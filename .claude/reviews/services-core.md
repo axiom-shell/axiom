@@ -4,13 +4,13 @@ reviewed: 4d8f880 2026-10-31  (full)
 The core funnels (CommandManager, FileManager, StateManager, ConsumerRegistry, the topics hub and its Go sources) are sound and match their docs. The weak spots are at the edges: two daemon topics lose their failures on the way to the UI (an offline first update check reads "System is up to date", an offline first weather fetch reads "Loading weather…" for the whole interval), and MediaManager, which no doc covers, picks Spotify over a playing player, ticks with nothing shown and never prunes its album art.
 
 ## Open findings
-- Major: [A failed update check shows as up to date](../../docs/dev/issues.md#a-failed-update-check-shows-as-up-to-date)
-- Major: [A weather fetch that fails shows Loading forever](../../docs/dev/issues.md#a-weather-fetch-that-fails-shows-loading-forever)
+- Major: "A failed update check shows as up to date" (fixed, row 20 core-ui-theming-03)
+- Major: "A weather fetch that fails shows Loading forever" (fixed, row 20 core-ui-theming-03)
 - Major: [SystemManager samples every second while nothing is shown](../../docs/dev/issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
-- Major: [The active media player is Spotify first and never follows playback](../../docs/dev/issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
-- Major: [Album art piles up in the runtime folder for the whole session](../../docs/dev/issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
-- Major: [MediaManager ticks the position with nothing showing it](../../docs/dev/issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
-- Cleanup: [runDetached warns about a lost connection](../../docs/dev/issues.md#rundetached-warns-about-a-lost-connection)
+- Major: "The active media player is Spotify first and never follows playback" (fixed, row 20 core-ui-theming-02)
+- Major: "Album art piles up in the runtime folder for the whole session" (fixed, row 20 core-ui-theming-02)
+- Major: "MediaManager ticks the position with nothing showing it" (fixed, row 20 core-ui-theming-02)
+- Cleanup: "runDetached warns about a lost connection" (fixed, row 20 core-ui-theming-07)
 - Cleanup: "Small shrinks in the core services" (fixed, row 20 core-ui-theming-01)
 Minor (unrecorded):
 - `docs/dev/core/services-pattern.md` › Shape: "Every service is `pragma Singleton QtObject`", but 24 services' root is Quickshell's `Singleton` (the service recipe allows it for child objects).

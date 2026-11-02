@@ -190,6 +190,7 @@ QtObject {
   // -- Private --
   property ConfigDraft _draft: ConfigDraft {
     path: ["CustomWidgets"]
+    onRefused: root._apply()
   }
 
   // The draft (the CustomWidgets section, every default filled)

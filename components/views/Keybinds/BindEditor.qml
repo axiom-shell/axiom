@@ -31,6 +31,8 @@ ColumnLayout {
       return I18n.tr("axiom binds don't have its options: {0}", entry.detail);
     case "shared":
       return I18n.tr("it's made in a shared module");
+    case "inFunction":
+      return I18n.tr("it's made inside a function");
     case "notOnly":
       return I18n.tr("it isn't the only call on its line");
     case "statement":

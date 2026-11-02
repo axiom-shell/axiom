@@ -7,7 +7,7 @@
 What happens when you step away is the axiom daemon's (`internal/idle`), in place of hypridle, which isn't a dependency anymore. The shell keeps the caffeine switch and shows the state.
 
 ### Turning it on
-- `Idle.enabled` (off by default; the onboarder's Integrations page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: AGENTS.md › Never, while testing). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
+- `Idle.enabled` (off by default; the onboarder's System page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: AGENTS.md › Never, while testing). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
 - Off, the daemon does nothing about idle: no listeners, no D-Bus connections, no hypridle started or stopped.
 - The managed mode's autostart (`Session.autostart`) no longer has a `hypridle` entry by default (the v78 step drops the old default's from saved configs), and still skips a plain `hypridle` one the user added while Idle is on, so it doesn't run beside it.
 
@@ -15,7 +15,7 @@ What happens when you step away is the axiom daemon's (`internal/idle`), in plac
 - `Plan(settings)`: dim, lock, screen off and suspend, each with its timeout (0 is off), in timeout order (ties keep that order), then the user's own `items` that are enabled, timed and run something.
 - Each step is a typed action, not a shell line:
   - **Dim** / **undim**: the shell's `brightness` IPC target (`dim` / `dimBy` / `undim`, every monitor, no OSD), which remembers what each monitor was.
-  - **Lock**: the locker `axiom lock` uses (`internal/lockscreen`), so `Lockscreen.mode` `none` runs `Lockscreen.lockCommand`.
+  - **Lock**: the locker `axiom lock` uses (`internal/lockscreen`), so `Lockscreen.mode` `none` runs `Lockscreen.lockCommand`. When that names no locker (empty, or `loginctl lock-session`, which comes back to axiom: `Locker.CanLock`), the daemon sets `Settings.NoLocker`: the plan has no lock step, logind's lock and the lock before sleep are skipped (no sleep inhibitor either), and `idle.state`'s `noLocker` makes the card's status "Doesn't lock".
   - **Screen off / on**: the compositor's socket (`Manager.ScreenPower`: Hyprland `dispatch hl.dsp.dpms`, sway `output * power`, niri `PowerOff/OnMonitors`).
   - **Suspend**: logind's `Suspend`.
   - **The user's own**: `sh -c` in its own process group (`internal/shellcmd`).
@@ -35,19 +35,19 @@ With `respectInhibitors` on:
 
 ### logind (`internal/logind`)
 - The session: `$XDG_SESSION_ID`, else the daemon's own, else the user's display session (a daemon outside the session's scope has none of its own).
-- `Session.Lock` (`loginctl lock-session`) locks, while `Idle.enabled` only: a user's own hypridle would also answer it.
+- `Session.Lock` (`loginctl lock-session`) locks, while `Idle.enabled` only (and not `NoLocker`): a user's own hypridle would also answer it.
 - Before sleep (`PrepareForSleep(true)`), with `lockBeforeSleep`: a delay inhibitor held all along keeps sleep waiting while the screen locks, up to logind's `InhibitDelayMaxUSec` less half a second; then it's let go. On waking it's taken again, and with `screenOnAfterSleep` the screens are turned on.
 - A lost bus is dialled again every 30 s.
 
 ### The shell
 - `IdleManager` (`services/session/`, from `shell.qml`'s `_services`):
-  - `status`: `off`, `running`, `inhibited`, `unsupported` (no `ext_idle_notifier_v1`) or `unavailable` (no daemon), from `idle.state` (a push on the `idle` topic; `idle.get` after each hello).
+  - `status`: `off`, `running`, `inhibited`, `noLock` (nothing locks: `noLocker`), `unsupported` (no `ext_idle_notifier_v1`) or `unavailable` (no daemon), from `idle.state` (a push on the `idle` topic; `idle.get` after each hello).
   - `inhibitors`, `screensaverHolder`.
   - Caffeine: `caffeine`, `setCaffeine(on)`, `toggle()` and the `idleInhibit` IPC target (`timer <text>` too). It is sent to the daemon (`idle.caffeine`, shell only) on change and after each hello, but only once the ticker is `ready`: on a reload caffeine reads off until its kept state is copied in, and the daemon must not see it go off and on.
   - Caffeine on a timer: `startCaffeineText("30m")` turns it on with a `caffeineTimer` (`StopwatchClock`'s timer state; `caffeineTimed`, `caffeineRemaining`, `caffeineText`, `caffeineProgress`, the last 3 durations in `caffeineRecent`), which turns it off at its end; paused, it stays on. With `Idle.caffeineWarning` (default on) the ticker's `warnBefore` fires 5 minutes before the end (only when crossed while running, once per end) and a notification offers 30 more minutes. `setCaffeine`/`toggle` drop the timer (on means until turned off). Both live in a `DeadlineTicker` (`keeps: false`: a `PersistentProperties` only, so they survive QML reloads but not restarts, and the end fires with nothing showing it); displays `acquire(owner, interval)` its ticking `now`.
 - The `IdleInhibitor` widget toggles caffeine and shows the time left while timed (faded while paused); its popout (`content/Caffeine/Caffeine.qml`, `popout.enabled`) has an on/off switch and the shared `CountdownTimer` (`content/parts/`, the one-off timer's too) over the widget's `presets` (default 30m, 1h, 4h); it takes `until 17:00` too, and while running shows "Until 17:30", steps by 5 minutes on the wheel and offers +30m / +1h / +2h on a right click of +15 min. The same file is the Caffeine overlay module (its own `presets` setting, default 4×5; compact, the time left or On/Off). On with no timer, both show "Awake until turned off" with Turn off and Set a timer (which brings back the presets, with a way back to no timer) instead of the presets. The quick action shows the time left too, and the launcher's `/caffeine 30m` starts one.
 - `shell/IdleInhibit.qml` holds the Wayland inhibitor itself. While caffeine is on, it maps a 1 px click-through Background-layer window on the primary monitor, because an inhibitor needs a surface. It therefore works without the bar widget (`bar/widgets/IdleInhibitor`).
-- Settings → Idle starts with `IdleStatusCard`: the status, what holds idle off, and the ScreenSaver warning.
+- Settings → Idle starts with `IdleStatusCard`: the status, what holds idle off, and the ScreenSaver warning. `noLock` says to set the Lock command.
 
 ### Testing
 - Go: `internal/idle` (the plan, and the service against a fake notifier, a fake bus and `logind/logindtest`), `wayland/idlenotify` (`wiretest`), `logind`, `screensaver`.
@@ -58,4 +58,4 @@ With Idle off, for the lock screen's `quickshell` mode, a user's own hypridle sh
 - `lock_cmd = axiom lock`
 - `before_sleep_cmd = loginctl lock-session`
 
-For `none` mode it should have no axiom references. See [Lockscreen](lockscreen.md).
+Any other idle daemon (swayidle, …) locks with `axiom lock`, before sleep too; the onboarder says only that, naming no daemon. For `none` mode it should have no axiom references. See [Lockscreen](lockscreen.md).

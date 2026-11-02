@@ -16,7 +16,8 @@
 //
 // Reason codes (kept and failed): key (its key can't be read as axiom's),
 // options (bind options axiom binds don't have: detail), function (it runs
-// a Lua function), shared (made in a shared module), notOnly (not the only
+// a Lua function), shared (made in a shared module), inFunction (made by a
+// function the file defines, which may make others), notOnly (not the only
 // call on its line), statement (part of a larger statement), followed
 // (something else follows it on its line), used (kept in a variable the
 // file uses: detail), unclosed (the call isn't closed), continued (a sway

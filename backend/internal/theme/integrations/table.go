@@ -91,7 +91,7 @@ var Table = map[string]Integration{
 		Missing: "no Firefox, LibreWolf, Zen, Floorp or Waterfox profile found (start the browser once)",
 		Files:   []File{{Path: "{each}/chrome/axiom.css", render: tmpl{name: "firefox.css"}}}},
 	"foot":    one("{config}/foot/axiom.ini", tmpl{name: "foot.ini", format: hex}),
-	"fzf":     {Files: []File{{Path: "{state}/axiom/fzf-colors", render: renderFunc(fzf)}}},
+	"fzf":     one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true}),
 	"ghostty": one("{config}/ghostty/themes/axiom", tmpl{name: "ghostty"}),
 	"gtk": {Files: []File{
 		{Path: "{config}/gtk-3.0/axiom.css", render: tmpl{name: "gtk.css"}},
@@ -181,23 +181,6 @@ type Dirs struct {
 // and {each}.
 func (d Dirs) Expand(s string) string {
 	return strings.NewReplacer("{home}", d.Home, "{config}", d.Config, "{state}", d.State, "{data}", d.Data, "{each}", d.Each).Replace(s)
-}
-
-// fzf's options file: one --color flag
-func fzf(t *Theme) ([]byte, error) {
-	v := t.vars(true)
-	pairs := []string{
-		"fg", "FOREGROUND", "bg", "BACKGROUND", "hl", "ACCENT",
-		"fg+", "FOREGROUND_HIGHLIGHT", "bg+", "BACKGROUND_HIGHLIGHT", "hl+", "ACCENT",
-		"info", "INFO", "marker", "SUCCESS", "prompt", "ACCENT", "spinner", "ACCENT_ALT",
-		"pointer", "ACCENT", "header", "FOREGROUND_ALT", "border", "BORDER",
-		"label", "FOREGROUND_ALT", "query", "FOREGROUND", "gutter", "BACKGROUND",
-	}
-	var colors []string
-	for i := 0; i < len(pairs); i += 2 {
-		colors = append(colors, pairs[i]+":"+v[pairs[i+1]])
-	}
-	return []byte("--color=" + strings.Join(colors, ",") + "\n"), nil
 }
 
 // nvim's palette file, read by the axiom_theme module: the file stem picks

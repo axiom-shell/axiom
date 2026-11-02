@@ -6,9 +6,9 @@ A sound, well-tested system: table, templates, goldens, schema switches with `x-
 ## Open findings
 - Major: [ncspot's splice keeps nothing after a begin marker that follows the end marker](../../docs/dev/issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
 - Major: [Kitty reloads only when its socket is /tmp/kitty-*](../../docs/dev/issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
-- Cleanup: [fzf's flags rebuilt in Go where a template does](../../docs/dev/issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
+- Cleanup: "fzf's flags rebuilt in Go where a template does" (fixed, row 20 core-ui-theming-07)
 - Cleanup: "Two hand-written cmp.Or in the theme packages" (fixed, row 20 core-ui-theming-01)
-- Cleanup: [The onboarder's integration commands are a hand-kept list in ThemeManager](../../docs/dev/issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
+- Cleanup: "The onboarder's integration commands are a hand-kept list in ThemeManager" (fixed, row 20 core-ui-theming-07)
 
 ### A theme name with a quote breaks wezterm's color file
 - **Where:** `backend/internal/theme/integrations/templates/wezterm.toml:6`

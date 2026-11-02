@@ -151,10 +151,7 @@ BaseView {
 
           StyledIconButton {
             visible: !root.editing && KeybindManager.page.lookupCombo !== ""
-            Layout.fillWidth: false
-            Layout.fillHeight: false
-            Layout.preferredWidth: Widget.height
-            Layout.preferredHeight: Widget.height
+            size: Widget.height
             iconText: "close"
             tooltipText: I18n.tr("Show every bind")
             onClicked: KeybindManager.page.lookupCombo = ""
@@ -162,10 +159,7 @@ BaseView {
 
           StyledIconButton {
             visible: !root.editing && !root.keyboard
-            Layout.fillWidth: false
-            Layout.fillHeight: false
-            Layout.preferredWidth: Widget.height
-            Layout.preferredHeight: Widget.height
+            size: Widget.height
             iconText: KeybindManager.page.refDensity === "compact" ? "density_small" : "density_medium"
             tooltipText: KeybindManager.page.refDensity === "compact" ? I18n.tr("Comfortable rows") : I18n.tr("Compact rows")
             onClicked: KeybindManager.page.setRefDensity(KeybindManager.page.refDensity === "compact" ? "comfortable" : "compact")
@@ -173,10 +167,7 @@ BaseView {
 
           StyledIconButton {
             visible: !root.editing && !root.keyboard
-            Layout.fillWidth: false
-            Layout.fillHeight: false
-            Layout.preferredWidth: Widget.height
-            Layout.preferredHeight: Widget.height
+            size: Widget.height
             iconText: "keyboard_command_key"
             iconColor: KeybindManager.page.refGlyphs ? Theme.accent : Theme.foreground
             tooltipText: KeybindManager.page.refGlyphs ? I18n.tr("Modifiers as words") : I18n.tr("Modifiers as symbols")

@@ -22,13 +22,17 @@ import (
 // fakeWriter is a writer whose compositor is a list of what was asked of
 // it
 type fakeWriter struct {
-	mu       sync.Mutex
-	dir      string
-	calls    []string
-	loaded   bool
-	invalid  string
-	unread   string
-	reloadCh chan ipc.Reload
+	mu      sync.Mutex
+	dir     string
+	calls   []string
+	loaded  bool
+	invalid string
+	unread  string
+	// elsewhere: the user's config the compositor runs instead (sway's)
+	elsewhere string
+	reloadCh  chan ipc.Reload
+	// reloaded: the reloads the manager has taken (noteReload)
+	reloaded int
 }
 
 func (f *fakeWriter) note(c string) {
@@ -45,7 +49,7 @@ func (f *fakeWriter) seen() []string {
 
 func (f *fakeWriter) files(in Inputs) files {
 	return files{ConfigDir: f.dir + "/conf/", IncludePath: f.dir + "/state/module", ManagedPath: f.dir + "/conf/hyprland.lua",
-		UserDir: f.dir + "/conf/user", UserFiles: f.dir + "/conf/user/*.lua", IncludeLines: "load it"}
+		UserDir: f.dir + "/conf/user", UserFiles: f.dir + "/conf/user/*.lua", IncludeLines: "load it", RunsElsewhere: f.elsewhere}
 }
 func (f *fakeWriter) moduleText(in Inputs, spec any) string {
 	return "-- module " + jsonx.ToString(getAny(spec, "tag")) + "\n"
@@ -73,9 +77,13 @@ func (f *fakeWriter) runtimeApply(_ context.Context, in Inputs, live func() []st
 	f.note("runtime:" + strings.Join(live(), ";"))
 }
 func (f *fakeWriter) runtimeClear(context.Context) { f.note("clear") }
-func (f *fakeWriter) noteReload()                  {}
-func (f *fakeWriter) seenReload()                  {}
-func (f *fakeWriter) skippedKeys() []string        { return nil }
+func (f *fakeWriter) noteReload() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reloaded++
+}
+func (f *fakeWriter) seenReload()           {}
+func (f *fakeWriter) skippedKeys() []string { return nil }
 func (f *fakeWriter) checkLoaded(context.Context, Inputs, string) (bool, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -366,6 +374,23 @@ func TestANewConfigNeedsNoApproval(t *testing.T) {
 	h.inputs("f1", "l1", "k1")
 	f := h.w.files(Inputs{})
 	h.eventually("taken over", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+}
+
+// A compositor running another config of the user's is never taken over:
+// the managed file would never load
+func TestManagedIsBlockedWhenTheCompositorRunsAnotherConfig(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "managed")
+	h.w.elsewhere = "/home/me/.config/i3/config"
+	h.inputs("f1", "l1", "k1")
+	h.eventually("the runtime layer instead", h.called("runtime:live l1"))
+	h.eventually("blocked", func() bool {
+		return h.state("managedCheck") == "blocked" && h.state("managedBlockedBy") == "elsewhere"
+	})
+	f := h.w.files(Inputs{})
+	if _, err := os.Stat(f.ManagedPath); err == nil {
+		t.Fatal("the managed config was written")
+	}
 }
 
 func TestLivePartsAreEvaluatedAndTakenBack(t *testing.T) {
@@ -753,5 +778,76 @@ func TestManagedFromTheFileNotifies(t *testing.T) {
 				t.Fatal("taken over without the approval")
 			}
 		})
+	}
+}
+
+// Leaving included between sessions (the mode applied last is known only
+// within one compositor run): the module left loading is emptied anyway
+func TestAModuleLeftFromAnEarlierSessionIsEmptied(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	path := h.w.files(Inputs{}).IncludePath
+	os.MkdirAll(filepath.Dir(path), 0o755)
+	os.WriteFile(path, []byte("-- module f0\n"), 0o644)
+	h.inputs("f1", "l1", "k1")
+	h.eventually("emptied", func() bool { return readFile(path) == "-- empty\n" })
+}
+
+// A takeover that fails (the config dir can't be locked): the runtime
+// layer stands in, and the card says why
+func TestAFailedTakeoverAppliesTheRuntimeLayer(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "managed")
+	if err := h.m.approvals().add("hyprland"); err != nil {
+		t.Fatal(err)
+	}
+	f := h.w.files(Inputs{})
+	os.WriteFile(strings.TrimSuffix(f.ConfigDir, "/"), []byte("not a dir"), 0o644)
+	h.inputs("f1", "l1", "k1")
+	h.eventually("the runtime layer", h.called("runtime:live l1"))
+	if p := jsonx.ToString(h.state("problem")); !strings.HasPrefix(p, "Couldn't take over") {
+		t.Fatalf("problem %q", p)
+	}
+}
+
+// A takeover check that fails leaves no answer behind: a stale one could
+// let a claim adopt the user's config without their Allow
+func TestAFailedTakeoverCheckForgetsTheLastAnswer(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "managed")
+	f := h.w.files(Inputs{})
+	os.WriteFile(strings.TrimSuffix(f.ConfigDir, "/"), []byte("not a dir"), 0o644)
+	h.m.do(context.Background(), func(ctx context.Context) {
+		h.m.managedCheck = "new"
+		h.m.check(ctx)
+	})
+	if got := h.state("managedCheck"); got != "" {
+		t.Fatalf("managedCheck %v after a failed check", got)
+	}
+}
+
+// niri's state as its event stream starts can come after the first apply
+// (the stream connects on its own): a config niri couldn't load at its
+// start is said then, and the module the apply found reads as not loaded
+func TestNiriFailedAtItsStartIsSaidAfterTheFirstApply(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	env := map[string]string{"NIRI_SOCKET": filepath.Join(dir, "niri.sock"), "XDG_RUNTIME_DIR": dir}
+	m := New(Options{
+		Getenv:      func(k string) string { return env[k] },
+		StateDir:    filepath.Join(dir, "state"),
+		RuntimeFile: filepath.Join(dir, "run", "compositor.json"),
+		Log:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	m.in = Inputs{jsonx.Obj("kind", "niri")}
+	m.mode, m.loaded = "included", true
+	// A later stream's state that didn't fail changes nothing
+	m.configReloaded(context.Background(), ipc.Reload{Initial: true})
+	if !m.loaded || m.problem != "" {
+		t.Fatalf("loaded %v, problem %q after a state that didn't fail", m.loaded, m.problem)
+	}
+	m.configReloaded(context.Background(), ipc.Reload{Initial: true, Failed: true})
+	if want := m.w.problems(m.in).Failed; m.loaded || m.problem != want {
+		t.Fatalf("loaded %v, problem %q; want the failure said", m.loaded, m.problem)
 	}
 }

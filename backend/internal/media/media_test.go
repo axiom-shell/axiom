@@ -2,11 +2,14 @@ package media
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 )
@@ -69,6 +72,47 @@ func TestArtKeepsWhatIsThere(t *testing.T) {
 	}
 	if got, _ := os.ReadFile(path); string(got) != "cached" {
 		t.Errorf("got %q", got)
+	}
+}
+
+// A fetch leaves only the keep most recently used files; art used again
+// (kept, not fetched) counts as new
+func TestArtPrunes(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	old := time.Now().Add(-time.Hour)
+	for i := range keep + 3 {
+		path := filepath.Join(dir, fmt.Sprintf("%02d.jpg", i))
+		os.WriteFile(path, []byte("art"), 0o600)
+		// 00.jpg is the oldest
+		at := old.Add(time.Duration(i) * time.Second)
+		os.Chtimes(path, at, at)
+	}
+	src := filepath.Join(t.TempDir(), "cover.png")
+	os.WriteFile(src, []byte("png"), 0o644)
+	if err := Art(context.Background(), Options{Dir: dir}, "file://"+src, filepath.Join(dir, "00.jpg")); err != nil {
+		t.Fatal(err)
+	}
+	if err := Art(context.Background(), Options{Dir: dir}, "file://"+src, filepath.Join(dir, "new.jpg")); err != nil {
+		t.Fatal(err)
+	}
+	entries, _ := os.ReadDir(dir)
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	if len(names) != keep {
+		t.Fatalf("kept %d files, want %d: %v", len(names), keep, names)
+	}
+	for _, name := range []string{"00.jpg", "new.jpg", "18.jpg"} {
+		if !slices.Contains(names, name) {
+			t.Errorf("%s removed: %v", name, names)
+		}
+	}
+	for _, name := range []string{"01.jpg", "02.jpg", "03.jpg", "04.jpg"} {
+		if slices.Contains(names, name) {
+			t.Errorf("%s kept: %v", name, names)
+		}
 	}
 }
 

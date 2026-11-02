@@ -124,10 +124,6 @@ QtObject {
         "arch": "glib2",
         "fedora": "glib2"
       },
-      "notify-send": {
-        "arch": "libnotify",
-        "fedora": "libnotify"
-      },
       "wlsunset": {
         "arch": "wlsunset",
         "fedora": "wlsunset"

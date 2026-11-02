@@ -587,11 +587,27 @@ def check_generated_edit(tool_input):
 
 # ------------------------------------------------------------------ main
 
+# `cd /dir && git … && git …` and nothing else: no `;`, `||`, `|`, `\&`,
+# newline, redirection, substitution, wrapper (`env -C`), other command
+# (`eval`, `builtin cd`) or relative folder (CDPATH) that could leave a push
+# somewhere else than the folder
+LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*(?:[ \t]*&&[ \t]*git[ \t][^\n\\;&|()<>`$]*)+")
+
+
 def check(call):
     tool, tool_input = call.get("tool_name", ""), call.get("tool_input") or {}
     if tool == "Bash":
-        for env, argv in split_commands(tool_input.get("command", "")):
-            check_argv(env, argv, call.get("cwd") or str(REPO))
+        command = tool_input.get("command", "")
+        commands = split_commands(command)
+        cwd = call.get("cwd") or str(REPO)
+        # A leading cd into a folder moves the git commands after it (an
+        # agent's cwd resets every call); any other shape is judged here. cd
+        # takes `..` after `~` and before symlinks (normpath), as the shell does
+        if (commands[:1] and commands[0][1][:1] == ["cd"] and LEADING_CD.fullmatch(command)
+                and (target := resolve(os.path.normpath(os.path.expanduser(commands[0][1][1])), cwd)).is_dir()):
+            cwd, commands = str(target), commands[1:]
+        for env, argv in commands:
+            check_argv(env, argv, cwd)
     elif tool in {"Edit", "Write"}:
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)

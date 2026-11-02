@@ -151,6 +151,14 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs bar-popouts-02, on Hyprland and niri: a floating edge menu with Close on outside click, and the launcher attached and detached, close on a click on a window, a bar, the screen border and another monitor; a click in the edge menu's submenu (and a tray menu's) leaves it open; a pinned menu stays; with the launcher open, a click on a bar's launcher button closes it without reopening it, and one on a bar button opening the power menu or an edge menu leaves that open; with either open, hovering a bar widget whose popout takes the keyboard (Todo, Calculator, Stopwatch) opens that popout and leaves them open, and once it closes a click outside still closes them (on Hyprland they take their grab back); on Hyprland, with the launcher or the edge menu open under such a popout with its text field focused, a click on a window closes both and the window keeps the keyboard (a click back in the launcher closes both too: [known](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)).
 - Once the shell runs #287 (config-02), edit config.json by hand, then within a moment change a setting in the shell: the save is refused, the shell shows the hand edit, and the next change saves.
 - Once the shell runs #288 (config-03), turn Polkit's "Use axiom's prompt" or Idle's "Handle idle" on in Settings without saving and check nothing starts (no agent swap, hypridle untouched), then Discard; and in the launcher `/config Polkit.enabled` offers only Show in settings.
+- After a save axiom refuses (e.g. right after a hand edit of config.json), the editor's edits show live again on the running bars and settings (#293).
+- Once axiom runs a binary built with platform-02, run `axiom lock` under Hyprland and check `axiom daemon logs` has no `the shell didn't confirm the lock: starting it locked` (a nested Hyprland acknowledged the lock after about 5 s; the daemon now waits 10 s more for a shell holding the lock), and whether a real Hyprland is ever that slow.
+- Once the greeter runs platform-02, with a bundle setting two keyboard layouts (`us,de`), log out to the login screen under sway and Hyprland: its keyboard layout module switches between both from the start.
+- Once the shell runs platform-02, start a shell locked (`axiom lock` confirmed too late, or one restarted while locked), unlock with the password, then save a QML file: the reload doesn't lock again.
+- Once the shell and binary run platform-03, take a screenshot with an annotator installed and click the notification's Edit in … button (it opens the annotator), and use Settings → Notifications' Show: both toast as before, and `scripts/log.sh` shows no `[NotificationManager] Sending`.
+- Once the shell runs clear-out core-ui-theming-02 (row 20): with two players open, play one then the other and check the Media widget and NowPlaying follow the one playing (and a player picked in NowPlaying stays until another starts); with no Media widget or NowPlaying shown, check the position isn't ticking (a temporary `console.log` in `updatePosition` stays quiet while music plays); with a scheduled theme, set the other mode by hand (dark while light is scheduled) and force a reload: it stays, and goes back only at the next scheduled switch or a fresh start (logout, or the shell restarted); likewise night light and do-not-disturb.
+- Once axiom runs a build with row 20's compositor-05, start a nested niri in managed mode with a broken `user/*.kdl` (`scripts/dev/nested.sh niri --managed`) and check the Compositor card reports niri couldn't load its config rather than loaded; and with a stale `NIRI_SOCKET` (or `HYPRLAND_INSTANCE_SIGNATURE`) left in the systemd user environment under another compositor, check the shell and `axiom daemon logs` use the compositor running.
+- Once axiom runs row 20's compositor-06, under a sway started as `sway -c ~/.config/i3/config` (a scratch copy), check the Compositor page's Add it for me edits that file (not `~/.config/sway/config`) and Managed says it can't switch, naming that file.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -191,7 +199,6 @@ Done: extend `archtest` (dependency direction, no `init()` or package state, eve
 
 Resolves:
 - [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
-- [A dev build during a branch switch re-execs onto the defaults](issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
@@ -215,6 +222,10 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
+- Once axiom runs a binary built with platform-04, in dev mode: `git switch` to an older branch and `git pull` (or touch a Go file) within the build's time; `axiom daemon logs` shows `dev build done, but the source changed meanwhile: building again` and one more build, the image re-exec'd last is the tree's (`axiom config status` loads, no `running on the defaults`). Then switch to a branch whose config version is older than config.json's: the shell keeps showing the config it had, not the defaults.
+- Once axiom runs platform-04 in dev mode, bump `protocol` in `config/json/backend.json` and save a Go file: after the re-exec, `axiom ipc …` from a bind and a terminal (the installed `~/.local/bin/axiom`, still on the old protocol) works through the dev build, and the shell's calls work with no QML reload (`scripts/log.sh` shows no `refused the hello`). Put the protocol back after.
+- Once axiom runs platform-04 in dev mode, save a QML file and a Go file together a few times (as a rebase does): every re-exec's shell hello is accepted (`scripts/log.sh` shows no `only the shell axiom runs may connect as the shell`, `axiom daemon status` lists the shell).
+- Once axiom runs a binary with the newer-client re-exec (platform-04), the stuck case: replace `~/.local/bin/axiom` with a build whose `protocol` is one more (and the tree's `backend.json` too) without re-execing the daemon, then run `axiom ping`: it says hello again after a second and works, `axiom daemon logs` shows `a client speaks a newer protocol: re-executing`, the shell stays up; with the tree's `backend.json` left at the old number, `axiom ping` is refused with `update axiom` and nothing re-execs.
 - [The keybinds page on a small monitor with large binds](issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds) (with the 1080p pass)
 - [Modules inside borders aren't sized evenly](issues.md#modules-inside-borders-arent-sized-evenly)
 
@@ -222,7 +233,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [Bar widget hosts settle after they're gone](issues.md#bar-widget-hosts-settle-after-theyre-gone)
-- [The shell's hello can be refused across a dev re-exec](issues.md#the-shells-hello-can-be-refused-across-a-dev-re-exec)
 - [A custom Ring element logs an undefined `inside` on load](issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
 - [The Layouts canvas logs null reads as it's torn down](issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
 - [Keybind sections log null reads as they're torn down](issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
@@ -233,11 +243,6 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
 
 Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the [Deferred](#deferred) entries to GitHub; a PR-size note in `CONTRIBUTING.md` (a batch per PR, an item per commit, moves apart from logic); the maintainer prepares the photos and videos for the post (it blocks the post, not the row).
-
-Resolves:
-- [A protocol bump in dev mode leaves the installed CLI on the old protocol](issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)
-- [AGENTS.md's funnel rule doesn't name FileManager.write and watch](issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
-- [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
@@ -323,28 +328,19 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
 
-Found while retiring the `qs ipc` fallback (backend stage 6):
-- [A word passed to an int IPC parameter is 0](issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
-
-Found while closing the config path (backend stage 7):
-- [After a refused save, a draft's edits show unsaved but not live](issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
-
-Found while fixing the lock screen surviving a reload:
-- [Nested Hyprland acknowledges a lock too late for axiom lock](issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
-
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
 
+Found while reviewing the guard's leading `cd` (row 20, config-05):
+- [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
+
 Found by the audits:
-- [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
-- [The daemon picks a compositor the shell may not run under](issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
 - [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
 - [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
 - [A trial monitor Apply that turns a monitor off drops its Keep/Revert](issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
 - [A shell reload during a trial monitor Apply loses the way back](issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)
 - [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
-- [The bind merge deletes an hl.bind inside a helper, losing binds it never read](issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
 - [A failed monitor profile apply is never retried for the same outputs](issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
 - [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
@@ -362,23 +358,12 @@ Found by the audits:
 - [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
-- [niri started on a broken config reads as loaded](issues.md#niri-started-on-a-broken-config-reads-as-loaded)
-- [A file mode that stops loading keeps the saved monitor profile off](issues.md#a-file-mode-that-stops-loading-keeps-the-saved-monitor-profile-off)
-- [Leaving included between sessions leaves the full module loaded](issues.md#leaving-included-between-sessions-leaves-the-full-module-loaded)
-- [A failed takeover leaves no layer and no problem](issues.md#a-failed-takeover-leaves-no-layer-and-no-problem)
-- [A failed takeover check reuses the last answer and can adopt without approval](issues.md#a-failed-takeover-check-reuses-the-last-answer-and-can-adopt-without-approval)
-- [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
-- [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
-- [A relative -c is read from the daemon's folder](issues.md#a-relative--c-is-read-from-the-daemons-folder)
 - [Gaps to the edges are wider on sway than the setting says](issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says)
+- [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
 - [A $' or $& in a bind's argument is read as a replacement pattern](issues.md#a--or--in-a-binds-argument-is-read-as-a-replacement-pattern)
-- [A niri merge of two binds on one line loses one](issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)
 - [A sway bind using a variable from an include moves as a literal $name](issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
 - [A niri spawn of one word with a space moves as a broken shell command](issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)
-- [A sway line continuing a non-bind line is moved as a bind of its own](issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
 - [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
-- [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
-- [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
 - [The overview stays open with nothing shown after its monitor goes away](issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
 - [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
@@ -394,13 +379,10 @@ Found by the audits:
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
 - [niri's confirming quit moves in as an instant log out](issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
-- [A sway title-bar mouse bind moves in as a whole-window bind](issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
 - [A sway exec chained with ; or , moves in as one shell command](issues.md#a-sway-exec-chained-with--or--moves-in-as-one-shell-command)
-- [A sway include path with a space breaks after a takeover](issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
 - [A sway output rule by description misses a monitor with no serial](issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
 - [Managed mode's monitor-conflict check misses quoted and block output lines](issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
 - [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
-- [The sway extract's input-device case and isSwayFlag repeat the general rule](issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
 - [niri's overview drop moves a window's whole column and switches workspace](issues.md#niris-overview-drop-moves-a-windows-whole-column-and-switches-workspace)
 - [sway's named workspaces all share workspace id -1](issues.md#sways-named-workspaces-all-share-workspace-id--1)
 - [sway lists disabled outputs as outputs](issues.md#sway-lists-disabled-outputs-as-outputs)
@@ -416,7 +398,6 @@ Found by the audits:
 - [An open edge popout's layer and namespace still follow its edge's bar](issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
 - [EdgePopout works out its attach edge and slide distance itself](issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
-- [The Updates popout's package list is frozen at opening](issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
 - [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
 - [SurfaceContext.layout's pill and merged results have no test row](issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
 - [Both tray menu lists override the same width cap](issues.md#both-tray-menu-lists-override-the-same-width-cap)
@@ -465,42 +446,10 @@ Found by the audits:
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- [A failed update check shows as up to date](issues.md#a-failed-update-check-shows-as-up-to-date)
-- [A weather fetch that fails shows Loading forever](issues.md#a-weather-fetch-that-fails-shows-loading-forever)
-- [The active media player is Spotify first and never follows playback](issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
-- [Album art piles up in the runtime folder for the whole session](issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
-- [MediaManager ticks the position with nothing showing it](issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
-- [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
-- [Rescanning the theme folders lists the shell's working directory as themes](issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
-- [A generated theme from a wallpaper reached through a symlink is regenerated at every start](issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
-- [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
-- [Icons.overrides never reaches window icons](issues.md#iconsoverrides-never-reaches-window-icons)
-- [A cancelled rename's typed text comes back in the notes and chat rename fields](issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
-- [Nine shared controls animate with their own easing, written out where Glide does it](issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
-- [Every StyledSlider overrides its look and its value the same way](issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)
-- [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
-- [ActionTile and ActionPill carry the same countdown bar](issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
-- [StyledTextEntry and StyledTextArea carry the same blinking cursor](issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
-- [ncspot's splice keeps nothing after a begin marker that follows the end marker](issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
-- [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
-- [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
-- [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
-- [A shell started locked locks again on every reload](issues.md#a-shell-started-locked-locks-again-on-every-reload)
-- [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
-- [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
-- [Uninstall keeps a stale greetd backup when greetd points elsewhere](issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
-- [The greeter reads its keyboard layouts before the bundle's are applied](issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
-- [The launcher's /generate reads a monitor setting that doesn't exist](issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
-- [A clip's label and detail are written in both the launcher and the clipboard module](issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
-- [App scoring is written twice and the use bonus three times](issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
-- [install.sh and the AUR packages never install notify-send, gio or pactl](issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl) (decided: `notify-send` is replaced by a daemon method in Go, not added as a dependency; maintainer, 2026-11-01)
-- [A main-channel update applied after edge moved on needs go to rebuild the binary](issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
-- [The onboarder's Checks-page purposes don't match their declared keys](issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
-- [daemon.shutdown starts its goroutine past tasks.Go](issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
-- [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
+- [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
 - [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
@@ -548,16 +497,14 @@ Found by the audits:
 - [The apply's wallpaper rides in a property instead of the callback](issues.md#the-applys-wallpaper-rides-in-a-property-instead-of-the-callback)
 - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
 - [Clicking an older capture's notification opens the newest capture](issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
-- [The screenshot's Edit notification rebuilds sendNotification's actions](issues.md#the-screenshots-edit-notification-rebuilds-sendnotifications-actions)
 - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 
-Found while reworking the onboarder:
-- [The onboarder's Integrations page names Hyprland's tools everywhere](issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
-- [The onboarder's Integrations page is too long for one step](issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
-- [The Look page offers Hyprland's wallpapers under any compositor](issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
+Found while fixing core-ui-theming-04 (row 20):
+- [MediaManager's start-up pass throws: the engine has no Object.fromEntries](issues.md#mediamanagers-start-up-pass-throws-the-engine-has-no-objectfromentries)
 
-Found while making caffeine survive reloads:
-- [DailySchedule's persisted state never survives a reload](issues.md#dailyschedules-persisted-state-never-survives-a-reload)
+Found while reviewing core-ui-theming-06 (row 20):
+- [A NowPlaying seek shows the old place until the next tick, and keeps it while paused](issues.md#a-nowplaying-seek-shows-the-old-place-until-the-next-tick-and-keeps-it-while-paused)
+- [The text cursor keeps blinking with animations off](issues.md#the-text-cursor-keeps-blinking-with-animations-off)
 
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
@@ -602,12 +549,14 @@ Found meanwhile:
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
 - [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
 - [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp) (an idea from the wallpaper transitions branch)
+- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification) (the maintainer's request, 2026-11-02)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
 - [Video wallpapers](issues.md#video-wallpapers) (an idea from the wallpaper transitions branch)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
 - [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
+- [A bind can't be limited to some compositors](issues.md#a-bind-cant-be-limited-to-some-compositors) (the maintainer's request, 2026-11-02)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
@@ -662,3 +611,6 @@ Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge sub
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [The lock screen has no settings for allowing or viewing notifications](issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (needs a plan once taken up)
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
+
+Deferred by the maintainer (2026-11-02: "add to needs a plan in deferred"):
+- [axiom installs into Quickshell's config folder, and dev mode can't switch trees](issues.md#axiom-installs-into-quickshells-config-folder-and-dev-mode-cant-switch-trees) (needs a plan once taken up)

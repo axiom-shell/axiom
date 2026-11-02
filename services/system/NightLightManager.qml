@@ -133,7 +133,8 @@ Singleton {
   }
   onAvailableChanged: root._probeOnce()
 
-  property DailySchedule _schedule: DailySchedule {
+  DailySchedule {
+    id: _schedule
     name: "nightLight"
     enabled: NightLight.schedule
     // Not before the probe, which would overwrite what it sets

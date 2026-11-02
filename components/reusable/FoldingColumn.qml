@@ -26,11 +26,8 @@ Item {
   visible: root.shown
   clip: root._reveal < 1
 
-  Behavior on _reveal {
-    NumberAnimation {
-      duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
-    }
+  Glide on _reveal {
+    duration: Appearance.animNormal
   }
 
   ColumnLayout {

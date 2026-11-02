@@ -36,6 +36,9 @@ Singleton {
   readonly property string focusedOutput: Hyprland.focusedMonitor?.name ?? ""
   // The focused window's id (its "0x…" address), or ""
   readonly property string activeWindowId: Hyprland.activeToplevel ? "0x" + Hyprland.activeToplevel.address : ""
+  // The wallpapers Hyprland's package leaves in a data dir
+  // (CompositorManager.stockWallpapers)
+  readonly property string stockWallpapers: "hypr/wall*.png"
   // What Hyprland does (CompositorManager.supports)
   readonly property var supports: ({
       "configModes": true,

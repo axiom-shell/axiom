@@ -3,8 +3,9 @@ import QtQuick
 
 import qs.config
 
-// A themed slider (trough, fill, handle) that emits moved while dragged
-// and released at the end; a value pushed in animates to it.
+// A themed slider (trough, fill, round handle) that emits moved while
+// dragged and released at the end. `value` is only pushed in, never written
+// by a drag, so it can stay bound; a new value animates to it.
 Item {
   id: root
 
@@ -14,41 +15,37 @@ Item {
 
   // -- Public API --
   property real value: 0.0
-  property real targetValue: value
-  property real _internalValue: value
-  property bool pressed: mouseArea.isDragging
+  readonly property bool pressed: mouseArea.isDragging
+  // What the slider shows: the drag's place while pressed
+  readonly property real position: root._shown
 
   // -- Configurable Appearance --
   property alias troughColor: troughRect.color
   property alias fillColor: fillRect.color
   property alias handleColor: handleRect.color
-  property alias handleRadius: handleRect.radius
-
-  property alias handleWidth: handleRect.width
-  property alias handleHeight: handleRect.height
   property alias troughHeight: troughRect.height
+  property real handleSize: Widget.px(14)
 
   // -- Implementation --
+  property real _shown: root.value
+
   Binding {
     target: root
-    property: "_internalValue"
-    value: root.targetValue
-    when: !mouseArea.isDragging
+    property: "_shown"
+    value: mouseArea.dragValue
+    when: mouseArea.isDragging
   }
 
-  Behavior on _internalValue {
+  Glide on _shown {
+    duration: Appearance.animNormal
     enabled: !mouseArea.isDragging
-    NumberAnimation {
-      duration: Appearance.animNormal
-      easing.type: Easing.OutQuad
-    }
   }
 
   Rectangle {
     id: troughRect
     anchors.verticalCenter: parent.verticalCenter
     width: parent.width
-    height: Widget.px(4)
+    height: Widget.px(6)
     radius: Widget.radius
     color: Theme.backgroundHighlight
   }
@@ -56,7 +53,6 @@ Item {
   // The handle travels within the trough, so it never sticks out past
   // either end; the fill runs to its centre
   readonly property real _travel: Math.max(0, root.width - handleRect.width)
-  readonly property real _shown: mouseArea.isDragging ? root.value : root._internalValue
 
   Rectangle {
     id: fillRect
@@ -64,32 +60,21 @@ Item {
     width: root._shown * root._travel + handleRect.width / 2
     height: troughRect.height
     radius: height / 2
-    color: Theme.foreground
-
-    Behavior on width {
-      enabled: !mouseArea.isDragging
-      NumberAnimation {
-        duration: Appearance.animNormal
-        easing.type: Easing.OutQuad
-      }
-    }
+    color: Theme.accent
   }
 
   Rectangle {
     id: handleRect
     x: fillRect.width - width / 2
     anchors.verticalCenter: parent.verticalCenter
-    width: Widget.px(24)
-    height: Widget.px(14)
-    radius: Widget.radius
-    color: Theme.backgroundAlt
+    width: root.handleSize
+    height: root.handleSize
+    radius: root.handleSize / 2
+    color: Theme.foreground
     scale: mouseArea.isDragging ? 1.2 : (mouseArea.containsMouse ? 1.1 : 1.0)
 
-    Behavior on scale {
-      NumberAnimation {
-        duration: Appearance.animNormal
-        easing.type: Easing.OutQuad
-      }
+    Glide on scale {
+      duration: Appearance.animNormal
     }
   }
 
@@ -103,6 +88,7 @@ Item {
     preventStealing: true
 
     property bool isDragging: false
+    property real dragValue: 0
     // Where on the handle it was grabbed, so pressing the handle doesn't
     // jump the value; a press on the trough centres the handle there
     property real grabOffset: handleRect.width / 2
@@ -112,9 +98,8 @@ Item {
     }
 
     function updatePosition(x) {
-      const ratio = ratioAt(x);
-      root.value = ratio;
-      root.moved(ratio);
+      dragValue = ratioAt(x);
+      root.moved(dragValue);
     }
 
     onPressed: mouse => {
@@ -130,20 +115,22 @@ Item {
       }
     }
 
+    // `released` goes out before the drag ends, so a user pushing the
+    // released value in has done so when the slider goes back to showing
+    // `value`, and it doesn't snap back to the old one first
     onReleased: {
       if (isDragging) {
+        dragValue = ratioAt(mouseX);
+        root.released(dragValue);
         isDragging = false;
-        const ratio = ratioAt(mouseX);
-        root.value = ratio;
-        root.released(ratio);
       }
     }
 
     // Still ends the drag where it got to, so the value is committed
     onCanceled: {
       if (isDragging) {
+        root.released(dragValue);
         isDragging = false;
-        root.released(root.value);
       }
     }
   }

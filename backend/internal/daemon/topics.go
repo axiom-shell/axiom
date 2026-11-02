@@ -53,7 +53,7 @@ func (d *Daemon) sources() []topics.Source {
 		updates.Source(updates.Options{Log: d.opts.Log}),
 		d.sysmon.Source(),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
-		weather.Source(weather.Options{}),
+		weather.Source(weather.Options{Log: d.opts.Log}),
 		lockkeys.Source(lockkeys.Options{}),
 	}, d.opts.topics...)
 }

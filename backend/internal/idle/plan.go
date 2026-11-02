@@ -21,6 +21,10 @@ type Settings struct {
 	ScreenOnAfterSleep bool
 	RespectInhibitors  bool
 	Items              []Item
+	// NoLocker: nothing locks (the user's own locker with no lock command
+	// of theirs, lockscreen.Locker.CanLock; set by the daemon, not the
+	// section): the lock steps are left out, and State says so
+	NoLocker bool
 }
 
 // Item is one of the user's own listeners (Idle.items).
@@ -110,8 +114,8 @@ type Listener struct {
 	OnResume  Action        `json:"onResume"`
 }
 
-// Plan is what the settings arm: the dim, lock, screen-off and suspend
-// steps whose timeout isn't 0, in timeout order (steps on the same
+// Plan is what the settings arm: the dim, lock (unless NoLocker),
+// screen-off and suspend steps whose timeout isn't 0, in timeout order (steps on the same
 // timeout keep that order), then the user's own enabled listeners that
 // run something.
 func Plan(s Settings) []Listener {
@@ -125,7 +129,9 @@ func Plan(s Settings) []Listener {
 		{Timeout: s.ScreenOffTimeout, OnTimeout: Action{Kind: ScreenOff}, OnResume: Action{Kind: ScreenOn}},
 		{Timeout: s.SuspendTimeout, OnTimeout: Action{Kind: Suspend}},
 	}
-	steps = slices.DeleteFunc(steps, func(l Listener) bool { return l.Timeout <= 0 })
+	steps = slices.DeleteFunc(steps, func(l Listener) bool {
+		return l.Timeout <= 0 || s.NoLocker && l.OnTimeout.Kind == Lock
+	})
 	slices.SortStableFunc(steps, func(a, b Listener) int { return int((a.Timeout - b.Timeout) / time.Millisecond) })
 	for _, item := range s.Items {
 		run := strings.TrimSpace(item.OnTimeout)

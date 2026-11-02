@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03 and config-04 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06 and core-ui-theming-07 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -9,9 +9,9 @@ Not an options plan: this is row 20's PR list, combined from the seven area tria
 The product questions, answered in one sitting (step 2.5); each entry quotes its answer under **Decided**, and the deferred ones are under [Deferred](../roadmap.md#deferred).
 
 1. Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot: b) apply the snapshot with default machine settings.
-2. [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks): yes, the plan also shows "doesn't lock" as a status.
-3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
-4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
+2. With Idle on and the user's own locker left at loginctl lock-session, nothing locks: yes, the plan also shows "doesn't lock" as a status.
+3. Done: the onboarder's Integrations page was too long for one step: split, with the theme page directly after integrations (System, then App colors).
+4. Done: Power repeated the session actions' icons, labels and confirm: a) "Restart" / "Shut down".
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): accept the narrower gap.
@@ -61,23 +61,23 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 13 | config-02 | major | Done: The store's load and write safety | 3 | ~220 | config-01 | Q1 |
 | 14 | config-03 | major | Done: The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
 | 15 | config-04 | major | Done: Editor fields and draft comparisons | 3 | ~110 | none |  |
-| 16 | config-05 | minor-sweep | Config and guardrails | 2 | ~50 | config-03, config-04 |  |
-| 17 | platform-02 | major | Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
-| 18 | platform-03 | major | Packaging and self-update | 4 | ~400 | none |  |
-| 19 | platform-04 | major | Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
-| 20 | platform-05 | major | Launcher and IPC input | 2 | ~80 | platform-01 |  |
-| 21 | platform-06 | minor-sweep | The onboarder | 3 | ~150 | platform-03 | Q3 |
-| 22 | platform-07 | minor-sweep | The launcher with its providers | 2 | ~80 | platform-05 |  |
-| 23 | platform-08 | minor-sweep | Security: the session actions | 1 | ~60 | platform-02 | Q4 |
-| 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
-| 25 | core-ui-theming-03 | major | Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
-| 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
-| 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
-| 28 | core-ui-theming-06 | minor-sweep | ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
-| 29 | core-ui-theming-07 | minor-sweep | Core services, theming and theme integrations | 4 | ~60 | core-ui-theming-04 |  |
-| 30 | compositor-05 | major | The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
-| 31 | compositor-06 | major | Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
-| 32 | compositor-07 | major | The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
+| 16 | config-05 | minor-sweep | Done: Config and guardrails | 2 | ~50 | config-03, config-04 |  |
+| 17 | platform-02 | major | Done: Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
+| 18 | platform-03 | major | Done: Packaging and self-update | 4 | ~400 | none |  |
+| 19 | platform-04 | major | Done: Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
+| 20 | platform-05 | major | Done: Launcher and IPC input | 2 | ~80 | platform-01 |  |
+| 21 | platform-06 | minor-sweep | Done: The onboarder | 3 | ~150 | platform-03 | Q3 |
+| 22 | platform-07 | minor-sweep | Done: The launcher with its providers | 2 | ~80 | platform-05 |  |
+| 23 | platform-08 | minor-sweep | Done: Security: the session actions | 1 | ~60 | platform-02 | Q4 |
+| 24 | core-ui-theming-02 | major | Done: Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
+| 25 | core-ui-theming-03 | major | Done: Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
+| 26 | core-ui-theming-04 | major | Done: Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
+| 27 | core-ui-theming-05 | major | Done: ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
+| 28 | core-ui-theming-06 | minor-sweep | Done: ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
+| 29 | core-ui-theming-07 | minor-sweep | Done: Core services, theming and theme integrations | 4 | ~60 | core-ui-theming-04 |  |
+| 30 | compositor-05 | major | Done: The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
+| 31 | compositor-06 | major | Done: Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
+| 32 | compositor-07 | major | Done: The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
 | 33 | compositor-08 | major | What a moved bind becomes | 3 | ~120 | compositor-07 |  |
 | 34 | compositor-21 | major | Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
 | 35 | compositor-09 | major | Applying monitor rules | 4 | ~150 | compositor-05 |  |
@@ -253,96 +253,96 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A number box keeps its typed text when the setting it edits switches under it
   - Escape in a settings-page number box leaves the half-typed value in the draft
   - Restoring a saved keybind preset marks every bind new, and Revert deletes it
-- **config-05** (2):
-  - [After a refused save, a draft's edits show unsaved but not live](../issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
-  - [The guard reads the branch from the session's folder, not a `cd` before the push](../issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
+- **config-05** (2, done):
+  - After a refused save, a draft's edits show unsaved but not live
+  - The guard reads the branch from the session's folder, not a `cd` before the push
 
 **platform**
 
-- **platform-02** (5): The nested-Hyprland timing gets a Live checks line.
-  - [A shell started locked locks again on every reload](../issues.md#a-shell-started-locked-locks-again-on-every-reload)
-  - [With Idle on and the user's own locker left at loginctl lock-session, nothing locks](../issues.md#with-idle-on-and-the-users-own-locker-left-at-loginctl-lock-session-nothing-locks)
-  - [Nested Hyprland acknowledges a lock too late for axiom lock](../issues.md#nested-hyprland-acknowledges-a-lock-too-late-for-axiom-lock)
-  - [Uninstall keeps a stale greetd backup when greetd points elsewhere](../issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
-  - [The greeter reads its keyboard layouts before the bundle's are applied](../issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
-- **platform-03** (4): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
-  - [install.sh and the AUR packages never install notify-send, gio or pactl](../issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
-  - [A main-channel update applied after edge moved on needs go to rebuild the binary](../issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
-  - [install.sh still installs the rest of a feature whose COPR was declined](../issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
-  - [The onboarder's Checks-page purposes don't match their declared keys](../issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
-- **platform-04** (4): Dev mode only; the three re-exec races get Live checks lines.
-  - [A dev build during a branch switch re-execs onto the defaults](../issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
-  - [A protocol bump in dev mode leaves the installed CLI on the old protocol](../issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)
-  - [The shell's hello can be refused across a dev re-exec](../issues.md#the-shells-hello-can-be-refused-across-a-dev-re-exec)
-  - [daemon.shutdown starts its goroutine past tasks.Go](../issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
-- **platform-05** (2): Before core-ui-theming-04, whose other-monitor theme fix assumes /generate reads the right monitor.
-  - [The launcher's /generate reads a monitor setting that doesn't exist](../issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
-  - [A word passed to an int IPC parameter is 0](../issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
-- **platform-06** (3):
-  - [The onboarder's Integrations page names Hyprland's tools everywhere](../issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)
-  - [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
-  - [The Look page offers Hyprland's wallpapers under any compositor](../issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
-- **platform-07** (2):
-  - [A clip's label and detail are written in both the launcher and the clipboard module](../issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
-  - [App scoring is written twice and the use bonus three times](../issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
-- **platform-08** (1):
-  - [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
+- **platform-02** (5, done): The nested-Hyprland timing gets a Live checks line.
+  - A shell started locked locks again on every reload
+  - With Idle on and the user's own locker left at loginctl lock-session, nothing locks
+  - Nested Hyprland acknowledges a lock too late for axiom lock
+  - Uninstall keeps a stale greetd backup when greetd points elsewhere
+  - The greeter reads its keyboard layouts before the bundle's are applied
+- **platform-03** (4, done): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
+  - install.sh and the AUR packages never install notify-send, gio or pactl
+  - A main-channel update applied after edge moved on needs go to rebuild the binary
+  - install.sh still installs the rest of a feature whose COPR was declined
+  - The onboarder's Checks-page purposes don't match their declared keys
+- **platform-04** (4, done): Dev mode only; the three re-exec races get Live checks lines.
+  - A dev build during a branch switch re-execs onto the defaults
+  - A protocol bump in dev mode leaves the installed CLI on the old protocol
+  - The shell's hello can be refused across a dev re-exec
+  - daemon.shutdown starts its goroutine past tasks.Go
+- **platform-05** (2, done): Before core-ui-theming-04, whose other-monitor theme fix assumes /generate reads the right monitor.
+  - The launcher's /generate reads a monitor setting that doesn't exist
+  - A word passed to an int IPC parameter is 0
+- **platform-06** (3, done): The System and App colors steps (the split), and the Look page's wallpapers from the compositor's backend.
+  - The onboarder's Integrations page names Hyprland's tools everywhere
+  - The onboarder's Integrations page is too long for one step
+  - The Look page offers Hyprland's wallpapers under any compositor
+- **platform-07** (2, done):
+  - A clip's label and detail are written in both the launcher and the clipboard module
+  - App scoring is written twice and the use bonus three times
+- **platform-08** (1, done):
+  - Power repeats the session actions' icons, labels and confirm
 
 **core-ui-theming**
 
-- **core-ui-theming-02** (4): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
-  - [MediaManager ticks the position with nothing showing it](../issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
-  - [The active media player is Spotify first and never follows playback](../issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
-  - [Album art piles up in the runtime folder for the whole session](../issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
-  - [DailySchedule's persisted state never survives a reload](../issues.md#dailyschedules-persisted-state-never-survives-a-reload)
-- **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
-  - [A failed update check shows as up to date](../issues.md#a-failed-update-check-shows-as-up-to-date)
-  - [A weather fetch that fails shows Loading forever](../issues.md#a-weather-fetch-that-fails-shows-loading-forever)
-  - [A Wayland protocol error leaves every client claiming its protocol](../issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
-  - [The Updates popout's package list is frozen at opening](../issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
-- **core-ui-theming-04** (5):
-  - [Rescanning the theme folders lists the shell's working directory as themes](../issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
-  - [A generated theme from a wallpaper reached through a symlink is regenerated at every start](../issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)
-  - [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](../issues.md#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start)
-  - [ncspot's splice keeps nothing after a begin marker that follows the end marker](../issues.md#ncspots-splice-keeps-nothing-after-a-begin-marker-that-follows-the-end-marker)
-  - [Kitty reloads only when its socket is /tmp/kitty-*](../issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
-- **core-ui-theming-05** (3):
-  - [Icons.overrides never reaches window icons](../issues.md#iconsoverrides-never-reaches-window-icons)
-  - [A cancelled rename's typed text comes back in the notes and chat rename fields](../issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
-  - [Nine shared controls animate with their own easing, written out where Glide does it](../issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
-- **core-ui-theming-06** (4):
-  - [Every StyledSlider overrides its look and its value the same way](../issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)
-  - [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](../issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
-  - [ActionTile and ActionPill carry the same countdown bar](../issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
-  - [StyledTextEntry and StyledTextArea carry the same blinking cursor](../issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
-- **core-ui-theming-07** (4):
-  - [runDetached warns about a lost connection](../issues.md#rundetached-warns-about-a-lost-connection)
-  - [AGENTS.md's funnel rule doesn't name FileManager.write and watch](../issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
-  - [fzf's flags rebuilt in Go where a template does](../issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
-  - [The onboarder's integration commands are a hand-kept list in ThemeManager](../issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
+- **core-ui-theming-02** (4, done): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
+  - MediaManager ticks the position with nothing showing it
+  - The active media player is Spotify first and never follows playback
+  - Album art piles up in the runtime folder for the whole session
+  - DailySchedule's persisted state never survives a reload
+- **core-ui-theming-03** (4, done): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
+  - A failed update check shows as up to date
+  - A weather fetch that fails shows Loading forever
+  - A Wayland protocol error leaves every client claiming its protocol
+  - The Updates popout's package list is frozen at opening
+- **core-ui-theming-04** (5, done):
+  - Rescanning the theme folders lists the shell's working directory as themes
+  - A generated theme from a wallpaper reached through a symlink is regenerated at every start
+  - A theme generated from another monitor's wallpaper is replaced by the primary's at the next start
+  - ncspot's splice keeps nothing after a begin marker that follows the end marker
+  - Kitty reloads only when its socket is /tmp/kitty-*
+- **core-ui-theming-05** (3, done):
+  - Icons.overrides never reaches window icons
+  - A cancelled rename's typed text comes back in the notes and chat rename fields
+  - Nine shared controls animate with their own easing, written out where Glide does it
+- **core-ui-theming-06** (4, done):
+  - Every StyledSlider overrides its look and its value the same way
+  - Eleven StyledIconButtons undo its stretching to be FlatIconButtons
+  - ActionTile and ActionPill carry the same countdown bar
+  - StyledTextEntry and StyledTextArea carry the same blinking cursor
+- **core-ui-theming-07** (4, done):
+  - runDetached warns about a lost connection
+  - AGENTS.md's funnel rule doesn't name FileManager.write and watch
+  - fzf's flags rebuilt in Go where a template does
+  - The onboarder's integration commands are a hand-kept list in ThemeManager
 
 **compositor**
 
-- **compositor-05** (6): The niri entry's shell-side lastLoadFailed is deleted in compositor-01.
-  - [The daemon picks a compositor the shell may not run under](../issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
-  - [A file mode that stops loading keeps the saved monitor profile off](../issues.md#a-file-mode-that-stops-loading-keeps-the-saved-monitor-profile-off)
-  - [Leaving included between sessions leaves the full module loaded](../issues.md#leaving-included-between-sessions-leaves-the-full-module-loaded)
-  - [A failed takeover leaves no layer and no problem](../issues.md#a-failed-takeover-leaves-no-layer-and-no-problem)
-  - [A failed takeover check reuses the last answer and can adopt without approval](../issues.md#a-failed-takeover-check-reuses-the-last-answer-and-can-adopt-without-approval)
-  - [niri started on a broken config reads as loaded](../issues.md#niri-started-on-a-broken-config-reads-as-loaded)
-- **compositor-06** (5):
-  - [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](../issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
-  - [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](../issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
-  - [A relative -c is read from the daemon's folder](../issues.md#a-relative--c-is-read-from-the-daemons-folder)
-  - [A claim comments out axiom's start inside a long string, breaking the script](../issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
-  - [A sway include path with a space breaks after a takeover](../issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
-- **compositor-07** (6):
-  - [Hyprland's remove deletes whatever hl.bind is on a site's line now](../issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
-  - [The bind merge deletes an hl.bind inside a helper, losing binds it never read](../issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)
-  - [A niri merge of two binds on one line loses one](../issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)
-  - [A sway line continuing a non-bind line is moved as a bind of its own](../issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
-  - [A sway title-bar mouse bind moves in as a whole-window bind](../issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
-  - [The sway extract's input-device case and isSwayFlag repeat the general rule](../issues.md#the-sway-extracts-input-device-case-and-isswayflag-repeat-the-general-rule)
+- **compositor-05** (6, done): The niri entry's shell-side lastLoadFailed is deleted in compositor-01.
+  - The daemon picks a compositor the shell may not run under
+  - A file mode that stops loading keeps the saved monitor profile off
+  - Leaving included between sessions leaves the full module loaded
+  - A failed takeover leaves no layer and no problem
+  - A failed takeover check reuses the last answer and can adopt without approval
+  - niri started on a broken config reads as loaded
+- **compositor-06** (5, done):
+  - Claim keeps writing a symlinked or git-tracked config that release refuses to give back
+  - sway's hookup and takeover use ~/.config/sway/config whatever config sway runs
+  - A relative -c is read from the daemon's folder
+  - A claim comments out axiom's start inside a long string, breaking the script
+  - A sway include path with a space breaks after a takeover
+- **compositor-07** (6, done):
+  - Hyprland's remove deletes whatever hl.bind is on a site's line now
+  - The bind merge deletes an hl.bind inside a helper, losing binds it never read
+  - A niri merge of two binds on one line loses one
+  - A sway line continuing a non-bind line is moved as a bind of its own
+  - A sway title-bar mouse bind moves in as a whole-window bind
+  - The sway extract's input-device case and isSwayFlag repeat the general rule
 - **compositor-08** (3; two entries fixed by the bind actions PR):
   - [The Hyprland and sway bind merges each skip half of compositor/actions](../issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
   - [sway's merge moves workspace binds as raw sway commands](../issues.md#sways-merge-moves-workspace-binds-as-raw-sway-commands)
@@ -570,7 +570,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-13** (4):
   - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](../issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
   - [Clicking an older capture's notification opens the newest capture](../issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
-  - [The screenshot's Edit notification rebuilds sendNotification's actions](../issues.md#the-screenshots-edit-notification-rebuilds-sendnotifications-actions)
+  - The screenshot's Edit notification rebuilds sendNotification's actions (done in platform-03, with notify-send's move into Go)
   - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](../issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 - **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
   - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)

@@ -53,6 +53,13 @@ TestCase {
     }, now), 2.5);
   }
 
+  function test_useBonus() {
+    compare(Search.useBonus(0), 0, "never used");
+    compare(Search.useBonus(1), 8);
+    compare(Search.useBonus(3), 16);
+    compare(Search.useBonus(100), 25, "capped");
+  }
+
   function test_looksLikeMath() {
     verify(Search.looksLikeMath("2+2"));
     verify(Search.looksLikeMath("(3 × 4) ÷ 2"));

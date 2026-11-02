@@ -36,8 +36,9 @@ Singleton {
   readonly property var caffeineRecent: StopwatchClock.normalizeRecent(_ticker.values.recent)
 
   // "off" | "running" | "inhibited" (an app holds idle off) |
-  // "unsupported" (the compositor has no idle notifications) |
-  // "unavailable" (no daemon to run it)
+  // "noLock" (running, but nothing locks: the user's own locker with no
+  // lock command of theirs) | "unsupported" (the compositor has no idle
+  // notifications) | "unavailable" (no daemon to run it)
   readonly property string status: {
     if (!Idle.enabled)
       return "off";
@@ -46,6 +47,8 @@ Singleton {
       return "unavailable";
     if (!state.notifier)
       return "unsupported";
+    if (state.noLocker)
+      return "noLock";
     return state.inhibited ? "inhibited" : "running";
   }
   // What holds idle off: [{ source: "screensaver" | "logind" | "caffeine",

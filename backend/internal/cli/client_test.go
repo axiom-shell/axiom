@@ -1,12 +1,17 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/daemon"
+	"github.com/axiom-shell/axiom/backend/internal/rpc"
 )
 
 // The daemon to talk to: --socket, else $AXIOM_SOCKET, else the display's,
@@ -103,4 +108,98 @@ func TestConfigOffline(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "config.json")); err != nil {
 		t.Errorf("no config.json written: %v", err)
 	}
+}
+
+// A daemon that refuses this binary's protocol (dev mode rebuilt it with
+// a bump) runs the command again with the dev build, once, and only when
+// the daemon runs it. Not parallel: it stubs procExe.
+func TestProtocolRefusalRunsTheDevBuild(t *testing.T) {
+	daemonExe, real := "/usr/bin/axiom", procExe
+	t.Cleanup(func() { procExe = real })
+	procExe = func(pid int) string {
+		if pid != os.Getpid() {
+			return ""
+		}
+		return daemonExe
+	}
+	dir, err := os.MkdirTemp("", "ax") // short: a sockaddr_un
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "s.sock")
+	ln, err := rpc.Listen(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := rpc.NewRegistry()
+	rpc.Handle(reg, "daemon.hello", func(context.Context, *rpc.Conn, daemon.HelloParams) (struct{}, error) {
+		return struct{}{}, axerr.New(axerr.Incompatible, "this axiom speaks protocol 99")
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
+
+	dev := filepath.Join(dir, "state", "axiom", "dev", "axiom")
+	run := func(env map[string]string) (ran string, err error) {
+		e := &Env{Getenv: func(k string) string { return env[k] }}
+		e.Globals.Socket = sock
+		e.Exec = func(exe string) error {
+			ran = exe
+			return errors.New("exec'd")
+		}
+		_, _, err = connect(ctx, e)
+		return ran, err
+	}
+	state := map[string]string{"XDG_STATE_HOME": filepath.Join(dir, "state")}
+	// A dev build left from an earlier dev mode: the daemon runs another
+	os.MkdirAll(filepath.Dir(dev), 0o700)
+	if err := os.WriteFile(dev, []byte("#!/bin/sh\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("the daemon runs the installed binary: ran %q, %v", ran, err)
+	}
+	daemonExe = dev
+	if ran, err := run(state); ran != dev || err == nil {
+		t.Errorf("the daemon runs the dev build: ran %q, %v", ran, err)
+	}
+	state[devCLIEnv] = "1"
+	if ran, err := run(state); ran != "" || axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("already the dev build: ran %q, %v", ran, err)
+	}
+}
+
+// A daemon restarting into a binary that speaks this protocol is greeted
+// again once it's back.
+func TestHelloAgainAfterTheDaemonRestarts(t *testing.T) {
+	t.Parallel()
+	dir, err := os.MkdirTemp("", "ax") // short: a sockaddr_un
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "s.sock")
+	ln, err := rpc.Listen(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := rpc.NewRegistry()
+	var hellos atomic.Int32
+	rpc.Handle(reg, "daemon.hello", func(context.Context, *rpc.Conn, daemon.HelloParams) (daemon.HelloResult, error) {
+		if hellos.Add(1) == 1 {
+			return daemon.HelloResult{}, axerr.New(axerr.Unavailable, "axiom is restarting into the newer binary /x: try again")
+		}
+		return daemon.HelloResult{Version: "new"}, nil
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	go (&rpc.Server{Registry: reg}).Serve(ctx, ln)
+	e := &Env{Getenv: func(string) string { return "" }}
+	e.Globals.Socket = sock
+	c, hello, err := connect(ctx, e)
+	if err != nil || hello.Version != "new" || hellos.Load() != 2 {
+		t.Fatalf("hello %+v, %v after %d hellos", hello, err, hellos.Load())
+	}
+	c.Close()
 }

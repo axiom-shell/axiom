@@ -181,6 +181,10 @@ func TestAdoptedShellIsNotStoppedAsAnOrphan(t *testing.T) {
 	os.WriteFile(pidFile, []byte(strconv.Itoa(pid)), 0o600)
 
 	s := New(fast(Options{Command: command, PIDFile: pidFile, AdoptPID: pid}))
+	// Known before Run: the daemon answers the shell's hello from the start
+	if st := s.Status(); st.PID != pid || !st.Running {
+		t.Fatalf("before Run, the adopted shell isn't known (status %+v)", st)
+	}
 	cancel, done := run(t, s)
 	eventually(t, func() bool { return s.Status().PID == pid })
 	// Longer than an orphan's stop takes

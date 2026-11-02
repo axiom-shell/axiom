@@ -8,7 +8,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 
 ### Overview
 - Off by default.
-- Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatusCard`) or from the onboarder's Integrations page. Both go through `forms/GreeterSetup`.
+- Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatusCard`) or from the onboarder's System page. Both go through `forms/GreeterSetup`.
 - The greeter runs as greetd's user, who can't read the user's home, so it runs from a copy and reads an export (the [bundle](greeter-runtime.md#the-bundle)).
 - `GreeterManager` is created from `shell.qml`'s `_services`.
 
@@ -67,7 +67,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - **greetd:** it points greetd's `default_session` `command` at `scripts/greeter/greeter-session.sh`.
   - First it backs up `/etc/greetd/config.toml`: `.axiom-original` once, plus `.axiom-bak-<date>` per change.
   - The edit is line-wise and keeps the config's `user`.
-- **Uninstall** puts the original config back and deletes `.axiom-original`, so a later install backs up the config as it is then.
+- **Uninstall** puts the original config back (only while greetd still runs axiom's greeter: one pointed elsewhere by hand is left as it is) and deletes `.axiom-original` either way, so a later install backs up the config as it is then.
 
 #### Around the prompt
 - While pkexec waits, the overlay and the onboarder step aside, unless axiom's own polkit agent is running ([SurfaceManager](../core/shell-manager-targeting.md#stepping-aside)).

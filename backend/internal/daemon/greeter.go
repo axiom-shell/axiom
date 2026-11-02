@@ -58,6 +58,9 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	if o.Log == nil {
 		o.Log = slog.New(slog.DiscardHandler)
 	}
+	// As Run: only the compositor running is reached
+	o.Environ = ipc.WithoutVars(o.Environ, ipc.StaleVars(o.Getenv))
+	o.Getenv = ipc.LiveEnv(o.Getenv)
 	socket := filepath.Join(o.Dir, greeterSocket)
 	ln, err := rpc.Listen(socket)
 	if err != nil {
@@ -184,7 +187,7 @@ func greeterRegistry(o GreeterOptions, env []string, isShell func(int) bool, wat
 	niriHandlers(reg, ipc.NiriFromEnv(o.Getenv), niriStreams)
 	outputHandlers(reg, o.Getenv)
 	greeterOnlyMethods(reg, o.Getenv, func() any { return o.Schema }, profiles)
-	topics.Register(reg, hub, weather.Source(weather.Options{}))
+	topics.Register(reg, hub, weather.Source(weather.Options{Log: o.Log}))
 	topics.Register(reg, hub, lockkeys.Source(lockkeys.Options{}))
 	return reg
 }

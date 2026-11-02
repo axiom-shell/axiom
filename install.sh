@@ -52,10 +52,12 @@ PACKAGES=(
   "sway|sway|sway"
   "niri|niri|niri"
   "secret-tool|libsecret|libsecret"
+  "gio|glib2|glib2"
   "nmcli|networkmanager|NetworkManager"
   "nm-connection-editor|nm-connection-editor|nm-connection-editor"
   "checkupdates|pacman-contrib|-"
   "wf-recorder|wf-recorder|wf-recorder"
+  "pactl|libpulse|pulseaudio-utils"
   "grim|grim|grim"
   "satty|satty|nett00n/hyprland:satty"
   "qalc|libqalculate|qalculate"
@@ -76,10 +78,12 @@ REQUIRED=(git quickshell curl)
 # the AUR package's optdepends say the same
 FEATURES=(
   "Calendar accounts and feeds|secret-tool|"
+  "Moving deleted notes to the trash|gio|"
   "Wi-Fi menu and network widget|nmcli|"
   "Adding and editing VPNs (the VPN menu's edit button)|nm-connection-editor|"
   "Package update checks|checkupdates|"
   "Screen recording|wf-recorder|"
+  "The system's sound in screen recordings|pactl|"
   "Screenshots under niri|grim|niri"
   "Annotating screenshots|satty|"
   "Launcher calculator|qalc|"
@@ -653,21 +657,25 @@ else
   ok "Every optional feature's packages are installed"
 fi
 
-# Every key to install (a key can be wanted twice), as packages
-mapfile -t to_install < <(missing "${need_required[@]}" "${wanted[@]}" | sort -u)
-packages=() coprs=()
-for key in "${to_install[@]}"; do
-  cell=$(package_of "$key")
-  case "$cell" in
-  - | n/a) ;;
-  *)
-    packages+=("$(package_name "$cell")")
-    copr=$(package_copr "$cell")
-    [[ -n "$copr" ]] && ! copr_enabled "$copr" && [[ " ${coprs[*]} " != *" $copr "* ]] && coprs+=("$copr")
-    ;;
-  esac
-done
-mapfile -t packages < <(printf '%s\n' "${packages[@]}" | sed '/^$/d' | sort -u)
+# Every key to install (a key can be wanted twice), as packages, and the
+# COPRs they need that aren't enabled yet
+plan_packages() {
+  mapfile -t to_install < <(missing "${need_required[@]}" "${wanted[@]}" | sort -u)
+  packages=() coprs=()
+  for key in "${to_install[@]}"; do
+    cell=$(package_of "$key")
+    case "$cell" in
+    - | n/a) ;;
+    *)
+      packages+=("$(package_name "$cell")")
+      copr=$(package_copr "$cell")
+      [[ -n "$copr" ]] && ! copr_enabled "$copr" && [[ " ${coprs[*]} " != *" $copr "* ]] && coprs+=("$copr")
+      ;;
+    esac
+  done
+  mapfile -t packages < <(printf '%s\n' "${packages[@]}" | sed '/^$/d' | sort -u)
+}
+plan_packages
 
 # root_notice "what": says what runs as root and why
 root_notice() {
@@ -725,13 +733,22 @@ if ((${#coprs[@]})); then
   done
 fi
 
+# is_skipped "feature": whether it's in skipped
+is_skipped() {
+  local feature
+  for feature in "${skipped[@]}"; do [[ "$feature" == "$1" ]] && return 0; done
+  return 1
+}
+
 # Packages from a declined COPR: a required one stops here, an optional
-# one's feature is skipped
+# one's whole feature is skipped, and the packages are planned again from
+# the features left
 for copr in "${declined_coprs[@]}"; do
   for key in "${need_required[@]}"; do
     [[ "$(package_copr "$(package_of "$key")")" == "$copr" ]] && die "axiom can't run without $key, which comes from $copr. Run this again and enable it."
   done
   for entry in "${offered[@]}"; do
+    is_skipped "${entry%%|*}" && continue
     read -ra feature_keys <<<"${entry#*|}"
     for key in "${feature_keys[@]}"; do
       if [[ "$(package_copr "$(package_of "$key")")" == "$copr" ]]; then
@@ -740,14 +757,16 @@ for copr in "${declined_coprs[@]}"; do
       fi
     done
   done
-  mapfile -t packages < <(for package in "${packages[@]}"; do
-    for key in "${to_install[@]}"; do
-      cell=$(package_of "$key")
-      [[ "$(package_name "$cell")" == "$package" && "$(package_copr "$cell")" == "$copr" ]] && continue 2
-    done
-    echo "$package"
-  done)
 done
+if ((${#declined_coprs[@]})); then
+  wanted=()
+  for entry in "${offered[@]}"; do
+    is_skipped "${entry%%|*}" && continue
+    read -ra feature_keys <<<"${entry#*|}"
+    wanted+=("${feature_keys[@]}")
+  done
+  plan_packages
+fi
 
 # One sudo call for every package. Declining returns 1
 install_packages() {

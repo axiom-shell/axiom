@@ -144,8 +144,11 @@ func (u *Updater) Check(ctx context.Context, channel string) (Report, error) {
 // Apply moves the clone to target, which must be the Latest a check
 // reported, still available and not blocked: a fast-forward of the branch
 // checked out (main or master), or a detached checkout when HEAD is
-// detached. The report is the clone after it; a refusal or a failed
-// merge is its Error. It runs to the end once started, whatever ctx does.
+// detached. On main it fetches and notes main's newest build again first,
+// and moves to that build's commit when it's past target, so the binary
+// downloaded after is the one of the commit checked out. The report is
+// the clone after it; a refusal or a failed merge is its Error. It runs
+// to the end once started, whatever ctx does.
 func (u *Updater) Apply(ctx context.Context, channel, target string) (Report, error) {
 	ctx = context.WithoutCancel(ctx)
 	u.mu.Lock()
@@ -160,8 +163,20 @@ func (u *Updater) Apply(ctx context.Context, channel, target string) (Report, er
 		}
 		return r, err
 	}
-	if r, err = s.inspect(ctx, ""); err != nil {
+	fetched := ""
+	if channel == ChannelMain {
+		if b, failed := s.fetch(ctx); failed == "" {
+			fetched = b
+			s.noteEdge(ctx)
+		}
+	}
+	if r, err = s.inspect(ctx, fetched); err != nil {
 		return r, err
+	}
+	if channel == ChannelMain && r.State == "available" && r.Latest != target && s.ref != "" {
+		if past, _ := s.ancestor(ctx, target, s.ref); past {
+			target = r.Latest
+		}
 	}
 	switch {
 	case r.State != "available" || r.Latest != target:

@@ -21,7 +21,7 @@ A channel change triggers a recheck.
 `backend/internal/selfupdate` does the git work on the tree the daemon runs from (`daemon/selfupdate.go`), one call at a time; each method takes `{ channel, target? }` and answers one report:
 - `selfupdate.status`: the clone from the refs it has, without fetching (at every shell load, for the installed version and `managed`).
 - `selfupdate.check`: fetches (`v*` tags; on main the branch too, else master; a minute at most, never prompting for a password or host key), then describes. A failed fetch still describes the clone, with git's reason as `error`.
-- `selfupdate.apply`: only from the shell. `target` must be the `latest` a check reported, still available and not blocked; it runs to the end once started.
+- `selfupdate.apply`: only from the shell. `target` must be the `latest` a check reported, still available and not blocked; it runs to the end once started. On `main` it fetches and records edge's commit again first, and when main's newest build has moved past `target` since the check (a merge in between, the usual case for an update clicked later), it moves to that build's commit instead, so the binary it downloads is the one of the commit checked out; the report's `latest` names it. Offline, it moves to `target` from the refs it has.
 
 The report:
 - `channel`, `current`, `commit`

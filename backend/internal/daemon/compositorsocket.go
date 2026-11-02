@@ -33,7 +33,7 @@ func (d *Daemon) compositorSocketMethods(reg *rpc.Registry) {
 }
 
 // outputHandlers is outputs.apply: monitor rules (MonitorRule) set now on
-// the compositor the environment names, as the Monitors page's Apply and
+// the compositor running (ipc.Detect), as the Monitors page's Apply and
 // the greeter's saved profile do. details are the outputs connected
 // (CompositorManager.withOutputDetails), which a rule naming its output or
 // mirror by description is resolved in.
@@ -78,6 +78,7 @@ func greeterOnlyMethods(reg *rpc.Registry, getenv func(string) string, schema fu
 		Profiles json.RawMessage `json:"profiles"`
 		Input    json.RawMessage `json:"input"`
 	}
+	getenv = ipc.LiveEnv(getenv)
 	h, n, s := ipc.HyprFromEnv(getenv), ipc.NiriFromEnv(getenv), ipc.SwayFromEnv(getenv)
 	rpc.Handle(reg, "greeter.compositor", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
 		if !fromShell(c) {
@@ -107,7 +108,7 @@ func inputSchemaOf(schema any) any {
 	return o.Value("Input")
 }
 
-// applyGreeter sets up the first of Hyprland, niri and sway running from
+// applyGreeter sets up the compositor running (Hyprland, niri or sway) from
 // the greeter's profiles and input values (greeter.compositor).
 // xcursorPath is the greeter's XCURSOR_PATH; watch keeps Hyprland's and
 // sway's monitors in the profiles (greeterProfiles).

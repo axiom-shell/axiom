@@ -46,6 +46,7 @@ func TestPlan(t *testing.T) {
 				t.Errorf("dim %+v", ls[0].OnTimeout)
 			}
 		}},
+		{"nothing to lock with: no lock step", func(s *Settings) { s.NoLocker = true }, []Kind{Dim, ScreenOff}, nil},
 		{"every step off", func(s *Settings) { s.DimTimeout, s.LockTimeout, s.ScreenOffTimeout = 0, 0, 0 }, nil, nil},
 		{"timeout order, ties in step order", func(s *Settings) {
 			s.DimTimeout, s.LockTimeout, s.ScreenOffTimeout, s.SuspendTimeout = 600*time.Second, 60*time.Second, 60*time.Second, 900*time.Second

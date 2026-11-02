@@ -49,7 +49,8 @@ func TestGenerate(t *testing.T) {
 			dir := t.TempDir()
 			wall := filepath.Join(dir, tc.name)
 			writeImage(t, wall, tc.encode)
-			// A link to the image is recorded as the image itself
+			// A link to the image is recorded as given, the path the
+			// shell compares with the wallpaper it shows
 			link := filepath.Join(dir, "link")
 			if err := os.Symlink(wall, link); err != nil {
 				t.Fatal(err)
@@ -71,8 +72,8 @@ func TestGenerate(t *testing.T) {
 				t.Fatal(err)
 			}
 			generated := v.(*jsonx.Object).Value("generated").(*jsonx.Object)
-			if got := generated.Value("wallpaper"); got != wall {
-				t.Errorf("wallpaper = %v, want %s", got, wall)
+			if got := generated.Value("wallpaper"); got != link {
+				t.Errorf("wallpaper = %v, want %s", got, link)
 			}
 		})
 	}

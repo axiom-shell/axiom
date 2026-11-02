@@ -453,6 +453,26 @@ func TestUninstallRestoresTheOriginal(t *testing.T) {
 	}
 }
 
+// Pointed at another greeter by hand before the uninstall, greetd's config
+// is left as it is, and the original is spent all the same: a later
+// install's uninstall restores the config of then, not the first one's.
+func TestUninstallAfterGreetdPointedElsewhere(t *testing.T) {
+	t.Parallel()
+	f := newInstallFixture(t)
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	elsewhere := strings.Replace(rules.PointGreetd(f.config(), "tuigreet"), "vt = 1", "vt = 3", 1)
+	f.write(f.root, "etc/greetd/config.toml", elsewhere, 0o644)
+	f.ok(rules.ActionUninstall, "", "")
+	if f.config() != elsewhere || f.exists("etc/greetd/config.toml.axiom-original") {
+		t.Fatal("uninstall changed greetd's config pointed elsewhere, or kept the original")
+	}
+	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
+	f.ok(rules.ActionUninstall, "", "")
+	if f.config() != elsewhere {
+		t.Errorf("the next uninstall restored %q, want the config of the second install", f.config())
+	}
+}
+
 func TestRefusals(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)

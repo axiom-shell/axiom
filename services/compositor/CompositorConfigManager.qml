@@ -8,6 +8,7 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.session
+import qs.services.system
 import qs.services.ui
 
 /*
@@ -58,7 +59,8 @@ Singleton {
   // (the daemon tries again), or ""
   readonly property string releaseProblem: _state.releaseProblem ?? ""
   // What switching to managed would do: "ours" | "adopt" | "stock" |
-  // "released" | "new" | "blocked" (by managedBlockedBy "link" or "git")
+  // "released" | "new" | "blocked" (by managedBlockedBy "link", "git" or
+  // "elsewhere": the compositor runs another config of the user's)
   readonly property string managedCheck: _state.managedCheck ?? ""
   readonly property string managedBlockedBy: _state.managedBlockedBy ?? ""
   readonly property string managedBlockedRepo: _state.managedBlockedRepo ?? ""
@@ -102,6 +104,9 @@ Singleton {
   // I18n.tr("Adds the line at the end: niri starts axiom with every session.")
   readonly property var includeTarget: _files.includeTarget ?? null
   readonly property var autostartTarget: _files.autostartTarget ?? null
+  // Why managed is blocked "elsewhere": the config the compositor runs
+  // (the include's) isn't the one axiom would manage
+  readonly property string elsewhereReason: I18n.tr("{0} runs {1}, not {2}, so axiom won't take it over. Use Included instead.", CompositorManager.displayName, Paths.shortenHome(includeTarget?.file ?? ""), Paths.shortenHome(managedPath))
 
   // Whether a configured bind (one of KeybindsConfig.activeBinds) has
   // everything it needs to be bound, as the daemon says
@@ -368,12 +373,18 @@ Singleton {
       return;
     _session[flag] = true;
     const all = actions.concat([["settings", I18n.tr("Open settings"), () => SettingsManager.openSetting("Compositor")]]);
-    const command = ["notify-send", "-a", "axiom", "-u", "critical"].concat(...all.map(action => ["-A", `${action[0]}=${action[1]}`]), ["--", title, body]);
-    CommandManager.run(command, (code, out) => {
-      // (not `picked?.[2]()`: Qt 6.12's compiler crashes on it)
-      const picked = all.find(action => action[0] === out.trim());
-      if (picked)
-        picked[2]();
+    NotificationManager.sendNotification("axiom", title, body, {
+      "urgency": "critical",
+      "actions": all.map(action => ({
+            "id": action[0],
+            "label": action[1]
+          })),
+      "onAction": id => {
+        // (not `picked?.[2]()`: Qt 6.12's compiler crashes on it)
+        const picked = all.find(action => action[0] === id);
+        if (picked)
+          picked[2]();
+      }
     });
   }
 

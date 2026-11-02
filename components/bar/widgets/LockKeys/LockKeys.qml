@@ -73,16 +73,9 @@ BarIconWidget {
     }
   }
 
-  // Not clickable, so its click area takes no hover; the hit area its host
-  // lays over it does (its own bounds without one)
-  HoverHandler {
-    id: hover
-    enabled: !root.hitArea
-  }
-
   // Each shown key, on or off, on the bar's inner side
   LazyLoader {
-    active: !root.hidden && (root.hitArea ? root.hitArea.hovered : hover.hovered)
+    active: !root.hidden && root.hovered
     StyledToolTip {
       target: root
       text: root.keys.map(k => root.isOn(k) ? I18n.tr("{0}: on", root.keyName(k)) : I18n.tr("{0}: off", root.keyName(k))).join("\n")

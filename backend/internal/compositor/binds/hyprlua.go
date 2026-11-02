@@ -19,7 +19,10 @@ import (
 type luaBind struct {
 	file string
 	line int
-	key  string // "" when it isn't a string
+	// inFunction: made by a function the file defines, not its main chunk
+	// (a helper's call makes binds a handler or another branch would too)
+	inFunction bool
+	key        string // "" when it isn't a string
 	// The dispatcher: its hl.dsp name ("window.close"), arguments and Lua
 	// source; lua is "" when it's a Lua function, which can't move
 	dispatcher string
@@ -29,9 +32,10 @@ type luaBind struct {
 }
 
 type luaUnbind struct {
-	file string
-	line int
-	key  string
+	file       string
+	line       int
+	inFunction bool
+	key        string
 }
 
 type luaFound struct {
@@ -277,8 +281,8 @@ func standIn(L *lua.LState, found *luaFound) *lua.LTable {
 	hl := L.NewTable()
 	L.SetField(hl, "dsp", dsp(""))
 	L.SetField(hl, "bind", L.NewFunction(func(L *lua.LState) int {
-		file, line := callSite(L)
-		b := luaBind{file: file, line: line}
+		file, line, inFunction := callSite(L)
+		b := luaBind{file: file, line: line, inFunction: inFunction}
 		if key, ok := L.Get(1).(lua.LString); ok {
 			b.key = string(key)
 		}
@@ -322,8 +326,8 @@ func standIn(L *lua.LState, found *luaFound) *lua.LTable {
 		return 1
 	}))
 	L.SetField(hl, "unbind", L.NewFunction(func(L *lua.LState) int {
-		file, line := callSite(L)
-		u := luaUnbind{file: file, line: line}
+		file, line, inFunction := callSite(L)
+		u := luaUnbind{file: file, line: line, inFunction: inFunction}
 		if key, ok := L.Get(1).(lua.LString); ok {
 			u.key = string(key)
 		}
@@ -338,14 +342,15 @@ func standIn(L *lua.LState, found *luaFound) *lua.LTable {
 }
 
 // callSite is where the hl.* call was made: its file ("" for a chunk that
-// isn't one) and line
-func callSite(L *lua.LState) (string, int) {
+// isn't one), line, and whether in a function (not a file's main chunk,
+// which is defined on line 0)
+func callSite(L *lua.LState) (string, int, bool) {
 	dbg, ok := L.GetStack(1)
 	if !ok {
-		return "", 0
+		return "", 0, false
 	}
 	if _, err := L.GetInfo("Sl", dbg, lua.LNil); err != nil {
-		return "", 0
+		return "", 0, false
 	}
 	source := dbg.Source
 	if strings.HasPrefix(source, "@") {
@@ -353,7 +358,7 @@ func callSite(L *lua.LState) (string, int) {
 	} else if _, err := os.Stat(source); err != nil {
 		source = ""
 	}
-	return source, max(dbg.CurrentLine, 0)
+	return source, max(dbg.CurrentLine, 0), dbg.LineDefined > 0
 }
 
 // plain: a string, number, boolean or table of them without a metatable

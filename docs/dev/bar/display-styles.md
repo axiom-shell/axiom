@@ -55,3 +55,5 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 | Weather, Updates, Tailscale | none (label, icon, stacked) | the condition / the AUR's share / this machine's address |
 
 Widgets with no value, time or long text (Workspaces, tray, Separator, Notifications, Todo, KeyboardLayout, Privacy, ScreenRecord, Time, Button) have no `appearance`.
+
+While its check fails, Updates draws in the icon style whatever its own: an error icon after the download icon, in the error colour, in place of the count.

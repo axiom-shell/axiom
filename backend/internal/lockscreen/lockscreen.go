@@ -31,7 +31,11 @@ type Options struct {
 	Command func() string
 	// Confirm is how long the shell has to report it locked
 	Confirm time.Duration
-	Log     *slog.Logger
+	// Ack is how much longer a shell that took the lock waits for the
+	// compositor to acknowledge it before it's started again locked (a
+	// nested Hyprland took about 5 s)
+	Ack time.Duration
+	Log *slog.Logger
 	// Go runs work that outlives a call (a relaunch, waiting for the
 	// user's locker) on a goroutine its owner stops (default: a plain
 	// goroutine on a background context, for tests)
@@ -73,6 +77,9 @@ type Locker struct {
 func New(opts Options) *Locker {
 	if opts.Confirm == 0 {
 		opts.Confirm = 3 * time.Second
+	}
+	if opts.Ack == 0 {
+		opts.Ack = 10 * time.Second
 	}
 	if opts.Log == nil {
 		opts.Log = slog.New(slog.DiscardHandler)
@@ -153,7 +160,7 @@ func (l *Locker) Lock(ctx context.Context) error {
 	if l.opts.AskShell != nil {
 		if err := l.opts.AskShell(ctx); err != nil {
 			l.opts.Log.Warn("the shell didn't take the lock request", "err", err)
-		} else if l.wait(ctx, l.opts.Confirm) {
+		} else if l.wait(ctx, l.opts.Confirm) || l.awaitingAck() && l.wait(ctx, l.opts.Ack) {
 			return nil
 		}
 	}
@@ -171,17 +178,40 @@ func (l *Locker) Lock(ctx context.Context) error {
 
 // ownLocker runs the user's lock command (mode "none"). Their locker
 // can't confirm anything to axiom, so running it is all there is.
-// `loginctl lock-session` is refused: logind hands that lock request to
-// the idle daemon, which calls axiom lock again.
 func (l *Locker) ownLocker() error {
+	command := l.ownCommand()
+	if command == "" {
+		return axerr.New(axerr.Unavailable, "the lock screen is your own (Lockscreen.mode none), and Lockscreen.lockCommand doesn't name a locker")
+	}
+	return shellcmd.Start(command, l.opts.Go)
+}
+
+// ownCommand is the user's lock command, "" when it names no locker:
+// `loginctl lock-session` doesn't, since logind hands that lock request
+// to the idle daemon, which calls axiom lock again.
+func (l *Locker) ownCommand() string {
 	command := ""
 	if l.opts.Command != nil {
 		command = strings.TrimSpace(l.opts.Command())
 	}
-	if command == "" || command == "loginctl lock-session" {
-		return axerr.New(axerr.Unavailable, "the lock screen is your own (Lockscreen.mode none), and Lockscreen.lockCommand doesn't name a locker")
+	if command == "loginctl lock-session" {
+		return ""
 	}
-	return shellcmd.Start(command, l.opts.Go)
+	return command
+}
+
+// CanLock is whether Lock has a locker to lock with: the built-in one, or
+// the user's own lock command.
+func (l *Locker) CanLock() bool {
+	return l.opts.Mode == nil || l.opts.Mode() != "none" || l.ownCommand() != ""
+}
+
+// awaitingAck: the running shell took the lock and the compositor hasn't
+// acknowledged it yet. Starting it again wouldn't be any faster.
+func (l *Locker) awaitingAck() bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return !l.gone && l.state.Holding && !l.state.Locked
 }
 
 // wait waits for a confirmed report.

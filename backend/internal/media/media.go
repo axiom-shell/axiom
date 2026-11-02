@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -20,6 +22,9 @@ const (
 	timeout = 15 * time.Second
 	// Art is a picture, never more: a bigger answer isn't kept
 	maxSize = 32 << 20
+	// The art kept in the folder (a tmpfs: RAM until logout), newest first;
+	// enough for a playlist going back and forth to stay cached
+	keep = 16
 )
 
 // Options are where art goes and how it's fetched; a zero Client is
@@ -42,13 +47,16 @@ func ArtDir(runtimeDir string) string {
 
 // Art puts the art at src into path, which must be a file directly in
 // o.Dir. A file already there (and not empty) is kept: the shell names art
-// by its URL. It lands in path.part and is renamed, so an interrupted
-// fetch is never taken for art.
+// by its URL, and marked as used. It lands in path.part and is renamed,
+// so an interrupted fetch is never taken for art; then all but the keep
+// most recently used files in o.Dir are removed.
 func Art(ctx context.Context, o Options, src, path string) error {
 	if o.Dir == "" || filepath.Dir(filepath.Clean(path)) != filepath.Clean(o.Dir) || filepath.Base(path) == "." {
 		return axerr.New(axerr.Refused, "media.art: %q is not in %s", path, o.Dir)
 	}
 	if fi, err := os.Stat(path); err == nil && fi.Mode().IsRegular() && fi.Size() > 0 {
+		now := time.Now()
+		os.Chtimes(path, now, now)
 		return nil
 	}
 	u, err := url.Parse(src)
@@ -93,7 +101,28 @@ func Art(ctx context.Context, o Options, src, path string) error {
 		os.Remove(part)
 		return axerr.Wrap(axerr.Unavailable, err, "media.art")
 	}
+	prune(o.Dir)
 	return nil
+}
+
+// prune removes all but the keep newest art files in dir (by mtime; a
+// .part being written is left alone)
+func prune(dir string) {
+	entries, _ := os.ReadDir(dir)
+	type art struct {
+		path string
+		mod  time.Time
+	}
+	var files []art
+	for _, e := range entries {
+		if fi, err := e.Info(); err == nil && fi.Mode().IsRegular() && !strings.HasSuffix(e.Name(), ".part") {
+			files = append(files, art{filepath.Join(dir, e.Name()), fi.ModTime()})
+		}
+	}
+	slices.SortFunc(files, func(a, b art) int { return b.mod.Compare(a.mod) })
+	for _, f := range files[min(keep, len(files)):] {
+		os.Remove(f.path)
+	}
 }
 
 func download(ctx context.Context, o Options, src string) (io.ReadCloser, error) {

@@ -1,12 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 
 import qs.config
 import qs.services.apps
 import qs.components.hosts.popout
+import qs.components.reusable
 import qs.components.bar.widgets.base
 
-// Current conditions (from WeatherManager, for the Weather settings). Hovering opens a 5-day forecast.
+// Current conditions (from WeatherManager, for the Weather settings). Hovering opens a 5-day forecast,
+// or says why there's no weather.
 // Stacked: the temperature over the condition.
 ValueStyleWidget {
   id: root
@@ -17,7 +20,7 @@ ValueStyleWidget {
   readonly property var current: WeatherManager.current
   readonly property var condition: WeatherManager.condition
 
-  icon: condition?.icon ?? "cloud"
+  icon: condition?.icon ?? (WeatherManager.error ? "cloud_off" : "cloud")
   text: current ? `${Math.round(current.temperature_2m)}°` + (properties.showCondition ? ` ${condition.label}` : "") : "…"
 
   styleText: current ? `${Math.round(current.temperature_2m)}°` : "…"
@@ -27,5 +30,15 @@ ValueStyleWidget {
     hitArea: root.hitArea
     popoutName: "WeatherForecast"
     active: EdgeMenusConfig.opensOwnPopout(root.properties) && WeatherManager.weather !== null
+  }
+
+  // With no weather, why, on the bar's inner side
+  LazyLoader {
+    active: root.hovered && WeatherManager.error !== ""
+    StyledToolTip {
+      target: root
+      text: I18n.tr("Couldn't load the weather: {0}", WeatherManager.error)
+      edges: root.innerEdges
+    }
   }
 }

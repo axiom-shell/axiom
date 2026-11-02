@@ -40,11 +40,7 @@ RowLayout {
   }
 
   StyledIconButton {
-    Layout.fillWidth: false
-    Layout.fillHeight: false
     Layout.alignment: Qt.AlignVCenter
-    Layout.preferredWidth: Widget.iconButton
-    Layout.preferredHeight: Widget.iconButton
     iconText: "send"
     iconSize: Appearance.fontSizeBy(-2)
     borderRadius: width / 2

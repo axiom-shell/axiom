@@ -113,6 +113,7 @@ QtObject {
   property ConfigDraft _draft: ConfigDraft {
     id: draft
     path: ["EdgeMenus", "items"]
+    onRefused: root.applyChanges()
   }
   readonly property alias localMenus: draft.local
   readonly property alias savedMenus: draft.saved

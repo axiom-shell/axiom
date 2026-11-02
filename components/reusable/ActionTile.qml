@@ -108,30 +108,9 @@ Rectangle {
   }
 
   // Time left while active
-  Rectangle {
-    id: countdownBar
-    anchors.bottom: parent.bottom
-    anchors.left: parent.left
-    height: Widget.px(3)
-    color: Theme.background
-    opacity: 0.6
-    visible: root.active && root.countdown > 0
-    width: 0
-
-    NumberAnimation {
-      id: drain
-      target: countdownBar
-      property: "width"
-      from: root.width
-      to: 0
-      duration: root.countdown
-    }
-  }
-
-  onActiveChanged: {
-    drain.stop();
-    if (root.active && root.countdown > 0)
-      drain.start();
+  CountdownBar {
+    running: root.active
+    duration: root.countdown
   }
 
   MouseArea {

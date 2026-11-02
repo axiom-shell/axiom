@@ -1,15 +1,21 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/sys/unix"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 )
@@ -147,4 +153,77 @@ func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
 		ul.SetUnlinkOnClose(true)
 	}
 	return ln, nil
+}
+
+// upgradeTarget is the binary to re-exec into for a client speaking
+// protocol want, newer than this image's: the dev build (in dev mode),
+// else the installed one, the first that speaks it, and only when the
+// tree's files do too (a stray newer CLI never strands the shell). ""
+// when none does; each binary is tried once. Once one is found, every
+// newer hello until the exec gets it too (start: only the first, which
+// re-execs), so one said meanwhile isn't refused.
+func (d *Daemon) upgradeTarget(ctx context.Context, want int) (exe string, start bool) {
+	if want <= buildinfo.Protocol() || protocolIn(filepath.Join(d.opts.Tree, "config", "json", "backend.json")) != want {
+		return "", false
+	}
+	d.upgradeMu.Lock()
+	defer d.upgradeMu.Unlock()
+	if d.upgrading != "" {
+		return d.upgrading, false
+	}
+	candidates := []string{d.installed}
+	if d.dev.Enabled() {
+		candidates = []string{DevBinary(d.dirs), d.installed}
+	}
+	for _, exe := range candidates {
+		info, err := os.Stat(exe)
+		if err != nil {
+			continue
+		}
+		var inode uint64
+		if st, ok := info.Sys().(*syscall.Stat_t); ok {
+			inode = st.Ino
+		}
+		key := fmt.Sprint(exe, inode, info.ModTime().UnixNano())
+		if d.upgradesTried == nil {
+			d.upgradesTried = map[string]bool{}
+		}
+		if d.upgradesTried[key] {
+			continue
+		}
+		d.upgradesTried[key] = true
+		if binaryProtocol(ctx, exe) == want {
+			d.upgrading = exe
+			return exe, true
+		}
+	}
+	return "", false
+}
+
+// binaryProtocol is the protocol the axiom binary at exe speaks (0: it
+// didn't say). A hello dropped meanwhile doesn't cut it short: the
+// answer is remembered (upgradesTried) for every later hello.
+func binaryProtocol(ctx context.Context, exe string) int {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, exe, "version", "--json").Output()
+	var info struct {
+		Protocol int `json:"protocol"`
+	}
+	if err != nil || json.Unmarshal(out, &info) != nil {
+		return 0
+	}
+	return info.Protocol
+}
+
+// protocolIn is the protocol a backend.json names (0: unreadable).
+func protocolIn(path string) int {
+	data, err := os.ReadFile(path)
+	var file struct {
+		Protocol int `json:"protocol"`
+	}
+	if err != nil || json.Unmarshal(data, &file) != nil {
+		return 0
+	}
+	return file.Protocol
 }

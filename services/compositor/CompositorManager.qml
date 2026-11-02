@@ -60,28 +60,17 @@ Singleton {
 
   // Which compositor axiom runs under: "hyprland", "sway", "niri" or ""
   // (unknown, or none), from HYPRLAND_INSTANCE_SIGNATURE / SWAYSOCK /
-  // NIRI_SOCKET; with more than one set (one left over from an earlier
-  // session), the one still running (CompositorKind). AXIOM_COMPOSITOR
-  // overrides it, for testing ("none" for no backend at all).
+  // NIRI_SOCKET, of which the daemon leaves only the running one's
+  // (CompositorKind). AXIOM_COMPOSITOR overrides it, for testing ("none"
+  // for no backend at all).
   readonly property string kind: {
     const forced = Quickshell.env("AXIOM_COMPOSITOR") ?? "";
     if (forced !== "")
       return forced === "none" ? "" : forced;
-    const env = CompositorKind.envNames.reduce((all, name) => {
+    return CompositorKind.kind(CompositorKind.envNames.reduce((all, name) => {
       all[name] = Quickshell.env(name) ?? "";
       return all;
-    }, {});
-    const candidates = CompositorKind.candidates(env);
-    const picked = CompositorKind.pick(candidates, candidate => root._running(candidate));
-    if (candidates.length > 1)
-      console.log(`[CompositorManager] ${candidates.map(c => c.kind).join(", ")} named in the environment; running under ${picked}`);
-    return picked;
-  }
-
-  // Whether a CompositorKind candidate's process still runs
-  function _running(candidate) {
-    const pid = candidate.pid !== "" ? candidate.pid : CompositorKind.lockPid(candidate.lockFile !== "" ? FileManager.read(candidate.lockFile) : "");
-    return pid !== "" && CompositorKind.isProcess(candidate.kind, FileManager.read(`/proc/${pid}/comm`));
+    }, {}));
   }
 
   // The backend for `kind`, or null (docs/dev/compositor/contract.md). Only
@@ -109,6 +98,11 @@ Singleton {
   // (niri's Mod + drag): { action: key, as axiom writes it }. The Keybinds
   // page says so of a bind with that action instead of flagging it
   readonly property var builtInBinds: root.backend?.builtInBinds ?? ({})
+
+  // Where the compositor's package leaves its wallpapers, as a glob under
+  // a data dir ("hypr/wall*.png"), for the onboarding's Look page; "" for
+  // a compositor that ships none
+  readonly property string stockWallpapers: root.backend?.stockWallpapers ?? ""
 
   // Appearance's surfaces are translucent only where the compositor blurs
   // behind them (Appearance.compositorBlurs: readers don't read services).
@@ -293,14 +287,15 @@ Singleton {
   // axiom sends Hyprland Lua keeping the monitors in the profile for what's
   // connected and the x-greeter input, then the cursor; sway its input and
   // seat commands (its monitors: applyOutputs); niri takes input from its
-  // config file alone
-  function setUpGreeter(profiles, input) {
+  // config file alone. `then` is called on the reply, failed or not
+  function setUpGreeter(profiles, input, then) {
     BackendManager.call("greeter.compositor", {
       "profiles": profiles,
       "input": input
     }, error => {
       if (error)
         console.warn("[CompositorManager] setting up the greeter's compositor:", error.message);
+      then?.();
     });
   }
 
@@ -701,20 +696,20 @@ Singleton {
     target: "workspaces"
 
     function go(id: string): void {
-      root.goToWorkspace(parseInt(id), "go");
+      root.goToWorkspace(_int(id), "go");
     }
 
     function move(id: string): void {
-      root.goToWorkspace(parseInt(id), "move");
+      root.goToWorkspace(_int(id), "move");
     }
 
     function moveSilent(id: string): void {
-      root.goToWorkspace(parseInt(id), "moveSilent");
+      root.goToWorkspace(_int(id), "moveSilent");
     }
 
     // The n-th of the current row (grid), or workspace n (standard)
     function nth(n: string, mode: string): void {
-      root.nthWorkspace(parseInt(n), mode);
+      root.nthWorkspace(_int(n), mode);
     }
 
     // Moves workspaces left outside their output's ids (by a change made

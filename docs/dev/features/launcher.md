@@ -53,7 +53,7 @@ The first character picks the provider:
 | `;` | emoji (EmojiManager) |
 
 - **No prefix:** the text searches apps and windows.
-  - Apps are scored, plus frecency from `usage` `{id: {count, last}}` in `state/launcher.json`.
+  - Apps are scored, plus frecency from `usage` `{id: {count, last}}` in `state/launcher.json`, as `Search.useBonus` (the one bonus apps, commands and emoji add).
   - Windows come from `CompositorManager.windows`.
 - **Extra rows:** a calculator row is added when the text is plain math, and a web row goes last.
 - **Toggles:** each provider has a `Launcher` config toggle (`LauncherConfig`).
@@ -63,7 +63,7 @@ The first character picks the provider:
   `{ name, aliases, glyph, description(), usage, needsArg, confirm, available(), status(), options(arg), run(arg, value) }`
 - A new shell feature gets a command by adding an entry that calls its service.
 - `options` supplies argument completions.
-- `confirm` asks for a second Enter: the destructive session actions, `/clear` and `/update` installing (a getter, true only while an update is available).
+- `confirm` asks for a second Enter (`LauncherManager._gate`, a `ConfirmGate`): the destructive session actions, `/clear` and `/update` installing (a getter, true only while an update is available).
 
 ### /config
 - Its rows and what they do are `services/ui/LauncherConfigBrowser.qml` (`options(arg)`, `run(value)`): not a singleton, `LauncherCommands` holds one for its `config` entry.

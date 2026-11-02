@@ -18,10 +18,10 @@ Scope {
   readonly property string reason: BackendManager.incompatible
   // The compositor the environment names first (CompositorManager would
   // start its backend)
-  readonly property string _compositor: CompositorKind.candidates(CompositorKind.envNames.reduce((env, name) => {
+  readonly property string _compositor: CompositorKind.kind(CompositorKind.envNames.reduce((env, name) => {
     env[name] = Quickshell.env(name) ?? "";
     return env;
-  }, {}))[0]?.kind ?? ""
+  }, {}))
   // install.sh's autostart line for this compositor
   readonly property string _line: ({
       "hyprland": 'hl.on("hyprland.start", function() hl.exec_cmd("axiom run") end)   (hyprland.lua)',

@@ -68,7 +68,7 @@ QtObject {
       "argv": argv,
       "cwd": cwd ?? ""
     }, error => {
-      if (error)
+      if (error && error.kind !== "unavailable")
         console.warn(`[CommandManager] ${argv[0]}: ${error.message}`);
     });
   }

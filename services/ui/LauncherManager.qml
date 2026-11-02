@@ -126,20 +126,17 @@ QtObject {
   // then frecency), as desktop entries; the most used ones when it's empty
   function searchApps(text, limit) {
     const q = String(text ?? "").trim().toLowerCase();
-    const apps = _apps();
     if (!q)
-      return apps.slice().sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).slice(0, limit);
-    const scored = [];
-    for (const app of apps) {
-      const s = _appScore(app, q);
-      if (s > 0)
-        scored.push({
-          s: s,
+      return _apps().sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).slice(0, limit);
+    return _scoredApps(q).sort((a, b) => b.s - a.s || a.app.name.localeCompare(b.app.name)).slice(0, limit).map(m => m.app);
+  }
+
+  // The apps matching the lowercased query, unsorted, as [{ s, app }]
+  function _scoredApps(q) {
+    return _apps().map(app => ({
+          s: _appScore(app, q),
           app: app
-        });
-    }
-    scored.sort((a, b) => b.s - a.s || a.app.name.localeCompare(b.app.name));
-    return scored.slice(0, limit).map(m => m.app);
+        })).filter(m => m.s > 0);
   }
 
   // How well an app matches the lowercased query (name, generic name, then
@@ -147,7 +144,7 @@ QtObject {
   function _appScore(app, q) {
     const keyword = Math.max(0, ...app.keywords.map(k => Search.score(k, q)).filter(s => s >= 50));
     const s = Math.max(Search.score(app.name, q), 0.75 * Search.score(app.genericName, q), 0.6 * keyword);
-    return s > 0 ? s + Math.min(25, 8 * Math.log2(1 + _frecency(app.id))) : 0;
+    return s > 0 ? s + Search.useBonus(_frecency(app.id)) : 0;
   }
 
   function _apps() {
@@ -191,16 +188,11 @@ QtObject {
 
   function _searchRows(q) {
     q = q.toLowerCase();
-    const scored = [];
-    for (const app of _apps()) {
-      const s = _appScore(app, q);
-      if (s > 0)
-        scored.push({
-          s: s,
-          name: app.name,
-          row: () => _appRow(app)
-        });
-    }
+    const scored = _scoredApps(q).map(m => ({
+          s: m.s,
+          name: m.app.name,
+          row: () => _appRow(m.app)
+        }));
     if (LauncherConfig.windows) {
       for (const win of CompositorManager.windows) {
         if (win.hidden)
@@ -227,14 +219,8 @@ QtObject {
 
   property LauncherCommands _commands: LauncherCommands {}
   // A command waiting for its confirming second Enter
-  property string _armed: ""
-
-  property Timer _disarm: Timer {
-    interval: 3000
-    onTriggered: {
-      root._armed = "";
-      root._refresh();
-    }
+  property ConfirmGate _gate: ConfirmGate {
+    onExpired: root._refresh()
   }
 
   // Re-reads the rows after a command that keeps the launcher open, once
@@ -280,7 +266,7 @@ QtObject {
             f: _entryFrecency(commandUsage[c.name]),
             s: q === "" ? 1 : Math.max(Search.score(c.name, q), ...c.aliases.map(a => 0.9 * Search.score(a, q)))
           })).filter(m => m.s > 0).map(m => Object.assign(m, {
-          s: m.s + Math.min(25, 8 * Math.log2(1 + m.f))
+          s: m.s + Search.useBonus(m.f)
         }));
       matches.sort((a, b) => b.s - a.s || b.f - a.f || a.i - b.i);
       return matches.length > 0 ? matches.map(m => _commandRow(m.c, "")) : [_infoRow(I18n.tr("No command \"{0}\"", body), I18n.tr("Type / to list every command"))];
@@ -312,7 +298,7 @@ QtObject {
 
   function _commandRow(command, arg) {
     const takesArg = !!(command.options || command.usage);
-    const armed = root._armed === command.name;
+    const armed = root._gate.armed === command.name;
     return {
       kind: "command",
       glyph: command.glyph,
@@ -340,13 +326,10 @@ QtObject {
   }
 
   function _runCommand(command, arg, value) {
-    if (command.confirm && root._armed !== command.name) {
-      root._armed = command.name;
-      _disarm.restart();
+    if (!root._gate.pass(command.name, command.confirm)) {
       _refresh();
       return false;
     }
-    root._armed = "";
     _recordCommand(command.name);
     const result = command.run(arg, value);
     if (typeof result === "string")
@@ -471,8 +454,7 @@ QtObject {
   function _clipboardRows(query) {
     if (ClipboardManager.unsupported)
       return [_infoRow(I18n.tr("No clipboard history here"), I18n.tr("This compositor offers no clipboard control"))];
-    // Pins first, then the history without them
-    const entries = ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)));
+    const entries = ClipboardManager.shown;
     if (entries.length === 0)
       return [_infoRow(I18n.tr("The clipboard history is empty"), I18n.tr("Copy something and it shows up here"))];
     const q = query.toLowerCase();
@@ -497,21 +479,16 @@ QtObject {
     return rows.length > 0 ? rows : [_infoRow(I18n.tr("No matches"), I18n.tr("{0} entries", entries.length))];
   }
 
+  // A clip: an image (or HTML that is just one) with its thumbnail, or its
+  // text's first line
   function _clipboardRow(entry) {
-    if (entry.format || entry.html)
-      return _clipboardImageRow(entry);
-    const lines = entry.text.trim().split("\n");
-    const first = lines[0].trim();
-    const details = [];
-    if (lines.length > 1)
-      details.push(I18n.tr("{0} lines", lines.length));
-    if (entry.time > 0)
-      details.push(I18n.formatDate(new Date(entry.time), I18n.dateFormat("time24")));
+    const label = ClipboardManager.labelOf(entry);
     return {
       kind: "clipboard",
-      glyph: entry.pinned ? "keep" : "content_paste",
-      title: first.length > 120 ? first.slice(0, 120) + "…" : first,
-      subtitle: details.join(" · "),
+      glyph: entry.format || entry.html ? "image" : entry.pinned ? "keep" : "content_paste",
+      image: entry.image,
+      title: label.length > 120 ? label.slice(0, 120) + "…" : label,
+      subtitle: ClipboardManager.detailOf(entry) + (entry.html && entry.image ? " · " + entry.image : ""),
       hint: entry.pinned ? I18n.tr("Shift+Enter unpins") : I18n.tr("Shift+Enter removes"),
       run: shift => {
         if (shift) {
@@ -523,26 +500,6 @@ QtObject {
         }
         ClipboardManager.copy(entry);
         return true;
-      }
-    };
-  }
-
-  // An image, with its thumbnail, or HTML that is just
-  // an image, previewed from its url
-  function _clipboardImageRow(entry) {
-    return {
-      kind: "clipboard",
-      glyph: "image",
-      image: entry.image,
-      title: entry.html ? (entry.image ? I18n.tr("Image from {0}", entry.image.match(/^\w+:\/\/([^/]+)/)[1]) : I18n.tr("Image")) : I18n.tr("Image {0}", entry.dimensions),
-      subtitle: entry.html ? I18n.tr("HTML") + (entry.image ? " · " + entry.image : "") : entry.format.toUpperCase() + " · " + entry.size,
-      hint: I18n.tr("Shift+Enter removes"),
-      run: shift => {
-        if (shift)
-          ClipboardManager.remove(entry);
-        else
-          ClipboardManager.copy(entry);
-        return !shift;
       }
     };
   }

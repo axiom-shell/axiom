@@ -10,7 +10,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
 - `themeIntegrations()` asks the daemon's `theme.integrate` (`{ theme, keys }`: the theme file, the switched-on `ThemeIntegrations` keys to run) and logs each integration's `error` or `warnings` as a warning.
 - `integrations` is the schema's `ThemeIntegrations` boolean keys, in schema order.
 - `integrationTitle(key)`: the key's schema title (untranslated).
-- `integrationCommands(key)`: the commands any of which shows the app is installed (used by the onboarder). Defaults to `[key]`; exceptions are listed in `_integrationCommands` (e.g. `qt` → `qt6ct`/`qt5ct`, `gtk` → none, every desktop has it).
+- `integrationCommands(key)`: the commands any of which shows the app is installed (used by the onboarder). The switch's `x-commands`, else `[key]` (e.g. `qt` → `qt6ct`/`qt5ct` or a KDE app, `gtk` → none, every desktop has it).
 - When they run:
   - when the active theme's name or contents change;
   - for one integration, as soon as its switch turns on (`_enabledIntegrations` compared against those of the last full run, `_themed`);
@@ -19,7 +19,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
 - Each switch is hooked into its app by `IntegrationHookupManager` (see Hookup below).
 
 ### The renderer and the writer (`backend/internal/theme`)
-- `theme/integrations` (pure) is the table: per key, the files written (`{config}`, `{state}`, `{data}` are the `$XDG_*_HOME`s, as the apps read them), each a template from its `templates/` (embedded) or built in Go (fzf's flags, Neovim's JSON, qt*ct's palette rows).
+- `theme/integrations` (pure) is the table: per key, the files written (`{config}`, `{state}`, `{data}` are the `$XDG_*_HOME`s, as the apps read them), each a template from its `templates/` (embedded) or built in Go (Neovim's JSON, qt*ct's palette rows).
   - A template's `${NAME}`s: `THEME_NAME`, `THEME_AUTHOR`, `THEME_VARIANT`, `COLOR_SCHEME` (light/dark), `BASE00`–`BASE0F`, every semantic color as `UPPER_SNAKE` (`backgroundAlt`: `BACKGROUND_ALT`), `ANSI_0`–`ANSI_15`, plus an entry's own (cava's gradient, VS Code's `UI_THEME`). A name nothing sets fails the render; a `.json` template gets its values JSON-escaped.
   - What a theme leaves out comes from `theme-defaults.json`, as `Theme` does.
   - The ANSI palette's chromatic colors (and bright black, dimmer) are floored to readable contrast against the background (`palette.Readable`: the OKLCH hue kept, lightness moved only as far as needed); `text: true` entries floor the semantic colors terminal apps draw text in too (red…info). GTK, Qt, VS Code and Firefox keep them as accents.
@@ -29,7 +29,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
 - `theme.Integrator` (`integrate.go`) renders and writes each file atomically (`fsx.WriteFile`: a symlink is written through and kept), and `effects.go` does the rest per key: reshaping a file for the installed app (foot), keeping the app's own files in step (ncspot, kdeglobals), warnings, and telling running apps. Only the daemon's `Live` integrator tells apps; tests never do.
 - Each writes only its own `axiom.*` file (a test checks every path of the table).
 - A missing main config may be created with the hookup (`IfMissing`: cava's config, GTK's `gtk.css`). One that exists is never touched.
-- Reloads (live only): cava (`SIGUSR2`), Ghostty 1.2+ (`SIGUSR2`), Helix 23.10+ (`SIGUSR1`; older versions die of the signal, so the version is asked first), kitty over its remote-control sockets, Neovim over its RPC sockets, ncspot's socket, zathura over D-Bus (`SourceConfig` on each `org.pwmt.zathura.PID-*` name), KDE apps (`notifyChange`), GTK's light/dark through `gsettings` (`color-scheme`, and `gtk-theme` between `adw-gtk3` and `adw-gtk3-dark` when it's one of them), bat's theme cache (`bat cache --build`). Signals go to this user's processes of that name (`/proc`, as `pkill -x`).
+- Reloads (live only): cava (`SIGUSR2`), Ghostty 1.2+ (`SIGUSR2`), Helix 23.10+ and kitty 0.24+ (`SIGUSR1`; older versions die of the signal, so the version is asked first), Neovim over its RPC sockets, ncspot's socket, zathura over D-Bus (`SourceConfig` on each `org.pwmt.zathura.PID-*` name), KDE apps (`notifyChange`), GTK's light/dark through `gsettings` (`color-scheme`, and `gtk-theme` between `adw-gtk3` and `adw-gtk3-dark` when it's one of them), bat's theme cache (`bat cache --build`). Signals go to this user's processes of that name (`/proc`, as `pkill -x`).
 - foot: the template is foot 1.20's `[colors]`; a foot accepting `[colors-dark]`/`[colors-light]` (1.28 rejects `[colors]`) gets the theme in both, an older one its cursor in `[cursor]` (asked of the installed foot with `--check-config`).
 
 ### Changes from the scripts (2026-10)
@@ -38,7 +38,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - An app that isn't installed no longer fails its integration: the file is written anyway (an app installed later finds it), and only the reload needs the app.
 - JSON files (VS Code, Zed, Neovim) are rendered from templates or Go, so their whitespace and key order differ (Neovim's maps are sorted); their content is the same.
 - Firefox's profiles are read by the daemon from the schema's `x-profiles`, no longer through the hookup script's `profiles` action (that action went).
-- The scripts' progress lines are gone (how many kitty and Neovim instances reloaded goes to the daemon's log at info); only problems reach the shell.
+- The scripts' progress lines are gone (how many Neovim instances reloaded goes to the daemon's log at info); only problems reach the shell.
 
 ### Changes from the hookup script (2026-10)
 `integration_hookup.py` was ported to Go as well. On purpose:
@@ -49,7 +49,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - `requires` is checked with the daemon's `PATH`, `$SHELL`/`$ZDOTDIR` and the XDG folders are the daemon's environment (`axiom run`'s, which the shell inherits).
 
 ### Qt and KDE apps
-- The `qt` integration writes qt5ct's / qt6ct's `colors/axiom.conf` (a QPalette per state; for each tool installed, if any) and the KDE color scheme `$XDG_DATA_HOME/color-schemes/Axiom.colors` (`templates/qt.colors`, colors as `r,g,b`). The switch counts as installed with qt*ct or a common KDE app (`ThemeManager._integrationCommands`).
+- The `qt` integration writes qt5ct's / qt6ct's `colors/axiom.conf` (a QPalette per state; for each tool installed, if any) and the KDE color scheme `$XDG_DATA_HOME/color-schemes/Axiom.colors` (`templates/qt.colors`, colors as `r,g,b`). The switch counts as installed with qt*ct or a common KDE app (its `x-commands`).
 - Qt apps load qt*ct only with `QT_QPA_PLATFORMTHEME`: a managed compositor config sets it to `qt5ct` while the switch is on (`render.SessionEnv`; qt6ct's plugin answers to `qt5ct` too). The daemon reads `ThemeIntegrations.qt` into the layer (`manager.buildInputs`), so switching it rewrites the file. The session's own `Session.env` wins; apps started before the next login (qs's children included) keep the old environment.
 - KDE apps (KColorScheme) read most of their colors from `kdeglobals`' `[Colors:*]`, `[ColorEffects:*]` and `[WM]` groups, a copy of the chosen scheme that Plasma keeps. The hookup's third target sets `ColorScheme=Axiom` in its `[General]`; from then on the integration keeps those groups (`integrations.MergeKDE`) a copy of `Axiom.colors` on every theme change, replacing only the keys the scheme sets (others, like `[WM] activeFont`, stay), and emits `org.kde.KGlobalSettings.notifyChange` (palette) so running KDE apps re-read it. With any other `ColorScheme` it leaves `kdeglobals` alone. This is the second exception to "only Apply edits a user's config": a file KDE's tools write, after the user opted in.
 - That copy reaches only apps reading KColorScheme straight (System Settings). Apps with a color scheme menu (KColorSchemeManager: Okular, Dolphin, Kate, Gwenview) take the scheme named by `[UiSettings] ColorScheme` in their own rc, which falls back to `kdeglobals`'. With none they use the platform theme's (only `QT_QPA_PLATFORMTHEME=kde`, or the portal under `XDG_CURRENT_DESKTOP=KDE`, has one; qt5ct and qt6ct don't), else BreezeLight / BreezeDark, hard-coded (KF 6.31's `kcolorschememanager.cpp`). So the hookup's fourth target sets `ColorScheme=Axiom` in `kdeglobals`' `[UiSettings]` too, in effect for every app whose own menu is left at Default. An app that picked another scheme in its menu keeps it: the integration warns, naming its rc, and changes nothing.
@@ -60,7 +60,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 ### ncspot (an exception)
 - ncspot can't include a file, so its integration writes `$XDG_STATE_HOME/axiom/ncspot-theme.toml`.
 - It copies that between the two marker lines its Apply put in `config.toml`'s `[theme]` (`integrations.SpliceNcspot`; `x-hookupNote` says so; a test checks the markers are the hookup's text).
-- It leaves out keys the user sets in `[theme]` outside the markers. With no markers it only warns.
+- It leaves out keys the user sets in `[theme]` outside the markers. With no markers, or the end before the begin (an Apply that put back a deleted begin line after the end), it only warns.
 - It edits the file a symlink points at (only a warning when the user can't write it, e.g. a `/nix/store` link), rewrites only on a change, and sends `reload` to ncspot's socket.
 
 ### Neovim
@@ -123,14 +123,13 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
   - then Apply.
 - `SettingsField` adds it under any field with `x-hookup`.
 - In settings they are their own category, one folding card per app (`x-card`'s `perField` on `ThemeIntegrations`).
-- The onboarder's Integrations page lists the switched-on ones under "Finish setting up".
+- The onboarder's App colors page lists the switched-on ones under "Finish setting up".
 - Only Apply, on the user's click, edits a user's config.
 
 ### Adding an integration
 - An entry in `integrations.Table` (`backend/internal/theme/integrations/table.go`), usually a template in its `templates/`; anything it does beyond writing the file (a reload) is an entry in `effects` (`backend/internal/theme/effects.go`). Recipe: `docs/recipes/theme-integration.md`.
-- A schema boolean under `ThemeIntegrations` with its `x-hookup` (and `x-hookupNote` if needed). `ThemeManager.integrations` picks it up from the schema; a Go test fails when the table and the schema's switches differ.
+- A schema boolean under `ThemeIntegrations` with its `x-hookup` (and `x-hookupNote` if needed; `x-commands` if the app's binary isn't named `<key>`). `ThemeManager.integrations` picks it up from the schema; a Go test fails when the table and the schema's switches differ.
 - A property in `config/ThemeIntegrations.qml` (ThemeManager reads `ThemeIntegrations[key]`).
-- An entry in `ThemeManager._integrationCommands` only if the app's binary isn't named `<key>`.
 
 ### Testing
 - `backend/internal/theme/integrations`: every file of every integration for a dark and a light theme against goldens (`go test ./internal/theme/integrations -update` rewrites them; read the diff), every shipped theme rendered through every integration (JSON and plist parse, colors well-formed), the terminal palette's contrast, and the merges (ncspot, kdeglobals, foot).

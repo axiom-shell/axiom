@@ -543,10 +543,11 @@ func (r *run) uninstall() error {
 		if err != nil || rerr != nil || copyFile(path, r.backup) != nil || writeFile(path, data, info.Mode().Perm()) != nil {
 			return failf("can't restore %s", path)
 		}
-		// Spent: a later install takes greetd's config as it is then
-		os.Remove(path + ".axiom-original")
 		r.changed = append(r.changed, path)
 	}
+	// Spent, also when greetd was pointed elsewhere by hand: a later
+	// install takes greetd's config as it is then
+	os.Remove(path + ".axiom-original")
 	for _, p := range []string{in.installDir(), in.varDir(), in.policy()} {
 		if _, err := os.Lstat(p); err != nil {
 			continue

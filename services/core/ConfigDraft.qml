@@ -20,6 +20,9 @@ QtObject {
 
   // load() started over: the editor drops what it showed live
   signal loaded
+  // A save was refused and the edits are unsaved again: the editor shows
+  // them live again (its save cleared that)
+  signal refused
 
   Component.onCompleted: load()
 
@@ -57,6 +60,8 @@ QtObject {
         return;
       root.saved = Utils.clone(root._read());
       root.isDirty = !Utils.deepEqual(root.local, root.saved);
+      if (root.isDirty)
+        root.refused();
     }
   }
 

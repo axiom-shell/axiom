@@ -166,6 +166,7 @@ QtObject {
       if (!error && result?.config) {
         root._config = result.config;
         root._revision = result.revision;
+        root._kept = false;
         done?.();
       }
     });
@@ -197,7 +198,8 @@ QtObject {
     // here, else (one missed, or ops this can't apply) the config is read
     // again. The shell's own saves come back too, already applied
     BackendManager.listen("config.changed", params => {
-      if (root._revision < 0 || params.revision <= root._revision)
+      // While kept, config.state reads it again once the defaults go
+      if (root._revision < 0 || params.revision <= root._revision || root._kept)
         return;
       const next = params.revision === root._revision + 1 ? ConfigOps.apply(root._config, params.changes ?? []) : null;
       console.log("[ConfigManager] axiom pushed the config, revision", params.revision);
@@ -229,6 +231,16 @@ QtObject {
         root._firstRun = true;
         BackendManager.call("config.ackFirstRun", null, null);
       }
+      // A re-exec'd axiom that couldn't load the file (an older dev build)
+      // runs on the defaults: keep the config read before (or, after a
+      // QML reload, the snapshot, which such a re-exec leaves as it was),
+      // as the message says, until it leaves them (_applyState: a fix or
+      // a restore). At a start on the defaults the snapshot is them
+      if (state.defaults) {
+        root._revision = state.revision;
+        root._kept = true;
+        return;
+      }
       // A push missed while disconnected (a re-exec, which may count
       // the revisions again): read it again, ignoring pushes until then
       root._revision = -1;
@@ -240,6 +252,8 @@ QtObject {
     if (state.blocked && !root._savesBlocked)
       console.error("[ConfigManager] config.json doesn't load; axiom keeps the last good config and blocks saves until it's fixed.", (state.issues ?? []).map(i => i.path + ": " + i.message).join("; "));
     root._savesBlocked = !!state.blocked;
+    if (root._kept && !state.defaults)
+      root.hardResetConfig();
   }
 
   readonly property string _snapshotPath: Quickshell.env("AXIOM_CONFIG") ?? ""
@@ -248,6 +262,9 @@ QtObject {
   // The revision `_config` is (axiom's count of changes); -1 until read
   // (config.get, when the connection says hello)
   property int _revision: -1
+  // `_config` was kept over axiom's defaults (onGreeted): pushes aren't
+  // applied to it, the config is read again once axiom leaves the defaults
+  property bool _kept: false
   property bool _savesBlocked: false
   property var _previews: ({})
 

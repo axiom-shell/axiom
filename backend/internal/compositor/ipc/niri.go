@@ -106,10 +106,9 @@ func (n *Niri) Version(ctx context.Context) (string, error) {
 
 // Reloads streams niri's config loads (ConfigLoaded events, Failed when niri
 // couldn't load it) until ctx ends or the socket closes. The stream's first
-// ConfigLoaded is the state niri starts it with, not a reload: it's left
-// out.
+// ConfigLoaded is the state niri starts it with, not a reload: Initial.
 func (n *Niri) Reloads(ctx context.Context, out chan<- Reload) error {
-	started := false
+	initial := true
 	return n.Events(ctx, nil, func(line []byte) {
 		var event struct {
 			ConfigLoaded *struct {
@@ -119,12 +118,10 @@ func (n *Niri) Reloads(ctx context.Context, out chan<- Reload) error {
 		if json.Unmarshal(line, &event) != nil || event.ConfigLoaded == nil {
 			return
 		}
-		if !started {
-			started = true
-			return
-		}
+		r := Reload{Failed: event.ConfigLoaded.Failed, Initial: initial}
+		initial = false
 		select {
-		case out <- Reload{Failed: event.ConfigLoaded.Failed}:
+		case out <- r:
 		case <-ctx.Done():
 		}
 	})

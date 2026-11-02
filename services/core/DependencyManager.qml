@@ -56,21 +56,16 @@ Singleton {
   // command itself being what's installed when none is; one with nothing
   // to install on this distribution (Packages) is left out.
   // I18n.tr("Calculator in the launcher")
-  // I18n.tr("Brightness of external monitors") I18n.tr("Copying to the clipboard")
-  // I18n.tr("Reading JSON (theme integrations)") I18n.tr("Chat requests")
+  // I18n.tr("Brightness of external monitors")
   // I18n.tr("Pending package updates")
   // I18n.tr("Chat API keys in the keyring") I18n.tr("Moving notes to the trash")
-  // I18n.tr("Theme integrations and keybinds")
-  // I18n.tr("Notifications from axiom itself, with their buttons")
-  // I18n.tr("Idle locking and screen blanking") I18n.tr("Night light")
+  // I18n.tr("Night light, where the compositor has no gamma control")
   // I18n.tr("X11 apps (Steam, games, older apps)")
-  // I18n.tr("Clipboard history shared with other apps")
-  // I18n.tr("Typing emoji from the launcher") I18n.tr("Screen recording")
+  // I18n.tr("Screen recording") I18n.tr("Screenshots (the picker's frozen frame)")
   // I18n.tr("The system's sound in screen recordings")
   // I18n.tr("Annotating screenshots (swappy works too)")
   // I18n.tr("Power profiles in the quick actions")
   // I18n.tr("Removable drives (udisks2: mounting, ejecting, unlocking)")
-  // I18n.tr("Calendar accounts and feeds")
   // I18n.tr("The login screen's compositor (Hyprland works too)")
   readonly property var tools: [
     {
@@ -92,10 +87,6 @@ Singleton {
     {
       "command": "gio",
       "purpose": "Moving notes to the trash"
-    },
-    {
-      "command": "notify-send",
-      "purpose": "Notifications from axiom itself, with their buttons"
     },
     {
       "command": "wlsunset",

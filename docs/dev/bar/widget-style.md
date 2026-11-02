@@ -13,7 +13,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - It owns their pointer handling:
     - `clickable` + `acceptedButtons` → `clicked(button)`. The widget dims while pressed, and clicking is off while it is hidden.
     - `scrollable` → `scrolled(steps)`.
-    - `hovered` is what an edge menu opened by a Button stays open for.
+    - `hovered` is what an edge menu opened by a Button stays open for, and what a tooltip opens on. A widget taking no clicks or scrolls reads it from its hit area (or its own HoverHandler without one).
     - `dim` is for fades of the widget's own.
 - **`ValueStyleWidget`** (a `BarIconWidget`) draws a widget's value in its display style, and `ValueGraphic` is that graphic alone ([Display styles](display-styles.md)).
 - **`AudioLevelWidget`** (a `ValueStyleWidget`) is shared by Volume and Microphone.

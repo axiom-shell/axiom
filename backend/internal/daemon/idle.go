@@ -71,7 +71,9 @@ func (d *Daemon) idlePart() part {
 		cfg, _ := d.store.Config()
 		v, _ := config.Lookup(cfg, config.Keys("Idle"))
 		section, _ := v.(*jsonx.Object)
-		d.idle.Configure(idle.SettingsFrom(section))
+		settings := idle.SettingsFrom(section)
+		settings.NoLocker = !d.locker.CanLock()
+		d.idle.Configure(settings)
 	}
 	configure()
 	return part{

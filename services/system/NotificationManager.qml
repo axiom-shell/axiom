@@ -61,7 +61,8 @@ Singleton {
 
   // NotificationsConfig.dnd's schedule: on and off at its times; a switch
   // by hand lasts until the next of them
-  property DailySchedule _dndSchedule: DailySchedule {
+  DailySchedule {
+    id: _dndSchedule
     name: "notificationsDnd"
     enabled: NotificationsConfig.dndSchedule
     ready: root._stateLoaded
@@ -217,34 +218,34 @@ Singleton {
     root._handlers[desktopEntry] = handler;
   }
 
-  // NotificationServer can't create notifications itself, so send one over
-  // DBus; it comes back through our own server like any other (DND applies).
-  // opts: { desktopEntry (see registerHandler), icon (a name or path),
+  // NotificationServer can't create notifications itself, so axiom sends
+  // one over DBus (notify.send); it comes back through our own server
+  // like any other (DND applies). opts: { desktopEntry (see
+  // registerHandler), icon (a name or path), urgency ("low", "critical"),
   // actions ([{ id, label }]: buttons on it), onAction (called with the
-  // picked action's id), urgency ("critical" for an urgent one), silent
-  // (only filed in the history, as Do Not Disturb keeps one: no popup,
-  // no buttons) }. With actions notify-send waits until it's closed
-  // (exec.run has no timeout); a QML reload in between loses onAction,
-  // so the buttons then do nothing
+  // picked action's id), silent (only filed in the history, as Do Not
+  // Disturb keeps one: no popup, no buttons) }. The pick comes later as
+  // notify.action; a QML reload in between loses onAction, so the buttons
+  // then do nothing
   function sendNotification(appName, summary, body, opts) {
     if (opts?.silent === true) {
       root._file(appName, summary, body, opts.icon ?? "", opts.desktopEntry ?? "");
       return;
     }
-    const hints = opts?.desktopEntry ? ["-h", "string:desktop-entry:" + opts.desktopEntry] : [];
-    const icon = opts?.icon ? ["-i", opts.icon] : [];
-    const urgency = opts?.urgency === "critical" ? ["-u", "critical"] : [];
-    const actions = opts?.actions ?? [];
-    const command = ["notify-send", "-a", appName].concat(icon, urgency, hints, [].concat(...actions.map(a => ["-A", a.id + "=" + a.label])), ["--", summary, body]);
-    if (actions.length === 0) {
-      CommandManager.runDetached(command);
-      return;
-    }
-    const onAction = opts.onAction;
-    CommandManager.run(command, (code, stdout) => {
-      const id = String(stdout ?? "").trim();
-      if (code === 0 && id !== "" && onAction)
-        onAction(id);
+    const onAction = opts?.onAction;
+    BackendManager.call("notify.send", {
+      "appName": appName,
+      "summary": summary,
+      "body": body,
+      "icon": opts?.icon ?? "",
+      "desktopEntry": opts?.desktopEntry ?? "",
+      "urgency": opts?.urgency ?? "",
+      "actions": opts?.actions ?? []
+    }, (error, result) => {
+      if (error)
+        console.warn(`[NotificationManager] Sending "${summary}" failed: ${error.message}`);
+      else if (onAction && opts.actions?.length)
+        root._onAction[result.id] = onAction;
     });
   }
 
@@ -321,6 +322,8 @@ Singleton {
   property var _live: ({})
   // desktop entry -> function(entry), from registerHandler
   property var _handlers: ({})
+  // notify.send's id -> onAction, until its notify.action
+  property var _onAction: ({})
   property int _serial: 0
 
   function _newUid() {
@@ -635,6 +638,12 @@ Singleton {
   }
 
   Component.onCompleted: {
+    BackendManager.listen("notify.action", picked => {
+      const onAction = root._onAction[picked.id];
+      delete root._onAction[picked.id];
+      if (onAction && picked.action !== "")
+        onAction(picked.action);
+    });
     CommandManager.runDetached(["mkdir", "-p", root.imageDir]);
     root._load();
     root._dnd = root._state.load({}).dnd === true;

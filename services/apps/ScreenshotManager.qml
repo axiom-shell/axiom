@@ -205,8 +205,7 @@ QtObject {
   // A screenshot taken, where the OSD's `screenshot` status or
   // Screenshots.notify puts it (NotificationManager.announce): its card
   // (lastShot), or a notification (a click opens it; with an annotator an
-  // "Edit in …" button: notify-send waits for it, until the notification
-  // closes, and prints the action), or nothing
+  // "Edit in …" button, live until the notification closes), or nothing
   function _sayTaken(path) {
     const summary = I18n.tr("Screenshot saved");
     const body = root.copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");

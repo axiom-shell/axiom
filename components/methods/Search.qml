@@ -2,9 +2,9 @@ pragma Singleton
 import QtQuick
 
 // Pure helpers for searching lists by typed text: the launcher's fuzzy
-// score, frecency from a { count, last } use record (Utils.recordUse) and
-// whether text reads as math for the calculator. No file access, processes
-// or services.
+// score, frecency from a { count, last } use record (Utils.recordUse), its
+// ranking bonus and whether text reads as math for the calculator. No file
+// access, processes or services.
 QtObject {
   id: root
 
@@ -76,6 +76,12 @@ QtObject {
       return 0;
     const days = (now - entry.last) / 86400000;
     return entry.count * (days < 1 ? 1 : days < 7 ? 0.7 : days < 30 ? 0.5 : 0.25);
+  }
+
+  // The ranking bonus for a frecency (above): up to 25, growing with the
+  // log of use so a few launches count and many don't swamp the match
+  function useBonus(frecency) {
+    return Math.min(25, 8 * Math.log2(1 + frecency));
   }
 
   // Digits and operators only, with at least one of each: worth a

@@ -131,13 +131,13 @@ Item {
           from: 0
           to: busyTrack.width * 0.7
           duration: Appearance.animSlow * 3
-          easing.type: Easing.InOutQuad
+          easing.type: Appearance.easing
         }
         NumberAnimation {
           from: busyTrack.width * 0.7
           to: 0
           duration: Appearance.animSlow * 3
-          easing.type: Easing.InOutQuad
+          easing.type: Appearance.easing
         }
       }
     }

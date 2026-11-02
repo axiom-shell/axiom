@@ -12,8 +12,8 @@ import qs.services.ui
 /*
  * The first-run onboarder (shell/Onboarding): a series of pages that set
  * the essentials up (the compositor, monitors, apps and keys, workspaces,
- * the look, integrations), each applying as the user goes, with the
- * compositor mode applied on Finish.
+ * the look, the system's integrations, other apps' colors), each applying
+ * as the user goes, with the compositor mode applied on Finish.
  *
  * It opens by itself when there was no config.json (ConfigManager.firstRun),
  * and again after a reload or restart until it's finished or skipped:
@@ -30,7 +30,8 @@ Singleton {
 
   // The pages, in order: { id, title, icon }
   // I18n.tr("Welcome") I18n.tr("Compositor") I18n.tr("Monitors") I18n.tr("Apps & keys")
-  // I18n.tr("Workspaces") I18n.tr("Look") I18n.tr("Integrations") I18n.tr("Checks") I18n.tr("Finish")
+  // I18n.tr("Workspaces") I18n.tr("Look") I18n.tr("System") I18n.tr("App colors") I18n.tr("Checks")
+  // I18n.tr("Finish")
   // The Compositor page sets the compositor up (its config mode), where
   // axiom can (configModes); the Monitors page needs the compositor's
   // monitors; the Workspaces page has nothing to pick where the compositor
@@ -68,9 +69,14 @@ Singleton {
       "icon": "palette"
     },
     {
-      "id": "integrations",
-      "title": "Integrations",
-      "icon": "extension"
+      "id": "system",
+      "title": "System",
+      "icon": "settings"
+    },
+    {
+      "id": "appColors",
+      "title": "App colors",
+      "icon": "format_paint"
     },
     {
       "id": "checks",
@@ -132,6 +138,8 @@ Singleton {
       return I18n.tr("{0} or its config is a symlink (dotfiles?), so axiom won't replace it.", dir);
     if (CompositorConfigManager.managedBlockedBy === "git")
       return I18n.tr("{0} is inside the git repository at {1}, so axiom won't take it over. Move or remove that repository's .git to allow it.", dir, Paths.shortenHome(CompositorConfigManager.managedBlockedRepo));
+    if (CompositorConfigManager.managedBlockedBy === "elsewhere")
+      return CompositorConfigManager.elsewhereReason;
     return configState === "blocked" ? I18n.tr("Your {0} config is a symlink or in a git repository, so axiom won't take it over.", CompositorManager.displayName) : "";
   }
   // Whether the compositor's config already starts axiom (install.sh's
@@ -279,9 +287,10 @@ Singleton {
     }
 
     // Opens on a step (0 is Welcome)
-    function goTo(index: int): void {
+    function goTo(index: string): void {
+      const step = _int(index);
       root.open();
-      root.goTo(index);
+      root.goTo(step);
     }
 
     function reset(): void {

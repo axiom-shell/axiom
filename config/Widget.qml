@@ -59,7 +59,7 @@ QtObject {
   readonly property int spacing: Math.round(_density.spacing * scale)
   // A module card's padding (OverlayConfig.cardPad)
   readonly property int cardPadding: Math.round(_density.card * scale)
-  // Side of a square icon button (FlatIconButton)
+  // Side of a square icon button (StyledIconButton's default size)
   readonly property int iconButton: Math.round(_density.iconButton * scale)
   // Height of chips, pills and small buttons (keybind chips, a
   // notification's actions)

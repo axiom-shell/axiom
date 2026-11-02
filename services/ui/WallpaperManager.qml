@@ -165,23 +165,24 @@ Singleton {
   // Images in Appearance.wallpaperPath: -1 until checked (or while
   // checking), -2 when the folder doesn't exist
   property int folderImages: -1
-  // Hyprland's own wallpapers (the first data dir's hypr/ with wall*.png),
-  // offered as a folder to start from; "" until found
-  readonly property string hyprlandWallpapers: _hyprlandWallpapers
-  readonly property bool hasHyprlandWallpapers: _hyprlandWallpapers !== ""
-  property string _hyprlandWallpapers: ""
+  // The compositor's own wallpapers (the first data dir holding
+  // CompositorManager.stockWallpapers), offered as a folder to start from;
+  // "" until found, and for a compositor that ships none
+  readonly property string compositorWallpapers: _compositorWallpapers
+  property string _compositorWallpapers: ""
 
   // Prints the image count (-2 without the folder), then the first data
-  // dir's hypr/ holding Hyprland's wallpapers, if any. Only the latest
-  // check's answer counts
+  // dir's folder holding the compositor's wallpapers, if any. Only the
+  // latest check's answer counts
   function checkFolder() {
     const check = ++root._folderChecks;
-    CommandManager.run(["sh", "-c", 'if [ -d "$1" ]; then find "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" \\) | wc -l; else echo -2; fi; shift; for d in "$@"; do ls "$d"/hypr/wall*.png >/dev/null 2>&1 && { echo "$d/hypr"; break; }; done', "sh", Appearance.wallpaperPath].concat(Paths.dataSearchDirs), (code, stdout) => {
+    const stock = CompositorManager.stockWallpapers;
+    CommandManager.run(["sh", "-c", 'if [ -d "$1" ]; then find "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" \\) | wc -l; else echo -2; fi; p=$2; shift 2; for d in "$@"; do ls "$d"/$p >/dev/null 2>&1 && { echo "$d/${p%/*}"; break; }; done', "sh", Appearance.wallpaperPath, stock].concat(stock !== "" ? Paths.dataSearchDirs : []), (code, stdout) => {
       if (check !== root._folderChecks)
         return;
       const lines = stdout.split("\n").filter(line => line !== "");
       root.folderImages = parseInt(lines[0] ?? "-1");
-      root._hyprlandWallpapers = lines[1] ?? "";
+      root._compositorWallpapers = lines[1] ?? "";
     }, null, true);
   }
   property int _folderChecks: 0
@@ -304,7 +305,8 @@ Singleton {
     }
   }
 
-  property DailySchedule _themeSchedule: DailySchedule {
+  DailySchedule {
+    id: _themeSchedule
     name: "theme"
     enabled: Appearance.themeScheduled
     startAt: Appearance.lightAt

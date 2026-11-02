@@ -5,7 +5,8 @@ install.sh, components/methods/Packages.qml (the onboarder's install hints)
 and the AUR PKGBUILDs (packaging/aur/*/PKGBUILD) each say what installs
 axiom's dependencies; this fails when they drift:
 - every key in install.sh's PACKAGES names the same Arch and Fedora package
-  as Packages.packages (a COPR as Packages' `repo`, "-" and "n/a" as null)
+  as Packages.packages (a COPR as Packages' `repo`, "-" and "n/a" as null),
+  and every key of Packages.packages has a PACKAGES row
 - every key install.sh's REQUIRED and FEATURES use is in PACKAGES
 - each PKGBUILD's depends are the Arch packages of REQUIRED (less git: a
   package doesn't self-update), and its optdepends are exactly the Arch
@@ -105,6 +106,9 @@ def main():
         for distro in DISTROS:
             if not same(cells[distro], packages[key].get(distro)):
                 error(INSTALL, f"{key} on {distro} is {cells[distro]!r}, Packages.qml says {packages[key].get(distro)!r}")
+    for key in packages:
+        if key not in table:
+            error(INSTALL, f"no PACKAGES row for {key!r} (Packages.qml has it)")
 
     feature_keys = []
     for feature in features:

@@ -122,6 +122,11 @@ bindcode $mod+49 exec thing
 mode "resize" {
     bindsym h resize shrink width 10px
 }
+bindsym --release button2 kill
+bindsym --whole-window $mod+button3 floating toggle
+bindsym --input-device=1:1:kbd $mod+y kill
+exec_always foo \
+bindsym $mod+z kill
 `
 
 func TestSwayExtract(t *testing.T) {
@@ -143,9 +148,17 @@ func TestSwayExtract(t *testing.T) {
 	// A mode's binds aren't seen; sway options axiom binds lack stay
 	_, mode := binds["H"]
 	eq(t, mode, false)
-	kept := list(found, "kept")
-	eq(t, len(kept), 1)
-	eq(t, js(kept[0]), `{"file":"`+f.user("00-previous.conf")+`","line":11,"key":"Mod4+button2","reason":"options","detail":"--border"}`)
+	// Only over a title bar: axiom's mouse binds are for the whole window
+	eq(t, binds["SUPER + mouse:273"], `{"key":"SUPER + mouse:273","action":"toggleFloat"}`)
+	// Part of the exec_always above it, to sway
+	_, continued := binds["SUPER + Z"]
+	eq(t, continued, false)
+	var kept []string
+	for _, k := range list(found, "kept") {
+		kept = append(kept, js(k.Value("line"))+" "+k.Value("key").(string)+" "+k.Value("reason").(string)+": "+k.Value("detail").(string))
+	}
+	eq(t, strings.Join(kept, ", "), "11 Mod4+button2 options: --border, 16 button2 options: title bar, 18 Mod4+y options: --input-device=1:1:kbd")
+	eq(t, list(found, "kept")[0].Value("file"), any(f.user("00-previous.conf")))
 }
 
 // Commenting one line out of a `bindsym { … }` block would leave the rest
@@ -493,6 +506,66 @@ func TestHyprAFailedRemovalNamesItsSites(t *testing.T) {
 	eq(t, info.Mode().Perm(), os.FileMode(0o640))
 }
 
+// A file that changed since extract keeps whatever call is on a site's
+// line now: here a new first line moves both down one
+func TestHyprRemoveLeavesAStatementItDidntRead(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	binds := "hl.bind(\"SUPER + Y\", hl.dsp.window.close())\nhl.bind(\"SUPER + U\", hl.dsp.window.pin())\n"
+	f.write("binds.lua", binds)
+	found := f.extract()
+	text := "hl.bind(\"SUPER + Z\", hl.dsp.exec_cmd(\"mine\"))\n" + binds
+	f.write("binds.lua", text)
+	done := f.remove(found.Value("sites"))
+	var failed []string
+	for _, e := range list(done, "failed") {
+		failed = append(failed, js(e.Value("line"))+" "+e.Value("reason").(string))
+	}
+	eq(t, strings.Join(failed, ", ")+" "+js(done.Value("removed")), "1 changed, 2 changed 0")
+	eq(t, f.read("binds.lua"), text)
+}
+
+// A statement holding an invalid byte (here in its comment) is still the
+// one extract read: the site's text reaches remove through JSON, as U+FFFD
+func TestHyprRemoveTakesAStatementWithAnInvalidByte(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", "hl.bind(\"SUPER + Y\", hl.dsp.window.close()) -- \xff\n")
+	done := f.remove(f.extract().Value("sites"))
+	eq(t, js(done.Value("failed"))+js(done.Value("removed")), "[]1")
+	eq(t, f.read("binds.lua"), "")
+}
+
+// A helper's hl.bind stays: it also makes binds extract never sees (in a
+// submap or hl.on handler, another branch). Its file's own calls, a loop's
+// too, still move
+func TestHyprABindMadeInAFunctionStays(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", strings.Join([]string{
+		"local function bindx(k, c)",
+		"  hl.bind(k, hl.dsp.exec_cmd(c))",
+		"end",
+		`bindx("SUPER + A", "foo")`,
+		`hl.define_submap("resize", function() bindx("x", "bar") end)`,
+		`for _, k in ipairs({ "B", "C" }) do`,
+		`  hl.bind("SUPER + " .. k, hl.dsp.window.close())`,
+		"end",
+		"",
+	}, "\n"))
+	found := f.extract()
+	var kept []string
+	for _, k := range list(found, "kept") {
+		kept = append(kept, k.Value("key").(string)+" "+k.Value("reason").(string))
+	}
+	eq(t, strings.Join(kept, ", "), "SUPER + A inFunction")
+	eq(t, len(list(found, "binds")), 2)
+	f.remove(found.Value("sites"))
+	text := f.read("binds.lua")
+	eq(t, strings.Contains(text, "hl.bind(k, hl.dsp.exec_cmd(c))"), true)
+	eq(t, strings.Contains(text, "window.close"), false)
+}
+
 // An edit that would leave the file unparsable leaves it alone
 func TestHyprRemoveKeepsAFileThatWouldntParse(t *testing.T) {
 	t.Parallel()
@@ -570,6 +643,19 @@ func TestNiriRemove(t *testing.T) {
 	backups, _ := os.ReadDir(f.user(".backups"))
 	eq(t, len(backups), 1)
 	eq(t, len(list(f.extract(), "binds")), 0)
+}
+
+// Two binds on one line: both go, the first checked against the line as
+// read, not as the second's mark left it
+func TestNiriRemoveTwoBindsOnALine(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "niri")
+	f.write("00-previous.kdl", "binds {\n    Mod+T { spawn \"foot\"; }; Mod+Q { close-window; }\n}\n")
+	found := f.extract()
+	eq(t, len(list(found, "sites")), 2)
+	done := f.remove(found.Value("sites"))
+	eq(t, js(done.Value("failed"))+js(done.Value("removed")), "[]2")
+	eq(t, f.read("00-previous.kdl"), "binds {\n    /* (moved into axiom) */ /-Mod+T { spawn \"foot\"; }; /* (moved into axiom) */ /-Mod+Q { close-window; }\n}\n")
 }
 
 func TestNiriChangedLineStays(t *testing.T) {

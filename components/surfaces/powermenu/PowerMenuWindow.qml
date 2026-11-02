@@ -21,8 +21,6 @@ PanelWindow {
   readonly property var actions: PowerMenuConfig.actions.filter(a => SessionManager.sessionActionInfo(a) !== null)
   // The tile the keys act on (hover moves it too)
   property int selected: 0
-  // A destructive action waiting for its confirming press
-  property string armed: ""
   // "3h 12m", read from /proc/uptime when it opens
   property string uptime: ""
 
@@ -33,12 +31,8 @@ PanelWindow {
   }
 
   function run(action) {
-    if (PowerMenuConfig.confirm && SessionManager.destructiveActions.includes(action) && armed !== action) {
-      armed = action;
-      disarm.restart();
+    if (!gate.pass(action, PowerMenuConfig.confirm && SessionManager.destructiveActions.includes(action)))
       return;
-    }
-    armed = "";
     shown = false;
     SessionManager.sessionAction(action);
   }
@@ -49,7 +43,7 @@ PanelWindow {
       return;
     const next = ((index % count) + count) % count;
     if (next !== root.selected)
-      root.armed = "";
+      gate.disarm();
     root.selected = next;
   }
 
@@ -72,17 +66,16 @@ PanelWindow {
   }
 
   onShownChanged: {
-    armed = "";
+    gate.disarm();
     if (shown) {
       selected = 0;
       readUptime();
     }
   }
 
-  Timer {
-    id: disarm
-    interval: 3000
-    onTriggered: root.armed = ""
+  // A destructive action waiting for its confirming press
+  ConfirmGate {
+    id: gate
   }
 
   Connections {
@@ -285,8 +278,8 @@ PanelWindow {
               required property string modelData
               action: modelData
               selected: root.selected === index
-              armed: root.armed === modelData
-              armedTimeout: disarm.interval
+              armed: gate.armed === modelData
+              armedTimeout: gate.timeout
               revealed: root.shown
               onHovered: root.select(index)
               onClicked: {

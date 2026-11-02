@@ -26,6 +26,39 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
+### Included's hookup can put sway-only lines into a config i3 still runs
+- **Where:** `backend/internal/compositor/manager/sway.go` (`userMain`)
+- **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.
+- **Size:** small
+- **Found:** 2026-11-02, while reviewing roadmap row 20's compositor-06
+
+### MediaManager's start-up pass throws: the engine has no Object.fromEntries
+- **Where:** `services/system/MediaManager.qml:228` (`_startedAt`)
+- **What:** `Component.onCompleted` sets `root._startedAt = Object.fromEntries(…)`, but Qt's JS engine has no `Object.fromEntries` (qml-pitfalls.md › The JS engine). Every start and reload logs `TypeError: Property 'fromEntries' of object function Object() { [native code] } is not a function` (a nested niri run's log, 2026-11-02), and the `_pick()` after it never runs: the players already running at start get no start time, and nothing is picked until the player list changes. Fix: `reduce`, as the pitfall says; `check_structure` could refuse `fromEntries` and `flatMap` as it refuses an optional call on a computed member.
+- **Size:** trivial
+- **Found:** 2026-11-02, while fixing roadmap row 20's core-ui-theming-04
+
+### A NowPlaying seek shows the old place until the next tick, and keeps it while paused
+- **Where:** `services/system/MediaManager.qml` (`setPositionByRatio`), `components/content/NowPlaying/NowPlaying.qml` (`seek`)
+- **What:** `setPositionByRatio` writes `activePlayer.position` but not `MediaManager.position`, which only `_positionTimer` copies over (every 500 ms, and only while playing). Released, the seek slider shows its `value` (`MediaManager.progress`, still the old place) and glides back to it, then jumps to the seek at the next tick; paused, it stays on the old place (and the time beside it) until playback resumes. The same before core-ui-theming-06 (the old slider put `targetValue` back on release). Found by reading; a seek while paused settles it. Fix: `root.position = seekPosition` in `setPositionByRatio`.
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
+
+### The text cursor keeps blinking with animations off
+- **Where:** `components/reusable/TextCursor.qml`
+- **What:** its `SequentialAnimation on opacity` loops whenever the input has focus, whatever `Appearance.animations` says, against AGENTS.md › Config: "looping animations gate `running` on `Appearance.animations`" (`check_structure` doesn't check it). Carried over from StyledTextEntry's and StyledTextArea's copies. Fix: `running: root._focused && Appearance.animations`, and opacity back to 1 when it stops (a stop leaves it wherever the blink was, maybe 0).
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
+
+### axiom installs into Quickshell's config folder, and dev mode can't switch trees
+- **Where:** `install.sh`, `config/Paths.qml` (`axiomPath`), `backend/internal/daemon/dev.go`
+- **What:** An idea from the maintainer (2026-11-02), not a bug. The checkout lives in `~/.config/quickshell/axiom`, though it's now an installed program (the Go daemon and CLI, the greeter, a QML tree self-update replaces) of which the QML is one part `axiom run` hands to qs. The maintainer: "where should a git install (or install script) actually live? Since quickshell has been moved to rendering primarily and axiom has its own shit (i.e. go) it feels slighty wrong to be in quickshell directly?" and "does this also make sense with a light refactor (i.e. a qs folder with all qs in it). This then allows for easy swirching between a real install (i.e. share version), and my cloned version for dev, with just turning dev mode on/off? (i.e. axiom dev set "path" then axiom dev on/off rewires to main install (that you don't tiuch) and the clone?" Three parts for the plan:
+  - **Install location:** the checkout in `~/.local/share/axiom` (`/usr/share/axiom` for packages), the binary in `~/.local/bin`, config in `~/.config/axiom`; an existing install moved once (install.sh or self-update, with a symlink left for a release). What still looks for the tree under `~/.config/quickshell` (binds, `qs ipc` paths, the greeter install, docs) follows.
+  - **A `qs/` folder:** every QML folder under it, run as `qs -p <root>/qs`, so qs watches only QML and the root holds `backend/`, `scripts/`, `docs/`. One large move PR in a quiet window: the checks' folder rules, the allowlist, generated files and doc paths change; the `qs.` imports should survive (they resolve from the shell's root).
+  - **Dev mode picks the tree:** `axiom dev set <path>` records a clone; `dev on` builds and re-execs into the clone's binary and restarts qs on its `qs/`, `dev off` goes back to the installed binary and tree. Self-update only ever touches the install. Open question: `~/.config/axiom` is shared, so a clone's newer migration upgrades config.json and the installed binary then refuses it (`version: … is newer than this axiom knows`); options are a separate dev config folder, a snapshot at `dev on` restored at `dev off`, or `dev off` refusing until updated.
+- **Size:** needs a plan
+- **Found:** 2026-11-02, while running the roadmap autopilot (the maintainer's question)
+
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
@@ -55,6 +88,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing removable drive support
+
+### The axiom CLI can't send a notification
+- **Where:** `backend/internal/cli/named.go`, `backend/internal/daemon/tools.go`, `backend/internal/notification/notify.go`
+- **What:** A feature request from the maintainer (2026-11-02, "yes file the cli notification support where it goes"): with notify-send gone as a dependency, the daemon's `notify.send` and `notify.action` are reached only by the shell, and the CLI's `axiom notifications` only clears them and switches do-not-disturb. A command such as `axiom notify "title" "body" [--icon --urgency --action id=Label --wait]` would wrap them for scripts: it sends through the daemon, and with `--wait` blocks until a button is picked or the notification closes, printing the button's id as `notify-send --action` does. It should share its flags with `axiom message` (the OSD message command) where they overlap.
+- **Size:** small
+- **Found:** 2026-11-02, while removing the notify-send dependency (roadmap row 20, platform-03)
+
+### A bind can't be limited to some compositors
+- **Where:** `config/schema/sections/Keybinds.yaml`, `services/compositor/KeybindManager.qml`, `components/views/Keybinds/BindEditor.qml`, `components/views/Keybinds/FilterChips.qml`
+- **What:** A feature request from the maintainer (2026-11-02): "add another config option for binds that is only on (default nothing selected), and can pick any if the three compositors (multiple allowed) (i.e. this bind is only niri, or this bind is only sway/hyprland)". With the improvements proposed alongside it ("just add the issue and roadmap entries"): (1) one multi-select, "Only on": Hyprland, sway, niri, plus "Scrolling strips" and "Tiling" (no strips), empty meaning everywhere, so a later compositor with strips gets those binds by capability, not by name. "Scrolling strips" means strips in use, not `supports.strips` alone (maintainer, 2026-11-02: "hyprland supports strips but should only be active if strips are on right?"): `supports.strips` only says a compositor can do strips (Hyprland has it); strips are in use where every workspace is one (`supports.stripsAlways`: niri) or where an output's strip direction is set (`CompositorManager.stripDirection`, from `WorkspacesConfig`). Open for the plan: Hyprland turns strips on per output while its binds are global, so either a strips-only bind is written while any output is a strip (the simpler default: `WorkspacesConfig.hasStrips`) or it acts only when the focused output is one; (2) two binds on the same keys whose "Only on" sets don't overlap aren't a conflict (one key, a niri and a sway meaning); (3) set by itself where a bind can only work on one: a raw-command bind defaults to its compositor, a bind moved in from a compositor's own config gets that compositor, and an action that needs strips counts as strips-only without the user setting it; (4) the Keybinds page lists binds that don't apply here dimmed, with an "only on" chip and a filter, still editable, while the cheatsheet and the keyboard reference show only the binds that apply; (5) the default is an empty list, so no migration, and saved configs and presets carry it (it describes the bind, not the machine). Each compositor's config writer leaves out the binds that don't apply to it.
+- **Size:** needs a plan
+- **Found:** 2026-11-02, while running the roadmap autopilot (the maintainer's request)
 
 ### Toggles are switched in several places, and most have no IPC
 - **Where:** `components/content/QuickActions/QuickActions.qml`, `components/surfaces/osd/OSDStatusSource.qml` (toggle), `services/ui/LauncherCommands.qml`
@@ -88,37 +133,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while filing the maintainer's notes
 
-### DailySchedule's persisted state never survives a reload
-- **Where:** `services/core/DailySchedule.qml` (`_state`), `services/system/NotificationManager.qml` (`_dndSchedule`), `services/system/NightLightManager.qml` (`_schedule`), `services/ui/WallpaperManager.qml` (`_themeSchedule`)
-- **What:** `DailySchedule` is a QtObject holding its `PersistentProperties` in a named property, and each owner holds it in a named property too. Quickshell's Singleton passes a reload only to its default children, and only to Reloadable ones (a plain QObject child is skipped), so `persisted.last` always starts empty and every QML reload reports `due` again: a scheduled dark theme or night light switched off by hand comes back, as do do-not-disturb windows. DeadlineTicker had the same shape and was fixed by making it a `Scope` declared as a default child (`DeadlineTicker { id: … }`); the same change fits here.
-- **Size:** small
-- **Found:** 2026-10-31, while making caffeine survive reloads
-
 ### A tray menu logs an undefined menu handle
 - **Where:** `components/content/parts/TrayMenuList.qml` (`menuOpener`)
 - **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
 - **Size:** small
 - **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
-
-### The onboarder's Integrations page names Hyprland's tools everywhere
-- **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`
-- **What:** Under sway and niri the Idle cards say "Remove any hypridle you start yourself" and "such as hypridle", the hint for your own idle daemon shows a `~/.config/hypr/hypridle.conf` block, and the polkit cards name hyprpolkitagent. These should name the compositor's usual tools (swayidle, …) or stay neutral.
-- **Size:** small
-- **Found:** 2026-10-30, while reworking the onboarder
-
-### The onboarder's Integrations page is too long for one step
-- **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/session/OnboardingManager.qml` (`_pages`)
-- **What:** One step holds updates, clipboard history, idle (with its four timeouts), the lock screen, polkit, the login screen (with its install), then every theme integration with its hookups: by far the longest page, mixing decisions that take something over with optional app colours. Proposal: split it into a "System" step and an "App colours" step (a page id, and `version` stays, since nothing new is asked).
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "split it into a System step and an App colours step"): "agree - add theme page directly after integrations (so it is last before checks)".
-- **Size:** small
-- **Found:** 2026-10-30, while reworking the onboarder
-
-### The Look page offers Hyprland's wallpapers under any compositor
-- **Where:** `components/surfaces/onboarding/pages/LookPage.qml`, `services/ui/WallpaperManager.qml` (`hasHyprlandWallpapers`)
-- **What:** With the wallpaper folder missing, the Look page offers "Use Hyprland's wallpapers" (and the notice names them) whenever Hyprland's package left its wallpapers in a data dir, under sway and niri too. Harmless (the images work), but it reads oddly off Hyprland.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reworking the onboarder
 
 ### A VPN's password request can go unseen
 - **Where:** `services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
@@ -131,12 +150,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found. `WallpaperManager.rotationHeld`, the same shape (`&&`/`||` chains ending in `General.outputs.some(…)` and service reads), logged `@services/ui/WallpaperManager.qml[271:3]: Unable to assign [undefined] to bool` on a reload (2026-11-01, switching the checkout to a branch).
 - **Size:** trivial
 - **Found:** 2026-10-30, while building the network popout's VPN fold and connection details
-
-### A dev build during a branch switch re-execs onto the defaults
-- **Where:** `backend/internal/daemon/dev.go` (`watchSource`, `build`), the re-exec's config load
-- **What:** On 2026-10-30, `git switch main` followed 3 s later by `git pull` (main at config version 82, then 84). The source watch kicked a build of the v82 tree. The pull's changes reached the old process while that build ran, and its kick died with the process when the build re-exec'd. The new image (`the tree's schema isn't the one this binary was built with (fine in dev mode)`) knew version 82, refused the v84 config.json (`version: 84 is newer than this axiom knows (82): update axiom`) and logged `the config doesn't load: running on the defaults, saves blocked until it's fixed`. The shell came up on the defaults until the next build. config.json itself stayed untouched. Two gaps: a kick that arrives during a build should build again rather than re-exec into the stale binary (or the new image should check whether the source is newer than itself), and a re-exec that can't read the config should keep the config the old image had running (the shell's message already claims it keeps the last good config).
-- **Size:** small
-- **Found:** 2026-10-30, while investigating the shell on default config after merging the notifications revamp
 
 ### A shared file older than v71 resets niri's hot corner
 - **Where:** `backend/internal/share/zz_generated_movedkeys.go` (`movedKeys`), `backend/internal/migrate/steps/v82.go`
@@ -180,35 +193,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
 
-### After a refused save, a draft's edits show unsaved but not live
-- **Where:** `services/core/ConfigDraft.qml` (`_refusals`), `services/ui/SettingsManager.qml` (`_clearPreviews`), `services/ui/BarManager.qml` (`applyChanges`)
-- **What:** When axiom refuses a save, `ConfigManager.saveRefused` makes the draft dirty again, but the editor's previews were cleared when it saved (the settings page's `draft.load()` → `_clearPreviews`; `BarManager` clears its preview once clean) and nothing sets them again: the running config shows the value read back while the editor shows the edits as unsaved, until the next edit previews them. Rare (a save axiom refuses), so left after the minimal fix (row 12).
-- **Size:** small
-- **Found:** 2026-10-28, while reviewing row 12's refused-save fix (backend stage 7)
-
-### A protocol bump in dev mode leaves the installed CLI on the old protocol
-- **Where:** `backend/cmd/axiom`, `config/json/backend.json` (`protocol`)
-- **What:** In dev mode a Go change rebuilds and re-execs the live daemon (into `~/.local/state/axiom/dev/axiom`), but the installed `~/.local/bin/axiom` stays as it was. After a change that bumps `protocol`, every `axiom ipc` call (keybinds, scripts) fails with `this axiom speaks protocol 5, the client 4` until the user rebuilds it by hand (`go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`). Dev mode's rebuild could rebuild the CLI too, or the CLI could run the dev binary when the daemon says it's newer. The live shell is hit too (seen 2026-10-28, bumping to protocol 8): the re-exec'd daemon speaks the new protocol before qs reloads `backend.json`, so every call fails (`this axiom speaks protocol 8, the client 7`) until a QML reload.
-- **Size:** small
-- **Found:** 2026-10-28, while sending config saves as path ops (backend stage 7)
-
-### A word passed to an int IPC parameter is 0
-- **Where:** `services/core/BackendManager.qml` (`_callTarget`), `backend/internal/ipcroute/ipcroute.go` (`Router.Call`)
-- **What:** Since `IpcTarget` stopped being an `IpcHandler`, `axiom ipc` sends the command line's text and the target's typed parameters convert it: JavaScript can't read a function's parameter types, so nothing refuses a word where a number belongs. `axiom ipc brightness set loud` sets 0 % (QML turns `"loud"` into 0 for an `int`), where qs's typed call refused it with `bad_request`. Only `int` and `string` parameters exist today (`brightness` `set` / `dim` / `dimBy`, `workspaces` `nth`); a `bool` parameter would take `"false"` as true. A fix: the functions check their own input, or a parameter-type table generated from the source as `ipc.md` is.
-- **Size:** small
-- **Found:** 2026-10-28, while retiring the `qs ipc` fallback (backend stage 6)
-
 ### A fast chat reply can drop the shell's connection
 - **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
 - **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
 - **Size:** small
 - **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
-
-### AGENTS.md's funnel rule doesn't name FileManager.write and watch
-- **Where:** `AGENTS.md` (Services › Quickshell.Io's side effects), `services/core/FileManager.qml` (`write`, `watch`)
-- **What:** The rule lists the funnels new code uses (`CommandManager.run` / `runDetached`, `FileManager.read`, `StateManager`, `IpcTarget`) but still says to ask the daemon for "a file to watch or write", though #157 added `FileManager.write` (atomic, through `file.write`) and `FileManager.watch` (through `file.watch`) for exactly that. An agent following it could call `BackendManager` directly instead of the funnel. The line should name both, as it names `FileManager.read`.
-- **Size:** trivial
-- **Found:** 2026-10-28, while reviewing row 11's PRs (#155 to #158)
 
 ### With no takeovers kept, a broken config.json can still release the compositor's config
 - **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
@@ -333,12 +322,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while reviewing the bar display styles branch
 
-### Nested Hyprland acknowledges a lock too late for axiom lock
-- **Where:** `backend/internal/lockscreen/lockscreen.go` (`Options.Confirm`, `Locker.Lock`)
-- **What:** In a nested Hyprland (`scripts/dev/nested.sh hyprland`) the compositor takes about 5 s to acknowledge the session lock (`WlSessionLock.secure`), past `Lock`'s 3 s wait, so `axiom lock` restarts the shell locked and then fails: `the shell didn't confirm the lock: starting it locked`. Pre-existing; seen while fixing the lock surviving a reload (2026-10-29). Unknown whether a real Hyprland session is ever that slow; check, then either wait longer under Hyprland or confirm on the lock surfaces alone.
-- **Size:** small
-- **Found:** 2026-10-29, while fixing the lock screen surviving a reload
-
 ### Quickshell's wlr screencopy crashes the shell on niri
 - **Where:** `services/apps/ScreenshotManager.qml` (`grimFrames`, the workaround), `components/surfaces/screenshot/ScreenshotPickerWindow.qml` (its `ScreencopyView`); the bug is Quickshell's
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
@@ -356,12 +339,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The log shows `Model size of -1 is less than 0` right after `Overlay card unit 572 for 3376x1231` (the overlay's first sizing on a monitor), five times in one session. Opening the Themes or Settings page again didn't repeat it, so it's likely a Repeater or Grid whose count is worked out from a size that is still 0 or unset at that moment.
 - **Size:** small
 - **Found:** 2026-10-18, while adding the community setups gallery
-
-### install.sh still installs the rest of a feature whose COPR was declined
-- **Where:** `install.sh` (the declined-COPR loop after the COPR prompts)
-- **What:** Declining a COPR on Fedora marks each feature with a package from it as skipped, but drops only that COPR's packages: the feature's other packages stay in the one `dnf install`. Declining `nett00n/hyprland` while setting up niri skips the login screen's feature yet still installs `greetd`. Rebuilding `packages` from the features left (and the required keys) after the prompts would fix it; test with `--dry-run` in a `fedora:latest` container.
-- **Size:** small
-- **Found:** 2026-10-17, while reviewing the distro-support branch for merge
 
 ### Quickshell's I3 socket warns on every reload
 - **Where:** `services/compositor/SwayManager.qml` (Quickshell.I3)
@@ -397,18 +374,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The guard reads the branch from the session's folder, not a `cd` before the push
-- **Where:** `.claude/hooks/guard.py` (`check_git`, `current_branch`), `tests/scripts/test_guard.py`
-- **What:** `git push … origin HEAD` (or a push with no refspec) is refused when `current_branch` of the hook's `cwd` is main, and that `cwd` is the session's folder: a `cd` earlier in the same command isn't followed (`git -C` is). An agent whose session sits in a checkout on main and pushes a branch from a worktree with `cd <worktree> && git push -q -u origin HEAD && gh pr create --label roadmap --base main --body "$(cat <<'EOF' … EOF)"` gets `don't push to main; open a PR from a branch.` (refused once on 2026-10-30, autopilot for #232; reproduced 2026-10-30 by feeding `guard.check` that command with `cwd` a scratch repository on main: refused; with `cwd` the worktree, or `git -C <worktree> push`: allowed). The plain shape from the branch's own folder passes since #241 (a heredoc body with rule-like text passes too). It struck again on 2026-11-01 (row 19, batch 15): `git push -u origin HEAD` for the feature branch `roadmap/19-audits-batch15` was refused with `Blocked by AGENTS.md › Never, while testing: don't push to main; open a PR from a branch.`, and pushing by branch name went through. `check_git` already resolves a bare `HEAD` (line 376, `dest == "HEAD" and current_branch(cwd) in PROTECTED_BRANCHES`), but from the hook's `cwd`; a subagent's Bash `cwd` resets to the session's folder (the live checkout, on main) every call, so a worktree reached by `cd` is never the one read (reproduced 2026-11-01 through `guard.check`: `git push -u origin HEAD` with `cwd` the worktree allowed; with `cwd` the live checkout, with or without a leading `cd <worktree> &&`, refused). The workaround is an explicit `branch:branch` refspec or `git -C`. Fix: follow a leading `cd <dir> &&` into the cwd `check_git` uses, with a test case.
-- **Size:** trivial
-- **Found:** 2026-10-30, while recording the size before the audits (roadmap row 19)
-
-### The daemon picks a compositor the shell may not run under
-- **Where:** `backend/internal/compositor/manager/manager.go` (`New`), `backend/internal/compositor/manager/outputs.go` (`OutputsFromEnv`, `Outputs.Read`), `backend/internal/daemon/compositorsocket.go` (`greeterOnlyMethods`, `outputHandlers`, `applyGreeter`), `components/methods/CompositorKind.qml`
-- **What:** The shell picks its compositor with `CompositorKind`: with more than one of `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET` set (one left in the systemd user environment by an earlier session), the one whose process still runs wins. The daemon doesn't: `manager.New` takes the first set in a fixed order (Hyprland, niri, sway; the shell's is Hyprland, sway, niri) and `Outputs.Read`/`Apply` switch on the same order, with no process check. Under niri with a stale `HYPRLAND_INSTANCE_SIGNATURE` (or under sway with a stale `NIRI_SOCKET`) the manager is Hyprland's: `live()` needs the shell's facts to name its kind, so the layer is never applied (no binds, look or input in any mode), the status card stays on Checking, monitor profiles and `outputs.apply` go to a dead socket, and idle's `ScreenPower` fails. `applyGreeter` takes the same order. A stale variable is a case `docs/dev/compositor/README.md` names; the live session (sway) has none, so it isn't seen there. Both the compositor and the niri audits found this from the code; the niri one adds that `outputs.apply` (the Monitors page's Apply, profile switching) then fails with "no reply from Hyprland". Fix: one Go `Detect(getenv)` (CompositorKind's rule, `/proc/<pid>/comm`, as `userconf.NiriMain` and the sway reader already check their pid) used by all three, or the daemon passes the kind it picked to all three; then the daemon can start qs with only the running compositor's variable set, and `CompositorKind.qml` (68 lines), `tests/tst_CompositorKind.qml` (73) and `CompositorManager._running` go.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system (and again reviewing the niri system)
-
 ### The Translucency card reads the window look's blur object as a switch
 - **Where:** `components/views/Settings/TranslucencyStatus.qml`, `config/WindowLookConfig.qml` (`look`)
 - **What:** `WindowLook.blur` is the `Blur` object (`{ enabled, windowBlur, size, … }`), but the card tests `WindowLookConfig.look.blur` as a bool, so it's always truthy: the status always ends "Set in Compositor → Window look." even when the blur comes from the user's own config, and the "Set the compositor's blur" button (`root.off && !look.blur`) is never offered. Its branch would also `setValue(["WindowLook", "blur"], true)`, writing `true` over the whole object. Fix: read `blur.enabled` (a new reader property on `WindowLookConfig`, `blurSet`) and set `["WindowLook", "blur", "enabled"]`; `look` and `_lookJson` (5 lines, whose comment about applying it again is stale since the daemon applies the look) then have no reader and go.
@@ -437,12 +402,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
 - **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The bind merge deletes an hl.bind inside a helper, losing binds it never read
-- **Where:** `backend/internal/compositor/binds/hyprlua.go` (`callSite`), `backend/internal/compositor/binds/hypr.go` (`extractHypr`)
-- **What:** A bind's site is the line of its `hl.bind` call (`callSite`: `GetStack(1)`, `CurrentLine`), not the top-level statement that ran it. A `user/*.lua` file binding through its own helper (`local function bindx(k, c) hl.bind(k, hl.dsp.exec_cmd(c)) end`, then `bindx("SUPER + A", "foo")` and, in a `hl.define_submap` handler, `bindx("x", "bar")`) gives one site, the helper's body, holding only the binds extract saw. Everything it saw maps, so the merge moves it and `remove` deletes the helper's `hl.bind` line: the submap's `x` bind (and any bind the helper makes from an `hl.on` handler or an untaken branch) is silently gone, with only the dated backup to recover it. Reproduced against `extractHypr`/`removeHypr` with an overlay test (no tree edits). bind-merge.md › What can move doesn't cover it. Fix: record on each `luaBind`/`luaUnbind` whether the call ran in the file's main chunk (`L.GetInfo("S", …)`'s `What` at level 1) and keep a site that didn't, with a new reason (e.g. `inFunction`); a top-level loop still moves. A test row with the file above, and a line in bind-merge.md.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### The bind merge removes an hl.unbind whether or not its bind went
@@ -547,12 +506,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### niri started on a broken config reads as loaded
-- **Where:** `backend/internal/compositor/ipc/niri.go` (`Reloads`), `backend/internal/compositor/manager/niri.go` (`checkLoaded`, `lastFailed`), `backend/internal/compositor/manager/manager.go` (`configReloaded`)
-- **What:** `Reloads` drops the event stream's first `ConfigLoaded` (the state niri starts the stream with), its `failed` flag included, so `niriWriter.lastFailed` is only ever set by a later reload. When niri starts on a config it can't load (a broken `user/*.kdl` at login), it runs its defaults; the stream opens with `ConfigLoaded { failed: true }`, the daemon ignores it, and managed mode's `checkLoaded` reports loaded (the managed file is there, header and all). The Compositor settings show no problem while none of axiom's binds, look or input apply, until the next reload. The shell sees it (`NiriState.reduce` keeps `configFailed` from every `ConfigLoaded`) but nothing reads it (the unread `NiriManager` property that forwarded it is gone). PLAUSIBLE: niri running its defaults after a failed start and the first event carrying `failed: true` are to be confirmed in `scripts/dev/nested.sh niri --managed` with a broken user file. Fix: `Reloads` hands the first `ConfigLoaded`'s `Failed` over as the initial state, not as a reload; the writer sets `lastFailed` from it.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
-
 ### Setting names that still confuse
 - **Where:** `config/schema/sections/`
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.
@@ -601,17 +554,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### The shell's hello can be refused across a dev re-exec
-- **Where:** `backend/internal/daemon/methods.go` (`daemon.hello`, `isShell`), the re-exec's shell hand-over (`supervising the shell started before the re-exec`)
-- **What:** On 2026-10-29 a rebase replaced QML and Go files under the live session: qs reloaded at 18:18:32, dev mode re-exec'd the daemon at 18:18:33.871, and the reloaded shell's hello at 18:18:34.200 was refused, `only the shell axiom runs may connect as the shell`, one millisecond after the new daemon logged `supervising the shell started before the re-exec` for that same pid (433649). From then on every call failed (`[FileManager] Could not write …selfupdate.json`, `[SelfUpdateManager] Check failed`) until the shell was started again. So the re-exec'd daemon answers a hello before it knows the shell's pid, or matches the wrong one.
-- **Size:** small
-- **Found:** 2026-10-29, while rebasing the custom widgets branch onto main
-
 ### A greeter-only module validates on any page
 - **Where:** `components/content/Session/schema.yaml` (`hosts`), `components/content/Login/schema.yaml`, `components/content/Password/schema.yaml`
 - **What:** `hosts: {only: [greeter]}` keeps Session out of the layouts editor's library elsewhere, but the built schema still lists it in every host's `oneOf`: a config with Session in an edge menu and on an overlay page passed `axiom config validate`, and it drew as a bare "Session" field on an empty card. So an import, a community setup or a hand edit can put a greeter- or lock-only module (Session, Login, Password) where it can't work.
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
+
+### The guard judges a push where the line starts, not where git runs
+- **Where:** `.claude/hooks/guard.py` (`check_git`, `simple`), `tests/scripts/test_guard.py`
+- **What:** `check_git` reads the branch once, in the folder the line starts in (or `git -C`'s), before anything in the line runs, so a push to main gets past it when git runs on another branch or folder than that: `git switch main && git push` (or `git checkout main`) from a feature branch's folder; a wrapper that changes folder (`env -C <main checkout> git push`, `sudo -D`, `systemd-run --working-directory`, whose options `simple` drops); `git --git-dir=…`/`--work-tree=…` or `GIT_DIR=… git push`. Each was allowed by `guard.check` from a folder on a feature branch (2026-11-02). Fix: refuse a bare push (no refspec, or `HEAD`) after a `switch`/`checkout` in the same line, and judge the folder those options and variables name.
+- **Size:** small
+- **Found:** 2026-11-02, while reviewing the guard's leading `cd` (row 20, config-05)
 
 ### Opening a hover-closing edge menu by IPC closes it at once
 - **Where:** `services/ui/EdgeMenuManager.qml` (the `edgeMenu` `IpcTarget`'s `open`), `components/surfaces/edgemenu/EdgeMenuSync.qml` (`autoDismiss`)
@@ -637,48 +590,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### A file mode that stops loading keeps the saved monitor profile off
-- **Where:** `backend/internal/compositor/manager/manager.go:1177` (`configReloaded`), `backend/internal/compositor/manager/manager.go:631` (`checkLoaded`)
-- **What:** `m.loaded` is set when the included module or the managed config is in effect (631) and cleared only in `modeChanged` (728) and `syncFile`'s "isn't axiom's any more" branch (1151); `checkLoaded`'s not-loaded and `failed` paths leave it true. Scenario: Hyprland or sway, included mode, module loaded; the user takes the include line out and the compositor reloads. `configReloaded` tests `!m.loaded` (1177) before `checkLoaded` runs, so it skips the profile; `checkLoaded` then puts the runtime layer in (which carries no monitor rules: `hyprWriter.runtimeApply` has binds, required settings, live lines and strips only), but `m.loaded` stays true. The reload set the outputs from the user's own lines, and every later reload skips the saved profile the same way, until a hotplug or a Monitors edit. No test covers it (`TestHotplugsApplyTheSavedProfile` reloads in detached mode only). Fix: `m.loaded = false` in `checkLoaded`'s not-loaded and `failed` paths, and in `configReloaded` re-apply the profile after the mode branch has run `checkLoaded`; a test row (included, loaded, then a reload with the file no longer loaded re-applies the profile).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Leaving included between sessions leaves the full module loaded
-- **Where:** `backend/internal/compositor/manager/manager.go:705` (`apply`), `backend/internal/compositor/manager/manager.go:942` (`leave`)
-- **What:** `emptyModule` runs only from `leave`, which runs only when `previous != "" && previous != m.mode` (705); `previous` is `m.st.AppliedMode`, kept in `compositor.json` for one compositor instance only, so each new session starts with `""`. Managed has a cover for "a mode changed while axiom wasn't running" (`configIsOurs`, 698); included has none. Scenario: the last session ran included and the user's config still loads the module; config.json says detached at the next start (synced, or edited while axiom wasn't running). `apply` skips `leave`, the module keeps its old binds, look, input and monitor rules, and the runtime layer skips every axiom key as taken by the user's config, so Keybinds edits to those keys do nothing until the include line goes. config-modes.md › Leaving a mode: "Leaving included, or leaving managed for detached, empties the module if it exists". Fix: in `apply`, call `m.emptyModule(ctx)` whenever `m.mode != "included"` (outside the hold), not only from `leave` (it does nothing when the file is missing or already empty).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A failed takeover leaves no layer and no problem
-- **Where:** `backend/internal/compositor/manager/manager.go:837` (`claim`), `backend/internal/compositor/manager/manager.go:845` (`claim`), `backend/internal/compositor/manager/manager.go:606` (`writeIfChanged`)
-- **What:** In managed mode, approved (or nothing of the user's to take over), `claim` can fail: `edit.LockDir` (837: the lock held over 10 s by a command line's `axiom compositor …`, or a read-only config dir) or `takeover.Claim` (845: `MkdirAll` of user/, a backup copy, `setAside`). Both branches only log and return: no runtime layer goes on, `problem` stays "", the status reads `pending` with no reason, and the session has none of axiom's binds, look or input until a compositor reload happens to run `checkLoaded`. The `blocked` branch beside them already does it right (`m.warnOnce(m.w.problems(m.in).Blocked); m.runtimeApply(ctx)`). config-modes.md › The layer: "Whenever a file isn't loaded … the runtime layer stands in and `problem` says why". `writeIfChanged`'s write error (606) is the same in small: logged, no problem shown. Fix: in both `claim` error branches `m.warnOnce("Couldn't take over " + path + ": " + err.Error()); m.runtimeApply(ctx)`; in `writeIfChanged` `m.warnOnce("Couldn't write " + path + ": " + err.Error())`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A failed takeover check reuses the last answer and can adopt without approval
-- **Where:** `backend/internal/compositor/manager/manager.go:800` (`check`), `backend/internal/compositor/manager/manager.go:813` (`claimIfApproved`)
-- **What:** When `takeover.Check` errors (its `edit.LockDir` giving up while `axiom compositor claim|release|binds remove` holds the lock), `check` logs and returns, keeping `m.managedCheck` from an earlier call; `claimIfApproved` decides on that stale word. Scenario: the check said `released`/`new`/`stock` earlier in the session, the user then puts their own config back (now `adopt`), and an `apply` runs while the lock is held and is freed before `claim` takes it: the stale word lets `claim` run, and `takeover.Claim` adopts whatever is there without the user's Allow. config-modes.md › Approving a takeover: "Allowed only by `allowTakeover()` … `adopt` waits". `compositor.checkManaged` returns the stale word too. Narrow race. Fix: on error set `m.managedCheck = ""`, so `claimIfApproved`'s default branch waits (pending, runtime layer standing in).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### Claim keeps writing a symlinked or git-tracked config that release refuses to give back
-- **Where:** `backend/internal/compositor/takeover/takeover.go:179` (`Claim`), `backend/internal/compositor/takeover/takeover.go:241` (`Release`), `backend/internal/compositor/manager/manager.go:862` (`claim`)
-- **What:** `Claim` returns `ours` before it checks `blocked` (179-184); `Release` checks `blocked` after `ours` and refuses (241-246). managed-takeover.md › Release: "A symlinked or git-tracked file is refused, as `claim` refuses it". Scenario: in managed mode the user moves `~/.config/hypr` (or sway, niri) into a dotfiles repo, by git or a stow symlink. Every apply then runs `Claim` → `ours` → `writeIfChanged(ManagedPath, …)`, and `fsx.WriteFile` follows the link, so axiom rewrites the file in their repo on every settings change; leaving managed, `Release` answers `blocked:link`/`blocked:git` and the manager retries from 10 s up to every 5 min, telling them to make it a plain file. Fix: one rule; the smaller is `blocked` before `ours` in `Claim` (and `Check`), so managed stops writing and the runtime layer stands in with `problems().Blocked`, as release already assumes; a test row for claiming an `ours` symlinked file.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### sway's hookup and takeover use ~/.config/sway/config whatever config sway runs
-- **Where:** `backend/internal/compositor/manager/sway.go:57` (`files`), `backend/internal/compositor/userconf/sway.go:17` (`SwayMain`), `backend/internal/compositor/takeover/kinds.go:106` (`sway`)
-- **What:** The sway writer reads the user's binds from the config sway runs (`userconf.SwayMain`: the running sway's `-c`, else sway's search order `~/.sway/config`, `$XDG_CONFIG_HOME/sway/config`, `~/.i3/config`, `$XDG_CONFIG_HOME/i3/config`, `/etc/sway/config`), but `files()` points `IncludeTarget`/`AutostartTarget` at `managed := w.dir() + "config"`, and the takeover's file is the same fixed path. niri's writer uses `w.mainConfig`. Scenario: an i3 migrant on `~/.config/i3/config` (or `sway -c ~/dotfiles/sway.conf`) picks included; **Add it for me** creates `~/.config/sway/config` holding only the include line; nothing changes this session, but at the next login sway finds that file before `i3/config` and runs an almost empty config. Managed: `check` says `new` (no approval asked), `claim` writes the managed config there, `checkLoaded` fails all session, and the next login runs axiom's config with the user's neither adopted nor loaded. With `~/.sway/config` (searched first) neither mode ever loads. Fix: build sway's targets from `SwayMain` as niri's use `mainConfig`; in managed, `blocked` (or adopt) when `SwayMain` isn't the managed path; a test row running sway from `~/.config/i3/config`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A relative -c is read from the daemon's folder
-- **Where:** `backend/internal/compositor/userconf/niri.go:88` (`NiriMain`), `backend/internal/compositor/userconf/sway.go:22` (`SwayMain`)
-- **What:** `startedWith` returns the compositor's `-c` as written. After `cd ~/.config/niri && niri -c test.kdl`, `NiriMain` returns `test.kdl`, which `ResolveNiri` opens relative to the daemon's working folder: "Can't read your niri config", no user binds known, included reported as not loaded, and a wrapper including `test.kdl` relative to `$XDG_STATE_HOME/axiom/`. `SwayMain` checks `isFile` against the daemon's folder and silently falls back to the default places, a config sway doesn't run. Fix: when the path isn't absolute, join it to `os.Readlink("/proc/<pid>/cwd")`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### Gaps to the edges are wider on sway than the setting says
 - **Where:** `backend/internal/compositor/render/sway.go:468` (`SwayLookLines`), `backend/internal/compositor/render/niri.go:456` (`NiriLookNodes`), `services/compositor/SwayManager.qml:38` (`gapsOut`)
 - **What:** `WindowLook.gaps.outer` is "Gaps to the edges". Hyprland writes it as `gaps_out` (the edge gap); niri's writer writes struts of `outer - inner` so its edge comes out at `outer`; the sway writer writes `"gaps inner "+inner, "gaps outer "+outer` unchanged (468-469), and sway(5) says "Outer gaps are in addition to inner gaps. To reduce or remove outer gaps, outer gaps can be set to a negative value." (sway-backend.md and `SwayManager.gapsOut` read it back as outer + inner). At the defaults (inner 3, outer 6) Hyprland and niri leave 6 px at the edge, sway 9, and Automatic bars follow the 9. niri's writer also clamps the struts at 0 (`math.Max(0, …-inner)`), so with inner 10 and outer 0 niri keeps 10 px where Hyprland keeps 0 (`niri validate` 26.04 accepts a negative strut; PLAUSIBLE that niri draws it narrower: a nested niri with inner 10, outer 0 settles it). Fix: sway writes `outer - inner` (`gaps outer`, and `gaps outer all set` live), `SwayManager.gapsOut`'s live branch becomes `_liveGaps.outer`; drop niri's `math.Max(0, …)` around the edge; regenerate the sway and niri goldens.
@@ -690,12 +601,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A $' or $& in a bind's argument is read as a replacement pattern
 - **Where:** `backend/internal/compositor/render/actions.go:129` (`jsReplace`), `backend/internal/compositor/render/hyprconfig.go:116` (`ipcCall`), `backend/internal/compositor/render/actions.go:101` (`DefaultLabel`), `components/methods/BindActions.qml:99` (`defaultLabel`)
 - **What:** `jsReplace` reproduces JS `String.replace`'s `$$ $& $\` $'` handling, and the user's argument is passed through it as the replacement. A `launcherSearch` bind with the argument `US$'s rate` renders on sway as `exec "axiom ipc appLauncher search 'US\\''s rate'"` and on Hyprland as `exec_cmd("axiom ipc appLauncher search 'US\\''s rate'")` (scratch run): the shell gets `US\s rate`, and both descriptions read "Launcher: USs rate". niri substitutes word by word (niri.go:316-324) and passes it intact, so the same bind does different things per compositor. Fix: put user text in literally (`strings.Replace(s, "{0}", arg, 1)` in `ipcCall` and `DefaultLabel`, and for `"{}"` in sway.go's exec lines); `jsReplace` can become literal if no frozen case pins a `$` replacement. The shell's halves do the same (`BindActions.qml:69` `word.replace("{0}", text)`, :99 `.replace("{0}", argument)`, which the parity replay pins against the Go): pass a function (`() => argument`) there in the same change.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A niri merge of two binds on one line loses one
-- **Where:** `backend/internal/compositor/binds/marked.go:64` (`removeMarked`), `backend/internal/compositor/manager/manager.go:1305` (`merge`)
-- **What:** `removeMarked` marks a niri file's sites right to left on the same `lines[i]`, but checks each site's `text` against `lines[i]` as already marked. With `binds {\n    Mod+T { spawn "foot"; }; Mod+Q { close-window; }\n}` both binds are extracted (same line, cols 4 and 29); `Mod+Q` is marked first, then `Mod+T`'s check fails as `changed`. Remove returns `removed:1, failed:[{line:2, reason:"changed"}]` and writes `Mod+T { spawn "foot"; }; /* (moved into axiom) */ /-Mod+Q { close-window; }` (reproduced with a `go test -overlay` probe). `merge`'s `left()` matches failures by file and line only, so it takes both line-2 binds back out of the commit: `Mod+Q` is commented out of the user's file and missing from `Keybinds.binds` (only `user/.backups/` has it), and the merge reports a file nobody changed. Sway can't reach it (one bind per line); Hyprland keeps a call not alone on its line. Fix: compare against the line as read (keep `orig := lines[i]` per line before any mark); a `TestNiriRemove` row with two binds on one line.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -711,29 +616,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A sway line continuing a non-bind line is moved as a bind of its own
-- **Where:** `backend/internal/compositor/binds/sway.go:283` (`extractSway`)
-- **What:** Only the bind's own line is checked for a trailing `\`; a line that follows a continued line is read as a fresh statement. `exec_always foo \` then `bindsym Mod4+x kill` is to sway one `exec_always foo bindsym Mod4+x kill`; extract moves `SUPER + X → closeWindow` (reproduced) and remove prefixes the second line with `# (moved into axiom) `, so sway now runs `foo # (moved into axiom) bindsym Mod4+x kill` and the user gains a bind they never had. Rare. Fix: carry a `continued` flag from the previous raw line and skip a line it covers; one test row.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### The Hyprland and sway bind merges each skip half of compositor/actions
 - **Where:** `backend/internal/compositor/binds/hypr.go:109` (`execAction`), `backend/internal/compositor/binds/sway.go:202` (`swayAction`), `backend/internal/compositor/binds/niri.go:56` (`commandAction`)
 - **What:** sway's and niri's merges run every exec command through `actions.Default().IPCAction` first, so `axiom ipc appLauncher toggle`, `axiom lock` and `axiom restart` become the `launcher`, `lock` and `restartShell` actions. Hyprland's `execAction` only checks the exit command and `actions.MediaAction`, then returns `"exec", command` (`grep -n 'IPCAction' binds/hypr.go` finds nothing). bind-merge.md › Where it runs says the opposite: "What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) … maps onto comes from `compositor/actions`". The commonest real case is an included-mode user who wrote `hl.bind("SUPER + D", hl.dsp.exec_cmd("axiom ipc appLauncher toggle"))` and is then claimed. Probe: extracting that file gives `{"key":"SUPER + D","action":"exec","argument":"axiom ipc appLauncher toggle",…}`. The moved bind still works, but it shows on the Keybinds page as a raw exec instead of the launcher action. It also gets none of the action's call, label or section, and on a key axiom already binds, `mergeBinds` puts this exec in place of axiom's own launcher bind. The niri review found the mirror gap in sway's merge: its `exec` branch calls `IPCAction` but never `MediaAction`, so `bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+` moves as `exec` (no axiom OSD action, no `locked`/`repeating` defaults from `actionFlags`). Only niri's merge uses both, as niri-backend.md says all three do: the same user bind becomes an axiom action on one compositor and a shell command on another. Fix: one `actions.CommandAction(command)` (IPC, then media, else nil) called by all three merges, carrying `call`/`argument`, with a row per merge in the binds tests (`TestHyprMappingAndRawLua`: `axiom ipc appLauncher toggle` → `launcher`; sway: a `wpctl set-volume` exec → its media action).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system and the niri system
-
-### Hyprland's remove deletes whatever hl.bind is on a site's line now
-- **Where:** `backend/internal/compositor/binds/hypr.go:455` (`extractHypr`'s sites), `backend/internal/compositor/binds/hypr.go:507` (`removeHypr`), `backend/internal/compositor/binds/binds.go:174` (`readSites`)
-- **What:** sway's and niri's sites carry the line's `text` (sway.go:327, niri.go:228), and `removeMarked` leaves a line whose text changed since extract (`changed`). Hyprland's sites carry only `file` and `line`, and `removeHypr` keeps only `s.line` (hypr.go:507). It reports `changed` only when no `hl.bind`/`hl.unbind` statement starts on that line any more (hypr.go:544). So if the file changes between extract and remove, and each site's line still holds some `hl.bind`, other binds are deleted. The window is the isolated child's run (up to 30 s) plus the commit; an editor save or a dotfiles sync can land in it. Probe: extract `binds.lua` = `SUPER + Y` (line 1), `SUPER + U` (line 2). Then the file gains `hl.bind("SUPER + Z", …exec_cmd("mine"))` at the top, and remove runs on the old sites. Result: `{"removed":2,"failed":[]}`, and the file is left with only `hl.bind("SUPER + U", …)`. Z, which was never moved, is deleted and is not in axiom. U is in axiom and still in the file, so it is bound twice, which bind-merge.md › Committing and removing says can't happen. The merge reports success, and only the dated backup has Z. This breaks C3 ("remove gives back exactly what was there"). Fix: put each statement's source text (`text[start:end]` from `statementSpan`) in the hypr site as `text`, and in `removeHypr` fail a site as `changed` when the statement found at its line differs. Add a test row: the probe above, expecting `2 changed` and Z kept.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A claim comments out axiom's start inside a long string, breaking the script
-- **Where:** `backend/internal/compositor/takeover/takeover.go:352` (`adopt`), `backend/internal/compositor/takeover/kinds.go:86` (hyprland `axiomLine`)
-- **What:** `adopt` checks each line on its own with `mapLines`. A line matching the unanchored `axiomLine` (`(^|[[:space:]"'/])axiom["']?[[:space:]]+run…`) gets `-- (axiom starts and loads itself now) ` put in front of it, even when the line is inside a Lua long string. The result still parses, so `keepsParsing` keeps the edit (with luac it returns true at once). Probe: hyprland.lua = `hl.exec_cmd([[\n  axiom run &\n  waybar\n]])` claims as `adopted:00-previous.lua`, with line 2 of the copy now `-- (axiom starts and loads itself now)   axiom run &` inside the string. Hyprland runs that string through `sh -c`, where `-- (axiom …` is a syntax error, so the whole script fails and waybar (and anything else the script started) no longer starts in managed mode. The same thing happens for a matching line inside a `--[[ ]]` block comment (harmless there). Fix: skip lines that start inside a string or comment. luacheck already finds those spans (`tokens`), so export a `luacheck.InCode(text) []bool` (or reuse `WholeLines(text, []int{n})`) and only mark lines where it holds. Add a takeover test row with the file above, expecting the line inside the string to be left as it was.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### The overview stays open with nothing shown after its monitor goes away
 - **Where:** `shell/WorkspaceOverlay.qml:21` (`overlayVisible`), `shell/WorkspaceOverlay.qml:30` (`open`), `shell/WorkspaceOverlay.qml:42` (`toggle`), `shell/WorkspaceOverlay.qml:90` (`shown`)
@@ -827,32 +714,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the niri system
 
-### A sway title-bar mouse bind moves in as a whole-window bind
-- **Where:** `backend/internal/compositor/binds/sway.go:29` (`swayHarmless`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/render/sway.go:245` (`swayConflictFlags`)
-- **What:** sway(5) says mouse bindings "are only triggered when over the title bar" unless `--whole-window` is given. `swayHarmless` lists `--whole-window` as droppable, so a mouse bind *without* it moves in as well. axiom then writes every mouse key with `--whole-window` (`if k.Mouse { flags = append(flags, "--whole-window") }`). The i3 guide's own examples are `bindsym --release button2 kill` and `bindsym button3 floating toggle`. A probe of the worktree's extract on `bindsym --release button2 kill` gave `{"key":"mouse:274","action":"closeWindow","release":true}`, and the line was commented out. After a takeover, a middle click anywhere (a paste in a terminal) closes the window. The binds are shared, so Hyprland gets the same bind too.
-
-  Fix: keep a mouse key whose flags lack `--whole-window` as `kept` `options` with the detail `title bar`, and add a `TestSwayExtract` row for it. About 4 lines.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### A sway exec chained with ; or , moves in as one shell command
 - **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
 - **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
 
   Fix: before the `exec` branch, a stored command holding `;` or `,` outside quotes returns `raw` for sway, which keeps sway's behaviour. That is a small scan, plus a test row for each separator.
 - **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### A sway include path with a space breaks after a takeover
-- **Where:** `backend/internal/compositor/takeover/kinds.go:196` (`swayInclude`), `backend/internal/compositor/render/sway.go:683` (`SwayManagedText`), `backend/internal/compositor/render/sway.go:694` (`SwayReleasedText`)
-- **What:** sway expands an include through wordexp(3). A C probe showed a double-quoted `"<dir>/user/*"` stays literal (no glob), and an unquoted path with a space splits into two words. With a space in `$HOME` or `$XDG_CONFIG_HOME`, two things break:
-  - `swayInclude` makes a relative include absolute as `quote + dir + "/" + inner + quote`, unquoted when the original was. `include conf.d/*` becomes two words and loads nothing.
-  - The managed and released configs write `include ` + `SwayQuote(userDir+"/*")`. `SwayQuote` double-quotes the whole path, `*` included, so sway loads nothing from `user/`: the adopted config and every user file are dropped.
-
-  `userconf.SwayText` still reads the quoted glob (`shellSplit`, then `glob`), so the daemon reads binds from files sway doesn't load. This is a rare path.
-
-  Fix: quote only the folder, never the glob: one helper in render, `SwayQuote(dir+"/") + rest`, used by the three writers, plus a takeover test row and a golden row with a spaced dir.
-- **Size:** small
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### A sway output rule by description misses a monitor with no serial
@@ -887,12 +754,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
   Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
-
-### The sway extract's input-device case and isSwayFlag repeat the general rule
-- **Where:** `backend/internal/compositor/binds/sway.go:37` (`isSwayFlag`), `backend/internal/compositor/binds/sway.go:288` (`extractSway`), `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
-- **What:** Deletion pass, about 17 lines. `--input-device=<id>` is in neither `swayFlags` nor `swayHarmless`, so the general `other` branch already keeps such a bind as `options`. The `device` boolean (288-302) exists only so the detail lists every flag instead of the unknown one, which nothing pins (`input-device` appears only in sway.go). `isSwayFlag` (37-45, 9 lines) has one caller. Fix: `slices.ContainsFunc(swayFlags, …)` inline, plus `if len(other) > 0 { push(… strings.Join(other, " ")) }`. The 17 lines at 287-303 become about 9, and `isSwayFlag` goes. `swayAction`'s `o Options` parameter is never read and goes too. These are the lines [A sway title-bar mouse bind moves in as a whole-window bind](#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind) changes: land the two together.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the sway system
 
 ### niri's overview drop moves a window's whole column and switches workspace
@@ -990,16 +851,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
 - **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### The Updates popout's package list is frozen at opening
-- **Where:** `components/bar/widgets/Updates/Updates.qml:54` (`extraData`), `components/content/Updates/Updates.qml:20` (`repoPackages`), `components/content/Updates/Updates.qml:21` (`aurPackages`), `components/hosts/popout/BarPopouts.qml:547`
-- **What:** The widget sends `repoPackages`/`aurPackages` as `extraData`. BarPopouts copies each key once in `onLoaded` (`item[key] = root.currentData[key];`), which replaces the panel's live bindings (`property var repoPackages: UpdatesManager.repoPackages`) with the arrays as they were at opening. `PopoutAnchor.open()` returns early while the popout is open.
-  - **Scenario:** with the popout open, right-click the widget (`UpdatesManager.refresh()`), or let an upgrade finish in a terminal. The bar's count changes, but the popout still lists the old packages, or still says it's up to date, until it is reopened.
-  - **Why the keys exist:** only to apply the widget's AUR filter.
-
-  Fix: delete the widget's `extraData` (4 lines). The panel's `aurPackages` binds the same filter itself (`UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []`), which cards then share; both properties become `readonly`.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the popouts system
 
 ### NowPlaying builds its strip layout and a second transport hidden in every mode
@@ -1358,210 +1209,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### A failed update check shows as up to date
-- **Where:** `services/system/UpdatesManager.qml:104` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)
-- **What:** Go ends every check in a state, a failed one with its `error` and the last packages (`st.Repo, st.Error = last.Repo, err.Error()`), but the shell's listener reads only `state.repo` and `state.aur`, so nothing in the UI can tell a failed check from an empty one. Scenario: log in before the Wi-Fi connects (or with the pacman db locked): the first `checkupdates` fails, `last.Repo` is still empty, and the Updates card says "System is up to date" (and the widget shows 0, or hides with `hideWhenEmpty`) until the next check, 30 minutes later by default. Fix: keep `state.error` in a new `error` property of UpdatesManager; the card shows it in place of "System is up to date" and the widget's tooltip names it.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### A weather fetch that fails shows Loading forever
-- **Where:** `backend/internal/weather/weather.go:148` (`fetch`), `services/apps/WeatherManager.qml:109` (`_shown`), `components/content/Weather/Weather.qml:52`
-- **What:** A failed fetch returns an error, which the topics hub only logs (once per distinct error) and never pushes, so the shell keeps its last state. That's right while the settings are unchanged, but `_shown` drops a state fetched for other settings, so with no good fetch yet for the current ones nothing ever says why. Scenarios: log in offline, and the card says "Loading weather…" until the next fetch, 15 minutes later by default, even once the network is back; type a location Open-Meteo doesn't know (`unknown location "…"`), and it says "Loading weather…" for good. Fix: on a failure, `fetch` returns a state for the request with an `error` and no weather (the hub pushes it since it differs), a new `error` property of WeatherManager exposes it while it answers the current settings, and the card and the widget's tooltip show it in place of loading.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### The active media player is Spotify first and never follows playback
-- **Where:** `services/system/MediaManager.qml:215` (`_pickActivePlayer`), `services/system/MediaManager.qml:264` (`onPlayersChanged`)
-- **What:** `_pickActivePlayer` returns any player whose bus name contains `org.mpris.MediaPlayer2.spotify` before it looks for one that is playing, and the pick is only redone when the player list changes, never when a player starts or stops playing. Scenarios: with Spotify open and paused, play a video in the browser: its player appears, the pick runs and keeps paused Spotify, so the bar's Media widget and NowPlaying show Spotify, and the media keys (`media` IPC `playPause`) start Spotify over the video. With two players open, pausing one and playing the other leaves the active player on the paused one. No doc mentions the preference (MediaManager has no doc beyond its name in services-pattern.md). Fix: pick the playing player first (then the last active, then one that can play), drop the Spotify case, and re-pick when any player's `playbackState` changes while none is pinned (`selectPlayer` keeps a user's choice); the three loops (28 lines) become one ordered `find`.
-
-  **Decided** (maintainer, 2026-10-31): "Recommendation as described". Fix: a pure methods helper `MediaPick.pick(players, pinnedId, lastActiveId)` over `{id, playing, canPlay, startedAt}` (order: pinned, most recently started playing, last active, can play), tested in `tst_MediaPick.qml`. MediaManager tracks `startedAt` through an Instantiator of Connections on `playbackStateChanged` and re-picks on any state or list change. A pin drops when its player vanishes or another starts playing. The Spotify case and the per-pick log go. No schema change.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### Album art piles up in the runtime folder for the whole session
-- **Where:** `backend/internal/media/media.go:47` (`Art`), `services/system/MediaManager.qml:34` (`artFilePath`)
-- **What:** Each track's art is saved as `<md5 of its URL>.jpg` in `$XDG_RUNTIME_DIR/axiom/media-art` and kept ("A file already there (and not empty) is kept"), and nothing ever deletes one: `grep -rn media-art` finds only the shell's path and Go's `ArtDir`. The runtime folder is a tmpfs, so the art of every track played stays in RAM until logout: on 2026-10-31, 1 h 36 min after boot, it held 15 files, 2.3 MB; a day of music is a few hundred covers, tens of MB. Fix: after a fetch lands, `Art` removes all but the newest few files in `o.Dir` (by mtime; say 16, which keeps a playlist going back and forth cached).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### MediaManager ticks the position with nothing showing it
-- **Where:** `services/system/MediaManager.qml:198` (`_positionTimer`)
-- **What:** AGENTS.md › Services: "Anything polled goes through `acquire(owner, request)` / `release(owner)`: fetched once at the shortest interval asked, not at all with no consumer". `_positionTimer` runs every 500 ms whenever a player is playing (`running: root.isPlaying && root.hasActivePlayer`), copying the position into `position` for its two readers (the Media bar widget and the NowPlaying module), whether or not either exists; MediaManager is created from `shell.qml`'s `_services`, so it ticks through every song with no media UI configured or the overlay closed. The same kind of ticker in StopwatchManager and PomodoroManager goes through `acquire(owner)` (services-pattern.md › Other polled services). Fix: a `ConsumerRegistry` with `acquire(owner)` / `release(owner)` from Media and NowPlaying, and `running` also gated on `_registry.active`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### runDetached warns about a lost connection
-- **Where:** `services/core/CommandManager.qml:71` (`runDetached`)
-- **What:** `run()` and `_logFailure` skip an error of kind `unavailable` (the connection to axiom closed: a re-exec or restart, already logged where it happens), but `runDetached` warns on any error. The live log shows it after reloads: `[CommandManager] mkdir: the connection to axiom closed` (NotificationManager's startup `mkdir -p` of its image folder, queued as the connection went). Fix: `if (error && error.kind !== "unavailable")`, as `run` does.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### Rescanning the theme folders lists the shell's working directory as themes
-- **Where:** `services/core/ThemeManager.qml:578` (`_reloadAllThemes`), `services/core/ThemeManager.qml:589` (`reloadCommunityThemes`), `services/core/ThemeManager.qml:642` (`_defaultThemeLoader`), `services/core/ThemeManager.qml:651` (`_generatedThemeLoader`), `services/core/ThemeManager.qml:660` (`_communityThemeLoader`)
-- **What:** To rescan, `_reloadAllThemes` (at start-up and after every generation) and `reloadCommunityThemes` set each loader's `folder` to `""` and then back. A FolderListModel whose folder is empty lists the current directory. qs runs in `$HOME`, so each loader briefly lists `~/*.json`, and its `onStatusChanged` (Ready, count > 0) parses every JSON file there as a theme and rebuilds the families. The live debug log shows it at each start: the first line is `[ThemeManager] Themes: axiom-backup-before-resize-…, axiom-demoConfig7-…` (exported configs in `~`, without the stock themes), the next lists them twice (stock and community loaders both on `~`), and only later lines show the real list. When the real folder then has no themes (a user who has never generated any: `Paths.generatedThemesPath` empty or missing), no Ready with rows follows. The `~` files then stay as `generated/<file>` families in the Themes page's Generated group, and picking one applies a theme that doesn't exist. Only the community loader has a guard for its count dropping to 0 (`_communityEmptied`), so its list recovers after a second; the generated one doesn't. PLAUSIBLE for the stuck case: run a nested shell with an empty generated folder and a JSON file in its working directory, and see whether the Generated group lists it. Fix: give the three folders one inline loader component (`path`, `prefix`) whose handler ignores rows while `String(folder)` isn't its path, and give all three the emptied-folder handling. That replaces the three 9-line `FolderListModel` blocks and the community-only `_communityEmptied` Timer (lines 640–680, 41 lines) with one component and three instances.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### A generated theme from a wallpaper reached through a symlink is regenerated at every start
-- **Where:** `services/core/ThemeManager.qml:194` (`syncGeneratedTheme`), `backend/internal/theme/theme.go:42` (`Generate`)
-- **What:** `Generate` resolves symlinks (`filepath.EvalSymlinks`, line 51) and records the resolved path as the theme's `generated.wallpaper`, on purpose (`theme_test.go`: "A link to the image is recorded as the image itself", carried over from generate_theme.py's `Path.resolve()`). `syncGeneratedTheme` compares that path with the shown wallpaper's own path (`root.currentTheme?.generated?.wallpaper === wanted`, line 201), never resolved. When the wallpaper folder or file is a symlink (a wallpaper folder linked into a dotfiles repo), the two never match. While a generated theme is active, every `_applyShown` regenerates all ten files: each start or QML reload, each monitor connecting, each rotation. Each new file carries a new `timestamp`, so `_reloadTheme` sees new content and runs every enabled theme integration again (`themeIntegrations`). Fix: record the absolute path as given (drop the `EvalSymlinks` lines 51–53, since `os.Open` follows the link, and update the test row to expect the link), so the shell's comparison holds.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### A theme generated from another monitor's wallpaper is replaced by the primary's at the next start
-- **Where:** `services/core/ThemeManager.qml:194` (`syncGeneratedTheme`), `services/ui/WallpaperManager.qml:36` (`pick`), `services/ui/LauncherCommands.qml:159`
-- **What:** A pick by hand always generates themes from the picked wallpaper (wallpaper-and-schedules.md: "picks by hand … always do"), including one for a monitor that isn't the primary: the Themes page's monitor picker, or `pick` from the focused monitor. The launcher's `/generate` does the same from its target monitor's wallpaper. `syncGeneratedTheme` holds a generated theme to the primary's wallpaper only (`root.wallpaper`), and `_applyShown` runs it on every change of what's shown and once at start-up. Scenario: with a generated theme active and two monitors, pick a wallpaper for DP-2. The colors follow it. At the next qs start or reload, or the next monitor hotplug or rotation, `syncGeneratedTheme` sees `generated.wallpaper` ≠ the primary's and regenerates from the primary's wallpaper, so the colors the user picked change without them doing anything. When the theme was already from a non-primary wallpaper, the pick's own `_applyShown` queues the primary's generation right behind the pick's, and the picked colors flash and are replaced. Fix: in `syncGeneratedTheme`, accept any wallpaper shown on any monitor (`Object.values(shownWallpapers.wallpapers)` plus `wallpaper`, decoded) as up to date. A restored snapshot whose generation's wallpaper is no longer shown still regenerates, now from the primary's.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the theming system
-
-### Icons.overrides never reaches window icons
-- **Where:** `services/system/AppIconManager.qml:37` (`resolveWindowIcon`), `config/schema/sections/Icons.yaml:12`, `components/bar/widgets/SystemTray/SystemTray.qml:78`
-- **What:** The schema documents `overrides` as "App name → icon path/URL, for apps whose tray or window icon doesn't resolve", but `IconsConfig.overrides` has one reader, the tray (`grep -rn IconsConfig` outside the reader and docs: only `SystemTray.qml:78`). `AppIconManager.resolveWindowIcon`, which every window icon goes through (the dock, the workspace strips and grid, the switcher, window previews, the launcher: 8 files), never reads it. A user whose app's window class has no icon adds `"Icons": {"overrides": {"someclass": "/path/icon.svg"}}` (the setting is `x-settings: false`, so config.json is the only way in): the tray would take it, the dock and switchers keep the generic icon. Fix: in `resolveWindowIcon`, before the cache, `const override = IconsConfig.overrides[windowClass ?? ""]; if (override) return override;` (outside the per-class cache, so editing the map applies at once), and say in the description that a window's key is its class.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### A cancelled rename's typed text comes back in the notes and chat rename fields
-- **Where:** `components/content/parts/notes/NoteBrowser.qml:383` (`text`), `components/content/parts/chat/ConversationList.qml:143` (`text`), `components/reusable/StyledTextEntry.qml:64` (`onTextChanged`)
-- **What:** Both rename fields bind `text:` to the item's name (`text: row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName)`; `text: item.conversation.title ?? ""`), against StyledTextEntry's contract (qml-pitfalls.md: "`StyledTextEntry` writes every keystroke back to `text`, dropping any binding: push the value in"). The first keystroke runs `onTextChanged: root.text = text`, which drops the binding. Escape only clears `renaming` (`input.Keys.onEscapePressed: root.renaming = ""`), hiding the field; the delegate stays. Rename a note "foo" and type "bar" (replacing the selected name), press Escape, then rename the same note again: the field opens with "bar", not "foo", and Enter would save it. The same in the chat's conversation list; a name changed elsewhere meanwhile isn't shown either. Fix: push the name in as the field opens: in each field's `onVisibleChanged`, `text = <the name>` before `selectAll()`, and drop the `text:` binding (one line each).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### Nine shared controls animate with their own easing, written out where Glide does it
-- **Where:** `components/reusable/StyledVolumeBar.qml:91`, `components/reusable/StyledTextEntry.qml:50`, `components/reusable/StyledSlider.qml:39`, `components/reusable/StyledTextButton.qml:46`, `components/reusable/PercentageCircle.qml:87`, `components/reusable/StyledSwitch.qml:22`, `components/reusable/FoldingColumn.qml:29`, `components/reusable/PopInRectangle.qml:41`, `components/reusable/PasswordEntry.qml:125`
-- **What:** AGENTS.md › Config: "a `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` with `Appearance.easing`" (`check_structure` checks only the duration). Fourteen `easing.type: Easing.*` lines in these nine files break it: `Easing.InOutQuad` in StyledTextEntry, StyledTextButton (×2), StyledSwitch, PopInRectangle's settle and PasswordEntry's busy bar (×2); `Easing.OutQuad` in StyledSlider (×3); `Easing.OutCubic` written out in StyledVolumeBar (×2), PercentageCircle and FoldingColumn, the value `Appearance.easing` has today. So the most used controls (buttons, fields, switches, folds) don't move as the rest of the shell does, and wouldn't follow a change to the shell's easing. Ten of them are whole `Behavior { NumberAnimation | ColorAnimation { duration; easing } }` blocks that `Glide` / `ColorGlide` are for (shared-ui-pieces.md: "`Glide on width {}` ... `duration` for animNormal/animSlow; `enabled` to gate it"): StyledVolumeBar 91–97 and 99–105, StyledTextEntry 50–55, StyledSlider 39–45 and 88–93, StyledTextButton 46–51 and 55–60, PercentageCircle 87–92, StyledSwitch 22–27, FoldingColumn 29–34 (63 lines). Fix: those ten become `Glide on <p> { duration: Appearance.animNormal }` / `ColorGlide on <p> { … }` (with `enabled:` where they have it; 33 lines, 30 removed); PopInRectangle's and PasswordEntry's sequences take `Appearance.easing`. (StyledSlider's 69–75 goes in [Every StyledSlider overrides its look and its value the same way](#every-styledslider-overrides-its-look-and-its-value-the-same-way).) 24 more literal easings outside this system (`grep -rn 'easing.type: Easing' --include=*.qml . | wc -l`: 38) are their systems' to judge.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### Every StyledSlider overrides its look and its value the same way
-- **Where:** `components/reusable/StyledSlider.qml:16` (`value`, `targetValue`, `_internalValue`), `components/reusable/StyledSlider.qml:69`, `components/forms/SchemaNumberField.qml:193`, `components/content/parts/custom/elements/Bar/CustomBar.qml:52`, `components/content/parts/AudioRow.qml:95`, `components/content/NowPlaying/NowPlaying.qml:213`, `components/content/NightLightControls/NightLightControls.qml:112`
-- **What:** Nobody uses the slider's defaults (a 4 px trough, a 24×14 handle in `Theme.backgroundAlt`, a `Theme.foreground` fill): its five users set a 14×14 handle of radius 7 (four of five, NowPlaying scaling it), `handleColor: Theme.foreground` (four), `fillColor: Theme.accent` (two; the others colour it by state or element) and a 6 px trough (three). And all five push their value through `targetValue`, each with the same comment, "Not `value`: dragging assigns that, which would drop the binding", since `value` is both the documented input and what a drag writes. The fill also eases twice: `_internalValue` animates (39–45) and the fill's width has its own Behavior (69–75), so each frame of the first restarts the second and the fill lags its target. Fix: defaults become what the users set (6 px trough, 14 px round handle in `Theme.foreground`, accent fill), removing 21 lines from the users (SchemaNumberField 193 and 195–199, CustomBar 52–55, AudioRow 95–98, NowPlaying 213–214, NightLightControls 112–116); `value` becomes the pushed-in input, which a drag never writes (the drag's place in a private property, `pressed` as now), so the five comments go (5 lines); delete the width Behavior (69–75, 7 lines). 33 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### Eleven StyledIconButtons undo its stretching to be FlatIconButtons
-- **Where:** `components/reusable/StyledIconButton.qml:30` (`Layout.fillHeight`, `Layout.fillWidth`), `components/reusable/FlatIconButton.qml:10` (`size`), `components/views/Settings/DockListCard.qml:118`, `components/views/Keybinds/Keybinds.qml:152`, `components/surfaces/notifications/ToastItem.qml:364`, `components/surfaces/edgemenu/EdgeMenuBody.qml:101`, `components/content/parts/notifications/NotificationReply.qml:42`, `components/content/parts/notifications/NotificationItemDelegate.qml:186`, `components/content/parts/notifications/NotificationGroupDelegate.qml:276`
-- **What:** StyledIconButton fills both directions in a layout by default (lines 30–31). Apart from FlatIconButton, its only subclass, it has eleven direct users (`grep -rn '^\s*StyledIconButton {'`: 12 with FlatIconButton), and every one undoes that and sizes a square by hand: `Layout.fillWidth: false`, `Layout.fillHeight: false`, `Layout.preferredWidth/Height: <side>` (DockListCard ×3, Keybinds ×3, ToastItem, NotificationReply), or `width`/`height` (EdgeMenuBody, both notification delegates): 36 lines, which is FlatIconButton's `size` (its lines 10–19). Fix: StyledIconButton takes FlatIconButton's square `size` (default `Widget.iconButton`) and its no-stretch layout lines in place of its own three; FlatIconButton keeps only its `iconColor`; the eleven users set `size:` (11 lines for 36): 25 lines.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### ActionTile and ActionPill carry the same countdown bar
-- **Where:** `components/reusable/ActionTile.qml:110` (`countdownBar`, `drain`, `onActiveChanged`), `components/reusable/ActionPill.qml:121` (`countdownBar`, `drain`, `onActiveChanged`)
-- **What:** The "time left while active" bar is the same 26 lines in both (`diff <(sed -n 110,135p ActionTile.qml) <(sed -n 121,146p ActionPill.qml)` prints nothing): a Rectangle along the bottom, a NumberAnimation draining its width over `countdown` ms, and the `onActiveChanged` that restarts it. Their frames are the same too (`radius`, the `color` and `border.color` from `active`/`hot`/`tone`, two `ColorGlide`s: ActionTile 48–55, ActionPill 36–43). Fix: one small piece in `components/reusable/` (a bar draining over a duration while running), each tile placing it in 3 lines; 26 lines go.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### StyledTextEntry and StyledTextArea carry the same blinking cursor
-- **Where:** `components/reusable/StyledTextEntry.qml:104` (`cursorDelegate`), `components/reusable/StyledTextArea.qml:171` (`cursorDelegate`)
-- **What:** Both draw the accent cursor and blink it with the same `SequentialAnimation` (two `PropertyAnimation`s of 500 ms marked as behaviour timing), 19 lines each, the same but for the focus they read (`textField` / `textInput`) and a comment. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a cursor piece in `components/reusable/` reading its parent input's `activeFocus`, set as the `cursorDelegate` of both; 19 lines go (and the blink timing lives in one place).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
-### ncspot's splice keeps nothing after a begin marker that follows the end marker
-- **Where:** `backend/internal/theme/integrations/merge.go:27` (`SpliceNcspot`), `backend/internal/theme/effects.go:194` (`ncspot`)
-- **What:** `SpliceNcspot` accepts any file with one begin and one end marker, the begin in `[theme]`, without checking their order. When the end comes first, the rewrite copies lines up to the begin marker, then the colors, and sets `inside` with no end marker left to clear it: every later line of `config.toml` is dropped, and `ncspot` writes the result (no backup). Reached without hand-editing the markers' order: a user who deleted the begin line sees the hookup as not done, clicks Apply, and `hookup.Edit` (`place: section`, only the missing line) appends the begin marker at the end of `[theme]`, after the remaining end marker. Proven with a probe test: `[theme]`, `background = "x"`, the end marker, then `[keybindings]` with `"q" = "quit"` → after Apply the begin line sits after the end line, and the next splice returns `[theme]`, `background`, the two markers and the colors, without `[keybindings]`. Fix: in `SpliceNcspot`, note the begin's and end's line numbers and return `ok = false` unless the begin comes before the end (the integration then warns that the block is missing and leaves the file alone); a test row for the swapped order.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### Kitty reloads only when its socket is /tmp/kitty-*
-- **Where:** `backend/internal/theme/effects.go:254` (`reloadKitty`), `config/schema/sections/ThemeIntegrations.yaml:59` (`kitty`'s description)
-- **What:** The switch says "Reloads kitty when allow_remote_control is on", but `reloadKitty` only tries the sockets matching `/tmp/kitty-*`. kitty's `listen_on` defaults to `none` (no socket at all, whatever `allow_remote_control` says), and its own examples are `unix:${TEMP}/mykitty` and `unix:@mykitty` (kitty.conf), which give `/tmp/mykitty-<pid>` or an abstract socket: neither matches, so a theme change reaches no running kitty unless the user happened to name the socket `kitty`. kitty reloads its whole config on `SIGUSR1` (kitty.conf: "sending kitty the SIGUSR1 signal"; its changelog fixes that on macOS in 0.24.0), which needs neither remote control nor a socket. Fix: replace `reloadKitty` (lines 253–266, 14 lines) with the effect `"kitty": {after: live(func(r *run) { r.signalFrom("kitty", "0.24", syscall.SIGUSR1, "kitty") })}`, as Ghostty's, and change the description to "Reloads running kitty." (and the doc's Reloads line).
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### fzf's flags rebuilt in Go where a template does
-- **Where:** `backend/internal/theme/integrations/table.go:187` (`fzf`)
-- **What:** `fzf` takes `t.vars(true)` and joins fixed `name:${VAR}` pairs into one `--color=` line, which is what `tmpl{text: true}` does with a one-line template; the system's Checks name such an entry as an odd one out ("a table entry … reimplementing what `tmpl` … does"). Fix: a `templates/fzf` holding `--color=fg:${FOREGROUND},bg:${BACKGROUND},hl:${ACCENT},fg+:${FOREGROUND_HIGHLIGHT},bg+:${BACKGROUND_HIGHLIGHT},hl+:${ACCENT},info:${INFO},marker:${SUCCESS},prompt:${ACCENT},spinner:${ACCENT_ALT},pointer:${ACCENT},header:${FOREGROUND_ALT},border:${BORDER},label:${FOREGROUND_ALT},query:${FOREGROUND},gutter:${BACKGROUND}` and the entry `one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true})`; the goldens stay byte for byte. Removes lines 186–201 (16 lines); the doc's "built in Go (fzf's flags, …)" drops fzf.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### The onboarder's integration commands are a hand-kept list in ThemeManager
-- **Where:** `services/core/ThemeManager.qml:561` (`_integrationCommands`), `config/schema/sections/ThemeIntegrations.yaml`
-- **What:** AGENTS.md › Config: "Prefer a new schema annotation to a hand-kept list in QML". The commands that show an integration's app is installed are a QML map keyed by the `ThemeIntegrations` switches, beside the schema that already carries each switch's per-app facts (`x-hookup`, `x-profiles`); a new integration has to remember a second place (the doc's Adding an integration lists it). Fix: an `x-commands` annotation (described in `config/schema/annotations.yaml`) on the seven switches the map lists (`gtk: []`, `qt`, `helix`, `vscode`, `zed`, `vesktop`, `firefox`), and `integrationCommands(key)` returning that switch's `x-commands`, else `[key]`; removes lines 559–570 (12 lines) and the doc's step.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### A shell started locked locks again on every reload
-- **Where:** `shell/Lockscreen.qml:96` (`Component.onCompleted`), `backend/internal/daemon/daemon.go:498` (`startLocked`), `services/session/LockManager.qml:96` (`reload`)
-- **What:** axiom relaunches the shell with `AXIOM_LOCK_ON_START=1` when `axiom lock` isn't confirmed within 3 s (every lock in a nested Hyprland, see "Nested Hyprland acknowledges a lock too late for axiom lock"), when `axiom restart` runs while locked, and when the shell dies while locked. The variable stays in the qs process's environment for its whole life, and `Lockscreen.qml` checks it in `Component.onCompleted`, which every QML generation runs again: `if (Quickshell.env("AXIOM_LOCK_ON_START") === "1") LockManager.lock();`. So after the user unlocks that shell, the next reload locks the session again: the reload `LockManager.reload()` held back for the unlock (`/reload`, an auto self-update) fires right after the unlock (`onBuiltinLockedChanged` → `Quickshell.reload`) and locks again at once; a saved QML file does the same, and so does every later reload until the shell is restarted. It fails closed (no unlock without PAM), but it is a lock the user didn't ask for, repeated. Fix: start locked once per process, kept across reloads in the existing `PersistentProperties`: add `property bool startedLocked: false` to `lockState`, and `if (!lockState.startedLocked && Quickshell.env("AXIOM_LOCK_ON_START") === "1") { lockState.startedLocked = true; LockManager.lock(); }`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the security system
-
-### With Idle on and the user's own locker left at loginctl lock-session, nothing locks
-- **Where:** `backend/internal/lockscreen/lockscreen.go:181` (`Locker.ownLocker`), `backend/internal/idle/idle.go:489` (`logindOnce`), `services/session/LockManager.qml:88` (`lock`), `components/views/Settings/IdleStatusCard.qml:43` (`detail`), `config/schema/sections/Lockscreen.yaml:21`
-- **What:** `Lockscreen.lockCommand` defaults to `loginctl lock-session` (meant for a user's own idle daemon), and `ownLocker` refuses that command, so with `Lockscreen.mode` `none`, `Idle.enabled` on and the command left at its default: (1) every idle lock step, logind lock request and lock before sleep fails with only a daemon warning (`idle: an action failed`, `idle: locking before sleep`), while the dim, screen-off and suspend steps still run, so the machine idles into suspend unlocked; (2) a lock button runs `loginctl lock-session` (`LockManager.lock`), logind sends `Lock`, the daemon (Idle on) calls `Locker.Lock`, which refuses again: the button does nothing. The Idle card meanwhile says "axiom dims, locks and turns the screens off on these settings, and locks before the computer sleeps." Nothing in the UI joins the two settings (`grep -rn lockCommand --include=*.qml`: only `LockManager.lock` and the reader). Fix: the Idle card's `detail` (and status colour) warns when `Idle.enabled && LockscreenConfig.mode === "none"` and `lockCommand` is empty or `loginctl lock-session`: "Your own locker's command is loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker." Open (maintainer): whether the lock steps should also leave the plan in that state, so the card can say "doesn't lock" instead of a failure in the log.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "yes: the daemon also leaves the plan in a 'doesn't lock' state, so the card shows it as a status"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the security system
-
-### Power repeats the session actions' icons, labels and confirm
-- **Where:** `components/content/Power/Power.qml:25` (`_info`), `services/session/SessionManager.qml:16` (`sessionActionInfo`), `components/surfaces/powermenu/PowerMenuWindow.qml:35` (`run`), `components/content/QuickActions/QuickActions.qml:185` (`run`)
-- **What:** `Power._info` (Power.qml:25-41, 17 lines) restates `SessionManager.sessionActionInfo`'s icons (`bedtime`, `restart_alt`, `power_settings_new`) and `SessionManager.destructiveActions` (`confirm` true for reboot and poweroff), with other words for the same actions ("Restart" / "Shut down" on the lock screen and greeter, "Reboot" / "Power off" in the power menu, QuickActions and launcher). And the press-twice gate (an `armed` string, a 3000 ms `disarm` Timer, "arm unless already armed, else run") is written out three times: `Power.press` and its Timer (Power.qml:44-65), `PowerMenuWindow.run` and `disarm` (:35-44, :82-86), `QuickActions.run` and `disarm` (:185-190, :226-230). Fix: Power reads `SessionManager.sessionActionInfo(action)` and `SessionManager.destructiveActions` (drops `_info`: 17 lines), and one small non-visual `ConfirmGate` (`armed`, `timeout`, `pass(key, needsConfirm)`) replaces the three gates. Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off").
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "a) 'Restart' / 'Shut down'"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the security system
-
-### Uninstall keeps a stale greetd backup when greetd points elsewhere
-- **Where:** `backend/internal/greeterinstall/install.go:520` (`uninstall`)
-- **What:** `uninstall` deletes `/etc/greetd/config.toml.axiom-original` only inside `if rules.GreetdValue(...) == rules.Session`. When the user pointed greetd at another greeter by hand before pressing Remove, the original survives; the next install keeps it (`pointGreetd` copies only when it's missing), so the next uninstall restores the config from before the *first* install, dropping every edit made since (greeter, `vt`, `user`). greeter-install.md says the opposite: "Uninstall puts the original config back and deletes `.axiom-original`, so a later install backs up the config as it is then." Proven with a throwaway test on a scratch root: install, set `command = "tuigreet"` and `vt = 3`, uninstall (`.axiom-original` kept: true), install, uninstall: greetd's config came back as the first install's `agreety`/`vt = 1`. Fix: move `os.Remove(path + ".axiom-original")` after the `if` so every uninstall spends it, plus that sequence as a case beside `TestUninstallRestoresTheOriginal`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the greeter system
-
-### The greeter reads its keyboard layouts before the bundle's are applied
-- **Where:** `services/session/GreetdManager.qml:233` (`Component.onCompleted`, `_readLayouts`), `services/compositor/CompositorManager.qml:293` (`setUpGreeter`)
-- **What:** At start `GreetdManager` calls `_applyCompositor()` (`CompositorManager.setUpGreeter` → the daemon's `greeter.compositor`, which sets the bundle's keyboard layouts on sway or Hyprland) and then `_readLayouts()` at once, without waiting for its reply. The daemon answers each request in its own goroutine (`backend/internal/rpc/rpc.go:482`), and both backends read the layouts from the compositor's live state (`SwayState.keyboard` from `xkb_layout_names`, `HyprState.keyboard` from `devices`), so the read can land before the input is set: a bundle with `us,de` then shows the compositor's default single layout, `KeyboardLayout.canSwitch` (`layouts.length > 1`) is false, the module is inert, and nothing reads the layouts again (only `nextLayout` does, which needs a click). PLAUSIBLE: settle in a nested sway with a bundle setting two layouts and the greeter run non-windowed. Fix: give `setUpGreeter` a `then` callback (called on the reply, error or not) and run `_readLayouts()` from it; windowed, read at once as now.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the greeter system
-
-### The launcher's /generate reads a monitor setting that doesn't exist
-- **Where:** `services/ui/LauncherCommands.qml:156` (`generate`), `config/LauncherConfig.qml` (`screen`)
-- **What:** `/generate` picks its wallpaper with `ShellManager.targetFor(...)` given a `monitors` member that LauncherConfig doesn't have (its ScreenTarget is `screen`; a grep of every LauncherConfig member used, against the reader's members, finds only this one missing). `targetFor(undefined)` resolves as "inherit", so it answers for General's screen target, not the launcher's. Scenario: two monitors with different wallpapers, `General.screen` primary (DP-1) and `Launcher.screen` focused; open the launcher on DP-2 and run `/generate`: the themes are generated from DP-1's wallpaper, not the one on the monitor the launcher is on. [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start) describes `/generate` as using "its target monitor's wallpaper", which only holds after this fix. Fix: pass `LauncherConfig.screen`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### A clip's label and detail are written in both the launcher and the clipboard module
-- **Where:** `services/ui/LauncherManager.qml:480` (`_clipboardRows`), `services/ui/LauncherManager.qml:505` (`_clipboardRow`), `services/ui/LauncherManager.qml:537` (`_clipboardImageRow`), `components/content/ClipboardHistory/ClipboardHistory.qml:61` (`labelOf`, `detailOf`, `allClips`)
-- **What:** Both build "pins first, then the history without them" with the same expression (LauncherManager:480, ClipboardHistory:25), and both turn an entry into its label ("Image {0}", "Image from {0}" with the url's host, the first line) and its detail (line count and time, format and size, "HTML"): LauncherManager:508-514 and 542-543 against ClipboardHistory:61-83. They differ only in the launcher's " · <url>" after "HTML" and the module's "Pinned". Fix: ClipboardManager gets `shown` (the pins-first list) and `labelOf(entry)` / `detailOf(entry)` (the module's 23 lines, moved, with the url suffix); both callers read them, removing about 10 lines from LauncherManager, which keeps its own glyph and hint.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### App scoring is written twice and the use bonus three times
-- **Where:** `services/ui/LauncherManager.qml:132` (`searchApps`), `services/ui/LauncherManager.qml:197` (`_searchRows`), `services/ui/LauncherManager.qml:288` (`_commandRows`), `services/apps/EmojiManager.qml:72` (`search`)
-- **What:** `searchApps` (lines 137-147) and `_searchRows` (lines 199-208) run the same loop over `_apps()` scoring with `_appScore`, one returning apps, the other rows merged with windows. And the frecency bonus `Math.min(25, 8 * Math.log2(1 + frecency))` is spelled out in `_appScore`, `_commandRows` and `EmojiManager.search`. Fix: a `_scoredApps(q)` returning `[{ s, app }]` that both use, and the bonus as one pure function in `components/methods/Search.qml` (a `useBonus(frecency)`: the three callers each have a frecency number, `_commandRows` only that) with a `tst_Search` row: about 8 lines fewer and one place to tune the ranking.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the launcher system
-
-### install.sh and the AUR packages never install notify-send, gio or pactl
-- **Where:** `components/methods/Packages.qml:142` (`packages`), `services/core/DependencyManager.qml:103` (`tools`), `install.sh:77` (`REQUIRED`), `install.sh:80` (`FEATURES`), `scripts/check_packages.py:126` (`main`), `services/system/NotificationManager.qml:226` (`sendNotification`), `services/compositor/CompositorConfigManager.qml:370`, `services/apps/ScreenshotManager.qml:213`
-- **What:** `Packages.packages` has three keys install.sh's `PACKAGES` table doesn't: `gio` (glib2), `notify-send` (libnotify) and `pactl` (libpulse). `DependencyManager.tools` lists all three on the onboarder's Checks page, and `docs/installation.md` lists `gio` and `pactl` as optional features, but install.sh never offers them and neither PKGBUILD names them in `optdepends`. (`gio` is present anyway on Arch, where glib2 comes with quickshell's own `qt6-base` and `polkit`; for it the drift is only in the tables.) `check_packages.py` only checks install.sh's keys against Packages (`for key, cells in table.items()`), never the other way, so the drift passes CI, against AGENTS.md › Checks: "A new dependency goes in install.sh's table, `Packages.packages` and the AUR PKGBUILDs." The one that bites is `notify-send`: `NotificationManager.sendNotification` runs it for every notification axiom sends itself (self-update's "available"/"updated", the missing icon font, the screenshot's Edit action, the compositor config's critical notices), and nothing a fresh Arch install of axiom brings depends on libnotify (`pacman -Si quickshell` and `hyprland` list no libnotify; `pactree -r libnotify` shows only unrelated apps). Scenario: install with `./install.sh --yes` on a fresh Arch, no icon font yet or an update out: the notification is never shown, and nothing says why until the user reaches the Checks page. Fix: `notify-send` moves into Go rather than becoming a dependency (maintainer, 2026-11-01: "yes - note roadmap and issues accordingly to replace notify-send into go"): its three call sites (`NotificationManager.sendNotification`, `CompositorConfigManager`'s critical notices, `ScreenshotManager`'s Edit action) go through a daemon method that sends with the backend's own D-Bus client (`org.freedesktop.Notifications.Notify`, actions through `ActionInvoked`/`NotificationClosed`), and `notify-send` leaves `Packages.packages` and `DependencyManager.tools` rather than being added to install.sh or the PKGBUILDs. For the other two: `PACKAGES` rows for `gio` and `pactl` (Arch `glib2`/`libpulse`, Fedora `glib2`/`pulseaudio-utils`), `FEATURES` rows and `optdepends` for `gio` ("Moving deleted notes to the trash") and `pactl` ("The system's sound in screen recordings"); and make `check_packages.py` also fail on a `Packages.packages` key missing from `PACKAGES`.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the packaging system
-
-### A main-channel update applied after edge moved on needs go to rebuild the binary
-- **Where:** `backend/internal/daemon/selfupdate.go:93` (`replaceInstalled`), `backend/internal/selfupdate/selfupdate.go:347` (`inspect`), `backend/internal/selfupdate/selfupdate.go:149` (`Apply`), `services/core/SelfUpdateManager.qml:81` (`apply`)
-- **What:** On `main`, a check records edge's commit X as `refs/axiom/edge` and reports it as `latest`; `apply` (no fetch) moves the clone to X, then `replaceInstalled` downloads edge, which is only ever main's newest build. When a merge has published Y since the check, `commit != head` turns it into `ErrMissing` and the daemon falls back to building, which on a machine install.sh set up has no `go` (install.sh installs it only when no official build was taken), so the report says `buildError: "go isn't installed"` and SelfUpdateManager notifies "The axiom binary didn't build … settings can't be saved after the next start". Scenario: `SelfUpdate.channel: main`, mode `notify`; the startup check finds X and notifies; a PR merges an hour later; the user clicks Update in Settings → Updates. With several merges a day this is the usual case for notify mode and for an update clicked from the card, not a race (only `auto` applies right after its check). The fallback is pinned with go present (`TestReplaceInstalled`, "main's newest build of another commit: built"), not without it. Fix: `selfupdate.apply` on `main` fetches and notes edge again first (as `Check` does) and, when the newly recorded commit is a fast-forward past the requested `target`, moves to it instead, so the download is the build of the commit checked out; the report's `latest` then names it.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the packaging system
-
-### The onboarder's Checks-page purposes don't match their declared keys
-- **Where:** `services/core/DependencyManager.qml:65` (`tools`), `components/surfaces/onboarding/pages/ChecksPage.qml:66`
-- **What:** ChecksPage shows `I18n.tr(tool.modelData.purpose)`, its comment saying "purposes are declared in DependencyManager", but the declarations above `tools` have drifted from the list: two purposes aren't declared, so they're in no `config/i18n/*.json` and show in English in every language ("Night light, where the compositor has no gamma control", "Screenshots (the picker's frozen frame)": 0 i18n files each), and nine declared keys are no tool's purpose any more ("Copying to the clipboard", "Reading JSON (theme integrations)", "Chat requests", "Theme integrations and keybinds", "Idle locking and screen blanking", "Night light", "Clipboard history shared with other apps", "Typing emoji from the launcher", "Calendar accounts and feeds"), which keeps their translations alive for nothing. Fix: the comment declares exactly the 14 distinct purposes of `tools`' 15 entries (the two X11 tools share one): drop lines 67, 70, 72, 74 and 79 (5 lines) and the stale keys on 66 and 75, and declare the two missing ones.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the packaging system
-
-### daemon.shutdown starts its goroutine past tasks.Go
-- **Where:** `backend/internal/daemon/methods.go:340` (`coreMethods`)
-- **What:** The daemon's docs state "Every goroutine is started through `tasks.Go` … and `Run` waits for all of them" (`docs/dev/backend/README.md` › What exists now, the daemon's parts; the daemon system's Checks repeat it), but `daemon.shutdown` runs `announceClosing` and `d.stop()` on a bare `go func()`: `Run` doesn't wait for it, so it can still be sending `daemon.closing` through a server whose `Serve` has returned. Every other goroutine of the package goes through `tasks.Go` (or, in dev mode's `watch`, a wait group its stop function waits on; the greeter's `Serve`, a channel its function waits on before returning). Fix: `d.tasks.Go(func(context.Context) { announceClosing(d.server, false, closingWait); d.stop() })`, as `reexecSoon` does.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the daemon system
-
-### A Wayland protocol error leaves every client claiming its protocol
-- **Where:** `backend/internal/wayland/client/client.go:99` (`Run`), `backend/internal/daemon/daemon.go:419` (`followCompositor`), `backend/internal/daemon/wayland.go:31` (`waylandNow`)
-- **What:** When the compositor sends `wl_display.error` (any bad request from one of the nine clients on the shared connection), `wire.Conn.Run` closes the connection and `client.Run` returns, but no client is told: each keeps its manager id and objects. `followCompositor` only logs `the Wayland connection failed: monitors aren't known` and falls back to `wire.Watch`. From then on `idlenotify.Notifier.Available()` stays true with its watches armed on a dead socket (proven with a throwaway test on `wiretest`: `Run returned: the compositor reported error 0 on object 2: bad request; Available after: true`), so with Idle on nothing ever dims, locks or turns the screens off while `idle.state` reports the notifier and the watches armed; `wayland.state` keeps `ready: true` and its `typing` / `nightLight` / `clipboard` flags, so `NightLightManager` doesn't fall back to wlsunset (the compositor dropped the gamma/CTM with the client), `ClipboardManager` stays `available` with its history frozen, and `EmojiManager.canType` stays true while `input.type` fails. Related: `wayland.md` says "until then every flag reads off", but `waylandNow` returns the flags whatever `ready` says. Fix: give `client.Client` a `Stop()` that `client.Run` calls on every client when the connection ends (each forgets its ids as its `Start` does and tells its `OnChange`; `waylandSession.Stop` sets `ready` false), and have `waylandNow` return `waylandState{}` while not ready, so the shell sees everything off and falls back.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the dbus-wayland system
-
 ### A transient notification toasts blank
 - **Where:** `services/system/NotificationManager.qml:626` (`server.onNotification`), `services/system/NotificationManager.qml:534` (`_adopt`), `components/surfaces/notifications/ToastItem.qml:21` (`notification`)
 - **What:** A notification with the transient hint (`notify-send -e`, volume or brightness scripts) is not tracked (`if (!notification.transient && rule?.history !== false) { notification.tracked = true; … } else if (!notification.transient && toasts) { notification.tracked = true; … }`), yet `showPopup` still toasts it. Quickshell deletes an untracked notification as soon as the handler returns (`server.cpp`: `if (!notification->isTracked()) { emit NotificationClosed(…); delete notification; }`, no `closed` signal), and a `var` holding a deleted QObject reads `null` with its bindings re-evaluated (checked with a qmltestrunner case: a binding `holder.n?.summary ?? "<none>"` reads `<none>` after `destroy()`). So the toast shows no app name, summary or body, a bell for its avatar, no actions, and isn't clickable, for its whole timeout. Fix: track a transient one that toasts as a toast-only one (`else if (toasts) { notification.tracked = true; root._toastOnly = root._toastOnly.concat([notification]); }`, dropping `!notification.transient &&`), so `toastsGone` expires it once no screen shows it; and `_adopt` expires a kept transient one after a reload as it does a `history: false` one (`if (notif.transient || root.ruleFor(notif)?.history === false)`), so a reload never gives it an entry.
@@ -1573,6 +1220,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
+
+### DockWindow logs a binding loop on _wouldShow
+- **Where:** `components/surfaces/dock/DockWindow.qml:270` (`_wouldShow`), `components/surfaces/dock/DockWindow.qml:318` (`conceal`), `components/hosts/popout/PopoutClaim.qml` (`_sync`), `services/ui/PopoutManager.qml` (`_refuse`), `shell/Dock.qml` (the DockWindow the log names)
+- **What:** The live shell logged `Binding loop detected for property "_wouldShow"` (`@shell/Dock.qml[35:19]`) after a reload on 2026-11-02. main's code has the loop (none of these files differ on the maintainer's branch): when `_wouldShow` turns true (the dock latches) while a popout covers its spot, the claim's `wanted:` binding (line 247) makes `PopoutClaim._sync` call `PopoutManager.claim`, which refuses a resident synchronously (`_refuse` puts it `yielded`); `away` turns true and `onAwayChanged` runs `conceal()`, setting `latched = false` while `_wouldShow`'s binding is still writing its value. The dock ends hidden, as wanted, but with the warning. Fix: drop the latch a turn later (`Qt.callLater` in `onAwayChanged`), or have `conceal` skip `latched` when `away` already hides it.
+- **Size:** small
+- **Found:** 2026-11-02, while clearing out the launcher's issues (platform-07)
+
 
 ### A device's own level arriving late brings the OSD's bars out beside its card
 - **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`, `_openBox`), `components/methods/OSDItems.qml` (`replaces`)
@@ -1588,7 +1242,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### The notification list's delegates animate with their own easing
 - **Where:** `components/content/parts/notifications/NotificationGroupDelegate.qml:124`, `components/content/parts/notifications/NotificationGroupDelegate.qml:192`, `components/content/parts/notifications/NotificationGroupDelegate.qml:301`, `components/content/parts/notifications/NotificationItemDelegate.qml:80`
-- **What:** AGENTS.md › Config: "a `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` with `Appearance.easing`" (`check_structure` checks only the duration). Nine `easing.type: Easing.*` lines break it: `Easing.OutCubic` at NotificationGroupDelegate 124, 132, 195, 304 and NotificationItemDelegate 80, 88, 99, `Easing.InCubic` at NotificationGroupDelegate 147 and NotificationItemDelegate 117; and three opacity animations (NotificationGroupDelegate 153, NotificationItemDelegate 105, 123) have no easing at all, while the same snap-back in ToastItem uses `Appearance.easing`. (These nine are among the 24 literal easings outside the ui-kit that [Nine shared controls animate with their own easing, written out where Glide does it](#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it) leaves to their systems; that entry covers only `components/reusable/`, so the two don't overlap.) Two of them are whole `Behavior { NumberAnimation { duration; easing } }` blocks that `Glide` is for (shared-ui-pieces.md: "`Glide on width {}` ... `duration` for animNormal/animSlow"): the card's height (NotificationGroupDelegate 192–197) and the chevron's rotation (301–306), 12 lines. Fix: those two become `Glide on height { duration: Appearance.animNormal }` / `Glide on rotation { … }` (2 lines, 10 removed); the rest take `Appearance.easing` (or go with the shared swipe piece in [The history's group and entry delegates repeat one swipe-away mechanism](#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)).
+- **What:** AGENTS.md › Config: "a `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` with `Appearance.easing`" (`check_structure` checks only the duration). Nine `easing.type: Easing.*` lines break it: `Easing.OutCubic` at NotificationGroupDelegate 124, 132, 195, 304 and NotificationItemDelegate 80, 88, 99, `Easing.InCubic` at NotificationGroupDelegate 147 and NotificationItemDelegate 117; and three opacity animations (NotificationGroupDelegate 153, NotificationItemDelegate 105, 123) have no easing at all, while the same snap-back in ToastItem uses `Appearance.easing`. (These nine are among the 24 literal easings outside the ui-kit that the ui-kit's own easing fix (`components/reusable/`) left to their systems.) Two of them are whole `Behavior { NumberAnimation { duration; easing } }` blocks that `Glide` is for (shared-ui-pieces.md: "`Glide on width {}` ... `duration` for animNormal/animSlow"): the card's height (NotificationGroupDelegate 192–197) and the chevron's rotation (301–306), 12 lines. Fix: those two become `Glide on height { duration: Appearance.animNormal }` / `Glide on rotation { … }` (2 lines, 10 removed); the rest take `Appearance.easing` (or go with the shared swipe piece in [The history's group and entry delegates repeat one swipe-away mechanism](#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:notifications system
 
@@ -1700,7 +1354,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Idle dimming is forgotten across a shell reload
 - **Where:** `services/system/BrightnessManager.qml:92` (`_dimmed`)
-- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive: see [DailySchedule's persisted state never survives a reload](#dailyschedules-persisted-state-never-survives-a-reload)).
+- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive, as `DailySchedule` and `DeadlineTicker` show: [Todo and pomodoro](features/todo-pomodoro.md) › Shared plumbing).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 
@@ -1874,12 +1528,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `services/apps/ScreenshotManager.qml:500` (`Component.onCompleted`, the handler), `services/apps/ScreenshotManager.qml:194` (`finish`), `services/apps/ScreenshotManager.qml:426` (`_recorded`)
 - **What:** Every screenshot and recording notification carries the same desktop entry (`axiom-screenshot`), and its one handler opens `root._lastPath`, which each new capture overwrites (lines 194 and 426): `CommandManager.runDetached(["xdg-open", root._lastPath])`. Take screenshot A, then screenshot B (or finish a recording), then click A's notification in the notification centre: B opens. The doc promises "(click opens it)" for each. CONFIRMED by reading. Fix: open what the clicked notification names: the handler gets the entry (`NotificationManager.openApp` passes it to `root._handlers[id]`), whose `appIcon` already is a screenshot's path (`"icon": path`); a recording passes its path the same way (or as a body/hint the handler reads); `_lastPath` and its two assignments go (3 lines).
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the screenshots-recording system
-
-### The screenshot's Edit notification rebuilds sendNotification's actions
-- **Where:** `services/apps/ScreenshotManager.qml:204` (`finish`), `services/system/NotificationManager.qml:227` (`sendNotification`)
-- **What:** `finish` runs its own `notify-send … -A edit=…` through `CommandManager.run` and parses stdout (lines 204-216, 13 lines), though `NotificationManager.sendNotification` already takes `actions: [{ id, label }]` and `onAction(id)` and does exactly that wait-and-parse (DeadlineTicker uses it). The copy also leaves a third `notify-send` call site for the move into Go that *install.sh and the AUR packages never install notify-send, gio or pactl* plans. Fix: one call, `NotificationManager.sendNotification("axiom", summary, body, { "desktopEntry": root._desktopEntry, "icon": path, "actions": root.annotator === "" ? [] : [{ "id": "edit", "label": I18n.tr("Edit in {0}", root.annotatorName) }], "onAction": () => root.edit(path) })`, replacing lines 204-216 (13 lines) with about 7, and the branch on `annotator` goes.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the screenshots-recording system
 
 ### ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour

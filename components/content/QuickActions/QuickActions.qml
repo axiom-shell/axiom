@@ -12,8 +12,8 @@ import qs.components.content.base
 // A grid of action tiles: toggles, session actions and pin, in any mix.
 // Tiles that can't work here are hidden: night light (no color transform,
 // gamma control or wlsunset) and power saver (power-profiles-daemon)
-// without their tool, pin outside an edge menu. Log out, reboot and power
-// off ask for a second click.
+// without their tool, pin outside an edge menu. Log out, restart and shut
+// down ask for a second click.
 // Names show on every tile or none ("auto": only when all fit whole),
 // always ("show", elided) or never ("hide").
 // "pills" draws wide tiles with a status line, as Android's quick settings
@@ -26,8 +26,6 @@ import qs.components.content.base
 //               labels: "auto" | "show" | "hide", style: "tiles" | "pills" }
 Card {
   id: root
-
-  property string armed: ""
 
   readonly property bool inMenu: EdgeMenuManager.canPin(root.host)
   readonly property bool pinned: root.inMenu && EdgeMenuManager.isPinned(root.host.id)
@@ -134,8 +132,8 @@ Card {
     const destructive = SessionManager.destructiveActions.includes(name);
     return {
       "icon": info.icon,
-      "label": root.armed === name ? I18n.tr("Confirm?") : info.label,
-      "active": root.armed === name,
+      "label": gate.armed === name ? I18n.tr("Confirm?") : info.label,
+      "active": gate.armed === name,
       "destructive": destructive,
       "tone": destructive ? Theme.error : Theme.accent
     };
@@ -182,13 +180,8 @@ Card {
 
   function run(name) {
     if (root.sessionActions.includes(name)) {
-      if (SessionManager.destructiveActions.includes(name) && root.armed !== name) {
-        root.armed = name;
-        disarm.restart();
-        return;
-      }
-      root.armed = "";
-      SessionManager.sessionAction(name);
+      if (gate.pass(name, SessionManager.destructiveActions.includes(name)))
+        SessionManager.sessionAction(name);
       return;
     }
     switch (name) {
@@ -229,10 +222,8 @@ Card {
   Component.onCompleted: IdleManager.acquire(root, 1000)
   Component.onDestruction: IdleManager.release(root)
 
-  Timer {
-    id: disarm
-    interval: 3000
-    onTriggered: root.armed = ""
+  ConfirmGate {
+    id: gate
   }
 
   TileGrid {
@@ -263,7 +254,7 @@ Card {
         forceLabel: root.labels === "show"
         activeColor: def.destructive ? Theme.error : Theme.accent
         tone: def.tone ?? activeColor
-        countdown: def.destructive ? disarm.interval : 0
+        countdown: def.destructive ? gate.timeout : 0
         opens: detail !== ""
         onClicked: root.tap(action, tile)
         onOpened: root.expand(tile.detail, tile.def.detailProperties ?? {}, tile)
@@ -289,7 +280,7 @@ Card {
         active: def.active
         activeColor: def.destructive ? Theme.error : Theme.accent
         tone: def.tone ?? activeColor
-        countdown: def.destructive ? disarm.interval : 0
+        countdown: def.destructive ? gate.timeout : 0
         opens: detail !== ""
         onClicked: root.tap(action, pill)
         onOpened: root.expand(pill.detail, pill.def.detailProperties ?? {}, pill)
