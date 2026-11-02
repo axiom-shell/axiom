@@ -9,8 +9,9 @@ import qs.services.core
 // axiom's `weather` topic, which fetches Open-Meteo's forecast for their
 // coordinates, else their location (geocoded), else the machine's IP,
 // every `interval` while some widget wants it. A failed fetch keeps the
-// last good data, and so does stopping, so a widget created again (the
-// overlay reopening) shows it at once while it refreshes.
+// last good data for the same settings (with none, `error` says why), and
+// so does stopping, so a widget created again (the overlay reopening)
+// shows it at once while it refreshes.
 //   WeatherManager.acquire(owner)
 //   WeatherManager.release(owner)
 //   WeatherManager.weather .current .condition .place …
@@ -18,9 +19,12 @@ QtObject {
   id: root
 
   // { latitude, longitude, name }
-  readonly property var place: _shown?.place ?? null
+  readonly property var place: _weather?.place ?? null
   // Open-Meteo's forecast: current, hourly (12h), daily (5 days)
-  readonly property var weather: _shown?.weather ?? null
+  readonly property var weather: _weather?.weather ?? null
+  // Why there's no weather for the settings ("" while there is, or it's
+  // still loading)
+  readonly property string error: _shown?.error ?? ""
   readonly property var current: weather?.current ?? null
   readonly property var condition: current ? conditionFor(current.weather_code, current.is_day) : null
   readonly property string unitSymbol: WeatherConfig.units === "fahrenheit" ? "°F" : "°C"
@@ -110,6 +114,7 @@ QtObject {
     const s = root._state;
     return s && s.location === WeatherConfig.location && s.latitude === WeatherConfig.latitude && s.longitude === WeatherConfig.longitude && s.units === WeatherConfig.units ? s : null;
   }
+  readonly property var _weather: root._shown?.error ? null : root._shown
 
   // The request as one string, so axiom is asked again only when it
   // really changes

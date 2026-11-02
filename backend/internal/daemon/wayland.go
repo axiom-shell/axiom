@@ -16,7 +16,8 @@ import (
 // shell (wayland.state): the services gate on it, not on a compositor.
 type waylandState struct {
 	// Ready: the connection's globals are bound, so the rest is what the
-	// compositor offers (all off before)
+	// compositor offers (all off before), or the connection failed since
+	// (all off: nothing on it works)
 	Ready bool `json:"ready"`
 	// Typing: virtual keyboards (input.type)
 	Typing bool `json:"typing"`
@@ -30,8 +31,11 @@ type waylandState struct {
 
 func (d *Daemon) waylandNow() waylandState {
 	d.wayland.mu.Lock()
-	ready := d.wayland.ready
+	ready, failed := d.wayland.ready, d.wayland.failed
 	d.wayland.mu.Unlock()
+	if !ready || failed {
+		return waylandState{Ready: ready}
+	}
 	return waylandState{Ready: ready, Typing: d.keyboard.Available(), NightLight: d.nightLight.Mode(), Clipboard: d.clip.Protocol()}
 }
 
@@ -108,9 +112,11 @@ func (d *Daemon) newNightLight() {
 // about the compositor behind it, and whether it's ready; a client.Client
 // binding nothing, last on the connection so its Ready follows the others'.
 type waylandSession struct {
-	mu     sync.Mutex
-	s      *client.Session
-	ready  bool
+	mu    sync.Mutex
+	s     *client.Session
+	ready bool
+	// failed: the connection failed after Start (a protocol error)
+	failed bool
 	pushed *waylandState
 	// onChange is told when ready changes
 	onChange func()
@@ -129,7 +135,7 @@ func (w *waylandSession) CompositorPID() int {
 func (w *waylandSession) Interfaces() []string { return nil }
 func (w *waylandSession) Start(s *client.Session) {
 	w.mu.Lock()
-	w.s, w.ready = s, false
+	w.s, w.ready, w.failed = s, false, false
 	w.mu.Unlock()
 	w.onChange()
 }
@@ -138,6 +144,15 @@ func (w *waylandSession) Removed(uint32)       {}
 func (w *waylandSession) Ready() {
 	w.mu.Lock()
 	w.ready = true
+	w.mu.Unlock()
+	w.onChange()
+}
+
+// Failed: the connection failed (followCompositor), so the shell falls
+// back from everything it offered.
+func (w *waylandSession) Failed() {
+	w.mu.Lock()
+	w.ready, w.failed = true, true
 	w.mu.Unlock()
 	w.onChange()
 }

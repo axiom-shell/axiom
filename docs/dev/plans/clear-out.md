@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08 and core-ui-theming-02 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02 and core-ui-theming-03 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -70,7 +70,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 22 | platform-07 | minor-sweep | Done: The launcher with its providers | 2 | ~80 | platform-05 |  |
 | 23 | platform-08 | minor-sweep | Done: Security: the session actions | 1 | ~60 | platform-02 | Q4 |
 | 24 | core-ui-theming-02 | major | Done: Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
-| 25 | core-ui-theming-03 | major | Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
+| 25 | core-ui-theming-03 | major | Done: Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
 | 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
 | 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
 | 28 | core-ui-theming-06 | minor-sweep | ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
@@ -295,11 +295,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The active media player is Spotify first and never follows playback
   - Album art piles up in the runtime folder for the whole session
   - DailySchedule's persisted state never survives a reload
-- **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
-  - [A failed update check shows as up to date](../issues.md#a-failed-update-check-shows-as-up-to-date)
-  - [A weather fetch that fails shows Loading forever](../issues.md#a-weather-fetch-that-fails-shows-loading-forever)
-  - [A Wayland protocol error leaves every client claiming its protocol](../issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
-  - [The Updates popout's package list is frozen at opening](../issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
+- **core-ui-theming-03** (4, done): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
+  - A failed update check shows as up to date
+  - A weather fetch that fails shows Loading forever
+  - A Wayland protocol error leaves every client claiming its protocol
+  - The Updates popout's package list is frozen at opening
 - **core-ui-theming-04** (5):
   - [Rescanning the theme folders lists the shell's working directory as themes](../issues.md#rescanning-the-theme-folders-lists-the-shells-working-directory-as-themes)
   - [A generated theme from a wallpaper reached through a symlink is regenerated at every start](../issues.md#a-generated-theme-from-a-wallpaper-reached-through-a-symlink-is-regenerated-at-every-start)

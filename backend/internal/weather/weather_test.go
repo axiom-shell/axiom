@@ -3,6 +3,7 @@ package weather
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -210,5 +211,35 @@ func TestSource(t *testing.T) {
 	}
 	if s := st.(*State); s.Units != "fahrenheit" || s.Place.Latitude != 5 {
 		t.Fatalf("%+v", s)
+	}
+}
+
+// A failed fetch keeps the last weather for the same settings; with none
+// (offline at login, an unknown location), the state says why
+func TestFailureState(t *testing.T) {
+	t.Parallel()
+	f := newFake(t, map[string]string{"/forecast": forecastReply, "/geo": `{"results":[]}`})
+	w := newFetcher(f, &clock{})
+	w.o.Log = slog.New(slog.DiscardHandler)
+	ctx := context.Background()
+	here := Request{Latitude: "1", Longitude: "2"}
+	good, err := w.state(ctx, here)
+	if err != nil || good.(*State).Error != "" {
+		t.Fatalf("good fetch: %+v, %v", good, err)
+	}
+	f.set("/forecast", "")
+	if again, _ := w.state(ctx, here); again != good {
+		t.Errorf("a failure replaced the weather: %+v", again)
+	}
+	st, err := w.state(ctx, Request{Location: "Nowhere"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := st.(*State); s.Location != "Nowhere" || s.Weather.Current != nil || !strings.Contains(s.Error, `unknown location "Nowhere"`) {
+		t.Errorf("unknown location: %+v", s)
+	}
+	f.set("/forecast", forecastReply)
+	if st, _ := w.state(ctx, here); st.(*State).Error != "" || st.(*State).Weather.Current == nil {
+		t.Errorf("recovered: %+v", st)
 	}
 }

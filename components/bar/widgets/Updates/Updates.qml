@@ -11,7 +11,7 @@ import qs.components.bar.widgets.base
 // Fedora; hidden on one UpdatesManager can't check), plus AUR packages via
 // paru/yay when enabled on Arch (UpdatesConfig). Left click opens a
 // terminal to upgrade, right click checks again now; hovering lists the
-// packages. Stacked: the count over the AUR's share.
+// packages, or why the check failed. Stacked: the count over the AUR's share.
 ValueStyleWidget {
   id: root
 
@@ -20,7 +20,8 @@ ValueStyleWidget {
   readonly property var aurPackages: UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []
   readonly property int count: repoPackages.length + aurPackages.length
 
-  hidden: !UpdatesManager.supported || (properties.hideWhenEmpty && count === 0)
+  // Shown while a check fails, so its popout can say why
+  hidden: !UpdatesManager.supported || (properties.hideWhenEmpty && count === 0 && UpdatesManager.error === "")
   readonly property string upgradeCommand: UpdatesConfig.upgradeCommand || UpdatesManager.upgradeCommand(UpdatesConfig.activeAurHelper)
 
   icon: "download"
@@ -52,9 +53,5 @@ ValueStyleWidget {
     hitArea: root.hitArea
     popoutName: "Updates"
     active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
-    extraData: ({
-        "repoPackages": root.repoPackages,
-        "aurPackages": root.aurPackages
-      })
   }
 }

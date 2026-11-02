@@ -48,8 +48,8 @@ Card {
     visible: !root.current
     maxWidth: root.innerWidth
     availableHeight: root.innerHeight
-    icon: "cloud"
-    text: I18n.tr("Loading weather…")
+    icon: WeatherManager.error ? "cloud_off" : "cloud"
+    text: WeatherManager.error ? I18n.tr("Couldn't load the weather: {0}", WeatherManager.error) : I18n.tr("Loading weather…")
   }
 
   // Compact: the condition and temperature

@@ -945,16 +945,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### The Updates popout's package list is frozen at opening
-- **Where:** `components/bar/widgets/Updates/Updates.qml:54` (`extraData`), `components/content/Updates/Updates.qml:20` (`repoPackages`), `components/content/Updates/Updates.qml:21` (`aurPackages`), `components/hosts/popout/BarPopouts.qml:547`
-- **What:** The widget sends `repoPackages`/`aurPackages` as `extraData`. BarPopouts copies each key once in `onLoaded` (`item[key] = root.currentData[key];`), which replaces the panel's live bindings (`property var repoPackages: UpdatesManager.repoPackages`) with the arrays as they were at opening. `PopoutAnchor.open()` returns early while the popout is open.
-  - **Scenario:** with the popout open, right-click the widget (`UpdatesManager.refresh()`), or let an upgrade finish in a terminal. The bar's count changes, but the popout still lists the old packages, or still says it's up to date, until it is reopened.
-  - **Why the keys exist:** only to apply the widget's AUR filter.
-
-  Fix: delete the widget's `extraData` (4 lines). The panel's `aurPackages` binds the same filter itself (`UpdatesConfig.includeAur && UpdatesManager.hasAur ? UpdatesManager.aurPackages : []`), which cards then share; both properties become `readonly`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### NowPlaying builds its strip layout and a second transport hidden in every mode
 - **Where:** `components/content/NowPlaying/NowPlaying.qml:330` (the strip), `components/content/NowPlaying/NowPlaying.qml:440` (the grid's `Transport`), `components/content/NowPlaying/NowPlaying.qml:453` (the popout's `Transport`)
 - **What:** components/content/AGENTS.md says "a part shown in one mode only is a Loader gated on it, not `visible: false`". All three parts here are gated by `visible` only:
@@ -1311,18 +1301,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### A failed update check shows as up to date
-- **Where:** `services/system/UpdatesManager.qml:104` (`repoPackages`), `components/content/Updates/Updates.qml:171`, `backend/internal/updates/updates.go:41` (`State`)
-- **What:** Go ends every check in a state, a failed one with its `error` and the last packages (`st.Repo, st.Error = last.Repo, err.Error()`), but the shell's listener reads only `state.repo` and `state.aur`, so nothing in the UI can tell a failed check from an empty one. Scenario: log in before the Wi-Fi connects (or with the pacman db locked): the first `checkupdates` fails, `last.Repo` is still empty, and the Updates card says "System is up to date" (and the widget shows 0, or hides with `hideWhenEmpty`) until the next check, 30 minutes later by default. Fix: keep `state.error` in a new `error` property of UpdatesManager; the card shows it in place of "System is up to date" and the widget's tooltip names it.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### A weather fetch that fails shows Loading forever
-- **Where:** `backend/internal/weather/weather.go:148` (`fetch`), `services/apps/WeatherManager.qml:109` (`_shown`), `components/content/Weather/Weather.qml:52`
-- **What:** A failed fetch returns an error, which the topics hub only logs (once per distinct error) and never pushes, so the shell keeps its last state. That's right while the settings are unchanged, but `_shown` drops a state fetched for other settings, so with no good fetch yet for the current ones nothing ever says why. Scenarios: log in offline, and the card says "Loading weather…" until the next fetch, 15 minutes later by default, even once the network is back; type a location Open-Meteo doesn't know (`unknown location "…"`), and it says "Loading weather…" for good. Fix: on a failure, `fetch` returns a state for the request with an `error` and no weather (the hub pushes it since it differs), a new `error` property of WeatherManager exposes it while it answers the current settings, and the card and the widget's tooltip show it in place of loading.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
 ### runDetached warns about a lost connection
 - **Where:** `services/core/CommandManager.qml:71` (`runDetached`)
 - **What:** `run()` and `_logFailure` skip an error of kind `unavailable` (the connection to axiom closed: a re-exec or restart, already logged where it happens), but `runDetached` warns on any error. The live log shows it after reloads: `[CommandManager] mkdir: the connection to axiom closed` (NotificationManager's startup `mkdir -p` of its image folder, queued as the connection went). Fix: `if (error && error.kind !== "unavailable")`, as `run` does.
@@ -1412,12 +1390,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** AGENTS.md › Config: "Prefer a new schema annotation to a hand-kept list in QML". The commands that show an integration's app is installed are a QML map keyed by the `ThemeIntegrations` switches, beside the schema that already carries each switch's per-app facts (`x-hookup`, `x-profiles`); a new integration has to remember a second place (the doc's Adding an integration lists it). Fix: an `x-commands` annotation (described in `config/schema/annotations.yaml`) on the seven switches the map lists (`gtk: []`, `qt`, `helix`, `vscode`, `zed`, `vesktop`, `firefox`), and `integrationCommands(key)` returning that switch's `x-commands`, else `[key]`; removes lines 559–570 (12 lines) and the doc's step.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the theme-integrations system
-
-### A Wayland protocol error leaves every client claiming its protocol
-- **Where:** `backend/internal/wayland/client/client.go:99` (`Run`), `backend/internal/daemon/daemon.go:419` (`followCompositor`), `backend/internal/daemon/wayland.go:31` (`waylandNow`)
-- **What:** When the compositor sends `wl_display.error` (any bad request from one of the nine clients on the shared connection), `wire.Conn.Run` closes the connection and `client.Run` returns, but no client is told: each keeps its manager id and objects. `followCompositor` only logs `the Wayland connection failed: monitors aren't known` and falls back to `wire.Watch`. From then on `idlenotify.Notifier.Available()` stays true with its watches armed on a dead socket (proven with a throwaway test on `wiretest`: `Run returned: the compositor reported error 0 on object 2: bad request; Available after: true`), so with Idle on nothing ever dims, locks or turns the screens off while `idle.state` reports the notifier and the watches armed; `wayland.state` keeps `ready: true` and its `typing` / `nightLight` / `clipboard` flags, so `NightLightManager` doesn't fall back to wlsunset (the compositor dropped the gamma/CTM with the client), `ClipboardManager` stays `available` with its history frozen, and `EmojiManager.canType` stays true while `input.type` fails. Related: `wayland.md` says "until then every flag reads off", but `waylandNow` returns the flags whatever `ready` says. Fix: give `client.Client` a `Stop()` that `client.Run` calls on every client when the connection ends (each forgets its ids as its `Start` does and tells its `OnChange`; `waylandSession.Stop` sets `ready` false), and have `waylandNow` return `waylandState{}` while not ready, so the shell sees everything off and falls back.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the dbus-wayland system
 
 ### A transient notification toasts blank
 - **Where:** `services/system/NotificationManager.qml:626` (`server.onNotification`), `services/system/NotificationManager.qml:534` (`_adopt`), `components/surfaces/notifications/ToastItem.qml:21` (`notification`)

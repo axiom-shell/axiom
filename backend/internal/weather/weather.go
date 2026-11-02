@@ -2,8 +2,9 @@
 // topic (WeatherManager): Open-Meteo's forecast (no API key) for one
 // place, from the Weather settings' coordinates, else their location
 // (geocoded by Open-Meteo), else the machine's IP (ipinfo.io, then
-// ipapi.co, as either may rate limit). A failed fetch is an error the hub
-// logs once, so the shell keeps the last good weather.
+// ipapi.co, as either may rate limit). A failed fetch keeps the last
+// good weather for the same settings; with none, its state carries the
+// error and no weather, so the shell can say why it has none.
 package weather
 
 import (
@@ -11,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -87,6 +89,8 @@ type State struct {
 	Request
 	Place   Place    `json:"place"`
 	Weather Forecast `json:"weather"`
+	// Error is why there's no weather for the request ("" when there is)
+	Error string `json:"error"`
 }
 
 // Options are where the source fetches from; zero values are the real
@@ -95,6 +99,7 @@ type Options struct {
 	Forecast, Geocode, IPInfo, IPAPI string
 	Client                           *http.Client
 	Now                              func() time.Time
+	Log                              *slog.Logger
 }
 
 // Source is the `weather` topic.
@@ -117,6 +122,9 @@ func Source(o Options) topics.Source {
 	if o.Now == nil {
 		o.Now = time.Now
 	}
+	if o.Log == nil {
+		o.Log = slog.New(slog.DiscardHandler)
+	}
 	w := &fetcher{o: o}
 	return topics.Source{
 		Name:    "weather",
@@ -130,7 +138,7 @@ func Source(o Options) topics.Source {
 			if len(requests) > 0 {
 				json.Unmarshal(requests[0], &r)
 			}
-			return w.fetch(ctx, r)
+			return w.state(ctx, r)
 		},
 	}
 }
@@ -143,11 +151,38 @@ type fetcher struct {
 	place    *Place
 	placeKey string
 	placeAt  time.Time
+	// The last state, and the last failure logged (each said once)
+	last   *State
+	failed string
+}
+
+// state is fetch's state for r. A failed fetch keeps the last state when
+// it has weather for r (the hub pushes nothing new), else it is r's with
+// the error.
+func (w *fetcher) state(ctx context.Context, r Request) (any, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	st, err := w.fetch(ctx, r)
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	if err != nil {
+		if err.Error() != w.failed {
+			w.failed = err.Error()
+			w.o.Log.Warn("fetching the weather", "err", err)
+		}
+		if w.last != nil && w.last.Request == r && w.last.Error == "" {
+			return w.last, nil
+		}
+		st = &State{Request: r, Error: err.Error()}
+	} else {
+		w.failed = ""
+	}
+	w.last = st
+	return st, nil
 }
 
 func (w *fetcher) fetch(ctx context.Context, r Request) (*State, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
 	place, err := w.resolve(ctx, r)
 	if err != nil {
 		return nil, err

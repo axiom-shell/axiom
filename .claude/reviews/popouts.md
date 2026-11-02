@@ -15,7 +15,7 @@ The next review should reread these fixes, and the content panels skipped here.
 - Major: [EdgePopout works out its attach edge and slide distance itself](../../docs/dev/issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
 - Major: [A large corner radius folds a pill's or shallow box's outline back on itself](../../docs/dev/issues.md#a-large-corner-radius-folds-a-pills-or-shallow-boxs-outline-back-on-itself)
 - Major: [A tray submenu longer than the screen runs off it](../../docs/dev/issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
-- Major: [The Updates popout's package list is frozen at opening](../../docs/dev/issues.md#the-updates-popouts-package-list-is-frozen-at-opening)
+- Major: "The Updates popout's package list is frozen at opening" (fixed, row 20 core-ui-theming-03)
 - Major: [NowPlaying builds its strip layout and a second transport hidden in every mode](../../docs/dev/issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
 - Cleanup: [popout_matrix.py crashes on the current config and nothing runs it](../../docs/dev/issues.md#popout_matrixpy-crashes-on-the-current-config-and-nothing-runs-it)
 - Cleanup: [PopoutWrapperBase's aboutToDismiss signal has no listener](../../docs/dev/issues.md#popoutwrapperbases-abouttodismiss-signal-has-no-listener)
