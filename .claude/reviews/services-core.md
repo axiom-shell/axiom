@@ -10,7 +10,7 @@ The core funnels (CommandManager, FileManager, StateManager, ConsumerRegistry, t
 - Major: "The active media player is Spotify first and never follows playback" (fixed, row 20 core-ui-theming-02)
 - Major: "Album art piles up in the runtime folder for the whole session" (fixed, row 20 core-ui-theming-02)
 - Major: "MediaManager ticks the position with nothing showing it" (fixed, row 20 core-ui-theming-02)
-- Cleanup: [runDetached warns about a lost connection](../../docs/dev/issues.md#rundetached-warns-about-a-lost-connection)
+- Cleanup: "runDetached warns about a lost connection" (fixed, row 20 core-ui-theming-07)
 - Cleanup: "Small shrinks in the core services" (fixed, row 20 core-ui-theming-01)
 Minor (unrecorded):
 - `docs/dev/core/services-pattern.md` › Shape: "Every service is `pragma Singleton QtObject`", but 24 services' root is Quickshell's `Singleton` (the service recipe allows it for child objects).

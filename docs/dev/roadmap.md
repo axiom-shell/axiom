@@ -241,9 +241,6 @@ Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-cl
 
 Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` pages it points at); fold `docs/dev/core/config-v2.md` into `schema-annotations.md` and `config-manager.md` once stage 7 finishes v2; the maintainer moves the [Deferred](#deferred) entries to GitHub; a PR-size note in `CONTRIBUTING.md` (a batch per PR, an item per commit, moves apart from logic); the maintainer prepares the photos and videos for the post (it blocks the post, not the row).
 
-Resolves:
-- [AGENTS.md's funnel rule doesn't name FileManager.write and watch](issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
-
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
 
@@ -462,7 +459,6 @@ Found by the audits:
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- [runDetached warns about a lost connection](issues.md#rundetached-warns-about-a-lost-connection)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
