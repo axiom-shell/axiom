@@ -8,10 +8,9 @@
 1. `backend/internal/theme/integrations/templates/<key>.<ext>`: the app's file with `${NAME}`s, if it renders one.
 2. `backend/internal/theme/integrations/table.go` → `Table["<key>"]`: its files and where they go.
 3. `backend/internal/theme/effects.go` → `effects["<key>"]`: only if the app needs telling (a signal, socket, D-Bus call) or a file reshaped for its version.
-4. `config/schema/sections/ThemeIntegrations.yaml` → `properties.<key>`: a boolean (`default: false`) with `title`, `description`, `x-hookup` (optionally `x-hookupNote`). `ThemeManager.integrations` is derived from these boolean keys, in schema order.
+4. `config/schema/sections/ThemeIntegrations.yaml` → `properties.<key>`: a boolean (`default: false`) with `title`, `description`, `x-hookup` (optionally `x-hookupNote`, and `x-commands` if the app's binary isn't named `<key>`: what "installed" is checked by). `ThemeManager.integrations` is derived from these boolean keys, in schema order.
 5. `config/ThemeIntegrations.qml`: `readonly property bool <key>: _c.<key>` (`ThemeManager` reads `ThemeIntegrations[key]`).
-6. `services/core/ThemeManager.qml` → `_integrationCommands`: only if the app's binary isn't named `<key>` (the list is what "installed" is checked by).
-7. The goldens: `go -C backend test ./internal/theme/integrations -update`.
+6. The goldens: `go -C backend test ./internal/theme/integrations -update`.
 
 ## Skeleton
 ```go
@@ -43,10 +42,10 @@ foo:
 
 ## Steps
 1. Write the template and the table entry.
-2. Add the schema switch with its `x-hookup`:
+2. Add the schema switch with its `x-hookup` (and, if needed, `x-commands`):
    - The `place`/`section`/`replace` options are described in [theme-integrations](../dev/theming/theme-integrations.md) and implemented in `backend/internal/hookup` (deciding the edit) and `backend/internal/compositor/edit/hookup.go` (the files).
    - Copy the closest existing entry for the file format.
-3. Add the reader property and, if needed, the `_integrationCommands` entry.
+3. Add the reader property.
 4. A reload, if the app has one: an `effects` entry wrapped in `live(…)`, so only the daemon's integrator runs it, never a test.
 5. Write the goldens (`-update`) and read them.
 

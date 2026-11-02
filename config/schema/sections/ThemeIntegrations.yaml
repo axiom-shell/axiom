@@ -13,6 +13,8 @@ properties:
     title: GTK
     default: false
     description: Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).
+    # every desktop has GTK
+    x-commands: []
     x-hookup:
       - file: '{config}/gtk-3.0/gtk.css'
         place: start
@@ -28,6 +30,8 @@ properties:
     title: Qt and KDE apps
     default: false
     description: Writes an "axiom" color scheme for qt5ct and qt6ct, and an "Axiom" KDE color scheme (Dolphin, Gwenview, Okular, Kate…).
+    # qt*ct, or a KDE app (which reads the KDE scheme without them)
+    x-commands: [qt6ct, qt5ct, okular, dolphin, kate, kwrite, gwenview, konsole, ark, spectacle, systemsettings]
     x-hookupNote: "Qt apps take the palette from qt5ct / qt6ct only with QT_QPA_PLATFORMTHEME=qt5ct, which a managed compositor config sets while this is on (apps started from your next login get it); otherwise set it in your compositor's environment. KDE apps read most of their colors from kdeglobals instead: once its ColorScheme is Axiom, axiom keeps its color groups a copy of the scheme on every theme change, as Plasma does. Apps with a color scheme menu of their own (Okular, Dolphin, Kate, Gwenview) pick Breeze outside Plasma unless kdeglobals' UiSettings names one: the last line does, for every app whose own menu is left at Default. Those apps load the scheme when they start, so restart them after a theme change."
     x-hookup:
       - file: '{config}/qt5ct/qt5ct.conf'
@@ -121,6 +125,7 @@ properties:
     title: Helix
     default: false
     description: Writes the "axiom" theme. Helix 23.10+ reloads it.
+    x-commands: [hx, helix]
     x-hookup:
       - file: '{config}/helix/config.toml'
         place: top
@@ -131,6 +136,7 @@ properties:
     title: VS Code / VSCodium
     default: false
     description: Installs a local "Axiom" color theme extension.
+    x-commands: [code, codium]
     x-hookup:
       - text: '"workbench.colorTheme": "Axiom"'
         where: 'In settings.json (Preferences: Open User Settings (JSON)), or pick Axiom under Preferences: Color Theme.'
@@ -139,6 +145,7 @@ properties:
     title: Zed
     default: false
     description: Writes the "Axiom" theme, which follows light/dark. Zed reloads it.
+    x-commands: [zed, zeditor, zedit, dev.zed.Zed]
     x-hookup:
       - text: '"theme": "Axiom"'
         where: 'In Zed''s settings.json (zed: open settings), or pick Axiom in the theme selector (ctrl-k ctrl-t). With "mode": "system", set both "light" and "dark" to Axiom.'
@@ -147,6 +154,7 @@ properties:
     title: Vesktop / Vencord
     default: false
     description: Writes the axiom.theme.css Vencord theme for Vesktop (and Vencord, Equibop, Equicord). Discord re-colors live.
+    x-commands: [vesktop, dev.vencord.Vesktop, equibop, discord]
     x-hookup:
       - {text: axiom.theme.css, where: 'In Vesktop: Settings → Vencord → Themes, switch it on.'}
   firefox:
@@ -154,6 +162,7 @@ properties:
     title: Firefox / LibreWolf / Zen
     default: false
     description: Writes chrome/axiom.css into every profile of Firefox and its forks (LibreWolf, Zen, Floorp, Waterfox; Flatpak too), recoloring the browser's tabs, toolbars, menus and sidebar. Applies from each browser's next start; websites only follow light/dark.
+    x-commands: [firefox, librewolf, zen-browser, zen, floorp, waterfox, org.mozilla.firefox, io.gitlab.librewolf-community, app.zen_browser.zen, one.ablaze.floorp, net.waterfox.waterfox]
     x-hookupNote: "Apply sets up every profile it finds: it imports axiom.css at the top of each profile's chrome/userChrome.css, and turns on toolkit.legacyUserProfileCustomizations.stylesheets in its user.js, which Firefox needs before it reads userChrome.css. Restart the browser afterwards."
     x-profiles:
       - '{home}/.mozilla/firefox/profiles.ini'

@@ -136,5 +136,6 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
 ### Theme integrations
 - `x-hookup` (on a `ThemeIntegrations` boolean): how the integration hooks into its app (targets, place, text).
 - `x-hookupNote`: a note shown with it.
+- `x-commands`: the commands any of which shows the app is installed (the onboarder's App colors page; `[]` for one every desktop has, the key when left out).
 - `x-profiles`: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 - See [Theme integrations](../theming/theme-integrations.md).
