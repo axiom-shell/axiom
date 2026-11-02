@@ -43,22 +43,16 @@ QtObject {
     return OSDItems.cardRoute(root.osds, type, notify);
   }
 
-  // Whether a message to the OSD `id` (messageOsd's) shows there as its
-  // card (OSDItems.opensCard: not quiet there); else it's a notification
-  function showsMessage(id) {
-    return OSDItems.opensCard(root.osdById(id), "message");
-  }
-
   function osdById(id) {
     return osds.find(osd => osd.id === id) ?? null;
   }
 
-  // The OSD a message goes to (`axiom message`): the enabled one
-  // of that id, else the first enabled one with a Messages item, else the
-  // first enabled one; "" with none
+  // The OSD a message goes to (`axiom message`) as its card: the one of
+  // that id, else (`id` "") the first, of those that pick Messages under
+  // their cards (OSDItems.opensCard); "" with none: it's a notification
   function messageOsd(id) {
-    const shown = osds.filter(osd => osd.enabled);
-    const pick = shown.find(osd => osd.id === id) ?? shown.find(osd => osd.statuses.items.includes("message")) ?? shown[0];
+    const showing = osds.filter(osd => OSDItems.opensCard(osd, "message"));
+    const pick = id !== "" ? showing.find(osd => osd.id === id) : showing[0];
     return pick ? pick.id : "";
   }
 
@@ -82,6 +76,6 @@ QtObject {
     const parts = bars.length > 0 ? bars : osd.statuses.items.map(type => root.nameOf(type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");
-    return osd.media.enabled ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
+    return osd.cards.enabled && osd.cards.items.includes("media") ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
   }
 }

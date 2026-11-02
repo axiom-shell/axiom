@@ -22,5 +22,5 @@ properties:
     type: boolean
     title: Screenshot notifications
     default: true
-    description: "Send a notification when a screenshot is taken (a click opens it; Edit in … opens it in the annotator). An OSD with Screenshots among its status icons (one whose detail cards are on, where it opens the OSD) shows it as a card instead (a click opens it). Off, and with no such OSD, nothing is shown."
+    description: "Send a notification when a screenshot is taken (a click opens it; Edit in … opens it in the annotator). An OSD picking Screenshots under its Detail cards shows it as a card instead (a click opens it). Off, and with no such OSD, nothing is shown."
     x-link: {setting: OSD}

@@ -57,7 +57,11 @@ Item {
 
   readonly property var levelItems: osd.bars.items
   readonly property var statusTypes: osd.statuses.items
-  readonly property bool hasMedia: osd.media.enabled
+  // Its cards on (`cards.enabled`), and the card-only types it picks
+  // (`cards.items`: OSDItems.cardOnlyTypes, and "media", Now playing)
+  readonly property bool cards: root.osd.cards.enabled
+  readonly property var _cardOnly: root.cards ? root.osd.cards.items.filter(type => type !== "media") : []
+  readonly property bool hasMedia: root.cards && root.osd.cards.items.includes("media")
 
   // The status that changed last ("" once the icons close), ringed, and
   // when (Date.now(), for OSDItems.replaces)
@@ -83,8 +87,9 @@ Item {
   // Keeps what the row shows while the icons are out: run as they open
   // and as a change rings (every change while they're out does), never
   // from a binding on the row, which it feeds
+  // ("Only the one that changed" keeps none: it shows just the latest)
   function _keepRow() {
-    if (root._open.status !== true)
+    if (root._open.status !== true || root.osd.statuses.row === "changed")
       return;
     const more = root.rowTypes.filter(type => !root._kept.includes(type));
     if (more.length > 0)
@@ -94,13 +99,10 @@ Item {
   // every one, not an empty row, until it closes
   property bool _previewAll: false
 
-  // The OSD shows a status's card for the changes OSDItems.cardTypes
-  // lists (unless its cards are off: then the icons), and a message's
-  // always (OSDItems.alwaysCard)
-  readonly property bool cards: root.osd.statuses.cards
-  // It may show a message (it lists Messages, or one was sent to it by id)
-  readonly property bool _hasMessages: root.statusTypes.includes("message") || root._cardType === "message"
-  readonly property bool hasCards: (root.cards && OSDItems.cardTypes.some(type => root.statusTypes.includes(type))) || root._hasMessages
+  // It may show a status's card: its cards on, for a status icon with one
+  // (OSDItems.cardTypes; with its cards off the change shows as its icon)
+  // or a card-only type it picks
+  readonly property bool hasCards: root.cards && (OSDItems.cardTypes.some(type => root.statusTypes.includes(type)) || root._cardOnly.length > 0)
   // What the status card shows (OSDItems.card), its role translated
   // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in") I18n.tr("Mounted") I18n.tr("Safe to remove") I18n.tr("Unmounted") I18n.tr("Disconnected") I18n.tr("Unplugged without ejecting") I18n.tr("In use: close what's using it") I18n.tr("Couldn't eject") I18n.tr("Encrypted: click to unlock") I18n.tr("Battery low") I18n.tr("Battery critically low") I18n.tr("Copied to the clipboard")
   readonly property var cardContent: {
@@ -160,7 +162,7 @@ Item {
     return part === "level" ? grid : part === "status" ? row : root._cardKind === "media" ? mediaCard : statusCard;
   }
   function _timeout(part) {
-    return part === "card" ? root.osd.statuses.cardTimeout : root.osd.timeout;
+    return part === "card" ? root.osd.cards.timeout : root.osd.timeout;
   }
 
   function _folded(part, reveal) {
@@ -523,8 +525,8 @@ Item {
   }
 
   // A status changed; `force` opens the OSD. With its card (`withCard`,
-  // OSDItems.cardTypes', unless the OSD's cards are off; a message's
-  // always) only the card shows, the icon turning lit quietly (ringed if
+  // OSDItems.cardTypes', unless the OSD's cards are off) only the card
+  // shows, the icon turning lit quietly (ringed if
   // the icons are out), unless the card out mustn't give way to it
   // (OSDItems.replaces). Without one the icons show, it ringed, unless
   // it's a knock-on of the card's change or of the change ringed
@@ -535,7 +537,7 @@ Item {
       return;
     const now = Date.now();
     const cardOut = root._open.card === true && root._cardKind === "status";
-    if (withCard === true && (root.cards || OSDItems.alwaysCard(type))) {
+    if (withCard === true && root.cards) {
       if (root._queued("card", force, {
         "kind": "status",
         "type": type,
@@ -723,7 +725,8 @@ Item {
   // anew (OSDConfig.osds), and a new array as the model would rebuild
   // every watcher, deaf while it settles; the string changes only with
   // the types
-  readonly property string _watchKey: root.statusTypes.concat(root.hasMedia ? ["media"] : []).join(",")
+  // (a message has none: ShellManager.osdMessage brings it)
+  readonly property string _watchKey: root.statusTypes.concat(root._cardOnly.filter(type => type !== "message"), root.hasMedia ? ["media"] : []).join(",")
 
   // The statuses' and the card's watchers (they draw nothing)
   Repeater {
@@ -734,7 +737,7 @@ Item {
       required property string modelData
 
       type: watcher.modelData
-      mediaOptions: root.osd.media
+      mediaOptions: root.osd.cards
       onTileChanged: root._setTile(watcher.type, watcher.tile)
       Component.onCompleted: {
         root._setTile(watcher.type, watcher.tile);
@@ -769,7 +772,8 @@ Item {
         "detail": detail,
         "tone": tone
       }));
-      root.showStatus("message", !root.osd.statuses.quiet.includes("message"), true);
+      // (sent only to an OSD that picks Messages: OSDConfig.messageOsd)
+      root.showStatus("message", true, true);
     }
 
     function onShowOsd(id) {

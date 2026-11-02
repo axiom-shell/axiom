@@ -169,6 +169,9 @@ var all = []Step{
 		}
 		return []string{"Drives.announce " + announce + " became Drives.notify: an OSD listing Removable drives shows them, else they notify unless it's off"}
 	}},
+	// v91: an OSD's cards got their own object (`cards`: enabled, timeout,
+	// the card-only types and Now playing as `items`) (v91.go)
+	{Version: 91, Run: v91},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

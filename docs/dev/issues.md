@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### An OSD set to show only the change keeps every change since its icons came out
-- **Where:** `components/surfaces/osd/OSDContent.qml` (`_kept`, `_keepRow`), `components/methods/OSDItems.qml` (`rowTypes`)
-- **What:** `rowTypes` now shows every kept type whatever `statuses.row` says, and `_keepRow` keeps each change as it rings. With `row` "changed" (Only the one that changed), Caps Lock then Num Lock while the icons are out shows both, where the label promises one. Keeping what turned ordinary in place fits "What's unusual"; whether "changed" should keep only the latest change (`_kept` left empty in that mode) is the maintainer's call. Fix if so: `_keepRow` returns early when `root.osd.statuses.row === "changed"`, and a test row.
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing the bindable commands and the OSD's final pass
-
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.

@@ -271,12 +271,9 @@ QtObject {
   // statuses), by `mode` ("notable" | "all" | "changed") over `tiles` (by
   // type, tile()'s), `kept` (the change, and every one shown since the
   // icons came out: one that turned ordinary stays until they go) always
-  // among them. A hidden tile shows only as it changes; a message never
-  // (it shows as its card).
+  // among them. A hidden tile shows only as it changes.
   function rowTypes(types, tiles, mode, kept) {
     return types.filter(type => {
-      if (type === "message")
-        return false;
       if ((kept ?? []).includes(type))
         return true;
       const t = tiles[type];
@@ -339,33 +336,36 @@ QtObject {
   // camera or share the screen, the charger plugged in, a Wi-Fi network
   // joined, something done to a drive (DrivesManager.lastEvent), the
   // battery dropping to low or critical, a monitor connected or removed,
-  // a screenshot taken, and a message (always: alwaysCard)
+  // a screenshot taken, and a message
   readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive", "battery", "monitor", "screenshot", "message"]
 
   // The types whose card is clicked to act on what it says (a drive's
   // opens or unlocks it, a screenshot's opens the picture)
   readonly property var clickableCards: ["drive", "screenshot"]
 
-  // The types shown as their card even on an OSD whose detail cards are
-  // off: a message is its text, nothing without it
-  function alwaysCard(type) {
-    return type === "message";
-  }
+  // The types that are only ever a card, picked in an OSD's
+  // `cards.items` (with "media", Now playing) rather than its status icons
+  readonly property var cardOnlyTypes: ["monitor", "screenshot", "message"]
 
   // Whether `osd` (an OSDConfig.osds entry) shows a change of `type` as
-  // its card the moment it comes: enabled, `type` not quiet (a quiet one
-  // never opens it), its detail cards on (a message's always). Where none
-  // does, an event is a notification instead (cardRoute)
+  // its card the moment it comes: enabled, its cards on, and the type
+  // picked: a card-only one in `cards.items`, any other among its status
+  // icons and not quiet (a quiet one never opens it). Where none does, an
+  // event is a notification instead (cardRoute)
   function opensCard(osd, type) {
-    return osd !== null && osd.enabled && !osd.statuses.quiet.includes(type) && (osd.statuses.cards || root.alwaysCard(type));
+    if (!osd || !osd.enabled || !osd.cards.enabled)
+      return false;
+    if (root.cardOnlyTypes.includes(type))
+      return osd.cards.items.includes(type);
+    return osd.statuses.items.includes(type) && !osd.statuses.quiet.includes(type);
   }
 
-  // Where an event of a status type goes (a drive, the battery, a
-  // monitor, a screenshot): "osd" when an OSD of `osds` lists the type and
-  // opens its card (opensCard), else "notification" with `notify` (its
-  // section's switch), else "" (nowhere)
+  // Where an event goes (a drive, the battery, a monitor, a screenshot):
+  // "osd" when an OSD of `osds` opens its card (opensCard), else
+  // "notification" with `notify` (its section's switch), else ""
+  // (nowhere)
   function cardRoute(osds, type, notify) {
-    if (osds.some(osd => osd.statuses.items.includes(type) && root.opensCard(osd, type)))
+    if (osds.some(osd => root.opensCard(osd, type)))
       return "osd";
     return notify ? "notification" : "";
   }

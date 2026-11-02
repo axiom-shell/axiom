@@ -17,9 +17,10 @@ import qs.components.methods
 Loader {
   id: root
 
-  // A status type (OSD.statuses.items in the schema), or "media"
+  // A status type (an OSD's statuses.items, or a card-only one from its
+  // cards.items), or "media"
   required property string type
-  // The OSD's `media` ({ enabled, onTrackChange, onPlayPause }), for "media"
+  // The OSD's `cards` ({ onTrackChange, onPlayPause, … }), for "media"
   property var mediaOptions: ({})
 
   // It changed: the user's doing, or (a VPN, a capture, Wi-Fi joining a

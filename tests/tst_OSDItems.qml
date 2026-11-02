@@ -193,19 +193,20 @@ TestCase {
       "message": refusal
     }, []);
     compare([card.icon, card.title, card.role, card.detail, card.tone], ["nightlight", "Night light", "", "Not available here", "warning"], "its card, its two lines");
-    verify(OSDItems.alwaysCard("message"));
-    verify(!OSDItems.alwaysCard("audio"), "the others follow the OSD's detail cards");
     verify(OSDItems.tile("message", {}).hidden, "none yet");
     verify(OSDItems.tile("bogus", {}).hidden);
   }
 
   function test_cardRoute_data() {
-    const osd = (items, quiet, cards, enabled) => ({
+    const osd = (items, quiet, cards, enabled, only) => ({
           "enabled": enabled !== false,
           "statuses": {
             "items": items,
-            "quiet": quiet,
-            "cards": cards
+            "quiet": quiet
+          },
+          "cards": {
+            "enabled": cards,
+            "items": only ?? []
           }
         });
     return [
@@ -240,7 +241,7 @@ TestCase {
         "want": ""
       },
       {
-        "tag": "detail cards off: a notification",
+        "tag": "cards off: a notification",
         "osds": [osd(["drive"], [], false)],
         "notify": true,
         "want": "notification"
@@ -264,18 +265,25 @@ TestCase {
     compare(OSDItems.cardRoute(row.osds, "drive", row.notify), row.want);
   }
 
-  function test_opensCard_message() {
-    const osd = (quiet, cards) => ({
+  function test_opensCard_cardOnly() {
+    const osd = (cards, only) => ({
           "enabled": true,
           "statuses": {
-            "items": [],
-            "quiet": quiet,
-            "cards": cards
+            "items": ["monitor"],
+            "quiet": []
+          },
+          "cards": {
+            "enabled": cards,
+            "items": only
           }
         });
-    verify(OSDItems.opensCard(osd([], false), "message"), "a message is its card, detail cards or not, listed or not");
-    verify(!OSDItems.opensCard(osd(["message"], true), "message"), "quiet: a notification instead");
+    verify(OSDItems.opensCard(osd(true, ["message", "monitor"]), "message"), "picked under its cards");
+    verify(!OSDItems.opensCard(osd(true, []), "message"), "not picked: a notification instead");
+    verify(!OSDItems.opensCard(osd(false, ["message"]), "message"), "cards off: none at all");
+    verify(!OSDItems.opensCard(osd(true, []), "monitor"), "a card-only type counts only in its cards list");
     verify(!OSDItems.opensCard(null, "message"), "no OSD");
+    compare(OSDItems.cardRoute([osd(true, ["screenshot"])], "screenshot", false), "osd");
+    compare(OSDItems.cardRoute([osd(true, [])], "screenshot", true), "notification");
   }
 
   function test_tile_base_icons() {
@@ -591,7 +599,7 @@ TestCase {
   }
 
   function test_rowTypes() {
-    const types = ["capsLock", "numLock", "dnd", "wifi", "message"];
+    const types = ["capsLock", "numLock", "dnd", "wifi"];
     const tiles = {
       "capsLock": OSDItems.tile("capsLock", {
         "available": true,
@@ -606,16 +614,12 @@ TestCase {
       }),
       "wifi": OSDItems.tile("wifi", {
         "available": false
-      }),
-      "message": OSDItems.tile("message", {
-        "text": "Hi"
       })
     };
     compare(OSDItems.rowTypes(types, tiles, "notable", []), ["capsLock", "numLock"], "the lock keys on");
     compare(OSDItems.rowTypes(types, tiles, "notable", ["dnd"]), ["capsLock", "numLock", "dnd"], "the change, in its place");
     compare(OSDItems.rowTypes(types, tiles, "notable", ["wifi"]), ["capsLock", "numLock", "wifi"], "a hidden one as it changes");
-    compare(OSDItems.rowTypes(types, tiles, "all", []), ["capsLock", "numLock", "dnd"], "not hidden ones, nor a message");
-    compare(OSDItems.rowTypes(types, tiles, "all", ["message"]), ["capsLock", "numLock", "dnd"], "a message is a card, never a tile");
+    compare(OSDItems.rowTypes(types, tiles, "all", []), ["capsLock", "numLock", "dnd"], "not hidden ones");
     compare(OSDItems.rowTypes(types, tiles, "changed", ["numLock"]), ["numLock"]);
     compare(OSDItems.rowTypes(types, tiles, "changed", ["dnd", "numLock"]), ["numLock", "dnd"], "every one kept, in the OSD's order");
     compare(OSDItems.rowTypes(types, tiles, "changed", []), []);

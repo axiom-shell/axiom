@@ -81,10 +81,10 @@ QtObject {
 
   // A message to the OSD `id` (OSDConfig.messageOsd's) as its card, also
   // filed in the notification history without a popup with
-  // OSD.cardsToHistory; where it wouldn't show (no OSD, or `message`
-  // quiet there: OSDConfig.showsMessage) a notification instead
+  // OSD.cardsToHistory; with none (no OSD picks Messages) a notification
+  // instead
   function _message(id, icon, text, detail) {
-    if (!OSDConfig.showsMessage(id)) {
+    if (id === "") {
       NotificationManager.sendNotification("axiom", text, detail);
       return;
     }
@@ -97,13 +97,13 @@ QtObject {
 
   // The same on the warning colour: what a bind, hot corner or `axiom`
   // command that can't run here says instead of nothing (never filed: it
-  // only answers what was just tried; a notification where no OSD shows
-  // it). `icon` the base one of what was refused ("nightlight", never
+  // only answers what was just tried; a notification where no OSD picks
+  // Messages). `icon` the base one of what was refused ("nightlight", never
   // "nightlight_off"), `title` what ("Night light"), `detail` why ("Not
   // available here")
   function refuse(icon, title, detail) {
     const id = OSDConfig.messageOsd("");
-    if (!OSDConfig.showsMessage(id)) {
+    if (id === "") {
       NotificationManager.sendNotification("axiom", title, detail);
       return;
     }
@@ -114,8 +114,9 @@ QtObject {
     target: "osd"
 
     // What `axiom message` calls (IPC functions take no optional
-    // arguments, so it passes all four): `id` "" for the OSD showing
-    // messages, `detail` "" for no second line
+    // arguments, so it passes all four): `id` "" for the first OSD
+    // picking Messages (none: a notification), `detail` "" for no second
+    // line
     function message(id: string, icon: string, text: string, detail: string): void {
       root._message(OSDConfig.messageOsd(id), icon, text, detail);
     }

@@ -15,7 +15,9 @@ func messageCommand() *Command {
 		Summary: "Show a message card on the OSD",
 		Args:    "ICON TEXT",
 		Help: `Shows TEXT with ICON (a Material Symbols name, such as "info" or
-"download_done") on the OSD showing Messages, else the first one.
+"download_done") as a card on the first OSD that picks Messages
+(under its Detail cards), or with --osd on that one; where none
+does, as a notification.
 
   axiom message info "Backup done"
   axiom message --detail "42 files, 1.2 GB" download_done "Backup done"
