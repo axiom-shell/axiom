@@ -7,7 +7,7 @@ The kit is in use everywhere, with no piece nothing uses and the service-import 
 - Major: "Icons.overrides never reaches window icons" (fixed, row 20 core-ui-theming-05)
 - Major: "A cancelled rename's typed text comes back in the notes and chat rename fields" (fixed, row 20 core-ui-theming-05)
 - Major: "Nine shared controls animate with their own easing, written out where Glide does it" (fixed, row 20 core-ui-theming-05)
-- Cleanup: [Every StyledSlider overrides its look and its value the same way](../../docs/dev/issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)
+- Cleanup: "Every StyledSlider overrides its look and its value the same way" (fixed, row 20 core-ui-theming-06)
 - Cleanup: [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](../../docs/dev/issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
 - Cleanup: "StyledRectButton's badge and border press colour have no user" (fixed, row 20 core-ui-theming-01)
 - Cleanup: [ActionTile and ActionPill carry the same countdown bar](../../docs/dev/issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)

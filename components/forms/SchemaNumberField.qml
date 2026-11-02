@@ -190,15 +190,8 @@ ColumnLayout {
       StyledSlider {
         Layout.fillWidth: true
         Layout.preferredHeight: root.controlHeight
-        troughHeight: Widget.px(6)
         troughColor: Theme.border
-        fillColor: Theme.accent
-        handleColor: Theme.foreground
-        handleWidth: Widget.px(14)
-        handleHeight: Widget.px(14)
-        handleRadius: Widget.px(7)
-        // Not `value`: dragging assigns that, which would drop the binding
-        targetValue: root.highest > root.lowest ? (root.value - root.lowest) / (root.highest - root.lowest) : 0
+        value: root.highest > root.lowest ? (root.value - root.lowest) / (root.highest - root.lowest) : 0
         onMoved: ratio => root.value = root.clamp(root.lowest + ratio * (root.highest - root.lowest))
         onReleased: ratio => root.setValue(root.lowest + ratio * (root.highest - root.lowest), true)
       }

@@ -49,13 +49,8 @@ CustomElementBase {
         height: Math.max(Widget.px(16), root.thickness)
         rotation: root.vertical ? -90 : 0
         troughHeight: root.thickness
-        handleWidth: Widget.px(14)
-        handleHeight: Widget.px(14)
-        handleRadius: Widget.px(7)
-        handleColor: Theme.foreground
         fillColor: root.colorOf(Theme.accent)
-        // Not `value`: dragging assigns that, which would drop the binding
-        targetValue: root.held >= 0 ? root.held : root.share
+        value: root.held >= 0 ? root.held : root.share
         onReleased: ratio => {
           root.held = ratio;
           root.act("change", root.valueOf(ratio));
