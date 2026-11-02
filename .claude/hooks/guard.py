@@ -602,9 +602,9 @@ def check(call):
         cwd = call.get("cwd") or str(REPO)
         # A leading cd into a folder moves the git commands after it (an
         # agent's cwd resets every call); any other shape is judged here. cd
-        # takes `..` before symlinks (normpath), as the shell does
+        # takes `..` after `~` and before symlinks (normpath), as the shell does
         if (commands[:1] and commands[0][1][:1] == ["cd"] and LEADING_CD.fullmatch(command)
-                and (target := resolve(os.path.normpath(commands[0][1][1]), cwd, commands[0][0])).is_dir()):
+                and (target := resolve(os.path.normpath(os.path.expanduser(commands[0][1][1])), cwd)).is_dir()):
             cwd, commands = str(target), commands[1:]
         for env, argv in commands:
             check_argv(env, argv, cwd)

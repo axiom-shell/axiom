@@ -115,6 +115,9 @@ class Bash(unittest.TestCase):
                     (Path(tree) / "sub").mkdir()
                     (Path(other) / "link").symlink_to(Path(tree) / "sub")
                     self.blocks(f"cd {other}/link/.. && git push")
+                # `~` is expanded before its `..`
+                with mock.patch.dict(os.environ, {"HOME": str(Path(tree) / "sub")}):
+                    self.allows("cd ~/.. && git push -u origin HEAD")
                 # The push may run where the session started
                 self.blocks(f"cd {tree}; git push origin HEAD", f"cd {tree} || git push origin HEAD",
                             f"(cd {tree}) && git push origin HEAD",
