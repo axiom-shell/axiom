@@ -21,7 +21,7 @@ How `managed` mode takes `~/.config/hypr/hyprland.lua` over (`claim`), and how l
   - `claim`, which does the takeover
   - `release` (below).
 - **Refusals.** It refuses a symlinked or git-tracked dir (or config), checked before `ours`: a managed config since symlinked or put in git is no longer written, as release refuses it too:
-  - the codes are `blocked:link` and `blocked:git:<repo>`
+  - the codes are `blocked:link` and `blocked:git:<repo>`; `check` and `claim` also answer `blocked:elsewhere:<file>` when the compositor runs another config of the user's (`Options.Elsewhere`: sway's, [sway backend](../compositor/sway-backend.md)), which release ignores
   - `managedCheck` is then `blocked`
   - `managedBlockedBy`/`managedBlockedRepo` say why, for the onboarder's greyed-out card and the status card.
 - **The `stock` case.** A `hyprland.lua` that is Hyprland's example config (the first `hypr/hyprland.lua` in `$XDG_DATA_DIRS`, `/usr/share/hypr/` on most distros) counts as `stock`.

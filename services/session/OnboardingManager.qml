@@ -138,6 +138,8 @@ Singleton {
       return I18n.tr("{0} or its config is a symlink (dotfiles?), so axiom won't replace it.", dir);
     if (CompositorConfigManager.managedBlockedBy === "git")
       return I18n.tr("{0} is inside the git repository at {1}, so axiom won't take it over. Move or remove that repository's .git to allow it.", dir, Paths.shortenHome(CompositorConfigManager.managedBlockedRepo));
+    if (CompositorConfigManager.managedBlockedBy === "elsewhere")
+      return CompositorConfigManager.elsewhereReason;
     return configState === "blocked" ? I18n.tr("Your {0} config is a symlink or in a git repository, so axiom won't take it over.", CompositorManager.displayName) : "";
   }
   // Whether the compositor's config already starts axiom (install.sh's

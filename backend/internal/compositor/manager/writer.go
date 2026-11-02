@@ -41,6 +41,9 @@ type files struct {
 	ConfigDir, IncludePath, ManagedPath, UserDir, UserFiles string
 	IncludeLines, AutostartLines                            string
 	IncludeTarget, AutostartTarget                          *jsonx.Object
+	// RunsElsewhere: the user's config the compositor runs in place of
+	// ManagedPath, which a takeover would never load (sway's), or ""
+	RunsElsewhere string
 }
 
 func (f files) json() *jsonx.Object {

@@ -44,7 +44,7 @@ How axiom sets the compositor up, the same on every compositor with `supports.co
 
 ### Status card and saving
 - The settings page's Compositor section starts with `CompositorStatusCard`, built from `status` (`runtime` | `loaded` | `fallback` | `pending`) and `problem`.
-- A mode picked there waits for Save (`x-applyOnSave`). The card predicts a takeover with `checkManaged()`: `ours` | `adopt` | `stock` | `released` | `new` | `blocked` (`managedBlockedBy` `link` or `git`).
+- A mode picked there waits for Save (`x-applyOnSave`). The card predicts a takeover with `checkManaged()`: `ours` | `adopt` | `stock` | `released` | `new` | `blocked` (`managedBlockedBy` `link` or `git`, or `elsewhere`: the compositor runs another config of the user's than the one managed mode writes, `files().RunsElsewhere`, so the takeover's file would never load; sway's, from `userconf.SwayMain`).
 
 ### Approving a takeover
 - Managed mode takes over a config of the user's only once they've allowed it on that compositor. The approvals are state, not config (`$XDG_STATE_HOME/axiom/ui/takeover.json`, `{ approved: [kind] }`), so a config imported, or carried over from another compositor, with `mode: "managed"` never counts as one.

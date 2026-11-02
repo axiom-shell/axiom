@@ -6,6 +6,7 @@
 //	ours                the file is already axiom's (its first line starts with the header)
 //	blocked:link        the dir or its config is a symlink: never taken over
 //	blocked:git:<repo>  the dir is in the git repository <repo>: never taken over
+//	blocked:elsewhere:<file>  (check, claim) the compositor runs <file> instead
 //
 // check:
 //
@@ -60,6 +61,9 @@ type Options struct {
 	// Git is the repository dir is in, if any (default `git rev-parse`)
 	Git func(ctx context.Context, dir string) (string, bool)
 	Lua luacheck.Checker
+	// Elsewhere is the user's config the compositor runs in place of
+	// Dir's, if any: check and claim refuse it
+	Elsewhere string
 	// Locked: the caller holds Dir's lock (edit.LockDir), as the compositor
 	// manager does across a claim and the managed write after it; else
 	// each verb takes it
@@ -126,6 +130,16 @@ func (c *call) blocked(ctx context.Context) string {
 	return ""
 }
 
+// refused is blocked, or blocked:elsewhere:<file> when the compositor runs
+// another config of the user's (Options.Elsewhere): a takeover's file would
+// never load. Only claiming: release gives back whatever it runs
+func (c *call) refused(ctx context.Context) string {
+	if c.Elsewhere != "" {
+		return "blocked:elsewhere:" + c.Elsewhere
+	}
+	return c.blocked(ctx)
+}
+
 // Check says what claim would do.
 func Check(ctx context.Context, o Options) (string, error) {
 	c, err := prepare(o, false)
@@ -139,7 +153,7 @@ func Check(ctx context.Context, o Options) (string, error) {
 	defer unlock()
 	// Before ours: a managed config since symlinked or put in git is no
 	// longer written (release refuses it too)
-	if b := c.blocked(ctx); b != "" {
+	if b := c.refused(ctx); b != "" {
 		return b, nil
 	}
 	if c.isOurs() {
@@ -169,7 +183,7 @@ func Claim(ctx context.Context, o Options) (string, error) {
 	defer unlock()
 	// Before ours: a managed config since symlinked or put in git is no
 	// longer written (release refuses it too)
-	if b := c.blocked(ctx); b != "" {
+	if b := c.refused(ctx); b != "" {
 		return b, nil
 	}
 	if c.isOurs() {

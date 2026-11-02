@@ -775,8 +775,9 @@ func (m *Manager) AllowTakeover() {
 
 func (m *Manager) takeoverOptions(mode string) takeover.Options {
 	kind, _ := takeover.KindNamed(m.w.takeoverKind())
-	return takeover.Options{Kind: kind, Dir: m.files().ConfigDir, Header: m.w.header(),
-		Fallback: m.w.releasedText(m.in, mode), Getenv: m.o.Getenv}
+	f := m.files()
+	return takeover.Options{Kind: kind, Dir: f.ConfigDir, Header: m.w.header(),
+		Fallback: m.w.releasedText(m.in, mode), Getenv: m.o.Getenv, Elsewhere: f.RunsElsewhere}
 }
 
 // configIsOurs: the compositor's config is the one axiom wrote (its first
@@ -855,7 +856,11 @@ func (m *Manager) claim(ctx context.Context) {
 	switch word {
 	case "blocked":
 		lock.Release()
-		m.warnOnce(`Compositor mode is "managed", but ` + m.files().ConfigDir + ` is a symlink or in a git repository, so axiom won't take it over; use "included" instead. Applying axiom's layer at runtime meanwhile.`)
+		why := m.files().ConfigDir + ` is a symlink or in a git repository`
+		if by, file, _ := strings.Cut(rest, ":"); by == "elsewhere" {
+			why = "the compositor runs " + file + ", not " + m.files().ManagedPath
+		}
+		m.warnOnce(`Compositor mode is "managed", but ` + why + `, so axiom won't take it over; use "included" instead. Applying axiom's layer at runtime meanwhile.`)
 		m.runtimeApply(ctx)
 		return
 	case "adopted":

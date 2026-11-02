@@ -763,3 +763,22 @@ func TestSwayAdoptInADirWithASpace(t *testing.T) {
 	text, _ := userconf.SwayText(f.path("user/00-previous.conf"), nil, "", func(string) string { return "" })
 	eq(t, strings.Contains(text, "bindsym Mod4+a exec a"), true)
 }
+
+// A compositor running another config is refused a claim, never a release
+func TestElsewhereBlocksOnlyClaiming(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "sway")
+	f.ours()
+	o := f.options(f.dir)
+	o.Elsewhere = "/home/me/.config/i3/config"
+	for _, verb := range []func(context.Context, Options) (string, error){Check, Claim} {
+		got, err := verb(context.Background(), o)
+		if err != nil || got != "blocked:elsewhere:/home/me/.config/i3/config" {
+			t.Fatalf("got %q %v", got, err)
+		}
+	}
+	got, err := Release(context.Background(), o)
+	if err != nil || got != "written" {
+		t.Fatalf("release: %q %v", got, err)
+	}
+}

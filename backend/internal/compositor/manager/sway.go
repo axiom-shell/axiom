@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -53,16 +54,30 @@ func (w *swayWriter) includeLines() string {
 	return "include " + render.SwayQuote(w.includePath())
 }
 
+// userMain is the user's config sway runs (userconf.SwayMain), or the
+// managed path when sway runs none of theirs (none, or the system's
+// example, which only the managed path's file replaces)
+func (w *swayWriter) userMain() string {
+	if main := userconf.SwayMain(w.getenv); main != "" && main != "/etc/sway/config" {
+		return filepath.Clean(main)
+	}
+	return w.dir() + "config"
+}
+
 func (w *swayWriter) files(in Inputs) files {
-	managed := w.dir() + "config"
+	managed, main := w.dir()+"config", w.userMain()
 	autostart := "exec " + startCommand(in)
+	elsewhere := ""
+	if main != filepath.Clean(managed) {
+		elsewhere = main
+	}
 	return files{
 		ConfigDir: w.dir(), IncludePath: w.includePath(), ManagedPath: managed, UserDir: w.dir() + "user", UserFiles: w.dir() + "user/*",
-		IncludeLines: w.includeLines(), AutostartLines: autostart,
-		IncludeTarget: jsonx.Obj("title", "Load axiom's module", "file", managed, "text", w.includeLines(), "place", "start",
+		IncludeLines: w.includeLines(), AutostartLines: autostart, RunsElsewhere: elsewhere,
+		IncludeTarget: jsonx.Obj("title", "Load axiom's module", "file", main, "text", w.includeLines(), "place", "start",
 			"comment", "#", "accept", `^\s*include\s+.*axiom/sway\.conf`,
 			"note", "Adds the lines at the top, so your own settings after them win over axiom's."),
-		AutostartTarget: jsonx.Obj("title", "Start axiom", "file", managed, "text", autostart, "place", "end",
+		AutostartTarget: jsonx.Obj("title", "Start axiom", "file", main, "text", autostart, "place", "end",
 			"comment", "#", "accept", in.str("startPattern"),
 			"note", "Adds the line at the end: sway starts axiom with every session."),
 	}
