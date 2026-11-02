@@ -36,6 +36,12 @@ type Notification struct {
 	Urgency string `json:"urgency,omitempty"`
 	// Its buttons
 	Actions []Action `json:"actions,omitempty"`
+	// The x-axiom-key hint: a notification of the same key replaces this
+	// one in the shell's history (one entry per key, never a pile)
+	Key string `json:"key,omitempty"`
+	// The transient hint: shown, never filed in a history (an answer to
+	// what was just done)
+	Transient bool `json:"transient,omitempty"`
 }
 
 // Action is a button: the id Send answers when it's picked, and its text.
@@ -128,6 +134,12 @@ func hints(n Notification) map[string]dbus.Variant {
 	}
 	if n.DesktopEntry != "" {
 		h["desktop-entry"] = dbus.MakeVariant(n.DesktopEntry)
+	}
+	if n.Key != "" {
+		h["x-axiom-key"] = dbus.MakeVariant(n.Key)
+	}
+	if n.Transient {
+		h["transient"] = dbus.MakeVariant(true)
 	}
 	switch n.Urgency {
 	case "low":

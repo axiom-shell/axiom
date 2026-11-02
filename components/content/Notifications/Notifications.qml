@@ -13,7 +13,8 @@ import qs.components.content.parts.notifications
 
 // The notification menu (the Notifications widget's popout, or an overlay
 // card): a header with do not disturb and clear all, then one card per app,
-// newest first.
+// newest first, then the Quiet section (silent ones, folded shut by
+// default).
 Panel {
   id: root
 
@@ -37,7 +38,9 @@ Panel {
   // In a popout the list grows away from the header, which stays by the
   // bar (Panel.growth)
   flips: true
-  maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.maxListHeight - (root.groupKeys.length > 0 ? scroll.height : root.emptyHeight)
+  // Anything to list: alerts, or silent ones under the Quiet heading
+  readonly property bool hasList: root.groupKeys.length > 0 || NotificationManager.quietCount > 0
+  maxImplicitHeight: root.embedded ? 0 : root.implicitHeight + root.maxListHeight - (root.hasList ? scroll.height : 0) - (root.groupKeys.length === 0 ? root.emptyHeight : 0)
 
   FontMetrics {
     id: smallMetrics
@@ -61,22 +64,35 @@ Panel {
   implicitWidth: Widget.px(400)
   // Grows to show every group (from compact, to the full layout); empty,
   // back to its place
-  wantedHeight: root.groupKeys.length === 0 ? 0 : scroll.height > 0 ? root.height + list.implicitHeight - scroll.height : 1
+  wantedHeight: !root.hasList ? 0 : scroll.height > 0 ? root.height + list.implicitHeight - scroll.height : 1
 
-  // Groups by key, and their keys newest first. The Repeater is keyed by
-  // the key strings, so a group's card (and whether it's expanded) survives
-  // notifications coming and going.
+  // Groups by key, and their keys newest first, for the alerts and the
+  // silent ones. The Repeaters are keyed by the key strings, so a group's
+  // card (and whether it's expanded) survives notifications coming and
+  // going.
   property var groups: ({})
   property var groupKeys: []
+  property var quietGroups: ({})
+  property var quietKeys: []
 
   // Refreshes relative times, each minute
   readonly property real now: clock.date.getTime()
 
   function rebuildGroups() {
+    const alerts = root.groupsOf(NotificationManager.alerts);
+    root.groups = alerts.byKey;
+    root.groupKeys = alerts.keys;
+    const quiet = root.groupsOf(NotificationManager.quiet);
+    root.quietGroups = quiet.byKey;
+    root.quietKeys = quiet.keys;
+  }
+
+  // Entries by app: { byKey, keys }
+  function groupsOf(entries) {
     const byKey = {};
     const keys = [];
     // Entries are newest first, so groups and their entries come out sorted
-    for (const entry of NotificationManager.entries) {
+    for (const entry of entries) {
       const key = entry.appName || entry.desktopEntry || "";
       if (!byKey[key]) {
         byKey[key] = {
@@ -99,8 +115,10 @@ Panel {
       if (!group.desktopEntry && entry.desktopEntry)
         group.desktopEntry = entry.desktopEntry;
     }
-    root.groups = byKey;
-    root.groupKeys = keys;
+    return {
+      byKey: byKey,
+      keys: keys
+    };
   }
 
   function clearAll() {
@@ -151,41 +169,12 @@ Panel {
     separatorColor: Theme.backgroundHighlight
   }
 
-  StyledScrollView {
-    id: scroll
-    visible: root.groupKeys.length > 0
-    Layout.fillWidth: true
-    Layout.preferredHeight: root.embedded ? -1 : Math.min(root.maxListHeight, list.implicitHeight)
-    Layout.fillHeight: root.embedded
-    contentPadding: 0
-    showScrollBar: list.implicitHeight > (root.embedded ? scroll.height : root.maxListHeight)
-
-    ColumnLayout {
-      id: list
-      width: scroll.availableWidth
-      spacing: Widget.spacing
-
-      Repeater {
-        id: groupRepeater
-        model: ScriptModel {
-          values: root.groupKeys
-        }
-
-        NotificationGroupDelegate {
-          required property string modelData
-          group: root.groups[modelData] ?? null
-          now: root.now
-        }
-      }
-    }
-  }
-
   // Empty: centred in whatever room is left (the card's slot, or one
   // notification's height in a popout)
   Item {
     visible: root.groupKeys.length === 0
     Layout.fillWidth: true
-    Layout.fillHeight: root.embedded
+    Layout.fillHeight: root.embedded && !root.hasList
     Layout.preferredHeight: root.embedded ? -1 : root.emptyHeight
 
     ColumnLayout {
@@ -221,6 +210,61 @@ Panel {
         textColor: Theme.foregroundAlt
         textSize: Appearance.fontSizeBy(-2)
         opacity: 0.7
+      }
+    }
+  }
+
+  StyledScrollView {
+    id: scroll
+    visible: root.hasList
+    Layout.fillWidth: true
+    Layout.preferredHeight: root.embedded ? -1 : Math.min(root.maxListHeight, list.implicitHeight)
+    Layout.fillHeight: root.embedded
+    contentPadding: 0
+    showScrollBar: list.implicitHeight > (root.embedded ? scroll.height : root.maxListHeight)
+
+    ColumnLayout {
+      id: list
+      width: scroll.availableWidth
+      spacing: Widget.spacing
+
+      Repeater {
+        id: groupRepeater
+        model: ScriptModel {
+          values: root.groupKeys
+        }
+
+        NotificationGroupDelegate {
+          required property string modelData
+          group: root.groups[modelData] ?? null
+          now: root.now
+        }
+      }
+
+      NotificationQuietHeader {
+        visible: NotificationManager.quietCount > 0
+        Layout.topMargin: root.groupKeys.length > 0 ? Widget.spacing / 2 : 0
+      }
+
+      // Built only while open (or folding shut)
+      FoldingColumn {
+        id: quietFold
+        Layout.fillWidth: true
+        open: NotificationManager.quietOpen && NotificationManager.quietCount > 0
+        spacing: Widget.spacing
+
+        Repeater {
+          model: ScriptModel {
+            values: quietFold.shown ? root.quietKeys : []
+          }
+
+          NotificationGroupDelegate {
+            required property string modelData
+            group: root.quietGroups[modelData] ?? null
+            now: root.now
+            quiet: true
+          }
+        }
       }
     }
   }
