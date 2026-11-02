@@ -14,6 +14,10 @@ import (
 
 var swayPlain = regexp.MustCompile(`^[A-Za-z0-9_.:+\-/@~=*]+$`)
 
+// SwayIncludePath is an include's path to rest in dir: only the folder
+// quoted, since sway's wordexp expands no glob inside quotes.
+func SwayIncludePath(dir, rest string) string { return SwayQuote(dir+"/") + rest }
+
 // SwayQuote is SwayConf.quote: a string as one argument of a sway command,
 // bare when it's plain word characters, else each run without a `"` in
 // double quotes and each `"` in single ones.
@@ -668,7 +672,7 @@ func SwayManagedText(module string, opts any) string {
 # The session
 ` + strings.Join(lines, "\n") + `
 
-include ` + SwayQuote(userDir+"/*") + `
+include ` + SwayIncludePath(userDir, "*") + `
 `
 }
 
@@ -679,7 +683,7 @@ func SwayReleasedText(userDir any, startLines string) string {
 # ` + jsCat(userDir) + `/, as axiom's managed one did.
 ` + startLines + `
 
-include ` + SwayQuote(jsCat(userDir)+"/*") + `
+include ` + SwayIncludePath(jsCat(userDir), "*") + `
 `
 }
 

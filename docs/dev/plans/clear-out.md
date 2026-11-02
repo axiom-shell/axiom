@@ -76,7 +76,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 28 | core-ui-theming-06 | minor-sweep | Done: ui-kit shared pieces | 4 | ~250 touched (~-100 net) | core-ui-theming-05 |  |
 | 29 | core-ui-theming-07 | minor-sweep | Done: Core services, theming and theme integrations | 4 | ~60 | core-ui-theming-04 |  |
 | 30 | compositor-05 | major | Done: The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
-| 31 | compositor-06 | major | Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
+| 31 | compositor-06 | major | Done: Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
 | 32 | compositor-07 | major | The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
 | 33 | compositor-08 | major | What a moved bind becomes | 3 | ~120 | compositor-07 |  |
 | 34 | compositor-21 | major | Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
@@ -330,12 +330,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A failed takeover leaves no layer and no problem
   - A failed takeover check reuses the last answer and can adopt without approval
   - niri started on a broken config reads as loaded
-- **compositor-06** (5):
-  - [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](../issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
-  - [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](../issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
-  - [A relative -c is read from the daemon's folder](../issues.md#a-relative--c-is-read-from-the-daemons-folder)
-  - [A claim comments out axiom's start inside a long string, breaking the script](../issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
-  - [A sway include path with a space breaks after a takeover](../issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
+- **compositor-06** (5, done):
+  - Claim keeps writing a symlinked or git-tracked config that release refuses to give back
+  - sway's hookup and takeover use ~/.config/sway/config whatever config sway runs
+  - A relative -c is read from the daemon's folder
+  - A claim comments out axiom's start inside a long string, breaking the script
+  - A sway include path with a space breaks after a takeover
 - **compositor-07** (6):
   - [Hyprland's remove deletes whatever hl.bind is on a site's line now](../issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
   - [The bind merge deletes an hl.bind inside a helper, losing binds it never read](../issues.md#the-bind-merge-deletes-an-hlbind-inside-a-helper-losing-binds-it-never-read)

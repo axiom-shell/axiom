@@ -22,13 +22,15 @@ import (
 // fakeWriter is a writer whose compositor is a list of what was asked of
 // it
 type fakeWriter struct {
-	mu       sync.Mutex
-	dir      string
-	calls    []string
-	loaded   bool
-	invalid  string
-	unread   string
-	reloadCh chan ipc.Reload
+	mu      sync.Mutex
+	dir     string
+	calls   []string
+	loaded  bool
+	invalid string
+	unread  string
+	// elsewhere: the user's config the compositor runs instead (sway's)
+	elsewhere string
+	reloadCh  chan ipc.Reload
 	// reloaded: the reloads the manager has taken (noteReload)
 	reloaded int
 }
@@ -47,7 +49,7 @@ func (f *fakeWriter) seen() []string {
 
 func (f *fakeWriter) files(in Inputs) files {
 	return files{ConfigDir: f.dir + "/conf/", IncludePath: f.dir + "/state/module", ManagedPath: f.dir + "/conf/hyprland.lua",
-		UserDir: f.dir + "/conf/user", UserFiles: f.dir + "/conf/user/*.lua", IncludeLines: "load it"}
+		UserDir: f.dir + "/conf/user", UserFiles: f.dir + "/conf/user/*.lua", IncludeLines: "load it", RunsElsewhere: f.elsewhere}
 }
 func (f *fakeWriter) moduleText(in Inputs, spec any) string {
 	return "-- module " + jsonx.ToString(getAny(spec, "tag")) + "\n"
@@ -372,6 +374,23 @@ func TestANewConfigNeedsNoApproval(t *testing.T) {
 	h.inputs("f1", "l1", "k1")
 	f := h.w.files(Inputs{})
 	h.eventually("taken over", func() bool { return readFile(f.ManagedPath) == hyprHeader+" managed f1\n" })
+}
+
+// A compositor running another config of the user's is never taken over:
+// the managed file would never load
+func TestManagedIsBlockedWhenTheCompositorRunsAnotherConfig(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "managed")
+	h.w.elsewhere = "/home/me/.config/i3/config"
+	h.inputs("f1", "l1", "k1")
+	h.eventually("the runtime layer instead", h.called("runtime:live l1"))
+	h.eventually("blocked", func() bool {
+		return h.state("managedCheck") == "blocked" && h.state("managedBlockedBy") == "elsewhere"
+	})
+	f := h.w.files(Inputs{})
+	if _, err := os.Stat(f.ManagedPath); err == nil {
+		t.Fatal("the managed config was written")
+	}
 }
 
 func TestLivePartsAreEvaluatedAndTakenBack(t *testing.T) {

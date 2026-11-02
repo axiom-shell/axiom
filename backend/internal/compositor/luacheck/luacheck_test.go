@@ -3,6 +3,7 @@ package luacheck
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os/exec"
 	"testing"
 )
@@ -64,5 +65,15 @@ func TestWholeLines(t *testing.T) {
 				t.Errorf("got %v, want %v", got, c.want)
 			}
 		})
+	}
+}
+
+func TestInCode(t *testing.T) {
+	t.Parallel()
+	src := "a([[\nx\n]])\n--[==[\ny ]==] b()\n-- c\n\"d\\\ne\"\n"
+	want := []bool{true, false, false, true, false, true, true, false, true}
+	got := InCode(src)
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("got %v, want %v", got, want)
 	}
 }

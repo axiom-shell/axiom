@@ -3715,6 +3715,7 @@
     "Couldn't check for updates: {0}": "",
     "Couldn't load the weather: {0}": "",
     "Writes kitty/axiom.conf. Reloads running kitty.": "",
-    "App name → icon path/URL, for apps whose tray or window icon doesn't resolve (a window's key is its class).": ""
+    "App name → icon path/URL, for apps whose tray or window icon doesn't resolve (a window's key is its class).": "",
+    "{0} runs {1}, not {2}, so axiom won't take it over. Use Included instead.": ""
   }
 }

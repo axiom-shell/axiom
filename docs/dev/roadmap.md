@@ -157,6 +157,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell and binary run platform-03, take a screenshot with an annotator installed and click the notification's Edit in … button (it opens the annotator), and use Settings → Notifications' Show: both toast as before, and `scripts/log.sh` shows no `[NotificationManager] Sending`.
 - Once the shell runs clear-out core-ui-theming-02 (row 20): with two players open, play one then the other and check the Media widget and NowPlaying follow the one playing (and a player picked in NowPlaying stays until another starts); with no Media widget or NowPlaying shown, check the position isn't ticking (a temporary `console.log` in `updatePosition` stays quiet while music plays); with a scheduled theme, set the other mode by hand (dark while light is scheduled) and force a reload: it stays, and goes back only at the next scheduled switch or a fresh start (logout, or the shell restarted); likewise night light and do-not-disturb.
 - Once axiom runs a build with row 20's compositor-05, start a nested niri in managed mode with a broken `user/*.kdl` (`scripts/dev/nested.sh niri --managed`) and check the Compositor card reports niri couldn't load its config rather than loaded; and with a stale `NIRI_SOCKET` (or `HYPRLAND_INSTANCE_SIGNATURE`) left in the systemd user environment under another compositor, check the shell and `axiom daemon logs` use the compositor running.
+- Once axiom runs row 20's compositor-06, under a sway started as `sway -c ~/.config/i3/config` (a scratch copy), check the Compositor page's Add it for me edits that file (not `~/.config/sway/config`) and Managed says it can't switch, naming that file.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -357,10 +358,8 @@ Found by the audits:
 - [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
-- [Claim keeps writing a symlinked or git-tracked config that release refuses to give back](issues.md#claim-keeps-writing-a-symlinked-or-git-tracked-config-that-release-refuses-to-give-back)
-- [sway's hookup and takeover use ~/.config/sway/config whatever config sway runs](issues.md#sways-hookup-and-takeover-use-configswayconfig-whatever-config-sway-runs)
-- [A relative -c is read from the daemon's folder](issues.md#a-relative--c-is-read-from-the-daemons-folder)
 - [Gaps to the edges are wider on sway than the setting says](issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says)
+- [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
 - [A $' or $& in a bind's argument is read as a replacement pattern](issues.md#a--or--in-a-binds-argument-is-read-as-a-replacement-pattern)
 - [A niri merge of two binds on one line loses one](issues.md#a-niri-merge-of-two-binds-on-one-line-loses-one)
 - [A sway bind using a variable from an include moves as a literal $name](issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
@@ -368,7 +367,6 @@ Found by the audits:
 - [A sway line continuing a non-bind line is moved as a bind of its own](issues.md#a-sway-line-continuing-a-non-bind-line-is-moved-as-a-bind-of-its-own)
 - [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 - [Hyprland's remove deletes whatever hl.bind is on a site's line now](issues.md#hyprlands-remove-deletes-whatever-hlbind-is-on-a-sites-line-now)
-- [A claim comments out axiom's start inside a long string, breaking the script](issues.md#a-claim-comments-out-axioms-start-inside-a-long-string-breaking-the-script)
 - [The overview stays open with nothing shown after its monitor goes away](issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
 - [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
@@ -386,7 +384,6 @@ Found by the audits:
 - [niri's confirming quit moves in as an instant log out](issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
 - [A sway title-bar mouse bind moves in as a whole-window bind](issues.md#a-sway-title-bar-mouse-bind-moves-in-as-a-whole-window-bind)
 - [A sway exec chained with ; or , moves in as one shell command](issues.md#a-sway-exec-chained-with--or--moves-in-as-one-shell-command)
-- [A sway include path with a space breaks after a takeover](issues.md#a-sway-include-path-with-a-space-breaks-after-a-takeover)
 - [A sway output rule by description misses a monitor with no serial](issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
 - [Managed mode's monitor-conflict check misses quoted and block output lines](issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
 - [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
