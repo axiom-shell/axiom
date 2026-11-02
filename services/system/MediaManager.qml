@@ -4,12 +4,15 @@ import QtQuick
 import Quickshell.Services.Mpris
 
 import qs.config
+import qs.components.methods
 import qs.services.core
 
-// The active MPRIS player (Spotify first, else one playing, else one
-// that can play; or the one picked with selectPlayer) for the media
-// widgets, the lockscreen and the media keys: its track, position and
-// controls, and its album art downloaded to a local file.
+// The active MPRIS player (MediaPick: the one picked with selectPlayer,
+// else the one that most recently started playing, else the last active,
+// else one that can play) for the media widgets, the lockscreen and the
+// media keys: its track, position and controls, and its album art
+// downloaded to a local file. `position` ticks only while a display has
+// acquire()d it.
 QtObject {
   id: root
 
@@ -184,6 +187,17 @@ QtObject {
     }
   }
 
+  // Displays of the position (the Media widget, NowPlaying): it ticks only
+  // while one holds it
+  function acquire(owner) {
+    root._registry.acquire(owner, true);
+    root.updatePosition();
+  }
+
+  function release(owner) {
+    root._registry.release(owner);
+  }
+
   // --- Helper Functions ---
 
   function formatTime(seconds) {
@@ -196,8 +210,10 @@ QtObject {
 
   // --- Private Logic, Timers, and Workers ---
 
+  property ConsumerRegistry _registry: ConsumerRegistry {}
+
   property Timer _positionTimer: Timer {
-    running: root.isPlaying && root.hasActivePlayer
+    running: root.isPlaying && root._registry.active
     interval: 500
     repeat: true
     // Copies the position into `position` too, so every consumer sees it
@@ -206,68 +222,53 @@ QtObject {
   }
 
   // Players already running at startup (later ones: onPlayersChanged)
-  Component.onCompleted: {
-    if (root.players.length > 0) {
-      root._updateActivePlayer();
-      root.updateAllMetadata();
-    }
-  }
-
-  function _pickActivePlayer() {
-    const playersArray = Mpris.players.values;
-    console.log("[MediaManager] Picking active MPRIS player from", playersArray.length, "available players.");
-    if (!playersArray || playersArray.length === 0)
-      return null;
-
-    const playerCount = playersArray.length;
-
-    for (let i = 0; i < playerCount; ++i) {
-      const p = playersArray[i];
-      if (p.dbusName && p.dbusName.indexOf("org.mpris.MediaPlayer2.spotify") !== -1) {
-        return p;
-      }
-    }
-    for (let i = 0; i < playerCount; ++i) {
-      const p = playersArray[i];
-      if (p.playbackState === MprisPlaybackState.Playing) {
-        return p;
-      }
-    }
-    for (let i = 0; i < playerCount; ++i) {
-      const p = playersArray[i];
-      if (p.canPlay) {
-        return p;
-      }
-    }
-    return playersArray[0];
-  }
-
-  function _updateActivePlayer() {
-    const newPlayer = _pickActivePlayer();
-    if (activePlayer !== newPlayer) {
-      activePlayer = newPlayer;
-    }
-  }
+  Component.onCompleted: root._pick()
 
   // Every player, for player switchers
   readonly property var players: Mpris.players?.values ?? []
-  // A player the user picked; kept until it goes away
-  property var _pinnedPlayer: null
+  // The bus name of a player the user picked: kept until it goes away or
+  // another starts playing
+  property string _pinnedId: ""
+  // Bus name -> when it last started playing (ms)
+  property var _startedAt: ({})
 
   function selectPlayer(player) {
-    root._pinnedPlayer = player;
-    root.activePlayer = player;
-    updateAllMetadata();
+    root._pinnedId = player.dbusName;
+    root._pick();
   }
 
-  // Players come and go after startup: keep a pinned player while it
-  // exists, otherwise re-pick (and drop a player that has vanished)
+  function _pick() {
+    const id = MediaPick.pick(root.players.map(p => ({
+          "id": p.dbusName,
+          "playing": p.playbackState === MprisPlaybackState.Playing,
+          "canPlay": p.canPlay,
+          "startedAt": root._startedAt[p.dbusName] ?? 0
+        })), root._pinnedId, root.activePlayer?.dbusName ?? "");
+    root.activePlayer = root.players.find(p => p.dbusName === id) ?? null;
+  }
+
   onPlayersChanged: {
-    if (root._pinnedPlayer && root.players.includes(root._pinnedPlayer))
-      return;
-    root._pinnedPlayer = null;
-    _updateActivePlayer();
-    if (root.activePlayer)
-      updateAllMetadata();
+    if (!root.players.some(p => p.dbusName === root._pinnedId))
+      root._pinnedId = "";
+    root._pick();
+  }
+
+  // A player starting playback becomes the active one
+  property Instantiator _playback: Instantiator {
+    model: Mpris.players
+
+    delegate: Connections {
+      required property var modelData
+      target: modelData
+
+      function onPlaybackStateChanged() {
+        if (modelData.playbackState === MprisPlaybackState.Playing) {
+          root._startedAt[modelData.dbusName] = Date.now();
+          if (root._pinnedId !== modelData.dbusName)
+            root._pinnedId = "";
+        }
+        root._pick();
+      }
+    }
   }
 }

@@ -39,6 +39,9 @@ Panel {
   // A seek bar is being dragged, so the popout mustn't dismiss
   property bool seeking: false
 
+  Component.onCompleted: MediaManager.acquire(root)
+  Component.onDestruction: MediaManager.release(root)
+
   hovered: pointerInside || root.seeking
   // The blurred cover is a box of its own, so bare it keeps its padding
   drawsBox: true

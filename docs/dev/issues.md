@@ -1329,23 +1329,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the services-core system
 
-### The active media player is Spotify first and never follows playback
-- **Where:** `services/system/MediaManager.qml:215` (`_pickActivePlayer`), `services/system/MediaManager.qml:264` (`onPlayersChanged`)
-- **What:** `_pickActivePlayer` returns any player whose bus name contains `org.mpris.MediaPlayer2.spotify` before it looks for one that is playing, and the pick is only redone when the player list changes, never when a player starts or stops playing. Scenarios: with Spotify open and paused, play a video in the browser: its player appears, the pick runs and keeps paused Spotify, so the bar's Media widget and NowPlaying show Spotify, and the media keys (`media` IPC `playPause`) start Spotify over the video. With two players open, pausing one and playing the other leaves the active player on the paused one. No doc mentions the preference (MediaManager has no doc beyond its name in services-pattern.md). Fix: pick the playing player first (then the last active, then one that can play), drop the Spotify case, and re-pick when any player's `playbackState` changes while none is pinned (`selectPlayer` keeps a user's choice); the three loops (28 lines) become one ordered `find`.
-
-  **Decided** (maintainer, 2026-10-31): "Recommendation as described". Fix: a pure methods helper `MediaPick.pick(players, pinnedId, lastActiveId)` over `{id, playing, canPlay, startedAt}` (order: pinned, most recently started playing, last active, can play), tested in `tst_MediaPick.qml`. MediaManager tracks `startedAt` through an Instantiator of Connections on `playbackStateChanged` and re-picks on any state or list change. A pin drops when its player vanishes or another starts playing. The Spotify case and the per-pick log go. No schema change.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
 ### Album art piles up in the runtime folder for the whole session
 - **Where:** `backend/internal/media/media.go:47` (`Art`), `services/system/MediaManager.qml:34` (`artFilePath`)
 - **What:** Each track's art is saved as `<md5 of its URL>.jpg` in `$XDG_RUNTIME_DIR/axiom/media-art` and kept ("A file already there (and not empty) is kept"), and nothing ever deletes one: `grep -rn media-art` finds only the shell's path and Go's `ArtDir`. The runtime folder is a tmpfs, so the art of every track played stays in RAM until logout: on 2026-10-31, 1 h 36 min after boot, it held 15 files, 2.3 MB; a day of music is a few hundred covers, tens of MB. Fix: after a fetch lands, `Art` removes all but the newest few files in `o.Dir` (by mtime; say 16, which keeps a playlist going back and forth cached).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
-### MediaManager ticks the position with nothing showing it
-- **Where:** `services/system/MediaManager.qml:198` (`_positionTimer`)
-- **What:** AGENTS.md › Services: "Anything polled goes through `acquire(owner, request)` / `release(owner)`: fetched once at the shortest interval asked, not at all with no consumer". `_positionTimer` runs every 500 ms whenever a player is playing (`running: root.isPlaying && root.hasActivePlayer`), copying the position into `position` for its two readers (the Media bar widget and the NowPlaying module), whether or not either exists; MediaManager is created from `shell.qml`'s `_services`, so it ticks through every song with no media UI configured or the overlay closed. The same kind of ticker in StopwatchManager and PomodoroManager goes through `acquire(owner)` (services-pattern.md › Other polled services). Fix: a `ConsumerRegistry` with `acquire(owner)` / `release(owner)` from Media and NowPlaying, and `running` also gated on `_registry.active`.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the services-core system
 

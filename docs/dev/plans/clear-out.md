@@ -291,8 +291,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 **core-ui-theming**
 
 - **core-ui-theming-02** (4): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
-  - [MediaManager ticks the position with nothing showing it](../issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
-  - [The active media player is Spotify first and never follows playback](../issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
+  - MediaManager ticks the position with nothing showing it
+  - The active media player is Spotify first and never follows playback
   - [Album art piles up in the runtime folder for the whole session](../issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
   - [DailySchedule's persisted state never survives a reload](../issues.md#dailyschedules-persisted-state-never-survives-a-reload)
 - **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
