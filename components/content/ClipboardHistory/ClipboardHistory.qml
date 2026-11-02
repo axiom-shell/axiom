@@ -21,8 +21,7 @@ Panel {
   readonly property bool off: !ClipboardManager.enabled
   // The compositor offers no clipboard control
   readonly property bool missing: ClipboardManager.unsupported
-  readonly property var allClips: ClipboardManager.shown
-  readonly property var clips: root.query === "" ? root.allClips : root.allClips.filter(e => ClipboardManager.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
+  readonly property var clips: root.query === "" ? ClipboardManager.shown : ClipboardManager.shown.filter(e => ClipboardManager.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
   readonly property var newest: ClipboardManager.pins.length > 0 || ClipboardManager.entries.length > 0 ? (ClipboardManager.entries[0] ?? ClipboardManager.pins[0]) : null
   // The clip copied last, for a moment, as feedback
   property string copiedId: ""
@@ -76,7 +75,7 @@ Panel {
   compactContent: CompactFigure {
     icon: "content_paste"
     iconColor: root.off ? Theme.foregroundAlt : Theme.accent
-    value: root.off ? "" : String(root.allClips.length)
+    value: root.off ? "" : String(ClipboardManager.shown.length)
     label: root.off ? I18n.tr("off") : I18n.tr("clips")
   }
 
@@ -85,8 +84,8 @@ Panel {
     icon: "content_paste"
     title: I18n.tr("Clipboard")
     StyledText {
-      visible: root.allClips.length > 0
-      text: String(root.allClips.length)
+      visible: ClipboardManager.shown.length > 0
+      text: String(ClipboardManager.shown.length)
       textSize: Appearance.fontSizeBy(-2)
       textColor: Theme.foregroundAlt
     }

@@ -1466,8 +1466,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
 
 ### DockWindow logs a binding loop on _wouldShow
-- **Where:** `components/surfaces/dock/DockWindow.qml` (`_wouldShow`), `shell/Dock.qml`
-- **What:** The live shell logged `Binding loop detected for property "_wouldShow"` (`@shell/Dock.qml[35:19]`, DockWindow.qml:270) after a reload on 2026-11-02. `_wouldShow` reads `latched`, `engaged`, `obscured` and `hiddenByHand`, and feeds `wantShown` and a `wanted:` binding (line 247); one of those likely writes back a value it reads. Not traced.
+- **Where:** `components/surfaces/dock/DockWindow.qml:270` (`_wouldShow`), `components/surfaces/dock/DockWindow.qml:318` (`conceal`), `components/hosts/popout/PopoutClaim.qml` (`_sync`), `services/ui/PopoutManager.qml` (`_refuse`), `shell/Dock.qml` (the DockWindow the log names)
+- **What:** The live shell logged `Binding loop detected for property "_wouldShow"` (`@shell/Dock.qml[35:19]`) after a reload on 2026-11-02. main's code has the loop (none of these files differ on the maintainer's branch): when `_wouldShow` turns true (the dock latches) while a popout covers its spot, the claim's `wanted:` binding (line 247) makes `PopoutClaim._sync` call `PopoutManager.claim`, which refuses a resident synchronously (`_refuse` puts it `yielded`); `away` turns true and `onAwayChanged` runs `conceal()`, setting `latched = false` while `_wouldShow`'s binding is still writing its value. The dock ends hidden, as wanted, but with the warning. Fix: drop the latch a turn later (`Qt.callLater` in `onAwayChanged`), or have `conceal` skip `latched` when `away` already hides it.
 - **Size:** small
 - **Found:** 2026-11-02, while clearing out the launcher's issues (platform-07)
 
