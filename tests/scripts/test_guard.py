@@ -110,6 +110,11 @@ class Bash(unittest.TestCase):
             with mock.patch.object(guard, "current_branch", side_effect=branch):
                 self.allows(f"cd {tree} && git push -u origin HEAD")
                 self.blocks("git push -u origin HEAD", f"cd {tree} && cd {REPO} && git push")
+                # cd's `..` leaves a link to the folder (here into one on main), not the folder it points to
+                with tempfile.TemporaryDirectory() as other:
+                    (Path(tree) / "sub").mkdir()
+                    (Path(other) / "link").symlink_to(Path(tree) / "sub")
+                    self.blocks(f"cd {other}/link/.. && git push")
                 # The push may run where the session started
                 self.blocks(f"cd {tree}; git push origin HEAD", f"cd {tree} || git push origin HEAD",
                             f"(cd {tree}) && git push origin HEAD",
