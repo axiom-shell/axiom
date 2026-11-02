@@ -29,6 +29,8 @@ type fakeWriter struct {
 	invalid  string
 	unread   string
 	reloadCh chan ipc.Reload
+	// reloaded: the reloads the manager has taken (noteReload)
+	reloaded int
 }
 
 func (f *fakeWriter) note(c string) {
@@ -73,9 +75,13 @@ func (f *fakeWriter) runtimeApply(_ context.Context, in Inputs, live func() []st
 	f.note("runtime:" + strings.Join(live(), ";"))
 }
 func (f *fakeWriter) runtimeClear(context.Context) { f.note("clear") }
-func (f *fakeWriter) noteReload()                  {}
-func (f *fakeWriter) seenReload()                  {}
-func (f *fakeWriter) skippedKeys() []string        { return nil }
+func (f *fakeWriter) noteReload() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reloaded++
+}
+func (f *fakeWriter) seenReload()           {}
+func (f *fakeWriter) skippedKeys() []string { return nil }
 func (f *fakeWriter) checkLoaded(context.Context, Inputs, string) (bool, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -753,5 +759,50 @@ func TestManagedFromTheFileNotifies(t *testing.T) {
 				t.Fatal("taken over without the approval")
 			}
 		})
+	}
+}
+
+// Leaving included between sessions (the mode applied last is known only
+// within one compositor run): the module left loading is emptied anyway
+func TestAModuleLeftFromAnEarlierSessionIsEmptied(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "detached")
+	path := h.w.files(Inputs{}).IncludePath
+	os.MkdirAll(filepath.Dir(path), 0o755)
+	os.WriteFile(path, []byte("-- module f0\n"), 0o644)
+	h.inputs("f1", "l1", "k1")
+	h.eventually("emptied", func() bool { return readFile(path) == "-- empty\n" })
+}
+
+// A takeover that fails (the config dir can't be locked): the runtime
+// layer stands in, and the card says why
+func TestAFailedTakeoverAppliesTheRuntimeLayer(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "managed")
+	if err := h.m.approvals().add("hyprland"); err != nil {
+		t.Fatal(err)
+	}
+	f := h.w.files(Inputs{})
+	os.WriteFile(strings.TrimSuffix(f.ConfigDir, "/"), []byte("not a dir"), 0o644)
+	h.inputs("f1", "l1", "k1")
+	h.eventually("the runtime layer", h.called("runtime:live l1"))
+	if p := jsonx.ToString(h.state("problem")); !strings.HasPrefix(p, "Couldn't take over") {
+		t.Fatalf("problem %q", p)
+	}
+}
+
+// A takeover check that fails leaves no answer behind: a stale one could
+// let a claim adopt the user's config without their Allow
+func TestAFailedTakeoverCheckForgetsTheLastAnswer(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "managed")
+	f := h.w.files(Inputs{})
+	os.WriteFile(strings.TrimSuffix(f.ConfigDir, "/"), []byte("not a dir"), 0o644)
+	h.m.do(context.Background(), func(ctx context.Context) {
+		h.m.managedCheck = "new"
+		h.m.check(ctx)
+	})
+	if got := h.state("managedCheck"); got != "" {
+		t.Fatalf("managedCheck %v after a failed check", got)
 	}
 }

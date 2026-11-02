@@ -119,6 +119,53 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	profile("")
 }
 
+// A file mode whose file stops loading (included, its include line taken
+// out): the reload set the outputs from the user's config, so the saved
+// profile goes back on
+func TestAFileThatStopsLoadingAppliesTheSavedProfile(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, "included")
+	items, _ := jsonx.Unmarshal([]byte(testProfiles))
+	h.modeMu.Lock()
+	h.config = jsonx.Obj("Monitors", jsonx.Obj("items", items))
+	h.modeMu.Unlock()
+	f := &fakeOutputs{}
+	f.connect(mainOut, tvOut)
+	h.m.profiles = &profileSwitch{io: f}
+	h.m.hotplugDelay = 0
+	applied := func(n int) func() bool {
+		return func() bool { _, a := f.counts(); return len(a) == n }
+	}
+	reload := func(loaded bool) {
+		h.w.mu.Lock()
+		h.w.loaded = loaded
+		n := h.w.reloaded + 1
+		h.w.mu.Unlock()
+		h.w.reloadCh <- ipc.Reload{}
+		h.eventually("the reload taken", func() bool {
+			h.w.mu.Lock()
+			defer h.w.mu.Unlock()
+			return h.w.reloaded == n
+		})
+		h.m.do(context.Background(), func(context.Context) {})
+	}
+	h.m.OutputsChanged()
+	h.eventually("the profile", applied(1))
+	h.inputs("f1", "l1", "k1")
+	h.eventually("live", func() bool { return h.state("live") == true })
+	reload(true)
+	reload(true)
+	if _, a := f.counts(); len(a) != 1 || h.status() != "loaded" {
+		t.Fatalf("applied with the module loaded (%s): %v", h.status(), a)
+	}
+	// The include line taken out
+	reload(false)
+	reload(false)
+	if _, a := f.counts(); len(a) != 3 {
+		t.Fatalf("applied %d times, want once each reload", len(a))
+	}
+}
+
 // buildInputs gives the writers the saved profile's rules for the outputs
 // read: nil until they're read (the files keep what they
 // say), [] when no profile matches

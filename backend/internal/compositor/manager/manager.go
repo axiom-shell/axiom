@@ -594,7 +594,7 @@ func (m *Manager) writeIfChanged(ctx context.Context, path, text string) {
 		return
 	}
 	if err := writeFile(path, text); err != nil {
-		m.o.Log.Warn("compositor: could not write "+path, "err", err)
+		m.warnOnce("Couldn't write " + path + ": " + err.Error())
 		return
 	}
 	m.w.reload(ctx)
@@ -612,13 +612,13 @@ func (m *Manager) checkLoaded(ctx context.Context) {
 	}
 	// The compositor couldn't load its config at all: the runtime layer
 	// wouldn't load either
+	m.loaded = loaded && !failed
 	if failed {
 		m.warnOnce(m.w.problems(m.in).Failed)
 		return
 	}
 	if loaded {
 		m.problem = ""
-		m.loaded = true
 		m.w.runtimeClear(ctx)
 		return
 	}
@@ -691,9 +691,18 @@ func (m *Manager) apply(ctx context.Context) {
 	if m.mode == "managed" {
 		m.releaseDone()
 	}
-	released := false
-	if previous != "" && previous != m.mode {
-		released = m.leave(ctx, previous)
+	// Outside included the module does nothing (managed's restored config
+	// may load it). Emptied whatever mode applied last: that is known only
+	// within one compositor run
+	if m.mode != "included" {
+		m.emptyModule(ctx)
+	}
+	// Leaving managed gives back the config it claimed; else the old layer
+	// would stay in the compositor's config, and the runtime layer, which
+	// only adds, can't undo it. A release brings the runtime layer in itself
+	released := previous == "managed" && m.mode != "managed"
+	if released {
+		m.release(ctx)
 	}
 	m.st.AppliedMode = m.mode
 	m.st.save()
@@ -793,8 +802,8 @@ func (m *Manager) CheckManaged(ctx context.Context) string {
 func (m *Manager) check(ctx context.Context) {
 	result, err := takeover.Check(ctx, m.takeoverOptions(m.mode))
 	if err != nil {
+		// Not the last answer: claimIfApproved waits on none
 		m.o.Log.Warn("compositor: checking the takeover", "err", err)
-		return
 	}
 	m.managedCheck = result
 }
@@ -830,7 +839,7 @@ func (m *Manager) claimIfApproved(ctx context.Context) {
 func (m *Manager) claim(ctx context.Context) {
 	lock, err := edit.LockDir(ctx, m.files().ConfigDir)
 	if err != nil {
-		m.o.Log.Warn("compositor: taking over "+m.files().ManagedPath, "err", err)
+		m.claimFailed(ctx, err)
 		return
 	}
 	o := m.takeoverOptions(m.mode)
@@ -839,7 +848,7 @@ func (m *Manager) claim(ctx context.Context) {
 	m.findMonitorConflicts()
 	if err != nil {
 		lock.Release()
-		m.o.Log.Warn("compositor: taking over "+m.files().ManagedPath, "err", err)
+		m.claimFailed(ctx, err)
 		return
 	}
 	word, rest, _ := strings.Cut(result, ":")
@@ -862,6 +871,12 @@ func (m *Manager) claim(ctx context.Context) {
 	if word == "adopted" {
 		m.merge(ctx, rest, false)
 	}
+}
+
+// claimFailed: the runtime layer stands in, and the card says why
+func (m *Manager) claimFailed(ctx context.Context, err error) {
+	m.warnOnce("Couldn't take over " + m.files().ManagedPath + ": " + err.Error() + ". Applying axiom's layer at runtime meanwhile.")
+	m.runtimeApply(ctx)
 }
 
 // release gives the config back. One that fails (an error, or the dir now
@@ -922,23 +937,6 @@ func (m *Manager) releaseDone() {
 	m.releaseProblem = ""
 	m.releaseBackoff = 0
 	m.releaseRetry.Stop()
-}
-
-// leave gives back what previous took: leaving managed, the config it
-// claimed; leaving included (or managed, whose restored config may load
-// it), the module, which then does nothing. Else the old layer stays in
-// the compositor's config, and the runtime layer, which only adds, can't
-// undo it. True when it ran a release, which brings the runtime layer
-// in itself.
-func (m *Manager) leave(ctx context.Context, previous string) bool {
-	if m.mode != "included" {
-		m.emptyModule(ctx)
-	}
-	if previous == "managed" {
-		m.release(ctx)
-		return true
-	}
-	return false
 }
 
 func (m *Manager) emptyModule(ctx context.Context) {
@@ -1163,11 +1161,14 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 		}
 	}
 	// Unless a file of axiom's holds it, the reload set the outputs as the
-	// user's config says: the saved profile goes back on
-	if m.profiles != nil && !m.loaded {
-		m.profiles.applied = ""
-		m.applyProfile(ctx)
-	}
+	// user's config says: the saved profile goes back on, once checkLoaded
+	// below has said whether one does
+	defer func() {
+		if m.profiles != nil && !m.loaded {
+			m.profiles.applied = ""
+			m.applyProfile(ctx)
+		}
+	}()
 	if !m.live() {
 		return
 	}
