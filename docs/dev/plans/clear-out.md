@@ -269,7 +269,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [install.sh and the AUR packages never install notify-send, gio or pactl](../issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
   - [A main-channel update applied after edge moved on needs go to rebuild the binary](../issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
   - [install.sh still installs the rest of a feature whose COPR was declined](../issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
-  - [The onboarder's Checks-page purposes don't match their declared keys](../issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
+  - The onboarder's Checks-page purposes don't match their declared keys
 - **platform-04** (4): Dev mode only; the three re-exec races get Live checks lines.
   - [A dev build during a branch switch re-execs onto the defaults](../issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
   - [A protocol bump in dev mode leaves the installed CLI on the old protocol](../issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)

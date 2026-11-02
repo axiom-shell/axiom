@@ -1506,12 +1506,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the packaging system
 
-### The onboarder's Checks-page purposes don't match their declared keys
-- **Where:** `services/core/DependencyManager.qml:65` (`tools`), `components/surfaces/onboarding/pages/ChecksPage.qml:66`
-- **What:** ChecksPage shows `I18n.tr(tool.modelData.purpose)`, its comment saying "purposes are declared in DependencyManager", but the declarations above `tools` have drifted from the list: two purposes aren't declared, so they're in no `config/i18n/*.json` and show in English in every language ("Night light, where the compositor has no gamma control", "Screenshots (the picker's frozen frame)": 0 i18n files each), and nine declared keys are no tool's purpose any more ("Copying to the clipboard", "Reading JSON (theme integrations)", "Chat requests", "Theme integrations and keybinds", "Idle locking and screen blanking", "Night light", "Clipboard history shared with other apps", "Typing emoji from the launcher", "Calendar accounts and feeds"), which keeps their translations alive for nothing. Fix: the comment declares exactly the 14 distinct purposes of `tools`' 15 entries (the two X11 tools share one): drop lines 67, 70, 72, 74 and 79 (5 lines) and the stale keys on 66 and 75, and declare the two missing ones.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the packaging system
-
 ### daemon.shutdown starts its goroutine past tasks.Go
 - **Where:** `backend/internal/daemon/methods.go:340` (`coreMethods`)
 - **What:** The daemon's docs state "Every goroutine is started through `tasks.Go` … and `Run` waits for all of them" (`docs/dev/backend/README.md` › What exists now, the daemon's parts; the daemon system's Checks repeat it), but `daemon.shutdown` runs `announceClosing` and `d.stop()` on a bare `go func()`: `Run` doesn't wait for it, so it can still be sending `daemon.closing` through a server whose `Serve` has returned. Every other goroutine of the package goes through `tasks.Go` (or, in dev mode's `watch`, a wait group its stop function waits on; the greeter's `Serve`, a channel its function waits on before returning). Fix: `d.tasks.Go(func(context.Context) { announceClosing(d.server, false, closingWait); d.stop() })`, as `reexecSoon` does.
