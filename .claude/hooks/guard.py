@@ -587,15 +587,20 @@ def check_generated_edit(tool_input):
 
 # ------------------------------------------------------------------ main
 
+LEADING_CD = re.compile(r"\s*cd\s+[^-\s;&|()<>`][^\s;&|()<>`]*\s*&&")
+
+
 def check(call):
     tool, tool_input = call.get("tool_name", ""), call.get("tool_input") or {}
     if tool == "Bash":
-        commands = split_commands(tool_input.get("command", ""))
+        command = tool_input.get("command", "")
+        commands = split_commands(command)
         cwd = call.get("cwd") or str(REPO)
-        # Leading `cd <dir> &&`s move the rest (an agent's cwd resets every call)
-        while commands and len(commands[0][1]) == 2 and commands[0][1][0] == "cd":
+        # Leading `cd <dir> &&`s move the rest (an agent's cwd resets every
+        # call); after `;`, `||` or `|` the rest may run where it started
+        while commands and commands[0][1][:1] == ["cd"] and (m := LEADING_CD.match(command)):
             cwd = str(resolve(commands[0][1][1], cwd, commands[0][0]))
-            commands = commands[1:]
+            commands, command = commands[1:], command[m.end():]
         for env, argv in commands:
             check_argv(env, argv, cwd)
     elif tool in {"Edit", "Write"}:

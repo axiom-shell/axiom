@@ -109,6 +109,9 @@ class Bash(unittest.TestCase):
             with mock.patch.object(guard, "current_branch", side_effect=branch):
                 self.allows(f"cd {tree} && git push -u origin HEAD")
                 self.blocks("git push -u origin HEAD", f"cd {tree} && cd {REPO} && git push")
+                # The push may run where the session started
+                self.blocks(f"cd {tree}; git push origin HEAD", f"cd {tree} || git push origin HEAD",
+                            f"(cd {tree}) && git push origin HEAD")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
