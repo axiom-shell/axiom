@@ -116,7 +116,10 @@ class Bash(unittest.TestCase):
                             # a cd that fails, or another cd later in the line
                             f"cd {tree}/none && true; git push", f"cd '{tree}/none&&'; git push",
                             f"cd {tree} && cd {REPO}; git push", f"cd {tree} && pushd {REPO}; git push",
-                            f"cd {tree} && bash -c 'cd {REPO}; git push'")
+                            f"cd {tree} && bash -c 'cd {REPO}; git push'",
+                            # anything but git after the cd, or a `\&` that backgrounds the cd
+                            f"cd {tree} && eval 'cd {REPO}' && git push", f"cd {tree} && builtin cd {REPO} && git push",
+                            f"cd {tree} && env -C {REPO} git push", f"cd {tree} && git status \\&& git push")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
