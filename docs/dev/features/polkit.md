@@ -7,7 +7,7 @@
 Axiom as the session's polkit agent: it takes over registration from other agents and draws a modal password prompt.
 
 ### Enabling
-- Off by default; the onboarder's Integrations page recommends it.
+- Off by default; the onboarder's System page recommends it.
 - `Polkit.enabled` is `x-takeover`.
 - While it's on, a `LazyLoader` holds a `PolkitAgent`.
 - **`flow`:** the open request (an `AuthFlow`).

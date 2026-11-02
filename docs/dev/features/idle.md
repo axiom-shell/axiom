@@ -7,7 +7,7 @@
 What happens when you step away is the axiom daemon's (`internal/idle`), in place of hypridle, which isn't a dependency anymore. The shell keeps the caffeine switch and shows the state.
 
 ### Turning it on
-- `Idle.enabled` (off by default; the onboarder's Integrations page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: AGENTS.md › Never, while testing). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
+- `Idle.enabled` (off by default; the onboarder's System page recommends it) is an `x-takeover` setting: ask before enabling it on the live config (rule: AGENTS.md › Never, while testing). It replaces an idle daemon of the user's own; a running hypridle shows up as the holder of `org.freedesktop.ScreenSaver` in the card's warning.
 - Off, the daemon does nothing about idle: no listeners, no D-Bus connections, no hypridle started or stopped.
 - The managed mode's autostart (`Session.autostart`) no longer has a `hypridle` entry by default (the v78 step drops the old default's from saved configs), and still skips a plain `hypridle` one the user added while Idle is on, so it doesn't run beside it.
 
@@ -58,4 +58,4 @@ With Idle off, for the lock screen's `quickshell` mode, a user's own hypridle sh
 - `lock_cmd = axiom lock`
 - `before_sleep_cmd = loginctl lock-session`
 
-For `none` mode it should have no axiom references. See [Lockscreen](lockscreen.md).
+Any other idle daemon (swayidle, …) locks with `axiom lock`, before sleep too; the onboarder says only that, naming no daemon. For `none` mode it should have no axiom references. See [Lockscreen](lockscreen.md).

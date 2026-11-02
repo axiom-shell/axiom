@@ -8,7 +8,7 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 
 ### Overview
 - Off by default.
-- Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatusCard`) or from the onboarder's Integrations page. Both go through `forms/GreeterSetup`.
+- Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatusCard`) or from the onboarder's System page. Both go through `forms/GreeterSetup`.
 - The greeter runs as greetd's user, who can't read the user's home, so it runs from a copy and reads an export (the [bundle](greeter-runtime.md#the-bundle)).
 - `GreeterManager` is created from `shell.qml`'s `_services`.
 

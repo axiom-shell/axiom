@@ -66,8 +66,10 @@ ReservedAreaWindow {
             return workspacesPage;
           case "look":
             return lookPage;
-          case "integrations":
-            return integrationsPage;
+          case "system":
+            return systemPage;
+          case "appColors":
+            return appColorsPage;
           case "checks":
             return checksPage;
           case "finish":
@@ -144,8 +146,14 @@ ReservedAreaWindow {
     }
   }
   Component {
-    id: integrationsPage
-    IntegrationsPage {
+    id: systemPage
+    SystemPage {
+      grid: overlayGrid
+    }
+  }
+  Component {
+    id: appColorsPage
+    AppColorsPage {
       grid: overlayGrid
     }
   }

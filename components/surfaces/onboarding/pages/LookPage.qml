@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.core
+import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
@@ -38,7 +39,7 @@ OnboardingPage {
   Notice {
     visible: root.imageCount === -2 || root.imageCount === 0
     tone: "warning"
-    text: root.imageCount === -2 ? (WallpaperManager.hasHyprlandWallpapers ? I18n.tr("That folder doesn't exist yet. Create it and put some images in it, or use Hyprland's wallpapers for now.") : I18n.tr("That folder doesn't exist yet. Create it and put some images in it.")) : I18n.tr("That folder has no images (jpg, png or bmp) yet.")
+    text: root.imageCount === -2 ? (WallpaperManager.compositorWallpapers !== "" ? I18n.tr("That folder doesn't exist yet. Create it and put some images in it, or use {0}'s wallpapers for now.", CompositorManager.displayName) : I18n.tr("That folder doesn't exist yet. Create it and put some images in it.")) : I18n.tr("That folder has no images (jpg, png or bmp) yet.")
   }
 
   RowLayout {
@@ -60,11 +61,11 @@ OnboardingPage {
     }
 
     StyledTextButton {
-      visible: WallpaperManager.hasHyprlandWallpapers
-      text: I18n.tr("Use Hyprland's wallpapers")
+      visible: WallpaperManager.compositorWallpapers !== ""
+      text: I18n.tr("Use {0}'s wallpapers", CompositorManager.displayName)
       iconText: "wallpaper"
       onClicked: SettingsManager.commitValues({
-        "Appearance.wallpaper.folder": WallpaperManager.hyprlandWallpapers
+        "Appearance.wallpaper.folder": WallpaperManager.compositorWallpapers
       })
     }
 

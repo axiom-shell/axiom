@@ -20,6 +20,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### axiom installs into Quickshell's config folder, and dev mode can't switch trees
+- **Where:** `install.sh`, `config/Paths.qml` (`axiomPath`), `backend/internal/daemon/dev.go`
+- **What:** An idea from the maintainer (2026-11-02), not a bug. The checkout lives in `~/.config/quickshell/axiom`, though it's now an installed program (the Go daemon and CLI, the greeter, a QML tree self-update replaces) of which the QML is one part `axiom run` hands to qs. The maintainer: "where should a git install (or install script) actually live? Since quickshell has been moved to rendering primarily and axiom has its own shit (i.e. go) it feels slighty wrong to be in quickshell directly?" and "does this also make sense with a light refactor (i.e. a qs folder with all qs in it). This then allows for easy swirching between a real install (i.e. share version), and my cloned version for dev, with just turning dev mode on/off? (i.e. axiom dev set "path" then axiom dev on/off rewires to main install (that you don't tiuch) and the clone?" Three parts for the plan:
+  - **Install location:** the checkout in `~/.local/share/axiom` (`/usr/share/axiom` for packages), the binary in `~/.local/bin`, config in `~/.config/axiom`; an existing install moved once (install.sh or self-update, with a symlink left for a release). What still looks for the tree under `~/.config/quickshell` (binds, `qs ipc` paths, the greeter install, docs) follows.
+  - **A `qs/` folder:** every QML folder under it, run as `qs -p <root>/qs`, so qs watches only QML and the root holds `backend/`, `scripts/`, `docs/`. One large move PR in a quiet window: the checks' folder rules, the allowlist, generated files and doc paths change; the `qs.` imports should survive (they resolve from the shell's root).
+  - **Dev mode picks the tree:** `axiom dev set <path>` records a clone; `dev on` builds and re-execs into the clone's binary and restarts qs on its `qs/`, `dev off` goes back to the installed binary and tree. Self-update only ever touches the install. Open question: `~/.config/axiom` is shared, so a clone's newer migration upgrades config.json and the installed binary then refuses it (`version: … is newer than this axiom knows`); options are a separate dev config folder, a snapshot at `dev on` restored at `dev off`, or `dev off` refusing until updated.
+- **Size:** needs a plan
+- **Found:** 2026-11-02, while running the roadmap autopilot (the maintainer's question)
+
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
@@ -111,26 +120,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
 - **Size:** small
 - **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
-
-### The onboarder's Integrations page names Hyprland's tools everywhere
-- **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`
-- **What:** Under sway and niri the Idle cards say "Remove any hypridle you start yourself" and "such as hypridle", the hint for your own idle daemon shows a `~/.config/hypr/hypridle.conf` block, and the polkit cards name hyprpolkitagent. These should name the compositor's usual tools (swayidle, …) or stay neutral.
-- **Size:** small
-- **Found:** 2026-10-30, while reworking the onboarder
-
-### The onboarder's Integrations page is too long for one step
-- **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/session/OnboardingManager.qml` (`_pages`)
-- **What:** One step holds updates, clipboard history, idle (with its four timeouts), the lock screen, polkit, the login screen (with its install), then every theme integration with its hookups: by far the longest page, mixing decisions that take something over with optional app colours. Proposal: split it into a "System" step and an "App colours" step (a page id, and `version` stays, since nothing new is asked).
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "split it into a System step and an App colours step"): "agree - add theme page directly after integrations (so it is last before checks)".
-- **Size:** small
-- **Found:** 2026-10-30, while reworking the onboarder
-
-### The Look page offers Hyprland's wallpapers under any compositor
-- **Where:** `components/surfaces/onboarding/pages/LookPage.qml`, `services/ui/WallpaperManager.qml` (`hasHyprlandWallpapers`)
-- **What:** With the wallpaper folder missing, the Look page offers "Use Hyprland's wallpapers" (and the notice names them) whenever Hyprland's package left its wallpapers in a data dir, under sway and niri too. Harmless (the images work), but it reads oddly off Hyprland.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reworking the onboarder
 
 ### A VPN's password request can go unseen
 - **Where:** `services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)

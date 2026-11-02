@@ -1,10 +1,10 @@
 # Onboarding
 
-> **Files:** `services/session/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `components/surfaces/onboarding/pages/ExampleCard.qml`, `services/core/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
+> **Files:** `services/session/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/SystemPage.qml`, `components/surfaces/onboarding/pages/AppColorsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `components/surfaces/onboarding/pages/ExampleCard.qml`, `services/core/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
 > **Config:** none of its own (pages write other sections); state in `~/.local/state/axiom/ui/onboarding.json`
 > **Related:** [Config modes](../compositor/config-modes.md), [Hyprland's writer](../hyprland/config-modes.md), [Monitors](../hyprland/monitors.md), [Greeter install](greeter-install.md), [Pages and grid](../overlay/pages-and-grid.md)
 
-The first-run onboarder: a paged window that sets up the look, the compositor's config mode, monitors, apps and integrations.
+The first-run onboarder: a paged window that sets up the look, the compositor's config mode, monitors, apps, the system's integrations and other apps' colors.
 
 ### When it opens
 - When there was no config.json (`ConfigManager.firstRun`, set by `_existsCheck`).
@@ -53,14 +53,15 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 ### Other pages
 - It reuses the Monitors view (with `settingsLinks: false`: a link into Settings would open the overlay over the onboarder), `WallpaperPicker` and `ThemePicker` as they are.
 - The Workspaces page offers the layouts only: windows tile, and strips are set up in Settings. It isn't shown where the compositor makes its workspaces itself (`CompositorManager.dynamicWorkspaces`, not `dynamicByLayout`: niri), as nothing there would apply.
-- The Look page's folder check, create and open are `WallpaperManager.checkFolder()` / `folderImages` / `createFolder()` / `openFolder()`.
+- The Look page's folder check, create and open are `WallpaperManager.checkFolder()` / `folderImages` / `createFolder()` / `openFolder()`. With the folder missing it offers the compositor's own wallpapers (`compositorWallpapers`, found from the backend's `CompositorManager.stockWallpapers`), named by `displayName`; under a compositor that ships none (niri), nothing.
 - Below its screen border, the [example setups](../core/saved-configs-sharing.md) are `pages/ExampleCard`s: a small screen drawn in the example's theme (`ThemeFamilies.previewOf`) with its bars, docks and screen border (`share.examples`' summary), then its palette, title and description. A click applies it at once (`SavedConfigsManager.applyExample`, keeping the running config first as every apply does); the applied one is marked. `Workspaces` is `personal` scope, so one doesn't undo the Workspaces step.
 - `DependencyManager.check(commands)` / `found` / `tools` say what's installed. The Checks page shows each tool's `purpose` through `I18n.tr`, so the comment above `tools` declares exactly the purposes it holds, one `I18n.tr("…")` each: a new or reworded purpose gets its line there, a dropped one loses it. Calls made together are batched into one `deps.check` to axiom (`backend/internal/deps`: `$PATH` through `exec.LookPath`), and without axiom the commands stay unknown.
 - The Apps page shows the main modifier and the keys to know only where axiom binds keys (`CompositorManager.supports.keybinds`); elsewhere it's just the apps.
-- The Integrations page, top to bottom: updates, clipboard history, [Idle](idle.md), the lock screen, [Polkit](polkit.md), the login screen, then theme integrations.
+- The System page, top to bottom: updates, clipboard history, [Idle](idle.md), the lock screen, [Polkit](polkit.md), the login screen.
   - Idle, the lock screen, polkit and the login screen are `OptionCard` choices. The lock screen has two (`Lockscreen.mode`): axiom's, or your own.
+  - It names no compositor's tools (hypridle, hyprpolkitagent): "any idle daemon you start yourself", "any other agent you run", and `axiom lock` as the command your own idle daemon locks with.
   - The login screen (`forms/GreeterSetup`, see [Greeter install](greeter-install.md)) is set up only from its Install button.
-  - Theme integrations come last: they're optional and need no decision.
+- The App colors page, right after it (the last before Checks), holds the [theme integrations](../theming/theme-integrations.md) and the switched-on ones' hookups: optional, needing no decision, so they don't lengthen the System page's choices.
 
 ### Package hints
 - `DependencyManager.distro` is `Packages.distroFamily` of `/etc/os-release`: `arch`, `fedora`, or `""` (unknown).
