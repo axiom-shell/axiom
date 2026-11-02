@@ -613,19 +613,19 @@ QtObject {
     return "show";
   }
 
-  // The OSD's parts, nearest the edge first on a tie: the bars, the
+  // The OSD's parts, out from the edge in this order: the bars, the
   // status icons, the card
   readonly property var parts: ["level", "status", "card"]
 
   // The parts' order out from the edge once `incoming` opens: `order` the
-  // ones shown (kept as they are: nothing shown moves for a length
-  // changing), `lengths` each part's along the edge. The card is always
-  // last, past the bars and the icons. Between
-  // those two, it goes before the first one shorter by more than `snap`
-  // (or as long, within `snap`, and later in `parts`): the longer nearest
-  // the edge. `atEnd` (the pointer on the OSD, holding still): after the
-  // other, so nothing under it moves
-  function partOrder(order, incoming, lengths, snap, atEnd) {
+  // ones shown. In `parts`' order: the bars by the edge, the icons past
+  // them, or with `iconsInside` (an OSD's `iconsPlace` "inside") the icons
+  // by the edge (the box is as long as its longest part, so nothing is
+  // gained by putting the longer first); the card always last. `atEnd`
+  // (the pointer on the OSD, holding still): a box part goes after the
+  // one out, so nothing under the pointer moves; what that left out of
+  // order stays so
+  function partOrder(order, incoming, atEnd, iconsInside) {
     if (order.includes(incoming))
       return order.slice();
     const box = order.filter(part => part !== "card");
@@ -634,15 +634,10 @@ QtObject {
       return box.concat(["card"]);
     if (atEnd)
       return box.concat([incoming], card);
-    const mine = lengths?.[incoming] ?? 0;
-    const rank = part => root.parts.indexOf(part);
-    let at = box.findIndex(part => {
-      const other = lengths?.[part] ?? 0;
-      return other < mine - snap || (Math.abs(other - mine) <= snap && rank(part) > rank(incoming));
-    });
-    if (at < 0)
-      at = box.length;
-    return box.slice(0, at).concat([incoming], box.slice(at), card);
+    const ranked = iconsInside === true ? ["status", "level", "card"] : root.parts;
+    const rank = part => ranked.indexOf(part);
+    const at = box.findIndex(part => rank(part) > rank(incoming));
+    return at < 0 ? box.concat([incoming], card) : box.slice(0, at).concat([incoming], box.slice(at), card);
   }
 
   // The parts' shared time, from `deadlines` (by part; 0 or missing: not

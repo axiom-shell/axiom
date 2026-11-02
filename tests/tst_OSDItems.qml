@@ -910,32 +910,20 @@ TestCase {
   }
 
   function test_partOrder() {
-    const lengths = {
-      "level": 200,
-      "status": 120,
-      "card": 400
-    };
-    compare(OSDItems.partOrder([], "level", lengths, 20, false), ["level"]);
-    compare(OSDItems.partOrder(["level"], "card", lengths, 20, false), ["level", "card"], "the card always last, however long");
-    compare(OSDItems.partOrder(["level"], "status", lengths, 20, false), ["level", "status"]);
-    compare(OSDItems.partOrder(["level"], "card", lengths, 20, true), ["level", "card"], "holding still: past them all");
-    compare(OSDItems.partOrder(["status", "card"], "level", lengths, 20, false), ["level", "status", "card"], "a box part goes inside the card");
-    compare(OSDItems.partOrder(["level", "card"], "status", lengths, 20, true), ["level", "status", "card"], "holding still: after the box, still inside the card");
-    compare(OSDItems.partOrder(["level", "status"], "status", lengths, 20, false), ["level", "status"], "already shown");
-    compare(OSDItems.partOrder(["status"], "level", {
-      "level": 130,
-      "status": 120
-    }, 20, false), ["level", "status"], "a tie: the bars first");
-    compare(OSDItems.partOrder(["level"], "status", {
-      "level": 120,
-      "status": 130
-    }, 20, false), ["level", "status"], "a tie: the buttons after");
-    compare(OSDItems.partOrder(["status", "level"], "card", {
-      "level": 300,
-      "status": 100,
-      "card": 200
-    }, 20, false), ["status", "level", "card"], "an unsorted order kept, the card last");
-    compare(OSDItems.partOrder(["status", "level"], "level", lengths, 20, false), ["status", "level"], "an unsorted box kept");
+    compare(OSDItems.partOrder([], "level", false), ["level"]);
+    compare(OSDItems.partOrder([], "status", false), ["status"]);
+    compare(OSDItems.partOrder(["level"], "card", false), ["level", "card"], "the card always last");
+    compare(OSDItems.partOrder(["level"], "status", false), ["level", "status"], "the icons past the bars");
+    compare(OSDItems.partOrder(["status"], "level", false), ["level", "status"], "the bars by the edge, the icons moving out");
+    compare(OSDItems.partOrder(["status", "card"], "level", false), ["level", "status", "card"], "the bars inside the icons and the card");
+    compare(OSDItems.partOrder(["level"], "card", true), ["level", "card"], "holding still: the card past them all");
+    compare(OSDItems.partOrder(["status"], "level", true), ["status", "level"], "holding still: the bars after the icons, nothing moving");
+    compare(OSDItems.partOrder(["status", "card"], "level", true), ["status", "level", "card"], "holding still: after the box, still inside the card");
+    compare(OSDItems.partOrder(["level", "status"], "status", false), ["level", "status"], "already shown");
+    compare(OSDItems.partOrder(["status", "level"], "card", false), ["status", "level", "card"], "an order holding still left is kept");
+    compare(OSDItems.partOrder(["level"], "status", false, true), ["status", "level"], "icons inside: by the edge, the bars moving out");
+    compare(OSDItems.partOrder(["status"], "level", false, true), ["status", "level"], "icons inside: the bars past them");
+    compare(OSDItems.partOrder(["level", "card"], "status", true, true), ["level", "status", "card"], "icons inside, holding still: after the bars");
   }
 
   function test_partsDue() {

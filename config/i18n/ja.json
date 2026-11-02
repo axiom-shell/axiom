@@ -3709,7 +3709,6 @@
     "Telling when a monitor is connected or removed. The monitor layouts are edited on the Monitors page.": "",
     "A change to a bar or a status icon brings out both. Off, each comes out on its own; while both are out they close together.": "",
     "Screenshot notifications": "",
-    "While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you're pointing at moves. Off, they take their usual place, the longer by the edge. A card always goes last.": "",
     "Drive event notifications": "",
     "Keep event cards in notifications": "",
     "Send a notification when a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or something went wrong. An OSD with Removable drives among its status icons (one whose detail cards are on, where it opens the OSD) shows them as a card instead (a click opens the drive, or unlocks an encrypted one). Off, and with no such OSD, they're left to the Drives widget and module. Asking what to do with a drive plugged in is always a notification.": "",
@@ -3741,6 +3740,10 @@
     "Writes kitty/axiom.conf. Reloads running kitty.": "",
     "App name → icon path/URL, for apps whose tray or window icon doesn't resolve (a window's key is its class).": "",
     "{0} runs {1}, not {2}, so axiom won't take it over. Use Included instead.": "",
-    "it's made inside a function": ""
+    "it's made inside a function": "",
+    "Past the bars": "",
+    "By the edge": "",
+    "Where the status icons go when they're out with the bars: past them, away from the edge, or between the bars and the edge. A card always goes last.": "",
+    "While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you're pointing at moves. Off, they take their usual place (Status icons). A card always goes last.": ""
   }
 }

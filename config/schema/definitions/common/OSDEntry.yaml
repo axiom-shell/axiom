@@ -76,11 +76,20 @@ properties:
     title: Bars and status icons together
     default: false
     description: 'A change to a bar or a status icon brings out both. Off, each comes out on its own; while both are out they close together.'
+  iconsPlace:
+    type: string
+    title: Status icons
+    default: outside
+    enum: [outside, inside]
+    x-enumLabels:
+      outside: Past the bars
+      inside: By the edge
+    description: 'Where the status icons go when they''re out with the bars: past them, away from the edge, or between the bars and the edge. A card always goes last.'
   holdStill:
     type: boolean
     title: Hold still under the mouse
     default: true
-    description: 'While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you''re pointing at moves. Off, they take their usual place, the longer by the edge. A card always goes last.'
+    description: 'While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you''re pointing at moves. Off, they take their usual place (Status icons). A card always goes last.'
   bars:
     type: object
     title: Bars

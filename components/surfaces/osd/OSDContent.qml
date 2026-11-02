@@ -15,8 +15,10 @@ import qs.components.reusable
 // audio device switched, a VPN came up, an app started a capture, the
 // charger was plugged in, Wi-Fi joined a network, a drive event, a
 // message; or the now playing card). They stack out from the edge in
-// one box, the longer of the bars and the icons nearest it, the card
-// last (OSDItems.partOrder), each sliding out from under the one before
+// one box, the bars nearest it, then the icons (`iconsPlace` inside:
+// the other way round), the card last
+// (OSDItems.partOrder; with `holdStill` and the pointer on it, a part
+// coming in goes after the others), each sliding out from under the one before
 // as it opens, the box as long as the longest, its length easing to fit.
 // With `openTogether` a change to the bars or the icons brings out both.
 // The bars and the icons out together share their time
@@ -112,8 +114,6 @@ Item {
   property var _deadlines: ({})
   // The deadlines' merge: parts due this close together close together
   readonly property int grace: 750
-  // Lengths within this of each other are a tie (OSDItems.partOrder)
-  readonly property real snap: Appearance.borderRadius * 2
   // A part opening on a shut OSD is simply there as it slides in: only
   // one opening on an open OSD slides out
   property bool _snapping: false
@@ -215,11 +215,8 @@ Item {
     root._snapping = !root.hostOpen || !root._order.some(other => other !== part && root._reveal(other) > 0);
     if (part === "status" && root._open.status !== true)
       root._previewAll = OSDItems.rowTypes(root.statusTypes, root.tiles, root.osd.statuses.row, root.changed !== "" ? root.changed : root._held).length === 0;
-    if (!root._order.includes(part)) {
-      const lengths = {};
-      OSDItems.parts.forEach(other => lengths[other] = root._length(root._item(other)));
-      root._order = OSDItems.partOrder(root._order, part, lengths, root.snap, root.osd.holdStill && root.pointerIn && root.hostOpen);
-    }
+    if (!root._order.includes(part))
+      root._order = OSDItems.partOrder(root._order, part, root.osd.holdStill && root.pointerIn && root.hostOpen, root.osd.iconsPlace === "inside");
     root._setOpen(part, true);
     root._snapping = false;
     root._schedule();
