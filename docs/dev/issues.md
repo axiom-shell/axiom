@@ -1301,12 +1301,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### A weather fetch that fails shows Loading forever
-- **Where:** `backend/internal/weather/weather.go:148` (`fetch`), `services/apps/WeatherManager.qml:109` (`_shown`), `components/content/Weather/Weather.qml:52`
-- **What:** A failed fetch returns an error, which the topics hub only logs (once per distinct error) and never pushes, so the shell keeps its last state. That's right while the settings are unchanged, but `_shown` drops a state fetched for other settings, so with no good fetch yet for the current ones nothing ever says why. Scenarios: log in offline, and the card says "Loading weather…" until the next fetch, 15 minutes later by default, even once the network is back; type a location Open-Meteo doesn't know (`unknown location "…"`), and it says "Loading weather…" for good. Fix: on a failure, `fetch` returns a state for the request with an `error` and no weather (the hub pushes it since it differs), a new `error` property of WeatherManager exposes it while it answers the current settings, and the card and the widget's tooltip show it in place of loading.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the services-core system
-
 ### runDetached warns about a lost connection
 - **Where:** `services/core/CommandManager.qml:71` (`runDetached`)
 - **What:** `run()` and `_logFailure` skip an error of kind `unavailable` (the connection to axiom closed: a re-exec or restart, already logged where it happens), but `runDetached` warns on any error. The live log shows it after reloads: `[CommandManager] mkdir: the connection to axiom closed` (NotificationManager's startup `mkdir -p` of its image folder, queued as the connection went). Fix: `if (error && error.kind !== "unavailable")`, as `run` does.

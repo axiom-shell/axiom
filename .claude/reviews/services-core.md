@@ -5,7 +5,7 @@ The core funnels (CommandManager, FileManager, StateManager, ConsumerRegistry, t
 
 ## Open findings
 - Major: "A failed update check shows as up to date" (fixed, row 20 core-ui-theming-03)
-- Major: [A weather fetch that fails shows Loading forever](../../docs/dev/issues.md#a-weather-fetch-that-fails-shows-loading-forever)
+- Major: "A weather fetch that fails shows Loading forever" (fixed, row 20 core-ui-theming-03)
 - Major: [SystemManager samples every second while nothing is shown](../../docs/dev/issues.md#systemmanager-samples-every-second-while-nothing-is-shown)
 - Major: "The active media player is Spotify first and never follows playback" (fixed, row 20 core-ui-theming-02)
 - Major: "Album art piles up in the runtime folder for the whole session" (fixed, row 20 core-ui-theming-02)

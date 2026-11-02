@@ -297,7 +297,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - DailySchedule's persisted state never survives a reload
 - **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
   - A failed update check shows as up to date
-  - [A weather fetch that fails shows Loading forever](../issues.md#a-weather-fetch-that-fails-shows-loading-forever)
+  - A weather fetch that fails shows Loading forever
   - A Wayland protocol error leaves every client claiming its protocol
   - The Updates popout's package list is frozen at opening
 - **core-ui-theming-04** (5):
