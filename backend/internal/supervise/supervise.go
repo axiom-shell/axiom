@@ -63,7 +63,8 @@ type Options struct {
 	StopGrace time.Duration
 
 	// AdoptPID is a shell already running as this process's child (after a
-	// re-exec): supervised instead of starting one
+	// re-exec): supervised instead of starting one, its pid in Status from
+	// New on (the daemon answers its hello before Run starts)
 	AdoptPID int
 
 	// OnStart sees each run start, OnExit each run that ended on its own
@@ -123,7 +124,11 @@ func New(opts Options) *Supervisor {
 	if opts.Environ == nil {
 		opts.Environ = os.Environ()
 	}
-	return &Supervisor{opts: opts, restart: make(chan restartRequest)}
+	s := &Supervisor{opts: opts, restart: make(chan restartRequest)}
+	if opts.AdoptPID > 0 {
+		s.status.Running, s.status.PID = true, opts.AdoptPID
+	}
+	return s
 }
 
 // Status is the current status.

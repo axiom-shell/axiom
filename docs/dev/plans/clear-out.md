@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02 and platform-03 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03 and platform-04 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -64,7 +64,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 16 | config-05 | minor-sweep | Done: Config and guardrails | 2 | ~50 | config-03, config-04 |  |
 | 17 | platform-02 | major | Done: Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
 | 18 | platform-03 | major | Done: Packaging and self-update | 4 | ~400 | none |  |
-| 19 | platform-04 | major | Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
+| 19 | platform-04 | major | Done: Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
 | 20 | platform-05 | major | Launcher and IPC input | 2 | ~80 | platform-01 |  |
 | 21 | platform-06 | minor-sweep | The onboarder | 3 | ~150 | platform-03 | Q3 |
 | 22 | platform-07 | minor-sweep | The launcher with its providers | 2 | ~80 | platform-05 |  |
@@ -270,11 +270,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A main-channel update applied after edge moved on needs go to rebuild the binary
   - install.sh still installs the rest of a feature whose COPR was declined
   - The onboarder's Checks-page purposes don't match their declared keys
-- **platform-04** (4): Dev mode only; the three re-exec races get Live checks lines.
-  - [A dev build during a branch switch re-execs onto the defaults](../issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
-  - [A protocol bump in dev mode leaves the installed CLI on the old protocol](../issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)
-  - [The shell's hello can be refused across a dev re-exec](../issues.md#the-shells-hello-can-be-refused-across-a-dev-re-exec)
-  - [daemon.shutdown starts its goroutine past tasks.Go](../issues.md#daemonshutdown-starts-its-goroutine-past-tasksgo)
+- **platform-04** (4, done): Dev mode only; the three re-exec races get Live checks lines.
+  - A dev build during a branch switch re-execs onto the defaults
+  - A protocol bump in dev mode leaves the installed CLI on the old protocol
+  - The shell's hello can be refused across a dev re-exec
+  - daemon.shutdown starts its goroutine past tasks.Go
 - **platform-05** (2): Before core-ui-theming-04, whose other-monitor theme fix assumes /generate reads the right monitor.
   - [The launcher's /generate reads a monitor setting that doesn't exist](../issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
   - [A word passed to an int IPC parameter is 0](../issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)

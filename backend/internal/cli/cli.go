@@ -27,6 +27,9 @@ type Env struct {
 	Stdout io.Writer
 	Stderr io.Writer
 	Getenv func(string) string
+	// Exec runs this command again with another axiom binary (the dev
+	// build, when the daemon speaks another protocol); nil in tests
+	Exec func(exe string) error
 
 	Globals Globals
 }

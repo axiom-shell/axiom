@@ -213,7 +213,9 @@ QtObject {
   }
   property int _retry: 0
 
-  readonly property int _protocol: {
+  // The protocol the tree's files speak, read for each hello: a dev
+  // build's re-exec may bump it with no QML change to reload this
+  function _protocol() {
     const text = FileManager.read(Qt.resolvedUrl("../../config/json/backend.json"));
     try {
       return JSON.parse(text).protocol;
@@ -279,7 +281,7 @@ QtObject {
       root.greeted();
     };
     root._send(JsonRpc.request(id, "daemon.hello", {
-      "protocol": root._protocol,
+      "protocol": root._protocol(),
       "client": "shell",
       "schemaHash": root._schemaHash,
       "subscribe": true,

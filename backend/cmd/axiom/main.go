@@ -14,5 +14,6 @@ func main() {
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 		Getenv: os.Getenv,
+		Exec:   cli.ExecDev,
 	}))
 }

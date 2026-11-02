@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -35,7 +36,8 @@ import (
 //   - the daemon logs at debug level;
 //   - an edit to the Go source (or a file the binary embeds) builds a dev
 //     binary into $XDG_STATE_HOME/axiom/dev/ and re-execs into it, the
-//     shell running on; a build that fails leaves the daemon as it was;
+//     shell running on; a build that fails leaves the daemon as it was,
+//     and one the source changed under builds again before re-executing;
 //   - a rebuilt installed binary is re-exec'd into as well.
 // Turning it off goes back to the installed binary.
 
@@ -78,6 +80,9 @@ type devMode struct {
 
 	changed chan struct{} // the run loop's cue to start or stop the watchers
 	builds  *kicker
+	// edited: the source changed since the build running started, so
+	// it's stale (its kick comes once the edits settle)
+	edited atomic.Bool
 }
 
 func newDevMode(d *Daemon, enabled bool) *devMode {
@@ -340,6 +345,7 @@ func (m *devMode) watchSource(ctx context.Context) error {
 	}
 	keep := func(p string) bool {
 		if embedded[p] {
+			m.edited.Store(true)
 			return true
 		}
 		base := filepath.Base(p)
@@ -348,6 +354,7 @@ func (m *devMode) watchSource(ctx context.Context) error {
 		}
 		switch filepath.Ext(base) {
 		case ".go", ".mod", ".sum", ".js", ".json":
+			m.edited.Store(true)
 			return true
 		}
 		return false
@@ -398,8 +405,12 @@ func (m *devMode) watchBinary(ctx context.Context) error {
 // keeps (its tail: the errors).
 const buildOutputLimit = 8 << 10
 
-// build builds a dev binary from the tree's source and re-execs into it.
+// build builds a dev binary from the tree's source and re-execs into it,
+// unless the source changed meanwhile (a branch switch, then a pull): the
+// image would be stale and the edits' kick would die with this process,
+// so the next build (that kick's) re-execs instead.
 func (m *devMode) build(ctx context.Context) {
+	m.edited.Store(false)
 	m.mu.Lock()
 	m.building = true
 	m.mu.Unlock()
@@ -423,6 +434,10 @@ func (m *devMode) build(ctx context.Context) {
 	if err != nil {
 		return
 	}
+	if m.edited.Load() {
+		m.d.opts.Log.Info("dev build done, but the source changed meanwhile: building again")
+		return
+	}
 	target := m.binary()
 	m.d.opts.Log.Info("dev build done: re-executing", "binary", target)
 	if err := m.d.reexec(target); err != nil {
@@ -431,7 +446,11 @@ func (m *devMode) build(ctx context.Context) {
 }
 
 // binary is where dev builds go.
-func (m *devMode) binary() string { return m.d.dirs.State + "dev/axiom" }
+func (m *devMode) binary() string { return DevBinary(m.d.dirs) }
+
+// DevBinary is where dev builds go (the CLI runs it when its protocol
+// isn't the daemon's).
+func DevBinary(dirs xdg.Dirs) string { return dirs.State + "dev/axiom" }
 
 // compile builds the dev binary.
 func (m *devMode) compile(ctx context.Context) ([]byte, error) {

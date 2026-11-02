@@ -112,8 +112,14 @@ type Daemon struct {
 	// (they differ while dev mode runs its own build)
 	executable string
 	installed  string
-	instance   *fsx.Lock
-	listener   net.Listener
+	// upgradesTried: the binaries (path, inode, time) a newer client's
+	// hello already re-exec'd into or found wanting, never tried again;
+	// upgrading the one it is re-executing into
+	upgradeMu     sync.Mutex
+	upgradesTried map[string]bool
+	upgrading     string
+	instance      *fsx.Lock
+	listener      net.Listener
 
 	store     *store.Store
 	saved     *saved.Service
@@ -251,8 +257,13 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 	defer d.store.Close()
-	if err := d.writeSnapshot(); err != nil {
-		return err
+	// A re-exec that comes up on the defaults (an older dev build refusing
+	// a newer file) leaves the snapshot of before: a QML reload keeps the
+	// config the shell had running, as ConfigManager does on the hello
+	if _, st := d.store.Config(); h == nil || !st.Defaults {
+		if err := d.writeSnapshot(); err != nil {
+			return err
+		}
 	}
 
 	if listener == nil {
@@ -355,6 +366,27 @@ func Run(ctx context.Context, opts Options) error {
 		}
 	})
 
+	// The shell's supervisor before the socket serves: an adopted shell
+	// reconnects the moment the re-exec'd image listens, and its hello
+	// is checked against the pid this knows
+	if !opts.NoShell {
+		adopt := 0
+		if h != nil {
+			adopt = h.Shell
+		}
+		d.shell = supervise.New(supervise.Options{
+			Command:  ShellCommand(opts.QS, opts.Tree),
+			NoTHP:    true,
+			Env:      d.shellEnv(),
+			EnvFunc:  d.shellEnvNow,
+			PIDFile:  runtime.File(ShellPIDFile),
+			Output:   opts.ShellOutput,
+			Log:      opts.Log.With("part", "shell"),
+			AdoptPID: adopt,
+			OnExit:   func(int, bool) { d.locker.ShellExited() },
+			OnStop:   func(int) { d.locker.ShellStopped() },
+		})
+	}
 	serve := func(name string, fn func(context.Context) error) {
 		d.tasks.Go(func(ctx context.Context) {
 			if err := fn(ctx); err != nil {
@@ -381,23 +413,7 @@ func Run(ctx context.Context, opts Options) error {
 			return nil
 		})
 	}
-	if !opts.NoShell {
-		adopt := 0
-		if h != nil {
-			adopt = h.Shell
-		}
-		d.shell = supervise.New(supervise.Options{
-			Command:  ShellCommand(opts.QS, opts.Tree),
-			NoTHP:    true,
-			Env:      d.shellEnv(),
-			EnvFunc:  d.shellEnvNow,
-			PIDFile:  runtime.File(ShellPIDFile),
-			Output:   opts.ShellOutput,
-			Log:      opts.Log.With("part", "shell"),
-			AdoptPID: adopt,
-			OnExit:   func(int, bool) { d.locker.ShellExited() },
-			OnStop:   func(int) { d.locker.ShellStopped() },
-		})
+	if d.shell != nil {
 		serve("the shell", d.shell.Run)
 		if _, hash := d.currentSchema(); h != nil && h.Schema != "" && h.Schema != hash {
 			// The shell read the schema of before (an update re-exec'd

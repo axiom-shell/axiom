@@ -321,6 +321,18 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "daemon.hello", func(ctx context.Context, c *rpc.Conn, p HelloParams) (HelloResult, error) {
 		_, hash := d.currentSchema()
 		if err := p.compatible(hash); err != nil {
+			// A newer client (an update replaced the binary, a dev build
+			// bumped it): this image takes the binary that speaks it
+			if exe, start := d.upgradeTarget(ctx, p.Protocol); exe != "" {
+				if start {
+					d.opts.Log.Info("a client speaks a newer protocol: re-executing", "protocol", p.Protocol, "binary", exe)
+					d.reexecSoon(exe)
+				}
+				return HelloResult{}, axerr.New(axerr.Unavailable, "axiom is restarting into the newer binary %s: try again", exe)
+			}
+			if p.Protocol > buildinfo.Protocol() {
+				return HelloResult{}, axerr.New(axerr.Incompatible, "%s (no axiom binary here speaks protocol %d: update axiom)", err.Error(), p.Protocol)
+			}
 			return HelloResult{}, err
 		}
 		// Only the shell this daemon runs may say it is the shell: it
@@ -347,10 +359,10 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 
 	rpc.Handle(reg, "daemon.shutdown", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
 		d.opts.Log.Info("asked to shut down", "client", sessionOf(c).Client)
-		go func() {
+		d.tasks.Go(func(context.Context) {
 			announceClosing(d.server, false, closingWait)
 			d.stop()
-		}()
+		})
 		return struct{}{}, nil
 	})
 
@@ -378,6 +390,10 @@ func (d *Daemon) reexecSoon(target string) {
 		}
 		if err := d.reexec(target); err != nil {
 			d.opts.Log.Error("re-exec", "err", err)
+			// A newer client's hello is refused again, not told to wait
+			d.upgradeMu.Lock()
+			d.upgrading = ""
+			d.upgradeMu.Unlock()
 		}
 	})
 }
