@@ -255,7 +255,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Restoring a saved keybind preset marks every bind new, and Revert deletes it
 - **config-05** (2):
   - [After a refused save, a draft's edits show unsaved but not live](../issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
-  - [The guard reads the branch from the session's folder, not a `cd` before the push](../issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
+  - The guard reads the branch from the session's folder, not a `cd` before the push
 
 **platform**
 

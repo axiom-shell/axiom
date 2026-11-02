@@ -336,7 +336,6 @@ Found while investigating Hyprland starting on workspace 10:
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
 
 Found by the audits:
-- [The guard reads the branch from the session's folder, not a `cd` before the push](issues.md#the-guard-reads-the-branch-from-the-sessions-folder-not-a-cd-before-the-push)
 - [The daemon picks a compositor the shell may not run under](issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
 - [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
 - [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)

@@ -590,8 +590,14 @@ def check_generated_edit(tool_input):
 def check(call):
     tool, tool_input = call.get("tool_name", ""), call.get("tool_input") or {}
     if tool == "Bash":
-        for env, argv in split_commands(tool_input.get("command", "")):
-            check_argv(env, argv, call.get("cwd") or str(REPO))
+        commands = split_commands(tool_input.get("command", ""))
+        cwd = call.get("cwd") or str(REPO)
+        # Leading `cd <dir> &&`s move the rest (an agent's cwd resets every call)
+        while commands and len(commands[0][1]) == 2 and commands[0][1][0] == "cd":
+            cwd = str(resolve(commands[0][1][1], cwd, commands[0][0]))
+            commands = commands[1:]
+        for env, argv in commands:
+            check_argv(env, argv, cwd)
     elif tool in {"Edit", "Write"}:
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)

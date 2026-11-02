@@ -103,6 +103,12 @@ class Bash(unittest.TestCase):
             self.blocks("git push", "git push -u origin HEAD")
         with mock.patch.object(guard, "current_branch", return_value="roadmap/1-x"):
             self.allows("git push", "git push -u origin HEAD")
+        # A leading `cd` is followed: the branch is read in the folder it enters
+        with tempfile.TemporaryDirectory() as tree:
+            branch = lambda cwd: "roadmap/1-x" if Path(cwd) == Path(tree).resolve() else "main"
+            with mock.patch.object(guard, "current_branch", side_effect=branch):
+                self.allows(f"cd {tree} && git push -u origin HEAD")
+                self.blocks("git push -u origin HEAD", f"cd {tree} && cd {REPO} && git push")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
