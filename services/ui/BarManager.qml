@@ -22,6 +22,7 @@ QtObject {
   property ConfigDraft _draft: ConfigDraft {
     id: draft
     path: ["Bars"]
+    onRefused: root.applyChanges()
   }
   // The bars (Bars.items) in the draft, and as saved
   readonly property var localConfig: draft.local?.items ?? null

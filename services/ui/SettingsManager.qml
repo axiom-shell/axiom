@@ -24,6 +24,13 @@ QtObject {
   property ConfigDraft _draft: ConfigDraft {
     id: draft
     onLoaded: root._clearPreviews()
+    onRefused: root.setValues(root._diff(draft.local, draft.saved, []).map(key => {
+      const path = key.split(".");
+      return {
+        "path": path,
+        "value": Utils.valueAt(draft.local, path)
+      };
+    }))
   }
   readonly property alias localConfig: draft.local
   readonly property alias savedConfig: draft.saved
