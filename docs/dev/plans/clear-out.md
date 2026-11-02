@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03 and config-04 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04 and config-05 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -61,7 +61,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 13 | config-02 | major | Done: The store's load and write safety | 3 | ~220 | config-01 | Q1 |
 | 14 | config-03 | major | Done: The settings page's schema predicates, and takeover settings from the launcher | 4 | ~170 | none |  |
 | 15 | config-04 | major | Done: Editor fields and draft comparisons | 3 | ~110 | none |  |
-| 16 | config-05 | minor-sweep | Config and guardrails | 2 | ~50 | config-03, config-04 |  |
+| 16 | config-05 | minor-sweep | Done: Config and guardrails | 2 | ~50 | config-03, config-04 |  |
 | 17 | platform-02 | major | Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
 | 18 | platform-03 | major | Packaging and self-update | 4 | ~400 | none |  |
 | 19 | platform-04 | major | Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
@@ -253,8 +253,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A number box keeps its typed text when the setting it edits switches under it
   - Escape in a settings-page number box leaves the half-typed value in the draft
   - Restoring a saved keybind preset marks every bind new, and Revert deletes it
-- **config-05** (2):
-  - [After a refused save, a draft's edits show unsaved but not live](../issues.md#after-a-refused-save-a-drafts-edits-show-unsaved-but-not-live)
+- **config-05** (2, done):
+  - After a refused save, a draft's edits show unsaved but not live
   - The guard reads the branch from the session's folder, not a `cd` before the push
 
 **platform**
