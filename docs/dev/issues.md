@@ -1447,12 +1447,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
 
-### A clip's label and detail are written in both the launcher and the clipboard module
-- **Where:** `services/ui/LauncherManager.qml:480` (`_clipboardRows`), `services/ui/LauncherManager.qml:505` (`_clipboardRow`), `services/ui/LauncherManager.qml:537` (`_clipboardImageRow`), `components/content/ClipboardHistory/ClipboardHistory.qml:61` (`labelOf`, `detailOf`, `allClips`)
-- **What:** Both build "pins first, then the history without them" with the same expression (LauncherManager:480, ClipboardHistory:25), and both turn an entry into its label ("Image {0}", "Image from {0}" with the url's host, the first line) and its detail (line count and time, format and size, "HTML"): LauncherManager:508-514 and 542-543 against ClipboardHistory:61-83. They differ only in the launcher's " · <url>" after "HTML" and the module's "Pinned". Fix: ClipboardManager gets `shown` (the pins-first list) and `labelOf(entry)` / `detailOf(entry)` (the module's 23 lines, moved, with the url suffix); both callers read them, removing about 10 lines from LauncherManager, which keeps its own glyph and hint.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the launcher system
-
 ### A Wayland protocol error leaves every client claiming its protocol
 - **Where:** `backend/internal/wayland/client/client.go:99` (`Run`), `backend/internal/daemon/daemon.go:419` (`followCompositor`), `backend/internal/daemon/wayland.go:31` (`waylandNow`)
 - **What:** When the compositor sends `wl_display.error` (any bad request from one of the nine clients on the shared connection), `wire.Conn.Run` closes the connection and `client.Run` returns, but no client is told: each keeps its manager id and objects. `followCompositor` only logs `the Wayland connection failed: monitors aren't known` and falls back to `wire.Watch`. From then on `idlenotify.Notifier.Available()` stays true with its watches armed on a dead socket (proven with a throwaway test on `wiretest`: `Run returned: the compositor reported error 0 on object 2: bad request; Available after: true`), so with Idle on nothing ever dims, locks or turns the screens off while `idle.state` reports the notifier and the watches armed; `wayland.state` keeps `ready: true` and its `typing` / `nightLight` / `clipboard` flags, so `NightLightManager` doesn't fall back to wlsunset (the compositor dropped the gamma/CTM with the client), `ClipboardManager` stays `available` with its history frozen, and `EmojiManager.canType` stays true while `input.type` fails. Related: `wayland.md` says "until then every flag reads off", but `waylandNow` returns the flags whatever `ready` says. Fix: give `client.Client` a `Stop()` that `client.Run` calls on every client when the connection ends (each forgets its ids as its `Start` does and tells its `OnChange`; `waylandSession.Stop` sets `ready` false), and have `waylandNow` return `waylandState{}` while not ready, so the shell sees everything off and falls back.
@@ -1470,6 +1464,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
+
+### DockWindow logs a binding loop on _wouldShow
+- **Where:** `components/surfaces/dock/DockWindow.qml` (`_wouldShow`), `shell/Dock.qml`
+- **What:** The live shell logged `Binding loop detected for property "_wouldShow"` (`@shell/Dock.qml[35:19]`, DockWindow.qml:270) after a reload on 2026-11-02. `_wouldShow` reads `latched`, `engaged`, `obscured` and `hiddenByHand`, and feeds `wantShown` and a `wanted:` binding (line 247); one of those likely writes back a value it reads. Not traced.
+- **Size:** small
+- **Found:** 2026-11-02, while clearing out the launcher's issues (platform-07)
 
 ### A device's own level arriving late can swap its OSD card for the bars
 - **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`), `components/methods/OSDItems.qml` (`replaces`)

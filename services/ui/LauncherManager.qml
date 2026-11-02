@@ -463,8 +463,7 @@ QtObject {
   function _clipboardRows(query) {
     if (ClipboardManager.unsupported)
       return [_infoRow(I18n.tr("No clipboard history here"), I18n.tr("This compositor offers no clipboard control"))];
-    // Pins first, then the history without them
-    const entries = ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)));
+    const entries = ClipboardManager.shown;
     if (entries.length === 0)
       return [_infoRow(I18n.tr("The clipboard history is empty"), I18n.tr("Copy something and it shows up here"))];
     const q = query.toLowerCase();
@@ -489,21 +488,16 @@ QtObject {
     return rows.length > 0 ? rows : [_infoRow(I18n.tr("No matches"), I18n.tr("{0} entries", entries.length))];
   }
 
+  // A clip: an image (or HTML that is just one) with its thumbnail, or its
+  // text's first line
   function _clipboardRow(entry) {
-    if (entry.format || entry.html)
-      return _clipboardImageRow(entry);
-    const lines = entry.text.trim().split("\n");
-    const first = lines[0].trim();
-    const details = [];
-    if (lines.length > 1)
-      details.push(I18n.tr("{0} lines", lines.length));
-    if (entry.time > 0)
-      details.push(I18n.formatDate(new Date(entry.time), I18n.dateFormat("time24")));
+    const label = ClipboardManager.labelOf(entry);
     return {
       kind: "clipboard",
-      glyph: entry.pinned ? "keep" : "content_paste",
-      title: first.length > 120 ? first.slice(0, 120) + "…" : first,
-      subtitle: details.join(" · "),
+      glyph: entry.format || entry.html ? "image" : entry.pinned ? "keep" : "content_paste",
+      image: entry.image,
+      title: label.length > 120 ? label.slice(0, 120) + "…" : label,
+      subtitle: ClipboardManager.detailOf(entry) + (entry.html && entry.image ? " · " + entry.image : ""),
       hint: entry.pinned ? I18n.tr("Shift+Enter unpins") : I18n.tr("Shift+Enter removes"),
       run: shift => {
         if (shift) {
@@ -515,26 +509,6 @@ QtObject {
         }
         ClipboardManager.copy(entry);
         return true;
-      }
-    };
-  }
-
-  // An image, with its thumbnail, or HTML that is just
-  // an image, previewed from its url
-  function _clipboardImageRow(entry) {
-    return {
-      kind: "clipboard",
-      glyph: "image",
-      image: entry.image,
-      title: entry.html ? (entry.image ? I18n.tr("Image from {0}", entry.image.match(/^\w+:\/\/([^/]+)/)[1]) : I18n.tr("Image")) : I18n.tr("Image {0}", entry.dimensions),
-      subtitle: entry.html ? I18n.tr("HTML") + (entry.image ? " · " + entry.image : "") : entry.format.toUpperCase() + " · " + entry.size,
-      hint: I18n.tr("Shift+Enter removes"),
-      run: shift => {
-        if (shift)
-          ClipboardManager.remove(entry);
-        else
-          ClipboardManager.copy(entry);
-        return !shift;
       }
     };
   }

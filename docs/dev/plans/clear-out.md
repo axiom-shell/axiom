@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05 and platform-06 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06 and platform-07 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -67,7 +67,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 19 | platform-04 | major | Done: Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
 | 20 | platform-05 | major | Done: Launcher and IPC input | 2 | ~80 | platform-01 |  |
 | 21 | platform-06 | minor-sweep | Done: The onboarder | 3 | ~150 | platform-03 | Q3 |
-| 22 | platform-07 | minor-sweep | The launcher with its providers | 2 | ~80 | platform-05 |  |
+| 22 | platform-07 | minor-sweep | Done: The launcher with its providers | 2 | ~80 | platform-05 |  |
 | 23 | platform-08 | minor-sweep | Security: the session actions | 1 | ~60 | platform-02 | Q4 |
 | 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
 | 25 | core-ui-theming-03 | major | Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
@@ -282,8 +282,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The onboarder's Integrations page names Hyprland's tools everywhere
   - The onboarder's Integrations page is too long for one step
   - The Look page offers Hyprland's wallpapers under any compositor
-- **platform-07** (2):
-  - [A clip's label and detail are written in both the launcher and the clipboard module](../issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
+- **platform-07** (2, done):
+  - A clip's label and detail are written in both the launcher and the clipboard module
   - App scoring is written twice and the use bonus three times
 - **platform-08** (1):
   - [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)

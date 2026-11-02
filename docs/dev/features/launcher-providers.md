@@ -48,7 +48,7 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
 - `pin` fetches the clip whole first (`clipboard.text`), since a row holds only its start; `preview` keeps the row's text, which is how the row is matched.
 - `unpin` goes by text.
 - A pin copies with `copyText`.
-- The launcher and the ClipboardHistory module list pins first, then the history without them.
+- The launcher and the ClipboardHistory module list `shown`: pins first, then the history without them. Both name a clip with `labelOf(entry)` (its first line, or what an image is) and `detailOf(entry)` (line count and time, or format and size, or "HTML"); the launcher adds an HTML image's url, the module "Pinned".
 
 ### EmojiManager
 - **Opening it:** the launcher's emoji are `;` or `/emoji`. `Launcher.providers.emoji` is on by default.

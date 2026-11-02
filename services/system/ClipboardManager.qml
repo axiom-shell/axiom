@@ -36,6 +36,33 @@ Singleton {
 
   property var entries: []
   property var pins: []
+  // What the launcher and the ClipboardHistory module list: the pins, then
+  // the history without them
+  readonly property var shown: root.pins.concat(root.entries.filter(e => !root.isPinned(e)))
+
+  // A clip's first line, or what an image is
+  function labelOf(entry) {
+    if (entry.format)
+      return I18n.tr("Image {0}", entry.dimensions);
+    if (entry.html)
+      return entry.image ? I18n.tr("Image from {0}", (entry.image.match(/^\w+:\/\/([^/]+)/) ?? ["", ""])[1]) : I18n.tr("Image");
+    return entry.text.trim().split("\n")[0].trim();
+  }
+
+  // An image's format and size, else a text's line count and time
+  function detailOf(entry) {
+    if (entry.format)
+      return entry.format.toUpperCase() + " · " + entry.size;
+    if (entry.html)
+      return I18n.tr("HTML");
+    const details = [];
+    const lines = entry.text.trim().split("\n").length;
+    if (lines > 1)
+      details.push(I18n.tr("{0} lines", lines));
+    if (entry.time > 0)
+      details.push(I18n.formatDate(new Date(entry.time), I18n.dateFormat("time24")));
+    return details.join(" · ");
+  }
 
   function copy(entry) {
     if (!entry)

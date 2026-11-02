@@ -21,9 +21,8 @@ Panel {
   readonly property bool off: !ClipboardManager.enabled
   // The compositor offers no clipboard control
   readonly property bool missing: ClipboardManager.unsupported
-  // Pins, then the history without them
-  readonly property var allClips: ClipboardManager.pins.concat(ClipboardManager.entries.filter(e => !ClipboardManager.isPinned(e)))
-  readonly property var clips: root.query === "" ? root.allClips : root.allClips.filter(e => root.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
+  readonly property var allClips: ClipboardManager.shown
+  readonly property var clips: root.query === "" ? root.allClips : root.allClips.filter(e => ClipboardManager.labelOf(e).toLowerCase().includes(root.query) || (e.text ?? "").toLowerCase().includes(root.query))
   readonly property var newest: ClipboardManager.pins.length > 0 || ClipboardManager.entries.length > 0 ? (ClipboardManager.entries[0] ?? ClipboardManager.pins[0]) : null
   // The clip copied last, for a moment, as feedback
   property string copiedId: ""
@@ -53,33 +52,8 @@ Panel {
   // The text with its lines run together (a preview), or what an image is
   function previewOf(entry) {
     if (entry.format || entry.html)
-      return labelOf(entry);
+      return ClipboardManager.labelOf(entry);
     return entry.text.trim().slice(0, 400).replace(/\s+/g, " ");
-  }
-
-  // The first line, or what an image is
-  function labelOf(entry) {
-    if (entry.format)
-      return I18n.tr("Image {0}", entry.dimensions);
-    if (entry.html)
-      return entry.image ? I18n.tr("Image from {0}", (entry.image.match(/^\w+:\/\/([^/]+)/) ?? ["", ""])[1]) : I18n.tr("Image");
-    return entry.text.trim().split("\n")[0].trim();
-  }
-
-  function detailOf(entry) {
-    if (entry.format)
-      return entry.format.toUpperCase() + " · " + entry.size;
-    if (entry.html)
-      return I18n.tr("HTML");
-    const details = [];
-    const lines = entry.text.trim().split("\n").length;
-    if (entry.pinned)
-      details.push(I18n.tr("Pinned"));
-    if (lines > 1)
-      details.push(I18n.tr("{0} lines", lines));
-    if (entry.time > 0)
-      details.push(I18n.formatDate(new Date(entry.time), I18n.dateFormat("time24")));
-    return details.join(" · ");
   }
 
   function copy(entry) {
@@ -186,9 +160,9 @@ Panel {
       icon: root.copiedId === row.entry.id ? "check" : row.entry.pinned ? "keep" : row.entry.format || row.entry.html ? "image" : "content_paste"
       image: row.entry.image ?? ""
       marked: row.entry.pinned === true || root.copiedId === row.entry.id
-      title: row.titleLines > 1 ? root.previewOf(row.entry) : root.labelOf(row.entry)
+      title: row.titleLines > 1 ? root.previewOf(row.entry) : ClipboardManager.labelOf(row.entry)
       titleLines: row.entry.format || row.entry.html ? 1 : root.titleLines
-      subtitle: root.detailOf(row.entry)
+      subtitle: [row.entry.pinned ? I18n.tr("Pinned") : "", ClipboardManager.detailOf(row.entry)].filter(part => part !== "").join(" · ")
       onActivated: root.copy(row.entry)
 
       FlatIconButton {
@@ -227,7 +201,7 @@ Panel {
     }
     StyledText {
       Layout.fillWidth: true
-      text: root.off ? I18n.tr("Clipboard history is off") : root.newest ? root.labelOf(root.newest) : I18n.tr("Nothing copied yet")
+      text: root.off ? I18n.tr("Clipboard history is off") : root.newest ? ClipboardManager.labelOf(root.newest) : I18n.tr("Nothing copied yet")
       textColor: root.newest && !root.off ? Theme.foreground : Theme.foregroundAlt
       elide: Text.ElideRight
     }
