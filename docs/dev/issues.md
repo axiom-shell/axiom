@@ -1313,12 +1313,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the services-core system
 
-### ActionTile and ActionPill carry the same countdown bar
-- **Where:** `components/reusable/ActionTile.qml:110` (`countdownBar`, `drain`, `onActiveChanged`), `components/reusable/ActionPill.qml:121` (`countdownBar`, `drain`, `onActiveChanged`)
-- **What:** The "time left while active" bar is the same 26 lines in both (`diff <(sed -n 110,135p ActionTile.qml) <(sed -n 121,146p ActionPill.qml)` prints nothing): a Rectangle along the bottom, a NumberAnimation draining its width over `countdown` ms, and the `onActiveChanged` that restarts it. Their frames are the same too (`radius`, the `color` and `border.color` from `active`/`hot`/`tone`, two `ColorGlide`s: ActionTile 48–55, ActionPill 36–43). Fix: one small piece in `components/reusable/` (a bar draining over a duration while running), each tile placing it in 3 lines; 26 lines go.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the ui-kit system
-
 ### StyledTextEntry and StyledTextArea carry the same blinking cursor
 - **Where:** `components/reusable/StyledTextEntry.qml:104` (`cursorDelegate`), `components/reusable/StyledTextArea.qml:171` (`cursorDelegate`)
 - **What:** Both draw the accent cursor and blink it with the same `SequentialAnimation` (two `PropertyAnimation`s of 500 ms marked as behaviour timing), 19 lines each, the same but for the focus they read (`textField` / `textInput`) and a comment. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: a cursor piece in `components/reusable/` reading its parent input's `activeFocus`, set as the `cursorDelegate` of both; 19 lines go (and the blink timing lives in one place).

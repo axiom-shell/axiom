@@ -76,6 +76,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `TypePickerPopup`: pick a type, `{ type, label, icon }`.
 - `ActionTile`: an icon well over a label. With `opens`, a right click or long press is `opened`.
 - `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens.
+  - Both drain a `CountdownBar` (a bar along the bottom emptying over `duration` while `running`) over their `countdown` while active.
 
 ### Editor lists and drags (`reusable/`)
 - `ListEntryRow` (+ `RowAction`, `AddEntryButton`).
