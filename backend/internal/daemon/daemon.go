@@ -189,6 +189,10 @@ func Run(ctx context.Context, opts Options) error {
 	if opts.Go == "" {
 		opts.Go = "go"
 	}
+	// A compositor's variable left over from an earlier session reaches
+	// nothing: not the daemon's parts, not the shell
+	stale := ipc.StaleVars(opts.Getenv)
+	opts.Getenv = ipc.LiveEnv(opts.Getenv)
 	runtime, err := xdg.ForDisplay(opts.Getenv, true)
 	if err != nil {
 		return err
@@ -379,6 +383,7 @@ func Run(ctx context.Context, opts Options) error {
 			NoTHP:    true,
 			Env:      d.shellEnv(),
 			EnvFunc:  d.shellEnvNow,
+			Environ:  ipc.WithoutVars(os.Environ(), stale),
 			PIDFile:  runtime.File(ShellPIDFile),
 			Output:   opts.ShellOutput,
 			Log:      opts.Log.With("part", "shell"),

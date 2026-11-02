@@ -58,6 +58,9 @@ func RunGreeter(ctx context.Context, o GreeterOptions) error {
 	if o.Log == nil {
 		o.Log = slog.New(slog.DiscardHandler)
 	}
+	// As Run: only the compositor running is reached
+	o.Environ = ipc.WithoutVars(o.Environ, ipc.StaleVars(o.Getenv))
+	o.Getenv = ipc.LiveEnv(o.Getenv)
 	socket := filepath.Join(o.Dir, greeterSocket)
 	ln, err := rpc.Listen(socket)
 	if err != nil {

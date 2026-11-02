@@ -324,7 +324,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 **compositor**
 
 - **compositor-05** (6): The niri entry's shell-side lastLoadFailed is deleted in compositor-01.
-  - [The daemon picks a compositor the shell may not run under](../issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
+  - The daemon picks a compositor the shell may not run under
   - [A file mode that stops loading keeps the saved monitor profile off](../issues.md#a-file-mode-that-stops-loading-keeps-the-saved-monitor-profile-off)
   - [Leaving included between sessions leaves the full module loaded](../issues.md#leaving-included-between-sessions-leaves-the-full-module-loaded)
   - [A failed takeover leaves no layer and no problem](../issues.md#a-failed-takeover-leaves-no-layer-and-no-problem)

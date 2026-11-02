@@ -60,28 +60,17 @@ Singleton {
 
   // Which compositor axiom runs under: "hyprland", "sway", "niri" or ""
   // (unknown, or none), from HYPRLAND_INSTANCE_SIGNATURE / SWAYSOCK /
-  // NIRI_SOCKET; with more than one set (one left over from an earlier
-  // session), the one still running (CompositorKind). AXIOM_COMPOSITOR
-  // overrides it, for testing ("none" for no backend at all).
+  // NIRI_SOCKET, of which the daemon leaves only the running one's
+  // (CompositorKind). AXIOM_COMPOSITOR overrides it, for testing ("none"
+  // for no backend at all).
   readonly property string kind: {
     const forced = Quickshell.env("AXIOM_COMPOSITOR") ?? "";
     if (forced !== "")
       return forced === "none" ? "" : forced;
-    const env = CompositorKind.envNames.reduce((all, name) => {
+    return CompositorKind.kind(CompositorKind.envNames.reduce((all, name) => {
       all[name] = Quickshell.env(name) ?? "";
       return all;
-    }, {});
-    const candidates = CompositorKind.candidates(env);
-    const picked = CompositorKind.pick(candidates, candidate => root._running(candidate));
-    if (candidates.length > 1)
-      console.log(`[CompositorManager] ${candidates.map(c => c.kind).join(", ")} named in the environment; running under ${picked}`);
-    return picked;
-  }
-
-  // Whether a CompositorKind candidate's process still runs
-  function _running(candidate) {
-    const pid = candidate.pid !== "" ? candidate.pid : CompositorKind.lockPid(candidate.lockFile !== "" ? FileManager.read(candidate.lockFile) : "");
-    return pid !== "" && CompositorKind.isProcess(candidate.kind, FileManager.read(`/proc/${pid}/comm`));
+    }, {}));
   }
 
   // The backend for `kind`, or null (docs/dev/compositor/contract.md). Only

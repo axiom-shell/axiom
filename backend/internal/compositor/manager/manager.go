@@ -129,20 +129,13 @@ type Manager struct {
 	debounce, liveDebounce, fileSync, releaseRetry, hotplug *time.Timer
 }
 
-// New is the manager for the compositor the environment names; Kind is ""
+// New is the manager for the compositor running (ipc.Detect); Kind is ""
 // (and it does nothing) under none of axiom's config modes' compositors.
 func New(o Options) *Manager {
+	o.Getenv = ipc.LiveEnv(o.Getenv)
 	m := &Manager{o: o, wake: make(chan struct{}, 1), stopped: make(chan struct{}), mergeable: -1, releaseFirst: 10 * time.Second, hotplugDelay: 500 * time.Millisecond}
-	instance := ""
-	switch {
-	case o.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "":
-		m.kind, instance = "hyprland", o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
-	case o.Getenv("NIRI_SOCKET") != "":
-		m.kind, instance = "niri", o.Getenv("NIRI_SOCKET")
-	case o.Getenv("SWAYSOCK") != "":
-		m.kind, instance = "sway", o.Getenv("SWAYSOCK")
-	}
-	m.st = loadState(o.RuntimeFile, m.kind+":"+instance)
+	m.kind = ipc.Detect(o.Getenv)
+	m.st = loadState(o.RuntimeFile, m.kind+":"+o.Getenv("HYPRLAND_INSTANCE_SIGNATURE")+o.Getenv("SWAYSOCK")+o.Getenv("NIRI_SOCKET"))
 	stateDir := strings.TrimSuffix(o.StateDir, "/") + "/"
 	e := env{getenv: o.Getenv, stateDir: stateDir, tables: o.Tables, schema: o.Schema, logf: m.logf, state: m.st}
 	switch m.kind {

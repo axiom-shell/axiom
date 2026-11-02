@@ -7,7 +7,7 @@
 How axiom reaches the compositor it runs under. Read this before anything that reads windows, outputs or workspaces, switches workspace, focuses a window, or does something only one compositor can.
 
 ### Detection
-- `CompositorManager.kind` is `"hyprland"`, `"sway"`, `"niri"` or `""` (unknown), from `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET`. With more than one set (one exported into the systemd user environment by an earlier session reaches the next compositor), the one whose process still runs wins (`methods/CompositorKind`).
+- `CompositorManager.kind` is `"hyprland"`, `"sway"`, `"niri"` or `""` (unknown), from `HYPRLAND_INSTANCE_SIGNATURE` / `SWAYSOCK` / `NIRI_SOCKET`. With more than one set (one exported into the systemd user environment by an earlier session reaches the next compositor), the one whose process still runs wins: the daemon decides (`ipc.Detect`), uses only that compositor for everything of its own (the config layer, `outputs.apply`, `greeter.compositor`) and starts the shell (and the greeter's) without the others' variables, so the shell takes the one set (`methods/CompositorKind`).
 - `AXIOM_COMPOSITOR` overrides it for testing (`none` gives `""`).
 - `CompositorManager.backend` is that compositor's backend singleton (`HyprlandManager`, `SwayManager`, `NiriManager`), or null. Only the one picked is created.
 

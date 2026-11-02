@@ -16,17 +16,18 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// Outputs are the connected outputs of the first of Hyprland, niri and
-// sway running (as the config layer picks): read, and set by monitor
-// rules (MonitorRule) in the compositor's own terms.
+// Outputs are the connected outputs of the compositor running (one of
+// Hyprland, niri and sway): read, and set by monitor rules (MonitorRule)
+// in the compositor's own terms.
 type Outputs struct {
 	Hypr *ipc.Hypr
 	Niri *ipc.Niri
 	Sway *ipc.Sway
 }
 
-// OutputsFromEnv are the outputs of the compositor the environment names.
+// OutputsFromEnv are the outputs of the compositor running (ipc.Detect).
 func OutputsFromEnv(getenv func(string) string) Outputs {
+	getenv = ipc.LiveEnv(getenv)
 	return Outputs{Hypr: ipc.HyprFromEnv(getenv), Niri: ipc.NiriFromEnv(getenv), Sway: ipc.SwayFromEnv(getenv)}
 }
 

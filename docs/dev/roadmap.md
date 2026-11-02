@@ -333,7 +333,6 @@ Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
 
 Found by the audits:
-- [The daemon picks a compositor the shell may not run under](issues.md#the-daemon-picks-a-compositor-the-shell-may-not-run-under)
 - [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
 - [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
 - [A trial monitor Apply that turns a monitor off drops its Keep/Revert](issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
