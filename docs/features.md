@@ -343,6 +343,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - the look, monitors and workspaces
   - default apps and keys
   - the compositor mode, and the optional integrations (login screen, polkit, idle)
+  - other apps in axiom's colors
 
   `/welcome` runs it again.
 - **Screenshots:** a region, a window or a whole screen, picked on a frozen frame. Saved and copied, or opened in satty or swappy to annotate. Also screen recording with `wf-recorder`, with the microphone or (with `pactl`) the system's sound.
