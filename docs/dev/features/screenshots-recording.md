@@ -41,7 +41,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - The folders are global settings (General → Screenshots & recordings), not the cards': every entry point saves to the same place. Recordings go to `recordingFolder`: `Screenshots.recordingFolder`, else `folder`.
 - **Copying:** to the clipboard through the daemon (`ClipboardManager.copyFile`, `clipboard.copy {path, mime}`).
 - Then one of:
-  - **A notification** with an "Edit in Satty/Swappy" button. This is a waiting `notify-send -A` (`CommandManager.run`), so each one's button stays live until its notification closes.
+  - **A notification** with an "Edit in Satty/Swappy" button. Sent through `NotificationManager.sendNotification` with an `edit` action, so each one's button stays live until its notification closes.
   - **Opened in satty/swappy straight away** with `annotate`: the picker's "Edit in …" switch, the E key, or holding Shift on release.
 - **Watchdog:** a single 3 s watchdog in the service fails any capture that gets no frame, so nothing can wedge it.
   - A picker reports its frame with `frameArrived()`.

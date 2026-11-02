@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05 and platform-02 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02 and platform-03 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -63,7 +63,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 15 | config-04 | major | Done: Editor fields and draft comparisons | 3 | ~110 | none |  |
 | 16 | config-05 | minor-sweep | Done: Config and guardrails | 2 | ~50 | config-03, config-04 |  |
 | 17 | platform-02 | major | Done: Locking and the greeter | 5 | ~150 | platform-01 | Q2 |
-| 18 | platform-03 | major | Packaging and self-update | 4 | ~400 | none |  |
+| 18 | platform-03 | major | Done: Packaging and self-update | 4 | ~400 | none |  |
 | 19 | platform-04 | major | Dev-mode re-exec and the protocol | 4 | ~200 | platform-01 |  |
 | 20 | platform-05 | major | Launcher and IPC input | 2 | ~80 | platform-01 |  |
 | 21 | platform-06 | minor-sweep | The onboarder | 3 | ~150 | platform-03 | Q3 |
@@ -265,11 +265,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Nested Hyprland acknowledges a lock too late for axiom lock
   - Uninstall keeps a stale greetd backup when greetd points elsewhere
   - The greeter reads its keyboard layouts before the bundle's are applied
-- **platform-03** (4): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
-  - [install.sh and the AUR packages never install notify-send, gio or pactl](../issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
-  - [A main-channel update applied after edge moved on needs go to rebuild the binary](../issues.md#a-main-channel-update-applied-after-edge-moved-on-needs-go-to-rebuild-the-binary)
-  - [install.sh still installs the rest of a feature whose COPR was declined](../issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
-  - [The onboarder's Checks-page purposes don't match their declared keys](../issues.md#the-onboarders-checks-page-purposes-dont-match-their-declared-keys)
+- **platform-03** (4, done): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
+  - install.sh and the AUR packages never install notify-send, gio or pactl
+  - A main-channel update applied after edge moved on needs go to rebuild the binary
+  - install.sh still installs the rest of a feature whose COPR was declined
+  - The onboarder's Checks-page purposes don't match their declared keys
 - **platform-04** (4): Dev mode only; the three re-exec races get Live checks lines.
   - [A dev build during a branch switch re-execs onto the defaults](../issues.md#a-dev-build-during-a-branch-switch-re-execs-onto-the-defaults)
   - [A protocol bump in dev mode leaves the installed CLI on the old protocol](../issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)
@@ -570,7 +570,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-13** (4):
   - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](../issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
   - [Clicking an older capture's notification opens the newest capture](../issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
-  - [The screenshot's Edit notification rebuilds sendNotification's actions](../issues.md#the-screenshots-edit-notification-rebuilds-sendnotifications-actions)
+  - The screenshot's Edit notification rebuilds sendNotification's actions (done in platform-03, with notify-send's move into Go)
   - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](../issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 - **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
   - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)

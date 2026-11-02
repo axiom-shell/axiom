@@ -46,6 +46,7 @@ func pushShapes() []rpc.PushShape {
 		pushNiriStarted.Shape(), pushNiriEvent.Shape(),
 		pushGreeterAuthorized.Shape(),
 		pushSwitcherKey.Shape(),
+		pushNotifyAction.Shape(),
 	}
 }
 

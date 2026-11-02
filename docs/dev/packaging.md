@@ -11,7 +11,7 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 - They share keys: a command, a compositor by its lowercase name, or a package without a command (`xdg-desktop-portal-gtk`).
 - `scripts/check_packages.py` (CI, `check_all.sh`, `verify.sh` when one of them changes) fails when:
   - an install.sh key's Arch or Fedora package differs from `Packages.packages` (a COPR is `owner/project:name` there and `{ name, repo }` here; `-` and `n/a` are `null`);
-  - a key in `REQUIRED` or `FEATURES` isn't in `PACKAGES`;
+  - a key in `REQUIRED` or `FEATURES` isn't in `PACKAGES`, or a key of `Packages.packages` has no `PACKAGES` row;
   - a PKGBUILD's `depends` aren't `REQUIRED`'s Arch packages (less `git`, which only fetches it: `makedepends` with `go`), or its `optdepends` aren't exactly the compositors' and `FEATURES`' Arch packages.
 - Adding an optional feature: its keys in `Packages.packages` (if new), a `PACKAGES` row, a `FEATURES` row, and an `optdepends` line in both PKGBUILDs, in the same words.
 
@@ -19,7 +19,7 @@ How axiom gets onto a machine: the installer (a clone in the user's home) or a d
 - One self-contained file, wrapped in `main` so `curl | bash` reads all of it first. Questions and the package manager read `/dev/tty`.
 - **Distribution:** `distro_family` follows `Packages.distroFamily`'s rule (os-release `ID`, else the first known `ID_LIKE`). Arch uses `pacman -T` / `pacman -S --needed`; Fedora `rpm -q --whatprovides` / `dnf install`, each COPR enabled first (`dnf copr enable`, the copr plugin installed if missing).
   - `PACKAGES` cells: a package, `owner/project:name` (from that COPR), `-` (nothing needed there: `checkupdates` on Fedora) or `n/a` (not packaged there; its feature is listed as not available).
-  - COPRs: quickshell from `errornointernet/quickshell` (the one quickshell's docs name; Fedora's own is too old), Hyprland and its tools from `nett00n/hyprland`. Each is asked separately; declining one a required package needs stops the install.
+  - COPRs: quickshell from `errornointernet/quickshell` (the one quickshell's docs name; Fedora's own is too old), Hyprland and its tools from `nett00n/hyprland`. Each is asked separately; declining one a required package needs stops the install, and declining one an optional feature needs skips that whole feature (none of its packages are installed).
 - **Compositor:** the main one is `--compositor` if given; else the running one (`HYPRLAND_INSTANCE_SIGNATURE`, `NIRI_SOCKET`, `SWAYSOCK`); else the installed one whose config already starts axiom (an earlier run's); else it asks among the installed ones; with none installed, it asks which to install (Hyprland by default, and without a terminal). The main one is what the session gets into (the TTY offer).
   - Every other installed compositor is offered the autostart line too, asked separately and defaulting to no: sway may be there only for the login screen, whose feature installs it.
   - Each gets the autostart line its `*ConfigWriter.autostartTarget` writes (`AUTOSTART`), unless a line matching the same `accept` pattern is there. A missing config is seeded from the compositor's default (`/usr/share/hypr/hyprland.lua`, `/etc/sway/config`, `/usr/share/doc/niri/default-config.kdl`); with no default to seed from, it says what to add instead of writing a config with no binds.

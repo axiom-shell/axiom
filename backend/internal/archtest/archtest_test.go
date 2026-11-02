@@ -88,6 +88,7 @@ var tiers = map[string]int{
 	"internal/media":                tierEdge,
 	"internal/netif":                tierEdge,
 	"internal/nightlight":           tierEdge,
+	"internal/notification":         tierEdge,
 	"internal/rpc":                  tierEdge,
 	"internal/saved":                tierEdge,
 	"internal/screensaver":          tierEdge,
