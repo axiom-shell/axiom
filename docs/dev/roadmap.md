@@ -240,7 +240,6 @@ Steps: trim the root `AGENTS.md` to its rules (mechanics move to the `docs/dev` 
 Resolves:
 - [A protocol bump in dev mode leaves the installed CLI on the old protocol](issues.md#a-protocol-bump-in-dev-mode-leaves-the-installed-cli-on-the-old-protocol)
 - [AGENTS.md's funnel rule doesn't name FileManager.write and watch](issues.md#agentsmds-funnel-rule-doesnt-name-filemanagerwrite-and-watch)
-- [install.sh still installs the rest of a feature whose COPR was declined](issues.md#installsh-still-installs-the-rest-of-a-feature-whose-copr-was-declined)
 
 ### Phase 10: custom JSON widgets
 The last feature before posting for testers (decided 2026-10-27), the editor page included. Point a definition at a script; its output (Waybar's `return-type: json` as the preset) is drawn by a small library of styles, as a bar widget, its popout, a desktop, overlay or edge menu module and a lockscreen module, all from one definition, so the script runs once for all of them. Waits for [backend stage 3b](backend/roadmap.md) (streamed commands, JSON parsed in Go).
