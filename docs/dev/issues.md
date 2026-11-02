@@ -1439,13 +1439,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the theme-integrations system
 
-### Power repeats the session actions' icons, labels and confirm
-- **Where:** `components/content/Power/Power.qml:25` (`_info`), `services/session/SessionManager.qml:16` (`sessionActionInfo`), `components/surfaces/powermenu/PowerMenuWindow.qml:35` (`run`), `components/content/QuickActions/QuickActions.qml:185` (`run`)
-- **What:** `Power._info` (Power.qml:25-41, 17 lines) restates `SessionManager.sessionActionInfo`'s icons (`bedtime`, `restart_alt`, `power_settings_new`) and `SessionManager.destructiveActions` (`confirm` true for reboot and poweroff), with other words for the same actions ("Restart" / "Shut down" on the lock screen and greeter, "Reboot" / "Power off" in the power menu, QuickActions and launcher). And the press-twice gate (an `armed` string, a 3000 ms `disarm` Timer, "arm unless already armed, else run") is written out three times: `Power.press` and its Timer (Power.qml:44-65), `PowerMenuWindow.run` and `disarm` (:35-44, :82-86), `QuickActions.run` and `disarm` (:185-190, :226-230). Fix: Power reads `SessionManager.sessionActionInfo(action)` and `SessionManager.destructiveActions` (drops `_info`: 17 lines), and one small non-visual `ConfirmGate` (`armed`, `timeout`, `pass(key, needsConfirm)`) replaces the three gates. Open (maintainer): which words the session actions use everywhere ("Restart" / "Shut down" or "Reboot" / "Power off").
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "a) 'Restart' / 'Shut down'"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the security system
+### The launcher's command confirm is a fourth press-twice gate
+- **Where:** `services/ui/LauncherManager.qml` (`_runCommand`, `_disarm`), `components/reusable/ConfirmGate.qml`
+- **What:** The power menu, QuickActions and Power share `ConfirmGate`, but the launcher's confirming second Enter still writes the gate out (an `_armed` string, a 3000 ms `_disarm` Timer that also re-reads the rows, "arm unless already armed, else run"). A service can't use a `components/reusable/` piece (none imports `qs.components.reusable`: services sit below the UI). Fix: move `ConfirmGate` beside the services as a non-singleton part (`services/core/`, with an `expired` signal for the launcher's re-read), the three UI users importing it from there, and have `LauncherManager` use it.
+- **Size:** trivial
+- **Found:** 2026-11-02, while clearing out the session actions' issues (platform-08)
 
 ### A Wayland protocol error leaves every client claiming its protocol
 - **Where:** `backend/internal/wayland/client/client.go:99` (`Run`), `backend/internal/daemon/daemon.go:419` (`followCompositor`), `backend/internal/daemon/wayland.go:31` (`waylandNow`)

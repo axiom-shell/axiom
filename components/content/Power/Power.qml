@@ -22,17 +22,8 @@ Card {
   // The schema's three, whatever the file says: never log out or lock here
   readonly property var actions: (root.properties.actions ?? []).filter(a => ["suspend", "reboot", "poweroff"].includes(a))
 
-  // The action waiting for its second click
-  property string armed: ""
-
   function press(action) {
-    if (SessionManager.destructiveActions.includes(action) && root.armed !== action) {
-      root.armed = action;
-      disarm.restart();
-      return;
-    }
-    root.armed = "";
-    if (!root.live)
+    if (!gate.pass(action, SessionManager.destructiveActions.includes(action)) || !root.live)
       return;
     if (root.kind === "greeter")
       GreetdManager.power(action);
@@ -40,10 +31,8 @@ Card {
       SessionManager.sessionAction(action);
   }
 
-  Timer {
-    id: disarm
-    interval: 3000
-    onTriggered: root.armed = ""
+  ConfirmGate {
+    id: gate
   }
 
   TileGrid {
@@ -66,9 +55,9 @@ Card {
         height: grid.tileHeight
         icon: info?.icon ?? ""
         label: info?.label ?? ""
-        active: root.armed === action
+        active: gate.armed === action
         activeColor: SessionManager.destructiveActions.includes(action) ? Theme.error : Theme.accent
-        countdown: root.armed === action ? disarm.interval : 0
+        countdown: gate.armed === action ? gate.timeout : 0
         onClicked: root.press(action)
       }
     }
