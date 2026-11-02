@@ -103,9 +103,7 @@ Item {
   StyledIconButton {
     visible: root.menu.pinButton
     z: 2
-    width: Widget.height
-    height: Widget.height
-    padding: 0
+    size: Widget.height
     anchors.top: root.menu.edge === "top" ? undefined : parent.top
     anchors.bottom: root.menu.edge === "top" ? parent.bottom : undefined
     anchors.right: root.menu.edge === "right" ? undefined : parent.right

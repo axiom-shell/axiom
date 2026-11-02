@@ -213,10 +213,8 @@ ColumnLayout {
   component StepButton: StyledIconButton {
     // The ±10 buttons: text, smaller and dimmer than −/+
     property bool coarse: false
+    size: root.buttonSize
     Layout.preferredWidth: coarse ? Math.round(root.buttonSize * 1.4) : root.buttonSize
-    Layout.preferredHeight: root.buttonSize
-    Layout.fillWidth: false
-    Layout.fillHeight: false
     iconSize: coarse ? Appearance.fontSizeBy(-4) : Appearance.fontSize
     iconColor: coarse ? Theme.foregroundAlt : Theme.foreground
     autoRepeat: true

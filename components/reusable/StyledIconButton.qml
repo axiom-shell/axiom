@@ -14,6 +14,8 @@ ToolButton {
   // -- Public API --
   property string iconText: ""
   property string tooltipText: ""
+  // A square of this side that doesn't stretch in layouts
+  property real size: Widget.iconButton
 
   // -- Configurable Appearance --
   property int iconSize: Appearance.fontSize
@@ -27,10 +29,15 @@ ToolButton {
 
   // -- Implementation --
 
-  Layout.fillHeight: true
-  Layout.fillWidth: true
+  implicitWidth: size
+  implicitHeight: size
+  Layout.preferredWidth: size
+  Layout.preferredHeight: size
+  Layout.fillWidth: false
+  Layout.fillHeight: false
   Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
+  padding: 0
   opacity: enabled ? 1.0 : 0.4
   scale: root.pressed ? 0.92 : 1.0
 

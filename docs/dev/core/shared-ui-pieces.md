@@ -15,7 +15,7 @@ Everything outside the bars follows the Interface scale and Density through `Wid
 | Inner margins of a row, field or dropdown (6–8 px) | `Widget.smallPadding` |
 | A panel's or card's padding (10–22 px) | `Widget.padding` (× 2 for 18–22) |
 | A control's height (fields, switches, tabs) | `Widget.height` (or a fixed share of it) |
-| A square icon button | `Widget.iconButton` (`FlatIconButton`'s default) |
+| A square icon button | `Widget.iconButton` (`StyledIconButton`'s default `size`) |
 | A chip, pill or small button (18–22 px) | `Widget.smallHeight` |
 | An icon or text size | `Appearance.fontSize`, `fontSizeLarge`, or `Appearance.fontSizeBy(n)` for n px more or less (never `fontSize ± n`: the offset wouldn't scale) |
 | A width, an avatar, a dot, a thin bar | `Widget.px(n)` (the Interface scale only) |
@@ -54,7 +54,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `LayoutOrder`: shows a layout's items in reverse order while `reversed` (`Panel.flips`: a popout growing up keeps its controls last, by the bar). Only for a layout of plain items, no Repeater directly in it.
 
 ### Controls (`reusable/`)
-- `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors).
+- `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors). `StyledIconButton` is a square of side `size` that doesn't stretch in a layout; `FlatIconButton` is one with a dimmer icon.
 - `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
 - `StyledSlider`: trough, accent fill and a round handle (`handleSize`); `moved` while dragged, `released` at the end. `value` is only pushed in (a drag never writes it, so bind it) and animates when it changes; `position` is what it shows (the drag's place while `pressed`).
 - `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll; its trough clips the fill, so a low level keeps to its rounded ends); muted, its icon (the base one) is a `SlashedIcon`; with `iconClickable` the icon is a button (`iconClicked`, hover highlight, `iconTip`); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).

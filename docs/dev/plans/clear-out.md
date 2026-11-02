@@ -312,7 +312,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Nine shared controls animate with their own easing, written out where Glide does it
 - **core-ui-theming-06** (4):
   - Every StyledSlider overrides its look and its value the same way
-  - [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](../issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
+  - Eleven StyledIconButtons undo its stretching to be FlatIconButtons
   - [ActionTile and ActionPill carry the same countdown bar](../issues.md#actiontile-and-actionpill-carry-the-same-countdown-bar)
   - [StyledTextEntry and StyledTextArea carry the same blinking cursor](../issues.md#styledtextentry-and-styledtextarea-carry-the-same-blinking-cursor)
 - **core-ui-theming-07** (4):
