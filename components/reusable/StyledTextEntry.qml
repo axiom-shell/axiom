@@ -54,11 +54,8 @@ StyledContainer {
   borderColor: textField.activeFocus ? Theme.accent : Theme.border
   backgroundColor: Theme.backgroundAlt
 
-  Behavior on borderColor {
-    ColorAnimation {
-      duration: Appearance.animNormal
-      easing.type: Easing.InOutQuad
-    }
+  ColorGlide on borderColor {
+    duration: Appearance.animNormal
   }
 
   TextField {

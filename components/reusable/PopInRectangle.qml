@@ -38,7 +38,7 @@ Rectangle {
       property: "_bump"
       to: 1
       duration: Appearance.animFast
-      easing.type: Easing.InOutQuad
+      easing.type: Appearance.easing
     }
   }
 }

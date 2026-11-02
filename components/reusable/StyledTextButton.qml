@@ -43,20 +43,14 @@ Rectangle {
   border.width: borderWidth
   radius: borderRadius
 
-  Behavior on color {
-    ColorAnimation {
-      duration: Appearance.animNormal
-      easing.type: Easing.InOutQuad
-    }
+  ColorGlide on color {
+    duration: Appearance.animNormal
   }
 
   property color _contentColor: mouseArea.containsMouse ? root.textHoverColor : root.textColor
 
-  Behavior on _contentColor {
-    ColorAnimation {
-      duration: Appearance.animNormal
-      easing.type: Easing.InOutQuad
-    }
+  ColorGlide on _contentColor {
+    duration: Appearance.animNormal
   }
 
   RowLayout {

@@ -2,10 +2,12 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.components.methods
+import qs.config
 
 // App and window icons as sources the icon theme holds: IconResolver's
 // guesses (pure, tested), given the theme and the desktop entries, worked
-// out once per window class until the desktop entries change.
+// out once per window class until the desktop entries change. An
+// Icons.overrides entry for the class wins over the guess.
 Singleton {
   id: root
 
@@ -36,6 +38,10 @@ Singleton {
 
   function resolveWindowIcon(windowClass, windowTitle) {
     const key = windowClass ?? "";
+    // Outside the cache, so an edited map applies at once
+    const override = IconsConfig.overrides[key];
+    if (override)
+      return override;
     const icons = root._windowIcons;
     let baseIcon = icons[key];
     if (baseIcon === undefined) {

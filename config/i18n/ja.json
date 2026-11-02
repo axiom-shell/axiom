@@ -36,7 +36,6 @@
     "Animations": "アニメーション",
     "Any path on the filesystem to report.": "表示するファイルシステム上の任意のパス。",
     "Any usage (%) or temperature (°C) at or above this switches to the warning background.": "使用率（%）または温度（°C）がこの値以上になると警告用の背景に切り替わります。",
-    "App name → icon path/URL, for apps whose tray or window icon doesn't resolve.": "アプリ名 → アイコンのパス／URL（トレイやウィンドウのアイコンが見つからないアプリ用）。",
     "Appearance": "外観",
     "Append the connected device's battery level, when it reports one.": "接続中のデバイスがバッテリー残量を報告する場合、それを表示します。",
     "Applications ({0})": "アプリケーション（{0}）",
@@ -3715,6 +3714,7 @@
     "Log out, restart and shut down ask for a second click (or Enter) first.": "",
     "Couldn't check for updates: {0}": "",
     "Couldn't load the weather: {0}": "",
-    "Writes kitty/axiom.conf. Reloads running kitty.": ""
+    "Writes kitty/axiom.conf. Reloads running kitty.": "",
+    "App name → icon path/URL, for apps whose tray or window icon doesn't resolve (a window's key is its class).": ""
   }
 }

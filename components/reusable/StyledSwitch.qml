@@ -19,11 +19,8 @@ Switch {
     radius: (root.height - Widget.px(4)) / 2
     color: Theme.foreground
 
-    Behavior on x {
-      NumberAnimation {
-        duration: Appearance.animNormal
-        easing.type: Easing.InOutQuad
-      }
+    Glide on x {
+      duration: Appearance.animNormal
     }
   }
 

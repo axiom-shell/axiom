@@ -4,9 +4,9 @@ reviewed: 4d8f880 2026-10-31  (full)
 The kit is in use everywhere, with no piece nothing uses and the service-import and duration rules held. Its oldest controls predate the motion conventions (nine animate with their own easings in written-out Behaviors) and carry defaults every user overrides (the slider, the icon button). At its seams, the notes and chat rename fields bind `text` and bring a cancelled rename back, and `Icons.overrides` reaches only the tray.
 
 ## Open findings
-- Major: [Icons.overrides never reaches window icons](../../docs/dev/issues.md#iconsoverrides-never-reaches-window-icons)
-- Major: [A cancelled rename's typed text comes back in the notes and chat rename fields](../../docs/dev/issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
-- Major: [Nine shared controls animate with their own easing, written out where Glide does it](../../docs/dev/issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
+- Major: "Icons.overrides never reaches window icons" (fixed, row 20 core-ui-theming-05)
+- Major: "A cancelled rename's typed text comes back in the notes and chat rename fields" (fixed, row 20 core-ui-theming-05)
+- Major: "Nine shared controls animate with their own easing, written out where Glide does it" (fixed, row 20 core-ui-theming-05)
 - Cleanup: [Every StyledSlider overrides its look and its value the same way](../../docs/dev/issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)
 - Cleanup: [Eleven StyledIconButtons undo its stretching to be FlatIconButtons](../../docs/dev/issues.md#eleven-stylediconbuttons-undo-its-stretching-to-be-flaticonbuttons)
 - Cleanup: "StyledRectButton's badge and border press colour have no user" (fixed, row 20 core-ui-theming-01)
