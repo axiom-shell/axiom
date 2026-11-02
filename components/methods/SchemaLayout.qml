@@ -87,6 +87,9 @@ QtObject {
         return Array.prototype.includes.call(want, value);
       if (want !== null && typeof want === "object" && want.notEmpty)
         return (value?.length ?? 0) > 0;
+      if (want !== null && typeof want === "object" && "includes" in want)
+        // (a list object from another file, as `want` above)
+        return value !== null && typeof value === "object" && typeof value.length === "number" && Array.prototype.includes.call(value, want.includes);
       if (want !== null && typeof want === "object")
         return value !== want.not;
       return value === want;

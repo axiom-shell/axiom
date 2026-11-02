@@ -154,20 +154,6 @@ QtObject {
     return null;
   }
 
-  // Where a drive event (without a question) is said, from
-  // Drives.announce and whether an enabled OSD shows the `drive` status:
-  // "osd" (its card), "notification", or "" (nothing). "osd" with no such
-  // OSD falls back to notifications
-  function channel(announce, osdShowsDrive) {
-    switch (announce) {
-    case "osd":
-      return osdShowsDrive ? "osd" : "notification";
-    case "notification":
-      return "notification";
-    }
-    return "";
-  }
-
   // What a click on a drive event (an OSD card, a notification) does:
   // "open" its folder (mounted), "unlock" it (an encrypted drive
   // plugged in), else "show" the Drives module

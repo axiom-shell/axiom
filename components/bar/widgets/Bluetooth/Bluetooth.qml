@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 import qs.config
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
@@ -42,8 +43,10 @@ ValueStyleWidget {
   onClicked: button => {
     if (button === Qt.MiddleButton)
       CommandManager.runDetached(root.properties.middleCommand);
-    else
+    else {
+      ShellManager.onScreen("bluetooth");
       BluetoothManager.toggleEnabled();
+    }
   }
 
   PopoutAnchor {

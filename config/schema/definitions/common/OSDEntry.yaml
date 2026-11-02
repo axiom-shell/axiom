@@ -70,11 +70,30 @@ properties:
     default: 1000
     minimum: 250
     maximum: 10000
-    description: How long the OSD stays open after the last change.
+    description: How long the bars and the status icons stay out after the last change. A card has its own (Status icons › Card timeout).
+  openTogether:
+    type: boolean
+    title: Bars and status icons together
+    default: false
+    description: 'A change to a bar or a status icon brings out both. Off, each comes out on its own; while both are out they close together.'
+  iconsPlace:
+    type: string
+    title: Status icons
+    default: outside
+    enum: [outside, inside]
+    x-enumLabels:
+      outside: Past the bars
+      inside: By the edge
+    description: 'Where the status icons go when they''re out with the bars: past them, away from the edge, or between the bars and the edge. A card always goes last.'
+  holdStill:
+    type: boolean
+    title: Hold still under the mouse
+    default: true
+    description: 'While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you''re pointing at moves. Off, they take their usual place (Status icons). A card always goes last.'
   bars:
     type: object
     title: Bars
-    description: 'The levels the OSD shows as bars, and how they''re laid out. A change to one shows the bars, with the status icons beside them.'
+    description: 'The levels the OSD shows as bars, and how they''re laid out. A change to one shows the bars.'
     additionalProperties: false
     properties:
       orientation:
@@ -150,7 +169,7 @@ properties:
   statuses:
     type: object
     title: Status icons
-    description: 'The state of the machine as icons: a change to one opens the OSD on the icons alone, and the bars show them beside the levels.'
+    description: 'The state of the machine as icons: a change to one shows the icons. A change with a card (a drive plugged in, a VPN connecting; see Detail cards) shows only the card; its icon is lit the next time the icons show.'
     additionalProperties: false
     properties:
       row:
@@ -162,18 +181,13 @@ properties:
           notable: What's unusual
           all: Every one picked
           changed: Only the one that changed
-        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock on, muted, do not disturb, on battery, …) and the one that just changed. Every one picked shows each, lit when on.'
-      cards:
-        type: boolean
-        title: Detail cards
-        default: true
-        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, something done to a removable drive. Off, they show as their icon like any other change.'
+        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. Only the one that changed shows each change as it comes. Whichever you pick, an icon shown stays while the icons are out, though it turns ordinary or another one changes.'
       items:
         type: array
         title: Shows
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, recording, camera, micUse, screenShare, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, recording, camera, micUse, screenShare]
         x-enumLabels:
           capsLock: Caps Lock
           numLock: Num Lock
@@ -191,11 +205,11 @@ properties:
           vpn: VPN
           drive: Removable drives
           charger: Charger
+          battery: Low battery
           recording: Screen recording
           camera: Camera
           micUse: Microphone in use
           screenShare: Screen sharing
-          message: Messages
         x-enumIcons:
           capsLock: keyboard_capslock
           numLock: dialpad
@@ -213,19 +227,19 @@ properties:
           vpn: vpn_key
           drive: usb
           charger: power
+          battery: battery_alert
           recording: screen_record
           camera: videocam
           micUse: record_voice_over
           screenShare: screen_share
-          message: chat
-        default: [capsLock, numLock, keyboardLayout, microphone, audio, drive]
-        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (when Removable drives › Show drive events is On the OSD; a click opens the drive, or unlocks an encrypted one). Messages are what `axiom ipc osd message <icon> <text>` sends.'
+        default: [capsLock, numLock, keyboardLayout, microphone, audio, dnd, caffeine, nightLight, recording, drive]
+        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (a click opens the drive, or unlocks an encrypted one), and Low battery one as the battery drops to low and to critical. With Detail cards on, Removable drives and Low battery picked here show as a card instead of a notification, unless they''re among those that don''t open the OSD.'
       quiet:
         type: array
         title: Without opening the OSD
         items:
           type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, recording, camera, micUse, screenShare, message]
+          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, recording, camera, micUse, screenShare]
         x-enumFrom: items
         x-showIf: {items: {notEmpty: true}}
         x-enumLabels:
@@ -245,11 +259,11 @@ properties:
           vpn: VPN
           drive: Removable drives
           charger: Charger
+          battery: Low battery
           recording: Screen recording
           camera: Camera
           micUse: Microphone in use
           screenShare: Screen sharing
-          message: Messages
         x-enumIcons:
           capsLock: keyboard_capslock
           numLock: dialpad
@@ -267,31 +281,60 @@ properties:
           vpn: vpn_key
           drive: usb
           charger: power
+          battery: battery_alert
           recording: screen_record
           camera: videocam
           micUse: record_voice_over
           screenShare: screen_share
-          message: chat
         default: []
-        description: Shown among the icons, but a change to one doesn't open the OSD.
-  media:
+        description: "Shown among the icons, but a change to one doesn't open the OSD (it shows if the OSD is already open). Removable drives or Low battery picked here is a notification instead, as it would be without the OSD."
+  cards:
     type: object
-    title: Now playing
-    description: The cover, title and artist of the track playing, as a card.
+    title: Detail cards
+    description: 'Cards with more to say than an icon: for the status icons above (an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, the battery running low, something done to a removable drive), and the ones that are only ever a card, picked here.'
     additionalProperties: false
     properties:
       enabled:
         type: boolean
-        title: Show the track playing
-        default: false
+        title: Show cards
+        default: true
+        description: 'Off, this OSD shows no card at all: the status icons'' changes show as their icon, and a drive, low battery, monitor, screenshot or message is a notification instead.'
+      timeout:
+        type: integer
+        title: Card timeout
+        x-unit: ms
+        default: 4000
+        minimum: 1000
+        maximum: 15000
+        x-showIf: {enabled: true}
+        description: 'How long a card stays out, keeping the OSD open. Then it slides back in, and the OSD closes with it unless the mouse is on it. Hovering the card keeps it out.'
+      items:
+        type: array
+        title: Only as cards
+        x-showIf: {enabled: true}
+        items:
+          type: string
+          enum: [monitor, screenshot, message, media]
+        x-enumLabels:
+          monitor: Monitors
+          screenshot: Screenshots
+          message: Messages
+          media: Now playing
+        x-enumIcons:
+          monitor: monitor
+          screenshot: screenshot_monitor
+          message: chat
+          media: music_note
+        default: [message]
+        description: 'Monitors shows a card naming a monitor connected or removed and its resolution, Screenshots one with the picture as one is taken (a click opens it), Messages what `axiom message <icon> <text>` and a bind that can''t run send, and Now playing the cover, title and artist of the track playing. Picked here, Monitors, Screenshots and Messages show on this OSD instead of as notifications.'
       onTrackChange:
         type: boolean
-        title: On a new track
+        title: Now playing on a new track
         default: true
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, items: {includes: media}}
       onPlayPause:
         type: boolean
-        title: On play and pause
+        title: Now playing on play and pause
         default: false
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, items: {includes: media}}
 required: [id]

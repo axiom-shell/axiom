@@ -24,7 +24,7 @@ The night light: a screen color temperature, set by the axiom daemon (wlsunset w
 - Created from `shell.qml`'s `_services`.
 
 ### Entry points
-- IPC `nightLight`: `toggle` / `enable` / `disable` / `status`.
+- IPC `nightLight`: `toggle` / `enable` / `disable` / `status`; `toggle` and `enable` say on the OSD when neither the daemon nor wlsunset can warm the screens (`_canWarm`).
 - Bind `nightLight`.
 - Launcher `/nightlight`.
 - The QuickActions tile.

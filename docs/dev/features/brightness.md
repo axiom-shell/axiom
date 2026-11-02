@@ -37,7 +37,7 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
 - **Sliders:**
   - They scroll at any size: the shared slider first, then (on all monitors) one per monitor.
   - The shared one greys out while the monitors differ. A click on it sets them all to their mean.
-- It sets silently, so it doesn't open the OSD.
+- Its changes are marked as the pointer's (`ShellManager.onScreen("brightness")`), so an open OSD's brightness bar follows them, and they open one only with `OSD.onScreenChanges` ([OSD](osd.md) › What opens it). Only idle's `dim`/`undim` set silently.
 
 ### OSD brightness bars
 - An OSD `brightness` bar with `allMonitors` sets every monitor. It shows their mean, and any of them changing pokes it.

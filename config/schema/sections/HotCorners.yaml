@@ -41,7 +41,6 @@ properties:
             - powerMenu
             - lock
             - toggleDnd
-            - clearNotifications
             - idleInhibit
             - nightLight
             - nextWallpaper
@@ -52,11 +51,7 @@ properties:
             - bluetooth
             - vpn
             - workspaceStep
-            - moveWindowStep
             - workspaceNth
-            - moveWindowStepSilent
-            - moveWindowNth
-            - moveWindowNthSilent
             - scrollStep
             - volumeUp
             - volumeDown
@@ -79,13 +74,10 @@ properties:
             - chatNew
             - pomodoro
             - pomodoroSkip
-            - pomodoroStop
             - stopwatch
             - stopwatchLap
-            - stopwatchReset
             - timerStart
             - timerToggle
-            - timerReset
             - screenshot
             - screenRecord
             - exec
@@ -100,7 +92,6 @@ properties:
             powerMenu: Power menu
             lock: Lock
             toggleDnd: Do not disturb
-            clearNotifications: Clear notifications
             idleInhibit: Caffeine
             nightLight: Night light
             nextWallpaper: Next wallpaper
@@ -111,16 +102,12 @@ properties:
             bluetooth: Bluetooth
             vpn: VPN on or off
             workspaceStep: Workspace in a direction
-            moveWindowStep: Move window in a direction
             workspaceNth: Workspace by number
-            moveWindowStepSilent: Send window in a direction
-            moveWindowNth: Move window to number
-            moveWindowNthSilent: Send window to number
             scrollStep: Scroll along the layout
             volumeUp: Volume up
             volumeDown: Volume down
-            toggleMute: Mute
-            toggleMicMute: Mute microphone
+            toggleMute: Toggle mute
+            toggleMicMute: Toggle microphone
             brightnessUp: Brightness up
             brightnessDown: Brightness down
             mediaPlayPause: Play/Pause
@@ -138,13 +125,10 @@ properties:
             chatNew: New chat
             pomodoro: Pomodoro start or pause
             pomodoroSkip: Skip pomodoro phase
-            pomodoroStop: Stop pomodoro
             stopwatch: Stopwatch start or pause
             stopwatchLap: Stopwatch lap
-            stopwatchReset: Reset stopwatch
             timerStart: Start a timer
             timerToggle: Pause or resume timer
-            timerReset: Reset timer
             screenshot: Screenshot
             screenRecord: Screen recording
             exec: Run a command
@@ -161,15 +145,34 @@ properties:
               - edgeMenu
               - dock
               - workspaceStep
-              - moveWindowStep
               - workspaceNth
-              - moveWindowStepSilent
-              - moveWindowNth
-              - moveWindowNthSilent
               - scrollStep
               - timerStart
               - screenshot
               - exec
+        call:
+          type: string
+          title: Call
+          default: toggle
+          enum: [toggle, open, close]
+          x-enumLabels: {toggle: Toggle, open: Open, close: Close}
+          description: 'For actions that open and close or turn on and off something: whether the corner toggles it, only opens it or only closes it.'
+          x-showIf:
+            action:
+              - launcher
+              - overlay
+              - edgeMenu
+              - dock
+              - workspaceOverview
+              - powerMenu
+              - idleInhibit
+              - nightLight
+              - darkMode
+              - wifi
+              - bluetooth
+              - screenRecord
+              - toggleMicMute
+              - toggleDnd
         screen:
           $ref: '#/definitions/ScreenTarget'
           title: Monitors

@@ -7,7 +7,7 @@ import qs.services.core
 
 // The laptop battery (UPower's display device, when it is one) and the
 // power-saver profile, for the Battery widget and module, and the low
-// battery notifications (at BatteryConfig's levels).
+// battery's notification or OSD card (at BatteryConfig's levels).
 QtObject {
   id: root
 
@@ -68,14 +68,37 @@ QtObject {
   function _checkLevel() {
     if (!root._settled)
       return;
-    if (BatteryConfig.notify) {
-      if (level === "critical" && _notifiedLevel !== "critical")
-        NotificationManager.sendNotification("axiom", I18n.tr("Critical Battery"), I18n.tr("Battery critically low: {0}%", root.percentage));
-      else if (level === "low" && _notifiedLevel === "none")
-        NotificationManager.sendNotification("axiom", I18n.tr("Low Battery"), I18n.tr("Battery low: {0}%", root.percentage));
-    }
+    const dropped = (level === "critical" && _notifiedLevel !== "critical") || (level === "low" && _notifiedLevel === "none");
     root._notifiedLevel = level;
+    if (dropped)
+      root._sayLevel(level);
   }
+
+  // The battery dropping to `level`, where the OSD's `battery` status or
+  // Battery.notify puts it (NotificationManager.announce): its card
+  // (levelEvent), a notification, or nothing; a critical one is urgent and
+  // notifies beside its card too
+  function _sayLevel(level) {
+    const critical = level === "critical";
+    const summary = critical ? I18n.tr("Critical Battery") : I18n.tr("Low Battery");
+    const body = critical ? I18n.tr("Battery critically low: {0}%", root.percentage) : I18n.tr("Battery low: {0}%", root.percentage);
+    const route = NotificationManager.announce("battery", BatteryConfig.notify, summary, body, {
+      "urgency": critical ? "critical" : "normal"
+    });
+    if (route !== "osd")
+      return;
+    root._levelSerial += 1;
+    root.levelEvent = {
+      "level": level,
+      "serial": root._levelSerial
+    };
+  }
+
+  // The last drop to low or critical, for the OSD's `battery` status:
+  // { level: "low" | "critical", serial }, else null. Set only when the
+  // OSD says it (_sayLevel)
+  property var levelEvent: null
+  property int _levelSerial: 0
 
   function setPowerSaver(on) {
     PowerProfiles.profile = on ? PowerProfile.PowerSaver : PowerProfile.Balanced;

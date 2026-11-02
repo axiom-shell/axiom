@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.session
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
@@ -60,7 +61,10 @@ Panel {
 
     StyledSwitch {
       checked: IdleManager.caffeine
-      onToggled: IdleManager.setCaffeine(checked)
+      onToggled: {
+        ShellManager.onScreen("caffeine");
+        IdleManager.setCaffeine(checked);
+      }
     }
   }
 
@@ -116,7 +120,10 @@ Panel {
             implicitHeight: Widget.height - Widget.px(4)
             iconText: "power_settings_new"
             text: I18n.tr("Turn off")
-            onClicked: IdleManager.setCaffeine(false)
+            onClicked: {
+              ShellManager.onScreen("caffeine");
+              IdleManager.setCaffeine(false);
+            }
           }
           StyledTextButton {
             implicitHeight: Widget.height - Widget.px(4)
@@ -147,9 +154,18 @@ Panel {
     moreChoices: [30 * 60000, 60 * 60000, 2 * 60 * 60000]
     wheelStep: 5 * 60000
     resetText: I18n.tr("Turn off")
-    onStarted: text => IdleManager.startCaffeineText(text)
-    onToggled: IdleManager.toggleCaffeineTimer()
-    onReset: IdleManager.setCaffeine(false)
+    onStarted: text => {
+      ShellManager.onScreen("caffeine");
+      IdleManager.startCaffeineText(text);
+    }
+    onToggled: {
+      ShellManager.onScreen("caffeine");
+      IdleManager.toggleCaffeineTimer();
+    }
+    onReset: {
+      ShellManager.onScreen("caffeine");
+      IdleManager.setCaffeine(false);
+    }
     onExtended: ms => IdleManager.addCaffeineTime(ms)
   }
 

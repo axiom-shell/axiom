@@ -50,7 +50,7 @@ The schema is written in YAML (`config/schema/`): `index.yaml` is the root and l
 
 ### Behaviour
 - `x-showIf`: hides a field unless a condition holds. `SchemaField` evaluates it (`SchemaLayout.showIfHolds`), so it works in every form; on a nested object it hides that object's cards.
-  - Form: `{ sibling: value | [values] | { not: value } | { notEmpty: true } }`. Every key must hold.
+  - Form: `{ sibling: value | [values] | { not: value } | { notEmpty: true } | { includes: value } }` (`includes`: a list holding that value, e.g. the OSD's Now playing options while its cards list picks `media`). Every key must hold. `backend/internal/schema/conditions.go` (`Holds`) is the same grammar in Go, checked against the shared fixtures.
   - `anyOf: [conditions]` holds when one of them does. Example: the OSD's `alongEdge`, shown only while its bars run along its edge.
   - A key starting with `/` is a dotted path from the config root (e.g. `"/Workspaces.layout"`), read through `SettingsManager.configValueAt`.
   - **Compositor.** Two `/` keys read the running compositor instead: `"/$supports.<capability>": true` (`CompositorManager.supports`) and `"/$compositor": "<kind>"`. See [The compositor](../compositor/README.md) › Hiding what a compositor can't do.

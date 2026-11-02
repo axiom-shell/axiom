@@ -67,7 +67,7 @@ Scope {
             interval: entry.item?.delay ?? 0
             onTriggered: {
               if (area.containsMouse && entry.item)
-                ShellManager.runAction(entry.item.action, entry.item.argument);
+                ShellManager.runAction(entry.item.action, entry.item.argument, entry.item.call);
             }
           }
         }

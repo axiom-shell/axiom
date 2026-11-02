@@ -5,6 +5,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.system
 import qs.services.ui
 
 /*
@@ -19,6 +20,9 @@ import qs.services.ui
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
  * countdown running out) puts back what was there before.
+ *
+ * A monitor connected or removed (seen between two reads) is said where
+ * the OSD's `monitor` status or Monitors.notify puts it (lastEvent).
  */
 QtObject {
   id: root
@@ -389,12 +393,63 @@ QtObject {
     _reading = true;
     CompositorManager.withOutputDetails(outputs => {
       root._reading = false;
-      if (outputs)
-        root.outputs = outputs;
+      if (!outputs)
+        return;
+      const before = root.outputs;
+      root.outputs = outputs;
+      if (root._read)
+        root._sayHotplugs(before, outputs);
+      root._read = true;
     });
   }
 
   property bool _reading: false
+  // The monitors have been read once: what's connected at the start isn't
+  // a hotplug
+  property bool _read: false
+
+  // --- Monitors coming and going ---
+
+  // The last monitor connected or removed, for the OSD's `monitor`
+  // status: { kind: "added" | "removed", name, description, width,
+  // height, serial }, else null. Set only when the OSD says it
+  // (_sayHotplugs)
+  property var lastEvent: null
+  property int _serial: 0
+
+  // Each monitor connected or removed between two reads (by connector,
+  // disabled ones included: turning one off isn't unplugging it), where
+  // the OSD's `monitor` status or Monitors.notify puts it
+  // (NotificationManager.announce): its card, a notification, or nothing
+  function _sayHotplugs(before, after) {
+    const names = list => list.map(monitor => monitor.name);
+    const added = after.filter(monitor => !names(before).includes(monitor.name));
+    const removed = before.filter(monitor => !names(after).includes(monitor.name));
+    for (const monitor of added)
+      root._sayHotplug("added", monitor);
+    for (const monitor of removed)
+      root._sayHotplug("removed", monitor);
+  }
+
+  function _sayHotplug(kind, monitor) {
+    const label = monitor.description || monitor.name;
+    const size = monitor.width > 0 ? `${monitor.width}×${monitor.height}` : "";
+    const summary = kind === "added" ? I18n.tr("{0} connected", label) : I18n.tr("{0} disconnected", label);
+    const body = [monitor.description ? monitor.name : "", size].filter(part => part !== "").join(" · ");
+    if (NotificationManager.announce("monitor", MonitorsConfig.notify, summary, body, {
+      "icon": "video-display"
+    }) !== "osd")
+      return;
+    root._serial += 1;
+    root.lastEvent = {
+      "kind": kind,
+      "name": monitor.name,
+      "description": monitor.description ?? "",
+      "width": monitor.width ?? 0,
+      "height": monitor.height ?? 0,
+      "serial": root._serial
+    };
+  }
 
   // Mode changes send no event: read again once they've settled
   property Timer _refreshSoon: Timer {

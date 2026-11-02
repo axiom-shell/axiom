@@ -39,6 +39,16 @@ settings:
       - lock
       - command
       - none
+    x-enumLabels:
+      powerMenu: Power menu
+      appLauncher: App launcher
+      overlay: Overlay
+      overlayPage: Overlay page
+      workspaceOverlay: Workspace overview
+      edgeMenu: Edge menu
+      lock: Lock
+      command: Run a command
+      none: Nothing
   page:
     type: string
     title: Overlay page
@@ -78,7 +88,7 @@ settings:
     default: false
     description: Run the click action after hovering for the popout open delay. Doesn't close a launcher, overlay or power menu that is already open. For an edge menu on hover, use Hover popout.
     x-showIf:
-      action: [powerMenu, appLauncher, overlay, overlayPage, workspaceOverlay, lock, command]
+      action: [powerMenu, appLauncher, overlay, overlayPage, workspaceOverlay, command]
   labelCommand:
     x-scope: commands
     type: string

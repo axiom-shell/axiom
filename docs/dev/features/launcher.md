@@ -63,7 +63,7 @@ The first character picks the provider:
   `{ name, aliases, glyph, description(), usage, needsArg, confirm, available(), status(), options(arg), run(arg, value) }`
 - A new shell feature gets a command by adding an entry that calls its service.
 - `options` supplies argument completions.
-- `confirm` (destructive session actions) asks for a second Enter (`LauncherManager._gate`, a `ConfirmGate`).
+- `confirm` asks for a second Enter (`LauncherManager._gate`, a `ConfirmGate`): the destructive session actions, `/clear` and `/update` installing (a getter, true only while an update is available).
 
 ### /config
 - Its rows and what they do are `services/ui/LauncherConfigBrowser.qml` (`options(arg)`, `run(value)`): not a singleton, `LauncherCommands` holds one for its `config` entry.

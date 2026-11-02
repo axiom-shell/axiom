@@ -1,7 +1,7 @@
 # Monitors (profiles and the Monitors page)
 
 > **Files:** `services/compositor/MonitorManager.qml`, `config/MonitorsConfig.qml`, `components/views/Monitors/Monitors.qml`, `components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `components/methods/MonitorLayout.qml`, `backend/internal/compositor/render/hyprlua.go`, `backend/internal/compositor/manager/outputs.go`, `backend/internal/compositor/render/profiles.go`, `shell/MonitorPrompt.qml`, `components/surfaces/monitors/MonitorPromptWindow.qml`
-> **Config:** `Monitors.items`, `General.primaryMonitor`
+> **Config:** `Monitors.items`, `Monitors.notify`, `General.primaryMonitor`
 > **Related:** [Config modes](config-modes.md), [Onboarding](../features/onboarding.md) (`useWholeScale`), [Shell targeting](../core/shell-manager-targeting.md)
 
 Monitor layouts saved per set of connected monitors, edited on the Monitors page and applied on hotplug by the daemon, on every compositor ([sway](../compositor/sway-backend.md)). The page reaches the compositor only through `CompositorManager` (`withOutputDetails`, `applyOutputs`; [contract](../compositor/contract.md)).
@@ -29,6 +29,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
   - when it named none, a new profile is made from the live state
   - otherwise the named profile gains any output it doesn't list.
 - While the page is open, a hotplug re-detects unless the draft has other edits than detection's (`_untouched`), and so does a new name from the daemon (its read can land after the page's) unless a detect is still waiting for the page's read. A draft with the user's edits, or a closed page, only follows the new name.
+- **Hotplugs said:** `MonitorManager` compares each read with the last (by connector, disabled ones included; never the first read) and says a monitor connected or removed through `NotificationManager.announce("monitor", Monitors.notify, …)`: an OSD's `monitor` card (`lastEvent`) or, with `Monitors.notify` (off by default), a notification naming it and its resolution ([OSD](../features/osd.md) › Where events go). Only with `supports.monitors`, which the reads need.
 - **Snapping.** Tiles snap (`MonitorLayout.snap`): edge to edge, or aligned starts/ends/centres, within 14 screen px. Outside that range they drop anywhere, so offsets stay possible.
 - The view holds still during a drag.
 - `General.primaryMonitor` is set from the inspector at once, without waiting for Save.

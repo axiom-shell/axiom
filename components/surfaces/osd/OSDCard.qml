@@ -19,8 +19,22 @@ Item {
   property string status: ""
 
   readonly property int pictureSize: Widget.px(48)
-  // The text's width: room for a long device name or track title
-  readonly property int textWidth: Widget.px(300)
+  // The text's width: its own, the longer line's, between a least (a
+  // short title doesn't make a stub of a card) and a most (a long one
+  // ends in "…"). A Text's implicit width ignores its eliding, so this
+  // reads the lines' own widths (the subtitle's by its text, not its
+  // `visible`, which reads false while the card's slot is folded)
+  readonly property int minTextWidth: Widget.px(160)
+  readonly property int maxTextWidth: Widget.px(360)
+  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? subtitleText.implicitWidth : 0))))
+  // The empty margin round what shows across `vertical` edges' depth
+  // (its width) or else its height (round the picture): a host spacing
+  // it by what shows reads it
+  function inset(vertical) {
+    return vertical ? Widget.spacing * 2 : (root.implicitHeight - root.pictureSize) / 2;
+  }
+  // Its width with the text at its most: the room a host keeps for it
+  readonly property real maxWidth: root.implicitWidth - root.textWidth + root.maxTextWidth
 
   implicitWidth: row.implicitWidth + Widget.spacing * 4
   implicitHeight: Widget.px(64)
@@ -43,6 +57,7 @@ Item {
       Layout.preferredWidth: root.textWidth
 
       StyledText {
+        id: titleText
         Layout.fillWidth: true
         text: root.title
         textSize: Appearance.fontSizeLarge
@@ -52,6 +67,7 @@ Item {
       }
 
       StyledText {
+        id: subtitleText
         Layout.fillWidth: true
         text: root.subtitle
         textColor: Theme.foregroundAlt

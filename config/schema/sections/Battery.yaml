@@ -10,7 +10,8 @@ properties:
     type: boolean
     title: Low battery notifications
     default: true
-    description: Send a notification when the battery becomes low, and again when it becomes critical.
+    description: "Send a notification when the battery becomes low, and again when it becomes critical. An OSD with Low battery among its status icons (one whose detail cards are on, where it opens the OSD) shows them as a card instead; a critical battery still sends an urgent notification too while this is on."
+    x-link: {setting: OSD}
   lowThreshold: {type: integer, title: Low at, x-unit: '%', default: 20, minimum: 0, maximum: 100}
   criticalThreshold:
     type: integer

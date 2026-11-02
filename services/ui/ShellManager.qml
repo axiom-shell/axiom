@@ -5,12 +5,13 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 
 /* The shell's signals, link navigation and screen targeting */
 QtObject {
   id: root
 
-  signal openPowerMenu
+  signal togglePowerMenu
   signal toggleAppLauncher
   signal toggleOverlay
   signal toggleWorkspaceOverlay
@@ -54,23 +55,70 @@ QtObject {
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)
   signal showOsd(string id)
-  // Shows a line of text on an OSD (`axiom ipc osd message`): the OSD of
+  // Shows a message card on an OSD (`axiom message`): the OSD of
   // that id (OSDConfig.messageOsd picks it), where it would open for a
-  // change
-  signal osdMessage(string id, string icon, string text)
+  // change; `text` its title, `detail` a faint second line ("" for none),
+  // `tone` "warning" for a refusal (refuse()), else ""
+  signal osdMessage(string id, string icon, string text, string detail, string tone)
+
+  // Changes the pointer made in axiom's own bar and panels, by kind
+  // (OSDItems.onScreenKind's: "audio", "microphone", "brightness", or a
+  // status type), when (Date.now()): an OSD doesn't open for them unless
+  // OSD.onScreenChanges. Marked by the UI right before it calls a setter,
+  // never by a service, so keys (IPC) and automation are never mistaken
+  // for a click
+  property var _onScreen: ({})
+
+  function onScreen(kind) {
+    root._onScreen[kind] = Date.now();
+  }
+
+  // Whether a change of a bar or status type is the pointer's own
+  function fromScreen(type) {
+    const at = root._onScreen[OSDItems.onScreenKind(type)];
+    return at !== undefined && OSDItems.fromScreen(type, Date.now() - at);
+  }
+
+  // A message to the OSD `id` (OSDConfig.messageOsd's) as its card, also
+  // filed in the notification history without a popup with
+  // OSD.cardsToHistory; with none (no OSD picks Messages) a notification
+  // instead
+  function _message(id, icon, text, detail) {
+    if (id === "") {
+      NotificationManager.sendNotification("axiom", text, detail);
+      return;
+    }
+    root.osdMessage(id, icon, text, detail, "");
+    if (OSDConfig.cardsToHistory)
+      NotificationManager.sendNotification("axiom", text, detail, {
+        "silent": true
+      });
+  }
+
+  // The same on the warning colour: what a bind, hot corner or `axiom`
+  // command that can't run here says instead of nothing (never filed: it
+  // only answers what was just tried; a notification where no OSD picks
+  // Messages). `icon` the base one of what was refused ("nightlight", never
+  // "nightlight_off"), `title` what ("Night light"), `detail` why ("Not
+  // available here")
+  function refuse(icon, title, detail) {
+    const id = OSDConfig.messageOsd("");
+    if (id === "") {
+      NotificationManager.sendNotification("axiom", title, detail);
+      return;
+    }
+    root.osdMessage(id, icon, title, detail, "warning");
+  }
 
   property IpcTarget _osdIpc: IpcTarget {
     target: "osd"
 
-    // On the OSD showing messages (the first with a Messages item, else
-    // the first)
-    function message(icon: string, text: string): void {
-      root.osdMessage(OSDConfig.messageOsd(""), icon, text);
-    }
-
-    // On the OSD of that id
-    function messageTo(id: string, icon: string, text: string): void {
-      root.osdMessage(OSDConfig.messageOsd(id), icon, text);
+    // What `axiom message` calls (IPC functions take no optional
+    // arguments, so it passes all four): `id` "" for the first OSD
+    // picking Messages (none: a notification), `detail` "" for no second
+    // line
+    function message(id: string, icon: string, text: string, detail: string): void {
+      root._message(OSDConfig.messageOsd(id), icon, text, detail);
     }
 
     function show(id: string): void {
@@ -100,21 +148,22 @@ QtObject {
   }
 
   // Runs an axiom action (the keybind table's ipcActions: "overlayPage"
-  // with its page, "lock", …) as its bind would, or `exec`'s command
-  function runAction(action, argument) {
+  // with its page, "lock", …) with its call (toggle, open or close) as its
+  // bind would, or `exec`'s command
+  function runAction(action, argument, call) {
     if (action === "exec") {
       CommandManager.runDetached(argument);
       return;
     }
-    const call = BindActions.ipcCall(KeybindManager.actionTable, action, argument);
-    if (!call) {
+    const ipc = BindActions.ipcCall(KeybindManager.actionTable, action, argument, call);
+    if (!ipc) {
       console.warn("[ShellManager] can't run action", action);
       return;
     }
     BackendManager.call("ipc.call", {
-      "target": call.target,
-      "function": call.function,
-      "args": call.args
+      "target": ipc.target,
+      "function": ipc.function,
+      "args": ipc.args
     }, error => {
       if (error)
         console.warn("[ShellManager]", action, "failed:", error.message);

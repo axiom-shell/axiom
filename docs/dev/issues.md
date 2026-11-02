@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A VPN bind ignores Tailscale unless a VPN widget is showing
+- **Where:** `services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
+- **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.
+- **Size:** small
+- **Found:** 2026-11-01, while reviewing the bindable commands
+
+### TestNvidiaStream can see the stream's first line before it looks
+- **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaStream`)
+- **What:** The fake stream (`streams`, line "37, 61") answers as soon as the fetch starts it, so the first `fetch` can already read its values and the check that none came yet fails: CI run 41435061352 (a branch that didn't touch sysmon) failed with `before the stream's first line: {… GPUUsage:0xc000190238 GPUTemp:0xc000190248 …}`; the rerun passed. Fix: hold the fake's first line until the test releases it (a channel), then check before and after.
+- **Size:** trivial
+- **Found:** 2026-11-02, while reviewing the OSD's cards (CI on commands-pass)
+
 ### Included's hookup can put sway-only lines into a config i3 still runs
 - **Where:** `backend/internal/compositor/manager/sway.go` (`userMain`)
 - **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.
@@ -83,12 +95,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing removable drive support
 
-### A workspace overview bind set to open calls a missing function
-- **Where:** `backend/internal/compositor/actions/table.json`, `shell/WorkspaceOverlay.qml`, `tests/tst_BindActions.qml`
-- **What:** The table's `calls` maps `workspaceOverview` open to `show`, but the `workspaceOverlay` IPC target has `toggle`, `open` and `hide`, no `show`. A bind or hot corner set to open runs `axiom ipc workspaceOverlay show` and fails. `tst_BindActions` covers close→hide only, and nothing checks the table's templates and calls against `docs/dev/generated/ipc.md` (as `backend/internal/cli/named_test.go` does for the named commands).
-- **Size:** trivial
-- **Found:** 2026-11-01, while listing the actions a keybind can't run yet
-
 ### The axiom CLI can't send a notification
 - **Where:** `backend/internal/cli/named.go`, `backend/internal/daemon/tools.go`, `backend/internal/notification/notify.go`
 - **What:** A feature request from the maintainer (2026-11-02, "yes file the cli notification support where it goes"): with notify-send gone as a dependency, the daemon's `notify.send` and `notify.action` are reached only by the shell, and the CLI's `axiom notifications` only clears them and switches do-not-disturb. A command such as `axiom notify "title" "body" [--icon --urgency --action id=Label --wait]` would wrap them for scripts: it sends through the daemon, and with `--wait` blocks until a button is picked or the notification closes, printing the button's id as `notify-send --action` does. It should share its flags with `axiom message` (the OSD message command) where they overlap.
@@ -145,9 +151,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the VPN branch
 
-### BlurManager.paused reads undefined on a reload
-- **Where:** `services/ui/BlurManager.qml` (`paused`)
-- **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found.
+### BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload
+- **Where:** `services/ui/BlurManager.qml` (`paused`), `services/ui/WallpaperManager.qml` (`rotationHeld`)
+- **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found. `WallpaperManager.rotationHeld`, the same shape (`&&`/`||` chains ending in `General.outputs.some(…)` and service reads), logged `@services/ui/WallpaperManager.qml[271:3]: Unable to assign [undefined] to bool` on a reload (2026-11-01, switching the checkout to a branch).
 - **Size:** trivial
 - **Found:** 2026-10-30, while building the network popout's VPN fold and connection details
 
@@ -1227,9 +1233,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-02, while clearing out the launcher's issues (platform-07)
 
-### A device's own level arriving late can swap its OSD card for the bars
-- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`), `components/methods/OSDItems.qml` (`replaces`)
-- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` sets `_shown` to `level` with no `replaces` check: the device card is swapped for the bars, the case the branch set out to stop. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
+
+### A device's own level arriving late brings the OSD's bars out beside its card
+- **Where:** `components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`, `_openBox`), `components/methods/OSDItems.qml` (`replaces`)
+- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` opens the bars part (`_openBox`) with no `replaces` check: the bars come out beside the device card, a change the user didn't make. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
 

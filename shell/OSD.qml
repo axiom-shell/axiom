@@ -12,7 +12,7 @@ import qs.components.methods
 // on: an EdgePopout, held off its edge when `detached` (as a dock or edge
 // menu can be). A change opens every OSD holding that item, on the target
 // screen (the focused one), or on all of them in "all" mode. Hiding is the
-// host's own hover-aware dismiss timer. Keyed by id, so editing an OSD's
+// parts' own times (OSDContent's collapse). Keyed by id, so editing an OSD's
 // settings updates it in place instead of rebuilding every OSD.
 Scope {
   Variants {
@@ -48,9 +48,9 @@ Scope {
           claimKey: "osd:" + entry.osd.id + ":" + (modelData?.name ?? "")
           claimKind: "osd"
           // The strip spans the OSD's own length along the edge
-          triggerLength: edgeHost.vertical ? (edgeHost.contentItem?.implicitHeight ?? 0) : (edgeHost.contentItem?.implicitWidth ?? 0)
+          triggerLength: (edgeHost.contentItem as OSDContent)?.triggerLength ?? 0
           dismissDelay: entry.osd.timeout
-          // Room for the deepest of its parts, as it swaps between them
+          // Room for every part out at once, as they come and go
           maxContentDepth: (edgeHost.contentItem as OSDContent)?.maxDepth ?? 0
           // The items inside also report their own changes, so they must
           // exist while the OSD is closed
@@ -60,10 +60,15 @@ Scope {
             OSDContent {
               osd: entry.osd
               screenName: edgeHost.screen?.name ?? ""
+              gap: edgeHost.contentPadding - Appearance.borderWidth
               edgeVertical: edgeHost.vertical
+              edgeAtEnd: edgeHost.edge === ScreenEdge.Bottom || edgeHost.edge === ScreenEdge.Right
+              // On its surface or hover strip (not what opened it: nothing)
+              pointerIn: edgeHost.keepAlive
               // Until it has slid away, so the highlight stays as it goes
               hostOpen: edgeHost.occupied
               onPoked: force => edgeTriggers.poke(force)
+              onCollapse: edgeHost.hide()
             }
           }
 

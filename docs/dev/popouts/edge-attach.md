@@ -74,7 +74,7 @@
   - A stretch carries the pill it stands on at rest (`pill`) and its surface's box (`box`). The bar finds the pill by that span when its index has gone stale (`BarLayout.pillIndex`: an end reach's stub came or went before the stretch was sent again), and the box bounds how far a squared end's shadow runs on under the surface (`BarLayout.flushEnds`).
 - **The owner sets the pace; the bar draws what it's sent, as sent.** The bar animates none of it, so a surface and the pill it stands on can't drift apart.
   - A `PillStretch` animates its own `progress` (animFast) and sends its stretch that far out from the pill's own span (`EdgeAttach.progressStretch`).
-  - A stretch changing while it's out (a switch in place, a resize) glides there.
+  - A stretch changing while it's out (a switch in place, a resize) glides there, unless `glides` is off (`EdgePlacement.stretchGlides`). `EdgePopout` turns it off, because its box follows its content's size as it eases (an OSD's length easing): the pill follows the box as sent, not chasing it with an ease of its own.
   - With `tracks`, the stretch follows its surface along a slide by itself and is sent as given.
   - Pushes go at the end of the pass (`Qt.callLater`): what one sends reshapes the pills it reads.
   - The pills' position follows the layout at once.

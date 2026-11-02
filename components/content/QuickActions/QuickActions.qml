@@ -186,24 +186,30 @@ Card {
     }
     switch (name) {
     case "wifi":
+      ShellManager.onScreen("wifi");
       NetworkingManager.toggleWifi();
       break;
     case "bluetooth":
+      ShellManager.onScreen("bluetooth");
       BluetoothManager.toggleEnabled();
       break;
     case "caffeine":
+      ShellManager.onScreen("caffeine");
       IdleManager.toggle();
       break;
     case "dnd":
+      ShellManager.onScreen("dnd");
       NotificationManager.toggleDnd();
       break;
     case "darkMode":
       ThemeManager.toggleDarkMode();
       break;
     case "nightLight":
+      ShellManager.onScreen("nightLight");
       NightLightManager.toggle();
       break;
     case "powerSaver":
+      ShellManager.onScreen("powerProfile");
       BatteryManager.setPowerSaver(!BatteryManager.powerSaver);
       break;
     case "pin":

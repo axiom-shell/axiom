@@ -22,6 +22,17 @@ properties:
     maximum: 25
     x-showIf: {scrollToChange: true}
     description: How much one wheel notch changes the level.
+  onScreenChanges:
+    type: boolean
+    title: Show for changes made on screen
+    default: false
+    description: Open the OSD for what you change with the mouse in axiom's own bar and panels (scrolling the Volume widget, a quick toggle). Off, those change an open OSD but don't open one. Keys and other apps always open it.
+  cardsToHistory:
+    type: boolean
+    title: Keep event cards in notifications
+    default: true
+    description: "A card an OSD shows for something that happened (a drive, a low battery, a monitor, a screenshot, a message) is also kept in the notification history, without a popup. Cards for a device switching, a VPN, Wi-Fi or an app using the camera are only shown."
+    x-link: {setting: Notifications}
   items:
     type: array
     title: OSDs

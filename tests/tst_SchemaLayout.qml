@@ -299,6 +299,32 @@ TestCase {
       "anyOf": []
     }, valueOf));
     verify(shared.showIfHolds({}, valueOf));
+    // includes: a list holding that value
+    verify(shared.showIfHolds({
+      "list": {
+        "includes": 1
+      }
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "list": {
+        "includes": 2
+      }
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "none": {
+        "includes": 1
+      }
+    }, valueOf));
+    verify(!shared.showIfHolds({
+      "name": {
+        "includes": "x"
+      }
+    }, valueOf), "not a list");
+    verify(!shared.showIfHolds({
+      "missing": {
+        "includes": 1
+      }
+    }, valueOf));
   }
 
   // The real settings page: every category has cards, and every

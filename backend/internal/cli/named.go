@@ -84,11 +84,17 @@ var namedCommands = []named{
 		{"stop", "disable", "", 0, "Stop recording"},
 		{"status", "status", "", 0, "Say whether it's recording"},
 	}},
-	{"volume", "Change the volume", "audio", []verb{
+	{"volume", "Change the volume or the output", "audio", []verb{
 		{"up", "volumeUp", "", 0, "Louder"},
 		{"down", "volumeDown", "", 0, "Quieter"},
-		{"mute", "toggleMute", "", 0, "Mute, or unmute"},
-		{"mic-mute", "toggleMicMute", "", 0, "Mute the microphone, or unmute it"},
+		{"toggle-mute", "toggleMute", "", 0, "Mute, or unmute when muted"},
+		{"next-output", "nextOutput", "", 0, "Switch to the next output"},
+	}},
+	{"mic", "Turn the microphone on or off", "microphone", []verb{
+		{"toggle", "toggle", "", 0, "Mute it, or unmute it when muted"},
+		{"on", "enable", "", 0, "Unmute it"},
+		{"off", "disable", "", 0, "Mute it"},
+		{"status", "status", "", 0, "Say whether it's on (unmuted)"},
 	}},
 	{"brightness", "Change the screen brightness", "brightness", []verb{
 		{"up", "up", "", 0, "Brighter"},
@@ -103,9 +109,14 @@ var namedCommands = []named{
 		{"previous", "previous", "", 0, "Previous track"},
 		{"stop", "stop", "", 0, "Stop"},
 	}},
-	{"notifications", "Clear notifications or switch do-not-disturb", "notifications", []verb{
-		{"clear", "clear", "", 0, "Clear them all"},
-		{"dnd", "toggleDnd", "", 0, "Switch do not disturb"},
+	{"notifications", "Clear the notifications", "notifications", []verb{
+		{"clear", "clear", "", 0, "Clear them all (no undo)"},
+	}},
+	{"dnd", "Turn do not disturb on or off", "dnd", []verb{
+		{"toggle", "toggle", "", 0, "On, or off"},
+		{"on", "enable", "", 0, "On"},
+		{"off", "disable", "", 0, "Off"},
+		{"status", "status", "", 0, "Say whether it's on"},
 	}},
 	{"night-light", "Switch the night light", "nightLight", []verb{
 		{"toggle", "toggle", "", 0, "On, or off"},
@@ -121,6 +132,25 @@ var namedCommands = []named{
 	}},
 	{"wallpaper", "Change the wallpaper", "wallpaper", []verb{
 		{"next", "next", "", 0, "The next one"},
+		{"random", "random", "", 0, "A random one, on the focused monitor"},
+	}},
+	{"dark-mode", "Switch between the theme's dark and light variants", "darkMode", []verb{
+		{"toggle", "toggle", "", 0, "Dark, or light"},
+		{"on", "enable", "", 0, "Dark"},
+		{"off", "disable", "", 0, "Light"},
+	}},
+	{"wifi", "Turn Wi-Fi on or off", "wifi", []verb{
+		{"toggle", "toggle", "", 0, "On, or off"},
+		{"on", "enable", "", 0, "On"},
+		{"off", "disable", "", 0, "Off"},
+	}},
+	{"bluetooth", "Turn Bluetooth on or off", "bluetooth", []verb{
+		{"toggle", "toggle", "", 0, "On, or off"},
+		{"on", "enable", "", 0, "On"},
+		{"off", "disable", "", 0, "Off"},
+	}},
+	{"vpn", "Connect or disconnect the VPN", "vpn", []verb{
+		{"toggle", "toggle", "", 0, "Bring the last one used up, or the active one down"},
 	}},
 }
 

@@ -8,7 +8,7 @@ import qs.services.core
 QtObject {
   readonly property var _c: ConfigManager.live.HotCorners
 
-  // [{ id, corner, action, argument, screen, delay }] (see the schema).
+  // [{ id, corner, action, argument, call, screen, delay }] (see the schema).
   // Goes through a string so a reload that leaves the list unchanged
   // doesn't rebuild the corners.
   readonly property string _itemsJson: JSON.stringify(_c.items)

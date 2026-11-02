@@ -104,6 +104,10 @@ QtObject {
   // pills have grown out to carry it, its own and any pill bar's it joins
   // at an end: the surface slides out once they have (PillStretch.ready)
   property bool open: false
+  // Its pill's ends glide to a new stretch once out (PillStretch.glides):
+  // off for a surface whose box eases its own size, which the pill then
+  // follows as sent
+  property bool stretchGlides: true
   readonly property bool stretchReady: root._stretch.ready && root._startPill.ready && root._endPill.ready
 
   readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
@@ -472,6 +476,7 @@ QtObject {
   property PillStretch _stretch: PillStretch {
     container: root.container
     owner: root.owner
+    glides: root.stretchGlides
     open: root.open
     stretch: root.showing && root.stretch ? root._toBarStretch(Object.assign({}, root.stretch, {
       "box": {

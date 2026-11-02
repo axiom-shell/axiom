@@ -80,7 +80,7 @@ PanelWindow {
 
   Connections {
     target: ShellManager
-    function onOpenPowerMenu() {
+    function onTogglePowerMenu() {
       if (ShellManager.isTarget(root.screen, PowerMenuConfig.screen))
         root.toggle();
     }

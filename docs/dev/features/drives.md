@@ -1,7 +1,7 @@
 # Removable drives
 
 > **Files:** `services/system/DrivesManager.qml`, `components/methods/DriveInfo.qml`, `components/content/Drives/Drives.qml`, `components/content/parts/DriveRow.qml`, `components/content/parts/SecretField.qml`, `components/bar/widgets/Drives/Drives.qml`, `components/surfaces/osd/OSDStatusSource.qml`, `services/ui/LauncherCommands.qml`, `config/DrivesConfig.qml`
-> **Config:** `Drives` (`DrivesConfig`: `announce`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.fileManager`; the OSD's `drive` status
+> **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.fileManager`; the OSD's `drive` status
 > **Related:** [OSD](osd.md), [Notifications](notifications.md), [VPN](vpn.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
 USB sticks, memory cards and discs: an OSD card or a notification as one is plugged in, mounting, opening, unmounting, unlocking a LUKS volume and ejecting, from the bar, an overlay card, the launcher and IPC. udisks2 does the work, reached on the system bus by the axiom daemon; Quickshell has no udisks service.
@@ -26,16 +26,17 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 
 ### On plug-in
 Only a real `drives.event` `added` (never a drive there at login, or udisks2 restarting) runs `DrivesConfig.onInsert` (`_arrived`):
-- **`ask`** (the default): a notification with Mount / Open / Ignore, an encrypted drive's Unlock / Ignore (`_ask`), whatever `announce` says: an OSD can't ask. Any button removes it (`dismissApp`); Mount then only mounts, said like any other mount (Mounted): Open was the notification's offer. A drive already mounted is only Connected.
+- **`ask`** (the default): a notification with Mount / Open / Ignore, an encrypted drive's Unlock / Ignore (`_ask`), whatever `notify` says: an OSD can't ask. Any button removes it (`dismissApp`); Mount then only mounts, said like any other mount (Mounted): Open was the notification's offer. A drive already mounted is only Connected.
 - **`mount`**: mounts every volume it can (`_mountAll`); the Mounted read from the state says so. While the built-in lock is up (`LockManager.builtinLocked`) nothing mounts: the drive waits in `_queued` until the unlock, Connected said meanwhile.
 - **`nothing`**: Connected; the widget and module show it.
 - An encrypted drive under `mount` or `nothing` is Locked (`locked`): a click on it asks for the passphrase.
 
 ### Who says what
-Every event but `ask`'s question is said once (`_say`), where `Drives.announce` puts it (`DriveInfo.channel`, with whether an enabled OSD shows `drive`, `OSDConfig.showsStatus`):
-- **`osd`**: the OSD's card (`lastEvent`, set only then). With no OSD showing `drive`, notifications instead, so nothing goes unsaid.
-- **`notification`**: a notification (`_notifyEvent`), with buttons where they help: Mounted has Open / Eject, Locked has Unlock.
-- **`off`**: nothing; the widget and module show it. `ask` still notifies.
+Every event but `ask`'s question is said once (`_say`), through `NotificationManager.announce("drive", Drives.notify, …)`, which routes it by `OSDConfig.routeOf` ([OSD](osd.md) › Where events go):
+- **An OSD opens `drive`'s card** (enabled, listing it, not `quiet`, detail cards on: `OSDItems.cardRoute`): the OSD's card (`lastEvent`, set only then), whatever `Drives.notify` says; also filed in the notification history without a popup with `OSD.cardsToHistory`.
+- **Else, with `Drives.notify`** (the default): a notification (`_eventNotice`), with buttons where they help: Mounted has Open / Eject, Locked has Unlock.
+- **Else** nothing; the widget and module show it. `ask` still notifies.
+- Until config v90 this was `Drives.announce` (`osd` | `notification` | `off`); v90 made `osd` and `notification` `notify` true, `off` false.
 - **A click** on the card (`OSDStatusCard`'s `clicked`, only when `OSDItems.card`'s `clickable`) or on a notification runs `activate(event)`, which does what `DriveInfo.clickAction` says: Mounted opens the folder, Locked asks for the passphrase, anything else shows the Drives module.
 
 The events: Connected (`added`), Locked, Mounted, Unmounted, Safe to remove (`ejected`), Disconnected (`removed`), Unplugged without ejecting (`pulled`, with `warnUnplugged`), and an eject's In use (`busy`) or Couldn't eject (`ejectFailed`).

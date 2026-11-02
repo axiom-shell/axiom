@@ -122,7 +122,7 @@ PopoutWrapperBase {
   // opened or asked for again (engage()) and not let go since. A pinned
   // one ranks as its kind meanwhile, so it opens (or comes forward) over
   // what it would give way to as pinned, and drops to pinned once let go
-  readonly property bool engaged: surfaceHover.hovered || trigger.containsMouse || root.anchorHovered || root._grace
+  readonly property bool engaged: surface.hovered || trigger.containsMouse || root.anchorHovered || root._grace
   property bool _grace: false
   function engage() {
     root._grace = true;
@@ -133,7 +133,7 @@ PopoutWrapperBase {
     interval: Math.max(root.dismissDelay, 2500)
     onTriggered: root._grace = false
   }
-  readonly property bool _pointerIn: surfaceHover.hovered
+  readonly property bool _pointerIn: surface.hovered
   on_PointerInChanged: {
     if (!root._pointerIn)
       root._grace = false;
@@ -282,6 +282,9 @@ PopoutWrapperBase {
   EdgePlacement {
     id: placement
     screen: root.screen
+    // Its box eases its own size (its content's): the pill follows it as
+    // sent, not chasing it with an ease of its own
+    stretchGlides: false
     edge: root.edge
     held: root.holds
     gap: root.held ? root.gap : -1
@@ -289,8 +292,9 @@ PopoutWrapperBase {
     probeStart: placement.centre - root.naturalBox / 2
     probeLength: root.naturalBox
     // Along a side edge the box reaches past its content's ends for a
-    // submenu (shownStretchTop/Bottom)
-    aligned: placement.centre - root._contentAlong / 2 - root._stretchAlongTop
+    // submenu (shownStretchTop/Bottom). On a whole pixel: content easing
+    // its length (an OSD's) flipped a half pixel every other frame
+    aligned: Math.round(placement.centre - root._contentAlong / 2) - root._stretchAlongTop
     contentLength: root._contentAlong + root._stretchAlongTop + root._stretchAlongBottom
     submenu: slot
     coverStart: surface.coverStart
@@ -349,7 +353,7 @@ PopoutWrapperBase {
   readonly property real _stretchAlongTop: root.vertical ? slot.shownStretchTop : 0
   readonly property real _stretchAlongBottom: root.vertical ? slot.shownStretchBottom : 0
   // ---- end submenu ----
-  keepAlive: surfaceHover.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
+  keepAlive: surface.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
 
   EdgeTrigger {
     id: trigger
@@ -420,11 +424,20 @@ PopoutWrapperBase {
 
     // The surface, or room for it at the content's largest
     readonly property real depth: {
-      const content = root.vertical ? (root.contentItem?.implicitWidth ?? 0) : (root.contentItem?.implicitHeight ?? 0);
       // (a submenu's stretch as it will be, not as it animates there)
       const surfaceDepth = (root.vertical ? surface.implicitWidth : surface.implicitHeight) - slot.shownStretchAcross + slot.stretchAcross;
       // and room for the shadow it casts (SurfaceShadow)
-      const own = surfaceDepth + Math.max(0, root.maxContentDepth - content) + surface.shadowReach;
+      // (whole pixels: the surface's depth is, its content may not be, and
+      // a window flipping a pixel taller and back moved a bottom one's
+      // content with it)
+      // With `maxContentDepth`, at least the surface's depth at that
+      // content outright: the surface's less the content's are two
+      // bindings a pass apart as a part eases, which wobbled a few pixels
+      // a frame, each wobble resizing the layer window (a stutter on a
+      // fast monitor). Content past it (a toast stack taller than its
+      // estimate) still gets its room
+      const largest = root.maxContentDepth > 0 ? surface.depthFor(Math.ceil(root.maxContentDepth + root.contentPadding * 2) + root.attachExtra + (root.vertical ? 0 : slot.stretchAcross)) : 0;
+      const own = Math.ceil(Math.max(surfaceDepth, largest) + surface.shadowReach);
       if (!root.roomForSubmenus || root.vertical)
         return own;
       // From this window's edge (its attach edge, less its backfill and
@@ -499,10 +512,6 @@ PopoutWrapperBase {
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor
       strokeColor: root.strokeColor
-
-      HoverHandler {
-        id: surfaceHover
-      }
 
       Loader {
         id: loader

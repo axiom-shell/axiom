@@ -8,10 +8,12 @@ import qs.components.reusable
 
 // An OSD's status icons: one tile per status shown (OSDItems.rowTypes), in
 // a line along its edge. A tile is its icon (or short label: a layout's
-// code) in a rounded square, filled while on, faint and struck through
-// (SlashedIcon) while off; the one that just changed is the accent and
-// pops in, its caption (a message's text) beside the line.
-// Hovered, a tile lightens and names itself and its state; one in
+// code) in a rounded square: on the accent while on, faint while off (a
+// mute also struck through: SlashedIcon). The one that just changed is
+// ringed (the ring fading in and out) and pops in. A message never shows
+// here: it's a card.
+// Hovered, a tile takes a faint layer at once and names itself and its
+// state; one in
 // `toggleable` is clicked to flip it (`toggled`).
 Item {
   id: root
@@ -26,19 +28,14 @@ Item {
   property string changed: ""
   // Runs top to bottom (along a left or right edge)
   property bool vertical: false
-  // It may show a caption (the OSD shows messages)
-  property bool hasCaption: false
   // The types a click flips
   property var toggleable: []
 
   signal toggled(string type)
 
   readonly property int tileSize: Widget.px(40)
-  readonly property int captionWidth: Widget.px(280)
-  // Its largest size across the edge, whatever it shows (OSDContent.maxDepth):
-  // a tile, and along a left or right edge a caption at its widest
-  readonly property real maxDepth: root.vertical && root.hasCaption ? Math.max(root.tileSize, root.captionWidth) : root.tileSize
-  readonly property string caption: root.changed !== "" ? (root.tiles[root.changed]?.caption ?? "") : ""
+  // Its largest size across the edge, whatever it shows (OSDContent.maxDepth)
+  readonly property real maxDepth: root.tileSize
 
   // As a string, so an edit elsewhere in the OSD doesn't rebuild the tiles
   readonly property string _allKey: root.allTypes.join(",")
@@ -70,7 +67,7 @@ Item {
         // I18n.tr("{0}: on") I18n.tr("{0}: off") I18n.tr("{0}: {1}") I18n.tr("{0}: {1}, muted")
         readonly property string tip: {
           const name = OSDConfig.nameOf(tile.modelData);
-          const value = tile.t.caption || tile.t.name || tile.t.label;
+          const value = tile.t.name || tile.t.label;
           if (tile.t.name && tile.t.slash)
             return I18n.tr("{0}: {1}, muted", name, value);
           if (value)
@@ -84,9 +81,21 @@ Item {
         Layout.preferredHeight: root.tileSize
         Layout.alignment: Qt.AlignCenter
         radius: Widget.radius
-        readonly property color fill: tile.current ? Theme.accent : tile.t.on ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
-        color: !area.containsMouse ? tile.fill : tile.current ? Qt.lighter(Theme.accent, 1.15) : Theme.backgroundAlt
+        readonly property bool lit: tile.t.on === true
+        // Only the state glides: hover is the layer below, at once, so
+        // moving across the row leaves no tile easing back behind it
+        color: tile.lit ? Theme.accent : Qt.alpha(Theme.accent, 0)
         ColorGlide on color {}
+
+        // The hover layer: the ink faintly over the fill, so it shows on
+        // any accent (lightening a pale one barely changes it)
+        readonly property color hoverTint: Qt.alpha(tile.ink, 0.12)
+        Rectangle {
+          anchors.fill: parent
+          radius: tile.radius
+          visible: area.containsMouse
+          color: tile.hoverTint
+        }
 
         // Pops in as it becomes the change
         onCurrentChanged: {
@@ -103,8 +112,8 @@ Item {
           easing.type: Easing.OutBack
         }
 
-        readonly property color ink: tile.current ? Theme.background : Theme.foreground
-        readonly property real inkOpacity: tile.current || tile.t.on ? 1 : 0.45
+        readonly property color ink: tile.lit ? Theme.background : Theme.foreground
+        readonly property real inkOpacity: tile.current || tile.lit ? 1 : 0.45
 
         SlashedIcon {
           anchors.centerIn: parent
@@ -113,7 +122,9 @@ Item {
           textSize: Appearance.fontSizeBy(6)
           textColor: tile.ink
           slashed: tile.t.slash === true
-          cutout: tile.color
+          // What the slash parts the glyph in: the lit fill as it shows
+          // (hovered too); none on an unlit one, which has no fill
+          cutout: !tile.lit ? Qt.alpha(Theme.background, 0) : area.containsMouse ? Qt.tint(tile.color, tile.hoverTint) : tile.color
           opacity: tile.inkOpacity
         }
 
@@ -124,6 +135,31 @@ Item {
           font.bold: true
           textColor: tile.ink
           opacity: tile.inkOpacity
+        }
+
+        // The ring round the one that just changed: the foreground, then
+        // a gap in the background inside it, so it reads on the accent
+        // fill too (borderFocus is the accent in most themes). Fades in
+        // and out
+        Rectangle {
+          anchors.fill: parent
+          radius: tile.radius
+          color: "transparent"
+          border.width: Widget.px(2)
+          border.color: Theme.foreground
+          opacity: tile.current ? 1 : 0
+          Glide on opacity {
+            duration: Appearance.animNormal
+          }
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: Widget.px(2)
+            radius: Math.max(0, tile.radius - Widget.px(2))
+            color: "transparent"
+            border.width: Widget.px(2)
+            border.color: Theme.background
+          }
         }
 
         MouseArea {
@@ -145,17 +181,6 @@ Item {
           }
         }
       }
-    }
-
-    StyledText {
-      visible: root.caption !== ""
-      Layout.alignment: Qt.AlignCenter
-      Layout.maximumWidth: root.captionWidth
-      Layout.leftMargin: root.vertical ? 0 : Widget.spacing
-      text: root.caption
-      textSize: Appearance.fontSizeLarge
-      elide: Text.ElideRight
-      maximumLineCount: 1
     }
   }
 }

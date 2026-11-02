@@ -193,6 +193,8 @@ Item {
   readonly property bool _holesReady: Appearance.translucent && !root.mirror
 
   default property alias content: contentContainer.data
+  // The pointer is on the surface (its box and fillets)
+  readonly property bool hovered: surfaceHover.hovered
   // The content box, sliding with the surface: where things in the
   // content are within the box whether or not it's out yet
   readonly property Item contentBox: contentContainer
@@ -320,6 +322,14 @@ Item {
   // The box and the half connector gap past it (and a joined end's fillet
   // along the perpendicular stroke)
   readonly property real depth: _m.depth
+  // ...as it would be with a box `boxDepth` deep: a host sizing for its
+  // content at its largest, not as it eases there
+  function depthFor(boxDepth) {
+    const spec = Object.assign({}, root._baseSpec, {
+      "boxDepth": boxDepth
+    });
+    return SurfaceOutline.withBoxStart(spec, SurfaceOutline.metrics(spec), root.boxStart === root.naturalBoxStart ? SurfaceOutline.metrics(spec).naturalBoxStart : root.boxStart).depth;
+  }
 
   // Along the edge: box + fillet squares. Away from the edge: box +
   // connector gap.
@@ -630,6 +640,13 @@ Item {
       y: root.boxRect.y
       width: root.boxWidth
       height: root.boxHeight
+
+      // On the whole surface, which holds the content (declared here, as
+      // the surface's own children are its content's)
+      HoverHandler {
+        id: surfaceHover
+        parent: root
+      }
     }
   }
 }

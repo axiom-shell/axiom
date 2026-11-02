@@ -7,7 +7,8 @@ import qs.services.core
 QtObject {
   readonly property var _c: ConfigManager.live.Battery
 
-  // Notify on reaching the low, then the critical level
+  // Notify on reaching the low, then the critical level, where no OSD
+  // shows `battery` (OSDConfig.routeOf); critical notifies even then
   readonly property bool notify: _c.notify
   // Percentages at or below which the battery is low / critical
   readonly property int lowThreshold: _c.lowThreshold

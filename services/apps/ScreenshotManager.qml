@@ -199,9 +199,17 @@ QtObject {
       return;
     }
     root.annotate = false;
+    root._sayTaken(path);
+  }
+
+  // A screenshot taken, where the OSD's `screenshot` status or
+  // Screenshots.notify puts it (NotificationManager.announce): its card
+  // (lastShot), or a notification (a click opens it; with an annotator an
+  // "Edit in …" button, live until the notification closes), or nothing
+  function _sayTaken(path) {
     const summary = I18n.tr("Screenshot saved");
     const body = root.copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
-    NotificationManager.sendNotification("axiom", summary, body, {
+    const route = NotificationManager.announce("screenshot", Screenshots.notify, summary, body, {
       "desktopEntry": root._desktopEntry,
       "icon": path,
       "actions": root.annotator === "" ? [] : [
@@ -210,8 +218,33 @@ QtObject {
           "label": I18n.tr("Edit in {0}", root.annotatorName)
         }
       ],
-      "onAction": () => root.edit(path)
+      "onAction": id => {
+        if (id === "edit")
+          root.edit(path);
+      }
     });
+    if (route !== "osd")
+      return;
+    root._shotSerial += 1;
+    root.lastShot = {
+      "path": path,
+      "title": summary,
+      "folder": root.copyOnly ? "" : Paths.shortenHome(path.replace(/\/[^/]*$/, "")),
+      "serial": root._shotSerial
+    };
+  }
+
+  // The last screenshot taken, for the OSD's `screenshot` status: { path,
+  // title (what happened, translated), folder (where it was saved, ""
+  // when only copied), serial }, else null. Set only when the OSD says it
+  // (_sayTaken)
+  property var lastShot: null
+  property int _shotSerial: 0
+
+  // Opens a picture taken (the OSD card's click)
+  function open(path) {
+    if (path)
+      CommandManager.runDetached(["xdg-open", path]);
   }
 
   // Opens a picture in the annotator, which saves over it
@@ -513,15 +546,25 @@ QtObject {
     }
   }
 
+  // Whether a recording can start; says why not on the OSD (a bind's or
+  // `axiom record`'s start, which has no button to grey out)
+  function _canRecord() {
+    if (root.recording || root.hasRecorder)
+      return true;
+    ShellManager.refuse("screen_record", I18n.tr("Screen recording"), I18n.tr("Needs wf-recorder"));
+    return false;
+  }
+
   property IpcTarget _recordIpc: IpcTarget {
     target: "screenRecord"
 
     function toggle(): void {
-      root.toggleRecording();
+      if (root._canRecord())
+        root.toggleRecording();
     }
 
     function enable(): void {
-      if (!root.recording)
+      if (!root.recording && root._canRecord())
         root.startRecording();
     }
 

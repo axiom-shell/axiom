@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.services.apps
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.content.base
@@ -149,10 +150,15 @@ Panel {
     onActivated: {
       if (row.asking)
         NetworkingManager.cancelPassword();
-      else
+      else {
+        ShellManager.onScreen("wifi");
         NetworkingManager.toggleNetwork(row.network);
+      }
     }
-    onConnectClicked: NetworkingManager.toggleNetwork(row.network)
+    onConnectClicked: {
+      ShellManager.onScreen("wifi");
+      NetworkingManager.toggleNetwork(row.network);
+    }
     onForgetConfirmed: NetworkingManager.forget(row.network)
 
     // Whether it joins on its own when in range
@@ -228,7 +234,10 @@ Panel {
     switchShown: NetworkingManager.available
     switchEnabled: NetworkingManager.available && !NetworkingManager.hardwareBlocked
 
-    onToggled: checked => NetworkingManager.setWifiEnabled(checked)
+    onToggled: checked => {
+      ShellManager.onScreen("wifi");
+      NetworkingManager.setWifiEnabled(checked);
+    }
 
     FlatIconButton {
       visible: Apps.networkEditor !== ""
@@ -251,7 +260,10 @@ Panel {
       iconText: "flight"
       iconColor: NetworkingManager.airplane ? Theme.accent : Theme.foregroundAlt
       tooltipText: NetworkingManager.airplane ? I18n.tr("Airplane mode: on") : I18n.tr("Airplane mode: off")
-      onClicked: NetworkingManager.setAirplane(!NetworkingManager.airplane)
+      onClicked: {
+        ShellManager.onScreen("airplane");
+        NetworkingManager.setAirplane(!NetworkingManager.airplane);
+      }
     }
   }
 
@@ -375,7 +387,10 @@ Panel {
           backgroundColor: "transparent"
           borderHoverColor: Theme.accent
           tooltipText: target?.state === "on" ? I18n.tr("Disconnect {0}", target.name) : I18n.tr("Connect {0}", target?.name ?? "")
-          onClicked: VpnManager.toggle(target)
+          onClicked: {
+            ShellManager.onScreen("vpn");
+            VpnManager.toggle(target);
+          }
         }
       }
 

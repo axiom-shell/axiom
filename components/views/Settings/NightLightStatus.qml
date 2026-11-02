@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.core
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.parts
 
@@ -50,7 +51,10 @@ ColumnLayout {
       visible: NightLightManager.available
       implicitHeight: Widget.height - Widget.px(4)
       text: NightLightManager.active ? I18n.tr("Turn off") : I18n.tr("Turn on")
-      onClicked: NightLightManager.toggle()
+      onClicked: {
+        ShellManager.onScreen("nightLight");
+        NightLightManager.toggle();
+      }
     }
   }
 

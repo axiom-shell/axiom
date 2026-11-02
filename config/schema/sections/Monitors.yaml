@@ -2,13 +2,19 @@
 
 type: object
 x-category: Compositor
-x-settings: false
 title: Monitors
-description: Edited on the Monitors page.
+description: Telling when a monitor is connected or removed. The monitor layouts are edited on the Monitors page.
 additionalProperties: false
 properties:
+  notify:
+    type: boolean
+    title: Monitor notifications
+    default: false
+    description: "Send a notification naming a monitor and its resolution when one is connected or removed. An OSD picking Monitors under its Detail cards shows it as a card instead, whether this is on or not."
+    x-link: {setting: OSD}
   items:
     type: array
+    x-settings: false
     default: []
     description: Monitor layouts, one per set of connected monitors.
     items: {$ref: '#/definitions/MonitorProfile'}

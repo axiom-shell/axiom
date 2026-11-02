@@ -4,6 +4,7 @@ import QtQuick
 
 import qs.config
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
@@ -23,8 +24,10 @@ BarIconWidget {
   onClicked: button => {
     if (button === Qt.MiddleButton)
       NotificationManager.clearAll();
-    else
+    else {
+      ShellManager.onScreen("dnd");
       NotificationManager.toggleDnd();
+    }
   }
 
   // On the icon's top-right corner, which on a narrow bar reaches past

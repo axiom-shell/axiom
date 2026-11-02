@@ -9,12 +9,12 @@ Keybinds are edited on the overlay's **Keybinds** page: the binds by section on 
 **All binds** is the quick reference: every bind your compositor has, axiom's and your own, by section and grouped under their modifiers (click a group to fold it), with direction and number sets folded into one row. Press a combo in **Look up a combo** to see what it does, or bind it if nothing does. **Keyboard** shows the same binds on a keyboard under the modifiers you pick. Click one of axiom's binds in either to edit it. The Cheatsheet module shows the reference on any page, as a list or a keyboard.
 
 A bind can run:
-- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light), **Tools** (clipboard history, emoji, calculator, notes, calendar, chat, pomodoro, stopwatch and timers), media keys and switching the audio output
+- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light, do not disturb, the microphone), **Tools** (clipboard history, emoji, calculator, notes, calendar, chat, pomodoro, stopwatch and timers), media keys and switching the audio output
 - a window action (focus, move, resize, close, fullscreen, floating, special workspaces, mouse drag)
 - a raw command in the compositor's own language: a Hyprland dispatcher as Lua (`hl.dsp.layout("swapsplit")`), a sway command or a niri action. It's kept for the compositor it was written for, and skipped (with a warning) on the others
 - a command
 
-It can repeat while held, work while locked, or fire on release. A description like `Workspace: Switch left` puts the bind in its own section on the page.
+An action that switches something on and off (or opens and closes it) can toggle it, or only turn it on or only off. It can repeat while held, work while locked, or fire on release. A description like `Workspace: Switch left` puts the bind in its own section on the page.
 
 **Presets** add a set of binds in one click, skipping any key you already use (Southpaw, marked ⇄, rebinds its keys instead):
 
@@ -28,7 +28,7 @@ It can repeat while held, work while locked, or fire on release. A description l
 | Southpaw (grid or per-monitor workspaces) | <kbd>Super</kbd> + <kbd>W</kbd> / <kbd>S</kbd> up and down the workspaces, <kbd>H</kbd> / <kbd>L</kbd> left and right (the next monitor with per-monitor workspaces), <kbd>A</kbd> <kbd>D</kbd> <kbd>J</kbd> <kbd>K</kbd> move focus; with <kbd>Shift</kbd> the window goes along |
 | Window switcher | <kbd>Alt</kbd> + <kbd>Tab</kbd> steps through your windows, most recently used first, with <kbd>Shift</kbd> backwards; releasing <kbd>Alt</kbd> picks |
 | Strips (with a strip monitor) | <kbd>Super</kbd> + <kbd>[</kbd> / <kbd>]</kbd> swaps columns, <kbd>Super</kbd> + <kbd>=</kbd> / <kbd>-</kbd> steps the width, <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd> fits the visible columns, <kbd>Super</kbd> + scroll moves focus along the strip (the strip binds are also in the defaults) |
-| Media keys | Volume, mute, brightness and playback keys, through axiom so the OSD shows |
+| Media keys | Volume, mute, microphone, brightness and playback keys, through axiom (the OSD shows volume and mute changes) |
 
 The page only offers actions your compositor can do. In managed mode, **Merge** moves the binds from your own files in the compositor's `user/` folder onto this page.
 
@@ -50,7 +50,7 @@ axiom ipc <target> <function> [args]
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
 | `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator` (opens on that history or picker) |
 | `powermenu` | `open`, `close`, `toggle` |
-| `osd` | `message <icon> <text>` (an icon and text on the OSD showing Messages, else the first), `messageTo <id> <icon> <text>`, `show <id>` |
+| `osd` | `show <id>` (messages: `axiom message`) |
 | `workspaceOverlay` | `open`, `hide`, `toggle` |
 | `workspaces` | `go <id>`, `move <id>`, `moveSilent <id>`, `left`, `right`, `up`, `down`, `step <direction> <mode>`, `scroll <direction>`, `nth <n> <mode>`, `reconcile` |
 | `windowSwitcher` | `next`, `previous`, `commit`, `cancel` (for scripts: the Alt+Tab bind doesn't need them) |
@@ -69,7 +69,8 @@ axiom ipc <target> <function> [args]
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
 | `lockscreen` | `lock` |
 | `greeter` | `open` (its settings), `preview` (the login screen's layout, on screen) |
-| `notifications` | `clear`, `toggleDnd` |
+| `notifications` | `clear` (every notification, no undo), `toggleDnd` |
+| `dnd` | `enable`, `disable`, `toggle`, `status` (do not disturb) |
 | `selfUpdate` | `check`, `update`, `open` |
 | `community` | `refresh`, `list` (each setup's id and title), `apply <id>` (without its wallpaper) |
 | `chat` | `open`, `newChat`, `ask <text>`, `settings` |
@@ -80,12 +81,13 @@ axiom ipc <target> <function> [args]
 | `pomodoro` | `start`, `pause`, `toggle`, `skip`, `stop`, `reset`, `status` |
 | `stopwatch` | `timer <duration [label]>`, `toggleTimer`, `resetTimer`, `toggle`, `lap`, `reset`, `status` |
 | `audio` | `volumeUp`, `volumeDown`, `toggleMute`, `toggleMicMute`, `nextOutput` (the next audio output) |
+| `microphone` | `enable` (unmuted), `disable` (muted), `toggle`, `status` (whether it's on) |
 | `media` | `playPause`, `next`, `previous`, `stop` |
 | `popouts` | `list` (debugging: every open popout's claim and footprint) |
 
 </details>
 
-The common actions also have their own commands, which are easier to remember: `axiom launcher toggle`, `axiom overlay toggle`, `axiom volume up`, `axiom brightness down`, `axiom media play-pause`, `axiom screenshot take region`, `axiom lock`. `axiom --help` lists them all, and `axiom <command> --help` each one's options.
+The common actions also have their own commands, which are easier to remember: `axiom launcher toggle`, `axiom overlay toggle`, `axiom volume up`, `axiom mic toggle`, `axiom dnd on`, `axiom message info "Backup done"`, `axiom brightness down`, `axiom media play-pause`, `axiom screenshot take region`, `axiom lock`. `axiom --help` lists them all, and `axiom <command> --help` each one's options.
 
 To bind them in your compositor's own config instead, run the same command. On Hyprland, a `"Section: Label"` description also sets where the bind appears on the Keybinds page:
 

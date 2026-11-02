@@ -34,7 +34,7 @@ BarIconWidget {
   function runAction() {
     switch (properties.action) {
     case "powerMenu":
-      ShellManager.openPowerMenu();
+      ShellManager.togglePowerMenu();
       break;
     case "appLauncher":
       ShellManager.toggleAppLauncher();
@@ -105,10 +105,11 @@ BarIconWidget {
 
   // "Activate on hover": the click action once per hover, after the
   // popout open delay. Not an edge menu's (as the schema shows it): that's
-  // the hover popout (popout.enabled), which closes on leave and ranks as one
+  // the hover popout (popout.enabled), which closes on leave and ranks as one.
+  // Never a lock's: resting the pointer on the button mustn't lock the screen
   Timer {
     interval: PopoutsConfig.openDelay
-    running: root.hovered && root.properties.hoverActivate && root.properties.action !== "none" && root.properties.action !== "edgeMenu"
+    running: root.hovered && root.properties.hoverActivate && !["none", "edgeMenu", "lock"].includes(root.properties.action)
     onTriggered: root.hoverAction()
   }
 

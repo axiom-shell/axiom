@@ -10,10 +10,12 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
 - `binds` are edited on the Keybinds page, not in settings.
 - An action is one of:
   - **An axiom IPC call** (the table's `ipcActions`). This includes the `audio`/`media` targets on AudioManager/MediaManager, so the OSD shows. The picker files them by the table's section:
-    - **Axiom**: the launcher, overlay, edge menus, docks, power menu, lock, notifications, wallpapers (`nextWallpaper`, `randomWallpaper`), `monitorsIdentify`.
+    - **Axiom**: the launcher, overlay, edge menus, docks, power menu, lock, notifications (`toggleDnd` through the `dnd` target, with toggle/on/off calls), wallpapers (`nextWallpaper`, `randomWallpaper`), `monitorsIdentify`.
     - **System**: on/off toggles with toggle/on/off calls: `idleInhibit`, `nightLight`, `darkMode` (ThemeManager), `wifi` (NetworkingManager), `bluetooth` (BluetoothManager), and `vpn` (VpnManager's `toggleLast`, as the Vpn widget's click). Networking, Bluetooth and VPN are in `shell.qml`'s `_services`, so their IPC answers with no widget showing them.
     - **Tools**: the launcher's clipboard, emoji and calculator rows (`appLauncher clipboard|emoji|calculator`), `notes` (`NotesManager.openNotes`), calendar, chat, pomodoro, stopwatch and timer (`timerStart` takes a length, `10m` or `1:30`; its argument kind `duration`).
-    - **Media**: volume, brightness, playback, `audioOutputNext` (`AudioManager.nextOutput`, the next sink round the list).
+    - **Media**: volume, brightness, playback, the microphone (`toggleMicMute` through the `microphone` target, with toggle/on/off calls: on is unmuted), `audioOutputNext` (`AudioManager.nextOutput`, the next sink round the list).
+  - The labels are the schema's `x-enumLabels` (the picker's), and the table's (the compositor's bind descriptions) are the same words where they take no argument (`tst_BindActions` `test_labelsAgree`). `ipc_test.go` checks every action's call, with each of its calls, against `docs/dev/generated/ipc.md`.
+  - An action that can't run here (screen recording without wf-recorder, no VPN, no night light, one audio output) says so on the OSD in the warning colour (`ShellManager.refuse`), as a bind has no button to grey out.
   - Left out on purpose: daemon/dev/update/onboarding/greeter calls, monitors keep/revert, `list`/`status` queries, and calls that need free text other than a search or a timer length (todo add, chat ask, calendar add).
   - **A compositor action bound directly** (the table's `compositorActions`; on Hyprland its Lua in `render.dispatcherLua`):
     - focus/move/resize, close, fullscreen, floating, pin, special workspaces

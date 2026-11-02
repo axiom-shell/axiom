@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.services.core
 import qs.services.apps
+import qs.services.ui
 
 // Every VPN as one list for the widgets, modules and the Wi-Fi menu:
 // NetworkManager's (WireGuard, OpenVPN and other plugins) from axiom's
@@ -386,8 +387,13 @@ QtObject {
   property IpcTarget _ipc: IpcTarget {
     target: "vpn"
 
+    // Says so on the OSD when there's none to toggle (a bind has no
+    // widget to show it)
     function toggle(): void {
-      root.toggleLast();
+      if (!root.anyActive && !root.lastRow)
+        ShellManager.refuse("vpn_key", I18n.tr("VPN"), I18n.tr("None set up"));
+      else
+        root.toggleLast();
     }
   }
 }

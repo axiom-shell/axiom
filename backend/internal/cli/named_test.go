@@ -1,10 +1,6 @@
 package cli
 
 import (
-	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
@@ -15,33 +11,7 @@ import (
 // IpcTargets).
 func TestNamedCommandsMatchTheShellsTargets(t *testing.T) {
 	t.Parallel()
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "docs", "dev", "generated", "ipc.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	functions := map[string]int{} // "target.fn" → argument count
-	target := ""
-	fn := regexp.MustCompile("^- `([A-Za-z]+)\\(([^)]*)\\)")
-	for _, line := range strings.Split(string(data), "\n") {
-		if name, ok := strings.CutPrefix(line, "## "); ok {
-			target = strings.TrimSpace(name)
-			continue
-		}
-		if m := fn.FindStringSubmatch(line); m != nil && target != "" {
-			n := 0
-			if strings.TrimSpace(m[2]) != "" {
-				n = strings.Count(m[2], ",") + 1
-			}
-			functions[target+"."+m[1]] = n
-		}
-	}
-	if len(functions) < 50 {
-		t.Fatalf("read only %d functions from ipc.md", len(functions))
-	}
-	names := map[string]bool{}
-	for _, c := range Root().Subs {
-		names[c.Name] = true
-	}
+	functions := testkit.ShellFunctions(t)
 	for _, n := range namedCommands {
 		for _, v := range n.verbs {
 			want, ok := functions[n.target+"."+v.function]
@@ -51,6 +21,15 @@ func TestNamedCommandsMatchTheShellsTargets(t *testing.T) {
 				t.Errorf("axiom %s %s passes %d arguments, %s.%s takes %d", n.name, v.name, v.nargs, n.target, v.function, want)
 			}
 		}
+	}
+}
+
+// axiom message passes osd.message as many arguments as it takes.
+func TestMessageMatchesTheShellsTarget(t *testing.T) {
+	t.Parallel()
+	args := messageArgs("", "", "info", "text")
+	if n, ok := testkit.ShellFunctions(t)["osd.message"]; !ok || n != len(args) {
+		t.Errorf("axiom message passes %d arguments, osd.message takes %d (the shell has it: %v)", len(args), n, ok)
 	}
 }
 

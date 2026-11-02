@@ -1,7 +1,7 @@
 # Screenshots and screen recording
 
 > **Files:** `services/apps/ScreenshotManager.qml`, `shell/Screenshot.qml`, `components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `components/content/ScreenRecord/ScreenRecord.qml`, `components/bar/widgets/ScreenRecord/ScreenRecord.qml`, `config/Screenshots.qml`
-> **Config:** `Screenshots` (`folder`, `recordingFolder`; reader `config/Screenshots.qml`); the picker's choices persist in `~/.local/state/axiom/ui/screenshot.json`
+> **Config:** `Screenshots` (`folder`, `recordingFolder`, `notify`; reader `config/Screenshots.qml`); the picker's choices persist in `~/.local/state/axiom/ui/screenshot.json`
 > **Related:** [Keybinds](../hyprland/keybinds.md), [Chat](chat.md) (region attachments), [Utility modules](../overlay/utility-modules.md)
 
 Screenshots and wf-recorder recordings, both in `ScreenshotManager`, with one picker surface for both. Slurp is not used; grim only takes the picker's frame under niri (below).
@@ -41,14 +41,14 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - The folders are global settings (General → Screenshots & recordings), not the cards': every entry point saves to the same place. Recordings go to `recordingFolder`: `Screenshots.recordingFolder`, else `folder`.
 - **Copying:** to the clipboard through the daemon (`ClipboardManager.copyFile`, `clipboard.copy {path, mime}`).
 - Then one of:
-  - **A notification** with an "Edit in Satty/Swappy" button. Sent through `NotificationManager.sendNotification` with an `edit` action, so each one's button stays live until its notification closes.
+  - **Said** (`_sayTaken`, through `NotificationManager.announce("screenshot", Screenshots.notify, …)`): on an OSD listing `screenshot`, its card with the picture (`lastShot`; a click opens it, `open`); else, with `Screenshots.notify` (the default), a notification (a click opens it) with an "Edit in Satty/Swappy" button. Sent through `sendNotification` with an `edit` action, so each one's button stays live until its notification closes. Off, with no such OSD, nothing ([OSD](osd.md) › Where events go).
   - **Opened in satty/swappy straight away** with `annotate`: the picker's "Edit in …" switch, the E key, or holding Shift on release.
 - **Watchdog:** a single 3 s watchdog in the service fails any capture that gets no frame, so nothing can wedge it.
   - A picker reports its frame with `frameArrived()`.
   - An immediate `screen` capture must report back too.
 
 ### Recording
-Recording lives in the service, not in the card, because the overlay destroys the card when it closes.
+Recording lives in the service, not in the card, because the overlay destroys the card when it closes. IPC `screenRecord` (`toggle` / `enable` / `disable` / `status`; binds, hot corners, `axiom record`) says on the OSD that wf-recorder is missing instead of doing nothing (`_canRecord`).
 
 **Pick-based (`toggleRecording()`):**
 - Opens the same picker with kind `record`. That kind has no save or annotate controls.

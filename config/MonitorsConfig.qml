@@ -10,6 +10,10 @@ QtObject {
 
   readonly property var _c: ConfigManager.live.Monitors
 
+  // A monitor connected or removed as a notification, where no OSD shows
+  // `monitor` (OSDConfig.routeOf)
+  readonly property bool notify: _c.notify
+
   // Goes through a string so a config change leaving them unchanged doesn't
   // notify their readers
   readonly property string _profilesJson: JSON.stringify(_c.items)

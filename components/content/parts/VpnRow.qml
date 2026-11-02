@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 
 // One VPN in a VPN list (VpnManager.rows): its kind, name and status,
@@ -28,10 +29,15 @@ DeviceRow {
   onActivated: {
     if (row.asking)
       VpnManager.cancelSecret();
-    else
+    else {
+      ShellManager.onScreen("vpn");
       VpnManager.toggle(row.vpn);
+    }
   }
-  onConnectClicked: VpnManager.toggle(row.vpn)
+  onConnectClicked: {
+    ShellManager.onScreen("vpn");
+    VpnManager.toggle(row.vpn);
+  }
 
   // The secrets asked for: built only while asked (each ask starts empty)
   Loader {

@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.services.core
+import qs.services.ui
 
 /*
  * The night light (the NightLight section): warmer colors, set by the
@@ -168,15 +169,27 @@ Singleton {
     root._probeOnce();
   }
 
+  // Whether the screens can be warmed here; says why not on the OSD (a
+  // bind's or `axiom night-light`'s, which has no tile to hide)
+  function _canWarm() {
+    // Still looking: setActive says so in the log
+    if (root.tool !== "")
+      return true;
+    ShellManager.refuse("nightlight", I18n.tr("Night light"), I18n.tr("Not available here"));
+    return false;
+  }
+
   property IpcTarget _ipc: IpcTarget {
     target: "nightLight"
 
     function toggle(): void {
-      root.toggle();
+      if (root._canWarm())
+        root.toggle();
     }
 
     function enable(): void {
-      root.setActive(true);
+      if (root._canWarm())
+        root.setActive(true);
     }
 
     function disable(): void {

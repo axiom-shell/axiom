@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.components.methods
 import qs.services.core
 
 // Reader for the OSD section (the on-screen displays of levels, lock keys,
@@ -12,6 +13,9 @@ QtObject {
 
   // Level change per wheel notch (0-1); 0 when scrolling is off
   readonly property real scrollStep: _c.scrollToChange ? _c.scrollStep / 100 : 0
+  // A change the pointer made in axiom's own bar and panels
+  // (ShellManager.fromScreen) opens an OSD too
+  readonly property bool onScreenChanges: _c.onScreenChanges
   // [OSDEntry] (see the schema): each with its id, screen (a ScreenTarget),
   // place, `bars` (their layout and items, { type, icon, showOsd, … }),
   // `statuses` ({ row, items, quiet }: the status types shown as icons)
@@ -25,22 +29,30 @@ QtObject {
   // skip
   readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.bars.items.filter(item => item.type === "app").map(item => item.apps))))
 
-  // Whether an enabled OSD shows a status type (a service with something
-  // to say then leaves it to the OSD, not a notification)
-  function showsStatus(type) {
-    return osds.some(osd => osd.enabled && osd.statuses.items.includes(type));
+  // An event card shown on an OSD (a drive, the battery, a monitor, a
+  // screenshot, a message) is also filed in the notification history,
+  // without a popup (NotificationManager.announce)
+  readonly property bool cardsToHistory: _c.cardsToHistory
+
+  // Where an event goes (OSDItems.cardRoute): "osd" (an OSD opens its
+  // card: OSDItems.opensCard),
+  // else "notification" with `notify` (its section's switch:
+  // Battery.notify, Drives.notify, Monitors.notify, Screenshots.notify),
+  // else "" (nowhere)
+  function routeOf(type, notify) {
+    return OSDItems.cardRoute(root.osds, type, notify);
   }
 
   function osdById(id) {
     return osds.find(osd => osd.id === id) ?? null;
   }
 
-  // The OSD a message goes to (`axiom ipc osd message`): the enabled one
-  // of that id, else the first enabled one with a Messages item, else the
-  // first enabled one; "" with none
+  // The OSD a message goes to (`axiom message`) as its card: the one of
+  // that id, else (`id` "") the first, of those that pick Messages under
+  // their cards (OSDItems.opensCard); "" with none: it's a notification
   function messageOsd(id) {
-    const shown = osds.filter(osd => osd.enabled);
-    const pick = shown.find(osd => osd.id === id) ?? shown.find(osd => osd.statuses.items.includes("message")) ?? shown[0];
+    const showing = osds.filter(osd => OSDItems.opensCard(osd, "message"));
+    const pick = id !== "" ? showing.find(osd => osd.id === id) : showing[0];
     return pick ? pick.id : "";
   }
 
@@ -64,6 +76,6 @@ QtObject {
     const parts = bars.length > 0 ? bars : osd.statuses.items.map(type => root.nameOf(type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");
-    return osd.media.enabled ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
+    return osd.cards.enabled && osd.cards.items.includes("media") ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
   }
 }

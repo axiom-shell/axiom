@@ -78,11 +78,11 @@ TestCase {
       "available": true,
       "on": false
     });
-    compare([capsOff.on, capsOff.slash, capsOff.notable], [false, true, false], "off: struck through");
-    verify(!OSDItems.tile("numLock", {
+    compare([capsOff.on, capsOff.slash, capsOff.notable], [false, false, false], "off: unlit, only a mute is struck through");
+    verify(OSDItems.tile("numLock", {
       "available": true,
       "on": true
-    }).notable, "Num Lock on is ordinary");
+    }).notable, "Num Lock on is unusual, as Caps Lock is");
     verify(OSDItems.tile("scrollLock", {
       "available": false,
       "on": false
@@ -121,7 +121,7 @@ TestCase {
       "icon": "",
       "device": "44"
     });
-    compare([device.icon, device.name, device.detail, device.device, device.on, device.slash, device.caption, device.notable, device.hidden], ["volume_up", "AudioBox Go", "Analog Stereo", "44", true, false, "", false, false], "lit, no caption");
+    compare([device.icon, device.name, device.detail, device.device, device.on, device.slash, device.notable, device.hidden], ["volume_up", "AudioBox Go", "Analog Stereo", "44", true, false, false, false], "lit");
     compare([OSDItems.tile("audio", {
         "muted": true,
         "device": "44"
@@ -160,7 +160,7 @@ TestCase {
     const dndOff = OSDItems.tile("dnd", {
       "on": false
     });
-    compare([dndOff.icon, dndOff.slash], ["do_not_disturb_on", true], "off: the same icon, struck through");
+    compare([dndOff.icon, dndOff.on, dndOff.slash], ["do_not_disturb_on", false, false], "off: the same icon, unlit");
     verify(OSDItems.tile("wifi", {
       "available": true,
       "on": false
@@ -181,15 +181,115 @@ TestCase {
       "icon": "",
       "text": "Saved"
     });
-    compare([message.icon, message.caption, message.hidden], ["chat", "Saved", false]);
+    compare([message.icon, message.name, message.detail, message.tone, message.hidden], ["chat", "Saved", "", "", false]);
+    const refusal = OSDItems.tile("message", {
+      "icon": "nightlight",
+      "text": "Night light",
+      "detail": "Not available here",
+      "tone": "warning"
+    });
+    compare([refusal.name, refusal.detail, refusal.tone], ["Night light", "Not available here", "warning"], "a refusal");
+    const card = OSDItems.card("message", {
+      "message": refusal
+    }, []);
+    compare([card.icon, card.title, card.role, card.detail, card.tone], ["nightlight", "Night light", "", "Not available here", "warning"], "its card, its two lines");
     verify(OSDItems.tile("message", {}).hidden, "none yet");
     verify(OSDItems.tile("bogus", {}).hidden);
   }
 
+  function test_cardRoute_data() {
+    const osd = (items, quiet, cards, enabled, only) => ({
+          "enabled": enabled !== false,
+          "statuses": {
+            "items": items,
+            "quiet": quiet
+          },
+          "cards": {
+            "enabled": cards,
+            "items": only ?? []
+          }
+        });
+    return [
+      {
+        "tag": "listed: its card",
+        "osds": [osd(["drive"], [], true)],
+        "notify": true,
+        "want": "osd"
+      },
+      {
+        "tag": "not listed: a notification",
+        "osds": [osd(["audio"], [], true)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "not listed, notify off: nowhere",
+        "osds": [osd(["audio"], [], true)],
+        "notify": false,
+        "want": ""
+      },
+      {
+        "tag": "quiet: never opens it, so a notification",
+        "osds": [osd(["drive"], ["drive"], true)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "quiet, notify off: nowhere",
+        "osds": [osd(["drive"], ["drive"], true)],
+        "notify": false,
+        "want": ""
+      },
+      {
+        "tag": "cards off: a notification",
+        "osds": [osd(["drive"], [], false)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "a disabled OSD: a notification",
+        "osds": [osd(["drive"], [], true, false)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "any one OSD showing it is enough",
+        "osds": [osd(["drive"], ["drive"], true), osd(["drive"], [], true)],
+        "notify": true,
+        "want": "osd"
+      }
+    ];
+  }
+
+  function test_cardRoute(row) {
+    compare(OSDItems.cardRoute(row.osds, "drive", row.notify), row.want);
+  }
+
+  function test_opensCard_cardOnly() {
+    const osd = (cards, only) => ({
+          "enabled": true,
+          "statuses": {
+            "items": ["monitor"],
+            "quiet": []
+          },
+          "cards": {
+            "enabled": cards,
+            "items": only
+          }
+        });
+    verify(OSDItems.opensCard(osd(true, ["message", "monitor"]), "message"), "picked under its cards");
+    verify(!OSDItems.opensCard(osd(true, []), "message"), "not picked: a notification instead");
+    verify(!OSDItems.opensCard(osd(false, ["message"]), "message"), "cards off: none at all");
+    verify(!OSDItems.opensCard(osd(true, []), "monitor"), "a card-only type counts only in its cards list");
+    verify(!OSDItems.opensCard(null, "message"), "no OSD");
+    compare(OSDItems.cardRoute([osd(true, ["screenshot"])], "screenshot", false), "osd");
+    compare(OSDItems.cardRoute([osd(true, [])], "screenshot", true), "notification");
+  }
+
   function test_tile_base_icons() {
-    // An off state is a slash over the base icon, never an icon's own off
-    // form, so every one looks the same
-    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "drive", "recording", "camera", "micUse", "screenShare"];
+    // Off is the base icon unlit (a mute struck through), never an icon's
+    // own off form, so every one looks the same
+    const types = ["capsLock", "numLock", "scrollLock", "keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "charger", "message", "vpn", "drive", "battery", "monitor", "screenshot", "recording", "camera", "micUse", "screenShare"];
     for (const type of types) {
       for (const on of [true, false]) {
         const t = OSDItems.tile(type, {
@@ -218,7 +318,7 @@ TestCase {
         "mountPoint": "/run/media/u/STICK"
       }
     });
-    verify(mounted.on && !mounted.hidden && !mounted.slash && !mounted.notable, "a drive in: shown, never unusual");
+    verify(mounted.on && !mounted.hidden && !mounted.slash && mounted.notable, "a drive in: shown, unusual");
     compare(mounted.name, "STICK");
     let card = OSDItems.card("drive", {
       "drive": mounted
@@ -273,6 +373,92 @@ TestCase {
     verify(OSDItems.tile("drive", null).hidden, "no state yet");
   }
 
+  function test_tile_battery() {
+    const low = OSDItems.tile("battery", {
+      "available": true,
+      "level": "low",
+      "percent": 18,
+      "timeLeft": "1h 5m"
+    });
+    verify(low.on && low.notable && !low.hidden, "low: lit and unusual");
+    compare(low.icon, "battery_low");
+    let card = OSDItems.card("battery", {
+      "battery": low
+    }, ["battery"]);
+    compare([card.icon, card.title, card.role, card.detail, card.tone, card.clickable], ["battery_low", "18%", "Battery low", "1h 5m", "", false]);
+    const critical = OSDItems.tile("battery", {
+      "available": true,
+      "level": "critical",
+      "percent": 6,
+      "timeLeft": ""
+    });
+    verify(critical.notable, "critical is unusual");
+    card = OSDItems.card("battery", {
+      "battery": critical
+    }, ["battery"]);
+    compare([card.icon, card.role, card.detail, card.tone], ["battery_alert", "Battery critically low", "", "warning"]);
+    const fine = OSDItems.tile("battery", {
+      "available": true,
+      "level": "none",
+      "percent": 80
+    });
+    verify(!fine.on && !fine.notable && !fine.hidden, "fine: shown unlit");
+    verify(OSDItems.tile("battery", {
+      "available": false
+    }).hidden, "no battery");
+    verify(OSDItems.tile("battery", null).hidden, "no state yet");
+  }
+
+  function test_tile_monitor() {
+    const added = OSDItems.tile("monitor", {
+      "event": {
+        "kind": "added",
+        "name": "DP-1",
+        "description": "Dell U2720Q",
+        "width": 3840,
+        "height": 2160
+      }
+    });
+    verify(added.hidden && !added.notable, "only ever its card, never unusual");
+    let card = OSDItems.card("monitor", {
+      "monitor": added
+    }, ["monitor"]);
+    compare([card.icon, card.title, card.role, card.detail, card.clickable], ["monitor", "Dell U2720Q", "Connected", "DP-1 · 3840×2160", false]);
+    card = OSDItems.card("monitor", {
+      "monitor": OSDItems.tile("monitor", {
+        "event": {
+          "kind": "removed",
+          "name": "HDMI-A-1",
+          "description": "",
+          "width": 1920,
+          "height": 1080
+        }
+      })
+    }, ["monitor"]);
+    compare([card.icon, card.title, card.role, card.detail], ["desktop_access_disabled", "HDMI-A-1", "Disconnected", "1920×1080"], "no description: named by its connector, once");
+    compare(OSDItems.card("monitor", {
+      "monitor": OSDItems.tile("monitor", null)
+    }, ["monitor"]).detail, "", "no event yet");
+  }
+
+  function test_tile_screenshot() {
+    const shot = OSDItems.tile("screenshot", {
+      "event": {
+        "path": "/home/u/Pictures/Screenshots/a.png",
+        "title": "Screenshot saved",
+        "folder": "~/Pictures/Screenshots"
+      }
+    });
+    verify(shot.hidden && !shot.notable, "only ever its card");
+    const card = OSDItems.card("screenshot", {
+      "screenshot": shot
+    }, ["screenshot"]);
+    compare([card.icon, card.title, card.role, card.detail, card.image], ["screenshot_monitor", "Screenshot saved", "Copied to the clipboard", "~/Pictures/Screenshots", "file:///home/u/Pictures/Screenshots/a.png"]);
+    verify(card.clickable, "a screenshot's card opens it");
+    compare(OSDItems.card("screenshot", {}, ["screenshot"]).image, "", "no picture yet");
+    compare(OSDItems.card("drive", {}, ["drive"]).image, "", "no picture but a screenshot's");
+  }
+
   function test_tile_vpn_capture() {
     const up = OSDItems.tile("vpn", {
       "available": true,
@@ -286,7 +472,7 @@ TestCase {
       "on": false,
       "name": "Home"
     });
-    verify(down.slash && !down.notable);
+    verify(!down.on && !down.slash && !down.notable);
     compare(down.name, "", "no name while down: the tooltip says off");
     verify(OSDItems.tile("vpn", {
       "available": false
@@ -311,7 +497,7 @@ TestCase {
     const share = OSDItems.tile("screenShare", {
       "apps": []
     });
-    verify(share.slash && !share.notable && !share.hidden);
+    verify(!share.on && !share.slash && !share.notable && !share.hidden);
     compare(share.icon, "screen_share");
   }
 
@@ -413,7 +599,7 @@ TestCase {
   }
 
   function test_rowTypes() {
-    const types = ["capsLock", "numLock", "dnd", "wifi", "message"];
+    const types = ["capsLock", "numLock", "dnd", "wifi"];
     const tiles = {
       "capsLock": OSDItems.tile("capsLock", {
         "available": true,
@@ -428,18 +614,16 @@ TestCase {
       }),
       "wifi": OSDItems.tile("wifi", {
         "available": false
-      }),
-      "message": OSDItems.tile("message", {
-        "text": "Hi"
       })
     };
-    compare(OSDItems.rowTypes(types, tiles, "notable", ""), ["capsLock"]);
-    compare(OSDItems.rowTypes(types, tiles, "notable", "dnd"), ["capsLock", "dnd"], "the change, in its place");
-    compare(OSDItems.rowTypes(types, tiles, "all", ""), ["capsLock", "numLock", "dnd"], "not hidden ones, nor a message");
-    compare(OSDItems.rowTypes(types, tiles, "all", "message"), ["capsLock", "numLock", "dnd", "message"]);
-    compare(OSDItems.rowTypes(types, tiles, "changed", "numLock"), ["numLock"]);
-    compare(OSDItems.rowTypes(types, tiles, "changed", ""), []);
-    compare(OSDItems.rowTypes([], tiles, "all", ""), []);
+    compare(OSDItems.rowTypes(types, tiles, "notable", []), ["capsLock", "numLock"], "the lock keys on");
+    compare(OSDItems.rowTypes(types, tiles, "notable", ["dnd"]), ["capsLock", "numLock", "dnd"], "the change, in its place");
+    compare(OSDItems.rowTypes(types, tiles, "notable", ["wifi"]), ["capsLock", "numLock", "wifi"], "a hidden one as it changes");
+    compare(OSDItems.rowTypes(types, tiles, "all", []), ["capsLock", "numLock", "dnd"], "not hidden ones");
+    compare(OSDItems.rowTypes(types, tiles, "changed", ["numLock"]), ["numLock"]);
+    compare(OSDItems.rowTypes(types, tiles, "changed", ["dnd", "numLock"]), ["numLock", "dnd"], "every one kept, in the OSD's order");
+    compare(OSDItems.rowTypes(types, tiles, "changed", []), []);
+    compare(OSDItems.rowTypes([], tiles, "all", []), []);
   }
 
   function test_replaces() {
@@ -450,6 +634,10 @@ TestCase {
     verify(OSDItems.replaces("airplane", "bluetooth", OSDItems.quietWindow), "the user's own toggle later");
     verify(OSDItems.replaces("wifi", "airplane", 0), "airplane mode always shows");
     verify(OSDItems.replaces("airplane", "capsLock", 0));
+    verify(!OSDItems.replaces("message", "capsLock", 300, {}, true, false), "a message's card stays to be read");
+    verify(OSDItems.replaces("message", "message", 300, {}, true, true), "another message");
+    verify(OSDItems.replaces("message", "audio", 300, {}, true, true), "another card");
+    verify(OSDItems.replaces("message", "capsLock", OSDItems.quietWindow, {}, true, false), "later");
 
     const headset = {
       "audio": OSDItems.tile("audio", {
@@ -561,7 +749,7 @@ TestCase {
     compare(cam.title, "Firefox");
     compare(cam.role, "Using the camera");
     compare(OSDItems.card("screenShare", {}, ["screenShare"]).role, "Sharing the screen", "no tile yet");
-    verify(!OSDItems.card("screenShare", {}, ["screenShare"]).clickable, "only a drive's card takes a click");
+    verify(!OSDItems.card("screenShare", {}, ["screenShare"]).clickable, "only a drive's and a screenshot's cards take a click");
     const stopped = OSDItems.card("screenShare", {
       "screenShare": OSDItems.tile("screenShare", {
         "apps": [],
@@ -637,6 +825,16 @@ TestCase {
       verify(OSDItems.card(type, {}, [type]) !== null, type);
   }
 
+  function test_fromScreen() {
+    const rows = [
+      // [type, elapsed, from the pointer, what]
+      ["master", 500, true, "the output's bar: the audio mark"], ["app", 500, true, "an app's bar: the audio mark"], ["microphone", 1999, true, "inside the window"], ["microphone", 2000, false, "past it"], ["caffeine", Infinity, false, "never marked"], ["vpn", 10000, true, "a VPN settles slowly"], ["wifi", 9000, false, "past Wi-Fi's window"], ["dnd", -5, false, "a mark from the future (clock change)"]];
+    for (const [type, elapsed, want, what] of rows)
+      compare(OSDItems.fromScreen(type, elapsed), want, what);
+    compare(OSDItems.onScreenKind("other"), "audio");
+    compare(OSDItems.onScreenKind("brightness"), "brightness");
+  }
+
   function test_deviceName() {
     const rows = [
       // [device, title, detail, translate, what]
@@ -699,5 +897,106 @@ TestCase {
       const name = OSDItems.deviceName(device);
       compare([name.title, name.detail, name.translate === true], [title, detail, translate], what);
     }
+  }
+
+  function test_besideCard() {
+    const vpnDown = {
+      "vpn": OSDItems.tile("vpn", {
+        "available": true,
+        "on": false
+      })
+    };
+    compare(OSDItems.besideCard("vpn", "vpn", 300, vpnDown), "retract", "a drop: the card would say Connected");
+    compare(OSDItems.besideCard("vpn", "vpn", 5000, vpnDown), "retract", "a drop later too");
+    compare(OSDItems.besideCard("vpn", "capsLock", 300, vpnDown), "show", "unrelated: the card stays");
+    compare(OSDItems.besideCard("camera", "camera", 300, {}), "suppress", "a capture stopping as it starts");
+    compare(OSDItems.besideCard("microphone", "microphone", 300, {}), "suppress", "the new input's mute coming in");
+    compare(OSDItems.besideCard("microphone", "microphone", OSDItems.quietWindow, {}), "show", "the user's own mute later");
+    compare(OSDItems.besideCard("message", "capsLock", 300, {}), "show", "a message stays beside the buttons");
+  }
+
+  function test_partOrder() {
+    compare(OSDItems.partOrder([], "level", false), ["level"]);
+    compare(OSDItems.partOrder([], "status", false), ["status"]);
+    compare(OSDItems.partOrder(["level"], "card", false), ["level", "card"], "the card always last");
+    compare(OSDItems.partOrder(["level"], "status", false), ["level", "status"], "the icons past the bars");
+    compare(OSDItems.partOrder(["status"], "level", false), ["level", "status"], "the bars by the edge, the icons moving out");
+    compare(OSDItems.partOrder(["status", "card"], "level", false), ["level", "status", "card"], "the bars inside the icons and the card");
+    compare(OSDItems.partOrder(["level"], "card", true), ["level", "card"], "holding still: the card past them all");
+    compare(OSDItems.partOrder(["status"], "level", true), ["status", "level"], "holding still: the bars after the icons, nothing moving");
+    compare(OSDItems.partOrder(["status", "card"], "level", true), ["status", "level", "card"], "holding still: after the box, still inside the card");
+    compare(OSDItems.partOrder(["level", "status"], "status", false), ["level", "status"], "already shown");
+    compare(OSDItems.partOrder(["status", "level"], "card", false), ["status", "level", "card"], "an order holding still left is kept");
+    compare(OSDItems.partOrder(["level"], "status", false, true), ["status", "level"], "icons inside: by the edge, the bars moving out");
+    compare(OSDItems.partOrder(["status"], "level", false, true), ["status", "level"], "icons inside: the bars past them");
+    compare(OSDItems.partOrder(["level", "card"], "status", true, true), ["level", "status", "card"], "icons inside, holding still: after the bars");
+  }
+
+  function test_partsDue() {
+    compare(OSDItems.partsDue({}, 1000, 750), {
+      "due": [],
+      "next": 0
+    });
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 0
+    }, 1000, 750), {
+      "due": ["level"],
+      "next": 0
+    });
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 1500
+    }, 1000, 750), {
+      "due": [],
+      "next": 1500
+    }, "held for the card: they close together");
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 1500
+    }, 1500, 750).due.sort(), ["card", "level"]);
+    compare(OSDItems.partsDue({
+      "level": 1000,
+      "card": 3000
+    }, 1000, 750), {
+      "due": ["level"],
+      "next": 3000
+    }, "apart: each on its own");
+  }
+
+  function test_sharedDeadlines() {
+    compare(OSDItems.sharedDeadlines({}), {});
+    compare(OSDItems.sharedDeadlines({
+      "level": 1000,
+      "status": 2500,
+      "card": 0
+    }), {
+      "level": 2500,
+      "status": 2500,
+      "card": 0
+    }, "the bars and the icons share the latest");
+    compare(OSDItems.sharedDeadlines({
+      "level": 1000,
+      "card": 4000
+    }), {
+      "level": 1000,
+      "card": 4000
+    }, "a card doesn't hold the bars");
+    compare(OSDItems.sharedDeadlines({
+      "level": 5000,
+      "status": 3000,
+      "card": 4000
+    }), {
+      "level": 5000,
+      "status": 5000,
+      "card": 4000
+    }, "nor do they hold the card");
+    compare(OSDItems.sharedDeadlines({
+      "level": 0,
+      "status": 3000
+    }), {
+      "level": 0,
+      "status": 3000
+    }, "a closed part stays closed");
   }
 }

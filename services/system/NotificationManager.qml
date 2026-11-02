@@ -223,9 +223,15 @@ Singleton {
   // like any other (DND applies). opts: { desktopEntry (see
   // registerHandler), icon (a name or path), urgency ("low", "critical"),
   // actions ([{ id, label }]: buttons on it), onAction (called with the
-  // picked action's id) }. The pick comes later as notify.action; a QML
-  // reload in between loses onAction, so the buttons then do nothing
+  // picked action's id), silent (only filed in the history, as Do Not
+  // Disturb keeps one: no popup, no buttons) }. The pick comes later as
+  // notify.action; a QML reload in between loses onAction, so the buttons
+  // then do nothing
   function sendNotification(appName, summary, body, opts) {
+    if (opts?.silent === true) {
+      root._file(appName, summary, body, opts.icon ?? "", opts.desktopEntry ?? "");
+      return;
+    }
     const onAction = opts?.onAction;
     BackendManager.call("notify.send", {
       "appName": appName,
@@ -243,7 +249,50 @@ Singleton {
     });
   }
 
+  // An event of an OSD status type (`type`: "drive", "battery",
+  // "monitor", "screenshot") said where OSDConfig.routeOf puts it, with
+  // `notify` its section's switch: on an OSD listing it (the caller shows
+  // its card; filed here without a popup with OSD.cardsToHistory), else
+  // as a notification, else nowhere. An urgent one (opts.urgency
+  // "critical": a critical battery) pops up beside its card too, unless
+  // `notify` is off. Returns the route ("osd", "notification" or "")
+  function announce(type, notify, summary, body, opts) {
+    const route = OSDConfig.routeOf(type, notify);
+    if (route === "notification" || (route === "osd" && notify && opts?.urgency === "critical"))
+      root.sendNotification("axiom", summary, body, opts);
+    else if (route === "osd" && OSDConfig.cardsToHistory)
+      root.sendNotification("axiom", summary, body, Object.assign({}, opts, {
+        "silent": true
+      }));
+    return route;
+  }
+
   // -- Private --
+
+  // Files one in the history with no popup (sendNotification's silent):
+  // no notification behind it, so no buttons; a click goes by its desktop
+  // entry (registerHandler). An icon that's a path is its picture
+  function _file(appName, summary, body, icon, desktopEntry) {
+    const picture = icon.startsWith("/");
+    const entry = {
+      uid: root._newUid(),
+      nid: -1,
+      appName: appName,
+      appIcon: picture ? "" : icon,
+      desktopEntry: desktopEntry,
+      summary: summary,
+      body: body,
+      image: "",
+      urgency: NotificationUrgency.Normal,
+      time: Date.now(),
+      live: false
+    };
+    if (root.ruleFor(entry)?.history === false)
+      return;
+    root._put(entry);
+    if (picture)
+      root._cacheImage(entry.uid, "file://" + icon);
+  }
 
   readonly property var _state: StateManager.createStateHandler("notifications")
   property bool _stateLoaded: false
@@ -614,6 +663,27 @@ Singleton {
     }
     function toggleDnd(): void {
       root.toggleDnd();
+    }
+  }
+
+  // Do not disturb on or off (keybind action toggleDnd with its call)
+  property IpcTarget _dndIpc: IpcTarget {
+    target: "dnd"
+
+    function toggle(): void {
+      root.toggleDnd();
+    }
+
+    function enable(): void {
+      root.setDnd(true);
+    }
+
+    function disable(): void {
+      root.setDnd(false);
+    }
+
+    function status(): bool {
+      return root.dnd;
     }
   }
 

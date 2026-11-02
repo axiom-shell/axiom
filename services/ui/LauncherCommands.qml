@@ -14,7 +14,9 @@ import qs.services.apps
  * filters and runs them; each entry is
  *   { name, aliases, glyph, description, usage,
  *     needsArg,   Enter without an argument completes "/name " instead
- *     confirm,    asks for a second Enter first (destructive session actions)
+ *     confirm,    asks for a second Enter first (what can't be undone:
+ *                 destructive session actions, clearing notifications,
+ *                 installing an update)
  *     available() whether it's listed at all
  *     status()    current state, shown on the command's row
  *     options(arg) completion rows [{ title, subtitle, glyph, image, value,
@@ -41,13 +43,13 @@ QtObject {
       aliases: ["powermenu"],
       glyph: "power_settings_new",
       description: () => I18n.tr("Open the power menu"),
-      run: () => ShellManager.openPowerMenu()
+      run: () => ShellManager.togglePowerMenu()
     },
     {
       name: "workspaces",
       aliases: ["overview"],
       glyph: "grid_view",
-      description: () => I18n.tr("Open the workspace overview"),
+      description: () => I18n.tr("Open or close the workspace overview"),
       run: () => ShellManager.toggleWorkspaceOverlay()
     },
     {
@@ -318,7 +320,7 @@ QtObject {
       aliases: ["quiet"],
       glyph: "notifications_off",
       usage: "[on | off]",
-      description: () => I18n.tr("Do not disturb"),
+      description: () => I18n.tr("Turn do not disturb on or off"),
       status: () => NotificationManager.dnd ? I18n.tr("On") : I18n.tr("Off"),
       options: () => root._onOffOptions(),
       run: (arg, value) => {
@@ -331,6 +333,7 @@ QtObject {
       name: "clear",
       aliases: ["clear-notifications"],
       glyph: "clear_all",
+      confirm: true,
       description: () => I18n.tr("Clear all notifications"),
       status: () => NotificationManager.count > 0 ? I18n.tr("{0} notifications", NotificationManager.count) : "",
       run: () => {
@@ -580,6 +583,10 @@ QtObject {
       glyph: "update",
       // A package (or any tree with no .git) updates with the system
       available: () => !Paths.packaged && !SelfUpdateManager.managed,
+      // Installing asks first; a check doesn't
+      get confirm() {
+        return SelfUpdateManager.available;
+      },
       description: () => SelfUpdateManager.available ? I18n.tr("Update axiom to {0}", SelfUpdateManager.latest) : I18n.tr("Check for axiom updates"),
       status: () => SelfUpdateManager.busy ? I18n.tr("Checking…") : SelfUpdateManager.available ? I18n.tr("{0} available", SelfUpdateManager.latest) : (SelfUpdateManager.current || SelfUpdateManager.commit),
       run: () => {
@@ -605,7 +612,7 @@ QtObject {
       name: "screenshot",
       aliases: ["shot", "capture"],
       glyph: "screenshot_region",
-      usage: "<region|window|screen>",
+      usage: "[region | window | screen]",
       description: () => I18n.tr("Take a screenshot"),
       // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
       options: () => ScreenshotManager.kinds.map(kind => ({
