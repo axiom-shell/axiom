@@ -599,6 +599,7 @@ Needs a plan:
 - [Video wallpapers](issues.md#video-wallpapers) (an idea from the wallpaper transitions branch)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
 - [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
+- [A bind can't be limited to some compositors](issues.md#a-bind-cant-be-limited-to-some-compositors) (the maintainer's request, 2026-11-02)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
