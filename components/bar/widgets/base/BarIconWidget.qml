@@ -31,8 +31,10 @@ IconTextWidget {
   property bool scrollable: false
   property real dim: 1
   readonly property bool pressed: clickArea.pressed
-  // The pointer is over it (an edge menu this opened stays open meanwhile)
-  readonly property bool hovered: clickArea.containsMouse
+  // The pointer is over it (an edge menu this opened stays open
+  // meanwhile). One taking no clicks or scrolls has no click area: its
+  // hit area's hover, else its own bounds'
+  readonly property bool hovered: clickArea.enabled ? clickArea.containsMouse : root.hitArea ? root.hitArea.hovered : hover.hovered
   // The bar's inner side, where its tooltip opens
   readonly property int innerEdges: barConfig.top ? Edges.Bottom : barConfig.bottom ? Edges.Top : barConfig.left ? Edges.Right : Edges.Left
 
@@ -62,6 +64,11 @@ IconTextWidget {
   foregroundColor: colors.text
   iconColor: colors.icon
   opacity: (root.pressed ? 0.8 : 1) * root.dim
+
+  HoverHandler {
+    id: hover
+    enabled: !clickArea.enabled && !root.hitArea
+  }
 
   MouseArea {
     id: clickArea
