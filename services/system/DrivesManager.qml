@@ -359,12 +359,8 @@ QtObject {
   }
 
   function _notify(summary, body, icon, actions, onAction) {
-    NotificationManager.sendNotification("axiom", summary, body, {
-      "icon": icon,
-      "desktopEntry": root._desktopEntry,
-      "actions": actions ?? [],
-      "onAction": onAction ?? null
-    });
+    const notice = root._notice(summary, body, icon, actions, onAction);
+    NotificationManager.sendNotification("axiom", notice.summary, notice.body, notice.opts);
   }
 
   // Something that happened to a drive (`kind`, lastEvent's), where the

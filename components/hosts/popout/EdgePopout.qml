@@ -424,19 +424,20 @@ PopoutWrapperBase {
 
     // The surface, or room for it at the content's largest
     readonly property real depth: {
-      const content = root.vertical ? (root.contentItem?.implicitWidth ?? 0) : (root.contentItem?.implicitHeight ?? 0);
       // (a submenu's stretch as it will be, not as it animates there)
       const surfaceDepth = (root.vertical ? surface.implicitWidth : surface.implicitHeight) - slot.shownStretchAcross + slot.stretchAcross;
       // and room for the shadow it casts (SurfaceShadow)
       // (whole pixels: the surface's depth is, its content may not be, and
       // a window flipping a pixel taller and back moved a bottom one's
       // content with it)
-      // Content in parts (`maxContentDepth`) takes the surface's depth at
-      // its largest outright: the surface's less the content's are two
+      // With `maxContentDepth`, at least the surface's depth at that
+      // content outright: the surface's less the content's are two
       // bindings a pass apart as a part eases, which wobbled a few pixels
       // a frame, each wobble resizing the layer window (a stutter on a
-      // fast monitor)
-      const own = root.maxContentDepth > 0 ? Math.ceil(surface.depthFor(Math.ceil(root.maxContentDepth + root.contentPadding * 2) + root.attachExtra + (root.vertical ? 0 : slot.stretchAcross)) + surface.shadowReach) : Math.ceil(surfaceDepth + Math.max(0, root.maxContentDepth - content) + surface.shadowReach);
+      // fast monitor). Content past it (a toast stack taller than its
+      // estimate) still gets its room
+      const largest = root.maxContentDepth > 0 ? surface.depthFor(Math.ceil(root.maxContentDepth + root.contentPadding * 2) + root.attachExtra + (root.vertical ? 0 : slot.stretchAcross)) : 0;
+      const own = Math.ceil(Math.max(surfaceDepth, largest) + surface.shadowReach);
       if (!root.roomForSubmenus || root.vertical)
         return own;
       // From this window's edge (its attach edge, less its backfill and

@@ -13,9 +13,11 @@ import (
 // pointer.
 var cornerUnsafe = []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"}
 
-// osdOldStatuses is the default status icons before v89, which v87 wrote
-// into every OSD it split; osdAddedStatuses joined them, the toggles a
-// bind or hot corner switches with no other sign.
+// osdOldStatuses is the default status icons before v89: as v87 wrote
+// them into every OSD it split, and with "drive" after them (the default
+// since removable drives, which a config written since holds).
+// osdAddedStatuses joined them, the toggles a bind or hot corner switches
+// with no other sign, before "drive" as in the new default.
 var (
 	osdOldStatuses   = []string{"capsLock", "numLock", "keyboardLayout", "microphone", "audio"}
 	osdAddedStatuses = []string{"dnd", "caffeine", "nightLight", "recording"}
@@ -32,7 +34,7 @@ func v89(cfg *jsonx.Object) []string {
 }
 
 // addToggleStatuses gives each OSD whose status icons are osdOldStatuses
-// (in that order) osdAddedStatuses too.
+// (in that order, "drive" after them or not) osdAddedStatuses too.
 func addToggleStatuses(cfg *jsonx.Object) []string {
 	osd := object(cfg, "OSD")
 	if osd == nil {
@@ -53,19 +55,28 @@ func addToggleStatuses(cfg *jsonx.Object) []string {
 			continue
 		}
 		shown, _ := statuses.Value("items").(*jsonx.Array)
-		if shown == nil || len(shown.Items) != len(osdOldStatuses) {
+		if shown == nil {
+			continue
+		}
+		withDrive := len(shown.Items) == len(osdOldStatuses)+1 && shown.Items[len(osdOldStatuses)] == "drive"
+		if len(shown.Items) != len(osdOldStatuses) && !withDrive {
 			continue
 		}
 		same := true
-		for i, v := range shown.Items {
-			same = same && v == osdOldStatuses[i]
+		for i, v := range osdOldStatuses {
+			same = same && shown.Items[i] == v
 		}
 		if !same {
 			continue
 		}
-		for _, name := range osdAddedStatuses {
-			shown.Append(name)
+		items := []any{}
+		for _, name := range append(slices.Clone(osdOldStatuses), osdAddedStatuses...) {
+			items = append(items, name)
 		}
+		if withDrive {
+			items = append(items, "drive")
+		}
+		shown.Items = items
 		count++
 	}
 	if count == 0 {
