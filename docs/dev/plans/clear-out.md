@@ -10,7 +10,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 
 1. Over a config.json that didn't load at the start, keeping the running config saves the defaults over the active snapshot: b) apply the snapshot with default machine settings.
 2. With Idle on and the user's own locker left at loginctl lock-session, nothing locks: yes, the plan also shows "doesn't lock" as a status.
-3. [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step): split, with the theme page directly after integrations.
+3. Done: the onboarder's Integrations page was too long for one step: split, with the theme page directly after integrations (System, then App colors).
 4. [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm): a) "Restart" / "Shut down".
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
@@ -279,7 +279,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The launcher's /generate reads a monitor setting that doesn't exist
   - A word passed to an int IPC parameter is 0
 - **platform-06** (3):
-  - [The onboarder's Integrations page is too long for one step](../issues.md#the-onboarders-integrations-page-is-too-long-for-one-step)
   - [The Look page offers Hyprland's wallpapers under any compositor](../issues.md#the-look-page-offers-hyprlands-wallpapers-under-any-compositor)
 - **platform-07** (2):
   - [A clip's label and detail are written in both the launcher and the clipboard module](../issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)

@@ -1281,7 +1281,6 @@
     "axiom uses a few programs for some of its features. Everything else works without them.": "axiom の一部の機能はいくつかのプログラムを使います。それ以外の機能はそれらがなくても動作します。",
     "Everything axiom uses is installed.": "axiom が使うものはすべてインストールされています。",
     "Check again": "再確認",
-    "Integrations": "連携",
     "Turn on for installed apps": "インストール済みのアプリで有効にする",
     "Clipboard history": "クリップボード履歴",
     "Type : in the launcher to search what you've copied. axiom keeps it in memory only and skips what password managers mark as sensitive; turn it off if you copy passwords from apps that don't.": "ランチャーで : を入力すると、コピーした内容を検索できます。axiom は履歴をメモリ上にのみ保持し、パスワードマネージャーが機密としてマークしたものは記録しません。機密マークを付けないアプリからパスワードをコピーする場合はオフにしてください。",
@@ -2551,11 +2550,9 @@
     "Asks apps to leave out their own title bar (with its close and maximize buttons) and window shadow. Apps that don't agree keep theirs; open ones change once restarted.": "アプリに独自のタイトルバー（閉じる・最大化ボタン付き）とウィンドウの影を省くよう求めます。応じないアプリはそのままです。開いているアプリは再起動後に変わります。",
     "A box around the workspaces, in the bar's widget style. Off: the workspaces sit on the bar at the size of the widgets around them.": "ワークスペースを囲むボックス(バーのウィジェットスタイル)。オフ:ワークスペースは周りのウィジェットと同じサイズでバーに直接表示されます。",
     "Install these with your package manager: {0}": "パッケージマネージャーで次をインストールしてください: {0}",
-    "How axiom fits into the rest of your system: updates, idle, locking, password prompts and the login screen, then other apps in axiom's colors.": "axiom とシステムの連携: アップデート、アイドル、ロック、パスワード入力、ログイン画面、そして axiom の配色に合わせる他のアプリ。",
     "Use axiom's lock screen": "axiom のロック画面を使う",
     "Locks through the session-lock protocol and unlocks with your password (PAM), in your theme and laid out on the Layouts page.": "セッションロックプロトコルでロックし、パスワード（PAM）で解除します。テーマに合わせ、レイアウトページで配置できます。",
     "Leaves locking to a locker you set up yourself.": "ロックは自分で設定したロッカーに任せます。",
-    "Other apps in axiom's colors": "axiom の配色に合わせる他のアプリ",
     "Annotating screenshots (swappy works too)": "スクリーンショットへの注釈（swappy でも可）",
     "Power profiles in the quick actions": "クイックアクションの電源プロファイル",
     "Keeping axiom up to date": "axiom を最新に保つ",
@@ -3715,6 +3712,8 @@
     "Leaves idle to a daemon you run yourself.": "",
     "To lock after some idle time with your own idle daemon, have it lock with this command, also before the computer sleeps:": "",
     "The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent you run.": "",
-    "Leaves the prompt to the agent you start yourself.": ""
+    "Leaves the prompt to the agent you start yourself.": "",
+    "How axiom fits into the rest of your system: updates, idle, locking, password prompts and the login screen.": "",
+    "App colors": ""
   }
 }

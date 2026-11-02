@@ -112,14 +112,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
 
-### The onboarder's Integrations page is too long for one step
-- **Where:** `components/surfaces/onboarding/pages/IntegrationsPage.qml`, `services/session/OnboardingManager.qml` (`_pages`)
-- **What:** One step holds updates, clipboard history, idle (with its four timeouts), the lock screen, polkit, the login screen (with its install), then every theme integration with its hookups: by far the longest page, mixing decisions that take something over with optional app colours. Proposal: split it into a "System" step and an "App colours" step (a page id, and `version` stays, since nothing new is asked).
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "split it into a System step and an App colours step"): "agree - add theme page directly after integrations (so it is last before checks)".
-- **Size:** small
-- **Found:** 2026-10-30, while reworking the onboarder
-
 ### The Look page offers Hyprland's wallpapers under any compositor
 - **Where:** `components/surfaces/onboarding/pages/LookPage.qml`, `services/ui/WallpaperManager.qml` (`hasHyprlandWallpapers`)
 - **What:** With the wallpaper folder missing, the Look page offers "Use Hyprland's wallpapers" (and the notice names them) whenever Hyprland's package left its wallpapers in a data dir, under sway and niri too. Harmless (the images work), but it reads oddly off Hyprland.

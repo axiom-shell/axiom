@@ -20,7 +20,7 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
 
 ### ClipboardManager
 - **Opening it:** the launcher's clipboard history is `:` or `/clipboard`.
-- **Toggle:** `Launcher.providers.clipboard.enabled` is on by default and also appears on the onboarder's Integrations page. Turning it off clears the history.
+- **Toggle:** `Launcher.providers.clipboard.enabled` is on by default and also appears on the onboarder's System page. Turning it off clears the history.
 - **Created from** `shell.qml`'s `_services`.
 
 #### The history (the daemon's `internal/clipboard`)

@@ -123,7 +123,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
   - then Apply.
 - `SettingsField` adds it under any field with `x-hookup`.
 - In settings they are their own category, one folding card per app (`x-card`'s `perField` on `ThemeIntegrations`).
-- The onboarder's Integrations page lists the switched-on ones under "Finish setting up".
+- The onboarder's App colors page lists the switched-on ones under "Finish setting up".
 - Only Apply, on the user's click, edits a user's config.
 
 ### Adding an integration
