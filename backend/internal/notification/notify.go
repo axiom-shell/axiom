@@ -44,50 +44,66 @@ type Action struct {
 	Label string `json:"label"`
 }
 
-// Send shows n. Without actions it returns once the server took it; with
-// them it waits until one is picked (its id) or the notification closes
-// (""), or ctx ends.
-func Send(ctx context.Context, conn *dbus.Conn, n Notification) (string, error) {
+// Sent is a notification shown: its id, and with buttons what Wait
+// listens to.
+type Sent struct {
+	ID  uint32
+	sub *dbus.Subscription
+}
+
+// Send shows n and returns once the server took it.
+func Send(ctx context.Context, conn *dbus.Conn, n Notification) (Sent, error) {
 	setup, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
-	var sub *dbus.Subscription
+	var sent Sent
 	if len(n.Actions) > 0 {
 		// Subscribed before the call, so a quick pick isn't missed
 		var err error
-		if sub, err = conn.Subscribe(setup, dbus.Match{Sender: busName, Path: path, Interface: iface}); err != nil {
-			return "", axerr.Wrap(axerr.Unavailable, err, "listening for the notification's buttons")
+		if sent.sub, err = conn.Subscribe(setup, dbus.Match{Sender: busName, Path: path, Interface: iface}); err != nil {
+			return Sent{}, axerr.Wrap(axerr.Unavailable, err, "listening for the notification's buttons")
 		}
-		defer sub.Close()
+	}
+	fail := func(err error) (Sent, error) {
+		if sent.sub != nil {
+			sent.sub.Close()
+		}
+		return Sent{}, err
 	}
 	reply, err := conn.Call(setup, busName, path, iface, "Notify", "susssasa{sv}i",
 		n.AppName, uint32(0), "", n.Summary, n.Body, actionList(n.Actions), hints(n), int32(-1))
 	if err != nil {
-		return "", axerr.Wrap(axerr.Unavailable, err, "no notification server took it")
+		return fail(axerr.Wrap(axerr.Unavailable, err, "no notification server took it"))
 	}
-	if sub == nil {
-		return "", nil
+	if err := reply.Store(&sent.ID); err != nil {
+		return fail(axerr.Wrap(axerr.Internal, err, "reading the notification's id"))
 	}
-	var id uint32
-	if err := reply.Store(&id); err != nil {
-		return "", axerr.Wrap(axerr.Internal, err, "reading the notification's id")
+	return sent, nil
+}
+
+// Wait answers the id of the button picked, or "" once the notification
+// closes, the bus does or ctx ends (at once without buttons).
+func (s Sent) Wait(ctx context.Context) string {
+	if s.sub == nil {
+		return ""
 	}
+	defer s.sub.Close()
 	for {
 		select {
 		case <-ctx.Done():
-			return "", nil
-		case m, ok := <-sub.C:
+			return ""
+		case m, ok := <-s.sub.C:
 			if !ok {
-				return "", nil
+				return ""
 			}
-			if len(m.Body) < 2 || m.Body[0] != id {
+			if len(m.Body) < 2 || m.Body[0] != s.ID {
 				continue
 			}
 			switch m.Member {
 			case "ActionInvoked":
 				picked, _ := m.Body[1].(string)
-				return picked, nil
+				return picked
 			case "NotificationClosed":
-				return "", nil
+				return ""
 			}
 		}
 	}

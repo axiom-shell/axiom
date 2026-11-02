@@ -26,12 +26,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while adding wallpaper transitions
 
-### Notifications with buttons each hold a daemon call until they close
-- **Where:** `backend/internal/notification/notify.go` (`Send`), `backend/internal/rpc/rpc.go` (`MaxInFlight`), `services/system/NotificationManager.qml` (`sendNotification`)
-- **What:** `notify.send` with actions answers only when a button is picked or the notification closes, and a notification kept in the history stays open until it's dismissed or pruned (`_forget`). Each one holds one of the shell connection's 256 in-flight calls and a session-bus connection meanwhile. With `Notifications.maxEntries` above 256 (its maximum is 500) and more than 256 such notifications kept (screenshots with an annotator installed: each has an Edit button), every other daemon call from the shell fails with `too many requests in flight`. notify-send held a process per notification instead, which broke nothing else. Fix: answer `notify.send` with the notification's id and let the shell's own server, which receives it, call `onAction` when its action is invoked, or cap `maxEntries` under the limit.
-- **Size:** needs a plan
-- **Found:** 2026-11-02, while reviewing platform-03 (notify-send moved into the daemon)
-
 ### Video wallpapers
 - **Where:** `components/surfaces/wallpaper/WallpaperView.qml`, `services/core/ThemeManager.qml` (generateThemesFromWallpaper)
 - **What:** An idea from the wallpaper transitions branch, not a bug: mp4/webm wallpapers through QtMultimedia. It adds a dependency and a steady GPU and battery cost, the transitions would need a video's frame as a texture, and generating a theme needs a still frame grabbed from it. Kept out of the branch (maintainer, 2026-11-01: not picked among the wallpaper improvements).

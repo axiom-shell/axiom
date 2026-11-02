@@ -64,19 +64,35 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "community.fetch", func(ctx context.Context, c *rpc.Conn, p fetchParams) (fetchResult, error) {
 		return fetchResult{Files: fetcher.Fetch(ctx, p.Files)}, nil
 	})
-	type notifyResult struct {
-		Action string `json:"action"` // the button picked, "" for none
-	}
-	// axiom's own notifications; with buttons the answer comes when one
-	// is picked or the notification closes
+	// axiom's own notifications. It answers once the server took one; a
+	// button's pick comes later as notify.action, so a notification kept
+	// open holds no call (only a bus connection, as notify-send's process
+	// did)
 	rpc.Handle(reg, "notify.send", func(ctx context.Context, c *rpc.Conn, p notification.Notification) (notifyResult, error) {
 		conn, err := d.sessionBus(ctx)
 		if err != nil {
 			return notifyResult{}, err
 		}
-		defer conn.Close()
-		action, err := notification.Send(ctx, conn, p)
-		return notifyResult{Action: action}, err
+		sent, err := notification.Send(ctx, conn, p)
+		if err != nil || len(p.Actions) == 0 {
+			conn.Close()
+			return notifyResult{ID: sent.ID}, err
+		}
+		d.tasks.Go(func(ctx context.Context) {
+			defer conn.Close()
+			// Its connection gone (a shell reload), nobody hears the pick
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+			go func() {
+				select {
+				case <-c.Done():
+					cancel()
+				case <-ctx.Done():
+				}
+			}()
+			c.Notify(pushNotifyAction.Method, notifyAction{ID: sent.ID, Action: sent.Wait(ctx)})
+		})
+		return notifyResult{ID: sent.ID}, nil
 	})
 	type pickResult struct {
 		Path string `json:"path"` // "": cancelled
@@ -103,6 +119,18 @@ func (d *Daemon) filePickerOptions() filepicker.Options {
 		Home: d.opts.Getenv("HOME"),
 		Log:  log,
 	}
+}
+
+// notifyResult is notify.send's answer: the server's id for it.
+type notifyResult struct {
+	ID uint32 `json:"id"`
+}
+
+// notifyAction is notify.action: which notification, and the button
+// picked on it ("" when it closed without one).
+type notifyAction struct {
+	ID     uint32 `json:"id"`
+	Action string `json:"action"`
 }
 
 // sessionBus connects to the session bus, for one call's use.

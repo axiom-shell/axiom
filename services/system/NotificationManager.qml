@@ -222,9 +222,8 @@ Singleton {
   // like any other (DND applies). opts: { desktopEntry (see
   // registerHandler), icon (a name or path), urgency ("low", "critical"),
   // actions ([{ id, label }]: buttons on it), onAction (called with the
-  // picked action's id) }. With actions the call waits until it's
-  // closed; a QML reload in between loses onAction, so the buttons then
-  // do nothing
+  // picked action's id) }. The pick comes later as notify.action; a QML
+  // reload in between loses onAction, so the buttons then do nothing
   function sendNotification(appName, summary, body, opts) {
     const onAction = opts?.onAction;
     BackendManager.call("notify.send", {
@@ -238,8 +237,8 @@ Singleton {
     }, (error, result) => {
       if (error)
         console.warn(`[NotificationManager] Sending "${summary}" failed: ${error.message}`);
-      else if (result.action !== "" && onAction)
-        onAction(result.action);
+      else if (onAction && opts.actions?.length)
+        root._onAction[result.id] = onAction;
     });
   }
 
@@ -273,6 +272,8 @@ Singleton {
   property var _live: ({})
   // desktop entry -> function(entry), from registerHandler
   property var _handlers: ({})
+  // notify.send's id -> onAction, until its notify.action
+  property var _onAction: ({})
   property int _serial: 0
 
   function _newUid() {
@@ -587,6 +588,12 @@ Singleton {
   }
 
   Component.onCompleted: {
+    BackendManager.listen("notify.action", picked => {
+      const onAction = root._onAction[picked.id];
+      delete root._onAction[picked.id];
+      if (onAction && picked.action !== "")
+        onAction(picked.action);
+    });
     CommandManager.runDetached(["mkdir", "-p", root.imageDir]);
     root._load();
     root._dnd = root._state.load({}).dnd === true;

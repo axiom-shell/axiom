@@ -101,6 +101,11 @@ var (
 	// Nor this: sent only to the connection holding the window
 	// switcher's keyboard (switcher.hold), once per hold
 	pushSwitcherKey = rpc.Push[switcherKey]{Method: "switcher.key"}
+
+	// Nor this: sent only to the connection whose notify.send showed a
+	// notification with buttons, once: the button picked, or "" when it
+	// closed
+	pushNotifyAction = rpc.Push[notifyAction]{Method: "notify.action"}
 )
 
 // compositorPushes are the compositor's pushes by method, for its
