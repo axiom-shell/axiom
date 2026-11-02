@@ -216,7 +216,6 @@
     "Percentage of RAM in use, or GiB used.": "メモリ使用率、または使用量（GiB）。",
     "Popout": "ポップアウト",
     "Popouts": "ポップアウト",
-    "Power off": "電源を切る",
     "Power saver": "省電力",
     "Primary monitor": "メインモニター",
     "Priority": "優先度",
@@ -857,7 +856,6 @@
     "Which actions the menu shows, in order.": "メニューに表示する操作とその順序。",
     "Dim the whole screen behind the power menu, under the bars and border.": "電源メニューの背後の画面全体（バーと枠の下）を暗くします。",
     "Greeting and uptime": "あいさつと稼働時間",
-    "Log out, reboot and power off ask for a second click (or Enter) first.": "ログアウト、再起動、電源オフの前にもう一度クリック（または Enter）を求めます。",
     "Show a greeting and how long the computer has been up above the actions.": "操作の上にあいさつとコンピューターの稼働時間を表示します。",
     "Paste image": "画像を貼り付け",
     "Screenshot a region": "範囲のスクリーンショット",
@@ -2998,7 +2996,6 @@
     "Building…": "",
     "The dev build failed": "",
     "Which locker locks the session. The Idle settings can lock after some idle time; an idle daemon of your own should lock through `axiom lock` for the built-in one.": "",
-    "The power menu: lock, suspend, hibernate, log out, reboot and power off, opened by the power button, a keybind or `axiom ipc powermenu toggle`.": "",
     "How workspaces are laid out, for the bar's workspace widget, the workspace overview and the Workspaces module. Point your workspace keybinds at `axiom ipc workspaces <left|right|up|down|go N|nth N>` (and the move… versions) so they follow it too.": "",
     "the file couldn't be read or written ({0})": "",
     "the merge failed ({0})": "",
@@ -3061,7 +3058,6 @@
     "Tailscale isn't available.": "",
     "Rows it may take while its device list needs them: free rows towards the edge first (above it, or below it in a bottom menu), then away from it, pushing the modules there along (not on the lock or login screen). 0 keeps it at its size.": "",
     "No monitor here has a brightness control (a backlight, or ddcutil for DDC/CI)": "",
-    "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or one ddcutil reaches over DDC/CI; a tap opens every monitor's sliders), and pin only in an edge menu. Log out, reboot and power off ask for a second click.": "",
     "Package manager": "",
     "This copy of axiom isn't a git clone: its updates come from your package manager.": "",
     "The login screen needs axiom installed from a git clone, or by a package. This copy is neither (no .git folder), so it can't be set up from here.": "",
@@ -3714,6 +3710,9 @@
     "How axiom fits into the rest of your system: updates, idle, locking, password prompts and the login screen.": "",
     "App colors": "",
     "That folder doesn't exist yet. Create it and put some images in it, or use {0}'s wallpapers for now.": "",
-    "Use {0}'s wallpapers": ""
+    "Use {0}'s wallpapers": "",
+    "Toggles, session actions and pin, in any mix. Night light only shows where axiom can warm the screens (or wlsunset is installed), power saver only when powerprofilesctl is, brightness only with a monitor axiom can set (a laptop backlight, or one ddcutil reaches over DDC/CI; a tap opens every monitor's sliders), and pin only in an edge menu. Log out, restart and shut down ask for a second click.": "",
+    "The power menu: lock, suspend, hibernate, log out, restart and shut down, opened by the power button, a keybind or `axiom ipc powermenu toggle`.": "",
+    "Log out, restart and shut down ask for a second click (or Enter) first.": ""
   }
 }

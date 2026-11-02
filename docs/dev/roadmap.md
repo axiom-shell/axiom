@@ -482,7 +482,6 @@ Found by the audits:
 - [Kitty reloads only when its socket is /tmp/kitty-*](issues.md#kitty-reloads-only-when-its-socket-is-tmpkitty-)
 - [fzf's flags rebuilt in Go where a template does](issues.md#fzfs-flags-rebuilt-in-go-where-a-template-does)
 - [The onboarder's integration commands are a hand-kept list in ThemeManager](issues.md#the-onboarders-integration-commands-are-a-hand-kept-list-in-thememanager)
-- [Power repeats the session actions' icons, labels and confirm](issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 - [A Wayland protocol error leaves every client claiming its protocol](issues.md#a-wayland-protocol-error-leaves-every-client-claiming-its-protocol)
 - [A transient notification toasts blank](issues.md#a-transient-notification-toasts-blank)
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
