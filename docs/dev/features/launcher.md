@@ -53,7 +53,7 @@ The first character picks the provider:
 | `;` | emoji (EmojiManager) |
 
 - **No prefix:** the text searches apps and windows.
-  - Apps are scored, plus frecency from `usage` `{id: {count, last}}` in `state/launcher.json`.
+  - Apps are scored, plus frecency from `usage` `{id: {count, last}}` in `state/launcher.json`, as `Search.useBonus` (the one bonus apps, commands and emoji add).
   - Windows come from `CompositorManager.windows`.
 - **Extra rows:** a calculator row is added when the text is plain math, and a web row goes last.
 - **Toggles:** each provider has a `Launcher` config toggle (`LauncherConfig`).

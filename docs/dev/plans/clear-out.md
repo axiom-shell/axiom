@@ -284,7 +284,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Look page offers Hyprland's wallpapers under any compositor
 - **platform-07** (2):
   - [A clip's label and detail are written in both the launcher and the clipboard module](../issues.md#a-clips-label-and-detail-are-written-in-both-the-launcher-and-the-clipboard-module)
-  - [App scoring is written twice and the use bonus three times](../issues.md#app-scoring-is-written-twice-and-the-use-bonus-three-times)
+  - App scoring is written twice and the use bonus three times
 - **platform-08** (1):
   - [Power repeats the session actions' icons, labels and confirm](../issues.md#power-repeats-the-session-actions-icons-labels-and-confirm)
 

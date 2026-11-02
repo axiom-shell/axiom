@@ -126,20 +126,17 @@ QtObject {
   // then frecency), as desktop entries; the most used ones when it's empty
   function searchApps(text, limit) {
     const q = String(text ?? "").trim().toLowerCase();
-    const apps = _apps();
     if (!q)
-      return apps.slice().sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).slice(0, limit);
-    const scored = [];
-    for (const app of apps) {
-      const s = _appScore(app, q);
-      if (s > 0)
-        scored.push({
-          s: s,
+      return _apps().sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).slice(0, limit);
+    return _scoredApps(q).sort((a, b) => b.s - a.s || a.app.name.localeCompare(b.app.name)).slice(0, limit).map(m => m.app);
+  }
+
+  // The apps matching the lowercased query, unsorted, as [{ s, app }]
+  function _scoredApps(q) {
+    return _apps().map(app => ({
+          s: _appScore(app, q),
           app: app
-        });
-    }
-    scored.sort((a, b) => b.s - a.s || a.app.name.localeCompare(b.app.name));
-    return scored.slice(0, limit).map(m => m.app);
+        })).filter(m => m.s > 0);
   }
 
   // How well an app matches the lowercased query (name, generic name, then
@@ -147,7 +144,7 @@ QtObject {
   function _appScore(app, q) {
     const keyword = Math.max(0, ...app.keywords.map(k => Search.score(k, q)).filter(s => s >= 50));
     const s = Math.max(Search.score(app.name, q), 0.75 * Search.score(app.genericName, q), 0.6 * keyword);
-    return s > 0 ? s + Math.min(25, 8 * Math.log2(1 + _frecency(app.id))) : 0;
+    return s > 0 ? s + Search.useBonus(_frecency(app.id)) : 0;
   }
 
   function _apps() {
@@ -191,16 +188,11 @@ QtObject {
 
   function _searchRows(q) {
     q = q.toLowerCase();
-    const scored = [];
-    for (const app of _apps()) {
-      const s = _appScore(app, q);
-      if (s > 0)
-        scored.push({
-          s: s,
-          name: app.name,
-          row: () => _appRow(app)
-        });
-    }
+    const scored = _scoredApps(q).map(m => ({
+          s: m.s,
+          name: m.app.name,
+          row: () => _appRow(m.app)
+        }));
     if (LauncherConfig.windows) {
       for (const win of CompositorManager.windows) {
         if (win.hidden)
@@ -280,7 +272,7 @@ QtObject {
             f: _entryFrecency(commandUsage[c.name]),
             s: q === "" ? 1 : Math.max(Search.score(c.name, q), ...c.aliases.map(a => 0.9 * Search.score(a, q)))
           })).filter(m => m.s > 0).map(m => Object.assign(m, {
-          s: m.s + Math.min(25, 8 * Math.log2(1 + m.f))
+          s: m.s + Search.useBonus(m.f)
         }));
       matches.sort((a, b) => b.s - a.s || b.f - a.f || a.i - b.i);
       return matches.length > 0 ? matches.map(m => _commandRow(m.c, "")) : [_infoRow(I18n.tr("No command \"{0}\"", body), I18n.tr("Type / to list every command"))];
