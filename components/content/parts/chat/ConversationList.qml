@@ -140,9 +140,11 @@ DropdownSurface {
                     visible: item.editing
                     Layout.fillWidth: true
                     Layout.preferredHeight: Widget.height - Widget.px(6)
-                    text: item.conversation.title ?? ""
+                    // Pushed in as it opens: typing drops a binding, and
+                    // a cancelled rename's text would come back
                     onVisibleChanged: {
                       if (visible) {
+                        text = item.conversation.title ?? "";
                         input.forceActiveFocus();
                         input.selectAll();
                       }

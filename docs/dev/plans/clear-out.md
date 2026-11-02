@@ -308,7 +308,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Kitty reloads only when its socket is /tmp/kitty-*
 - **core-ui-theming-05** (3):
   - Icons.overrides never reaches window icons
-  - [A cancelled rename's typed text comes back in the notes and chat rename fields](../issues.md#a-cancelled-renames-typed-text-comes-back-in-the-notes-and-chat-rename-fields)
+  - A cancelled rename's typed text comes back in the notes and chat rename fields
   - [Nine shared controls animate with their own easing, written out where Glide does it](../issues.md#nine-shared-controls-animate-with-their-own-easing-written-out-where-glide-does-it)
 - **core-ui-theming-06** (4):
   - [Every StyledSlider overrides its look and its value the same way](../issues.md#every-styledslider-overrides-its-look-and-its-value-the-same-way)

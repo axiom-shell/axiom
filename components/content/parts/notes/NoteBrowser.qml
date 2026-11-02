@@ -380,9 +380,11 @@ DropdownSurface {
             visible: row.editing
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height - Widget.px(8)
-            text: row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName)
+            // Pushed in as it opens: typing drops a binding, and a
+            // cancelled rename's text would come back
             onVisibleChanged: {
               if (visible) {
+                text = row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName);
                 input.forceActiveFocus();
                 input.selectAll();
               }
