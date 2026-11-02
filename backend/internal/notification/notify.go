@@ -27,7 +27,8 @@ type Notification struct {
 	AppName string `json:"appName"`
 	Summary string `json:"summary"`
 	Body    string `json:"body"`
-	// An icon name or a picture's path ("": none)
+	// An icon name or a picture's path ("": none), sent as the
+	// image-path hint as notify-send -i did (the app icon stays empty)
 	Icon string `json:"icon,omitempty"`
 	// The desktop-entry hint: which app clicking it leads to
 	DesktopEntry string `json:"desktopEntry,omitempty"`
@@ -59,7 +60,7 @@ func Send(ctx context.Context, conn *dbus.Conn, n Notification) (string, error) 
 		defer sub.Close()
 	}
 	reply, err := conn.Call(setup, busName, path, iface, "Notify", "susssasa{sv}i",
-		n.AppName, uint32(0), n.Icon, n.Summary, n.Body, actionList(n.Actions), hints(n), int32(-1))
+		n.AppName, uint32(0), "", n.Summary, n.Body, actionList(n.Actions), hints(n), int32(-1))
 	if err != nil {
 		return "", axerr.Wrap(axerr.Unavailable, err, "no notification server took it")
 	}
@@ -104,6 +105,9 @@ func actionList(actions []Action) []string {
 // hints are Notify's hints for n.
 func hints(n Notification) map[string]dbus.Variant {
 	h := map[string]dbus.Variant{}
+	if n.Icon != "" {
+		h["image-path"] = dbus.MakeVariant(n.Icon)
+	}
 	if n.DesktopEntry != "" {
 		h["desktop-entry"] = dbus.MakeVariant(n.DesktopEntry)
 	}

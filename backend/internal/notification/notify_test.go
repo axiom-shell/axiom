@@ -68,7 +68,8 @@ func TestSendWithoutActions(t *testing.T) {
 		t.Fatalf("%q %v", picked, err)
 	}
 	body := <-calls
-	want := []any{"axiom", uint32(0), "/a.png", "Hi", "there", []string(nil), map[string]dbus.Variant{
+	want := []any{"axiom", uint32(0), "", "Hi", "there", []string(nil), map[string]dbus.Variant{
+		"image-path":    dbus.MakeVariant("/a.png"),
 		"desktop-entry": dbus.MakeVariant("axiom-update"),
 		"urgency":       dbus.MakeVariant(uint8(2)),
 	}, int32(-1)}

@@ -597,6 +597,7 @@ Found meanwhile:
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
 - [Video wallpapers](issues.md#video-wallpapers) (an idea from the wallpaper transitions branch)
+- [Notifications with buttons each hold a daemon call until they close](issues.md#notifications-with-buttons-each-hold-a-daemon-call-until-they-close)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
 - [Toggles are switched in several places, and most have no IPC](issues.md#toggles-are-switched-in-several-places-and-most-have-no-ipc)
 
