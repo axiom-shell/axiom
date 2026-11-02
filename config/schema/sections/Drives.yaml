@@ -11,7 +11,7 @@ properties:
     type: boolean
     title: Drive event notifications
     default: true
-    description: "Send a notification when a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or something went wrong. An enabled OSD with Removable drives among its statuses shows them as a card instead (a click opens the drive, or unlocks an encrypted one). Off, and with no such OSD, they're left to the Drives widget and module. Asking what to do with a drive plugged in is always a notification."
+    description: "Send a notification when a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or something went wrong. An OSD with Removable drives among its status icons (one whose detail cards are on, where it opens the OSD) shows them as a card instead (a click opens the drive, or unlocks an encrypted one). Off, and with no such OSD, they're left to the Drives widget and module. Asking what to do with a drive plugged in is always a notification."
     x-link: {setting: OSD}
   onInsert:
     type: string

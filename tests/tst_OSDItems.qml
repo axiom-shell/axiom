@@ -199,6 +199,85 @@ TestCase {
     verify(OSDItems.tile("bogus", {}).hidden);
   }
 
+  function test_cardRoute_data() {
+    const osd = (items, quiet, cards, enabled) => ({
+          "enabled": enabled !== false,
+          "statuses": {
+            "items": items,
+            "quiet": quiet,
+            "cards": cards
+          }
+        });
+    return [
+      {
+        "tag": "listed: its card",
+        "osds": [osd(["drive"], [], true)],
+        "notify": true,
+        "want": "osd"
+      },
+      {
+        "tag": "not listed: a notification",
+        "osds": [osd(["audio"], [], true)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "not listed, notify off: nowhere",
+        "osds": [osd(["audio"], [], true)],
+        "notify": false,
+        "want": ""
+      },
+      {
+        "tag": "quiet: never opens it, so a notification",
+        "osds": [osd(["drive"], ["drive"], true)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "quiet, notify off: nowhere",
+        "osds": [osd(["drive"], ["drive"], true)],
+        "notify": false,
+        "want": ""
+      },
+      {
+        "tag": "detail cards off: a notification",
+        "osds": [osd(["drive"], [], false)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "a disabled OSD: a notification",
+        "osds": [osd(["drive"], [], true, false)],
+        "notify": true,
+        "want": "notification"
+      },
+      {
+        "tag": "any one OSD showing it is enough",
+        "osds": [osd(["drive"], ["drive"], true), osd(["drive"], [], true)],
+        "notify": true,
+        "want": "osd"
+      }
+    ];
+  }
+
+  function test_cardRoute(row) {
+    compare(OSDItems.cardRoute(row.osds, "drive", row.notify), row.want);
+  }
+
+  function test_opensCard_message() {
+    const osd = (quiet, cards) => ({
+          "enabled": true,
+          "statuses": {
+            "items": [],
+            "quiet": quiet,
+            "cards": cards
+          }
+        });
+    verify(OSDItems.opensCard(osd([], false), "message"), "a message is its card, detail cards or not, listed or not");
+    verify(!OSDItems.opensCard(osd(["message"], true), "message"), "quiet: a notification instead");
+    verify(!OSDItems.opensCard(null, "message"), "no OSD");
+  }
+
   function test_tile_base_icons() {
     // Off is the base icon unlit (a mute struck through), never an icon's
     // own off form, so every one looks the same

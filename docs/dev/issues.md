@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### A quiet OSD event type never shows with the OSD shut
-- **Where:** `config/OSDConfig.qml` (`showsType`, `routeOf`), `components/surfaces/osd/OSDContent.qml` (`showStatus`)
-- **What:** `showsType` counts a status listed in the OSD's `quiet`, so a `drive`, `battery`, `monitor` or `screenshot` event there is routed to the OSD (no notification), but a quiet change with the OSD shut is dropped: the event is only seen if the OSD happens to be open (or in the history with `OSD.cardsToHistory`; a critical battery still notifies). Excluding quiet types in `routeOf` would send them as notifications instead (and never as a card): a behaviour choice for the maintainer.
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing the OSD's parts and event cards
-
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.

@@ -70,7 +70,7 @@ properties:
     default: 1000
     minimum: 250
     maximum: 10000
-    description: How long the OSD stays open after the last change.
+    description: How long the bars and the status icons stay out after the last change. A card has its own (Status icons › Card timeout).
   openTogether:
     type: boolean
     title: Bars and status icons together
@@ -177,7 +177,7 @@ properties:
         type: boolean
         title: Detail cards
         default: true
-        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, the battery running low, a monitor connected or removed, a screenshot taken, something done to a removable drive. Off, they show as their icon like any other change.'
+        description: 'Some changes show a card with more to say: an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, the battery running low, a monitor connected or removed, a screenshot taken, something done to a removable drive. Off, they show as their icon like any other change, and a drive, low battery, monitor or screenshot is a notification instead (a message is always a card).'
       cardTimeout:
         type: integer
         title: Card timeout
@@ -243,7 +243,7 @@ properties:
           screenShare: screen_share
           message: chat
         default: [capsLock, numLock, keyboardLayout, microphone, audio, dnd, caffeine, nightLight, recording, drive]
-        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (a click opens the drive, or unlocks an encrypted one). Low battery shows one as the battery drops to low and to critical, Monitors one naming a monitor connected or removed and its resolution, and Screenshots one with the picture as one is taken (a click opens it). Removable drives, Low battery, Monitors and Screenshots picked in an OSD show there instead of as notifications. Messages are what `axiom message <icon> <text>` sends.'
+        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, and Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (a click opens the drive, or unlocks an encrypted one). Low battery shows one as the battery drops to low and to critical, Monitors one naming a monitor connected or removed and its resolution, and Screenshots one with the picture as one is taken (a click opens it). Removable drives, Low battery, Monitors and Screenshots picked here show as a card instead of a notification, unless they''re among those that don''t open the OSD or detail cards are off. Messages are what `axiom message <icon> <text>` sends (on the OSD picking Messages, else the first).'
       quiet:
         type: array
         title: Without opening the OSD
@@ -303,7 +303,7 @@ properties:
           screenShare: screen_share
           message: chat
         default: []
-        description: Shown among the icons, but a change to one doesn't open the OSD.
+        description: "Shown among the icons, but a change to one doesn't open the OSD (it shows if the OSD is already open). A drive, low battery, monitor, screenshot or message picked here is a notification instead, as it would be without the OSD."
   media:
     type: object
     title: Now playing

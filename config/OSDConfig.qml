@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.components.methods
 import qs.services.core
 
 // Reader for the OSD section (the on-screen displays of levels, lock keys,
@@ -33,18 +34,19 @@ QtObject {
   // without a popup (NotificationManager.announce)
   readonly property bool cardsToHistory: _c.cardsToHistory
 
-  // Whether an enabled OSD shows a status type (a service with something
-  // to say then leaves it to the OSD, not a notification)
-  function showsType(type) {
-    return osds.some(osd => osd.enabled && osd.statuses.items.includes(type));
+  // Where an event of a status type goes (OSDItems.cardRoute): "osd" (an
+  // enabled OSD lists it, not quiet, with its detail cards on: its card),
+  // else "notification" with `notify` (its section's switch:
+  // Battery.notify, Drives.notify, Monitors.notify, Screenshots.notify),
+  // else "" (nowhere)
+  function routeOf(type, notify) {
+    return OSDItems.cardRoute(root.osds, type, notify);
   }
 
-  // Where an event of a status type goes: "osd" (an enabled OSD lists
-  // it: its card), else "notification" with `notify` (its section's
-  // switch: Battery.notify, Drives.notify, Monitors.notify,
-  // Screenshots.notify), else "" (nowhere)
-  function routeOf(type, notify) {
-    return root.showsType(type) ? "osd" : notify ? "notification" : "";
+  // Whether a message to the OSD `id` (messageOsd's) shows there as its
+  // card (OSDItems.opensCard: not quiet there); else it's a notification
+  function showsMessage(id) {
+    return OSDItems.opensCard(root.osdById(id), "message");
   }
 
   function osdById(id) {

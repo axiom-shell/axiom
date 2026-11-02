@@ -352,6 +352,24 @@ QtObject {
     return type === "message";
   }
 
+  // Whether `osd` (an OSDConfig.osds entry) shows a change of `type` as
+  // its card the moment it comes: enabled, `type` not quiet (a quiet one
+  // never opens it), its detail cards on (a message's always). Where none
+  // does, an event is a notification instead (cardRoute)
+  function opensCard(osd, type) {
+    return osd !== null && osd.enabled && !osd.statuses.quiet.includes(type) && (osd.statuses.cards || root.alwaysCard(type));
+  }
+
+  // Where an event of a status type goes (a drive, the battery, a
+  // monitor, a screenshot): "osd" when an OSD of `osds` lists the type and
+  // opens its card (opensCard), else "notification" with `notify` (its
+  // section's switch), else "" (nowhere)
+  function cardRoute(osds, type, notify) {
+    if (osds.some(osd => osd.statuses.items.includes(type) && root.opensCard(osd, type)))
+      return "osd";
+    return notify ? "notification" : "";
+  }
+
   // A drive event's card (DrivesManager.lastEvent's kinds): its icon and
   // what happened (English)
   readonly property var _driveCards: ({

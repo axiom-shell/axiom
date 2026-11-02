@@ -502,7 +502,6 @@ Found by the audits:
 - [removeOnClick never removes a clicked toast's entry](issues.md#removeonclick-never-removes-a-clicked-toasts-entry)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)
-- [A quiet OSD event type never shows with the OSD shut](issues.md#a-quiet-osd-event-type-never-shows-with-the-osd-shut)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
 - [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
 - [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)

@@ -33,7 +33,7 @@ Only a real `drives.event` `added` (never a drive there at login, or udisks2 res
 
 ### Who says what
 Every event but `ask`'s question is said once (`_say`), through `NotificationManager.announce("drive", Drives.notify, …)`, which routes it by `OSDConfig.routeOf` ([OSD](osd.md) › Where events go):
-- **An enabled OSD lists `drive`**: the OSD's card (`lastEvent`, set only then), whatever `Drives.notify` says; also filed in the notification history without a popup with `OSD.cardsToHistory`.
+- **An OSD opens `drive`'s card** (enabled, listing it, not `quiet`, detail cards on: `OSDItems.cardRoute`): the OSD's card (`lastEvent`, set only then), whatever `Drives.notify` says; also filed in the notification history without a popup with `OSD.cardsToHistory`.
 - **Else, with `Drives.notify`** (the default): a notification (`_eventNotice`), with buttons where they help: Mounted has Open / Eject, Locked has Unlock.
 - **Else** nothing; the widget and module show it. `ask` still notifies.
 - Until config v90 this was `Drives.announce` (`osd` | `notification` | `off`); v90 made `osd` and `notification` `notify` true, `off` false.

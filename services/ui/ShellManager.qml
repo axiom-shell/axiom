@@ -79,23 +79,35 @@ QtObject {
     return at !== undefined && OSDItems.fromScreen(type, Date.now() - at);
   }
 
-  // A message to the OSD `id`, also filed in the notification history
-  // without a popup with OSD.cardsToHistory (a refusal isn't: it only
-  // answers what was just tried)
+  // A message to the OSD `id` (OSDConfig.messageOsd's) as its card, also
+  // filed in the notification history without a popup with
+  // OSD.cardsToHistory; where it wouldn't show (no OSD, or `message`
+  // quiet there: OSDConfig.showsMessage) a notification instead
   function _message(id, icon, text, detail) {
+    if (!OSDConfig.showsMessage(id)) {
+      NotificationManager.sendNotification("axiom", text, detail);
+      return;
+    }
     root.osdMessage(id, icon, text, detail, "");
-    if (id !== "" && OSDConfig.cardsToHistory)
+    if (OSDConfig.cardsToHistory)
       NotificationManager.sendNotification("axiom", text, detail, {
         "silent": true
       });
   }
 
   // The same on the warning colour: what a bind, hot corner or `axiom`
-  // command that can't run here says instead of nothing. `icon` the base
-  // one of what was refused ("nightlight", never "nightlight_off"),
-  // `title` what ("Night light"), `detail` why ("Not available here")
+  // command that can't run here says instead of nothing (never filed: it
+  // only answers what was just tried; a notification where no OSD shows
+  // it). `icon` the base one of what was refused ("nightlight", never
+  // "nightlight_off"), `title` what ("Night light"), `detail` why ("Not
+  // available here")
   function refuse(icon, title, detail) {
-    root.osdMessage(OSDConfig.messageOsd(""), icon, title, detail, "warning");
+    const id = OSDConfig.messageOsd("");
+    if (!OSDConfig.showsMessage(id)) {
+      NotificationManager.sendNotification("axiom", title, detail);
+      return;
+    }
+    root.osdMessage(id, icon, title, detail, "warning");
   }
 
   property IpcTarget _osdIpc: IpcTarget {
