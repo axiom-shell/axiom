@@ -59,6 +59,9 @@ Singleton {
   // SwayFX's blur ({ enabled, size, passes }), as the window look set it
   // (setLiveLook), else its config's; plain sway has none
   readonly property var blur: _liveBlur ?? _configBlur
+  // The wallpapers sway's package leaves in a data dir
+  // (CompositorManager.stockWallpapers)
+  readonly property string stockWallpapers: "backgrounds/sway/*.png"
   // What sway does (CompositorManager.supports): SwayFX adds the blur,
   // rounded corners, shadows and dimming. Window opacity is set a window
   // at a time as focus moves (SwayState.windowCommands)

@@ -1303,11 +1303,9 @@
     "Your config already binds {0}, so axiom's binds on those keys are skipped. Free them in your config, or pick other keys on the Keybinds page.": "設定ですでに {0} がバインドされているため、これらのキーへの axiom のバインドはスキップされます。設定でキーを空けるか、キーバインドページで別のキーを選んでください。",
     "Look": "外観",
     "Pick a wallpaper and a theme. Themes can also be generated from a wallpaper: pick one, and a matching light and dark theme appear in the list.": "壁紙とテーマを選んでください。テーマは壁紙から生成することもできます。壁紙を選ぶと、それに合ったライトとダークのテーマが一覧に追加されます。",
-    "That folder doesn't exist yet. Create it and put some images in it, or use Hyprland's wallpapers for now.": "そのフォルダーはまだありません。作成して画像を入れるか、ひとまず Hyprland の壁紙を使ってください。",
     "That folder has no images (jpg, png or bmp) yet.": "そのフォルダーにはまだ画像（jpg、png、bmp）がありません。",
     "Create it": "作成する",
     "Open it": "開く",
-    "Use Hyprland's wallpapers": "Hyprland の壁紙を使う",
     "Bar": "バー",
     "Pills": "ピル",
     "A pill per group of widgets": "ウィジェットのグループごとにピルを表示",
@@ -3714,6 +3712,8 @@
     "The screen dims and the prompt opens in the middle, in axiom's theme. Stops any other agent you run.": "",
     "Leaves the prompt to the agent you start yourself.": "",
     "How axiom fits into the rest of your system: updates, idle, locking, password prompts and the login screen.": "",
-    "App colors": ""
+    "App colors": "",
+    "That folder doesn't exist yet. Create it and put some images in it, or use {0}'s wallpapers for now.": "",
+    "Use {0}'s wallpapers": ""
   }
 }

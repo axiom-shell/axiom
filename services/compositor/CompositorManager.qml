@@ -110,6 +110,11 @@ Singleton {
   // page says so of a bind with that action instead of flagging it
   readonly property var builtInBinds: root.backend?.builtInBinds ?? ({})
 
+  // Where the compositor's package leaves its wallpapers, as a glob under
+  // a data dir ("hypr/wall*.png"), for the onboarding's Look page; "" for
+  // a compositor that ships none
+  readonly property string stockWallpapers: root.backend?.stockWallpapers ?? ""
+
   // Appearance's surfaces are translucent only where the compositor blurs
   // behind them (Appearance.compositorBlurs: readers don't read services).
   // Never at the login screen: its compositor runs no blur rules, and the
