@@ -263,7 +263,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A shell started locked locks again on every reload
   - With Idle on and the user's own locker left at loginctl lock-session, nothing locks
   - Nested Hyprland acknowledges a lock too late for axiom lock
-  - [Uninstall keeps a stale greetd backup when greetd points elsewhere](../issues.md#uninstall-keeps-a-stale-greetd-backup-when-greetd-points-elsewhere)
+  - Uninstall keeps a stale greetd backup when greetd points elsewhere
   - [The greeter reads its keyboard layouts before the bundle's are applied](../issues.md#the-greeter-reads-its-keyboard-layouts-before-the-bundles-are-applied)
 - **platform-03** (4): notify-send moves into Go here (NotificationManager, ScreenshotManager, CompositorConfigManager), so it lands before the compositor and features majors. Splits by file group if it passes 800.
   - [install.sh and the AUR packages never install notify-send, gio or pactl](../issues.md#installsh-and-the-aur-packages-never-install-notify-send-gio-or-pactl)
