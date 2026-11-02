@@ -620,8 +620,7 @@ QtObject {
   // The parts' order out from the edge once `incoming` opens: `order` the
   // ones shown. In `parts`' order: the bars by the edge, the icons past
   // them, or with `iconsInside` (an OSD's `iconsPlace` "inside") the icons
-  // by the edge (the box is as long as its longest part, so nothing is
-  // gained by putting the longer first); the card always last. `atEnd`
+  // by the edge; the card always last. `atEnd`
   // (the pointer on the OSD, holding still): a box part goes after the
   // one out, so nothing under the pointer moves; what that left out of
   // order stays so
