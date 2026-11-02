@@ -155,6 +155,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the greeter runs platform-02, with a bundle setting two keyboard layouts (`us,de`), log out to the login screen under sway and Hyprland: its keyboard layout module switches between both from the start.
 - Once the shell runs platform-02, start a shell locked (`axiom lock` confirmed too late, or one restarted while locked), unlock with the password, then save a QML file: the reload doesn't lock again.
 - Once the shell and binary run platform-03, take a screenshot with an annotator installed and click the notification's Edit in … button (it opens the annotator), and use Settings → Notifications' Show: both toast as before, and `scripts/log.sh` shows no `[NotificationManager] Sending`.
+- Once the shell runs clear-out core-ui-theming-02 (row 20): with two players open, play one then the other and check the Media widget and NowPlaying follow the one playing (and a player picked in NowPlaying stays until another starts); with no Media widget or NowPlaying shown, check the position isn't ticking (a temporary `console.log` in `updatePosition` stays quiet while music plays); with the theme schedule on, switch light/dark by hand, save a loaded QML file, and check the switch stays (likewise night light and do-not-disturb).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -534,7 +535,6 @@ Found by the audits:
 - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 
 Found while making caffeine survive reloads:
-- [DailySchedule's persisted state never survives a reload](issues.md#dailyschedules-persisted-state-never-survives-a-reload)
 
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)

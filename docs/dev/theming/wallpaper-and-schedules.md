@@ -54,7 +54,7 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 - Runs through a `services/core/DailySchedule`:
   - it fires `due(inWindow)` only on edges: the window opens or closes, the schedule is turned on, or the times are moved across now;
   - so a switch by hand lasts until the next edge;
-  - its last state survives reloads.
+  - its last state survives reloads: a `Scope` its owner declares as a default child (`DailySchedule { id: … }`), never in a named property, since a Singleton passes a reload only to its default Reloadable children, matched by order.
 - The night light uses the same `DailySchedule` (see [Night light](night-light.md)).
 
 ### Editing (Themes page)

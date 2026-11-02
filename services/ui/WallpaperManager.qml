@@ -303,7 +303,8 @@ Singleton {
     }
   }
 
-  property DailySchedule _themeSchedule: DailySchedule {
+  DailySchedule {
+    id: _themeSchedule
     name: "theme"
     enabled: Appearance.themeScheduled
     startAt: Appearance.lightAt

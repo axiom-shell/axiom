@@ -61,7 +61,8 @@ Singleton {
 
   // NotificationsConfig.dnd's schedule: on and off at its times; a switch
   // by hand lasts until the next of them
-  property DailySchedule _dndSchedule: DailySchedule {
+  DailySchedule {
+    id: _dndSchedule
     name: "notificationsDnd"
     enabled: NotificationsConfig.dndSchedule
     ready: root._stateLoaded

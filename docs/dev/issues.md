@@ -109,12 +109,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while filing the maintainer's notes
 
-### DailySchedule's persisted state never survives a reload
-- **Where:** `services/core/DailySchedule.qml` (`_state`), `services/system/NotificationManager.qml` (`_dndSchedule`), `services/system/NightLightManager.qml` (`_schedule`), `services/ui/WallpaperManager.qml` (`_themeSchedule`)
-- **What:** `DailySchedule` is a QtObject holding its `PersistentProperties` in a named property, and each owner holds it in a named property too. Quickshell's Singleton passes a reload only to its default children, and only to Reloadable ones (a plain QObject child is skipped), so `persisted.last` always starts empty and every QML reload reports `due` again: a scheduled dark theme or night light switched off by hand comes back, as do do-not-disturb windows. DeadlineTicker had the same shape and was fixed by making it a `Scope` declared as a default child (`DeadlineTicker { id: … }`); the same change fits here.
-- **Size:** small
-- **Found:** 2026-10-31, while making caffeine survive reloads
-
 ### A tray menu logs an undefined menu handle
 - **Where:** `components/content/parts/TrayMenuList.qml` (`menuOpener`)
 - **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
@@ -1569,7 +1563,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Idle dimming is forgotten across a shell reload
 - **Where:** `services/system/BrightnessManager.qml:92` (`_dimmed`)
-- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive: see [DailySchedule's persisted state never survives a reload](#dailyschedules-persisted-state-never-survives-a-reload)).
+- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive, as `DailySchedule` and `DeadlineTicker` show: [Todo and pomodoro](features/todo-pomodoro.md) › Shared plumbing).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:brightness system
 

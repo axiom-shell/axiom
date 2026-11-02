@@ -11,7 +11,11 @@ import qs.components.methods
 // reloads (keyed by `name`), so a reload doesn't undo a change by hand; a
 // restart reports afresh. Checked every 30 s, which also catches up after a
 // suspend (a single timer to the next edge would stop with the clock).
-QtObject {
+// Its owner declares it as a default child (`DailySchedule { id: … }`), or
+// a reload loses its state. A Scope, not a QtObject: a Singleton's reload
+// passes only to its default children that are Reloadable, matched by
+// their order.
+Scope {
   id: root
 
   // Unique per schedule: keeps its state across reloads
@@ -55,7 +59,8 @@ QtObject {
 
   property bool _started: false
 
-  property PersistentProperties _state: PersistentProperties {
+  // Matched on a reload to the old schedule's (both the Scope's first child)
+  PersistentProperties {
     id: persisted
     reloadableId: "axiomSchedule-" + root.name
     // "in" | "out" | "" (not reported since it was turned on)
