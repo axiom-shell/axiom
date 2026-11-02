@@ -1,6 +1,10 @@
 package schema
 
-import "github.com/axiom-shell/axiom/backend/internal/jsonx"
+import (
+	"slices"
+
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+)
 
 // ValueOf looks a condition's key up: a sibling's value, or with a leading
 // "/" a dotted path from the config's root (or a runtime value such as
@@ -14,6 +18,7 @@ type ValueOf func(key string) (value any, ok bool)
 //	[values]         one of them
 //	{not: value}     anything but it
 //	{notEmpty: true} a non-empty string or list
+//	{includes: v}    a list holding v
 //	anyOf: [conds]   any of the conditions
 //
 // A missing or null condition holds. This is SchemaLayout.showIfHolds.
@@ -61,6 +66,13 @@ func Holds(condition any, valueOf ValueOf) bool {
 		case *jsonx.Object:
 			if jsonx.Truthy(w.Value("notEmpty")) {
 				if length(value, present) <= 0 {
+					return false
+				}
+				continue
+			}
+			if item, ok := w.Get("includes"); ok {
+				list, isList := value.(*jsonx.Array)
+				if !present || !isList || !slices.ContainsFunc(list.Items, func(x any) bool { return jsonx.SameValueZero(x, item) }) {
 					return false
 				}
 				continue
