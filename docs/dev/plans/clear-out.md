@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07 and platform-08 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08 and core-ui-theming-02 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -69,7 +69,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 21 | platform-06 | minor-sweep | Done: The onboarder | 3 | ~150 | platform-03 | Q3 |
 | 22 | platform-07 | minor-sweep | Done: The launcher with its providers | 2 | ~80 | platform-05 |  |
 | 23 | platform-08 | minor-sweep | Done: Security: the session actions | 1 | ~60 | platform-02 | Q4 |
-| 24 | core-ui-theming-02 | major | Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
+| 24 | core-ui-theming-02 | major | Done: Services that run with nothing shown, the media pick, schedules lost on reload | 4 | ~220 | core-ui-theming-01 |  |
 | 25 | core-ui-theming-03 | major | Daemon failures the shell never sees, and the Updates popout's list | 4 | ~200 | core-ui-theming-01, bar-popouts-01 |  |
 | 26 | core-ui-theming-04 | major | Themes changing unbidden, and two integration bugs | 5 | ~130 | core-ui-theming-01, platform-05 |  |
 | 27 | core-ui-theming-05 | major | ui-kit bugs users notice | 3 | ~110 | core-ui-theming-01 |  |
@@ -290,11 +290,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **core-ui-theming**
 
-- **core-ui-theming-02** (4): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
-  - [MediaManager ticks the position with nothing showing it](../issues.md#mediamanager-ticks-the-position-with-nothing-showing-it)
-  - [The active media player is Spotify first and never follows playback](../issues.md#the-active-media-player-is-spotify-first-and-never-follows-playback)
-  - [Album art piles up in the runtime folder for the whole session](../issues.md#album-art-piles-up-in-the-runtime-folder-for-the-whole-session)
-  - [DailySchedule's persisted state never survives a reload](../issues.md#dailyschedules-persisted-state-never-survives-a-reload)
+- **core-ui-theming-02** (4, done): Before features-08, which gives idle dimming the same reload fix. SystemManager's self-consumer went with the graphs' history moving into the daemon (its own PR).
+  - MediaManager ticks the position with nothing showing it
+  - The active media player is Spotify first and never follows playback
+  - Album art piles up in the runtime folder for the whole session
+  - DailySchedule's persisted state never survives a reload
 - **core-ui-theming-03** (4): Takes bar-popouts' Updates popout entry: same UpdatesManager-to-card path.
   - [A failed update check shows as up to date](../issues.md#a-failed-update-check-shows-as-up-to-date)
   - [A weather fetch that fails shows Loading forever](../issues.md#a-weather-fetch-that-fails-shows-loading-forever)

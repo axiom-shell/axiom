@@ -31,6 +31,9 @@ ValueStyleWidget {
   subtext: root.style === "stacked" ? root.artist : ""
   accentColor: Theme.resolveColor(MediaManager.isPlaying ? root.properties.playingColor : root.properties.pausedColor)
 
+  Component.onCompleted: MediaManager.acquire(root)
+  Component.onDestruction: MediaManager.release(root)
+
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "NowPlaying"
