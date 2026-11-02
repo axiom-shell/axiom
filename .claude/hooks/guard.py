@@ -596,11 +596,13 @@ def check(call):
         command = tool_input.get("command", "")
         commands = split_commands(command)
         cwd = call.get("cwd") or str(REPO)
-        # Leading `cd <dir> &&`s move the rest (an agent's cwd resets every
-        # call); after `;`, `||` or `|` the rest may run where it started
-        while commands and commands[0][1][:1] == ["cd"] and (m := LEADING_CD.match(command)):
-            cwd = str(resolve(commands[0][1][1], cwd, commands[0][0]))
-            commands, command = commands[1:], command[m.end():]
+        # A leading `cd <dir> &&` moves the rest (an agent's cwd resets every
+        # call). After `;`, `||` or `|`, a cd into no folder, or with another
+        # cd, pushd or popd anywhere in the line, the rest may run elsewhere
+        if (commands and commands[0][1][:1] == ["cd"] and LEADING_CD.match(command)
+                and (target := resolve(commands[0][1][1], cwd, commands[0][0])).is_dir()
+                and not any(argv[:1] in (["cd"], ["pushd"], ["popd"]) for _, argv in commands[1:])):
+            cwd, commands = str(target), commands[1:]
         for env, argv in commands:
             check_argv(env, argv, cwd)
     elif tool in {"Edit", "Write"}:
