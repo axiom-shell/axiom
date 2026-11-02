@@ -233,14 +233,14 @@ func TestStartedWithARelativeConfig(t *testing.T) {
 	}
 	defer func() { stdin.Close(); cmd.Wait() }()
 	pid := strconv.Itoa(cmd.Process.Pid)
+	// Mid-exec the kernel already names the process niri while its
+	// cmdline still reads empty: wait for the -c itself
 	deadline := time.Now().Add(5 * time.Second)
-	for {
-		if _, isNiri := startedWith(pid, "niri"); isNiri || time.Now().After(deadline) {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
 	config, isNiri := startedWith(pid, "niri")
+	for config == "" && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+		config, isNiri = startedWith(pid, "niri")
+	}
 	eq(t, fmt.Sprint(isNiri), "true")
 	real, _ := filepath.EvalSymlinks(dir)
 	eq(t, config, filepath.Join(real, "test.kdl"))
