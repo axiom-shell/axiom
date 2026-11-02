@@ -166,6 +166,7 @@ QtObject {
       if (!error && result?.config) {
         root._config = result.config;
         root._revision = result.revision;
+        root._kept = false;
         done?.();
       }
     });
@@ -199,7 +200,7 @@ QtObject {
     BackendManager.listen("config.changed", params => {
       if (root._revision < 0 || params.revision <= root._revision)
         return;
-      const next = params.revision === root._revision + 1 ? ConfigOps.apply(root._config, params.changes ?? []) : null;
+      const next = !root._kept && params.revision === root._revision + 1 ? ConfigOps.apply(root._config, params.changes ?? []) : null;
       console.log("[ConfigManager] axiom pushed the config, revision", params.revision);
       if (next === null) {
         root.hardResetConfig();
@@ -229,6 +230,14 @@ QtObject {
         root._firstRun = true;
         BackendManager.call("config.ackFirstRun", null, null);
       }
+      // A re-exec'd axiom that couldn't load the file (an older dev build)
+      // runs on the defaults: keep the config read before, as the message
+      // says, until a change is pushed (a fix or a restore reads it then)
+      if (state.defaults && root._revision >= 0) {
+        root._revision = state.revision;
+        root._kept = true;
+        return;
+      }
       // A push missed while disconnected (a re-exec, which may count
       // the revisions again): read it again, ignoring pushes until then
       root._revision = -1;
@@ -248,6 +257,9 @@ QtObject {
   // The revision `_config` is (axiom's count of changes); -1 until read
   // (config.get, when the connection says hello)
   property int _revision: -1
+  // `_config` was kept over axiom's defaults (onGreeted): the next push
+  // reads the config again rather than applying its ops
+  property bool _kept: false
   property bool _savesBlocked: false
   property var _previews: ({})
 
