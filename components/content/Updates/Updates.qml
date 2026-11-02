@@ -155,6 +155,8 @@ Panel {
   StyledText {
     visible: !root.embedded && (root.total === 0 || root.failed !== "")
     Layout.fillWidth: true
+    // A failed check's stderr wraps rather than widening the popout
+    Layout.maximumWidth: Widget.px(320)
     wrapMode: Text.Wrap
     text: root.failed || I18n.tr("System is up to date")
     textColor: Theme.foregroundAlt
