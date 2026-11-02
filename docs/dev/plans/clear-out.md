@@ -276,7 +276,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The shell's hello can be refused across a dev re-exec
   - daemon.shutdown starts its goroutine past tasks.Go
 - **platform-05** (2): Before core-ui-theming-04, whose other-monitor theme fix assumes /generate reads the right monitor.
-  - [The launcher's /generate reads a monitor setting that doesn't exist](../issues.md#the-launchers-generate-reads-a-monitor-setting-that-doesnt-exist)
+  - The launcher's /generate reads a monitor setting that doesn't exist
   - [A word passed to an int IPC parameter is 0](../issues.md#a-word-passed-to-an-int-ipc-parameter-is-0)
 - **platform-06** (3):
   - [The onboarder's Integrations page names Hyprland's tools everywhere](../issues.md#the-onboarders-integrations-page-names-hyprlands-tools-everywhere)

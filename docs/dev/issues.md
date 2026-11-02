@@ -1464,12 +1464,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the security system
 
-### The launcher's /generate reads a monitor setting that doesn't exist
-- **Where:** `services/ui/LauncherCommands.qml:156` (`generate`), `config/LauncherConfig.qml` (`screen`)
-- **What:** `/generate` picks its wallpaper with `ShellManager.targetFor(...)` given a `monitors` member that LauncherConfig doesn't have (its ScreenTarget is `screen`; a grep of every LauncherConfig member used, against the reader's members, finds only this one missing). `targetFor(undefined)` resolves as "inherit", so it answers for General's screen target, not the launcher's. Scenario: two monitors with different wallpapers, `General.screen` primary (DP-1) and `Launcher.screen` focused; open the launcher on DP-2 and run `/generate`: the themes are generated from DP-1's wallpaper, not the one on the monitor the launcher is on. [A theme generated from another monitor's wallpaper is replaced by the primary's at the next start](#a-theme-generated-from-another-monitors-wallpaper-is-replaced-by-the-primarys-at-the-next-start) describes `/generate` as using "its target monitor's wallpaper", which only holds after this fix. Fix: pass `LauncherConfig.screen`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the launcher system
-
 ### A clip's label and detail are written in both the launcher and the clipboard module
 - **Where:** `services/ui/LauncherManager.qml:480` (`_clipboardRows`), `services/ui/LauncherManager.qml:505` (`_clipboardRow`), `services/ui/LauncherManager.qml:537` (`_clipboardImageRow`), `components/content/ClipboardHistory/ClipboardHistory.qml:61` (`labelOf`, `detailOf`, `allClips`)
 - **What:** Both build "pins first, then the history without them" with the same expression (LauncherManager:480, ClipboardHistory:25), and both turn an entry into its label ("Image {0}", "Image from {0}" with the url's host, the first line) and its detail (line count and time, format and size, "HTML"): LauncherManager:508-514 and 542-543 against ClipboardHistory:61-83. They differ only in the launcher's " · <url>" after "HTML" and the module's "Pinned". Fix: ClipboardManager gets `shown` (the pins-first list) and `labelOf(entry)` / `detailOf(entry)` (the module's 23 lines, moved, with the url suffix); both callers read them, removing about 10 lines from LauncherManager, which keeps its own glyph and hint.

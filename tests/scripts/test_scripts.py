@@ -360,6 +360,14 @@ class ConfigUsage(unittest.TestCase):
         self.assertEqual(usage.member("R", "x", ""), ["a.qml"])
         self.assertEqual(usage.member("R", "y", ""), [])
 
+    def test_missing_member_fails(self):
+        # A read the reader lacks fails; a config path in a string or a
+        # block comment isn't a read
+        from gen_docs import Usage
+        usage = Usage()
+        usage.files = {"a.qml": 'f(R.x, R.gone)\n/* R.prose */\nset("R.path", `R.tpl`)'}
+        self.assertEqual(usage.missing({"R": {"members": {"x": {}}}}), ["a.qml: R.gone"])
+
     def test_ratchet(self):
         from gen_docs import ratchet_problems
         self.assertEqual(ratchet_problems({"A.x"}, ["A.x"], "unused"), [])
