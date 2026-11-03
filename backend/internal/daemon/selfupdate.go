@@ -66,7 +66,7 @@ func (d *Daemon) selfUpdateMethods(reg *rpc.Registry) {
 			// The new image takes the daemon over once this reply is out;
 			// when the update changed the schema it restarts the shell
 			d.opts.Log.Info("self-update: replaced the binary, re-executing", "binary", d.installed, "from", r.BinarySource)
-			d.reexecSoon(d.installed)
+			d.reexecSoon(d.installed, d.image())
 		}
 		return r, nil
 	})

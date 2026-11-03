@@ -133,7 +133,7 @@ func daemonCommand() *Command {
 						}
 						return e.Output(status, func(w io.Writer) {
 							fmt.Fprintf(w, "axiom %s (protocol %d) on %s, pid %d, up %s\n", status.Version, status.Protocol, status.Display, status.PID, status.Uptime)
-							fmt.Fprintf(w, "tree     %s\nconfig   %srevision %d\nclients  %d\n", status.Tree, status.Dirs.Config, status.State.Revision, status.Clients)
+							fmt.Fprintf(w, "tree     %s\nconfig   %s, revision %d\nclients  %d\n", status.Tree, status.ConfigFile, status.State.Revision, status.Clients)
 							if status.Shell != nil {
 								fmt.Fprintf(w, "shell    running %v, pid %d, restarts %d\n", status.Shell.Running, status.Shell.PID, status.Shell.Restarts)
 							}

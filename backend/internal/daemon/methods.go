@@ -274,8 +274,11 @@ type StatusResult struct {
 	Shell  *supervise.Status `json:"shell,omitempty"`
 	// QMLDir is the folder the shell runs from (`qs -p`, which names its
 	// quickshell instance: `axiom log` reads its log); "" with no shell
-	QMLDir  string `json:"qmlDir,omitempty"`
-	Clients int    `json:"clients"`
+	QMLDir string `json:"qmlDir,omitempty"`
+	// ConfigFile is the config.json the daemon runs on: the live one, or
+	// the dev config while dev mode runs its own tree
+	ConfigFile string `json:"configFile"`
+	Clients    int    `json:"clients"`
 }
 
 type configResult struct {
@@ -329,7 +332,7 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 			if exe, start := d.upgradeTarget(ctx, p.Protocol); exe != "" {
 				if start {
 					d.opts.Log.Info("a client speaks a newer protocol: re-executing", "protocol", p.Protocol, "binary", exe)
-					d.reexecSoon(exe)
+					d.reexecSoon(exe, d.image())
 				}
 				return HelloResult{}, axerr.New(axerr.Unavailable, "axiom is restarting into the newer binary %s: try again", exe)
 			}
@@ -352,7 +355,7 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 	})
 
 	rpc.Handle(reg, "daemon.status", func(ctx context.Context, c *rpc.Conn, _ struct{}) (StatusResult, error) {
-		res := StatusResult{HelloResult: d.hello(), Uptime: time.Since(d.started).Round(time.Second).String(), Clients: len(d.server.Conns())}
+		res := StatusResult{HelloResult: d.hello(), Uptime: time.Since(d.started).Round(time.Second).String(), Clients: len(d.server.Conns()), ConfigFile: d.store.Path()}
 		if d.shell != nil {
 			st := d.shell.Status()
 			res.Shell = &st
@@ -371,7 +374,7 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 	})
 
 	rpc.Handle(reg, "daemon.reexec", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
-		d.reexecSoon(d.executable)
+		d.reexecSoon(d.executable, d.image())
 		return struct{}{}, nil
 	})
 
@@ -383,16 +386,16 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 	})
 }
 
-// reexecSoon re-execs into target once the reply that asked for it has
-// gone out (the exec closes every connection).
-func (d *Daemon) reexecSoon(target string) {
+// reexecSoon re-execs into target, running img, once the reply that
+// asked for it has gone out (the exec closes every connection).
+func (d *Daemon) reexecSoon(target string, img image) {
 	d.tasks.Go(func(ctx context.Context) {
 		select {
 		case <-time.After(50 * time.Millisecond):
 		case <-ctx.Done():
 			return
 		}
-		if err := d.reexec(target); err != nil {
+		if err := d.reexec(target, img); err != nil {
 			d.opts.Log.Error("re-exec", "err", err)
 			// A newer client's hello is refused again, not told to wait
 			d.upgradeMu.Lock()

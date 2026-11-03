@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -325,7 +326,7 @@ func TestDevModeIsSwitchedAndRemembered(t *testing.T) {
 	if err := c.Call(ctx, "dev.set", map[string]bool{"enabled": true}, &st); err != nil || !st.Enabled {
 		t.Fatalf("dev.set: %v %+v", err, st)
 	}
-	if !loadDevChoice(td.dirs) {
+	if !loadDevChoice(td.dirs).Enabled {
 		t.Error("the choice wasn't saved")
 	}
 	seen := map[string]bool{}
@@ -343,7 +344,7 @@ func TestDevModeIsSwitchedAndRemembered(t *testing.T) {
 	if err := c.Call(ctx, "dev.set", map[string]bool{"enabled": false}, &st); err != nil || st.Enabled {
 		t.Fatalf("dev.set off: %v %+v", err, st)
 	}
-	if loadDevChoice(td.dirs) {
+	if loadDevChoice(td.dirs).Enabled {
 		t.Error("the choice wasn't saved off")
 	}
 }
@@ -386,6 +387,7 @@ func TestEmbeddedSchemaMatch(t *testing.T) {
 
 func TestHandoffIsChecked(t *testing.T) {
 	t.Parallel()
+	dirs := xdg.Resolve(func(k string) string { return map[string]string{"HOME": "/home/u"}[k] })
 	for _, tc := range []struct {
 		name, raw string
 		ok        bool
@@ -395,41 +397,174 @@ func TestHandoffIsChecked(t *testing.T) {
 		{"stdio descriptors", `{"lock":0,"configLock":4,"listener":5}`, false},
 		{"no listener", `{"lock":3,"configLock":4}`, false},
 		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"tree":"/t","locked":true,"dev":true,"installed":"/usr/bin/axiom"}`, true},
+		{"another config folder", `{"lock":3,"configLock":4,"listener":5,"configDir":"/elsewhere/"}`, false},
+		{"a fresh exec", `{"lock":3,"fresh":true,"installed":"/usr/bin/axiom","installTree":"/i"}`, true},
+		{"a fresh exec without the lock", `{"fresh":true}`, false},
+		{"a fresh exec handing a socket over", `{"lock":3,"listener":5,"fresh":true}`, false},
+		{"a fresh exec handing the config over", `{"lock":3,"configLock":4,"fresh":true}`, false},
+		{"a fresh exec handing a shell over", `{"lock":3,"shell":42,"fresh":true}`, false},
+		{"a fresh exec naming a tree", `{"lock":3,"tree":"/t","fresh":true}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			h, err := inherited(func(string) string { return tc.raw })
+			h, err := inherited(func(string) string { return tc.raw }, dirs)
 			if (err == nil) != tc.ok {
 				t.Fatalf("err %v", err)
 			}
-			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42 || h.Tree != "/t" || !h.Locked) {
-				t.Errorf("handoff %+v", h)
+			switch tc.name {
+			case "whole":
+				// An image of before the config folders: both the live one
+				if !h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42 || h.Tree != "/t" || !h.Locked || h.ConfigDir != dirs.Config || h.ConfigLockDir != dirs.Config {
+					t.Errorf("handoff %+v", h)
+				}
+			case "a fresh exec":
+				if !h.Fresh || h.carried() || h.InstallTree != "/i" || h.ConfigDir != "" {
+					t.Errorf("handoff %+v", h)
+				}
 			}
 		})
 	}
 }
 
-// The shell adopted across a re-exec restarts when it runs another tree
-// than the new image starts it on, or read another schema
+// What reexec hands on comes back whole on the other side
+func TestHandoffRoundTrip(t *testing.T) {
+	t.Parallel()
+	dirs := xdg.Resolve(func(k string) string { return map[string]string{"HOME": "/home/u"}[k] })
+	want := handoff{
+		Lock: 3, ConfigLock: 4, Listener: 5, Shell: 42, Schema: "abc", Locked: true,
+		Tree: "/dev/tree", ConfigDir: devConfigDir(dirs), Dev: true,
+		InstallTree: "/install", Installed: "/usr/bin/axiom",
+		ShellEntry: "/install/qml", ConfigLockDir: dirs.Config, Started: 1234,
+	}
+	raw, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := inherited(func(string) string { return string(raw) }, dirs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(*got, want) {
+		t.Errorf("round trip\n got %+v\nwant %+v", *got, want)
+	}
+}
+
+// The shell adopted across a re-exec restarts when it runs from another
+// QML dir than the new image starts it on, reads another config, or read
+// another schema
 func TestShellRestartAfterReexec(t *testing.T) {
 	t.Parallel()
+	const live, dev = "/c/axiom/", "/c/axiom/dev/"
 	for _, tc := range []struct {
 		name    string
 		h       *handoff
 		restart bool
 	}{
 		{"no re-exec", nil, false},
-		{"the same tree and schema", &handoff{Shell: 42, Tree: "/t", Schema: "a"}, false},
-		{"no schema said", &handoff{Shell: 42, Tree: "/t"}, false},
-		{"another schema", &handoff{Shell: 42, Tree: "/t", Schema: "b"}, true},
-		{"another tree", &handoff{Shell: 42, Tree: "/other", Schema: "a"}, true},
-		{"an image of before the tree was handed over", &handoff{Shell: 42, Schema: "a"}, true},
+		{"a fresh exec", &handoff{Lock: 3, Fresh: true}, false},
+		{"the same entry, config and schema", &handoff{Shell: 42, ShellEntry: "/t/qml", ConfigLockDir: live, Schema: "a"}, false},
+		{"no schema said", &handoff{Shell: 42, ShellEntry: "/t/qml", ConfigLockDir: live}, false},
+		{"another schema", &handoff{Shell: 42, ShellEntry: "/t/qml", ConfigLockDir: live, Schema: "b"}, true},
+		{"another tree", &handoff{Shell: 42, ShellEntry: "/other/qml", ConfigLockDir: live, Schema: "a"}, true},
+		{"another config", &handoff{Shell: 42, ShellEntry: "/t/qml", ConfigLockDir: dev, Schema: "a"}, true},
+		{"an image of before the entry was handed over", &handoff{Shell: 42, ConfigLockDir: live, Schema: "a"}, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if got := shellRestartReason(tc.h, "/t", "a"); (got != "") != tc.restart {
+			if got := needsShellRestart(tc.h, "/t/qml", live, "a"); (got != "") != tc.restart {
 				t.Errorf("reason %q, want a restart: %v", got, tc.restart)
 			}
 		})
+	}
+}
+
+// The tree and config a daemon starts on: a re-exec's image, a fresh
+// exec's dev tree, else what run found
+func TestStartImage(t *testing.T) {
+	t.Parallel()
+	dirs := xdg.Resolve(func(k string) string { return map[string]string{"HOME": "/home/u"}[k] })
+	live, dev := dirs.Config, devConfigDir(dirs)
+	on := devChoice{Enabled: true, Tree: "/clone"}
+	for _, tc := range []struct {
+		name        string
+		h           *handoff
+		choice      devChoice
+		opts        Options
+		want        image
+		installTree string
+	}{
+		{"no handoff", nil, devChoice{}, Options{Tree: "/found"}, image{"/found", live, false}, "/found"},
+		{"no handoff, dev on (not running its tree yet)", nil, on, Options{Tree: "/found"}, image{"/found", live, true}, "/found"},
+		{"no handoff, --dev", nil, devChoice{}, Options{Tree: "/found", Dev: true}, image{"/found", live, true}, "/found"},
+		{"a re-exec names the tree, not run's search", &handoff{Tree: "/t", ConfigDir: live, InstallTree: "/i"}, on, Options{Tree: "/found"}, image{"/t", live, false}, "/i"},
+		{"a re-exec when run found none", &handoff{Tree: "/t", ConfigDir: live, InstallTree: "/i"}, devChoice{}, Options{}, image{"/t", live, false}, "/i"},
+		{"a re-exec into the dev image", &handoff{Tree: "/clone", ConfigDir: dev, Dev: true, InstallTree: "/i"}, on, Options{Tree: "/found"}, image{"/clone", dev, true}, "/i"},
+		{"an image of before the install tree", &handoff{Tree: "/t", ConfigDir: live}, devChoice{}, Options{Tree: "/found"}, image{"/t", live, false}, "/t"},
+		{"an image of before the tree", &handoff{ConfigDir: live}, devChoice{}, Options{Tree: "/found"}, image{"/found", live, false}, "/found"},
+		{"a fresh exec runs the dev tree", &handoff{Fresh: true, InstallTree: "/i"}, on, Options{Tree: "/found"}, image{"/clone", dev, true}, "/i"},
+		{"a fresh exec, the install tree found", &handoff{Fresh: true}, on, Options{Tree: "/found"}, image{"/clone", dev, true}, "/found"},
+		{"a fresh exec, dev off meanwhile", &handoff{Fresh: true}, devChoice{Tree: "/clone"}, Options{Tree: "/found"}, image{"/found", live, false}, "/found"},
+		{"a fresh exec, no dev tree", &handoff{Fresh: true}, devChoice{Enabled: true}, Options{Tree: "/found"}, image{"/found", live, true}, "/found"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			img, installTree := startImage(tc.h, tc.choice, tc.opts, dirs)
+			if img != tc.want || installTree != tc.installTree {
+				t.Errorf("got %+v, install tree %q; want %+v, %q", img, installTree, tc.want, tc.installTree)
+			}
+		})
+	}
+}
+
+// dev.json is read, changed and written back: a file of before the tree
+// (only "enabled") still reads, and keys this binary doesn't know stay
+func TestDevChoiceReadModifyWrite(t *testing.T) {
+	t.Parallel()
+	home := t.TempDir()
+	dirs := xdg.Resolve(func(k string) string { return map[string]string{"HOME": home}[k] })
+	if got := loadDevChoice(dirs); got != (devChoice{}) {
+		t.Errorf("no file: %+v", got)
+	}
+	if err := os.MkdirAll(dirs.State, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := dirs.State + devChoiceFile
+	if err := os.WriteFile(path, []byte(`{"enabled": true}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadDevChoice(dirs); got != (devChoice{Enabled: true}) {
+		t.Errorf("an old file: %+v", got)
+	}
+	if err := os.WriteFile(path, []byte(`{"enabled": true, "future": [1]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := saveDevChoice(dirs, func(c *devChoice) { c.Tree = "/clone" }); err != nil {
+		t.Fatal(err)
+	}
+	if err := saveDevChoice(dirs, func(c *devChoice) { c.Options = true }); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadDevChoice(dirs); got != (devChoice{Enabled: true, Tree: "/clone", Options: true}) {
+		t.Errorf("after two changes: %+v", got)
+	}
+	if err := saveDevChoice(dirs, func(c *devChoice) { c.Enabled, c.Tree = false, "" }); err != nil {
+		t.Fatal(err)
+	}
+	var raw map[string]any
+	data, _ := os.ReadFile(path)
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := raw["tree"]; ok || raw["enabled"] != false || raw["options"] != true || raw["future"] == nil {
+		t.Errorf("written %s", data)
+	}
+	if err := os.WriteFile(path, []byte(`not json`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadDevChoice(dirs); got != (devChoice{}) {
+		t.Errorf("not JSON: %+v", got)
+	}
+	if err := saveDevChoice(dirs, func(c *devChoice) { c.Enabled = true }); err != nil || loadDevChoice(dirs) != (devChoice{Enabled: true}) {
+		t.Errorf("written over a file that isn't JSON: %v %+v", err, loadDevChoice(dirs))
 	}
 }
 

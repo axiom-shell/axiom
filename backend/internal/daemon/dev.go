@@ -132,24 +132,50 @@ func (m *devMode) unavailable() string {
 	return ""
 }
 
-// loadDevChoice is the saved choice (off when there is none).
-func loadDevChoice(dirs xdg.Dirs) bool {
-	data, err := os.ReadFile(dirs.State + devChoiceFile)
-	if err != nil {
-		return false
-	}
-	var choice struct {
-		Enabled bool `json:"enabled"`
-	}
-	return json.Unmarshal(data, &choice) == nil && choice.Enabled
+// devChoice is what dev.json keeps: whether dev mode is on, the dev tree
+// it runs (a clone's root, "" when none is set) and whether Settings shows
+// the developer options. A file of before the tree (only "enabled") reads
+// as no tree and no options.
+type devChoice struct {
+	Enabled bool   `json:"enabled"`
+	Tree    string `json:"tree,omitempty"`
+	Options bool   `json:"options"`
 }
 
-func saveDevChoice(dirs xdg.Dirs, on bool) error {
+// loadDevChoice is the saved choice (all off when there is none, or it
+// isn't JSON).
+func loadDevChoice(dirs xdg.Dirs) devChoice {
+	var choice devChoice
+	data, err := os.ReadFile(dirs.State + devChoiceFile)
+	if err != nil || json.Unmarshal(data, &choice) != nil {
+		return devChoice{}
+	}
+	return choice
+}
+
+// saveDevChoice changes the saved choice: it reads dev.json, applies
+// change and writes it back, keeping the keys it doesn't know (a dev
+// build of another branch may have written more).
+func saveDevChoice(dirs xdg.Dirs, change func(*devChoice)) error {
 	if err := os.MkdirAll(dirs.State, 0o700); err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "making %s", dirs.State)
 	}
-	data, _ := json.Marshal(map[string]bool{"enabled": on})
-	if err := fsx.WriteFile(dirs.State+devChoiceFile, append(data, '\n'), 0o600); err != nil {
+	path := dirs.State + devChoiceFile
+	raw := map[string]json.RawMessage{}
+	if data, err := os.ReadFile(path); err == nil && json.Unmarshal(data, &raw) != nil {
+		raw = map[string]json.RawMessage{} // not JSON: written anew
+	}
+	choice := loadDevChoice(dirs)
+	change(&choice)
+	fields, _ := json.Marshal(choice)
+	var known map[string]json.RawMessage
+	json.Unmarshal(fields, &known)
+	delete(raw, "tree") // omitted when cleared
+	for k, v := range known {
+		raw[k] = v
+	}
+	data, _ := json.Marshal(raw)
+	if err := fsx.WriteFile(path, append(data, '\n'), 0o600); err != nil {
 		return axerr.Wrap(axerr.Unavailable, err, "saving the dev mode choice")
 	}
 	return nil
@@ -158,7 +184,7 @@ func saveDevChoice(dirs xdg.Dirs, on bool) error {
 // Set turns dev mode on or off, saving the choice. Off while a dev build
 // runs goes back to the installed binary.
 func (m *devMode) Set(on bool) error {
-	if err := saveDevChoice(m.d.dirs, on); err != nil {
+	if err := saveDevChoice(m.d.dirs, func(c *devChoice) { c.Enabled = on }); err != nil {
 		return err
 	}
 	m.mu.Lock()
@@ -174,7 +200,7 @@ func (m *devMode) Set(on bool) error {
 	m.d.pushState()
 	m.push()
 	if !on && m.d.executable != m.d.installed {
-		m.d.reexecSoon(m.d.installed)
+		m.d.reexecSoon(m.d.installed, m.d.image())
 	}
 	return nil
 }
@@ -399,7 +425,7 @@ func (m *devMode) watchBinary(ctx context.Context) error {
 			if err != nil || now.Mode()&0o111 == 0 || (before != nil && os.SameFile(before, now) && now.ModTime().Equal(before.ModTime())) {
 				continue
 			}
-			if err := m.d.reexec(installed); err != nil {
+			if err := m.d.reexec(installed, m.d.image()); err != nil {
 				m.d.opts.Log.Error("re-exec", "err", err)
 			}
 		}
@@ -445,7 +471,7 @@ func (m *devMode) build(ctx context.Context) {
 	}
 	target := m.binary()
 	m.d.opts.Log.Info("dev build done: re-executing", "binary", target)
-	if err := m.d.reexec(target); err != nil {
+	if err := m.d.reexec(target, m.d.image()); err != nil {
 		m.d.opts.Log.Error("re-exec", "err", err)
 	}
 }

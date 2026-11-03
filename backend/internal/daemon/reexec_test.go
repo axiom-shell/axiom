@@ -225,3 +225,69 @@ func TestHandoffWithoutTheHeldLockIsRefused(t *testing.T) {
 		})
 	}
 }
+
+// A re-exec into the dev image doesn't take the live config's lock over:
+// it closes it, readies and opens the dev config (seeded, with its own
+// lock), and writes the shell's snapshot from it, not keeping the one of
+// before
+func TestReexecOntoTheDevConfig(t *testing.T) {
+	t.Parallel()
+	td := newTestDaemon(t)
+	fx := newHandoffFixture(t, td)
+	snapshot := td.runtime.File(SnapshotFile)
+	if err := os.WriteFile(snapshot, []byte("the live config's"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	td.setHandoff(t, handoff{
+		Lock:       dup(t, fx.instance.File()),
+		ConfigLock: dup(t, fx.config.File()),
+		Listener:   dup(t, fx.listener),
+		Tree:       testkit.RepoRoot(),
+		ConfigDir:  devConfigDir(td.dirs),
+		Dev:        true,
+		// The image before ran the live config (configLockDir "")
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	stopped := make(chan error, 1)
+	opts := td.options(nil)
+	opts.Tree = ""
+	go func() { stopped <- Run(ctx, opts) }()
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case <-stopped:
+		case <-time.After(testkit.Bound(10 * time.Second)):
+			t.Error("the daemon didn't stop")
+		}
+	})
+
+	callCtx, callCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer callCancel()
+	c, err := rpc.Dial(callCtx, td.socket, rpc.NewRegistry(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	params := map[string]any{"protocol": buildinfo.Protocol(), "client": "test", "pid": os.Getpid()}
+	var hello HelloResult
+	if err := c.Call(callCtx, "daemon.hello", params, &hello); err != nil {
+		t.Fatalf("hello: %v", err)
+	}
+	var status StatusResult
+	if err := c.Call(callCtx, "daemon.status", nil, &status); err != nil {
+		t.Fatal(err)
+	}
+	devFile := filepath.Join(devConfigDir(td.dirs), store.FileName)
+	if status.ConfigFile != devFile || !hello.Dev.Enabled {
+		t.Errorf("runs on %s (dev %v), want %s in dev mode", status.ConfigFile, hello.Dev.Enabled, devFile)
+	}
+	if _, err := os.Stat(devFile); err != nil {
+		t.Errorf("the dev config wasn't made: %v", err)
+	}
+	if _, err := fsx.TryLock(devFile + ".lock"); axerr.KindOf(err) != axerr.Running {
+		t.Errorf("the dev config's lock isn't held: %v", err)
+	}
+	if data, err := os.ReadFile(snapshot); err != nil || string(data) == "the live config's" {
+		t.Errorf("the snapshot of the config before was kept: %q %v", data, err)
+	}
+}
