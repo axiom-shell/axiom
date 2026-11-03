@@ -31,6 +31,8 @@ type testDaemon struct {
 	runtime xdg.Runtime
 	// registered sees the running daemon's registry
 	registered func(*rpc.Registry)
+	// goBin is the go dev mode builds with ("": go)
+	goBin string
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -113,7 +115,7 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 }
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
-	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered}
+	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered, Go: td.goBin}
 }
 
 // connect dials the daemon and says hello as client; the connection's
@@ -312,7 +314,10 @@ func TestPolledTopicFollowsItsSubscribers(t *testing.T) {
 
 func TestDevModeIsSwitchedAndRemembered(t *testing.T) {
 	t.Parallel()
-	td := startDaemon(t, nil)
+	td := newTestDaemon(t)
+	// A build that fails: dev on never re-execs the test
+	td.goBin = fakeGo(t, "exit 1")
+	td.start(t, nil)
 	pushes := make(chan string, 16)
 	c, err := td.connect(t, "cli", []string{"daemon"}, pushes)
 	if err != nil {
@@ -323,11 +328,15 @@ func TestDevModeIsSwitchedAndRemembered(t *testing.T) {
 		t.Errorf("a rebuild with dev mode off: %v", err)
 	}
 	var st DevState
-	if err := c.Call(ctx, "dev.set", map[string]bool{"enabled": true}, &st); err != nil || !st.Enabled {
+	if err := c.Call(ctx, "dev.set", map[string]bool{"enabled": true}, &st); axerr.KindOf(err) != axerr.Refused {
+		t.Fatalf("dev on without a tree: %v", err)
+	}
+	clone := fakeTree(t)
+	if err := c.Call(ctx, "dev.set", map[string]any{"tree": clone, "enabled": true}, &st); err != nil || !st.Enabled || st.Tree != clone || st.Active {
 		t.Fatalf("dev.set: %v %+v", err, st)
 	}
-	if !loadDevChoice(td.dirs).Enabled {
-		t.Error("the choice wasn't saved")
+	if got := loadDevChoice(td.dirs); !got.Enabled || got.Tree != clone {
+		t.Errorf("the choice wasn't saved: %+v", got)
 	}
 	seen := map[string]bool{}
 	for len(seen) < 2 {
@@ -341,11 +350,21 @@ func TestDevModeIsSwitchedAndRemembered(t *testing.T) {
 	if !seen["dev.state"] || !seen["daemon.state"] {
 		t.Errorf("pushes %v", seen)
 	}
+	// The build kicked fails: the install keeps running, told why
+	if !testkit.Eventually(func() bool {
+		c.Call(ctx, "dev.get", nil, &st)
+		return st.LastBuild != nil && !st.LastBuild.OK && !st.Building
+	}) {
+		t.Errorf("the dev build didn't fail: %+v", st)
+	}
 	if err := c.Call(ctx, "dev.set", map[string]bool{"enabled": false}, &st); err != nil || st.Enabled {
 		t.Fatalf("dev.set off: %v %+v", err, st)
 	}
-	if loadDevChoice(td.dirs).Enabled {
-		t.Error("the choice wasn't saved off")
+	if got := loadDevChoice(td.dirs); got.Enabled || got.Tree != clone {
+		t.Errorf("the choice wasn't saved off: %+v", got)
+	}
+	if st.Config.LivePath != filepath.Join(td.dirs.Config, "config.json") || st.InstallTree != testkit.RepoRoot() {
+		t.Errorf("state %+v", st)
 	}
 }
 

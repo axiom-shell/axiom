@@ -346,6 +346,9 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 		if p.Client == "shell" && !d.isShell(c.PeerPID()) {
 			return HelloResult{}, axerr.New(axerr.Refused, "only the shell axiom runs may connect as the shell")
 		}
+		if p.Client == "shell" {
+			d.dev.shellHello()
+		}
 		all, topics, err := p.topics()
 		if err != nil {
 			return HelloResult{}, err
@@ -395,18 +398,30 @@ func (d *Daemon) reexecSoon(target string, img image) {
 		case <-ctx.Done():
 			return
 		}
-		if err := d.reexec(target, img); err != nil {
+		if err := d.reexecInto(target, img); err != nil {
 			d.opts.Log.Error("re-exec", "err", err)
 			// A newer client's hello is refused again, not told to wait
 			d.upgradeMu.Lock()
 			d.upgrading = ""
 			d.upgradeMu.Unlock()
+			d.dev.switchFailed()
 		}
 	})
 }
 
+// reexecInto re-execs into exe running img (Options.reexec in tests).
+func (d *Daemon) reexecInto(exe string, img image) error {
+	if d.opts.reexec != nil {
+		return d.opts.reexec(exe, img)
+	}
+	return d.reexec(exe, img)
+}
+
 // pushState tells the clients what changed in the hello's answer.
 func (d *Daemon) pushState() {
+	if d.server == nil {
+		return
+	}
 	ok, reason := d.compatible()
 	pushDaemonState.Send(d.server, DaemonState{Compatible: ok, Reason: reason}, subscribedTo(topicDaemon))
 }

@@ -120,7 +120,7 @@ func (d *Daemon) rebuildInstalled(ctx context.Context) (bool, string) {
 	if _, err := exec.LookPath(d.opts.Go); err != nil {
 		return false, "go isn't installed"
 	}
-	out, err := buildAxiom(ctx, d.opts.Go, d.opts.Tree, bin)
+	_, out, err := buildAxiom(ctx, d.opts.Go, d.opts.Tree, bin)
 	if err == nil {
 		return true, ""
 	}
@@ -142,7 +142,7 @@ func installBinary(ctx context.Context, data []byte, target string) error {
 	if err := writeExecutable(next, data); err != nil {
 		return err
 	}
-	_, err := swapIn(ctx, next, target)
+	_, _, err := swapIn(ctx, next, target)
 	return err
 }
 

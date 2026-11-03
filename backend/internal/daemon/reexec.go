@@ -270,8 +270,8 @@ func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
 }
 
 // upgradeTarget is the binary to re-exec into for a client speaking
-// protocol want, newer than this image's: the dev build (in dev mode),
-// else the installed one, the first that speaks it, and only when the
+// protocol want, newer than this image's: the dev build while the dev
+// image runs, else the installed one, when it speaks it, and only when the
 // tree's files do too (a stray newer CLI never strands the shell). ""
 // when none does; each binary is tried once. Once one is found, every
 // newer hello until the exec gets it too (start: only the first, which
@@ -286,8 +286,8 @@ func (d *Daemon) upgradeTarget(ctx context.Context, want int) (exe string, start
 		return d.upgrading, false
 	}
 	candidates := []string{d.installed}
-	if d.dev.Enabled() {
-		candidates = []string{DevBinary(d.dirs), d.installed}
+	if d.dev.active() {
+		candidates = []string{DevBinary(d.dirs)}
 	}
 	for _, exe := range candidates {
 		info, err := os.Stat(exe)

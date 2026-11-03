@@ -19,27 +19,37 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/devconfig"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 	"github.com/axiom-shell/axiom/backend/internal/schema/yamlsrc"
+	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
-// Dev mode, switched while axiom runs (`axiom dev on|off`, the settings
-// card, /dev) and remembered across sessions in $XDG_STATE_HOME/axiom/
-// dev.json. While it's on:
-//   - the schema is rebuilt within 100 ms of a YAML edit (schema.changed);
+// Dev mode runs a dev tree (a clone, `axiom dev set <path>`) on its own
+// binary, built from it, and its own config ($XDG_CONFIG_HOME/axiom/dev/),
+// switched while axiom runs (`axiom dev on|off`, Settings, /dev) and
+// remembered across sessions in $XDG_STATE_HOME/axiom/dev.json. It's
+// "active" when the dev image runs (the dev build on the dev tree and
+// config); turned on, the installed image builds the dev tree (unless its
+// build is fresh) and re-execs into it. While it's on:
+//   - the dev tree's Go source (or a file the binary embeds) is built,
+//     after an edit, into $XDG_STATE_HOME/axiom/dev/axiom, and re-exec'd
+//     into, the shell restarted onto the dev tree when it ran another; a
+//     build that fails leaves the daemon as it was, and one the source, the
+//     tree or the choice changed under doesn't switch;
+//   - the dev image rebuilds the schema within 100 ms of a YAML edit
+//     (schema.changed); the installed image re-execs into the installed
+//     binary when it's rebuilt;
 //   - a tree whose schema isn't the binary's may write the config;
-//   - the daemon logs at debug level;
-//   - an edit to the Go source (or a file the binary embeds) builds a dev
-//     binary into $XDG_STATE_HOME/axiom/dev/ and re-execs into it, the
-//     shell running on; a build that fails leaves the daemon as it was,
-//     and one the source changed under builds again before re-executing;
-//   - a rebuilt installed binary is re-exec'd into as well.
-// Turning it off goes back to the installed binary.
+//   - the daemon logs at debug level.
+// Turning it off goes back to the installed binary, tree and config. Every
+// build goes through one kicker (an edit, dev.rebuild, a stale build at the
+// session start, dev on, a new dev tree); devstart.go is the session start.
 
 // devChoiceFile holds the saved choice, under the state folder.
 const devChoiceFile = "dev.json"
@@ -47,9 +57,14 @@ const devChoiceFile = "dev.json"
 // DevState is dev mode as the shell and the CLI see it (dev.state).
 type DevState struct {
 	Enabled bool `json:"enabled"`
-	// Available: the tree has the Go source and go is installed, so edits
-	// can be built; Unavailable says why not (the schema still follows
-	// its YAML without them)
+	// Options: Settings shows the developer options (dev.json, not config)
+	Options bool `json:"options"`
+	// Active: the dev image runs (the dev build on the dev tree and the dev
+	// config); dev mode on and not active, the install runs while the dev
+	// build is built
+	Active bool `json:"active"`
+	// Available: the dev tree has the Go source and go is installed, so it
+	// can be built; Unavailable says why not
 	Available   bool         `json:"available"`
 	Unavailable string       `json:"unavailable,omitempty"`
 	Building    bool         `json:"building"`
@@ -57,10 +72,46 @@ type DevState struct {
 	// The image running, and the installed binary dev mode goes back to
 	Binary    string `json:"binary"`
 	Installed string `json:"installed"`
-	// OffReadOnly: turning dev mode off would leave the config read-only
-	// (the tree's schema isn't the running binary's, and it is the
-	// installed one; from a dev build the installed binary decides)
-	OffReadOnly bool `json:"offReadOnly"`
+	// The dev tree ("" when none is set) and the install tree; the dev
+	// tree's checkout: its branch, commit and whether it has changes
+	Tree        string `json:"tree"`
+	InstallTree string `json:"installTree"`
+	Branch      string `json:"branch,omitempty"`
+	Commit      string `json:"commit,omitempty"`
+	Dirty       bool   `json:"dirty"`
+	// Build: the dev build against the dev tree
+	Build DevBuildState `json:"build"`
+	// Config: the dev config
+	Config DevConfigState `json:"config"`
+}
+
+// DevBuildState is the dev build against the dev tree (DevState.build), as
+// last looked at (at a switch, the start, after a build: never polled).
+type DevBuildState struct {
+	// Fresh: built from the dev tree as it is, and new enough to run
+	Fresh bool   `json:"fresh"`
+	Why   string `json:"why,omitempty"` // why not
+	// The build recorded for the dev tree: the commit it was built at, and
+	// when
+	Commit string     `json:"commit,omitempty"`
+	Dirty  bool       `json:"dirty"`
+	At     *time.Time `json:"at,omitempty"`
+}
+
+// DevConfigState is the dev config (DevState.config): its file and live's,
+// and, while the dev image runs, what readying it did and found.
+type DevConfigState struct {
+	Path     string `json:"path"`
+	LivePath string `json:"livePath"`
+	devconfig.Prepared
+}
+
+// DevSetParams are dev.set's: each field given changes that (tree "":
+// none).
+type DevSetParams struct {
+	Enabled *bool   `json:"enabled,omitempty"`
+	Tree    *string `json:"tree,omitempty"`
+	Options *bool   `json:"options,omitempty"`
 }
 
 // BuildResult is the last dev build.
@@ -73,10 +124,27 @@ type BuildResult struct {
 type devMode struct {
 	d *Daemon
 
-	mu        sync.Mutex
-	enabled   bool
-	building  bool
+	// setMu: one dev.set at a time
+	setMu sync.Mutex
+
+	mu       sync.Mutex
+	enabled  bool
+	tree     string // the dev tree ("": none)
+	options  bool
+	building bool
+	// gen counts the dev tree's changes: a build of an earlier gen never
+	// switches
+	gen int
+	// switching: a re-exec into another image is scheduled, and no other
+	// switch is taken meanwhile
+	switching bool
 	lastBuild *BuildResult
+	git       gitState   // the dev tree's checkout
+	check     buildCheck // the dev build against the dev tree
+	// prepared is what readying the dev config did (the dev image)
+	prepared devconfig.Prepared
+	// startKick: build once the builds run (stale at the session start)
+	startKick bool
 
 	changed chan struct{} // the run loop's cue to start or stop the watchers
 	builds  *kicker
@@ -92,6 +160,31 @@ func newDevMode(d *Daemon, enabled bool) *devMode {
 	return m
 }
 
+// begin takes the saved choice's tree and options, reads the dev tree's
+// checkout and build, and takes the session start's decision: a stale
+// build is built once the builds run, a tripped guard is told.
+func (m *devMode) begin(ctx context.Context, choice devChoice, plan startDecision) {
+	var git gitState
+	var check buildCheck
+	if choice.Tree != "" {
+		git = gitInfo(ctx, choice.Tree)
+		check = buildFresh(m.d.dirs, choice.Tree)
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.tree, m.options, m.git, m.check = choice.Tree, choice.Options, git, check
+	switch plan.Action {
+	case startBuild:
+		if m.enabled && !m.active() {
+			m.d.opts.Log.Info("dev mode: building the dev tree, then switching", "tree", choice.Tree, "why", plan.Why)
+			m.startKick = true
+		}
+	case startStayLive:
+		m.d.opts.Log.Warn("dev mode: staying on the installed axiom", "why", plan.Why)
+		m.lastBuild = &BuildResult{At: time.Now(), Output: plan.Why}
+	}
+}
+
 func (m *devMode) part() part {
 	return part{name: "dev mode", methods: m.methods, run: m.run}
 }
@@ -103,16 +196,35 @@ func (m *devMode) Enabled() bool {
 	return m.enabled
 }
 
+// active: the dev image runs (on the dev config).
+func (m *devMode) active() bool {
+	return m.d.configDir != "" && m.d.configDir == devConfigDir(m.d.dirs)
+}
+
 // State is dev.state.
 func (m *devMode) State() DevState {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	st := DevState{
-		Enabled: m.enabled, Building: m.building, LastBuild: m.lastBuild,
+		Enabled: m.enabled, Options: m.options, Active: m.active(),
+		Building: m.building, LastBuild: m.lastBuild,
 		Binary: m.d.executable, Installed: m.d.installed,
+		Tree: m.tree, InstallTree: m.d.installTree,
+		Branch: m.git.Branch, Commit: m.git.Commit, Dirty: m.git.Dirty,
+		Build: DevBuildState{Fresh: m.check.Fresh, Why: m.check.Why},
+		Config: DevConfigState{
+			Path:     filepath.Join(devConfigDir(m.d.dirs), store.FileName),
+			LivePath: filepath.Join(m.d.dirs.Config, store.FileName),
+		},
 	}
-	st.OffReadOnly = m.d.executable == m.d.installed && !m.d.matches()
-	if reason := m.unavailable(); reason != "" {
+	if b := m.check.Build; m.tree != "" && b.Tree == m.tree {
+		at := b.At
+		st.Build.Commit, st.Build.Dirty, st.Build.At = b.Commit, b.Dirty, &at
+	}
+	if st.Active {
+		st.Config.Prepared = m.prepared
+	}
+	if reason := m.unavailable(m.tree); reason != "" {
 		st.Unavailable = reason
 	} else {
 		st.Available = true
@@ -120,14 +232,17 @@ func (m *devMode) State() DevState {
 	return st
 }
 
-// unavailable says why edits to the Go source can't be built here ("":
-// they can).
-func (m *devMode) unavailable() string {
-	if _, err := os.Stat(filepath.Join(m.d.opts.Tree, "backend", "go.mod")); err != nil {
-		return "this axiom tree has no Go source (an installed package): only the schema follows its source"
+// unavailable says why the dev tree at treeDir can't be built here ("":
+// it can).
+func (m *devMode) unavailable(treeDir string) string {
+	if treeDir == "" {
+		return "no dev tree is set: axiom dev set <clone>"
+	}
+	if _, err := os.Stat(filepath.Join(treeDir, "backend", "go.mod")); err != nil {
+		return "the dev tree has no Go source"
 	}
 	if _, err := exec.LookPath(m.d.opts.Go); err != nil {
-		return "go isn't installed: only the schema follows its source"
+		return "go isn't installed"
 	}
 	return ""
 }
@@ -181,28 +296,167 @@ func saveDevChoice(dirs xdg.Dirs, change func(*devChoice)) error {
 	return nil
 }
 
-// Set turns dev mode on or off, saving the choice. Off while a dev build
-// runs goes back to the installed binary.
-func (m *devMode) Set(on bool) error {
-	if err := saveDevChoice(m.d.dirs, func(c *devChoice) { c.Enabled = on }); err != nil {
-		return err
+// validDevTree is path as a dev tree (its symlinks resolved), or why it
+// can't be one: an absolute path to an axiom tree with the Go source.
+func validDevTree(path string) (string, error) {
+	if !filepath.IsAbs(path) {
+		return "", axerr.New(axerr.BadRequest, "the dev tree must be an absolute path: %s", path)
+	}
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", axerr.Wrap(axerr.NotFound, err, "the dev tree %s", path)
+	}
+	if !tree.IsTree(resolved) {
+		return "", axerr.New(axerr.NotFound, "%s isn't an axiom tree (no qml/shell.qml and qml/config/)", resolved)
+	}
+	if _, err := os.Stat(filepath.Join(resolved, "backend", "go.mod")); err != nil {
+		return "", axerr.New(axerr.NotFound, "%s has no Go source (backend/go.mod): a dev tree is a clone", resolved)
+	}
+	return resolved, nil
+}
+
+// devImage is the dev image on the dev tree at treeDir.
+func (m *devMode) devImage(treeDir string) image {
+	return image{Tree: treeDir, ConfigDir: devConfigDir(m.d.dirs), Dev: true}
+}
+
+// installImage is the install's image, dev mode off.
+func (m *devMode) installImage() image {
+	return image{Tree: m.d.installTree, ConfigDir: m.d.dirs.Config, Dev: false}
+}
+
+// Set changes dev mode (dev.set), saving the choice: the dev tree (checked;
+// "" clears it), the developer options, and on or off. On builds the dev
+// tree and re-execs into it (at once when its build is fresh); a new dev
+// tree while on does the same; off, from the dev image, re-execs into the
+// installed binary on the install tree and live config (a build running
+// meanwhile finds dev mode off and doesn't switch).
+func (m *devMode) Set(ctx context.Context, p DevSetParams) error {
+	m.setMu.Lock()
+	defer m.setMu.Unlock()
+	var newTree string
+	if p.Tree != nil && *p.Tree != "" {
+		t, err := validDevTree(*p.Tree)
+		if err != nil {
+			return err
+		}
+		newTree = t
 	}
 	m.mu.Lock()
-	was := m.enabled
-	m.enabled = on
+	wasOn, oldTree, switching := m.enabled, m.tree, m.switching
 	m.mu.Unlock()
-	if was == on {
-		return nil
+	if switching {
+		return axerr.New(axerr.Unavailable, "dev mode is switching: try again in a moment")
 	}
-	m.d.opts.Log.Info("dev mode", "enabled", on)
-	m.setLogLevel(on)
-	notify(m.changed)
-	m.d.pushState()
+	on, treeDir := wasOn, oldTree
+	if p.Enabled != nil {
+		on = *p.Enabled
+	}
+	if p.Tree != nil {
+		treeDir = newTree
+	}
+	treeChanged := treeDir != oldTree
+	if on && treeDir == "" {
+		if oldTree != "" {
+			return axerr.New(axerr.Refused, "dev mode runs this tree: turn it off first (axiom dev off)")
+		}
+		return axerr.New(axerr.Refused, "set a dev tree first: axiom dev set <clone>")
+	}
+	// What a switch onto the dev tree would run: its build, else a new one
+	var check buildCheck
+	var git gitState
+	if treeDir != "" && (treeChanged || on && !wasOn) {
+		check = buildFresh(m.d.dirs, treeDir)
+		if on && !check.Fresh {
+			if reason := m.unavailable(treeDir); reason != "" {
+				return axerr.New(axerr.Unavailable, "the dev tree can't be built: %s", reason)
+			}
+		}
+	}
+	if treeChanged && treeDir != "" {
+		git = gitInfo(ctx, treeDir)
+	}
+	if err := saveDevChoice(m.d.dirs, func(c *devChoice) {
+		c.Enabled, c.Tree = on, treeDir
+		if p.Options != nil {
+			c.Options = *p.Options
+		}
+	}); err != nil {
+		return err
+	}
+
+	m.mu.Lock()
+	m.enabled, m.tree = on, treeDir
+	if p.Options != nil {
+		m.options = *p.Options
+	}
+	if treeChanged {
+		m.gen++
+		m.git, m.check = git, check
+		if treeDir == "" {
+			m.check = buildCheck{}
+		}
+	} else if treeDir != "" && on && !wasOn {
+		m.check = check
+	}
+	m.mu.Unlock()
+
+	if on != wasOn {
+		m.d.opts.Log.Info("dev mode", "enabled", on, "tree", treeDir)
+		m.setLogLevel(on)
+		m.d.pushState()
+	}
+	if treeChanged {
+		m.d.opts.Log.Info("dev mode: the dev tree", "tree", treeDir)
+	}
+	if on != wasOn || treeChanged {
+		notify(m.changed)
+	}
 	m.push()
-	if !on && m.d.executable != m.d.installed {
-		m.d.reexecSoon(m.d.installed, m.d.image())
+	switch {
+	case !on && wasOn:
+		if m.active() || m.d.executable != m.d.installed {
+			m.switchSoon(m.d.installed, m.installImage())
+		}
+	case on && (!wasOn || treeChanged):
+		if check.Fresh {
+			m.switchSoon(DevBinary(m.d.dirs), m.devImage(treeDir))
+		} else {
+			m.builds.Kick()
+		}
 	}
 	return nil
+}
+
+// switchSoon re-execs into exe running img once the reply is out, and
+// refuses other switches meanwhile.
+func (m *devMode) switchSoon(exe string, img image) {
+	m.mu.Lock()
+	m.switching = true
+	m.mu.Unlock()
+	m.d.reexecSoon(exe, img)
+}
+
+// switchFailed: the re-exec didn't happen, the daemon runs on.
+func (m *devMode) switchFailed() {
+	m.mu.Lock()
+	was := m.switching
+	m.switching = false
+	m.mu.Unlock()
+	if was {
+		m.push()
+	}
+}
+
+// shellHello: the shell said hello. In the dev image it came up, so the
+// boot guard's marker goes.
+func (m *devMode) shellHello() {
+	if !m.active() {
+		return
+	}
+	if err := clearBoot(m.d.dirs); err != nil {
+		m.d.opts.Log.Warn("dev mode: clearing the boot guard", "err", err)
+	}
 }
 
 func (m *devMode) setLogLevel(on bool) {
@@ -226,19 +480,20 @@ func (m *devMode) methods(reg *rpc.Registry) {
 	rpc.Handle(reg, "dev.get", func(ctx context.Context, c *rpc.Conn, _ struct{}) (DevState, error) {
 		return m.State(), nil
 	})
-	rpc.Handle(reg, "dev.set", func(ctx context.Context, c *rpc.Conn, p struct {
-		Enabled bool `json:"enabled"`
-	}) (DevState, error) {
-		if err := m.Set(p.Enabled); err != nil {
+	rpc.Handle(reg, "dev.set", func(ctx context.Context, c *rpc.Conn, p DevSetParams) (DevState, error) {
+		if err := m.Set(ctx, p); err != nil {
 			return DevState{}, err
 		}
 		return m.State(), nil
 	})
 	rpc.Handle(reg, "dev.rebuild", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
-		if !m.Enabled() {
+		m.mu.Lock()
+		on, treeDir := m.enabled, m.tree
+		m.mu.Unlock()
+		if !on {
 			return struct{}{}, axerr.New(axerr.Unavailable, "dev mode is off (axiom dev on)")
 		}
-		if reason := m.unavailable(); reason != "" {
+		if reason := m.unavailable(treeDir); reason != "" {
 			return struct{}{}, axerr.New(axerr.Unavailable, "%s", reason)
 		}
 		m.builds.Kick()
@@ -246,21 +501,35 @@ func (m *devMode) methods(reg *rpc.Registry) {
 	})
 }
 
-// run starts the watchers while dev mode is on and stops them when it
-// goes off, until ctx ends.
+// watchKey is what the watchers run for: dev mode on and its tree (the
+// image, active or not, is the process's own).
+type watchKey struct {
+	enabled bool
+	tree    string
+}
+
+func (m *devMode) watchKey() watchKey {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return watchKey{m.enabled, m.tree}
+}
+
+// run starts the watchers for dev mode as it is, and starts them again
+// whenever it goes on or off or its tree changes, until ctx ends.
 func (m *devMode) run(ctx context.Context) error {
 	var stop func()
+	var key watchKey
 	defer func() {
 		if stop != nil {
 			stop()
 		}
 	}()
 	for {
-		if on := m.Enabled(); on && stop == nil {
-			stop = m.watch(ctx)
-		} else if !on && stop != nil {
-			stop()
-			stop = nil
+		if k := m.watchKey(); stop == nil || k != key {
+			if stop != nil {
+				stop()
+			}
+			key, stop = k, m.watch(ctx, k)
 		}
 		select {
 		case <-ctx.Done():
@@ -270,8 +539,10 @@ func (m *devMode) run(ctx context.Context) error {
 	}
 }
 
-// watch starts the watchers and returns what stops them (and waits).
-func (m *devMode) watch(ctx context.Context) func() {
+// watch starts the watchers for key and returns what stops them (and
+// waits): while dev mode is on, the dev tree's source (and its builds),
+// and the schema's YAML in the dev image, else the installed binary.
+func (m *devMode) watch(ctx context.Context, key watchKey) func() {
 	ctx, cancel := context.WithCancel(ctx)
 	var wg sync.WaitGroup
 	start := func(name string, fn func(context.Context) error) {
@@ -283,15 +554,25 @@ func (m *devMode) watch(ctx context.Context) func() {
 			}
 		}()
 	}
-	start("the schema watch", m.watchSchema)
-	if m.d.installed != "" {
-		start("the binary watch", m.watchBinary)
-	}
-	if reason := m.unavailable(); reason == "" {
-		start("the builds", m.builds.run)
-		start("the source watch", m.watchSource)
-	} else {
-		m.d.opts.Log.Info("dev mode: not building the Go source", "why", reason)
+	if key.enabled {
+		if m.active() {
+			start("the schema watch", m.watchSchema)
+		} else if m.d.installed != "" {
+			start("the binary watch", m.watchBinary)
+		}
+		if reason := m.unavailable(key.tree); reason == "" {
+			start("the builds", m.builds.run)
+			start("the source watch", func(ctx context.Context) error { return m.watchSource(ctx, key.tree) })
+			m.mu.Lock()
+			kick := m.startKick
+			m.startKick = false
+			m.mu.Unlock()
+			if kick {
+				m.builds.Kick()
+			}
+		} else {
+			m.d.opts.Log.Info("dev mode: not building the dev tree", "why", reason)
+		}
 	}
 	return func() {
 		cancel()
@@ -360,37 +641,19 @@ func (m *devMode) watchSchema(ctx context.Context) error {
 	return m.watchDirs(ctx, roots, nil, isYAML, 100*time.Millisecond, m.d.rebuildSchema)
 }
 
-// watchSource builds a dev binary whenever the Go source, or a file the
-// binary embeds, changes. Tests, editors' temporary files and the
-// generated copies (which the build itself writes) are left out.
-func (m *devMode) watchSource(ctx context.Context) error {
-	jsonDir := filepath.Join(tree.QMLDir(m.d.opts.Tree), "config", "json")
-	embedded := map[string]bool{
-		filepath.Join(jsonDir, "backend.json"):        true,
-		filepath.Join(jsonDir, "theme-defaults.json"): true,
-	}
-	generated := filepath.Join(m.d.opts.Tree, "backend", "internal", "assets", "data")
-	skip := func(dir string) bool {
-		base := filepath.Base(dir)
-		return dir == generated || base == "testdata" || (strings.HasPrefix(base, ".") && len(base) > 1)
-	}
+// watchSource builds a dev binary whenever a build input of the dev tree
+// at treeDir changes (isBuildInput: the Go source, a file the binary
+// embeds).
+func (m *devMode) watchSource(ctx context.Context, treeDir string) error {
 	keep := func(p string) bool {
-		if embedded[p] {
-			m.edited.Store(true)
-			return true
-		}
-		base := filepath.Base(p)
-		if strings.HasPrefix(base, ".") || strings.HasSuffix(base, "_test.go") || !strings.HasPrefix(p, filepath.Join(m.d.opts.Tree, "backend")+"/") {
-			return false
-		}
-		switch filepath.Ext(base) {
-		case ".go", ".mod", ".sum", ".js", ".json":
+		if isBuildInput(treeDir, p) {
 			m.edited.Store(true)
 			return true
 		}
 		return false
 	}
-	return m.watchDirs(ctx, []string{filepath.Join(m.d.opts.Tree, "backend"), jsonDir}, skip, keep, time.Second, m.builds.Kick)
+	roots := []string{filepath.Join(treeDir, "backend"), filepath.Join(tree.QMLDir(treeDir), "config", "json")}
+	return m.watchDirs(ctx, roots, buildWalkSkip(treeDir), keep, time.Second, m.builds.Kick)
 }
 
 // watchBinary re-execs into the installed binary when it is rebuilt
@@ -425,7 +688,7 @@ func (m *devMode) watchBinary(ctx context.Context) error {
 			if err != nil || now.Mode()&0o111 == 0 || (before != nil && os.SameFile(before, now) && now.ModTime().Equal(before.ModTime())) {
 				continue
 			}
-			if err := m.d.reexec(installed, m.d.image()); err != nil {
+			if err := m.d.reexecInto(installed, m.d.image()); err != nil {
 				m.d.opts.Log.Error("re-exec", "err", err)
 			}
 		}
@@ -436,19 +699,35 @@ func (m *devMode) watchBinary(ctx context.Context) error {
 // keeps (its tail: the errors).
 const buildOutputLimit = 8 << 10
 
-// build builds a dev binary from the tree's source and re-execs into it,
-// unless the source changed meanwhile (a branch switch, then a pull): the
-// image would be stale and the edits' kick would die with this process,
-// so the next build (that kick's) re-execs instead.
+// build builds the dev binary from the dev tree's source, records it
+// (build.json) and re-execs into the dev image, unless meanwhile dev mode
+// went off, its tree changed (gen), another switch was scheduled, or the
+// source changed (a branch switch, then a pull: the image would be stale
+// and the edits' kick would die with this process, so the next build, that
+// kick's, re-execs instead). A binary older than dev trees is never run.
 func (m *devMode) build(ctx context.Context) {
-	m.edited.Store(false)
 	m.mu.Lock()
+	on, treeDir, gen := m.enabled, m.tree, m.gen
+	if !on || treeDir == "" {
+		m.mu.Unlock()
+		return
+	}
 	m.building = true
 	m.mu.Unlock()
+	m.edited.Store(false)
 	m.push()
-	out, err := m.compile(ctx)
+	fp, fpErr := fingerprint(treeDir)
+	info, out, err := m.compile(ctx, treeDir)
 	if ctx.Err() != nil {
+		m.mu.Lock()
+		m.building = false
+		m.mu.Unlock()
+		m.push()
 		return
+	}
+	if err == nil && info.Handoff < minDevHandoff {
+		err = axerr.New(axerr.Unavailable, "this tree predates dev trees: merge main")
+		out = []byte(err.Error())
 	}
 	res := &BuildResult{OK: err == nil, At: time.Now()}
 	if err != nil {
@@ -458,8 +737,22 @@ func (m *devMode) build(ctx context.Context) {
 		}
 		m.d.opts.Log.Error("dev build failed: keeping this binary", "err", err, "output", res.Output)
 	}
+	git := gitInfo(ctx, treeDir)
+	if err == nil && fpErr == nil {
+		b := devBuild{Tree: treeDir, Fingerprint: fp, Commit: git.Commit, Dirty: git.Dirty, Handoff: info.Handoff, Protocol: info.Protocol, At: res.At}
+		if werr := writeBuild(m.d.dirs, b); werr != nil {
+			m.d.opts.Log.Warn("dev mode: recording the build", "err", werr)
+		}
+	}
 	m.mu.Lock()
 	m.building, m.lastBuild = false, res
+	current := m.enabled && m.gen == gen
+	if current {
+		m.git = git
+		if err == nil {
+			m.check = buildFresh(m.d.dirs, treeDir)
+		}
+	}
 	m.mu.Unlock()
 	m.push()
 	if err != nil {
@@ -469,10 +762,21 @@ func (m *devMode) build(ctx context.Context) {
 		m.d.opts.Log.Info("dev build done, but the source changed meanwhile: building again")
 		return
 	}
+	m.mu.Lock()
+	switchNow := m.enabled && m.gen == gen && !m.switching
+	if switchNow {
+		m.switching = true
+	}
+	m.mu.Unlock()
+	if !switchNow {
+		m.d.opts.Log.Info("dev build done, but dev mode went off, its tree changed or it's switching meanwhile: not re-executing")
+		return
+	}
 	target := m.binary()
-	m.d.opts.Log.Info("dev build done: re-executing", "binary", target)
-	if err := m.d.reexec(target, m.d.image()); err != nil {
+	m.d.opts.Log.Info("dev build done: re-executing", "binary", target, "tree", treeDir)
+	if err := m.d.reexecInto(target, m.devImage(treeDir)); err != nil {
 		m.d.opts.Log.Error("re-exec", "err", err)
+		m.switchFailed()
 	}
 }
 
@@ -483,20 +787,21 @@ func (m *devMode) binary() string { return DevBinary(m.d.dirs) }
 // isn't the daemon's).
 func DevBinary(dirs xdg.Dirs) string { return dirs.State + "dev/axiom" }
 
-// compile builds the dev binary.
-func (m *devMode) compile(ctx context.Context) ([]byte, error) {
+// compile builds the dev binary from the tree at treeDir.
+func (m *devMode) compile(ctx context.Context, treeDir string) (buildinfo.Info, []byte, error) {
 	target := m.binary()
 	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
-		return nil, err
+		return buildinfo.Info{}, nil, err
 	}
-	return buildAxiom(ctx, m.d.opts.Go, m.d.opts.Tree, target)
+	return buildAxiom(ctx, m.d.opts.Go, treeDir, target)
 }
 
 // buildAxiom builds the tree's axiom binary to target (a dev build, or
 // the installed binary after a self-update): go generate, then go build
 // into a file beside it, checked to run before it replaces target. It
-// returns the tools' output.
-func buildAxiom(ctx context.Context, goBin, treeDir, target string) ([]byte, error) {
+// returns what the new binary says it is (`version --json`) and the
+// tools' output.
+func buildAxiom(ctx context.Context, goBin, treeDir, target string) (buildinfo.Info, []byte, error) {
 	src := filepath.Join(treeDir, "backend")
 	next := target + ".new"
 	defer os.Remove(next)
@@ -509,24 +814,34 @@ func buildAxiom(ctx context.Context, goBin, treeDir, target string) ([]byte, err
 		return cmd.Run()
 	}
 	if err := run(goBin, "generate", "./internal/assets"); err != nil {
-		return out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go generate")
+		return buildinfo.Info{}, out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go generate")
 	}
 	if err := run(goBin, "build", "-o", next, "-trimpath", "./cmd/axiom"); err != nil {
-		return out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go build")
+		return buildinfo.Info{}, out.Bytes(), axerr.Wrap(axerr.Unavailable, err, "go build")
 	}
-	vout, err := swapIn(ctx, next, target)
-	out.Write(vout)
-	return out.Bytes(), err
+	info, vout, err := swapIn(ctx, next, target)
+	if err != nil {
+		out.Write(vout)
+	}
+	return info, out.Bytes(), err
 }
 
 // swapIn replaces target with next, a new axiom binary beside it, once
-// it's checked to run (its `version`, returned).
-func swapIn(ctx context.Context, next, target string) ([]byte, error) {
-	out, err := exec.CommandContext(ctx, next, "version").CombinedOutput()
-	if err != nil {
-		return out, axerr.Wrap(axerr.Unavailable, err, "the new binary doesn't run")
+// it's checked to run: what it says it is (`version --json`; a zero Info
+// when it doesn't say, as no binary of before the field would be execed
+// for dev mode) and its output.
+func swapIn(ctx context.Context, next, target string) (buildinfo.Info, []byte, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, next, "version", "--json")
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		return buildinfo.Info{}, append(stdout.Bytes(), stderr.Bytes()...), axerr.Wrap(axerr.Unavailable, err, "the new binary doesn't run")
 	}
-	return out, os.Rename(next, target)
+	var info buildinfo.Info
+	if json.Unmarshal(stdout.Bytes(), &info) != nil {
+		info = buildinfo.Info{}
+	}
+	return info, stdout.Bytes(), os.Rename(next, target)
 }
 
 // rebuildSchema builds the schema from its YAML source again: written for
@@ -560,7 +875,6 @@ func (d *Daemon) rebuildSchema() {
 		}
 	}
 	d.setSchema(data, hash)
-	d.dev.push() // whether turning it off leaves the config read-only
 	d.opts.Log.Info("rebuilt the schema", "hash", hash)
 	pushSchemaChanged.Send(d.server, schemaChanged{Hash: hash, Path: d.runtime.File(SchemaFile)}, subscribedTo(topicConfig))
 	d.store.Reschema(config.Pipeline{S: schema.New(parsed)})

@@ -56,7 +56,8 @@ chosen last (see "axiom dev"), and logs go to the terminal too.`,
 				level := new(slog.LevelVar)
 				log := slog.New(slog.NewTextHandler(out, &slog.HandlerOptions{Level: level}))
 				return daemon.Run(ctx, daemon.Options{
-					Tree: root, Dev: *dev, NoShell: *noShell, QS: *qs,
+					Tree: root, TreeOverride: *dir != "" || e.Getenv("AXIOM_TREE") != "",
+					Dev: *dev, NoShell: *noShell, QS: *qs,
 					Getenv: e.Getenv, Log: log, LogLevel: level, ShellOutput: shellOut,
 				})
 			}

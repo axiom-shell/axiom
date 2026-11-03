@@ -62,12 +62,15 @@ type Options struct {
 	Tree string // the axiom tree the shell runs from
 	// Dev starts in dev mode whatever the saved choice ($XDG_STATE_HOME/
 	// axiom/dev.json, which `axiom dev on|off` sets)
-	Dev     bool
-	NoShell bool   // don't start quickshell (tests, headless use)
-	QS      string // the quickshell binary (default "qs")
-	Go      string // the go binary dev mode builds with (default "go")
-	Getenv  func(string) string
-	Log     *slog.Logger
+	Dev bool
+	// TreeOverride: the tree was given (--tree, $AXIOM_TREE), and wins
+	// over dev mode's at the session start
+	TreeOverride bool
+	NoShell      bool   // don't start quickshell (tests, headless use)
+	QS           string // the quickshell binary (default "qs")
+	Go           string // the go binary dev mode builds with (default "go")
+	Getenv       func(string) string
+	Log          *slog.Logger
 	// LogLevel, when set, follows dev mode: debug while it's on
 	LogLevel *slog.LevelVar
 	// ShellOutput gets the shell's stdout and stderr (nil: discarded)
@@ -81,6 +84,11 @@ type Options struct {
 	registered func(*rpc.Registry)
 	// releases replaces the official releases' download url (tests)
 	releases string
+	// exec replaces execve for the session start's exec and the dev
+	// image's way back (tests)
+	exec func(exe string, argv, env []string) error
+	// reexec replaces the re-exec into another image (tests)
+	reexec func(exe string, img image) error
 }
 
 // Files in the runtime directory
@@ -189,7 +197,7 @@ type Daemon struct {
 }
 
 // Run runs the daemon until ctx ends or it is told to shut down.
-func Run(ctx context.Context, opts Options) error {
+func Run(ctx context.Context, opts Options) (err error) {
 	if opts.Log == nil {
 		opts.Log = slog.New(slog.DiscardHandler)
 	}
@@ -238,10 +246,22 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 	defer d.instance.Release()
+	// A dev image the session start exec'd into goes back to the installed
+	// binary if it fails before it serves (devstart.go)
+	if h != nil && h.Fresh {
+		defer func() {
+			if err != nil && ctx.Err() == nil {
+				d.fallBackLive(h, err)
+			}
+		}()
+	}
 
-	// The image: as the image before a re-exec named it, else (dev mode
-	// as --dev or the saved choice) the tree run found on the live config
+	// The session start: dev mode's fresh build is exec'd into now (or its
+	// stale one built once running); then the image, as the image before a
+	// re-exec named it, else (dev mode as --dev or the saved choice) the
+	// tree run found on the live config
 	choice := loadDevChoice(d.dirs)
+	plan := d.sessionStart(h, choice)
 	img, installTree := startImage(h, choice, opts, d.dirs)
 	if h != nil && h.Fresh && img.ConfigDir != devConfigDir(d.dirs) {
 		opts.Log.Warn("started for dev mode, but dev.json names no dev tree now: running the install tree")
@@ -254,6 +274,7 @@ func Run(ctx context.Context, opts Options) error {
 		return axerr.New(axerr.NotFound, "no axiom tree to run (pass --tree)")
 	}
 	d.dev = newDevMode(d, img.Dev)
+	d.dev.begin(ctx, choice, plan)
 
 	if err := d.loadSchema(); err != nil {
 		closeConfigLock(h)
@@ -459,7 +480,7 @@ func Run(ctx context.Context, opts Options) error {
 			})
 		}
 	}
-	opts.Log.Info("axiom is running", "display", runtime.Display, "tree", opts.Tree, "socket", runtime.Socket(), "version", buildinfo.Get().Version, "config", d.store.Path(), "reexec", h != nil, "dev", d.dev.Enabled())
+	opts.Log.Info("axiom is running", "display", runtime.Display, "tree", opts.Tree, "socket", runtime.Socket(), "version", buildinfo.Get().Version, "config", d.store.Path(), "reexec", h != nil, "dev", d.dev.Enabled(), "devActive", d.dev.active())
 	<-ctx.Done()
 	d.tasks.Wait()
 	opts.Log.Info("axiom stopped")
@@ -502,6 +523,7 @@ func (d *Daemon) openStore(opts store.Options) (*store.Store, error) {
 		if err != nil {
 			return nil, err
 		}
+		d.dev.prepared = p // before anything reads it
 		d.opts.Log.Info("the dev config", "path", filepath.Join(d.configDir, store.FileName), "seeded", p.Seeded, "liveChanged", p.LiveChanged, "patched", p.Patched, "note", p.Note)
 	}
 	return store.Open(opts)
