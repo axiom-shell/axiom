@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting! Two commands give us most of what we need: `axiom bug-info` (your versions and setup; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) and `log.sh` (the shell's log), in axiom's `scripts/` folder: `~/.config/quickshell/axiom/scripts/` for a clone, `/usr/share/axiom/scripts/` for a distribution package.
+        Thanks for reporting! Two commands give us most of what we need: `axiom bug-info` (your versions and setup) and `axiom log` (the shell's log); `~/.local/bin/axiom` if `axiom` isn't on your `PATH`.
 
         Asking how to do something? [Discussions](https://github.com/axiom-shell/axiom/discussions/categories/q-a) is the place.
   - type: textarea
@@ -69,7 +69,7 @@ body:
     id: logs
     attributes:
       label: Log
-      description: The output of `scripts/log.sh`, right after the problem happens. `scripts/log.sh --debug` gives more detail. If the shell won't start, crashes, or doesn't save settings, add `axiom daemon logs` too.
+      description: The output of `axiom log`, right after the problem happens. `axiom log --debug` gives more detail. If the shell won't start, crashes, or doesn't save settings, add `axiom daemon logs` too.
       render: text
     validations:
       required: true

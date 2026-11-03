@@ -121,14 +121,17 @@ type Daemon struct {
 	instance      *fsx.Lock
 	listener      net.Listener
 
-	store     *store.Store
-	saved     *saved.Service
-	server    *rpc.Server
-	shell     *supervise.Supervisor
-	router    *ipcroute.Router
-	locker    *lockscreen.Locker
-	dev       *devMode
-	savedKick *kicker
+	store  *store.Store
+	saved  *saved.Service
+	server *rpc.Server
+	shell  *supervise.Supervisor
+	// shellEntry is the QML dir the shell runs from (`qs -p`), which
+	// names its quickshell instance (`axiom log` reads it)
+	shellEntry string
+	router     *ipcroute.Router
+	locker     *lockscreen.Locker
+	dev        *devMode
+	savedKick  *kicker
 	// compositor is the compositor's config layer (nil without the tree's
 	// tables)
 	compositor *manager.Manager
@@ -385,8 +388,9 @@ func Run(ctx context.Context, opts Options) error {
 		if h != nil {
 			adopt = h.Shell
 		}
+		d.shellEntry = tree.QMLDir(opts.Tree)
 		d.shell = supervise.New(supervise.Options{
-			Command:  ShellCommand(opts.QS, tree.QMLDir(opts.Tree)),
+			Command:  ShellCommand(opts.QS, d.shellEntry),
 			NoTHP:    true,
 			Env:      d.shellEnv(),
 			EnvFunc:  d.shellEnvNow,

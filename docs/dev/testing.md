@@ -45,7 +45,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
   - Revert temporary edits in place, not with `git checkout`.
 - A failed reload leaves the old generation running. Force a clean reload before editing config.json.
 - To wait for a reload: `timeout 8 bash -c 'until scripts/log.sh | grep -q "Configuration Loaded"; do :; done'`.
-- Raw logs: `qs log -c axiom -f` (or `-t 50`); each instance also writes `/run/user/$UID/quickshell/by-id/<instance>/log.log` (plain text; `pgrep -af "qs -c axiom"` finds the instance). stdout and journalctl show nothing.
+- Raw logs: `axiom log --debug -f` (or `axiom log -- -t 50`: `qs log` of the QML folder the daemon's shell runs from); each instance also writes `/run/user/$UID/quickshell/by-id/<instance>/log.log` (plain text; `pgrep -af "qs -p .*/qml"` finds the instance). stdout and journalctl show nothing.
 - If config.json was lost (it falls back to defaults), restore it from a snapshot in `~/.config/axiom/saved/`.
 - **Renaming or deleting a singleton** can leave a reload failing with `Type <Old> unavailable … File not found`: one fired between the edits and kept the old file in its module listing. Force one more reload (above); it rescans and loads. Add the old name to `RETIRED` in `scripts/check_docs.py` so docs still citing it fail.
 

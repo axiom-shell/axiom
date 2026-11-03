@@ -116,7 +116,8 @@ func TestInstallCopiesPointsGreetdAndBacksUp(t *testing.T) {
 	f.write(f.root, "var/lib/axiom-greeter/config/greeter.json", "{}", 0o644)
 	r := f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	if !f.exists("usr/share/axiom-greeter/qml/greeter.qml") || f.exists("usr/share/axiom-greeter/tests") ||
-		f.exists("usr/share/axiom-greeter/docs") || f.exists("usr/share/axiom-greeter/backend") {
+		f.exists("usr/share/axiom-greeter/docs") || f.exists("usr/share/axiom-greeter/backend") ||
+		f.exists("usr/share/axiom-greeter/scripts") {
 		t.Error("the copy isn't the shipped files")
 	}
 	if f.copied("fallback/greeter.json") != "{}" {

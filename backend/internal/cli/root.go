@@ -25,6 +25,7 @@ func Root() *Command {
 			configCommand(),
 			schemaCommand(),
 			lockCommand(),
+			logCommand(),
 			messageCommand(),
 			ipcCommand(),
 			execCommand(),

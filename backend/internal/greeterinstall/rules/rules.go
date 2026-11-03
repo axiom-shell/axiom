@@ -192,8 +192,10 @@ func (o Origin) Label() string {
 }
 
 // Ships says whether a copy takes a file of axiom's tree (by its path
-// from the tree's top): the greeter never runs the tests, docs, the
-// binary's source (an install copies the built binary) or install.sh.
+// from the tree's top): the greeter runs only qml/ and data/ (and the
+// built binary an install copies), never the tests, docs, dev tooling
+// (scripts/, the packaging, the repo's hooks), the binary's source or
+// install.sh; what the packages leave out too.
 func Ships(path string) bool {
 	return Hashes(path) && !strings.HasPrefix(path, "backend/")
 }
@@ -201,7 +203,7 @@ func Ships(path string) bool {
 // Hashes says whether a local copy's hash covers a file: what it ships,
 // and the binary's source.
 func Hashes(path string) bool {
-	for _, dir := range []string{"tests/", ".github/", "docs/"} {
+	for _, dir := range []string{"tests/", ".github/", "docs/", "scripts/", "packaging/", ".githooks/", ".claude/"} {
 		if strings.HasPrefix(path, dir) {
 			return false
 		}

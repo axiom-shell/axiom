@@ -45,7 +45,11 @@ func writeHelp(w io.Writer, cmd *Command, trail []string) {
 		if _, isBool := f.Value.(interface{ IsBoolFlag() bool }); !isBool {
 			arg = " " + valueName(f)
 		}
-		fmt.Fprintf(tw, "  --%s%s\t%s\n", f.Name, arg, f.Usage)
+		dash := "--"
+		if len(f.Name) == 1 {
+			dash = "-" // a short flag (-f, -o), as it's usually typed
+		}
+		fmt.Fprintf(tw, "  %s%s%s\t%s\n", dash, f.Name, arg, f.Usage)
 	})
 	tw.Flush()
 }

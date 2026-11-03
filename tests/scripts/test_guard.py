@@ -36,7 +36,7 @@ class Bash(unittest.TestCase):
 
     def test_ordinary_commands_pass(self):
         self.allows("scripts/dev/verify.sh", "git status && git diff HEAD", "axiom ipc overlay toggle",
-                    "scripts/log.sh -g lock", "grep -rn 'lockscreen lock' docs", "echo 'qs kill'", "qs log -f")
+                    "scripts/log.sh -g lock", "axiom log -f", "grep -rn 'lockscreen lock' docs", "echo 'qs kill'", "qs log -f")
 
     def test_compound_commands(self):
         self.blocks("(qs kill)", "{ qs kill; }", "echo $(qs kill)", "x=`qs kill`", "if true; then qs kill; fi",

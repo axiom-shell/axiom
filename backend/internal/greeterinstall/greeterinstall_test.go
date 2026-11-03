@@ -95,7 +95,7 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatal(err)
 	}
 	for _, name := range []string{"qml/greeter.qml", "qml/shell.qml", "data/greeter/greeter-session.sh",
-		"data/greeter/org.axiom.greeter.policy", "tests/tst_x.qml", "docs/notes.md", "backend/go.mod"} {
+		"data/greeter/org.axiom.greeter.policy", "tests/tst_x.qml", "docs/notes.md", "backend/go.mod", "scripts/generate.sh"} {
 		f.write(f.repo, name, name, 0o644)
 	}
 	f.git(tmp, "init", "-q", "-b", "main", f.repo)

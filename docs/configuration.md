@@ -17,7 +17,7 @@ Everything is configured from inside the shell (see [Features](features.md)). Op
 
 ### Where axiom keeps your files
 
-axiom never writes inside its own folder (`~/.config/quickshell/axiom`). What it saves goes in the standard XDG folders (under `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME` and `$XDG_DATA_HOME` if they're set):
+axiom never writes inside its own folder (`~/.local/share/axiom-shell`, or `/usr/share/axiom-shell` for a package). What it saves goes in the standard XDG folders (under `$XDG_CONFIG_HOME`, `$XDG_STATE_HOME` and `$XDG_DATA_HOME` if they're set):
 
 | What | Where |
 |---|---|
@@ -81,9 +81,9 @@ Setups other people built and shared at [axiom-shell/community-setups](https://g
 View the shell's log with:
 
 ```bash
-scripts/log.sh          # warnings and errors since the last reload
-scripts/log.sh --debug  # include console.log output
-scripts/log.sh -f       # follow
+axiom log               # warnings and errors
+axiom log --debug       # include console.log output
+axiom log -f            # follow
 ```
 
 A clean reload prints only `Reloading configuration...` and `Configuration Loaded`.
@@ -100,4 +100,4 @@ axiom restart           # restart the shell (the daemon keeps running)
 - **A notice saying axiom isn't running the shell:** the shell was started directly with `qs`. Start it with `axiom run` instead, and use that in your compositor's start-up line.
 - **A notice that the files and the binary are from different versions:** the `axiom` binary is older or newer than the shell's files, so axiom runs read-only and doesn't save settings. Rebuild the binary from the same clone (`scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`), then `axiom daemon reexec`.
 
-Reporting a bug? Include the output of `axiom bug-info` (your versions, compositor, distribution and config mode; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) along with the log (`scripts/log.sh`, in axiom's folder: `~/.config/quickshell/axiom` for a clone, `/usr/share/axiom` for a package).
+Reporting a bug? Include the output of `axiom bug-info` (your versions, compositor, distribution and config mode; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) along with the log (`axiom log`).

@@ -108,7 +108,10 @@ func TestShipsAndHashes(t *testing.T) {
 		{"docs/notes.md", false, false},
 		{".github/workflows/ci.yml", false, false},
 		{"install.sh", false, false},
-		{"scripts/install.sh", true, true},
+		{"scripts/generate.sh", false, false},
+		{"data/templates/nvim/axiom.lua", true, true},
+		{"packaging/aur/axiom-shell/PKGBUILD", false, false},
+		{".claude/hooks/guard.py", false, false},
 		{"qml/components/AGENTS.md", false, false},
 		{"qml/components/tests/x.qml", true, true},
 	} {

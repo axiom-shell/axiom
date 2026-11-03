@@ -270,9 +270,12 @@ func announceClosing(server *rpc.Server, reexec bool, wait time.Duration) {
 // StatusResult is daemon.status.
 type StatusResult struct {
 	HelloResult
-	Uptime  string            `json:"uptime"`
-	Shell   *supervise.Status `json:"shell,omitempty"`
-	Clients int               `json:"clients"`
+	Uptime string            `json:"uptime"`
+	Shell  *supervise.Status `json:"shell,omitempty"`
+	// QMLDir is the folder the shell runs from (`qs -p`, which names its
+	// quickshell instance: `axiom log` reads its log); "" with no shell
+	QMLDir  string `json:"qmlDir,omitempty"`
+	Clients int    `json:"clients"`
 }
 
 type configResult struct {
@@ -353,6 +356,7 @@ func (d *Daemon) coreMethods(reg *rpc.Registry) {
 		if d.shell != nil {
 			st := d.shell.Status()
 			res.Shell = &st
+			res.QMLDir = d.shellEntry
 		}
 		return res, nil
 	})
