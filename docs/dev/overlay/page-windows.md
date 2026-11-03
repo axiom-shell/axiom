@@ -43,7 +43,7 @@ How a tool page leaves the overlay for a window of its own (an xdg toplevel, Qui
 ### Desktop entries (`data/applications/`)
 - `axiom-<type>.desktop`, one per windowable page. `Exec=axiom ipc pages window <type>`.
 - The AUR packages install them to `/usr/share/applications`. install.sh copies them to `$XDG_DATA_HOME/applications` with `Exec` naming the binary by its path (a launcher's PATH may not have it). An install updated later keeps the copies it made then.
-- axiom's own launcher leaves out `axiom-*` entries (`LauncherManager._apps`), since its `/` commands open the same pages.
+- They're apps like any other, in axiom's launcher too: an entry opens its page in a window, where the page's `/` command opens the overlay (or goes to the window when the page is out).
 - A new windowable page needs an entry here, plus a row in the `pages` IPC line in `docs/usage.md`.
 
 ### Testing
