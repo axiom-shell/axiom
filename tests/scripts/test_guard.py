@@ -257,6 +257,19 @@ class Bash(unittest.TestCase):
 
 
 class Axiom(unittest.TestCase):
+    def setUp(self):
+        # The live session: wayland-1's daemon in /run/user/1000, no inherited $AXIOM_SOCKET
+        self.patches = [mock.patch.object(guard, "LIVE_RUNTIME", "/run/user/1000"),
+                        mock.patch.object(guard, "LIVE_DISPLAY", "wayland-1"),
+                        mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": "/run/user/1000", "WAYLAND_DISPLAY": "wayland-1"})]
+        for p in self.patches:
+            p.start()
+        os.environ.pop("AXIOM_SOCKET", None)
+
+    def tearDown(self):
+        for p in reversed(self.patches):
+            p.stop()
+
     def denied(self, cmd):
         try:
             guard.check({"tool_name": "Bash", "tool_input": {"command": cmd}})
@@ -297,8 +310,46 @@ class Axiom(unittest.TestCase):
     def test_reads_pass(self):
         for cmd in ("axiom ping", "axiom config get Bars", "axiom ipc list", "axiom launcher toggle",
                     "axiom config set Battery.notify off", "axiom debug wayland-globals", "axiom schema build",
-                    "axiom dev status", "axiom dev"):
+                    "axiom dev status", "axiom dev", "axiom dev config diff", "axiom --json dev config diff"):
             self.assertFalse(self.denied(cmd), cmd)
+
+    def test_live_dev_verbs_refused(self):
+        for cmd in ("axiom dev set ~/src/axiom-2", "axiom dev options --no-build", "axiom dev options",
+                    "axiom dev config copy --to live Bar.height", "axiom dev config pull --merge",
+                    "axiom --json dev config copy --to dev General", "env -i bash -c 'axiom dev set .'"):
+            self.assertTrue(self.denied(cmd), cmd)
+
+    def test_nested_daemon_socket_passes(self):
+        nested = "/run/user/1000/axiom/wayland-2/axiom.sock"
+        for cmd in (f"axiom --socket {nested} dev on", f"axiom --socket={nested} dev set ~/src/axiom-2",
+                    f"axiom --socket {nested} dev config copy --to live Bar.height",
+                    f"axiom --socket {nested} dev config pull", f"axiom --socket {nested} dev options --no-build",
+                    f"AXIOM_SOCKET={nested} axiom dev rebuild", f"axiom --socket {nested} quit",
+                    "axiom --socket $XDG_RUNTIME_DIR/axiom/wayland-2/axiom.sock dev off",
+                    f"/tmp/n/axiom --socket {nested} ipc lockscreen lock",
+                    "WAYLAND_DISPLAY=wayland-2 axiom dev on", "WAYLAND_DISPLAY=/tmp/n/wayland-2 axiom dev set ."):
+            self.assertFalse(self.denied(cmd), cmd)
+
+    def test_live_socket_still_refused(self):
+        live = "/run/user/1000/axiom/wayland-1/axiom.sock"
+        for cmd in (f"axiom --socket {live} dev on", f"axiom --socket={live} dev set .", f"AXIOM_SOCKET={live} axiom quit",
+                    "axiom --socket $XDG_RUNTIME_DIR/axiom/$WAYLAND_DISPLAY/axiom.sock dev on",
+                    "axiom --socket /run/user/1000/axiom/wayland-2/../wayland-1/axiom.sock dev off",
+                    "axiom --socket /run/user/1000/other.sock dev on", "WAYLAND_DISPLAY=wayland-1 axiom dev on",
+                    "WAYLAND_DISPLAY=$WAYLAND_DISPLAY axiom lock", "XDG_RUNTIME_DIR=/run/user/1000 axiom dev set ."):
+            self.assertTrue(self.denied(cmd), cmd)
+
+    def test_inherited_socket_counts(self):
+        # A session started from the shell inherits its $AXIOM_SOCKET, which the CLI prefers over $WAYLAND_DISPLAY
+        with mock.patch.dict(os.environ, {"AXIOM_SOCKET": "/run/user/1000/axiom/wayland-1/axiom.sock"}):
+            self.assertTrue(self.denied("WAYLAND_DISPLAY=wayland-2 axiom dev on"))
+            self.assertTrue(self.denied("axiom dev set ."))
+            self.assertFalse(self.denied("AXIOM_SOCKET=/run/user/1000/axiom/wayland-2/axiom.sock axiom dev on"))
+
+    def test_unknown_live_display_refuses_the_runtime_dir(self):
+        with mock.patch.object(guard, "LIVE_DISPLAY", ""):
+            self.assertTrue(self.denied("axiom --socket /run/user/1000/axiom/wayland-2/axiom.sock dev on"))
+            self.assertTrue(self.denied("WAYLAND_DISPLAY=wayland-2 axiom dev on"))
 
 
 class ConfigEdits(unittest.TestCase):
