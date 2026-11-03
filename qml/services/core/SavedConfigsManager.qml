@@ -106,7 +106,9 @@ QtObject {
 
   // Saves the running config's snapshot parts under `name`, replacing any
   // existing snapshot of that name. Unsaved settings edits go first (the
-  // settings page saves before asking).
+  // settings page saves before asking). While dev mode runs, a snapshot
+  // the installed axiom can restore isn't replaced: axiom refuses
+  // (`conflict`), and the status asks for a new name.
   function save(name) {
     if (sanitize(name) === "") {
       root.status = I18n.tr("Enter a name to save as");
@@ -115,9 +117,16 @@ QtObject {
     BackendManager.call("saved.save", {
       "name": name
     }, (error, result) => {
-      root.status = error ? I18n.tr("Failed to save \"{0}\"", sanitize(name)) : I18n.tr("Saved \"{0}\"", result.name);
-      if (error)
-        console.warn("[SavedConfigsManager] Saving", name, "failed:", error.message);
+      if (!error) {
+        root.status = I18n.tr("Saved \"{0}\"", result.name);
+        return;
+      }
+      if (error.kind === "conflict" && (error.message ?? "").includes("dev mode")) {
+        root.status = I18n.tr("\"{0}\" is one the installed axiom can restore, so dev mode doesn't replace it: save under a new name", sanitize(name));
+        return;
+      }
+      root.status = I18n.tr("Failed to save \"{0}\"", sanitize(name));
+      console.warn("[SavedConfigsManager] Saving", name, "failed:", error.message);
     });
   }
 

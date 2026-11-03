@@ -232,8 +232,17 @@ Item {
     }
   }
 
+  // Dev mode is on: which tree and config the page edits (DevBanner)
+  Loader {
+    id: devBanner
+    active: DevManager.enabled
+    width: parent.width
+    sourceComponent: DevBanner {}
+  }
+
   TitledCard {
     id: titledCard
+    anchors.topMargin: devBanner.active ? devBanner.height + Widget.spacing : 0
     // I18n.tr("Search results"); category names come from the schema's
     // x-categories
     // Each category keeps its own place; search results start at the top
@@ -417,8 +426,8 @@ Item {
                 Component.onCompleted: {
                   if (!root.listing)
                     root._cards[card.modelData.key] = card;
-                  // Its title from the schema (`x-cardTitle`, or the
-                  // category's `cardTitle`), as the sidebar names it
+                  // Its title from the schema (`x-card.title`, or the
+                  // category's card's `title`), as the sidebar names it
                   if (card.modelData.kind === "card")
                     card.setSource(Qt.resolvedUrl(card.modelData.card + "Card.qml"), Object.assign({
                       "title": I18n.tr(card.modelData.title)

@@ -1,0 +1,263 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import qs.config
+import qs.services.core
+import qs.components.methods
+import qs.components.reusable
+
+// The Development category's second card (its `cards`): every setting the
+// dev config and live differ on, which of them changed it since dev last
+// took live over, and a copy either way (a dev-only setting, which the
+// installed axiom doesn't have, can't go to live). Nothing merges by
+// itself. Asked of axiom when shown and after each change, only while
+// the dev image runs (DevManager.diff; rows labelled by methods/DevDiff)
+FieldGroup {
+  id: root
+
+  // dev.config.diff's rows: [{ path, side, dev?, live?, devOnly }]
+  property var rows: []
+  property bool loaded: false
+  // A call is out: the buttons wait
+  property bool busy: false
+  // What the last action said: a refusal (`error`) or what it did
+  property string message: ""
+  property bool error: false
+
+  readonly property var schema: ConfigManager.configSchema
+
+  // Asks axiom again (only the dev image has the dev config open)
+  function refresh() {
+    if (!DevManager.active) {
+      root.rows = [];
+      root.loaded = false;
+      return;
+    }
+    DevManager.diff((error, result) => {
+      root.loaded = !error;
+      root.rows = error ? [] : result.rows;
+      if (error)
+        root._said(error.message, true);
+    });
+  }
+
+  function _said(text, isError) {
+    root.message = text;
+    root.error = isError;
+  }
+
+  // Copies one row's setting `to` "live" or "dev"
+  function copy(row, to) {
+    root.busy = true;
+    DevManager.copy([row.path], to, (error, result) => {
+      root.busy = false;
+      if (error) {
+        root._said(error.message, true);
+        return;
+      }
+      root.rows = result.diff.rows;
+      root._said(to === "live" ? I18n.tr("Copied to live.") : I18n.tr("Copied to dev."), false);
+    });
+  }
+
+  // Brings live's changes over where dev left the setting alone
+  function merge() {
+    root.busy = true;
+    DevManager.pull("merge", (error, result) => {
+      root.busy = false;
+      if (error) {
+        root._said(error.message, true);
+        return;
+      }
+      root.rows = result.diff.rows;
+      const kept = result.conflicts?.length ?? 0;
+      root._said(kept === 0 ? I18n.tr("Live changes brought over.") : I18n.tr("Live changes brought over; {0} changed in dev too kept their dev values.", kept), false);
+    });
+  }
+
+  // A row's setting, its titles from the dev schema
+  function rowTitle(row) {
+    return DevDiff.titleParts(root.schema, row.path).map(part => part.schema ? I18n.tr(part.text) : part.text).join(" › ");
+  }
+
+  Component.onCompleted: root.refresh()
+
+  Connections {
+    target: DevManager
+    function onActiveChanged() {
+      root.refresh();
+    }
+    function onLiveChangedChanged() {
+      root.refresh();
+    }
+  }
+
+  // A dev setting saved (here or anywhere) changes the rows
+  Connections {
+    target: ConfigManager
+    function onConfigChanged() {
+      root.refresh();
+    }
+  }
+
+  headerExtras: [
+    StyledIconButton {
+      visible: DevManager.active
+      iconText: "refresh"
+      tooltipText: I18n.tr("Compare again")
+      onClicked: root.refresh()
+    }
+  ]
+
+  StyledText {
+    visible: !DevManager.active
+    text: I18n.tr("The dev config and live are compared while dev mode runs the dev tree.")
+    opacity: 0.7
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
+  }
+
+  // Live changed since dev last took it over
+  RowLayout {
+    visible: DevManager.active && DevManager.liveChanged
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    StyledText {
+      text: I18n.tr("Live changed since dev last took it over.")
+      textColor: Theme.warning
+      wrapMode: Text.WordWrap
+      Layout.fillWidth: true
+    }
+
+    StyledTextButton {
+      implicitHeight: Widget.height - Widget.px(4)
+      enabled: !root.busy
+      text: I18n.tr("Bring live changes over")
+      iconText: "merge"
+      onClicked: root.merge()
+    }
+  }
+
+  StyledText {
+    visible: DevManager.active && root.loaded && root.rows.length === 0
+    text: I18n.tr("Dev and live agree on every setting.")
+    opacity: 0.7
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
+  }
+
+  StyledText {
+    visible: root.message !== ""
+    text: root.message
+    textColor: root.error ? Theme.error : Theme.foregroundAlt
+    wrapMode: Text.WordWrap
+    Layout.fillWidth: true
+  }
+
+  // One row per setting; lists compare whole
+  ListView {
+    id: list
+    visible: DevManager.active && root.rows.length > 0
+    Layout.fillWidth: true
+    Layout.preferredHeight: Math.min(contentHeight, Widget.height * 14)
+    clip: true
+    spacing: Widget.spacing
+    boundsBehavior: Flickable.StopAtBounds
+    model: root.rows.length
+
+    ScrollIndicator.vertical: ScrollIndicator {}
+
+    delegate: Rectangle {
+      id: entry
+      required property int index
+      readonly property var row: root.rows[index] ?? ({})
+
+      width: ListView.view.width
+      implicitHeight: entryColumn.implicitHeight + Widget.smallPadding * 2
+      radius: Widget.radius
+      color: Theme.backgroundAlt
+
+      ColumnLayout {
+        id: entryColumn
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Widget.smallPadding
+        spacing: Widget.spacing / 2
+
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: Widget.spacing
+
+          StyledText {
+            text: root.rowTitle(entry.row)
+            font.weight: Font.Medium
+            elide: Text.ElideMiddle
+            Layout.fillWidth: true
+          }
+
+          // I18n.tr("Changed in dev") I18n.tr("Changed in live") I18n.tr("Changed in both")
+          StatusChip {
+            text: I18n.tr(DevDiff.sideLabel(entry.row.side))
+            color: entry.row.side === "both" ? Theme.warning : entry.row.side === "live" ? Theme.accent : Theme.success
+          }
+
+          StatusChip {
+            visible: entry.row.devOnly === true
+            text: I18n.tr("Dev only")
+            color: Theme.foregroundAlt
+          }
+        }
+
+        GridLayout {
+          Layout.fillWidth: true
+          columns: 3
+          columnSpacing: Widget.spacing * 2
+          rowSpacing: Widget.spacing / 2
+
+          StyledText {
+            text: I18n.tr("Dev")
+            opacity: 0.7
+          }
+          StyledText {
+            text: DevDiff.has(entry.row, "dev") ? DevDiff.valueText(entry.row, "dev") : I18n.tr("not set")
+            opacity: DevDiff.has(entry.row, "dev") ? 1 : 0.6
+            textFamily: "monospace"
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+          }
+          StyledTextButton {
+            implicitHeight: Widget.smallHeight
+            enabled: !root.busy && DevDiff.toLive(entry.row)
+            text: I18n.tr("To live")
+            iconText: "arrow_forward"
+            iconAfter: true
+            tooltipText: DevDiff.toLive(entry.row) ? "" : I18n.tr("The installed axiom has no such setting")
+            onClicked: root.copy(entry.row, "live")
+          }
+
+          StyledText {
+            text: I18n.tr("Live")
+            opacity: 0.7
+          }
+          StyledText {
+            text: DevDiff.has(entry.row, "live") ? DevDiff.valueText(entry.row, "live") : I18n.tr("not set")
+            opacity: DevDiff.has(entry.row, "live") ? 1 : 0.6
+            textFamily: "monospace"
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+          }
+          StyledTextButton {
+            implicitHeight: Widget.smallHeight
+            enabled: !root.busy
+            text: I18n.tr("To dev")
+            iconText: "arrow_back"
+            onClicked: root.copy(entry.row, "dev")
+          }
+        }
+      }
+    }
+  }
+}

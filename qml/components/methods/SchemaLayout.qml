@@ -452,19 +452,19 @@ QtObject {
   }
 
   // A category's cards in page order: its sections' (`groups`), then its
-  // own `card`. Wide cards ahead of every narrow one stay at the top; any
-  // other goes to the bottom, so none cuts the columns partway down
-  // (`methods/ColumnSplit` lays them out)
+  // own `cards`, in order. Wide cards ahead of every narrow one stay at
+  // the top; any other goes to the bottom, so none cuts the columns
+  // partway down (`methods/ColumnSplit` lays them out)
   function categoryGroups(schema, category) {
     const all = [].concat(...(category?.sections ?? []).map(section => root.groups(schema, section)));
-    if (category?.card)
+    for (const own of category?.cards ?? [])
       all.push({
         "kind": "card",
-        "key": category.name + ":" + category.card,
-        "card": category.card,
+        "key": category.name + ":" + own.card,
+        "card": own.card,
         "folds": false,
         "wide": true,
-        "title": category.cardTitle || category.name,
+        "title": own.title || category.name,
         "description": "",
         "section": category.name,
         "path": [],
@@ -505,24 +505,43 @@ QtObject {
     return null;
   }
 
-  // [{ name, icon, card, cardTitle, sections: [key], links: [page type] }]:
-  // the root's `x-categories` in order (`icon`, and `card`, a hand-built
-  // card of the category's own: settings/<card>Card.qml, wide, titled
-  // `cardTitle` in the sidebar), then any other `x-category` in schema
-  // order. A section without `x-category` is a category of its own. A
-  // declared category with no sections and no card is left out, as is a
-  // section whose own `x-showIf` (`/`-rooted keys, read by `valueOf`; e.g. the
-  // compositor's, as SettingsManager.configValueAt reads them) fails.
+  // A declared category's own hand-built cards, [{ card, title }]: its
+  // `cards`, or the older single `card` titled `cardTitle`
+  function _ownCards(declared) {
+    if (declared?.cards)
+      return Array.prototype.map.call(declared.cards, own => ({
+            "card": own.card,
+            "title": own.title ?? ""
+          }));
+    return declared?.card ? [
+      {
+        "card": declared.card,
+        "title": declared.cardTitle ?? ""
+      }
+    ] : [];
+  }
+
+  // [{ name, icon, cards: [{ card, title }], sections: [key], links: [page
+  // type] }]: the root's `x-categories` in order (`icon`, and `cards`, the
+  // category's own hand-built cards: settings/<card>Card.qml, wide, titled
+  // `title` in the sidebar; or one `card` titled `cardTitle`), then any
+  // other `x-category` in schema order. A section without `x-category` is
+  // a category of its own. A declared category with no sections and no
+  // card is left out, as is one whose `showIf` fails and a section whose
+  // own `x-showIf` does (`/`-rooted keys, read by `valueOf`; e.g. the
+  // compositor's, as SettingsManager.configValueAt reads them; without
+  // `valueOf`, both are kept).
   function categories(schema, valueOf) {
     const make = (name, declared) => ({
           "name": name,
           "icon": declared?.icon ?? "settings",
-          "card": declared?.card ?? "",
-          "cardTitle": declared?.cardTitle ?? "",
+          "cards": root._ownCards(declared),
           "sections": [],
           "links": []
         });
-    const result = (schema?.["x-categories"] ?? []).map(declared => make(declared.name, declared));
+    const declared = Array.prototype.filter.call(schema?.["x-categories"] ?? [], category => !valueOf || showIfHolds(category.showIf, valueOf));
+    const hidden = Array.prototype.filter.call(schema?.["x-categories"] ?? [], category => !declared.includes(category)).map(category => category.name);
+    const result = declared.map(category => make(category.name, category));
     for (const key in schema?.properties ?? {}) {
       const section = schema.properties[key];
       if (section.type !== "object" || section["x-settings"] === false || groups(schema, key).length === 0)
@@ -530,6 +549,8 @@ QtObject {
       if (valueOf && !showIfHolds(section["x-showIf"], valueOf))
         continue;
       const name = section["x-category"] ?? section.title ?? key;
+      if (hidden.includes(name))
+        continue;
       let category = result.find(c => c.name === name);
       if (!category) {
         category = make(name, null);
@@ -540,6 +561,6 @@ QtObject {
         if (!category.links.includes(link))
           category.links.push(link);
     }
-    return result.filter(c => c.sections.length > 0 || c.card !== "");
+    return result.filter(c => c.sections.length > 0 || c.cards.length > 0);
   }
 }

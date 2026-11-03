@@ -37,11 +37,16 @@ QtObject {
   // What ships with axiom in config/: json/ (schema, theme defaults,
   // emoji), themes/, i18n/
   readonly property string resourcePath: root.axiomPath + "config/"
+  // The install tree ($AXIOM_INSTALL_TREE, which axiom sets; else this
+  // tree), with a trailing slash: what self-update and the greeter install
+  // use, the tree a dev tree runs beside
+  readonly property string installTreePath: (Quickshell.env("AXIOM_INSTALL_TREE") || root.treePath).replace(/\/?$/, "/")
   // Installed as a package (the AUR's axiom-shell): its version, from the
-  // marker its PKGBUILD writes ("" for a clone: docs/dev/packaging.md).
-  // The package manager updates it (SelfUpdateManager stays off) and the
-  // login screen runs it (GreeterManager)
-  readonly property string packagedVersion: (FileManager.read(root.treePath + ".packaged") ?? "").trim()
+  // marker its PKGBUILD writes in the install tree ("" for a clone:
+  // docs/dev/packaging.md). The package manager updates it
+  // (SelfUpdateManager stays off) and the login screen runs it
+  // (GreeterManager)
+  readonly property string packagedVersion: (FileManager.read(root.installTreePath + ".packaged") ?? "").trim()
   readonly property bool packaged: packagedVersion !== ""
 
   // --- What axiom writes (ConfigManager.dataDirs: the XDG folders) ---

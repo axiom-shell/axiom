@@ -21,6 +21,7 @@ x-categories:
   - {name: Modules, icon: widgets}
   - {name: Theme integrations, icon: format_paint}
   - {name: Maintenance, icon: build, card: SavedConfigs, cardTitle: Saved configurations}
+  - {name: Development, icon: code, showIf: {/$devOptions: true}, cards: [{card: DevTree, title: Dev tree}, {card: DevConfigDiff, title: Dev config and live}]}
 x-libraryGroups:
   - Desktop
   - Time & weather

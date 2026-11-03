@@ -250,7 +250,9 @@ QtObject {
 
   // --- The bundle ---
 
-  readonly property bool _exporting: root._report?.installed === true && root._report.bundleWritable === true
+  // Not while dev mode is on: the login screen shows the live config, and
+  // the bundle is exported again from it once dev mode is off
+  readonly property bool _exporting: root._report?.installed === true && root._report.bundleWritable === true && !DevManager.enabled
   // The config with the wallpapers showing as its fixed ones (the
   // greeter keeps no rotation of its own), so it shows what the desktop does
   readonly property var _shownConfig: Object.assign({}, ConfigManager.config, {
