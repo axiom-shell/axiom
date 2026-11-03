@@ -1,0 +1,7 @@
+label: Dev Mode
+icon: code
+group: System
+popout:
+  variant: own
+  enabled: {description: 'Rebuild, open the Development settings or turn dev mode off, when hovered.'}
+colors: standard

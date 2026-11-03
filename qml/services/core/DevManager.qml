@@ -33,6 +33,16 @@ Singleton {
   readonly property var lastBuild: BackendManager.dev.lastBuild ?? null
   // Running a dev build rather than the installed binary
   readonly property bool onDevBuild: (BackendManager.dev.binary ?? "") !== (BackendManager.dev.installed ?? "")
+  // The last build in a line, for the DevMode widget's tooltip and menu:
+  // building, built or failed and when, or none yet this run
+  readonly property string buildText: {
+    if (root.building)
+      return I18n.tr("Building…");
+    if (!root.lastBuild)
+      return I18n.tr("Not built this run");
+    const when = root.lastBuild.at ? I18n.formatDate(new Date(root.lastBuild.at), I18n.dateFormat("dateTime")) : "";
+    return root.lastBuild.ok ? I18n.tr("Built {0}", when) : I18n.tr("Build failed {0}", when);
+  }
 
   // The dev tree ("" when none is set) and the install tree; the dev
   // tree's checkout: branch, commit, changes, and as `branch@sha`

@@ -377,17 +377,28 @@ QtObject {
       name: "dev",
       aliases: ["devmode"],
       glyph: "code",
-      usage: "[on | off | rebuild]",
+      usage: "[on | off | rebuild | set <path>]",
       description: () => I18n.tr("Dev mode: rebuild the schema and axiom as you edit them"),
       available: () => BackendManager.ready,
       status: () => DevManager.building ? I18n.tr("Building…") : DevManager.enabled ? I18n.tr("On") : I18n.tr("Off"),
-      options: () => root._onOffOptions().concat(DevManager.enabled && DevManager.available ? [
+      // `set <path>` is typed out, never offered: no options past "set"
+      options: arg => /^\s*set(\s|$)/.test(arg ?? "") ? [] : root._onOffOptions().concat(DevManager.enabled && DevManager.available ? [
           {
             title: "rebuild",
             value: "rebuild"
           }
         ] : []),
       run: (arg, value) => {
+        // `set <path>` makes that clone the dev tree; without a path, back
+        // to typing one
+        const set = value === undefined ? (arg ?? "").match(/^\s*set(?:\s+(.*))?$/) : null;
+        if (set) {
+          const path = (set[1] ?? "").trim();
+          if (path === "")
+            return "/dev set ";
+          DevManager.setTree(path);
+          return false;
+        }
         if (((value ?? arg) ?? "").trim() === "rebuild") {
           DevManager.rebuild();
           return false;

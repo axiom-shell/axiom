@@ -3821,6 +3821,15 @@
     "Replace dev config with live": "",
     "Development": "",
     "Dev config and live": "",
-    "Dev tree": ""
+    "Dev tree": "",
+    "DEV · {0}": "",
+    "DEV": "",
+    "Dev mode · {0}": "",
+    "Open Development settings": "",
+    "Not built this run": "",
+    "Built {0}": "",
+    "Build failed {0}": "",
+    "Dev Mode": "",
+    "Rebuild, open the Development settings or turn dev mode off, when hovered.": ""
   }
 }
