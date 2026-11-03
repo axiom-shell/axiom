@@ -2,7 +2,7 @@
 """Check (or build) the compiled wallpaper shaders.
 
 Qt 6 loads a ShaderEffect's shader only precompiled (.qsb), and axiom has
-no build step, so each shader in components/surfaces/wallpaper/shaders/
+no build step, so each shader in qml/components/surfaces/wallpaper/shaders/
 is committed twice: its source (`<name>.frag`, the shared `common.glsl`
 prepended at build) and `<name>.frag.qsb`. `stamps.txt` there holds the
 hash of the source each .qsb was built from; this fails when a source
@@ -24,7 +24,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SHADERS = ROOT / "components/surfaces/wallpaper/shaders"
+SHADERS = ROOT / "qml/components/surfaces/wallpaper/shaders"
 COMMON = SHADERS / "common.glsl"
 STAMPS = SHADERS / "stamps.txt"
 # The shading languages Qt Quick asks for (OpenGL (ES), Vulkan, Direct3D,

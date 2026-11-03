@@ -8,4 +8,4 @@
 - Add a test case whenever you change a helper's behaviour; run `scripts/run_tests.sh <Name>`.
 - JS engine gaps: no `flatMap` (`[].concat(...arr.map(...))`), no `Object.fromEntries` (`reduce`), no `Intl`.
 - Geometry rules (`SurfaceContext`, `EdgeAttach`, `PopoutGeometry`, `BarEnds`, `GridPlacement`) are the single source for their decisions: a new case is a rule here plus a test row, not a special case in a host. See `docs/dev/popouts/`.
-- Config migrations aren't here: the axiom binary owns them (format-2 steps in `backend/internal/migrate/steps/`, [migration recipe](../../docs/recipes/migration.md)); the format-1 ones are its frozen `backend/internal/migrate/legacy/legacy.js`.
+- Config migrations aren't here: the axiom binary owns them (format-2 steps in `backend/internal/migrate/steps/`, [migration recipe](../../../docs/recipes/migration.md)); the format-1 ones are its frozen `backend/internal/migrate/legacy/legacy.js`.

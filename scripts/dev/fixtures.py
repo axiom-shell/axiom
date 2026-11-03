@@ -25,7 +25,7 @@ qmltestrunner.
 A case is <suite>/<test>/<name>.json ({op, args}) plus <name>.expected.json
 (the exact bytes the JS helper produced). Arguments larger than BLOB_SIZE
 are stored once under blobs/<hash>.json and referenced as {"$blob": hash};
-the live schema is named by its path, {"$repoFile": "config/json/…"}.
+the live schema is named by its path, {"$repoFile": "qml/config/json/…"}.
 The expected bytes come from the JS engine the shell runs (V4, through
 qmltestrunner) and are written untouched; arguments only need to parse to
 the same values, so they are re-serialized here.
@@ -52,14 +52,14 @@ HELPERS = ("BindActions", "BindKeys", "ConfigOps", "KeyNames", "LayerStack")
 RECORD_TESTS = ("Config", "SchemaValidation", "SchemaLayout", "GreeterBundle") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them
-STAMP_INPUTS = ("components/methods/SchemaValidation.qml", "tests/Shared.qml", "tests/RepoFiles.qml",
+STAMP_INPUTS = ("qml/components/methods/SchemaValidation.qml", "tests/Shared.qml", "tests/RepoFiles.qml",
                 "tests/tst_Config.qml", "tests/tst_SchemaValidation.qml",
-                "components/methods/SchemaLayout.qml", "tests/tst_SchemaLayout.qml",
-                "components/methods/GreeterBundle.qml", "tests/tst_GreeterBundle.qml",
-                "config/json/config.schema.json", "scripts/dev/fixtures.py",
-                *(f"components/methods/{h}.qml" for h in HELPERS), *(f"tests/tst_{h}.qml" for h in HELPERS),
-                "components/methods/MonitorLayout.qml", "components/methods/PolkitAgents.qml",
-                "components/methods/SwayState.qml", "components/methods/NiriState.qml",
+                "qml/components/methods/SchemaLayout.qml", "tests/tst_SchemaLayout.qml",
+                "qml/components/methods/GreeterBundle.qml", "tests/tst_GreeterBundle.qml",
+                "qml/config/json/config.schema.json", "scripts/dev/fixtures.py",
+                *(f"qml/components/methods/{h}.qml" for h in HELPERS), *(f"tests/tst_{h}.qml" for h in HELPERS),
+                "qml/components/methods/MonitorLayout.qml", "qml/components/methods/PolkitAgents.qml",
+                "qml/components/methods/SwayState.qml", "qml/components/methods/NiriState.qml",
                 "backend/internal/compositor/actions/table.json",
                 "scripts/qml_modules.py", "scripts/run_tests.sh")
 

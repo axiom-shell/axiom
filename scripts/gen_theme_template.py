@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Write config/themes/template/theme.json, the theme a new one is copied
+"""Write qml/config/themes/template/theme.json, the theme a new one is copied
 from: the fallback palette and every semantic name with its dark map, from
-config/json/theme-defaults.json (the same defaults that fill what a theme
+qml/config/json/theme-defaults.json (the same defaults that fill what a theme
 leaves out). It sits in a subfolder so ThemeManager's scan (showDirs:
 false) doesn't list it. The pre-commit hook runs this; never edit the
 template by hand.
@@ -15,8 +15,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULTS = ROOT / "config" / "json" / "theme-defaults.json"
-TEMPLATE = ROOT / "config" / "themes" / "template" / "theme.json"
+DEFAULTS = ROOT / "qml" / "config" / "json" / "theme-defaults.json"
+TEMPLATE = ROOT / "qml" / "config" / "themes" / "template" / "theme.json"
 
 
 def template():

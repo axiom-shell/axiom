@@ -20,7 +20,7 @@ TestCase {
   property var schema
 
   function initTestCase() {
-    schema = files.json("config/json/config.schema.json");
+    schema = files.json("qml/config/json/config.schema.json");
   }
 
   function test_rows_flatten_and_skip_hidden() {
@@ -540,7 +540,7 @@ TestCase {
     for (const key in schema.properties) {
       const section = schema.properties[key];
       if (section["x-card"]?.folds)
-        verify(/^EntryListCard \{|property string foldKey/m.test(files.text("components/views/Settings/" + section["x-card"].file + "Card.qml")), key);
+        verify(/^EntryListCard \{|property string foldKey/m.test(files.text("qml/components/views/Settings/" + section["x-card"].file + "Card.qml")), key);
     }
   }
 
@@ -689,7 +689,7 @@ TestCase {
     for (const key in schema.properties) {
       const intro = schema.properties[key]["x-intro"];
       if (intro)
-        verify(files.text("components/views/Settings/" + intro + ".qml").includes("x-intro"), intro);
+        verify(files.text("qml/components/views/Settings/" + intro + ".qml").includes("x-intro"), intro);
     }
   }
 
@@ -864,7 +864,7 @@ TestCase {
     for (const category of categories) {
       verify(declared.includes(category.name), "declared in x-categories: " + category.name);
       if (category.card !== "") {
-        verify(files.text("components/views/Settings/" + category.card + "Card.qml").length > 0, category.card);
+        verify(files.text("qml/components/views/Settings/" + category.card + "Card.qml").length > 0, category.card);
         continue;
       }
       verify(category.sections.length > 0, category.name);

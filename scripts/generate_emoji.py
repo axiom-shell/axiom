@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build config/json/emoji.json, the launcher's emoji list (";" or /emoji).
+"""Build qml/config/json/emoji.json, the launcher's emoji list (";" or /emoji).
 
 Downloads Unicode's emoji-test.txt (the emoji, their names and groups, in
 the standard order) and CLDR's English annotations (search keywords), and
@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "config" / "json" / "emoji.json"
+OUT = ROOT / "qml" / "config" / "json" / "emoji.json"
 
 EMOJI_TEST = "https://unicode.org/Public/emoji/{version}/emoji-test.txt"
 CLDR = "https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json"

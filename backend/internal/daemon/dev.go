@@ -524,7 +524,7 @@ func (d *Daemon) rebuildSchema() {
 	// The tree's generated copy too, for the tools and tests: only in a
 	// checkout (an installed tree is read-only)
 	if _, err := os.Stat(filepath.Join(d.opts.Tree, ".git")); err == nil {
-		if err := fsx.WriteFile(filepath.Join(d.opts.Tree, tree.SchemaJSON), data, 0o644); err != nil {
+		if err := fsx.WriteFile(tree.SchemaPath(d.opts.Tree), data, 0o644); err != nil {
 			d.opts.Log.Warn("writing the tree's schema copy", "err", err)
 		}
 	}

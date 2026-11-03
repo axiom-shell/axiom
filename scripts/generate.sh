@@ -5,8 +5,8 @@
 # clone runs this once (verify.sh, check_all.sh, check_go.sh and CI run it
 # first):
 #   - backend/internal/assets/data/, the repo files compiled into the binary,
-#     the schema among them, and config/json/config.schema.json, the schema
-#     built from its YAML source config/schema/ (`go generate`,
+#     the schema among them, and qml/config/json/config.schema.json, the schema
+#     built from its YAML source qml/config/schema/ (`go generate`,
 #     backend/tools/syncassets, a small program: with --no-docs nothing
 #     compiles the whole binary); the binary doesn't compile without data/
 #   - docs/dev/config/ and docs/dev/generated/, the reference docs made from
@@ -40,7 +40,7 @@ for arg in "$@"; do
 done
 
 if ! command -v go >/dev/null; then
-  echo "generate: go isn't installed (it builds config/json/config.schema.json)" >&2
+  echo "generate: go isn't installed (it builds qml/config/json/config.schema.json)" >&2
   exit 1
 fi
 # The embedded copies and the tree's schema (the binary needs the first to

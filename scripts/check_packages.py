@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the three package lists agree.
 
-install.sh, components/methods/Packages.qml (the onboarder's install hints)
+install.sh, qml/components/methods/Packages.qml (the onboarder's install hints)
 and the AUR PKGBUILDs (packaging/aur/*/PKGBUILD) each say what installs
 axiom's dependencies; this fails when they drift:
 - every key in install.sh's PACKAGES names the same Arch and Fedora package
@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 INSTALL = ROOT / "install.sh"
-PACKAGES_QML = ROOT / "components/methods/Packages.qml"
+PACKAGES_QML = ROOT / "qml/components/methods/Packages.qml"
 PKGBUILDS = sorted((ROOT / "packaging/aur").glob("*/PKGBUILD"))
 DISTROS = ("arch", "fedora")
 COMPOSITORS = ("hyprland", "sway", "niri")

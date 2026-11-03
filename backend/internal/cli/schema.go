@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
@@ -19,11 +18,11 @@ import (
 func schemaCommand() *Command {
 	return &Command{
 		Name:    "schema",
-		Summary: "Build and check the config schema from its YAML source (config/schema/)",
+		Summary: "Build and check the config schema from its YAML source (qml/config/schema/)",
 		Subs: []*Command{
 			{
 				Name:    "build",
-				Summary: "Write config/json/config.schema.json from config/schema/",
+				Summary: "Write qml/config/json/config.schema.json from qml/config/schema/",
 				Setup: func(fs *flag.FlagSet) Runner {
 					dir := fs.String("tree", "", "the axiom tree (default: $AXIOM_TREE, the one here, else the installed one)")
 					out := fs.String("o", "", "write here instead (- for stdout)")
@@ -41,7 +40,7 @@ func schemaCommand() *Command {
 							return err
 						}
 						if target == "" {
-							target = filepath.Join(root, tree.SchemaJSON)
+							target = tree.SchemaPath(root)
 						}
 						if old, err := os.ReadFile(target); err == nil && bytes.Equal(old, data) {
 							return e.Output(map[string]any{"path": target, "changed": false}, func(w io.Writer) {
@@ -59,7 +58,7 @@ func schemaCommand() *Command {
 			},
 			{
 				Name:    "check",
-				Summary: "Check that config/schema/ builds, and that config/json/config.schema.json is built from it and fresh",
+				Summary: "Check that qml/config/schema/ builds, and that qml/config/json/config.schema.json is built from it and fresh",
 				Setup: func(fs *flag.FlagSet) Runner {
 					dir := fs.String("tree", "", "the axiom tree (default: $AXIOM_TREE, the one here, else the installed one)")
 					return func(ctx context.Context, e *Env, args []string) error {
@@ -67,7 +66,7 @@ func schemaCommand() *Command {
 						if err != nil {
 							return err
 						}
-						target := filepath.Join(root, tree.SchemaJSON)
+						target := tree.SchemaPath(root)
 						old, err := os.ReadFile(target)
 						switch {
 						case errors.Is(err, os.ErrNotExist):

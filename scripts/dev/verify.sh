@@ -3,7 +3,7 @@
 # (plus new files), the way CI will, and shows what the live shell logged.
 #
 #   0. builds the generated files (scripts/generate.sh: the schema from
-#      config/schema/, the binary's embedded copies, the reference docs in
+#      qml/config/schema/, the binary's embedded copies, the reference docs in
 #      docs/dev/config and docs/dev/generated, and the shared fixtures when a
 #      change touches what they're recorded from)
 #   1. formats changed QML with Qt 6's qmlformat, writing in place so the
@@ -69,26 +69,26 @@ for f in "${changed[@]}"; do
   esac
   case "$f" in
   scripts/check_qmllint.py | scripts/qmllint-baseline.json | scripts/qml_modules.py) lint=1 ;;
-  scripts/check_i18n.py | config/i18n/*) i18n=1 ;;
+  scripts/check_i18n.py | qml/config/i18n/*) i18n=1 ;;
   scripts/check_go.sh) go=1 ;;
   scripts/check_qmlformat.sh) qmlformat=1 ;;
-  components/surfaces/wallpaper/shaders/* | scripts/check_shaders.py) shaders=1 ;;
+  qml/components/surfaces/wallpaper/shaders/* | scripts/check_shaders.py) shaders=1 ;;
   esac
   case "$f" in
-  components/methods/SchemaValidation.qml) schema=1 go=1 ;;
-  config/schema/* | backend/internal/schema/*) schema=1 go=1 ;;
+  qml/components/methods/SchemaValidation.qml) schema=1 go=1 ;;
+  qml/config/schema/* | backend/internal/schema/*) schema=1 go=1 ;;
   # The bind actions' functions, which the binary's port replays
   # (backend/internal/compositor/render's shared cases)
-  components/methods/BindActions.qml) go=1 ;;
+  qml/components/methods/BindActions.qml) go=1 ;;
   esac
   # backend/ and the repo files the binary embeds (backend/tools/syncassets)
   case "$f" in
-  backend/* | config/json/backend.json | config/json/theme-defaults.json) go=1 ;;
+  backend/* | qml/config/json/backend.json | qml/config/json/theme-defaults.json) go=1 ;;
   # The shared fixtures: both sides replay them (docs/dev/backend/README.md)
   tests/Shared.qml | scripts/dev/fixtures.py | scripts/generate.sh) go=1 fixtures=1 tests+=(Shared) ;;
   esac
   case "$f" in
-  components/methods/*.qml)
+  qml/components/methods/*.qml)
     name="$(basename "$f" .qml)"
     [[ -f "tests/tst_$name.qml" ]] && tests+=("$name")
     ;;
@@ -100,9 +100,9 @@ for f in "${changed[@]}"; do
   # tests/scripts/test_scripts.py's classes for each script (the whole
   # file takes ~15 s); a new script with tests gets a line here
   case "$f" in
-  config/themes/* | config/json/theme-defaults.json | scripts/gen_theme_template.py) script_tests+=(Themes) ;;
-  scripts/templates/nvim/*) script_tests+=(NvimModule) ;;
-  scripts/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
+  qml/config/themes/* | qml/config/json/theme-defaults.json | scripts/gen_theme_template.py) script_tests+=(Themes) ;;
+  data/templates/nvim/*) script_tests+=(NvimModule) ;;
+  data/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
   scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
@@ -188,7 +188,7 @@ if [[ ${#shells[@]} -gt 0 ]]; then
   step "shellcheck" shellcheck -x -S warning "${shells[@]}"
 fi
 if [[ $i18n -eq 1 ]]; then
-  # Warnings only: a new key is absent from config/i18n/ until the
+  # Warnings only: a new key is absent from qml/config/i18n/ until the
   # pre-commit hook adds it (check_all.sh fails on that)
   echo "── translations (warnings only)"
   python3 scripts/check_i18n.py 2>&1 | tail -n 15 || true

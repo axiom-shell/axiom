@@ -197,10 +197,10 @@ def owners(names):
 
 def all_code():
     out = []
-    for top in ("components", "services", "config", "shell", "scripts", "backend"):
+    for top in ("qml", "data", "scripts", "backend"):
         for pat in CODE:
             out += expand(os.path.join(top, "**", pat))
-    return sorted(set(out + expand("shell.qml") + expand("install.sh")))
+    return sorted(set(out + expand("install.sh")))
 
 
 def symbols(entry):

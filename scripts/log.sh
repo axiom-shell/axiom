@@ -13,6 +13,8 @@
 
 set -euo pipefail
 
+# The shell this checkout runs: qs names an instance by its QML folder
+qml="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/qml"
 rules='*.debug=false'
 since_reload=1
 follow=0
@@ -39,7 +41,7 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-args=(log -c axiom)
+args=(log -p "$qml")
 [[ -n "$rules" ]] && args+=(-r "$rules")
 
 strip() { sed -u 's/\x1b\[[0-9;]*m//g'; }

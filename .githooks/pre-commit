@@ -2,13 +2,13 @@
 # Regenerates what's built from the code being committed (the index, not the
 # working tree) and stages it, so a commit never carries stale output:
 #   - the translations (scripts/check_i18n.py --fill --prune): every new key,
-#     empty, in each config/i18n/<code>.json, every key nothing uses any more
-#     dropped from them, and the empty template a new language is copied
-#     from, config/i18n/template/language.json
-#   - the theme template, config/themes/template/theme.json
+#     empty, in each qml/config/i18n/<code>.json, every key nothing uses any
+#     more dropped from them, and the empty template a new language is
+#     copied from, qml/config/i18n/template/language.json
+#   - the theme template, qml/config/themes/template/theme.json
 #     (scripts/gen_theme_template.py)
 # The config schema the translations are made from,
-# config/json/config.schema.json, is built from config/schema/ and the
+# qml/config/json/config.schema.json, is built from qml/config/schema/ and the
 # components' schema.yaml files in the snapshot
 # (backend/tools/syncassets, through go generate) and never committed, like the
 # reference docs in docs/dev/config and docs/dev/generated (scripts/generate.sh
@@ -22,9 +22,9 @@ cd "$root"
 
 staged="$(git diff --cached --name-only --diff-filter=ACMRD)"
 i18n=0 theme=0
-grep -qE '^config/schema/|^backend/internal/schema/|^components/.*/schema\.yaml$' <<<"$staged" && i18n=1
-grep -qE '\.qml$|^scripts/check_i18n\.py$|^config/i18n/' <<<"$staged" && i18n=1
-grep -qE '^config/json/theme-defaults\.json$|^scripts/gen_theme_template\.py$|^config/themes/template/' <<<"$staged" && theme=1
+grep -qE '^qml/config/schema/|^backend/internal/schema/|^qml/components/.*/schema\.yaml$' <<<"$staged" && i18n=1
+grep -qE '\.qml$|^scripts/check_i18n\.py$|^qml/config/i18n/' <<<"$staged" && i18n=1
+grep -qE '^qml/config/json/theme-defaults\.json$|^scripts/gen_theme_template\.py$|^qml/config/themes/template/' <<<"$staged" && theme=1
 [[ $i18n -eq 1 || $theme -eq 1 ]] || exit 0
 
 tmp="$(mktemp -d)"
@@ -51,11 +51,11 @@ fi
 if [[ $i18n -eq 1 && -f "$tmp/scripts/check_i18n.py" ]]; then
   # Exits 1 while entries are untranslated, which is fine to commit
   python3 "$tmp/scripts/check_i18n.py" --fill --prune >/dev/null || true
-  template=config/i18n/template/language.json
+  template=qml/config/i18n/template/language.json
   mkdir -p "$(dirname "$template")"
   cmp -s "$tmp/$template" <(git show ":$template" 2>/dev/null) || place "$template"
-  for file in "$tmp"/config/i18n/*.json; do
-    rel="config/i18n/$(basename "$file")"
+  for file in "$tmp"/qml/config/i18n/*.json; do
+    rel="qml/config/i18n/$(basename "$file")"
     cmp -s "$file" <(git show ":$rel") && continue
     # A language file with unstaged edits is left alone: rewriting it from
     # the index would drop them
@@ -70,7 +70,7 @@ fi
 
 if [[ $theme -eq 1 && -f "$tmp/scripts/gen_theme_template.py" ]]; then
   python3 "$tmp/scripts/gen_theme_template.py" >/dev/null
-  template=config/themes/template/theme.json
+  template=qml/config/themes/template/theme.json
   mkdir -p "$(dirname "$template")"
   cmp -s "$tmp/$template" <(git show ":$template" 2>/dev/null) || place "$template"
 fi

@@ -3,15 +3,16 @@
 
 Docs drift silently; this catches the drift a reader would trip on:
 - every relative markdown link points at a file that exists
-- every backticked repo path (`services/core/FooManager.qml`, `docs/dev/…`)
-  exists, resolved from the repo root, from components/, or from the doc's
-  own directory (paths with <placeholders> or globs are skipped)
+- every backticked repo path (`qml/services/core/FooManager.qml`, `docs/dev/…`)
+  exists, resolved from the repo root, from qml/components/, or from the
+  doc's own directory (paths with <placeholders> or globs are skipped)
 - every backticked `Singleton.member` names a member that file declares
-  (Singleton = a file in services/*/, config/ or components/methods/)
+  (Singleton = a file in qml/services/*/, qml/config/ or
+  qml/components/methods/)
 - no backticked name is one a rename retired (RETIRED: add the old name
   when renaming a singleton, so docs still citing it fail; an old name that
   is also a schema definition fails only with a member that isn't a setting)
-- every shared piece (a file in components/reusable, forms or content/parts)
+- every shared piece (a file in qml/components/reusable, forms or content/parts)
   is named in the shared-ui-pieces index or the docs it defers to, so the
   index agents check before building stays whole
 - every recipe in docs/recipes has a skill in .claude/skills of its name,
@@ -35,11 +36,26 @@ import sys
 from pathlib import Path
 
 from gen_docs import parse_qml
-from qml_modules import ROOT
+from qml_modules import QML_ROOT, ROOT
 
 GENERATED = ("docs/dev/config/", "docs/dev/generated/")
-PATH_ROOTS = ("components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
+SCHEMA = "qml/config/json/config.schema.json"
+PATH_ROOTS = ("qml/", "data/", "components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
               "examples/", "backend/", ".github/", ".claude/", "shell.qml", "greeter.qml", "install.sh")
+# Until the docs are rewritten for the qml/ and data/ layout (the
+# restructure's docs step removes this): a path a doc still cites at its
+# old place also resolves at its new one
+MOVED = {"scripts/greeter/": "data/greeter/", "scripts/templates/": "data/templates/",
+         "examples/": "data/examples/", "assets/screenshots/": "docs/screenshots/",
+         "assets/": "qml/assets/"}
+
+
+def old_layout(path):
+    """Where a path cited at its pre-restructure place lives now (the shim)."""
+    for old, new in MOVED.items():
+        if (path + "/").startswith(old):
+            return [ROOT / (new + path[len(old):])]
+    return [QML_ROOT / path, QML_ROOT / "components" / path]
 # Names a rename retired: a doc still citing one is stale (old -> new)
 RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig"}
 # Backticked text that looks like a member access but isn't one of ours
@@ -57,11 +73,21 @@ def docs():
     return sorted(p for p in files if p.exists())
 
 
+def moved_link(doc, target):
+    """A link to a file's pre-restructure place that exists at its new one
+    (the shim, with old_layout)."""
+    try:
+        path = (doc.parent / target).resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return False
+    return any(c.exists() for c in old_layout(path))
+
+
 def singletons():
     """{name: set of root member names} for every singleton file."""
     table = {}
     for folder in ("services/*", "config", "components/methods"):
-        for path in ROOT.glob(f"{folder}/*.qml"):
+        for path in QML_ROOT.glob(f"{folder}/*.qml"):
             _, members = parse_qml(path)
             text = path.read_text()
             names = {m["name"] for m in members}
@@ -76,7 +102,7 @@ def singletons():
 def config_names():
     """`Section.key` and `Definition.key` spellings of config paths (a doc
     naming `Appearance.surface` or `Bar.background` means the setting)."""
-    schema = json.loads((ROOT / "config/json/config.schema.json").read_text())
+    schema = json.loads((ROOT / SCHEMA).read_text())
     names = set()
 
     def walk(prefix, node, depth=0):
@@ -184,9 +210,9 @@ def check_issue_links(paths):
 
 # Folders of shared pieces -> the docs that must name each of their files
 PIECE_INDEX = {
-    "components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
-    "components/forms": ["docs/dev/core/shared-ui-pieces.md"],
-    "components/content/parts": ["docs/dev/core/shared-ui-pieces.md", "docs/dev/overlay/content-roots.md",
+    "qml/components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
+    "qml/components/forms": ["docs/dev/core/shared-ui-pieces.md"],
+    "qml/components/content/parts": ["docs/dev/core/shared-ui-pieces.md", "docs/dev/overlay/content-roots.md",
                                  "docs/dev/overlay/writing-modules.md"],
 }
 
@@ -222,7 +248,6 @@ def check_skills():
     return errors
 
 
-SCHEMA = "config/json/config.schema.json"
 ANNOTATIONS_DOC = "docs/dev/core/schema-annotations.md"
 
 
@@ -257,7 +282,7 @@ def main():
             for target in re.findall(r"\]\(([^)\s#]+)(?:#[^)]*)?\)", line):
                 if re.match(r"[a-z]+:", target):
                     continue
-                if not (doc.parent / target).exists():
+                if not (doc.parent / target).exists() and not moved_link(doc, target):
                     errors.append(f"{where}: link to missing {target}")
             for span in re.findall(r"`([^`\n]+)`", line):
                 span = span.strip()
@@ -267,7 +292,7 @@ def main():
                     continue
                 if span.startswith(PATH_ROOTS) and not re.search(r"[<>*{}|$ ]|\.\.\.|…", span):
                     path = span.split(":")[0].rstrip("/").rstrip(".,")
-                    candidates = [ROOT / path, ROOT / "components" / path, doc.parent / path]
+                    candidates = [ROOT / path, doc.parent / path] + old_layout(path)
                     if not any(c.exists() or c.with_suffix(".qml").exists() for c in candidates) and not ignored(path):
                         errors.append(f"{where}: `{span}` doesn't exist")
                     continue

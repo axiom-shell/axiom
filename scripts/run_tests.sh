@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the QML unit tests (tests/tst_*.qml) with qmltestrunner, outside qs.
 #
-# The tests cover components/methods/ (pure by the layering rule), imported
+# The tests cover qml/components/methods/ (pure by the layering rule), imported
 # from a module tree of the shell's Quickshell-free files
 # (scripts/qml_modules.py --pure).
 #

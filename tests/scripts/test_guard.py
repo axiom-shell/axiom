@@ -81,9 +81,9 @@ class Bash(unittest.TestCase):
                     "hyprctl eval 'hl.dsp.cursor.move(1, 1)'")
 
     def test_shell_lifecycle(self):
-        self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p shell.qml &")
-        self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/greeter.qml"',
-                    'qs kill -p "$PWD/greeter.qml"', "qs kill -i abc123", "qs list")
+        self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p qml/shell.qml &")
+        self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/qml/greeter.qml"',
+                    'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list")
 
     def test_github_issues(self):
         self.blocks("gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh api repos/a/b/issues -f title=x",
@@ -131,10 +131,10 @@ class Bash(unittest.TestCase):
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
-                    "scripts/greeter/greeter_install.sh install . me")
-        self.allows("systemctl status greetd", "scripts/greeter/greeter_install.sh check .",
-                    "AXIOM_GREETER_ROOT=/tmp/x scripts/greeter/greeter_install.sh install . me",
-                    'export AXIOM_GREETER_ROOT="$tmp"; scripts/greeter/greeter_install.sh uninstall . me')
+                    "data/greeter/greeter_install.sh install . me")
+        self.allows("systemctl status greetd", "data/greeter/greeter_install.sh check .",
+                    "AXIOM_GREETER_ROOT=/tmp/x data/greeter/greeter_install.sh install . me",
+                    'export AXIOM_GREETER_ROOT="$tmp"; data/greeter/greeter_install.sh uninstall . me')
 
     def test_compositor_claim(self):
         self.blocks(f"axiom compositor claim --kind sway -- {HOME}/.config/sway '# axiom'",
@@ -158,12 +158,12 @@ class Bash(unittest.TestCase):
                         "export NIRI_SOCKET=/run/user/1000/niri.wayland-2.200.sock; niri msg output winit scale 1")
 
     def test_scripts_run_through_a_shell_and_variables(self):
-        self.blocks("bash scripts/greeter/greeter_install.sh install . me")
+        self.blocks("bash data/greeter/greeter_install.sh install . me")
         self.assertTrue(denied("axiom compositor claim --kind sway $HOME/.config/sway axiom", cwd="/tmp"))
         self.assertTrue(denied("axiom compositor claim --kind sway ${HOME}/.config/sway axiom", cwd="/tmp"))
         self.assertTrue(denied("export D=~/.config/hypr; axiom compositor binds remove --kind hyprland $D '[]'", cwd="/tmp"))
         self.blocks("bash -lc 'qs -c axiom kill'")
-        self.allows("axiom compositor claim --kind sway scratch/sway axiom", "bash scripts/greeter/greeter_install.sh check .")
+        self.allows("axiom compositor claim --kind sway scratch/sway axiom", "bash data/greeter/greeter_install.sh check .")
 
     def test_heredoc_bodies(self):
         """A heredoc's body is judged only when the command could run it (a shell, source, ., eval) or it substitutes."""
@@ -344,14 +344,14 @@ class GeneratedEdits(unittest.TestCase):
         return False
 
     def test_generated_and_frozen_refused(self):
-        for path in ("config/json/config.schema.json", "backend/internal/migrate/legacy/schema-v75.json",
+        for path in ("qml/config/json/config.schema.json", "backend/internal/migrate/legacy/schema-v75.json",
                      "backend/internal/migrate/legacy/legacy.js", "tests/fixtures/shared/schema/Config/x.0.json",
                      "backend/internal/migrate/legacy/testdata/frozen.jsonl.gz",
                      "tests/fixtures/shared/blobs/abc.json", "backend/internal/assets/data/config/json/backend.json"):
             self.assertTrue(self.denied(path), path)
 
     def test_sources_pass(self):
-        for path in ("config/schema/sections/Bars.yaml", "components/methods/SchemaValidation.qml", "examples/basic.json"):
+        for path in ("qml/config/schema/sections/Bars.yaml", "qml/components/methods/SchemaValidation.qml", "data/examples/basic.json"):
             self.assertFalse(self.denied(path), path)
 
 

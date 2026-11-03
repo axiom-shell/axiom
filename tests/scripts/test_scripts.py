@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Smoke tests for the scripts in scripts/, each run in a scratch $HOME.
 
-  - every shipped theme is complete (config/themes/theme.schema.json's
+  - every shipped theme is complete (qml/config/themes/theme.schema.json's
     required keys, hex colors, semantic names that resolve, pairs that exist)
   - the Neovim module Apply copies compiles and maps the shipped themes
   - check_sizes.py finds sizes written as numbers, skipping hairlines and
@@ -27,7 +27,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPTS = ROOT / "scripts"
-THEMES = ROOT / "config" / "themes"
+THEMES = ROOT / "qml" / "config" / "themes"
 BASES = [f"base0{c}" for c in "0123456789ABCDEF"]
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
@@ -126,7 +126,7 @@ class Themes(unittest.TestCase):
                 self.assertEqual(missing, [], "semantic keys missing")
 
     def test_theme_defaults_are_complete(self):
-        defaults = json.loads((ROOT / "config" / "json" / "theme-defaults.json").read_text())
+        defaults = json.loads((ROOT / "qml" / "config" / "json" / "theme-defaults.json").read_text())
         for base in BASES:
             self.assertRegex(defaults["colors"][base], HEX)
         for variant in ("dark", "light"):
@@ -151,12 +151,12 @@ class NvimModule(unittest.TestCase):
         luac = shutil.which("luac")
         if not luac:
             self.skipTest("no luac")
-        module = SCRIPTS / "templates" / "nvim" / "axiom_theme.lua"
+        module = ROOT / "data" / "templates" / "nvim" / "axiom_theme.lua"
         result = subprocess.run([luac, "-p", str(module)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_nvim_module_maps_shipped_themes(self):
-        text = (SCRIPTS / "templates" / "nvim" / "axiom_theme.lua").read_text()
+        text = (ROOT / "data" / "templates" / "nvim" / "axiom_theme.lua").read_text()
         mapped = set(re.findall(r'^\s*\["([\w-]+)"\] = scheme\(', text, re.M))
         shipped = {p.stem for p in THEMES.glob("*.json")} - {"theme.schema"}
         self.assertEqual(mapped - shipped, set(), "map entries without a theme")
@@ -180,7 +180,7 @@ class KnownIssues(unittest.TestCase):
 ```
 
 ### A file's warning
-- **Where:** `services/Thing.qml`
+- **Where:** `qml/services/Thing.qml`
 - **What:** logs `Cannot read property` at its binding, and warns `the connection closed`
 - **Size:** trivial
 - **Found:** 2026-10-16, while testing
@@ -381,67 +381,67 @@ class CheckStructure(unittest.TestCase):
     copy of the shell: (file written, what the check must say)."""
 
     FILES = [
-        ("components/views/Stray.qml", qml(), "components/views/Stray.qml: a root holds only type folders"),
-        ("components/views/Empty/Other.qml", qml(), "components/views/Empty/: a type folder without Empty.qml"),
-        ("components/lonely/Lonely.qml", qml(), None),
-        ("components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
+        ("qml/components/views/Stray.qml", qml(), "qml/components/views/Stray.qml: a root holds only type folders"),
+        ("qml/components/views/Empty/Other.qml", qml(), "qml/components/views/Empty/: a type folder without Empty.qml"),
+        ("qml/components/lonely/Lonely.qml", qml(), None),
+        ("qml/components/views/Reach/Reach.qml", qml(imports="import qs.components.lonely"),
          "Reach.qml needs qs.components.lonely, which no file reached from shell.qml imports"),
         # (Reach is also no OverlayView type and nothing uses it: the warning below)
-        ("services/core/Spawner.qml", qml("Process {}"), "services/core/Spawner.qml: uses Process directly"),
-        ("services/Direct.qml", qml(), "services/Direct.qml: directly in services/"),
-        ("shell/Handler.qml", qml("IpcHandler {}"), "shell/Handler.qml: an IpcHandler"),
-        ("shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
-        ("shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
-        ("shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
-         "shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
-        ("shell/NoPurpose.qml", qml(purpose=""), "shell/NoPurpose.qml: no purpose comment"),
-        ("shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no components/content/Ghost/Ghost.qml'),
-        ("components/content/Unused/Unused.qml", qml(), "components/content/Unused/: not an overlay module"),
-        ("components/widgets/Old.qml", qml(), "components/widgets/Old.qml: lives under retired"),
-        ("shell/NoPragma.qml", qml(head=""), "shell/NoPragma.qml: doesn't start with pragma"),
-        ("services/core/BigManager.qml", qml(head="pragma Singleton", body="\n" * 800), "BigManager.qml: a singleton of"),
-        ("shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
-        ("shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "shell/Hypr.qml: imports Quickshell.Hyprland"),
-        ("shell/I3.qml", qml(imports="import Quickshell.I3"), "shell/I3.qml: imports Quickshell.I3"),
-        ("shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "shell/Swaymsg.qml: talks to sway directly"),
-        ("shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "shell/NiriCli.qml: talks to niri directly"),
-        ("shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "shell/Hyprm.qml: uses HyprlandManager"),
-        ("shell/HState.qml", qml("property var s: HyprState.parse"), "shell/HState.qml: uses a Hyprland helper"),
-        ("shell/SState.qml", qml("property var s: SwayState.parse"), "shell/SState.qml: uses a sway helper"),
-        ("shell/NState.qml", qml("property var s: NiriState.parse"), "shell/NState.qml: uses a niri helper"),
-        ("shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
-        ("shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
-        ("config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
+        ("qml/services/core/Spawner.qml", qml("Process {}"), "qml/services/core/Spawner.qml: uses Process directly"),
+        ("qml/services/Direct.qml", qml(), "qml/services/Direct.qml: directly in services/"),
+        ("qml/shell/Handler.qml", qml("IpcHandler {}"), "qml/shell/Handler.qml: an IpcHandler"),
+        ("qml/shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
+        ("qml/shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
+        ("qml/shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
+         "qml/shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
+        ("qml/shell/NoPurpose.qml", qml(purpose=""), "qml/shell/NoPurpose.qml: no purpose comment"),
+        ("qml/shell/Popout.qml", qml('PopoutAnchor { popoutName: "Ghost" }'), 'popoutName "Ghost" has no qml/components/content/Ghost/Ghost.qml'),
+        ("qml/components/content/Unused/Unused.qml", qml(), "qml/components/content/Unused/: not an overlay module"),
+        ("qml/components/widgets/Old.qml", qml(), "qml/components/widgets/Old.qml: lives under retired"),
+        ("qml/shell/NoPragma.qml", qml(head=""), "qml/shell/NoPragma.qml: doesn't start with pragma"),
+        ("qml/services/core/BigManager.qml", qml(head="pragma Singleton", body="\n" * 800), "BigManager.qml: a singleton of"),
+        ("qml/shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
+        ("qml/shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "qml/shell/Hypr.qml: imports Quickshell.Hyprland"),
+        ("qml/shell/I3.qml", qml(imports="import Quickshell.I3"), "qml/shell/I3.qml: imports Quickshell.I3"),
+        ("qml/shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "qml/shell/Swaymsg.qml: talks to sway directly"),
+        ("qml/shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "qml/shell/NiriCli.qml: talks to niri directly"),
+        ("qml/shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "qml/shell/Hyprm.qml: uses HyprlandManager"),
+        ("qml/shell/HState.qml", qml("property var s: HyprState.parse"), "qml/shell/HState.qml: uses a Hyprland helper"),
+        ("qml/shell/SState.qml", qml("property var s: SwayState.parse"), "qml/shell/SState.qml: uses a sway helper"),
+        ("qml/shell/NState.qml", qml("property var s: NiriState.parse"), "qml/shell/NState.qml: uses a niri helper"),
+        ("qml/shell/NotService.qml", qml("property var s: GhostManager.x"), "GhostManager is not a service"),
+        ("qml/shell/Typo.qml", qml("property var s: AudioManger.x"), "AudioManger — did you mean AudioManager?"),
+        ("qml/config/GhostConfig.qml", qml("readonly property int k: _c.key ?? 1", head="pragma Singleton"),
          "`_c.key ??`: readers use no ?? fallback"),
-        ("shell/LiveModel.qml", qml("Repeater { model: SystemManager.processes }"),
-         "shell/LiveModel.qml:6: a Repeater model from live values (SystemManager.processes)"),
-        ("shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
+        ("qml/shell/LiveModel.qml", qml("Repeater { model: SystemManager.processes }"),
+         "qml/shell/LiveModel.qml:6: a Repeater model from live values (SystemManager.processes)"),
+        ("qml/shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
-        ("shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "shell/Motion.qml:6: a duration in ms"),
-        ("shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "shell/Stamp.qml:6: Qt.formatDateTime"),
-        ("shell/Screens.qml", qml("property var s: Quickshell.screens"), "shell/Screens.qml:6: Quickshell.screens"),
-        ("components/dupa/Dup.qml", qml(), None),
-        ("components/dupb/Dup.qml", qml(), None),
-        ("shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
-         "shell/Both.qml: Dup is defined in qs.components.dupa and qs.components.dupb"),
+        ("qml/shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "qml/shell/Motion.qml:6: a duration in ms"),
+        ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
+        ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens"), "qml/shell/Screens.qml:6: Quickshell.screens"),
+        ("qml/components/dupa/Dup.qml", qml(), None),
+        ("qml/components/dupb/Dup.qml", qml(), None),
+        ("qml/shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
+         "qml/shell/Both.qml: Dup is defined in qs.components.dupa and qs.components.dupb"),
     ]
     # What the check must say about the schema, docs/usage.md and the allowlist edits below (and Reach)
     EDITS = [
-        "components/views/Reach/: not a OverlayView type and not used anywhere",
-        "BarWidget type 'Ghost' has no components/bar/widgets/Ghost/Ghost.qml",
+        "qml/components/views/Reach/: not a OverlayView type and not used anywhere",
+        "BarWidget type 'Ghost' has no qml/components/bar/widgets/Ghost/Ghost.qml",
         "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
         "OverlayModule Todo: x-hosts lists overlay but not desktop",
         "OverlayModule Calculator: has a text field but no x-keyboard",
-        "schema x-card 'Ghost' has no components/views/Settings/GhostCard.qml",
-        "schema x-intro 'GhostIntro' has no components/views/Settings/GhostIntro.qml",
+        "schema x-card 'Ghost' has no qml/components/views/Settings/GhostCard.qml",
+        "schema x-intro 'GhostIntro' has no qml/components/views/Settings/GhostIntro.qml",
         "tool page Keybinds isn't in the Overlay.items default",
         "docs/usage.md: IPC target 'phantom' has no IpcTarget",
-        "services/core/Gone.qml no longer uses Socket",
+        "qml/services/core/Gone.qml no longer uses Socket",
     ]
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "shell.qml", "greeter.qml", "components", "shell", "services", "config", "docs/usage.md")
+            root = fixture_root(tmp, "qml", "docs/usage.md")
 
             def schema(s):
                 defs = s["definitions"]
@@ -451,8 +451,8 @@ class CheckStructure(unittest.TestCase):
                 s["x-card"], s["x-intro"] = {"file": "Ghost"}, "GhostIntro"
                 items = s["properties"]["Overlay"]["properties"]["items"]
                 items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
-            edit_json(root / "config/json/config.schema.json", schema)
-            edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"services/core/Gone.qml": ["Socket"]}))
+            edit_json(root / "qml/config/json/config.schema.json", schema)
+            edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
             usage = root / "docs/usage.md"
             usage.write_text(usage.read_text().replace("| `overlay` |", "| `phantom` | `open` |\n| `overlay` |", 1))
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
@@ -466,11 +466,11 @@ class CheckI18n(unittest.TestCase):
     --untranslated finds bare UI text and undeclared runtime keys."""
 
     FILES = [
-        ("config/I18n.qml", 'readonly property var _formats: ({\n  "longDate": "dddd"\n})\n'),
-        ("config/json/config.schema.json", json.dumps({"properties": {"A": {"title": "Alpha"}}, "definitions": {}})),
-        ("components/A.qml", qml('text: I18n.tr("Shown")\n    label: I18n.tr(on ? "Yes" : "No")\n'
+        ("qml/config/I18n.qml", 'readonly property var _formats: ({\n  "longDate": "dddd"\n})\n'),
+        ("qml/config/json/config.schema.json", json.dumps({"properties": {"A": {"title": "Alpha"}}, "definitions": {}})),
+        ("qml/components/A.qml", qml('text: I18n.tr("Shown")\n    label: I18n.tr(on ? "Yes" : "No")\n'
                                  '    title: "Bare words"\n    description: I18n.tr(name)')),
-        ("config/i18n/xx.json", json.dumps({"_meta": {}, "strings": {"Alpha": "a", "Shown": "", "Yes": "y", "Gone": "g"}}, indent=4)),
+        ("qml/config/i18n/xx.json", json.dumps({"_meta": {}, "strings": {"Alpha": "a", "Shown": "", "Yes": "y", "Gone": "g"}}, indent=4)),
     ]
 
     def test_each_rule_fails(self):
@@ -478,13 +478,13 @@ class CheckI18n(unittest.TestCase):
             root = fixture_root(tmp)
             code, out = run_check(root, "check_i18n.py", files=self.FILES)
             self.assertEqual(code, 1)
-            self.assertEqual(missed(out, ["missing  components/A.qml:6: 'Shown'", "absent   components/A.qml:7: 'No'",
+            self.assertEqual(missed(out, ["missing  qml/components/A.qml:6: 'Shown'", "absent   qml/components/A.qml:7: 'No'",
                                           "unused   'Gone'", "format   not in the canonical format",
-                                          "config/i18n/template/language.json: stale"]), [], out)
+                                          "qml/config/i18n/template/language.json: stale"]), [], out)
             code, out = run_check(root, "check_i18n.py", "--untranslated")
             self.assertEqual(code, 1)
-            self.assertEqual(missed(out, ["components/A.qml:8: title: 'Bare words'",
-                                          "components/A.qml:9: dynamic tr() without declared keys"]), [], out)
+            self.assertEqual(missed(out, ["qml/components/A.qml:8: title: 'Bare words'",
+                                          "qml/components/A.qml:9: dynamic tr() without declared keys"]), [], out)
             run_check(root, "check_i18n.py", "--fill", "--prune")
             code, out = run_check(root, "check_i18n.py")
             self.assertEqual(code, 0, out)
@@ -524,7 +524,7 @@ class CheckPackages(unittest.TestCase):
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "install.sh", "components/methods/Packages.qml", "packaging/aur")
+            root = fixture_root(tmp, "install.sh", "qml/components/methods/Packages.qml", "packaging/aur")
             for path, old, new, _ in self.EDITS:
                 if old:
                     text = (root / path).read_text()
@@ -539,7 +539,7 @@ class CheckShaders(unittest.TestCase):
     """scripts/check_shaders.py fails when a wallpaper shader's .qsb is stale
     or missing, or a .qsb or stamp has no source."""
 
-    SHADERS = "components/surfaces/wallpaper/shaders"
+    SHADERS = "qml/components/surfaces/wallpaper/shaders"
 
     def test_clean(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -589,18 +589,18 @@ class CheckIcons(unittest.TestCase):
             "}",
         ])
         with tempfile.TemporaryDirectory() as tmp:
-            (Path(tmp) / "components").mkdir()
-            (Path(tmp) / "components/A.qml").write_text(qml)
+            (Path(tmp) / "qml/components").mkdir(parents=True)
+            (Path(tmp) / "qml/components/A.qml").write_text(qml)
             old_root, check_icons.ROOT, check_icons.errors = check_icons.ROOT, Path(tmp), []
             try:
                 check_icons.check_qml({"wifi", "shield_lock", "lock"})
             finally:
                 check_icons.ROOT = old_root
         self.assertEqual(check_icons.errors, [
-            "error    components/A.qml:3: no icon named 'shieldd_lock'",
-            "error    components/A.qml:4: no icon named 'bogus_one'",
-            "error    components/A.qml:8: no icon named 'bogus_text'",
-            "error    components/A.qml:15: no icon named 'bogus_map'",
+            "error    qml/components/A.qml:3: no icon named 'shieldd_lock'",
+            "error    qml/components/A.qml:4: no icon named 'bogus_one'",
+            "error    qml/components/A.qml:8: no icon named 'bogus_text'",
+            "error    qml/components/A.qml:15: no icon named 'bogus_map'",
         ])
 
     def test_the_tree_passes(self):
@@ -676,7 +676,7 @@ class CheckDocs(unittest.TestCase):
     FILES = [
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
                               "`IconConfig.x`\n[b](issues.md#no-such-entry)\n"),
-        ("components/reusable/GhostPiece.qml", qml()),
+        ("qml/components/reusable/GhostPiece.qml", qml()),
         ("docs/recipes/ghost.md", "# Ghost\n"),
         (".claude/skills/bar-widget/SKILL.md", SKILL.format("bar-widget", "Read the docs.")),
         (".claude/skills/setting/SKILL.md", SKILL.format("setting", "Read `docs/recipes/setting.md`.\nThen this.\nAnd that.")),
@@ -684,9 +684,8 @@ class CheckDocs(unittest.TestCase):
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs", ".claude/skills", "components", "services", "config",
-                                "AGENTS.md", "README.md", "CONTRIBUTING.md")
-            edit_json(root / "config/json/config.schema.json", lambda s: s.update({"x-ghost": True}))
+            root = fixture_root(tmp, "docs", ".claude/skills", "qml", "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            edit_json(root / "qml/config/json/config.schema.json", lambda s: s.update({"x-ghost": True}))
             with open(root / "docs/dev/issues.md", "a") as issues:
                 issues.write("\n### Ghost entry\n- **Where:** nowhere\n")
             code, out = run_check(root, "check_docs.py", files=self.FILES)
@@ -699,7 +698,7 @@ class CheckDocs(unittest.TestCase):
             "docs/dev/ghost.md:5: link to a missing issues.md entry #no-such-entry",
             "docs/dev/issues.md: 'Ghost entry': fields ['Where'], expected",
             "docs/dev/issues.md: 'Ghost entry' isn't linked from docs/dev/roadmap.md",
-            "components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
+            "qml/components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
             "docs/recipes/ghost.md: no skill .claude/skills/ghost/SKILL.md",
             ".claude/skills/bar-widget/SKILL.md: doesn't point at docs/recipes/bar-widget.md",
             ".claude/skills/setting/SKILL.md: 3 lines; a recipe skill only points at its recipe",
@@ -727,29 +726,29 @@ class ReviewScope(unittest.TestCase):
 
     def test_header_paths(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs/dev/issues.md", ".claude/skills/review-system", "services/compositor",
-                                "shell.qml")
+            root = fixture_root(tmp, "docs/dev/issues.md", ".claude/skills/review-system", "qml/services/compositor",
+                                "qml/shell.qml")
             (root / "docs/dev/ghost.md").write_text(
-                "> **Files:** `services/compositor/{NiriManager,SwayManager}.qml`, `services/compositor/`,"
-                " `services/gone.qml`, `shell.qml`, `LayoutsPanel`, `components/content/<Type>/<Type>.qml`\n")
+                "> **Files:** `qml/services/compositor/{NiriManager,SwayManager}.qml`, `qml/services/compositor/`,"
+                " `qml/services/gone.qml`, `qml/shell.qml`, `LayoutsPanel`, `qml/components/content/<Type>/<Type>.qml`\n")
             _, out = self.run_scope(root, "doc:docs/dev/ghost.md")
             (root / "backend/internal/pkg/sub").mkdir(parents=True)
             (root / "backend/internal/pkg/sub/deep.go").write_text("package sub\n")
             _, orphans = self.run_scope(root, "--orphans")
         self.assertIn("  backend/internal/pkg/sub/deep.go\n", orphans)
         self.assertIn("NOT FOUND (a moved file or a bad pattern: its code is missing below): "
-                      "services/gone.qml (docs/dev/ghost.md)\n", out)
-        self.assertEqual(out.count("services/compositor/NiriManager.qml"), 1, out)
-        self.assertIn("services/compositor/CompositorManager.qml", out)
-        self.assertIn("  shell.qml\n", out)
+                      "qml/services/gone.qml (docs/dev/ghost.md)\n", out)
+        self.assertEqual(out.count("qml/services/compositor/NiriManager.qml"), 1, out)
+        self.assertIn("qml/services/compositor/CompositorManager.qml", out)
+        self.assertIn("  qml/shell.qml\n", out)
 
     def test_apply(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs", ".claude/skills", ".claude/reviews", "components", "services", "config",
+            root = fixture_root(tmp, "docs", ".claude/skills", ".claude/reviews", "qml",
                                 "AGENTS.md", "README.md", "CONTRIBUTING.md")
             niri, comp = Path(tmp) / "out/niri", Path(tmp) / "out/compositor"
-            where = "`services/compositor/NiriManager.qml:10` (`queueAction`)"
-            shared = self.entry("Both audits saw it", "`services/compositor/CompositorManager.qml`", "niri")
+            where = "`qml/services/compositor/NiriManager.qml:10` (`queueAction`)"
+            shared = self.entry("Both audits saw it", "`qml/services/compositor/CompositorManager.qml`", "niri")
             for d, report in (
                 (niri, "## Major\n" + self.entry("The `niri` writer: drops binds", where, "niri")
                  + "\n## Minor\n" + self.entry("A minor one", where, "niri")
@@ -769,7 +768,7 @@ class ReviewScope(unittest.TestCase):
         self.assertEqual(missed(out, [
             "title already taken, skipped (merge it by hand if it differs): Both audits saw it",
             "same symbol, one cause or one fix? Another on queueAction / The `niri` writer: drops binds: "
-            "services/compositor/NiriManager.qml (queueAction)",
+            "qml/services/compositor/NiriManager.qml (queueAction)",
             "3 entries filed",
         ]), [], out)
         # check_docs ran on the result (the fixture lacks the rest of the tree: only the new entries count)
@@ -814,7 +813,7 @@ def handler_at(text, pos):
 def unlock_problems(files):
     """What lets the built-in lock screen unlock other than PAM's success,
     in `files` ({repo path: QML text}): a `locked = false` anywhere but
-    shell/Lockscreen.qml's onAuthenticationSucceeded (or its onSecureChanged
+    qml/shell/Lockscreen.qml's onAuthenticationSucceeded (or its onSecureChanged
     once the compositor has ended the lock), a session lock not bound to
     its state, authenticationSucceeded emitted for anything but
     PamResult.Success, or the lockscreen IPC target taking more than lock."""
@@ -825,11 +824,11 @@ def unlock_problems(files):
             # The compositor's end: only as the statement of that one guard
             guarded = re.search(r"if \(!sessionLock\.locked && lockState\.locked\)\s*lockState\.$", text[start : m.start()])
             allowed = fn == "onAuthenticationSucceeded" or (fn == "onSecureChanged" and guarded)
-            if path != "shell/Lockscreen.qml" or not allowed:
+            if path != "qml/shell/Lockscreen.qml" or not allowed:
                 problems.append(f"{path}: unlocks in {fn}")
         for m in re.finditer(r"\bauthenticationSucceeded\(\)", text):
             case = re.findall(r"case\s+([\w.]+):", text[: m.start()])
-            if path != "services/session/AuthManager.qml" or not case or case[-1] != "PamResult.Success":
+            if path != "qml/services/session/AuthManager.qml" or not case or case[-1] != "PamResult.Success":
                 problems.append(f"{path}: authenticationSucceeded after {case[-1] if case else 'no case'}")
         for m in re.finditer(r"IpcTarget\s*\{", text):
             block = text[m.end() : block_end(text, m.end() - 1)]
@@ -837,10 +836,10 @@ def unlock_problems(files):
                 functions = re.findall(r"function\s+(\w+)", block)
                 if functions != ["lock"]:
                     problems.append(f"{path}: the lockscreen IPC target takes {functions}")
-    lock = files.get("shell/Lockscreen.qml", "")
+    lock = files.get("qml/shell/Lockscreen.qml", "")
     m = re.search(r"WlSessionLock\s*\{", lock)
     if not m or not re.search(r"^\s*locked:\s*lockState\.locked\s*$", lock[m.end() : block_end(lock, m.end() - 1)], re.M):
-        problems.append("shell/Lockscreen.qml: the session lock isn't bound to lockState.locked alone")
+        problems.append("qml/shell/Lockscreen.qml: the session lock isn't bound to lockState.locked alone")
     return problems
 
 
@@ -865,7 +864,7 @@ class OnlyPamUnlocks(unittest.TestCase):
         return unlock_problems(files)
 
     def test_each_way_around_it_is_caught(self):
-        lock, auth, ipc = "shell/Lockscreen.qml", "services/session/AuthManager.qml", "services/session/LockManager.qml"
+        lock, auth, ipc = "qml/shell/Lockscreen.qml", "qml/services/session/AuthManager.qml", "qml/services/session/LockManager.qml"
         for path, old, new in [
             # An IPC unlock
             (ipc, "function lock(): void {", "function unlock(): void {}\n    function lock(): void {"),
@@ -879,7 +878,7 @@ class OnlyPamUnlocks(unittest.TestCase):
             (lock, "if (!sessionLock.locked && lockState.locked)", "if (!sessionLock.locked || true)"),
             (lock, "lockState.locked)\n        lockState.locked = false;", "lockState.locked) {}\n        lockState.locked = false;"),
             # Any other file unlocking, or the lock bound to something else
-            ("components/Unlock.qml", "", "Item { function go() { sessionLock.locked = false; } }"),
+            ("qml/components/Unlock.qml", "", "Item { function go() { sessionLock.locked = false; } }"),
             (lock, "locked: lockState.locked\n", "locked: lockState.locked && !AuthManager.isAuthenticating\n"),
         ]:
             with self.subTest(path=path, new=new):
@@ -895,9 +894,9 @@ class GreeterShim(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.copy = self.tmp / "usr/share/axiom-greeter"
-        (self.copy / "scripts/greeter").mkdir(parents=True)
-        self.shim = self.copy / "scripts/greeter/greeter_install.sh"
-        shutil.copy(SCRIPTS / "greeter" / "greeter_install.sh", self.shim)
+        (self.copy / "data/greeter").mkdir(parents=True)
+        self.shim = self.copy / "data/greeter/greeter_install.sh"
+        shutil.copy(ROOT / "data/greeter/greeter_install.sh", self.shim)
         self.env = scratch_env(self.tmp)
         # What the environment could name: never run
         planted = self.tmp / "planted"
@@ -957,7 +956,7 @@ class GreeterSession(unittest.TestCase):
 
     def run_session(self):
         env = {"PATH": str(self.bin), "XDG_RUNTIME_DIR": str(self.tmp)}
-        subprocess.run(["/bin/sh", str(SCRIPTS / "greeter/greeter-session.sh")], env=env,
+        subprocess.run(["/bin/sh", str(ROOT / "data/greeter/greeter-session.sh")], env=env,
                        capture_output=True, text=True, timeout=10)
         return [line.split()[0] for line in self.calls.read_text().splitlines()] if self.calls.exists() else []
 
@@ -988,10 +987,10 @@ class GreeterSession(unittest.TestCase):
         self.fake("axiom", 1)
         self.fake("hyprctl")
         env = {"PATH": str(self.bin), "XDG_RUNTIME_DIR": str(self.tmp)}
-        subprocess.run(["/bin/sh", str(SCRIPTS / "greeter/greeter-session.sh"), "shell"], env=env,
+        subprocess.run(["/bin/sh", str(ROOT / "data/greeter/greeter-session.sh"), "shell"], env=env,
                        capture_output=True, text=True, timeout=10)
         calls = self.calls.read_text().splitlines()
-        tree = str(SCRIPTS.parent)
+        tree = str(ROOT)
         self.assertEqual(calls[:2], [f"axiom greeter --tree {tree}", f"axiom greeter --tree {tree} --safe"])
         self.assertTrue((self.tmp / "axiom-greeter-failed").exists())
 

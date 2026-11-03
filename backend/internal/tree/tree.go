@@ -1,6 +1,6 @@
 // Package tree finds the axiom tree (the shell's QML and the config
 // schema's source) a command works on, and builds the JSON schema from it:
-// config/schema/**.yaml → config/json/config.schema.json.
+// qml/config/schema/**.yaml → qml/config/json/config.schema.json.
 //
 // It is the disk side of schema/yamlsrc, which stays pure: tree finds the
 // tree, hands yamlsrc the files (os.DirFS) and reports yamlsrc's problems
@@ -22,9 +22,23 @@ import (
 
 // Paths inside a tree
 const (
+	// SchemaJSON is the built schema, relative to the QML dir (QMLDir);
+	// it is also the binary's embedded copy's key (assets.Read)
 	SchemaJSON = "config/json/config.schema.json"
 	shellQML   = "shell.qml"
+	qmlDir     = "qml"
 )
+
+// QMLDir is the tree's QML folder: shell.qml, greeter.qml and config/
+// (the schema's YAML source and its built JSON) live under it
+func QMLDir(root string) string {
+	return filepath.Join(root, qmlDir)
+}
+
+// SchemaPath is the built schema's path on disk in the tree at root
+func SchemaPath(root string) string {
+	return filepath.Join(QMLDir(root), SchemaJSON)
+}
 
 // Find is the tree to use: dir when given, else $AXIOM_TREE, else the
 // nearest directory up from start holding shell.qml and config/, else the
@@ -92,13 +106,15 @@ func isTree(dir string) bool {
 	return err == nil && info.IsDir()
 }
 
-// BuildSchema assembles the tree's YAML schema source (config/schema/ and
-// the type folders' schema.yaml) into the JSON schema's bytes.
+// BuildSchema assembles the tree's YAML schema source (qml/config/schema/
+// and the type folders' schema.yaml) into the JSON schema's bytes. The
+// source's paths are relative to the QML dir (QMLDir).
 func BuildSchema(dir string) ([]byte, error) {
-	if _, err := os.Stat(filepath.Join(dir, yamlsrc.IndexFile)); errors.Is(err, fs.ErrNotExist) {
-		return nil, axerr.New(axerr.NotFound, "%s has no schema source (%s)", dir, yamlsrc.IndexFile)
+	qml := QMLDir(dir)
+	if _, err := os.Stat(filepath.Join(qml, yamlsrc.IndexFile)); errors.Is(err, fs.ErrNotExist) {
+		return nil, axerr.New(axerr.NotFound, "%s has no schema source (%s)", dir, filepath.Join(qmlDir, yamlsrc.IndexFile))
 	}
-	root, err := yamlsrc.Assemble(os.DirFS(dir))
+	root, err := yamlsrc.Assemble(os.DirFS(qml))
 	if err != nil {
 		var errs yamlsrc.Errors
 		if errors.As(err, &errs) {

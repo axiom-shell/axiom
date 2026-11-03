@@ -29,7 +29,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 HOME = Path(os.path.expanduser("~")).resolve()
 # The live config.json (DataDirs.xdg)
 LIVE_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config").resolve() / "axiom/config.json"
-SCHEMA = REPO / "config/json/config.schema.json"
+SCHEMA = REPO / "qml/config/json/config.schema.json"
 PUNCTUATION = ";&|()<>`"
 # Words that start a command without being its name
 KEYWORDS = {"if", "then", "else", "elif", "while", "until", "do", "!", "{", "}"}
@@ -199,7 +199,7 @@ def simple(tokens, exported):
     if Path(argv[0]).name in SHELLS and command_flag is not None:
         inner = argv[command_flag + 1]
         return [(dict(env, **e), a) for e, a in split_commands(inner)]
-    # A script run through a shell (`bash scripts/greeter/greeter_install.sh …`): judge the script
+    # A script run through a shell (`bash data/greeter/greeter_install.sh …`): judge the script
     if Path(argv[0]).name in SHELLS:
         rest = argv[1:]
         while rest and rest[0].startswith("-"):
@@ -557,7 +557,7 @@ def check_config_edit(tool, tool_input):
 
 # Files built from a source (edit the source) and frozen ones (never edit)
 GENERATED = {
-    REPO / "config/json/config.schema.json": "it's built from config/schema/ (edit the YAML there; scripts/generate.sh rebuilds it)",
+    REPO / "qml/config/json/config.schema.json": "it's built from qml/config/schema/ (edit the YAML there; scripts/generate.sh rebuilds it)",
 }
 # Generated directories (scripts/generate.sh), never committed
 GENERATED_DIRS = {

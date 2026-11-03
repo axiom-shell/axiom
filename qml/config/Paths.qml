@@ -10,9 +10,14 @@ QtObject {
 
   // --- Paths (from the environment, not from any config value) ---
   readonly property string homeDirectory: Quickshell.env("HOME") + "/"
-  // Shell root (this repo), always with a trailing slash. Read-only: axiom
-  // writes nothing under it (a package installs it where it can't)
+  // The shell's QML folder (the tree's qml/, where shell.qml is), always
+  // with a trailing slash. Read-only: axiom writes nothing under it (a
+  // package installs it where it can't)
   readonly property string axiomPath: decodeURIComponent(Quickshell.shellDir.toString().replace("file://", "")).replace(/\/?$/, "/")
+  // The axiom tree the QML folder is part of ($AXIOM_TREE, which axiom
+  // sets, else the QML folder's parent), with a trailing slash: data/
+  // (runtime files that aren't QML) and the package marker live here
+  readonly property string treePath: (Quickshell.env("AXIOM_TREE") || root.axiomPath.replace(/[^\/]+\/$/, "")).replace(/\/?$/, "/")
   // How compositors, binds and idle daemons call axiom: the binary that
   // runs this shell ($AXIOM_BIN), by its path (a compositor's PATH may not
   // have it). `<shellCommand> ipc <target> <fn>` calls the shell.
@@ -29,7 +34,6 @@ QtObject {
   // autostart hookup's `accept`): `axiom run`
   readonly property string startPattern: "(^|[\\s'\"/])axiom['\"]? +run\\b"
   readonly property string themePath: root.axiomPath + "config/themes/"
-  readonly property string scriptsPath: root.axiomPath + "scripts/"
   // What ships with axiom in config/: json/ (schema, theme defaults,
   // emoji), themes/, i18n/
   readonly property string resourcePath: root.axiomPath + "config/"
@@ -37,7 +41,7 @@ QtObject {
   // marker its PKGBUILD writes ("" for a clone: docs/dev/packaging.md).
   // The package manager updates it (SelfUpdateManager stays off) and the
   // login screen runs it (GreeterManager)
-  readonly property string packagedVersion: (FileManager.read(root.axiomPath + ".packaged") ?? "").trim()
+  readonly property string packagedVersion: (FileManager.read(root.treePath + ".packaged") ?? "").trim()
   readonly property bool packaged: packagedVersion !== ""
 
   // --- What axiom writes (ConfigManager.dataDirs: the XDG folders) ---
@@ -90,8 +94,8 @@ QtObject {
   readonly property string greeterStatePath: root.greeterDir + "state/"
   // The snapshot of the bundle its install took (axiom greeter-install): in
   // the install folder the session script names, else beside the code (a
-  // packaged axiom's install folder isn't its code's)
-  readonly property string greeterFallbackUrl: Quickshell.env("AXIOM_GREETER_FALLBACK") ? "file://" + Quickshell.env("AXIOM_GREETER_FALLBACK") : Qt.resolvedUrl("../fallback/")
+  // packaged axiom's install folder isn't its code's): the tree's fallback/
+  readonly property string greeterFallbackUrl: Quickshell.env("AXIOM_GREETER_FALLBACK") ? "file://" + Quickshell.env("AXIOM_GREETER_FALLBACK") : Qt.resolvedUrl("../../fallback/")
 
   // A theme's JSON file, by its Appearance.theme name: "generated/<name>"
   // from generatedThemesPath, "community/<id>" from communityThemesPath,

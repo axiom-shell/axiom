@@ -49,7 +49,10 @@ def docs():
         if not match:
             continue
         cited = [c.rstrip("/") for c in CITED.findall(match.group(1))]
-        cited = [c for c in cited if (ROOT / c).exists()]
+        # A path still cited at its place before the qml/ layout counts at
+        # its new one (until the restructure's docs step rewrites them)
+        cited = [next((p for p in (c, f"qml/{c}", f"qml/components/{c}") if (ROOT / p).exists()), None) for c in cited]
+        cited = [c for c in cited if c]
         if cited:
             out[rel] = cited
     return out

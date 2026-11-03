@@ -3,12 +3,12 @@
 
 Downloads Material Symbols Rounded (the variable font, its codepoints and
 licence) at a pinned commit of google/material-design-icons and writes:
-- assets/fonts/MaterialSymbolsRounded.ttf: the font with only the FILL and
+- qml/assets/fonts/MaterialSymbolsRounded.ttf: the font with only the FILL and
   wght axes StyledIcon sets (GRAD 0, opsz 24, as Qt drew it anyway), about a
   third of the size, renamed "Axiom Material Symbols" so a system copy of
   the font can never be drawn in its place (Apache-2.0 allows both)
-- assets/fonts/LICENSE and assets/fonts/VERSION (the commit)
-- config/json/material-symbols.json: the icon picker's catalog (IconManager),
+- qml/assets/fonts/LICENSE and qml/assets/fonts/VERSION (the commit)
+- qml/config/json/material-symbols.json: the icon picker's catalog (IconManager),
   each icon as [name, "search words"], most popular first. The words are
   Google's tags (fonts.google.com's metadata), split into words, less the
   name's own and the few that tag most icons ("icon", "symbol", ...)
@@ -28,10 +28,10 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FONT_OUT = ROOT / "assets" / "fonts" / "MaterialSymbolsRounded.ttf"
-LICENSE_OUT = ROOT / "assets" / "fonts" / "LICENSE"
-VERSION_OUT = ROOT / "assets" / "fonts" / "VERSION"
-CATALOG_OUT = ROOT / "config" / "json" / "material-symbols.json"
+FONT_OUT = ROOT / "qml" / "assets" / "fonts" / "MaterialSymbolsRounded.ttf"
+LICENSE_OUT = ROOT / "qml" / "assets" / "fonts" / "LICENSE"
+VERSION_OUT = ROOT / "qml" / "assets" / "fonts" / "VERSION"
+CATALOG_OUT = ROOT / "qml" / "config" / "json" / "material-symbols.json"
 
 # The commit the bundled font comes from: bump it (or pass --commit) for a
 # newer font
