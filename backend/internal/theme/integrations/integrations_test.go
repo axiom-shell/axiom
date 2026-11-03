@@ -26,7 +26,7 @@ func load(t *testing.T, path string) *Theme {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defaults, err := os.ReadFile(repo + "/config/json/theme-defaults.json")
+	defaults, err := os.ReadFile(repo + "/qml/config/json/theme-defaults.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +39,7 @@ func load(t *testing.T, path string) *Theme {
 
 func shipped(t *testing.T) []string {
 	t.Helper()
-	files, _ := filepath.Glob(repo + "/config/themes/*.json")
+	files, _ := filepath.Glob(repo + "/qml/config/themes/*.json")
 	files = slices.DeleteFunc(files, func(f string) bool { return strings.HasSuffix(f, "theme.schema.json") })
 	if len(files) < 10 {
 		t.Fatalf("only %d themes", len(files))
@@ -57,7 +57,7 @@ func golden(theme, key, path string) string {
 func TestGoldens(t *testing.T) {
 	t.Parallel()
 	for _, theme := range []string{"catppuccin-mocha", "ayu-light"} {
-		th := load(t, repo+"/config/themes/"+theme+".json")
+		th := load(t, repo+"/qml/config/themes/"+theme+".json")
 		for key, integ := range Table {
 			for _, f := range integ.Files {
 				t.Run(theme+"/"+key+"/"+f.Path, func(t *testing.T) {
@@ -288,7 +288,7 @@ func TestFoot(t *testing.T) {
 func TestReadableNvimText(t *testing.T) {
 	t.Parallel()
 	for _, name := range []string{"ayu-light", "submarine-sonar"} {
-		th := load(t, repo+"/config/themes/"+name+".json")
+		th := load(t, repo+"/qml/config/themes/"+name+".json")
 		out, err := nvim(th)
 		if err != nil {
 			t.Fatal(err)

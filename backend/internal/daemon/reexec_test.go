@@ -121,11 +121,12 @@ func (td *testDaemon) setHandoff(t *testing.T, h handoff) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	td.env[reexecEnv] = string(raw)
+	td.env[ReexecEnv] = string(raw)
 }
 
 // A daemon handed this display's held locks and socket takes them over
-// and serves on the same socket; when it stops, the socket goes.
+// and serves on the same socket, on the tree the handoff names (its own
+// search found none); when it stops, the socket goes.
 func TestAdoptedHandoffServes(t *testing.T) {
 	t.Parallel()
 	td := newTestDaemon(t)
@@ -134,11 +135,14 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		Lock:       dup(t, fx.instance.File()),
 		ConfigLock: dup(t, fx.config.File()),
 		Listener:   dup(t, fx.listener),
+		Tree:       testkit.RepoRoot(),
 	})
 	ctx, cancel := context.WithCancel(context.Background())
 	var runErr error
 	stopped := make(chan struct{})
-	go func() { runErr = Run(ctx, td.options(nil)); close(stopped) }()
+	opts := td.options(nil)
+	opts.Tree = ""
+	go func() { runErr = Run(ctx, opts); close(stopped) }()
 	// Stopped before its folders go, also when the test fails early
 	t.Cleanup(func() {
 		cancel()

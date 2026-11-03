@@ -430,7 +430,7 @@ func TestApplyExampleKeepsWorkspaces(t *testing.T) {
 	t.Parallel()
 	f := setup(t)
 	set(t, f.store, "Workspaces.layout", "grid")
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "examples", "clean.json"))
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "data", "examples", "clean.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,7 +465,7 @@ func TestExport(t *testing.T) {
 // to a valid config.
 func TestShippedExamplesApply(t *testing.T) {
 	t.Parallel()
-	entries, err := os.ReadDir(filepath.Join(testkit.RepoRoot(), "examples"))
+	entries, err := os.ReadDir(filepath.Join(testkit.RepoRoot(), "data", "examples"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -478,7 +478,7 @@ func TestShippedExamplesApply(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			f := setup(t)
-			data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "examples", e.Name()))
+			data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "data", "examples", e.Name()))
 			if err != nil {
 				t.Fatal(err)
 			}

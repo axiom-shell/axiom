@@ -28,10 +28,10 @@ const (
 
 // Session is greetd's default_session command once installed: the
 // installed copy's session script, by its real path.
-const Session = "/usr/share/axiom-greeter/scripts/greeter/greeter-session.sh"
+const Session = "/usr/share/axiom-greeter/data/greeter/greeter-session.sh"
 
 // PackagePath is the package source's code, and where the greeter finds it.
-const PackagePath = "/usr/share/axiom"
+const PackagePath = "/usr/share/axiom-shell"
 
 // Repository is the official repository, the git source's code: root
 // fetches only it, never the clone's remote (maintainer, 2026-10-27:

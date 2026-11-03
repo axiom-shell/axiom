@@ -34,7 +34,7 @@ const (
 
 // loginScreen is what a copy can't do without: a release from before the
 // login screen existed has nothing to run.
-var loginScreen = []string{"greeter.qml", "scripts/greeter/greeter-session.sh", "scripts/greeter/org.axiom.greeter.policy"}
+var loginScreen = []string{"qml/greeter.qml", "data/greeter/greeter-session.sh", "data/greeter/org.axiom.greeter.policy"}
 
 // failure is why a run as root stopped: its message is the reply's error.
 type failure string
@@ -162,7 +162,7 @@ func (r *run) install(ctx context.Context) error {
 
 	// The polkit action naming the copy's own helper: update and uninstall
 	// ask for it by name, and run root's file rather than the user's
-	policy, err := os.ReadFile(filepath.Join(in.installDir(), "scripts/greeter/org.axiom.greeter.policy"))
+	policy, err := os.ReadFile(filepath.Join(in.installDir(), "data/greeter/org.axiom.greeter.policy"))
 	if err == nil {
 		err = writeFile(in.policy(), policy, 0o644)
 	}
@@ -185,7 +185,7 @@ func (in *Installer) checkPackage() error {
 	if in.root != "" {
 		owner = os.Getuid()
 	}
-	for _, p := range []string{dir, filepath.Join(dir, "scripts/greeter")} {
+	for _, p := range []string{dir, filepath.Join(dir, "data/greeter")} {
 		if uid, ok := ownerOf(p); !ok || uid != owner {
 			return failf("%s isn't root's", dir)
 		}
@@ -263,8 +263,8 @@ func (r *run) fillCopy(ctx context.Context, stage string) error {
 	case rules.SourcePackage:
 		// Only what greetd and polkit name by path; the session script runs
 		// the package's code (.greeter-source)
-		if err := copyTree(filepath.Join(in.packageDir(), "scripts/greeter"), filepath.Join(stage, "scripts/greeter")); err != nil {
-			return failf("copying %s/scripts/greeter failed", in.packageDir())
+		if err := copyTree(filepath.Join(in.packageDir(), "data/greeter"), filepath.Join(stage, "data/greeter")); err != nil {
+			return failf("copying %s/data/greeter failed", in.packageDir())
 		}
 		hash = firstLine(readText(filepath.Join(in.packageDir(), ".packaged")))
 		origin = rules.Origin{Source: rules.SourcePackage, Dir: rules.PackagePath}

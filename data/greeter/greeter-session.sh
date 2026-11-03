@@ -32,7 +32,7 @@ copy=$install
 # and the fallback snapshot
 if [ -f "$install/.greeter-source" ]; then
   read -r kind dir <"$install/.greeter-source"
-  [ "$kind" = package ] && [ -f "$dir/greeter.qml" ] && copy=$dir
+  [ "$kind" = package ] && [ -f "$dir/qml/greeter.qml" ] && copy=$dir
 fi
 # Where axiom greeter and ThemeManager find that snapshot
 export AXIOM_GREETER_FALLBACK="$install/fallback/"

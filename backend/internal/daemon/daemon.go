@@ -221,6 +221,9 @@ func Run(ctx context.Context, opts Options) error {
 		if h.Started > 0 {
 			d.started = time.UnixMilli(h.Started)
 		}
+		if h.Tree != "" {
+			opts.Tree, d.opts.Tree = h.Tree, h.Tree
+		}
 	} else if d.instance, err = fsx.TryLock(runtime.Lock()); err != nil {
 		if axerr.KindOf(err) == axerr.Running {
 			return &axerr.Error{Kind: axerr.Running, Message: "axiom is already running on " + runtime.Display, Err: err}
@@ -228,6 +231,10 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 	defer d.instance.Release()
+	if opts.Tree == "" {
+		// `axiom run` found none, and no handoff named one
+		return axerr.New(axerr.NotFound, "no axiom tree to run (pass --tree)")
+	}
 
 	// Dev mode: as the image before a re-exec had it, else --dev, else
 	// the saved choice
@@ -300,7 +307,7 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	d.saved = saved.New(saved.Options{
 		Dir:      d.dirs.Config,
-		Examples: filepath.Join(opts.Tree, "examples"),
+		Examples: filepath.Join(opts.Tree, "data", "examples"),
 		Home:     opts.Getenv("HOME"),
 		UIState:  filepath.Join(d.dirs.UI, "savedconfigs.json"),
 		Store:    d.store,
@@ -379,7 +386,7 @@ func Run(ctx context.Context, opts Options) error {
 			adopt = h.Shell
 		}
 		d.shell = supervise.New(supervise.Options{
-			Command:  ShellCommand(opts.QS, opts.Tree),
+			Command:  ShellCommand(opts.QS, tree.QMLDir(opts.Tree)),
 			NoTHP:    true,
 			Env:      d.shellEnv(),
 			EnvFunc:  d.shellEnvNow,
@@ -420,13 +427,12 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	if d.shell != nil {
 		serve("the shell", d.shell.Run)
-		if _, hash := d.currentSchema(); h != nil && h.Schema != "" && h.Schema != hash {
-			// The shell read the schema of before (an update re-exec'd
-			// into the new binary): its hello would be refused
+		_, hash := d.currentSchema()
+		if why := shellRestartReason(h, opts.Tree, hash); why != "" {
 			d.tasks.Go(func(ctx context.Context) {
-				opts.Log.Info("the schema changed across the re-exec: restarting the shell")
+				opts.Log.Info(why + " across the re-exec: restarting the shell")
 				if err := d.restartShell(ctx); err != nil && ctx.Err() == nil {
-					opts.Log.Error("restarting the shell for the new schema", "err", err)
+					opts.Log.Error("restarting the shell after the re-exec", "err", err)
 				}
 			})
 		}
@@ -436,6 +442,23 @@ func Run(ctx context.Context, opts Options) error {
 	d.tasks.Wait()
 	opts.Log.Info("axiom stopped")
 	return nil
+}
+
+// shellRestartReason is why the shell an image adopts across a re-exec
+// (h) must restart ("": it needn't): it runs another tree than this image
+// starts it on (an image of before the handoff carried it ran the old
+// layout), or read another schema (an update re-exec'd into the new
+// binary), whose hello would be refused.
+func shellRestartReason(h *handoff, tree, schemaHash string) string {
+	switch {
+	case h == nil:
+		return ""
+	case h.Tree != tree:
+		return "the shell's tree changed"
+	case h.Schema != "" && h.Schema != schemaHash:
+		return "the schema changed"
+	}
+	return ""
 }
 
 // followCompositor runs the Wayland connection until ctx ends, and stops
@@ -560,7 +583,7 @@ func (d *Daemon) writeSnapshot() error {
 	return fsx.WriteFile(d.runtime.File(SnapshotFile), jsonx.Marshal(cfg), 0o600)
 }
 
-// ShellCommand runs qs on entry (the tree, or its greeter.qml). Its log
+// ShellCommand runs qs on entry (the tree's QML dir, or its greeter.qml). Its log
 // rule drops Qt's text-input-v3 warnings ("Trying to enable/disable …"),
 // which are Qt's own bookkeeping, not a fault: a surface whose wl_surface
 // goes before Qt moves the focus off its text field (a layer window hiding:

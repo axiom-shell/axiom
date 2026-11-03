@@ -18,15 +18,16 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
+	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
 
-// reexecEnv carries a handoff from the image before a re-exec (an updated
+// ReexecEnv carries a handoff from the image before a re-exec (an updated
 // binary taking over) to the one after: the descriptors it keeps open and
 // the shell it supervises and the commands it runs (still this process's
 // children: execve keeps the pid). The handoff is trusted only when its
 // instance-lock descriptor really is the held lock of this display, which
 // only the previous holder could pass on.
-const reexecEnv = "AXIOM_REEXEC"
+const ReexecEnv = "AXIOM_REEXEC"
 
 type handoff struct {
 	Lock       int `json:"lock"`
@@ -40,6 +41,10 @@ type handoff struct {
 	// shell, locked first when it was
 	Schema string `json:"schema,omitempty"`
 	Locked bool   `json:"locked,omitempty"`
+	// The tree the shell runs on: the next image runs the same one (its
+	// own search may find no tree, or another), and restarts the shell
+	// when it doesn't (an image of before this field ran the old layout)
+	Tree string `json:"tree,omitempty"`
 	// Dev mode as it was (a runtime switch isn't in the arguments), and
 	// the installed binary while a dev build runs
 	Dev       bool   `json:"dev,omitempty"`
@@ -50,14 +55,14 @@ type handoff struct {
 
 // inherited reads (and clears) a handoff from the environment.
 func inherited(getenv func(string) string) (*handoff, error) {
-	raw := getenv(reexecEnv)
+	raw := getenv(ReexecEnv)
 	if raw == "" {
 		return nil, nil
 	}
-	os.Unsetenv(reexecEnv)
+	os.Unsetenv(ReexecEnv)
 	var h handoff
 	if err := json.Unmarshal([]byte(raw), &h); err != nil || h.Lock < 3 || h.Listener < 3 || h.ConfigLock < 3 {
-		return nil, axerr.New(axerr.Refused, "a malformed %s", reexecEnv)
+		return nil, axerr.New(axerr.Refused, "a malformed %s", ReexecEnv)
 	}
 	return &h, nil
 }
@@ -85,6 +90,7 @@ func (d *Daemon) reexec(exe string) (err error) {
 		ConfigLock: int(d.store.LockFile().Fd()),
 		Listener:   int(listener.Fd()),
 		Shell:      d.shellPID(),
+		Tree:       d.opts.Tree,
 		Locked:     d.locker.Held(),
 		Dev:        d.dev.Enabled(),
 		Installed:  d.installed,
@@ -117,9 +123,9 @@ func (d *Daemon) reexec(exe string) (err error) {
 		}
 	}
 	data, _ := json.Marshal(h)
-	env := []string{reexecEnv + "=" + string(data)}
+	env := []string{ReexecEnv + "=" + string(data)}
 	for _, kv := range os.Environ() {
-		if !strings.HasPrefix(kv, reexecEnv+"=") {
+		if !strings.HasPrefix(kv, ReexecEnv+"=") {
 			env = append(env, kv)
 		}
 	}
@@ -163,7 +169,7 @@ func (d *Daemon) adopt(h *handoff) (net.Listener, error) {
 // newer hello until the exec gets it too (start: only the first, which
 // re-execs), so one said meanwhile isn't refused.
 func (d *Daemon) upgradeTarget(ctx context.Context, want int) (exe string, start bool) {
-	if want <= buildinfo.Protocol() || protocolIn(filepath.Join(d.opts.Tree, "config", "json", "backend.json")) != want {
+	if want <= buildinfo.Protocol() || protocolIn(filepath.Join(tree.QMLDir(d.opts.Tree), "config", "json", "backend.json")) != want {
 		return "", false
 	}
 	d.upgradeMu.Lock()

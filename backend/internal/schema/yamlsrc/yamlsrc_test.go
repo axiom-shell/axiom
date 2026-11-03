@@ -2,6 +2,7 @@ package yamlsrc
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -14,7 +15,7 @@ import (
 // every type folder.
 func TestRepoSchemaAssembles(t *testing.T) {
 	t.Parallel()
-	root, err := Assemble(os.DirFS(testkit.RepoRoot()))
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -22,9 +22,9 @@ import (
 type HookupOptions struct {
 	Getenv   func(string) string
 	LookPath func(string) (string, error)
-	// Scripts is the tree's scripts/ folder, which a copy target's From is
+	// DataDir is the tree's data/ folder, which a copy target's From is
 	// relative to
-	Scripts string
+	DataDir string
 	Now     func() time.Time
 }
 
@@ -103,7 +103,7 @@ func (h *Hookups) apply(r hookup.Resolved, suffix string) (HookupResult, error) 
 	}
 	switch {
 	case r.Place == hookup.Copy:
-		data, err := os.ReadFile(filepath.Join(h.opts.Scripts, r.From))
+		data, err := os.ReadFile(filepath.Join(h.opts.DataDir, r.From))
 		if err != nil {
 			return result, err
 		}

@@ -113,8 +113,8 @@ func TestNewerClientFindsItsBinary(t *testing.T) {
 	m := devFixture(t, fakeGo(t, "exit 0"))
 	d := m.d
 	tree := func(protocol int) {
-		os.MkdirAll(filepath.Join(d.opts.Tree, "config", "json"), 0o755)
-		os.WriteFile(filepath.Join(d.opts.Tree, "config", "json", "backend.json"), []byte(fmt.Sprintf(`{"protocol": %d}`, protocol)), 0o644)
+		os.MkdirAll(filepath.Join(d.opts.Tree, "qml", "config", "json"), 0o755)
+		os.WriteFile(filepath.Join(d.opts.Tree, "qml", "config", "json", "backend.json"), []byte(fmt.Sprintf(`{"protocol": %d}`, protocol)), 0o644)
 	}
 	binary := func(path string, protocol int) {
 		os.MkdirAll(filepath.Dir(path), 0o700)

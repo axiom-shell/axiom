@@ -49,7 +49,7 @@ func newScratch(t *testing.T) *scratch {
 			}
 			return "/usr/bin/" + cmd, nil
 		},
-		Scripts: filepath.Join("..", "..", "..", "..", "scripts"),
+		DataDir: filepath.Join("..", "..", "..", "..", "data"),
 		Now:     func() time.Time { return time.Date(2026, 10, 27, 12, 0, 0, 0, time.Local) },
 	})
 	data, err := assets.Read("config/json/config.schema.json")
@@ -345,7 +345,7 @@ func TestApplyCases(t *testing.T) {
 	}
 	os.Remove(module)
 	s.apply("nvim")
-	if read(t, module) != read(t, filepath.Join("..", "..", "..", "..", "scripts", "templates", "nvim", "axiom_theme.lua")) {
+	if read(t, module) != read(t, filepath.Join("..", "..", "..", "..", "data", "templates", "nvim", "axiom_theme.lua")) {
 		t.Error("the module wasn't copied")
 	}
 

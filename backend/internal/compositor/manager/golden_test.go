@@ -40,7 +40,7 @@ func repo(t *testing.T) (*render.Tables, any) {
 		if repoErr != nil {
 			return
 		}
-		data, err := os.ReadFile(filepath.Join(root, "config/json/config.schema.json"))
+		data, err := os.ReadFile(filepath.Join(root, "qml/config/json/config.schema.json"))
 		if err != nil {
 			repoErr = err
 			return

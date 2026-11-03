@@ -13,5 +13,5 @@ hl.config({
 })
 
 hl.on("hyprland.start", function()
-  hl.exec_cmd("/usr/share/axiom-greeter/scripts/greeter/greeter-session.sh shell")
+  hl.exec_cmd("/usr/share/axiom-greeter/data/greeter/greeter-session.sh shell")
 end)

@@ -8,25 +8,31 @@ import (
 
 func makeTree(t *testing.T, dir string) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, qmlDir, "config"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, shellQML), nil, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, qmlDir, shellQML), nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// Found from the folder a command runs in first, then where quickshell
-// finds `-c axiom`: an autostart's `axiom run` runs from $HOME.
+// Found from the folder a command runs in first, then where an install
+// puts it: an autostart's `axiom run` runs from $HOME.
 func TestFind(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	clone := filepath.Join(root, "work", "axiom")
-	user := filepath.Join(root, "config", "quickshell", "axiom")
-	system := filepath.Join(root, "xdg", "quickshell", "axiom")
+	user := filepath.Join(root, "data", "axiom-shell")
+	system := filepath.Join(root, "share", "axiom-shell")
 	for _, d := range []string{clone, user, system} {
 		makeTree(t, d)
 	}
+	// An old install's place, never looked in
+	makeTree(t, filepath.Join(root, "config", "quickshell", "axiom"))
+	// A tree without qml/ isn't one
+	old := filepath.Join(root, "old")
+	os.MkdirAll(filepath.Join(old, "config"), 0o755)
+	os.WriteFile(filepath.Join(old, shellQML), nil, 0o644)
 	nowhere := filepath.Join(root, "home")
 	os.MkdirAll(nowhere, 0o755)
 	env := func(vars map[string]string) func(string) string {
@@ -38,11 +44,12 @@ func TestFind(t *testing.T) {
 		start string
 		want  string
 	}{
-		{"inside a clone", map[string]string{"XDG_CONFIG_HOME": filepath.Join(root, "config")}, filepath.Join(clone, "config"), clone},
-		{"the user's", map[string]string{"XDG_CONFIG_HOME": filepath.Join(root, "config")}, nowhere, user},
-		{"the system's", map[string]string{"HOME": nowhere, "XDG_CONFIG_DIRS": filepath.Join(root, "xdg")}, nowhere, system},
-		{"AXIOM_TREE first", map[string]string{"AXIOM_TREE": system, "XDG_CONFIG_HOME": filepath.Join(root, "config")}, clone, system},
-		{"none", map[string]string{"HOME": nowhere, "XDG_CONFIG_DIRS": filepath.Join(root, "none")}, nowhere, ""},
+		{"inside a clone", map[string]string{"XDG_DATA_HOME": filepath.Join(root, "data")}, filepath.Join(clone, "qml", "config"), clone},
+		{"the user's", map[string]string{"XDG_DATA_HOME": filepath.Join(root, "data"), "XDG_DATA_DIRS": filepath.Join(root, "share")}, nowhere, user},
+		{"the system's", map[string]string{"HOME": nowhere, "XDG_DATA_DIRS": filepath.Join(root, "share")}, nowhere, system},
+		{"AXIOM_TREE first", map[string]string{"AXIOM_TREE": system, "XDG_DATA_HOME": filepath.Join(root, "data")}, clone, system},
+		{"not the old config folder", map[string]string{"HOME": nowhere, "XDG_CONFIG_HOME": filepath.Join(root, "config"), "XDG_DATA_DIRS": filepath.Join(root, "none")}, nowhere, ""},
+		{"not the old layout", map[string]string{"HOME": nowhere, "XDG_DATA_DIRS": filepath.Join(root, "none")}, old, ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

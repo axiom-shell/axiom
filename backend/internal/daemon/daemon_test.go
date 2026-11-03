@@ -394,15 +394,40 @@ func TestHandoffIsChecked(t *testing.T) {
 		{"not json", "{", false},
 		{"stdio descriptors", `{"lock":0,"configLock":4,"listener":5}`, false},
 		{"no listener", `{"lock":3,"configLock":4}`, false},
-		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"locked":true,"dev":true,"installed":"/usr/bin/axiom"}`, true},
+		{"whole", `{"lock":3,"configLock":4,"listener":5,"shell":42,"tree":"/t","locked":true,"dev":true,"installed":"/usr/bin/axiom"}`, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			h, err := inherited(func(string) string { return tc.raw })
 			if (err == nil) != tc.ok {
 				t.Fatalf("err %v", err)
 			}
-			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42 || !h.Locked) {
+			if tc.name == "whole" && (!h.Dev || h.Installed != "/usr/bin/axiom" || h.Shell != 42 || h.Tree != "/t" || !h.Locked) {
 				t.Errorf("handoff %+v", h)
+			}
+		})
+	}
+}
+
+// The shell adopted across a re-exec restarts when it runs another tree
+// than the new image starts it on, or read another schema
+func TestShellRestartAfterReexec(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name    string
+		h       *handoff
+		restart bool
+	}{
+		{"no re-exec", nil, false},
+		{"the same tree and schema", &handoff{Shell: 42, Tree: "/t", Schema: "a"}, false},
+		{"no schema said", &handoff{Shell: 42, Tree: "/t"}, false},
+		{"another schema", &handoff{Shell: 42, Tree: "/t", Schema: "b"}, true},
+		{"another tree", &handoff{Shell: 42, Tree: "/other", Schema: "a"}, true},
+		{"an image of before the tree was handed over", &handoff{Shell: 42, Schema: "a"}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := shellRestartReason(tc.h, "/t", "a"); (got != "") != tc.restart {
+				t.Errorf("reason %q, want a restart: %v", got, tc.restart)
 			}
 		})
 	}

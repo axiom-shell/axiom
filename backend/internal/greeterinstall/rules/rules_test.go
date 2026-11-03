@@ -81,7 +81,7 @@ func TestOrigin(t *testing.T) {
 		{"git tags https://github.com/a/b\n", Origin{Source: SourceGit, Channel: "tags", URL: "https://github.com/a/b"}, "git:tags"},
 		{"git main /x/upstream.git", Origin{Source: SourceGit, Channel: "main", URL: "/x/upstream.git"}, "git:main"},
 		{"local\n", Origin{Source: SourceLocal}, "local"},
-		{"package /usr/share/axiom\n", Origin{Source: SourcePackage, Dir: "/usr/share/axiom"}, "package"},
+		{"package /usr/share/axiom-shell\n", Origin{Source: SourcePackage, Dir: "/usr/share/axiom-shell"}, "package"},
 		{"", Origin{}, ""},
 		{"svn x", Origin{}, ""},
 	} {
@@ -101,16 +101,16 @@ func TestShipsAndHashes(t *testing.T) {
 		path          string
 		ships, hashes bool
 	}{
-		{"greeter.qml", true, true},
-		{"scripts/greeter/greeter-session.sh", true, true},
+		{"qml/greeter.qml", true, true},
+		{"data/greeter/greeter-session.sh", true, true},
 		{"backend/go.mod", false, true},
 		{"tests/tst_x.qml", false, false},
 		{"docs/notes.md", false, false},
 		{".github/workflows/ci.yml", false, false},
 		{"install.sh", false, false},
 		{"scripts/install.sh", true, true},
-		{"components/AGENTS.md", false, false},
-		{"components/tests/x.qml", true, true},
+		{"qml/components/AGENTS.md", false, false},
+		{"qml/components/tests/x.qml", true, true},
 	} {
 		if Ships(tc.path) != tc.ships || Hashes(tc.path) != tc.hashes {
 			t.Errorf("%s: ships %v hashes %v", tc.path, Ships(tc.path), Hashes(tc.path))

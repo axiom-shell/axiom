@@ -62,6 +62,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
 
+### The compositor facts' axiomPath is read by nothing
+- **Where:** `backend/internal/compositor/manager/inputs.go` (`BindCtx`), `services/compositor/CompositorConfigManager.qml` (`axiomPath`)
+- **What:** The shell sends `ctx.axiomPath` (`Paths.axiomPath`, the QML dir) with the compositor facts, and `BindCtx.AxiomPath` decodes it, but no renderer reads it: the binds' commands use only `axiomBin`, `shellCommand` and `restartCommand` (`grep 'get(ctx, "' backend/internal/compositor`). A dead field both sides keep up, which the move to `qml/` had to update in `manager/testdata/facts.json` all the same. Fix: drop the field and the shell's key (and the fixture's).
+- **Size:** trivial
+- **Found:** 2026-11-03, while moving the backend to the qml/ layout
+
 ### axiom installs into Quickshell's config folder, and dev mode can't switch trees
 - **Where:** `install.sh`, `config/Paths.qml` (`axiomPath`), `backend/internal/daemon/dev.go`
 - **What:** An idea from the maintainer (2026-11-02), not a bug. The checkout lives in `~/.config/quickshell/axiom`, though it's now an installed program (the Go daemon and CLI, the greeter, a QML tree self-update replaces) of which the QML is one part `axiom run` hands to qs. The maintainer: "where should a git install (or install script) actually live? Since quickshell has been moved to rendering primarily and axiom has its own shit (i.e. go) it feels slighty wrong to be in quickshell directly?" and "does this also make sense with a light refactor (i.e. a qs folder with all qs in it). This then allows for easy swirching between a real install (i.e. share version), and my cloned version for dev, with just turning dev mode on/off? (i.e. axiom dev set "path" then axiom dev on/off rewires to main install (that you don't tiuch) and the clone?" Three parts for the plan:

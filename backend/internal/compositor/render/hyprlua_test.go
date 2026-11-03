@@ -27,7 +27,7 @@ func runLua(t *testing.T, chunks ...string) {
 
 func repoSchema(t *testing.T) any {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "config/json/config.schema.json"))
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "qml/config/json/config.schema.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

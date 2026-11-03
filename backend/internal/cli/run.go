@@ -35,7 +35,9 @@ chosen last (see "axiom dev"), and logs go to the terminal too.`,
 				}
 				wd, _ := os.Getwd()
 				root, err := tree.Find(*dir, e.Getenv, wd)
-				if err != nil {
+				// A re-exec'd image runs the tree its handoff names, which
+				// its own search may not find
+				if err != nil && e.Getenv(daemon.ReexecEnv) == "" {
 					return err
 				}
 				dirs := xdg.Resolve(e.Getenv)

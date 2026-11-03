@@ -273,7 +273,7 @@ func (m *devMode) watch(ctx context.Context) func() {
 	}
 }
 
-// watchDirs watches every folder under roots (relative to the tree), and
+// watchDirs watches every folder under roots (absolute paths), and
 // the folders made later, calling fn for each event on a file keep
 // accepts, debounced by delay.
 func (m *devMode) watchDirs(ctx context.Context, roots []string, skip func(dir string) bool, keep func(path string) bool, delay time.Duration, fn func()) error {
@@ -295,7 +295,7 @@ func (m *devMode) watchDirs(ctx context.Context, roots []string, skip func(dir s
 		})
 	}
 	for _, r := range roots {
-		add(filepath.Join(m.d.opts.Tree, r))
+		add(r)
 	}
 	wait := newDebouncer(delay)
 	defer wait.Stop()
@@ -322,10 +322,14 @@ func (m *devMode) watchDirs(ctx context.Context, roots []string, skip func(dir s
 	}
 }
 
-// watchSchema rebuilds the schema whenever its YAML source (config/
+// watchSchema rebuilds the schema whenever its YAML source (qml/config/
 // schema/, a type folder's schema.yaml) changes.
 func (m *devMode) watchSchema(ctx context.Context) error {
-	roots := yamlsrc.Roots(os.DirFS(m.d.opts.Tree))
+	qml := tree.QMLDir(m.d.opts.Tree)
+	var roots []string
+	for _, r := range yamlsrc.Roots(os.DirFS(qml)) {
+		roots = append(roots, filepath.Join(qml, r))
+	}
 	isYAML := func(p string) bool { return strings.HasSuffix(p, ".yaml") }
 	return m.watchDirs(ctx, roots, nil, isYAML, 100*time.Millisecond, m.d.rebuildSchema)
 }
@@ -334,9 +338,10 @@ func (m *devMode) watchSchema(ctx context.Context) error {
 // binary embeds, changes. Tests, editors' temporary files and the
 // generated copies (which the build itself writes) are left out.
 func (m *devMode) watchSource(ctx context.Context) error {
+	jsonDir := filepath.Join(tree.QMLDir(m.d.opts.Tree), "config", "json")
 	embedded := map[string]bool{
-		filepath.Join(m.d.opts.Tree, "config", "json", "backend.json"):        true,
-		filepath.Join(m.d.opts.Tree, "config", "json", "theme-defaults.json"): true,
+		filepath.Join(jsonDir, "backend.json"):        true,
+		filepath.Join(jsonDir, "theme-defaults.json"): true,
 	}
 	generated := filepath.Join(m.d.opts.Tree, "backend", "internal", "assets", "data")
 	skip := func(dir string) bool {
@@ -359,7 +364,7 @@ func (m *devMode) watchSource(ctx context.Context) error {
 		}
 		return false
 	}
-	return m.watchDirs(ctx, []string{"backend", filepath.Join("config", "json")}, skip, keep, time.Second, m.builds.Kick)
+	return m.watchDirs(ctx, []string{filepath.Join(m.d.opts.Tree, "backend"), jsonDir}, skip, keep, time.Second, m.builds.Kick)
 }
 
 // watchBinary re-execs into the installed binary when it is rebuilt
