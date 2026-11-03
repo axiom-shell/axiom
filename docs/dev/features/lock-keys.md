@@ -1,6 +1,6 @@
 # Lock keys
 
-> **Files:** `backend/internal/lockkeys/lockkeys.go`, `backend/internal/daemon/topics.go`, `backend/internal/daemon/greeter.go`, `services/system/LockKeysManager.qml`, `components/reusable/CapsLockHint.qml`, `components/reusable/StyledTextEntry.qml`, `components/reusable/PasswordEntry.qml`, `components/bar/widgets/LockKeys/LockKeys.qml`, `components/surfaces/osd/OSDStatusSource.qml`
+> **Files:** `backend/internal/lockkeys/lockkeys.go`, `backend/internal/daemon/topics.go`, `backend/internal/daemon/greeter.go`, `qml/services/system/LockKeysManager.qml`, `qml/components/reusable/CapsLockHint.qml`, `qml/components/reusable/StyledTextEntry.qml`, `qml/components/reusable/PasswordEntry.qml`, `qml/components/bar/widgets/LockKeys/LockKeys.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml`
 > **Config:** none of its own; the LockKeys widget's settings (`showCaps`, `showNum`, `showScroll`, `hideWhenOff`, its colors)
 > **Related:** [Services pattern](../core/services-pattern.md) (polled topics), [Protocol](../backend/protocol.md), [Shared UI pieces](../core/shared-ui-pieces.md) (`StyledTextEntry`, `PasswordEntry`), [Greeter runtime](greeter-runtime.md)
 
@@ -14,7 +14,7 @@ Whether Caps Lock, Num Lock and Scroll Lock are on: every password field warns a
 - Registered on the session's axiom (`sources()`) and the greeter's (`greeterRegistry`).
 
 ### Shell
-- `LockKeysManager` (`services/system`): `available`, `capsLock`, `numLock`, `scrollLock`; consumers `acquire(owner)` / `release(owner)` with no request (they share the default interval). With no consumer it releases the topic and reads all off and unavailable, so a state from the last consumer never shows stale.
+- `LockKeysManager` (`qml/services/system`): `available`, `capsLock`, `numLock`, `scrollLock`; consumers `acquire(owner)` / `release(owner)` with no request (they share the default interval). With no consumer it releases the topic and reads all off and unavailable, so a state from the last consumer never shows stale.
 - **Password fields**: `StyledTextEntry` loads `CapsLockHint` at its right (left of the clear X when both show) while its `echoMode` hides text, it has focus and isn't read-only, so the key is polled only while a password is being typed. The hint is an `IssueIcon` (`keyboard_capslock`, warning, "Caps Lock is on" on hover) that pops in; the text makes room only while it shows. A revealed field (`echoMode` Normal) shows no hint: what's typed is visible. Every password field gets it with no setting: the lock screen, greeter and polkit (through `PasswordEntry`), Wi-Fi, VPN secrets, the CalDAV password and the chat API keys.
 - `CapsLockHint` is plumbing, the one reusable piece reading `LockKeysManager` (root `AGENTS.md` › Layout); hosts read `StyledTextEntry.capsHintShown`.
 - **`PasswordEntry`** (lock screen, greeter, polkit, where a wrong password costs most): while its message is empty, its message line says "Caps Lock is on" in `Theme.warning` (under `inlineMessage`, the empty field's placeholder). A real message (a failure, a PAM prompt) always wins. `capsMessage` turns the line's warning off: the lock screen's and greeter's fields tie it to their Messages setting, since with no line reserved it would push the field (the icon still shows).

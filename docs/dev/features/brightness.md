@@ -1,6 +1,6 @@
 # Brightness
 
-> **Files:** `services/system/BrightnessManager.qml`, `backend/internal/brightness/`, `backend/internal/daemon/brightness.go`, `components/content/Brightness/Brightness.qml`, `components/surfaces/osd/OSDBar.qml`
+> **Files:** `qml/services/system/BrightnessManager.qml`, `backend/internal/brightness/`, `backend/internal/daemon/brightness.go`, `qml/components/content/Brightness/Brightness.qml`, `qml/components/surfaces/osd/OSDBar.qml`
 > **Config:** none of its own (the module's `monitor` property; OSD `brightness` bars)
 > **Related:** [OSD](osd.md), [Idle](idle.md) (dim/undim), [Utility modules](../overlay/utility-modules.md)
 
@@ -27,7 +27,7 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
   - `setMany(names, value, silent)`.
 - **IPC `brightness`:** `up`, `down`, `set <percent>`, all on the focused monitor. The bind actions are `brightnessUp` / `brightnessDown`.
   - `dim <percent>` / `undim` are used by idle (see [Idle](idle.md)).
-- Created from `shell.qml`'s `_services`.
+- Created from `qml/shell.qml`'s `_services`.
 
 ### Brightness module (`content/Brightness`)
 - **`monitor`:**

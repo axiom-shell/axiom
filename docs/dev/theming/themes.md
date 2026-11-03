@@ -1,6 +1,6 @@
 # Themes
 
-> **Files:** `services/core/ThemeManager.qml`, `components/methods/ThemeFamilies.qml`, `config/Theme.qml`, `config/json/theme-defaults.json`, `config/themes/`, `scripts/gen_theme_template.py`, `backend/internal/theme/`, `backend/internal/theme/palette/`, `components/views/Themes/Themes.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/content/Palette/Palette.qml`
+> **Files:** `qml/services/core/ThemeManager.qml`, `qml/components/methods/ThemeFamilies.qml`, `qml/config/Theme.qml`, `qml/config/json/theme-defaults.json`, `qml/config/themes/`, `scripts/gen_theme_template.py`, `backend/internal/theme/`, `backend/internal/theme/palette/`, `qml/components/views/Themes/Themes.qml`, `qml/components/content/ThemePicker/ThemePicker.qml`, `qml/components/content/Palette/Palette.qml`
 > **Config:** `Appearance.theme`
 > **Related:** [Theme integrations](theme-integrations.md), [Wallpaper and schedules](wallpaper-and-schedules.md), [Config readers](../core/config-readers.md)
 
@@ -23,8 +23,8 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 - `setLightMode(bool)` switches the current theme's variant by hand (config). The schedule uses `followSchedule(bool)` (runtime only). `Appearance.darkMode` follows the shown theme.
 
 ### Theme files
-- `config/themes/template/theme.json` is the theme a new one is copied from: empty name, author and pair, plus `theme-defaults.json`'s fallback colors and dark semantic map. `scripts/gen_theme_template.py` writes it, the pre-commit hook runs that when the defaults change, and `test_scripts.py`'s `Themes` fails when it's stale. It sits in a subfolder, so the theme scan (`showDirs: false`) doesn't list it.
-- `config/themes/*.json` are static; `Paths.generatedThemesPath` (`~/.local/state/axiom/themes/*.json`, named `generated/<name>`) come from a wallpaper; `Paths.communityThemesPath` (`~/.local/share/axiom/themes/*.json`, named `community/<id>`) are the palettes [community setups](../features/community-setups.md) brought, each a theme on its own (`paired` ignored), listed after the stock ones (`community: true` on their families).
+- `qml/config/themes/template/theme.json` is the theme a new one is copied from: empty name, author and pair, plus `theme-defaults.json`'s fallback colors and dark semantic map. `scripts/gen_theme_template.py` writes it, the pre-commit hook runs that when the defaults change, and `test_scripts.py`'s `Themes` fails when it's stale. It sits in a subfolder, so the theme scan (`showDirs: false`) doesn't list it.
+- `qml/config/themes/*.json` are static; `Paths.generatedThemesPath` (`~/.local/state/axiom/themes/*.json`, named `generated/<name>`) come from a wallpaper; `Paths.communityThemesPath` (`~/.local/share/axiom/themes/*.json`, named `community/<id>`) are the palettes [community setups](../features/community-setups.md) brought, each a theme on its own (`paired` ignored), listed after the stock ones (`community: true` on their families).
 - Each folder is a `ThemeFolder` (an inline FolderListModel in `ThemeManager`) with its folder set from the start: a FolderListModel created without a folder, or with one that doesn't exist yet, lists qs's working directory, so rows read while `folder` isn't its own are ignored, and one still missing once created empties `folder` (no watch on the working directory) until a rescan. A generation (and a community setup's install, `reloadCommunityThemes`) rescans by emptying `folder` and setting it again; a folder whose count drops to 0 and stays there a second (its last theme deleted) lists no themes.
 - Static themes keep the hue slots fixed, even where an upstream base16 port reorders them, because the semantic names and the terminal ANSI colors read them by slot:
   - `base08` red, `09` orange, `0A` yellow, `0B` green, `0C` cyan, `0D` blue, `0E` magenta.
@@ -33,7 +33,7 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 - Pairing: an extra dark variant points `paired` at its family's light theme, and the light theme points back at the main dark one.
 
 ### theme-defaults.json
-- `config/json/theme-defaults.json` is the one fallback palette and semantic → base16 map (dark and light).
+- `qml/config/json/theme-defaults.json` is the one fallback palette and semantic → base16 map (dark and light).
 - Read through `ThemeManager.defaults` by `Theme`, for keys a theme omits and for a missing theme.
 - Also read by theme generation (`backend/internal/theme`, from the binary's embedded copy).
 
@@ -57,7 +57,7 @@ How the active theme is loaded, how themes are grouped into dark/light families,
 - `views/Themes/Themes.qml`, the `Themes` view type. It sits in `Overlay.items` like any other view, with nothing to configure.
 - A `BaseView` in the editors' shape (see [Editors pattern](../core/editors-pattern.md)). It hosts ordinary modules directly, as the onboarding Look page does, each streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)):
   - `WallpaperPicker` at `sideWidth`. Two cards tall, it adds a monitor picker and a preview, and sets the picked monitor's wallpaper.
-  - `ThemePicker`: the theme list and the light mode switch (plus Auto, see [Wallpaper and schedules](wallpaper-and-schedules.md)). The list is three folding groups (`reusable/FoldingSection`): Built-in (`config/themes/`), Imported (community setups' palettes) and Generated. Which are folded is `ThemeManager.foldedGroups` (`toggleGroup`, kept in the look state).
+  - `ThemePicker`: the theme list and the light mode switch (plus Auto, see [Wallpaper and schedules](wallpaper-and-schedules.md)). The list is three folding groups (`reusable/FoldingSection`): Built-in (`qml/config/themes/`), Imported (community setups' palettes) and Generated. Which are folded is `ThemeManager.foldedGroups` (`toggleGroup`, kept in the look state).
   - A column of `Palette` over a Look card:
     - `Palette`: the 16 base colors with their hex, and under each tile the semantic names that map to it (`Theme.roles`).
     - The Look card: `SettingRows` for font, corner radius and animations, and a link to Settings → Look & Feel.

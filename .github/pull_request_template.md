@@ -25,10 +25,10 @@ Fixes #
 
 - [ ] `scripts/dev/verify.sh` prints `verify ok` (it formats changed QML and runs the checks the change touches)
 - [ ] `scripts/log.sh` shows no new warnings after a reload
-- [ ] User-visible text goes through `I18n.tr()` (the pre-commit hook adds the new keys to `config/i18n/`)
-- [ ] New settings are in the schema's YAML (`config/schema/`) with a default, plus a reader property
+- [ ] User-visible text goes through `I18n.tr()` (the pre-commit hook adds the new keys to `qml/config/i18n/`)
+- [ ] New settings are in the schema's YAML (`qml/config/schema/`) with a default, plus a reader property
 - [ ] A change to the layout of existing config bumps `version`, with a format-2 step (`backend/internal/migrate/steps/`) and a test
 - [ ] New side effects (processes, files, sockets) go through the shared services or the `axiom` binary, not a new `Process`/`FileView` (`check_structure` says if not)
-- [ ] A change to what an existing shell ↔ binary method or push means bumps `protocol` in `config/json/backend.json` (a new one needs no bump)
+- [ ] A change to what an existing shell ↔ binary method or push means bumps `protocol` in `qml/config/json/backend.json` (a new one needs no bump)
 - [ ] The docs that verify.sh lists still describe the change (`docs/dev/`, and `docs/` for anything users see)
 - [ ] Unrelated problems found along the way are reported as issues, not fixed here

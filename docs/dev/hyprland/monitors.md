@@ -1,6 +1,6 @@
 # Monitors (profiles and the Monitors page)
 
-> **Files:** `services/compositor/MonitorManager.qml`, `config/MonitorsConfig.qml`, `components/views/Monitors/Monitors.qml`, `components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `components/methods/MonitorLayout.qml`, `backend/internal/compositor/render/hyprlua.go`, `backend/internal/compositor/manager/outputs.go`, `backend/internal/compositor/render/profiles.go`, `shell/MonitorPrompt.qml`, `components/surfaces/monitors/MonitorPromptWindow.qml`
+> **Files:** `qml/services/compositor/MonitorManager.qml`, `qml/config/MonitorsConfig.qml`, `qml/components/views/Monitors/Monitors.qml`, `qml/components/views/Monitors/` (`MonitorCanvas`, `MonitorInspector`), `qml/components/methods/MonitorLayout.qml`, `backend/internal/compositor/render/hyprlua.go`, `backend/internal/compositor/manager/outputs.go`, `backend/internal/compositor/render/profiles.go`, `qml/shell/MonitorPrompt.qml`, `qml/components/surfaces/monitors/MonitorPromptWindow.qml`
 > **Config:** `Monitors.items`, `Monitors.notify`, `General.primaryMonitor`
 > **Related:** [Config modes](config-modes.md), [Onboarding](../features/onboarding.md) (`useWholeScale`), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -47,7 +47,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 
 ### Apply, Keep, Revert
 1. **Apply** has axiom eval the selected profile's `hl.monitor` calls (`CompositorManager.applyOutputs` → `outputs.apply`, `render.MonitorCalls`), after taking a snapshot of the old state.
-2. It shows `shell/MonitorPrompt` (`surfaces/monitors/MonitorPromptWindow`).
+2. It shows `qml/shell/MonitorPrompt` (`surfaces/monitors/MonitorPromptWindow`).
    - It appears on every screen, outside the overlay, because the overlay's screen may change.
    - It sits on the Overlay layer as `axiom-monitor-prompt`; its layer rule stacks it over the overlay.
    - It is registered in `SurfaceManager.modalWindows` while shown, so the overlay's focus grab lets clicks through to it.

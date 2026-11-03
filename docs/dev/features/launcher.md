@@ -1,6 +1,6 @@
 # Launcher
 
-> **Files:** `services/ui/LauncherManager.qml`, `services/ui/LauncherCommands.qml`, `services/ui/LauncherConfigBrowser.qml`, `components/surfaces/launcher/Launcher.qml`, `components/surfaces/launcher/LauncherPanel.qml`, `components/surfaces/launcher/LauncherRow.qml`, `components/views/Settings/LauncherPlace.qml`, `components/hosts/popout/FloatPlacement.qml`
+> **Files:** `qml/services/ui/LauncherManager.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/services/ui/LauncherConfigBrowser.qml`, `qml/components/surfaces/launcher/Launcher.qml`, `qml/components/surfaces/launcher/LauncherPanel.qml`, `qml/components/surfaces/launcher/LauncherRow.qml`, `qml/components/views/Settings/LauncherPlace.qml`, `qml/components/hosts/popout/FloatPlacement.qml`
 > **Config:** `Launcher.*` (reader `LauncherConfig`)
 > **Related:** [Launcher providers](launcher-providers.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
 
@@ -59,21 +59,21 @@ The first character picks the provider:
 - **Toggles:** each provider has a `Launcher` config toggle (`LauncherConfig`).
 
 ### Commands
-- Commands live in `services/ui/LauncherCommands.qml`, a plain list of entries:
+- Commands live in `qml/services/ui/LauncherCommands.qml`, a plain list of entries:
   `{ name, aliases, glyph, description(), usage, needsArg, confirm, available(), status(), options(arg), run(arg, value) }`
 - A new shell feature gets a command by adding an entry that calls its service.
 - `options` supplies argument completions.
 - `confirm` asks for a second Enter (`LauncherManager._gate`, a `ConfirmGate`): the destructive session actions, `/clear` and `/update` installing (a getter, true only while an update is available).
 
 ### /config
-- Its rows and what they do are `services/ui/LauncherConfigBrowser.qml` (`options(arg)`, `run(value)`): not a singleton, `LauncherCommands` holds one for its `config` entry.
+- Its rows and what they do are `qml/services/ui/LauncherConfigBrowser.qml` (`options(arg)`, `run(value)`): not a singleton, `LauncherCommands` holds one for its `config` entry.
 - `/config` sets any setting by dotted path (`/config Appearance.font.size 14`). It saves at once through `SettingsManager.commitValue`.
 - It also holds `save` / `restore` for snapshots, `example` for the example setups, and `community <search>` for the [community setups](community-setups.md) (with their thumbnails, applied without a wallpaper), as on the settings page ([saved configs](../core/saved-configs-sharing.md)):
   - `save` suggests only `SavedConfigsManager.active`, saying whether it is `modified`. Another snapshot is replaced only by typing its name.
   - `restore` lists the active snapshot first.
   - There is no delete, since a row runs without a confirm.
 - It works inside the options contract: each option's title is the whole argument, so matching and Tab work unchanged.
-- It offers `SettingsManager.settingPaths` only: the settings page's fields, minus anything under `_blockedPrefixes` (`Bars.items`, `Overlay.items`, `EdgeMenus`). It can never edit bars, overlay pages or edge menus. (Rule: `services/AGENTS.md`, Launcher.)
+- It offers `SettingsManager.settingPaths` only: the settings page's fields, minus anything under `_blockedPrefixes` (`Bars.items`, `Overlay.items`, `EdgeMenus`). It can never edit bars, overlay pages or edge menus. (Rule: `qml/services/AGENTS.md`, Launcher.)
 - A takeover setting (`x-applyOnSave` or `x-takeover`, `SchemaLayout.waitsForUser`) is `openOnly`: typed, it offers only **Show in settings**, and `commitValue` refuses it, so it changes only on its own card.
 - Values are parsed and checked by `SettingsManager.parseValue`. Choices come from `SettingsManager.optionsFor`, shared with `SchemaField`.
 - Once a setting is typed, its last row is **Show in settings** (while a settings card shows it) (`{ show: key }`): it opens the settings page on that setting (`SettingsManager.openSetting`) after the launcher closes.

@@ -1,6 +1,6 @@
 # Popout shadow
 
-> **Files:** `components/hosts/popout/SurfaceShadow.qml`, `components/hosts/popout/OutsideShadow.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/SlideAnimation.qml`, `components/methods/SurfaceContext.qml`, `components/bar/BarContainer.qml`
+> **Files:** `qml/components/hosts/popout/SurfaceShadow.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/bar/BarContainer.qml`
 > **Config:** `Bars.style.shadow` (`enabled`, `color`, `size`)
 > **Related:** [Surface context](surface-context.md), [Submenus](submenus.md), [Translucency and blur](../theming/translucency-blur.md), [Blur window and openings](../theming/blur-window-openings.md), [Bar layering and corners](../bar/layering-and-corners.md)
 

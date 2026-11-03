@@ -1,6 +1,6 @@
 # Community setups
 
-> **Files:** `services/apps/CommunitySetupsManager.qml`, `backend/internal/community/`, `backend/internal/daemon/tools.go`, `components/methods/CommunityCatalog.qml`, `config/CommunitySetups.qml`, `components/views/Settings/CommunitySetupsCard.qml`, `services/core/SavedConfigsManager.qml`
+> **Files:** `qml/services/apps/CommunitySetupsManager.qml`, `backend/internal/community/`, `backend/internal/daemon/tools.go`, `qml/components/methods/CommunityCatalog.qml`, `qml/config/CommunitySetups.qml`, `qml/components/views/Settings/CommunitySetupsCard.qml`, `qml/services/core/SavedConfigsManager.qml`
 > **Config:** `CommunitySetups.*` (reader `CommunitySetups`); an applied setup becomes the saved config `community-<id>`
 > **Related:** [Saved configs and sharing](../core/saved-configs-sharing.md), [Themes](../theming/themes.md), [Launcher](launcher.md), [Config manager](../core/config-manager.md) (where files live)
 
@@ -44,7 +44,7 @@ A gallery of setups other people shared at [axiom-shell/community-setups](https:
 ### Where it shows
 - **Settings → Maintenance**: `CommunitySetupsCard` is the `CommunitySetups` section's `x-card` (wide). It has a search field, tag chips (`SegmentButton`s in a Flow) and a `TileFlow` of thumbnails. A tile opens the details: the full screenshot (`fetchScreenshot`; the thumbnail until then), about, chips for tested compositors / its own palette / missing fonts / a newer axiom, the wallpaper's license with an "Also use its wallpaper" switch (off), and Apply (a second click confirms). **Export and submit…** exports the look (personal parts and commands off, monitors by place) and opens the submission issue form (`submitUrl`: its title prefilled from the active saved config; attachments can't be).
 - **Launcher**: `/config community <search>` lists matches with their thumbnails (`matched` rows) and applies one without its wallpaper.
-- **IPC** `community`: `refresh`, `list`, `apply <id>`. The service is created from `shell.qml`'s `_services`, so the target exists before the gallery is opened.
+- **IPC** `community`: `refresh`, `list`, `apply <id>`. The service is created from `qml/shell.qml`'s `_services`, so the target exists before the gallery is opened.
 
 ### Themes
 A bundled palette is `Appearance.theme` `community/<id>` (`Paths.themeFile`'s third prefix beside `generated/`). `ThemeManager` scans `communityThemesPath` with a third loader. Its families carry `community: true` and sit after the stock ones (`ThemePicker` lists them with the stock themes; the launcher's `/theme` labels them). A community palette is one theme on its own: its `paired` is ignored.

@@ -4,8 +4,8 @@
 Docs drift silently; this catches the drift a reader would trip on:
 - every relative markdown link points at a file that exists
 - every backticked repo path (`qml/services/core/FooManager.qml`, `docs/dev/…`)
-  exists, resolved from the repo root, from qml/components/, or from the
-  doc's own directory (paths with <placeholders> or globs are skipped)
+  exists, resolved from the repo root or from the doc's own directory
+  (paths with <placeholders> or globs are skipped)
 - every backticked `Singleton.member` names a member that file declares
   (Singleton = a file in qml/services/*/, qml/config/ or
   qml/components/methods/)
@@ -40,22 +40,11 @@ from qml_modules import QML_ROOT, ROOT
 
 GENERATED = ("docs/dev/config/", "docs/dev/generated/")
 SCHEMA = "qml/config/json/config.schema.json"
+# The old top-level QML folders stay roots, so a path cited at its place
+# before the qml/ layout fails instead of passing unchecked
 PATH_ROOTS = ("qml/", "data/", "components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
-              "examples/", "backend/", ".github/", ".claude/", "shell.qml", "greeter.qml", "install.sh")
-# Until the docs are rewritten for the qml/ and data/ layout (the
-# restructure's docs step removes this): a path a doc still cites at its
-# old place also resolves at its new one
-MOVED = {"scripts/greeter/": "data/greeter/", "scripts/templates/": "data/templates/",
-         "examples/": "data/examples/", "assets/screenshots/": "docs/screenshots/",
-         "assets/": "qml/assets/"}
-
-
-def old_layout(path):
-    """Where a path cited at its pre-restructure place lives now (the shim)."""
-    for old, new in MOVED.items():
-        if (path + "/").startswith(old):
-            return [ROOT / (new + path[len(old):])]
-    return [QML_ROOT / path, QML_ROOT / "components" / path]
+              "examples/", "assets/", "backend/", "packaging/", ".github/", ".claude/", "shell.qml", "greeter.qml",
+              "install.sh")
 # Names a rename retired: a doc still citing one is stale (old -> new)
 RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig"}
 # Backticked text that looks like a member access but isn't one of ours
@@ -71,16 +60,6 @@ def docs():
     files += [ROOT / "README.md", ROOT / "CONTRIBUTING.md"]
     files += list((ROOT / ".claude/skills").rglob("*.md"))
     return sorted(p for p in files if p.exists())
-
-
-def moved_link(doc, target):
-    """A link to a file's pre-restructure place that exists at its new one
-    (the shim, with old_layout)."""
-    try:
-        path = (doc.parent / target).resolve().relative_to(ROOT).as_posix()
-    except ValueError:
-        return False
-    return any(c.exists() for c in old_layout(path))
 
 
 def singletons():
@@ -282,7 +261,7 @@ def main():
             for target in re.findall(r"\]\(([^)\s#]+)(?:#[^)]*)?\)", line):
                 if re.match(r"[a-z]+:", target):
                     continue
-                if not (doc.parent / target).exists() and not moved_link(doc, target):
+                if not (doc.parent / target).exists():
                     errors.append(f"{where}: link to missing {target}")
             for span in re.findall(r"`([^`\n]+)`", line):
                 span = span.strip()
@@ -292,7 +271,7 @@ def main():
                     continue
                 if span.startswith(PATH_ROOTS) and not re.search(r"[<>*{}|$ ]|\.\.\.|…", span):
                     path = span.split(":")[0].rstrip("/").rstrip(".,")
-                    candidates = [ROOT / path, doc.parent / path] + old_layout(path)
+                    candidates = [ROOT / path, doc.parent / path]
                     if not any(c.exists() or c.with_suffix(".qml").exists() for c in candidates) and not ignored(path):
                         errors.append(f"{where}: `{span}` doesn't exist")
                     continue

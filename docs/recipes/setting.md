@@ -1,14 +1,14 @@
 # Recipe: a new setting in an existing section
 
 > **Use when:** adding one config key to a section that already exists (`Battery`, `Launcher`, `Appearance`, …). For a new section see [config-section](config-section.md); renaming or reshaping an existing key needs a [migration](migration.md).
-> **Copy from:** `config/schema/sections/Battery.yaml` (small section, `x-order`, `x-unit`, min/max) with `config/BatteryConfig.qml` (the reader)
+> **Copy from:** `qml/config/schema/sections/Battery.yaml` (small section, `x-order`, `x-unit`, min/max) with `qml/config/BatteryConfig.qml` (the reader)
 > **Docs:** [schema-annotations](../dev/core/schema-annotations.md), [config-readers](../dev/core/config-readers.md), generated reference `docs/dev/config/<Section>.md`
 
 ## Files to touch
-1. `config/schema/sections/<Section>.yaml` → `properties.<key>`: the setting, with a `default`. Add the key to the section's `x-order` if it has one.
-2. `config/<Section>.qml` or `config/<Section>Config.qml` (find it in the table in `docs/dev/config/README.md`): one `readonly property <type> <name>: _c.<key>`.
+1. `qml/config/schema/sections/<Section>.yaml` → `properties.<key>`: the setting, with a `default`. Add the key to the section's `x-order` if it has one.
+2. `qml/config/<Section>.qml` or `qml/config/<Section>Config.qml` (find it in the table in `docs/dev/config/README.md`): one `readonly property <type> <name>: _c.<key>`.
 3. The consumer (service or UI) reads `<Reader>.<name>`, never `ConfigManager.config`.
-4. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template (the title and description are translation keys).
+4. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template (the title and description are translation keys).
 
 ## Skeleton
 ```json

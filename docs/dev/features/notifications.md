@@ -1,6 +1,6 @@
 # Notifications
 
-> **Files:** `services/system/NotificationManager.qml`, `services/system/NotificationFiles.qml`, `services/system/ConnectionNotes.qml`, `components/methods/NotificationLevel.qml`, `components/content/parts/notifications/NotificationQuietHeader.qml`, `shell/Notifications.qml`, `components/surfaces/notifications/ToastStack.qml`, `components/surfaces/notifications/ToastItem.qml`, `components/methods/ToastMotion.qml`, `components/methods/NotificationMatch.qml`, `config/NotificationsConfig.qml`, `components/content/Notifications/Notifications.qml`, `components/views/Settings/NotificationsPreview.qml`, `components/content/parts/notifications/`, `backend/internal/notification/`
+> **Files:** `qml/services/system/NotificationManager.qml`, `qml/services/system/NotificationFiles.qml`, `qml/services/system/ConnectionNotes.qml`, `qml/components/methods/NotificationLevel.qml`, `qml/components/content/parts/notifications/NotificationQuietHeader.qml`, `qml/shell/Notifications.qml`, `qml/components/surfaces/notifications/ToastStack.qml`, `qml/components/surfaces/notifications/ToastItem.qml`, `qml/components/methods/ToastMotion.qml`, `qml/components/methods/NotificationMatch.qml`, `qml/config/NotificationsConfig.qml`, `qml/components/content/Notifications/Notifications.qml`, `qml/components/views/Settings/NotificationsPreview.qml`, `qml/components/content/parts/notifications/`, `backend/internal/notification/`
 > **Config:** `Notifications.*` (reader `NotificationsConfig`)
 > **Related:** [Self-update](self-update.md) (registerHandler), [Drives](drives.md) (buttons), [Calendar](calendar.md) (reminders), [Grow and expand](../overlay/grow-expand.md)
 
@@ -54,7 +54,7 @@ Every notification has a level (`methods/NotificationLevel`, the single source o
 - `closeRemoves`.
 
 ### Toasts
-- `shell/Notifications` builds a `surfaces/notifications/ToastStack` per screen of `NotificationsConfig.screen` (`ShellManager.showsOn`). A toast goes on every screen (`hideEverywhere`) when the user closes it, or when its app or the list closes it.
+- `qml/shell/Notifications` builds a `surfaces/notifications/ToastStack` per screen of `NotificationsConfig.screen` (`ShellManager.showsOn`). A toast goes on every screen (`hideEverywhere`) when the user closes it, or when its app or the list closes it.
 - Toasts take their entry's uid when they're created (`uidOf`), because invoking an action can close the notification.
 - **One toast** is a `ToastItem`: its timer (paused while hovered or replied to; `followApps` takes the app's own timeout), a sideways swipe, its actions and reply, and its motion. It's a card of its own (detached) or a row of the attached box.
 - **Placement:** `edge`, `position`, `detached` and `gap`, as the OSD's and dock's.
@@ -91,10 +91,10 @@ Every notification has a level (`methods/NotificationLevel`, the single source o
 ### Images
 - Cached as PNGs in `$XDG_STATE_HOME/axiom/notifications/`.
 - On load, an entry whose image file is gone loses its `image` (`_dropMissingImages`), so its avatar shows the app icon without a `Cannot open` warning.
-- Rendered through an `imageHost` item that `shell/Notifications` lends the service, since grabbing an image needs a window.
+- Rendered through an `imageHost` item that `qml/shell/Notifications` lends the service, since grabbing an image needs a window.
 
 ### Per-app rules
-- `Notifications.apps`: per app (`app`, matched through `NotificationMatch` against the notification's keys, as its windows are), its `level` (Levels; `toast` and transient ones get no entry and are tracked only while a toast shows them: `shell/Notifications` calls `toastsGone` once no screen does, which expires it, and a reload expires one left over; config v92 made `toasts` / `history` into it), its urgency (`urgency`, over the app's: `urgencyOf`, which the entry, the toast and do not disturb use) and its toast duration (`timeout`, ms; -1 the default: `timeoutOf`). `ruleFor` finds an entry's or notification's rule. The App field suggests (`x-suggestions: notificationApps`) the apps in the history and the shell's sources (`NotificationLevel.sources`, chips by name, filled in as the desktop entry `_sourceLevel` matches).
+- `Notifications.apps`: per app (`app`, matched through `NotificationMatch` against the notification's keys, as its windows are), its `level` (Levels; `toast` and transient ones get no entry and are tracked only while a toast shows them: `qml/shell/Notifications` calls `toastsGone` once no screen does, which expires it, and a reload expires one left over; config v92 made `toasts` / `history` into it), its urgency (`urgency`, over the app's: `urgencyOf`, which the entry, the toast and do not disturb use) and its toast duration (`timeout`, ms; -1 the default: `timeoutOf`). `ruleFor` finds an entry's or notification's rule. The App field suggests (`x-suggestions: notificationApps`) the apps in the history and the shell's sources (`NotificationLevel.sources`, chips by name, filled in as the desktop entry `_sourceLevel` matches).
 
 ### Do not disturb
 - `dnd` is readonly; change it with `setDnd` / `toggleDnd`. Binds, hot corners and `axiom dnd` reach it through the `dnd` IPC target (`toggle`, `enable`, `disable`, `status`).

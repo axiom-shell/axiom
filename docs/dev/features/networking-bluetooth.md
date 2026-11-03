@@ -1,6 +1,6 @@
 # Networking and Bluetooth
 
-> **Files:** `services/system/NetworkingManager.qml`, `services/system/BluetoothManager.qml`, `backend/internal/nmnet/`, `backend/internal/daemon/net.go`, `components/content/WifiNetworks/WifiNetworks.qml`, `components/content/parts/WifiJoinForm.qml`, `components/content/parts/ConnectionDetails.qml`
+> **Files:** `qml/services/system/NetworkingManager.qml`, `qml/services/system/BluetoothManager.qml`, `backend/internal/nmnet/`, `backend/internal/daemon/net.go`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `qml/components/content/parts/WifiJoinForm.qml`, `qml/components/content/parts/ConnectionDetails.qml`
 > **Config:** `Apps.networkEditor` (the Wi-Fi menu's Settings button)
 > **Related:** [Services pattern](../core/services-pattern.md), [VPN](vpn.md)
 
@@ -8,7 +8,7 @@ Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughpu
 
 ### NetworkingManager
 - Wi-Fi over `Quickshell.Networking`: NetworkManager over D-Bus, event-driven. Nothing runs `nmcli`. What Quickshell doesn't show goes through axiom's `nmnet` (below).
-- **Radio:** `wifiEnabled`, `setWifiEnabled`; IPC `wifi enable|disable|toggle` (the `wifi` keybind action). In `shell.qml`'s `_services`, so it answers with no Wi-Fi widget shown.
+- **Radio:** `wifiEnabled`, `setWifiEnabled`; IPC `wifi enable|disable|toggle` (the `wifi` keybind action). In `qml/shell.qml`'s `_services`, so it answers with no Wi-Fi widget shown.
 - **Airplane mode:** `setAirplane(on)` remembers both radios' states (`StateManager`, `airplane`) and turns Wi-Fi and Bluetooth off; off restores them (Wi-Fi at least). `airplane` is true only when turned on here and both radios are still off: either coming back on ends it, and radios that are merely both off aren't airplane mode.
 - **`networks`:** sorted connected first, then saved, then by name. The order is fixed.
 - **Actions:** connect, disconnect, forget.

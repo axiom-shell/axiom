@@ -1,6 +1,6 @@
 # Submenus (one level deep)
 
-> **Files:** `components/hosts/popout/SubPopout.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/SubmenuSide.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/content/Submenu/MenuSubmenu.qml`, `components/content/SystemTray/SystemTray.qml`
+> **Files:** `qml/components/hosts/popout/SubPopout.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/hosts/popout/SubmenuSide.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/components/content/SystemTray/SystemTray.qml`
 > **Config:** none
 > **Related:** [Hosts and switching](hosts-and-switching.md), [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Registry](registry.md), [Edge menu submenus](../edge-menus/editing-submenus.md)
 

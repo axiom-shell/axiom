@@ -1,6 +1,6 @@
 # Blur window and openings
 
-> **Files:** `shell/BlurBacking.qml`, `shell/BlurBackingWindow.qml`, `services/ui/BlurManager.qml`, `components/hosts/popout/BlurShape.qml`, `components/hosts/popout/AttachedSurfaceCopy.qml`, `components/hosts/popout/OutsideShadow.qml`, `components/hosts/popout/LayerOrigin.qml`, `components/hosts/popout/BorderOpening.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/reusable/HoledItem.qml`, `components/surfaces/border/BorderPanel.qml`, `components/surfaces/border/RoundedBorders.qml`
+> **Files:** `qml/shell/BlurBacking.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/services/ui/BlurManager.qml`, `qml/components/hosts/popout/BlurShape.qml`, `qml/components/hosts/popout/AttachedSurfaceCopy.qml`, `qml/components/hosts/popout/OutsideShadow.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/hosts/popout/BorderOpening.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/reusable/HoledItem.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/border/RoundedBorders.qml`
 > **Config:** `Appearance.surface.*`
 > **Related:** [Translucency and blur](translucency-blur.md), [Shadows](../popouts/shadows.md), [Surface context](../popouts/surface-context.md), [Edge attach](../popouts/edge-attach.md), [Submenus](../popouts/submenus.md)
 
@@ -13,7 +13,7 @@ How the chrome's translucent surfaces share one blurred backing window, how thei
   - edge popouts: OSDs, floating edge menus, the attached launcher;
   - integrated edge menus' strips, docks.
 - A shape is a `hosts/popout/BlurShape`: an `AttachedSurface`, a `Rectangle` or the border's `frame`, with its top-left on screen and its fill color.
-- `shell/BlurBacking`: one click-through `axiom-blur-backing` window per screen (a `shell/BlurBackingWindow`), layer order 9 (under the chrome, over the backdrop).
+- `qml/shell/BlurBacking`: one click-through `axiom-blur-backing` window per screen (a `qml/shell/BlurBackingWindow`), layer order 9 (under the chrome, over the backdrop).
   - It draws a copy of each shape (`AttachedSurfaceCopy`, an `AttachedSurface` `mirror`, its geometry bound to the source's, sliding with it; a strip that slides reads `SlideAnimation.slideX`/`slideY`).
   - All copies are drawn opaque and then at the surface opacity at once, so overlaps never stack.
 - It's the only one of these windows the compositor blurs, in one pass (on niri only where it sends its shapes as its blur region: [translucency](translucency-blur.md) › niri: blur regions). The overlay, the floating launcher and switcher and the other free-standing surfaces still blur themselves (notification toasts are backed by it: a card is a `BlurShape` rect, the attached box an EdgePopout).

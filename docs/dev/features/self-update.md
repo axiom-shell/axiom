@@ -1,6 +1,6 @@
 # Self-update
 
-> **Files:** `services/core/SelfUpdateManager.qml`, `backend/internal/selfupdate/selfupdate.go`, `backend/internal/daemon/selfupdate.go`, `backend/internal/release/`, `config/SelfUpdate.qml`, `components/views/Settings/SelfUpdateStatusCard.qml`
+> **Files:** `qml/services/core/SelfUpdateManager.qml`, `backend/internal/selfupdate/selfupdate.go`, `backend/internal/daemon/selfupdate.go`, `backend/internal/release/`, `qml/config/SelfUpdate.qml`, `qml/components/views/Settings/SelfUpdateStatusCard.qml`
 > **Config:** `SelfUpdate.*` (reader `SelfUpdate`)
 > **Related:** [Notifications](notifications.md), [Launcher](launcher.md), [Backend](../backend/README.md) › Re-exec
 
@@ -18,7 +18,7 @@ A tree that isn't a git clone otherwise (no `.git`: installed some other way) is
 A channel change triggers a recheck.
 
 ### The daemon's methods
-`backend/internal/selfupdate` does the git work on the tree the daemon runs from (`daemon/selfupdate.go`), one call at a time; each method takes `{ channel, target? }` and answers one report:
+`backend/internal/selfupdate` does the git work on the install tree (`daemon/selfupdate.go`; `~/.local/share/axiom-shell`, never a dev tree, even while dev mode runs one), one call at a time; each method takes `{ channel, target? }` and answers one report:
 - `selfupdate.status`: the clone from the refs it has, without fetching (at every shell load, for the installed version and `managed`).
 - `selfupdate.check`: fetches (`v*` tags; on main the branch too, else master; a minute at most, never prompting for a password or host key), then describes. A failed fetch still describes the clone, with git's reason as `error`.
 - `selfupdate.apply`: only from the shell. `target` must be the `latest` a check reported, still available and not blocked; it runs to the end once started. On `main` it fetches and records edge's commit again first, and when main's newest build has moved past `target` since the check (a merge in between, the usual case for an update clicked later), it moves to that build's commit instead, so the binary it downloads is the one of the commit checked out; the report's `latest` names it. Offline, it moves to `target` from the refs it has.
@@ -43,6 +43,7 @@ What it will and won't do:
 ### Modes (`SelfUpdate.mode`)
 - **`auto`:** applies, notifies, then reloads the shell (`LockManager.reload()`, which waits for the unlock while the built-in lock is up: [lockscreen.md](lockscreen.md) › No reload under the lock). git replaces files by inode, which the file watcher misses, so the explicit reload is needed.
   - With the binary replaced, the daemon re-execs into it once its reply is out: the new image takes the daemon over, and when the update changed the schema it restarts the shell (locked first when it was), whose hello would otherwise be refused ([backend](../backend/README.md) › Re-exec). A failed build is notified.
+  - While the dev image runs ([backend](../backend/README.md) › Dev mode), the install is updated and its binary rebuilt, but nothing re-execs ("install updated; dev keeps running") and the shell doesn't reload (`DevManager.active`): dev off runs the new install.
 - **`notify`:** sends a notification whose `desktopEntry` (`axiom-update`) is a `NotificationManager.registerHandler` key. Clicking it runs `openSettings()`, which opens Settings → Updates (the `SelfUpdateStatusCard`). A release on the tags channel alerts; main's new commits are silent ([Notifications](notifications.md) › Levels), one entry kept current (key `update-available`). A successful update takes the earlier notifications of that entry away before it notes the new version, silently (`update-applied`, the release notes readable in the Quiet section); a failed update or build alerts.
 - **`off`:** never checks.
 
@@ -57,12 +58,12 @@ What it will and won't do:
 ### Entry points
 - IPC `selfUpdate`: `check`, `update`, `open`.
 - Launcher `/update`.
-- Created from `shell.qml`'s `_services`.
+- Created from `qml/shell.qml`'s `_services`.
 
 ### Changes from the script
 - A tree with no `.git` is `managed` (the decision above): the card says its updates come from the package manager instead of "Can't update: it isn't a git clone", and nothing checks it. Its report has no `error`.
 - `selfupdate.status` is new: the card shows the installed version and whether it's a clone at once, not after the first check.
-- The daemon rebuilds and re-execs itself after an update; the shell no longer runs `axiom daemon reexec`. The build is `go generate` and `go build` alone: the tree's generated `config/json/config.schema.json` (the tools' copy; the daemon builds the shell's from the YAML) isn't rebuilt.
+- The daemon rebuilds and re-execs itself after an update; the shell no longer runs `axiom daemon reexec`. The build is `go generate` and `go build` alone: the tree's generated `qml/config/json/config.schema.json` (the tools' copy; the daemon builds the shell's from the YAML) isn't rebuilt.
 - git runs in the C locale (its messages parse the same in every language), and a tag's SSH signature is cut from the notes as a PGP one was.
 - An unknown channel or an apply without a target is a `bad_request` error rather than a report.
 

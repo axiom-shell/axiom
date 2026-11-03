@@ -1,6 +1,6 @@
 # Greeter: install, update, status
 
-> **Files:** `services/session/GreeterManager.qml`, `config/GreeterConfig.qml`, `backend/internal/greeterinstall/`, `backend/internal/release/`, `backend/internal/daemon/greeterinstall.go`, `scripts/greeter/greeter_install.sh`, `scripts/greeter/org.axiom.greeter.policy`, `components/views/Settings/GreeterStatusCard.qml`, `components/forms/GreeterSetup.qml`
+> **Files:** `qml/services/session/GreeterManager.qml`, `qml/config/GreeterConfig.qml`, `backend/internal/greeterinstall/`, `backend/internal/release/`, `backend/internal/daemon/greeterinstall.go`, `data/greeter/greeter_install.sh`, `data/greeter/org.axiom.greeter.policy`, `qml/components/views/Settings/GreeterStatusCard.qml`, `qml/components/forms/GreeterSetup.qml`
 > **Config:** `Greeter.enabled`, `Greeter.source`, `SelfUpdate.channel` (reader `GreeterConfig`)
 > **Related:** [Greeter runtime](greeter-runtime.md), [Lockscreen](lockscreen.md), [Self-update](self-update.md), [Polkit](polkit.md), [Shell targeting](../core/shell-manager-targeting.md)
 
@@ -10,15 +10,15 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - Off by default.
 - Set up from Settings → Screen & Power → Login screen (`views/Settings/GreeterStatusCard`) or from the onboarder's System page. Both go through `forms/GreeterSetup`.
 - The greeter runs as greetd's user, who can't read the user's home, so it runs from a copy and reads an export (the [bundle](greeter-runtime.md#the-bundle)).
-- `GreeterManager` is created from `shell.qml`'s `_services`.
+- `GreeterManager` is created from `qml/shell.qml`'s `_services`.
 
 ### Install / update / uninstall
 - **Calls:** `GreeterManager.install` / `update` / `uninstall`, through the daemon's `greeter.apply` (`{ action, source, channel, staged }`, only from the shell; `backend/internal/daemon/greeterinstall.go`). Each needs one polkit prompt. The reply is the installer's `{ ok, changed, backup, error }`, plus `dismissed` when the prompt was dismissed.
-- **The installer** is `axiom greeter-install install|update|uninstall <repo> <user> [<staged bundle> [<source> [<channel> [<binary>]]]]` (`backend/internal/greeterinstall`, the pure `greeterinstall/rules` deciding), printing one JSON object, `{ ok, changed, backup, error }`. `cli.Main` hands it over before anything else, so nothing of the user's (XDG folders, a log file, the daemon's socket) is opened as root. `scripts/greeter/greeter_install.sh` is only its shim: it stays at the path polkit and greetd's setup name and runs the binary installed beside it (`../../bin/axiom`), else `/usr/bin/axiom` (the package source's install folder has no `bin/`), never one found through `PATH` or `$AXIOM_BIN`.
+- **The installer** is `axiom greeter-install install|update|uninstall <repo> <user> [<staged bundle> [<source> [<channel> [<binary>]]]]` (`backend/internal/greeterinstall`, the pure `greeterinstall/rules` deciding), printing one JSON object, `{ ok, changed, backup, error }`. `cli.Main` hands it over before anything else, so nothing of the user's (XDG folders, a log file, the daemon's socket) is opened as root. `data/greeter/greeter_install.sh` is only its shim: it stays at the path polkit and greetd's setup name and runs the binary installed beside it (`../../bin/axiom`), else `/usr/bin/axiom` (the package source's install folder has no `bin/`), never one found through `PATH` or `$AXIOM_BIN`.
 - **How it is run** (the daemon runs pkexec, `greeterinstall.Elevate`):
   - Until the greeter is installed, only a binary root owns or one checked against its release (maintainer, 2026-10-27: "root owned checksum verified binary"; `greeterinstall.firstProgram`), `pkexec <binary> greeter-install <action> <repo> <user> …`: for `package`, the package's `/usr/bin/axiom` (refused unless root's and writable by no one else); for `git`, the channel's official build (the newest release's prebuilt binary, or for `main` the [edge prerelease](../packaging.md)'s), downloaded by the daemon and checked against that release's `SHA256SUMS`, then handed to root on stdin: pkexec runs `/bin/sh` (`greeterinstall.verifyAndRun`), which writes it into a new folder only root can use, under `/var/lib/axiom-greeter` (not `/tmp`, which may be mounted noexec; refused when that folder is a link or not root's; removed afterwards), and checks it there against the official release's `SHA256SUMS` root fetches itself (`curl`) before running it: the user supplies the bytes, never the sum they're checked against, and nothing of theirs can swap the file after the check. A channel with no build for this machine (a release without one, no edge build) is refused before any prompt. That `curl` runs in pkexec's cleared environment, so proxy settings are ignored (maintainer, 2026-10-27: "ignore proxies"); for `local`, the binary the user's daemon runs (`Request.Binary`), unchecked.
-  - Once installed: `pkexec /usr/share/axiom-greeter/scripts/greeter/greeter_install.sh …`, root's copy. For `main`, only a helper whose shim has the edge marker line (`edgeMarker`: "Its main channel takes main's newest build"); an older one refuses `main`, so the daemon runs the first-install program for it instead (`TestElevateMainNeedsAnEdgeHelper`).
-- **Root's copy afterwards:** the installed polkit action `org.axiom.greeter.manage` (`scripts/greeter/org.axiom.greeter.policy`) names that copy by `exec.path`.
+  - Once installed: `pkexec /usr/share/axiom-greeter/data/greeter/greeter_install.sh …`, root's copy. A copy installed before `data/` (its helper under `/usr/share/axiom-greeter/scripts/greeter/`) reads as not set up, so it's installed again. For `main`, only a helper whose shim has the edge marker line (`edgeMarker`: "Its main channel takes main's newest build"); an older one refuses `main`, so the daemon runs the first-install program for it instead (`TestElevateMainNeedsAnEdgeHelper`).
+- **Root's copy afterwards:** the installed polkit action `org.axiom.greeter.manage` (`data/greeter/org.axiom.greeter.policy`) names that copy by `exec.path`.
   - Its prompt says what it's for.
   - The user's own file never runs as root again; `greeter.status` reports `helper`.
 - **Compatibility:** an update is run by the copy it replaces, so the arguments and the reply are a contract between versions (`rules.Request`, `rules.Result`; maintainer, 2026-10-27: "Keep argv (Recommended)"): a new argument goes last. An install made before the port updates through its bash helper, which copies the new tree (the shim with it) and its binary; the next update runs the shim (`cli.TestOldInstallerUpdatesToTheShim`). The status's `binaries` says whether the installed helper installs the binary too (its marker line, which the shim keeps); while it doesn't, the daemon runs the first-install program instead, so a copy is never left without its binary.
@@ -26,8 +26,8 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 - **The user argument:** under pkexec, `<user>` must be `$PKEXEC_UID`'s.
 
 #### What gets copied
-- The code, minus tests, docs and `*.md`.
-- **From:** `Greeter.source` (`GreeterConfig.source`), passed as the installer's `<source> <channel> <binary>` arguments. The channel is `SelfUpdate.channel`; `<binary>` is the axiom binary the user built last (below).
+- The code: `qml/` and `data/` (`rules.Ships`), never the tests, docs, `scripts/` (dev tooling only), the packaging, the repo's hooks, `backend/`, `install.sh` or `*.md`.
+- **From** the install tree (`AXIOM_INSTALL_TREE`; never a dev tree, even while dev mode runs one): `Greeter.source` (`GreeterConfig.source`), passed as the installer's `<source> <channel> <binary>` arguments. The channel is `SelfUpdate.channel`; `<binary>` is the axiom binary the user built last (below).
 - **The binary** the greeter runs (`axiom greeter`, [greeter-runtime.md](greeter-runtime.md)) goes in the copy's `bin/axiom`, by source (below); a package's is its own, on `PATH`.
 - **To:** `/usr/share/axiom-greeter`, owned by root.
   - `.greeter-source` says where the copy came from: `"git <channel> <url>"`, `"local"` or `"package <dir>"`.
@@ -41,17 +41,17 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
   - The hash is the commit.
   - **Its binary:** the target's official build from the official repository (`release.Official`, `https://github.com/axiom-shell/axiom/releases/download/<tag>/`, downloaded and checked by `release/fetch`; maintainer, 2026-10-27: "pin official repo"): the tag's release's prebuilt `axiom-linux-<amd64|arm64>`, or for `main` the edge prerelease's, taken with its `COMMIT` from one `SHA256SUMS` (`fetch.Edge`) and refused unless that commit is the one fetched (a build published mid-install: try again). Root runs it at the next update, so nothing else is taken, and the sums prove it's an official build. A mismatch fails the install; so does a release without one (a tag the official repository hasn't released, a release with no binary) (maintainer, 2026-10-27: "Refuse the install (except for if you have the local clone install path selected, in which case it reuses your most recently built binary, and skips the checksum)"). The old copy stays.
 - **Source `local`:**
-  - It archives the clone's tracked files as they are in the working tree: whatever branch, uncommitted changes included.
+  - It archives the install tree's tracked files as they are in its working tree: whatever branch, uncommitted changes included.
   - It uses `git ls-files` + `tar`, run as the user (their uid, groups and `HOME`), so the clone's config and filters never run as root; root unpacks the archive in Go, confined to the new copy (`os.Root`), regular files only.
   - The hash is the files' content, the binary's Go source (`backend/`) included, so docs-only edits are not an update. `backend/` is left out of the archive.
   - **Its binary:** `<binary>`, the binary the user built last (the daemon's running image: a dev build while dev mode is on, else the installed one), read as the user (root follows none of their links), refused unless it's an ELF file. Unchecked: the same trust as copying the working tree.
 - **Source `package`** (always, for a packaged axiom: `GreeterManager.wantedSource` ignores `Greeter.source`, which is hidden; [packaging.md](../packaging.md)):
-  - The greeter runs `/usr/share/axiom` itself (always that path, never `<repo>`), and the package manager updates it.
-  - The install folder gets only `scripts/greeter/` (what greetd and polkit name by path), `.greeter-source` and the snapshot. The session script reads `.greeter-source` to find the code.
-  - It refuses without `.packaged`, or when the package's folder or its `scripts/greeter/` isn't root's: its `greeter_install.sh` becomes the helper polkit runs as root.
+  - The greeter runs `/usr/share/axiom-shell` itself (always that path, never `<repo>`), and the package manager updates it.
+  - The install folder gets only `data/greeter/` (what greetd and polkit name by path), `.greeter-source` and the snapshot. The session script reads `.greeter-source` to find the code.
+  - It refuses without `.packaged`, or when the package's folder or its `data/greeter/` isn't root's: its `greeter_install.sh` becomes the helper polkit runs as root.
   - The hash is the package's version (the marker's text), so a package update shows as `outdated` until **Update** refreshes the scripts and the snapshot.
 - **Refusals and safety:**
-  - A copy without `greeter.qml`, the session script or the policy (a release from before the login screen) is refused.
+  - A copy without `qml/greeter.qml`, the session script or the policy (a release from before the login screen) is refused.
   - `ext::` transports are off, and git never prompts.
   - A copy that can't be swapped in leaves the old one in place.
   - It refuses without `agreety` (`greetd-agreety`), the fallback login.
@@ -59,12 +59,12 @@ Axiom as greetd's login screen, laid out like the lock screen. This doc covers t
 
 #### Then it sets up
 - **`/var/lib/axiom-greeter`:**
-  - `config/` is the user's: the bundle.
-  - `state/` is greetd's user's: the last user and their sessions (`GreetdManager`'s `greeter` state).
+  - `/var/lib/axiom-greeter/config/` is the user's: the bundle.
+  - `/var/lib/axiom-greeter/state/` is greetd's user's: the last user and their sessions (`GreetdManager`'s `greeter` state).
 - **Fallback snapshot:** it snapshots the bundle as the copy's `fallback/`.
   - The source is `<staged bundle>`, `$XDG_RUNTIME_DIR/axiom/greeter-bundle`. Axiom writes it just before install and update, since a first install has no bundle yet.
   - It reads with `openat2(RESOLVE_NO_SYMLINKS)`: the folder is the user's, and root never follows a link there.
-- **greetd:** it points greetd's `default_session` `command` at `scripts/greeter/greeter-session.sh`.
+- **greetd:** it points greetd's `default_session` `command` at `data/greeter/greeter-session.sh`.
   - First it backs up `/etc/greetd/config.toml`: `.axiom-original` once, plus `.axiom-bak-<date>` per change.
   - The edit is line-wise and keeps the config's `user`.
 - **Uninstall** puts the original config back (only while greetd still runs axiom's greeter: one pointed elsewhere by hand is left as it is) and deletes `.axiom-original` either way, so a later install backs up the config as it is then.

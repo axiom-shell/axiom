@@ -1,6 +1,6 @@
 # Config v2: the unified shape
 
-> **Files:** `config/schema/`, `backend/internal/schema/yamlsrc/`, `backend/internal/migrate/legacy/`
+> **Files:** `qml/config/schema/`, `backend/internal/schema/yamlsrc/`, `backend/internal/migrate/legacy/`
 > **Related:** [Schema and its annotations](schema-annotations.md), [Config manager](config-manager.md), [Saved configs and sharing](saved-configs-sharing.md), [The axiom binary](../backend/README.md)
 
 **Status: accepted; being implemented** (the open questions at the end are settled as recommended). Each change below is one rule applied everywhere it fits. Format 1 is versions 1 to 75; v2 starts at `version: 76` with `format: 2`. The binary converts a format-1 file once: the frozen format-1 chain to v75, then the conversion described here. Old saved configs, exports, examples and community setups keep importing through the same path.
@@ -25,12 +25,12 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
    - A condition repeated across definitions is written once: the `$bar.*` show rules on widget colors (today copied into 23 widget files) live in the shared widget color definitions.
 10. **The envelope:** `{ "$schema", "format": 2, "version": N, … }`. `version` is the only migration counter and keeps counting from 76; `format` names the file's grammar, so a reader refuses a format it doesn't know outright rather than guessing from a version number. Saved and exported files add `meta: { title, description, source }`, replacing `_example`.
 11. **Types live in folders.** A bar widget, overlay module or view type is a folder `<root>/<Type>/` holding `<Type>.qml` (its root object), `schema.yaml` (its definition) and its private parts (sub-components, layouts; later, variant files).
-    - Roots: `components/bar/widgets`, `components/content`, `components/views`. A root holds only type folders: shared bases (`BarIconWidget`, `AudioLevelWidget`, `BaseView`) move to a `base/` folder beside it.
+    - Roots: `qml/components/bar/widgets`, `qml/components/content`, `qml/components/views`. A root holds only type folders: shared bases (`BarIconWidget`, `AudioLevelWidget`, `BaseView`) move to a `base/` folder beside it.
     - The folder name is the type const, the one place a type's name is written. Loaders build `<root>/<Type>/<Type>.qml`.
-    - Popout-only content (`WeatherForecast`) is a folder in `components/content` without a `schema.yaml`.
+    - Popout-only content (`WeatherForecast`) is a folder in `qml/components/content` without a `schema.yaml`.
     - The private folders folded in: the bar editor's parts are in the BarEditor folder, the workspace strips in the Workspaces folder, the Submenu module's `MenuSubmenu` (loaded as `Submenu/MenuSubmenu`) in the Submenu folder. `Paths.widgetUrl` / `contentUrl` / `viewUrl` build the paths.
     - Done: the files are in their folders; the builder finds each `schema.yaml` through `index.yaml`'s `kinds` (the definition `<Type><suffix>`), and the definitions list is gone.
-    - A feature's shared settings (`Weather.location`, used by the widget, the module and the popout) stay a section in `config/schema/sections/`: a type folder never declares a section.
+    - A feature's shared settings (`Weather.location`, used by the widget, the module and the popout) stay a section in `qml/config/schema/sections/`: a type folder never declares a section.
 
 ## Shared definitions
 
@@ -83,7 +83,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 Sections that are already one concept with plain keys stay as they are, apart from the units, enum case and ids above: `Battery`, `Polkit`, `NightLight`, `Screenshots`, `Apps`, `PowerMenu`, `Todo`, `Stopwatch`, `Workspaces`, `WorkspaceOverlay`, `WindowSwitcher`, `SelfUpdate`, `CommunitySetups`, `ThemeIntegrations`, `Icons`, `Notes`, `Weather` (bar its interval), `Session`.
 
 ## Schema source: what the builder supplies
-`axiom schema build` finds every `schema.yaml` under the three roots, so `index.yaml` lists no type definitions and `BarWidget`, `OverlayModule` and `OverlayView` have no hand-written `oneOf`. A `schema.yaml` writes only what is particular to its type; the builder adds each kind's common part, which is itself data (a base definition per kind in `config/schema/`, merged in), not Go code:
+`axiom schema build` finds every `schema.yaml` under the three roots, so `index.yaml` lists no type definitions and `BarWidget`, `OverlayModule` and `OverlayView` have no hand-written `oneOf`. A `schema.yaml` writes only what is particular to its type; the builder adds each kind's common part, which is itself data (a base definition per kind in `qml/config/schema/`, merged in), not Go code:
 
 | Kind | Added by the builder | Written in `schema.yaml` |
 |---|---|---|
@@ -94,9 +94,9 @@ Sections that are already one concept with plain keys stay as they are, apart fr
 
 The builder also links a type to the section of the same name when there is one (`x-link: {setting: Weather}` today), unless the type says otherwise.
 
-The Weather widget, today about 55 lines in `components/bar/widgets/Weather/schema.yaml`:
+The Weather widget, today about 55 lines in `qml/components/bar/widgets/Weather/schema.yaml`:
 ```yaml
-# components/bar/widgets/Weather/schema.yaml
+# qml/components/bar/widgets/Weather/schema.yaml
 icon: partly_cloudy_day
 group: Time & weather
 popout: own

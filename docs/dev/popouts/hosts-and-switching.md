@@ -1,12 +1,12 @@
 # Popout hosts, window sizing and switching in place
 
-> **Files:** `components/hosts/popout/PopoutWrapperBase.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/FloatingPopout.qml`, `components/hosts/popout/FloatingShadow.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/SlideAnimation.qml`, `components/hosts/popout/SwitchStill.qml`, `shell/OSD.qml`
+> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/FloatingPopout.qml`, `qml/components/hosts/popout/FloatingShadow.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/shell/OSD.qml`
 > **Config:** none directly
 > **Related:** [Surface context](surface-context.md), [Edge attach](edge-attach.md), [Submenus](submenus.md), [Registry](registry.md), [Content roots](../overlay/content-roots.md), [Pill and floating bars](pill-and-floating-bars.md)
 
-This doc covers the shared host pieces in `components/hosts/popout/`, how a bar popout's window is sized, how it switches to another payload without closing, and how screen-edge popouts sit.
+This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a bar popout's window is sized, how it switches to another payload without closing, and how screen-edge popouts sit.
 
-### Shared pieces (`components/hosts/popout/`)
+### Shared pieces (`qml/components/hosts/popout/`)
 - **`PopoutWrapperBase`:**
   - Open/close/queue state: `isOpen`, `show(data)`, `hide()`, and a timer that dismisses on hover loss.
 - **`AttachedSurface.hovered`:** the pointer on the whole surface (its `HoverHandler` is reparented to the surface: one declared inside it lands in the content box). `EdgePopout`'s `keepAlive`, `engaged` and `_pointerIn` read it.

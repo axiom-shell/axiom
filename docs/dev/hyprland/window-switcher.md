@@ -1,6 +1,6 @@
 # Window switcher (Alt+Tab)
 
-> **Files:** `services/compositor/WindowSwitcherManager.qml`, `config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `components/methods/WindowOrder.qml`, `shell/WindowSwitcher.qml`, `components/hosts/popout/FloatPlacement.qml`, `components/views/Settings/WindowSwitcherPlace.qml`, `components/surfaces/switcher/SwitcherStrip.qml`, `backend/internal/wayland/keyhold/`, `backend/internal/daemon/switcher.go`
+> **Files:** `qml/services/compositor/WindowSwitcherManager.qml`, `qml/config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `qml/components/methods/WindowOrder.qml`, `qml/shell/WindowSwitcher.qml`, `qml/components/hosts/popout/FloatPlacement.qml`, `qml/components/views/Settings/WindowSwitcherPlace.qml`, `qml/components/surfaces/switcher/SwitcherStrip.qml`, `backend/internal/wayland/keyhold/`, `backend/internal/daemon/switcher.go`
 > **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`, `compositorSwitcher`, `edge`, `position`, `detached`, `distance`, `order`)
 > **Related:** [Keybinds](keybinds.md), [Config modes](config-modes.md), [Workspaces](workspaces.md)
 
@@ -50,7 +50,7 @@ sway fires a release bind only when no other key came between, and niri has no r
 
 ### Drawing
 - It draws only once held for `showDelay` (`shown`), so a tap swaps windows invisibly.
-- `shell/WindowSwitcher` builds one host per screen and shows it on the monitor the switcher opened on. It is placed as the launcher is ([Launcher](../features/launcher.md) › Placement): `edge`, `position` along it, and `detached`.
+- `qml/shell/WindowSwitcher` builds one host per screen and shows it on the monitor the switcher opened on. It is placed as the launcher is ([Launcher](../features/launcher.md) › Placement): `edge`, `position` along it, and `detached`.
   - **Detached** (the default, centred: `distance` 50%): a `FloatingPopout` (`axiom-switcher`, blurred with the launcher), placed by `FloatPlacement`.
   - **Attached:** an `EdgePopout` growing out of the border or bar on its edge, with no hover trigger.
   - Either one claims `switcher:<screen>` (ranked `launcher`), so it closes the popouts it covers ([Registry](../popouts/registry.md)). It closes when the switcher does, not on hover loss (`autoDismiss` off).

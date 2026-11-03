@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        A language is one JSON file, so it's a good first contribution: copy the empty template `config/i18n/template/language.json` to `config/i18n/<code>.json`, set its `_meta` name and locale, and translate its entries (empty ones show in English, so a partial translation is fine). `scripts/check_i18n.py` lists what's missing, and it shows under **Settings → General → Language** as soon as you save. See [CONTRIBUTING.md](https://github.com/axiom-shell/axiom/blob/main/CONTRIBUTING.md).
+        A language is one JSON file, so it's a good first contribution: copy the empty template `qml/config/i18n/template/language.json` to `qml/config/i18n/<code>.json`, set its `_meta` name and locale, and translate its entries (empty ones show in English, so a partial translation is fine). `scripts/check_i18n.py` lists what's missing, and it shows under **Settings → General → Language** as soon as you save. See [CONTRIBUTING.md](https://github.com/axiom-shell/axiom/blob/main/CONTRIBUTING.md).
   - type: dropdown
     id: kind
     attributes:

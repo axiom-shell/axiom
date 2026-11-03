@@ -1,18 +1,18 @@
 # Recipe: a new overlay view type (incl. tool pages)
 
 > **Use when:** adding a page type to the overlay. A *tool page* (`x-tool: true`: Settings, BarEditor, Themes, Keybinds, Monitors, CalendarPage) is a hand-built page that is always in config.
-> **Copy from:** `components/views/Settings/Settings.qml` (a small `BaseView` page), `components/views/Themes/Themes.qml`; schema `components/views/CalendarPage/schema.yaml`.
-> **Docs:** [overlay/pages-and-grid](../dev/overlay/pages-and-grid.md), [core/streamed-building](../dev/core/streamed-building.md), [core/editors-pattern](../dev/core/editors-pattern.md) (for an editor page), rules in `components/views/AGENTS.md`; generated: [config/OverlayViews](../dev/config/OverlayViews.md).
+> **Copy from:** `qml/components/views/Settings/Settings.qml` (a small `BaseView` page), `qml/components/views/Themes/Themes.qml`; schema `qml/components/views/CalendarPage/schema.yaml`.
+> **Docs:** [overlay/pages-and-grid](../dev/overlay/pages-and-grid.md), [core/streamed-building](../dev/core/streamed-building.md), [core/editors-pattern](../dev/core/editors-pattern.md) (for an editor page), rules in `qml/components/views/AGENTS.md`; generated: [config/OverlayViews](../dev/config/OverlayViews.md).
 
 ## Files to touch
-1. `components/views/<Type>/<Type>.qml`: the page; its pieces beside it.
-2. `components/views/<Type>/schema.yaml`: the type's schema, beside it. The build finds it (index.yaml's `kinds`), expands it over `definitions/kinds/ViewBase.yaml` into `<Type>OverlayView` and adds it to `OverlayView`'s `oneOf`: nothing else to list.
+1. `qml/components/views/<Type>/<Type>.qml`: the page; its pieces beside it.
+2. `qml/components/views/<Type>/schema.yaml`: the type's schema, beside it. The build finds it (index.yaml's `kinds`), expands it over `definitions/kinds/ViewBase.yaml` into `<Type>OverlayView` and adds it to `OverlayView`'s `oneOf`: nothing else to list.
 3. Tool page only:
-   - `config/schema/sections/Overlay.yaml`'s `items` `default` array: append `{ type: <Type>, id: <type> }`;
+   - `qml/config/schema/sections/Overlay.yaml`'s `items` `default` array: append `{ type: <Type>, id: <type> }`;
    - a format-2 step appending it to existing configs, with its test and the `version` bump ([migration](migration.md));
-   - `services/ui/LauncherCommands.qml`: a way to open it (below);
+   - `qml/services/ui/LauncherCommands.qml`: a way to open it (below);
    - `docs/usage.md`: the **Pages** row of the launcher command table.
-4. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
+4. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
 
 ## Skeleton
 ```qml

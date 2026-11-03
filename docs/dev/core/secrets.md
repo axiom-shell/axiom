@@ -1,6 +1,6 @@
 # Secrets
 
-> **Files:** `services/core/SecretsManager.qml`, `backend/internal/secrets/secrets.go`, `backend/internal/daemon/secrets.go`, `backend/internal/chat/keys.go`, `components/views/Settings/ChatProvidersCard.qml`, `components/views/Settings/CalendarAccountsCard.qml`
+> **Files:** `qml/services/core/SecretsManager.qml`, `backend/internal/secrets/secrets.go`, `backend/internal/daemon/secrets.go`, `backend/internal/chat/keys.go`, `qml/components/views/Settings/ChatProvidersCard.qml`, `qml/components/views/Settings/CalendarAccountsCard.qml`
 > **Config:** none (secrets never go in config.json); a provider's `keyEnv`
 > **Related:** [Chat](../features/chat.md), [Calendar](../features/calendar.md), [Protocol](../backend/protocol.md)
 

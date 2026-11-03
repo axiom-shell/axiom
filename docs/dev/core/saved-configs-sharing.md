@@ -1,6 +1,6 @@
 # Saved configs, examples, import and export
 
-> **Files:** `services/core/SavedConfigsManager.qml`, `components/views/Settings/SavedConfigsCard.qml`, `services/apps/FilePickerManager.qml`, `backend/internal/saved/saved.go`, `backend/internal/share/share.go`, `backend/internal/daemon/sharing.go`, `backend/internal/store/store.go`, `examples/*.json`
+> **Files:** `qml/services/core/SavedConfigsManager.qml`, `qml/components/views/Settings/SavedConfigsCard.qml`, `qml/services/apps/FilePickerManager.qml`, `backend/internal/saved/saved.go`, `backend/internal/share/share.go`, `backend/internal/daemon/sharing.go`, `backend/internal/store/store.go`, `data/examples/*.json`
 > **Config:** whole config, filtered by `x-scope`; snapshots in `~/.config/axiom/saved/`; `~/.local/state/axiom/ui/savedconfigs.json`
 > **Related:** [Schema annotations](schema-annotations.md), [Config manager](config-manager.md), [Launcher](../features/launcher.md) (`/config` save/restore), [Shell manager](shell-manager-targeting.md)
 
@@ -9,7 +9,7 @@ Snapshots of the config, the shipped example setups, and sharing a config throug
 ### Where it shows
 - The Maintenance category's own card `SavedConfigsCard` (its `x-categories` `card`, wide, last).
 - It shows `SavedConfigsManager`'s snapshots in `~/.config/axiom/saved/`.
-- Below them: sharing (Share: Export, Import…) and the example setups in `examples/` (`SavedConfigsManager.examples`).
+- Below them: sharing (Share: Export, Import…) and the example setups in `data/examples/` (`SavedConfigsManager.examples`).
 - The onboarder's Look page shows the examples too, as cards that apply on a click ([Onboarding](../features/onboarding.md)). `share.examples` gives each `{ name, title, description, theme, screenBorder, bars: [{ location, background }], docks: [{ edge }] }`: the shown bars and docks read from the example loaded as applying takes it, for the card's drawn preview.
 - The launcher's `/config` can also save and restore snapshots: see [Launcher](../features/launcher.md).
 
@@ -65,7 +65,7 @@ Walks a value along the schema.
 
 ### Adding an example setup
 - Build the setup in the shell, then Settings → Maintenance → Share → Export, with both switches off unless the example needs a command. It writes `~/axiom-<name>-<date>-<time>.json`, holding only the look (`x-scope`) minus defaults.
-- Move it to `examples/<name>.json` and fill in its `meta`: `{ "title": "…", "description": "…" }`.
+- Move it to `data/examples/<name>.json` and fill in its `meta`: `{ "title": "…", "description": "…" }`.
 - Wallpapers, accounts and paths are `machine` scope, so they're never in an export, and monitors only by place: don't add them by hand.
 
 ### Snapshot rows

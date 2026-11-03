@@ -1,13 +1,14 @@
 # Settings page
 
-> **Files:** `components/views/Settings/Settings.qml`, `components/methods/SchemaLayout.qml`, `components/methods/ColumnSplit.qml`, `components/views/Settings/` (`SettingsGroupCard`, `EntryListCard`, `FoldingCard`, `SettingsSidebar`, `SettingsContent`), `components/forms/`, `components/reusable/ScrollMemory.qml`, `services/ui/SettingsManager.qml`
+> **Files:** `qml/components/views/Settings/Settings.qml`, `qml/components/methods/SchemaLayout.qml`, `qml/components/methods/ColumnSplit.qml`, `qml/components/views/Settings/` (`SettingsGroupCard`, `EntryListCard`, `FoldingCard`, `SettingsSidebar`, `SettingsContent`), `qml/components/forms/`, `qml/components/reusable/ScrollMemory.qml`, `qml/services/ui/SettingsManager.qml`
 > **Config:** every section with settings (`x-settings` not false); fold state in `~/.local/state/axiom/ui/settings.json`
 > **Related:** [Schema annotations](schema-annotations.md), [Editors pattern](editors-pattern.md), [Shared UI pieces](shared-ui-pieces.md)
 
 How the schema becomes the settings page: layout, cards, folding, sidebar and search.
 
 ### From schema to rows
-- `methods/SchemaLayout` turns the schema into categories → groups → rows.
+- `methods/SchemaLayout` turns the schema into categories → groups → rows. A category may hide itself (`x-categories`' `showIf`) and bring hand-built cards of its own (`cards`; [Schema annotations](schema-annotations.md)).
+- **Dev mode** shows a one-line banner above the content while it's on (`qml/components/views/Settings/DevBanner.qml`: the dev tree, branch@sha, the dev config; a click opens Development), and the Development category while the developer options are (Maintenance › Updates' `DevModeStatus` switch).
 - The cards are built from the schema, the category and the search only. What a card's showing depends on config (`x-showIf`) reaches the page as strings (`Settings._categoriesKey`, `SettingsContent._shownKey`), so they notify only when the answer changes: a new array on every edit rebuilds every card, flashing the page.
 - Only this page builds its own rows. Flat objects (array items, widget/module options, a bar's fields) render through `forms/SchemaPropertiesForm`.
 - Streamed (`StreamedLoader`, [streamed building](streamed-building.md)): the sidebar, and each card of a category, on opening the page and on switching category (`always`), so a category shows at once and its cards fill in, top to bottom. Search results and Changed from default stream too: one letter matches most of the page, and building every card in one frame froze the shell. The columns settle as the cards arrive (the 150 ms quiet spell below). `SchemaPropertiesForm` streams its fields the same way wherever it's used.

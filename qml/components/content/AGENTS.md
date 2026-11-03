@@ -1,4 +1,4 @@
-# Content (`components/content/`)
+# Content (`qml/components/content/`)
 
 Every loadable panel, by name: overlay modules (`<Type>.qml`, also used by edge menus, the desktop, the lock screen and the greeter) and bar popouts (`popoutName`). `base/` holds the roots, `parts/` shared parts. Docs: `docs/dev/overlay/content-roots.md`, `writing-modules.md`, `grow-expand.md`.
 

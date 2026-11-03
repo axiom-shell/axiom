@@ -1,13 +1,13 @@
 # Bar composition
 
-> **Files:** `shell/Bar.qml`, `components/bar/BarPanel.qml`, `components/bar/BarContainer.qml`, `components/bar/WidgetGroup.qml`, `components/bar/BarWidgetHost.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/PopoutAnchor.qml`, `config/BarsConfig.qml`, `services/ui/BarManager.qml`, `services/ui/ScreenEdgeManager.qml`
+> **Files:** `qml/shell/Bar.qml`, `qml/components/bar/BarPanel.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/config/BarsConfig.qml`, `qml/services/ui/BarManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
 How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and edge menus, the icon rules, and why bar motion animates what is drawn rather than what is measured.
 
 ### Bars from config
-- `shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
+- `qml/shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
 - `ScreenEdgeManager.bars` holds the running bars after `BarsConfig.enrichBarConfig` (the bar editor, `BarManager`, only previews its draft into them). Enrichment adds:
   - The compositor's `gapsOut` and `floatGaps` (what an Automatic float gap keeps: `gapsOut`, or the screen margin with no backend), which a reader can't read.
   - Each bar's place among the bars stacked on its edge (`BarEnds.withEnds`: its exclusive `zone`, `layerRank`, `ends`; [Layering and corners](layering-and-corners.md#bars-stacked-on-one-edge-barendsstackson-placestack-edgeof)).
@@ -16,7 +16,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Any other bar's monitor is resolved to a connected screen there.
 
 ### Widgets and their options
-- Bar contents are built from `components/bar/{BarContainer,BarWidgetHost,WidgetGroup,BarPanel}.qml`. These compose widgets from `components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
+- Bar contents are built from `qml/components/bar/{BarContainer,BarWidgetHost,WidgetGroup,BarPanel}.qml`. These compose widgets from `qml/components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
 - Each widget's options live under its `<Type>Widget.properties.properties` definition in the schema.
 - `SchemaValidation` picks the `BarWidget` oneOf option by `type`. Widget properties therefore get their defaults filled like the rest of the config, and widgets read `properties.<key>` directly.
 - Widget types come from `BarsConfig.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.

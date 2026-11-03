@@ -1,6 +1,6 @@
 # Overlay pages and the module grid
 
-> **Files:** `shell/Overlay.qml`, `components/hosts/overlay/OverlayPanel.qml`, `components/hosts/overlay/OverlayPages.qml`, `components/hosts/overlay/OverlayGrid.qml`, `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/OverlaySlot.qml`, `components/hosts/overlay/OverlayPageNavigator.qml`, `components/views/base/BaseView.qml`, `components/views/Custom/Custom.qml`, `components/methods/GridPlacement.qml`, `config/OverlayConfig.qml`
+> **Files:** `qml/shell/Overlay.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayGrid.qml`, `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/overlay/OverlayPageNavigator.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/views/Custom/Custom.qml`, `qml/components/methods/GridPlacement.qml`, `qml/config/OverlayConfig.qml`
 > **Config:** `Overlay.items`, `Overlay.moduleScale`, `Widget.cardSize`, `Widget.scale`, `Overlay.navigator`, `Overlay.navigatorLabels`, `Overlay.animation`, `Overlay.showBackdrop`, `Overlay.backdrop`
 > **Related:** [Streamed building](../core/streamed-building.md), [Content roots](content-roots.md), [Writing modules](writing-modules.md), [Layouts editor](layouts-editor.md), [Edge menus](../edge-menus/overview.md)
 
@@ -17,7 +17,7 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 - Views and modules are `oneOf`s discriminated by `type`, like `BarWidget`.
 
 ### View (`OverlayPages` → `OverlayView`)
-- `components/views/<type>/<type>.qml`, a `BaseView` that receives the screen's `grid` and its `viewConfig`.
+- `qml/components/views/<type>/<type>.qml`, a `BaseView` that receives the screen's `grid` and its `viewConfig`.
 - `BaseView` gives hand-built pages their sizes: `pageHeight` (two cards), `cardPageWidth`, `sideWidth`.
 - `Custom` (`views/Custom/Custom.qml`) is one `ModuleGrid` of its `modules`, with its own `icon` in the navigator (`OverlayConfig.pageIcon`; empty is the type's).
 - Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`, `CustomWidgets`.
@@ -79,7 +79,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - The onboarder (`OnboardingWindow`) works out the same grid and draws its pages at the same zoom, so its Welcome page previews `Widget.cardSize` and `Widget.scale`.
 
 ### Loading
-- One overlay per screen in `General.screens` (`shell/Overlay.qml`): a transparent `OverlayPanel` inside the reserved area, placed by its base `ReservedAreaWindow` (shared with the onboarder).
+- One overlay per screen in `General.screens` (`qml/shell/Overlay.qml`): a transparent `OverlayPanel` inside the reserved area, placed by its base `ReservedAreaWindow` (shared with the onboarder).
 - Under it, its `reusable/BackdropRequest` dims the whole monitor under the bars and border (the screen's `ScreenBackdrop` window), as dark as `Overlay.backdrop` while `Overlay.showBackdrop`.
   - It comes in as the overlay does (`Overlay.animation`): sliding from the top or bottom edge (the request's `slide`), or fading.
   - A Top-layer surface kept under them by a Hyprland `order` layer rule that `HyprlandManager` adds at startup and on config reload.
@@ -87,7 +87,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - Its focus grab (`HyprlandGrab`) also whitelists `SurfaceManager.grabPartnersFor(screen)`. The bars, bar popouts and submenus register themselves there (`registerGrabPartner(window, screenName)`), so they keep working while it's open.
 - Opening it closes the bar popouts and floating edge menus on its screen (`PopoutManager.closeOn`), which keep their layer while open and would end up under it; integrated menus, docks, OSDs and the launcher stay.
 - Close on outside click (`Overlay.closeOnOutsideClick`) is a real click only: on its empty background, outside the page and the navigator (`backgroundClicks`), or, without a native grab, on a screen's backdrop or another screen's bar (`FocusGrab.clickedOutside`; its own screen's bars are grab partners). Its grab ending never closes it: that's also keyboard focus leaving (a polkit prompt closing gives it back to the last app) or, on Hyprland, another surface's grab starting over it (one native grab at a time).
-- Only the current page and its neighbours (navigation wraps) are instantiated, and only while the overlay is open (`OverlayPages.isLoaded` → `OverlayPage.loaded`). (Rule: `components/content/AGENTS.md`, Overlay lifetime.)
+- Only the current page and its neighbours (navigation wraps) are instantiated, and only while the overlay is open (`OverlayPages.isLoaded` → `OverlayPage.loaded`). (Rule: `qml/components/content/AGENTS.md`, Overlay lifetime.)
   - Opening or switching builds only the page shown. Its neighbours follow the page the user settled on (`OverlayPages._settled`, set `Appearance.animSlow` after the open or the switch), so they're built once it has slid in, not in the same frame.
   - A Custom page's modules stream in (`ModuleGrid.stream`): the grid and its box are built at once, sized from the places, and each module is a job in `BuildQueueManager`'s queue, top left to bottom right (`GridPlacement.revealOrder`), fading in (`OverlaySlot.active` / `ready`). Tool pages stream their panels the same way (`StreamedLoader`). Edge menus, the lock screen, the greeter, the desktop and screen layouts build all of their modules with the grid. The mechanics, and what each tool page streams: [streamed-building](../core/streamed-building.md).
   - The panel keeps the page area's last mapped size (`pageArea.roomWidth` / `roomHeight` in `OverlayPanel`): the window has no size while unmapped, and building at an estimate laid every page out twice per open. Before the first map it estimates from the screen less the window's margins.

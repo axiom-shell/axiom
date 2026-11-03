@@ -1,7 +1,7 @@
 # Screenshots and screen recording
 
-> **Files:** `services/apps/ScreenshotManager.qml`, `shell/Screenshot.qml`, `components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `components/content/ScreenRecord/ScreenRecord.qml`, `components/bar/widgets/ScreenRecord/ScreenRecord.qml`, `config/Screenshots.qml`
-> **Config:** `Screenshots` (`folder`, `recordingFolder`, `notify`; reader `config/Screenshots.qml`); the picker's choices persist in `~/.local/state/axiom/ui/screenshot.json`
+> **Files:** `qml/services/apps/ScreenshotManager.qml`, `qml/shell/Screenshot.qml`, `qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `qml/components/content/ScreenRecord/ScreenRecord.qml`, `qml/components/bar/widgets/ScreenRecord/ScreenRecord.qml`, `qml/config/Screenshots.qml`
+> **Config:** `Screenshots` (`folder`, `recordingFolder`, `notify`; reader `qml/config/Screenshots.qml`); the picker's choices persist in `~/.local/state/axiom/ui/screenshot.json`
 > **Related:** [Keybinds](../hyprland/keybinds.md), [Chat](chat.md) (region attachments), [Utility modules](../overlay/utility-modules.md)
 
 Screenshots and wf-recorder recordings, both in `ScreenshotManager`, with one picker surface for both. Slurp is not used; grim only takes the picker's frame under niri (below).
@@ -16,7 +16,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - The chat's region attachments use `pick(path, callback)`. It saves to `path` and calls back instead of copying (see [Chat](chat.md)).
 
 ### The picker
-- While `picking`, `shell/Screenshot` shows `surfaces/screenshot/ScreenshotPickerWindow`:
+- While `picking`, `qml/shell/Screenshot` shows `surfaces/screenshot/ScreenshotPickerWindow`:
   - one frozen frame per screen: a `ScreencopyView`, or grim's picture (below);
   - layer rule `axiom-screenshot` with `no_anim`;
   - the window under the cursor is highlighted from the start (`CompositorManager.withCursorPos`).

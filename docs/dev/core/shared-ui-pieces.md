@@ -1,13 +1,13 @@
 # Shared UI pieces
 
-> **Files:** `components/reusable/`, `components/forms/`, `components/content/parts/`, `components/methods/Utils.qml`, `components/methods/Search.qml`, `components/views/Settings/FoldingCard.qml`, `components/views/Settings/EntryListCard.qml`, `components/views/Settings/ScreenSpotPicker.qml`, `components/views/Settings/PlaceIntro.qml`
+> **Files:** `qml/components/reusable/`, `qml/components/forms/`, `qml/components/content/parts/`, `qml/components/methods/Utils.qml`, `qml/components/methods/Search.qml`, `qml/components/views/Settings/FoldingCard.qml`, `qml/components/views/Settings/EntryListCard.qml`, `qml/components/views/Settings/ScreenSpotPicker.qml`, `qml/components/views/Settings/PlaceIntro.qml`
 > **Config:** none
 > **Related:** [Editors pattern](editors-pattern.md), [Content roots](../overlay/content-roots.md), [Writing modules](../overlay/writing-modules.md), [Popout surface context](../popouts/surface-context.md), [Translucency and blur](../theming/translucency-blur.md)
 
 An index of reusable pieces. Reach for one of these before drawing your own; when a pattern appears a second time, it becomes one of these. (Rule: AGENTS.md › UI conventions, "Reuse before building".) Every file in `reusable/`, `forms/` and `content/parts/` is named here or in the docs it links to (`scripts/check_docs.py` checks): add a line when you add a piece.
 
 ### Sizes
-Everything outside the bars follows the Interface scale and Density through `Widget` (`config/Widget.qml`); a size written as a number doesn't, and `scripts/check_sizes.py` fails on one of 3 px or more, set alone or added, subtracted or chosen in a size's expression (`Widget.height - 4` is `Widget.height - Widget.px(4)`; factors like `* 2` and grid units like `span(8)` are fine).
+Everything outside the bars follows the Interface scale and Density through `Widget` (`qml/config/Widget.qml`); a size written as a number doesn't, and `scripts/check_sizes.py` fails on one of 3 px or more, set alone or added, subtracted or chosen in a size's expression (`Widget.height - 4` is `Widget.height - Widget.px(4)`; factors like `* 2` and grid units like `span(8)` are fine).
 
 | What | Use |
 |---|---|
@@ -130,10 +130,10 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Small helpers
 - **Cover art** (`reusable/CoverArt`): a track's cover (`source`, `MediaManager.artSource`), rounded, a new one fading in over the old (`CrossFade`), a note while there's none. The Now Playing module's and the OSD's now playing card's.
-- **Confirm gate** (`services/core/ConfirmGate`, a services part so the launcher can use it too): the press-twice gate of a destructive action. `pass(key, needsConfirm)` arms `key` and refuses, or passes when it's already armed (or needs no confirm); `armed` (the key waiting) and `timeout` (3 s, an armed tile's `countdown`) drive the tile; `disarm()` drops it, `expired` says it ran out. The power menu's, the QuickActions module's and the Power module's session actions, and the launcher's confirming commands.
-- **Last found** (`reusable/LastFound`): the last non-null `source`, for an entry looked up by id whose delegates must never be handed null as it's removed (`shell/Dock`, `shell/OSD`).
+- **Confirm gate** (`qml/services/core/ConfirmGate`, a services part so the launcher can use it too): the press-twice gate of a destructive action. `pass(key, needsConfirm)` arms `key` and refuses, or passes when it's already armed (or needs no confirm); `armed` (the key waiting) and `timeout` (3 s, an armed tile's `countdown`) drive the tile; `disarm()` drops it, `expired` says it ran out. The power menu's, the QuickActions module's and the Power module's session actions, and the launcher's confirming commands.
+- **Last found** (`reusable/LastFound`): the last non-null `source`, for an entry looked up by id whose delegates must never be handed null as it's removed (`qml/shell/Dock`, `qml/shell/OSD`).
 - **Frame nudge** (`reusable/FrameNudge`): `burst()` makes its window draw and commit a few more frames. For where Hyprland keeps showing a layer's frame from before a change (a bar's stretches, the blur window's shapes).
-- **Backdrop** (`reusable/BackdropRequest`): a full-screen surface's dim background (overlay, overview, launcher, power menu, onboarding), under the bars and the border. It's drawn by the screen's one backdrop window (`surfaces/backdrop/ScreenBackdrop`, built by `shell/Backdrops`), which shows the request that showed last there (`BackdropManager`).
+- **Backdrop** (`reusable/BackdropRequest`): a full-screen surface's dim background (overlay, overview, launcher, power menu, onboarding), under the bars and the border. It's drawn by the screen's one backdrop window (`surfaces/backdrop/ScreenBackdrop`, built by `qml/shell/Backdrops`), which shows the request that showed last there (`BackdropManager`).
 - **Scroll memory** (`reusable/ScrollMemory`): keeps where a Flickable was scrolled to, by `key` (`EditsManager.scrollOf`, in memory), and puts it back when it's rebuilt (overlay pages are unloaded while it's closed), applied as soon as its content is long enough while it settles. A user's scroll or `cancel()` (a jump) stops it. `TitledCard.scrollKey` sets one up for a panel; an empty key keeps nothing.
 - **Flash outline** (`reusable/FlashOutline`): an accent outline that shows for a moment on `flash()`: what a jump to a settings card or row lands on.
 - **Surface group** (`reusable/SurfaceGroup`): keeps a surface's instances on every monitor in step when its `monitors` mode is `all`.

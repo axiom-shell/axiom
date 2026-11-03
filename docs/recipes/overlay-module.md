@@ -1,13 +1,13 @@
 # Recipe: a new overlay module
 
 > **Use when:** adding a card type for overlay pages (also usable in edge menus and on the desktop, and on the lock screen or greeter when it opts in).
-> **Copy from:** `components/content/Battery/Battery.qml` (`Card`, `fullMinWidth`/`fullMinHeight`, `compactContent: CompactFigure`, `shape`), `components/content/ColorSwatch/ColorSwatch.qml` (driven by `properties`); schema `components/content/Battery/schema.yaml` (with `hosts`) or `components/content/Calculator/schema.yaml` (with `settings`).
-> **Docs:** [overlay/writing-modules](../dev/overlay/writing-modules.md), [overlay/content-roots](../dev/overlay/content-roots.md), [overlay/grow-expand](../dev/overlay/grow-expand.md), rules in `components/content/AGENTS.md`; generated: [config/OverlayModules](../dev/config/OverlayModules.md).
+> **Copy from:** `qml/components/content/Battery/Battery.qml` (`Card`, `fullMinWidth`/`fullMinHeight`, `compactContent: CompactFigure`, `shape`), `qml/components/content/ColorSwatch/ColorSwatch.qml` (driven by `properties`); schema `qml/components/content/Battery/schema.yaml` (with `hosts`) or `qml/components/content/Calculator/schema.yaml` (with `settings`).
+> **Docs:** [overlay/writing-modules](../dev/overlay/writing-modules.md), [overlay/content-roots](../dev/overlay/content-roots.md), [overlay/grow-expand](../dev/overlay/grow-expand.md), rules in `qml/components/content/AGENTS.md`; generated: [config/OverlayModules](../dev/config/OverlayModules.md).
 
 ## Files to touch
-1. `components/content/<Type>/<Type>.qml`: the module. The file name is the type const.
-2. `components/content/<Type>/schema.yaml`: the type's schema, beside it. The build finds it (index.yaml's `kinds`), expands it over `definitions/kinds/ModuleBase.yaml` into `<Type>OverlayModule` and adds it to `OverlayModule`'s `oneOf`: nothing else to list.
-3. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
+1. `qml/components/content/<Type>/<Type>.qml`: the module. The file name is the type const.
+2. `qml/components/content/<Type>/schema.yaml`: the type's schema, beside it. The build finds it (index.yaml's `kinds`), expands it over `definitions/kinds/ModuleBase.yaml` into `<Type>OverlayModule` and adds it to `OverlayModule`'s `oneOf`: nothing else to list.
+3. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
 4. A service, if it needs data ([service](service.md)): modules only read and acquire.
 
 ## Skeleton
@@ -77,7 +77,7 @@ settings:
 - Repeater models and `acquire` requests come from config or counts, never live values (a model rebuilt per sample once pushed qs past 25 GB).
 - `lockscreen` in `hosts` only for a module that launches, dispatches and writes nothing and shows nothing private. Greeter modules are inert unless `host.kind === "greeter" && !host.preview && Paths.greeter`.
 - No inline `component` using another inline component of the same file (URL-loaded: "is not a type").
-- Shared parts are in `components/content/parts/` (`ModuleHeader`, `CompactFigure`, `StatFigure`, `Sparkline`, `EmptyState`, `TileGrid`, …): check them and [core/shared-ui-pieces](../dev/core/shared-ui-pieces.md) before drawing your own.
+- Shared parts are in `qml/components/content/parts/` (`ModuleHeader`, `CompactFigure`, `StatFigure`, `Sparkline`, `EmptyState`, `TileGrid`, …): check them and [core/shared-ui-pieces](../dev/core/shared-ui-pieces.md) before drawing your own.
 - A module that wants more rows (`properties.grow`) or a detail view (`expand()`): [overlay/grow-expand](../dev/overlay/grow-expand.md).
 
 ## Verify

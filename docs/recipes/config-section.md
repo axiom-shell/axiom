@@ -1,14 +1,14 @@
 # Recipe: a new config section and its reader
 
 > **Use when:** a feature needs settings of its own that don't belong in an existing section. For one more key in an existing section see [setting](setting.md).
-> **Copy from:** `config/PolkitConfig.qml` (minimal reader), `config/NotesConfig.qml` (derived values); schema → `properties.Polkit` (minimal) or `properties.Battery` (with `x-order`)
+> **Copy from:** `qml/config/PolkitConfig.qml` (minimal reader), `qml/config/NotesConfig.qml` (derived values); schema → `properties.Polkit` (minimal) or `properties.Battery` (with `x-order`)
 > **Docs:** [config-readers](../dev/core/config-readers.md), [config-manager](../dev/core/config-manager.md), [schema-annotations](../dev/core/schema-annotations.md), [settings-page](../dev/core/settings-page.md)
 
 ## Files to touch
-1. `config/schema/sections/<Section>.yaml` (and the name in `config/schema/index.yaml`'s `sections`, where it sits in the order): an object with `x-category`, `title`, `description`, `additionalProperties: false`, `properties` (each with a `default`), optionally `x-order`.
-2. `config/<Section>.qml`, or `config/<Section>Config.qml` when `<Section>` is also a type name (a bar widget, module, view or Quickshell type), as with `BatteryConfig`, `OSDConfig`, `LauncherConfig`.
+1. `qml/config/schema/sections/<Section>.yaml` (and the name in `qml/config/schema/index.yaml`'s `sections`, where it sits in the order): an object with `x-category`, `title`, `description`, `additionalProperties: false`, `properties` (each with a `default`), optionally `x-order`.
+2. `qml/config/<Section>.qml`, or `qml/config/<Section>Config.qml` when `<Section>` is also a type name (a bar widget, module, view or Quickshell type), as with `BatteryConfig`, `OSDConfig`, `LauncherConfig`.
 3. The service and UI that use it.
-4. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
+4. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
 
 ## Skeleton
 ```json
@@ -53,7 +53,7 @@ QtObject {
    - Imports are only `QtQuick` and `qs.services.core` (for `ConfigManager`), plus other readers if needed.
    - Write one `readonly property` per key that is used, as `_c.<key>`. No `??` fallbacks.
 3. **Use it:** services read it to act; UI binds to it.
-4. **Hand-built settings UI:** only if the generated form can't express it. Add `x-card: {file: <Name>, title: …}` (`components/views/Settings/<Name>Card.qml`) or `x-intro`.
+4. **Hand-built settings UI:** only if the generated form can't express it. Add `x-card: {file: <Name>, title: …}` (`qml/components/views/Settings/<Name>Card.qml`) or `x-intro`.
 
 ## Gotchas
 - **Sections unknown to the schema are pruned on load**, with a warning. A key missing from the schema vanishes from the user's config on the next save.

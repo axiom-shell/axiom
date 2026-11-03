@@ -51,11 +51,13 @@ It first prints its plan: the distribution, the compositor and each step. Then:
 2. **Packages.** It lists the optional features and offers them all at once (recommended), or one at a time, skipping any already installed. The login screen brings sway to run in; with Hyprland, that sway is offered on its own (recommended, so taking them all installs it), and without it the login screen runs in Hyprland. A feature with no package on your distribution is listed as not available there (wallpaper transitions on Fedora). It then shows the one `sudo pacman` or `sudo dnf` command it will run, and why, before running it.
    - On Arch, every package comes from the official repositories.
    - On Fedora, quickshell comes from the COPR `errornointernet/quickshell` and Hyprland and its tools (satty) from `nett00n/hyprland`: Fedora's own quickshell is too old, and Hyprland left its repositories. A COPR is a third-party repository on Fedora's build service, so each one is shown and asked separately, and only enabled when something you picked needs it. Declining one a required package needs stops the install; declining one an optional feature needs skips that whole feature, so none of its packages are installed.
-3. **The clone.** It clones the latest release into `~/.config/quickshell/axiom`.
-4. **The `axiom` binary.** It builds `axiom` from the clone into `~/.local/bin/axiom` (`$XDG_BIN_HOME` if it's set). It doesn't need to be on your `PATH`: the start-up line names it by its full path.
+3. **The install.** It clones the latest release into `~/.local/share/axiom-shell` (`$XDG_DATA_HOME/axiom-shell`). An install already there is left as it is: it updates itself.
+4. **The `axiom` binary.** It downloads the release's official build of `axiom` (checked against its checksums), or builds it from the install, into `~/.local/bin/axiom` (`$XDG_BIN_HOME` if it's set). It doesn't need to be on your `PATH`: the start-up line names it by its full path.
 5. **Autostart.** It asks before adding the line that starts axiom to the end of the compositor's config (`hyprland.lua`, sway's `config`, niri's `config.kdl`), backing up the file first. A config that doesn't exist yet starts as the compositor's own default one, so its starter keybinds are there too.
 
-Run from a text console (a TTY) outside a graphical session, it last offers to start the compositor. `--yes` answers yes to every question, `--minimal` installs only what's required, and `--dry-run` prints every command it would run and changes nothing. Running it again is safe. From a clone, run `./install.sh`: that clone is used wherever it is, and if it isn't at `~/.config/quickshell/axiom` (where `axiom run` looks), the installer offers to link it there, or to move it.
+Run from a text console (a TTY) outside a graphical session, it last offers to start the compositor. `--yes` answers yes to every question, `--minimal` installs only what's required, and `--dry-run` prints every command it would run and changes nothing. Running it again is safe. Run from a clone (`./install.sh`), it installs the latest release all the same, then offers to make that clone axiom's dev tree, to work on axiom ([Contributing](../CONTRIBUTING.md)).
+
+**Coming from an older install** in `~/.config/quickshell/axiom`: nothing looks there any more. Run the installer again (it installs to `~/.local/share/axiom-shell` and keeps your settings, which live in `~/.config/axiom`), log out and back in, then delete `~/.config/quickshell/axiom`. An installed login screen needs **Update** (Settings → Screen & Power → Login screen) once.
 
 <details>
 <summary><b>From the AUR</b> (Arch, not published yet)</summary>
@@ -68,23 +70,23 @@ Run from a text console (a TTY) outside a graphical session, it last offers to s
 paru -S axiom-shell
 ```
 
-It installs axiom to `/usr/share/axiom` with the required packages; the compositor and each optional feature's packages are optional dependencies, so install the ones you want. `axiom run` finds it (a clone in `~/.config/quickshell/axiom` runs instead, if you have one). Add the line that starts it to your compositor's config, as below. The package manager updates it, so **axiom updates** isn't in the settings, and the login screen runs the package's own copy.
+It installs axiom to `/usr/share/axiom-shell` with the required packages; the compositor and each optional feature's packages are optional dependencies, so install the ones you want. `axiom run` finds it (an install in `~/.local/share/axiom-shell` runs instead, if you have one). Add the line that starts it to your compositor's config, as below. The package manager updates it, so **axiom updates** isn't in the settings, and the login screen runs the package's own copy.
 
 </details>
 
 <details>
 <summary><b>By hand</b>, or on another distribution</summary>
 
-Install the [requirements](#requirements), then clone into Quickshell's config directory:
+Install the [requirements](#requirements), then clone axiom where `axiom run` looks for it:
 
 ```bash
-git clone https://github.com/axiom-shell/axiom.git ~/.config/quickshell/axiom
+git clone https://github.com/axiom-shell/axiom.git ~/.local/share/axiom-shell
 ```
 
 Build the `axiom` binary, the shell's parent (it needs `go`):
 
 ```bash
-cd ~/.config/quickshell/axiom && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
+cd ~/.local/share/axiom-shell && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
 ```
 
 `axiom run` starts it once. To start it with your session, add its line to your compositor's config (a second `axiom run` on the same display exits at once):
@@ -196,13 +198,13 @@ Axiom can be your login screen, as a [greetd](https://sr.ht/~kennylevinsen/greet
 
 - copies axiom's code to `/usr/share/axiom-greeter`, owned by root. greetd's user runs this copy, since it can't read your home folder. Where the code comes from is **Code from** on the same settings page:
   - **Git** (default): root fetches it from the repository you cloned axiom from, the newest release or the main branch, following **axiom updates → Follow**. The address is recorded at install, so nothing that can write to your clone (a changed remote, a local commit, an edited file) can change what the login screen runs. A new release or commit sends a notification, and **Update** fetches it.
-  - **Local**: your clone as it is, whatever branch is checked out, uncommitted changes included. Use it to work on axiom. Any program running as you could change that code before your next **Update**, and then your password prompt is the only check, so the settings page warns you while it's on.
+  - **Local**: axiom's install (`~/.local/share/axiom-shell`) as it is, whatever branch is checked out there, uncommitted changes included; never a dev tree, even while dev mode runs one. Any program running as you could change that code before your next **Update**, and then your password prompt is the only check, so the settings page warns you while it's on.
 
   Switching between them, or changing which channel axiom updates follow, needs an **Update** to take effect.
 
-  Installed from the AUR, there's no choice: the login screen runs the package's own copy in `/usr/share/axiom`, which only root can change, and `/usr/share/axiom-greeter` holds only its start-up scripts. The package manager updates it with the system; after an update, **Update** refreshes those scripts and the saved fallback config.
+  Installed from the AUR, there's no choice: the login screen runs the package's own copy in `/usr/share/axiom-shell`, which only root can change, and `/usr/share/axiom-greeter` holds only its start-up scripts. The package manager updates it with the system; after an update, **Update** refreshes those scripts and the saved fallback config.
 
-- makes `/var/lib/axiom-greeter`. Its `config/` folder is yours: axiom exports the login screen's layout, look, theme, wallpapers and monitor layouts there whenever they change, so changing them needs no password. Only the parts of your config the login screen shows go there, and greetd's user can read them.
+- makes `/var/lib/axiom-greeter`. Its config folder is yours: axiom exports the login screen's layout, look, theme, wallpapers and monitor layouts there whenever they change, so changing them needs no password. Only the parts of your config the login screen shows go there, and greetd's user can read them.
 - installs a polkit action, so Update and Remove ask for your password by name ("update or remove axiom's login screen") and run root's copy of the setup script rather than the one in your home folder.
 - backs up `/etc/greetd/config.toml` (`.axiom-original`, plus `.axiom-bak-<date>` for each change), then points only its `default_session` command at axiom's greeter. The greeter runs in a compositor of its own, whichever one you log in to: sway (no SwayFX needed), or Hyprland when sway isn't installed or can't start. Its log is `/var/lib/axiom-greeter/state/greeter.log` (`sudo` to read it).
 

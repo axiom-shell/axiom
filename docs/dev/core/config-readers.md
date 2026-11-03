@@ -1,6 +1,6 @@
 # Config readers
 
-> **Files:** `config/*.qml` (e.g. `config/General.qml`, `config/Appearance.qml`, `config/BarsConfig.qml`, `config/Theme.qml`, `config/Paths.qml`)
+> **Files:** `qml/config/*.qml` (e.g. `qml/config/General.qml`, `qml/config/Appearance.qml`, `qml/config/BarsConfig.qml`, `qml/config/Theme.qml`, `qml/config/Paths.qml`)
 > **Config:** one reader per section
 > **Related:** [Config manager](config-manager.md), [Schema annotations](schema-annotations.md), [Themes](../theming/themes.md)
 
@@ -49,13 +49,13 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
   - `shownCalendars` / `writableCalendars`, `newEventCalendar`
   - `colors` by calendar id
   - `timeFormat` from `use24Hour`.
-- **`Paths`**: derived filesystem paths, not configurable. Also `packaged` / `packagedVersion`: the marker a distribution package writes beside the code ([packaging.md](../packaging.md)).
-  - What ships in the repo (`Quickshell.shellDir`): `axiomPath`, `resourcePath`, `themePath`, `scriptsPath`. Read-only.
+- **`Paths`**: derived filesystem paths, not configurable. Also `packaged` / `packagedVersion`: the marker a distribution package writes at the install tree's root (`installTreePath`, from `$AXIOM_INSTALL_TREE`; [packaging.md](../packaging.md)).
+  - What ships in the tree: `axiomPath` (the QML folder, `Quickshell.shellDir`), `resourcePath` and `themePath` under it, and `treePath` (the tree's root, `$AXIOM_TREE`, whose `data/` holds the runtime files that aren't QML). Read-only.
   - What axiom writes, the XDG folders from `ConfigManager.dataDirs`: `userConfigPath`, `statePath`, `userStatePath`, `userDataPath`, `defaultNotesPath`, `generatedThemesPath`, plus `themeFile(name)` for a theme's file by name. See [Where files live](config-manager.md#where-files-live).
   - Also `greeter` and the greeter's folders ([Greeter runtime](../features/greeter-runtime.md)).
 - **`Theme`**: below.
 
 ### Theme
-- `config/Theme.qml` exposes the base16 palette (`base00`–`base0F`).
+- `qml/config/Theme.qml` exposes the base16 palette (`base00`–`base0F`).
 - Semantic aliases (`background`, `accent`, `error`, …) resolve through `_themeData.semantic`.
 - `stringToColorMap` + `resolveColor(name)` give dynamic lookup by string, for a color name that comes from JSON/config rather than a static binding.

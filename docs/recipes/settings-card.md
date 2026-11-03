@@ -1,19 +1,19 @@
 # Recipe: a hand-built settings card or intro
 
 > **Use when:** a settings section needs more than generated rows: a status card with actions, a list of entries, or a status line above the fields.
-> **Copy from:** `components/views/Settings/OnboardingCard.qml` (`FieldGroup` with a header button), `components/views/Settings/PolkitStatusCard.qml` (status), `components/views/Settings/OSDListCard.qml` (an entry list via `EntryListCard`, folding), `components/views/Settings/CalendarAccountsCard.qml` (a `FoldingCard`), `components/views/Settings/NightLightStatus.qml` (an `x-intro`).
+> **Copy from:** `qml/components/views/Settings/OnboardingCard.qml` (`FieldGroup` with a header button), `qml/components/views/Settings/PolkitStatusCard.qml` (status), `qml/components/views/Settings/OSDListCard.qml` (an entry list via `EntryListCard`, folding), `qml/components/views/Settings/CalendarAccountsCard.qml` (a `FoldingCard`), `qml/components/views/Settings/NightLightStatus.qml` (an `x-intro`).
 > **Docs:** [core/settings-page](../dev/core/settings-page.md), [core/schema-annotations](../dev/core/schema-annotations.md).
 
 ## The three annotations
-- `x-card: "<Name>"` on a section: loads `components/views/Settings/<Name>Card.qml` as the section's first card (`SettingsContent` adds the `Card` suffix).
+- `x-card: "<Name>"` on a section: loads `qml/components/views/Settings/<Name>Card.qml` as the section's first card (`SettingsContent` adds the `Card` suffix).
 - `x-cardTitle: "<Title>"` with it (required): the card's title, which `SettingsContent` passes in as `title` and the sidebar lists; the card's QML sets none. Set `x-cardWide: true` when it holds a list or a form that needs the room.
 - `x-cardFolds: true` with it: the card folds like the generated cards and is given `foldKey` (`"<Section>:<Name>"`).
-- `x-intro: "<Name>"` on a section or an object property: loads `components/views/Settings/<Name>.qml` at the top of that group's card, above its fields; it hides while its `shown` (if it declares one) is false.
+- `x-intro: "<Name>"` on a section or an object property: loads `qml/components/views/Settings/<Name>.qml` at the top of that group's card, above its fields; it hides while its `shown` (if it declares one) is false.
 
 ## Files to touch
-1. `config/schema/sections/<Section>.yaml`: the annotation on the section (or property).
-2. `components/views/Settings/<Name>Card.qml` (or `<Name>.qml` for an intro).
-3. `config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
+1. `qml/config/schema/sections/<Section>.yaml`: the annotation on the section (or property).
+2. `qml/components/views/Settings/<Name>Card.qml` (or `<Name>.qml` for an intro).
+3. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template.
 
 ## Skeleton
 A status card:
@@ -62,7 +62,7 @@ FoldingCard {
 
 ## Verify
 - `scripts/dev/verify.sh`
-- Settings categories have no IPC: add a temporary `IpcTarget` to `shell.qml` calling `SettingsManager.openCategory("<Category>")`, look with `scripts/dev/shot.sh`, then remove it in place ([testing](../dev/testing.md)).
+- Settings categories have no IPC: add a temporary `IpcTarget` to `qml/shell.qml` calling `SettingsManager.openCategory("<Category>")`, look with `scripts/dev/shot.sh`, then remove it in place ([testing](../dev/testing.md)).
 
 ## Docs to update
 - [core/settings-page](../dev/core/settings-page.md) if it adds a new kind of card; the feature's doc.

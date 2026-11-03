@@ -1,6 +1,6 @@
 # Popouts on floating, pill and transparent bars
 
-> **Files:** `components/bar/BarContainer.qml`, `components/methods/BarLayout.qml`, `components/methods/EdgeAttach.qml`, `components/hosts/popout/PillBarJoin.qml`, `components/hosts/popout/AttachedSurface.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/ClosedLatch.qml`
+> **Files:** `qml/components/bar/BarContainer.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/EdgeAttach.qml`, `qml/components/hosts/popout/PillBarJoin.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/EdgePlacement.qml`, `qml/components/hosts/popout/ClosedLatch.qml`
 > **Config:** `Bar.background` (`floating`, `floatingPills`, `pills`, transparent), `Bar.floatGap`, `Bar.pillMerge` (per bar in `Bars`; `island`/`islandPills` are derived on `barConfig`)
 > **Related:** [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Held off an edge](held-off-edge.md), [Bar layering and corners](../bar/layering-and-corners.md), [Shadows](shadows.md)
 

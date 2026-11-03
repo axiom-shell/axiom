@@ -1,6 +1,6 @@
 # Chat
 
-> **Files:** `services/apps/ChatManager.qml`, `backend/internal/chat/`, `backend/internal/daemon/chat.go`, `components/methods/ChatMarkdown.qml`, `components/content/Chat/Chat.qml`, `components/content/parts/chat/`, `config/ChatConfig.qml`
+> **Files:** `qml/services/apps/ChatManager.qml`, `backend/internal/chat/`, `backend/internal/daemon/chat.go`, `qml/components/methods/ChatMarkdown.qml`, `qml/components/content/Chat/Chat.qml`, `qml/components/content/parts/chat/`, `qml/config/ChatConfig.qml`
 > **Config:** `Chat.*` (reader `ChatConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Screenshots and recording](screenshots-recording.md), [Launcher](launcher.md), [Services pattern](../core/services-pattern.md)
 
@@ -34,11 +34,11 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 - It replaces the placeholder message only when the reply ends, so the message list doesn't rebuild on every token.
 
 ### Display
-- `components/methods/ChatMarkdown` splits a reply into prose and code blocks.
+- `qml/components/methods/ChatMarkdown` splits a reply into prose and code blocks.
 - `content/Chat/Chat.qml` is a `Panel`, so it can also be used as a popout.
 
 ### Entry points
 - IPC `chat`: `open`, `newChat`, `ask <text>`, `settings`.
 - Launcher: `@` and `/chat`.
 - `OverlayConfig.pageWithModule(type)` finds the page to open.
-- Created from `shell.qml`'s `_services`, because of its IPC target.
+- Created from `qml/shell.qml`'s `_services`, because of its IPC target.

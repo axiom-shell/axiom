@@ -1,4 +1,4 @@
-# Pure helpers (`components/methods/`)
+# Pure helpers (`qml/components/methods/`)
 
 `pragma Singleton` `QtObject`s with pure functions: no files, processes, dispatches, timers or `qs.*` imports. `scripts/run_tests.sh` builds them as a `--pure` module tree, so anything importing Quickshell is left out of tests.
 

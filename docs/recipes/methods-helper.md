@@ -1,11 +1,11 @@
-# Recipe: a pure helper in `components/methods/` (with its test)
+# Recipe: a pure helper in `qml/components/methods/` (with its test)
 
 > **Use when:** logic that can be a pure function: geometry, parsing, formatting, layout maths, schema walking. Anything with files, processes, timers or dispatches is a [service](service.md).
-> **Copy from:** `components/methods/ColorTemperature.qml` + `tests/tst_ColorTemperature.qml` (smallest), `components/methods/TimeZones.qml` + `tests/tst_TimeZones.qml`
-> **Docs:** `components/methods/AGENTS.md`, [shared-ui-pieces](../dev/core/shared-ui-pieces.md) (check an existing helper doesn't already do it: `Utils`, `Search`, `GridPlacement`, `SurfaceContext`, …)
+> **Copy from:** `qml/components/methods/ColorTemperature.qml` + `tests/tst_ColorTemperature.qml` (smallest), `qml/components/methods/TimeZones.qml` + `tests/tst_TimeZones.qml`
+> **Docs:** `qml/components/methods/AGENTS.md`, [shared-ui-pieces](../dev/core/shared-ui-pieces.md) (check an existing helper doesn't already do it: `Utils`, `Search`, `GridPlacement`, `SurfaceContext`, …)
 
 ## Files to touch
-1. `components/methods/<Name>.qml`: `pragma Singleton` `QtObject` with functions (and readonly constants).
+1. `qml/components/methods/<Name>.qml`: `pragma Singleton` `QtObject` with functions (and readonly constants).
 2. `tests/tst_<Name>.qml`: a `TestCase`.
 3. The callers (`import qs.components.methods`).
 

@@ -1,6 +1,6 @@
 # Night light
 
-> **Files:** `backend/internal/nightlight/`, `backend/internal/wayland/ctm/`, `backend/internal/wayland/gamma/`, `services/system/NightLightManager.qml`, `config/NightLight.qml`, `components/views/Settings/NightLightStatus.qml`, `components/content/NightLightControls/NightLightControls.qml`, `services/core/DailySchedule.qml`
+> **Files:** `backend/internal/nightlight/`, `backend/internal/wayland/ctm/`, `backend/internal/wayland/gamma/`, `qml/services/system/NightLightManager.qml`, `qml/config/NightLight.qml`, `qml/components/views/Settings/NightLightStatus.qml`, `qml/components/content/NightLightControls/NightLightControls.qml`, `qml/services/core/DailySchedule.qml`
 > **Config:** `NightLight.*`
 > **Related:** [Wallpaper and schedules](wallpaper-and-schedules.md), [Utility modules](../overlay/utility-modules.md), [Wayland protocols](../backend/wayland.md)
 
@@ -21,7 +21,7 @@ The night light: a screen color temperature, set by the axiom daemon (wlsunset w
   - the schedule waits for the probe.
 - A `DailySchedule` turns it on at `startAt` and off at `endAt` (edge-triggered, see [Wallpaper and schedules](wallpaper-and-schedules.md)).
 - A new temperature or gamma applies while on (wlsunset restarts, debounced).
-- Created from `shell.qml`'s `_services`.
+- Created from `qml/shell.qml`'s `_services`.
 
 ### Entry points
 - IPC `nightLight`: `toggle` / `enable` / `disable` / `status`; `toggle` and `enable` say on the OSD when neither the daemon nor wlsunset can warm the screens (`_canWarm`).

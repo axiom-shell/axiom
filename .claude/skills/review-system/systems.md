@@ -161,7 +161,7 @@ Docs: core/services-pattern.md core/shell-manager-targeting.md core/file-picker.
 Extra: qml/services/core/ConsumerRegistry.qml qml/services/core/StateManager.qml qml/services/core/FileManager.qml qml/services/ui/ShellManager.qml qml/components/methods/KeyboardLayouts.qml qml/services/system/KeyboardLayoutManager.qml qml/services/system/AudioManager.qml qml/services/system/MediaManager.qml qml/services/system/BatteryManager.qml qml/services/apps/WeatherManager.qml qml/services/apps/ClaudeUsageManager.qml qml/config/BatteryConfig.qml qml/config/WeatherConfig.qml qml/config/ClaudeUsageConfig.qml qml/config/UpdatesConfig.qml backend/internal/sysmon/ backend/internal/media/ backend/internal/weather/ backend/internal/claudeusage/ backend/internal/updates/
 Checks:
 - Every polled service uses `acquire`/`release` with the Timer gated on `_registry.active`; requests from config only.
-- Persisted state written atomically, under XDG paths, never under `Paths.axiomPath`.
+- Persisted state written atomically, under XDG paths, never under the tree (`Paths.treePath`).
 - Only `ShellManager.isTarget` answers shortcuts, IPC and OSD; IPC handlers enabled on the target instance only.
 Seams: every service.
 
@@ -250,7 +250,7 @@ Seams: CI, the AUR, the guardrails (`check_packages.py`).
 ## daemon
 Scope: the axiom binary's core: the daemon and its parts, the RPC protocol and topics, the CLI, supervising the shell, commands, files and paths, the shared Go helpers.
 Docs: backend/README.md backend/protocol.md core/memory.md
-Extra: backend/cmd/axiom/ backend/internal/cli/ backend/internal/command/ backend/internal/daemon/{dev,exec,files,reexec,tasks}.go backend/internal/{files,fsx,xdg,axerr,buildinfo,logfile,assets,tree,shellcmd,deps,netif,testkit}/ backend/tools/syncassets/ qml/shell/NoParentNotice.qml
+Extra: backend/cmd/axiom/ backend/internal/cli/ backend/internal/command/ backend/internal/daemon/{dev,devbuild,devstart,devsync,exec,files,reexec,tasks}.go backend/internal/{devconfig,files,fsx,xdg,axerr,buildinfo,logfile,assets,tree,shellcmd,deps,netif,testkit}/ backend/tools/syncassets/ qml/shell/NoParentNotice.qml
 Checks:
 - The tiers and rules in `backend/AGENTS.md` hold (pure → edge → `daemon` → `cli`; no globals; `axerr` kinds across every boundary); `archtest` enforces what it claims to.
 - Every method and topic is in `methodSets` and the generated contract; whole-state pushes are latest-wins; a polled topic runs only while a connection subscribes.

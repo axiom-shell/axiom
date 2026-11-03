@@ -1,6 +1,6 @@
 # Bar widget shapes, runs, separators and accents
 
-> **Files:** `components/bar/WidgetGroup.qml`, `components/bar/WidgetBackground.qml`, `components/methods/BarShapes.qml`, `components/methods/BarLayout.qml`, `components/methods/BarWidgetStyle.qml`, `components/reusable/SeparatorMark.qml`, `components/bar/BarContainer.qml` (inline `AccentLine`), `components/bar/BarWidgetHost.qml`
+> **Files:** `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetBackground.qml`, `qml/components/methods/BarShapes.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/reusable/SeparatorMark.qml`, `qml/components/bar/BarContainer.qml` (inline `AccentLine`), `qml/components/bar/BarWidgetHost.qml`
 > **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `widgetEnds`, `widgetGrouping`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 

@@ -1,10 +1,10 @@
 # Edge attach: placement along an edge
 
-> **Files:** `components/methods/EdgeAttach.qml`, `tests/tst_EdgeAttach.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/PillStretch.qml`, `components/bar/BarContainer.qml`, `components/methods/BarLayout.qml`, `components/hosts/popout/BarPopouts.qml`
+> **Files:** `qml/components/methods/EdgeAttach.qml`, `tests/tst_EdgeAttach.qml`, `qml/components/hosts/popout/EdgePlacement.qml`, `qml/components/hosts/popout/PillStretch.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`
 > **Config:** none directly
 > **Related:** [Surface context](surface-context.md), [Pill and floating bars](pill-and-floating-bars.md), [Held off an edge](held-off-edge.md), [Submenus](submenus.md), [Bar layering and corners](../bar/layering-and-corners.md)
 
-`components/methods/EdgeAttach` (pure, tested by `tests/tst_EdgeAttach.qml`) decides where a box goes along its edge, and how it meets what's there. It is shared by bar popouts, every `EdgePopout` (OSDs, floating edge menus, the attached launcher) and docks.
+`qml/components/methods/EdgeAttach` (pure, tested by `tests/tst_EdgeAttach.qml`) decides where a box goes along its edge, and how it meets what's there. It is shared by bar popouts, every `EdgePopout` (OSDs, floating edge menus, the attached launcher) and docks.
 
 ### joins and place
 - **`joins`:** an end joins a joinable perpendicular stroke when the box would either be pushed back from that stroke or come within a connector gap of it.

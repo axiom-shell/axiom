@@ -9,7 +9,7 @@ Everything is configured from inside the shell (see [Features](features.md)). Op
 - Settings are saved to `~/.config/axiom/config.json`. The `axiom` binary owns that file: it checks every change against the schema and writes it atomically. You never need to open it, but axiom notices when the file changes, so editing it by hand also works.
 - From a terminal or a script, `axiom config` reads and changes it while axiom runs, and the shell shows the change at once: `axiom config get Appearance.font`, `axiom config set Appearance.font.size 14`, `axiom config reset Appearance.font.size`. `axiom config validate` checks a file without changing anything, `axiom config share FILE` prints a shared file as Export would write it (only its look), and `axiom config path` shows where everything is.
 - Configs from older versions are migrated automatically. The file as it was is kept once beside it: `config.v<version>.json`, or `config.format1.json` for a config from before the current format, which is converted. A hand-written config needs its `"format": 2` and `"version"`.
-- The schema defines every option and its default, and generates the Settings page. Its source is YAML under `config/schema/` (one file per section and definition), built into `config/json/config.schema.json`.
+- The schema defines every option and its default, and generates the Settings page. Its source is YAML under `qml/config/schema/` (one file per section and definition), built into `qml/config/json/config.schema.json`.
 - Chat API keys are entered in **Settings → Modules → Chat** and stored in your keyring (or `$XDG_STATE_HOME/axiom/secrets.json`, mode 600, without one). A provider's environment variable (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`) wins over a stored key. Conversations are saved in `$XDG_STATE_HOME/axiom/chats/`.
 
 > [!IMPORTANT]
@@ -39,13 +39,13 @@ Your whole setup (bars, overlay pages, edge menus, docks, the lock and login scr
 
 ### Example setups
 
-axiom ships the setups from the README in `examples/`. Apply one from **Settings → Maintenance → Example setups**, or with `/config example <name>` in the launcher.
+axiom ships the setups from the README in `data/examples/`. Apply one from **Settings → Maintenance → Example setups**, or with `/config example <name>` in the launcher.
 
 - An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, edge menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
 - Everything else stays as it is: wallpapers, monitors, apps, keybinds, calendars, chat providers, compositor settings, idle and the login screen.
 - One saved config is always the current one (marked Current, with a dot once you change something): at first it's `My setup`, which axiom saves for you. Changes you made to it are saved into it first, so nothing is lost and nothing is added. Confirming says where they go. **Revert** on the current one discards its changes. To delete it, switch to another first.
 - An applied example is saved as `example-<name>` (the defaults as `defaults`), the current one. If you don't change it, it's deleted once you apply or restore something else, since the example applies it again; once your changes are saved into it, it's yours, and applying the example again saves it as `example-<name> 2`.
-- An example is a partial `config.json` with a `_example` header (`title`, `description`). What it may hold is each setting's `x-scope` in `config/json/config.schema.json`. If it uses a font you don't have, the text falls back to another; a theme you don't have falls back to the default palette.
+- An example is a partial `config.json` with a `_example` header (`title`, `description`). What it may hold is each setting's `x-scope` in `qml/config/json/config.schema.json`. If it uses a font you don't have, the text falls back to another; a theme you don't have falls back to the default palette.
 
 ### Sharing a setup
 
@@ -66,14 +66,14 @@ Setups other people built and shared at [axiom-shell/community-setups](https://g
 
 ### Themes
 
-- Hand-made themes live in `config/themes/`, generated ones in `~/.local/state/axiom/themes/`, and community setups' palettes in `~/.local/share/axiom/themes/`.
-- A theme is a base16 palette (`base00`–`base0F`) plus optional semantic overrides. See `config/themes/theme.schema.json`.
-- To add a theme, copy the template `config/themes/template/theme.json` to `config/themes/<name>.json`, then set its name, variant and sixteen colors. To make a dark/light pair, give each file a `paired` field naming the other.
+- Hand-made themes live in `qml/config/themes/`, generated ones in `~/.local/state/axiom/themes/`, and community setups' palettes in `~/.local/share/axiom/themes/`.
+- A theme is a base16 palette (`base00`–`base0F`) plus optional semantic overrides. See `qml/config/themes/theme.schema.json`.
+- To add a theme, copy the template `qml/config/themes/template/theme.json` to `qml/config/themes/<name>.json`, then set its name, variant and sixteen colors. To make a dark/light pair, give each file a `paired` field naming the other.
 
 ### Translations
 
 - Pick a language in **Settings → General → Language**.
-- To add a language, copy the empty template `config/i18n/template/language.json` to `config/i18n/<code>.json`, set `_meta.name` and `_meta.locale`, and translate the strings. It shows up in the dropdown right away.
+- To add a language, copy the empty template `qml/config/i18n/template/language.json` to `qml/config/i18n/<code>.json`, set `_meta.name` and `_meta.locale`, and translate the strings. It shows up in the dropdown right away.
 - Missing strings fall back to English. `scripts/check_i18n.py` reports what's missing.
 
 ## Troubleshooting
@@ -86,7 +86,7 @@ axiom log --debug       # include console.log output
 axiom log -f            # follow
 ```
 
-A clean reload prints only `Reloading configuration...` and `Configuration Loaded`.
+It shows the running shell's whole log, every reload included; a clean reload adds only `Reloading configuration...` and `Configuration Loaded` to it.
 
 The shell runs under `axiom run`, its parent process, which has a log of its own:
 
@@ -98,6 +98,6 @@ axiom restart           # restart the shell (the daemon keeps running)
 ```
 
 - **A notice saying axiom isn't running the shell:** the shell was started directly with `qs`. Start it with `axiom run` instead, and use that in your compositor's start-up line.
-- **A notice that the files and the binary are from different versions:** the `axiom` binary is older or newer than the shell's files, so axiom runs read-only and doesn't save settings. Rebuild the binary from the same clone (`scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`), then `axiom daemon reexec`.
+- **A notice that the files and the binary are from different versions:** the `axiom` binary is older or newer than the shell's files, so axiom runs read-only and doesn't save settings. Rebuild the binary from the install (`cd ~/.local/share/axiom-shell && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom`), then `axiom daemon reexec`.
 
 Reporting a bug? Include the output of `axiom bug-info` (your versions, compositor, distribution and config mode; `~/.local/bin/axiom bug-info` if `axiom` isn't on your `PATH`) along with the log (`axiom log`).

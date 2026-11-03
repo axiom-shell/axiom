@@ -1,15 +1,15 @@
 # Icons
 
-> **Files:** `assets/fonts/MaterialSymbolsRounded.ttf`, `assets/fonts/VERSION`, `config/json/material-symbols.json`, `scripts/generate_icons.py`, `config/Appearance.qml`, `components/reusable/StyledIcon.qml`, `services/ui/IconManager.qml`, `components/methods/Search.qml`, `components/reusable/StyledComboEntry.qml`, `components/forms/SchemaField.qml`, `scripts/check_icons.py`
+> **Files:** `qml/assets/fonts/MaterialSymbolsRounded.ttf`, `qml/assets/fonts/VERSION`, `qml/config/json/material-symbols.json`, `scripts/generate_icons.py`, `qml/config/Appearance.qml`, `qml/components/reusable/StyledIcon.qml`, `qml/services/ui/IconManager.qml`, `qml/components/methods/Search.qml`, `qml/components/reusable/StyledComboEntry.qml`, `qml/components/forms/SchemaField.qml`, `scripts/check_icons.py`
 > **Config:** none of its own; `x-control: "icon"` on a string setting makes it an icon field
 > **Related:** [Shared UI pieces](shared-ui-pieces.md), [Schema annotations](schema-annotations.md), [Testing](../testing.md)
 
 Every icon is a Material Symbols name (`"wifi"`, `"battery_full"`) that `StyledIcon` draws in the icon font. Axiom bundles that font, so there's nothing to install and every machine draws the same version.
 
 ### The font
-- `assets/fonts/MaterialSymbolsRounded.ttf` is Google's Material Symbols Rounded variable font, cut down to the two axes `StyledIcon` sets: `FILL` (`fill`) and `wght` (`weight`). `GRAD` is fixed at 0 and `opsz` at 24, the values Qt drew with anyway. That takes it from 14.5 MB to about 4 MB.
-- It's renamed **Axiom Material Symbols**, so a system copy of the font (`ttf-material-symbols-variable`, still installed on older setups) can never be drawn in its place. Apache-2.0 (`assets/fonts/LICENSE`) allows the change and the rename. `assets/fonts/VERSION` names the upstream commit.
-- `config/Appearance.qml` loads it with a `FontLoader`, and `Appearance.iconFamily` is the loaded family. It sits in a reader, not a service, because every `StyledIcon` reads `iconFamily`, in the shell and the greeter alike: the font is loaded wherever an icon is drawn. If the file can't be loaded, it warns once and icons show as their names.
+- `qml/assets/fonts/MaterialSymbolsRounded.ttf` is Google's Material Symbols Rounded variable font, cut down to the two axes `StyledIcon` sets: `FILL` (`fill`) and `wght` (`weight`). `GRAD` is fixed at 0 and `opsz` at 24, the values Qt drew with anyway. That takes it from 14.5 MB to about 4 MB.
+- It's renamed **Axiom Material Symbols**, so a system copy of the font (`ttf-material-symbols-variable`, still installed on older setups) can never be drawn in its place. Apache-2.0 (`qml/assets/fonts/LICENSE`) allows the change and the rename. `qml/assets/fonts/VERSION` names the upstream commit.
+- `qml/config/Appearance.qml` loads it with a `FontLoader`, and `Appearance.iconFamily` is the loaded family. It sits in a reader, not a service, because every `StyledIcon` reads `iconFamily`, in the shell and the greeter alike: the font is loaded wherever an icon is drawn. If the file can't be loaded, it warns once and icons show as their names.
 - It reaches the greeter's copy (`git ls-files`) and the packages (`cp -r .`) with the rest of the tree.
 - `StyledIcon` draws text that isn't a name (a pasted Nerd Font glyph, a word with capitals) in the text font instead.
 
@@ -19,7 +19,7 @@ Every icon is a Material Symbols name (`"wifi"`, `"battery_full"`) that `StyledI
 - After a bump, run `scripts/check_icons.py`: Google sometimes renames or drops an icon.
 
 ### The catalog
-- `config/json/material-symbols.json` holds one `[name, "search words"]` per icon the font has (from its `.codepoints`), most popular first.
+- `qml/config/json/material-symbols.json` holds one `[name, "search words"]` per icon the font has (from its `.codepoints`), most popular first.
 - The words are Google's tags from `fonts.google.com/metadata/icons`, split into words, less the name's own and the few that tag over a tenth of all icons (`icon`, `symbol`, …). If that unofficial endpoint fails, the script writes names only.
 - `IconManager` reads it the first time it's asked, never before an icon field is shown, and never while a page builds:
   - `search(query, limit)`: `Search.rankIcons`, below. With no query, the most popular. It reads the catalog then if it isn't read yet (a list opened or typed in).

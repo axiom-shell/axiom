@@ -1,6 +1,6 @@
 # Display styles
 
-> **Files:** `components/bar/widgets/base/ValueStyleWidget.qml`, `components/bar/widgets/base/ValueGraphic.qml`, `config/schema/definitions/widgets/BarDisplay.yaml`, `config/schema/definitions/kinds/WidgetBase.yaml`, `components/bar/widgets/SystemStats/SystemStats.qml`, `components/bar/widgets/CustomWidget/CustomWidget.qml`
+> **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
 > **Config:** a bar widget's `properties.appearance` (`style`, `segments`, `width`, `colorText`); a custom widget's `bar`
 > **Related:** [Widget base classes](widget-style.md), [Custom widgets](../features/custom-widgets.md) › The bar widget, [Config v2](../core/config-v2.md)
 
@@ -54,6 +54,6 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 | Bluetooth | a lone device's battery | its battery under its name |
 | Weather, Updates, Tailscale | none (label, icon, stacked) | the condition / the AUR's share / this machine's address |
 
-Widgets with no value, time or long text (Workspaces, tray, Separator, Notifications, Todo, KeyboardLayout, Privacy, ScreenRecord, Time, Button) have no `appearance`.
+Widgets with no value, time or long text (Workspaces, tray, Separator, Notifications, Todo, KeyboardLayout, Privacy, ScreenRecord, DevMode, Time, Button) have no `appearance`.
 
 While its check fails, Updates draws in the icon style whatever its own: an error icon after the download icon, in the error colour, in place of the count.

@@ -1,6 +1,6 @@
 # Calendar
 
-> **Files:** `services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/calendar/ical/`, `backend/internal/daemon/calendar.go`, `config/CalendarConfig.qml`, `components/views/Settings/CalendarAccountsCard.qml`, `components/methods/CalendarEvents.qml`, `components/content/Calendar/Calendar.qml`, `components/content/Agenda/Agenda.qml`, `components/content/ClockCalendar/ClockCalendar.qml`, `components/content/parts/calendar/`, `components/views/CalendarPage/CalendarPage.qml`
+> **Files:** `qml/services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/calendar/ical/`, `backend/internal/daemon/calendar.go`, `qml/config/CalendarConfig.qml`, `qml/components/views/Settings/CalendarAccountsCard.qml`, `qml/components/methods/CalendarEvents.qml`, `qml/components/content/Calendar/Calendar.qml`, `qml/components/content/Agenda/Agenda.qml`, `qml/components/content/ClockCalendar/ClockCalendar.qml`, `qml/components/content/parts/calendar/`, `qml/components/views/CalendarPage/CalendarPage.qml`
 > **Config:** `Calendar.*` (reader `CalendarConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Services pattern](../core/services-pattern.md), [Notifications](notifications.md), [Lockscreen](lockscreen.md), [Greeter runtime](greeter-runtime.md)
 
@@ -109,7 +109,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 ### Entry points
 - IPC `calendar`: `open`, `newEvent`, `sync`, `add <text>`.
 - Launcher `/calendar` and `/event`; the `/event` row previews the parse.
-- Created from `shell.qml`'s `_services`.
+- Created from `qml/shell.qml`'s `_services`.
 
 ### Privacy
 - Events are private.

@@ -1,6 +1,6 @@
 # VPN
 
-> **Files:** `backend/internal/nmvpn/`, `backend/internal/daemon/vpn.go`, `services/system/VpnManager.qml`, `components/content/parts/VpnRow.qml`, `components/content/VpnConnections/VpnConnections.qml`, `components/bar/widgets/Vpn/Vpn.qml`, `components/bar/widgets/Network/Network.qml`, `components/content/WifiNetworks/WifiNetworks.qml`, `scripts/dev/vpn-fixtures.sh`, `config/VpnConfig.qml`
+> **Files:** `backend/internal/nmvpn/`, `backend/internal/daemon/vpn.go`, `qml/services/system/VpnManager.qml`, `qml/components/content/parts/VpnRow.qml`, `qml/components/content/VpnConnections/VpnConnections.qml`, `qml/components/bar/widgets/Vpn/Vpn.qml`, `qml/components/bar/widgets/Network/Network.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `scripts/dev/vpn-fixtures.sh`, `qml/config/VpnConfig.qml`
 > **Config:** `Vpn` (`VpnConfig`), `Apps.networkEditor`; the Network widget's `showVpn` / `vpnColor`
 > **Related:** [Networking and Bluetooth](networking-bluetooth.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 

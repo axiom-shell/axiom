@@ -1,6 +1,6 @@
 # Wallpaper and schedules
 
-> **Files:** `services/ui/WallpaperManager.qml`, `services/core/ThemeManager.qml`, `services/core/DailySchedule.qml`, `components/methods/Schedules.qml`, `components/methods/ShownLook.qml`, `shell/Wallpaper.qml`, `components/surfaces/wallpaper/WallpaperWindow.qml`, `components/surfaces/wallpaper/WallpaperView.qml`, `components/surfaces/wallpaper/shaders/`, `components/methods/WallpaperTransitions.qml`, `components/methods/WallpaperFill.qml`, `backend/internal/compositor/render/niri.go` (NiriWallpaperNodes), `scripts/check_shaders.py`, `backend/internal/files/list.go`, `components/content/WallpaperPicker/WallpaperPicker.qml`, `components/content/ThemePicker/ThemePicker.qml`, `components/forms/SettingRows.qml`
+> **Files:** `qml/services/ui/WallpaperManager.qml`, `qml/services/core/ThemeManager.qml`, `qml/services/core/DailySchedule.qml`, `qml/components/methods/Schedules.qml`, `qml/components/methods/ShownLook.qml`, `qml/shell/Wallpaper.qml`, `qml/components/surfaces/wallpaper/WallpaperWindow.qml`, `qml/components/surfaces/wallpaper/WallpaperView.qml`, `qml/components/surfaces/wallpaper/shaders/`, `qml/components/methods/WallpaperTransitions.qml`, `qml/components/methods/WallpaperFill.qml`, `backend/internal/compositor/render/niri.go` (NiriWallpaperNodes), `scripts/check_shaders.py`, `backend/internal/files/list.go`, `qml/components/content/WallpaperPicker/WallpaperPicker.qml`, `qml/components/content/ThemePicker/ThemePicker.qml`, `qml/components/forms/SettingRows.qml`
 > **Config:** `Appearance.wallpaper.*` (`file`, `perScreen`, `folder`, `collection`, `subfolders`, `mode`, `rotation`, `variants`, `transition`, `fill`, `parallax`), `Appearance.theme.schedule.*`
 > **Related:** [Themes](themes.md), [Night light](night-light.md)
 
@@ -15,7 +15,7 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 - The runtime part is in `~/.local/state/axiom/ui/look.json`: the schedule's variant (`theme: { for, name }`, dropped when a theme is picked by hand), the rotation's wallpapers (`rotated`), `lastRotated`, and the shuffle's round (`shuffle`, `ThemeManager.shuffleBag`).
 
 ### Drawing it
-- `shell/Wallpaper` draws `wallpaperFor` on one Background-layer `surfaces/wallpaper/WallpaperWindow` per screen, through a `WallpaperView`. The lock screen and greeter backdrops (`ScreenLayoutView`) are `WallpaperView`s too, so a change while locked plays the same transition.
+- `qml/shell/Wallpaper` draws `wallpaperFor` on one Background-layer `surfaces/wallpaper/WallpaperWindow` per screen, through a `WallpaperView`. The lock screen and greeter backdrops (`ScreenLayoutView`) are `WallpaperView`s too, so a change while locked plays the same transition.
 - `WallpaperView` holds two hidden `Image`s, the one shown and the one loading the next (a source it held last, dark → light → dark, isn't loaded again), and draws them through one `ShaderEffect`:
   - At rest its shader is `show` (the new image alone); the scene graph redraws only on a change, so idle costs what a plain Image did.
   - Once the next image is ready it reads `ThemeManager.transition` (`{ seed, forced, point }`), asks `WallpaperTransitions.pick(Appearance.wallpaperTransition, …pool, seed, forced, { direction, position, point })` for `{ name, angle, origin, sweep, seed }`, switches the shader to that one and animates `progress` 0 → 1 over `transition.duration` with `transition.easing` (`WallpaperTransitions.easing`: smooth InOutCubic, easeOut, easeIn, linear, snappy OutExpo), then back to `show`. A new wallpaper mid-transition ends the running one at once.
@@ -41,7 +41,7 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 - Regenerating the theme:
   - automatic changes regenerate only while a generated theme is active;
   - picks by hand (`pick(url, monitor, variant)`, from `WallpaperPicker`) always do.
-- Created from `shell.qml`'s `_services`.
+- Created from `qml/shell.qml`'s `_services`.
 - IPC `wallpaper preview <transition>` and launcher `/transition <name>` (`WallpaperManager.preview`) go to the next wallpaper with that transition.
 
 ### The list of wallpapers (WallpaperManager `images`, `collections`)
@@ -51,7 +51,7 @@ How the wallpaper is drawn, and everything that changes the look on its own: wal
 ### Theme schedule
 - `Appearance.theme.schedule`: light from `lightAt`, dark from `darkAt`.
 - An edge calls `ThemeManager.followSchedule(light)`: the variant is shown at runtime, and `Appearance.theme.name` keeps the theme picked. A pick or a light/dark switch by hand (`applyTheme`) writes the config and drops the schedule's variant until the next edge.
-- Runs through a `services/core/DailySchedule`:
+- Runs through a `qml/services/core/DailySchedule`:
   - it fires `due(inWindow)` only on edges: the window opens or closes, the schedule is turned on, or the times are moved across now;
   - so a switch by hand lasts until the next edge;
   - its last state survives reloads: a `Scope` its owner declares as a default child (`DailySchedule { id: … }`), never in a named property, since a Singleton passes a reload only to its default Reloadable children, matched by order.
