@@ -36,6 +36,8 @@ Rectangle {
   signal select(int index)
 
   readonly property real inset: 6
+  // Extra room at the ends, so the end buttons clear the rounded border
+  readonly property real endInset: Widget.spacing / 2
   readonly property real controlHeight: root.height - root.inset * 2
   readonly property real innerRadius: Math.max(0, Widget.radius - root.inset / 2)
   readonly property real tabPadding: Widget.padding * 1.5
@@ -59,14 +61,17 @@ Rectangle {
   // The current page can open in a window of its own (PageWindowManager),
   // and isn't in one
   readonly property bool canPopOut: PageWindowManager.canOpen(root.currentType) && !PageWindowManager.isOpen(root.currentType)
+  // The pop-out button keeps its place while any page can pop out (dimmed
+  // on the others), so moving between pages doesn't resize the navigator
+  readonly property bool hasPopOut: root.pages.some(page => PageWindowManager.canOpen(page.type))
   // Everything but the tabs: arrows, the gaps beside them and the insets,
-  // the back chip and the edit actions while they show
-  readonly property real chrome: root.controlHeight * 2 + row.spacing * 2 + root.inset * 2 + (root.showEditActions ? editActions.implicitWidth + row.spacing : 0) + (root.canPopOut ? root.controlHeight + row.spacing : 0) + (root.backPage ? backChip.implicitWidth + backChip.Layout.leftMargin + row.spacing : 0)
+  // the back chip, the pop-out button and the edit actions while they show
+  readonly property real chrome: root.controlHeight * 2 + row.spacing * 2 + (root.inset + root.endInset) * 2 + (root.showEditActions ? editActions.implicitWidth + row.spacing : 0) + (root.hasPopOut ? popOut.implicitWidth + row.spacing : 0) + (root.backPage ? backChip.implicitWidth + backChip.Layout.leftMargin + row.spacing : 0)
   // Only the current tab keeps its name when all of them don't fit
   readonly property bool compact: root.maxWidth > 0 && root.chrome + measureRow.fullWidth > root.maxWidth
   readonly property color onAccent: Theme.background
 
-  width: row.implicitWidth + root.inset * 2
+  width: row.implicitWidth + (root.inset + root.endInset) * 2
   height: OverlayConfig.navigatorHeight
   radius: Appearance.borderRadius
   color: Appearance.fill(Theme.backgroundAlt)
@@ -108,7 +113,7 @@ Rectangle {
   }
 
   // An icon button in the pill (the arrows, the edit actions), named in a
-  // tooltip when `tip` is set
+  // tooltip when `tip` is set; dimmed while disabled
   component ArrowButton: Rectangle {
     id: arrow
     property string icon
@@ -119,6 +124,7 @@ Rectangle {
     Layout.preferredWidth: root.controlHeight
     Layout.preferredHeight: root.controlHeight
     radius: root.innerRadius
+    opacity: arrow.enabled ? 1 : 0.4
     // Fade the highlight in and out rather than from "transparent", which is
     // transparent black and flashes dark mid-animation
     color: arrowArea.containsMouse ? Theme.backgroundHighlight : Qt.alpha(Theme.backgroundHighlight, 0)
@@ -148,6 +154,14 @@ Rectangle {
     }
 
     ColorGlide on color {}
+    Glide on opacity {}
+  }
+
+  // A thin divider between groups of controls
+  component Divider: StyledSeparator {
+    Layout.preferredWidth: Appearance.borderWidth
+    Layout.preferredHeight: root.controlHeight * 0.6
+    opacity: 0.5
   }
 
   RowLayout {
@@ -340,17 +354,27 @@ Rectangle {
       }
     }
 
+    // The current page into a window of its own, between dividers
+    RowLayout {
+      id: popOut
+      visible: root.hasPopOut
+      spacing: root.tabSpacing
+
+      Divider {}
+
+      ArrowButton {
+        enabled: root.canPopOut
+        icon: "open_in_new"
+        tip: I18n.tr("Open in a window")
+        onClicked: PageWindowManager.popOut(root.currentType)
+      }
+
+      Divider {}
+    }
+
     ArrowButton {
       icon: "chevron_right"
       onClicked: root.next()
-    }
-
-    // The current page into a window of its own
-    ArrowButton {
-      visible: root.canPopOut
-      icon: "open_in_new"
-      tip: I18n.tr("Open in a window")
-      onClicked: PageWindowManager.popOut(root.currentType)
     }
 
     RowLayout {
@@ -358,11 +382,8 @@ Rectangle {
       visible: root.showEditActions
       spacing: root.tabSpacing / 2
 
-      StyledSeparator {
-        Layout.preferredWidth: Appearance.borderWidth
-        Layout.preferredHeight: root.controlHeight * 0.6
+      Divider {
         Layout.rightMargin: root.tabSpacing / 2
-        opacity: 0.5
       }
 
       ArrowButton {
