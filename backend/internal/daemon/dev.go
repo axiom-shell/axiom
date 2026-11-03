@@ -305,6 +305,37 @@ func saveDevChoice(dirs xdg.Dirs, change func(*devChoice)) error {
 	return nil
 }
 
+// SaveDevChoice is dev.set with no axiom running (`axiom dev set` and
+// `dev options` offline, as install.sh runs it before the first start):
+// the tree, checked as dev.set checks it, and the options saved in
+// dev.json for the next start, the saved choice returned. On and off are
+// switched only while axiom runs, and a tree dev mode is on for isn't
+// cleared.
+func SaveDevChoice(dirs xdg.Dirs, p DevSetParams) (tree string, options bool, err error) {
+	if p.Enabled != nil {
+		return "", false, axerr.New(axerr.Unavailable, "no axiom is running: dev mode is switched on and off while it runs")
+	}
+	var newTree string
+	if p.Tree != nil && *p.Tree != "" {
+		if newTree, err = validDevTree(*p.Tree); err != nil {
+			return "", false, err
+		}
+	}
+	if p.Tree != nil && newTree == "" && loadDevChoice(dirs).Enabled {
+		return "", false, axerr.New(axerr.Refused, "dev mode runs this tree: turn it off first (axiom dev off)")
+	}
+	err = saveDevChoice(dirs, func(c *devChoice) {
+		if p.Tree != nil {
+			c.Tree = newTree
+		}
+		if p.Options != nil {
+			c.Options = *p.Options
+		}
+	})
+	choice := loadDevChoice(dirs)
+	return choice.Tree, choice.Options, err
+}
+
 // validDevTree is path as a dev tree (its symlinks resolved), or why it
 // can't be one: an absolute path to an axiom tree with the Go source.
 func validDevTree(path string) (string, error) {

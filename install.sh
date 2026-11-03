@@ -1022,7 +1022,7 @@ elif ((packaged)); then
 else
   ok "${bold}axiom is installed${reset} at $AXIOM_DIR"
 fi
-[[ -n "$dev_set_hint" ]] && info "To make this clone axiom's dev tree, run \`$dev_set_hint\` once axiom has started."
+[[ -n "$dev_set_hint" ]] && info "To make this clone axiom's dev tree, run \`$dev_set_hint\`."
 ((${#packages[@]})) && info "Packages: $(joined "${packages[@]}")"
 if ((${#skipped[@]})); then
   mapfile -t skipped < <(printf '%s\n' "${skipped[@]}" | awk '!seen[$0]++')

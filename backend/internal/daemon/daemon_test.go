@@ -598,3 +598,42 @@ func TestSourcesDeclareTypes(t *testing.T) {
 		}
 	}
 }
+
+// With no axiom running, `axiom dev set` and `dev options` save the tree
+// and the options for the next start: the tree checked as dev.set checks
+// it, on and off left to a running axiom, and a tree dev mode is on for
+// kept
+func TestSaveDevChoiceOffline(t *testing.T) {
+	t.Parallel()
+	home := t.TempDir()
+	dirs := xdg.Resolve(func(k string) string { return map[string]string{"HOME": home}[k] })
+	clone := fakeTree(t)
+	resolved, _ := filepath.EvalSymlinks(clone)
+	on, empty := true, ""
+	if _, _, err := SaveDevChoice(dirs, DevSetParams{Enabled: &on}); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("on offline: %v", err)
+	}
+	notTree := t.TempDir()
+	if _, _, err := SaveDevChoice(dirs, DevSetParams{Tree: &notTree}); axerr.KindOf(err) != axerr.NotFound {
+		t.Errorf("not a tree: %v", err)
+	}
+	tree, options, err := SaveDevChoice(dirs, DevSetParams{Tree: &clone})
+	if err != nil || tree != resolved || options {
+		t.Fatalf("set: %q %v %v", tree, options, err)
+	}
+	if tree, options, err = SaveDevChoice(dirs, DevSetParams{Options: &on}); err != nil || tree != resolved || !options {
+		t.Fatalf("options: %q %v %v", tree, options, err)
+	}
+	if got := loadDevChoice(dirs); got != (devChoice{Tree: resolved, Options: true}) {
+		t.Errorf("saved %+v", got)
+	}
+	if err := saveDevChoice(dirs, func(c *devChoice) { c.Enabled = true }); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := SaveDevChoice(dirs, DevSetParams{Tree: &empty}); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("clearing while on: %v", err)
+	}
+	if got := loadDevChoice(dirs); got.Tree != resolved {
+		t.Errorf("cleared while on: %+v", got)
+	}
+}

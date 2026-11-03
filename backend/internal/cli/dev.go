@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/daemon"
+	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
 func devCommand() *Command {
@@ -33,6 +35,30 @@ func devCommand() *Command {
 			},
 		}
 	}
+	// dev.set of the tree or the options; with no axiom running (or
+	// --offline) they're saved for its next start, as install.sh asks
+	// before the first one
+	setChoice := func(ctx context.Context, e *Env, p daemon.DevSetParams) error {
+		if !e.Globals.Offline {
+			// Only a daemon that can't be reached is "none running": its
+			// own refusals are the answer
+			c, _, err := connect(ctx, e)
+			if err == nil {
+				c.Close()
+				return show(ctx, e, "dev.set", p)
+			}
+			if axerr.KindOf(err) != axerr.Unavailable {
+				return err
+			}
+		}
+		tree, options, err := daemon.SaveDevChoice(xdg.Resolve(e.Getenv), p)
+		if err != nil {
+			return err
+		}
+		return e.Output(map[string]any{"tree": tree, "options": options}, func(w io.Writer) {
+			fmt.Fprintf(w, "no axiom is running: saved for its next start\ndev tree     %s\n", orNone(tree, "none"))
+		})
+	}
 	setDev := func(on bool) func(ctx context.Context, e *Env) error {
 		return func(ctx context.Context, e *Env) error {
 			return show(ctx, e, "dev.set", map[string]bool{"enabled": on})
@@ -50,7 +76,8 @@ it's on, an edit to the clone's Go source builds it again and re-execs into
 it, a YAML edit rebuilds the schema, and the log is at debug level. At
 login the installed axiom starts first and switches to the dev build once
 it's built. Turning it off goes back to the installed binary, tree and
-config.`,
+config. With no axiom running, "set" and "options" are saved for its next
+start.`,
 		Subs: []*Command{
 			leaf("status", "Show dev mode: the trees, the dev build and the config", func(ctx context.Context, e *Env) error {
 				return show(ctx, e, "dev.get", nil)
@@ -79,7 +106,7 @@ config.`,
 						default:
 							return usageError([]string{"axiom", "dev", "set"}, "takes a path, or --clear")
 						}
-						return show(ctx, e, "dev.set", map[string]string{"tree": dir})
+						return setChoice(ctx, e, daemon.DevSetParams{Tree: &dir})
 					}
 				},
 			},
@@ -92,7 +119,8 @@ config.`,
 						if len(args) != 1 || (args[0] != "on" && args[0] != "off") {
 							return usageError([]string{"axiom", "dev", "options"}, "takes on or off")
 						}
-						return show(ctx, e, "dev.set", map[string]bool{"options": args[0] == "on"})
+						on := args[0] == "on"
+						return setChoice(ctx, e, daemon.DevSetParams{Options: &on})
 					}
 				},
 			},
