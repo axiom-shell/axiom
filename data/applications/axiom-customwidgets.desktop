@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Custom Widgets
+GenericName=Custom widgets
+Comment=Make widgets for the axiom desktop from your own scripts
+Exec=axiom ipc pages window customwidgets
+Icon=applications-development
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=axiom;widgets;scripts;custom;
+StartupNotify=false

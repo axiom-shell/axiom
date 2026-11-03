@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Bar Editor
+GenericName=Bar editor
+Comment=Lay out the axiom desktop's bars and their widgets
+Exec=axiom ipc pages window bareditor
+Icon=preferences-desktop
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=axiom;bar;panel;widgets;
+StartupNotify=false

@@ -13,11 +13,13 @@ import qs.components.views.base
 // The Calendar page: the month large, each day's events in it where they
 // fit, and beside it the selected day's events (opening in the editor)
 // over the calendars, which switch on and off here. The page the
-// launcher's /calendar, the `calendar` IPC and reminders open.
+// launcher's /calendar, the `calendar` IPC and reminders open. It pops out
+// into a window, so the day, month and event editor are kept in
+// CalendarManager.page, never here.
 BaseView {
   id: root
 
-  property string selectedKey: CalendarEvents.dayKey(new Date())
+  readonly property CalendarPageState pageState: CalendarManager.page
   readonly property real sideColumnWidth: root.grid.unit * 1.05
   readonly property real monthWidth: Math.max(root.grid.unit * 1.6, Math.min(root.grid.unit * 3, root.grid.roomWidth - root.sideColumnWidth - OverlayConfig.cardSpacing * 3))
 
@@ -31,8 +33,8 @@ BaseView {
     const request = CalendarManager.takeRequest();
     if (!request)
       return;
-    root.selectedKey = request.key;
-    month.showDay(request.key);
+    root.pageState.select(request.key);
+    root.pageState.showDay(request.key);
     if (request.kind === "new")
       Qt.callLater(pane.newEvent);
   }
@@ -80,7 +82,7 @@ BaseView {
             textSize: Appearance.fontSizeBy(4)
           }
           StyledText {
-            text: I18n.formatDate(new Date(month.year, month.month, 1), I18n.dateFormat("monthYear"))
+            text: I18n.formatDate(new Date(root.pageState.year, root.pageState.month, 1), I18n.dateFormat("monthYear"))
             textSize: Appearance.fontSizeBy(4)
             font.bold: true
           }
@@ -101,30 +103,28 @@ BaseView {
           }
           StyledTextButton {
             text: I18n.tr("Today")
-            onClicked: {
-              month.showToday();
-              root.selectedKey = month.todayKey;
-            }
+            onClicked: root.pageState.goToday()
           }
           FlatIconButton {
             iconText: "chevron_left"
-            onClicked: month.step(-1)
+            onClicked: root.pageState.step(-1)
           }
           FlatIconButton {
             iconText: "chevron_right"
-            onClicked: month.step(1)
+            onClicked: root.pageState.step(1)
           }
         }
 
         MonthGrid {
-          id: month
           Layout.fillWidth: true
           Layout.fillHeight: true
           showHeader: false
           titles: true
           weekdayHeight: Appearance.fontSize * 1.8
-          selectedKey: root.selectedKey
-          onDaySelected: key => root.selectedKey = key
+          year: root.pageState.year
+          month: root.pageState.month
+          selectedKey: root.pageState.selectedKey
+          onDaySelected: key => root.pageState.select(key)
         }
       }
     }
@@ -147,7 +147,8 @@ BaseView {
           id: pane
           Layout.fillWidth: true
           Layout.fillHeight: true
-          dayKey: root.selectedKey
+          dayKey: root.pageState.selectedKey
+          session: root.pageState.draft
         }
 
         // The calendars, switched on and off here (Settings has the rest)

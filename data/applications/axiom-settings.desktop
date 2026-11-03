@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Settings
+GenericName=Desktop settings
+Comment=Every setting of the axiom desktop, in a window
+Exec=axiom ipc pages window settings
+Icon=preferences-system
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=axiom;settings;preferences;configuration;
+StartupNotify=false

@@ -60,6 +60,8 @@ QtObject {
         "minSize": def["x-minSize"] ?? null,
         // A tool page (`x-tool`), shown apart from the user's own pages
         "tool": def["x-tool"] === true,
+        // A tool page that can open as a window of its own (`x-window`)
+        "window": def["x-window"] === true,
         // The compositor capability a page needs to be shown (`x-needs`,
         // a CompositorManager.supports key), "" for none
         "needs": def["x-needs"] ?? "",
@@ -159,6 +161,31 @@ QtObject {
   }
   function isTool(type) {
     return viewInfo(type)?.tool ?? false;
+  }
+  // Whether a page type can be popped out into a window (`x-window`)
+  function isWindowable(type) {
+    return viewInfo(type)?.window ?? false;
+  }
+  // The page types that can open as windows (PageWindowManager's)
+  readonly property var windowTypes: availableViewTypes.filter(t => t.window).map(t => t.type)
+  // The view type `key` names (a view's type, or a Custom page's name),
+  // "" for none
+  function typeOfPage(key) {
+    if (viewInfo(key))
+      return key;
+    return views.find(view => view.name === key)?.type ?? "";
+  }
+  // What a host loads a page from (OverlayView's viewModel): its view's
+  // file and its entry in Overlay.items, null when it isn't there
+  function viewEntry(type) {
+    const index = views.findIndex(view => view.type === type);
+    if (index < 0)
+      return null;
+    return {
+      "component": Paths.viewUrl(type),
+      "viewConfig": views[index],
+      "index": index
+    };
   }
 
   // The page to open for a module type (what openOverlayPage takes): the

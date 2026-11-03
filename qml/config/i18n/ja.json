@@ -3834,6 +3834,13 @@
     "The dev build works again": "",
     "Dev mode notifications": "",
     "Where Install and Update take the login screen's code. Git fetches it as root from axiom's official repository, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed; a fork uses Local). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with your installed axiom binary (never a dev build), for working on axiom: any program running as you could change what the login screen runs before you next update it.": "",
-    "Notify when a dev build fails and when it works again, and when the live config changed since dev mode last took it over.": ""
+    "Notify when a dev build fails and when it works again, and when the live config changed since dev mode last took it over.": "",
+    "Open in the overlay": "",
+    "{0} is open in a window": "",
+    "Edits made there show here too.": "",
+    "Bring here": "",
+    "Go to window": "",
+    "Open in a window": "",
+    "{0} — axiom": ""
   }
 }

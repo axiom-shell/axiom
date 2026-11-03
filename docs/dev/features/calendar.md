@@ -1,6 +1,6 @@
 # Calendar
 
-> **Files:** `qml/services/apps/CalendarManager.qml`, `backend/internal/calendar/`, `backend/internal/calendar/ical/`, `backend/internal/daemon/calendar.go`, `qml/config/CalendarConfig.qml`, `qml/components/views/Settings/CalendarAccountsCard.qml`, `qml/components/methods/CalendarEvents.qml`, `qml/components/content/Calendar/Calendar.qml`, `qml/components/content/Agenda/Agenda.qml`, `qml/components/content/ClockCalendar/ClockCalendar.qml`, `qml/components/content/parts/calendar/`, `qml/components/views/CalendarPage/CalendarPage.qml`
+> **Files:** `qml/services/apps/CalendarManager.qml`, `qml/services/apps/CalendarPageState.qml`, `qml/services/apps/EventDraft.qml`, `backend/internal/calendar/`, `backend/internal/calendar/ical/`, `backend/internal/daemon/calendar.go`, `qml/config/CalendarConfig.qml`, `qml/components/views/Settings/CalendarAccountsCard.qml`, `qml/components/methods/CalendarEvents.qml`, `qml/components/content/Calendar/Calendar.qml`, `qml/components/content/Agenda/Agenda.qml`, `qml/components/content/ClockCalendar/ClockCalendar.qml`, `qml/components/content/parts/calendar/`, `qml/components/views/CalendarPage/CalendarPage.qml`
 > **Config:** `Calendar.*` (reader `CalendarConfig`)
 > **Related:** [Secrets](../core/secrets.md), [Services pattern](../core/services-pattern.md), [Notifications](notifications.md), [Lockscreen](lockscreen.md), [Greeter runtime](greeter-runtime.md)
 
@@ -102,6 +102,11 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
   - else Settings.
 - The request is taken once (`takeRequest`) by whichever page or module shows it.
 
+### The page's state (`CalendarManager.page`)
+- The Calendar page pops out into a window of its own ([page windows](../overlay/page-windows.md)), and a move builds a new view, so the page keeps nothing itself: `CalendarPageState` holds the selected day (`selectedKey`), the month shown (`year`, `month`, which the page's `MonthGrid` binds) and the open event (`draft`, an `EventDraft` its `DayPane` edits).
+- So a half-written event, a save in flight and the month paged to carry over a move, and over the overlay closing. A selected today follows the date past midnight, unless an event is open.
+- The editor's draft isn't a config edit, so it has no unsaved dot and isn't in Save all / Discard all.
+
 ### Quick add
 - `parseQuickAdd` / `quickAdd`.
 - Uses `CalendarEvents.parseQuickAdd` with the language's words and weekday names, plus the English ones.
@@ -122,19 +127,20 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 ### UI parts (`content/parts/calendar/`)
 - **`MonthGrid`:**
   - Six weeks, starting from the language's first weekday.
-  - Owns the month shown: `step` / `showDay` / `showToday`. Asks `CalendarManager.ensureMonth`.
+  - Owns the month shown: `step` / `showDay` / `showToday`, unless its owner binds `year` / `month` (the page). Either way a new month slides in. Asks `CalendarManager.ensureMonth`.
   - Shows a dot per calendar with events on a day, modelled by the joined colors.
   - With `titles`, it shows the events in cells that are tall enough, modelled by count, with "+n more".
   - `showEvents: false` makes it a plain date picker.
 - **`EventRow`:** calendar color, title, time and place.
 - **`DayAgenda`:** a day's rows under its date, a + to add, and empty / no-calendar states.
 - **`EventEditor`:**
+  - Its fields, save and delete are its `session`'s (an `EventDraft`, `qml/services/apps/EventDraft.qml`: its own, or the page's).
   - `open(draft)` takes a `CalendarEvents.newDraft` / `draftOf`.
   - Deleting asks in place of its buttons: This event / All events for a recurring event, a confirm otherwise. Saving a recurring event asks the same.
   - `actionsWidth` is how wide its buttons need it. The Calendar popout widens to it (through `DayPane.actionsWidth`), so a long translation isn't clipped.
   - It is read-only for a calendar axiom can't change.
 - **`DateTimeField`:** a date button that folds a `MonthGrid` open, plus a typed time.
-- **`DayPane`:** the agenda turning into the editor (`editing`).
+- **`DayPane`:** the agenda turning into the editor (`editing`, its `session`'s `active`).
 
 Drafts, and everything about days, spans, dots, what's next, reminders due and quick add, are pure, in `methods/CalendarEvents` (tested in `tst_CalendarEvents`).
 

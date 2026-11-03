@@ -1,3 +1,4 @@
 label: Settings
 icon: settings
 tool: true
+window: true

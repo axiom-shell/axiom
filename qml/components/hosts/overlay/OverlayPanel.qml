@@ -60,8 +60,11 @@ ReservedAreaWindow {
     }
   }
 
-  // Opens on a page by view type (e.g. "BarEditor", "Themes")
+  // Opens on a page by view type (e.g. "BarEditor", "Themes"); a page
+  // that's in a window of its own is gone to there instead
   function openPage(type) {
+    if (PageWindowManager.opened(type))
+      return;
     root.open();
     ShellManager.showOverlayPage(type);
   }

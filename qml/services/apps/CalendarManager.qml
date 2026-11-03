@@ -40,6 +40,8 @@ QtObject {
   // What the page or a module was asked to show next ({ kind: "new" |
   // "day", key }), taken by the first one that can (takeRequest)
   property var request: null
+  // The Calendar page's day, month and event editor, kept past the page
+  readonly property CalendarPageState page: CalendarPageState {}
   // The span of events kept, widened as views page past it
   property var range: CalendarEvents.rangeFor(Date.now(), CalendarConfig.pastMonths, CalendarConfig.futureMonths)
 

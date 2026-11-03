@@ -921,6 +921,42 @@ else
     || info "$(dirname "$AXIOM_BIN") isn't on your PATH: the compositor starts axiom by its full path, but for \`axiom\` commands in a terminal, add it."
 fi
 
+# ─── Desktop entries ─────────────────────────────────────────────────────────
+
+# The tool pages that open as windows (Settings, Themes, …: data/applications),
+# for any app launcher; a package installs its own. Taken from the install,
+# else (a release from before them, while this clone is the dev tree) from
+# the clone this runs from. Exec names the binary by its path, which may not
+# be on PATH
+if ((!packaged)); then
+  apps_dir=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+  entries_dir=""
+  for dir in "$AXIOM_DIR/data/applications" ${clone_dir:+"$clone_dir/data/applications"}; do
+    if compgen -G "$dir/axiom-*.desktop" >/dev/null; then
+      entries_dir=$dir
+      break
+    fi
+  done
+  if ((dry_run)) && [[ -z "$entries_dir" ]]; then
+    entries_dir="$AXIOM_DIR/data/applications"
+    run cp "$entries_dir/axiom-*.desktop" "$apps_dir/"
+  elif [[ -z "$entries_dir" ]]; then
+    info "No desktop entries for axiom's settings windows in this release (they come with a later one)"
+  else
+    info "Desktop entries for axiom's settings windows, into $apps_dir"
+    run mkdir -p "$apps_dir"
+    for entry in "$entries_dir"/axiom-*.desktop; do
+      if ((dry_run)); then
+        run cp "$entry" "$apps_dir/"
+      else
+        sed "s|^Exec=axiom |Exec=$AXIOM_BIN |" "$entry" >"$apps_dir/$(basename "$entry").new" \
+          && mv -f "$apps_dir/$(basename "$entry").new" "$apps_dir/$(basename "$entry")"
+      fi
+    done
+    ((dry_run)) || ok "Installed $(compgen -G "$entries_dir/axiom-*.desktop" | wc -l) desktop entries"
+  fi
+fi
+
 # ─── The dev tree ────────────────────────────────────────────────────────────
 
 # Run from a clone: the install above is what axiom runs, and the clone can

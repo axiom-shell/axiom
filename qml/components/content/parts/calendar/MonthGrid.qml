@@ -10,8 +10,9 @@ import qs.components.reusable
 // A month of days (six weeks from the language's first weekday) with a dot
 // for each calendar that has events on a day, or, with `titles` in cells
 // tall enough, the events themselves. It owns the month shown (the arrows
-// page it, the month's name goes back to today) and asks CalendarManager
-// for months past its range. A click selects a day (`daySelected`); the
+// page it, the month's name goes back to today), unless its owner binds
+// `year` and `month` (the Calendar page's, CalendarManager.page), and asks
+// CalendarManager for months past its range. A click selects a day (`daySelected`); the
 // owner sets `selectedKey`. Fills the height it's given.
 Item {
   id: root
@@ -44,11 +45,18 @@ Item {
     root._show(d.getFullYear(), d.getMonth());
   }
 
-  // A new month's days slide in from the side it lies on
   function _show(year, month) {
-    const delta = (year - root.year) * 12 + month - root.month;
     root.year = year;
     root.month = month;
+  }
+
+  // A new month's days slide in from the side it lies on, however it
+  // came (the arrows, or an owner's binding): run once both are set
+  property int _shownIndex: 0
+  function _slide() {
+    const index = root.year * 12 + root.month;
+    const delta = index - root._shownIndex;
+    root._shownIndex = index;
     if (delta === 0)
       return;
     daySlide.from = (delta > 0 ? 1 : -1) * Widget.spacing * 4;
@@ -86,9 +94,18 @@ Item {
     if (root.showEvents)
       CalendarManager.ensureMonth(root.year, root.month);
   }
-  onYearChanged: Qt.callLater(root._ensure)
-  onMonthChanged: Qt.callLater(root._ensure)
-  Component.onCompleted: root._ensure()
+  onYearChanged: {
+    Qt.callLater(root._ensure);
+    Qt.callLater(root._slide);
+  }
+  onMonthChanged: {
+    Qt.callLater(root._ensure);
+    Qt.callLater(root._slide);
+  }
+  Component.onCompleted: {
+    root._shownIndex = root.year * 12 + root.month;
+    root._ensure();
+  }
 
   SystemClock {
     id: clock
