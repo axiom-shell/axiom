@@ -921,6 +921,26 @@ else
     || info "$(dirname "$AXIOM_BIN") isn't on your PATH: the compositor starts axiom by its full path, but for \`axiom\` commands in a terminal, add it."
 fi
 
+# ─── Desktop entries ─────────────────────────────────────────────────────────
+
+# The tool pages that open as windows (Settings, Themes, …: data/applications),
+# for any app launcher; a package installs its own. Exec names the binary by
+# its path, which may not be on PATH
+if ((!packaged)); then
+  apps_dir=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+  info "Desktop entries for axiom's settings windows, into $apps_dir"
+  run mkdir -p "$apps_dir"
+  for entry in "$AXIOM_DIR"/data/applications/axiom-*.desktop; do
+    [[ -f "$entry" ]] || continue
+    if ((dry_run)); then
+      run cp "$entry" "$apps_dir/"
+    else
+      sed "s|^Exec=axiom |Exec=$AXIOM_BIN |" "$entry" >"$apps_dir/$(basename "$entry").new" \
+        && mv -f "$apps_dir/$(basename "$entry").new" "$apps_dir/$(basename "$entry")"
+    fi
+  done
+fi
+
 # ─── The dev tree ────────────────────────────────────────────────────────────
 
 # Run from a clone: the install above is what axiom runs, and the clone can

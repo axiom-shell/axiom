@@ -52,6 +52,10 @@ ShellRoot {
         id: overlay
       }
 
+      PageWindows {
+        id: pageWindows
+      }
+
       Bar {
         id: mainBar
       }

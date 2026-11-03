@@ -147,9 +147,11 @@ QtObject {
     return s > 0 ? s + Search.useBonus(_frecency(app.id)) : 0;
   }
 
+  // Less axiom's own page windows' entries (data/applications), which its
+  // slash commands open (/settings, /themes, …)
   function _apps() {
     const hidden = LauncherConfig.hiddenApps.map(id => id.replace(/\.desktop$/, ""));
-    return DesktopEntries.applications.values.filter(app => !app.noDisplay && !hidden.includes(app.id));
+    return DesktopEntries.applications.values.filter(app => !app.noDisplay && !hidden.includes(app.id) && !app.id.startsWith("axiom-"));
   }
 
   // How often and how lately an app was launched

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Keybinds
+GenericName=Keyboard shortcuts
+Comment=Edit the axiom desktop's keyboard shortcuts
+Exec=axiom ipc pages window keybinds
+Icon=preferences-desktop-keyboard-shortcuts
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=axiom;keybinds;shortcuts;keyboard;hotkeys;
+StartupNotify=false

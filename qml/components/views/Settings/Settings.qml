@@ -39,7 +39,7 @@ BaseView {
 
   SettingsContent {
     id: content
-    implicitWidth: root.grid.unit * 2
+    implicitWidth: root.windowedWidth(root.grid.unit * 2, root.grid.unit * 0.6, root.grid.unit * 1.6, root.grid.unit * 3)
     implicitHeight: root.pageHeight
     categories: root.categories
     category: root.category

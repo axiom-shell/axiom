@@ -76,4 +76,6 @@ package() {
   # and the login screen runs this copy
   printf '%s\n' "$pkgver-$pkgrel" >"$dest/.packaged"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  # The tool pages that open as windows, for any app launcher
+  install -Dm644 -t "$pkgdir/usr/share/applications" data/applications/axiom-*.desktop
 }

@@ -53,7 +53,7 @@ qml/              the QML tree quickshell runs (`qs -p <tree>/qml`); `qs.` impor
     reusable/     generic Styled* widgets, no feature logic (AGENTS.md › Layout names the few that read services)
     forms/        schema-driven form widgets
     content/      loadable panels by name: overlay module types, bar popouts (base/, parts/)
-    hosts/        where content appears: popout/, overlay/
+    hosts/        where content appears: popout/, overlay/, window/ (page windows)
     views/        overlay pages by view type
     bar/          the bar; widgets/ = bar widget types
     surfaces/     standalone windows (launcher, lockscreen, toasts, dock, onboarding, …)
@@ -143,6 +143,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 
 ### overlay/: pages and modules
 - [pages-and-grid](overlay/pages-and-grid.md): views, `GridPlacement`, card sizing, loading, the navigator, tool pages.
+- [page-windows](overlay/page-windows.md): tool pages popped out into windows of their own (`PageWindowManager`, `x-window`), the box left in the overlay, links and desktop entries.
 - [content-roots](overlay/content-roots.md): `content/<Name>/<Name>.qml`, `Card` / `Panel` roots, what hosts pass in.
 - [writing-modules](overlay/writing-modules.md): any-size modules, shared parts, data sources, Repeater models, safe live testing.
 - [grow-expand](overlay/grow-expand.md): modules growing rows and expanding over the grid.

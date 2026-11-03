@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Themes
+GenericName=Themes and wallpaper
+Comment=Pick a theme, wallpaper and look for the axiom desktop
+Exec=axiom ipc pages window themes
+Icon=preferences-desktop-theme
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=axiom;theme;wallpaper;colors;appearance;
+StartupNotify=false

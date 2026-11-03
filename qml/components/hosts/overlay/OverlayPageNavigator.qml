@@ -46,11 +46,22 @@ Rectangle {
   // Save all / Discard all: while a page other than this one has edits
   // they'd act on (the current page has its own buttons)
   readonly property bool showEditActions: EditsManager.canActOnAll && EditsManager.unsaved.some(type => type !== root.currentType && !EditsManager.separate.includes(type))
-  // The page a link was followed from, while it isn't the current one
-  readonly property var backPage: ShellManager.linkOrigin === "" || ShellManager.linkOrigin === root.currentType ? null : root.pages.find(page => page.type === ShellManager.linkOrigin) ?? null
+  // The page a link was followed from, while it isn't the current one: an
+  // overlay page, or a page window ("window:<type>")
+  readonly property string _windowOrigin: ShellManager.linkOrigin.startsWith("window:") ? ShellManager.linkOrigin.slice("window:".length) : ""
+  readonly property var backPage: root._windowOrigin !== "" ? {
+    "type": root._windowOrigin,
+    "icon": OverlayConfig.viewIcon(root._windowOrigin),
+    "label": OverlayConfig.viewLabel({
+      "type": root._windowOrigin
+    }, 0)
+  } : ShellManager.linkOrigin === "" || ShellManager.linkOrigin === root.currentType ? null : root.pages.find(page => page.type === ShellManager.linkOrigin) ?? null
+  // The current page can open in a window of its own (PageWindowManager),
+  // and isn't in one
+  readonly property bool canPopOut: PageWindowManager.canOpen(root.currentType) && !PageWindowManager.isOpen(root.currentType)
   // Everything but the tabs: arrows, the gaps beside them and the insets,
   // the back chip and the edit actions while they show
-  readonly property real chrome: root.controlHeight * 2 + row.spacing * 2 + root.inset * 2 + (root.showEditActions ? editActions.implicitWidth + row.spacing : 0) + (root.backPage ? backChip.implicitWidth + backChip.Layout.leftMargin + row.spacing : 0)
+  readonly property real chrome: root.controlHeight * 2 + row.spacing * 2 + root.inset * 2 + (root.showEditActions ? editActions.implicitWidth + row.spacing : 0) + (root.canPopOut ? root.controlHeight + row.spacing : 0) + (root.backPage ? backChip.implicitWidth + backChip.Layout.leftMargin + row.spacing : 0)
   // Only the current tab keeps its name when all of them don't fit
   readonly property bool compact: root.maxWidth > 0 && root.chrome + measureRow.fullWidth > root.maxWidth
   readonly property color onAccent: Theme.background
@@ -87,7 +98,7 @@ Rectangle {
       model: root.pages
       Item {
         required property var modelData
-        implicitWidth: root.tabPadding * 2 + root.iconSize + (modelData.tool ? 0 : root.labelSpacing + measureLabel.implicitWidth) + (EditsManager.isUnsaved(modelData.type) ? root.labelSpacing + Widget.px(8) : 0)
+        implicitWidth: root.tabPadding * 2 + root.iconSize + (modelData.tool ? 0 : root.labelSpacing + measureLabel.implicitWidth) + (EditsManager.isUnsaved(modelData.type) ? root.labelSpacing + Widget.px(8) : 0) + (PageWindowManager.isOpen(modelData.type) ? root.labelSpacing + root.iconSize * 0.7 : 0)
         StyledText {
           id: measureLabel
           text: parent.modelData.label
@@ -294,6 +305,15 @@ Rectangle {
                   shown: EditsManager.isUnsaved(tab.modelData.type)
                   onAccent: tab.isCurrent
                 }
+
+                // In a window of its own
+                StyledIcon {
+                  anchors.verticalCenter: parent.verticalCenter
+                  visible: PageWindowManager.isOpen(tab.modelData.type)
+                  text: "open_in_new"
+                  textSize: root.iconSize * 0.7
+                  textColor: tab.ink
+                }
               }
 
               MouseArea {
@@ -323,6 +343,14 @@ Rectangle {
     ArrowButton {
       icon: "chevron_right"
       onClicked: root.next()
+    }
+
+    // The current page into a window of its own
+    ArrowButton {
+      visible: root.canPopOut
+      icon: "open_in_new"
+      tip: I18n.tr("Open in a window")
+      onClicked: PageWindowManager.popOut(root.currentType)
     }
 
     RowLayout {

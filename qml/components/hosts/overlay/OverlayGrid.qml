@@ -23,8 +23,12 @@ QtObject {
   // The px between its cards: the layout's, or with a card size of its
   // own the layout's drawn at its zoom (GridPlacement.gapOf), set by its host
   property real gap: GridPlacement.cardSpacing
+  // A page window's grid (hosts/window/PageWindow): cards the size the
+  // overlay has on its screen, whatever the window's size, and pages
+  // filling the window's height (BaseView.pageHeight)
+  property bool windowed: false
 
-  readonly property var _layout: root.fixedUnit > 0 ? null : OverlayConfig.layoutFor(root.screen, root.availableWidth, root.availableHeight)
+  readonly property var _layout: root.fixedUnit > 0 ? null : (root.windowed ? OverlayConfig.layoutFor(root.screen, root.screen?.width ?? 0, root.screen?.height ?? 0) : OverlayConfig.layoutFor(root.screen, root.availableWidth, root.availableHeight))
   // The card size content lays out at, and the one it's drawn at
   readonly property int unit: root._layout ? root._layout.unit : root.fixedUnit
   readonly property int drawnUnit: root._layout ? root._layout.drawn : root.fixedUnit

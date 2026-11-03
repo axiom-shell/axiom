@@ -18,13 +18,14 @@ How the overlay turns `Overlay.items` into pages, and a page's modules into a gr
 
 ### View (`OverlayPages` → `OverlayView`)
 - `qml/components/views/<type>/<type>.qml`, a `BaseView` that receives the screen's `grid` and its `viewConfig`.
-- `BaseView` gives hand-built pages their sizes: `pageHeight` (two cards), `cardPageWidth`, `sideWidth`.
+- `BaseView` gives hand-built pages their sizes: `pageHeight` (two cards; a page window's height in a window, `windowed`), `cardPageWidth`, `sideWidth`.
 - `Custom` (`views/Custom/Custom.qml`) is one `ModuleGrid` of its `modules`, with its own `icon` in the navigator (`OverlayConfig.pageIcon`; empty is the type's).
 - Tool pages (`x-tool`), hand-built with their pieces in `views/<page>/`: `Settings`, `BarEditor`, `Themes`, `Keybinds`, `Monitors`, `CalendarPage`, `CustomWidgets`.
   - `CalendarPage`: the month with its events, the selected day's `DayPane`, and the calendars to switch on and off. It is not named `Calendar`, which `views/Themes`' import of `content/` would see twice.
   - The Themes page is described in [Themes](../theming/themes.md).
 - `Layouts` (the layouts editor, `views/Layouts/`) is pinned, not in config: see [Layouts editor](layouts-editor.md).
 - `ShellManager.showOverlayPage(type)` switches the overlay to a page. `axiom ipc overlay page <type or name>` opens it on one.
+- Tool pages with `x-window` can open in a window of their own instead, with a box in their place here meanwhile: [page windows](page-windows.md).
 
 ### Grid maths (`methods/GridPlacement`)
 Pure, tested by `tst_GridPlacement`.
@@ -103,5 +104,6 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - Tabs come from `OverlayPages.pages`: icon, name and `tool` from `OverlayConfig.viewIcon` / `viewLabel` / `isTool`, shared with the layouts editor.
 - Tool tabs follow a divider as icons only (named in a tooltip), even when current.
 - `Overlay.navigatorLabels`: `auto` drops the other tabs to icons when all names don't fit; `current` names only the current tab; `icons` names none.
-- **Links and the way back.** A link to another page (`SettingsLink`, a settings header link, the layouts editor's "Also opened by" rows, Edit in Layouts) goes through `ShellManager.followLink(type)`. `OverlayPages` keeps the page it left as `ShellManager.linkOrigin`, and the navigator shows a back chip (back arrow and that page's icon) before its arrows until the user navigates themselves (`step`, a tab), another switch comes from outside, or the overlay closes. The chip calls `ShellManager.followLinkBack()`. A link within the same page keeps the way back it already has.
+- A tool page that can open as a window (`x-window`) gets a pop-out button after the arrows while it's current. A page that's out gets an `open_in_new` badge on its tab ([page windows](page-windows.md)).
+- **Links and the way back.** A link to another page (`SettingsLink`, a settings header link, the layouts editor's "Also opened by" rows, Edit in Layouts) goes through `ShellManager.followLink(type)`. `OverlayPages` keeps the page it left as `ShellManager.linkOrigin`, and the navigator shows a back chip (back arrow and that page's icon) before its arrows until the user navigates themselves (`step`, a tab), another switch comes from outside, or the overlay closes. The chip calls `ShellManager.followLinkBack()`. A link within the same page keeps the way back it already has. A link followed from a page window sets `window:<type>`, and its chip goes back to that window.
 - **Scroll memory.** Pages are unloaded while the overlay is closed, so their panels keep where they were scrolled to in `EditsManager` (`TitledCard.scrollKey`, `reusable/ScrollMemory`): the settings categories and sidebar, Themes, Keybinds' list and key map, the bar editor and its widget inspector (per widget), Layouts and its module inspector (per module), Monitors and its inspector. A Notes module keeps each note's place the same way (by its path, [notes](../features/notes.md) › Scrolling).

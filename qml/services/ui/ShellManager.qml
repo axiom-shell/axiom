@@ -23,21 +23,30 @@ QtObject {
   // Closes the overlay wherever it's open
   signal closeOverlay
 
-  // The overlay page a link was last followed from (a view type, or ""):
-  // the navigator offers to go back to it until the user navigates
-  // themselves or the overlay closes (OverlayPages keeps it)
+  // The overlay page a link was last followed from (a view type, or ""),
+  // or "window:<type>" for a page window's: the navigator offers to go
+  // back to it until the user navigates themselves or the overlay closes
+  // (OverlayPages keeps it)
   readonly property string linkOrigin: _linkOrigin
   property string _linkOrigin: ""
   // Whether the page switch under way is a link being followed
   readonly property bool followingLink: _followingLink
   property bool _followingLink: false
+  // The page window the link under way was followed from, "" for the
+  // overlay (PageWindowManager.activeType as it was followed)
+  readonly property string linkFromWindow: _linkFromWindow
+  property string _linkFromWindow: ""
 
   // Opens a page as a link from the current one (SettingsLink, a page
-  // button), so the navigator offers the way back
+  // button), so the navigator offers the way back. From a page window, a
+  // page that's in a window of its own is gone to, any other opens in the
+  // overlay, whose way back returns to the window
   function followLink(type) {
     _followingLink = true;
+    _linkFromWindow = PageWindowManager.activeType;
     openOverlayPage(type);
     _followingLink = false;
+    _linkFromWindow = "";
   }
 
   // Sets or ("") drops the way back (OverlayPages, as it switches pages)
@@ -49,8 +58,12 @@ QtObject {
   function followLinkBack() {
     const origin = _linkOrigin;
     _linkOrigin = "";
-    if (origin !== "")
+    if (origin.startsWith("window:")) {
+      closeOverlay();
+      PageWindowManager.focus(origin.slice("window:".length));
+    } else if (origin !== "") {
       showOverlayPage(origin);
+    }
   }
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)

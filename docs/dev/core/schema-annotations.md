@@ -111,6 +111,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `x-actions`: the commands it runs, in order (keys of its `actions`), each a row of the inspector's Runs.
   - Its `options` are its look, a form of its own; `color: state` or `color: text` adds the colour (`CustomElementBase.yaml`'s parts: Auto takes the state's colour on graphics, a switch asks for it on text).
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
+- `x-window: true` on a tool page that can also open as a window of its own (`OverlayConfig.isWindowable`, `windowTypes`; [page windows](../overlay/page-windows.md)).
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 - `x-autoColor` (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`): a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`). See [Bar widget style](../bar/widget-style.md).
 

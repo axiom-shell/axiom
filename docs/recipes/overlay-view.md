@@ -77,7 +77,8 @@ Migration step (tool page; [migration](migration.md)):
 2. Pick a type const that's the file name and doesn't collide with a content type (`CalendarPage`, not `Calendar`).
 3. Write the view on `BaseView`: size from `grid`, `pageHeight`, `sideWidth`, `editorWidth`, `cardPageWidth`; `viewConfig` is its entry in `Overlay.items`.
 4. Opening it from the launcher: add `root._page("<name>", [aliases], "<Type>", "<Description>")` to `LauncherCommands.list`, and add `I18n.tr("<Description>")` to the declaration comment in `_page`. If the page should open on something chosen first, pass `before`; or give it its own command calling a service, as `/calendar` does (`CalendarManager.openPage()`, which falls back to a page holding the Calendar module).
-5. Verify.
+5. A tool page that's useful beside the desktop (an editor, a calendar): `window: true` in its `schema.yaml` lets it pop out into a window of its own. Add `data/applications/axiom-<type>.desktop` (copy `axiom-themes.desktop`) and its name to the `pages` row in `docs/usage.md`. Its state must live in its manager, as only one host builds it at a time ([page windows](../dev/overlay/page-windows.md)).
+6. Verify.
 
 ## Gotchas
 - A new subfolder imported only from URL-loaded files isn't scanned until qs restarts (`module "qs.components.views.FooPage" is not installed`): ask the user to restart.

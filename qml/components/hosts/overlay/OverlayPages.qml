@@ -96,9 +96,12 @@ Item {
       // A link keeps the page it left, for the navigator's way back; any
       // other switch (IPC, a keybind, a module's button) drops it. A link
       // within a page keeps the way back it already has
+      // A link from a page window goes back to that window
       const from = root.pages[root.currentIndex]?.type ?? "";
       if (!ShellManager.followingLink)
         ShellManager.setLinkOrigin("");
+      else if (ShellManager.linkFromWindow !== "")
+        ShellManager.setLinkOrigin("window:" + ShellManager.linkFromWindow);
       else if (root.open && index !== root.currentIndex)
         ShellManager.setLinkOrigin(from);
       root._show(index);
@@ -240,11 +243,24 @@ Item {
             currentIndex: root.currentIndex
             direction: root.direction
             loaded: root.isLoaded(index)
+            // A page in a window of its own is built there, not here
+            readonly property string type: viewPage.modelData.viewConfig.type
+            content: PageWindowManager.isOpen(viewPage.type) ? viewPage._poppedOut : viewPage._view
 
-            OverlayView {
-              anchors.centerIn: parent
-              grid: root.grid
-              viewModel: viewPage.modelData
+            readonly property Component _view: Component {
+              OverlayView {
+                anchors.centerIn: parent
+                grid: root.grid
+                viewModel: viewPage.modelData
+              }
+            }
+
+            readonly property Component _poppedOut: Component {
+              PoppedOutCard {
+                anchors.centerIn: parent
+                grid: root.grid
+                type: viewPage.type
+              }
             }
           }
         }
