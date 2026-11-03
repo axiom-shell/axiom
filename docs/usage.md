@@ -46,7 +46,7 @@ axiom ipc <target> <function> [args]
 | Target | Functions |
 | --- | --- |
 | `overlay` | `open`, `close`, `toggle`, `page <type>` (a page in a window of its own: its window) |
-| `pages` | `window <type>` (a tool page in a window of its own, or its window focused: `settings`, `themes`, `bareditor`, `keybinds`, `customwidgets`, `calendarpage`), `close <type>` (back into the overlay), `list` |
+| `pages` | `window <type>` (a tool page in a window of its own, or its window focused: `settings`, `themes`, `bareditor`, `keybinds`, `customwidgets`), `close <type>` (back into the overlay), `list` |
 | `edgeMenu` | `open <id>`, `close <id>`, `toggle <id>`, `pin <id>`, `unpin <id>`, `list`, `edit` |
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
 | `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator` (opens on that history or picker) |

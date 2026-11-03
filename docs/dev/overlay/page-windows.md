@@ -7,8 +7,8 @@
 How a tool page leaves the overlay for a window of its own (an xdg toplevel, Quickshell's `FloatingWindow`) and comes back. Read this before changing which pages pop out, the window's sizing, or how pages are opened by name.
 
 ### Which pages
-- A view type whose `schema.yaml` says `window: true` (`x-window`): Settings, Themes, BarEditor, Keybinds, CustomWidgets, CalendarPage. `OverlayConfig.isWindowable(type)`, and `OverlayConfig.windowTypes` lists them.
-- Monitors (it reflows the outputs under its own window) and Layouts (it previews the overlay at screen size) don't pop out.
+- A view type whose `schema.yaml` says `window: true` (`x-window`): Settings, Themes, BarEditor, Keybinds, CustomWidgets. `OverlayConfig.isWindowable(type)`, and `OverlayConfig.windowTypes` lists them.
+- Monitors (it reflows the outputs under its own window) and Layouts (it previews the overlay at screen size) don't pop out. Neither does CalendarPage yet: its selected day, month and event editor live in the view, so a move would drop an event being written (issues.md › The Calendar page can't open in a window: its state lives in the view).
 - A page opens in a window only while it's in `Overlay.items` (`OverlayConfig.viewEntry`). Removing it from config closes its window (`PageWindowManager` drops it as `OverlayConfig.views` changes), and putting it back doesn't reopen one.
 
 ### One host at a time

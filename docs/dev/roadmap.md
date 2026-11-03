@@ -461,7 +461,7 @@ Found by the audits:
 - [PomodoroDial redraws DialControls' ring and buttons](issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
 - [Focus and Pomodoro build the parts their properties turn off](issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
 - [A Calendar card on the desktop or in an edge menu takes the page's request](issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
-- [Popping the Calendar page out or back drops an event being written](issues.md#popping-the-calendar-page-out-or-back-drops-an-event-being-written)
+- [The Calendar page can't open in a window: its state lives in the view](issues.md#the-calendar-page-cant-open-in-a-window-its-state-lives-in-the-view)
 - [A save conflict reloads nothing, so trying again conflicts again](issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)
 - [Moving a recurring event to another calendar drops its earlier occurrences and exceptions](issues.md#moving-a-recurring-event-to-another-calendar-drops-its-earlier-occurrences-and-exceptions)
 - [Enter in the editor's title saves again while busy and picks All events while asking](issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
