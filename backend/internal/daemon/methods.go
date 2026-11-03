@@ -410,7 +410,21 @@ func (d *Daemon) reexecSoon(target string, img image) {
 }
 
 // reexecInto re-execs into exe running img (Options.reexec in tests).
-func (d *Daemon) reexecInto(exe string, img image) error {
+// Into the dev image, the boot guard goes first, as at session start
+// (devstart.go): a dev image that fails before it serves falls back to
+// the installed binary, which finds it. A failed exec leaves no marker.
+func (d *Daemon) reexecInto(exe string, img image) (err error) {
+	if img.ConfigDir == devConfigDir(d.dirs) {
+		b, _ := readBuild(d.dirs)
+		if err := writeBoot(d.dirs, b); err != nil {
+			return err
+		}
+		defer func() {
+			if err != nil {
+				clearBoot(d.dirs)
+			}
+		}()
+	}
 	if d.opts.reexec != nil {
 		return d.opts.reexec(exe, img)
 	}

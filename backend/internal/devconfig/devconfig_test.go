@@ -14,6 +14,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
+	"github.com/axiom-shell/axiom/backend/internal/share"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
@@ -279,9 +280,11 @@ func TestPrepareWaitsForNoStore(t *testing.T) {
 
 func TestRows(t *testing.T) {
 	t.Parallel()
-	base := mustParse(t, cfgText(0, `"General": {"a": 1, "b": "x", "c": false, "list": []}, "Extra": {"k": 1}`))
-	live := mustParse(t, cfgText(0, `"General": {"a": 2, "b": "y", "c": false, "list": []}, "Extra": {"k": 1}`))
-	dev := mustParse(t, cfgText(steps.Current()+1, `"General": {"a": 1, "b": "z", "c": true, "list": [{"id": "q"}]}`))
+	base := mustParse(t, cfgText(0, `"General": {"a": 1, "b": "x", "c": false, "list": []}, "Extra": {"k": 1}, "Idle": {"enabled": false}`))
+	live := mustParse(t, cfgText(0, `"General": {"a": 2, "b": "y", "c": false, "list": []}, "Extra": {"k": 1}, "Idle": {"enabled": false}`))
+	// Idle.enabled, a takeover, differs too, but is never a row
+	dev := mustParse(t, cfgText(steps.Current()+1, `"General": {"a": 1, "b": "z", "c": true, "list": [{"id": "q"}]}, "Idle": {"enabled": true}`))
+	takeover := share.TakeoverPaths(devSchema(t))
 	type want struct {
 		side            string
 		devOnly         bool
@@ -295,14 +298,14 @@ func TestRows(t *testing.T) {
 		"General.list": {SideDev, false, true, true, nil, nil},
 		"Extra":        {SideDev, true, false, true, nil, nil},
 	}
-	rows := Rows(base, live, dev, installSchema(t))
+	rows := Rows(base, live, dev, installSchema(t), takeover)
 	if len(rows) != len(wants) {
 		t.Errorf("%d rows, want %d: %+v", len(rows), len(wants), rows)
 	}
 	for _, r := range rows {
 		w, ok := wants[r.Path.String()]
 		if !ok {
-			t.Errorf("unexpected row %s (the version is never a row)", r.Path)
+			t.Errorf("unexpected row %s (the version and takeovers are never rows)", r.Path)
 			continue
 		}
 		if r.Side != w.side || r.DevOnly != w.devOnly || r.HasDev != w.hasDev || r.HasLive != w.hasLive {
@@ -313,7 +316,7 @@ func TestRows(t *testing.T) {
 		}
 	}
 	// Without a base, every row changed on both sides
-	for _, r := range Rows(nil, live, dev, installSchema(t)) {
+	for _, r := range Rows(nil, live, dev, installSchema(t), takeover) {
 		if r.Side != SideBoth {
 			t.Errorf("no base: %s is %s", r.Path, r.Side)
 		}
@@ -334,6 +337,9 @@ func TestRowJSON(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	t.Parallel()
+	idle := func(on bool) string {
+		return cfgText(0, fmt.Sprintf(`"General": {"a": 1, "b": "x", "list": []}, "Idle": {"enabled": %v}`, on))
+	}
 	base := cfgText(0, `"General": {"a": 1, "b": "x", "list": []}, "Extra": {"k": 1}`)
 	cases := []struct {
 		name, base, live, dev string
@@ -353,12 +359,15 @@ func TestMerge(t *testing.T) {
 		{"a key live added", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": []}, "Extra": {"k": 1}, "New": {"n": 1}`), base,
 			`[{"op":"set","path":["New"],"value":{"n":1}}]`},
 		{"never the version", base, cfgText(steps.Current()-1, `"General": {"a": 1, "b": "x", "list": []}, "Extra": {"k": 1}`), base, `null`},
+		{"never a takeover", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": []}, "Extra": {"k": 1}, "Idle": {"enabled": true}`), base, `null`},
+		{"never a takeover in a section both have", idle(false), idle(true), idle(false), `null`},
+		{"never under a takeover", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": []}, "Extra": {"k": 1}, "Idle": {"enabled": {"deep": 1}}`), base, `null`},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			dev := mustParse(t, c.dev)
-			ops := Merge(mustParse(t, c.base), mustParse(t, c.live), dev)
+			ops := Merge(mustParse(t, c.base), mustParse(t, c.live), dev, share.TakeoverPaths(devSchema(t)))
 			got, _ := json.Marshal(ops)
 			if string(got) != c.want {
 				t.Fatalf("got %s\nwant %s", got, c.want)
@@ -368,7 +377,7 @@ func TestMerge(t *testing.T) {
 			}
 		})
 	}
-	if ops := Merge(nil, mustParse(t, base), mustParse(t, cfgText(0, ``))); ops != nil {
+	if ops := Merge(nil, mustParse(t, base), mustParse(t, cfgText(0, ``)), nil); ops != nil {
 		t.Errorf("merged without a base: %v", ops)
 	}
 }
@@ -527,7 +536,7 @@ func TestRealSchema(t *testing.T) {
 	}
 	live, _ := InShape(pipe, []byte(content(t, f.Live)))
 	base, _ := InShape(pipe, []byte(content(t, f.Base)))
-	rows := Rows(base, live, dev, pipe.Schema())
+	rows := Rows(base, live, dev, pipe.Schema(), share.TakeoverPaths(pipe.Schema()))
 	if len(rows) != 1 || rows[0].Path.String() != "Idle.dim.timeout" || rows[0].Side != SideDev || rows[0].DevOnly {
 		t.Fatalf("rows %+v", rows)
 	}

@@ -573,12 +573,13 @@ QtObject {
   // (Paths.packaged), `$clone` whether its tree is a git clone
   // (GreeterManager.report's `clone`; true until the first check), `$dev`
   // whether dev mode is on (DevManager.enabled), `$devOptions` whether
-  // Settings shows the developer options (their switch alone).
+  // Settings shows the developer options (their switch, or dev mode on:
+  // DevManager.showsDevelopment).
   function configValueAt(dottedPath) {
     if (dottedPath === "$dev")
       return DevManager.enabled;
     if (dottedPath === "$devOptions")
-      return DevManager.options;
+      return DevManager.showsDevelopment;
     if (dottedPath === "$compositor")
       return CompositorManager.kind;
     if (dottedPath === "$distro")

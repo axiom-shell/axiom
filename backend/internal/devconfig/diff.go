@@ -49,11 +49,14 @@ func (r Row) MarshalJSON() ([]byte, error) {
 // list whole, objects followed down to what changed), each with the side
 // that changed it since the base (a nil base: both) and whether install
 // (the install tree's schema) lacks it. The version and format are never
-// rows: each config keeps its own.
-func Rows(base, live, dev *jsonx.Object, install *schema.Schema) []Row {
+// rows: each config keeps its own. Nor are the takeover settings
+// (takeover, share.TakeoverPaths of dev's schema; skipped): they're per
+// machine, mirrored dev to live as they change (the daemon's onConfig),
+// so they can never be copied.
+func Rows(base, live, dev *jsonx.Object, install *schema.Schema, takeover [][]string) []Row {
 	var rows []Row
 	for _, op := range config.Diff(live, dev) {
-		if ownKey(op.Path) {
+		if skipped(op.Path, takeover) {
 			continue
 		}
 		d, hasD := config.Lookup(dev, op.Path)
@@ -84,14 +87,15 @@ func Rows(base, live, dev *jsonx.Object, install *schema.Schema) []Row {
 // where dev left the setting as the base had it: the non-conflicting half
 // of a three-way merge (a setting changed on both sides is left alone).
 // Each carries dev's value as its base, so a dev edit made meanwhile
-// fails it as a conflict.
-func Merge(base, live, dev *jsonx.Object) []config.Op {
+// fails it as a conflict. Like Rows, it leaves out the version, the
+// format and the takeover settings.
+func Merge(base, live, dev *jsonx.Object, takeover [][]string) []config.Op {
 	if base == nil {
 		return nil
 	}
 	var ops []config.Op
 	for _, d := range config.Diff(live, dev) {
-		if ownKey(d.Path) || !differs(base, live, d.Path) || differs(base, dev, d.Path) {
+		if skipped(d.Path, takeover) || !differs(base, live, d.Path) || differs(base, dev, d.Path) {
 			continue
 		}
 		var op config.Op
@@ -238,6 +242,34 @@ func nextBase(basePath string, ops []config.Op, live []byte) []byte {
 // each keep their own of.
 func ownKey(path config.Path) bool {
 	return len(path) > 0 && path[0].ID == "" && (path[0].Key == "version" || path[0].Key == "format")
+}
+
+// skipped says a path is never a row or merged: a config's version or
+// format, a takeover setting, under one, or a section holding one (one
+// side lacks it whole: loaded configs have every section, so it's rare).
+func skipped(path config.Path, takeover [][]string) bool {
+	if ownKey(path) {
+		return true
+	}
+	for _, tp := range takeover {
+		if p := config.Keys(tp...); under(path, p) || under(p, path) {
+			return true
+		}
+	}
+	return false
+}
+
+// under says path is prefix or under it.
+func under(path, prefix config.Path) bool {
+	if len(prefix) > len(path) {
+		return false
+	}
+	for i, s := range prefix {
+		if path[i] != s {
+			return false
+		}
+	}
+	return true
 }
 
 // differs says a and b don't hold the same value at path (one holding

@@ -33,6 +33,9 @@ QtObject {
   readonly property int maxToasts: _c.maxToasts
   readonly property int width: Widget.px(_c.width)
   readonly property bool quietFullscreen: _c.quietFullscreen
+  // DevManager's notifications: a dev build failing and working again,
+  // live changed under the dev config
+  readonly property bool devNotifications: _c.devNotifications
 
   // Do not disturb: on a daily schedule ("HH:MM"), and whether critical
   // ones toast through it

@@ -32,8 +32,9 @@ import (
 // copy (replace). The image's own config goes through its store; the other
 // is a file, written on its raw JSON under its lock, never migrated
 // (devEnds). While the dev image runs, a takeover setting changed in dev
-// is written to live too (one per machine), and a snapshot the installed
-// axiom can restore is never written over.
+// is written to live too (one per machine: the only way one reaches live,
+// never a diff row, a copy or a merge), and a snapshot the installed axiom
+// can restore is never written over.
 
 // Where a copy goes
 const (
@@ -230,6 +231,10 @@ type devEnds struct {
 	devOpen bool            // the store holds dev (the dev image), else live
 }
 
+// takeover is the takeover settings' paths in dev's shape, which are
+// never rows: dev mode keeps them live's (one per machine).
+func (e devEnds) takeover() [][]string { return share.TakeoverPaths(e.devPipe.Schema()) }
+
 // ends is this image's devEnds (configMu held). The install image needs a
 // dev tree, whose migrations this binary must have: it loads every side
 // through its own steps.
@@ -331,16 +336,23 @@ func (m *devMode) configDiff(e devEnds) (DevConfigDiff, error) {
 	if err != nil {
 		return DevConfigDiff{}, err
 	}
-	rows := devconfig.Rows(s.base, s.live, s.dev, e.install)
+	rows := devconfig.Rows(s.base, s.live, s.dev, e.install, e.takeover())
 	if rows == nil {
 		rows = []devconfig.Row{}
 	}
 	return DevConfigDiff{Rows: rows, LiveChanged: m.liveChangedNow(e)}, nil
 }
 
+// takeoverCopy is a copy's refusal of a takeover setting at path.
+func takeoverCopy(path config.Path) error {
+	return axerr.New(axerr.TakeoverRefused, "%s takes something over on this PC: dev mode keeps it live's", path)
+}
+
 // configCopy is dev.config.copy: the rows under the paths given copied to
 // dev (as an edit of dev's) or to live (checked against the install's
-// schema; a dev-only setting can't go).
+// schema; a dev-only setting can't go). A takeover setting is refused
+// either way: it's never a row (a section's copy leaves it out), and a
+// copy never writes one (dev mode keeps them live's: onConfig).
 func (m *devMode) configCopy(p DevConfigCopyParams) (DevConfigCopied, error) {
 	if p.To != copyToLive && p.To != copyToDev {
 		return DevConfigCopied{}, axerr.New(axerr.BadRequest, "copy to %q: live or dev", p.To)
@@ -358,11 +370,14 @@ func (m *devMode) configCopy(p DevConfigCopyParams) (DevConfigCopied, error) {
 	if err != nil {
 		return DevConfigCopied{}, err
 	}
-	rows := devconfig.Rows(s.base, s.live, s.dev, e.install)
+	rows := devconfig.Rows(s.base, s.live, s.dev, e.install, e.takeover())
 	var picked []devconfig.Row
 	seen := map[string]bool{}
 	for _, want := range p.Paths {
 		want = config.Resolve(s.dev, want)
+		if underTakeover(want, e.devPipe.Schema(), e.install) {
+			return DevConfigCopied{}, takeoverCopy(want)
+		}
 		found := false
 		for _, r := range rows {
 			if hasPrefix(r.Path, want) {
@@ -400,6 +415,11 @@ func (m *devMode) configCopy(p DevConfigCopyParams) (DevConfigCopied, error) {
 			op = op.WithBase(jsonx.Clone(r.Dev))
 		}
 		ops = append(ops, op)
+	}
+	// Rows leave out dev's takeover settings: this also catches the
+	// install's, should its schema name others
+	if touchesTakeover(ops, e.devPipe.Schema(), e.install) {
+		return DevConfigCopied{}, takeoverCopy(copied[0])
 	}
 	if p.To == copyToLive {
 		if err := m.toLive(e, ops); err != nil {
@@ -442,7 +462,7 @@ func (m *devMode) configPull(p DevConfigPullParams) (DevConfigPulled, error) {
 		}
 		m.d.opts.Log.Info("dev config: replaced with live")
 	} else {
-		ops := devconfig.Merge(s.base, s.live, s.dev)
+		ops := devconfig.Merge(s.base, s.live, s.dev, e.takeover())
 		if len(ops) > 0 {
 			if err := m.toDev(e, ops); err != nil {
 				return DevConfigPulled{}, err
@@ -452,7 +472,7 @@ func (m *devMode) configPull(p DevConfigPullParams) (DevConfigPulled, error) {
 			out.Merged = append(out.Merged, op.Path)
 		}
 		if s.base != nil {
-			for _, r := range devconfig.Rows(s.base, s.live, s.dev, e.devPipe.Schema()) {
+			for _, r := range devconfig.Rows(s.base, s.live, s.dev, e.devPipe.Schema(), e.takeover()) {
 				if r.Side == devconfig.SideBoth {
 					out.Conflicts = append(out.Conflicts, r.Path)
 				}
@@ -475,7 +495,7 @@ func (m *devMode) toLive(e devEnds, ops []config.Op) error {
 	if e.devOpen {
 		return m.writeLive(ops, e.install)
 	}
-	if _, err := m.d.store.Set(ops, store.SetOptions{Takeover: touchesTakeover(ops, m.d.store.Pipeline())}); err != nil {
+	if _, err := m.d.store.Set(ops, store.SetOptions{}); err != nil {
 		return err
 	}
 	liveRaw, err := devconfig.ReadOptional(e.files.Live)
@@ -489,7 +509,7 @@ func (m *devMode) toLive(e devEnds, ops []config.Op) error {
 // its file (devconfig.WriteDev).
 func (m *devMode) toDev(e devEnds, ops []config.Op) error {
 	if e.devOpen {
-		_, err := m.d.store.Set(ops, store.SetOptions{Takeover: touchesTakeover(ops, e.devPipe)})
+		_, err := m.d.store.Set(ops, store.SetOptions{})
 		return err
 	}
 	return devconfig.WriteDev(e.files.Dev, ops, e.devPipe.Schema())
@@ -574,12 +594,27 @@ func (m *devMode) onConfig(ev store.Event) {
 }
 
 // touchesTakeover says whether ops change a takeover setting (or a
-// section holding one).
-func touchesTakeover(ops []config.Op, pipe config.Pipeline) bool {
-	for _, tp := range share.TakeoverPaths(pipe.Schema()) {
-		path := config.Keys(tp...)
-		for _, op := range ops {
-			if hasPrefix(op.Path, path) || hasPrefix(path, op.Path) {
+// section holding one) of any of the schemas.
+func touchesTakeover(ops []config.Op, schemas ...*schema.Schema) bool {
+	for _, s := range schemas {
+		for _, tp := range share.TakeoverPaths(s) {
+			path := config.Keys(tp...)
+			for _, op := range ops {
+				if hasPrefix(op.Path, path) || hasPrefix(path, op.Path) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// underTakeover says path is a takeover setting of any of the schemas, or
+// under one.
+func underTakeover(path config.Path, schemas ...*schema.Schema) bool {
+	for _, s := range schemas {
+		for _, tp := range share.TakeoverPaths(s) {
+			if hasPrefix(path, config.Keys(tp...)) {
 				return true
 			}
 		}

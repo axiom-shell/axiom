@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,6 +160,7 @@ func TestStartPlan(t *testing.T) {
 	t.Parallel()
 	on := devChoice{Enabled: true, Tree: "/clone"}
 	fresh := buildCheck{Fresh: true}
+	const live = "/home/u/.config/axiom/"
 	for _, tc := range []struct {
 		name     string
 		choice   devChoice
@@ -171,10 +173,12 @@ func TestStartPlan(t *testing.T) {
 		{"no dev tree", devChoice{Enabled: true}, fresh, nil, false, startAsIs},
 		{"a re-exec", on, fresh, &handoff{Tree: "/t"}, false, startAsIs},
 		{"the dev image's own start", on, fresh, &handoff{Fresh: true}, false, startAsIs},
-		{"a re-exec of the install image, build stale", on, buildCheck{Why: "stale"}, &handoff{Tree: "/t", Dev: true}, false, startBuild},
-		{"a re-exec of the install image, build fresh", on, fresh, &handoff{Tree: "/t", Dev: true}, false, startAsIs},
+		{"a re-exec of the install image, build stale", on, buildCheck{Why: "stale"}, &handoff{Tree: "/t", Dev: true, ConfigDir: live}, false, startBuild},
+		{"a re-exec of the install image, build fresh", on, fresh, &handoff{Tree: "/t", Dev: true, ConfigDir: live}, false, startAsIs},
+		{"a dev image fell back to the install image", on, buildCheck{Fresh: true, Guarded: true}, &handoff{Tree: "/t", Dev: true, ConfigDir: live}, false, startStayLive},
+		{"a re-exec of the install image, dev mode off", on, buildCheck{Fresh: true, Guarded: true}, &handoff{Tree: "/t", ConfigDir: live}, false, startAsIs},
 		{"a re-exec of the dev image, build stale", on, buildCheck{Why: "stale"}, &handoff{Tree: "/clone", Dev: true, ConfigDir: "/dev"}, false, startAsIs},
-		{"a re-exec of the install image, dev tree given over", on, buildCheck{Why: "stale"}, &handoff{Tree: "/t", Dev: true}, true, startAsIs},
+		{"a re-exec of the install image, dev tree given over", on, buildCheck{Why: "stale"}, &handoff{Tree: "/t", Dev: true, ConfigDir: live}, true, startAsIs},
 		{"--tree wins", on, fresh, nil, true, startAsIs},
 		{"--tree wins over a stale build", on, buildCheck{Why: "stale"}, nil, true, startAsIs},
 		{"fresh", on, fresh, nil, false, startExec},
@@ -184,7 +188,7 @@ func TestStartPlan(t *testing.T) {
 		{"the guard of an older build", on, buildCheck{Why: "the source changed", Guarded: false}, nil, false, startBuild},
 		{"the dev tree is gone", on, buildCheck{Gone: true, Why: "gone"}, nil, false, startStayLive},
 	} {
-		if got := startPlan(tc.choice, tc.build, tc.h, tc.override); got.Action != tc.want {
+		if got := startPlan(tc.choice, tc.build, tc.h, tc.override, live); got.Action != tc.want {
 			t.Errorf("%s: %+v, want %v", tc.name, got, tc.want)
 		}
 	}
@@ -326,7 +330,7 @@ func TestFallBackLive(t *testing.T) {
 	t.Parallel()
 	f := newStartFixture(t)
 	d := f.m.d
-	d.fallBackLive(&handoff{Fresh: true, Lock: 3, Installed: "/installed/axiom"}, axerr.New(axerr.Internal, "boom"))
+	d.fallBackLive(&handoff{Fresh: true, Lock: 3, Installed: "/installed/axiom"}, nil, axerr.New(axerr.Internal, "boom"))
 	select {
 	case call := <-f.execs:
 		if _, carried := handoffIn(call[1:]); call[0] != "/installed/axiom" || carried {
@@ -338,12 +342,109 @@ func TestFallBackLive(t *testing.T) {
 	if d.instance.File() != nil {
 		t.Error("the instance lock is still held")
 	}
-	// Only a session start's exec goes back
-	d.fallBackLive(&handoff{Lock: 3, Listener: 4, ConfigLock: 5, Installed: "/installed/axiom"}, axerr.New(axerr.Internal, "boom"))
+	// A re-exec's image not on the dev config doesn't go back
+	d.fallBackLive(&handoff{Lock: 3, Listener: 4, ConfigLock: 5, ConfigDir: d.dirs.Config, Installed: "/installed/axiom"}, nil, axerr.New(axerr.Internal, "boom"))
 	select {
 	case call := <-f.execs:
 		t.Errorf("a re-exec's image went back: %v", call)
 	default:
+	}
+}
+
+// A runtime switch into the dev image writes the boot guard before its
+// re-exec (none when it fails, nor into the install image); the install
+// image a dev image fell back to, carried, finds it and stays live.
+func TestRuntimeSwitchBootGuard(t *testing.T) {
+	t.Parallel()
+	f := newStartFixture(t)
+	d := f.m.d
+	fail := false
+	d.opts.reexec = func(string, image) error {
+		if fail {
+			return axerr.New(axerr.Unavailable, "no")
+		}
+		return nil
+	}
+	if err := d.reexecInto(d.installed, f.m.installImage()); err != nil || guarded(d.dirs, f.build) {
+		t.Errorf("into the install image: guarded %v, %v", guarded(d.dirs, f.build), err)
+	}
+	fail = true
+	if err := d.reexecInto(DevBinary(d.dirs), f.m.devImage(f.m.tree)); err == nil || guarded(d.dirs, f.build) {
+		t.Errorf("a failed switch: guarded %v, %v", guarded(d.dirs, f.build), err)
+	}
+	fail = false
+	if err := d.reexecInto(DevBinary(d.dirs), f.m.devImage(f.m.tree)); err != nil || !guarded(d.dirs, f.build) {
+		t.Fatalf("no boot guard before the switch: %v", err)
+	}
+	// The fallback's handoff, as inherited reads it
+	h := &handoff{Tree: "/install", ConfigDir: d.dirs.Config, Dev: true, Listener: 4, ConfigLock: 5, Lock: 3}
+	if plan := d.sessionStart(h, f.choice()); plan.Action != startStayLive || !strings.Contains(plan.Why, "didn't come up") {
+		t.Errorf("the install image after the fallback: %+v", plan)
+	}
+	select {
+	case call := <-f.execs:
+		t.Errorf("exec'd past the guard: %v", call)
+	default:
+	}
+}
+
+// A dev image a runtime switch re-exec'd into that fails before it serves
+// re-execs the installed binary with the handoff it carried: the install
+// tree and live config, the instance lock, the socket and the live
+// config's writer lock kept across.
+func TestFallBackCarried(t *testing.T) {
+	t.Parallel()
+	f := newStartFixture(t)
+	d := f.m.d
+	ln, err := net.Listen("unix", filepath.Join(t.TempDir(), "axiom.sock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ln.Close() })
+	os.MkdirAll(d.dirs.Config, 0o700)
+	carried := &handoff{Lock: 3, Listener: 4, ConfigLock: 5, Shell: 42, Tree: f.m.tree, ConfigDir: devConfigDir(d.dirs), Dev: true,
+		InstallTree: "/install", Installed: "/installed/axiom", ShellEntry: "/install/qml", ConfigLockDir: d.dirs.Config, Schema: "s", Started: 7}
+	d.fallBackLive(carried, ln, axerr.New(axerr.Internal, "boom"))
+	var call []string
+	select {
+	case call = <-f.execs:
+	default:
+		t.Fatal("no way back")
+	}
+	h, ok := handoffIn(call[1:])
+	if call[0] != "/installed/axiom" || !ok || !h.wellFormed() || h.Fresh {
+		t.Fatalf("exec %s with %+v", call[0], h)
+	}
+	if h.Tree != "/install" || h.ConfigDir != d.dirs.Config || !h.Dev || h.Shell != 42 || h.ShellEntry != "/install/qml" ||
+		h.ConfigLockDir != d.dirs.Config || h.Schema != "s" || h.Started != 7 || h.Installed != "/installed/axiom" || h.InstallTree != "/install" {
+		t.Errorf("handoff %+v", h)
+	}
+	if h.Lock != int(d.instance.File().Fd()) {
+		t.Errorf("the instance lock %d, want %d", h.Lock, d.instance.File().Fd())
+	}
+	// The exec returned (a test's): the instance lock held, close-on-exec
+	// again, and the live config's writer lock let go
+	if flags, err := unix.FcntlInt(d.instance.File().Fd(), unix.F_GETFD, 0); err != nil || flags&unix.FD_CLOEXEC == 0 {
+		t.Errorf("the lock left without close-on-exec: %v", err)
+	}
+	lock, err := fsx.TryLock(filepath.Join(d.dirs.Config, "config.json.lock"))
+	if err != nil {
+		t.Fatalf("the live config's lock still held: %v", err)
+	}
+	lock.Release()
+
+	// Only a dev image falls back: not the install image, nor without an
+	// installed binary
+	for _, h := range []*handoff{
+		{Lock: 3, Listener: 4, ConfigLock: 5, ConfigDir: d.dirs.Config, InstallTree: "/install", Installed: "/installed/axiom"},
+		{Lock: 3, Listener: 4, ConfigLock: 5, ConfigDir: devConfigDir(d.dirs), InstallTree: "/install"},
+	} {
+		d.fallBackLive(h, ln, axerr.New(axerr.Internal, "boom"))
+		select {
+		case call := <-f.execs:
+			t.Errorf("%+v went back: %v", h, call)
+		default:
+		}
 	}
 }
 

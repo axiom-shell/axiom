@@ -132,6 +132,13 @@ properties:
     x-group: Toasts
     default: true
     description: Show no toasts on a monitor whose workspace has a fullscreen window. Critical ones still show, and everything still goes to the history.
+  devNotifications:
+    type: boolean
+    title: Dev mode notifications
+    x-group: Toasts
+    default: true
+    x-showIf: {/$devOptions: true}
+    description: Notify when a dev build fails and when it works again, and when the live config changed since dev mode last took it over.
   dnd:
     type: object
     title: Do not disturb

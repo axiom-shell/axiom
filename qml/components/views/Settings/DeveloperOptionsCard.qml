@@ -6,10 +6,11 @@ import qs.services.core
 import qs.components.reusable
 import qs.components.forms
 
-// The top of the axiom updates card (the section's `x-intro`): the
-// Developer options switch, which shows the Development category (kept by
-// axiom, not in config), and a line on dev mode
-ColumnLayout {
+// Settings page, General (the category's last `card`, wide): the Developer
+// options switch, which shows the Development category (kept by axiom, not
+// in config; the category shows while dev mode is on too), and a line on
+// dev mode
+FieldGroup {
   id: root
 
   readonly property string detail: {
@@ -22,23 +23,21 @@ ColumnLayout {
     return DevManager.active ? I18n.tr("Dev mode runs {0} on its own config.", Paths.shortenHome(DevManager.tree)) : I18n.tr("Dev mode is on; the installed axiom runs until the dev build is ready.");
   }
 
-  spacing: Widget.spacing
-  visible: BackendManager.ready
-
   RowLayout {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    // I18n.tr("Developer options")
+    // I18n.tr("Enabled")
     // I18n.tr("Shows the Development category: a dev tree axiom runs and rebuilds as you edit it, on its own config.")
     FieldHeader {
-      label: "Developer options"
+      label: "Enabled"
       description: "Shows the Development category: a dev tree axiom runs and rebuilds as you edit it, on its own config."
     }
 
-    // The one switch for the Development category, dev mode on or off
+    // The one switch for the Development category
     StyledSwitch {
       id: optionsSwitch
+      enabled: BackendManager.ready
       checked: DevManager.options
       onToggled: {
         DevManager.setOptions(optionsSwitch.checked);
@@ -49,7 +48,7 @@ ColumnLayout {
   }
 
   RowLayout {
-    visible: DevManager.options
+    visible: DevManager.showsDevelopment
     Layout.fillWidth: true
     spacing: Widget.spacing
 

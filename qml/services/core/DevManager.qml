@@ -10,11 +10,14 @@ import qs.services.ui
 // docs/dev/backend/README.md): turned on, axiom runs a dev tree (any
 // clone, `setTree`) with its own build and its own config, rebuilt as its
 // Go source is edited; off, the installed tree on the live config. The
-// developer options (`options`, kept by axiom, not in config) alone show
-// the Development settings category, whose controls all work with dev mode
-// off too. State comes from BackendManager.dev; a
-// failed build sends a notification, and so does a dev start finding live
-// changed since the dev config last took it over (once per start).
+// developer options (`options`, kept by axiom, not in config) or dev mode
+// show the Development settings category, whose controls all work with dev
+// mode off too. State comes from BackendManager.dev. Unless
+// NotificationsConfig.devNotifications is off, a failing streak of builds
+// notifies once, and again when a build works (methods/DevBuildStreak, the
+// streak kept in StateManager's "dev-build" across the re-exec a build
+// starts), and so does a dev start finding live changed since the dev
+// config last took it over (once per start).
 Singleton {
   id: root
 
@@ -22,6 +25,9 @@ Singleton {
   // Settings shows the developer options: the Development category (dev
   // mode on or off)
   readonly property bool options: BackendManager.dev.options ?? false
+  // Settings shows the Development category: the developer options, or
+  // dev mode on (`/$devOptions` in an x-showIf)
+  readonly property bool showsDevelopment: root.options || root.enabled
   // The dev image runs: the dev build on the dev tree and the dev config
   readonly property bool active: BackendManager.dev.active ?? false
   // Edits to the Go source can be built here (the tree has it, go is
@@ -35,14 +41,20 @@ Singleton {
   // The last build failed (or a dev start stayed on the installed axiom)
   readonly property bool buildFailed: root.lastBuild?.ok === false
   // The last build in a line, for the DevMode widget's tooltip and menu:
-  // building, built or failed and when, or none yet this run
+  // building, built or failed and when; before a build this run (as right
+  // after the re-exec a build starts), the dev tree's recorded build, or
+  // none
   readonly property string buildText: {
     if (root.building)
       return I18n.tr("Building…");
-    if (!root.lastBuild)
+    const build = root.lastBuild ?? (root.builtAt ? {
+        "ok": true,
+        "at": root.builtAt
+      } : null);
+    if (!build)
       return I18n.tr("Not built this run");
-    const when = root.lastBuild.at ? I18n.formatDate(new Date(root.lastBuild.at), I18n.dateFormat("dateTime")) : "";
-    return root.lastBuild.ok ? I18n.tr("Built {0}", when) : I18n.tr("Build failed {0}", when);
+    const when = build.at ? I18n.formatDate(new Date(build.at), I18n.dateFormat("dateTime")) : "";
+    return build.ok ? I18n.tr("Built {0}", when) : I18n.tr("Build failed {0}", when);
   }
 
   // The dev tree ("" when none is set) and the install tree; the dev
@@ -57,6 +69,8 @@ Singleton {
   // why not)
   readonly property bool buildFresh: BackendManager.dev.build?.fresh ?? false
   readonly property string buildWhy: BackendManager.dev.build?.why ?? ""
+  // When the build recorded for the dev tree was made ("" for none)
+  readonly property string builtAt: BackendManager.dev.build?.at ?? ""
   // The dev config's file; whether live changed since dev last took it
   // over, and what readying it noted (seeded from the defaults: live is
   // newer than the dev tree), as of the dev start or, with dev mode off,
@@ -96,9 +110,9 @@ Singleton {
   }
 
   // Opens Settings › Development, turning the developer options on first
-  // (the category shows only while they are)
+  // unless dev mode is on (the category shows only while one is)
   function openDevelopment() {
-    if (root.options) {
+    if (root.showsDevelopment) {
       SettingsManager.openCategory("Development");
       return;
     }
@@ -193,7 +207,7 @@ Singleton {
 
   // Once per dev start: live changed since the dev config took it over
   function _noteLiveChanged() {
-    if (!_run.ready || !root.active || !root.liveChanged || _run.liveNotified)
+    if (!_run.ready || !root.active || !root.liveChanged || _run.liveNotified || !NotificationsConfig.devNotifications)
       return;
     _run.liveNotified = true;
     NotificationManager.sendNotification("axiom", I18n.tr("Live config changed"), I18n.tr("The live config changed since dev mode last took it over."), {
@@ -212,12 +226,31 @@ Singleton {
     });
   }
 
+  // The failing streak, kept across the re-exec a successful build starts
+  // (and hot reloads): { failing, failedAt }
+  readonly property var _streakState: StateManager.createStateHandler("dev-build")
+  property var _streak: null
+
+  // A streak's first failure, and the build that ends it
   function _noteBuild() {
-    const build = root.lastBuild;
-    if (!_run.ready || !build || build.ok || build.at === _run.notifiedAt)
+    if (!_run.ready || !BackendManager.ready)
       return;
-    _run.notifiedAt = build.at;
-    const lines = (build.output ?? "").trim().split("\n");
+    if (root._streak === null)
+      root._streak = root._streakState.load(DevBuildStreak.clear);
+    const step = DevBuildStreak.next(root._streak, root.lastBuild, root.builtAt);
+    if (JSON.stringify(step.streak) !== JSON.stringify(root._streak)) {
+      root._streak = step.streak;
+      root._streakState.save(step.streak);
+    }
+    if (step.notify === "" || !NotificationsConfig.devNotifications)
+      return;
+    if (step.notify === "works") {
+      NotificationManager.sendNotification("axiom", I18n.tr("The dev build works again"), "", {
+        "key": "dev-build"
+      });
+      return;
+    }
+    const lines = (root.lastBuild.output ?? "").trim().split("\n");
     NotificationManager.sendNotification("axiom", I18n.tr("The dev build failed"), lines.slice(-3).join("\n"), {
       "key": "dev-build"
     });
@@ -237,7 +270,6 @@ Singleton {
   PersistentProperties {
     id: _run
     reloadableId: "axiomDevMode"
-    property string notifiedAt: ""
     property bool liveNotified: false
     property bool ready: false
 

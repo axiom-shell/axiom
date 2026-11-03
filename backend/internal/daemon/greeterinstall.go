@@ -53,9 +53,11 @@ func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 		if err != nil {
 			return greeterinstall.Elevated{}, err
 		}
-		// A local copy reuses the binary built last: the one running
+		// A local copy takes the installed binary, never a dev build
+		// while dev mode runs one: the install tree's code and binary
+		// stay one install's (maintainer, 2026-11-04)
 		req := rules.Request{Action: p.Action, Repo: d.installTree, User: me.Username, Staged: p.Staged,
-			Source: p.Source, Channel: p.Channel, Binary: d.executable}
+			Source: p.Source, Channel: p.Channel, Binary: d.installed}
 		return in.Elevate(ctx, req, func() { c.Notify(pushGreeterAuthorized.Method, struct{}{}) })
 	})
 }

@@ -246,12 +246,13 @@ func Run(ctx context.Context, opts Options) (err error) {
 		return err
 	}
 	defer d.instance.Release()
-	// A dev image the session start exec'd into goes back to the installed
-	// binary if it fails before it serves (devstart.go)
-	if h != nil && h.Fresh {
+	// A dev image the installed binary exec'd into (at session start or
+	// a runtime switch) goes back to it if it fails before it serves
+	// (devstart.go)
+	if d.fallsBack(h) {
 		defer func() {
 			if err != nil && ctx.Err() == nil {
-				d.fallBackLive(h, err)
+				d.fallBackLive(h, listener, err)
 			}
 		}()
 	}

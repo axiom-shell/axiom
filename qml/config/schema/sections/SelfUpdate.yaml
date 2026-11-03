@@ -3,7 +3,6 @@
 type: object
 x-category: Maintenance
 x-card: {file: SelfUpdateStatus, title: Update status}
-x-intro: DevModeStatus
 x-showIf: {/$packaged: false}
 title: axiom updates
 description: 'Updates come from the repository axiom was cloned from: its release tags, or its main branch. An update only fast-forwards: a clone with changed files or commits of its own is never touched.'

@@ -8,7 +8,7 @@ $schema: 'http://json-schema.org/draft-07/schema#'
 title: Axiom Configuration Schema
 type: object
 x-categories:
-  - {name: General, icon: home}
+  - {name: General, icon: home, cards: [{card: DeveloperOptions, title: Developer options}]}
   - {name: Look & Feel, icon: palette}
   - {name: Compositor, icon: desktop_windows}
   - {name: Workspaces, icon: grid_view}

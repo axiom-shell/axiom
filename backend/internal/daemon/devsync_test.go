@@ -274,6 +274,41 @@ func TestDevConfigTakeoverMirror(t *testing.T) {
 	}
 }
 
+// A takeover setting live and dev disagree on (live's file edited by
+// hand: dev mode mirrors only dev's changes) is never a row, never merged,
+// and a copy naming it is refused, either way: no copy writes one.
+func TestDevConfigNeverCopiesATakeover(t *testing.T) {
+	t.Parallel()
+	m := devSyncFixture(t, liveText(1, "x", false))
+	writeLiveFile(t, m, liveText(1, "x", true))
+	if got := sidesOf(t, m); len(got) != 0 {
+		t.Errorf("rows %v", got)
+	}
+	for _, to := range []string{"live", "dev"} {
+		for _, path := range []string{"Idle.enabled", "Idle.enabled.deeper"} {
+			if _, err := m.configCopy(DevConfigCopyParams{Paths: []config.Path{mustPath(t, path)}, To: to}); axerr.KindOf(err) != axerr.TakeoverRefused {
+				t.Errorf("a copy of %s to %s: %v", path, to, err)
+			}
+		}
+	}
+	res, err := m.configPull(DevConfigPullParams{Mode: "merge"})
+	if err != nil || len(res.Merged) != 0 || len(res.Conflicts) != 0 {
+		t.Errorf("pulled %+v, %v", res, err)
+	}
+	if devValue(m, "Idle.enabled") != false {
+		t.Errorf("dev's Idle.enabled %v", devValue(m, "Idle.enabled"))
+	}
+	if v, _ := config.Lookup(liveFile(t, m), mustPath(t, "Idle.enabled")); v != true {
+		t.Errorf("live's Idle.enabled %v", v)
+	}
+
+	// The install image refuses it too
+	m = installSyncFixture(t, liveText(1, "x", false))
+	if _, err := m.configCopy(DevConfigCopyParams{Paths: []config.Path{mustPath(t, "Idle.enabled")}, To: "live"}); axerr.KindOf(err) != axerr.TakeoverRefused {
+		t.Errorf("a copy of a takeover from the install image: %v", err)
+	}
+}
+
 func TestDevNeverOverwritesALiveSnapshot(t *testing.T) {
 	t.Parallel()
 	m := devSyncFixture(t, liveText(1, "x", false))

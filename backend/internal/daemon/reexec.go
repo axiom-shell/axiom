@@ -132,6 +132,18 @@ func (h *handoff) wellFormed() bool {
 	return h.Listener >= 3 && h.ConfigLock >= 3
 }
 
+// environ is this process's environment with h as the handoff.
+func (h handoff) environ() []string {
+	data, _ := json.Marshal(h)
+	env := []string{ReexecEnv + "=" + string(data)}
+	for _, kv := range os.Environ() {
+		if !strings.HasPrefix(kv, ReexecEnv+"=") {
+			env = append(env, kv)
+		}
+	}
+	return env
+}
+
 // carried: h is a re-exec of a running daemon (not a session-start exec,
 // which hands over only the instance lock).
 func (h *handoff) carried() bool { return h != nil && !h.Fresh }
@@ -226,13 +238,7 @@ func (d *Daemon) reexec(exe string, img image) (err error) {
 			return axerr.Wrap(axerr.Internal, err, "keeping a descriptor across the re-exec")
 		}
 	}
-	data, _ := json.Marshal(h)
-	env := []string{ReexecEnv + "=" + string(data)}
-	for _, kv := range os.Environ() {
-		if !strings.HasPrefix(kv, ReexecEnv+"=") {
-			env = append(env, kv)
-		}
-	}
+	env := h.environ()
 	// No config write may be cut in half: hold the store until the exec
 	d.store.Freeze()
 	d.opts.Log.Info("re-executing", "binary", exe, "shell", h.Shell, "tree", img.Tree, "config", img.ConfigDir)

@@ -2,14 +2,17 @@ package daemon
 
 import (
 	"encoding/json"
+	"net"
 	"os"
-	"strings"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
+	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
@@ -19,13 +22,16 @@ import (
 // handoff (the instance lock only); a missing or stale one leaves the live
 // shell on the live config running while it builds, then switches.
 //
-// The boot guard: before that exec the installed axiom writes State/dev/
-// boot.json naming the build; the dev image's shell clears it with its
-// hello. A marker still there for the same build at the next session start
-// (the dev image or its shell never came up) keeps the session live, with
-// a notification, until the build changes. A dev image that fails before
-// it serves execs back into the installed binary at once, which finds the
-// marker.
+// The boot guard: before every exec into the dev image (that one, and a
+// runtime switch's re-exec: reexecInto) State/dev/boot.json is written
+// naming the build; the dev image's shell clears it with its hello. A
+// marker still there for the same build at the next session start (the
+// dev image or its shell never came up) keeps the session live, with a
+// notification, until the build changes. A dev image that fails before it
+// serves execs back into the installed binary at once (fallBackLive): a
+// session start's with no handoff, a runtime switch's with the handoff it
+// carried, onto the install tree and live config; either finds the marker
+// and stays live, told why.
 
 // bootFile is the boot guard's marker, under the state folder.
 const bootFile = "dev/boot.json"
@@ -59,11 +65,16 @@ type startDecision struct {
 // session start), and whether the tree was given (--tree, $AXIOM_TREE),
 // which wins over dev mode's. A carried re-exec of the installed axiom
 // with dev mode on (a rebuilt installed binary, a self-update) builds a
-// stale dev build again: the one building died with the exec. Pure.
-func startPlan(choice devChoice, build buildCheck, h *handoff, override bool) startDecision {
+// stale dev build again: the one building died with the exec, and stays
+// live, told why, when the guard tripped (a dev image fell back to it).
+// live is the live config's folder. Pure.
+func startPlan(choice devChoice, build buildCheck, h *handoff, override bool, live string) startDecision {
+	waiting := installImageWaiting(choice, h, override, live)
 	switch {
-	case installImageWaiting(choice, h, override) && !build.Fresh && !build.Gone:
+	case waiting && !build.Fresh && !build.Gone:
 		return startDecision{startBuild, build.Why}
+	case waiting && build.Fresh && build.Guarded:
+		return startDecision{startStayLive, guardTripped}
 	case h != nil:
 		return startDecision{startAsIs, "a re-exec runs the image it was handed"}
 	case !choice.Enabled || choice.Tree == "":
@@ -75,18 +86,22 @@ func startPlan(choice devChoice, build buildCheck, h *handoff, override bool) st
 	case !build.Fresh:
 		return startDecision{startBuild, build.Why}
 	case build.Guarded:
-		return startDecision{startStayLive, "the dev build didn't come up last time: staying on the installed axiom until it's built again (axiom dev rebuild)"}
+		return startDecision{startStayLive, guardTripped}
 	}
 	return startDecision{startExec, "the dev build is fresh"}
 }
 
+// guardTripped is a tripped boot guard's notification.
+const guardTripped = "the dev build didn't come up last time: staying on the installed axiom until it's built again (axiom dev rebuild)"
+
 // installImageWaiting: h is a carried re-exec of the install image (the
-// live config) in dev mode, a dev tree chosen and not given over.
-func installImageWaiting(choice devChoice, h *handoff, override bool) bool {
-	return h.carried() && h.Dev && h.ConfigDir == "" && choice.Enabled && choice.Tree != "" && !override
+// live config, live: inherited fills the folder in) in dev mode, a dev
+// tree chosen and not given over.
+func installImageWaiting(choice devChoice, h *handoff, override bool, live string) bool {
+	return h.carried() && h.Dev && h.ConfigDir == live && choice.Enabled && choice.Tree != "" && !override
 }
 
-// bootMarker is boot.json: the build the session start exec'd into.
+// bootMarker is boot.json: the build last exec'd into.
 type bootMarker struct {
 	Tree        string    `json:"tree"`
 	Fingerprint string    `json:"fingerprint"`
@@ -126,11 +141,11 @@ func clearBoot(dirs xdg.Dirs) error {
 // decision then startBuild, so the live image builds it again).
 func (d *Daemon) sessionStart(h *handoff, choice devChoice) startDecision {
 	var check buildCheck
-	if (h == nil || installImageWaiting(choice, h, d.opts.TreeOverride)) && choice.Enabled && choice.Tree != "" && !d.opts.TreeOverride {
+	if (h == nil || installImageWaiting(choice, h, d.opts.TreeOverride, d.dirs.Config)) && choice.Enabled && choice.Tree != "" && !d.opts.TreeOverride {
 		check = buildFresh(d.dirs, choice.Tree)
 		check.Guarded = check.Fresh && guarded(d.dirs, check.Build)
 	}
-	plan := startPlan(choice, check, h, d.opts.TreeOverride)
+	plan := startPlan(choice, check, h, d.opts.TreeOverride, d.dirs.Config)
 	if plan.Action != startExec {
 		return plan
 	}
@@ -155,13 +170,7 @@ func (d *Daemon) execFresh(b devBuild) (err error) {
 		}
 	}()
 	h := handoff{Lock: int(d.instance.File().Fd()), Fresh: true, Installed: d.installed, InstallTree: d.opts.Tree}
-	data, _ := json.Marshal(h)
-	env := []string{ReexecEnv + "=" + string(data)}
-	for _, kv := range os.Environ() {
-		if !strings.HasPrefix(kv, ReexecEnv+"=") {
-			env = append(env, kv)
-		}
-	}
+	env := h.environ()
 	syscall.ForkLock.Lock()
 	defer syscall.ForkLock.Unlock()
 	if _, err := unix.FcntlInt(uintptr(h.Lock), unix.F_SETFD, 0); err != nil {
@@ -172,20 +181,80 @@ func (d *Daemon) execFresh(b devBuild) (err error) {
 	return d.execProcess(DevBinary(d.dirs), os.Args, env)
 }
 
-// fallBackLive is the dev image's way out when it fails before it serves,
-// started by a session start's exec: it execs back into the installed
-// binary with no handoff (the instance lock dropped at the exec, which it
-// takes again), which finds the boot marker and stays live. It returns
-// only when it couldn't.
-func (d *Daemon) fallBackLive(h *handoff, cause error) {
-	if h == nil || !h.Fresh || h.Installed == "" {
+// fallsBack: an image started from h falls back to the installed binary
+// when it fails before it serves: a dev image (a session start's exec, a
+// runtime switch's re-exec) the installed binary handed over to.
+func (d *Daemon) fallsBack(h *handoff) bool {
+	return h != nil && h.Installed != "" && (h.Fresh || h.ConfigDir == devConfigDir(d.dirs))
+}
+
+// fallBackLive is the dev image's way out when it fails before it serves
+// (listener: the socket it adopted, for a carried h), and the store
+// closed: it execs back into the installed binary, which finds the boot
+// marker and stays live. From a session start's exec there's no handoff
+// (the instance lock dropped at the exec, which it takes again); from a
+// runtime switch the carried one goes on, onto the install tree and live
+// config (fallBackCarried). It returns only when it couldn't.
+func (d *Daemon) fallBackLive(h *handoff, listener net.Listener, cause error) {
+	if !d.fallsBack(h) {
 		return
 	}
 	d.opts.Log.Error("the dev image didn't start: back to the installed axiom", "err", cause)
-	d.instance.Release()
-	if err := d.execProcess(h.Installed, os.Args, os.Environ()); err != nil {
+	var err error
+	if h.Fresh {
+		d.instance.Release()
+		err = d.execProcess(h.Installed, os.Args, os.Environ())
+	} else {
+		err = d.fallBackCarried(h, listener)
+	}
+	if err != nil {
 		d.opts.Log.Error("re-executing the installed axiom", "err", err)
 	}
+}
+
+// fallBackCarried re-execs the installed binary with the handoff h
+// carried, as reexec would from the install image: the instance lock,
+// the socket, the shell and the commands go on; the config's writer lock
+// is the live config's, taken again (the store let go of the one it
+// had). The shell restarts when it ran the dev image's tree or config
+// (needsShellRestart: h's entry and config).
+func (d *Daemon) fallBackCarried(h *handoff, listener net.Listener) error {
+	lf, ok := listener.(*net.UnixListener)
+	if !ok || h.InstallTree == "" {
+		return axerr.New(axerr.Internal, "nothing to hand the installed axiom")
+	}
+	ln, err := lf.File()
+	if err != nil {
+		return axerr.Wrap(axerr.Internal, err, "the socket to hand over")
+	}
+	defer ln.Close() // only reached when the exec failed
+	lock, err := fsx.TryLock(filepath.Join(d.dirs.Config, store.FileName+".lock"))
+	if err != nil {
+		return err
+	}
+	defer lock.Release()
+	next := *h
+	next.Lock, next.ConfigLock, next.Listener = int(d.instance.File().Fd()), int(lock.File().Fd()), int(ln.Fd())
+	next.Tree, next.ConfigDir, next.Dev = h.InstallTree, d.dirs.Config, h.Dev
+	syscall.ForkLock.Lock()
+	defer syscall.ForkLock.Unlock()
+	next.Children = d.children.Handoff()
+	defer d.children.Resume()
+	fds := []int{next.Lock, next.ConfigLock, next.Listener}
+	for _, ch := range next.Children {
+		fds = append(fds, ch.Output...)
+	}
+	defer func() {
+		for _, fd := range fds {
+			unix.CloseOnExec(fd)
+		}
+	}()
+	for _, fd := range fds {
+		if _, err := unix.FcntlInt(uintptr(fd), unix.F_SETFD, 0); err != nil {
+			return axerr.Wrap(axerr.Internal, err, "keeping a descriptor across the re-exec")
+		}
+	}
+	return d.execProcess(h.Installed, os.Args, next.environ())
 }
 
 // execProcess replaces the process (Options.exec in tests).
