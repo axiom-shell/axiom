@@ -481,6 +481,13 @@ def check_argv(env, argv, cwd):
     if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
 
+    # Dev mode's writes (the daemon's dev.set, dev.rebuild, dev.config.copy
+    # and dev.config.pull: switching its image or tree, or writing a config)
+    # sent to the live daemon by hand, past the axiom dev verbs' rule
+    dev_writes = ("dev.set", "dev.rebuild", "dev.config.copy", "dev.config.pull")
+    if sends and any(m in a for a in args for m in dev_writes) and axiom_live_display(env, args):
+        deny("Never, while testing", "dev.set / dev.rebuild / dev.config.copy|pull only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket), never the live one.")
+
     # The real config.json: deleted or moved (the file or a folder above it)
     paths = [a for a in args if not a.startswith("-")]
     holding = {LIVE_CONFIG, *LIVE_CONFIG.parents}

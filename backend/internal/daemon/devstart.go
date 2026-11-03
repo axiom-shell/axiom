@@ -57,9 +57,13 @@ type startDecision struct {
 // startPlan decides a session start: dev mode's choice, its build's check
 // (looked at only when dev mode is on with a tree), the handoff (nil: a
 // session start), and whether the tree was given (--tree, $AXIOM_TREE),
-// which wins over dev mode's. Pure.
+// which wins over dev mode's. A carried re-exec of the installed axiom
+// with dev mode on (a rebuilt installed binary, a self-update) builds a
+// stale dev build again: the one building died with the exec. Pure.
 func startPlan(choice devChoice, build buildCheck, h *handoff, override bool) startDecision {
 	switch {
+	case installImageWaiting(choice, h, override) && !build.Fresh && !build.Gone:
+		return startDecision{startBuild, build.Why}
 	case h != nil:
 		return startDecision{startAsIs, "a re-exec runs the image it was handed"}
 	case !choice.Enabled || choice.Tree == "":
@@ -74,6 +78,12 @@ func startPlan(choice devChoice, build buildCheck, h *handoff, override bool) st
 		return startDecision{startStayLive, "the dev build didn't come up last time: staying on the installed axiom until it's built again (axiom dev rebuild)"}
 	}
 	return startDecision{startExec, "the dev build is fresh"}
+}
+
+// installImageWaiting: h is a carried re-exec of the install image (the
+// live config) in dev mode, a dev tree chosen and not given over.
+func installImageWaiting(choice devChoice, h *handoff, override bool) bool {
+	return h.carried() && h.Dev && h.ConfigDir == "" && choice.Enabled && choice.Tree != "" && !override
 }
 
 // bootMarker is boot.json: the build the session start exec'd into.
@@ -116,7 +126,7 @@ func clearBoot(dirs xdg.Dirs) error {
 // decision then startBuild, so the live image builds it again).
 func (d *Daemon) sessionStart(h *handoff, choice devChoice) startDecision {
 	var check buildCheck
-	if h == nil && choice.Enabled && choice.Tree != "" && !d.opts.TreeOverride {
+	if (h == nil || installImageWaiting(choice, h, d.opts.TreeOverride)) && choice.Enabled && choice.Tree != "" && !d.opts.TreeOverride {
 		check = buildFresh(d.dirs, choice.Tree)
 		check.Guarded = check.Fresh && guarded(d.dirs, check.Build)
 	}

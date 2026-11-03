@@ -32,18 +32,11 @@ RowLayout {
     textColor: Theme.accent
   }
 
-  StyledIcon {
+  SpinningIcon {
     text: "refresh"
     textColor: Theme.foregroundAlt
     opacity: root.scanning ? 1 : 0
-
-    RotationAnimation on rotation {
-      running: root.scanning && Appearance.animations
-      loops: Animation.Infinite
-      from: 0
-      to: 360
-      duration: Appearance.animSlow * 4
-    }
+    spinning: root.scanning
 
     Glide on opacity {}
   }

@@ -3793,7 +3793,6 @@
     "Copied to live.": "",
     "Copied to dev.": "",
     "Live changes brought over.": "",
-    "Live changes brought over; {0} changed in dev too kept their dev values.": "",
     "Compare again": "",
     "Live changed since dev last took it over.": "",
     "Bring live changes over": "",
@@ -3830,6 +3829,8 @@
     "Build failed {0}": "",
     "Dev Mode": "",
     "Rebuild, open the Development settings or turn dev mode off, when hovered.": "",
-    "Set a dev tree to compare its config with live.": ""
+    "Set a dev tree to compare its config with live.": "",
+    "Live changes brought over; 1 setting changed in dev too kept its dev value.": "",
+    "Live changes brought over; {0} settings changed in dev too kept their dev values.": ""
   }
 }

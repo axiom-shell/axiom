@@ -382,7 +382,7 @@ QtObject {
       available: () => BackendManager.ready,
       status: () => DevManager.building ? I18n.tr("Building…") : DevManager.enabled ? I18n.tr("On") : I18n.tr("Off"),
       // `set <path>` is typed out, never offered: no options past "set"
-      options: arg => /^\s*set(\s|$)/.test(arg ?? "") ? [] : root._onOffOptions().concat(DevManager.enabled && DevManager.available ? [
+      options: arg => /^\s*set(\s|$)/.test(arg ?? "") ? [] : root._onOffOptions().concat(DevManager.available ? [
           {
             title: "rebuild",
             value: "rebuild"

@@ -35,9 +35,10 @@ Rectangle {
     anchors.rightMargin: Widget.padding
     spacing: Widget.spacing
 
-    StyledIcon {
+    SpinningIcon {
       text: DevManager.building ? "progress_activity" : "code"
       textColor: DevManager.buildFailed ? Theme.error : Theme.accent
+      spinning: DevManager.building
     }
 
     StyledText {

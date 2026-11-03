@@ -28,6 +28,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Text and structure (`reusable/`)
 - `StyledText` / `StyledIcon`.
+- `SpinningIcon`: a `StyledIcon` that turns while `spinning` (gated on `Appearance.animations`), upright again when it stops: the busy mark (the radio menus' scan, the dev build in the DevMode widget and the Settings banner).
 - `SlashedIcon`: an icon struck through while `slashed`, one drawn slash (top left to bottom right, Material's direction) over a `cutout` line in what it sits on. Every off state is the base icon slashed, never an icon's own `_off` form, so they all look the same (the OSD's bars and status icons).
 - `SectionHeading`: accent title + muted description, folded past three lines.
 - `ClampedText`: muted help text cut to `maxLines` (3) with a More / Less link, shown only when it's longer. Field and card descriptions use it.

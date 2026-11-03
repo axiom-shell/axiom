@@ -30,7 +30,7 @@ BarIconWidget {
   clickable: true
   onClicked: DevManager.openDevelopment()
 
-  StyledIcon {
+  SpinningIcon {
     id: spinner
     parent: root.lead
     anchors.centerIn: parent
@@ -38,14 +38,7 @@ BarIconWidget {
     text: "progress_activity"
     textColor: root.iconColor
     textSize: root.fontSize * root.iconScale
-
-    RotationAnimation on rotation {
-      running: DevManager.building && Appearance.animations && !root.hidden
-      loops: Animation.Infinite
-      from: 0
-      to: 360
-      duration: Appearance.animSlow * 4
-    }
+    spinning: DevManager.building && !root.hidden
   }
 
   PopoutAnchor {

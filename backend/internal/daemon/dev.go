@@ -400,7 +400,9 @@ func (m *devMode) Set(ctx context.Context, p DevSetParams) error {
 		treeDir = newTree
 	}
 	treeChanged := treeDir != oldTree
-	if on && treeDir == "" {
+	// Refused only when asked for dev on or a tree: `axiom run --dev` runs
+	// dev mode on with no tree, and its options still change
+	if on && treeDir == "" && (p.Enabled != nil || p.Tree != nil) {
 		if oldTree != "" {
 			return axerr.New(axerr.Refused, "dev mode runs this tree: turn it off first (axiom dev off)")
 		}
@@ -421,7 +423,11 @@ func (m *devMode) Set(ctx context.Context, p DevSetParams) error {
 		git = gitInfo(ctx, treeDir)
 	}
 	if err := saveDevChoice(m.d.dirs, func(c *devChoice) {
-		c.Enabled, c.Tree = on, treeDir
+		// Enabled only when asked: --dev's one run is never saved
+		c.Tree = treeDir
+		if p.Enabled != nil {
+			c.Enabled = on
+		}
 		if p.Options != nil {
 			c.Options = *p.Options
 		}
@@ -446,6 +452,11 @@ func (m *devMode) Set(ctx context.Context, p DevSetParams) error {
 	} else if treeDir != "" && on && !wasOn {
 		m.check = check
 	}
+	// A stale build is built by the builds the watchers restart with (a
+	// kick now could reach the old ones, cancelled mid-build)
+	if on && (!wasOn || treeChanged) && !check.Fresh {
+		m.startKick = true
+	}
 	m.mu.Unlock()
 
 	if on != wasOn {
@@ -468,8 +479,6 @@ func (m *devMode) Set(ctx context.Context, p DevSetParams) error {
 	case on && (!wasOn || treeChanged):
 		if check.Fresh {
 			m.switchSoon(DevBinary(m.d.dirs), m.devImage(treeDir))
-		} else {
-			m.builds.Kick()
 		}
 	}
 	return nil
@@ -773,6 +782,7 @@ func (m *devMode) build(ctx context.Context) {
 		m.push()
 		return
 	}
+	swapped := err == nil
 	if err == nil && info.Handoff < minDevHandoff {
 		err = axerr.New(axerr.Unavailable, "this tree predates dev trees: merge main")
 		out = []byte(err.Error())
@@ -790,6 +800,13 @@ func (m *devMode) build(ctx context.Context) {
 		b := devBuild{Tree: treeDir, Fingerprint: fp, Commit: git.Commit, Dirty: git.Dirty, Handoff: info.Handoff, Protocol: info.Protocol, At: res.At}
 		if werr := writeBuild(m.d.dirs, b); werr != nil {
 			m.d.opts.Log.Warn("dev mode: recording the build", "err", werr)
+		}
+	} else if swapped {
+		// The new binary replaced the dev one but isn't recorded (refused
+		// handoff, or no fingerprint): drop the old record, so it never
+		// vouches for this binary as its tree's fresh build
+		if rerr := os.Remove(m.d.dirs.State + buildFile); rerr != nil && !os.IsNotExist(rerr) {
+			m.d.opts.Log.Warn("dev mode: dropping the build record", "err", rerr)
 		}
 	}
 	m.mu.Lock()

@@ -57,7 +57,7 @@ class Bash(unittest.TestCase):
                  "axiom config set Idle.enabled on --takeover", "axiom ipc monitors keep", "axiom ipc selfUpdate update",
                  f"rm {guard.LIVE_CONFIG}", f"cp /tmp/x.json {guard.LIVE_CONFIG}", "niri msg action quit",
                  f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
-                 f"python3 -c {call % 'greeter.apply'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
                  "axiom ipc lockscreen lock", "qs kill", "gh issue create -t x", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
@@ -220,6 +220,13 @@ class Bash(unittest.TestCase):
         self.blocks(f"python3 -c {call}", f"printf %s {call}", "axiom ipc selfUpdate update")
         self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'selfupdate.check'",
                     "grep -rn selfupdate.apply backend", "go test ./internal/selfupdate")
+
+    def test_dev_writes_sent_by_hand(self):
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        for method in ("dev.set", "dev.rebuild", "dev.config.copy", "dev.config.pull"):
+            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
+            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
+        self.allows(f"python3 -c {call % 'dev.config.diff'}", f"python3 -c {call % 'dev.get'}")
 
     def test_greeter_install_command(self):
         self.blocks("axiom greeter-install install . me", "sudo axiom greeter-install uninstall . me",

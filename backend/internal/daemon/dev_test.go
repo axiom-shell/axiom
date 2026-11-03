@@ -193,6 +193,22 @@ func TestDevBuildSourceChangedMeanwhile(t *testing.T) {
 	}
 }
 
+// A build that replaces the dev binary but is refused (a tree older than
+// dev trees) drops the record of the build before it, which would
+// otherwise vouch for this binary as that tree's fresh build.
+func TestRefusedDevBuildDropsTheOldRecord(t *testing.T) {
+	t.Parallel()
+	m := devFixture(t, fakeGo(t, buildsAxiom(minDevHandoff-1)))
+	recordReexecs(m)
+	if err := writeBuild(m.d.dirs, devBuild{Tree: m.tree, Handoff: minDevHandoff}); err != nil {
+		t.Fatal(err)
+	}
+	m.build(context.Background())
+	if b, recorded := readBuild(m.d.dirs); recorded {
+		t.Errorf("build.json kept: %+v", b)
+	}
+}
+
 // A build switches into the dev image (and records itself) only when
 // nothing changed meanwhile: a new dev tree (gen), dev mode off, or a
 // binary older than dev trees never re-execs.

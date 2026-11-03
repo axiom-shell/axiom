@@ -171,6 +171,10 @@ func TestStartPlan(t *testing.T) {
 		{"no dev tree", devChoice{Enabled: true}, fresh, nil, false, startAsIs},
 		{"a re-exec", on, fresh, &handoff{Tree: "/t"}, false, startAsIs},
 		{"the dev image's own start", on, fresh, &handoff{Fresh: true}, false, startAsIs},
+		{"a re-exec of the install image, build stale", on, buildCheck{Why: "stale"}, &handoff{Tree: "/t", Dev: true}, false, startBuild},
+		{"a re-exec of the install image, build fresh", on, fresh, &handoff{Tree: "/t", Dev: true}, false, startAsIs},
+		{"a re-exec of the dev image, build stale", on, buildCheck{Why: "stale"}, &handoff{Tree: "/clone", Dev: true, ConfigDir: "/dev"}, false, startAsIs},
+		{"a re-exec of the install image, dev tree given over", on, buildCheck{Why: "stale"}, &handoff{Tree: "/t", Dev: true}, true, startAsIs},
 		{"--tree wins", on, fresh, nil, true, startAsIs},
 		{"--tree wins over a stale build", on, buildCheck{Why: "stale"}, nil, true, startAsIs},
 		{"fresh", on, fresh, nil, false, startExec},
@@ -343,6 +347,25 @@ func TestFallBackLive(t *testing.T) {
 	}
 }
 
+// `axiom run --dev` (dev mode on for one run, no dev tree): the options
+// still change, and neither they nor a tree set save dev mode on.
+func TestDevSetUnderForcedDev(t *testing.T) {
+	t.Parallel()
+	m := devFixture(t, fakeGo(t, "exit 1"))
+	m.tree = "" // enabled by --dev, nothing saved
+	ctx := context.Background()
+	yes := true
+	if err := m.Set(ctx, DevSetParams{Options: &yes}); err != nil {
+		t.Fatalf("options under --dev: %v", err)
+	}
+	if got := loadDevChoice(m.d.dirs); got != (devChoice{Options: true}) {
+		t.Errorf("saved %+v", got)
+	}
+	if err := m.Set(ctx, DevSetParams{Enabled: &yes}); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("on without a tree: %v", err)
+	}
+}
+
 // dev.set: the dev tree checked (absolute, an axiom tree with the Go
 // source, symlinks resolved) and saved with the rest of dev.json; on
 // needs a tree.
@@ -397,14 +420,21 @@ func TestDevSetValidates(t *testing.T) {
 	}
 	gen := m.gen
 
-	// On: the build is stale, so it's built
+	// On: the build is stale, so it's built, by the builds the watchers
+	// restart with (never kicked into the old ones)
 	if err := m.Set(ctx, DevSetParams{Enabled: &yes}); err != nil {
 		t.Fatal(err)
 	}
+	m.mu.Lock()
+	kick := m.startKick
+	m.mu.Unlock()
+	if !kick {
+		t.Error("dev on didn't ask for a build")
+	}
 	select {
 	case <-m.builds.ch:
+		t.Error("dev on kicked the old builds")
 	default:
-		t.Error("dev on didn't kick a build")
 	}
 	// A cleared tree while on is refused; off and cleared at once isn't
 	if err := m.Set(ctx, DevSetParams{Tree: str("")}); axerr.KindOf(err) != axerr.Refused {

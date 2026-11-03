@@ -75,7 +75,7 @@ FieldGroup {
       }
       root.rows = result.diff.rows;
       const kept = result.conflicts?.length ?? 0;
-      root._said(kept === 0 ? I18n.tr("Live changes brought over.") : I18n.tr("Live changes brought over; {0} changed in dev too kept their dev values.", kept), false);
+      root._said(kept === 0 ? I18n.tr("Live changes brought over.") : kept === 1 ? I18n.tr("Live changes brought over; 1 setting changed in dev too kept its dev value.") : I18n.tr("Live changes brought over; {0} settings changed in dev too kept their dev values.", kept), false);
     });
   }
 
