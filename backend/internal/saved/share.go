@@ -35,7 +35,7 @@ func Share(p config.Pipeline, parsed any, name string, places bool) (Shared, err
 		return Shared{}, err
 	}
 	if len(loaded.Errors) > 0 {
-		return Shared{}, &axerr.Error{Kind: axerr.InvalidConfig, Message: name + " isn't a valid config", Issues: issuesOf(loaded.Errors)}
+		return Shared{}, &axerr.Error{Kind: axerr.InvalidConfig, Message: name + " isn't a valid config", Issues: axerr.IssuesFrom(loaded.Errors)}
 	}
 	var monitors share.Monitors
 	if places {

@@ -767,7 +767,7 @@ func (s *Service) load(parsed any) (*jsonx.Object, error) {
 		return nil, err
 	}
 	if len(loaded.Errors) > 0 {
-		return nil, &axerr.Error{Kind: axerr.InvalidConfig, Message: "it isn't a valid config", Issues: issuesOf(loaded.Errors)}
+		return nil, &axerr.Error{Kind: axerr.InvalidConfig, Message: "it isn't a valid config", Issues: axerr.IssuesFrom(loaded.Errors)}
 	}
 	cfg := loaded.Config
 	if loaded.FromFormat1 {
@@ -866,16 +866,4 @@ func versioned(parsed any, name string) (*jsonx.Object, error) {
 		return nil, axerr.New(axerr.InvalidConfig, "%s has no config version, so it can't be imported", name)
 	}
 	return obj, nil
-}
-
-func issuesOf(errs []string) []axerr.Issue {
-	out := make([]axerr.Issue, 0, len(errs))
-	for _, e := range errs {
-		path, msg, ok := strings.Cut(e, ": ")
-		if !ok {
-			path, msg = "", e
-		}
-		out = append(out, axerr.Issue{Path: path, Message: msg})
-	}
-	return out
 }

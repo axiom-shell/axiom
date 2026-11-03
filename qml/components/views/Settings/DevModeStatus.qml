@@ -18,7 +18,7 @@ ColumnLayout {
       return DevManager.tree === "" ? I18n.tr("Dev mode is off; no dev tree is set.") : I18n.tr("Dev mode is off; the dev tree is {0}.", Paths.shortenHome(DevManager.tree));
     if (DevManager.building)
       return I18n.tr("Dev mode is on, building {0}.", Paths.shortenHome(DevManager.tree));
-    if (DevManager.lastBuild && !DevManager.lastBuild.ok)
+    if (DevManager.buildFailed)
       return I18n.tr("Dev mode is on, but the last dev build failed.");
     return DevManager.active ? I18n.tr("Dev mode runs {0} on its own config.", Paths.shortenHome(DevManager.tree)) : I18n.tr("Dev mode is on; the installed axiom runs until the dev build is ready.");
   }
@@ -57,7 +57,7 @@ ColumnLayout {
 
     StatusChip {
       text: DevManager.building ? I18n.tr("Building") : DevManager.enabled ? I18n.tr("Dev mode") : I18n.tr("Dev mode off")
-      color: DevManager.lastBuild && !DevManager.lastBuild.ok ? Theme.error : DevManager.enabled ? Theme.accent : Theme.foregroundAlt
+      color: DevManager.buildFailed ? Theme.error : DevManager.enabled ? Theme.accent : Theme.foregroundAlt
     }
 
     StyledText {

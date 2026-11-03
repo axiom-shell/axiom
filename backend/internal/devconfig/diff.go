@@ -142,7 +142,7 @@ func WriteLive(livePath, basePath string, ops []config.Op, install *schema.Schem
 		return err
 	}
 	if _, problems := (config.Pipeline{S: install}).Check(next); len(problems) > 0 {
-		return &axerr.Error{Kind: axerr.InvalidConfig, Message: "the change makes the live config invalid", Issues: issues(problems)}
+		return &axerr.Error{Kind: axerr.InvalidConfig, Message: "the change makes the live config invalid", Issues: axerr.IssuesFrom(problems)}
 	}
 	out := jsonx.Marshal(next)
 	if !jsonx.Equal(next, live) {

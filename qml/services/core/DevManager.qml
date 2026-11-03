@@ -31,8 +31,8 @@ Singleton {
   // { ok, at, output }, null before the first build this run (a failure
   // also says why a dev build didn't start: the boot guard, a tree gone)
   readonly property var lastBuild: BackendManager.dev.lastBuild ?? null
-  // Running a dev build rather than the installed binary
-  readonly property bool onDevBuild: (BackendManager.dev.binary ?? "") !== (BackendManager.dev.installed ?? "")
+  // The last build failed (or a dev start stayed on the installed axiom)
+  readonly property bool buildFailed: root.lastBuild?.ok === false
   // The last build in a line, for the DevMode widget's tooltip and menu:
   // building, built or failed and when, or none yet this run
   readonly property string buildText: {
@@ -56,11 +56,10 @@ Singleton {
   // why not)
   readonly property bool buildFresh: BackendManager.dev.build?.fresh ?? false
   readonly property string buildWhy: BackendManager.dev.build?.why ?? ""
-  // The dev config's file and live's; while the dev image runs, whether
+  // The dev config's file; while the dev image runs, whether
   // live changed since dev last took it over, and what opening it noted
   // (seeded from the defaults: live is newer than the dev tree)
   readonly property string configPath: BackendManager.dev.config?.path ?? ""
-  readonly property string livePath: BackendManager.dev.config?.livePath ?? ""
   readonly property bool liveChanged: BackendManager.dev.config?.liveChanged ?? false
   readonly property string configNote: BackendManager.dev.config?.note ?? ""
 
@@ -71,10 +70,6 @@ Singleton {
     BackendManager.call("dev.set", {
       "enabled": on
     }, root._answer("dev mode", done));
-  }
-
-  function toggle() {
-    root.setEnabled(!root.enabled);
   }
 
   // Makes the clone at `path` the dev tree (axiom checks it is one)

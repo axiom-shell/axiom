@@ -14,8 +14,6 @@ import qs.components.content.parts
 Panel {
   id: root
 
-  readonly property bool failed: DevManager.lastBuild?.ok === false
-
   spacing: Widget.spacing
   implicitWidth: Math.max(Widget.px(280), body.implicitWidth + margins * 2)
 
@@ -41,7 +39,7 @@ Panel {
     StyledText {
       Layout.fillWidth: true
       text: DevManager.buildText
-      textColor: root.failed && !DevManager.building ? Theme.error : Theme.foregroundAlt
+      textColor: DevManager.buildFailed && !DevManager.building ? Theme.error : Theme.foregroundAlt
       textSize: Appearance.fontSizeBy(-2)
       elide: Text.ElideRight
     }

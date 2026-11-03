@@ -94,7 +94,6 @@ def schema_strings(node, out):
             out.add(node["x-card"]["title"])
         if isinstance(node.get("x-categories"), list):
             out.update(c["name"] for c in node["x-categories"] if isinstance(c, dict) and isinstance(c.get("name"), str))
-            out.update(c["cardTitle"] for c in node["x-categories"] if isinstance(c, dict) and isinstance(c.get("cardTitle"), str))
         if isinstance(node.get("x-libraryGroups"), list):
             out.update(g for g in node["x-libraryGroups"] if isinstance(g, str))
         if isinstance(node.get("x-hookup"), list):

@@ -20,7 +20,7 @@ x-categories:
   - {name: Calendar, icon: calendar_month}
   - {name: Modules, icon: widgets}
   - {name: Theme integrations, icon: format_paint}
-  - {name: Maintenance, icon: build, card: SavedConfigs, cardTitle: Saved configurations}
+  - {name: Maintenance, icon: build, cards: [{card: SavedConfigs, title: Saved configurations}]}
   - {name: Development, icon: code, showIf: {/$devOptions: true}, cards: [{card: DevTree, title: Dev tree}, {card: DevConfigDiff, title: Dev config and live}]}
 x-libraryGroups:
   - Desktop

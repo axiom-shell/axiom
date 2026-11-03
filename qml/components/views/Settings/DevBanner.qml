@@ -38,7 +38,7 @@ Rectangle {
 
     StyledIcon {
       text: DevManager.building ? "progress_activity" : "code"
-      textColor: DevManager.lastBuild && !DevManager.lastBuild.ok ? Theme.error : Theme.accent
+      textColor: DevManager.buildFailed ? Theme.error : Theme.accent
     }
 
     StyledText {

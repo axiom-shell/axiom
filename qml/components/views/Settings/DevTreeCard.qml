@@ -15,14 +15,12 @@ FieldGroup {
   // What axiom last answered a click with: a refusal's message, or ""
   property string message: ""
 
-  readonly property bool failed: DevManager.lastBuild !== null && !DevManager.lastBuild.ok
-
   readonly property string statusLabel: {
     if (!DevManager.enabled)
       return I18n.tr("Off");
     if (DevManager.building)
       return I18n.tr("Building");
-    if (root.failed)
+    if (DevManager.buildFailed)
       return I18n.tr("Build failed");
     return DevManager.active ? I18n.tr("Running") : I18n.tr("Waiting for the build");
   }
@@ -30,7 +28,7 @@ FieldGroup {
   readonly property color statusColor: {
     if (!DevManager.enabled)
       return Theme.foregroundAlt;
-    if (root.failed)
+    if (DevManager.buildFailed)
       return Theme.error;
     if (DevManager.building)
       return Theme.accent;

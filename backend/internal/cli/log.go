@@ -15,7 +15,7 @@ import (
 func logCommand() *Command {
 	return &Command{
 		Name:    "log",
-		Summary: "Show the shell's log (warnings and errors; -f follows)",
+		Summary: "Show the shell's log (debug lines only with --debug; -f follows)",
 		Args:    "[-- QS-ARGS…]",
 		Help: `Prints the log of the shell axiom runs: quickshell's log of the
 instance running from the shell's QML folder, which the daemon names (with

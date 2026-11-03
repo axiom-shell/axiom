@@ -242,7 +242,7 @@ func InShape(pipe config.Pipeline, raw []byte) (*jsonx.Object, error) {
 		return nil, err
 	}
 	if len(loaded.Errors) > 0 {
-		return nil, &axerr.Error{Kind: axerr.InvalidConfig, Message: "the config doesn't load", Issues: issues(loaded.Errors)}
+		return nil, &axerr.Error{Kind: axerr.InvalidConfig, Message: "the config doesn't load", Issues: axerr.IssuesFrom(loaded.Errors)}
 	}
 	return loaded.Config, nil
 }
@@ -323,26 +323,4 @@ func putAt(o *jsonx.Object, path []string, v any) {
 		o = next
 	}
 	o.Set(path[len(path)-1], v)
-}
-
-// issues is validation's "path: message" lines as issues.
-func issues(lines []string) []axerr.Issue {
-	out := make([]axerr.Issue, 0, len(lines))
-	for _, l := range lines {
-		path, msg, ok := cut(l)
-		if !ok {
-			path, msg = "", l
-		}
-		out = append(out, axerr.Issue{Path: path, Message: msg})
-	}
-	return out
-}
-
-func cut(line string) (string, string, bool) {
-	for i := 0; i+1 < len(line); i++ {
-		if line[i] == ':' && line[i+1] == ' ' {
-			return line[:i], line[i+2:], true
-		}
-	}
-	return "", "", false
 }

@@ -828,8 +828,12 @@ TestCase {
         {
           "name": "Tools",
           "icon": "build",
-          "card": "Tools",
-          "cardTitle": "Tool card"
+          "cards": [
+            {
+              "card": "Tools",
+              "title": "Tool card"
+            }
+          ]
         }
       ],
       "properties": {

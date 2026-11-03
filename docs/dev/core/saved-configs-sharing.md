@@ -7,7 +7,7 @@
 Snapshots of the config, the shipped example setups, and sharing a config through export/import. All of them carry only what `x-scope` says (snapshots also the `x-snapshot` wallpaper setup), so loading one never changes another machine setting, and never an `x-takeover` one. axiom does the work (`saved.*` and `share.*` methods, package `saved` over the pure `share`); `SavedConfigsManager` calls it and keeps what the settings page shows. Tests: `go test ./internal/share ./internal/saved` (the format-1 cases are the shared fixtures recorded from the JS `ConfigExamples`).
 
 ### Where it shows
-- The Maintenance category's own card `SavedConfigsCard` (its `x-categories` `card`, wide, last).
+- The Maintenance category's own card `SavedConfigsCard` (its `x-categories` `cards`, wide, last).
 - It shows `SavedConfigsManager`'s snapshots in `~/.config/axiom/saved/`.
 - Below them: sharing (Share: Export, Import…) and the example setups in `data/examples/` (`SavedConfigsManager.examples`).
 - The onboarder's Look page shows the examples too, as cards that apply on a click ([Onboarding](../features/onboarding.md)). `share.examples` gives each `{ name, title, description, theme, screenBorder, bars: [{ location, background }], docks: [{ edge }] }`: the shown bars and docks read from the example loaded as applying takes it, for the card's drawn preview.

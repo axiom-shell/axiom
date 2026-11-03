@@ -505,26 +505,10 @@ QtObject {
     return null;
   }
 
-  // A declared category's own hand-built cards, [{ card, title }]: its
-  // `cards`, or the older single `card` titled `cardTitle`
-  function _ownCards(declared) {
-    if (declared?.cards)
-      return Array.prototype.map.call(declared.cards, own => ({
-            "card": own.card,
-            "title": own.title ?? ""
-          }));
-    return declared?.card ? [
-      {
-        "card": declared.card,
-        "title": declared.cardTitle ?? ""
-      }
-    ] : [];
-  }
-
   // [{ name, icon, cards: [{ card, title }], sections: [key], links: [page
   // type] }]: the root's `x-categories` in order (`icon`, and `cards`, the
   // category's own hand-built cards: settings/<card>Card.qml, wide, titled
-  // `title` in the sidebar; or one `card` titled `cardTitle`), then any
+  // `title` in the sidebar), then any
   // other `x-category` in schema order. A section without `x-category` is
   // a category of its own. A declared category with no sections and no
   // card is left out, as is one whose `showIf` fails and a section whose
@@ -535,7 +519,10 @@ QtObject {
     const make = (name, declared) => ({
           "name": name,
           "icon": declared?.icon ?? "settings",
-          "cards": root._ownCards(declared),
+          "cards": Array.prototype.map.call(declared?.cards ?? [], own => ({
+                "card": own.card,
+                "title": own.title ?? ""
+              })),
           "sections": [],
           "links": []
         });
