@@ -1331,14 +1331,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
 
-### The Calendar page can't open in a window: its state lives in the view
-- **Where:** `qml/components/views/CalendarPage/CalendarPage.qml:20` (`selectedKey`), `qml/components/content/parts/calendar/DayPane.qml:20` (`_editing`), `qml/components/content/parts/calendar/EventEditor.qml:18` (`draft`)
-- **What:** Every other tool page that makes sense beside the desktop opens in a window of its own (`x-window`, `docs/dev/overlay/page-windows.md`), but CalendarPage was taken out of them: moving a page between the overlay and its window destroys one view and builds another, and a page window's state "must live in its manager, never the page" (`qml/components/views/AGENTS.md`). The Calendar page keeps its selected day, its shown month (`MonthGrid`'s `year`/`month`) and the open event editor (DayPane's `_editing`, EventEditor's `draft` and fields, `busy` while a save is in flight) in the view, so popping it out would silently drop a half-written event and reopen on today. Fix: move the day, month and editor draft into `CalendarManager` (the editor edits a manager-held draft, as the other editor pages do, with an unsaved dot while one is open), then put back `window: true` in its `schema.yaml`, its desktop entry in `data/applications/` (`axiom-calendarpage.desktop`, as the others), and `calendarpage` in the `pages` row of `docs/usage.md`.
-- **Size:** needs a plan
-- **Found:** 2026-11-04, while reviewing the page windows branch
-
 ### A save conflict reloads nothing, so trying again conflicts again
-- **Where:** `backend/internal/calendar/calendar.go:582` (`Save`), `backend/internal/calendar/calendar.go:618` (`Delete`), `qml/services/apps/CalendarManager.qml:325` (`errorText`), `qml/components/content/parts/calendar/EventEditor.qml:101` (`_save`)
+- **Where:** `backend/internal/calendar/calendar.go:582` (`Save`), `backend/internal/calendar/calendar.go:618` (`Delete`), `qml/services/apps/CalendarManager.qml:325` (`errorText`), `qml/services/apps/EventDraft.qml:111` (`saveAs`)
 - **What:** An event changed elsewhere (a phone) since the last sync: axiom's PUT gets 412 and `Save` returns `conflict` before `resync`, so objects.json and events.json keep the old copy and etag. The editor says "The event changed elsewhere. It has been reloaded: check it and try again." but nothing was reloaded, and Save again sends the same draft etag (`firstOf(r.Etag, obj.Etag)`, the draft's first) and conflicts again until the next timed sync, and even then the open editor keeps the stale etag. The same holds for a local calendar's file changed on disk, and for `cachedObject`'s conflict when the event is gone from the cache. Fix: on a `Conflict` from `put` or `cachedObject`, `Save` and `Delete` run `s.resync` for that calendar before returning the error; the editor, on `conflict`, reopens on the fresh event (`CalendarEvents.draftOf` of the occurrence with the same href and rid, or closes when it's gone), so what it says is true.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
@@ -1350,8 +1344,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Enter in the editor's title saves again while busy and picks All events while asking
-- **Where:** `qml/components/content/parts/calendar/EventEditor.qml:158` (`titleEntry`'s `onAccepted`), `qml/components/content/parts/calendar/EventEditor.qml:86` (`save`)
-- **What:** Only the Save button is disabled while `busy`; the title's `onAccepted: root.save()` isn't, and `save()` doesn't check `busy`. A new event saved with Enter twice on a slow server queues two `calendar.save` jobs with no href: two identical events. And while the "Change which?" row shows for a recurring event, `save()` skips the question (`root.asking === ""` is false) and calls `_save("series")`: pressing Enter again after editing a title changes every occurrence without the user choosing. Fix: `if (root.busy || root.asking !== "") return;` at the top of `save()` (the row's own buttons pick the scope).
+- **Where:** `qml/components/content/parts/calendar/EventEditor.qml:63` (`titleEntry`'s `onAccepted`), `qml/services/apps/EventDraft.qml:95` (`save`)
+- **What:** Only the Save button is disabled while `busy`; the title's `onAccepted: root.save()` isn't, and `save()` doesn't check `busy`. A new event saved with Enter twice on a slow server queues two `calendar.save` jobs with no href: two identical events. And while the "Change which?" row shows for a recurring event, `save()` skips the question (`root.asking === ""` is false) and calls `saveAs("series")`: pressing Enter again after editing a title changes every occurrence without the user choosing. Fix: `if (root.busy || root.asking !== "") return;` at the top of `save()` (the row's own buttons pick the scope).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
 

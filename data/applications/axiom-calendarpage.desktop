@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Axiom Calendar
+GenericName=Calendar
+Comment=The axiom desktop's calendar and agenda
+Exec=axiom ipc pages window calendarpage
+Icon=office-calendar
+Terminal=false
+Categories=Office;Calendar;
+Keywords=axiom;calendar;events;agenda;
+StartupNotify=false

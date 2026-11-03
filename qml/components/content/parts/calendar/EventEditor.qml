@@ -3,135 +3,38 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
-import qs.components.methods
 import qs.components.reusable
 
-// Editing an event: open(draft) loads a CalendarEvents draft (newDraft or
-// draftOf), Save and Delete go through CalendarManager, and `finished`
+// Editing an event, held by an EventDraft (`session`: its own, or one a
+// page keeps past it): open(draft) loads a CalendarEvents draft (newDraft
+// or draftOf), Save and Delete go through CalendarManager, and `finished`
 // fires once it's done or cancelled. A recurring event asks whether a
 // change is for this one or all of them. An event in a calendar axiom
 // can't change (a subscription, a read-only share) shows read-only.
 ColumnLayout {
   id: root
 
-  // The draft as opened; the fields below are its edits
-  property var draft: null
-  property string calendar: ""
-  property bool allDay: false
-  property real start: 0
-  property real end: 0
-  property string repeat: "none"
-  property int reminder: -1
-
-  readonly property bool isNew: !root.draft?.href
-  readonly property bool readOnly: !root.isNew && !(CalendarManager.calendar(root.draft?.originalCalendar ?? "")?.writable ?? false)
-  property bool busy: false
-  property string error: ""
-  // "save" | "delete" while asking which of a recurring event's,
-  // "confirm" while confirming a single event's delete
-  property string asking: ""
+  property EventDraft session: EventDraft {}
   // How wide the buttons along the bottom need it (the fields and texts
   // take any width), so a popout can widen for a long translation
-  readonly property real actionsWidth: root.asking !== "" ? askRow.implicitWidth - askText.implicitWidth + Appearance.fontSize * 6 : actionRow.implicitWidth
+  readonly property real actionsWidth: root.session.asking !== "" ? askRow.implicitWidth - askText.implicitWidth + Appearance.fontSize * 6 : actionRow.implicitWidth
 
   signal finished
 
   spacing: Widget.spacing
 
   function open(draft) {
-    root.draft = draft;
-    root.calendar = draft.calendar;
-    root.allDay = draft.allDay;
-    root.start = draft.start;
-    root.end = draft.end;
-    root.repeat = draft.repeat;
-    root.reminder = draft.reminder;
-    titleEntry.text = draft.title;
-    locationEntry.text = draft.location;
-    notesArea.text = draft.description;
-    root.error = "";
-    root.asking = "";
-    root.busy = false;
+    root.session.open(draft);
     fields.contentY = 0;
-    if (root.isNew)
+    if (root.session.isNew)
       Qt.callLater(() => titleEntry.input.forceActiveFocus());
   }
 
-  function _collect() {
-    return Object.assign({}, root.draft, {
-      "calendar": root.calendar,
-      "title": titleEntry.text,
-      "location": locationEntry.text,
-      "description": notesArea.text,
-      "allDay": root.allDay,
-      "start": root.start,
-      "end": root.end,
-      "repeat": root.repeat,
-      "reminder": root.reminder
-    });
-  }
-
-  function _problemText(problem) {
-    switch (problem) {
-    case "title":
-      return I18n.tr("Give it a title.");
-    case "calendar":
-      return I18n.tr("Pick a calendar.");
-    case "end":
-      return I18n.tr("It ends before it starts.");
+  Connections {
+    target: root.session
+    function onFinished() {
+      root.finished();
     }
-    return "";
-  }
-
-  function save() {
-    const draft = root._collect();
-    const problems = CalendarEvents.problems(draft);
-    if (problems.length > 0) {
-      root.error = root._problemText(problems[0]);
-      return;
-    }
-    // A change to the repeat or the calendar is the whole series'
-    if (draft.recurring && root.asking === "" && draft.repeat === draft.origRepeat && draft.calendar === draft.originalCalendar) {
-      root.asking = "save";
-      return;
-    }
-    root._save("series");
-  }
-
-  function _save(scope) {
-    root.asking = "";
-    root.busy = true;
-    root.error = "";
-    CalendarManager.save(root._collect(), scope, result => {
-      if (!root)
-        return;
-      root.busy = false;
-      if (result.ok)
-        root.finished();
-      else
-        root.error = CalendarManager.errorText(result);
-    });
-  }
-
-  function remove() {
-    root.asking = root.draft.recurring ? "delete" : "confirm";
-  }
-
-  function _remove(scope) {
-    root.asking = "";
-    root.busy = true;
-    const event = CalendarManager.events.find(e => e.href === root.draft.href && e.rid === root.draft.rid) ?? root.draft;
-    CalendarManager.remove(Object.assign({}, event, {
-      "calendar": root.draft.originalCalendar
-    }), scope, result => {
-      if (!root)
-        return;
-      root.busy = false;
-      if (result.ok)
-        root.finished();
-      else
-        root.error = CalendarManager.errorText(result);
-    });
   }
 
   // The fields scroll when the editor is short
@@ -153,9 +56,11 @@ ColumnLayout {
         id: titleEntry
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
+        text: root.session.title
         placeholderText: I18n.tr("Title")
-        readOnly: root.readOnly
-        onAccepted: root.save()
+        readOnly: root.session.readOnly
+        onTextEdited: root.session.title = text
+        onAccepted: root.session.save()
       }
 
       // A rule written elsewhere (Custom) can't be carried to another
@@ -163,13 +68,13 @@ ColumnLayout {
       StyledComboEntry {
         Layout.fillWidth: true
         icon: "event"
-        readOnly: root.readOnly || root.draft?.origRepeat === "custom"
-        options: (root.readOnly ? CalendarManager.calendars : CalendarManager.writableCalendars).map(calendar => ({
+        readOnly: root.session.readOnly || root.session.draft?.origRepeat === "custom"
+        options: (root.session.readOnly ? CalendarManager.calendars : CalendarManager.writableCalendars).map(calendar => ({
               "value": calendar.id,
               "label": CalendarConfig.accounts.length > 1 ? I18n.tr("{0} · {1}", calendar.name, calendar.accountName) : calendar.name
             }))
-        value: root.calendar
-        onPicked: value => root.calendar = value
+        value: root.session.calendar
+        onPicked: value => root.session.calendar = value
       }
 
       RowLayout {
@@ -179,32 +84,28 @@ ColumnLayout {
           text: I18n.tr("All day")
         }
         StyledSwitch {
-          checked: root.allDay
-          enabled: !root.readOnly
-          onToggled: root.allDay = checked
+          checked: root.session.allDay
+          enabled: !root.session.readOnly
+          onToggled: root.session.allDay = checked
         }
       }
 
       DateTimeField {
         Layout.fillWidth: true
         label: I18n.tr("Start")
-        value: root.start
-        allDay: root.allDay
-        readOnly: root.readOnly
-        // The end moves with the start, keeping the length
-        onEdited: value => {
-          root.end = value + (root.end - root.start);
-          root.start = value;
-        }
+        value: root.session.start
+        allDay: root.session.allDay
+        readOnly: root.session.readOnly
+        onEdited: value => root.session.setStart(value)
       }
 
       DateTimeField {
         Layout.fillWidth: true
         label: I18n.tr("End")
-        value: root.end
-        allDay: root.allDay
-        readOnly: root.readOnly
-        onEdited: value => root.end = value
+        value: root.session.end
+        allDay: root.session.allDay
+        readOnly: root.session.readOnly
+        onEdited: value => root.session.end = value
       }
 
       RowLayout {
@@ -218,18 +119,18 @@ ColumnLayout {
         StyledComboEntry {
           Layout.fillWidth: true
           icon: "notifications"
-          readOnly: root.readOnly
+          readOnly: root.session.readOnly
           options: {
             const minutes = [-1, 0, 5, 10, 15, 30, 60, 120, 1440, 2880, 10080];
-            if (!minutes.includes(root.reminder))
-              minutes.push(root.reminder);
+            if (!minutes.includes(root.session.reminder))
+              minutes.push(root.session.reminder);
             return minutes.sort((a, b) => a - b).map(m => ({
                   "value": String(m),
                   "label": m < 0 ? I18n.tr("None") : m === 0 ? I18n.tr("At the start") : m % 1440 === 0 ? I18n.tr("{0} d before", m / 1440) : m % 60 === 0 ? I18n.tr("{0} h before", m / 60) : I18n.tr("{0} min before", m)
                 }));
           }
-          value: String(root.reminder)
-          onPicked: value => root.reminder = Number(value)
+          value: String(root.session.reminder)
+          onPicked: value => root.session.reminder = Number(value)
         }
       }
 
@@ -240,7 +141,7 @@ ColumnLayout {
         spacing: Widget.spacing / 2
 
         Repeater {
-          model: ["none", "daily", "weekly", "monthly", "yearly"].concat(root.draft?.origRepeat === "custom" ? ["custom"] : [])
+          model: ["none", "daily", "weekly", "monthly", "yearly"].concat(root.session.draft?.origRepeat === "custom" ? ["custom"] : [])
           SegmentButton {
             required property string modelData
             // I18n.tr("Never") I18n.tr("Every day") I18n.tr("Every week") I18n.tr("Every month") I18n.tr("Every year") I18n.tr("Custom")
@@ -252,11 +153,11 @@ ColumnLayout {
               "yearly": "Every year",
               "custom": "Custom"
             }[modelData])
-            active: root.repeat === modelData
-            available: !root.readOnly && (modelData !== "custom" || root.repeat === "custom")
+            active: root.session.repeat === modelData
+            available: !root.session.readOnly && (modelData !== "custom" || root.session.repeat === "custom")
             onClicked: {
               if (available)
-                root.repeat = modelData;
+                root.session.repeat = modelData;
             }
           }
         }
@@ -266,25 +167,29 @@ ColumnLayout {
         id: locationEntry
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
+        text: root.session.location
         placeholderText: I18n.tr("Location")
-        readOnly: root.readOnly
+        readOnly: root.session.readOnly
+        onTextEdited: root.session.location = text
       }
 
       StyledTextArea {
         id: notesArea
         Layout.fillWidth: true
         Layout.preferredHeight: Math.max(implicitHeight, Appearance.fontSize * 5)
+        text: root.session.description
         placeholderText: I18n.tr("Notes")
-        readOnly: root.readOnly
+        readOnly: root.session.readOnly
+        onTextEdited: root.session.description = text
       }
     }
   }
 
   StyledText {
-    visible: root.error !== "" || root.readOnly
+    visible: root.session.error !== "" || root.session.readOnly
     Layout.fillWidth: true
-    text: root.error !== "" ? root.error : I18n.tr("This calendar can't be changed.")
-    textColor: root.error !== "" ? Theme.error : Theme.foregroundAlt
+    text: root.session.error !== "" ? root.session.error : I18n.tr("This calendar can't be changed.")
+    textColor: root.session.error !== "" ? Theme.error : Theme.foregroundAlt
     textSize: Appearance.fontSizeBy(-1)
     wrapMode: Text.Wrap
   }
@@ -293,68 +198,68 @@ ColumnLayout {
   // event's delete confirmed
   RowLayout {
     id: askRow
-    visible: root.asking !== ""
+    visible: root.session.asking !== ""
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
     StyledText {
       id: askText
       Layout.fillWidth: true
-      text: root.asking === "confirm" ? I18n.tr("Delete this event?") : root.asking === "delete" ? I18n.tr("Delete which?") : I18n.tr("Change which?")
+      text: root.session.asking === "confirm" ? I18n.tr("Delete this event?") : root.session.asking === "delete" ? I18n.tr("Delete which?") : I18n.tr("Change which?")
       elide: Text.ElideRight
     }
     StyledTextButton {
-      visible: root.asking === "confirm"
+      visible: root.session.asking === "confirm"
       text: I18n.tr("Delete")
       iconText: "delete"
       textColor: Theme.error
-      onClicked: root._remove("series")
+      onClicked: root.session.removeAs("series")
     }
     StyledTextButton {
-      visible: root.asking !== "confirm"
+      visible: root.session.asking !== "confirm"
       text: I18n.tr("This event")
-      onClicked: root.asking === "delete" ? root._remove("occurrence") : root._save("occurrence")
+      onClicked: root.session.asking === "delete" ? root.session.removeAs("occurrence") : root.session.saveAs("occurrence")
     }
     StyledTextButton {
-      visible: root.asking !== "confirm"
+      visible: root.session.asking !== "confirm"
       text: I18n.tr("All events")
-      onClicked: root.asking === "delete" ? root._remove("series") : root._save("series")
+      onClicked: root.session.asking === "delete" ? root.session.removeAs("series") : root.session.saveAs("series")
     }
     FlatIconButton {
       iconText: "close"
-      onClicked: root.asking = ""
+      onClicked: root.session.asking = ""
     }
   }
 
   RowLayout {
     id: actionRow
-    visible: root.asking === ""
+    visible: root.session.asking === ""
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
     StyledTextButton {
-      visible: !root.isNew && !root.readOnly
+      visible: !root.session.isNew && !root.session.readOnly
       text: I18n.tr("Delete")
       iconText: "delete"
       textColor: Theme.error
-      enabled: !root.busy
-      onClicked: root.remove()
+      enabled: !root.session.busy
+      onClicked: root.session.remove()
     }
     Item {
       Layout.fillWidth: true
     }
     StyledTextButton {
-      text: root.readOnly ? I18n.tr("Close") : I18n.tr("Cancel")
-      onClicked: root.finished()
+      text: root.session.readOnly ? I18n.tr("Close") : I18n.tr("Cancel")
+      onClicked: root.session.close()
     }
     StyledTextButton {
-      visible: !root.readOnly
-      text: root.busy ? I18n.tr("Saving…") : I18n.tr("Save")
+      visible: !root.session.readOnly
+      text: root.session.busy ? I18n.tr("Saving…") : I18n.tr("Save")
       iconText: "check"
       backgroundColor: Theme.accent
       textColor: Theme.background
-      enabled: !root.busy
-      onClicked: root.save()
+      enabled: !root.session.busy
+      onClicked: root.session.save()
     }
   }
 }
