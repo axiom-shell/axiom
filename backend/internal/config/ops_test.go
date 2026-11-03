@@ -106,3 +106,20 @@ func TestDiff(t *testing.T) {
 		})
 	}
 }
+
+func TestWithBase(t *testing.T) {
+	t.Parallel()
+	op := SetValue(Keys("a"), 2.0).WithBase(1.0)
+	if got, _ := json.Marshal(op); string(got) != `{"base":1,"op":"set","path":["a"],"value":2}` {
+		t.Errorf("marshalled %s", got)
+	}
+	for _, c := range []struct {
+		config string
+		ok     bool
+	}{{`{"a":1}`, true}, {`{"a":5}`, false}} {
+		err := ApplyOps(cfg(t, c.config), []Op{op})
+		if (err == nil) != c.ok {
+			t.Errorf("%s: err %v", c.config, err)
+		}
+	}
+}
