@@ -271,7 +271,15 @@ func TestReexecOntoTheDevConfig(t *testing.T) {
 	params := map[string]any{"protocol": buildinfo.Protocol(), "client": "test", "pid": os.Getpid()}
 	var hello HelloResult
 	if err := c.Call(callCtx, "daemon.hello", params, &hello); err != nil {
-		t.Fatalf("hello: %v", err)
+		// The listener was handed over: a daemon that stopped leaves the
+		// hello unanswered, so say why it stopped
+		select {
+		case runErr := <-stopped:
+			stopped <- runErr // for the cleanup
+			t.Fatalf("hello: %v (the daemon stopped: %v)", err, runErr)
+		default:
+			t.Fatalf("hello: %v", err)
+		}
 	}
 	var status StatusResult
 	if err := c.Call(callCtx, "daemon.status", nil, &status); err != nil {

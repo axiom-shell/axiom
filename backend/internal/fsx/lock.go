@@ -80,11 +80,16 @@ func Adopt(f *os.File, path string) (*Lock, error) {
 	return &Lock{f: f}, nil
 }
 
-// Release drops the lock.
+// Release drops the lock: unlocked first, then closed. Closing alone isn't
+// enough: a child forked meanwhile (any os/exec, on any goroutine) holds a
+// copy of the descriptor until it execs, close-on-exec or not, and the
+// flock lasts while any copy is open, so taking the lock again right after
+// (devconfig.Prepare, then the store) found it held by this very process.
 func (l *Lock) Release() error {
 	if l == nil || l.f == nil {
 		return nil
 	}
+	unix.Flock(int(l.f.Fd()), unix.LOCK_UN)
 	err := l.f.Close()
 	l.f = nil
 	return err
