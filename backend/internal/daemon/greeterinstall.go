@@ -12,7 +12,8 @@ import (
 
 // greeterInstallPart: GreeterManager's setup of the login screen (package
 // greeterinstall): its status, and installing, updating or removing its
-// copy as root through pkexec.
+// copy as root through pkexec. Its code is the install tree's, never a dev
+// tree's.
 func (d *Daemon) greeterInstallPart() part {
 	return part{name: "greeter-install", methods: d.greeterInstallMethods}
 }
@@ -36,7 +37,7 @@ type GreeterApplyRequest struct {
 func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 	in := greeterinstall.New(greeterinstall.Options{})
 	rpc.Handle(reg, "greeter.status", func(ctx context.Context, c *rpc.Conn, p GreeterStatusRequest) (greeterinstall.Report, error) {
-		return in.Status(ctx, d.opts.Tree, p.Source, p.Channel)
+		return in.Status(ctx, d.installTree, p.Source, p.Channel)
 	})
 	// Only the shell (a user's click) runs anything as root
 	rpc.Handle(reg, "greeter.apply", func(ctx context.Context, c *rpc.Conn, p GreeterApplyRequest) (greeterinstall.Elevated, error) {
@@ -53,7 +54,7 @@ func (d *Daemon) greeterInstallMethods(reg *rpc.Registry) {
 			return greeterinstall.Elevated{}, err
 		}
 		// A local copy reuses the binary built last: the one running
-		req := rules.Request{Action: p.Action, Repo: d.opts.Tree, User: me.Username, Staged: p.Staged,
+		req := rules.Request{Action: p.Action, Repo: d.installTree, User: me.Username, Staged: p.Staged,
 			Source: p.Source, Channel: p.Channel, Binary: d.executable}
 		return in.Elevate(ctx, req, func() { c.Notify(pushGreeterAuthorized.Method, struct{}{}) })
 	})

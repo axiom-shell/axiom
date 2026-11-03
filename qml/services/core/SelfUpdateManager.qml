@@ -216,8 +216,9 @@ Singleton {
       key: "update-applied",
       silent: true
     });
-    // With the binary rebuilt, the daemon re-execs into it; when the
-    // update changed the schema, it restarts the shell itself
+    // With the binary rebuilt, the daemon re-execs into it (not out of
+    // dev mode's own build); when the update changed the schema, it
+    // restarts the shell itself
     if (result.buildError) {
       console.warn(`[SelfUpdateManager] The axiom binary didn't build: ${result.buildError}`);
       root._notify(I18n.tr("The axiom binary didn't build"), I18n.tr("Until it does, settings can't be saved after the next start: {0}", result.buildError), {
@@ -225,8 +226,10 @@ Singleton {
       });
     }
     // git replaces files rather than editing them, which qs's file
-    // watcher can miss, so reload explicitly
-    _reloadTimer.restart();
+    // watcher can miss, so reload explicitly; a dev tree's shell isn't the
+    // one updated
+    if (!DevManager.active)
+      _reloadTimer.restart();
   }
 
   // Survives hot reloads, so a reload (including the one after an update)

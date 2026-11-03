@@ -12,6 +12,8 @@ QtObject {
   id: root
 
   readonly property bool enabled: BackendManager.dev.enabled ?? false
+  // The dev image runs: the dev build on the dev tree and the dev config
+  readonly property bool active: BackendManager.dev.active ?? false
   // Edits to the Go source can be built here (the tree has it, go is
   // installed); unavailable says why not
   readonly property bool available: BackendManager.dev.available ?? false

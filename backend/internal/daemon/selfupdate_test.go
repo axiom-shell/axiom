@@ -15,6 +15,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/release"
 	"github.com/axiom-shell/axiom/backend/internal/release/fetch"
+	"github.com/axiom-shell/axiom/backend/internal/selfupdate"
 )
 
 func TestReplaceInstalled(t *testing.T) {
@@ -61,6 +62,7 @@ func TestReplaceInstalled(t *testing.T) {
 			}
 			base := serveReleases(t, tc.published, tc.sums)
 			d := &Daemon{opts: Options{Tree: tree, Go: goBin, Log: slog.New(slog.DiscardHandler)}}
+			d.installTree = tree
 			d.installed = tc.installed(t)
 			before, _ := os.ReadFile(d.installed)
 			rebuilt, source, reason := d.replaceInstalled(context.Background(), fetch.New(fetch.Options{Base: base}), tc.channel, "v1.1.0", head)
@@ -73,6 +75,42 @@ func TestReplaceInstalled(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSelfUpdateTargetsTheInstallTree: while dev mode runs a dev tree,
+// a self-update builds the installed binary from the install tree, and the
+// dev image keeps running; with dev inactive it re-execs into the new
+// binary.
+func TestSelfUpdateTargetsTheInstallTree(t *testing.T) {
+	t.Parallel()
+	built := filepath.Join(t.TempDir(), "built-in")
+	m := devFixture(t, fakeGo(t, `pwd > "`+built+`"; printf '#!/bin/sh\necho axiom\n' > "$3"; chmod +x "$3"`))
+	d := m.d
+	install := t.TempDir()
+	os.MkdirAll(filepath.Join(install, "backend"), 0o755)
+	d.installTree = install
+	d.installed = writeBin(t, t.TempDir(), 0o755)
+	d.opts.Tree, d.configDir = m.tree, devConfigDir(d.dirs) // the dev image
+	if !m.active() {
+		t.Fatal("the fixture isn't the dev image")
+	}
+	reexecs := recordReexecs(m)
+	if rebuilt, reason := d.rebuildInstalled(context.Background()); !rebuilt {
+		t.Fatalf("not rebuilt: %s", reason)
+	}
+	if dir, _ := os.ReadFile(built); strings.TrimSpace(string(dir)) != filepath.Join(install, "backend") {
+		t.Errorf("built in %q, not the install tree", dir)
+	}
+	d.afterSelfUpdate(selfupdate.Report{Rebuilt: true})
+	noReexec(t, reexecs)
+
+	// The installed image (dev off) re-execs into the new binary
+	d.opts.Tree, d.configDir = install, d.dirs.Config
+	m.enabled = false
+	d.afterSelfUpdate(selfupdate.Report{Rebuilt: true})
+	wantReexec(t, reexecs, d.installed, image{Tree: install, ConfigDir: d.dirs.Config})
+	d.afterSelfUpdate(selfupdate.Report{})
+	noReexec(t, reexecs)
 }
 
 // serveReleases serves files (tag/name), each tag's SHA256SUMS listing

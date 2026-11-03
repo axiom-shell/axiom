@@ -19,12 +19,13 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/selfupdate"
 )
 
-// selfUpdatePart: SelfUpdateManager's updates of the tree the shell runs
-// from (package selfupdate), and after one the axiom binary replaced to
-// match it and re-exec'd into, so the daemon's embedded schema is the
-// tree's: the official build of the commit checked out when there is one
-// (maintainer, 2026-10-27: "Download, build fallback (Recommended)"),
-// else built from the tree.
+// selfUpdatePart: SelfUpdateManager's updates of the install tree (package
+// selfupdate; never the dev tree, which dev mode may run meanwhile), and
+// after one the installed axiom binary replaced to match it and re-exec'd
+// into, so the daemon's embedded schema is the tree's: the official build
+// of the commit checked out when there is one (maintainer, 2026-10-27:
+// "Download, build fallback (Recommended)"), else built from the tree. An
+// active dev image keeps running: dev off goes back to the new install.
 func (d *Daemon) selfUpdatePart() part {
 	return part{name: "self-update", methods: d.selfUpdateMethods}
 }
@@ -38,7 +39,7 @@ type SelfUpdateRequest struct {
 
 func (d *Daemon) selfUpdateMethods(reg *rpc.Registry) {
 	releases := fetch.New(fetch.Options{Base: d.opts.releases})
-	u := selfupdate.New(selfupdate.Options{Dir: d.opts.Tree, Environ: func() []string {
+	u := selfupdate.New(selfupdate.Options{Dir: d.installTree, Environ: func() []string {
 		// The shell's environment (its ssh agent), as when it ran git itself
 		if d.shell != nil {
 			return d.shell.Environ()
@@ -62,14 +63,24 @@ func (d *Daemon) selfUpdateMethods(reg *rpc.Registry) {
 		}
 		ctx = context.WithoutCancel(ctx)
 		r.Rebuilt, r.BinarySource, r.BuildError = d.replaceInstalled(ctx, releases, p.Channel, r.Latest, u.Head(ctx))
-		if r.Rebuilt {
-			// The new image takes the daemon over once this reply is out;
-			// when the update changed the schema it restarts the shell
-			d.opts.Log.Info("self-update: replaced the binary, re-executing", "binary", d.installed, "from", r.BinarySource)
-			d.reexecSoon(d.installed, d.image())
-		}
+		d.afterSelfUpdate(r)
 		return r, nil
 	})
+}
+
+// afterSelfUpdate re-execs into the installed binary once a self-update
+// replaced it: the new image takes the daemon over once the reply is out,
+// and restarts the shell when the update changed the schema. The dev
+// image keeps running (the install it goes back to is the new one).
+func (d *Daemon) afterSelfUpdate(r selfupdate.Report) {
+	switch {
+	case !r.Rebuilt:
+	case d.dev.active():
+		d.opts.Log.Info("self-update: install updated; dev keeps running", "binary", d.installed, "from", r.BinarySource)
+	default:
+		d.opts.Log.Info("self-update: replaced the binary, re-executing", "binary", d.installed, "from", r.BinarySource)
+		d.reexecSoon(d.installed, d.image())
+	}
 }
 
 // replaceInstalled replaces the installed binary to match the updated
@@ -114,13 +125,13 @@ func (d *Daemon) replaceInstalled(ctx context.Context, releases *fetch.Fetcher, 
 }
 
 // rebuildInstalled builds the installed binary again from the updated
-// tree: whether it did, or why that failed.
+// install tree: whether it did, or why that failed.
 func (d *Daemon) rebuildInstalled(ctx context.Context) (bool, string) {
 	bin := d.installed
 	if _, err := exec.LookPath(d.opts.Go); err != nil {
 		return false, "go isn't installed"
 	}
-	_, out, err := buildAxiom(ctx, d.opts.Go, d.opts.Tree, bin)
+	_, out, err := buildAxiom(ctx, d.opts.Go, d.installTree, bin)
 	if err == nil {
 		return true, ""
 	}
