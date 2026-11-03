@@ -21,8 +21,8 @@ same at every scale, so next to the text around it it comes out cramped at
     the offset stays the same at every scale; use
     `Appearance.fontSizeBy(n)`
 
-Left alone: components/bar/ (each bar sizes its own widgets),
-components/methods/ (pure helpers: sizes are handed in), hairlines
+Left alone: qml/components/bar/ (each bar sizes its own widgets),
+qml/components/methods/ (pure helpers: sizes are handed in), hairlines
 (0–2 px, `border.width` / `borderWidth`), `sourceSize` (an image's
 decoded resolution), and a line marked `// fixed px: <reason>` (a size
 measured against the screen or a measuring font, a placeholder, a
@@ -35,8 +35,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DIRS = ["components", "shell"]
-SKIP = ["components/bar/", "components/methods/"]
+DIRS = ["qml/components", "qml/shell"]
+SKIP = ["qml/components/bar/", "qml/components/methods/"]
 
 SIZE_WORD = r"(?:[wW]idth|[hH]eight|[sS]ize|[sS]pacing|[mM]argins?|[pP]adding|[rR]adius|[lL]ength|[tT]hickness)"
 # width, Layout.preferredHeight, anchors.leftMargin, textSize, troughHeight, …

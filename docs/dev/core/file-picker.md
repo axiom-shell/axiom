@@ -1,6 +1,6 @@
 # File picker
 
-> **Files:** `services/apps/FilePickerManager.qml`, `backend/internal/filepicker/filepicker.go`, `backend/internal/daemon/tools.go`, `components/forms/SchemaTextField.qml`, `components/forms/SchemaField.qml`
+> **Files:** `qml/services/apps/FilePickerManager.qml`, `backend/internal/filepicker/filepicker.go`, `backend/internal/daemon/tools.go`, `qml/components/forms/SchemaTextField.qml`, `qml/components/forms/SchemaField.qml`
 > **Config:** none of its own; `x-control: "folder"` on a string setting adds its Browse button
 > **Related:** [Schema annotations](schema-annotations.md), [Saved configs and sharing](saved-configs-sharing.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 

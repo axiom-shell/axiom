@@ -121,11 +121,12 @@ func (td *testDaemon) setHandoff(t *testing.T, h handoff) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	td.env[reexecEnv] = string(raw)
+	td.env[ReexecEnv] = string(raw)
 }
 
 // A daemon handed this display's held locks and socket takes them over
-// and serves on the same socket; when it stops, the socket goes.
+// and serves on the same socket, on the tree the handoff names (its own
+// search found none); when it stops, the socket goes.
 func TestAdoptedHandoffServes(t *testing.T) {
 	t.Parallel()
 	td := newTestDaemon(t)
@@ -134,11 +135,14 @@ func TestAdoptedHandoffServes(t *testing.T) {
 		Lock:       dup(t, fx.instance.File()),
 		ConfigLock: dup(t, fx.config.File()),
 		Listener:   dup(t, fx.listener),
+		Tree:       testkit.RepoRoot(),
 	})
 	ctx, cancel := context.WithCancel(context.Background())
 	var runErr error
 	stopped := make(chan struct{})
-	go func() { runErr = Run(ctx, td.options(nil)); close(stopped) }()
+	opts := td.options(nil)
+	opts.Tree = ""
+	go func() { runErr = Run(ctx, opts); close(stopped) }()
 	// Stopped before its folders go, also when the test fails early
 	t.Cleanup(func() {
 		cancel()
@@ -219,5 +223,152 @@ func TestHandoffWithoutTheHeldLockIsRefused(t *testing.T) {
 				t.Fatalf("run: %v, want Refused", err)
 			}
 		})
+	}
+}
+
+// A re-exec into the dev image doesn't take the live config's lock over:
+// it closes it, readies and opens the dev config (seeded, with its own
+// lock), and writes the shell's snapshot from it, not keeping the one of
+// before
+func TestReexecOntoTheDevConfig(t *testing.T) {
+	t.Parallel()
+	td := newTestDaemon(t)
+	fx := newHandoffFixture(t, td)
+	snapshot := td.runtime.File(SnapshotFile)
+	if err := os.WriteFile(snapshot, []byte("the live config's"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	td.setHandoff(t, handoff{
+		Lock:       dup(t, fx.instance.File()),
+		ConfigLock: dup(t, fx.config.File()),
+		Listener:   dup(t, fx.listener),
+		Tree:       testkit.RepoRoot(),
+		ConfigDir:  devConfigDir(td.dirs),
+		Dev:        true,
+		// The image before ran the live config (configLockDir "")
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	stopped := make(chan error, 1)
+	opts := td.options(nil)
+	opts.Tree = ""
+	go func() { stopped <- Run(ctx, opts) }()
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case <-stopped:
+		case <-time.After(testkit.Bound(10 * time.Second)):
+			t.Error("the daemon didn't stop")
+		}
+	})
+
+	callCtx, callCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer callCancel()
+	c, err := rpc.Dial(callCtx, td.socket, rpc.NewRegistry(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	params := map[string]any{"protocol": buildinfo.Protocol(), "client": "test", "pid": os.Getpid()}
+	var hello HelloResult
+	if err := c.Call(callCtx, "daemon.hello", params, &hello); err != nil {
+		// The listener was handed over: a daemon that stopped leaves the
+		// hello unanswered, so say why it stopped
+		select {
+		case runErr := <-stopped:
+			stopped <- runErr // for the cleanup
+			t.Fatalf("hello: %v (the daemon stopped: %v)", err, runErr)
+		default:
+			t.Fatalf("hello: %v", err)
+		}
+	}
+	var status StatusResult
+	if err := c.Call(callCtx, "daemon.status", nil, &status); err != nil {
+		t.Fatal(err)
+	}
+	devFile := filepath.Join(devConfigDir(td.dirs), store.FileName)
+	if status.ConfigFile != devFile || !hello.Dev.Enabled {
+		t.Errorf("runs on %s (dev %v), want %s in dev mode", status.ConfigFile, hello.Dev.Enabled, devFile)
+	}
+	if _, err := os.Stat(devFile); err != nil {
+		t.Errorf("the dev config wasn't made: %v", err)
+	}
+	if _, err := fsx.TryLock(devFile + ".lock"); axerr.KindOf(err) != axerr.Running {
+		t.Errorf("the dev config's lock isn't held: %v", err)
+	}
+	if data, err := os.ReadFile(snapshot); err != nil || string(data) == "the live config's" {
+		t.Errorf("the snapshot of the config before was kept: %q %v", data, err)
+	}
+}
+
+// A runtime switch's dev image that fails before it serves (here its tree
+// builds no schema) re-execs the installed binary with the handoff it
+// carried, onto the install tree and live config, the live config's
+// writer lock taken again for it.
+func TestDevImageFailingFallsBack(t *testing.T) {
+	t.Parallel()
+	td := newTestDaemon(t)
+	instance, err := fsx.TryLock(td.runtime.Lock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { instance.Release() })
+	ln, err := rpc.Listen(td.socket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listener, err := ln.File()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { listener.Close() })
+	ln.SetUnlinkOnClose(false)
+	ln.Close()
+	// The live config's writer lock, held by the handed-over copy alone
+	// (the image before's, which the dev image closes)
+	if err := os.MkdirAll(td.dirs.Config, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	lockFile, err := os.OpenFile(filepath.Join(td.dirs.Config, store.FileName+".lock"), os.O_RDWR|os.O_CREATE|unix.O_CLOEXEC, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Flock(int(lockFile.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	configFD := dup(t, lockFile)
+	lockFile.Close()
+	td.setHandoff(t, handoff{
+		Lock:          dup(t, instance.File()),
+		ConfigLock:    configFD,
+		Listener:      dup(t, listener),
+		Tree:          t.TempDir(), // no schema
+		ConfigDir:     devConfigDir(td.dirs),
+		Dev:           true,
+		InstallTree:   testkit.RepoRoot(),
+		Installed:     "/installed/axiom",
+		ShellEntry:    filepath.Join(testkit.RepoRoot(), "qml"),
+		ConfigLockDir: td.dirs.Config,
+	})
+	execs := make(chan []string, 2)
+	opts := td.options(nil)
+	opts.exec = func(exe string, argv, env []string) error {
+		execs <- append([]string{exe}, env...)
+		return axerr.New(axerr.Unavailable, "a test's exec")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), testkit.Bound(10*time.Second))
+	defer cancel()
+	runErr := Run(ctx, opts)
+	if runErr == nil {
+		t.Fatal("the dev image served")
+	}
+	var call []string
+	select {
+	case call = <-execs:
+	default:
+		t.Fatalf("no fallback (Run: %v)", runErr)
+	}
+	h, ok := handoffIn(call[1:])
+	if call[0] != "/installed/axiom" || !ok || !h.wellFormed() || h.Tree != testkit.RepoRoot() || h.ConfigDir != td.dirs.Config || !h.Dev || h.ConfigLockDir != td.dirs.Config {
+		t.Errorf("exec %s with %+v", call[0], h)
 	}
 }

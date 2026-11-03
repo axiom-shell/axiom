@@ -1,15 +1,15 @@
 # Services pattern
 
-> **Files:** `services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `services/core/ConsumerRegistry.qml`, `services/core/CommandManager.qml`, `services/system/SystemManager.qml`, `services/system/UpdatesManager.qml`, `config/Paths.qml`, `shell.qml`
+> **Files:** `qml/services/*/*.qml`, `scripts/quickshell-io-allowlist.json`, `qml/services/core/ConsumerRegistry.qml`, `qml/services/core/CommandManager.qml`, `qml/services/system/SystemManager.qml`, `qml/services/system/UpdatesManager.qml`, `qml/config/Paths.qml`, `qml/shell.qml`
 > **Config:** none of its own
 > **Related:** [Config manager](config-manager.md), [Config readers](config-readers.md), [Editors pattern](editors-pattern.md), [Shell manager and screen targeting](shell-manager-targeting.md)
 
-How `services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
+How `qml/services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
 
 ### Shape
-- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders, `services/AGENTS.md`). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, …) are listed in `services/AGENTS.md` › Folders.
+- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders, `qml/services/AGENTS.md`). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, …) are listed in `qml/services/AGENTS.md` › Folders.
 - (Rule: AGENTS.md › Services, for naming and singleton shadowing.)
-- A service with an IPC target that nothing else references is created from `shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
+- A service with an IPC target that nothing else references is created from `qml/shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
 (Rule: AGENTS.md › Services, "Anything polled".)
@@ -58,7 +58,7 @@ They follow the same pattern:
   - Recording streams are left out: an app's mic capture shares its name.
 - **BatteryManager**: also the power profile, and `level` against the `Battery` section's thresholds (`BatteryConfig`; the Battery widget and module colour from it).
   - Says each drop into low and then critical once, whatever bars exist: an OSD's `battery` card or a notification (`NotificationManager.announce`; a critical one notifies beside its card too).
-  - Created from `shell.qml`'s `_services` so it runs without a widget.
+  - Created from `qml/shell.qml`'s `_services` so it runs without a widget.
 - **KeyboardLayoutManager**, **MediaManager** (MPRIS), **CompositorManager** (the compositor, through its backend `HyprlandManager`: [compositor/](../compositor/README.md)), **StateManager**, **BarManager**, **LauncherManager**, **SettingsManager**, **SavedConfigsManager**, **AuthManager**, **LockManager**.
 
 ### One axiom per display

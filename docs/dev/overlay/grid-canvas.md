@@ -1,10 +1,10 @@
 # Grid canvas, drag layer and GridEditor
 
-> **Files:** `components/views/Layouts/GridCanvas.qml`, `components/views/Layouts/CanvasModule.qml`, `components/views/Layouts/GridDragLayer.qml`, `components/views/Layouts/EntryListTarget.qml`, `components/views/Layouts/EntryListRow.qml`, `components/views/Layouts/EditorInspector.qml`, `components/views/Layouts/ModuleLibrary.qml`, `components/views/Layouts/ModuleChip.qml`, `services/ui/GridEditor.qml`, `components/methods/GridPlacement.qml`
+> **Files:** `qml/components/views/Layouts/GridCanvas.qml`, `qml/components/views/Layouts/CanvasModule.qml`, `qml/components/views/Layouts/GridDragLayer.qml`, `qml/components/views/Layouts/EntryListTarget.qml`, `qml/components/views/Layouts/EntryListRow.qml`, `qml/components/views/Layouts/EditorInspector.qml`, `qml/components/views/Layouts/ModuleLibrary.qml`, `qml/components/views/Layouts/ModuleChip.qml`, `qml/services/ui/GridEditor.qml`, `qml/components/methods/GridPlacement.qml`
 > **Config:** whatever the edit target's draft holds (`Overlay.items[].layout.modules`, `EdgeMenus.items[].layout.modules`, screen layouts' `modules`)
 > **Related:** [Layouts editor](layouts-editor.md), [Pages and grid](pages-and-grid.md), [Edge menu editing](../edge-menus/editing-submenus.md), [Growing and expanding](grow-expand.md)
 
-The right side of the layouts editor: `GridCanvas` draws the selected page, menu or screen layout; `GridDragLayer` carries modules and list rows; `services/ui/GridEditor` turns drops, moves and resizes into plans and edits, with undo.
+The right side of the layouts editor: `GridCanvas` draws the selected page, menu or screen layout; `GridDragLayer` carries modules and list rows; `qml/services/ui/GridEditor` turns drops, moves and resizes into plans and edits, with undo.
 
 ### GridCanvas: drawing
 - Draws the selected page or menu at a scale it computes itself (not `Item.scale`).
@@ -58,7 +58,7 @@ Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement
 - A `TrashTarget` at the bottom of the canvas shows while a module is carried. Dropped there, it goes, with its group (required ones stay).
 - For a grid of something other than overlay modules (a custom widget's elements, `views/CustomWidgets/ElementEditorLayout`), three hooks name what it holds: `describe(type)` → `{ icon, label }`, `sizeLabel(w, h)` (a tile's size while resized; cards by default) and `countLabel(n)` (the canvas's count and a carried group; modules by default).
 
-### GridEditor (`services/ui/GridEditor`, non-singleton)
+### GridEditor (`qml/services/ui/GridEditor`, non-singleton)
 The canvas pieces name no service: they edit through `dragLayer.editor`.
 - Holds one grid of modules and its `selected` index.
 - Edits: `addModule` / `moveModule` / `resizeModule` / `duplicateModule` / `removeModule` / `updateModuleProperty`.

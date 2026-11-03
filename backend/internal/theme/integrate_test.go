@@ -17,7 +17,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/theme/integrations"
 )
 
-const themes = "../../../config/themes/"
+const themes = "../../../qml/config/themes/"
 
 // scratch is a home with nothing installed: no command is found, and
 // nothing reaches the session (Live is off).

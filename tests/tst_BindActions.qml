@@ -23,7 +23,7 @@ TestCase {
   readonly property var table: files.json("backend/internal/compositor/actions/table.json")
 
   function _schemaActions() {
-    return files.json("config/json/config.schema.json").definitions.Keybind.properties.action.enum;
+    return files.json("qml/config/json/config.schema.json").definitions.Keybind.properties.action.enum;
   }
 
   function test_everySchemaActionIsKnown() {
@@ -108,7 +108,7 @@ TestCase {
   // pointer), or a command; its argument and call shown exactly where the
   // action takes one
   function test_hotCornerActionsAreTheAxiomActions() {
-    const item = files.json("config/json/config.schema.json").properties.HotCorners.properties.items.items.properties;
+    const item = files.json("qml/config/json/config.schema.json").properties.HotCorners.properties.items.items.properties;
     const unsafe = ["clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"];
     compare(item.action.enum, Object.keys(test.table.ipcActions).filter(action => !unsafe.includes(action)).concat(["exec"]));
     compare(item.argument["x-showIf"].action, item.action.enum.filter(action => action === "exec" || test.table.ipcActions[action][0].includes("{0}")));
@@ -119,7 +119,7 @@ TestCase {
   // corners' and the compositor's bind descriptions (the table's, where
   // they take no argument) are one name each
   function test_labelsAgree() {
-    const schema = files.json("config/json/config.schema.json");
+    const schema = files.json("qml/config/json/config.schema.json");
     const binds = schema.definitions.Keybind.properties;
     const corners = schema.properties.HotCorners.properties.items.items.properties;
     for (const [action, label] of Object.entries(binds.action["x-enumLabels"])) {

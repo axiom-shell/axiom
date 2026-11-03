@@ -1,13 +1,14 @@
 post_install() {
   cat <<'EOF'
-==> axiom is installed in /usr/share/axiom; `axiom run` runs it.
+==> axiom is installed in /usr/share/axiom-shell; `axiom run` runs it.
     Start it with your compositor, by adding to its config:
       Hyprland (~/.config/hypr/hyprland.lua):
         hl.on("hyprland.start", function() hl.exec_cmd("'/usr/bin/axiom' run") end)
       sway (~/.config/sway/config):    exec '/usr/bin/axiom' run
       niri (~/.config/niri/config.kdl): spawn-sh-at-startup "'/usr/bin/axiom' run"
-    Its first start walks you through the rest. A clone in
-    ~/.config/quickshell/axiom, if you have one, runs instead of this.
+    Its first start walks you through the rest. An install in
+    ~/.local/share/axiom-shell (install.sh's), if you have one, runs
+    instead of this.
 EOF
 }
 
@@ -16,4 +17,13 @@ post_upgrade() {
 ==> Run the new version: `axiom daemon reexec`, then `axiom restart`
     (or log out and back in).
 EOF
+  # greetd still starts a login screen installed before axiom's files moved
+  # (scripts/greeter/ became data/greeter/), which now reads as not set up
+  if grep -qs '/usr/share/axiom-greeter/scripts/' /etc/greetd/config.toml; then
+    cat <<'EOF'
+==> axiom's login screen was installed by an older version: set it up
+    again (Settings → Login screen, which runs `axiom greeter-install`)
+    before you log out.
+EOF
+  fi
 }

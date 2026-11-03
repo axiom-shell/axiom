@@ -38,7 +38,9 @@ def entries():
         what = re.search(r"^- \*\*What:\*\* (.*)$", block, re.M)
         if not where or not what:
             continue
-        paths = {p for p in TICKED.findall(where.group(1)) if p.endswith(".qml")}
+        # qs logs a file by its path in the QML folder (qml/), where the
+        # entry cites it from the repo root
+        paths = {p.removeprefix("qml/") for p in TICKED.findall(where.group(1)) if p.endswith(".qml")}
         ticked = TICKED.findall(what.group(1))
         categories = {q for q in ticked if CATEGORY.match(f"  WARN {q}: ")}
         # A category is no quote: it would match every line from it

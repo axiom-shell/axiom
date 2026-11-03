@@ -20,7 +20,7 @@ TestCase {
   property var schema
 
   function initTestCase() {
-    schema = files.json("config/json/config.schema.json");
+    schema = files.json("qml/config/json/config.schema.json");
   }
 
   function test_rows_flatten_and_skip_hidden() {
@@ -540,7 +540,7 @@ TestCase {
     for (const key in schema.properties) {
       const section = schema.properties[key];
       if (section["x-card"]?.folds)
-        verify(/^EntryListCard \{|property string foldKey/m.test(files.text("components/views/Settings/" + section["x-card"].file + "Card.qml")), key);
+        verify(/^EntryListCard \{|property string foldKey/m.test(files.text("qml/components/views/Settings/" + section["x-card"].file + "Card.qml")), key);
     }
   }
 
@@ -623,12 +623,22 @@ TestCase {
     const groups = SchemaLayout.categoryGroups(schema, {
       "name": "Cat",
       "sections": ["S"],
-      "card": "Own",
-      "cardTitle": "Own card"
+      "cards": [
+        {
+          "card": "Own",
+          "title": "Own card"
+        },
+        {
+          "card": "Second",
+          "title": ""
+        }
+      ]
     });
-    compare(groups.map(group => group.title), ["S", "A", "B", "W", "Own card"]);
+    compare(groups.map(group => group.title), ["S", "A", "B", "W", "Own card", "Cat"]);
     compare(groups[4].key, "Cat:Own");
-    compare(groups.map(group => group.wide), [true, false, false, true, true]);
+    compare(groups[5].key, "Cat:Second");
+    compare(groups[5].card, "Second");
+    compare(groups.map(group => group.wide), [true, false, false, true, true, true]);
   }
 
   // A hand-built card is titled by `x-card.title`, which every real one has
@@ -689,7 +699,7 @@ TestCase {
     for (const key in schema.properties) {
       const intro = schema.properties[key]["x-intro"];
       if (intro)
-        verify(files.text("components/views/Settings/" + intro + ".qml").includes("x-intro"), intro);
+        verify(files.text("qml/components/views/Settings/" + intro + ".qml").includes("x-intro"), intro);
     }
   }
 
@@ -818,8 +828,12 @@ TestCase {
         {
           "name": "Tools",
           "icon": "build",
-          "card": "Tools",
-          "cardTitle": "Tool card"
+          "cards": [
+            {
+              "card": "Tools",
+              "title": "Tool card"
+            }
+          ]
         }
       ],
       "properties": {
@@ -851,10 +865,69 @@ TestCase {
     compare(categories[0].icon, "star");
     compare(categories[0].sections, ["Two"]);
     compare(categories[0].links, ["Themes"]);
-    compare([categories[1].card, categories[1].cardTitle], ["Tools", "Tool card"]);
+    compare(categories[1].cards, [
+      {
+        "card": "Tools",
+        "title": "Tool card"
+      }
+    ]);
     compare(categories[1].sections, []);
     compare(categories[2].icon, "settings");
-    compare(categories[2].card, "");
+    compare(categories[2].cards, []);
+  }
+
+  // A declared category's `cards` ([{ card, title }]) are its own cards in
+  // order; `showIf` (`/`-rooted keys, as a section's) leaves it out, with
+  // any section naming it, and without `valueOf` it's kept
+  function test_categories_cards_and_showIf() {
+    const schema = {
+      "x-categories": [
+        {
+          "name": "Dev",
+          "icon": "code",
+          "showIf": {
+            "/$devOptions": true
+          },
+          "cards": [
+            {
+              "card": "Tree",
+              "title": "Dev tree"
+            },
+            {
+              "card": "Diff"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "Extra": {
+          "type": "object",
+          "x-category": "Dev",
+          "properties": {
+            "f": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    };
+    const on = SchemaLayout.categories(schema, key => key === "/$devOptions");
+    compare(on.map(c => c.name), ["Dev"]);
+    compare(on[0].cards, [
+      {
+        "card": "Tree",
+        "title": "Dev tree"
+      },
+      {
+        "card": "Diff",
+        "title": ""
+      }
+    ]);
+    compare(on[0].sections, ["Extra"]);
+    compare(SchemaLayout.categoryGroups(schema, on[0]).map(group => [group.kind, group.title]), [["rows", "Extra"], ["card", "Dev tree"], ["card", "Dev"]]);
+    compare(SchemaLayout.categories(schema, key => false), []);
+    compare(SchemaLayout.categories(schema).map(c => c.name), ["Dev"]);
   }
 
   function test_real_schema_categories() {
@@ -863,10 +936,10 @@ TestCase {
     const declared = schema["x-categories"].map(c => c.name);
     for (const category of categories) {
       verify(declared.includes(category.name), "declared in x-categories: " + category.name);
-      if (category.card !== "") {
-        verify(files.text("components/views/Settings/" + category.card + "Card.qml").length > 0, category.card);
+      for (const own of category.cards)
+        verify(files.text("qml/components/views/Settings/" + own.card + "Card.qml").length > 0, own.card);
+      if (category.cards.length > 0)
         continue;
-      }
       verify(category.sections.length > 0, category.name);
       for (const key of category.sections)
         verify(SchemaLayout.groups(schema, key).length > 0, key);

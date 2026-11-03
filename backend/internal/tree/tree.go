@@ -1,6 +1,6 @@
 // Package tree finds the axiom tree (the shell's QML and the config
 // schema's source) a command works on, and builds the JSON schema from it:
-// config/schema/**.yaml → config/json/config.schema.json.
+// qml/config/schema/**.yaml → qml/config/json/config.schema.json.
 //
 // It is the disk side of schema/yamlsrc, which stays pure: tree finds the
 // tree, hands yamlsrc the files (os.DirFS) and reports yamlsrc's problems
@@ -18,18 +18,35 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/schema/yamlsrc"
+	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
 
 // Paths inside a tree
 const (
+	// SchemaJSON is the built schema, relative to the QML dir (QMLDir);
+	// it is also the binary's embedded copy's key (assets.Read)
 	SchemaJSON = "config/json/config.schema.json"
 	shellQML   = "shell.qml"
+	qmlDir     = "qml"
+	// installName is the installed tree's folder under a data dir
+	// (~/.local/share/axiom-shell, /usr/share/axiom-shell)
+	installName = "axiom-shell"
 )
 
+// QMLDir is the tree's QML folder: shell.qml, greeter.qml and config/
+// (the schema's YAML source and its built JSON) live under it
+func QMLDir(root string) string {
+	return filepath.Join(root, qmlDir)
+}
+
+// SchemaPath is the built schema's path on disk in the tree at root
+func SchemaPath(root string) string {
+	return filepath.Join(QMLDir(root), SchemaJSON)
+}
+
 // Find is the tree to use: dir when given, else $AXIOM_TREE, else the
-// nearest directory up from start holding shell.qml and config/, else the
-// installed one, where a clone or package puts it (a compositor's autostart runs
-// `axiom run` from $HOME).
+// nearest directory up from start that IsTree, else the installed one
+// (Installed: a compositor's autostart runs `axiom run` from $HOME).
 func Find(dir string, getenv func(string) string, start string) (string, error) {
 	if dir == "" {
 		dir = getenv("AXIOM_TREE")
@@ -39,13 +56,13 @@ func Find(dir string, getenv func(string) string, start string) (string, error) 
 		if err != nil {
 			return "", err
 		}
-		if !isTree(abs) {
-			return "", axerr.New(axerr.NotFound, "%s isn't an axiom tree (no shell.qml and config/)", abs)
+		if !IsTree(abs) {
+			return "", axerr.New(axerr.NotFound, "%s isn't an axiom tree (no qml/shell.qml and qml/config/)", abs)
 		}
 		return abs, nil
 	}
 	for d := start; ; d = filepath.Dir(d) {
-		if isTree(d) {
+		if IsTree(d) {
 			return d, nil
 		}
 		if filepath.Dir(d) == d {
@@ -53,52 +70,43 @@ func Find(dir string, getenv func(string) string, start string) (string, error) 
 		}
 	}
 	for _, d := range Installed(getenv) {
-		if isTree(d) {
+		if IsTree(d) {
 			return d, nil
 		}
 	}
 	return "", axerr.New(axerr.NotFound, "no axiom tree here or above, nor installed (pass --tree)")
 }
 
-// Installed is where an installed tree is looked for, in order, as
-// quickshell finds `-c axiom`: the user's config folder (a clone), then
-// each system one (a package links /etc/xdg/quickshell/axiom).
+// Installed is where an installed tree is looked for, in order: the
+// user's data folder (a script install, ~/.local/share/axiom-shell), then
+// each system one (a package's /usr/share/axiom-shell).
 func Installed(getenv func(string) string) []string {
 	var out []string
-	home := getenv("XDG_CONFIG_HOME")
-	if home == "" && getenv("HOME") != "" {
-		home = filepath.Join(getenv("HOME"), ".config")
-	}
-	if home != "" {
-		out = append(out, filepath.Join(home, "quickshell", "axiom"))
-	}
-	dirs := getenv("XDG_CONFIG_DIRS")
-	if dirs == "" {
-		dirs = "/etc/xdg"
-	}
-	for _, d := range filepath.SplitList(dirs) {
-		if filepath.IsAbs(d) {
-			out = append(out, filepath.Join(d, "quickshell", "axiom"))
-		}
+	for _, d := range xdg.SearchDirs(getenv) {
+		out = append(out, filepath.Join(d, installName))
 	}
 	return out
 }
 
-func isTree(dir string) bool {
-	if _, err := os.Stat(filepath.Join(dir, shellQML)); err != nil {
+// IsTree is whether dir is an axiom tree: it holds qml/shell.qml and
+// qml/config/.
+func IsTree(dir string) bool {
+	if _, err := os.Stat(filepath.Join(QMLDir(dir), shellQML)); err != nil {
 		return false
 	}
-	info, err := os.Stat(filepath.Join(dir, "config"))
+	info, err := os.Stat(filepath.Join(QMLDir(dir), "config"))
 	return err == nil && info.IsDir()
 }
 
-// BuildSchema assembles the tree's YAML schema source (config/schema/ and
-// the type folders' schema.yaml) into the JSON schema's bytes.
+// BuildSchema assembles the tree's YAML schema source (qml/config/schema/
+// and the type folders' schema.yaml) into the JSON schema's bytes. The
+// source's paths are relative to the QML dir (QMLDir).
 func BuildSchema(dir string) ([]byte, error) {
-	if _, err := os.Stat(filepath.Join(dir, yamlsrc.IndexFile)); errors.Is(err, fs.ErrNotExist) {
-		return nil, axerr.New(axerr.NotFound, "%s has no schema source (%s)", dir, yamlsrc.IndexFile)
+	qml := QMLDir(dir)
+	if _, err := os.Stat(filepath.Join(qml, yamlsrc.IndexFile)); errors.Is(err, fs.ErrNotExist) {
+		return nil, axerr.New(axerr.NotFound, "%s has no schema source (%s)", dir, filepath.Join(qmlDir, yamlsrc.IndexFile))
 	}
-	root, err := yamlsrc.Assemble(os.DirFS(dir))
+	root, err := yamlsrc.Assemble(os.DirFS(qml))
 	if err != nil {
 		var errs yamlsrc.Errors
 		if errors.As(err, &errs) {

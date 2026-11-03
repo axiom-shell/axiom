@@ -7,6 +7,7 @@ package axerr
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 // Kind classifies an error for callers.
@@ -107,6 +108,20 @@ func IssuesOf(err error) []Issue {
 		return e.Issues
 	}
 	return nil
+}
+
+// IssuesFrom is validation's "path: message" lines as issues (a line
+// without ": " is a message with no path).
+func IssuesFrom(lines []string) []Issue {
+	out := make([]Issue, 0, len(lines))
+	for _, l := range lines {
+		path, msg, ok := strings.Cut(l, ": ")
+		if !ok {
+			path, msg = "", l
+		}
+		out = append(out, Issue{Path: path, Message: msg})
+	}
+	return out
 }
 
 // ExitCode is the CLI's exit status for err (0 for nil):

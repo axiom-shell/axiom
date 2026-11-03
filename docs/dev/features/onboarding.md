@@ -1,6 +1,6 @@
 # Onboarding
 
-> **Files:** `services/session/OnboardingManager.qml`, `shell/Onboarding.qml`, `components/surfaces/onboarding/OnboardingWindow.qml`, `components/surfaces/onboarding/pages/CompositorPage.qml`, `components/surfaces/onboarding/pages/SystemPage.qml`, `components/surfaces/onboarding/pages/AppColorsPage.qml`, `components/surfaces/onboarding/pages/ChecksPage.qml`, `components/surfaces/onboarding/pages/ExampleCard.qml`, `services/core/DependencyManager.qml`, `components/methods/Packages.qml`, `components/views/Settings/OnboardingCard.qml`
+> **Files:** `qml/services/session/OnboardingManager.qml`, `qml/shell/Onboarding.qml`, `qml/components/surfaces/onboarding/OnboardingWindow.qml`, `qml/components/surfaces/onboarding/pages/CompositorPage.qml`, `qml/components/surfaces/onboarding/pages/SystemPage.qml`, `qml/components/surfaces/onboarding/pages/AppColorsPage.qml`, `qml/components/surfaces/onboarding/pages/ChecksPage.qml`, `qml/components/surfaces/onboarding/pages/ExampleCard.qml`, `qml/services/core/DependencyManager.qml`, `qml/components/methods/Packages.qml`, `qml/components/views/Settings/OnboardingCard.qml`
 > **Config:** none of its own (pages write other sections); state in `~/.local/state/axiom/ui/onboarding.json`
 > **Related:** [Config modes](../compositor/config-modes.md), [Hyprland's writer](../hyprland/config-modes.md), [Monitors](../hyprland/monitors.md), [Greeter install](greeter-install.md), [Pages and grid](../overlay/pages-and-grid.md)
 
@@ -15,7 +15,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - The step and the chosen compositor mode live in a `PersistentProperties`.
 
 ### Window
-- `shell/Onboarding` → `surfaces/onboarding/OnboardingWindow`, with pages in `onboarding/pages/`.
+- `qml/shell/Onboarding` → `surfaces/onboarding/OnboardingWindow`, with pages in `onboarding/pages/`.
 - The window is a `hosts/overlay/ReservedAreaWindow`, like the overlay's.
 - It uses the same `OverlayGrid` and draws its pages at its `zoom`, so the Welcome page's `Widget.cardSize` and `Widget.scale` settings show on it.
 - Its pages shrink as much as the overlay's first page does there (`GridPlacement.fitScale`). Cards therefore show at the overlay's real size, even on a screen too small for it.

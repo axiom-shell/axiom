@@ -1,6 +1,6 @@
 # Sway backend
 
-> **Files:** `services/compositor/SwayManager.qml`, `services/compositor/SwayIpcManager.qml`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/takeover/`, `backend/internal/compositor/binds/`, `backend/internal/compositor/userconf/sway.go`, `backend/internal/compositor/binds/sway.go`, `backend/internal/wayland/keyhold/`, `components/methods/SwayState.qml`, `tests/tst_SwayState.qml`, `services/compositor/CompositorManager.qml`, `scripts/dev/nested.sh`
+> **Files:** `qml/services/compositor/SwayManager.qml`, `qml/services/compositor/SwayIpcManager.qml`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/takeover/`, `backend/internal/compositor/binds/`, `backend/internal/compositor/userconf/sway.go`, `backend/internal/compositor/binds/sway.go`, `backend/internal/wayland/keyhold/`, `qml/components/methods/SwayState.qml`, `tests/tst_SwayState.qml`, `qml/services/compositor/CompositorManager.qml`, `scripts/dev/nested.sh`
 > **Config:** `WindowLook.*`, `Input.*`, `Keybinds.binds`, `Monitors.items`, `Compositor.mode`, `WindowBehaviour.*`, `Compositor.sway.*`, `Session.*`
 > **Related:** [The compositor](README.md), [Backend contract](contract.md), [Recipe: compositor backend](../../recipes/compositor-backend.md)
 

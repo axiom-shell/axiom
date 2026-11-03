@@ -3,15 +3,16 @@
 
 Docs drift silently; this catches the drift a reader would trip on:
 - every relative markdown link points at a file that exists
-- every backticked repo path (`services/core/FooManager.qml`, `docs/dev/…`)
-  exists, resolved from the repo root, from components/, or from the doc's
-  own directory (paths with <placeholders> or globs are skipped)
+- every backticked repo path (`qml/services/core/FooManager.qml`, `docs/dev/…`)
+  exists, resolved from the repo root or from the doc's own directory
+  (paths with <placeholders> or globs are skipped)
 - every backticked `Singleton.member` names a member that file declares
-  (Singleton = a file in services/*/, config/ or components/methods/)
+  (Singleton = a file in qml/services/*/, qml/config/ or
+  qml/components/methods/)
 - no backticked name is one a rename retired (RETIRED: add the old name
   when renaming a singleton, so docs still citing it fail; an old name that
   is also a schema definition fails only with a member that isn't a setting)
-- every shared piece (a file in components/reusable, forms or content/parts)
+- every shared piece (a file in qml/components/reusable, forms or content/parts)
   is named in the shared-ui-pieces index or the docs it defers to, so the
   index agents check before building stays whole
 - every recipe in docs/recipes has a skill in .claude/skills of its name,
@@ -35,11 +36,15 @@ import sys
 from pathlib import Path
 
 from gen_docs import parse_qml
-from qml_modules import ROOT
+from qml_modules import QML_ROOT, ROOT
 
 GENERATED = ("docs/dev/config/", "docs/dev/generated/")
-PATH_ROOTS = ("components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
-              "examples/", "backend/", ".github/", ".claude/", "shell.qml", "greeter.qml", "install.sh")
+SCHEMA = "qml/config/json/config.schema.json"
+# The old top-level QML folders stay roots, so a path cited at its place
+# before the qml/ layout fails instead of passing unchecked
+PATH_ROOTS = ("qml/", "data/", "components/", "services/", "config/", "scripts/", "shell/", "tests/", "docs/",
+              "examples/", "assets/", "backend/", "packaging/", ".github/", ".claude/", "shell.qml", "greeter.qml",
+              "install.sh")
 # Names a rename retired: a doc still citing one is stale (old -> new)
 RETIRED = {"IconConfig": "IconsConfig", "PopoutConfig": "PopoutsConfig", "Bar": "BarsConfig"}
 # Backticked text that looks like a member access but isn't one of ours
@@ -61,7 +66,7 @@ def singletons():
     """{name: set of root member names} for every singleton file."""
     table = {}
     for folder in ("services/*", "config", "components/methods"):
-        for path in ROOT.glob(f"{folder}/*.qml"):
+        for path in QML_ROOT.glob(f"{folder}/*.qml"):
             _, members = parse_qml(path)
             text = path.read_text()
             names = {m["name"] for m in members}
@@ -76,7 +81,7 @@ def singletons():
 def config_names():
     """`Section.key` and `Definition.key` spellings of config paths (a doc
     naming `Appearance.surface` or `Bar.background` means the setting)."""
-    schema = json.loads((ROOT / "config/json/config.schema.json").read_text())
+    schema = json.loads((ROOT / SCHEMA).read_text())
     names = set()
 
     def walk(prefix, node, depth=0):
@@ -184,9 +189,9 @@ def check_issue_links(paths):
 
 # Folders of shared pieces -> the docs that must name each of their files
 PIECE_INDEX = {
-    "components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
-    "components/forms": ["docs/dev/core/shared-ui-pieces.md"],
-    "components/content/parts": ["docs/dev/core/shared-ui-pieces.md", "docs/dev/overlay/content-roots.md",
+    "qml/components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
+    "qml/components/forms": ["docs/dev/core/shared-ui-pieces.md"],
+    "qml/components/content/parts": ["docs/dev/core/shared-ui-pieces.md", "docs/dev/overlay/content-roots.md",
                                  "docs/dev/overlay/writing-modules.md"],
 }
 
@@ -222,7 +227,6 @@ def check_skills():
     return errors
 
 
-SCHEMA = "config/json/config.schema.json"
 ANNOTATIONS_DOC = "docs/dev/core/schema-annotations.md"
 
 
@@ -267,7 +271,7 @@ def main():
                     continue
                 if span.startswith(PATH_ROOTS) and not re.search(r"[<>*{}|$ ]|\.\.\.|…", span):
                     path = span.split(":")[0].rstrip("/").rstrip(".,")
-                    candidates = [ROOT / path, ROOT / "components" / path, doc.parent / path]
+                    candidates = [ROOT / path, doc.parent / path]
                     if not any(c.exists() or c.with_suffix(".qml").exists() for c in candidates) and not ignored(path):
                         errors.append(f"{where}: `{span}` doesn't exist")
                     continue

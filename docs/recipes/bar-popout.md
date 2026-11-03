@@ -1,11 +1,11 @@
 # Recipe: a bar popout (content panel)
 
 > **Use when:** a bar widget should open a panel on hover (forecast, package list, device list), or an existing panel should open from a new widget.
-> **Copy from:** `components/content/WeatherForecast/WeatherForecast.qml` (a `Panel` fed by a service), `components/bar/widgets/Updates/Updates.qml` (anchor with `extraData`), `components/hosts/popout/PopoutAnchor.qml` (the anchor's API).
-> **Docs:** [overlay/content-roots](../dev/overlay/content-roots.md), [popouts/hosts-and-switching](../dev/popouts/hosts-and-switching.md), rules in `components/content/AGENTS.md`.
+> **Copy from:** `qml/components/content/WeatherForecast/WeatherForecast.qml` (a `Panel` fed by a service), `qml/components/bar/widgets/Updates/Updates.qml` (anchor with `extraData`), `qml/components/hosts/popout/PopoutAnchor.qml` (the anchor's API).
+> **Docs:** [overlay/content-roots](../dev/overlay/content-roots.md), [popouts/hosts-and-switching](../dev/popouts/hosts-and-switching.md), rules in `qml/components/content/AGENTS.md`.
 
 ## Files to touch
-1. `components/content/<Name>/<Name>.qml`: the panel. `<Name>` is the `popoutName`.
+1. `qml/components/content/<Name>/<Name>.qml`: the panel. `<Name>` is the `popoutName`.
 2. The widget that opens it: a `PopoutAnchor` ([bar-widget](bar-widget.md)).
 3. No schema entry for a popout-only panel. If the same file should also be an overlay module, add one as in [overlay-module](overlay-module.md).
 

@@ -28,10 +28,10 @@ const (
 
 // Session is greetd's default_session command once installed: the
 // installed copy's session script, by its real path.
-const Session = "/usr/share/axiom-greeter/scripts/greeter/greeter-session.sh"
+const Session = "/usr/share/axiom-greeter/data/greeter/greeter-session.sh"
 
 // PackagePath is the package source's code, and where the greeter finds it.
-const PackagePath = "/usr/share/axiom"
+const PackagePath = "/usr/share/axiom-shell"
 
 // Repository is the official repository, the git source's code: root
 // fetches only it, never the clone's remote (maintainer, 2026-10-27:
@@ -192,8 +192,10 @@ func (o Origin) Label() string {
 }
 
 // Ships says whether a copy takes a file of axiom's tree (by its path
-// from the tree's top): the greeter never runs the tests, docs, the
-// binary's source (an install copies the built binary) or install.sh.
+// from the tree's top): the greeter runs only qml/ and data/ (and the
+// built binary an install copies), never the tests, docs, dev tooling
+// (scripts/, the packaging, the repo's hooks), the binary's source or
+// install.sh; what the packages leave out too.
 func Ships(path string) bool {
 	return Hashes(path) && !strings.HasPrefix(path, "backend/")
 }
@@ -201,7 +203,7 @@ func Ships(path string) bool {
 // Hashes says whether a local copy's hash covers a file: what it ships,
 // and the binary's source.
 func Hashes(path string) bool {
-	for _, dir := range []string{"tests/", ".github/", "docs/"} {
+	for _, dir := range []string{"tests/", ".github/", "docs/", "scripts/", "packaging/", ".githooks/", ".claude/"} {
 		if strings.HasPrefix(path, dir) {
 			return false
 		}

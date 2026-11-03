@@ -1,6 +1,6 @@
 # Dock
 
-> **Files:** `services/ui/DockManager.qml`, `config/DockConfig.qml`, `shell/Dock.qml`, `components/surfaces/dock/`, `components/methods/DockLayout.qml`, `components/views/Settings/DockListCard.qml`
+> **Files:** `qml/services/ui/DockManager.qml`, `qml/config/DockConfig.qml`, `qml/shell/Dock.qml`, `qml/components/surfaces/dock/`, `qml/components/methods/DockLayout.qml`, `qml/components/views/Settings/DockListCard.qml`
 > **Config:** `Dock.*` (reader `DockConfig`); entries are `definitions/DockEntry`; `Apps.pinned` (reader `Apps`)
 > **Related:** [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Popout registry](../popouts/registry.md), [Layering and corners](../bar/layering-and-corners.md), [OSD](osd.md)
 
@@ -15,7 +15,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
   - Config v71 moved the first dock's `pinned` to `Apps.pinned`; another dock with a different list kept it as its own.
 
 ### Building (shell/Dock)
-- `shell/Dock` builds one `surfaces/dock/DockWindow` per enabled dock, per screen it shows on.
+- `qml/shell/Dock` builds one `surfaces/dock/DockWindow` per enabled dock, per screen it shows on.
 - The screens come from the dock's `monitors`, the same way as an OSD's (`DockConfig.screensOf`, filtered by `ShellManager.showsOn`).
 - On "focused" the dock is rebuilt on whichever monitor focus moves to.
 
@@ -90,7 +90,7 @@ Along the edge:
 
 ### Settings preview
 - The settings card's Show button is a preview: `DockManager.preview(entry)`, with the entry as edited, saved or not.
-- **Why a second window:** the dock is put away under the overlay that the card sits in. So `shell/Dock` builds a second `DockWindow` with `preview: true`:
+- **Why a second window:** the dock is put away under the overlay that the card sits in. So `qml/shell/Dock` builds a second `DockWindow` with `preview: true`:
   - on the screen the dock would show on (`previewScreen`, `ShellManager.targetFor`);
   - an Overlay-layer `axiom-dock-preview`, whose layer rule orders it after the overlay's panel;
   - with no trigger, zone, input or IPC;

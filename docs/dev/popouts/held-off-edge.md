@@ -1,6 +1,6 @@
 # Surfaces held off an edge
 
-> **Files:** `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/ClosedLatch.qml`, `components/methods/SurfaceContext.qml`, `services/ui/ScreenEdgeManager.qml`
+> **Files:** `qml/components/hosts/popout/EdgePlacement.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/ClosedLatch.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `detached` and `gap` on floating edge menus (`EdgeMenus.items[]`), docks (`Dock.items[]`) and OSDs (`OSD.items[]`)
 > **Related:** [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Pill and floating bars](pill-and-floating-bars.md), [Dock](../features/dock.md), [OSD](../features/osd.md), [Edge menu hosts](../edge-menus/hosts.md)
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Check that every Material Symbols name axiom writes down is in the font.
 
-An icon name the bundled font (assets/fonts, its names in
-config/json/material-symbols.json) doesn't have draws as the word itself,
+An icon name the bundled font (qml/assets/fonts, its names in
+qml/config/json/material-symbols.json) doesn't have draws as the word itself,
 silently. This fails on a name, read from:
 
-  - the built schema (config/json/config.schema.json): `x-icon`,
+  - the built schema (qml/config/json/config.schema.json): `x-icon`,
     `x-enumIcons` and `x-categories` icons, the default of every
     `x-control: icon` setting, and any `icon` / `…Icon` / `glyph` string in
     a default (Chat's presets)
@@ -29,9 +29,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CATALOG = ROOT / "config/json/material-symbols.json"
-SCHEMA = ROOT / "config/json/config.schema.json"
-DIRS = ["components", "services", "config", "shell"]
+CATALOG = ROOT / "qml/config/json/material-symbols.json"
+SCHEMA = ROOT / "qml/config/json/config.schema.json"
+DIRS = ["qml/components", "qml/services", "qml/config", "qml/shell"]
 NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 STRING = re.compile(r'"([^"\\]*)"')
 MARK = "// not an icon:"

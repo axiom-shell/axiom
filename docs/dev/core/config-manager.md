@@ -1,6 +1,6 @@
 # ConfigManager, drafts and previews
 
-> **Files:** `services/core/ConfigManager.qml`, `services/core/ConfigDraft.qml`, `services/core/BackendManager.qml`, `components/methods/DataDirs.qml`, `components/methods/SchemaValidation.qml`, `services/ui/SettingsManager.qml`, `backend/internal/store/store.go`, `backend/internal/config/load.go`
+> **Files:** `qml/services/core/ConfigManager.qml`, `qml/services/core/ConfigDraft.qml`, `qml/services/core/BackendManager.qml`, `qml/components/methods/DataDirs.qml`, `qml/components/methods/SchemaValidation.qml`, `qml/services/ui/SettingsManager.qml`, `backend/internal/store/store.go`, `backend/internal/config/load.go`
 > **Config:** all of `~/.config/axiom/config.json`
 > **Related:** [Config readers](config-readers.md), [Schema annotations](schema-annotations.md), [Editors pattern](editors-pattern.md), [Saved configs and sharing](saved-configs-sharing.md), [Secrets](secrets.md)
 
@@ -13,20 +13,22 @@ The binary is the shell's parent (`axiom run`) and owns config.json ([The axiom 
 - **Writing:** every write path (`commit`, `setTheme`, `setWallpaper(s)`) fills defaults here, applies the result at once and sends what differs from the running config as path ops (`config.set`, built by `ConfigOps.diff`: a set per changed value, a list whole, a delete per key gone), so a save writes only what it changed; axiom validates and writes it, and if it refuses (logged with its issues; also when the file holds an outside edit not read yet, which axiom reads as it refuses), the running config is read back from it (`hardResetConfig`) and `saveRefused(refused)` follows: a `ConfigDraft` whose `saved` is what was refused sets `saved` from the config read back, so its edits show unsaved again, and live again (its `refused` signal: the editor previews them as it did before the save). The shell doesn't validate first, so axiom's is the one answer. Its own save comes back as a push, already applied.
 - **Migrated:** a load that migrated the file says so in the store's state (`State.migrated`: `{ from, to, changes }`, the changes English as logged), in the hello and `config.state`; `ConfigManager.migrated` holds it, and `SettingsManager` notes it once per version, silently ([Notifications](../features/notifications.md) › What the shell sends).
 - **First run:** axiom found no config.json and wrote the defaults. It says so in its hello, and `firstRun` is acknowledged (`config.ackFirstRun`) so a QML reload doesn't start the onboarding again.
-- **Without axiom** (`qs` started by hand): `available` is false, there is no config, and `shell.qml` shows only a notice with the start line. The greeter (`greeter`) runs read-only on the config `axiom greeter` made from its bundle.
+- **The dev config:** while dev mode runs its dev tree, the daemon's store runs on `$XDG_CONFIG_HOME/axiom/dev/config.json`, a copy of live made the first time, which the install never reads ([The axiom binary](../backend/README.md) › Dev mode). The shell sees no difference: `$AXIOM_CONFIG`, the pushes and every write go to whichever config the daemon runs on. Takeover settings stay live's (one per machine: a change in dev is written to live too). `ConfigManager.configDir` stays the live folder, as it only feeds the shared `saved/`; the dev config's own path is `DevManager.configPath`. Settings › Development shows how dev and live differ and copies settings either way (`DevManager.diff` / `copy` / `pull`).
+- **Without axiom** (`qs` started by hand): `available` is false, there is no config, and `qml/shell.qml` shows only a notice with the start line. The greeter (`greeter`) runs read-only on the config `axiom greeter` made from its bundle.
 
 ### What it owns
 - `_config` (`config`): the config as axiom has it, plus saves applied but not yet answered; never an unsaved edit.
 - `live`: `config` with the previews laid over it (`ConfigOps.apply` of `ConfigOps.previewOps`, copying only the objects along each path), what readers read.
-- `_configSchema`: `$AXIOM_SCHEMA`, else the tree's `config/json/config.schema.json` (built from `config/schema/`, never committed).
+- `_configSchema`: `$AXIOM_SCHEMA`, else the tree's `qml/config/json/config.schema.json` (built from `qml/config/schema/`, never committed).
 - The active theme's data belongs to ThemeManager, not here.
 
 ### Where files live
-The repo (`Paths.axiomPath`) is read-only to the shell: a package installs it where it can't write (`/usr/share/axiom`, [packaging.md](../packaging.md)). Everything axiom writes is in the XDG folders, resolved once by `DataDirs.xdg` (each `$XDG_*_HOME` when absolute, else its default) and handed out by `ConfigManager.dataDirs` and `Paths`:
+The tree (`Paths.treePath`; `Paths.axiomPath` is its `qml/`) is read-only to the shell: a package installs it where it can't write (`/usr/share/axiom-shell`, [packaging.md](../packaging.md)). Everything axiom writes is in the XDG folders, resolved once by `DataDirs.xdg` (each `$XDG_*_HOME` when absolute, else its default) and handed out by `ConfigManager.dataDirs` and `Paths`:
 
 | What | Where | `Paths` |
 |---|---|---|
 | config.json, `saved/` | `$XDG_CONFIG_HOME/axiom/` | `userConfigPath` |
+| The dev config (dev mode only; `saved/` stays shared) | `$XDG_CONFIG_HOME/axiom/dev/config.json` | `DevManager.configPath` |
 | `StateManager` files (launcher, look, editors, onboarding, settings, clipboard pins, …) | `$XDG_STATE_HOME/axiom/ui/` (0700) | `statePath` |
 | Secrets, chats, notification history, calendar cache, generated hypridle/Hyprland configs, integration outputs | `$XDG_STATE_HOME/axiom/` | `userStatePath` |
 | Themes generated from the wallpaper (`generated/<name>`) | `$XDG_STATE_HOME/axiom/themes/` | `generatedThemesPath`, `themeFile(name)` |
@@ -57,7 +59,7 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 - Never mutate `ConfigManager.config` fields from UI code and expect persistence.
 
 ### ConfigDraft
-- The editor services each hold a `ConfigDraft` (`services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager (and its `EdgeMenuEditor`), KeybindManager (its `KeybindEditor`), MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
+- The editor services each hold a `ConfigDraft` (`qml/services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager (and its `EdgeMenuEditor`), KeybindManager (its `KeybindEditor`), MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
 - A draft is a working copy of one config path:
   - `changed()` after in-place edits
   - `save()` merges onto the latest config via `commit`.

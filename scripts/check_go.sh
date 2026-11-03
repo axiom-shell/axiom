@@ -86,7 +86,7 @@ tidy() {
 }
 step "mod tidy" tidy
 step "tests" tests
-step "schema built from config/schema/" go run ./cmd/axiom schema check --tree ..
+step "schema built from qml/config/schema/" go run ./cmd/axiom schema check --tree ..
 if [[ $ci -eq 1 ]]; then
   step "govulncheck" go tool govulncheck ./...
 fi

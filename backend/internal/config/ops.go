@@ -125,6 +125,12 @@ func SetValue(path Path, v any) Op {
 	return Op{Op: "set", Path: path, Value: jsonValue{V: v, Set: true}}
 }
 
+// WithBase is o applied only while the value at its path still is v.
+func (o Op) WithBase(v any) Op {
+	o.Base = jsonValue{V: v, Set: true}
+	return o
+}
+
 // Keys is a path of plain keys.
 func Keys(keys ...string) Path {
 	p := make(Path, len(keys))

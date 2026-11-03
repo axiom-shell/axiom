@@ -1,6 +1,6 @@
 # Theme integrations
 
-> **Files:** `services/core/ThemeManager.qml`, `services/ui/IntegrationHookupManager.qml`, `config/ThemeIntegrations.qml`, `backend/internal/theme/integrations/`, `backend/internal/theme/integrate.go`, `backend/internal/theme/effects.go`, `backend/internal/daemon/theme.go`, `backend/internal/hookup/`, `backend/internal/compositor/edit/hookup.go`, `backend/internal/daemon/hookup.go`, `scripts/templates/nvim/`, `components/forms/IntegrationHookup.qml`, `tests/scripts/test_scripts.py`
+> **Files:** `qml/services/core/ThemeManager.qml`, `qml/services/ui/IntegrationHookupManager.qml`, `qml/config/ThemeIntegrations.qml`, `backend/internal/theme/integrations/`, `backend/internal/theme/integrate.go`, `backend/internal/theme/effects.go`, `backend/internal/daemon/theme.go`, `backend/internal/hookup/`, `backend/internal/compositor/edit/hookup.go`, `backend/internal/daemon/hookup.go`, `data/templates/nvim/`, `qml/components/forms/IntegrationHookup.qml`, `tests/scripts/test_scripts.py`
 > **Config:** `ThemeIntegrations.*`
 > **Related:** [Themes](themes.md), [Schema annotations](../core/schema-annotations.md), [Hyprland config modes](../hyprland/config-modes.md)
 
@@ -66,7 +66,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 ### Neovim
 - No line to add: colorschemes come from plugins, often loaded lazily after init.lua.
 - The `nvim` integration writes `$XDG_STATE_HOME/axiom/nvim-theme.json` and calls `require("axiom_theme").reload()` in each running instance.
-- `scripts/templates/nvim/axiom_theme.lua` is that module (copied into the user's config by Apply):
+- `data/templates/nvim/axiom_theme.lua` is that module (copied into the user's config by Apply):
   - `M.map` maps every shipped theme's file stem to that theme's usual colorscheme plugin;
   - `setup({ map, fallback })` merges the user's entries over it;
   - any other theme (or one whose plugin lazy.nvim doesn't know) is built from its base16 palette: mini.base16 when installed, else plain highlight groups;
@@ -129,7 +129,7 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 ### Adding an integration
 - An entry in `integrations.Table` (`backend/internal/theme/integrations/table.go`), usually a template in its `templates/`; anything it does beyond writing the file (a reload) is an entry in `effects` (`backend/internal/theme/effects.go`). Recipe: `docs/recipes/theme-integration.md`.
 - A schema boolean under `ThemeIntegrations` with its `x-hookup` (and `x-hookupNote` if needed; `x-commands` if the app's binary isn't named `<key>`). `ThemeManager.integrations` picks it up from the schema; a Go test fails when the table and the schema's switches differ.
-- A property in `config/ThemeIntegrations.qml` (ThemeManager reads `ThemeIntegrations[key]`).
+- A property in `qml/config/ThemeIntegrations.qml` (ThemeManager reads `ThemeIntegrations[key]`).
 
 ### Testing
 - `backend/internal/theme/integrations`: every file of every integration for a dark and a light theme against goldens (`go test ./internal/theme/integrations -update` rewrites them; read the diff), every shipped theme rendered through every integration (JSON and plist parse, colors well-formed), the terminal palette's contrast, and the merges (ncspot, kdeglobals, foot).

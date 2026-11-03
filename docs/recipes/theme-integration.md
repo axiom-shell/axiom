@@ -1,15 +1,15 @@
 # Recipe: a new theme integration (theming another app)
 
 > **Use when:** making another app follow axiom's theme: an entry in the daemon's integrations table writing that app's own `axiom.*` file, plus the hookup that makes the app load it.
-> **Copy from:** `alacritty` in `backend/internal/theme/integrations/table.go` + `templates/alacritty.toml` (a template render), `zathura` in `backend/internal/theme/effects.go` (a live reload); schema → `ThemeIntegrations.alacritty` in `config/schema/sections/ThemeIntegrations.yaml` (switch + `x-hookup` + `x-hookupNote`)
+> **Copy from:** `alacritty` in `backend/internal/theme/integrations/table.go` + `templates/alacritty.toml` (a template render), `zathura` in `backend/internal/theme/effects.go` (a live reload); schema → `ThemeIntegrations.alacritty` in `qml/config/schema/sections/ThemeIntegrations.yaml` (switch + `x-hookup` + `x-hookupNote`)
 > **Docs:** [theme-integrations](../dev/theming/theme-integrations.md), `backend/AGENTS.md`
 
 ## Files to touch
 1. `backend/internal/theme/integrations/templates/<key>.<ext>`: the app's file with `${NAME}`s, if it renders one.
 2. `backend/internal/theme/integrations/table.go` → `Table["<key>"]`: its files and where they go.
 3. `backend/internal/theme/effects.go` → `effects["<key>"]`: only if the app needs telling (a signal, socket, D-Bus call) or a file reshaped for its version.
-4. `config/schema/sections/ThemeIntegrations.yaml` → `properties.<key>`: a boolean (`default: false`) with `title`, `description`, `x-hookup` (optionally `x-hookupNote`, and `x-commands` if the app's binary isn't named `<key>`: what "installed" is checked by). `ThemeManager.integrations` is derived from these boolean keys, in schema order.
-5. `config/ThemeIntegrations.qml`: `readonly property bool <key>: _c.<key>` (`ThemeManager` reads `ThemeIntegrations[key]`).
+4. `qml/config/schema/sections/ThemeIntegrations.yaml` → `properties.<key>`: a boolean (`default: false`) with `title`, `description`, `x-hookup` (optionally `x-hookupNote`, and `x-commands` if the app's binary isn't named `<key>`: what "installed" is checked by). `ThemeManager.integrations` is derived from these boolean keys, in schema order.
+5. `qml/config/ThemeIntegrations.qml`: `readonly property bool <key>: _c.<key>` (`ThemeManager` reads `ThemeIntegrations[key]`).
 6. The goldens: `go -C backend test ./internal/theme/integrations -update`.
 
 ## Skeleton

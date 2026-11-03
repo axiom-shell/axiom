@@ -1,6 +1,6 @@
 # The compositor (detection, the facade, gating)
 
-> **Files:** `services/compositor/CompositorManager.qml`, `services/compositor/HyprlandManager.qml`, `services/compositor/SwayManager.qml`, `services/compositor/FocusGrab.qml`, `components/methods/HyprState.qml`, `components/methods/SchemaLayout.qml`, `services/ui/SettingsManager.qml`
+> **Files:** `qml/services/compositor/CompositorManager.qml`, `qml/services/compositor/HyprlandManager.qml`, `qml/services/compositor/SwayManager.qml`, `qml/services/compositor/FocusGrab.qml`, `qml/components/methods/HyprState.qml`, `qml/components/methods/SchemaLayout.qml`, `qml/services/ui/SettingsManager.qml`
 > **Config:** `WindowLook.*`, `Workspaces.*`
 > **Related:** [Backend contract](contract.md), [Sway backend](sway-backend.md), [Layer arrangement](layer-arrangement.md), [Hyprland IPC](../hyprland/ipc.md), [Workspaces](../hyprland/workspaces.md), [Schema annotations](../core/schema-annotations.md)
 

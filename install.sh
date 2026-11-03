@@ -3,14 +3,16 @@
 # Description: Installs axiom on Arch Linux, Fedora, or a distribution based
 #              on either (CachyOS, EndeavourOS, Manjaro, Nobara, …): a
 #              compositor (Hyprland, sway or niri: the one you run or have,
-#              else your pick), axiom's packages, a clone at the latest
-#              release, and (if you agree) the line in the compositor's
-#              config that starts it; from a text console it then offers to
-#              start the compositor. Everything after that, keybinds
-#              included, is axiom's own Settings → Desktop → Compositor.
+#              else your pick), axiom's packages, the latest release in
+#              ~/.local/share/axiom-shell, and (if you agree) the line in
+#              the compositor's config that starts it; from a text console
+#              it then offers to start the compositor. Everything after
+#              that, keybinds included, is axiom's own Settings → Desktop →
+#              Compositor.
 # Usage:       curl -fsSL https://raw.githubusercontent.com/axiom-shell/axiom/main/install.sh | bash
-#              ./install.sh [options]   (from a clone anywhere; it's linked
-#                into ~/.config/quickshell/axiom, or moved there)
+#              ./install.sh [options]   (from a clone anywhere: it installs
+#                the latest release all the same, then offers to make the
+#                clone axiom's dev tree, `axiom dev set`)
 #                --yes          answer yes to every question
 #                --minimal      required packages only, and no other changes
 #                --compositor hyprland|sway|niri|none
@@ -18,8 +20,8 @@
 #                               from, without asking (none: neither)
 #                --dry-run      print every command it would run; change
 #                               nothing
-#              AXIOM_REPO and AXIOM_DIR override the clone's source and
-#              target. Safe to run again: nothing is installed or added twice.
+#              AXIOM_REPO and AXIOM_DIR override the install's source and
+#              folder. Safe to run again: nothing is installed or added twice.
 #              sudo runs only for the package manager (and on Fedora to
 #              enable a COPR), each time after showing the command.
 
@@ -33,11 +35,10 @@ AXIOM_REPO=${AXIOM_REPO:-https://github.com/axiom-shell/axiom.git}
 # main's newest build, each with a SHA256SUMS listing its files
 AXIOM_RELEASES=${AXIOM_RELEASES:-https://github.com/axiom-shell/axiom/releases/download}
 CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
-# Where `axiom run` looks for it
-QS_DIR=$CONFIG_HOME/quickshell/axiom
-AXIOM_DIR=${AXIOM_DIR:-$QS_DIR}
+# The install, where `axiom run` looks first (tree.Installed)
+AXIOM_DIR=${AXIOM_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/axiom-shell}
 # An AUR (or other) package's copy, with the marker its PKGBUILD writes
-PACKAGED_DIR=/usr/share/axiom
+PACKAGED_DIR=/usr/share/axiom-shell
 
 # What installs each key (Packages.packages' keys, checked against it by
 # scripts/check_packages.py): key|Arch|Fedora, each a package name,
@@ -470,26 +471,29 @@ fi
 
 # ─── The clone ───────────────────────────────────────────────────────────────
 
-is_axiom_clone() { [[ -f "$1/shell.qml" && -f "$1/backend/go.mod" ]] && git -C "$1" rev-parse --git-dir >/dev/null 2>&1; }
+is_axiom_clone() { [[ -f "$1/qml/shell.qml" && -f "$1/backend/go.mod" ]] && git -C "$1" rev-parse --git-dir >/dev/null 2>&1; }
 same_dir() { [[ "$(readlink -f "$1" 2>/dev/null)" == "$(readlink -f "$2" 2>/dev/null)" ]]; }
 
-# Run from a clone (not curl | bash): that clone is the install, wherever it is
-from_clone=0
+# Run from a clone (not curl | bash): the install is still a fresh clone of
+# the latest release, and this one is offered as the dev tree (`axiom dev
+# set`), unless it is the install itself
+from_clone=0 clone_dir=""
 if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
   script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-  if is_axiom_clone "$script_dir"; then
-    AXIOM_DIR=$script_dir
+  if is_axiom_clone "$script_dir" && ! same_dir "$script_dir" "$AXIOM_DIR"; then
+    clone_dir=$script_dir
     from_clone=1
   fi
 fi
 
-# Installed as a package (the AUR's axiom-shell): `axiom run` finds it
-# through /etc/xdg, so no clone, unless this runs from one
+# Installed as a package (the AUR's axiom-shell): `axiom run` finds it in
+# /usr/share (after ~/.local/share), so no install, unless this runs from a
+# clone
 packaged=0
 [[ -f "$PACKAGED_DIR/.packaged" ]] && ((!from_clone)) && ! is_axiom_clone "$AXIOM_DIR" && packaged=1
 
 # The axiom binary (the shell's parent: `axiom run`): the package's, else
-# built from the clone into your home
+# the install's release build (or built from it) into your home
 if ((packaged)); then
   AXIOM_BIN=/usr/bin/axiom
 else
@@ -547,12 +551,12 @@ official_binary() (
 
 if ((packaged)); then
   clone_step="none: axiom is installed as a package, at $PACKAGED_DIR"
-elif ((from_clone)); then
-  clone_step="this clone, at $AXIOM_DIR"
+elif is_axiom_clone "$AXIOM_DIR"; then
+  clone_step="none: axiom is installed at $AXIOM_DIR (left as it is)"
 else
   clone_step="a clone of the latest release at $AXIOM_DIR"
 fi
-((packaged)) || same_dir "$AXIOM_DIR" "$QS_DIR" || clone_step+=$'\n      (then linked or moved to '"$QS_DIR"', where `axiom run` looks)'
+((from_clone)) && clone_step+=$'\n      (not this clone: it can be axiom\'s dev tree instead, asked at the end)'
 if ((${#compositors[@]})); then
   compositor_step="$(compositor_label "$primary") ($compositor_how)"
   if ((${#compositors[@]} > 1)); then
@@ -570,7 +574,7 @@ fi
 if ((packaged)); then
   binary_step="none: the package's, at $AXIOM_BIN"
 else
-  binary_step="the axiom binary into $AXIOM_BIN: the official build of the clone's checkout, downloaded and checked, else built from the clone (installing go)"
+  binary_step="the axiom binary into $AXIOM_BIN: the release's official build, downloaded and checked, else built from the install (installing go)"
 fi
 if [[ "$distro" == arch ]]; then
   packages_step="packages from the official repositories, through sudo pacman"
@@ -855,10 +859,8 @@ fi
 
 if ((packaged)); then
   ok "axiom is installed as a package, at $PACKAGED_DIR"
-elif ((from_clone)); then
-  info "Using this clone: $AXIOM_DIR"
 elif is_axiom_clone "$AXIOM_DIR"; then
-  info "axiom is already cloned at $AXIOM_DIR"
+  info "axiom is already installed at $AXIOM_DIR (left as it is: it updates itself)"
 elif [[ -e "$AXIOM_DIR" ]]; then
   die "$AXIOM_DIR already exists and isn't an axiom clone. Move it away and run this again."
 elif ((dry_run)); then
@@ -871,49 +873,16 @@ else
   # Releases are v* tags; self-update also works from a detached tag
   latest=$(git -C "$AXIOM_DIR" tag -l 'v*' --sort=-v:refname | head -1)
   if [[ -n "$latest" ]]; then
+    # A release from before the qml/ layout runs from ~/.config/quickshell,
+    # which nothing looks in any more
+    if ! git -C "$AXIOM_DIR" cat-file -e "$latest:qml/shell.qml" 2>/dev/null; then
+      rm -rf "$AXIOM_DIR"
+      die "There's no release with the new layout yet ($latest has none); run this again once one is tagged."
+    fi
     git -C "$AXIOM_DIR" -c advice.detachedHead=false checkout --quiet "$latest"
     ok "Checked out $latest"
   else
     warn "No release tag yet, so this is the development branch."
-  fi
-fi
-
-# `axiom run` only looks in $QS_DIR (then /etc/xdg), so a clone elsewhere
-# is linked (or moved) there
-placed=1
-if ((packaged)); then
-  :
-elif [[ ! -d "$AXIOM_DIR" ]]; then
-  # A dry run's clone that wasn't made
-  :
-elif same_dir "$QS_DIR" "$AXIOM_DIR"; then
-  AXIOM_DIR=$(cd "$AXIOM_DIR" && pwd)
-  [[ -L "$QS_DIR" ]] && ok "$QS_DIR links to this clone"
-elif [[ -e "$QS_DIR" ]]; then
-  placed=0
-  if is_axiom_clone "$QS_DIR"; then
-    warn "$QS_DIR is another axiom clone, and it's the one \`axiom run\` runs. Run its install.sh instead, or move it away and run this again to use $AXIOM_DIR."
-  else
-    warn "$QS_DIR exists and isn't axiom, so \`axiom run\` can't find $AXIOM_DIR. Move it away and run this again."
-  fi
-else
-  AXIOM_DIR=$(cd "$AXIOM_DIR" && pwd)
-  echo
-  info "\`axiom run\` looks for axiom at $QS_DIR, but this clone is at $AXIOM_DIR."
-  # A dangling link there (a clone that was moved or deleted) is replaced
-  [[ -L "$QS_DIR" ]] && info "$QS_DIR is a broken link; it gets replaced."
-  if ask "Link it there? (recommended: the clone stays where it is)"; then
-    run mkdir -p "$(dirname "$QS_DIR")"
-    run ln -sfn "$AXIOM_DIR" "$QS_DIR"
-    ok "Linked $QS_DIR → $AXIOM_DIR"
-  elif ask "Move the clone there instead?" n; then
-    run mkdir -p "$(dirname "$QS_DIR")"
-    run rm -f "$QS_DIR"
-    run mv "$AXIOM_DIR" "$QS_DIR"
-    AXIOM_DIR=$QS_DIR
-    ok "Moved the clone to $QS_DIR"
-  else
-    placed=0
   fi
 fi
 
@@ -929,7 +898,7 @@ else
     run official_binary "$AXIOM_DIR" "$AXIOM_BIN.new"
     run "$AXIOM_BIN.new" schema build --tree "$AXIOM_DIR"
     run mv -f "$AXIOM_BIN.new" "$AXIOM_BIN"
-    info "(else built from the clone with go, installed first when it's missing)"
+    info "(else built from the install's source with go, installed first when it's missing)"
   elif official_binary "$AXIOM_DIR" "$AXIOM_BIN.new"; then
     # The tree's schema copy, which the tools read (the daemon builds the
     # shell's own)
@@ -937,7 +906,7 @@ else
     mv -f "$AXIOM_BIN.new" "$AXIOM_BIN"
     ok "Installed $AXIOM_BIN"
   else
-    info "Building it from the clone instead"
+    info "Building it from the install's source instead"
     if ! command -v go >/dev/null; then
       install_packages "$(package_name "$(package_of go)")" || die "Building the axiom binary needs go. Install it, then run this again."
     fi
@@ -950,6 +919,30 @@ else
   fi
   [[ ":$PATH:" == *":$(dirname "$AXIOM_BIN"):"* ]] \
     || info "$(dirname "$AXIOM_BIN") isn't on your PATH: the compositor starts axiom by its full path, but for \`axiom\` commands in a terminal, add it."
+fi
+
+# ─── The dev tree ────────────────────────────────────────────────────────────
+
+# Run from a clone: the install above is what axiom runs, and the clone can
+# be its dev tree (`axiom dev on` then builds and runs it). Offered only by
+# a binary that has `axiom dev set`; otherwise said
+dev_set_hint=""
+if ((from_clone)); then
+  echo
+  info "axiom runs the release installed at $AXIOM_DIR, not this clone ($clone_dir). To work on axiom, make this clone its dev tree: \`axiom dev on\` then builds and runs it."
+  if ((dry_run)); then
+    ask "Make it axiom's dev tree?" && run "$AXIOM_BIN" dev set "$clone_dir"
+  elif "$AXIOM_BIN" dev set --help >/dev/null 2>&1; then
+    if ask "Make it axiom's dev tree?"; then
+      if "$AXIOM_BIN" dev set "$clone_dir"; then
+        ok "This clone is axiom's dev tree: \`axiom dev on\` runs it, \`axiom dev off\` the install"
+      else
+        dev_set_hint="'$AXIOM_BIN' dev set '$clone_dir'"
+      fi
+    fi
+  else
+    dev_set_hint="'$AXIOM_BIN' dev set '$clone_dir'"
+  fi
 fi
 
 # ─── Autostart ───────────────────────────────────────────────────────────────
@@ -1007,7 +1000,7 @@ if [[ -n "$running_compositor" && " ${compositors[*]} " == *" $running_composito
   if axiom_running; then
     ok "axiom is already running"
     started=1
-  elif ((placed)) && ask "Start axiom now?"; then
+  elif ask "Start axiom now?"; then
     if ((dry_run)); then
       run setsid "$AXIOM_BIN" run
     else
@@ -1029,9 +1022,7 @@ elif ((packaged)); then
 else
   ok "${bold}axiom is installed${reset} at $AXIOM_DIR"
 fi
-if ((!placed)); then
-  warn "\`axiom run\` won't find it until it's at $QS_DIR. Link it with: ln -s \"$AXIOM_DIR\" \"$QS_DIR\""
-fi
+[[ -n "$dev_set_hint" ]] && info "To make this clone axiom's dev tree, run \`$dev_set_hint\`."
 ((${#packages[@]})) && info "Packages: $(joined "${packages[@]}")"
 if ((${#skipped[@]})); then
   mapfile -t skipped < <(printf '%s\n' "${skipped[@]}" | awk '!seen[$0]++')

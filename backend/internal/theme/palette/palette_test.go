@@ -56,7 +56,7 @@ func draw(name string) image.Image {
 }
 
 func semantic(t *testing.T) *jsonx.Object {
-	raw, err := os.ReadFile("../../../../config/json/theme-defaults.json")
+	raw, err := os.ReadFile("../../../../qml/config/json/theme-defaults.json")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,6 @@
 # ShellManager, screen targeting and the surface registry
 
-> **Files:** `services/ui/ShellManager.qml`, `services/ui/SurfaceManager.qml`, `config/General.qml`, `components/reusable/SurfaceGroup.qml`, `components/hosts/overlay/ReservedAreaWindow.qml`
+> **Files:** `qml/services/ui/ShellManager.qml`, `qml/services/ui/SurfaceManager.qml`, `qml/config/General.qml`, `qml/components/reusable/SurfaceGroup.qml`, `qml/components/hosts/overlay/ReservedAreaWindow.qml`
 > **Config:** `General.screen`, `General.primaryMonitor`; each surface's own `screen` (a `ScreenTarget`: OSD, overlay, launcher, notifications, power menu, docks, bars, edge menus)
 > **Related:** [Popout registry](../popouts/registry.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md), [Polkit](../features/polkit.md), [Screenshots and recording](../features/screenshots-recording.md)
 
@@ -31,7 +31,7 @@
 - Which popouts give way to which is PopoutManager's: see [Popout registry](../popouts/registry.md). An integrated edge menu holds no popout claim and takes no part (its exclusive zone pushes the others inwards instead).
 
 ### The surface registry
-`SurfaceManager` (`services/ui/SurfaceManager.qml`) keeps what the shown surfaces report:
+`SurfaceManager` (`qml/services/ui/SurfaceManager.qml`) keeps what the shown surfaces report:
 - `surfaceWindows` (each `SurfaceGroup`'s window), `openSurfaces` (`surfaceOpen(kind)`, `surfaceOpenOn(kind, screen)`) and `surfaceShown`, which keeps "all" instances in step.
 - `grabPartners` (`grabPartnersFor(screen)`): the bars and their popouts, which a full-screen surface's focus grab lets input through to.
 - `borderOpenings` (`setBorderOpening`): surfaces joined to the border's inner stroke, which leaves it open under them.

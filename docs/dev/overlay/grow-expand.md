@@ -1,6 +1,6 @@
 # Growing and expanding modules
 
-> **Files:** `components/hosts/overlay/ModuleGrid.qml`, `components/hosts/overlay/ExpandedModule.qml`, `components/hosts/overlay/OverlaySlot.qml`, `components/content/base/Card.qml`, `components/content/base/Panel.qml`, `components/content/parts/ExpandButton.qml`, `components/methods/GridPlacement.qml`
+> **Files:** `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/ExpandedModule.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/content/base/Card.qml`, `qml/components/content/base/Panel.qml`, `qml/components/content/parts/ExpandButton.qml`, `qml/components/methods/GridPlacement.qml`
 > **Config:** module `properties.grow` (Notifications, Agenda, WifiNetworks, BluetoothDevices, AudioMixer)
 > **Related:** [Writing modules](writing-modules.md), [Pages and grid](pages-and-grid.md), [Grid canvas](grid-canvas.md), [Edge menu hosts](../edge-menus/hosts.md), [Popout edge attach](../popouts/edge-attach.md)
 

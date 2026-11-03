@@ -1,6 +1,6 @@
 # Keybinds (actions and the Keybinds page)
 
-> **Files:** `services/compositor/KeybindManager.qml` (the reader), `services/compositor/KeybindEditor.qml` (`KeybindManager.editor`), `services/compositor/KeybindsPageState.qml` (`KeybindManager.page`), `config/KeybindsConfig.qml`, `backend/internal/compositor/actions/table.json` (what each action is, its argument kinds; the shell gets it from `compositor.bindActions` as `KeybindManager.actionTable`), `components/methods/BindActions.qml` (its functions, the table handed in), `backend/internal/compositor/render/hyprconfig.go` (`bindLua`, `dispatcherLua`), `services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `components/views/Keybinds/Keybinds.qml`, `components/views/Keybinds/` (`BindEditor`, `BindSection`, `BindListRow`, `BindInspector`, `KeyMapPanel`, `PresetSheet`, `KeyRecorder`, `FilterChips`), `components/methods/KeyNames.qml`, `components/methods/KeybindFilter.qml`, `components/methods/BindKeys.qml`, `components/methods/BindGroups.qml`, `components/methods/KeyMap.qml`, `components/methods/BindRows.qml`, `components/content/parts/KeybindSection.qml`, `components/content/parts/KeybindRow.qml`, `components/content/parts/KeyboardMap.qml`, `components/content/parts/KeyboardReference.qml`
+> **Files:** `qml/services/compositor/KeybindManager.qml` (the reader), `qml/services/compositor/KeybindEditor.qml` (`KeybindManager.editor`), `qml/services/compositor/KeybindsPageState.qml` (`KeybindManager.page`), `qml/config/KeybindsConfig.qml`, `backend/internal/compositor/actions/table.json` (what each action is, its argument kinds; the shell gets it from `compositor.bindActions` as `KeybindManager.actionTable`), `qml/components/methods/BindActions.qml` (its functions, the table handed in), `backend/internal/compositor/render/hyprconfig.go` (`bindLua`, `dispatcherLua`), `qml/services/compositor/CompositorConfigManager.qml`, `backend/internal/compositor/manager/hypr.go`, `qml/components/views/Keybinds/Keybinds.qml`, `qml/components/views/Keybinds/` (`BindEditor`, `BindSection`, `BindListRow`, `BindInspector`, `KeyMapPanel`, `PresetSheet`, `KeyRecorder`, `FilterChips`), `qml/components/methods/KeyNames.qml`, `qml/components/methods/KeybindFilter.qml`, `qml/components/methods/BindKeys.qml`, `qml/components/methods/BindGroups.qml`, `qml/components/methods/KeyMap.qml`, `qml/components/methods/BindRows.qml`, `qml/components/content/parts/KeybindSection.qml`, `qml/components/content/parts/KeybindRow.qml`, `qml/components/content/parts/KeyboardMap.qml`, `qml/components/content/parts/KeyboardReference.qml`
 > **Config:** `Keybinds.binds`, `Keybinds.presets`, `Apps.terminal`/`fileManager`/`browser`
 > **Related:** [Bind merge](bind-merge.md), [Config modes](config-modes.md), [Window switcher](window-switcher.md), [Screenshots and recording](../features/screenshots-recording.md), [Workspace strips](workspace-strips.md)
 
@@ -11,7 +11,7 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
 - An action is one of:
   - **An axiom IPC call** (the table's `ipcActions`). This includes the `audio`/`media` targets on AudioManager/MediaManager, so the OSD shows. The picker files them by the table's section:
     - **Axiom**: the launcher, overlay, edge menus, docks, power menu, lock, notifications (`toggleDnd` through the `dnd` target, with toggle/on/off calls), wallpapers (`nextWallpaper`, `randomWallpaper`), `monitorsIdentify`.
-    - **System**: on/off toggles with toggle/on/off calls: `idleInhibit`, `nightLight`, `darkMode` (ThemeManager), `wifi` (NetworkingManager), `bluetooth` (BluetoothManager), and `vpn` (VpnManager's `toggleLast`, as the Vpn widget's click). Networking, Bluetooth and VPN are in `shell.qml`'s `_services`, so their IPC answers with no widget showing them.
+    - **System**: on/off toggles with toggle/on/off calls: `idleInhibit`, `nightLight`, `darkMode` (ThemeManager), `wifi` (NetworkingManager), `bluetooth` (BluetoothManager), and `vpn` (VpnManager's `toggleLast`, as the Vpn widget's click). Networking, Bluetooth and VPN are in `qml/shell.qml`'s `_services`, so their IPC answers with no widget showing them.
     - **Tools**: the launcher's clipboard, emoji and calculator rows (`appLauncher clipboard|emoji|calculator`), `notes` (`NotesManager.openNotes`), calendar, chat, pomodoro, stopwatch and timer (`timerStart` takes a length, `10m` or `1:30`; its argument kind `duration`).
     - **Media**: volume, brightness, playback, the microphone (`toggleMicMute` through the `microphone` target, with toggle/on/off calls: on is unmuted), `audioOutputNext` (`AudioManager.nextOutput`, the next sink round the list).
   - The labels are the schema's `x-enumLabels` (the picker's), and the table's (the compositor's bind descriptions) are the same words where they take no argument (`tst_BindActions` `test_labelsAgree`). `ipc_test.go` checks every action's call, with each of its calls, against `docs/dev/generated/ipc.md`.
@@ -72,7 +72,7 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
   - A Lua timer leaves the submap after 30 s, even if qs dies.
   - This is the key recorder. It is unrelated to screen recording.
 - A modifier pressed alone and let go records a tap (`KeyNames.tapName`, left or right from the keycode) and sets `release`, where the compositor has `modifierTap`.
-- `components/methods/KeyNames` turns the Qt key event into a Hyprland key name.
+- `qml/components/methods/KeyNames` turns the Qt key event into a Hyprland key name.
 - A wheel turn over the recorder becomes `mouse_up`/`mouse_down`/`mouse_left`/`mouse_right` with the modifiers held (`fromWheel`).
 - Known gap: the recorder doesn't tell keypad keys apart, and doesn't map AltGr.
 
@@ -81,7 +81,7 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
   - A search plus toggle chips: `query`, `sectionFilter`, `modFilter`, `sourceFilter`, and the combo looked up (`lookupCombo`). They live in the manager so they survive the page.
   - Changed with `toggleFilter(group, value)` and `clearFilters()`.
   - The chips come from `modOptions`, built from the binds, not from the filtered result.
-  - Filtering is done by `components/methods/KeybindFilter`. Chips in one group are alternatives; the groups and the search all apply.
+  - Filtering is done by `qml/components/methods/KeybindFilter`. Chips in one group are alternatives; the groups and the search all apply.
 - **Editor tab.**
   - Its own chips: `editSectionFilter`, `editModFilter`, and a state group of `editPausedOnly` (Paused, `pausedCount`) and `editIssuesOnly` (With issues), either when both are on; options `editSectionOptions`/`editModOptions`.
   - Cleared by `clearEditFilters()`, which Add bind also calls.

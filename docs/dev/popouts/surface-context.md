@@ -1,10 +1,10 @@
 # Surface context: what a surface meets at its ends
 
-> **Files:** `components/methods/SurfaceContext.qml`, `tests/tst_SurfaceContext.qml`, `components/hosts/popout/EdgePlacement.qml`, `components/hosts/popout/EdgeSurface.qml`, `components/hosts/popout/StrokeOpening.qml`, `components/hosts/popout/SubmenuHost.qml`, `components/hosts/popout/SubmenuSide.qml`, `components/hosts/popout/PopoutAnchor.qml`
+> **Files:** `qml/components/methods/SurfaceContext.qml`, `tests/tst_SurfaceContext.qml`, `qml/components/hosts/popout/EdgePlacement.qml`, `qml/components/hosts/popout/EdgeSurface.qml`, `qml/components/hosts/popout/StrokeOpening.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/hosts/popout/SubmenuSide.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`
 > **Config:** none directly (reads bars, border and integrated menus through `ScreenEdgeManager`)
 > **Related:** [Edge attach](edge-attach.md), [Registry](registry.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Shadows](shadows.md), [Bar layering and corners](../bar/layering-and-corners.md)
 
-Every surface that grows out of a screen edge asks one pure helper what each of its ends meets. Read this before changing how any popout, dock or submenu joins, walls off or fillets at an intersection. (Rule: `components/hosts/popout/AGENTS.md`.)
+Every surface that grows out of a screen edge asks one pure helper what each of its ends meets. Read this before changing how any popout, dock or submenu joins, walls off or fillets at an intersection. (Rule: `qml/components/hosts/popout/AGENTS.md`.)
 
 ### One rule set for what a surface meets
 - Surfaces covered:

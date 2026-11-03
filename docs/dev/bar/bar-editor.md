@@ -1,6 +1,6 @@
 # Bar editor
 
-> **Files:** `components/views/BarEditor/BarEditor.qml`, `components/views/BarEditor/` (`BarsPanel`, `BarDragLayer`, `SectionsBoard`, `SectionLane`, `WidgetChip`, `WidgetInspector`, `LayoutOverrideField`), `services/ui/BarManager.qml`, `services/ui/EditsManager.qml`, `components/bar/BarContainer.qml`
+> **Files:** `qml/components/views/BarEditor/BarEditor.qml`, `qml/components/views/BarEditor/` (`BarsPanel`, `BarDragLayer`, `SectionsBoard`, `SectionLane`, `WidgetChip`, `WidgetInspector`, `LayoutOverrideField`), `qml/services/ui/BarManager.qml`, `qml/services/ui/EditsManager.qml`, `qml/components/bar/BarContainer.qml`
 > **Config:** `Bars` (edited through BarManager's draft)
 > **Related:** [Editors pattern](../core/editors-pattern.md), [Bar composition](composition.md), [Layouts editor](../overlay/layouts-editor.md)
 

@@ -20,7 +20,7 @@ QtObject {
   property var testCase: null
 
   // The live schema, which a case names by its path instead of copying it
-  readonly property string schemaPath: "config/json/config.schema.json"
+  readonly property string schemaPath: "qml/config/json/config.schema.json"
   readonly property var schema: _json(schemaPath)
 
   readonly property bool recording: _read("tests/fixtures/shared/.recording") !== ""

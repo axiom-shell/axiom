@@ -78,7 +78,7 @@ for job in "${jobs[@]}"; do
     step "shared fixtures" python3 scripts/dev/fixtures.py check
     ;;
   scripts)
-    step "shellcheck" shellcheck -x -S warning install.sh scripts/*.sh scripts/lib/*.sh scripts/greeter/*.sh scripts/dev/*.sh .githooks/pre-commit
+    step "shellcheck" shellcheck -x -S warning install.sh scripts/*.sh scripts/lib/*.sh data/greeter/*.sh scripts/dev/*.sh .githooks/pre-commit
     step "script tests" python3 tests/scripts/test_scripts.py
     step "guard tests" python3 tests/scripts/test_guard.py
     ;;

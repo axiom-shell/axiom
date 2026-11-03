@@ -1,0 +1,59 @@
+# Every x-* annotation the schema may use, with what it means in one line (the
+# whole story: docs/dev/core/schema-annotations.md). A key not listed here is
+# refused, so a typo can't pass as an annotation.
+
+x-actions: the commands a custom widget element runs, in order (keys of its `actions`; `CustomWidgetsConfig.elementKinds`).
+x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
+x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
+x-auto: a switch in front of an integer whose `value` means automatic.
+x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
+x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
+x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
+x-canvasFill: a color property the layouts editor fills a module's tile with (`OverlayConfig`).
+x-card: 'a hand-built settings card: `{ file, title, wide, folds, perField }` (`file`: `views/Settings/<file>Card.qml` as the first card, titled `title`; `wide` spans both columns; `folds` folds like the generated cards; `perField` makes each direct field a card of its own).'
+x-categories: 'orders the categories and gives their icons (`SchemaLayout.categories`); `cards: [{ card, title }]` are a category''s own hand-built cards, `showIf` hides it as a section''s `x-showIf` does.'
+x-category: names its sidebar category.
+x-commands: the commands any of which shows a theme integration's app is installed (the onboarder's App colors page); `[]` for one every desktop has, the key when left out (`ThemeManager.integrationCommands`).
+x-compositor: 'how a compositor config writer writes it, per compositor: `hyprland: { key, value, scale, if, skip, always }`, `sway: { key, value, scale, if, map, skip, configOnly }`, `niri: { key, value, scale, if, skip }` (schema-annotations.md › Compositor).'
+x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`; see schema-annotations.md › Fields).
+x-defaultSize: the size it's added at.
+x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
+x-emptyLabel: offers or renames the empty value under that label.
+x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
+x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
+x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
+x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'
+x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn''t hold.'
+x-greeter: the greeter's compositor takes it (`methods/GreeterBundle`).
+x-group: puts a field on a card of that name.
+x-hookup: how the integration hooks into its app (targets, place, text).
+x-hookupNote: a note shown with it.
+x-hosts: '`overlay`, `edgeMenu`, `lockscreen`, `greeter`, `desktop`.'
+x-icon: a Material Symbols name on bar widget, overlay module and view definitions.
+x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
+x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
+x-keyboard: the module takes typing.
+x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget or overlay module type is sorted into.
+x-libraryGroups: "(root) the groups, in order, the bar editor's and layouts editor's libraries sort their types into."
+x-link: where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition.
+x-links: 'pages its category''s header links to: a view type (`Themes`, `BarEditor`), `Layouts`, or the layouts editor on a screen (`Layouts:lockscreen`, `Layouts:greeter`, `Layouts:desktop`).'
+x-minSize: the least a drop into a gap shrinks it to; half the default when left out (`OverlayConfig.minSize`).
+x-monitorRef: a shared file names the monitor by its place, and a part for a place the user has no monitor for is turned off or left out (`share.Apply`).
+x-multiline: a growing text area.
+x-needs: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
+x-options: a dynamic option list.
+x-order: the keys shown first, in order.
+x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
+x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
+x-scope: what a snapshot, example, import or export carries.
+x-scopeIf: 'an item that matches `when` (`x-showIf`''s form, over the item''s keys) has `scope` as its own: an exec bind is `commands`, an app''s OSD bar `personal`.'
+x-settings: hides a key from the settings page (edited elsewhere, or UI-owned state).
+x-showIf: hides a field unless a condition holds.
+x-slots: a custom widget element's bindings, in order (keys of its `bind`; `CustomWidgetsConfig.elementKinds`).
+x-snapshot: 'a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on.'
+x-suggestions: chips under a text field (`SettingsManager.suggestionsFor`).
+x-takeover: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter).
+x-tool: the navigator's tool group.
+x-unit: the unit shown after a number (`px`, `%`, `ms`, …), and how the command line reads a value given with one.
+x-wide: the settings card the field lands on spans both columns (`SchemaLayout.groups`' `wide`).
+x-inline: 'a definition copied into each use (the builder''s; never in the built schema).'

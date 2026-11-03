@@ -25,6 +25,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/manager"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/devconfig"
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/idle"
@@ -61,12 +62,15 @@ type Options struct {
 	Tree string // the axiom tree the shell runs from
 	// Dev starts in dev mode whatever the saved choice ($XDG_STATE_HOME/
 	// axiom/dev.json, which `axiom dev on|off` sets)
-	Dev     bool
-	NoShell bool   // don't start quickshell (tests, headless use)
-	QS      string // the quickshell binary (default "qs")
-	Go      string // the go binary dev mode builds with (default "go")
-	Getenv  func(string) string
-	Log     *slog.Logger
+	Dev bool
+	// TreeOverride: the tree was given (--tree, $AXIOM_TREE), and wins
+	// over dev mode's at the session start
+	TreeOverride bool
+	NoShell      bool   // don't start quickshell (tests, headless use)
+	QS           string // the quickshell binary (default "qs")
+	Go           string // the go binary dev mode builds with (default "go")
+	Getenv       func(string) string
+	Log          *slog.Logger
 	// LogLevel, when set, follows dev mode: debug while it's on
 	LogLevel *slog.LevelVar
 	// ShellOutput gets the shell's stdout and stderr (nil: discarded)
@@ -80,6 +84,11 @@ type Options struct {
 	registered func(*rpc.Registry)
 	// releases replaces the official releases' download url (tests)
 	releases string
+	// exec replaces execve for the session start's exec and the dev
+	// image's way back (tests)
+	exec func(exe string, argv, env []string) error
+	// reexec replaces the re-exec into another image (tests)
+	reexec func(exe string, img image) error
 }
 
 // Files in the runtime directory
@@ -112,6 +121,12 @@ type Daemon struct {
 	// (they differ while dev mode runs its own build)
 	executable string
 	installed  string
+	// installTree is the installed axiom tree (self-update's, the
+	// greeter's), whatever tree the shell runs on (opts.Tree: a dev tree
+	// while dev mode runs it); configDir the folder of the config the
+	// store runs on: dirs.Config, or devConfigDir in the dev image
+	installTree string
+	configDir   string
 	// upgradesTried: the binaries (path, inode, time) a newer client's
 	// hello already re-exec'd into or found wanting, never tried again;
 	// upgrading the one it is re-executing into
@@ -121,14 +136,17 @@ type Daemon struct {
 	instance      *fsx.Lock
 	listener      net.Listener
 
-	store     *store.Store
-	saved     *saved.Service
-	server    *rpc.Server
-	shell     *supervise.Supervisor
-	router    *ipcroute.Router
-	locker    *lockscreen.Locker
-	dev       *devMode
-	savedKick *kicker
+	store  *store.Store
+	saved  *saved.Service
+	server *rpc.Server
+	shell  *supervise.Supervisor
+	// shellEntry is the QML dir the shell runs from (`qs -p`), which
+	// names its quickshell instance (`axiom log` reads it)
+	shellEntry string
+	router     *ipcroute.Router
+	locker     *lockscreen.Locker
+	dev        *devMode
+	savedKick  *kicker
 	// compositor is the compositor's config layer (nil without the tree's
 	// tables)
 	compositor *manager.Manager
@@ -179,7 +197,7 @@ type Daemon struct {
 }
 
 // Run runs the daemon until ctx ends or it is told to shut down.
-func Run(ctx context.Context, opts Options) error {
+func Run(ctx context.Context, opts Options) (err error) {
 	if opts.Log == nil {
 		opts.Log = slog.New(slog.DiscardHandler)
 	}
@@ -206,7 +224,7 @@ func Run(ctx context.Context, opts Options) error {
 		d.executable, _ = filepath.EvalSymlinks(d.executable)
 	}
 	d.installed = d.executable
-	h, err := inherited(opts.Getenv)
+	h, err := inherited(opts.Getenv, d.dirs)
 	if err != nil {
 		return err
 	}
@@ -228,34 +246,64 @@ func Run(ctx context.Context, opts Options) error {
 		return err
 	}
 	defer d.instance.Release()
-
-	// Dev mode: as the image before a re-exec had it, else --dev, else
-	// the saved choice
-	devOn := opts.Dev || loadDevChoice(d.dirs)
-	if h != nil {
-		devOn = h.Dev
+	// A dev image the installed binary exec'd into (at session start or
+	// a runtime switch) goes back to it if it fails before it serves
+	// (devstart.go)
+	if d.fallsBack(h) {
+		defer func() {
+			if err != nil && ctx.Err() == nil {
+				d.fallBackLive(h, listener, err)
+			}
+		}()
 	}
-	d.dev = newDevMode(d, devOn)
+
+	// The session start: dev mode's fresh build is exec'd into now (or its
+	// stale one built once running); then the image, as the image before a
+	// re-exec named it, else (dev mode as --dev or the saved choice) the
+	// tree run found on the live config
+	choice := loadDevChoice(d.dirs)
+	plan := d.sessionStart(h, choice)
+	img, installTree := startImage(h, choice, opts, d.dirs)
+	if h != nil && h.Fresh && img.ConfigDir != devConfigDir(d.dirs) {
+		opts.Log.Warn("started for dev mode, but dev.json names no dev tree now: running the install tree")
+	}
+	opts.Tree, d.opts.Tree = img.Tree, img.Tree
+	d.installTree, d.configDir = installTree, img.ConfigDir
+	if opts.Tree == "" {
+		// `axiom run` found none, and no handoff named one
+		closeConfigLock(h)
+		return axerr.New(axerr.NotFound, "no axiom tree to run (pass --tree)")
+	}
+	d.dev = newDevMode(d, img.Dev)
+	d.dev.begin(ctx, choice, plan)
 
 	if err := d.loadSchema(); err != nil {
+		closeConfigLock(h)
 		return err
 	}
 	built, _ := d.currentSchema()
 	parsed, err := jsonx.Unmarshal(built)
 	if err != nil {
+		closeConfigLock(h)
 		return axerr.Wrap(axerr.Internal, err, "the built schema")
 	}
+	pipeline := config.Pipeline{S: schema.New(parsed)}
 	storeOpts := store.Options{
-		Dir:      d.dirs.Config,
-		Pipeline: config.Pipeline{S: schema.New(parsed)},
+		Dir:      d.configDir,
+		Pipeline: pipeline,
 		Log:      opts.Log.With("part", "config"),
-		// The takeover settings in effect, read when config.json isn't JSON
+		// The takeover settings in effect, read when config.json isn't
+		// JSON: one per machine, so the dev config's too
 		TakeoversFile: filepath.Join(d.dirs.State, store.TakeoversFile),
 	}
-	if h != nil {
-		d.store, err = store.OpenAdopting(storeOpts, os.NewFile(uintptr(h.ConfigLock), "config.json.lock"))
+	// The writer lock goes on only with the config it locks: a re-exec
+	// onto the other config (into or out of the dev image) drops it
+	adopting := h.carried() && h.ConfigLockDir == d.configDir
+	if adopting {
+		d.store, err = store.OpenAdopting(storeOpts, os.NewFile(uintptr(h.ConfigLock), store.FileName+".lock"))
 	} else {
-		d.store, err = store.Open(storeOpts)
+		closeConfigLock(h)
+		d.store, err = d.openStore(storeOpts)
 	}
 	if err != nil {
 		return err
@@ -263,8 +311,9 @@ func Run(ctx context.Context, opts Options) error {
 	defer d.store.Close()
 	// A re-exec that comes up on the defaults (an older dev build refusing
 	// a newer file) leaves the snapshot of before: a QML reload keeps the
-	// config the shell had running, as ConfigManager does on the hello
-	if _, st := d.store.Config(); h == nil || !st.Defaults {
+	// config the shell had running, as ConfigManager does on the hello.
+	// Another config's snapshot is never kept
+	if _, st := d.store.Config(); !adopting || !st.Defaults {
 		if err := d.writeSnapshot(); err != nil {
 			return err
 		}
@@ -293,19 +342,22 @@ func Run(ctx context.Context, opts Options) error {
 		Log:         opts.Log.With("part", "lock"),
 		Go:          d.tasks.Go,
 	})
-	if h != nil && h.Locked {
+	if h.carried() && h.Locked {
 		// The adopted shell held the lock: until it reports again, it dies
 		// (or restarts for a new schema) locked
 		d.locker.Report(lockscreen.State{Holding: true})
 	}
 	d.saved = saved.New(saved.Options{
 		Dir:      d.dirs.Config,
-		Examples: filepath.Join(opts.Tree, "examples"),
+		Examples: filepath.Join(opts.Tree, "data", "examples"),
 		Home:     opts.Getenv("HOME"),
-		UIState:  filepath.Join(d.dirs.UI, "savedconfigs.json"),
+		// The active snapshot is the config's own: dev's apart
+		UIState:  d.uiStateFile(),
 		Store:    d.store,
 		Pipeline: d.store.Pipeline,
-		Log:      opts.Log.With("part", "saved"),
+		// saved/ is shared: dev never writes over a snapshot live restores
+		LiveRestores: d.dev.liveRestores,
+		Log:          opts.Log.With("part", "saved"),
 		OnState: func(st saved.State) {
 			// Also called while it opens, before there is a server
 			if d.server != nil {
@@ -375,11 +427,12 @@ func Run(ctx context.Context, opts Options) error {
 	// is checked against the pid this knows
 	if !opts.NoShell {
 		adopt := 0
-		if h != nil {
+		if h.carried() {
 			adopt = h.Shell
 		}
+		d.shellEntry = tree.QMLDir(opts.Tree)
 		d.shell = supervise.New(supervise.Options{
-			Command:  ShellCommand(opts.QS, opts.Tree),
+			Command:  ShellCommand(opts.QS, d.shellEntry),
 			NoTHP:    true,
 			Env:      d.shellEnv(),
 			EnvFunc:  d.shellEnvNow,
@@ -420,22 +473,81 @@ func Run(ctx context.Context, opts Options) error {
 	}
 	if d.shell != nil {
 		serve("the shell", d.shell.Run)
-		if _, hash := d.currentSchema(); h != nil && h.Schema != "" && h.Schema != hash {
-			// The shell read the schema of before (an update re-exec'd
-			// into the new binary): its hello would be refused
+		_, hash := d.currentSchema()
+		if why := needsShellRestart(h, d.shellEntry, d.configDir, hash); why != "" {
 			d.tasks.Go(func(ctx context.Context) {
-				opts.Log.Info("the schema changed across the re-exec: restarting the shell")
+				opts.Log.Info(why + " across the re-exec: restarting the shell")
 				if err := d.restartShell(ctx); err != nil && ctx.Err() == nil {
-					opts.Log.Error("restarting the shell for the new schema", "err", err)
+					opts.Log.Error("restarting the shell after the re-exec", "err", err)
 				}
 			})
 		}
 	}
-	opts.Log.Info("axiom is running", "display", runtime.Display, "tree", opts.Tree, "socket", runtime.Socket(), "version", buildinfo.Get().Version, "reexec", h != nil, "dev", d.dev.Enabled())
+	opts.Log.Info("axiom is running", "display", runtime.Display, "tree", opts.Tree, "socket", runtime.Socket(), "version", buildinfo.Get().Version, "config", d.store.Path(), "reexec", h != nil, "dev", d.dev.Enabled(), "devActive", d.dev.active())
 	<-ctx.Done()
 	d.tasks.Wait()
 	opts.Log.Info("axiom stopped")
 	return nil
+}
+
+// needsShellRestart is why the shell an image adopts across a re-exec (h)
+// must restart ("": it needn't): it runs from another QML dir than entry
+// (another tree; an image of before the handoff said ran the old layout),
+// reads another config than configDir's (into or out of the dev image), or
+// read another schema (an update re-exec'd into the new binary), whose
+// hello would be refused.
+func needsShellRestart(h *handoff, entry, configDir, schemaHash string) string {
+	switch {
+	case !h.carried():
+		return ""
+	case h.ShellEntry != entry:
+		return "the shell's tree changed"
+	case h.ConfigLockDir != configDir:
+		return "the config changed"
+	case h.Schema != "" && h.Schema != schemaHash:
+		return "the schema changed"
+	}
+	return ""
+}
+
+// closeConfigLock closes a re-exec's config writer lock, not taken over
+// (the next image runs on the other config, or doesn't start).
+func closeConfigLock(h *handoff) {
+	if h.carried() {
+		os.NewFile(uintptr(h.ConfigLock), store.FileName+".lock").Close()
+	}
+}
+
+// openStore opens the config afresh. The dev image's is readied first:
+// seeded from live the first time, its takeover settings live's.
+func (d *Daemon) openStore(opts store.Options) (*store.Store, error) {
+	if d.configDir == devConfigDir(d.dirs) {
+		p, err := devconfig.Prepare(d.devConfigFiles(), opts.Pipeline)
+		if err != nil {
+			return nil, err
+		}
+		d.dev.prepared = p // before anything reads it
+		d.opts.Log.Info("the dev config", "path", filepath.Join(d.configDir, store.FileName), "seeded", p.Seeded, "liveChanged", p.LiveChanged, "patched", p.Patched, "note", p.Note)
+	}
+	return store.Open(opts)
+}
+
+// devConfigFiles are the files the dev config is kept with.
+func (d *Daemon) devConfigFiles() devconfig.Files {
+	return devconfig.Files{
+		Live: filepath.Join(d.dirs.Config, store.FileName),
+		Dev:  filepath.Join(devConfigDir(d.dirs), store.FileName),
+		Base: d.dirs.State + "dev/base.json",
+	}
+}
+
+// uiStateFile remembers the config's active snapshot (saved/ is shared,
+// the pointer is each config's).
+func (d *Daemon) uiStateFile() string {
+	if d.configDir == devConfigDir(d.dirs) {
+		return filepath.Join(d.dirs.UI, "dev", "savedconfigs.json")
+	}
+	return filepath.Join(d.dirs.UI, "savedconfigs.json")
 }
 
 // followCompositor runs the Wayland connection until ctx ends, and stops
@@ -560,7 +672,7 @@ func (d *Daemon) writeSnapshot() error {
 	return fsx.WriteFile(d.runtime.File(SnapshotFile), jsonx.Marshal(cfg), 0o600)
 }
 
-// ShellCommand runs qs on entry (the tree, or its greeter.qml). Its log
+// ShellCommand runs qs on entry (the tree's QML dir, or its greeter.qml). Its log
 // rule drops Qt's text-input-v3 warnings ("Trying to enable/disable …"),
 // which are Qt's own bookkeeping, not a fault: a surface whose wl_surface
 // goes before Qt moves the focus off its text field (a layer window hiding:
@@ -581,7 +693,10 @@ func (d *Daemon) shellEnv() map[string]string {
 		"AXIOM_SCHEMA":     d.runtime.File(SchemaFile),
 		"AXIOM_CONFIG":     d.runtime.File(SnapshotFile),
 		"AXIOM_DAEMON_PID": itoa(os.Getpid()),
-		"AXIOM_TREE":       d.opts.Tree,
+		// The tree the shell runs on, and the installed one (whose
+		// packaging marker says how axiom was installed)
+		"AXIOM_TREE":         d.opts.Tree,
+		"AXIOM_INSTALL_TREE": d.installTree,
 		// What binds and generated compositor configs call: the installed
 		// binary, never a dev build that goes when dev mode does
 		"AXIOM_BIN": d.installed,

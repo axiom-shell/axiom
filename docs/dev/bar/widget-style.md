@@ -1,6 +1,6 @@
 # Bar widget classes, style and colors
 
-> **Files:** `components/bar/widgets/base/BarIconWidget.qml`, `components/bar/widgets/base/BarWidget.qml`, `components/bar/widgets/base/AudioLevelWidget.qml`, `components/bar/widgets/base/BaseWidget.qml`, `components/methods/BarWidgetStyle.qml`, `components/methods/BarAutoColors.qml`, `config/BarsConfig.qml`, `config/BarStyle.qml`, `components/bar/widgets/Workspaces/WorkspaceCell.qml`
+> **Files:** `qml/components/bar/widgets/base/BarIconWidget.qml`, `qml/components/bar/widgets/base/BarWidget.qml`, `qml/components/bar/widgets/base/AudioLevelWidget.qml`, `qml/components/bar/widgets/base/BaseWidget.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/methods/BarAutoColors.qml`, `qml/config/BarsConfig.qml`, `qml/config/BarStyle.qml`, `qml/components/bar/widgets/Workspaces/WorkspaceCell.qml`
 > **Config:** `BarStyle.*`, `Bars.style.*`, per bar `style` (inheriting) and `widgetTextColor`, widget color fields with `x-autoColor`
 > **Related:** [Bar composition](composition.md), [Widget shapes and runs](widget-shapes-runs.md), [Schema annotations](../core/schema-annotations.md)
 
@@ -22,7 +22,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - **`base/IconTextWidget`** (under `BarIconWidget`) lays the icon and label along the bar, the label's figures (a digit's height) centred on the icon's middle (`iconMiddle`) on a whole pixel rather than its box, which holds the descent and sat it high; on a vertical bar the label is turned along it, or with `uprightLabel` small and upright under the icon (SystemStats' metrics, each one an IconTextWidget); a graphic of `leadLength` goes in its `lead` slot before the icon, or after it, where the label would be, with `leadAfterIcon` (a display style's ring, meters, ticker). Its label's digits are of equal width and it is measured with them as zeros, never under `minimumText` (a value's widest, `"100%"`), so a changing number never resizes the bar; the ticker and stacked's value (`ValueGraphic`) likewise.
 
 ### Sizes come from the bar
-- (Rule: `components/bar/widgets/AGENTS.md`, "Sized by the bar".)
+- (Rule: `qml/components/bar/widgets/AGENTS.md`, "Sized by the bar".)
 - `BarsConfig.enrichBarConfig` derives `extent` from `widgetSize`, plus padding and whatever covers the bar.
 - It resolves `fontSize` and `radius` from the bar's `overrideFontSize`/`overrideRadius`, else from Appearance's values and `Widget.radius`.
 

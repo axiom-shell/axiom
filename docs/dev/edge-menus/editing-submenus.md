@@ -1,6 +1,6 @@
 # Edge menus: editing and submenus
 
-> **Files:** `services/ui/EdgeMenuEditor.qml`, `services/ui/EdgeMenuManager.qml`, `config/EdgeMenusConfig.qml`, `components/views/Layouts/MenuTarget.qml`, `components/views/Layouts/MenuOpening.qml`, `components/views/Layouts/OpenerButtons.qml`, `components/content/Submenu/Submenu.qml`, `components/content/Submenu/MenuSubmenu.qml`, `services/ui/GridEditor.qml`
+> **Files:** `qml/services/ui/EdgeMenuEditor.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
 > **Config:** `EdgeMenus.items[]` (`mode: "submenu"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 

@@ -4,7 +4,7 @@
 // who can't read the user's home, so it gets a copy of axiom of its own,
 // owned by root, and a folder the user's axiom exports its config to;
 // installing, updating and removing that copy runs as root through pkexec,
-// by root's own copy of scripts/greeter/greeter_install.sh once one is
+// by root's own copy of data/greeter/greeter_install.sh once one is
 // installed (org.axiom.greeter.policy names it). What to take and from
 // where is decided by package rules; this package runs git, reads and
 // writes the files. Every system path is under Options.Root, for tests.
@@ -32,7 +32,7 @@ import (
 
 // HelperPath is root's copy of the installer, which the installed polkit
 // action names: update and uninstall run it.
-const HelperPath = "/usr/share/axiom-greeter/scripts/greeter/greeter_install.sh"
+const HelperPath = "/usr/share/axiom-greeter/data/greeter/greeter_install.sh"
 
 // binariesMarker starts a line of every helper that installs the axiom
 // binary too: an older one doesn't, and is never run (Report.Binaries).

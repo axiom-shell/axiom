@@ -1,6 +1,6 @@
 # Writing overlay modules
 
-> **Files:** `components/content/<Type>/<Type>.qml`, `components/content/base/SlotContext.qml`, `components/content/parts/`, `components/methods/GridPlacement.qml`, `config/json/config.schema.json` (`definitions.OverlayModule`)
+> **Files:** `qml/components/content/<Type>/<Type>.qml`, `qml/components/content/base/SlotContext.qml`, `qml/components/content/parts/`, `qml/components/methods/GridPlacement.qml`, `qml/config/json/config.schema.json` (`definitions.OverlayModule`)
 > **Config:** `Overlay.items[].layout.modules[]`, `EdgeMenus.items[].layout.modules[]` (`{ type, place, properties }`)
 > **Related:** [Content roots](content-roots.md), [Pages and grid](pages-and-grid.md), [Growing and expanding](grow-expand.md), [Utility modules](utility-modules.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 

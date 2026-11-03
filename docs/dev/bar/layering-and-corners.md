@@ -1,16 +1,16 @@
 # Bars and the screen border: layering and corners
 
-> **Files:** `shell/Bar.qml`, `shell/ScreenBorder.qml`, `components/surfaces/border/RoundedBorders.qml`, `components/surfaces/border/BorderPanel.qml`, `components/reusable/CornerPiece.qml`, `components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `components/bar/BarContainer.qml`, `components/bar/CornerMerge.qml`, `components/hosts/popout/AttachedSurface.qml`, `services/ui/ScreenEdgeManager.qml`, `services/compositor/HyprlandManager.qml`
+> **Files:** `qml/shell/Bar.qml`, `qml/shell/ScreenBorder.qml`, `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/reusable/CornerPiece.qml`, `qml/components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/CornerMerge.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/services/ui/ScreenEdgeManager.qml`, `qml/services/compositor/HyprlandManager.qml`
 > **Config:** `Appearance.shape.screenBorder`, `Bars[].background`, `BarStyle` shadow group. (`insideBorder`, `innerStroke` are derived `barConfig` values from `BarsConfig.enrichBarConfig`, not config keys.)
 > **Related:** [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Surface context](../popouts/surface-context.md), [Widget shapes](widget-shapes-runs.md)
 
 How bars and the screen border share an edge through layer-shell ordering. Covers solid bars, bars inside the border, bars stacked on one edge, which bar gets a shared corner, transparent bars, the border being off, and the border's inward shadow window. Bar ends and pills are in [Bar ends and pills](bar-ends-pills.md).
 
-(Rule: `components/bar/AGENTS.md`, Layer ordering. The order lives in `LayerStack.layers`, listed in [layer stacking](../generated/layers.md).)
+(Rule: `qml/components/bar/AGENTS.md`, Layer ordering. The order lives in `LayerStack.layers`, listed in [layer stacking](../generated/layers.md).)
 
 ### The border
 - `Appearance.screenBorder` turns the border off.
-- The border is `shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
+- The border is `qml/shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
 
 ### Solid bar (`Bar.background: "solid"`)
 - It is on the Top layer, at the screen edge.
@@ -19,7 +19,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
   - So the bars, border, docks and edge menus are built only once `CompositorManager.surfacesReady` is true. The daemon adds the rules when the shell starts (`compositor.layerRules`, which `HyprlandManager` waits for, at most 2 s) and again on every `configreloaded` (a reload drops rules added at runtime); they're kept across QML reloads. On sway it waits for the `get_version` reply instead (whether it's SwayFX, so the blur and shadow windows map with the rest); niri's is true at once.
   - Why: in detached mode, hyprland.lua doesn't hold the rules. A border mapped first would land outside the bar, with its corners on the bar's outer side.
   - Each of these windows also maps in `LayerStack.layers` order, a stage at a time, through its `hosts/popout/LayerSlot`. Where the compositor has no layer rules (sway, niri: no `supports.layerOrder`), map order is all that decides, so a window landing out of place (a bar remade after the border) makes the ones it should have come before map again ([layer arrangement](../compositor/layer-arrangement.md)).
-- **Window keying.** For the same reason, `shell/Bar` keys each bar's window on whether it sits inside the border, as well as on its id.
+- **Window keying.** For the same reason, `qml/shell/Bar` keys each bar's window on whether it sits inside the border, as well as on its id.
   - Switching to or from solid changes the bar's namespace, so the window is remade and maps under the new rule.
 
 ### Bar inside the border (`barConfig.insideBorder`)
@@ -57,7 +57,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
   - Between bars of one kind, the bar on the screen's longer edge makes way (the `-long` namespace), so the shorter bar gets the corner: side bars on a landscape monitor, top and bottom ones on a portrait one (`shortEdge`, `BarEnds.onShortEdge`).
   - Solid bars can't tie with pill bars: a solid bar is arranged before the border, a pill bar after it.
   - Docks, the overlay, the OSD and popouts are ordered after every bar.
-  - The namespace comes from `BarsConfig.layerNamespace`. `shell/Bar` keys each window on it, since `order` is read only as a surface maps: a bar changing kind, or a monitor rotating, remakes the window.
+  - The namespace comes from `BarsConfig.layerNamespace`. `qml/shell/Bar` keys each window on it, since `order` is read only as a surface maps: a bar changing kind, or a monitor rotating, remakes the window.
 - A bar reserving nothing takes no corner.
 - **Against a stack:** an end makes way for each bar on the perpendicular edge that Hyprland arranges before it. Layer rules order kinds the same on every edge, so that's the outer part of the stack. The end meets the innermost of them (its `barId`), and its window starts past them all (`from`, `BarEnds.endsOf`). So a top pill bar on a landscape screen merges into a left pill bar's end, while the transparent bar inside that left bar makes way for the top bar.
 

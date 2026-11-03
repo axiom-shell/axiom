@@ -1,10 +1,10 @@
 # Lockscreen
 
-> **Files:** `services/session/LockManager.qml`, `services/session/AuthManager.qml`, `shell/Lockscreen.qml`, `components/surfaces/lockscreen/LockSurface.qml`, `components/surfaces/lockscreen/LockPreviewWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `components/content/Password/Password.qml`, `components/content/parts/PasswordField.qml`, `components/content/parts/FocusKeeper.qml`, `components/reusable/PasswordEntry.qml`, `components/content/Greeting/Greeting.qml`, `services/ui/ScreenLayoutEditor.qml`, `components/views/Layouts/LockscreenTarget.qml`, `config/LockscreenConfig.qml`
+> **Files:** `qml/services/session/LockManager.qml`, `qml/services/session/AuthManager.qml`, `qml/shell/Lockscreen.qml`, `qml/components/surfaces/lockscreen/LockSurface.qml`, `qml/components/surfaces/lockscreen/LockPreviewWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/components/content/Password/Password.qml`, `qml/components/content/parts/PasswordField.qml`, `qml/components/content/parts/FocusKeeper.qml`, `qml/components/reusable/PasswordEntry.qml`, `qml/components/content/Greeting/Greeting.qml`, `qml/services/ui/ScreenLayoutEditor.qml`, `qml/components/views/Layouts/LockscreenTarget.qml`, `qml/config/LockscreenConfig.qml`
 > **Config:** `Lockscreen.mode`, `Lockscreen.lockCommand`, `Lockscreen.layout` (reader `LockscreenConfig`)
 > **Related:** [Idle](idle.md), [Greeter runtime](greeter-runtime.md), [Desktop](desktop.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Themes](../theming/themes.md), [Shell targeting](../core/shell-manager-targeting.md)
 
-This doc covers the three lock modes, how the built-in lock screen's layout of modules works (grid, hosts, password, background), and how it is edited and previewed. (Rule: `services/AGENTS.md`, Lockscreen; never lock the session while testing.)
+This doc covers the three lock modes, how the built-in lock screen's layout of modules works (grid, hosts, password, background), and how it is edited and previewed. (Rule: `qml/services/AGENTS.md`, Lockscreen; never lock the session while testing.)
 
 ### Locking
 - `LockManager.lock()` is the one way to lock.
@@ -14,7 +14,7 @@ This doc covers the three lock modes, how the built-in lock screen's layout of m
 
 ### Under axiom (`axiom lock`)
 Run by `axiom run`, the binary makes locking dependable (`backend/internal/lockscreen`):
-- `axiom lock` (and `axiom ipc lockscreen lock`) asks the shell. It exits 0 only once `shell/Lockscreen.qml`'s session lock is `secure` (the compositor acknowledged it), which `LockManager` reports as `lock.state`, with a lock surface on every monitor connected.
+- `axiom lock` (and `axiom ipc lockscreen lock`) asks the shell. It exits 0 only once `qml/shell/Lockscreen.qml`'s session lock is `secure` (the compositor acknowledged it), which `LockManager` reports as `lock.state`, with a lock surface on every monitor connected.
   - The report counts the lock surfaces `Lockscreen.qml` actually built (`LockManager.builtinSurfaces`) against `General.outputs`, so a monitor without one keeps the lock unconfirmed. With no monitor connected the session lock alone confirms it; `WlSessionLock` builds a surface for each monitor connected later.
   - A stopped shell's last report confirms nothing until the next shell reports.
 - If that doesn't come within 3 s, the binary restarts (a shell that reports holding the lock while the compositor hasn't acknowledged it yet gets 10 s more first, `Options.Ack`: a nested Hyprland took about 5 s, and a restart wouldn't be faster) the shell with `AXIOM_LOCK_ON_START=1`, which locks before anything else shows, once per process: the variable stays in its environment, so a reload after the unlock doesn't lock again (`lockState.startedLocked`, kept across reloads). If that fails too, `axiom lock` fails: the built-in locker has nothing to fall back on.
@@ -26,7 +26,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 ### Modes (`Lockscreen.mode`)
 
 #### `quickshell` (default)
-- The built-in locker, `shell/Lockscreen.qml`.
+- The built-in locker, `qml/shell/Lockscreen.qml`.
   - A `WlSessionLock` (Wayland `ext-session-lock-v1`).
   - One `WlSessionLockSurface` per Wayland output (Quickshell adds one for an output connected while locked), showing `surfaces/lockscreen/LockSurface.qml`.
 - While locked, the compositor shows only the lock surfaces and sends them all input.
@@ -123,7 +123,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - On the real greeter the names are `GreetdManager.selectedUser`'s. With no user selected yet it shows "Welcome".
 
 ### Editing and preview
-- **The editor:** `LockManager.editor` is a `services/ui/ScreenLayoutEditor`, a non-singleton shared with the greeter. It holds:
+- **The editor:** `LockManager.editor` is a `qml/services/ui/ScreenLayoutEditor`, a non-singleton shared with the greeter. It holds:
   - the draft, a `ConfigDraft` of `["Lockscreen", "layout"]`, so it never fights the settings page's draft over `mode`;
   - its `GridEditor` (`layout`);
   - `problems`, `updateLayoutField`, `ensureLoaded` / `saveChanges` / `resetChanges`;
@@ -135,6 +135,6 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Escape or a click on the background (`stopPreview()`) reopens the overlay on Layouts.
 
 ### Testing
-- Look at the lock screen through `LockManager.editor.startPreview()` (a `ScreenLayoutEditor`), called from a temporary `IpcTarget` in `shell.qml`; revert the handler afterwards.
+- Look at the lock screen through `LockManager.editor.startPreview()` (a `ScreenLayoutEditor`), called from a temporary `IpcTarget` in `qml/shell.qml`; revert the handler afterwards.
 - Put demo layouts on the draft only, then `resetChanges`.
 - Test `LockSurface` in a hidden window, never by locking for real: only the user can type the password.

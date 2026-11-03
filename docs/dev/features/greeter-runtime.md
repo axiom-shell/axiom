@@ -1,13 +1,13 @@
 # Greeter: runtime (bundle, session, greeter mode, login)
 
-> **Files:** `greeter.qml`, `shell/Greeter.qml`, `shell/GreeterPreview.qml`, `components/surfaces/greeter/GreeterSurface.qml`, `components/surfaces/greeter/GreeterWindow.qml`, `components/surfaces/greeter/GreeterPreviewWindow.qml`, `services/session/GreetdManager.qml`, `services/session/GreeterManager.qml`, `components/methods/GreeterBundle.qml`, `components/methods/GreeterUsers.qml`, `components/methods/GreeterSessions.qml`, `components/content/Login/Login.qml`, `components/content/Session/Session.qml`, `components/content/KeyboardLayout/KeyboardLayout.qml`, `components/content/Power/Power.qml`, `components/content/parts/LoginField.qml`, `scripts/greeter/greeter-session.sh`, `scripts/greeter/sway.conf`, `scripts/greeter/hyprland.lua`, `backend/internal/greeter/greeter.go`, `backend/internal/cli/greeter.go`, `backend/internal/daemon/greeter.go`
+> **Files:** `qml/greeter.qml`, `qml/shell/Greeter.qml`, `qml/shell/GreeterPreview.qml`, `qml/components/surfaces/greeter/GreeterSurface.qml`, `qml/components/surfaces/greeter/GreeterWindow.qml`, `qml/components/surfaces/greeter/GreeterPreviewWindow.qml`, `qml/services/session/GreetdManager.qml`, `qml/services/session/GreeterManager.qml`, `qml/components/methods/GreeterBundle.qml`, `qml/components/methods/GreeterUsers.qml`, `qml/components/methods/GreeterSessions.qml`, `qml/components/content/Login/Login.qml`, `qml/components/content/Session/Session.qml`, `qml/components/content/KeyboardLayout/KeyboardLayout.qml`, `qml/components/content/Power/Power.qml`, `qml/components/content/parts/LoginField.qml`, `data/greeter/greeter-session.sh`, `data/greeter/sway.conf`, `data/greeter/hyprland.lua`, `backend/internal/greeter/greeter.go`, `backend/internal/cli/greeter.go`, `backend/internal/daemon/greeter.go`
 > **Config:** `Greeter.*` (reader `GreeterConfig`), plus the sections exported in the bundle
 > **Related:** [Greeter install](greeter-install.md), [Lockscreen](lockscreen.md), [Themes](../theming/themes.md), [Config manager](../core/config-manager.md), [Monitors](../hyprland/monitors.md), [Schema annotations](../core/schema-annotations.md)
 
 This doc covers what runs at the login screen and the data it reads: the bundle the user's axiom exports, the greetd session script, greeter mode (`Paths.greeter`), `GreetdManager`'s login API, and the greeter's surfaces and modules. Installing the root-owned copy is in [greeter-install.md](greeter-install.md).
 
 ### Who owns what
-- **`GreeterManager`:** axiom as greetd's login screen, seen from the user's side (install, bundle, status). It is created from `shell.qml`'s `_services`.
+- **`GreeterManager`:** axiom as greetd's login screen, seen from the user's side (install, bundle, status). It is created from `qml/shell.qml`'s `_services`.
 - **`GreetdManager`:** the login in the greeter itself. Only greeter-side code references it.
 
 ### The bundle
@@ -29,11 +29,11 @@ This doc covers what runs at the login screen and the data it reads: the bundle 
 
 ### Running it (session script)
 - `greeter-session.sh`, greetd's command, starts the greeter's own compositor, whichever one the user logs in to:
-  - **sway** when installed, on `scripts/greeter/sway.conf` (no binds, no bar, no XWayland, numlock on; `--unsupported-gpu` when `/sys/module/nvidia` exists). Plain sway is enough: the greeter blurs nothing ([Surfaces](#surfaces-and-modules)).
-  - **Hyprland** (`start-hyprland` on `scripts/greeter/hyprland.lua`: logo off, numlock on, no animations) when sway isn't installed, or exited non-zero without the failure marker (it couldn't start).
+  - **sway** when installed, on `data/greeter/sway.conf` (no binds, no bar, no XWayland, numlock on; `--unsupported-gpu` when `/sys/module/nvidia` exists). Plain sway is enough: the greeter blurs nothing ([Surfaces](#surfaces-and-modules)).
+  - **Hyprland** (`start-hyprland` on `data/greeter/hyprland.lua`: logo off, numlock on, no animations) when sway isn't installed, or exited non-zero without the failure marker (it couldn't start).
   - sway's own stderr goes to the greeter's `state/compositor.log`.
 - Each one's start (sway's `exec`, the Lua's start hook) runs `greeter-session.sh shell`, which runs `axiom greeter --tree <copy>` (below), its stderr in the greeter's `state/greeter.log` (emptied at each start; greetd's user's runtime dir, where qs keeps its own logs, goes with the greeter's session). Both are greetd's user's: `sudo` to read them.
-  - `<copy>` is the install folder, or for a packaged axiom the folder its `.greeter-source` names (`package /usr/share/axiom`).
+  - `<copy>` is the install folder, or for a packaged axiom the folder its `.greeter-source` names (`package /usr/share/axiom-shell`).
   - The binary is the install folder's `bin/axiom` (root's), else a packaged one on `PATH`.
   - It exports `AXIOM_GREETER_FALLBACK`, the install folder's `fallback/`, which `axiom greeter` and `Paths.greeterFallbackUrl` read (without it, `fallback/` beside the code).
   - If that fails, it runs once more with `--safe` (the snapshot, never the bundle); qs exits non-zero on a broken load.
@@ -44,12 +44,12 @@ This doc covers what runs at the login screen and the data it reads: the bundle 
 
 ### Greeter mode
 - **How it's detected:** `AXIOM_GREETER=1` sets `Paths.greeter`. `ConfigManager.greeter` reads the environment again itself, since `ConfigManager` reads no reader.
-- **What it builds:** `greeter.qml` builds only `shell/Greeter`, a `GreeterWindow` per screen.
+- **What it builds:** `qml/greeter.qml` builds only `qml/shell/Greeter`, a `GreeterWindow` per screen.
   - `AXIOM_GREETER_WINDOWED=1` builds one `FloatingWindow` instead, for looking at it from a session.
   - `AXIOM_GREETER_DIR` points it at a scratch folder.
 - **Config:** `axiom greeter` (the greeter's parent, as `axiom run` is the shell's) loads it with the same pipeline as config.json (`greeter.Load`): the bundle's `greeter.json`, else `fallback/`'s, else the schema defaults, logging why each was skipped. The schema is built from the copy's own YAML (the binary's, if that fails).
   - A format-1 file is converted; a format-2 bundle from a newer axiom is still tried as the current version, with its unknown keys pruned.
-  - It writes the result to a private runtime folder (`$XDG_RUNTIME_DIR/axiom/greeter-<display>/`, else the greeter's `state/run/`), never the session's own, then runs `qs -p <copy>/greeter.qml` as its child with `AXIOM_GREETER=1`, `AXIOM_CONFIG`, `AXIOM_SCHEMA`, `AXIOM_GREETER_SOURCE` (`bundle` | `fallback` | `defaults`) and `AXIOM_BIN` (itself: sway's and niri's backends read the compositor's config through `axiom compositor …`). Every other inherited `AXIOM_*` is dropped, as the daemon does for the shell, but `AXIOM_GREETER_WINDOWED`, `AXIOM_COMPOSITOR` and `AXIOM_COMPOSITOR_OFF` (for looking at it from a session; `greeterKept`).
+  - It writes the result to a private runtime folder (`$XDG_RUNTIME_DIR/axiom/greeter-<display>/`, else the greeter's `state/run/`), never the session's own, then runs `qs -p <copy>/qml/greeter.qml` as its child with `AXIOM_GREETER=1`, `AXIOM_CONFIG`, `AXIOM_SCHEMA`, `AXIOM_GREETER_SOURCE` (`bundle` | `fallback` | `defaults`) and `AXIOM_BIN` (itself: sway's and niri's backends read the compositor's config through `axiom compositor …`). Every other inherited `AXIOM_*` is dropped, as the daemon does for the shell, but `AXIOM_GREETER_WINDOWED`, `AXIOM_COMPOSITOR` and `AXIOM_COMPOSITOR_OFF` (for looking at it from a session; `greeterKept`).
   - `ConfigManager` reads that snapshot as it reads the shell's, and never writes, watches or polls.
   - **The greeter's axiom:** `axiom greeter` stays qs's parent until qs exits, and exits non-zero when qs did (so the session script tries `--safe`); SIGTERM stops qs first. It serves a socket in that runtime folder (`AXIOM_SOCKET`, `daemon.RunGreeter`). It answers only that qs's hello, then `exec.run` / `exec.spawn` (`CommandManager.run` / `runDetached`: `GreetdManager`'s sessions, avatars and power actions, `SwayIpcManager`, `NiriManager`), `exec.watch` / `exec.unwatch` / `exec.refresh` (`CommandManager.acquire`: a Button's label, a CommandOutput module), `file.write` / `file.watch` (`FileManager`: its state, `StateManager`), `tz.*`, `net.addresses`, `hypr.request` (`HyprlandManager` under the greeter's Hyprland: its layouts), `outputs.apply` (the saved monitor profile under sway or niri, `CompositorManager.applyOutputs`), `greeter.compositor` (Hyprland's monitor Lua, and the input and cursor, `CompositorManager.setUpGreeter`), `niri.request` / `niri.command` / `niri.watch` (`NiriManager`, when the greeter is looked at from a niri session) and the `weather` topic (`WeatherManager`, for its Weather module) and the `lockKeys` topic (`LockKeysManager`, the password field's Caps Lock warning, [Lock keys](lock-keys.md)). It owns no config, lock, idle, compositor layer or Wayland connection, and pushes nothing but `exec.outputs`, `file.changed`, `weather.state`, `lockKeys.state` and under niri `niri.started` / `niri.event`: any other call is `unavailable`, as with no axiom at all (so the callers and subscriptions a greeter module reaches, such as the `tailscale` and `system` topics and `deps.check`, stay quiet), and nothing of the session's daemon is reachable from the login screen ([protocol](../backend/protocol.md)).
 - **Theme:** `ThemeManager` reads the `theme.json` beside the config named by `ConfigManager.greeterSource` (the bundle's, else `fallback/`'s), so safe mode never loads a bundle theme.
@@ -98,7 +98,7 @@ Built on `Quickshell.Services.Greetd`.
   - Validation accepts any module in a `ScreenLayout`.
   - The bundle's folder is writable by any of the user's programs.
   - So the filter is what stops a hand-made bundle from putting a launcher on the login screen.
-- **Preview:** "Show on screen" (`GreeterManager.editor`, a `ScreenLayoutEditor`) shows `GreeterPreviewWindow`, built by `shell/GreeterPreview`.
+- **Preview:** "Show on screen" (`GreeterManager.editor`, a `ScreenLayoutEditor`) shows `GreeterPreviewWindow`, built by `qml/shell/GreeterPreview`.
 
 ### Testing
 - Look at the greeter in a window: `AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --tree "$PWD" --dir <scratch>`, with a scratch `XDG_RUNTIME_DIR` (short: the socket's path must fit 108 bytes) and `WAYLAND_DISPLAY` as an absolute path. qs started without it has no axiom and runs no command.

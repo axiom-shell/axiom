@@ -96,7 +96,7 @@ func oldInstaller(t *testing.T) string {
 		t.Skip("not in a clone:", err)
 	}
 	dir := strings.TrimSpace(string(top))
-	const path = "scripts/greeter/greeter_install.sh"
+	const path = "data/greeter/greeter_install.sh"
 	commits, err := exec.Command("git", "-C", dir, "rev-list", "HEAD", "--", path).Output()
 	if err != nil {
 		t.Skip("no history:", err)
@@ -122,11 +122,11 @@ func TestOldInstallerUpdatesToTheShim(t *testing.T) {
 		}
 	}
 	old := oldInstaller(t)
-	shim, err := os.ReadFile("../../../scripts/greeter/greeter_install.sh")
+	shim, err := os.ReadFile("../../../data/greeter/greeter_install.sh")
 	if err != nil {
 		t.Fatal(err)
 	}
-	policy, err := os.ReadFile("../../../scripts/greeter/org.axiom.greeter.policy")
+	policy, err := os.ReadFile("../../../data/greeter/org.axiom.greeter.policy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,8 +153,8 @@ func TestOldInstallerUpdatesToTheShim(t *testing.T) {
 		return string(out)
 	}
 	repo := filepath.Join(tmp, "repo")
-	for name, text := range map[string]string{"greeter.qml": "greeter", "scripts/greeter/greeter-session.sh": "session",
-		"scripts/greeter/org.axiom.greeter.policy": string(policy), "scripts/greeter/greeter_install.sh": old} {
+	for name, text := range map[string]string{"qml/greeter.qml": "greeter", "data/greeter/greeter-session.sh": "session",
+		"data/greeter/org.axiom.greeter.policy": string(policy), "data/greeter/greeter_install.sh": old} {
 		writeTestFile(t, filepath.Join(repo, name), text, 0o755)
 	}
 	run(tmp, "git", "init", "-q", "-b", "main", repo)
@@ -168,20 +168,20 @@ func TestOldInstallerUpdatesToTheShim(t *testing.T) {
 		}
 	}
 	// An install from before the port: root's helper is the bash one
-	helper := filepath.Join(root, "usr/share/axiom-greeter/scripts/greeter/greeter_install.sh")
-	update(filepath.Join(repo, "scripts/greeter/greeter_install.sh"))
+	helper := filepath.Join(root, "usr/share/axiom-greeter/data/greeter/greeter_install.sh")
+	update(filepath.Join(repo, "data/greeter/greeter_install.sh"))
 	// The port lands: the old helper's update installs the shim and binary
-	writeTestFile(t, filepath.Join(repo, "scripts/greeter/greeter_install.sh"), string(shim), 0o755)
-	writeTestFile(t, filepath.Join(repo, "greeter.qml"), "after the port", 0o644)
+	writeTestFile(t, filepath.Join(repo, "data/greeter/greeter_install.sh"), string(shim), 0o755)
+	writeTestFile(t, filepath.Join(repo, "qml/greeter.qml"), "after the port", 0o644)
 	run(repo, "git", "commit", "-qam", "the port")
 	update(helper)
 	if text, _ := os.ReadFile(helper); !bytes.Equal(text, shim) {
 		t.Fatal("the old helper's update didn't install the shim")
 	}
 	// The next update runs axiom greeter-install through the shim
-	writeTestFile(t, filepath.Join(repo, "greeter.qml"), "through the shim", 0o644)
+	writeTestFile(t, filepath.Join(repo, "qml/greeter.qml"), "through the shim", 0o644)
 	update(helper)
-	copied, _ := os.ReadFile(filepath.Join(root, "usr/share/axiom-greeter/greeter.qml"))
+	copied, _ := os.ReadFile(filepath.Join(root, "usr/share/axiom-greeter/qml/greeter.qml"))
 	source, _ := os.ReadFile(filepath.Join(root, "usr/share/axiom-greeter/.greeter-source"))
 	if string(copied) != "through the shim" || string(source) != "local\n" {
 		t.Errorf("after the shim's update: greeter.qml %q, source %q", copied, source)

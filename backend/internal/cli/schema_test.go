@@ -11,7 +11,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
 
-// `schema check` fails while config/json/config.schema.json is missing or
+// `schema check` fails while qml/config/json/config.schema.json is missing or
 // stale, and passes once it's built.
 func TestSchemaCheckNeedsTheBuiltSchema(t *testing.T) {
 	t.Parallel()
@@ -23,7 +23,7 @@ func TestSchemaCheckNeedsTheBuiltSchema(t *testing.T) {
 		"config/schema/sections/S.yaml":    "type: object\nproperties:\n  a: {type: integer}\n",
 		"config/schema/definitions/D.yaml": "type: object\n",
 	} {
-		path := filepath.Join(dir, name)
+		path := filepath.Join(tree.QMLDir(dir), name)
 		os.MkdirAll(filepath.Dir(path), 0o755)
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
@@ -36,7 +36,7 @@ func TestSchemaCheckNeedsTheBuiltSchema(t *testing.T) {
 	if err := check(); axerr.KindOf(err) != axerr.NotFound {
 		t.Errorf("missing: %v", err)
 	}
-	built := filepath.Join(dir, tree.SchemaJSON)
+	built := tree.SchemaPath(dir)
 	os.MkdirAll(filepath.Dir(built), 0o755)
 	os.WriteFile(built, []byte("{}\n"), 0o644)
 	if err := check(); axerr.KindOf(err) != axerr.InvalidConfig {

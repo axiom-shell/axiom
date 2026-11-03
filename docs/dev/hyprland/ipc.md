@@ -1,6 +1,6 @@
 # Talking to Hyprland (IPC)
 
-> **Files:** `services/compositor/HyprlandManager.qml`, `components/methods/HyprReply.qml`, `backend/internal/daemon/compositorsocket.go`, `backend/internal/compositor/ipc/hypr.go`, `components/methods/HyprState.qml`, `services/compositor/HyprlandGrab.qml`
+> **Files:** `qml/services/compositor/HyprlandManager.qml`, `qml/components/methods/HyprReply.qml`, `backend/internal/daemon/compositorsocket.go`, `backend/internal/compositor/ipc/hypr.go`, `qml/components/methods/HyprState.qml`, `qml/services/compositor/HyprlandGrab.qml`
 > **Config:** none
 > **Related:** [The compositor](../compositor/README.md), [Config modes](config-modes.md), [Workspaces](workspaces.md), [Monitors](monitors.md)
 

@@ -1,6 +1,6 @@
 # Removable drives
 
-> **Files:** `services/system/DrivesManager.qml`, `components/methods/DriveInfo.qml`, `components/content/Drives/Drives.qml`, `components/content/parts/DriveRow.qml`, `components/content/parts/SecretField.qml`, `components/bar/widgets/Drives/Drives.qml`, `components/surfaces/osd/OSDStatusSource.qml`, `services/ui/LauncherCommands.qml`, `config/DrivesConfig.qml`
+> **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/content/parts/SecretField.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
 > **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.fileManager`; the OSD's `drive` status
 > **Related:** [OSD](osd.md), [Notifications](notifications.md), [VPN](vpn.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
@@ -15,13 +15,13 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 - **Testing:** `scripts/dev/drive-fixtures.sh up|down` sets up loop devices (`udisksctl --no-user-interaction`; LUKS passphrase `axiom-test`) for a scratch daemon run with `AXIOM_DRIVES_INCLUDE_LOOP=1`; the Go side is tested against a fake UDisks2 on `dbustest`.
 
 ### The service
-`DrivesManager` (`services/system/`) holds the daemon's state and every action.
+`DrivesManager` (`qml/services/system/`) holds the daemon's state and every action.
 - **State:** `drives.get` after each hello, then `drives.state` on every change (the shell subscribes to every topic). `drives` leaves out the ignored ones (`DrivesConfig.ignore`, matched by `DriveInfo.ignored`: a volume's UUID or label, exactly), and they're never notified or mounted either. `available` false (udisks2 not running) shows the panel's off message.
 - **Actions:** `mount`, `unmount` / `unmountAll`, `lock`, `eject` / `ejectAll`, `open`, and `askUnlock(volumeId, andOpen)` then `unlock(passphrase)` (opening the folder after only with `andOpen`: `open`'s). Each marks its drive in `pending` until the call answers ("Mounting…" on the row); a failure's error kind (`busy`, `not_authorized`, `wrong_passphrase`, `not_found`, `unavailable`, `failed`) becomes the row's red status (`errors`, `errorText`). The passphrase goes only in the call's body; nothing logs a call's params.
 - **Open:** mounts first if needed (or asks for the passphrase, and opens once unlocked), then runs `Apps.fileManager` with the folder appended (`sh -c '<command> "$1"'`), else `xdg-open <folder>`.
 - **Unlock:** `unlockRequest` is the volume whose passphrase field shows (in its `DriveRow`). A Locked card's click or a notification's Unlock (`activate`) sets it and opens the overlay page or edge menu holding a Drives module (`ShellManager.openModule`); with none, the field waits in the bar popout. A wrong passphrase keeps the field with `unlockError`; a right one mounts the cleartext volume when the unlock's answer says there's a filesystem in it (`mountable`: not LVM).
 - **Eject:** unmounts, locks and powers off (the daemon's `drives.eject`), then says "Safe to remove" (see Who says what); `busy` warns that it's in use.
-- **Created from** `shell.qml`'s `_services`, so plug-ins are noticed and IPC answers with no Drives widget or module shown.
+- **Created from** `qml/shell.qml`'s `_services`, so plug-ins are noticed and IPC answers with no Drives widget or module shown.
 - **Inert** on the login screen (`Paths.greeter`): nothing is fetched or listened to.
 
 ### On plug-in
@@ -47,8 +47,8 @@ Every drive notification has the desktop entry `axiom-drives`: a click on one wi
 - **Pulled while mounted:** still mounted in `_seen` as it leaves, and not `pending`. udisks drops a pulled drive's volumes first (still mounted), then the drive, so `_seen` keeps the ids of its mounted volumes and counts one gone from the drive as still mounted (`DriveInfo.mountedIds`); that's no Unmounted either. File managers send their own notifications too (Nemo's "Volume unmounted"); axiom can't stop those.
 
 ### What shows them
-- **`DriveInfo`** (`components/methods/`, `tst_DriveInfo`): the pure parts: a drive's name (its one labelled volume's label, else vendor and model; the daemon sends no drive label) and size in decimal units ("SanDisk Ultra · 32 GB"), its icon (`usb`, `sd_card`, `album`, `hard_drive`), the volumes a list shows (a LUKS container standing for its cleartext volume, `effective`), each volume's action (`unlock`, `open`, `mount`), the volume opening the drive acts on (`pick`), and which volumes count as mounted while a pulled drive leaves (`mountedIds`).
-- **Drives module and popout** (`components/content/Drives/`): a `Panel` with a `DeviceList` of `DriveRow`s, Eject all in its header; compact, the count and how many are mounted. Its keyboard is held while a passphrase field shows.
+- **`DriveInfo`** (`qml/components/methods/`, `tst_DriveInfo`): the pure parts: a drive's name (its one labelled volume's label, else vendor and model; the daemon sends no drive label) and size in decimal units ("SanDisk Ultra · 32 GB"), its icon (`usb`, `sd_card`, `album`, `hard_drive`), the volumes a list shows (a LUKS container standing for its cleartext volume, `effective`), each volume's action (`unlock`, `open`, `mount`), the volume opening the drive acts on (`pick`), and which volumes count as mounted while a pulled drive leaves (`mountedIds`).
+- **Drives module and popout** (`qml/components/content/Drives/`): a `Panel` with a `DeviceList` of `DriveRow`s, Eject all in its header; compact, the count and how many are mounted. Its keyboard is held while a passphrase field shows.
 - **`DriveRow`:** a `DeviceRow` whose end button ejects (`actionIcon`). Clicking opens; on hover, unmount and lock. A drive of several volumes lists them under it, each with its own action; the passphrase field is a `SecretField`.
 - **Drives bar widget:** an icon and the count, hidden with none (`hideWhenEmpty`); hovering opens the Drives popout, a left click opens the first drive, a middle click ejects them all.
 - **OSD:** the `drive` status (`DrivesManager.lastEvent`) with its card, which takes a click ([OSD](osd.md)). In the default statuses.

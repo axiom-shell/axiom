@@ -18,6 +18,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# The shell's QML: `qs.` module names are relative to it
+QML_ROOT = ROOT / "qml"
 QML_DIRS = ["components", "shell", "services", "config"]
 
 SINGLETON = re.compile(r"^\s*pragma\s+Singleton\b", re.M)
@@ -26,9 +28,9 @@ SINGLETON = re.compile(r"^\s*pragma\s+Singleton\b", re.M)
 def qml_files():
     """Every QML file the shell loads: the entrypoints (shell.qml, greeter.qml)
     and the module directories."""
-    files = [ROOT / "shell.qml", ROOT / "greeter.qml"]
+    files = [QML_ROOT / "shell.qml", QML_ROOT / "greeter.qml"]
     for d in QML_DIRS:
-        files.extend(sorted((ROOT / d).rglob("*.qml")))
+        files.extend(sorted((QML_ROOT / d).rglob("*.qml")))
     return files
 
 
@@ -52,7 +54,7 @@ def build_tree(out, only=None):
     for f in qml_files():
         if only and not only(f):
             continue
-        by_dir.setdefault(f.parent.relative_to(ROOT), []).append(f)
+        by_dir.setdefault(f.parent.relative_to(QML_ROOT), []).append(f)
     for rel_dir, files in sorted(by_dir.items()):
         target = out / "qs" / rel_dir
         target.mkdir(parents=True, exist_ok=True)

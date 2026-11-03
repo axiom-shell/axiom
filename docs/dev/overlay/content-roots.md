@@ -1,10 +1,10 @@
 # Content: roots and hosts
 
-> **Files:** `components/content/base/Card.qml`, `components/content/base/Panel.qml`, `components/content/base/TitledCard.qml`, `components/content/base/SlotContext.qml`, `components/hosts/overlay/OverlaySlot.qml`, `components/hosts/popout/BarPopouts.qml`
+> **Files:** `qml/components/content/base/Card.qml`, `qml/components/content/base/Panel.qml`, `qml/components/content/base/TitledCard.qml`, `qml/components/content/base/SlotContext.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/popout/BarPopouts.qml`
 > **Config:** `Overlay.items[].layout.modules`, `EdgeMenus.items[].layout.modules` (module `type`), bar widget `popoutName`
 > **Related:** [Writing modules](writing-modules.md), [Pages and grid](pages-and-grid.md), [Popout hosts](../popouts/hosts-and-switching.md), [Submenus](../popouts/submenus.md)
 
-`components/content/<Name>/<Name>.qml` holds every loadable panel: overlay modules and bar popouts. This doc covers the two root types (`Card`, `Panel`), what each host passes in, and when one file serves both roles.
+`qml/components/content/<Name>/<Name>.qml` holds every loadable panel: overlay modules and bar popouts. This doc covers the two root types (`Card`, `Panel`), what each host passes in, and when one file serves both roles.
 
 ### Loaded by name
 - The name is the overlay module `type` (`OverlayModule.oneOf`) and/or a bar `popoutName`.

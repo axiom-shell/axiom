@@ -15,7 +15,7 @@ Runs on [Hyprland](https://hypr.land), [niri](https://github.com/YaLTeR/niri) an
 
 [Why axiom](#why-axiom) · [Highlights](#highlights) · [Example setups](#example-setups) · [What's included](#whats-included) · [Compositors](#compositors) · [Install](#installation) · [Docs](#documentation)
 
-<img src="assets/screenshots/hero-setups.webp" alt="Nine desktops sliding past one after another, all axiom with different themes, bars and docks: a solid Rosé Pine bar, large floating pills, a Dracula powerline bar on the bottom edge, an Everforest sidebar pinned open, a transparent Catppuccin bar, pills down the right edge, outlined arrows in Ayu, two plain bars in a light theme, and bars down both sides">
+<img src="docs/screenshots/hero-setups.webp" alt="Nine desktops sliding past one after another, all axiom with different themes, bars and docks: a solid Rosé Pine bar, large floating pills, a Dracula powerline bar on the bottom edge, an Everforest sidebar pinned open, a transparent Catppuccin bar, pills down the right edge, outlined arrows in Ayu, two plain bars in a light theme, and bars down both sides">
 
 <sub>One shell, infinite desktops, zero edited files. Each is an <a href="#example-setups">example setup</a> you can apply in one click.</sub>
 
@@ -43,7 +43,7 @@ Most shells hand you a finished desktop and a page of options to tweak. axiom ha
 
 Pages, menus, the desktop, even the lock and login screens: drag modules onto a grid and watch it change live.
 
-<img src="assets/screenshots/overlay-editor.webp" alt="The Layouts editor: the Home page's modules on a grid, with the module library below">
+<img src="docs/screenshots/overlay-editor.webp" alt="The Layouts editor: the Home page's modules on a grid, with the module library below">
 
 </td>
 <td width="50%" valign="top">
@@ -52,7 +52,7 @@ Pages, menus, the desktop, even the lock and login screens: drag modules onto a 
 
 Solid, floating, pills or powerline, on any edge. Mix and match until it's yours.
 
-<img src="assets/screenshots/bar-styles.webp" alt="Seven bars in seven styles, from solid filled pills to transparent underlined text, each in its own theme">
+<img src="docs/screenshots/bar-styles.webp" alt="Seven bars in seven styles, from solid filled pills to transparent underlined text, each in its own theme">
 
 </td>
 </tr>
@@ -63,7 +63,7 @@ Solid, floating, pills or powerline, on any edge. Mix and match until it's yours
 
 Menus slide out of any edge, over your windows or pushing them aside like a sidebar.
 
-<img src="assets/screenshots/menu-sidebar.webp" alt="An Everforest desktop with a sidebar pinned open on the left and two terminals retiled beside it">
+<img src="docs/screenshots/menu-sidebar.webp" alt="An Everforest desktop with a sidebar pinned open on the left and two terminals retiled beside it">
 
 </td>
 <td valign="top">
@@ -72,7 +72,7 @@ Menus slide out of any edge, over your windows or pushing them aside like a side
 
 A grid per monitor or scrolling strips, and everything follows along.
 
-<img src="assets/screenshots/workspace-overlay.webp" alt="The workspace overview: a 5×5 grid of workspaces with live window previews">
+<img src="docs/screenshots/workspace-overlay.webp" alt="The workspace overview: a 5×5 grid of workspaces with live window previews">
 
 </td>
 </tr>
@@ -83,7 +83,7 @@ A grid per monitor or scrolling strips, and everything follows along.
 
 Apps, math, emoji, the clipboard, AI chat, and commands for the whole shell.
 
-<img src="assets/screenshots/launcher.webp" alt="The launcher finding Firefox, listing /theme commands, converting 12 USD to euros and searching emoji">
+<img src="docs/screenshots/launcher.webp" alt="The launcher finding Firefox, listing /theme commands, converting 12 USD to euros and searching emoji">
 
 </td>
 <td valign="top">
@@ -92,7 +92,7 @@ Apps, math, emoji, the clipboard, AI chat, and commands for the whole shell.
 
 42 themes, or one from your wallpaper, carried across 22 of your apps.
 
-<img src="assets/screenshots/demo-themes.webp" alt="The overlay's Home page switching between six themes, every card recoloring at once">
+<img src="docs/screenshots/demo-themes.webp" alt="The overlay's Home page switching between six themes, every card recoloring at once">
 
 </td>
 </tr>
@@ -103,7 +103,7 @@ See **[all the features](docs/features.md)**, with screenshots of every surface.
 ## Example setups
 
 > [!NOTE]
-> **No file was edited by hand.** Each setup was built with axiom's own editors and Settings page, and ships in [`examples/`](examples). Apply one from **Settings → Maintenance** or with `/config example <name>` in the launcher. It changes the look and layout only (wallpapers, monitors, apps and accounts stay yours), and your current setup is saved first.
+> **No file was edited by hand.** Each setup was built with axiom's own editors and Settings page, and ships in [`data/examples/`](data/examples). Apply one from **Settings → Maintenance** or with `/config example <name>` in the launcher. It changes the look and layout only (wallpapers, monitors, apps and accounts stay yours), and your current setup is saved first.
 >
 > Your own setup travels the same way: **Settings → Maintenance → Share** exports its look and layout to a file, leaving out monitors, wallpapers, accounts and paths. **Import…** applies anyone's file just as an example applies. Keybinds, apps and commands come along only if you ask, since a shared command runs as you.
 >
@@ -114,13 +114,13 @@ See **[all the features](docs/features.md)**, with screenshots of every surface.
 
 | `clean` | `big-pills` | `powerline` |
 | :---: | :---: | :---: |
-| <img src="assets/screenshots/setup-clean.webp" alt="clean: a solid bar on top and the dock below, Rosé Pine Moon"> | <img src="assets/screenshots/setup-big-pills.webp" alt="big-pills: large floating pills with glow, Rosé Pine Moon"> | <img src="assets/screenshots/setup-powerline.webp" alt="powerline: powerline arrows on a bottom bar with the dock on top, Dracula"> |
+| <img src="docs/screenshots/setup-clean.webp" alt="clean: a solid bar on top and the dock below, Rosé Pine Moon"> | <img src="docs/screenshots/setup-big-pills.webp" alt="big-pills: large floating pills with glow, Rosé Pine Moon"> | <img src="docs/screenshots/setup-powerline.webp" alt="powerline: powerline arrows on a bottom bar with the dock on top, Dracula"> |
 | Rosé Pine Moon · solid · filled | Rosé Pine Moon · floating pills · glow | Dracula · bottom pills · powerline |
 | **`sidebar`** | **`transparent`** | **`underline`** |
-| <img src="assets/screenshots/setup-sidebar.webp" alt="sidebar: a floating bar on the left and a transparent bar on top, Everforest"> | <img src="assets/screenshots/setup-transparent.webp" alt="transparent: a see-through bar with dot separators, Catppuccin Mocha"> | <img src="assets/screenshots/setup-underline.webp" alt="underline: pills down the right edge with underlined slants, Everforest"> |
+| <img src="docs/screenshots/setup-sidebar.webp" alt="sidebar: a floating bar on the left and a transparent bar on top, Everforest"> | <img src="docs/screenshots/setup-transparent.webp" alt="transparent: a see-through bar with dot separators, Catppuccin Mocha"> | <img src="docs/screenshots/setup-underline.webp" alt="underline: pills down the right edge with underlined slants, Everforest"> |
 | Everforest · floating bar · pinned sidebar | Catppuccin Mocha · transparent · dots | Everforest · right-edge pills · slants |
 | **`outline`** | **`basic`** | **`sonar`** |
-| <img src="assets/screenshots/setup-outline.webp" alt="outline: a bar of outlined powerline arrows, Ayu Dark"> | <img src="assets/screenshots/setup-basic.webp" alt="basic: two plain bars, top and bottom, Kanagawa Lotus"> | <img src="assets/screenshots/setup-sonar.webp" alt="sonar: floating pills on the left and a transparent bar on the right, Submarine Sonar"> |
+| <img src="docs/screenshots/setup-outline.webp" alt="outline: a bar of outlined powerline arrows, Ayu Dark"> | <img src="docs/screenshots/setup-basic.webp" alt="basic: two plain bars, top and bottom, Kanagawa Lotus"> | <img src="docs/screenshots/setup-sonar.webp" alt="sonar: floating pills on the left and a transparent bar on the right, Submarine Sonar"> |
 | Ayu Dark · outlined arrows · glow | Kanagawa Lotus · two bars · light | Submarine Sonar · both sides · AI chat sidebar |
 
 </details>
@@ -171,6 +171,8 @@ curl -fsSL https://raw.githubusercontent.com/axiom-shell/axiom/main/install.sh |
 
 It uses the compositor you're running or have installed, or asks which one to install (Hyprland, niri or sway). Before anything runs as root it shows each command and why: one `sudo pacman` or `sudo dnf`, plus on Fedora each COPR it needs. It asks before adding axiom's start-up line to your compositor's config, and backs that file up first. `--dry-run` prints what it would do and changes nothing. On first start, a short setup walks you through the look, monitors, workspaces, apps and integrations.
 
+Installed axiom in `~/.config/quickshell/axiom` before? It lives in `~/.local/share/axiom-shell` now: run the installer again, log in again, then delete the old folder ([details](docs/installation.md#installation)).
+
 <details>
 <summary><b>By hand</b>: on another distribution, or if you'd rather not pipe to bash</summary>
 
@@ -179,8 +181,8 @@ Install the requirements: a compositor (above), [Quickshell](https://quickshell.
 Clone into Quickshell's config directory, build the `axiom` binary (the shell's parent), and try it with `axiom run`:
 
 ```bash
-git clone https://github.com/axiom-shell/axiom.git ~/.config/quickshell/axiom
-cd ~/.config/quickshell/axiom && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
+git clone https://github.com/axiom-shell/axiom.git ~/.local/share/axiom-shell
+cd ~/.local/share/axiom-shell && scripts/generate.sh --no-docs && go -C backend build -o ~/.local/bin/axiom ./cmd/axiom
 ```
 
 To start it with your session, add one line to your compositor's config (a second `axiom run` on the same display exits at once):
@@ -229,7 +231,7 @@ axiom is built on:
 - [Hyprland](https://hypr.land), [niri](https://github.com/YaLTeR/niri) and [sway](https://swaywm.org), the compositors it runs on
 - [Quickshell](https://quickshell.org), the QML toolkit every surface is written in, and without which axiom couldn't exist
 - [Go](https://go.dev), which the `axiom` binary is written in, with [goja](https://github.com/dop251/goja) (running the old config migrations) and [gopher-lua](https://github.com/yuin/gopher-lua) (reading Hyprland's Lua configs)
-- [Material Symbols](https://fonts.google.com/icons), the icons (bundled in `assets/fonts`, Apache-2.0)
+- [Material Symbols](https://fonts.google.com/icons), the icons (bundled in `qml/assets/fonts`, Apache-2.0)
 
 The static themes are ports of [Catppuccin](https://catppuccin.com), [Gruvbox](https://github.com/morhetz/gruvbox), [Gruvbox Material](https://github.com/sainnhe/gruvbox-material), [Solarized](https://ethanschoonover.com/solarized/), [Tokyo Night](https://github.com/tokyo-night/tokyo-night-vscode-theme), [Rosé Pine](https://rosepinetheme.com), [Nord](https://www.nordtheme.com) (Nord Light after [threddast's](https://github.com/tinted-theming/schemes/blob/spec-0.11/base16/nord-light.yaml)), [Dracula and Alucard](https://draculatheme.com), [Everforest](https://github.com/sainnhe/everforest), [Kanagawa](https://github.com/rebelot/kanagawa.nvim), [One Dark/Light](https://github.com/atom/atom/tree/master/packages), [Ayu](https://github.com/ayu-theme/ayu-colors), [Nightfox](https://github.com/EdenEast/nightfox.nvim), [GitHub](https://github.com/primer/github-vscode-theme) and [Oxocarbon](https://github.com/nyoom-engineering/oxocarbon.nvim), most by way of [tinted-theming](https://github.com/tinted-theming/schemes)'s base16 palettes. Submarine Sonar is axiom's own.
 

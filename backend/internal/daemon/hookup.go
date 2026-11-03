@@ -39,7 +39,7 @@ type HookupApplied struct {
 }
 
 func (d *Daemon) hookupMethods(reg *rpc.Registry) {
-	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, Scripts: filepath.Join(d.opts.Tree, "scripts")})
+	h := edit.NewHookups(edit.HookupOptions{Getenv: d.opts.Getenv, DataDir: filepath.Join(d.opts.Tree, "data")})
 	// The targets asked for, and the profiles.ini files of a browser's
 	targets := func(p HookupRequest) ([]hookup.Target, []string, error) {
 		if p.Targets != nil {

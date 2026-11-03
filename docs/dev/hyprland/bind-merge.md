@@ -1,6 +1,6 @@
 # Merging user binds (managed mode)
 
-> **Files:** `backend/internal/compositor/binds/`, `backend/internal/compositor/manager/hypr.go`, `services/compositor/CompositorConfigManager.qml` (`mergeUserBinds`, `previewMerge`), `backend/internal/compositor/actions/`, `components/methods/BindKeys.qml`
+> **Files:** `backend/internal/compositor/binds/`, `backend/internal/compositor/manager/hypr.go`, `qml/services/compositor/CompositorConfigManager.qml` (`mergeUserBinds`, `previewMerge`), `backend/internal/compositor/actions/`, `qml/components/methods/BindKeys.qml`
 > **Config:** `Keybinds.binds`
 > **Related:** [Managed takeover](managed-takeover.md), [Keybinds](keybinds.md), [Config modes](config-modes.md)
 

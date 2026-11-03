@@ -1,6 +1,6 @@
 # Notes
 
-> **Files:** `services/apps/NotesManager.qml`, `config/NotesConfig.qml`, `components/content/Notes/Notes.qml`, `components/content/parts/notes/NoteEditor.qml`, `components/content/parts/notes/NoteBlock.qml`, `components/content/parts/notes/NoteBrowser.qml`, `components/methods/NoteMarkdown.qml`
+> **Files:** `qml/services/apps/NotesManager.qml`, `qml/config/NotesConfig.qml`, `qml/components/content/Notes/Notes.qml`, `qml/components/content/parts/notes/NoteEditor.qml`, `qml/components/content/parts/notes/NoteBlock.qml`, `qml/components/content/parts/notes/NoteBrowser.qml`, `qml/components/methods/NoteMarkdown.qml`
 > **Config:** `Notes.*` (reader `NotesConfig`)
 > **Related:** [Launcher](launcher.md), [Edge menus](../edge-menus/overview.md), [Writing modules](../overlay/writing-modules.md)
 
@@ -71,4 +71,4 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 - `lockNote` pins a module to its `note`.
 
 ### Lifecycle
-- Created from `shell.qml`'s `_services`.
+- Created from `qml/shell.qml`'s `_services`.

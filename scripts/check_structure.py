@@ -57,25 +57,27 @@ from pathlib import Path
 from qml_modules import qml_files
 
 ROOT = Path(__file__).resolve().parent.parent
-SCHEMA = ROOT / "config" / "json" / "config.schema.json"
+# The shell's QML: `qs.` module names are relative to it
+QML_ROOT = ROOT / "qml"
+SCHEMA = QML_ROOT / "config" / "json" / "config.schema.json"
 
 # (schema oneOf definition, root its types load from, file prefix): a type
 # is a folder <root>/<Type>/ with <prefix><Type>.qml (docs/dev/core/config-v2.md,
 # rule 11). Custom widget elements are Custom<Type>.qml, so an element
 # named after a Qt type (Text, Image, List) never shadows it
 LOADERS = [
-    ("BarWidget", "components/bar/widgets", ""),
-    ("OverlayView", "components/views", ""),
-    ("OverlayModule", "components/content", ""),
-    ("CustomElement", "components/content/parts/custom/elements", "Custom"),
+    ("BarWidget", "qml/components/bar/widgets", ""),
+    ("OverlayView", "qml/components/views", ""),
+    ("OverlayModule", "qml/components/content", ""),
+    ("CustomElement", "qml/components/content/parts/custom/elements", "Custom"),
 ]
 # Bar popouts load content/<popoutName>/<popoutName>.qml, from the same root
 # as overlay modules (a content type can be both)
-POPOUT_DIR = "components/content"
+POPOUT_DIR = "qml/components/content"
 # Beside the type folders, the folders of what they share (lowercase)
 SHARED_FOLDERS = {"base", "parts"}
 # Directories retired by restructuring: nothing may live or be imported there
-RETIRED = ["components/widgets", "components/stolen"]
+RETIRED = ["qml/components/widgets", "qml/components/stolen"]
 # Quickshell.Io's side effects, frozen to the files that use them now
 IO_ALLOWLIST = ROOT / "scripts" / "quickshell-io-allowlist.json"
 IO_KINDS = {
@@ -89,13 +91,23 @@ IO_KINDS = {
 # (components/methods/, unit-tested tables of rules) and the compositor
 # backends (one compositor's whole contract each) may grow past it
 SINGLETON_LINES = 800
-SINGLETON_EXEMPT = re.compile(r"components/methods/.*|services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
+SINGLETON_EXEMPT = re.compile(r"qml/components/methods/.*|qml/services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
 errors, warnings = [], []
 
 
 def rel(path):
     return path.relative_to(ROOT).as_posix()
+
+
+def module_of(directory):
+    """The `qs.` module a directory under QML_ROOT is (qml/a/b → qs.a.b)."""
+    return ".".join(("qs",) + Path(directory).relative_to("qml").parts)
+
+
+def module_dir(module):
+    """The directory a `qs.` module names (qs.a.b → QML_ROOT/a/b)."""
+    return QML_ROOT.joinpath(*module.split(".")[1:])
 
 
 def schema_types(schema, name):
@@ -165,18 +177,18 @@ def main():
     # with `// qmllint disable unused-imports`)
     def imports_of(text):
         return set(re.findall(r"^import (qs(?:\.\w+)+)", text, re.M))
-    scanned, todo = set(), imports_of(sources["shell.qml"])
+    scanned, todo = set(), imports_of(sources["qml/shell.qml"])
     while todo:
         module = todo.pop()
         if module in scanned:
             continue
         scanned.add(module)
-        for f in (ROOT / Path(*module.split(".")[1:])).glob("*.qml"):
+        for f in module_dir(module).glob("*.qml"):
             todo |= imports_of(sources.get(rel(f), "")) - scanned
     unreached = {}
     for _, directory, _ in LOADERS:
         for f in sorted((ROOT / directory).rglob("*.qml")):
-            own = "qs." + rel(f.parent).replace("/", ".")
+            own = module_of(rel(f.parent))
             needed = imports_of(sources[rel(f)])
             if len(list(f.parent.glob("*.qml"))) > 1:
                 needed.add(own)
@@ -213,7 +225,7 @@ def main():
     # one directly in services/ would escape the singleton checks below,
     # check_docs and the API pages, which all read services/*/
     for path in sources:
-        if re.fullmatch(r"services/[^/]+\.qml", path):
+        if re.fullmatch(r"qml/services/[^/]+\.qml", path):
             errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
 
     # IPC targets are IpcTargets (registered with axiom, which calls them
@@ -249,7 +261,7 @@ def main():
     # "desktop" while listing "overlay" is how new modules once missed it.
     # One with a text field (in its file or a content part it uses) must
     # say whether the desktop hands it the keyboard: `x-keyboard`
-    content_parts = {f.stem: f.read_text() for f in (ROOT / "components/content/parts").rglob("*.qml")}
+    content_parts = {f.stem: f.read_text() for f in (ROOT / POPOUT_DIR / "parts").rglob("*.qml")}
     content_parts.update({f.stem: f.read_text() for f in (ROOT / POPOUT_DIR).glob("*/*.qml") if f.stem != f.parent.name})
     typing = re.compile(r"\b(?:StyledTextEntry|StyledTextArea|TextInput|TextEdit|TextArea|TextField)\s*\{|wantsKeyboardFocus:\s*true")
 
@@ -286,7 +298,7 @@ def main():
                 annotated(value, found)
         return found
     for key, name in annotated(schema, []):
-        target = f"components/views/Settings/{name}{'Card' if key == 'x-card' else ''}.qml"
+        target = f"qml/components/views/Settings/{name}{'Card' if key == 'x-card' else ''}.qml"
         if not (ROOT / target).exists():
             errors.append(f"schema {key} {name!r} has no {target}")
 
@@ -385,14 +397,14 @@ def main():
     # qs.* imports resolve
     for path, text in sources.items():
         for m in re.finditer(r"^import (qs(?:\.\w+)+)", text, re.M):
-            target = ROOT.joinpath(*m.group(1).split(".")[1:])
+            target = module_dir(m.group(1))
             if not target.is_dir():
                 errors.append(f"{path}: import {m.group(1)} — no such directory")
 
     # Only the Hyprland* services read Quickshell.Hyprland: the rest goes
     # through HyprlandManager (docs/dev/hyprland/ipc.md)
     for path, text in sources.items():
-        if re.search(r"^import Quickshell\.Hyprland\b", text, re.M) and not re.fullmatch(r"services/compositor/Hyprland\w*\.qml", path):
+        if re.search(r"^import Quickshell\.Hyprland\b", text, re.M) and not re.fullmatch(r"qml/services/compositor/Hyprland\w*\.qml", path):
             errors.append(f"{path}: imports Quickshell.Hyprland (only the Hyprland* services may; use CompositorManager)")
 
     # Likewise only a backend's own services talk to its compositor: read
@@ -406,7 +418,7 @@ def main():
     for prefix, name, module, talks in backends:
         for path, text in sources.items():
             # (CompositorKind names the variables that say which one runs)
-            if re.fullmatch(rf"services/compositor/{prefix}\w*\.qml", path) or path in ("services/compositor/CompositorManager.qml", "components/methods/CompositorKind.qml"):
+            if re.fullmatch(rf"qml/services/compositor/{prefix}\w*\.qml", path) or path in ("qml/services/compositor/CompositorManager.qml", "qml/components/methods/CompositorKind.qml"):
                 continue
             code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
             if module and re.search(rf"^import Quickshell\.{module}\b", text, re.M):
@@ -417,10 +429,10 @@ def main():
     # The rest of the shell reaches the compositor through CompositorManager
     # (docs/dev/compositor/README.md). HyprlandManager is its Hyprland
     # backend: besides the Hyprland* services, only CompositorManager uses it.
-    facade = "services/compositor/CompositorManager.qml"
+    facade = "qml/services/compositor/CompositorManager.qml"
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in text.splitlines())
-        if re.search(r"\bHyprlandManager\.", code) and not re.fullmatch(r"services/compositor/Hyprland\w*\.qml", path) and path != facade:
+        if re.search(r"\bHyprlandManager\.", code) and not re.fullmatch(r"qml/services/compositor/Hyprland\w*\.qml", path) and path != facade:
             errors.append(f"{path}: uses HyprlandManager (only the Hyprland* services and CompositorManager may; use CompositorManager)")
 
     # A backend's state helpers are its own (HyprState, SwayState,
@@ -429,19 +441,19 @@ def main():
     # (docs/dev/compositor/config-modes.md)
     for path, text in sources.items():
         code = "\n".join(line.split("//", 1)[0] for line in re.sub(r"/\*.*?\*/", "", text, flags=re.S).splitlines())
-        if not path.startswith(("services/", "components/", "shell/", "config/")):
+        if not path.startswith(("qml/services/", "qml/components/", "qml/shell/", "qml/config/")):
             continue
-        if not re.fullmatch(r"(services/compositor|components/methods)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
+        if not re.fullmatch(r"qml/(services/compositor|components/methods)/Hypr\w*\.qml", path) and re.search(r"\bHyprState\.", code):
             errors.append(f"{path}: uses a Hyprland helper (only the Hyprland* services and helpers may; go through CompositorManager / CompositorConfigManager)")
         for prefix, name, _, _ in backends:
-            if not re.fullmatch(rf"(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
+            if not re.fullmatch(rf"qml/(services/compositor|components/methods)/{prefix}\w*\.qml", path) and re.search(rf"\b{prefix}State\.", code):
                 errors.append(f"{path}: uses a {name} helper (only the {prefix}* services and helpers may; go through CompositorManager / CompositorConfigManager)")
 
     # Singleton references: FooManager. must be a service, and a near-miss
     # of any project singleton (AudioManger.) is a typo
     external = {"ToplevelManager"}  # Quickshell's own
-    singletons = {f.stem for d in ("services/*", "config", "components/methods") for f in ROOT.glob(f"{d}/*.qml")}
-    services = {f.stem for f in ROOT.glob("services/*/*.qml")} | external
+    singletons = {f.stem for d in ("services/*", "config", "components/methods") for f in QML_ROOT.glob(f"{d}/*.qml")}
+    services = {f.stem for f in QML_ROOT.glob("services/*/*.qml")} | external
     for path, text in sources.items():
         # without strings and comments
         code = re.sub(r'"(?:[^"\\\n]|\\.)*"|`[^`]*`', '""', text)
@@ -464,7 +476,7 @@ def main():
     # or through one property of the same file. A model may count one
     # (`.length`, `.count`: an int notifies only when it changes); a request
     # may not read one at all
-    polled = {f.stem for f in ROOT.glob("services/*/*.qml") if re.search(r"\b(?:ConsumerRegistry|DeadlineTicker)\s*\{", f.read_text())}
+    polled = {f.stem for f in QML_ROOT.glob("services/*/*.qml") if re.search(r"\b(?:ConsumerRegistry|DeadlineTicker)\s*\{", f.read_text())}
     chain = re.compile(r"(?<![\w.])(?:root\.)?([A-Za-z_]\w*)((?:\??\.\w+)*)")
 
     def live_reads(expr, props, counts, depth=0):
@@ -479,7 +491,7 @@ def main():
                 found += [f"{name} → {r}" for r in live_reads(props[name], props, counts, 1)]
         return found
     for path, text in sources.items():
-        if not path.startswith(("components/", "shell/")):
+        if not path.startswith(("qml/components/", "qml/shell/")):
             continue
         code = re.sub(r"//[^\n]*", "", re.sub(r'"(?:[^"\\\n]|\\.)*"|\'(?:[^\'\\\n]|\\.)*\'', '""', text))
         props = {m.group(1): binding(code, m.end()) for m in re.finditer(r"\bproperty\s+[\w<>.]+\s+(\w+)\s*:", code)}
@@ -519,12 +531,12 @@ def main():
                 continue
             if re.search(r"\bQt\.format(?:DateTime|Date|Time)\(", code):
                 errors.append(f"{path}:{n}: Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name)) (or mark a use that must stay `// allowed: <reason>`)")
-            if path != "config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
+            if path != "qml/config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
                 errors.append(f"{path}:{n}: Quickshell.screens: build on General.outputs or General.screensFor(target) (or mark a window that must exist with no monitor `// allowed: <reason>`)")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():
-        if not path.startswith("config/"):
+        if not path.startswith("qml/config/"):
             continue
         for n, line in enumerate(re.sub(r"//[^\n]*", "", text).splitlines(), 1):
             m = re.search(r"\b_c(?:\.\w+)+\s*\?\?", line)
@@ -535,10 +547,10 @@ def main():
     # on import order (bar widgets and content share some names by design)
     dir_types = {}
     for f in qml_files():
-        if rel(f).startswith(("components/", "shell/")):
-            dir_types.setdefault("qs." + rel(f.parent).replace("/", "."), set()).add(f.stem)
+        if rel(f).startswith(("qml/components/", "qml/shell/")):
+            dir_types.setdefault(module_of(rel(f.parent)), set()).add(f.stem)
     for path, text in sources.items():
-        own = "qs." + str(Path(path).parent).replace("/", ".")
+        own = module_of(Path(path).parent)
         visible = [d for d in set(re.findall(r"^import (qs(?:\.\w+)+)", text, re.M)) | {own} if d in dir_types]
         code = re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', re.sub(r"//[^\n]*", "", text))
         for name in sorted(set(re.findall(r"(?<![\w.])([A-Z]\w+)\s*\{", code)) - {Path(path).stem}):

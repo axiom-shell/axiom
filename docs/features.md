@@ -8,14 +8,14 @@ Everything below is one shell and one config, and everything is set from inside 
 
 ## Bar
 
-<p align="center"><img src="../assets/screenshots/desktop.webp" alt="A floating pill bar down the left, a transparent bar down the right and the dock at the top, inside the screen border"></p>
+<p align="center"><img src="screenshots/desktop.webp" alt="A floating pill bar down the left, a transparent bar down the right and the dock at the top, inside the screen border"></p>
 
 - Bars are defined in config. Have any number, on any monitor (or a copy on every one) and any edge.
 - **28 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
   - Updates, Weather, Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, Drives (removable drives: hidden with none, a popout to open, eject or unlock one, middle click ejects them all), KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
-  - ScreenRecord (shown while recording; click to stop), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
+  - ScreenRecord (shown while recording; click to stop), DevMode (shown while dev mode is on: the dev tree's branch, a build running or failed, a popout to rebuild or turn it off), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
   - Button (runs any command, opens a page or toggles an edge menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.
 - **The bar editor** draws each bar's sections the way the bar lays them out, on the side of the page matching the bar's edge:
@@ -24,24 +24,24 @@ Everything below is one shell and one config, and everything is set from inside 
   - It tells you, per screen, which widgets don't fit.
   - **Copy style** puts one bar's look onto others.
 
-<p align="center"><img src="../assets/screenshots/bar-editor.webp" alt="The bar editor on a bottom powerline bar: its sections as a strip along the bottom, its settings, and the widget library" width="900"></p>
+<p align="center"><img src="screenshots/bar-editor.webp" alt="The bar editor on a bottom powerline bar: its sections as a strip along the bottom, its settings, and the widget library" width="900"></p>
 
 <details>
 <summary><b>Popouts</b></summary>
 
 | Calendar | Audio mixer | Notifications |
 | :---: | :---: | :---: |
-| <img src="../assets/screenshots/popout-calendar.webp" alt="Calendar popout with the day's events"> | <img src="../assets/screenshots/popout-audio-mixer.webp" alt="Audio mixer popout"> | <img src="../assets/screenshots/popout-notifications.webp" alt="Notifications popout"> |
+| <img src="screenshots/popout-calendar.webp" alt="Calendar popout with the day's events"> | <img src="screenshots/popout-audio-mixer.webp" alt="Audio mixer popout"> | <img src="screenshots/popout-notifications.webp" alt="Notifications popout"> |
 | **Now playing** | **System graphs** | **Forecast** |
-| <img src="../assets/screenshots/popout-now-playing.webp" alt="Now playing popout"> | <img src="../assets/screenshots/popout-system-graphs.webp" alt="System graphs popout"> | <img src="../assets/screenshots/popout-weather-forecast.webp" alt="Weather forecast popout"> |
+| <img src="screenshots/popout-now-playing.webp" alt="Now playing popout"> | <img src="screenshots/popout-system-graphs.webp" alt="System graphs popout"> | <img src="screenshots/popout-weather-forecast.webp" alt="Weather forecast popout"> |
 | **Updates** | **Workspace grid** | |
-| <img src="../assets/screenshots/popout-updates.webp" alt="Pending updates popout"> | <img src="../assets/screenshots/popout-workspace-grid.webp" alt="Workspace grid popout"> | |
+| <img src="screenshots/popout-updates.webp" alt="Pending updates popout"> | <img src="screenshots/popout-workspace-grid.webp" alt="Workspace grid popout"> | |
 
 </details>
 
 ### Bar styles
 
-<p align="center"><img src="../assets/screenshots/bar-styles.webp" alt="Seven bars in seven styles, each in its own theme: solid filled, floating capsules with glow, powerline pills, outlined arrows, filled slants, transparent accent text with dots, and transparent underlines" width="900"></p>
+<p align="center"><img src="screenshots/bar-styles.webp" alt="Seven bars in seven styles, each in its own theme: solid filled, floating capsules with glow, powerline pills, outlined arrows, filled slants, transparent accent text with dots, and transparent underlines" width="900"></p>
 
 Set a style once under **Settings → Look & Feel → Bar widgets**, and give any bar its own:
 
@@ -69,7 +69,7 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
 
 ## Overlay
 
-<p align="center"><img src="../assets/screenshots/overlay-home.webp" alt="The overlay's Home page: Wi-Fi, quick actions, media, notifications, a clock and calendar, the mixer, network, weather and disks" width="900"></p>
+<p align="center"><img src="screenshots/overlay-home.webp" alt="The overlay's Home page: Wi-Fi, quick actions, media, notifications, a clock and calendar, the mixer, network, weather and disks" width="900"></p>
 
 - A full-screen overlay made of pages. Each page is a grid you place modules on, with gaps wherever you like. Pages have their own name and icon in the navigator.
 - **43 modules**, and every one adapts to its size and shape (square, wide or tall, down to a compact figure):
@@ -101,9 +101,9 @@ Set a style once under **Settings → Look & Feel → Bar widgets**, and give an
 
 | Settings | Keybinds |
 | :---: | :---: |
-| <img src="../assets/screenshots/settings.webp" alt="Settings page, General category"> | <img src="../assets/screenshots/keybinds.webp" alt="Keybinds page with filter chips"> |
+| <img src="screenshots/settings.webp" alt="Settings page, General category"> | <img src="screenshots/keybinds.webp" alt="Keybinds page with filter chips"> |
 | **Look & Feel** | **Monitors** |
-| <img src="../assets/screenshots/settings-look.webp" alt="Settings page, Look & Feel category"> | <img src="../assets/screenshots/monitors.webp" alt="The Monitors page"> |
+| <img src="screenshots/settings-look.webp" alt="Settings page, Look & Feel category"> | <img src="screenshots/monitors.webp" alt="The Monitors page"> |
 
 </details>
 
@@ -113,9 +113,9 @@ One editor, one grid, for everything made of modules: your **overlay pages**, yo
 
 | A page | An edge menu |
 | :---: | :---: |
-| <img src="../assets/screenshots/overlay-editor.webp" alt="The Layouts editor on the Home page"> | <img src="../assets/screenshots/edge-menu-editor.webp" alt="The Layouts editor on the left edge menu, drawn against its screen edge"> |
+| <img src="screenshots/overlay-editor.webp" alt="The Layouts editor on the Home page"> | <img src="screenshots/edge-menu-editor.webp" alt="The Layouts editor on the left edge menu, drawn against its screen edge"> |
 | **The lock screen** | **The login screen** |
-| <img src="../assets/screenshots/layouts-lockscreen.webp" alt="The Layouts editor on the lock screen, its grid fitted to the monitor"> | <img src="../assets/screenshots/layouts-greeter.webp" alt="The Layouts editor on the login screen"> |
+| <img src="screenshots/layouts-lockscreen.webp" alt="The Layouts editor on the lock screen, its grid fitted to the monitor"> | <img src="screenshots/layouts-greeter.webp" alt="The Layouts editor on the login screen"> |
 
 - Drag a module from the library onto the grid (or click it to drop it in the first free spot): dropped into a gap it shrinks to fit, dropped onto other modules it pushes them aside (down a page, along an edge menu's edge), and you see where everything will go before you let go. Drag a module anywhere, and drag any edge or corner to resize it.
 - Drag a box (or Shift/Ctrl+click) to select several modules and move them together, or drop them on the trash can to remove them.
@@ -130,7 +130,7 @@ One editor, one grid, for everything made of modules: your **overlay pages**, yo
 
 Edge menus are the overlay's other half. Every overlay module fits in them, placed on the same grid, but a menu slides out of a screen edge and leaves the rest of your desktop in view. Use them for what you want one hover away.
 
-<p align="center"><img src="../assets/screenshots/demo-menus.webp" alt="The right menu opening beside the bar while the windows retile to make room, then a floating menu on the left" width="900"></p>
+<p align="center"><img src="screenshots/demo-menus.webp" alt="The right menu opening beside the bar while the windows retile to make room, then a floating menu on the left" width="900"></p>
 
 - **Floating** menus open over your windows. They grow out of the screen border or a solid bar like the popouts, or sit apart as a box.
 - **Integrated** menus open outside the border and bars. They push the bars and your windows inwards, like a sidebar, and give the space back when they close.
@@ -146,15 +146,15 @@ Edge menus are the overlay's other half. Every overlay module fits in them, plac
 
 | Left: media at hand (floating) | Right: chat beside the bar (integrated) | Right: the week ahead (integrated) |
 | :---: | :---: | :---: |
-| <img src="../assets/screenshots/menu-left.webp" alt="A floating menu on the left edge with quick actions, now playing and the audio mixer"> | <img src="../assets/screenshots/menu-right.webp" alt="An integrated menu on the right edge with quick actions, AI chat, now playing and weather"> | <img src="../assets/screenshots/menu-calendar.webp" alt="An integrated menu on the right edge with a clock, the month and the week's agenda"> |
+| <img src="screenshots/menu-left.webp" alt="A floating menu on the left edge with quick actions, now playing and the audio mixer"> | <img src="screenshots/menu-right.webp" alt="An integrated menu on the right edge with quick actions, AI chat, now playing and weather"> | <img src="screenshots/menu-calendar.webp" alt="An integrated menu on the right edge with a clock, the month and the week's agenda"> |
 | **Top: wallpaper and theme, dropping from a pill** | **Right: a notepad** | |
-| <img src="../assets/screenshots/menu-theme.webp" alt="A floating menu under a pill bar with the wallpaper picker and theme list"> | <img src="../assets/screenshots/menu-notes.webp" alt="A floating menu on the right edge holding a note with task checkboxes"> | |
+| <img src="screenshots/menu-theme.webp" alt="A floating menu under a pill bar with the wallpaper picker and theme list"> | <img src="screenshots/menu-notes.webp" alt="A floating menu on the right edge holding a note with task checkboxes"> | |
 
-<p align="center"><img src="../assets/screenshots/menu-sidebar.webp" alt="An integrated menu pinned open on the left, with the terminals retiled beside it" width="900"></p>
+<p align="center"><img src="screenshots/menu-sidebar.webp" alt="An integrated menu pinned open on the left, with the terminals retiled beside it" width="900"></p>
 
 ## Workspaces
 
-<p align="center"><img src="../assets/screenshots/demo-workspaces.webp" alt="Sliding right, down, left and up around a grid of workspaces" width="900"></p>
+<p align="center"><img src="screenshots/demo-workspaces.webp" alt="Sliding right, down, left and up around a grid of workspaces" width="900"></p>
 
 Set **Settings → Workspaces → Layout**:
 - **Standard:** 1 to N, shared by every monitor.
@@ -173,11 +173,11 @@ Then:
 - **The overview** shows live window previews on Hyprland, and app icons elsewhere. Drag a window onto another workspace or onto a side of another window, right-drag to resize it, and middle-click to close it.
 - **Keybinds included.** Presets for the grid with WASD or the arrows (add <kbd>Shift</kbd> to take the window along), or previous and next.
 
-<p align="center"><img src="../assets/screenshots/workspace-overlay.webp" alt="The workspace overview: a 5×5 grid of workspaces with live window previews" width="900"></p>
+<p align="center"><img src="screenshots/workspace-overlay.webp" alt="The workspace overview: a 5×5 grid of workspaces with live window previews" width="900"></p>
 
 ## Window switcher (Alt+Tab)
 
-<p align="center"><img src="../assets/screenshots/window-switcher.webp" alt="The window switcher stepping through a row of live window previews" width="900"></p>
+<p align="center"><img src="screenshots/window-switcher.webp" alt="The window switcher stepping through a row of live window previews" width="900"></p>
 
 - <kbd>Alt</kbd>+<kbd>Tab</kbd> and <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> step through your windows, most recently used first, on the focused monitor. Let go of <kbd>Alt</kbd> to switch, press <kbd>Esc</kbd> to stay, or click a tile.
 - It only appears once you've held the keys for a moment, so a quick tap just swaps to your last window without anything drawn.
@@ -199,7 +199,7 @@ One config works on all three. Switch compositors and your bars, pages, theme an
 
 | The Calendar page | In the bar |
 | :---: | :---: |
-| <img src="../assets/screenshots/calendar-page.webp" alt="The Calendar page: the month with events from two calendars, the day's agenda, and the calendar switches"> | <img src="../assets/screenshots/popout-calendar.webp" alt="The bar's calendar popout with the day's events" width="300"> |
+| <img src="screenshots/calendar-page.webp" alt="The Calendar page: the month with events from two calendars, the day's agenda, and the calendar switches"> | <img src="screenshots/popout-calendar.webp" alt="The bar's calendar popout with the day's events" width="300"> |
 
 - **Sources:** your calendars from **CalDAV** accounts (iCloud, Fastmail, Nextcloud or any CalDAV server), read-only **.ics subscriptions** (holidays, shared feeds, Google's secret iCal address), and **local calendars** kept on this computer (one `.ics` file per event in `~/.local/share/axiom/calendars/`).
   - Add accounts in **Settings → Calendar**, then pick which of an account's calendars show.
@@ -219,7 +219,7 @@ One config works on all three. Switch compositors and your bars, pages, theme an
 
 | Apps | Commands | Calculator | Emoji |
 | :---: | :---: | :---: | :---: |
-| <img src="../assets/screenshots/launcher-apps.webp" alt="Launcher searching apps"> | <img src="../assets/screenshots/launcher-commands.webp" alt="Launcher command list"> | <img src="../assets/screenshots/launcher-calc.webp" alt="Launcher converting 12 USD to euros"> | <img src="../assets/screenshots/launcher-emoji.webp" alt="Launcher emoji search"> |
+| <img src="screenshots/launcher-apps.webp" alt="Launcher searching apps"> | <img src="screenshots/launcher-commands.webp" alt="Launcher command list"> | <img src="screenshots/launcher-calc.webp" alt="Launcher converting 12 USD to euros"> | <img src="screenshots/launcher-emoji.webp" alt="Launcher emoji search"> |
 
 - **Search:** apps (ranked by how often and how recently you use them), open windows, a calculator (math, units, currencies), the web, your clipboard history and emoji.
 - **Commands:** it runs shell commands, asks your AI chat, and controls the whole shell with `/` commands. Commands that change something you can see (the theme, the volume, the wallpaper) keep the launcher open, so you can try several.
@@ -231,7 +231,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 
 | Dock | OSD (a column of bars) | OSD (a row of bars) |
 | :---: | :---: | :---: |
-| <img src="../assets/screenshots/dock.webp" alt="The dock growing out of the screen border at the top"> | <img src="../assets/screenshots/osd.webp" alt="An OSD of vertical volume bars on the right edge"> | <img src="../assets/screenshots/osd-bars.webp" alt="An OSD with brightness and microphone bars side by side"> |
+| <img src="screenshots/dock.webp" alt="The dock growing out of the screen border at the top"> | <img src="screenshots/osd.webp" alt="An OSD of vertical volume bars on the right edge"> | <img src="screenshots/osd-bars.webp" alt="An OSD with brightness and microphone bars side by side"> |
 
 **Dock:**
 - **Contents:** your pinned apps, then the apps with open windows, grouped by app. A dot or line shows what's running, and a separator splits the two.
@@ -259,7 +259,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 
 | Lock screen | Login screen |
 | :---: | :---: |
-| <img src="../assets/screenshots/lockscreen.webp" alt="The lock screen: a greeting, the password field, media, a volume dial, weather, a clock and calendar, and power buttons over the blurred wallpaper"> | <img src="../assets/screenshots/greeter.webp" alt="The login screen: a greeting, the user and password fields, a clock and calendar, weather, the keyboard layout, the session picker and power buttons"> |
+| <img src="screenshots/lockscreen.webp" alt="The lock screen: a greeting, the password field, media, a volume dial, weather, a clock and calendar, and power buttons over the blurred wallpaper"> | <img src="screenshots/greeter.webp" alt="The login screen: a greeting, the user and password fields, a clock and calendar, weather, the keyboard layout, the session picker and power buttons"> |
 
 - **Lock screen modes:**
   - **Built-in** (`ext-session-lock`, PAM): the lock screen is laid out on the Layouts page, like an overlay page. Put a greeting, the password field, a clock, media, weather, power buttons (suspend, restart, shut down) and other display-only modules anywhere on a grid fitted to each monitor. It shows over your wallpaper (blurred and dimmed) or a color, and **Show on screen** previews it.
@@ -274,17 +274,17 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Switch which identity to authenticate as.
   - Turn it on under **Settings → Screen & Power → Authentication prompts**. axiom stops the other agent you had (hyprpolkitagent, KDE's, GNOME's), and starts it again if you turn axiom's off.
 
-<p align="center"><img src="../assets/screenshots/polkit.webp" alt="The polkit prompt: the action, its vendor and ID, the identity, and a password field" width="500"></p>
+<p align="center"><img src="screenshots/polkit.webp" alt="The polkit prompt: the action, its vendor and ID, the identity, and a password field" width="500"></p>
 
 ## Theming
 
 | Dark | Light |
 | :---: | :---: |
-| <img src="../assets/screenshots/themes-dark.webp" alt="Themes page in Everforest"> | <img src="../assets/screenshots/themes-light.webp" alt="Themes page in Kanagawa Lotus"> |
+| <img src="screenshots/themes-dark.webp" alt="Themes page in Everforest"> | <img src="screenshots/themes-light.webp" alt="Themes page in Kanagawa Lotus"> |
 
-<p align="center"><img src="../assets/screenshots/demo-themes.webp" alt="The overlay recoloring through six themes" width="900"></p>
+<p align="center"><img src="screenshots/demo-themes.webp" alt="The overlay recoloring through six themes" width="900"></p>
 
-<p align="center"><img src="../assets/screenshots/desktop-rice.webp" alt="Rosé Pine Moon across the desktop: the bar, the dock, and kitty running fastfetch, cava and Neovim in the same palette" width="900"></p>
+<p align="center"><img src="screenshots/desktop-rice.webp" alt="Rosé Pine Moon across the desktop: the bar, the dock, and kitty running fastfetch, cava and Neovim in the same palette" width="900"></p>
 
 - **42 base16 themes**, with dark and light pairs switched by one toggle: Catppuccin, Gruvbox, Gruvbox Material, Solarized, Tokyo Night, Rosé Pine, Nord, Dracula/Alucard, Everforest, Kanagawa, One, Ayu, Nightfox (with Carbonfox, Dayfox, Nordfox and Terafox), GitHub, Oxocarbon and Submarine Sonar.
 - **Generated themes** from your wallpaper, in five styles (tonal, vibrant, faithful, muted, alternate). The palette is built in OKLCH from the image's main colors, to match the contrast of the hand-made themes.
@@ -317,7 +317,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 
 | Notification | Power menu | First-run setup |
 | :---: | :---: | :---: |
-| <img src="../assets/screenshots/notification.webp" alt="A calendar reminder toast under the bar"> | <img src="../assets/screenshots/powermenu.webp" alt="The power menu: lock, suspend, hibernate, log out, restart, shut down"> | <img src="../assets/screenshots/onboarding.webp" alt="The first-run setup on its Look step"> |
+| <img src="screenshots/notification.webp" alt="A calendar reminder toast under the bar"> | <img src="screenshots/powermenu.webp" alt="The power menu: lock, suspend, hibernate, log out, restart, shut down"> | <img src="screenshots/onboarding.webp" alt="The first-run setup on its Look step"> |
 
 - **Notifications:** toasts and a notification center.
   - Toasts stack from any corner of one monitor or all of them, with gaps measured from the bar or border at each edge.
@@ -353,6 +353,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 - **Night light:** warmer colors on a schedule, set by axiom through the compositor (`wlsunset` on niri).
 - **Idle:** axiom handles idle itself, on any compositor: dim, lock, screen off and suspend timeouts, and locking before the computer sleeps.
 - **Updates:** axiom updates itself from git, following releases or `main`, with a notification or automatically, and switches to the rebuilt `axiom` binary without logging out.
+- **Dev mode**, for working on axiom: `axiom dev set <clone>` and `axiom dev on` run your clone instead of the install, rebuilt as you edit it, on a config of its own; **Settings → Development** shows how it differs from yours and copies settings either way.
 - **The `axiom` command:** the shell's parent process, and a command line for scripts and keybinds.
   - Run, restart or stop the shell (`axiom run`, `axiom restart`, `axiom quit`). If the shell crashes, axiom starts it again, locked first if it was locked.
   - Drive any surface: `axiom launcher toggle`, `axiom volume up`, `axiom screenshot take region`, or any IPC target with `axiom ipc` (see [IPC](usage.md#ipc)).
@@ -363,6 +364,6 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 <details>
 <summary><b>AI chat</b></summary>
 
-<p align="center"><img src="../assets/screenshots/chat.webp" alt="The AI chat in an integrated edge menu, answering with a numbered list and a code block" width="420"></p>
+<p align="center"><img src="screenshots/chat.webp" alt="The AI chat in an integrated edge menu, answering with a numbered list and a code block" width="420"></p>
 
 </details>

@@ -130,3 +130,25 @@ func TestLockDirWaitsForTheHolder(t *testing.T) {
 		t.Fatalf("left %v", entries)
 	}
 }
+
+// A copy of the lock's descriptor (a child forked meanwhile holds one
+// until it execs) doesn't keep the lock past Release.
+func TestReleaseWithACopyOpen(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "x.lock")
+	l, err := TryLock(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	child, err := unix.Dup(int(l.File().Fd()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(child)
+	l.Release()
+	again, err := TryLock(path)
+	if err != nil {
+		t.Fatalf("taken again after Release: %v", err)
+	}
+	again.Release()
+}

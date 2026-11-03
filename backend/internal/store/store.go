@@ -293,7 +293,7 @@ func (s *Store) write(change func(*jsonx.Object) (*jsonx.Object, error), opts Se
 	checked, problems := s.opts.Pipeline.Check(next)
 	if len(problems) > 0 {
 		s.mu.Unlock()
-		return 0, &axerr.Error{Kind: axerr.InvalidConfig, Message: "the change makes the config invalid", Issues: issues(problems)}
+		return 0, &axerr.Error{Kind: axerr.InvalidConfig, Message: "the change makes the config invalid", Issues: axerr.IssuesFrom(problems)}
 	}
 	if !opts.Takeover {
 		base := s.takeoverBase()
@@ -528,7 +528,7 @@ func (s *Store) load(data []byte) (*jsonx.Object, []axerr.Issue, *Migration) {
 		s.opts.Log.Info("migrated the config", "change", change)
 	}
 	if len(loaded.Errors) > 0 {
-		return loaded.Config, issues(loaded.Errors), nil
+		return loaded.Config, axerr.IssuesFrom(loaded.Errors), nil
 	}
 	var migration *Migration
 	if loaded.Migrated {
@@ -694,28 +694,6 @@ func (s *Store) publish() {
 	s.mu.Unlock()
 }
 
-func issues(lines []string) []axerr.Issue {
-	out := make([]axerr.Issue, 0, len(lines))
-	for _, l := range lines {
-		path, msg, ok := cut(l)
-		if !ok {
-			path, msg = "", l
-		}
-		out = append(out, axerr.Issue{Path: path, Message: msg})
-	}
-	return out
-}
-
-// cut splits "path: message" (validation's form) at its first ": ".
-func cut(line string) (string, string, bool) {
-	for i := 0; i+1 < len(line); i++ {
-		if line[i] == ':' && line[i+1] == ' ' {
-			return line[:i], line[i+2:], true
-		}
-	}
-	return "", "", false
-}
-
 func at(v any, path []string) (any, bool) {
 	for _, k := range path {
 		obj, ok := v.(*jsonx.Object)
@@ -773,7 +751,7 @@ func Peek(opts Options) (*jsonx.Object, State, error) {
 		return nil, State{}, err
 	}
 	if len(loaded.Errors) > 0 {
-		return loaded.Config, State{Blocked: true, Issues: issues(loaded.Errors)}, nil
+		return loaded.Config, State{Blocked: true, Issues: axerr.IssuesFrom(loaded.Errors)}, nil
 	}
 	return loaded.Config, State{}, nil
 }

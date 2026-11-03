@@ -1,6 +1,6 @@
 # QML pitfalls
 
-> **Files:** `components/reusable/StyledTextEntry.qml`, `components/bar/BarWidgetHost.qml`, `components/hosts/popout/BarPopouts.qml`, `components/hosts/overlay/OverlaySlot.qml`, `components/hosts/overlay/OverlayPanel.qml`
+> **Files:** `qml/components/reusable/StyledTextEntry.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`
 > **Config:** none
 > **Related:** [Shared UI pieces](shared-ui-pieces.md), [Editors pattern](editors-pattern.md), [Shadows](../popouts/shadows.md), [Testing](../testing.md)
 

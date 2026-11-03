@@ -139,7 +139,7 @@ func TestApplyGreeter(t *testing.T) {
 	t.Cleanup(func() { os.RemoveAll(dir) })
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "config/json/config.schema.json"))
+	data, err := os.ReadFile(filepath.Join(testkit.RepoRoot(), "qml/config/json/config.schema.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

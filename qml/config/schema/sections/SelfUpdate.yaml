@@ -1,0 +1,25 @@
+# The SelfUpdate section of the config (config.json's "SelfUpdate").
+
+type: object
+x-category: Maintenance
+x-card: {file: SelfUpdateStatus, title: Update status}
+x-showIf: {/$packaged: false}
+title: axiom updates
+description: 'Updates come from the repository axiom was cloned from: its release tags, or its main branch. An update only fast-forwards: a clone with changed files or commits of its own is never touched.'
+additionalProperties: false
+properties:
+  mode:
+    type: string
+    title: Updates
+    enum: [auto, notify, 'off']
+    x-enumLabels: {auto: Update automatically, notify: Notify me, 'off': 'Off'}
+    default: notify
+    description: Checked when the shell starts and once a day. Update automatically installs an update and notifies you; Notify me sends a notification that opens this page. Off never checks.
+  channel:
+    type: string
+    title: Follow
+    enum: [tags, main]
+    x-enumLabels: {tags: Releases, main: Main branch}
+    default: tags
+    x-showIf: {mode: {not: 'off'}}
+    description: 'Releases updates to each new release tag. Main branch updates to every new commit on main: newer, but less tested.'

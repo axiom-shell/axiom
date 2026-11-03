@@ -29,7 +29,7 @@
 # nested and the live one never meet.
 #
 # Logs: the daemon's in <scratch>/state/axiom/log/daemon.log, the shell's
-# with qs log -p <repo> (the nested instance is the newest). IPC and the
+# with qs log -p <repo>/qml (the nested instance is the newest). IPC and the
 # CLI: <scratch>/axiom --socket $XDG_RUNTIME_DIR/axiom/<display>/axiom.sock
 # ipc <target> <fn> …. Closing the nested window ends it all.
 
@@ -91,7 +91,7 @@ go -C "$repo/backend" build -trimpath -o "$scratch/axiom" ./cmd/axiom
 
 # The config axiom starts with: the defaults, or the user's, with the parts
 # that reach outside the nested session off
-python3 - "$scratch/config/axiom/config.json" "$copy" "$repo/config/json/config.schema.json" <<'EOF'
+python3 - "$scratch/config/axiom/config.json" "$copy" "$repo/qml/config/json/config.schema.json" <<'EOF'
 import json, os, sys
 path, copy = sys.argv[1], sys.argv[2] == "1"
 with open(sys.argv[3]) as f:

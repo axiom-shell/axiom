@@ -1,6 +1,6 @@
 # Tailscale
 
-> **Files:** `services/apps/TailscaleManager.qml`, `config/TailscaleConfig.qml`, `components/bar/widgets/Tailscale/Tailscale.qml`, `components/content/Tailscale/Tailscale.qml`, `backend/internal/tailscale/tailscale.go`, `backend/internal/daemon/topics.go`
+> **Files:** `qml/services/apps/TailscaleManager.qml`, `qml/config/TailscaleConfig.qml`, `qml/components/bar/widgets/Tailscale/Tailscale.qml`, `qml/components/content/Tailscale/Tailscale.qml`, `backend/internal/tailscale/tailscale.go`, `backend/internal/daemon/topics.go`
 > **Config:** `Tailscale.*` (reader `TailscaleConfig`); the bar widget's own settings are only about the bar
 > **Related:** [Services pattern](../core/services-pattern.md) (polled topics), [Protocol](../backend/protocol.md), [Networking and Bluetooth](networking-bluetooth.md) (the Network card's Tailscale line)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the translation dictionaries in config/i18n against the source.
+"""Check the translation dictionaries in qml/config/i18n against the source.
 
 Keys come from:
   - every string literal passed to I18n.tr("...") in the QML, and
@@ -17,7 +17,7 @@ Keys come from:
                                         (--fill and --prune write it too)
   scripts/check_i18n.py --untranslated  UI-looking string literals not wrapped in I18n.tr()
 
-It also keeps config/i18n/template/language.json, the empty dictionary a
+It also keeps qml/config/i18n/template/language.json, the empty dictionary a
 new language starts from: every key with an empty translation, sorted, and
 _meta holding English's date formats. --fill, --prune and --format rewrite
 it; a plain run fails when it's stale. It sits in a subfolder so neither
@@ -40,10 +40,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-I18N = ROOT / "config" / "i18n"
+QML_ROOT = ROOT / "qml"
+I18N = QML_ROOT / "config" / "i18n"
 TEMPLATE = I18N / "template" / "language.json"
-SCHEMA = ROOT / "config" / "json" / "config.schema.json"
-I18N_QML = ROOT / "config" / "I18n.qml"
+SCHEMA = QML_ROOT / "config" / "json" / "config.schema.json"
+I18N_QML = QML_ROOT / "config" / "I18n.qml"
 QML_DIRS = ["components", "shell", "services", "config"]
 SKIP = []
 
@@ -65,7 +66,7 @@ COMPARED = re.compile(r'(===|!==|==|!=|case)\s*$')
 
 def qml_files():
     for d in QML_DIRS:
-        for f in (ROOT / d).rglob("*.qml"):
+        for f in (QML_ROOT / d).rglob("*.qml"):
             rel = f.relative_to(ROOT).as_posix()
             if not any(rel.startswith(s) for s in SKIP):
                 yield f, rel
@@ -93,7 +94,6 @@ def schema_strings(node, out):
             out.add(node["x-card"]["title"])
         if isinstance(node.get("x-categories"), list):
             out.update(c["name"] for c in node["x-categories"] if isinstance(c, dict) and isinstance(c.get("name"), str))
-            out.update(c["cardTitle"] for c in node["x-categories"] if isinstance(c, dict) and isinstance(c.get("cardTitle"), str))
         if isinstance(node.get("x-libraryGroups"), list):
             out.update(g for g in node["x-libraryGroups"] if isinstance(g, str))
         if isinstance(node.get("x-hookup"), list):

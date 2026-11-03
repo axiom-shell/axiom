@@ -94,8 +94,8 @@ func newFixture(t *testing.T) *fixture {
 	if err := os.Symlink("/usr/lib/systemd/system/sddm.service", filepath.Join(f.root, "etc/systemd/system/display-manager.service")); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"greeter.qml", "shell.qml", "scripts/greeter/greeter-session.sh",
-		"scripts/greeter/org.axiom.greeter.policy", "tests/tst_x.qml", "docs/notes.md", "backend/go.mod"} {
+	for _, name := range []string{"qml/greeter.qml", "qml/shell.qml", "data/greeter/greeter-session.sh",
+		"data/greeter/org.axiom.greeter.policy", "tests/tst_x.qml", "docs/notes.md", "backend/go.mod", "scripts/generate.sh"} {
 		f.write(f.repo, name, name, 0o644)
 	}
 	f.git(tmp, "init", "-q", "-b", "main", f.repo)
@@ -234,7 +234,7 @@ func TestStatusWithoutAClone(t *testing.T) {
 func TestStatusPackage(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	f.write(f.root, "usr/share/axiom/.packaged", "1.2.0-1\n", 0o644)
+	f.write(f.root, "usr/share/axiom-shell/.packaged", "1.2.0-1\n", 0o644)
 	if got := f.status(rules.SourcePackage, rules.ChannelTags).CurrentHash; got != "1.2.0-1" {
 		t.Errorf("package hash %q", got)
 	}

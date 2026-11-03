@@ -24,6 +24,14 @@ import (
 // Dev builds leave it empty and report the VCS revision instead.
 var version string
 
+// Handoff is the generation of the daemon's re-exec handoff and of dev
+// mode's session start. 2: the handoff names the tree and the config
+// folder, and dev mode runs its own tree on its own config. The installed
+// axiom never execs a dev build below 2 (`version --json` says it): such
+// a tree predates dev trees, and would run on the live config and migrate
+// it.
+const Handoff = 2
+
 // Info describes the running binary.
 type Info struct {
 	Version    string `json:"version"`
@@ -33,6 +41,7 @@ type Info struct {
 	Platform   string `json:"platform"`
 	Protocol   int    `json:"protocol"`
 	SchemaHash string `json:"schemaHash"`
+	Handoff    int    `json:"handoff"`
 }
 
 var load = sync.OnceValue(func() Info {
@@ -41,6 +50,7 @@ var load = sync.OnceValue(func() Info {
 		GoVersion: runtime.Version(),
 		Platform:  runtime.GOOS + "/" + runtime.GOARCH,
 		Protocol:  mustProtocol(),
+		Handoff:   Handoff,
 	}
 	if bi, ok := debug.ReadBuildInfo(); ok {
 		for _, s := range bi.Settings {

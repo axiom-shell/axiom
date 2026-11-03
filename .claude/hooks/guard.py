@@ -29,7 +29,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 HOME = Path(os.path.expanduser("~")).resolve()
 # The live config.json (DataDirs.xdg)
 LIVE_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or HOME / ".config").resolve() / "axiom/config.json"
-SCHEMA = REPO / "config/json/config.schema.json"
+SCHEMA = REPO / "qml/config/json/config.schema.json"
 PUNCTUATION = ";&|()<>`"
 # Words that start a command without being its name
 KEYWORDS = {"if", "then", "else", "elif", "while", "until", "do", "!", "{", "}"}
@@ -199,7 +199,7 @@ def simple(tokens, exported):
     if Path(argv[0]).name in SHELLS and command_flag is not None:
         inner = argv[command_flag + 1]
         return [(dict(env, **e), a) for e, a in split_commands(inner)]
-    # A script run through a shell (`bash scripts/greeter/greeter_install.sh …`): judge the script
+    # A script run through a shell (`bash data/greeter/greeter_install.sh …`): judge the script
     if Path(argv[0]).name in SHELLS:
         rest = argv[1:]
         while rest and rest[0].startswith("-"):
@@ -261,13 +261,42 @@ def axiom_flag(args, flag):
     return ""
 
 
+def display_name(value):
+    """A $WAYLAND_DISPLAY's runtime folder name (xdg.DisplayName): its base name."""
+    return os.path.basename(value.strip().rstrip("/"))
+
+
+# The live session's display: its daemon's socket is LIVE_RUNTIME/axiom/<it>/axiom.sock
+LIVE_DISPLAY = display_name(os.environ.get("WAYLAND_DISPLAY", ""))
+
+
+def live_socket(socket, env):
+    """Whether a daemon socket is the live one: anything in the live runtime
+    dir but another display's socket (a nested session's daemon). Without a
+    known live display, all of it."""
+    path = resolve(socket, "/", env)
+    if not path.is_relative_to(Path(LIVE_RUNTIME)):
+        return False
+    parts = path.relative_to(Path(LIVE_RUNTIME)).parts
+    other = len(parts) == 3 and parts[0] == "axiom" and parts[2] == "axiom.sock" and parts[1] != LIVE_DISPLAY
+    return not (LIVE_DISPLAY and other)
+
+
 def axiom_live_display(env, args):
-    """Whether an axiom command reaches the live session's daemon."""
-    socket = axiom_flag(args, "--socket") or env.get("AXIOM_SOCKET", "")
+    """Whether an axiom command reaches the live session's daemon: the CLI's
+    order (cli/client.go socketPath) is --socket, $AXIOM_SOCKET (maybe
+    inherited), then $XDG_RUNTIME_DIR/axiom/$WAYLAND_DISPLAY."""
+    socket = axiom_flag(args, "--socket") or (env["AXIOM_SOCKET"] if "AXIOM_SOCKET" in env else os.environ.get("AXIOM_SOCKET", ""))
     if socket:
-        return not scratch(socket) or resolve(socket, "/").is_relative_to(Path(LIVE_RUNTIME))
+        return not scratch(socket) or live_socket(socket, env)
     runtime = env.get("XDG_RUNTIME_DIR", "")
-    return not runtime or resolve(runtime, "/") == Path(LIVE_RUNTIME)
+    if runtime and resolve(runtime, "/", env) != Path(LIVE_RUNTIME):
+        return False
+    # WAYLAND_DISPLAY=$WAYLAND_DISPLAY is the live one: expand it without itself
+    display = expand_vars(env.get("WAYLAND_DISPLAY", ""), {k: v for k, v in env.items() if k != "WAYLAND_DISPLAY"})
+    if display and ("$" in display or LIVE_DISPLAY and display_name(display) != LIVE_DISPLAY):
+        return False  # another display's daemon (or a variable the agent made: trust it)
+    return True
 
 
 def axiom_words(args):
@@ -295,8 +324,12 @@ def check_axiom(env, args, cwd):
         deny("Never, while testing", f"`axiom {sub}` starts or stops the live shell; never from this session (test with a scratch XDG_RUNTIME_DIR, or nested.sh).")
     if live and sub == "daemon" and words[1:2] and words[1] in {"stop", "restart", "reexec"}:
         deny("Never, while testing", f"`axiom daemon {words[1]}` stops or replaces the live daemon; never from this session.")
-    if live and sub == "dev" and words[1:2] and words[1] in {"on", "off", "rebuild"}:
-        deny("Never, while testing", f"`axiom dev {words[1]}` switches dev mode or re-execs the live daemon; ask the user (`axiom dev status` reads it).")
+    # Dev mode: switching it, its tree or options, or copying the dev config
+    # over the live one (status and `dev config diff` only read)
+    if live and sub == "dev" and (words[1:2] and words[1] in {"on", "off", "rebuild", "set", "options"}
+                                  or words[1:3] in (["config", "copy"], ["config", "pull"])):
+        verb = " ".join(words[1:3] if words[1] == "config" else words[1:2])
+        deny("Never, while testing", f"`axiom dev {verb}` changes the live daemon's dev mode or config; ask the user, or drive a nested daemon (--socket $XDG_RUNTIME_DIR/axiom/<nested display>/axiom.sock). `axiom dev status` and `dev config diff` read it.")
     if live and (sub == "lock" or sub == "ipc" and words[1:2] == ["lockscreen"]):
         deny("Never, while testing", "don't lock the session; only the user can type the password (lock a scratch instance: XDG_RUNTIME_DIR=<scratch>).")
     if live and sub == "ipc" and words[1:3] in (["monitors", "keep"], ["selfUpdate", "update"]):
@@ -448,6 +481,13 @@ def check_argv(env, argv, cwd):
     if sends and any("greeter.apply" in a for a in args) and axiom_live_display(env, args):
         deny("Never, while testing", "greeter.apply only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: it installs the greeter for real (test it with go test ./internal/greeterinstall).")
 
+    # Dev mode's writes (the daemon's dev.set, dev.rebuild, dev.config.copy
+    # and dev.config.pull: switching its image or tree, or writing a config)
+    # sent to the live daemon by hand, past the axiom dev verbs' rule
+    dev_writes = ("dev.set", "dev.rebuild", "dev.config.copy", "dev.config.pull")
+    if sends and any(m in a for a in args for m in dev_writes) and axiom_live_display(env, args):
+        deny("Never, while testing", "dev.set / dev.rebuild / dev.config.copy|pull only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket), never the live one.")
+
     # The real config.json: deleted or moved (the file or a folder above it)
     paths = [a for a in args if not a.startswith("-")]
     holding = {LIVE_CONFIG, *LIVE_CONFIG.parents}
@@ -557,7 +597,7 @@ def check_config_edit(tool, tool_input):
 
 # Files built from a source (edit the source) and frozen ones (never edit)
 GENERATED = {
-    REPO / "config/json/config.schema.json": "it's built from config/schema/ (edit the YAML there; scripts/generate.sh rebuilds it)",
+    REPO / "qml/config/json/config.schema.json": "it's built from qml/config/schema/ (edit the YAML there; scripts/generate.sh rebuilds it)",
 }
 # Generated directories (scripts/generate.sh), never committed
 GENERATED_DIRS = {

@@ -35,7 +35,9 @@ chosen last (see "axiom dev"), and logs go to the terminal too.`,
 				}
 				wd, _ := os.Getwd()
 				root, err := tree.Find(*dir, e.Getenv, wd)
-				if err != nil {
+				// A re-exec'd image runs the tree its handoff names, which
+				// its own search may not find
+				if err != nil && e.Getenv(daemon.ReexecEnv) == "" {
 					return err
 				}
 				dirs := xdg.Resolve(e.Getenv)
@@ -54,7 +56,8 @@ chosen last (see "axiom dev"), and logs go to the terminal too.`,
 				level := new(slog.LevelVar)
 				log := slog.New(slog.NewTextHandler(out, &slog.HandlerOptions{Level: level}))
 				return daemon.Run(ctx, daemon.Options{
-					Tree: root, Dev: *dev, NoShell: *noShell, QS: *qs,
+					Tree: root, TreeOverride: *dir != "" || e.Getenv("AXIOM_TREE") != "",
+					Dev: *dev, NoShell: *noShell, QS: *qs,
 					Getenv: e.Getenv, Log: log, LogLevel: level, ShellOutput: shellOut,
 				})
 			}
@@ -131,7 +134,7 @@ func daemonCommand() *Command {
 						}
 						return e.Output(status, func(w io.Writer) {
 							fmt.Fprintf(w, "axiom %s (protocol %d) on %s, pid %d, up %s\n", status.Version, status.Protocol, status.Display, status.PID, status.Uptime)
-							fmt.Fprintf(w, "tree     %s\nconfig   %srevision %d\nclients  %d\n", status.Tree, status.Dirs.Config, status.State.Revision, status.Clients)
+							fmt.Fprintf(w, "tree     %s\nconfig   %s, revision %d\nclients  %d\n", status.Tree, status.ConfigFile, status.State.Revision, status.Clients)
 							if status.Shell != nil {
 								fmt.Fprintf(w, "shell    running %v, pid %d, restarts %d\n", status.Shell.Running, status.Shell.PID, status.Shell.Restarts)
 							}

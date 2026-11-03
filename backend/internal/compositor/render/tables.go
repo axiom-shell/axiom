@@ -28,10 +28,10 @@ type Tables struct {
 	PolkitAgents []*jsonx.Object
 }
 
-// The files Tables come from, by their repo paths
+// The files Tables come from, by their paths in the tree
 const (
-	LayerStackFile   = "components/methods/LayerStack.qml"
-	PolkitAgentsFile = "components/methods/PolkitAgents.qml"
+	LayerStackFile   = "qml/components/methods/LayerStack.qml"
+	PolkitAgentsFile = "qml/components/methods/PolkitAgents.qml"
 )
 
 // ParseTables reads the tables from their files' text (read: a repo path's

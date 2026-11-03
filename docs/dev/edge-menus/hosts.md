@@ -1,13 +1,13 @@
 # Edge menu hosts (floating and integrated)
 
-> **Files:** `shell/EdgeMenus.qml`, `components/surfaces/edgemenu/EdgeMenu.qml`, `components/surfaces/edgemenu/EdgeMenuBody.qml`, `components/surfaces/edgemenu/EdgeMenuSync.qml`, `components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `components/hosts/popout/EdgePopout.qml`, `components/hosts/popout/PopoutWrapperBase.qml`, `services/ui/EdgeMenuManager.qml`, `services/ui/ScreenEdgeManager.qml`
+> **Files:** `qml/shell/EdgeMenus.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `EdgeMenus.items[].mode` (`floating` | `integrated` | `submenu`), `length`, `offset`, `gridOffset`, `moduleScale`, `pinButton`, `frame`, `detached`, `gap`
 > **Related:** [Overview](overview.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
 
 How an edge menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two host modes, `floating` and `integrated`. A `submenu`-mode menu has no host: see [Editing and submenus](editing-submenus.md).
 
 ### Building (`surfaces/edgemenu/`)
-- `shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its mode.
+- `qml/shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its mode.
 - `EdgeMenu` keeps the last live entry, so the hosts read its (schema-defaulted) fields directly.
 
 ### The body (`EdgeMenuBody`)

@@ -3,7 +3,7 @@
 // directory: copies of the sources, and the config schema built from its
 // YAML source (here rather than by `axiom schema build`, which can't
 // compile before its embedded copy exists). It writes the tree's own
-// config/json/config.schema.json too, the one the shell and the checks
+// qml/config/json/config.schema.json too, the one the shell and the checks
 // read, so building it compiles this small program, not the whole binary.
 // Run through `go generate` (scripts/generate.sh); data/ is gitignored.
 package main
@@ -20,8 +20,9 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/tree"
 )
 
-// The repo paths (relative to the repo root) copied, keeping their layout
-// under data/. A directory is copied whole.
+// The paths copied, relative to the tree's QML dir (tree.QMLDir), keeping
+// that layout under data/ (the keys assets.Read takes). A directory is
+// copied whole.
 var sources = []string{
 	"config/json/backend.json",
 	"config/json/theme-defaults.json",
@@ -44,8 +45,9 @@ func sync(root, out string) error {
 		return err
 	}
 	want := map[string][]byte{tree.SchemaJSON: schema}
+	qml := tree.QMLDir(root)
 	for _, src := range sources {
-		full := filepath.Join(root, src)
+		full := filepath.Join(qml, src)
 		err := filepath.WalkDir(full, func(path string, d fs.DirEntry, err error) error {
 			if err != nil || d.IsDir() {
 				return err
@@ -54,7 +56,7 @@ func sync(root, out string) error {
 			if err != nil {
 				return err
 			}
-			rel, err := filepath.Rel(root, path)
+			rel, err := filepath.Rel(qml, path)
 			if err != nil {
 				return err
 			}
@@ -99,7 +101,7 @@ func sync(root, out string) error {
 
 	// The tree's copy by rename, as `axiom schema build` writes it: the
 	// shell may be reading it
-	own := filepath.Join(root, tree.SchemaJSON)
+	own := tree.SchemaPath(root)
 	if old, err := os.ReadFile(own); err == nil && bytes.Equal(old, schema) {
 		return nil
 	}

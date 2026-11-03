@@ -94,11 +94,11 @@ func newInstallFixture(t *testing.T) *fixture {
 	t.Helper()
 	f := newFixture(t)
 	for name, mode := range map[string]os.FileMode{"org.axiom.greeter.policy": 0o644, "greeter_install.sh": 0o755} {
-		data, err := os.ReadFile("../../../scripts/greeter/" + name)
+		data, err := os.ReadFile("../../../data/greeter/" + name)
 		if err != nil {
 			t.Fatal(err)
 		}
-		f.write(f.repo, "scripts/greeter/"+name, string(data), mode)
+		f.write(f.repo, "data/greeter/"+name, string(data), mode)
 	}
 	f.git(f.repo, "add", ".")
 	f.git(f.repo, "commit", "-qm", "the policy and the helper")
@@ -115,8 +115,9 @@ func TestInstallCopiesPointsGreetdAndBacksUp(t *testing.T) {
 	f := newInstallFixture(t)
 	f.write(f.root, "var/lib/axiom-greeter/config/greeter.json", "{}", 0o644)
 	r := f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
-	if !f.exists("usr/share/axiom-greeter/greeter.qml") || f.exists("usr/share/axiom-greeter/tests") ||
-		f.exists("usr/share/axiom-greeter/docs") || f.exists("usr/share/axiom-greeter/backend") {
+	if !f.exists("usr/share/axiom-greeter/qml/greeter.qml") || f.exists("usr/share/axiom-greeter/tests") ||
+		f.exists("usr/share/axiom-greeter/docs") || f.exists("usr/share/axiom-greeter/backend") ||
+		f.exists("usr/share/axiom-greeter/scripts") {
 		t.Error("the copy isn't the shipped files")
 	}
 	if f.copied("fallback/greeter.json") != "{}" {
@@ -160,19 +161,19 @@ func TestInstallSnapshotsAStagedBundle(t *testing.T) {
 func TestGitTagsTakesTheNewestReleaseOnly(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
-	f.publish("greeter.qml", "unreleased", "")
+	f.publish("qml/greeter.qml", "unreleased", "")
 	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
-	if f.copied("greeter.qml") != "greeter.qml" {
+	if f.copied("qml/greeter.qml") != "qml/greeter.qml" {
 		t.Error("took an unreleased commit")
 	}
-	f.publish("greeter.qml", "v1.10", "v1.10")
-	f.publish("shell.qml", "v1.9", "v1.9")
+	f.publish("qml/greeter.qml", "v1.10", "v1.10")
+	f.publish("qml/shell.qml", "v1.9", "v1.9")
 	s := f.status(rules.SourceGit, rules.ChannelTags)
 	if s.CurrentHash != f.git(f.repo, "rev-parse", "v1.10^{commit}") || s.InstalledHash == s.CurrentHash {
 		t.Errorf("status %+v", s)
 	}
 	f.ok(rules.ActionUpdate, rules.SourceGit, rules.ChannelTags)
-	if f.copied("greeter.qml") != "v1.10" || f.copied(".greeter-hash") != s.CurrentHash+"\n" {
+	if f.copied("qml/greeter.qml") != "v1.10" || f.copied(".greeter-hash") != s.CurrentHash+"\n" {
 		t.Error("didn't take v1.10")
 	}
 }
@@ -183,17 +184,17 @@ func TestGitMainTakesTheEdgeBuild(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
-	f.publish("greeter.qml", "on main", "")
+	f.publish("qml/greeter.qml", "on main", "")
 	built := f.git(f.repo, "rev-parse", "main")
 	f.setEdge(built)
-	f.publish("greeter.qml", "not built yet", "")
+	f.publish("qml/greeter.qml", "not built yet", "")
 	if s := f.status(rules.SourceGit, rules.ChannelMain); s.CurrentHash != built {
 		t.Errorf("main's current hash %q, want the edge build's %q", s.CurrentHash, built)
 	}
 	f.ok(rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
-	if f.copied("greeter.qml") != "on main" || f.copied(".greeter-hash") != built+"\n" ||
+	if f.copied("qml/greeter.qml") != "on main" || f.copied(".greeter-hash") != built+"\n" ||
 		f.copied(".greeter-source") != "git main "+f.upstream+"\n" || f.copied("bin/axiom") != released {
-		t.Errorf("didn't take the edge build's commit: %q %q", f.copied("greeter.qml"), f.copied(".greeter-hash"))
+		t.Errorf("didn't take the edge build's commit: %q %q", f.copied("qml/greeter.qml"), f.copied(".greeter-hash"))
 	}
 	if s := f.status(rules.SourceGit, rules.ChannelMain); s.InstalledHash != s.CurrentHash {
 		t.Errorf("status %+v", s)
@@ -208,12 +209,12 @@ func TestGitMainWithoutAnEdgeBuildOnMain(t *testing.T) {
 	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
 	f.refused("nothing to fetch", rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
 	f.git(f.repo, "checkout", "-q", "-b", "fork")
-	f.write(f.repo, "greeter.qml", "not on main", 0o644)
+	f.write(f.repo, "qml/greeter.qml", "not on main", 0o644)
 	f.git(f.repo, "commit", "-qam", "fork")
 	f.git(f.repo, "push", "-q", "origin", "fork")
 	f.setEdge(f.git(f.repo, "rev-parse", "fork"))
 	f.refused("isn't on", rules.ActionUpdate, rules.SourceGit, rules.ChannelMain)
-	if f.copied("greeter.qml") != "greeter.qml" || f.copied(".greeter-source") != "git tags "+f.upstream+"\n" {
+	if f.copied("qml/greeter.qml") != "qml/greeter.qml" || f.copied(".greeter-source") != "git tags "+f.upstream+"\n" {
 		t.Error("a refused update changed the copy")
 	}
 }
@@ -224,7 +225,7 @@ func TestGitIgnoresTheClone(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	f.ok(rules.ActionInstall, rules.SourceGit, rules.ChannelTags)
-	f.write(f.repo, "greeter.qml", "edited", 0o644)
+	f.write(f.repo, "qml/greeter.qml", "edited", 0o644)
 	f.git(f.repo, "commit", "-qam", "local only")
 	other := filepath.Join(f.tmp, "other.git")
 	f.git(f.tmp, "clone", "-q", "--bare", f.repo, other)
@@ -235,7 +236,7 @@ func TestGitIgnoresTheClone(t *testing.T) {
 		t.Errorf("status %+v", s)
 	}
 	f.ok(rules.ActionUpdate, rules.SourceGit, rules.ChannelTags)
-	if f.copied("greeter.qml") != "greeter.qml" {
+	if f.copied("qml/greeter.qml") != "qml/greeter.qml" {
 		t.Error("took the clone's edit")
 	}
 }
@@ -257,16 +258,16 @@ func TestLocalCopiesTheWorkingTree(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
 	f.git(f.repo, "checkout", "-q", "-b", "feature")
-	f.write(f.repo, "greeter.qml", "uncommitted", 0o644)
+	f.write(f.repo, "qml/greeter.qml", "uncommitted", 0o644)
 	f.ok(rules.ActionInstall, rules.SourceLocal, rules.ChannelTags)
-	if f.copied("greeter.qml") != "uncommitted" || f.exists("usr/share/axiom-greeter/docs") || f.copied("bin/axiom") != localBinary {
+	if f.copied("qml/greeter.qml") != "uncommitted" || f.exists("usr/share/axiom-greeter/docs") || f.copied("bin/axiom") != localBinary {
 		t.Error("the copy isn't the working tree and the shell's binary")
 	}
 	s := f.status(rules.SourceLocal, rules.ChannelTags)
 	if s.InstalledSource != "local" || s.InstalledHash != s.CurrentHash || !s.Binaries {
 		t.Errorf("status %+v", s)
 	}
-	f.write(f.repo, "greeter.qml", "edited again", 0o644)
+	f.write(f.repo, "qml/greeter.qml", "edited again", 0o644)
 	if s := f.status(rules.SourceLocal, rules.ChannelTags); s.InstalledHash == s.CurrentHash {
 		t.Error("an edit isn't an update")
 	}
@@ -390,7 +391,7 @@ func TestSwitchingSource(t *testing.T) {
 func TestRefusesAReleaseWithoutALoginScreen(t *testing.T) {
 	t.Parallel()
 	f := newInstallFixture(t)
-	f.git(f.repo, "rm", "-q", "greeter.qml")
+	f.git(f.repo, "rm", "-q", "qml/greeter.qml")
 	f.git(f.repo, "commit", "-qm", "old")
 	f.git(f.repo, "tag", "-a", "v2.0", "-m", "v2.0")
 	f.git(f.repo, "push", "-q", "origin", "main", "--tags")
@@ -491,12 +492,12 @@ func TestRefusals(t *testing.T) {
 	}
 }
 
-// package lays a packaged axiom out at /usr/share/axiom, as its PKGBUILD
+// package lays a packaged axiom out at /usr/share/axiom-shell, as its PKGBUILD
 // does.
 func (f *fixture) packageAxiom(version string) string {
-	dir := filepath.Join(f.root, "usr/share/axiom")
-	for _, name := range []string{"greeter.qml", "shell.qml", "scripts/greeter/greeter-session.sh", "scripts/greeter/hyprland.lua",
-		"scripts/greeter/greeter_install.sh", "scripts/greeter/org.axiom.greeter.policy"} {
+	dir := filepath.Join(f.root, "usr/share/axiom-shell")
+	for _, name := range []string{"qml/greeter.qml", "qml/shell.qml", "data/greeter/greeter-session.sh", "data/greeter/hyprland.lua",
+		"data/greeter/greeter_install.sh", "data/greeter/org.axiom.greeter.policy"} {
 		f.write(dir, name, name, 0o644)
 	}
 	f.write(dir, ".packaged", version+"\n", 0o644)
@@ -504,7 +505,7 @@ func (f *fixture) packageAxiom(version string) string {
 }
 
 // A packaged axiom: the greeter runs the package's code, so the install
-// folder gets only scripts/greeter/ and the snapshot, and the package's
+// folder gets only data/greeter/ and the snapshot, and the package's
 // version is its hash
 func TestPackageSource(t *testing.T) {
 	t.Parallel()
@@ -518,11 +519,11 @@ func TestPackageSource(t *testing.T) {
 	for _, e := range entries {
 		names = append(names, e.Name())
 	}
-	if !slices.Equal(names, []string{".greeter-hash", ".greeter-source", "fallback", "scripts"}) {
+	if !slices.Equal(names, []string{".greeter-hash", ".greeter-source", "data", "fallback"}) {
 		t.Errorf("the copy holds %v", names)
 	}
-	if f.copied(".greeter-source") != "package /usr/share/axiom\n" || f.copied("fallback/greeter.json") != "{}" ||
-		f.copied("scripts/greeter/greeter_install.sh") != "scripts/greeter/greeter_install.sh" || rules.GreetdValue(f.config(), "command") != rules.Session {
+	if f.copied(".greeter-source") != "package /usr/share/axiom-shell\n" || f.copied("fallback/greeter.json") != "{}" ||
+		f.copied("data/greeter/greeter_install.sh") != "data/greeter/greeter_install.sh" || rules.GreetdValue(f.config(), "command") != rules.Session {
 		t.Error("the package's install isn't set up")
 	}
 	s := f.status(rules.SourcePackage, rules.ChannelTags)
@@ -788,7 +789,7 @@ func TestReplaceCopyClearsLeftovers(t *testing.T) {
 	os.Chmod(stuck, 0o555)
 	t.Cleanup(func() { os.Chmod(stuck, 0o755) })
 	f.refused("can't replace", rules.ActionUpdate, rules.SourceGit, rules.ChannelTags)
-	if f.exists("usr/share/axiom-greeter.new") || !f.exists("usr/share/axiom-greeter/greeter.qml") {
+	if f.exists("usr/share/axiom-greeter.new") || !f.exists("usr/share/axiom-greeter/qml/greeter.qml") {
 		t.Error("a stopped update left a stage, or lost the copy")
 	}
 }
@@ -811,7 +812,7 @@ func TestLocalArchiveBreaksOff(t *testing.T) {
 	}
 }
 
-// A package whose scripts/greeter is another account's is refused.
+// A package whose data/greeter is another account's is refused.
 func TestPackageFolderAnotherAccountOwns(t *testing.T) {
 	t.Parallel()
 	if os.Getuid() == 0 {
@@ -819,8 +820,8 @@ func TestPackageFolderAnotherAccountOwns(t *testing.T) {
 	}
 	f := newInstallFixture(t)
 	dir := f.packageAxiom("1.2.0-1")
-	os.RemoveAll(filepath.Join(dir, "scripts/greeter"))
-	os.Symlink("/dev/null", filepath.Join(dir, "scripts/greeter"))
+	os.RemoveAll(filepath.Join(dir, "data/greeter"))
+	os.Symlink("/dev/null", filepath.Join(dir, "data/greeter"))
 	f.refused("isn't root's", rules.ActionInstall, rules.SourcePackage, rules.ChannelTags)
 }
 

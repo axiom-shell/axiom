@@ -1,6 +1,6 @@
 # Desktop
 
-> **Files:** `services/ui/DesktopManager.qml`, `config/DesktopConfig.qml`, `shell/Desktop.qml`, `components/surfaces/desktop/DesktopWindow.qml`, `components/surfaces/screenlayout/ScreenLayoutView.qml`, `services/ui/ScreenLayoutEditor.qml`, `components/views/Layouts/DesktopTarget.qml`
+> **Files:** `qml/services/ui/DesktopManager.qml`, `qml/config/DesktopConfig.qml`, `qml/shell/Desktop.qml`, `qml/components/surfaces/desktop/DesktopWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/services/ui/ScreenLayoutEditor.qml`, `qml/components/views/Layouts/DesktopTarget.qml`
 > **Config:** `Desktop.all`, `Desktop.primary`, `Desktop.monitors[]` (reader `DesktopConfig`)
 > **Related:** [Lockscreen](lockscreen.md), [Layouts editor](../overlay/layouts-editor.md), [Clock and time zones](clock-timezones.md), [Saved configs](../core/saved-configs-sharing.md), [Edge menus hosts](../edge-menus/hosts.md), [Dock](dock.md)
 
@@ -28,7 +28,7 @@ Overlay modules drawn on the desktop, under the windows. Read this doc for deskt
 - `insetsFor`: each screen's room.
 
 ### Surface
-- **Window:** `shell/Desktop` builds `surfaces/desktop/DesktopWindow` on each screen whose layout has modules, once the layer rules are in.
+- **Window:** `qml/shell/Desktop` builds `surfaces/desktop/DesktopWindow` on each screen whose layout has modules, once the layer rules are in.
   - It is a Bottom-layer `PanelWindow` named `axiom-desktop`, with `no_anim` because it fades itself in.
   - It sits over the Background wallpaper and under every window, so fullscreen windows cover it.
 - **Input:**

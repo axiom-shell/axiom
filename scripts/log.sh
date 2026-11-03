@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Read the axiom shell's log without the noise.
+# Read the axiom shell's log without the noise: `axiom log`, trimmed.
 #
 # By default: only warnings/errors (and INFO lines) since the last config
 # reload, with colour codes stripped. A clean reload prints just the
@@ -10,17 +10,21 @@
 #   scripts/log.sh --all      whole log, not just since the last reload
 #   scripts/log.sh -f         follow live (combine with --debug)
 #   scripts/log.sh -g PATTERN only lines matching PATTERN (grep -E)
+#
+# The binary is $AXIOM_BIN (set in the shell), else `axiom` on PATH, else
+# ~/.local/bin/axiom; `axiom log` picks the shell the daemon runs.
 
 set -euo pipefail
 
-rules='*.debug=false'
+axiom=${AXIOM_BIN:-$(command -v axiom || echo "${XDG_BIN_HOME:-$HOME/.local/bin}/axiom")}
+args=(log)
 since_reload=1
 follow=0
 pattern=''
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-  -d | --debug) rules='' ;;
+  -d | --debug) args+=(--debug) ;;
   -a | --all) since_reload=0 ;;
   -f | --follow) follow=1 ;;
   -g | --grep)
@@ -28,7 +32,7 @@ while [[ $# -gt 0 ]]; do
     shift
     ;;
   -h | --help)
-    sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
   *)
@@ -39,18 +43,15 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-args=(log -c axiom)
-[[ -n "$rules" ]] && args+=(-r "$rules")
-
 strip() { sed -u 's/\x1b\[[0-9;]*m//g'; }
 filter() { if [[ -n "$pattern" ]]; then grep -E --color=never --line-buffered -- "$pattern" || true; else command cat; fi; }
 
 if [[ $follow -eq 1 ]]; then
-  qs "${args[@]}" -f 2>&1 | strip | filter
+  "$axiom" "${args[@]}" -f 2>&1 | strip | filter
   exit 0
 fi
 
-out=$(timeout 5 qs "${args[@]}" 2>&1 | strip || true)
+out=$(timeout 5 "$axiom" "${args[@]}" 2>&1 | strip || true)
 if [[ $since_reload -eq 1 ]]; then
   last=$(grep -n 'Reloading configuration' <<<"$out" | tail -1 | cut -d: -f1 || true)
   [[ -n "$last" ]] && out=$(tail -n +"$last" <<<"$out")
