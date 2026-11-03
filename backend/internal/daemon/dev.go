@@ -146,6 +146,15 @@ type devMode struct {
 	// startKick: build once the builds run (stale at the session start)
 	startKick bool
 
+	// configMu: one dev.config.* at a time; liveMu: one write to live
+	// (devsync.go)
+	configMu sync.Mutex
+	liveMu   sync.Mutex
+	// The install tree's schema, built when asked (installSchemaFn in
+	// tests)
+	installCache    installSchemaCache
+	installSchemaFn func() (*schema.Schema, error)
+
 	changed chan struct{} // the run loop's cue to start or stop the watchers
 	builds  *kicker
 	// edited: the source changed since the build running started, so
@@ -186,7 +195,7 @@ func (m *devMode) begin(ctx context.Context, choice devChoice, plan startDecisio
 }
 
 func (m *devMode) part() part {
-	return part{name: "dev mode", methods: m.methods, run: m.run}
+	return part{name: "dev mode", methods: m.methods, run: m.run, onConfig: m.onConfig}
 }
 
 // Enabled: dev mode is on.
@@ -499,6 +508,7 @@ func (m *devMode) methods(reg *rpc.Registry) {
 		m.builds.Kick()
 		return struct{}{}, nil
 	})
+	m.configMethods(reg)
 }
 
 // watchKey is what the watchers run for: dev mode on and its tree (the

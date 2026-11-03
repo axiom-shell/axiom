@@ -55,6 +55,11 @@ type Options struct {
 	// OnState is told whenever State changes (pushed as saved.state); it
 	// must not call back into the service
 	OnState func(State)
+	// LiveRestores, set for dev mode's config, says the installed axiom
+	// can restore a snapshot (its file): one on disk it says so of is never
+	// written over (saved/ is shared). A save of that name is refused, and
+	// the running config is kept under another name (plan); nil: none.
+	LiveRestores func(snapshot *jsonx.Object) bool
 }
 
 // State is what the settings page shows of the snapshots.
@@ -274,6 +279,9 @@ func (s *Service) save(name, source, kind string) (string, error) {
 	if st.Defaults {
 		return "", axerr.New(axerr.Conflict, "config.json didn't load: the defaults running aren't saved as a config")
 	}
+	if s.protected(file) {
+		return "", axerr.New(axerr.Conflict, "%q is a snapshot the installed axiom can restore: dev mode saves under a new name", file)
+	}
 	sch := s.opts.Pipeline().Schema()
 	out := envelope(file, "", source, kind)
 	body := share.Sparse(sch, share.Snapshot(sch, cfg)).(*jsonx.Object)
@@ -395,9 +403,27 @@ func (s *Service) plan() string {
 		return s.freeName(mySetup, false)
 	}
 	if s.modified() {
+		if s.protected(s.state.Active) {
+			return s.freeName(s.state.Active+" (dev)", false)
+		}
 		return s.state.Active
 	}
 	return ""
+}
+
+// protected says the snapshot name is on disk and LiveRestores says the
+// installed axiom restores it (one that can't be read counts: it may be
+// the user's).
+func (s *Service) protected(name string) bool {
+	if s.opts.LiveRestores == nil {
+		return false
+	}
+	parsed, err := readJSON(s.path(name))
+	if errors.Is(err, fs.ErrNotExist) {
+		return false
+	}
+	obj, ok := parsed.(*jsonx.Object)
+	return err != nil || !ok || s.opts.LiveRestores(obj)
 }
 
 // hasActive says whether a snapshot is active: loaded, its file there.
@@ -421,8 +447,9 @@ func (s *Service) freeName(base string, copies bool) string {
 		if _, err := os.Stat(path); err != nil {
 			return name
 		}
-		// One that can't be read is taken: it may be the user's
-		if parsed, err := readJSON(path); copies && err == nil && header(parsed).Kind == kindCopy {
+		// One that can't be read is taken: it may be the user's; so is one
+		// dev mode keeps for the installed axiom
+		if parsed, err := readJSON(path); copies && err == nil && header(parsed).Kind == kindCopy && !s.protected(name) {
 			return name
 		}
 		name = fmt.Sprintf("%s %d", base, n)

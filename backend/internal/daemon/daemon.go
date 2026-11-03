@@ -354,7 +354,9 @@ func Run(ctx context.Context, opts Options) (err error) {
 		UIState:  d.uiStateFile(),
 		Store:    d.store,
 		Pipeline: d.store.Pipeline,
-		Log:      opts.Log.With("part", "saved"),
+		// saved/ is shared: dev never writes over a snapshot live restores
+		LiveRestores: d.dev.liveRestores,
+		Log:          opts.Log.With("part", "saved"),
 		OnState: func(st saved.State) {
 			// Also called while it opens, before there is a server
 			if d.server != nil {

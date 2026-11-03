@@ -204,6 +204,30 @@ func changed(liveRaw, baseRaw []byte, devPipe config.Pipeline) bool {
 	return !jsonx.Equal(live, base)
 }
 
+// LiveChanged says whether live moved on since the base (Prepared's
+// LiveChanged, asked again after a copy or a pull): no live config is no
+// change, no base is one.
+func LiveChanged(f Files, devPipe config.Pipeline) (bool, error) {
+	liveRaw, err := readOptional(f.Live)
+	if err != nil || liveRaw == nil {
+		return false, err
+	}
+	baseRaw, err := readOptional(f.Base)
+	if err != nil {
+		return false, err
+	}
+	return baseRaw == nil || changed(liveRaw, baseRaw, devPipe), nil
+}
+
+// SyncBase makes the base liveRaw (live's bytes, as read for a pull): from
+// now on, only what live changes after it counts as live's.
+func SyncBase(f Files, liveRaw []byte) error {
+	return writeFile(f.Base, liveRaw)
+}
+
+// ReadOptional is a file's bytes, nil when there is none.
+func ReadOptional(path string) ([]byte, error) { return readOptional(path) }
+
 // InShape is raw config bytes loaded through pipe in memory (migrated,
 // pruned, filled with defaults): how Rows and Merge compare live and the
 // base with dev. Nothing is written; a config that doesn't load is an
