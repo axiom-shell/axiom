@@ -491,3 +491,28 @@ func TestDevWatchersTakeTheStartKick(t *testing.T) {
 		t.Error("the start's kick is still pending")
 	}
 }
+
+// With dev mode off, a dev tree set still builds (dev.rebuild): the dev
+// build is recorded, fresh for the next dev on, and never run.
+func TestDevRebuildWhileOff(t *testing.T) {
+	t.Parallel()
+	m := devFixture(t, fakeGo(t, buildsAxiom(2)))
+	m.enabled = false
+	reexecs := recordReexecs(m)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stop := m.watch(ctx, watchKey{enabled: false, tree: m.tree})
+	defer stop()
+	m.builds.Kick()
+	if !testkit.Eventually(func() bool { st := m.State(); return st.LastBuild != nil && !st.Building }) {
+		t.Fatal("the rebuild didn't run")
+	}
+	st := m.State()
+	if !st.LastBuild.OK || !st.Build.Fresh {
+		t.Errorf("state after the rebuild %+v", st)
+	}
+	if b, recorded := readBuild(m.d.dirs); !recorded || b.Tree != m.tree {
+		t.Errorf("build.json %+v (recorded %v)", b, recorded)
+	}
+	noReexec(t, reexecs)
+}

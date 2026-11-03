@@ -3,12 +3,11 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.core
-import qs.services.ui
 import qs.components.reusable
 
 // One line atop the settings page while dev mode is on (SettingsContent):
 // which tree and checkout run, and on which config. A click opens the
-// Development category
+// Development category (turning the developer options on first)
 Rectangle {
   id: root
 
@@ -58,6 +57,6 @@ Rectangle {
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
-    onClicked: SettingsManager.openCategory("Development")
+    onClicked: DevManager.openDevelopment()
   }
 }

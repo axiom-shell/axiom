@@ -4,7 +4,6 @@ import QtQuick.Layouts
 
 import qs.config
 import qs.services.core
-import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
@@ -61,7 +60,7 @@ Panel {
   ItemRow {
     icon: "settings"
     title: I18n.tr("Open Development settings")
-    onActivated: SettingsManager.openCategory("Development")
+    onActivated: DevManager.openDevelopment()
   }
 
   ItemRow {

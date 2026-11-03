@@ -8,7 +8,9 @@ import qs.components.content.parts
 
 // The Development category's first card (its `cards`): the dev tree (set
 // or clear it), dev mode on or off, the dev build (rebuild, its log) and
-// the dev config (replace it with live's copy) (DevManager)
+// the dev config (replace it with live's copy) (DevManager). All of it
+// works with dev mode off: Rebuild only builds, the copy writes the dev
+// config's file
 FieldGroup {
   id: root
 
@@ -16,22 +18,22 @@ FieldGroup {
   property string message: ""
 
   readonly property string statusLabel: {
-    if (!DevManager.enabled)
-      return I18n.tr("Off");
     if (DevManager.building)
       return I18n.tr("Building");
+    if (!DevManager.enabled)
+      return I18n.tr("Off");
     if (DevManager.buildFailed)
       return I18n.tr("Build failed");
     return DevManager.active ? I18n.tr("Running") : I18n.tr("Waiting for the build");
   }
 
   readonly property color statusColor: {
+    if (DevManager.building)
+      return Theme.accent;
     if (!DevManager.enabled)
       return Theme.foregroundAlt;
     if (DevManager.buildFailed)
       return Theme.error;
-    if (DevManager.building)
-      return Theme.accent;
     return DevManager.active ? Theme.success : Theme.warning;
   }
 
@@ -162,10 +164,10 @@ FieldGroup {
     Layout.fillWidth: true
   }
 
-  // What opening the dev config noted (seeded from the defaults: live is
+  // What readying the dev config noted (seeded from the defaults: live is
   // newer than the dev tree)
   StyledText {
-    visible: DevManager.active && DevManager.configNote !== ""
+    visible: DevManager.configNote !== ""
     text: DevManager.configNote
     textColor: Theme.warning
     wrapMode: Text.WordWrap
@@ -185,8 +187,9 @@ FieldGroup {
       onClicked: DevManager.setEnabled(!DevManager.enabled, error => root._answered(error))
     }
 
+    // With dev mode off it only builds: the next Turn on runs it at once
     StyledTextButton {
-      visible: DevManager.enabled && DevManager.available
+      visible: DevManager.available
       enabled: !DevManager.building
       implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Rebuild")
@@ -198,9 +201,9 @@ FieldGroup {
       Layout.fillWidth: true
     }
 
-    // Only the dev image has the dev config open
+    // Either image: the dev image's store, else the dev config's file
     StyledTextButton {
-      visible: DevManager.active
+      visible: DevManager.tree !== ""
       implicitHeight: Widget.height - Widget.px(4)
       text: gate.armed === "replace" ? I18n.tr("Click again to replace the dev config") : I18n.tr("Copy live → dev")
       iconText: "content_copy"

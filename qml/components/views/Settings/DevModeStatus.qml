@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.core
-import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
 
@@ -37,21 +36,20 @@ ColumnLayout {
       description: "Shows the Development category: a dev tree axiom runs and rebuilds as you edit it, on its own config."
     }
 
-    // On while dev mode is: it's turned off in Development first
+    // The one switch for the Development category, dev mode on or off
     StyledSwitch {
       id: optionsSwitch
-      enabled: !DevManager.enabled
-      checked: DevManager.options || DevManager.enabled
+      checked: DevManager.options
       onToggled: {
         DevManager.setOptions(optionsSwitch.checked);
         // Follows axiom's answer, not the click
-        optionsSwitch.checked = Qt.binding(() => DevManager.options || DevManager.enabled);
+        optionsSwitch.checked = Qt.binding(() => DevManager.options);
       }
     }
   }
 
   RowLayout {
-    visible: DevManager.options || DevManager.enabled
+    visible: DevManager.options
     Layout.fillWidth: true
     spacing: Widget.spacing
 
@@ -69,7 +67,7 @@ ColumnLayout {
     StyledTextButton {
       implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Open Development")
-      onClicked: SettingsManager.openCategory("Development")
+      onClicked: DevManager.openDevelopment()
     }
   }
 }

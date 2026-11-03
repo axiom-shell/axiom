@@ -99,7 +99,8 @@ type DevBuildState struct {
 }
 
 // DevConfigState is the dev config (DevState.config): its file and live's,
-// and, while the dev image runs, what readying it did and found.
+// and what readying it last did and found (the dev image's at its start;
+// the install image's at its last dev.config.*, with a dev tree set).
 type DevConfigState struct {
 	Path     string `json:"path"`
 	LivePath string `json:"livePath"`
@@ -150,10 +151,12 @@ type devMode struct {
 	// (devsync.go)
 	configMu sync.Mutex
 	liveMu   sync.Mutex
-	// The install tree's schema, built when asked (installSchemaFn in
-	// tests)
-	installCache    installSchemaCache
+	// The install tree's schema and, for the install image's dev.config.*,
+	// the dev tree's, built when asked (the Fns in tests)
+	installCache    treeSchemaCache
 	installSchemaFn func() (*schema.Schema, error)
+	devCache        treeSchemaCache
+	devSchemaFn     func() (*schema.Schema, error)
 
 	changed chan struct{} // the run loop's cue to start or stop the watchers
 	builds  *kicker
@@ -164,6 +167,7 @@ type devMode struct {
 
 func newDevMode(d *Daemon, enabled bool) *devMode {
 	m := &devMode{d: d, enabled: enabled, changed: make(chan struct{}, 1)}
+	m.installCache.what, m.devCache.what = "the install tree's schema", "the dev tree's schema"
 	m.builds = newKicker(m.build)
 	m.setLogLevel(enabled)
 	return m
@@ -230,7 +234,7 @@ func (m *devMode) State() DevState {
 		at := b.At
 		st.Build.Commit, st.Build.Dirty, st.Build.At = b.Commit, b.Dirty, &at
 	}
-	if st.Active {
+	if st.Active || m.tree != "" {
 		st.Config.Prepared = m.prepared
 	}
 	if reason := m.unavailable(m.tree); reason != "" {
@@ -436,6 +440,9 @@ func (m *devMode) Set(ctx context.Context, p DevSetParams) error {
 		if treeDir == "" {
 			m.check = buildCheck{}
 		}
+		if !m.active() {
+			m.prepared = devconfig.Prepared{} // another tree's dev config schema
+		}
 	} else if treeDir != "" && on && !wasOn {
 		m.check = check
 	}
@@ -528,11 +535,8 @@ func (m *devMode) methods(reg *rpc.Registry) {
 	})
 	rpc.Handle(reg, "dev.rebuild", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
 		m.mu.Lock()
-		on, treeDir := m.enabled, m.tree
+		treeDir := m.tree
 		m.mu.Unlock()
-		if !on {
-			return struct{}{}, axerr.New(axerr.Unavailable, "dev mode is off (axiom dev on)")
-		}
 		if reason := m.unavailable(treeDir); reason != "" {
 			return struct{}{}, axerr.New(axerr.Unavailable, "%s", reason)
 		}
@@ -581,8 +585,9 @@ func (m *devMode) run(ctx context.Context) error {
 }
 
 // watch starts the watchers for key and returns what stops them (and
-// waits): while dev mode is on, the dev tree's source (and its builds),
-// and the schema's YAML in the dev image, else the installed binary.
+// waits): the builds while a buildable dev tree is set (dev.rebuild works
+// with dev mode off); while dev mode is on, the dev tree's source, and the
+// schema's YAML in the dev image, else the installed binary.
 func (m *devMode) watch(ctx context.Context, key watchKey) func() {
 	ctx, cancel := context.WithCancel(ctx)
 	var wg sync.WaitGroup
@@ -601,8 +606,10 @@ func (m *devMode) watch(ctx context.Context, key watchKey) func() {
 		} else if m.d.installed != "" {
 			start("the binary watch", m.watchBinary)
 		}
-		if reason := m.unavailable(key.tree); reason == "" {
-			start("the builds", m.builds.run)
+	}
+	if reason := m.unavailable(key.tree); reason == "" {
+		start("the builds", m.builds.run)
+		if key.enabled {
 			start("the source watch", func(ctx context.Context) error { return m.watchSource(ctx, key.tree) })
 			m.mu.Lock()
 			kick := m.startKick
@@ -611,9 +618,9 @@ func (m *devMode) watch(ctx context.Context, key watchKey) func() {
 			if kick {
 				m.builds.Kick()
 			}
-		} else {
-			m.d.opts.Log.Info("dev mode: not building the dev tree", "why", reason)
 		}
+	} else if key.enabled {
+		m.d.opts.Log.Info("dev mode: not building the dev tree", "why", reason)
 	}
 	return func() {
 		cancel()
@@ -741,15 +748,15 @@ func (m *devMode) watchBinary(ctx context.Context) error {
 const buildOutputLimit = 8 << 10
 
 // build builds the dev binary from the dev tree's source, records it
-// (build.json) and re-execs into the dev image, unless meanwhile dev mode
-// went off, its tree changed (gen), another switch was scheduled, or the
-// source changed (a branch switch, then a pull: the image would be stale
+// (build.json) and re-execs into the dev image, unless dev mode is off (a
+// rebuild with it off only builds), its tree changed (gen), another switch
+// was scheduled, or the source changed (a branch switch, then a pull: the image would be stale
 // and the edits' kick would die with this process, so the next build, that
 // kick's, re-execs instead). A binary older than dev trees is never run.
 func (m *devMode) build(ctx context.Context) {
 	m.mu.Lock()
-	on, treeDir, gen := m.enabled, m.tree, m.gen
-	if !on || treeDir == "" {
+	treeDir, gen := m.tree, m.gen
+	if treeDir == "" {
 		m.mu.Unlock()
 		return
 	}
@@ -787,8 +794,7 @@ func (m *devMode) build(ctx context.Context) {
 	}
 	m.mu.Lock()
 	m.building, m.lastBuild = false, res
-	current := m.enabled && m.gen == gen
-	if current {
+	if m.gen == gen {
 		m.git = git
 		if err == nil {
 			m.check = buildFresh(m.d.dirs, treeDir)
@@ -810,7 +816,7 @@ func (m *devMode) build(ctx context.Context) {
 	}
 	m.mu.Unlock()
 	if !switchNow {
-		m.d.opts.Log.Info("dev build done, but dev mode went off, its tree changed or it's switching meanwhile: not re-executing")
+		m.d.opts.Log.Info("dev build done, but dev mode is off, its tree changed or it's switching: not re-executing")
 		return
 	}
 	target := m.binary()

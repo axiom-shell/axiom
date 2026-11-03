@@ -11,8 +11,9 @@ import qs.components.reusable
 // dev config and live differ on, which of them changed it since dev last
 // took live over, and a copy either way (a dev-only setting, which the
 // installed axiom doesn't have, can't go to live). Nothing merges by
-// itself. Asked of axiom when shown and after each change, only while
-// the dev image runs (DevManager.diff; rows labelled by methods/DevDiff)
+// itself. Asked of axiom when shown and after each change, while a dev
+// tree is set, dev mode on or off (DevManager.diff; rows labelled by
+// methods/DevDiff)
 FieldGroup {
   id: root
 
@@ -26,10 +27,12 @@ FieldGroup {
   property bool error: false
 
   readonly property var schema: ConfigManager.configSchema
+  // There's a dev config to compare: a dev tree is set
+  readonly property bool comparable: DevManager.tree !== ""
 
-  // Asks axiom again (only the dev image has the dev config open)
+  // Asks axiom again
   function refresh() {
-    if (!DevManager.active) {
+    if (!root.comparable) {
       root.rows = [];
       root.loaded = false;
       return;
@@ -88,12 +91,16 @@ FieldGroup {
     function onActiveChanged() {
       root.refresh();
     }
+    function onTreeChanged() {
+      root.refresh();
+    }
     function onLiveChangedChanged() {
       root.refresh();
     }
   }
 
-  // A dev setting saved (here or anywhere) changes the rows
+  // A setting saved in the running config (dev's, or live's with dev mode
+  // off) changes the rows
   Connections {
     target: ConfigManager
     function onConfigChanged() {
@@ -103,7 +110,7 @@ FieldGroup {
 
   headerExtras: [
     StyledIconButton {
-      visible: DevManager.active
+      visible: root.comparable
       iconText: "refresh"
       tooltipText: I18n.tr("Compare again")
       onClicked: root.refresh()
@@ -111,8 +118,8 @@ FieldGroup {
   ]
 
   StyledText {
-    visible: !DevManager.active
-    text: I18n.tr("The dev config and live are compared while dev mode runs the dev tree.")
+    visible: !root.comparable
+    text: I18n.tr("Set a dev tree to compare its config with live.")
     opacity: 0.7
     wrapMode: Text.WordWrap
     Layout.fillWidth: true
@@ -120,7 +127,7 @@ FieldGroup {
 
   // Live changed since dev last took it over
   RowLayout {
-    visible: DevManager.active && DevManager.liveChanged
+    visible: root.comparable && DevManager.liveChanged
     Layout.fillWidth: true
     spacing: Widget.spacing
 
@@ -141,7 +148,7 @@ FieldGroup {
   }
 
   StyledText {
-    visible: DevManager.active && root.loaded && root.rows.length === 0
+    visible: root.comparable && root.loaded && root.rows.length === 0
     text: I18n.tr("Dev and live agree on every setting.")
     opacity: 0.7
     wrapMode: Text.WordWrap
@@ -159,7 +166,7 @@ FieldGroup {
   // One row per setting; lists compare whole
   ListView {
     id: list
-    visible: DevManager.active && root.rows.length > 0
+    visible: root.comparable && root.rows.length > 0
     Layout.fillWidth: true
     Layout.preferredHeight: Math.min(contentHeight, Widget.height * 14)
     clip: true

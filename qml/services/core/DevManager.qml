@@ -10,16 +10,17 @@ import qs.services.ui
 // docs/dev/backend/README.md): turned on, axiom runs a dev tree (any
 // clone, `setTree`) with its own build and its own config, rebuilt as its
 // Go source is edited; off, the installed tree on the live config. The
-// developer options (`options`, kept by axiom, not in config) show the
-// Development settings category. State comes from BackendManager.dev; a
+// developer options (`options`, kept by axiom, not in config) alone show
+// the Development settings category, whose controls all work with dev mode
+// off too. State comes from BackendManager.dev; a
 // failed build sends a notification, and so does a dev start finding live
 // changed since the dev config last took it over (once per start).
 Singleton {
   id: root
 
   readonly property bool enabled: BackendManager.dev.enabled ?? false
-  // Settings shows the developer options (the Development category also
-  // shows while dev mode is on)
+  // Settings shows the developer options: the Development category (dev
+  // mode on or off)
   readonly property bool options: BackendManager.dev.options ?? false
   // The dev image runs: the dev build on the dev tree and the dev config
   readonly property bool active: BackendManager.dev.active ?? false
@@ -56,9 +57,10 @@ Singleton {
   // why not)
   readonly property bool buildFresh: BackendManager.dev.build?.fresh ?? false
   readonly property string buildWhy: BackendManager.dev.build?.why ?? ""
-  // The dev config's file; while the dev image runs, whether
-  // live changed since dev last took it over, and what opening it noted
-  // (seeded from the defaults: live is newer than the dev tree)
+  // The dev config's file; whether live changed since dev last took it
+  // over, and what readying it noted (seeded from the defaults: live is
+  // newer than the dev tree), as of the dev start or, with dev mode off,
+  // the last diff or copy
   readonly property string configPath: BackendManager.dev.config?.path ?? ""
   readonly property bool liveChanged: BackendManager.dev.config?.liveChanged ?? false
   readonly property string configNote: BackendManager.dev.config?.note ?? ""
@@ -93,6 +95,21 @@ Singleton {
     }, root._answer("the developer options", done));
   }
 
+  // Opens Settings › Development, turning the developer options on first
+  // (the category shows only while they are)
+  function openDevelopment() {
+    if (root.options) {
+      SettingsManager.openCategory("Development");
+      return;
+    }
+    root.setOptions(true, error => {
+      if (!error)
+        SettingsManager.openCategory("Development");
+    });
+  }
+
+  // Builds the dev tree (with dev mode off it only builds: the next dev on
+  // runs it at once)
   function rebuild(done) {
     BackendManager.call("dev.rebuild", null, (error, result) => {
       if (error)
@@ -101,7 +118,9 @@ Singleton {
     });
   }
 
-  // Every setting dev and live differ on (only while `active`): { rows:
+  // Every setting dev and live differ on (with a dev tree set, dev mode on
+  // or off; with it off, against the dev config's file, made from live the
+  // first time): { rows:
   // [{ path, side, dev?, live?, devOnly }], liveChanged } (methods/DevDiff
   // labels them)
   function diff(done) {
@@ -167,7 +186,7 @@ Singleton {
             "label": I18n.tr("Open Development")
           }
         ],
-        "onAction": id => SettingsManager.openCategory("Development")
+        "onAction": id => root.openDevelopment()
       });
     });
   }

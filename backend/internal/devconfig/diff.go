@@ -112,45 +112,109 @@ func Merge(base, live, dev *jsonx.Object) []config.Op {
 // (refused while a store has it open: dev isn't active), on its raw JSON,
 // never loaded or migrated: the result is checked against install (the
 // install tree's schema, defaults filled only for the check) and written
-// as it is, its version untouched. The same ops go to the base, so the
-// change isn't taken for live's own. Ops on the version or format are
-// refused; so is anything that leaves live invalid, live unchanged.
+// as it is, its version untouched. The same ops go to the base
+// (ShiftBase), so the change isn't taken for live's own. Ops on the
+// version or format are refused; so is anything that leaves live invalid,
+// live unchanged.
 func WriteLive(livePath, basePath string, ops []config.Op, install *schema.Schema) error {
-	for _, op := range ops {
-		if len(op.Path) == 0 || ownKey(op.Path) {
-			return axerr.New(axerr.BadRequest, "%q: the live config keeps its own version and format", op.Path.String())
-		}
-	}
-	if !fsx.IsFile(livePath) {
-		return axerr.New(axerr.NotFound, "there is no live config at %s", livePath)
-	}
-	lock, err := lockFor(livePath)
+	out, err := writeRaw(livePath, "live", install, func(cfg *jsonx.Object) error { return applyRaw(cfg, ops) })
 	if err != nil {
 		return err
+	}
+	return ShiftBase(basePath, ops, out)
+}
+
+// WriteDev applies ops to the dev config file as WriteLive does live (the
+// install image's copy to dev, with the dev config's file not open): under
+// its writer lock (refused while a dev store has it open), on its raw
+// JSON, checked against dev (the dev tree's schema), its version
+// untouched. Ops' bases, read from dev loaded, aren't checked against the
+// raw file (it may leave a default out): the lock stands for them. The
+// base is left alone.
+func WriteDev(devPath string, ops []config.Op, dev *schema.Schema) error {
+	unbased := make([]config.Op, len(ops))
+	for i, op := range ops {
+		op.Base = config.Op{}.Base
+		unbased[i] = op
+	}
+	_, err := writeRaw(devPath, "dev", dev, func(cfg *jsonx.Object) error { return applyRaw(cfg, unbased) })
+	return err
+}
+
+// ReplaceDev makes the dev config file cfg (live, in dev's shape) as
+// WriteDev writes it, keeping the file's own version and format.
+func ReplaceDev(devPath string, cfg *jsonx.Object, dev *schema.Schema) error {
+	_, err := writeRaw(devPath, "dev", dev, func(raw *jsonx.Object) error {
+		next := jsonx.Clone(cfg).(*jsonx.Object)
+		for _, k := range []string{"format", "version"} {
+			if v, has := raw.Get(k); has {
+				next.Set(k, v)
+			} else {
+				next.Delete(k)
+			}
+		}
+		*raw = *next
+		return nil
+	})
+	return err
+}
+
+// writeRaw changes a config file (what names it in errors) under its
+// writer lock, on its raw JSON: change's result is checked against s
+// (defaults filled only for the check) and written as it is, unless it's
+// unchanged. It returns the file's bytes after.
+func writeRaw(path, what string, s *schema.Schema, change func(*jsonx.Object) error) ([]byte, error) {
+	if !fsx.IsFile(path) {
+		return nil, axerr.New(axerr.NotFound, "there is no %s config at %s", what, path)
+	}
+	lock, err := lockFor(path)
+	if err != nil {
+		return nil, err
 	}
 	defer lock.Release()
-	raw, err := os.ReadFile(livePath)
+	raw, err := os.ReadFile(path)
 	if err != nil {
-		return axerr.Wrap(axerr.Unavailable, err, "reading %s", livePath)
+		return nil, axerr.Wrap(axerr.Unavailable, err, "reading %s", path)
 	}
-	live, err := parse(raw)
+	current, err := parse(raw)
 	if err != nil {
-		return axerr.Wrap(axerr.InvalidConfig, err, "reading %s", livePath)
+		return nil, axerr.Wrap(axerr.InvalidConfig, err, "reading %s", path)
 	}
-	next := jsonx.Clone(live).(*jsonx.Object)
-	if err := config.ApplyOps(next, ops); err != nil {
-		return err
+	next := jsonx.Clone(current).(*jsonx.Object)
+	if err := change(next); err != nil {
+		return nil, err
 	}
-	if _, problems := (config.Pipeline{S: install}).Check(next); len(problems) > 0 {
-		return &axerr.Error{Kind: axerr.InvalidConfig, Message: "the change makes the live config invalid", Issues: axerr.IssuesFrom(problems)}
+	if _, problems := (config.Pipeline{S: s}).Check(next); len(problems) > 0 {
+		return nil, &axerr.Error{Kind: axerr.InvalidConfig, Message: "the change makes the " + what + " config invalid", Issues: axerr.IssuesFrom(problems)}
+	}
+	if jsonx.Equal(next, current) {
+		return raw, nil
 	}
 	out := jsonx.Marshal(next)
-	if !jsonx.Equal(next, live) {
-		if err := writeFile(livePath, out); err != nil {
-			return err
+	return out, writeFile(path, out)
+}
+
+// applyRaw applies ops to a raw config: the version and format refused, a
+// delete of what the file leaves out (a default) skipped.
+func applyRaw(cfg *jsonx.Object, ops []config.Op) error {
+	var apply []config.Op
+	for _, op := range ops {
+		if len(op.Path) == 0 || ownKey(op.Path) {
+			return axerr.New(axerr.BadRequest, "%q: each config keeps its own version and format", op.Path.String())
 		}
+		if _, has := config.Lookup(cfg, op.Path); op.Op == "delete" && !has {
+			continue
+		}
+		apply = append(apply, op)
 	}
-	return writeFile(basePath, nextBase(basePath, ops, out))
+	return config.ApplyOps(cfg, apply)
+}
+
+// ShiftBase applies ops to the base too (a copy to live), so the change
+// isn't taken for live's own: the new live bytes when there is no base or
+// the ops don't apply to it.
+func ShiftBase(basePath string, ops []config.Op, live []byte) error {
+	return writeFile(basePath, nextBase(basePath, ops, live))
 }
 
 // nextBase is the base with ops applied, or the new live bytes when there
@@ -164,7 +228,7 @@ func nextBase(basePath string, ops []config.Op, live []byte) []byte {
 	if err != nil {
 		return live
 	}
-	if err := config.ApplyOps(base, ops); err != nil {
+	if err := applyRaw(base, ops); err != nil {
 		return live
 	}
 	return jsonx.Marshal(base)

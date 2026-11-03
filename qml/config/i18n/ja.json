@@ -3795,7 +3795,6 @@
     "Live changes brought over.": "",
     "Live changes brought over; {0} changed in dev too kept their dev values.": "",
     "Compare again": "",
-    "The dev config and live are compared while dev mode runs the dev tree.": "",
     "Live changed since dev last took it over.": "",
     "Bring live changes over": "",
     "Dev and live agree on every setting.": "",
@@ -3830,6 +3829,7 @@
     "Built {0}": "",
     "Build failed {0}": "",
     "Dev Mode": "",
-    "Rebuild, open the Development settings or turn dev mode off, when hovered.": ""
+    "Rebuild, open the Development settings or turn dev mode off, when hovered.": "",
+    "Set a dev tree to compare its config with live.": ""
   }
 }

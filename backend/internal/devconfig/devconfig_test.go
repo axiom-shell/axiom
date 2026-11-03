@@ -451,6 +451,54 @@ func TestWriteLive(t *testing.T) {
 	}
 }
 
+// WriteDev and ReplaceDev write the dev config's file as WriteLive does
+// live's: raw, checked against the dev schema, its version its own, ops'
+// bases not held against defaults the file leaves out, the base untouched.
+func TestWriteDev(t *testing.T) {
+	t.Parallel()
+	f := files(t)
+	dev := `{"format": 2, "version": 3, "General": {"a": 1}}`
+	put(t, f.Dev, dev)
+	put(t, f.Base, dev)
+	ops := []config.Op{
+		config.SetValue(config.Keys("General", "c"), true),
+		config.SetValue(config.Keys("General", "b"), "y").WithBase("x"), // "x" is b's default, not in the file
+		{Op: "delete", Path: config.Keys("Idle", "enabled")},            // not in the file either
+	}
+	if err := WriteDev(f.Dev, ops, devSchema(t)); err != nil {
+		t.Fatal(err)
+	}
+	if got := compact(t, content(t, f.Dev)); got != `{"format":2,"version":3,"General":{"a":1,"c":true,"b":"y"}}` {
+		t.Errorf("dev %s", got)
+	}
+	if content(t, f.Base) != dev {
+		t.Errorf("base changed: %s", content(t, f.Base))
+	}
+	if err := WriteDev(f.Dev, []config.Op{config.SetValue(config.Keys("General", "a"), "four")}, devSchema(t)); axerr.KindOf(err) != axerr.InvalidConfig {
+		t.Errorf("an invalid value: %v", err)
+	}
+	if err := WriteDev(f.Dev, []config.Op{config.SetValue(config.Keys("version"), 9.0)}, devSchema(t)); axerr.KindOf(err) != axerr.BadRequest {
+		t.Errorf("dev's version: %v", err)
+	}
+
+	live := mustParse(t, cfgText(0, `"General": {"a": 7, "b": "z"}`))
+	if err := ReplaceDev(f.Dev, live, devSchema(t)); err != nil {
+		t.Fatal(err)
+	}
+	if got := compact(t, content(t, f.Dev)); got != `{"format":2,"version":3,"General":{"a":7,"b":"z"}}` {
+		t.Errorf("dev after the replace %s", got)
+	}
+
+	lock, err := fsx.TryLock(f.Dev + ".lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	if err := ReplaceDev(f.Dev, live, devSchema(t)); axerr.KindOf(err) != axerr.Running {
+		t.Errorf("a store has dev open: %v", err)
+	}
+}
+
 func compact(t *testing.T, text string) string {
 	return string(jsonx.MarshalCompact(mustParse(t, text)))
 }

@@ -3,7 +3,6 @@ import QtQuick
 import Quickshell
 
 import qs.services.core
-import qs.services.ui
 import qs.config
 import qs.components.reusable
 import qs.components.hosts.popout
@@ -29,7 +28,7 @@ BarIconWidget {
   accentColor: DevManager.buildFailed ? Theme.error : Theme.resolveColor(properties.backgroundColor)
 
   clickable: true
-  onClicked: SettingsManager.openCategory("Development")
+  onClicked: DevManager.openDevelopment()
 
   StyledIcon {
     id: spinner

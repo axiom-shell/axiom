@@ -5,11 +5,13 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/devconfig"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
@@ -23,6 +25,12 @@ import (
 // Idle.enabled a takeover.
 func syncSchema(t *testing.T, withC bool) *schema.Schema {
 	t.Helper()
+	return syncSchemaAt(t, withC, steps.Current())
+}
+
+// syncSchemaAt is syncSchema at config version version.
+func syncSchemaAt(t *testing.T, withC bool, version int) *schema.Schema {
+	t.Helper()
 	c := ""
 	if withC {
 		c = `, "c": {"type": "boolean", "default": false}`
@@ -34,7 +42,7 @@ func syncSchema(t *testing.T, withC bool) *schema.Schema {
 			"a": {"type": "integer", "default": 1},
 			"b": {"type": "string", "default": "x"}%s}},
 		"Idle": {"type": "object", "additionalProperties": false, "properties": {
-			"enabled": {"type": "boolean", "default": false, "x-takeover": true}}}}}`, steps.Current(), c)
+			"enabled": {"type": "boolean", "default": false, "x-takeover": true}}}}}`, version, c)
 	v, err := jsonx.Unmarshal([]byte(text))
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +125,7 @@ func devValue(m *devMode, path string) any {
 // sidesOf is the diff's rows as path → side (" dev-only" appended).
 func sidesOf(t *testing.T, m *devMode) map[string]string {
 	t.Helper()
-	diff, err := m.configDiff()
+	diff, err := m.diffNow()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +154,7 @@ func TestDevConfigDiff(t *testing.T) {
 	if fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Errorf("rows %v, want %v", got, want)
 	}
-	if diff, _ := m.configDiff(); !diff.LiveChanged || !m.State().Config.LiveChanged {
+	if diff, _ := m.diffNow(); !diff.LiveChanged || !m.State().Config.LiveChanged {
 		t.Error("live's change isn't told")
 	}
 	writeLiveFile(t, m, liveText(7, "y", false))
@@ -155,7 +163,7 @@ func TestDevConfigDiff(t *testing.T) {
 	}
 
 	m.d.configDir = m.d.dirs.Config // the install image
-	if _, err := m.configDiff(); axerr.KindOf(err) != axerr.Unavailable {
+	if _, err := m.diffNow(); axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("a diff outside the dev image: %v", err)
 	}
 }
@@ -302,7 +310,7 @@ func TestInstallSchemaIsCached(t *testing.T) {
 	if schemaSourceKey(root) == "" {
 		t.Fatal("no key for the repo's schema source")
 	}
-	var c installSchemaCache
+	c := treeSchemaCache{what: "the install tree's schema"}
 	first, err := c.get(root)
 	if err != nil {
 		t.Fatal(err)
@@ -316,5 +324,189 @@ func TestInstallSchemaIsCached(t *testing.T) {
 	}
 	if _, err := c.get(t.TempDir()); axerr.KindOf(err) != axerr.NotFound {
 		t.Errorf("a tree without a schema source: %v", err)
+	}
+}
+
+// installSyncFixture is the install image on scratch folders, live open in
+// its store (the install's schema, without General.c), a dev tree set
+// whose schema has General.c, and no dev config yet.
+func installSyncFixture(t *testing.T, live string) *devMode {
+	t.Helper()
+	home := t.TempDir()
+	d := &Daemon{opts: Options{Tree: "/install", Log: slog.New(slog.DiscardHandler)}}
+	d.dirs = xdg.Dirs{Config: home + "/config/", State: home + "/state/", UI: home + "/ui/"}
+	d.installTree, d.configDir = "/install", d.dirs.Config
+	d.dev = newDevMode(d, false)
+	d.dev.tree = "/dev"
+	devSchema := syncSchema(t, true)
+	d.dev.devSchemaFn = func() (*schema.Schema, error) { return devSchema, nil }
+	d.dev.installSchemaFn = func() (*schema.Schema, error) {
+		t.Error("the install image asked for the install tree's schema: its store has it")
+		return nil, nil
+	}
+	os.MkdirAll(d.dirs.Config, 0o700)
+	writeLiveFile(t, d.dev, live)
+	st, err := d.openStore(store.Options{Dir: d.configDir, Pipeline: config.Pipeline{S: syncSchema(t, false)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	d.store = st
+	d.store.Subscribe(d.dev.onConfig)
+	return d.dev
+}
+
+// setLive changes live through the install's store.
+func setLive(t *testing.T, m *devMode, path string, v any) {
+	t.Helper()
+	if _, err := m.d.store.Set([]config.Op{config.SetValue(mustPath(t, path), v)}, store.SetOptions{}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// devFile is the dev config file, parsed.
+func devFile(t *testing.T, m *devMode) *jsonx.Object {
+	t.Helper()
+	data, err := os.ReadFile(m.d.devConfigFiles().Dev)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := jsonx.Unmarshal(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return v.(*jsonx.Object)
+}
+
+func devFileValue(t *testing.T, m *devMode, path string) any {
+	t.Helper()
+	v, _ := config.Lookup(devFile(t, m), mustPath(t, path))
+	return v
+}
+
+func storeValue(t *testing.T, m *devMode, path string) any {
+	t.Helper()
+	cfg, _ := m.d.store.Config()
+	v, _ := config.Lookup(cfg, mustPath(t, path))
+	return v
+}
+
+func TestDevConfigFromInstall(t *testing.T) {
+	t.Parallel()
+	m := installSyncFixture(t, liveText(1, "x", false))
+	// The first diff seeds the dev config from live, as a dev start would
+	if got := sidesOf(t, m); len(got) != 0 {
+		t.Fatalf("a fresh copy differs: %v", got)
+	}
+	if devFile(t, m).Value("version") != float64(steps.Current()) {
+		t.Fatalf("no dev config seeded: %s", jsonx.Marshal(devFile(t, m)))
+	}
+	// dev edited (by the dev image, earlier), live through its store
+	if err := os.WriteFile(m.d.devConfigFiles().Dev, []byte(fmt.Sprintf(`{"format": 2, "version": %d, "General": {"a": 5, "b": "x", "c": true}, "Idle": {"enabled": false}}`, steps.Current())), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	setLive(t, m, "General.b", "y")
+	want := map[string]string{"General.a": "dev", "General.b": "live", "General.c": "dev dev-only"}
+	if got := sidesOf(t, m); fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("rows %v, want %v", got, want)
+	}
+	if !m.State().Config.LiveChanged {
+		t.Error("live's change isn't told")
+	}
+
+	// To live: through the store, the base along; dev-only refused
+	if _, err := m.configCopy(DevConfigCopyParams{Paths: []config.Path{mustPath(t, "General.a")}, To: "live"}); err != nil {
+		t.Fatal(err)
+	}
+	if storeValue(t, m, "General.a") != 5.0 {
+		t.Errorf("live's a %v", storeValue(t, m, "General.a"))
+	}
+	if _, err := m.configCopy(DevConfigCopyParams{Paths: []config.Path{mustPath(t, "General.c")}, To: "live"}); axerr.KindOf(err) != axerr.Refused {
+		t.Errorf("a dev-only copy to live: %v", err)
+	}
+	if got := sidesOf(t, m); fmt.Sprint(got) != "map[General.b:live General.c:dev dev-only]" {
+		t.Errorf("rows after the copy to live %v", got)
+	}
+
+	// To dev: on the file's raw JSON, its version untouched
+	if _, err := m.configCopy(DevConfigCopyParams{Paths: []config.Path{mustPath(t, "General")}, To: "dev"}); err != nil {
+		t.Fatal(err)
+	}
+	if devFileValue(t, m, "General.b") != "y" || devFileValue(t, m, "General.c") != false || devFile(t, m).Value("version") != float64(steps.Current()) {
+		t.Errorf("dev after the copy %s", jsonx.Marshal(devFile(t, m)))
+	}
+	if got := sidesOf(t, m); len(got) != 0 {
+		t.Errorf("still differing: %v", got)
+	}
+}
+
+func TestDevConfigPullFromInstall(t *testing.T) {
+	t.Parallel()
+	for _, mode := range []string{"merge", "replace"} {
+		t.Run(mode, func(t *testing.T) {
+			t.Parallel()
+			m := installSyncFixture(t, liveText(1, "x", false))
+			sidesOf(t, m) // seeds dev
+			if _, err := m.configCopy(DevConfigCopyParams{Paths: []config.Path{mustPath(t, "General.c")}, To: "dev"}); axerr.KindOf(err) != axerr.NotFound {
+				t.Fatalf("a copy of no difference: %v", err)
+			}
+			if err := devconfig.WriteDev(m.d.devConfigFiles().Dev, []config.Op{config.SetValue(mustPath(t, "General.a"), 5.0)}, syncSchema(t, true)); err != nil {
+				t.Fatal(err)
+			}
+			setLive(t, m, "General.a", 7.0)
+			setLive(t, m, "General.b", "y")
+			res, err := m.configPull(DevConfigPullParams{Mode: mode})
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantA := 5.0
+			if mode == "replace" {
+				wantA = 7.0
+			} else if fmt.Sprint(pathStrings(res.Merged), pathStrings(res.Conflicts)) != "[General.b] [General.a]" {
+				t.Errorf("merged %v, conflicts %v", res.Merged, res.Conflicts)
+			}
+			if devFileValue(t, m, "General.a") != wantA || devFileValue(t, m, "General.b") != "y" || devFile(t, m).Value("version") != float64(steps.Current()) {
+				t.Errorf("dev after %s", jsonx.Marshal(devFile(t, m)))
+			}
+			if res.Diff.LiveChanged || m.State().Config.LiveChanged {
+				t.Error("live still counts as changed")
+			}
+		})
+	}
+}
+
+func TestDevConfigFromInstallRefusals(t *testing.T) {
+	t.Parallel()
+	// No dev tree
+	m := installSyncFixture(t, liveText(1, "x", false))
+	m.tree = ""
+	if _, err := m.diffNow(); axerr.KindOf(err) != axerr.Unavailable || !strings.Contains(err.Error(), "axiom dev set") {
+		t.Errorf("a diff with no dev tree: %v", err)
+	}
+	if _, err := os.Stat(m.d.devConfigFiles().Dev); err == nil {
+		t.Error("a dev config made with no dev tree")
+	}
+
+	// A dev store holding the dev config elsewhere
+	m = installSyncFixture(t, liveText(1, "x", false))
+	sidesOf(t, m)
+	lock, err := fsx.TryLock(m.d.devConfigFiles().Dev + ".lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	if _, err := m.configPull(DevConfigPullParams{Mode: "replace"}); axerr.KindOf(err) != axerr.Running {
+		t.Errorf("a pull while another axiom has the dev config: %v", err)
+	}
+	if err := devconfig.WriteDev(m.d.devConfigFiles().Dev, []config.Op{config.SetValue(mustPath(t, "General.a"), 5.0)}, syncSchema(t, true)); axerr.KindOf(err) != axerr.Running {
+		t.Errorf("a dev write while another axiom has it: %v", err)
+	}
+
+	// A dev tree migrating further than this binary
+	m = installSyncFixture(t, liveText(1, "x", false))
+	newer := syncSchemaAt(t, true, steps.Current()+1)
+	m.devSchemaFn = func() (*schema.Schema, error) { return newer, nil }
+	if _, err := m.diffNow(); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a diff past this binary's migrations: %v", err)
 	}
 }

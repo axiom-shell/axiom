@@ -70,7 +70,7 @@ Data the daemon polls for the shell (`backend/internal/topics`) is not a hello t
 - Every connection's peer must be the same user (`SO_PEERCRED`, `rpc.SamePeerUser`).
 - **Shell only**: `ipc.register`, `lock.state` and every compositor method that changes something answer only the connection whose hello was the shell's.
 - **Writable**: config writes (`config.set`, the `share.*` applies, `saved.restore`) are refused with `incompatible` while the tree's schema isn't the binary's and dev mode is off. `daemon.state` pushes the change.
-- **Dev image only**: `dev.config.diff`, `dev.config.copy` and `dev.config.pull` answer `unavailable` unless the dev image runs (`dev.state.active`); `dev.set` is refused while a switch is scheduled, and `dev.set {enabled: true}` without a dev tree ([The axiom binary](README.md) › Dev mode).
+- **Dev config**: `dev.config.diff`, `dev.config.copy` and `dev.config.pull` work in either image, dev mode on or off, while a dev tree is set (else `unavailable`); a dev config held open by another axiom answers `running`. `dev.rebuild` works with dev mode off too (it only builds). `dev.set` is refused while a switch is scheduled, and `dev.set {enabled: true}` without a dev tree ([The axiom binary](README.md) › Dev mode).
 - The lock screen takes only `lock`: no method unlocks it (`ipc.call` to `lockscreen` is anything but `lock` → `refused`).
 - Errors are `{ kind, message, issues }`. `kind` comes from `axerr.Kind` (`invalid_config`, `bad_request`, `conflict`, `takeover_refused`, `incompatible`, `unavailable`, `running`, `not_found`, `refused`, `unauthorized`, `no_password`, `bad_reply`, `internal`, and UDisks2's `busy`, `not_authorized`, `wrong_passphrase`, `failed`); messages stay English, and the shell translates by kind.
 
