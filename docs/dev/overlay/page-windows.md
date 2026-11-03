@@ -9,7 +9,7 @@ How a tool page leaves the overlay for a window of its own (an xdg toplevel, Qui
 ### Which pages
 - A view type whose `schema.yaml` says `window: true` (`x-window`): Settings, Themes, BarEditor, Keybinds, CustomWidgets, CalendarPage. `OverlayConfig.isWindowable(type)`, and `OverlayConfig.windowTypes` lists them.
 - Monitors (it reflows the outputs under its own window) and Layouts (it previews the overlay at screen size) don't pop out.
-- A page opens in a window only while it's in `Overlay.items` (`OverlayConfig.viewEntry`). Removing it from config closes its window.
+- A page opens in a window only while it's in `Overlay.items` (`OverlayConfig.viewEntry`). Removing it from config closes its window (`PageWindowManager` drops it as `OverlayConfig.views` changes), and putting it back doesn't reopen one.
 
 ### One host at a time
 - A page's state lives in singletons (`SettingsManager`, `BarManager`, `KeybindManager.editor`, `CustomWidgetsManager.editor`, the drafts, `EditsManager`). Building it in the overlay and a window at once would have two views driving one editor.
@@ -20,7 +20,7 @@ How a tool page leaves the overlay for a window of its own (an xdg toplevel, Qui
 ### PageWindowManager
 - `open`: the page types that are out. It's kept, with the screen each opened on, in `PersistentProperties` (`axiomPageWindows`), so a QML reload brings the windows back and a restart starts with none.
 - `popOut(type)` closes the overlay and adds the page. `popIn(type, show)` takes it out, opening the overlay on it with `show` (the window's button). `closed(type)` is the window closing itself (its `closed` signal, never its destruction, which a reload does too).
-- `focus(type)` finds the window in `CompositorManager.windows` by its title (`titleOf`, "<Page> — axiom") and this shell's app id (`Quickshell.appId`, one for every qs window: there's no per-window app id), then calls `CompositorManager.focusWindow`, which switches workspace first.
+- `focus(type)` finds the window in `CompositorManager.windows` by its title (`titleOf`, "<Page> — axiom") and this shell's app id (`Quickshell.appId`, one for every qs window: there's no per-window app id), then calls `CompositorManager.focusWindow`, which switches workspace first. It closes the overlay first, whoever asks (a page opened by name, Go to window, the back chip, `pages window`): the overlay would cover the window and keep the keyboard.
 - `opened(key)` (a view type or a Custom page's name): when that page is out, it focuses the window and answers true. `OverlayPanel.openPage` asks it first, so everything that opens a page by name goes to the window instead: `ShellManager.openOverlayPage` (launcher commands, keybinds, `openSetting`, `CalendarManager.openPage`), `axiom ipc overlay page`, a link. A navigator tab click doesn't (it's `OverlayPages.goTo`), so it shows the card and the window stays where it is.
 - Window sizes are kept for good in `StateManager` (`pageWindows.json`), written a second after a resize settles. `sizeOf` is read once as a window opens, and `keepSize` doesn't notify, so a window's own resizes never feed back into its size.
 - IPC target `pages`: `window <type>` (pop out, or focus when out; case-insensitive), `close <type>`, `list`.

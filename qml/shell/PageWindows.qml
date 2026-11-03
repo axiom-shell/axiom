@@ -16,6 +16,8 @@ Scope {
       required property string modelData
 
       LazyLoader {
+        // In Overlay.items too: a reload can bring back a page taken out
+        // of the config meanwhile
         active: PageWindowManager.isOpen(page.modelData) && OverlayConfig.viewEntry(page.modelData) !== null
 
         PageWindow {

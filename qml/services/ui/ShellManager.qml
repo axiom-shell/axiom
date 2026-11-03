@@ -59,7 +59,6 @@ QtObject {
     const origin = _linkOrigin;
     _linkOrigin = "";
     if (origin.startsWith("window:")) {
-      closeOverlay();
       PageWindowManager.focus(origin.slice("window:".length));
     } else if (origin !== "") {
       showOverlayPage(origin);

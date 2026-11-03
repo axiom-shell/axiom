@@ -12,7 +12,8 @@ import qs.services.compositor
  * a window, the overlay shows a box in its place (PoppedOutCard).
  *   popOut(type)   closes the overlay and opens the page in a window
  *   popIn(type)    closes the window and opens the page in the overlay
- *   focus(type)    goes to the page's window (its workspace too)
+ *   focus(type)    closes the overlay and goes to the page's window (its
+ *                  workspace too)
  *   opened(key)    a request for a page by type or name: focuses its
  *                  window and answers true when it's popped out, so the
  *                  overlay doesn't open (OverlayPanel.openPage)
@@ -100,7 +101,10 @@ Singleton {
     return CompositorManager.windows.find(win => win.title === title && win.appId === Quickshell.appId) ?? null;
   }
 
+  // The overlay closes first: it would cover the window and keep the
+  // keyboard
   function focus(type) {
+    ShellManager.closeOverlay();
     const win = root._windowOf(type);
     if (win)
       CompositorManager.focusWindow(win.id);
@@ -134,6 +138,17 @@ Singleton {
 
   function _setOpen(windows) {
     _kept.open = JSON.stringify(windows);
+  }
+
+  // A page taken out of Overlay.items is out of a window too: it doesn't
+  // come back in one when it's put back
+  property Connections _items: Connections {
+    target: OverlayConfig
+    function onViewsChanged() {
+      const kept = root._windows.filter(each => OverlayConfig.viewEntry(each.type) !== null);
+      if (ConfigManager.available && kept.length !== root._windows.length)
+        root._setOpen(kept);
+    }
   }
 
   // Kept across a QML reload (a restart starts with none out)

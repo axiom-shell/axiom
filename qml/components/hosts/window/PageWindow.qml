@@ -18,10 +18,9 @@ FloatingWindow {
 
   // The page's view type
   required property string type
-  // Its entry in Overlay.items, null once it's gone (the window closes)
+  // Its entry in Overlay.items (null once it's gone: PageWindowManager
+  // then closes the window)
   readonly property var _entry: OverlayConfig.viewEntry(root.type)
-  on_EntryChanged: if (!root._entry)
-    PageWindowManager.closed(root.type)
 
   readonly property real _padding: Widget.padding * 2
   readonly property real _headerHeight: Widget.height

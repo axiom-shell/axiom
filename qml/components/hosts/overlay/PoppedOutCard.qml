@@ -65,10 +65,7 @@ Item {
         implicitHeight: Widget.height
         iconText: "jump_to_element"
         text: I18n.tr("Go to window")
-        onClicked: {
-          ShellManager.closeOverlay();
-          PageWindowManager.focus(root.type);
-        }
+        onClicked: PageWindowManager.focus(root.type)
       }
     }
   }
