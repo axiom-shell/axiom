@@ -375,6 +375,62 @@ TestCase {
     compare(BarEnds.endInset(pills, pills.ends.start, thin), 1);
   }
 
+  // A bar not part of the frame lines up with the windows along it: a
+  // floating bar's islands end, and a transparent bar's end widgets sit,
+  // where windows start (the frame, or the bars it makes way for, and
+  // that side's gaps_out), border on or off, its own float gap aside
+  function test_unframed_bars_line_up_with_windows() {
+    const uneven = Object.assign({}, withBorder, {
+      "borderWidth": 1,
+      "gapsOut": {
+        "top": 6,
+        "bottom": 6,
+        "left": 20,
+        "right": 12
+      }
+    });
+    uneven.floatGaps = uneven.gapsOut;
+    const off = Object.assign({}, uneven, {
+      "border": false
+    });
+    // Where windows start at each end of a top bar, from the screen's
+    // left edge (its start) and right edge (its end)
+    const windowsAt = (bars, opts) => {
+      const placed = BarEnds.withEnds(bars, opts);
+      const left = BarEnds.edgeOf(placed.filter(b => b.left), opts).reserved + opts.gapsOut.left;
+      const right = BarEnds.edgeOf(placed.filter(b => b.right), opts).reserved + opts.gapsOut.right;
+      return [left, right];
+    };
+    // Where the line lies by the bar's ends: its window's start (past its
+    // reach) and the inset
+    const lineAt = (b, opts) => [b.ends.start.from - b.ends.start.reach + BarEnds.windowInset(b, b.ends.start, true, opts), b.ends.end.from - b.ends.end.reach + BarEnds.windowInset(b, b.ends.end, false, opts)];
+    const side = (location, kind, opts) => bar(location, kind, {
+        "insideBorder": kind !== "solid" && opts.border,
+        "extent": BarEnds.crossGeometry(kind, 26, 4, opts).extent
+      });
+    [uneven, off].forEach(opts => {
+      const name = opts.border ? "border on" : "border off";
+      ["floating", "floatingPills", "transparent"].forEach(kind => {
+        const top = side("top", kind, opts);
+        // Alone: the frame and that side's gaps
+        let bars = [top];
+        compare(lineAt(BarEnds.withEnds(bars, opts)[0], opts), windowsAt(bars, opts), `${kind} alone, ${name}`);
+        compare(lineAt(BarEnds.withEnds(bars, opts)[0], opts), opts.border ? [28, 20] : [20, 12], `${kind} alone, ${name}`);
+        // Past a solid bar on each side it makes way for
+        bars = [top, side("left", "solid", opts), side("right", "solid", opts)];
+        const [placed] = BarEnds.withEnds(bars, opts);
+        verify(!placed.ends.start.held && !placed.ends.end.held, name);
+        compare(lineAt(placed, opts), windowsAt(bars, opts), `${kind} past side bars, ${name}`);
+      });
+    });
+    // A hand-set float gap is across the bar only
+    const [gapped] = BarEnds.withEnds([bar("top", "floating", {
+        "floatingGap": 30,
+        "floatingGapAuto": false
+      })], uneven);
+    compare(BarEnds.windowInset(gapped, gapped.ends.start, true, uneven), 1 + 20);
+  }
+
   function test_stack_order_is_the_arrangement() {
     const bars = [bar("top", "floatingPills"), bar("top", "transparent", {
         "id": "t1"

@@ -108,8 +108,8 @@ QtObject {
   /**
    * How far along a solid or pill bar its first or last widgets sit from
    * its window's start at `end` (one of its ends, endsOf), where that end
-   * isn't held: past the line its window counts from (`from`), as far as
-   * windows start, so solid and pills place them alike. That's the screen
+   * isn't held: past the line its window counts from (`from`), as both
+   * are part of the frame, so solid and pills place them alike: the screen
    * margin (with the border off, at least the bar's `edgePadding`), from
    * the perpendicular screen edge or past the bars there it makes way
    * for. A bar inside the border counts `from` from the border's margin
@@ -122,6 +122,20 @@ QtObject {
     const line = opts.border ? opts.margin : Math.max(opts.margin, bar.edgePadding);
     const counted = opts.border && !bar.solid ? opts.margin : 0;
     return line - counted + end.reach;
+  }
+
+  /**
+   * Where windows start along a bar not part of the frame (floating,
+   * floating pills, transparent), from its window's start at an unheld
+   * `end` (its start with `atStart`, endsOf): past the frame, or the bars
+   * there it makes way for, by the compositor's gaps_out on that side (`floatGaps`: with no backend, what an Automatic float gap
+   * keeps). A floating bar's islands end on that line; a transparent
+   * bar's first and last widgets do. Its own float gap never counts along
+   * it. `opts`: { floatGaps }.
+   */
+  function windowInset(bar, end, atStart, opts) {
+    const side = root.endEdges(bar)[atStart ? 0 : 1];
+    return end.reach + (opts.floatGaps?.[side] ?? 0);
   }
 
   // Whether a bar lies along its screen's shorter edge (`width` × `height`

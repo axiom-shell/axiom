@@ -35,28 +35,29 @@ Rectangle {
   readonly property bool islands: barConfig.island
   // What each end meets (BarEnds): the frame, or a bar it makes way for
   readonly property var ends: barConfig.ends
-  // How far in from an end islands may reach: their float gap from the
-  // stroke there (bar-window 0 past its reach onto it), or held clear of
-  // a bar it makes way for, as a surface held off an edge
-  function _islandInset(end) {
-    return end.held ? end.over + end.gap : end.reach + root.barConfig.floatingGap;
+  // How far in from an end islands may reach: where windows start there
+  // (BarEnds.windowInset: the frame or the bars it makes way for, and the
+  // compositor's gaps_out on that side), or held clear of a bar it makes
+  // way for, as a surface held off an edge
+  function _islandInset(end, atStart) {
+    return end.held ? end.over + end.gap : BarEnds.windowInset(root.barConfig, end, atStart, ScreenEdgeManager.endsOptions);
   }
   // Where islands may reach along the bar, from its start
-  readonly property real islandFrom: root._islandInset(root.ends.start)
-  readonly property real islandEnd: root.length - root._islandInset(root.ends.end)
+  readonly property real islandFrom: root._islandInset(root.ends.start, true)
+  readonly property real islandEnd: root.length - root._islandInset(root.ends.end, false)
   // Fillet room each side of a pill, as for popouts (AttachedSurface)
   readonly property int pillConnector: Appearance.connectorGap
-  // Kept clear at each end. A solid or pill bar's widgets sit where
-  // windows start (BarEnds.endInset): an end pill fills the corner,
-  // joining the frame squarely as a solid bar does. An island's widgets
-  // sit inside its stroke and padding. A transparent bar's keep the gap
-  // they keep across it, past the stroke there (it draws nothing to fill
-  // the frame's rounded corner they'd sit over). At an end held clear of
-  // another bar, a pill's free end and its fillet stay past the held gap,
-  // and a plain bar's widgets at least its padding past that bar.
-  function _endMargin(end) {
+  // Kept clear at each end. A solid or pill bar, part of the frame, has
+  // its widgets the screen margin in (BarEnds.endInset): an end pill fills
+  // the corner, joining the frame squarely as a solid bar does. An
+  // island's widgets sit inside its stroke and padding. A transparent
+  // bar's, not part of the frame, line up with the windows
+  // (BarEnds.windowInset). At an end held clear of another bar, a pill's
+  // free end and its fillet stay past the held gap, and a plain bar's
+  // widgets at least its padding past that bar.
+  function _endMargin(end, atStart) {
     if (root.islands)
-      return root._islandInset(end) + root.barConfig.islandGap;
+      return root._islandInset(end, atStart) + root.barConfig.islandGap;
     if (end.held) {
       if (!root.pills)
         return end.over + Math.max(end.gap, root.barConfig.edgePadding);
@@ -64,11 +65,10 @@ Rectangle {
       return end.over + end.gap + fillet + root.barConfig.pillGap;
     }
     if (root.pills || root.barConfig.solid)
-      return BarEnds.endInset(root.barConfig, end, BarsConfig.endsOptions({}, {}));
-    // The gap its widgets keep across the bar, past the stroke at the end
-    return end.reach + root.barConfig.crossStart - (root.barConfig.insideBorder ? Appearance.borderWidth : 0);
+      return BarEnds.endInset(root.barConfig, end, ScreenEdgeManager.endsOptions);
+    return BarEnds.windowInset(root.barConfig, end, atStart, ScreenEdgeManager.endsOptions);
   }
-  readonly property var endMargins: [root._endMargin(root.ends.start), root._endMargin(root.ends.end)]
+  readonly property var endMargins: [root._endMargin(root.ends.start, true), root._endMargin(root.ends.end, false)]
   // How near a pill's end may come to an unheld end of the bar and still
   // run on to it and join it: its widgets' inset there less the pill gap
   // (on the stroke it covers, at least)

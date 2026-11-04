@@ -8,8 +8,8 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 
 ### Floating bars (islands)
 - **Settings:** `background: "floating" | "floatingPills"`, with `barConfig.island`/`islandPills`.
-- **Laid out like tiled windows:** the islands are held their float gap in from the border's stroke (or from the bare screen edge). The gap applies across the bar and from both ends (`islandStart`).
-  - **`floatingGap` Automatic (null):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep. So the islands' ends line up with the windows'. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
+- **Laid out like tiled windows:** across, the islands are held their float gap in from the border's stroke (or from the bare screen edge; `islandStart`). Along, at an end that isn't held, they end where windows start: the frame (or the bars there it makes way for) plus that side's gaps_out (`BarEnds.windowInset`, `BarContainer.islandFrom`/`islandEnd`), whatever the float gap.
+  - **`floatingGap` Automatic (null):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep, so across too the islands line up with the windows. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
   - **Each island** is a rounded box with a stroke all round, holding the widgets and their `padding`.
 - **Read as pills:** `BarContainer.pillRects` holds the islands shaped like pills (`BarLayout.islandRects`), so the popout code reads them as pills.
   - The shape is either one island from limit to limit, or one per joined group (groups at most `joinGap` apart join, `BarLayout.joinGroups`; islands that then overlap draw as one).
