@@ -224,7 +224,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [An edge menu can be bigger than its screen](issues.md#an-edge-menu-can-be-bigger-than-its-screen)
 - [A popout taller than the screen runs off it](issues.md#a-popout-taller-than-the-screen-runs-off-it)
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
-- [WorkspaceStrip's Grid briefly has more items than cells](issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
@@ -243,6 +242,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [The Layouts canvas logs null reads as it's torn down](issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
 - [A custom layout's element rect reads an undefined place](issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
 - [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
+- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).

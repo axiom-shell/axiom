@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A bar Grid warns as its bar turns between horizontal and vertical
+- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
+- **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.
+- **Size:** small
+- **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
+
 ### A bar widget's elasticity is stated twice
 - **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
 - **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
@@ -360,12 +366,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
 - **Size:** small
 - **Found:** 2026-10-18, while debugging the screenshot crash with a popout open
-
-### WorkspaceStrip's Grid briefly has more items than cells
-- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (the `Grid`, `id: layout`)
-- **What:** The log shows `Grid contains more visible items (2) than rows*columns (1)` after a reload. `shown` counts `activeStrip.visible`, so for a moment the Grid's `rows`/`columns` lag a child becoming visible; likely harmless (the next layout pass fits), but it warns.
-- **Size:** small
-- **Found:** 2026-10-18, while auditing the community setups gallery
 
 ### A model of size -1 when the overlay grid resizes
 - **Where:** `qml/components/hosts/overlay/OverlayPages.qml` (around the `grid` unit change; the model itself not found yet)

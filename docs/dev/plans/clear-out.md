@@ -407,7 +407,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - KeybindManager keeps tables the methods helpers already hold (its _bindMods part, left by compositor-02)
   - A bind description's section is parsed three ways
   - Keybind sections log null reads as they're torn down
-  - [WorkspaceStrip's Grid briefly has more items than cells](../issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
+  - WorkspaceStrip's Grid briefly has more items than cells
   - The key map and the keyboard reference each carry the same modifier chips and legend
   - A reference section's folded count re-derives BindRows.byModifiers' grouping
   - PresetSheet defers its re-choose a tick for a config that updates at once
