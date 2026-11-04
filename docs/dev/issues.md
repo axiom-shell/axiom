@@ -413,12 +413,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### Stale lines in the Hyprland docs and comments
-- **Where:** `docs/dev/hyprland/window-switcher.md`, `qml/components/methods/WorkspaceGeometry.qml` (`orderMonitors`), `qml/components/methods/BindKeys.qml`, `backend/internal/compositor/render/keys.go` (`RuntimeBinds`), `qml/components/hosts/popout/EdgePopout.qml`
-- **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### Setting names that still confuse
 - **Where:** `qml/config/schema/sections/`
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.

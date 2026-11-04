@@ -118,9 +118,9 @@ func keyIDOf(mask any, key string) string {
 	return str(mask) + ":" + strings.ToLower(key)
 }
 
-// RuntimeBinds is BindKeys.runtimeBinds: what a runtime layer does with
-// axiom's binds given the compositor's entries: { apply, skipped,
-// unreadable }.
+// RuntimeBinds is what a runtime layer does with axiom's binds given the
+// compositor's entries: { apply, skipped, unreadable } (the port of the
+// shell's old BindKeys.runtimeBinds, checked against its frozen cases).
 func RuntimeBinds(binds, entries any) *jsonx.Object {
 	taken := map[string]bool{}
 	for _, e := range items(entries) {
