@@ -135,12 +135,18 @@ bindsym $mod+Shift+2 move container to workspace number 2
 bindsym $mod+Shift+3 move to workspace 3
 bindsym $mod+Tab workspace next
 bindsym $mod+Shift+Tab move window to workspace prev
+include ../definitions
+bindsym $mod+t exec $term
+bindsym $mod+c exec notify-send bye; kill
+bindsym $mod+v exec "foot", focus left
+bindsym $mod+b exec notify-send "a; b, c"
 `
 
 func TestSwayExtract(t *testing.T) {
 	t.Parallel()
 	f := newFx(t, "sway")
 	f.write("00-previous.conf", swayConfig)
+	f.write("../definitions", "set $term foot -T 'my term'\n")
 	found := f.extract()
 	binds := byKey(found)
 	// Repeats only where axiom's action does (or a raw command as sway had it)
@@ -177,6 +183,15 @@ func TestSwayExtract(t *testing.T) {
 	}
 	eq(t, strings.Join(kept, ", "), "11 Mod4+button2 options: --border, 16 button2 options: title bar, 18 Mod4+y options: --input-device=1:1:kbd")
 	eq(t, list(found, "kept")[0].Value("file"), any(f.user("00-previous.conf")))
+	// A variable set in an included file, as sway reads it
+	eq(t, binds["SUPER + T"], `{"key":"SUPER + T","action":"exec","argument":"foot -T 'my term'"}`)
+	// Several commands, split at a ; or , outside quotes, stay sway's
+	eq(t, binds["SUPER + C"], `{"key":"SUPER + C","action":"raw","argument":"exec notify-send bye; kill","compositor":"sway","repeating":true}`)
+	eq(t, binds["SUPER + V"], `{"key":"SUPER + V","action":"raw","argument":"exec \"foot\", focus left","compositor":"sway","repeating":true}`)
+	eq(t, binds["SUPER + B"], `{"key":"SUPER + B","action":"exec","argument":"notify-send \"a; b, c\""}`)
+	// With --only, the variables user/'s earlier files set
+	f.write("01-later.conf", "bindsym $mod+e exec $term\n")
+	eq(t, byKey(f.extract("01-later.conf"))["SUPER + E"], `{"key":"SUPER + E","action":"exec","argument":"foot -T 'my term'"}`)
 }
 
 // Commenting one line out of a `bindsym { … }` block would leave the rest
@@ -626,6 +641,8 @@ binds {
         toggle-column-tabbed-display
     }
     Mod+P { spawn "notify-send" "it's" "a b"; }
+    Mod+Y { spawn "/opt/My App/app"; }
+    Mod+U { spawn "~/my scripts/run;x" "~/b"; }
 }
 `
 
@@ -648,6 +665,9 @@ func TestNiriExtract(t *testing.T) {
 	eq(t, binds["CTRL + ALT + Delete"], `{"key":"CTRL + ALT + Delete","action":"exitSession"}`)
 	eq(t, strings.Contains(binds["SUPER + W"], `"toggleGroup"`), true)
 	eq(t, binds["SUPER + P"], `{"key":"SUPER + P","action":"exec","argument":"notify-send 'it'\"'\"'s' 'a b'"}`)
+	// One word is quoted too; only the program's ~ is niri's home
+	eq(t, binds["SUPER + Y"], `{"key":"SUPER + Y","action":"exec","argument":"'/opt/My App/app'"}`)
+	eq(t, binds["SUPER + U"], `{"key":"SUPER + U","action":"exec","argument":"~/'my scripts/run;x' '~/b'"}`)
 	kept := list(found, "kept")
 	eq(t, len(kept), 1)
 	eq(t, kept[0].Value("key").(string)+" "+kept[0].Value("reason").(string), "Mod+Escape options")

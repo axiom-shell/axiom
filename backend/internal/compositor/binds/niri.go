@@ -82,8 +82,10 @@ func niriAction(node *kdl.Node) *jsonx.Object {
 			}
 		}
 		if len(words) == len(args) {
-			if len(words) == 1 {
-				return execBind(words[0])
+			// niri runs them without a shell, putting home in for the
+			// program's leading ~
+			if home, ok := strings.CutPrefix(words[0], "~/"); ok {
+				return execBind("~/" + shellJoin(append([]string{home}, words[1:]...)))
 			}
 			return execBind(shellJoin(words))
 		}
