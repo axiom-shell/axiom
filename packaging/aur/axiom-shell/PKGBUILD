@@ -38,6 +38,7 @@ optdepends=(
   'power-profiles-daemon: power profiles'
   'udisks2: removable drives (mount, open and eject USB sticks and memory cards)'
   'xdg-desktop-portal-gtk: browse buttons for folders and importing configs'
+  'fcitx5: typing Japanese, Chinese, Korean and more (the input method)'
   'greetd: axiom as the login screen (set up from Settings → Login screen)'
   'greetd-agreety: axiom as the login screen (its text fallback)'
 )

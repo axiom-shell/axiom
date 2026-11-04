@@ -117,6 +117,7 @@ TestCase {
     compare(Packages.installCommand("fedora", "satty"), "sudo dnf copr enable -y nett00n/hyprland && sudo dnf install satty");
     compare(Packages.installCommand("arch", ["greetd", "agreety"]), "sudo pacman -S --needed greetd greetd-agreety");
     compare(Packages.installCommand("fedora", ["greetd", "agreety"]), "sudo dnf install greetd", "agreety ships in greetd");
+    compare(Packages.installCommand("arch", ["fcitx5", "ibus-daemon"]), "sudo pacman -S --needed fcitx5 ibus", "ibus-daemon ships in ibus");
   }
 
   // Every distribution checks for updates, each with its own format
