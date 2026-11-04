@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A bar Grid warns as its bar turns between horizontal and vertical
+- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
+- **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.
+- **Size:** small
+- **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
+
 ### A bar widget's elasticity is stated twice
 - **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
 - **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
@@ -349,12 +355,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while screenshotting editor pages for the form row look
 
-### Keybind sections log null reads as they're torn down
-- **Where:** `qml/components/content/parts/KeybindSection.qml` (`section`, `items`, the folded count), `qml/components/methods/KeybindFilter.qml` (`sectionKey`)
-- **What:** Tearing down the Keybinds page or the Cheatsheet (a reload) logs a burst of `TypeError: Value is null and could not be converted to an object` from `KeybindSection.qml` (lines 20, 62, 67, 75, 82, 145) and `KeybindFilter.qml[14:-1]`, about 200 lines: the delegates' `section` goes null before their bindings stop. Guarding the reads of `root.section` (and `sectionKey`'s `section`) at the source would quiet it.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the bar display styles branch
-
 ### A custom layout's element rect reads an undefined place
 - **Where:** `qml/components/content/parts/custom/CustomLayout.qml` (the `CustomElement` delegate's `r`), `qml/components/methods/CustomWidgetData.qml` (`rect`)
 - **What:** The live shell logs `CustomWidgetData.qml[649:-1]: TypeError: Value is undefined and could not be converted to an object` after a reload: the delegate passes `element.place` while its `element` is still the `({})` stand-in (or past the end of a shrunk `elements`), and `rect` reads `place.x`. `rect` returning an empty rect for no place, or the delegate waiting for one, would quiet it.
@@ -366,12 +366,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
 - **Size:** small
 - **Found:** 2026-10-18, while debugging the screenshot crash with a popout open
-
-### WorkspaceStrip's Grid briefly has more items than cells
-- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (the `Grid`, `id: layout`)
-- **What:** The log shows `Grid contains more visible items (2) than rows*columns (1)` after a reload. `shown` counts `activeStrip.visible`, so for a moment the Grid's `rows`/`columns` lag a child becoming visible; likely harmless (the next layout pass fits), but it warns.
-- **Size:** small
-- **Found:** 2026-10-18, while auditing the community setups gallery
 
 ### A model of size -1 when the overlay grid resizes
 - **Where:** `qml/components/hosts/overlay/OverlayPages.qml` (around the `grid` unit change; the model itself not found yet)
@@ -413,75 +407,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The bind merge removes an hl.unbind whether or not its bind went
-- **Where:** `backend/internal/compositor/binds/hypr.go` (`extractHypr`'s unbind sites), `backend/internal/compositor/manager/manager.go` (`left`)
-- **What:** Extract adds an `hl.unbind(K)` site, with no binds, when K is a moved bind's key (hypr.go:459-474), and `remove` handles it on its own, per file. `left()` takes back only the binds of failed sites, matched by file and line, so the two outcomes split: the bind goes but the unbind's file fails (`syntax`, `io`, `changed`), and the user's surviving `hl.unbind(K)` runs after axiom's module and unbinds the moved bind (the key does nothing); or the unbind goes but the bind's file fails, the re-commit restores axiom's bind on K, and the user's `hl.bind(K)` fires alongside it, which bind-merge.md › Committing and removing says can't happen. Rare: needs one file of a merge to fail. Fix: give each unbind site the keys it covers; remove an unbind site only when its keys' bind sites all went, and treat a failed unbind site in `left()` as failing those binds.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A user/ file with a dot in its name never loads
-- **Where:** `backend/internal/compositor/render/hyprconfig.go` (`UserFilesLua`), `backend/internal/compositor/binds/hypr.go` (the extract's module name)
-- **What:** The managed and released files load each `user/*.lua` as `require("user." .. name)`, and the bind extract uses the same module name. Lua's `require` turns every `.` into `/`, so `user/my.binds.lua` is looked for as `user/my/binds.lua`: it never loads (Hyprland's config errors say module not found) and the merge reports an error for it. Reproduced against the extract. Nothing warns about dotted names (docs/installation.md only says `require("user.<name>")`). Fix: load such files with `dofile` (or skip them with a reported error), and say so in config-modes.md › managed. The `dofile` fix should skip dot-files, which the managed file's `ls *.lua` never loads: `hyprFiles` (binds/hypr.go:336) has no hidden-file filter, unlike sway's and niri's (the hyprland review, 2026-10-30).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A moved raw bind with a Lua keyword key compiles to nothing
-- **Where:** `backend/internal/compositor/binds/hyprlua.go` (`luaSource`)
-- **What:** `luaSource` writes a table key that looks like a name bare, keywords included (hyprlua.go:467): `{ ["end"] = 1 }` becomes `{ end = 1 }`, and NaN/Inf come out as `nan`/`inf` (nil globals). A dispatcher the merge maps to `raw` keeps that source as its argument; `DispatcherLua`'s `raw` case compiles it with `load`, which fails, so the moved bind becomes `hl.dsp.no_op()` while the user's original call is already deleted. Reproduced (`{["end"]=1}` → `{ end = 1 }`). Rare. Fix: exclude Lua's keywords from the bare form; better, `load`-check the rebuilt source at extract time and keep the site when it doesn't compile.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A workspace slide throws when animations go off between its legs
-- **Where:** `qml/services/compositor/HyprlandManager.qml` (`_nextSlide`, `travel`, `travelingTo`)
-- **What:** `travel` checks `_workspaceAnim` for the first leg only; `_nextSlide` re-reads it per leg and uses `anim.bezier`/`anim.style` unchecked (HyprlandManager.qml:517-534). An options read landing in the timer gap between the two legs of a diagonal grid switch with animations now off (`animations:enabled` false, the `instant` preset) makes the second leg throw a TypeError: the switch stops at the corner workspace, and `travelingTo` keeps the first leg's id, so `CompositorManager` plans the next switch from it and `_compaction` keeps deferring (`travelingTo > 0`) until another travel resets it. Rare. Fix: snapshot `anim` into each step in `travel`, or in `_nextSlide` dispatch the rest directly and reset `_slideSteps`/`travelingTo` when it's null.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Direct Hyprland dispatches can overtake queued Lua
-- **Where:** `qml/services/compositor/HyprlandManager.qml` (`sendWindowToWorkspace`, `activateWindow`, `travel`, `_eval`)
-- **What:** Workspace and window actions use two routes nothing orders: `Hyprland.dispatch` (Quickshell's socket, at once) and `_eval` (queued behind any Lua, through the daemon). A slide's chunk queued behind a compaction or remap chunk, followed by a quick `moveSilent` that dispatches at once, moves the focused window first; the queued chunk's focus-relative `hl.dsp.window.move({ workspace })` then acts on whatever window is focused by then. The same for an un-animated leg after a sliding one. PLAUSIBLE: the window is one `hypr.request` round trip, longer while a long chunk or a 5 s timeout holds the queue. Fix: while `_evaluating || _evalQueue.length > 0`, send direct dispatches through `_eval` too.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Recording two keys within 30 s can end the second recording early on Hyprland
-- **Where:** `qml/services/compositor/HyprlandManager.qml` (`_enterCaptureLua`, `captureKeys`), `qml/services/compositor/KeybindEditor.qml` (`startRecording`)
-- **What:** Each `captureKeys(true)` arms a 30 s `hl.timer` that leaves `axiom_record` if it's the current submap, and nothing cancels it when the recording stops. Record a key at t=0, finish at t=3, Add bind at t=10: the first timer leaves the second recording's submap at t=30, while QML still shows "Press a combo…" until its own 25 s timeout (`_recordTimeout`) ends it at t=35. Each start also redefines the submap, adding another copy of its unreachable bind (redefining a submap adds to it, as window-switcher.md notes). PLAUSIBLE and likely softened: the recorder's `ShortcutInhibitor` (KeyRecorder.qml) should keep Hyprland's binds from firing while it has focus. Sway already avoids the race by naming each mode anew. Fix: a generation in Lua (`AXIOM_CAPTURE_GEN`) checked by the timer and bumped on leave, and define the submap once.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Two keybind reference paths drop a key's binds
-- **Where:** `qml/services/compositor/KeybindsPageState.qml` (`_bindMods`), `qml/components/methods/BindRows.qml` (`collapseDirections`)
-- **What:** `_bindMods` decodes a bind's modifiers from its `BindKeys.keyId`, which leaves a tap's own modifier out, so a hand-written or merged `SUPER + Super_L` bind has no modifiers and the SUPER chip filters it out (the recorder's plain `Super_L` is unaffected). `collapseDirections` keeps only the first row per direction and merges only those (`_merged(ordered, …)`, BindRows.qml:107-119), while `_buildKeybindings` keeps rows whose labels differ in case apart ("Focus Left" next to "Focus left"), so the second row's `ids`, `user` and `overrides` are lost and the key map and combo lookup miss its key. Both rare. Fix: take the modifiers from `KeyNames.split(bind.key).mods`; pass all `members` to `_merged` and keep `ordered` for the cluster, with a test row of two "left" rows.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The monitor prompt's padding is a bare 18 px, and check_sizes misses it
 - **Where:** `qml/components/surfaces/monitors/MonitorPromptWindow.qml` (`pad`), `scripts/check_sizes.py` (`SIZE_WORD`)
 - **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it). The overlay's page navigator has the same gap: `readonly property real inset: 6` (`qml/components/hosts/overlay/OverlayPageNavigator.qml:38`) insets its arrows, tabs and pill in a bar whose height follows `Widget.height`. It should be `Widget.px(6)`, and `inset` belongs in `SIZE_WORD` too (found while reviewing the overlay system, 2026-10-31).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A bind description's section is parsed three ways
-- **Where:** `qml/services/compositor/KeybindsPageState.qml` (`_bindSection`), `qml/services/compositor/KeybindManager.qml` (`bindLabel`, `_buildKeybindings`), `qml/components/methods/BindActions.qml` (`hasOwnSection`)
-- **What:** "Section: Label" is split three ways: `indexOf(": ")`, `indexOf(":")` and `split(":")[0]`. Only the editor's (`_bindSection`) doesn't trim, so `" Media: Play"` or `"Media : Play"` passes `hasOwnSection` (which trims) and gets its own " Media"/"Media " section and chip in the editor, while the reference shows it under Media. Fix: one `BindActions.splitDescription(text) → { section, label }` (trimmed), with test rows for a leading space and `a:b: c`, used by all three.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### KeybindManager keeps tables the methods helpers already hold
-- **Where:** `qml/services/compositor/KeybindsPageState.qml` (`_bindMods`), `qml/components/methods/BindKeys.qml` (`decodeMods`)
-- **What:** Deletion pass. `_bindMods` parses keyId's string (`parseInt`) to get a mask back and decodes it (`BindKeys.decodeMods`); it stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds". The rest of this entry (the second modifier table, the key names KeyMap holds, the skipped keys worked out twice) was done in the clear-out's compositor-02.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The managed file's catch-all monitor line is copied into M.monitors
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`HyprFileMonitorCalls`), `backend/internal/compositor/manager/hypr.go`
-- **What:** Until the outputs are read, `M.monitors()` is refilled from the file: every line starting `hl.monitor({ output = "`. In managed mode that matches the managed file's fixed catch-all `hl.monitor({ output = "", mode = "preferred", … })` (hyprconfig.go:531) too, so each write made before the first read adds one more copy inside `M.monitors()`. Harmless (each replaces the default rule; the next write after a read cleans up) but the file churns and the layer key changes. Fix: read only the lines inside `function M.monitors()`, or skip `output = ""`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Stale lines in the Hyprland docs and comments
-- **Where:** `docs/dev/hyprland/window-switcher.md`, `qml/components/methods/WorkspaceGeometry.qml` (`orderMonitors`), `qml/components/methods/BindKeys.qml`, `backend/internal/compositor/render/keys.go` (`RuntimeBinds`), `qml/components/hosts/popout/EdgePopout.qml`
-- **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -574,38 +502,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### The key map and the keyboard reference each carry the same modifier chips and legend
-- **Where:** `qml/components/views/Keybinds/KeyMapPanel.qml:57`, `qml/components/views/Keybinds/KeyMapPanel.qml:82`, `qml/components/content/parts/KeyboardReference.qml:46`, `qml/components/content/parts/KeyboardReference.qml:75`
-- **What:** KeyMapPanel.qml:57-71 (15 lines) and KeyboardReference.qml:46-61 (16) are the same `Flow` of `KeyNames.modifiers` `SegmentButton`s toggling `KeybindManager.page.keyMapMods`. The only differences are `visible: root.showMods` and `root.mods` for `keyMapMods`. KeyMapPanel.qml:82-111 and KeyboardReference.qml:75-104 (30 lines each) are the same colour legend (a swatch `Rectangle` from `root.fill(source)` plus a label). Only the entry list differs ("paused" is in one only) and Flow/Row. Both also define the same `inkOf` rule. That is about 45 repeated lines around one shared part (`KeyboardMap`, "through hooks"). Fix: give `KeyboardMap` a `legend: [[source, label]]` with a `fillFor: source => color` hook (fillOf/inkOf then read `fillFor(sourceOf(key))`), and the chips behind a `showMods`/`mods` pair. Each caller passes its entries and colours. That removes about 40 lines from one side and keeps both looks.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A reference section's folded count re-derives BindRows.byModifiers' grouping
-- **Where:** `qml/components/content/parts/KeybindSection.qml:145`, `qml/components/methods/BindRows.qml:133` (`byModifiers`)
-- **What:** A folded group's count is `root.section.binds.filter(r => (r.combos[0]?.mods ?? []).join("+") === item.modelData.mods.join("+")).length`. That is `byModifiers`' own grouping rule (`row.combos?.[0]?.mods ?? []`, joined by "+") run again in the host, once per header per re-evaluation. AGENTS.md: "A methods helper's decision … is read from its output, never re-derived in a host". Fix: the header item in `items` carries `"count": group.rows.length` (KeybindSection.qml:21-24), and :145 reads `item.modelData.count`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### PresetSheet defers its re-choose a tick for a config that updates at once
-- **Where:** `qml/components/views/Keybinds/PresetSheet.qml:51`, `qml/components/views/Keybinds/PresetSheet.qml:264`
-- **What:** `saveAs` and "Save current binds over it" run `Qt.callLater(() => root.choose(…))` ("The list follows the config"). But `savePreset` → `SettingsManager.commitValues` → `ConfigManager.commit` sets `_config` synchronously (ConfigManager.qml:146) before the daemon call, so `KeybindsConfig.presets` and `savedPresets` are already current when it returns. A `Qt.callLater` standing in for an ordering the code already has is a timing hack (review lenses › design). Fix: call `root.choose(id)` / `root.choose(root.presetId)` directly and drop the comment.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The bind list's flag icons carry tooltip strings nothing shows
-- **Where:** `qml/components/views/Keybinds/BindListRow.qml:188`
-- **What:** The flags Repeater's model is `[["repeating", "repeat", I18n.tr("Repeats while held")], ["locked", "lock", I18n.tr("Works while locked")], ["release", "keyboard_capslock", I18n.tr("Fires on release")]]`, but the delegate (a bare `StyledIcon`, :190-196) reads only `modelData[1]`. "Repeats while held" and "Fires on release" are used nowhere else (grep: one hit each), so they are two dead translation keys translated into every language. Fix: show it (a `StyledToolTip` on hover). Showing it is likely the intent, since the icons alone don't explain themselves.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "show them (a StyledToolTip on hover)"): "agree".
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A reference section's title is worked out twice
-- **Where:** `qml/components/views/Keybinds/Keybinds.qml:203`, `qml/components/content/parts/KeybindSection.qml:67`
-- **What:** `section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"))` is written out in the chip labels and again in the section card. A change to one (a new kind of section) leaves the chip and the card disagreeing. Fix: one `sectionTitle(section)` in KeybindManager (beside `sectionIcon`), used by both.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland
 - **Where:** `qml/config/schema/sections/Input.yaml:115` (`mouse.accel`), `qml/config/schema/sections/Input.yaml:128` (`mouse.sensitivity`), `qml/config/schema/sections/Input.yaml:139` (`mouse.leftHanded`)
@@ -822,8 +718,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-31, while reviewing the modules system
 
 ### The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
-- **Where:** `qml/components/content/Cheatsheet/Cheatsheet.qml:46` (`fullMinHeight`), `qml/components/content/Cheatsheet/Cheatsheet.qml:36` (`strip`), `qml/components/content/parts/KeyboardMap.qml`, `qml/components/content/parts/KeyboardReference.qml:75` (the legend `Row`)
-- **What:** With `view: "keyboard"`, the module shows only `KeyboardReference`. Its height is fixed and it sits in no `Flickable`: 8 rows of `Math.round(Widget.height * 1.9)` = 57 px keys (6 `KeyMap.rows` plus the 20 `KeyMap.extras`), the gaps and the legend come to about 493 px inside, a card about 529 px tall. `fullMinHeight` is `Appearance.fontSize * 3` (42 px), the list view's figure, used for both views, and `strip` excludes the keyboard. So any card from 42 to about 529 px tall loses the legend, then the extra keys, then the lower rows, with no way to scroll to them. That includes the schema's `defaultSize: [8, 6]` at any unit under about 88 px. Across, at `fullMinWidth` (inner 160 px) a key unit is 8 px. Below about 24 px a unit, a key's corner name (never elided) spills into its neighbour. The legend is a non-wrapping `Row` of about 340 px. Fix: give the keyboard view its own minimums (about 28f × 38f), so a smaller slot shows the count figure, or a short key form, or put it in the list view's `Flickable`. Make the legend a `Flow`.
+- **Where:** `qml/components/content/Cheatsheet/Cheatsheet.qml:46` (`fullMinHeight`), `qml/components/content/Cheatsheet/Cheatsheet.qml:36` (`strip`), `qml/components/content/parts/KeyboardMap.qml`
+- **What:** With `view: "keyboard"`, the module shows only `KeyboardReference`. Its height is fixed and it sits in no `Flickable`: 8 rows of `Math.round(Widget.height * 1.9)` = 57 px keys (6 `KeyMap.rows` plus the 20 `KeyMap.extras`), the gaps and the legend come to about 493 px inside, a card about 529 px tall. `fullMinHeight` is `Appearance.fontSize * 3` (42 px), the list view's figure, used for both views, and `strip` excludes the keyboard. So any card from 42 to about 529 px tall loses the legend, then the extra keys, then the lower rows, with no way to scroll to them. That includes the schema's `defaultSize: [8, 6]` at any unit under about 88 px. Across, at `fullMinWidth` (inner 160 px) a key unit is 8 px. Below about 24 px a unit, a key's corner name (never elided) spills into its neighbour. Fix: give the keyboard view its own minimums (about 28f × 38f), so a smaller slot shows the count figure, or a short key form, or put it in the list view's `Flickable`.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 

@@ -196,7 +196,7 @@ BaseView {
                 "id": "section",
                 "options": KeybindManager.keybindings.filter(section => section.binds.length > 0).map(section => ({
                       "value": KeybindFilter.sectionKey(section),
-                      "label": (section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"))) + "  " + section.binds.length
+                      "label": KeybindManager.sectionTitle(section) + "  " + section.binds.length
                     }))
               },
               {

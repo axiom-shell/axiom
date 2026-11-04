@@ -20,7 +20,7 @@
 - It runs the files under gopher-lua (Lua 5.1), with no `lua` binary.
   - The daemon runs them in a child (`axiom compositor binds extract --memory-limit`, its own image through `/proc/self/exe`) that caps itself at 1 GiB (`RLIMIT_DATA`, `binds.MemoryLimit`): gopher-lua has no heap limit, and a file building a huge string allocates it in one instruction, so only the kernel can refuse it, and then only the child dies, never the daemon (the shell's parent). The merge then fails with what happened, and nothing moves. Refused memory, the Go runtime usually says `out of memory`, but inside its collector it may crash with a SIGSEGV instead: a child that crashed (killed by a signal, or the runtime's `fatal error` / `SIGSEGV` on stderr: `binds.crashed`) holding a quarter of the limit (peak RSS, `ProcessState.SysUsage`) is reported as too big too, since reading the files takes a few MiB; a crash below that reads as a crash, and the child's own error (a Lua error from a large file) reads as itself whatever its peak. A vforked child's peak counts the daemon's memory at exec, so a peak the daemon itself reached (its own `RUSAGE_SELF`) reads as a crash too (`binds.diedOfMemory`).
   - In any process, `string.rep` refuses a result over 16 MiB and the call stack is bounded.
-  - Each file is required as `user.<name>` against a stand-in `hl` that records `hl.bind`/`hl.unbind` with their file and line.
+  - Each file is required as `user.<name>` against a stand-in `hl` that records `hl.bind`/`hl.unbind` with their file and line. A file with a dot in its name (`my.binds.lua`) is one of the `errors`: `require` reads the dot as a folder, so Hyprland never loads it either (`render.DottedUserFile`).
   - Because the files really run, variables, string building and loops work.
   - Limits:
     - `io.popen` reads empty, `io.open` only reads, `os.execute`, `os.remove` and `os.rename` do nothing, and there's no `debug` library (`require("io")` and `package.loaded.io` are the stand-in too)
@@ -34,7 +34,7 @@
   - the example config's exit command → `exitSession`
   - any other exec → `exec`
   - focus/move/float/pseudo/togglesplit/special/drag → their own actions
-  - anything else → the `raw` action (`compositor: hyprland`), with the dispatcher as written.
+  - anything else → the `raw` action (`compositor: hyprland`), with the dispatcher as written (its arguments rebuilt as Lua source: a keyword key bracketed, nan and inf as `(0/0)` and `math.huge`).
 - Hyprland's example config maps completely.
 - **Remapped keys.** Binds from an adopted `00-previous*.lua` on keys axiom's defaults use are moved (`exampleKeys`) and reported in `remapped`. A key in the user's other files was their own choice, so it isn't moved.
   - togglesplit: `SUPER + J` (focus down) → `SUPER + X`
@@ -52,6 +52,7 @@
 ### Committing and removing
 1. The daemon saves the binds first (`Keybinds.binds`, through the store; refused while the config is read-only, `saveFailed`). The `compositor.bindsMerged` push lets `KeybindEditor` add them to a dirty draft.
 2. `remove` then deletes those calls, plus any `hl.unbind` of a moved key, its modifiers compared by `render.KeyID` (WIN is SUPER; it would unbind the moved bind too).
+   - A moved key's `hl.unbind` and its binds go together or stay together, in whichever files they are (`paired`): each site carries its `keys`, and every file is planned before any is written, so only a failed write can still split them.
    - It first writes a dated `<file>.axiom-backup-<date>` copy, keeping the file's mode.
    - A site carries its statement's text as extract read it: a call on that line now that differs (the file changed in between) is left (`changed`).
    - It leaves a file alone if the result doesn't parse (`luacheck`: `luac -p` where it's installed, else gopher-lua).

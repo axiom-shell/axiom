@@ -82,8 +82,8 @@ PopoutWrapperBase {
   // How far back towards the screen edge a detached box slides in from,
   // as a bar popout's: from under a transparent bar on its edge (its outer
   // edge, past the border stroke it lies on inside the border), its window
-  // starting there on the bar's layer, ordered under it (HyprlandManager's
-  // layer rules), when it slides under at all (EdgePlacement.slidesUnder:
+  // starting there on the bar's layer, ordered under it (the daemon's
+  // layer rules, render.LayerRulesLua), when it slides under at all (EdgePlacement.slidesUnder:
   // not while the overlay is open on its screen, _overOverlay, nor over a
   // fullscreen window, nor without supports.layerOrder). Anything else it
   // opens over, sliding out within its own window.
@@ -383,8 +383,8 @@ PopoutWrapperBase {
     // the border's and bars' reserved area; the -borderWidth margin then
     // lines it up with their inner stroke, whether that's a bar or the
     // plain border.
-    // Sliding under something, on its layer, ordered under it (see
-    // HyprlandManager's layer rules)
+    // Sliding under something, on its layer, ordered under it (see the
+    // daemon's layer rules, render.LayerRulesLua)
     WlrLayershell.layer: root.windowLayer
     WlrLayershell.namespace: root.layerNamespace
     // Its top-left on its screen, or null while unknown (a wallpaper

@@ -139,14 +139,24 @@ Singleton {
     return `"address:${id}"`;
   }
 
+  // Dispatches at once (Quickshell's socket), or behind the queued Lua
+  // while some waits, so a quick action can't overtake a chunk acting on
+  // the focused window
+  function _dispatch(dispatcher) {
+    if (_evaluating || _evalQueue.length > 0)
+      _eval(`hl.dispatch(${dispatcher})`);
+    else
+      Hyprland.dispatch(dispatcher);
+  }
+
   function closeWindow(id) {
-    Hyprland.dispatch(`hl.dsp.window.close({ window = ${_window(id)} })`);
+    root._dispatch(`hl.dsp.window.close({ window = ${_window(id)} })`);
   }
 
   // Focuses a window where it is (CompositorManager.focusWindow switches
   // workspace first, sliding)
   function activateWindow(id) {
-    Hyprland.dispatch(_focusWindowDispatcher(id));
+    root._dispatch(_focusWindowDispatcher(id));
   }
 
   function _focusWindowDispatcher(id) {
@@ -395,21 +405,28 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
 
   // While on, every key reaches axiom instead of a bind (the Keybinds
   // page's recorder): an empty submap (Hyprland only registers one with a
-  // bind, hence the unreachable one). A Hyprland timer leaves it even if
-  // the shell dies meanwhile.
+  // bind, hence the unreachable one; defined once, as redefining one adds
+  // to it). A Hyprland timer leaves it even if the shell dies meanwhile,
+  // unless a later recording started or this one ended (the generation).
   function captureKeys(on) {
     root._eval(on ? root._enterCaptureLua : root._leaveCaptureLua);
   }
 
   readonly property string _captureSubmap: "axiom_record"
-  readonly property string _leaveCaptureLua: `if hl.get_current_submap() == "${_captureSubmap}" then hl.dispatch(hl.dsp.submap("reset")) end`
-  readonly property string _enterCaptureLua: `hl.define_submap("${_captureSubmap}", function() hl.bind("SUPER + CTRL + ALT + SHIFT + F24", hl.dsp.submap("reset")) end)
-hl.timer(function() ${_leaveCaptureLua} end, { timeout = 30000, type = "oneshot" })
+  readonly property string _leaveCaptureLua: `AXIOM_CAPTURE_GEN = (AXIOM_CAPTURE_GEN or 0) + 1
+if hl.get_current_submap() == "${_captureSubmap}" then hl.dispatch(hl.dsp.submap("reset")) end`
+  readonly property string _enterCaptureLua: `if not AXIOM_CAPTURE_DEFINED then
+  hl.define_submap("${_captureSubmap}", function() hl.bind("SUPER + CTRL + ALT + SHIFT + F24", hl.dsp.submap("reset")) end)
+  AXIOM_CAPTURE_DEFINED = true
+end
+AXIOM_CAPTURE_GEN = (AXIOM_CAPTURE_GEN or 0) + 1
+local gen = AXIOM_CAPTURE_GEN
+hl.timer(function() if AXIOM_CAPTURE_GEN == gen then ${_leaveCaptureLua} end end, { timeout = 30000, type = "oneshot" })
 hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
 
   // Ends the Hyprland session (the power menu's log out)
   function exitSession() {
-    Hyprland.dispatch("hl.dsp.exit()");
+    root._dispatch("hl.dsp.exit()");
   }
 
   // Calls back with the cursor's global position ({ x, y }), or null if
@@ -441,12 +458,12 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
 
   // Sends the focused window to workspace `id`, staying put
   function sendWindowToWorkspace(id) {
-    Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${id}, follow = false })`);
+    root._dispatch(`hl.dsp.window.move({ workspace = ${id}, follow = false })`);
   }
 
   // Focuses output `name` (a dynamic workspaces' left or right step)
   function focusOutput(name) {
-    Hyprland.dispatch(`hl.dsp.focus({ monitor = ${JSON.stringify(name)} })`);
+    root._dispatch(`hl.dsp.focus({ monitor = ${JSON.stringify(name)} })`);
   }
 
   // Moves the focused window to the workspace output `name` shows, going
@@ -454,12 +471,12 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   function moveWindowToOutput(name, follow) {
     const id = root.outputs.find(o => o.name === name)?.activeWorkspaceId ?? -1;
     if (id >= 1)
-      Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${id}, follow = ${follow === true} })`);
+      root._dispatch(`hl.dsp.window.move({ workspace = ${id}, follow = ${follow === true} })`);
   }
 
   // Scrolls the focused workspace's strip a column on (1) or back (-1)
   function scrollStrip(direction) {
-    Hyprland.dispatch(`hl.dsp.layout("move ${direction > 0 ? "+col" : "-col"}")`);
+    root._dispatch(`hl.dsp.layout("move ${direction > 0 ? "+col" : "-col"}")`);
   }
 
   // A workspace switch (CompositorManager.goToWorkspace): `output` is
@@ -475,7 +492,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     const arrive = focusId ? _focusWindowDispatcher(focusId) : _goDispatcher(last.id, mode);
     const anim = root._workspaceAnim;
     if (!anim || legs.some(leg => !leg.axis)) {
-      lead.concat([arrive]).forEach(dispatcher => Hyprland.dispatch(dispatcher));
+      lead.concat([arrive]).forEach(dispatcher => root._dispatch(dispatcher));
       root.travelingTo = -1;
       return;
     }
@@ -486,6 +503,7 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
           "id": leg.id,
           "style": leg.axis === "y" ? "slidevert" : "slide",
           "speed": speed,
+          "anim": anim,
           "dispatchers": (i === 0 ? lead : []).concat([i === legs.length - 1 ? arrive : _goDispatcher(leg.id, mode)])
         }));
     _nextSlide();
@@ -508,7 +526,8 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
       root.travelingTo = -1;
       return;
     }
-    const anim = root._workspaceAnim;
+    // As travel read it: animations may go off between two legs
+    const anim = step.anim;
     const set = (style, speed) => `hl.animation({ leaf = "workspaces", enabled = true, speed = ${speed}, bezier = "${anim.bezier}", style = "${style}" })`;
     _eval([set(step.style, step.speed)].concat(step.dispatchers.map(dispatcher => `hl.dispatch(${dispatcher})`), [set(anim.style, anim.speed)]).join("\n"));
     if (root._slideSteps.length > 0) {

@@ -18,6 +18,7 @@ How the shell reads from and acts on Hyprland, without running `hyprctl`.
 - Events become signals, never `rawEvent` names (`_announce` maps them): `layersChanged`, `outputsHotplugged`, `configReloaded`, `keyboardLayoutChanged`, `windowFocused(appId)`, `switcherKey(verb, argument)`.
 - Hyprland's focus grab is `HyprlandGrab`, which only `FocusGrab` creates.
 - `_eval(lua, callback)` queues Lua chunks and runs them one at a time, in order, calling back with Hyprland's reply (`"ok"` or the error). Once the queue drains, it refetches the window list and, if asked meanwhile, the options (`layerApplied`).
+- Its own dispatches go through `_dispatch`: at once through `Hyprland.dispatch()`, but behind the queue while Lua waits in it, so a quick action (`sendWindowToWorkspace`) can't overtake a queued chunk acting on the focused window.
 - The options axiom follows (gaps, split multiplier, blur, the animations) are read in one batch: at startup, on `configreloaded`, and after axiom changes them.
 - Commands that Hyprland runs, and shell scripts, still call `hyprctl` (the exit bind): they run outside the shell. DPMS for idle is the daemon's, over the socket (`Manager.ScreenPower`).
 

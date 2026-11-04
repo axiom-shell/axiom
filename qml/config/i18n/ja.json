@@ -3858,6 +3858,7 @@
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, special workspace name, resize step (\"50 0\"), screenshot kind (region, window or screen), timer length (10m, 1:30), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout(\"swapsplit\"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).": "",
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.": "",
     "Auto-hiding bar": "",
-    "Use its type's priority": ""
+    "Use its type's priority": "",
+    "it goes with a call on the same key that stays": ""
   }
 }

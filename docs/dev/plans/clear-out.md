@@ -15,7 +15,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. Gaps to the edges are wider on sway than the setting says: accept the narrower gap.
-8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
+8. The bind list's flag icons carry tooltip strings nothing shows: show them.
 9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
 10. Removed: an edge popout's inconsistent size (fixed, maintainer).
 11. Deferred: [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall).
@@ -89,7 +89,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 41 | compositor-14 | major | Done: Capability gates in the schema | 3 | ~80 | none |  |
 | 42 | compositor-15 | major | Done: The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | Done: The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
-| 44 | compositor-17 | minor-sweep | Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
+| 44 | compositor-17 | minor-sweep | Done: Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
 | 45 | compositor-18 | plan | Touchpad settings apart from the mouse's | 1 | needs a plan | none |  |
 | 46 | bar-popouts-03 | major | EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
@@ -395,25 +395,25 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Picking a key in the key map under an edit search selects a bind the list doesn't show
   - Renaming a saved preset after switching presets renames the wrong one
   - The reference's sections and both chip rows are built while hidden
-- **compositor-17** (18): Six file groups, one commit each; fine under the gate.
-  - [The bind merge removes an hl.unbind whether or not its bind went](../issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
-  - [A user/ file with a dot in its name never loads](../issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
-  - [A moved raw bind with a Lua keyword key compiles to nothing](../issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
-  - [The managed file's catch-all monitor line is copied into M.monitors](../issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
-  - [A workspace slide throws when animations go off between its legs](../issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
-  - [Direct Hyprland dispatches can overtake queued Lua](../issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
-  - [Recording two keys within 30 s can end the second recording early on Hyprland](../issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
-  - [Two keybind reference paths drop a key's binds](../issues.md#two-keybind-reference-paths-drop-a-keys-binds)
-  - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold) (its _bindMods part, left by compositor-02)
-  - [A bind description's section is parsed three ways](../issues.md#a-bind-descriptions-section-is-parsed-three-ways)
-  - [Keybind sections log null reads as they're torn down](../issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
-  - [WorkspaceStrip's Grid briefly has more items than cells](../issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
-  - [The key map and the keyboard reference each carry the same modifier chips and legend](../issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
-  - [A reference section's folded count re-derives BindRows.byModifiers' grouping](../issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
-  - [PresetSheet defers its re-choose a tick for a config that updates at once](../issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
-  - [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
-  - [A reference section's title is worked out twice](../issues.md#a-reference-sections-title-is-worked-out-twice)
-  - [Stale lines in the Hyprland docs and comments](../issues.md#stale-lines-in-the-hyprland-docs-and-comments)
+- **compositor-17** (18, done): Six file groups, one commit each; fine under the gate.
+  - The bind merge removes an hl.unbind whether or not its bind went
+  - A user/ file with a dot in its name never loads
+  - A moved raw bind with a Lua keyword key compiles to nothing
+  - The managed file's catch-all monitor line is copied into M.monitors
+  - A workspace slide throws when animations go off between its legs
+  - Direct Hyprland dispatches can overtake queued Lua
+  - Recording two keys within 30 s can end the second recording early on Hyprland
+  - Two keybind reference paths drop a key's binds
+  - KeybindManager keeps tables the methods helpers already hold (its _bindMods part, left by compositor-02)
+  - A bind description's section is parsed three ways
+  - Keybind sections log null reads as they're torn down
+  - WorkspaceStrip's Grid briefly has more items than cells
+  - The key map and the keyboard reference each carry the same modifier chips and legend
+  - A reference section's folded count re-derives BindRows.byModifiers' grouping
+  - PresetSheet defers its re-choose a tick for a config that updates at once
+  - The bind list's flag icons carry tooltip strings nothing shows
+  - A reference section's title is worked out twice
+  - Stale lines in the Hyprland docs and comments
 - **compositor-18** (1): Decided that they separate; the plan settles how on Hyprland.
   - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](../issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
 

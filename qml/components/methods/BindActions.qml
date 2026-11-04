@@ -103,6 +103,20 @@ QtObject {
     return call === "toggle" ? label : `${label} (${call})`;
   }
 
+  // A description's own section and label, trimmed ("Media: Play" ->
+  // { section: "Media", label: "Play" }); section "" when it names none
+  function splitDescription(description) {
+    const text = String(description ?? "").trim();
+    const match = text.match(/^([^:]+): (\S[\s\S]*)$/);
+    return match && match[1].trim() !== "" ? {
+      "section": match[1].trim(),
+      "label": match[2].trim()
+    } : {
+      "section": "",
+      "label": text
+    };
+  }
+
   // Whether a description names its own section ("Section: Label")
   function hasOwnSection(description) {
     return /^[^:]+: \S/.test(String(description ?? "").trim());

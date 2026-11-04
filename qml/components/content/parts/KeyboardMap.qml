@@ -3,25 +3,34 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.config
+import qs.services.compositor
 import qs.components.methods
 import qs.components.reusable
 
 // A US keyboard (KeyMap.rows, then KeyMap.extras), each key coloured and
 // labelled through hooks: the editor's key map of free keys and the
 // keybinds reference's keyboard. `tall` keys show an icon and what the key
-// does under its name.
+// does under its name. Above it the modifier chips, below it what the
+// colours mean.
 ColumnLayout {
   id: root
 
-  // Hooks, by a key's name: its fill, its ink, whether it takes a click,
-  // and for tall keys what it does (a label and an icon; a tooltip shows
-  // the label in full)
-  property var fillOf: key => Theme.backgroundAlt
-  property var inkOf: key => Theme.foreground
+  // Hooks, by a key's name: whose it is (a source, coloured by fillFor; axiom's
+  // and both take the background's ink), whether it takes a click, and for
+  // tall keys what it does (a label and an icon; a tooltip shows the label
+  // in full)
+  property var sourceOf: key => ""
+  property var fillFor: source => Theme.backgroundAlt
   property var clickableOf: key => false
   property var labelOf: key => ""
   property var iconOf: key => ""
   property bool tall: false
+  // The modifier chips (shown with showMods), lit for `mods`: they toggle
+  // the page's key map modifiers
+  property bool showMods: false
+  property var mods: []
+  // What the colours mean: [[source, label]]
+  property var legend: []
 
   signal clicked(string key)
 
@@ -45,11 +54,12 @@ ColumnLayout {
     readonly property bool clickable: !keyButton.blank && root.clickableOf(keyButton.entry.key)
     readonly property string does: keyButton.blank ? "" : root.labelOf(keyButton.entry.key)
     readonly property string icon: keyButton.blank ? "" : root.iconOf(keyButton.entry.key)
-    readonly property color ink: root.inkOf(keyButton.entry.key)
+    readonly property string source: keyButton.blank ? "" : root.sourceOf(keyButton.entry.key)
+    readonly property color ink: keyButton.source === "axiom" || keyButton.source === "both" ? Theme.background : Theme.foreground
 
     implicitHeight: Math.round(Widget.height * (root.tall ? 1.9 : 0.9))
     radius: Widget.radius / 2
-    color: keyButton.blank ? "transparent" : root.fillOf(keyButton.entry.key)
+    color: keyButton.blank ? "transparent" : root.fillFor(keyButton.source)
     border.width: keyArea.containsMouse && keyButton.clickable ? 1 : 0
     border.color: Theme.foreground
 
@@ -112,6 +122,24 @@ ColumnLayout {
     }
   }
 
+  Flow {
+    visible: root.showMods
+    Layout.fillWidth: true
+    Layout.bottomMargin: Widget.spacing
+    spacing: Widget.spacing / 2
+
+    Repeater {
+      model: KeyNames.modifiers
+
+      delegate: SegmentButton {
+        required property string modelData
+        text: KeyNames.modifierLabel(modelData)
+        active: root.mods.includes(modelData)
+        onClicked: KeybindManager.page.toggleKeyMapMod(modelData)
+      }
+    }
+  }
+
   Repeater {
     model: KeyMap.rows
 
@@ -149,6 +177,39 @@ ColumnLayout {
         required property var modelData
         entry: modelData
         width: extras.keyWidth
+      }
+    }
+  }
+
+  // A Flow, from the left: it wraps in a narrow Cheatsheet
+  Flow {
+    Layout.fillWidth: true
+    Layout.topMargin: Widget.spacing
+    spacing: Widget.spacing * 2
+
+    Repeater {
+      model: root.legend
+
+      delegate: Row {
+        id: legendEntry
+        required property var modelData
+        spacing: Widget.spacing / 2
+
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          width: Appearance.fontSize
+          height: Appearance.fontSize
+          radius: Widget.px(3)
+          color: root.fillFor(legendEntry.modelData[0])
+          border.width: 1
+          border.color: Theme.border
+        }
+
+        StyledText {
+          text: legendEntry.modelData[1]
+          opacity: 0.7
+          textSize: Appearance.fontSizeBy(-2)
+        }
       }
     }
   }

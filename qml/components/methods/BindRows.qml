@@ -116,7 +116,9 @@ QtObject {
           "cluster": cluster
         };
       });
-      return root._merged(ordered, directionOf(members[0]).label, combos);
+      // Every member's sources and ids, though the cluster shows the first
+      // per direction
+      return root._merged(members, directionOf(members[0]).label, combos);
     });
   }
 

@@ -155,10 +155,12 @@ func TestLookBlurLua(t *testing.T) {
 }
 
 // The profile a module holds (HyprFileMonitorCalls): its own hl.monitor
-// calls, not the user's Lua nor an older module's picker
+// calls, not the user's Lua, an older module's picker nor the managed
+// file's catch-all
 func TestHyprFileMonitorCalls(t *testing.T) {
 	t.Parallel()
-	text := `function M.monitors()
+	text := `hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+function M.monitors()
   hl.monitor({ output = "DP-1", mode = "preferred", position = "0x0", scale = 1 })
   hl.monitor(rule)
         hl.monitor({ output = spec.output, mode = "preferred", position = "auto", scale = "auto" })

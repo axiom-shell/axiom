@@ -55,6 +55,8 @@ ColumnLayout {
       return I18n.tr("it's inside a bindsym { } block");
     case "io":
       return I18n.tr("the file couldn't be read or written ({0})", entry.detail);
+    case "paired":
+      return I18n.tr("it goes with a call on the same key that stays");
     case "crashed":
       return I18n.tr("the merge failed ({0})", entry.detail);
     }
