@@ -356,7 +356,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A failed monitor profile apply is never retried for the same outputs
   - [A sway output rule by description misses a monitor with no serial](../issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
   - [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](../issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
-  - [Managed mode's monitor-conflict check misses quoted and block output lines](../issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
+  - Managed mode's monitor-conflict check misses quoted and block output lines
 - **compositor-10** (3): The reload entry is a rare path: smallest fix.
   - [A trial monitor Apply that turns a monitor off drops its Keep/Revert](../issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
   - [A shell reload during a trial monitor Apply loses the way back](../issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)

@@ -74,3 +74,24 @@ func TestSwayTargetsTheConfigSwayRuns(t *testing.T) {
 	os.WriteFile(managed, []byte("# mine\n"), 0o644)
 	check(managed, "")
 }
+
+// The monitor-conflict check sees an output line by every name sway takes
+// (bare, double- or single-quoted) and the block form, not other settings
+func TestSwayMonitorPattern(t *testing.T) {
+	t.Parallel()
+	pattern, _ := (&swayWriter{}).monitorPattern()
+	for line, want := range map[string]bool{
+		`output DP-1 mode 1920x1080`:                        true,
+		`output "Dell Inc. DELL U2720Q 123" mode 3840x2160`: true,
+		`output DP-1 {`:                             true,
+		`output 'LG 27' pos 0 0`:                    true,
+		`  output "Dell Inc. DELL U2720Q 123" {`:    true,
+		`output * bg ~/wall.png fill`:               false,
+		`# output DP-1 mode 1920x1080`:              false,
+		`bindsym $mod+o output DP-1 mode 1920x1080`: false,
+	} {
+		if got := pattern.MatchString(line); got != want {
+			t.Errorf("%q: matched %v, want %v", line, got, want)
+		}
+	}
+}

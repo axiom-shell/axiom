@@ -95,8 +95,10 @@ func (w *swayWriter) problems(in Inputs) problems {
 	return p
 }
 
+// monitorPattern: an output line setting a monitor, its name bare or quoted
+// ("…" or '…'), or an `output X {` block
 func (w *swayWriter) monitorPattern() (*regexp.Regexp, string) {
-	return regexp.MustCompile(`^[[:space:]]*output[[:space:]]+[^[:space:]]+[[:space:]]+(mode|res|resolution|pos|position|scale|transform|enable|disable|power)`), "*"
+	return regexp.MustCompile(`^\s*output\s+("[^"]*"|'[^']*'|\S+)\s+(\{|mode|res|resolution|pos|position|scale|transform|enable|disable|power)`), "*"
 }
 
 func (w *swayWriter) complete(in Inputs, bind any) bool {

@@ -715,20 +715,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the sway system
 
-### Managed mode's monitor-conflict check misses quoted and block output lines
-- **Where:** `backend/internal/compositor/manager/sway.go:84` (`monitorPattern`), `backend/internal/compositor/manager/manager.go:966` (`findMonitorConflicts`)
-- **What:** In managed mode, `user/` files that set monitors (they load after axiom's lines and win) should show as `monitorConflicts` on the Monitors page. sway's pattern takes the output name as `[^[:space:]]+`, so it misses the forms sway users write most for a particular monitor. Running the regex:
-  - `output DP-1 mode 1920x1080` matches.
-  - `output "Dell Inc. DELL U2720Q 123" mode 3840x2160` doesn't.
-  - `output DP-1 {` doesn't.
-  - `output 'LG 27' pos 0 0` doesn't.
-
-  A takeover adopts the old config's output lines into `user/00-previous.conf`, so after a claim they override the Monitors page's profile with no warning. No test covers the sway pattern.
-
-  Fix: `^\s*output\s+("[^"]*"|'[^']*'|\S+)\s+(\{|mode|res|resolution|pos|position|scale|transform|enable|disable|power)`, with a test row for each form.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### The detached layer's unbind list can drift from what sway holds
 - **Where:** `backend/internal/compositor/manager/sway.go:225` (`runtimeApply`), `backend/internal/compositor/manager/sway.go:193` (`sendEach`)
 - **What:** `runtimeApply` replaces and saves `SwayUnbind` (235-237) before anything is sent, and `sendEach` drops `run`'s transport failure. If the socket call fails (dial error, the 5 s timeout), neither the old unbinds nor the new binds reach sway. The old runtime binds stay bound but are no longer recorded, so a bind removed in axiom keeps firing until sway reloads.

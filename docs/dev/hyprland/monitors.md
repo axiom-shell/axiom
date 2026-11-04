@@ -43,7 +43,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - Warnings:
   - islands (monitors not touching the rest)
   - scales Hyprland will round
-  - in managed mode, `user/*.lua` files that call `hl.monitor` (`CompositorConfigManager.monitorConflicts`). Those rules load later and win.
+  - in managed mode, `user/*.lua` files that call `hl.monitor` (`CompositorConfigManager.monitorConflicts`; on niri `user/*.kdl` with an `output` node, on sway `user/*` with an `output` line setting a monitor, its name bare or quoted, or an `output … {` block: each writer's `monitorPattern`). Those rules load later and win.
 
 ### Apply, Keep, Revert
 1. **Apply** has axiom eval the selected profile's `hl.monitor` calls (`CompositorManager.applyOutputs` → `outputs.apply`, `render.MonitorCalls`), after taking a snapshot of the old state.
