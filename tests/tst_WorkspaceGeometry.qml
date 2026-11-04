@@ -315,6 +315,14 @@ TestCase {
     ], "", 10, profiles), {
       "DP-9": 21
     }, "a named monitor on another port keeps its block");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-2",
+        "description": ""
+      }
+    ], "", 10, profiles), {
+      "DP-2": 11
+    }, "a monitor with no description yet keeps its block by the connector it was last seen on");
   }
 
   function test_outputToward() {

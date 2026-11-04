@@ -239,7 +239,8 @@ QtObject {
   // Each output's first workspace id ({ [name]: id }) when every output
   // owns a block of `size` ids. Blocks are numbered over every monitor the
   // monitor profiles name (by their rules' `output`; the primary first,
-  // matched by connector or by the rule's `label` while unplugged), then the
+  // matched by connector or by the rule's `label` while unplugged or its
+  // description is unknown), then the
   // connected ones none names (keyed by MonitorLayout.outputId), each part
   // in orderMonitors' order, so a block never moves with what's connected.
   // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
@@ -259,7 +260,9 @@ QtObject {
     }
     const unknown = [];
     for (const o of list) {
-      const k = known.find(k => !k.connected && MonitorLayout.matches(k.key, o));
+      // An output whose description is still to come (Hyprland's, at the
+      // start) matches by the connector a rule last saw it on
+      const k = known.find(k => !k.connected && (MonitorLayout.matches(k.key, o) || (!o.description && k.name === o.name)));
       if (k) {
         k.connected = o.name;
         k.name = o.name;

@@ -362,10 +362,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A shell reload during a trial monitor Apply loses the way back
   - Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed
 - **compositor-11** (5): Takes features' sway named-workspaces entry (SwayState, CompositorManager).
-  - [A remap runs at startup, from the layout before the config loaded](../issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
-  - [A monitor a profile names by description gets the next block until its description arrives](../issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
+  - A remap runs at startup, from the layout before the config loaded
+  - A monitor a profile names by description gets the next block until its description arrives
   - [sway lists disabled outputs as outputs](../issues.md#sway-lists-disabled-outputs-as-outputs)
-  - [In the standard layout, a switch past `count` slides through an unrelated workspace](../issues.md#in-the-standard-layout-a-switch-past-count-slides-through-an-unrelated-workspace)
+  - In the standard layout, a switch past `count` slides through an unrelated workspace
   - [sway's named workspaces all share workspace id -1](../issues.md#sways-named-workspaces-all-share-workspace-id--1)
 - **compositor-12** (3):
   - [The overview stays open with nothing shown after its monitor goes away](../issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)

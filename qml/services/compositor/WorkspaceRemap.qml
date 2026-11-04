@@ -32,15 +32,18 @@ QtObject {
     };
   }
 
-  // A layout or count change saved together is one remap. Turning the
-  // grid on (from off as last kept, so the config settling at the shell's
-  // start never counts) starts every output at its block's centre
+  // A layout or count change saved together is one remap; a change signal
+  // that leaves the layout as applied (at the shell's start) is none.
+  // Turning the grid on (from off as last kept, so the config settling at
+  // the shell's start never counts) starts every output at its block's
+  // centre
   property Timer _timer: Timer {
     interval: 200
     onTriggered: {
       const layout = root._layout();
-      if (root._applied)
-        root.remap(root._applied, layout, layout.grid && root._kept.grid === false);
+      const applied = root._applied;
+      if (applied && (applied.blocks !== layout.blocks || applied.size !== layout.size || applied.grid !== layout.grid))
+        root.remap(applied, layout, layout.grid && root._kept.grid === false);
       root._applied = layout;
       if (root._kept.grid !== undefined && root._kept.grid !== layout.grid)
         root._keep(layout.grid);
