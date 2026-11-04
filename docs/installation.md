@@ -33,6 +33,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Night light | nothing on Hyprland and sway; `wlsunset` on niri |
 | X11 apps (Steam, games, older apps) | On niri, `xwayland-satellite` (niri runs X11 apps only through it); on sway, Xwayland (`xorg-xwayland` on Arch, `xorg-x11-server-Xwayland` on Fedora). Hyprland's package brings Xwayland itself |
 | Notes | `gio` (glib2) to move deleted notes to the trash |
+| Typing Japanese, Chinese, Korean, … (input methods) | `fcitx5` (the default) with its engines (`fcitx5-mozc`, `fcitx5-chinese-addons`, `fcitx5-hangul`, …), or `ibus`. In managed mode axiom sets their environment and starts the framework |
 | Theme integrations | The app itself (`kitty`, `alacritty`, `foot`, `wezterm`, `ghostty`, `nvim`, `helix`/`hx`, VS Code or VSCodium, Zed (`zed`/`zeditor`), Firefox or a fork (LibreWolf, Zen, Floorp, Waterfox), Vesktop or Vencord, `zathura`, `ncspot`, `k9s`, `cava`, `btop`, `fzf` 0.49+, `lazygit`, `bat`, `yazi` 25.5+); `qt5ct`/`qt6ct` for Qt; `adw-gtk-theme` for GTK3 apps |
 
 </details>
