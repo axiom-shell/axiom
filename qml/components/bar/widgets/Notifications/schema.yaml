@@ -1,4 +1,5 @@
-label: Notification Center
+label: Notifications
+keywords: ['Notification Center']
 icon: notifications
 group: Desktop
 popout: {variant: own, enabled: {description: Open the notification list when hovered.}}

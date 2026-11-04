@@ -131,6 +131,12 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	bars, _ := defaults.(*jsonx.Object).Value("Bars").(*jsonx.Object)
 	items, _ := bars.Value("items").(*jsonx.Array)
 	for _, bar := range items.Items {
+		for _, key := range barKeysAddedSinceV1 {
+			bar.(*jsonx.Object).Delete(key)
+		}
+		if style, ok := bar.(*jsonx.Object).Value("style").(*jsonx.Object); ok {
+			style.Delete("textScale")
+		}
 		sections, _ := bar.(*jsonx.Object).Value("widgets").(*jsonx.Object)
 		for _, side := range sections.Keys() {
 			widgets, _ := sections.Value(side).(*jsonx.Array)
@@ -154,7 +160,7 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify"}
+var addedSinceV1 = []string{"Bars.style.textScale", "Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify"}
 
 // osdItemFields drops what an OSD gained since format 1 that no step
 // writes: every bar's fields but its type, icon and showOsd (each kind's
@@ -221,6 +227,10 @@ func osdItemFields(cfg *jsonx.Object) {
 // Bar widget settings added since, the same way (a widget's display style,
 // the Network widget's VPN lock and its popout's VPN section)
 var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn"}
+
+// A bar's settings added since (v93: its length and auto-hide), and its
+// style's textScale (in place of a font size of null, the default)
+var barKeysAddedSinceV1 = []string{"length", "align", "autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a

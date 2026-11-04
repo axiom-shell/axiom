@@ -66,7 +66,7 @@ settings:
 
 ## Gotchas
 - `BarWidgetHost` handles `popout.menu` itself (an edge menu instead of the popout): the widget's own `PopoutAnchor` is gated by `EdgeMenusConfig.opensOwnPopout(root.properties)`, never by `properties.popout.enabled` alone.
-- Every widget but Button, Separator and the tray has a `popout` part, even without a popout of its own (`menu`: they open an edge menu).
+- Every widget but Button, Separator, Spacer and the tray has a `popout` part, even without a popout of its own (`menu`: they open an edge menu).
 - A label's digits are always of equal width and measured as zeros, so a ticking time doesn't resize the bar. A value that gains or drops digits (a percent, a count) sets `minimumText` on its `BarIconWidget` to its widest (`"100%"`, as `Battery.qml` does).
 - Sizes come from the bar (`barConfig.widgetSize`, `barConfig` padding/spacing/font/radius), never `Widget.*`. `BarIconWidget` already does this; a widget drawing more must too.
 - A color field the bar should pick when empty is a `WidgetColor` (`default: ''`, `x-emptyLabel: Auto`) with an `x-autoColor` role (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`). `tst_Config` checks these.

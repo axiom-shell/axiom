@@ -41,7 +41,7 @@ QtObject {
 
   // A bar's look: its `style`, and its fields in the look groups
   // (`x-group`), not its identity, placement, behaviour or widgets
-  readonly property var styleGroups: ["Size", "Style"]
+  readonly property var styleGroups: ["Size", "Surface"]
   readonly property var styleKeys: ["style"].concat(...BarsConfig.fieldGroups.filter(group => root.styleGroups.includes(group.title)).map(group => group.keys))
   // The style copied with copyStyle(): { index, values }, or null. By
   // index, since ids may be empty or shared: kept pointing at its bar as

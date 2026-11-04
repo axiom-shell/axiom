@@ -1,4 +1,5 @@
-label: Battery Status
+label: Battery
+keywords: ['Battery Status']
 icon: battery_full
 group: System
 popout: menu

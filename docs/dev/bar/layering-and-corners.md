@@ -12,7 +12,7 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 - `Appearance.screenBorder` turns the border off.
 - The border is `qml/shell/ScreenBorder`, which is `surfaces/border/RoundedBorders`: four `BorderPanel` strips and four `CornerPiece` corners, in the layer namespace `axiom-border`.
 
-### Solid bar (`Bar.background: "solid"`)
+### Solid bar (`Bars.items[].surface: "bar"`)
 - It is on the Top layer, at the screen edge.
 - The border's strip on that edge is arranged after the bar and overlaps its inner part, so the strip's stroke is the bar's inner edge.
 - **Build order.** Hyprland reads a layer rule's `order` only as a surface maps.

@@ -1,4 +1,5 @@
-label: Window Title
+label: Window title
+elastic: true
 icon: wrap_text
 group: Desktop
 popout: menu

@@ -1,4 +1,5 @@
 label: Clock
+keywords: ['Time', 'Date']
 icon: schedule
 group: Time & weather
 popout: {variant: own, enabled: {description: Open the calendar when hovered.}}

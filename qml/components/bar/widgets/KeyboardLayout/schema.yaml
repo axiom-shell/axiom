@@ -1,4 +1,4 @@
-label: Keyboard Layout
+label: Keyboard layout
 link: {setting: Input.keyboard.layout}
 icon: keyboard
 group: System

@@ -1,8 +1,9 @@
-label: Separator / Spacer
+label: Separator
+keywords: ['Divider']
 icon: more_vert
 group: Look & layout
 settings:
-  style: {$ref: '#/definitions/SeparatorStyle'}
+  style: {$ref: '#/definitions/SeparatorStyle', enum: [line, dot, slash, chevron]}
   size:
     type: integer
     title: Size
@@ -20,7 +21,6 @@ settings:
     maximum: 10
     x-unit: px
     description: Line width (px); dots are twice this across.
-    x-showIf: {style: {not: space}}
   length:
     type: integer
     title: Line length
@@ -35,4 +35,3 @@ settings:
     title: Color
     x-options: colors
     default: base03
-    x-showIf: {style: {not: space}}

@@ -1,4 +1,5 @@
-label: Todo list
+label: Todo
+keywords: ['Todo list']
 icon: checklist
 group: Tools
 popout: {variant: own, enabled: {description: 'The list, to add to and tick off, when hovered.'}}

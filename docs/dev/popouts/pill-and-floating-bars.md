@@ -1,7 +1,7 @@
 # Popouts on floating, pill and transparent bars
 
 > **Files:** `qml/components/bar/BarContainer.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/EdgeAttach.qml`, `qml/components/hosts/popout/PillBarJoin.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/EdgePlacement.qml`, `qml/components/hosts/popout/ClosedLatch.qml`
-> **Config:** `Bar.background` (`floating`, `floatingPills`, `pills`, transparent), `Bar.floatGap`, `Bar.pillMerge` (per bar in `Bars`; `island`/`islandPills` are derived on `barConfig`)
+> **Config:** `Bars.items[].surface` (`bar`, `pills`, `none`) and `Bars.items[].floating`, `Bars.items[].floatingGap`, `Bars.items[].widgetGap` (pills join when that close; `island`/`islandPills` are derived on `barConfig`)
 > **Related:** [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Held off an edge](held-off-edge.md), [Bar layering and corners](../bar/layering-and-corners.md), [Shadows](shadows.md)
 
 How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, corner sharing and plain pills are in [Bar layering and corners](../bar/layering-and-corners.md).

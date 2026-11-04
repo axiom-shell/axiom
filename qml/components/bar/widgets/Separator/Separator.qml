@@ -5,8 +5,8 @@ import qs.config
 import qs.components.reusable
 import qs.components.bar.widgets.base
 
-// Layout helper for the bar: a divider (a line, dot, slash or chevron) or
-// plain space, taking exactly `size` px along the bar.
+// Layout helper for the bar: a divider (a line, dot, slash or chevron),
+// taking exactly `size` px along the bar (empty room is a Spacer).
 BarWidget {
   id: root
 

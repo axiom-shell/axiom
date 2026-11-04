@@ -1,4 +1,5 @@
-label: VPN Status
+label: VPN
+keywords: ['VPN Status']
 icon: vpn_lock
 group: Network & devices
 popout: {variant: own, enabled: {description: 'Show every VPN, to connect or disconnect one, when hovered.'}}

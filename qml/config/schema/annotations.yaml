@@ -19,6 +19,7 @@ x-control: the form control drawing a field instead of the one its type picks (`
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
 x-emptyLabel: offers or renames the empty value under that label.
+x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): only it takes a layout `minSize` and `maxSize`.'
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
 x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
 x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
