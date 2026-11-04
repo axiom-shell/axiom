@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11 and compositor-12 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12 and compositor-13 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -84,7 +84,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 36 | compositor-10 | major | Done: The trial Apply and the Monitors page | 3 | ~80 | none |  |
 | 37 | compositor-11 | major | Done: Workspace blocks and switching, and sway's workspace ids | 5 | ~110 | compositor-02 |  |
 | 38 | compositor-12 | major | Done: Overview and window events | 3 | ~80 | compositor-02 |  |
-| 39 | compositor-13 | major | The window look as written and read back | 5 | ~120 | compositor-03, compositor-04 | Q7 |
+| 39 | compositor-13 | major | Done: The window look as written and read back | 5 | ~120 | compositor-03, compositor-04 | Q7 |
 | 40 | compositor-20 | major | Blur fills | 2 | ~20 | compositor-03 |  |
 | 41 | compositor-14 | major | Capability gates in the schema | 3 | ~80 | none |  |
 | 42 | compositor-15 | major | The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
@@ -371,7 +371,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The overview stays open with nothing shown after its monitor goes away
   - niri's overview drop moves a window's whole column and switches workspace
   - niri doesn't send windowFocused for a window that opens focused
-- **compositor-13** (5):
+- **compositor-13** (5, done):
   - A user's blur off overrides axiom's blur on niri
   - Gaps to the edges are wider on sway than the setting says
   - A failed options read sets Hyprland's gaps to 0
