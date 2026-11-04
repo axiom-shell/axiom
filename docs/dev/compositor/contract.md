@@ -78,6 +78,9 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `windowCover` | without `windowGeometry`, windows carry a `cover` (niri's tiled ones), which obscures a dock (`DockManager.obscured`) |
 | `workspaceSlide` | `travel` legs slide |
 | `windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity` | the `WindowLook` parts shown and applied |
+| `fullscreenOpacity` | the window look's fullscreen opacity (niri's opacity rules can't match a fullscreen window) |
+| `blurContrast` | the window blur's contrast (Hyprland, SwayFX; niri's blur has none) |
+| `focusOnActivate` | Windows and focus › Focus windows that ask for it (niri has no such switch: it always focuses a window that asks with a valid token) |
 | `windowRounding` | the shape part's rounding (plain sway's shape is the border width alone) |
 | `windowShadow`, `windowDim` | the window look's shadow and dim parts |
 | `inputConfig` | axiom sets the keyboard, mouse and touchpad |

@@ -21,6 +21,7 @@ properties:
     title: Focus windows that ask for it
     default: true
     description: e.g. a browser window opened from a link.
+    x-enabledIf: {/$supports.focusOnActivate: true}
     x-compositor:
       hyprland: {key: misc.focus_on_activate, always: true}
       sway: {key: 'focus_on_window_activation {}', map: {'true': focus, 'false': urgent}}

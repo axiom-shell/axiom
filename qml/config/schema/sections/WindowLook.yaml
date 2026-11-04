@@ -264,6 +264,6 @@ properties:
         minimum: 10
         maximum: 100
         x-showIf: {enabled: true}
-        x-enabledIf: {/$supports.windowOpacity: true}
+        x-enabledIf: {/$supports.fullscreenOpacity: true}
         x-compositor: {hyprland: {key: decoration.fullscreen_opacity, scale: 0.01, if: enabled}}
     x-group: Window opacity

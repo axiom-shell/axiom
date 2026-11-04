@@ -302,6 +302,17 @@ def main():
         if not (ROOT / target).exists():
             errors.append(f"schema {key} {name!r} has no {target}")
 
+    # Every capability the schema gates on (`/$supports.<key>`, x-needs) is
+    # a key of the compositor contract's Capabilities table: one no backend
+    # declares greys its setting out everywhere
+    contract = (ROOT / "docs/dev/compositor/contract.md").read_text()
+    table = contract[contract.find("### Capabilities"):]
+    listed = {key for cell in re.findall(r"^\| ([^|]+) \|", table, re.M) for key in re.findall(r"`(\w+)`", cell)}
+    built = json.dumps(schema)
+    gated = set(re.findall(r'"/\$supports\.(\w+)"', built)) | set(re.findall(r'"x-needs": "(\w+)"', built))
+    for key in sorted(gated - listed):
+        errors.append(f"schema gates on supports.{key}, which docs/dev/compositor/contract.md › Capabilities doesn't list")
+
     # Tool pages (x-tool) are always in config: the Overlay.items default
     # carries every one (and a migration adds a new one to existing configs)
     default_views = {v.get("type") for v in schema["properties"]["Overlay"]["properties"]["items"]["default"]}

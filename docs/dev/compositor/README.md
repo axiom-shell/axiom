@@ -34,7 +34,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 - **Settings.** An `x-showIf` key starting with `/$` reads the compositor, not the config ([schema-annotations](../core/schema-annotations.md)):
   - `"/$supports.<capability>": true`
   - `"/$compositor": "sway"`
-- A section whose own `x-showIf` fails drops out of its category (`SchemaLayout.categories`): the `Hyprland` section needs `configModes`. The `WindowLook` fields each need their part (`windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity`).
+- A section whose own `x-showIf` fails drops out of its category (`SchemaLayout.categories`): the `Hyprland` section needs `configModes`. The `WindowLook` fields each need their part (`windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity`), and a field one compositor's part lacks its own key (the blur's contrast `blurContrast`, the fullscreen opacity `fullscreenOpacity`). A key the schema gates on must be in [contract.md › Capabilities](contract.md#capabilities) (`check_structure`).
 - **Pages.** A view type's `x-needs` names the capability it needs (Keybinds: `keybinds`, Monitors: `monitors`). `OverlayPages` leaves the page out, and the launcher's `/keybinds` and `/monitors` aren't listed.
 - **Onboarding.** The Hyprland and Monitors pages need `configModes`.
 

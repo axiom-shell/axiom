@@ -78,7 +78,7 @@ properties:
     minimum: 0
     maximum: 200
     x-showIf: {enabled: true}
-    x-enabledIf: {/$supports.windowBlur: true}
+    x-enabledIf: {/$supports.blurContrast: true}
     x-compositor: {hyprland: {key: decoration.blur.contrast, scale: 0.01, if: enabled}}
   vibrancy:
     type: integer

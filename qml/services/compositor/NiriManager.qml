@@ -90,7 +90,8 @@ Singleton {
   // the shell's surfaces where each window says (blurRegion: no alpha
   // threshold, a layer rule would blur the whole window), its
   // ext-background-effect. It has an overview of its own (overview) and a
-  // window switcher its config binds (compositorSwitcher).
+  // window switcher its config binds (compositorSwitcher). No release
+  // binds, fullscreen opacity, blur contrast or focus-on-activate switch.
   readonly property var supports: ({
       "configModes": true,
       "keybinds": true,
