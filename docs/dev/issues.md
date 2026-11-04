@@ -522,6 +522,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
 
+### BarPopouts works out its slide distance itself
+- **Where:** `qml/components/hosts/popout/BarPopouts.qml:251` (`underStart`), `qml/components/hosts/popout/BarPopouts.qml:510` (`detachedOffset`), `qml/components/methods/SurfaceContext.qml:399` (`layout`)
+- **What:** `SurfaceContext.layout` now returns `slideDistance` (the bar's outer edge, past the border stroke a bar inside the border lies on), which EdgePopout reads. BarPopouts still works the same rule out itself: `underStart: barConfig.insideBorder ? Appearance.borderWidth : 0` and `detachedOffset: underBar ? attachAt - underStart : 0`. That breaks qml/components/hosts/popout/AGENTS.md: "Never add a rule in a host". Its `attachAt` is `placement.attachFromBar`, which carries `_attachShift`, so the two may differ where the followed panel isn't its own bar; check that before switching. Fix: BarPopouts reads `placement.slideDistance` (with the shift added if it belongs there) for `detachedOffset` and `surfaceFrom`, and `underStart` goes.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing bar-popouts-03 (EdgePopout's placement read from SurfaceContext)
+
 ### A tray submenu longer than the screen runs off it
 - **Where:** `qml/components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `qml/components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `qml/components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
 - **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.

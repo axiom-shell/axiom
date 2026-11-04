@@ -408,7 +408,7 @@ PopoutWrapperBase {
     // Docks reserving space inside the border don't push it in: it reaches
     // past them, on its own edge and at both ends
     readonly property string screenName: root.screen?.name ?? ""
-    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - (root.slidesUnder ? root.slideDistance : 0) - DockManager.zoneOn(screenName, ScreenEdge.name(root.edge))
+    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - root.slideDistance - DockManager.zoneOn(screenName, ScreenEdge.name(root.edge))
     margins {
       top: root.edge === ScreenEdge.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "top") : 0
       bottom: root.edge === ScreenEdge.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "bottom") : 0
@@ -437,7 +437,7 @@ PopoutWrapperBase {
       // From this window's edge (its attach edge, less its backfill and
       // the way it slides in from) to the far edge's reserved space
       const far = ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge === ScreenEdge.Top ? ScreenEdge.Bottom : ScreenEdge.Top);
-      return Math.max(own, (root.screen?.height ?? 0) - far - root.attachAt + surface.backfill + (root.slidesUnder ? root.slideDistance : 0));
+      return Math.max(own, (root.screen?.height ?? 0) - far - root.attachAt + surface.backfill + root.slideDistance);
     }
     implicitWidth: root.vertical ? surfaceWindow.depth : 0
     implicitHeight: root.vertical ? 0 : surfaceWindow.depth
@@ -497,7 +497,7 @@ PopoutWrapperBase {
       width: implicitWidth
       height: implicitHeight
 
-      detachedOffset: root.slidesUnder ? root.slideDistance : 0
+      detachedOffset: root.slideDistance
       // Once its pill has grown out to carry it
       // While the blur window backs surfaces, once it knows where this one
       // is (LayerOrigin.settled), so it never shows unbacked beside them
