@@ -10,7 +10,7 @@ QtObject {
   // Adds derived orientation flags to a bar entry from the Bars section
   // (whose keys are always filled in from the schema defaults). Laid out
   // with the compositor's outer gaps (`gapsOut`: per edge name,
-  // CompositorManager's) and the gaps an Automatic float gap keeps
+  // CompositorManager's) and the gaps an Automatic floating gap keeps
   // (`floatGaps`: ScreenEdgeManager.floatGaps), which a floating bar's
   // islands keep from the screen edges as windows do.
   function enrichBarConfig(barConfig, gapsOut, floatGaps) {
@@ -46,11 +46,12 @@ QtObject {
     // A pill's free ends sit the padding and its stroke out from its
     // widgets, as its far side does
     const pillGap = edgePadding + Appearance.borderWidth;
-    // Laid out like a tiled window: an island sits its float gap in from
-    // the border's stroke (or the bare screen edge), across the bar and
-    // from both its ends (Automatic, -1: the compositor's gaps_out on its
-    // edge, as windows keep, or the screen margin with no backend; the ends take the same, so a gaps_out differing per
-    // side leaves them off the windows' edges), and holds the widgets and
+    // Laid out like a tiled window: an island sits its floating gap in
+    // from the border's stroke (or the bare screen edge), across the bar
+    // and from both its ends (Automatic, null: the compositor's gaps_out on
+    // its edge, as windows keep, or the screen margin with no backend; the
+    // ends take the same, so a gaps_out differing per side leaves them off
+    // the windows' edges), and holds the widgets and
     // their padding inside a stroke. Windows keep gaps_out from it, as from
     // a screen edge: gaps_in is only between windows.
     const edge = ScreenEdge.name(loc);
@@ -83,8 +84,9 @@ QtObject {
       "extent": island ? islandStart + islandDepth : cross.extent,
       "thickness": thickness,
       "edgePadding": edgePadding,
-      // How far the widgets sit in from the bar's outer edge: past the
-      // stroke and pill padding, or centred between whatever covers the bar
+      // How far the widgets sit in from the bar's outer edge: an island's
+      // past its gap, stroke and padding, else BarEnds.crossGeometry's
+      // (centred in a solid or pill bar, past the padding with no surface)
       "crossStart": island ? islandStart + Appearance.borderWidth + edgePadding : cross.crossStart,
       // solid, pills, transparent (no surface), floating, floatingPills
       "kind": kind,
@@ -199,8 +201,8 @@ QtObject {
 
   // A bar window's layer namespace, whose rule's `order` decides where
   // Hyprland arranges it (render.LayerRulesLua): by its kind
-  // (solid, outside the border; pills; transparent; floating: bars and
-  // pills held off the edge) and, for a bar along its screen's longer
+  // (solid, outside the border; pills; floating: bars and pills held off
+  // the edge; transparent) and, for a bar along its screen's longer
   // edge, a -long one arranged after the shorter edge's bar of that kind
   // (BarEnds)
   function layerNamespace(barConfig) {
@@ -209,7 +211,7 @@ QtObject {
   }
 
   // BarEnds' options, from Appearance, the compositor's gaps_out and the
-  // gaps an Automatic float gap keeps (enrichBarConfig)
+  // gaps an Automatic floating gap keeps (enrichBarConfig)
   function endsOptions(gapsOut, floatGaps) {
     return {
       "border": Appearance.screenBorder,
