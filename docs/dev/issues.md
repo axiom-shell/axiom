@@ -32,9 +32,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
 
-### TestDevImageFailingFallsBack failed once under load
+### TestDevImageFailingFallsBack sometimes finds no fallback exec
 - **Where:** `backend/internal/daemon/reexec_test.go` (`TestDevImageFailingFallsBack`)
-- **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The failure's message wasn't kept. PLAUSIBLE: the test runs in parallel and bounds `Run` (the dev image failing to build its schema, then the fallback exec) by one `testkit.Bound(10*time.Second)` ctx, and it reads the fallback's exec with a `select` whose `default` fails at once, so a `Run` that returned on the ctx before its fallback reached `opts.exec` reads as "no fallback". Next time it fails, keep the message (`no fallback (Run: …)` or `exec … with …`) before changing the test.
+- **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The review of compositor-14 saw it again, in 0.00s: `no fallback (Run: /tmp/TestDevImageFailingFallsBack…/002 has no schema source (qml/config/schema/index.yaml))`; five reruns then passed. So `Run` failed as meant with the ctx alive (the deferred `fallBackLive` runs only with `ctx.Err() == nil`), and `fallBackCarried` returned before `execProcess`, an error only logged (`re-executing the installed axiom`). PLAUSIBLE: its `fsx.TryLock` of the config's writer lock found it still held (a parallel test, or the carried `ConfigLock` not yet let go). Next time, read the test log's `re-executing the installed axiom` error before changing the test.
 - **Size:** trivial
 - **Found:** 2026-11-04, while reviewing compositor-20 (roadmap row 20)
 

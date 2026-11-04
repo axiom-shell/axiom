@@ -166,6 +166,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs compositor-13 (row 20): with the window look's defaults on sway, the gap to the screen edges is 6 px (the setting), not 9; on niri, with `blur { off }` in a `user/*.kdl` (managed) or in the user's config (included), axiom's blur still shows; the Translucency card offers "Set the compositor's blur" when the blur comes only from the user's own config; and Hyprland's gaps (and the bars that subtract them) don't drop to 0 through a busy reload.
 - Once the shell runs compositor-20 (row 20): with blur on and translucency below 100, a toast's tone matches the bar and edge popout beside it, and doesn't jump when the blur pauses or resumes.
 - Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
+- Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Focus windows that ask for it are greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -501,7 +502,7 @@ Found while running verify.sh --all for compositor-08 (row 20):
 - [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
 
 Found while reviewing compositor-20 (row 20):
-- [TestDevImageFailingFallsBack failed once under load](issues.md#testdevimagefailingfallsback-failed-once-under-load)
+- [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
