@@ -13,7 +13,8 @@ import qs.components.content.base
 // switch, an Unsaved chip and the help in a "?" (Save and Discard are
 // BarsPanel's); under it, how the running bar fits on each screen it's
 // on, the widgets it has no room for as buttons selecting them, with
-// Raise priority / Set max length for a selected one. A chip's right
+// Raise priority / Set max length for a selected one. While a chip is
+// carried, a TrashTarget shows over them, between the title and the first section. A chip's right
 // click opens its menu; while the board has focus (a chip clicked) it
 // takes Delete, Ctrl+D, Alt+arrows, Escape and Ctrl+Z / Ctrl+Shift+Z /
 // Ctrl+Y.
@@ -336,6 +337,7 @@ FocusScope {
 
       // The sections, one row under another
       ColumnLayout {
+        id: lanes
         Layout.fillWidth: true
         spacing: Widget.spacing
 
@@ -367,6 +369,15 @@ FocusScope {
       Item {
         Layout.fillHeight: true
       }
+    }
+
+    // Over the header and the fit line (not needed mid-drag), centred
+    // between the board's title and the first section
+    TrashTarget {
+      x: (parent.width - width) / 2
+      y: Math.max(0, column.y + (lanes.y - height) / 2)
+      dragLayer: root.dragLayer
+      active: root.dragLayer.dragging?.kind === "move"
     }
   }
 }

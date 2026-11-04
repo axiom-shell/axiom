@@ -7,8 +7,8 @@ import qs.components.reusable
 // The bar editor's widget area (sections board and inspector): a
 // DragLayer whose ghost is drawn above both, so a widget can be carried
 // out of the library or from one section to another. Its targets are the
-// section lanes (SectionLane: `zone`, `indexAt`), and a TrashTarget a
-// widget from a lane is dropped on to remove it. Payloads: { kind:
+// section lanes (SectionLane: `zone`, `indexAt`), and the board's
+// TrashTarget a widget from a lane is dropped on to remove it. Payloads: { kind:
 // "move" | "add", zone, index, type, compact (drawn as a lane's chip) }.
 DragLayer {
   id: root
@@ -92,14 +92,6 @@ DragLayer {
       BarManager.moveWidget(drag.zone, drag.index, target.zone, index);
     else
       BarManager.addWidget(target.zone, drag.type, index);
-  }
-
-  // Away from the board (at the top), in the middle at the bottom
-  TrashTarget {
-    x: (root.width - width) / 2
-    y: root.height - height - Widget.padding
-    dragLayer: root
-    active: root.dragging?.kind === "move"
   }
 
   WidgetChip {
