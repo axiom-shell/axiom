@@ -337,6 +337,9 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
+Found while fixing the Keybinds page (row 20, compositor-16):
+- [Text typed in the bind inspector is dropped when another row is clicked](issues.md#text-typed-in-the-bind-inspector-is-dropped-when-another-row-is-clicked)
+
 Found while testing the trial Apply (row 20, compositor-10):
 - [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
 
