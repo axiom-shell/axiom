@@ -8,11 +8,12 @@
 - **A: done** (b3288ea A1 annotations; bc3db71 A2 schema + migration v93 (A2+A3 squashed so each commit passes); bc71231 A4 readers). `verify.sh --all` green on bc71231.
   - Final contract = the plan's, plus `BarsConfig.kindOf(bar)` (surface none → transparent even if floating). Pills still use the old extent maths (with edgePadding); `fontSize` = baseFontSize·textScale/100 (no thickness scaling yet); `joinGap` = max(widgetGap, groupSpacing); BarContainer has a temporary `_five()` adapter (B removes); Spacer fixed at minGap (B makes it fill); inspector shows min/max on every widget (C hides for non-elastic via `typeInfo.elastic`).
 - **B items 5–11: done** (e72dabc B5 3 sections + spacers; 71e4dca B6 joinGroups; c2bb416 B7 pills = solid; 8fff252 B8 transparent last; 0285e2e B8b dropTieOrder + schema `priority:` per type / `BarsConfig.defaultPriority`; 07d1e5d B9 thickness scaling; e54017f B10 length fit; 3e1cf9f B11 editor reports `sections {used, room}` + `BarWidgetHost.preview`). New keys: `outerReach`, `stripCover`, `BarEnds.crossGeometry`.
-  - Open questions for the maintainer: (1) along the bar, a pill bar's end widgets sit 12 px from the screen edge vs solid's 8 px (border on) — across the bar they match; (2) `length: fit` on a solid bar keeps a full-length fill (only widgets pack), since the border strip relies on it.
+  - Maintainer answers (2026-11-04), now items **B12** and **B13** (see B below): (1) end inset: "Line up with windows"; (2) `length: fit`: "Remove it".
+- **B12–B13: running** (branch `bar-rewrite-B` reset onto `bar-rewrite`).
 - **C items 16–19: done** (0e4b97e C16 EditHistory/UndoRedoButtons; 35040f7 C17 StyledContextMenu/FieldChangeMarks/CardHeader.help; 2b7dbec C18 BarManager undo/hover/actions; 517281b C19 board: 3 wrapping lanes, menu, keys, badges). C's worktree had no hooks, so the lead re-committed through the hook.
   - C still to do (resume after B is merged): **20** live chips (`BarWidgetHost { preview: true }` + `BarManager.previewConfig`, greyed empty widgets, streaming); **21** inspector ~55% / library ~45% split (stacked when tall), BarsPanel tabs Layout/Surface/Widgets/Behaviour, per-section fit meter from B's `{used, room}` with Raise priority / Set max length, LayoutOverrideField min/max only for `typeInfo.elastic`, inspector `changedAt` for field dots/reset. Already done in 19: Unsaved chip, Save/Discard, undo/redo, context menu, keys.
   - Known gap: drop-order badges read `layout.priority ?? 0` (widget-internal defaults like Time 5 / Workspaces 10 missed); asked B to expose default priority if cheap.
-- **D (auto-hide, 12–15): running** (worktree branch `bar-rewrite-D` off 3e1cf9f). **C resumed for 20–21** (branch `bar-rewrite-C` reset onto 3e1cf9f).
+- **D (auto-hide, 12–15): running** (worktree branch `bar-rewrite-D` off 3e1cf9f; c558c52 D12 committed, D13 was uncommitted when the previous session ended and has been resumed). **C 20–21: running** (48740ae C20 committed; C21 was uncommitted and has been resumed).
 - Then: review-branch --fix agent, `verify.sh --all`, PR, CI. Delete this file in the last commit.
 - Uncommitted lead edits: issues.md + roadmap.md entry "MediaManager builds its start times with Object.fromEntries…" (found by A; out of scope, logged only) — commit with the next merge.
 
@@ -37,7 +38,8 @@ This one PR (maintainer: "the scope is everything for this pr") rebuilds all of 
   - Reveals on: edge hover; a workspace change (own toggle); widget activity (own toggle); while one of its popouts is open; IPC/keybind.
   - It keeps its stack slot and slides toward its edge.
 - **Stack order:** solid → strip → pills → floating → floating pills → transparent (transparent moves to last). Edge popouts of a transparent bar open past the floating bars.
-- **Bar length:** `length: full | fit` + `align: start | center | end`. Scroll actions are out of scope.
+- **Bar length:** ~~`length: full | fit` + `align`~~: removed (2026-11-04, "Remove it": pills, or floating pills with the widgets in the center, already give a short bar). Scroll actions are out of scope.
+- **End inset** (2026-11-04, "Line up with windows"): every style puts its first and last widgets at the screen margin from the screen's side edge (with the border off, the larger of the margin and the padding). An end pill meets the frame's corner squarely, like a solid bar, so it reserves no fillet room; the radius is never added.
 - **Editor:**
   - The board still follows the bar's edge; the stack button goes.
   - Each section gets a full-width row (or full-height column on side bars) that wraps instead of scrolling.
@@ -128,6 +130,8 @@ Each item is one commit, ending with `scripts/dev/verify.sh` printing `verify ok
     - `BarContainer.editorReport` gets per-section `{used, room}`.
     - A report on `Component.onCompleted` (fixes the issue "A bar made while the bar editor is open may never report to it").
     - `BarWidgetHost.preview` (no menu anchor, no report, `active: !preview` on the menu).
+12. **End inset = screen margin** (the End inset decision): `BarContainer._endMargin` for an unheld pill end gives the solid bar's value; the end pill fills the frame corner squarely (no fillet at that end, as a solid bar's end), with the shadow/blur shape and border opening to match. `tst_BarEnds`/BarLayout rows: solid and pill end widgets at the same along-offset, border on and off.
+13. **Remove `length`/`align`**: from `Bar.yaml`, the readers (`fit`, `align`), BarLayout, BarContainer, WidgetGroup, the editor and v93 (if it emits them), plus their tests and docs.
 
 ### D — auto-hide (after B)
 12. **`CompositorManager.windowsCover(screen, rect)`**, moved from `DockManager.obscured` (`DockManager.qml:212-226`); DockManager uses it.
