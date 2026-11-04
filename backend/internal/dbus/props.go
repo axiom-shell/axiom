@@ -18,6 +18,12 @@ func (c *Conn) GetProperty(ctx context.Context, dest string, path ObjectPath, if
 	return v, m.Store(&v)
 }
 
+// SetProperty writes one property.
+func (c *Conn) SetProperty(ctx context.Context, dest string, path ObjectPath, iface, name string, value Variant) error {
+	_, err := c.Call(ctx, dest, path, ifaceProperties, "Set", "ssv", iface, name, value)
+	return err
+}
+
 // GetAll reads every property of an interface.
 func (c *Conn) GetAll(ctx context.Context, dest string, path ObjectPath, iface string) (map[string]Variant, error) {
 	m, err := c.Call(ctx, dest, path, ifaceProperties, "GetAll", "s", iface)

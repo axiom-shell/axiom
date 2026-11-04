@@ -78,7 +78,7 @@
 The daemon holds its own Wayland connection ([wayland.md](wayland.md)): `backend/internal/wayland/wire` (the wire protocol, a `Conn` with objects and their events), shared by its clients (`wayland/client`): `wayland/outputs`, the outputs by place that `share.*` names monitors with, the seat, and idle notifications ([idle](../features/idle.md)). Gamma, clipboard and typing come next (roadmap stage 2).
 
 ### D-Bus
-The daemon's own client ([dbus.md](dbus.md), `backend/internal/dbus`): logind and `org.freedesktop.ScreenSaver` for idle so far.
+The daemon's own client ([dbus.md](dbus.md), `backend/internal/dbus`): logind and `org.freedesktop.ScreenSaver` for idle, and the services listed there, among them the input method framework ([inputmethod.md](inputmethod.md): fcitx5, ibus).
 
 ### Building and checking
 - `cd backend && go build ./cmd/axiom` builds it (pure Go, `CGO_ENABLED=0` works).
