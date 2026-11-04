@@ -23,8 +23,6 @@ BarWidget {
   readonly property bool showDate: properties.showDate
   readonly property color foregroundColor: colors.text
 
-  readonly property int priority: 5
-
   hasBackground: true
   accentColor: Theme.resolveColor(properties.backgroundColor)
 

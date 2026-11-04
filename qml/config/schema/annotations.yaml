@@ -45,6 +45,7 @@ x-multiline: a growing text area.
 x-needs: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 x-options: a dynamic option list.
 x-order: the keys shown first, in order.
+x-priority: a bar widget type's own priority, kept while the bar is crowded longer than the default 0 (`BarsConfig.defaultPriority`), which its `layout.priority` overrides.
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
 x-scope: what a snapshot, example, import or export carries.

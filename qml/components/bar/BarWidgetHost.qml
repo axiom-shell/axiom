@@ -18,8 +18,9 @@ import qs.components.hosts.popout
 //                                        shrinks towards minimumSize when crowded
 //   preferredSize: main-axis size (fixed: the size; elastic: the cap)
 //   minimumSize:   smallest main-axis size an elastic module accepts
-//   priority:      when a section can't fit even the minimum sizes, the
-//                  lowest-priority modules are hidden first (default 0)
+// Its priority (when a section can't fit even the minimum sizes, the
+// lowest-priority modules are hidden first) is its type's (`x-priority`,
+// default 0: `defaultPriority`)
 //
 // The widget's `layout` config (`layoutOverrides`: priority, and on an
 // elastic module minSize and maxSize, its cap) wins over the module's own
@@ -99,7 +100,10 @@ Item {
     const min = sizePolicy === "elastic" ? layoutOverrides?.minSize ?? _item?.minimumSize : undefined;
     return (min === undefined ? _preferred : Math.min(min, _preferred)) + _insets;
   }
-  readonly property int priority: layoutOverrides?.priority ?? _item?.priority ?? 0
+  // Its type's own priority (BarsConfig.defaultPriority, the schema's
+  // `x-priority`), which the widget's `layout.priority` overrides
+  property int defaultPriority: 0
+  readonly property int priority: layoutOverrides?.priority ?? defaultPriority
   // Its sizing as laid out, for the bar editor's inspector
   readonly property var measure: ({
       "policy": root.sizePolicy,

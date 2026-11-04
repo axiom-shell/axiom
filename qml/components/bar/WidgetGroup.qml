@@ -305,6 +305,7 @@ Item {
       barConfig: root.barConfig
       properties: module.modelData.properties || {}
       layoutOverrides: module.modelData.layout || {}
+      defaultPriority: BarsConfig.defaultPriority(module.modelData.type ?? "")
       componentPath: module.modelData.component
       highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
       hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)

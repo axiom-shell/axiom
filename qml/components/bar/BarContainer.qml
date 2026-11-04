@@ -303,6 +303,7 @@ Rectangle {
   function widgetModel(widgetConfigArray) {
     return (widgetConfigArray || []).map((widgetConf, i) => ({
           "component": Paths.widgetUrl(widgetConf.type),
+          "type": widgetConf.type,
           "properties": widgetConf.properties || {},
           "layout": widgetConf.layout || {},
           "configIndex": i,

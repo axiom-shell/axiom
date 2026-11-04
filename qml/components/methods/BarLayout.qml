@@ -179,7 +179,8 @@ QtObject {
   // that every section's minimum length, plus margins and gaps as in
   // layoutSections, fits the bar; `spacing` is the spacing between widgets
   // within a section. The lowest priority goes first. Ties go to the
-  // right section first, then the left, the center last, and within a
+  // right section first, then the left, the center last (dropTieOrder,
+  // as the editor's drop order badges read it: dropOrder), and within a
   // section to the widget listed last. Spacers (`fill`) are never hidden:
   // they keep their minimum gaps. With `lockCenter`, each half of the bar
   // must fit beside the full-size center on its own, and only the
@@ -202,7 +203,7 @@ QtObject {
       if (!lockCenter) {
         const spans = measures.map((m, s) => minSpan(s));
         const needed = spans.reduce((a, b) => a + b, 0) + gap * [0, 2].filter(s => spans[s] > 0).length;
-        return needed > room ? [2, 0, 1] : null;
+        return needed > room ? root.dropTieOrder : null;
       }
       if (minSpan(1) > room)
         return [1];

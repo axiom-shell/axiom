@@ -18,7 +18,6 @@ import qs.components.bar.widgets.base
 BarWidget {
   id: root
 
-  readonly property int priority: 10
   // A box in its own color, else clear over the bar
   readonly property bool boxed: barConfig.widgetBoxed && properties.showBackground
   // Within a colored box

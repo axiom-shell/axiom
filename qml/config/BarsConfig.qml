@@ -460,6 +460,8 @@ QtObject {
         // It shrinks when the bar is crowded, so takes a minSize and
         // maxSize (`x-elastic`)
         "elastic": def["x-elastic"] ?? false,
+        // Its own priority when the bar is crowded (`x-priority`)
+        "priority": def["x-priority"] ?? 0,
         "propertiesSchema": def.properties?.properties?.properties || null,
         // Its options shown first, in order (their `x-order`)
         "propertiesOrder": def.properties?.properties?.["x-order"] ?? [],
@@ -468,6 +470,11 @@ QtObject {
         "link": def["x-link"]
       };
     }).filter(t => t !== null);
+  }
+  // A widget type's own priority when its bar is crowded (`x-priority`),
+  // which a widget's `layout.priority` overrides
+  function defaultPriority(type) {
+    return BarsConfig.availableWidgetTypes.find(t => t.type === type)?.priority ?? 0;
   }
   // What the bar editor's library offers: the widget types, the custom
   // widgets one by one (keyed "CustomWidget:<id>",
