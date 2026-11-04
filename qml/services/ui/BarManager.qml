@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.compositor
 
 /* BarManager holds the bar editor's working copy of the Bars section (its
  * `style`, every bar's look unless a bar sets its own, and the bars,
@@ -44,6 +45,32 @@ QtObject {
     })
   // The section last selected or added to, where the library adds
   property string lastZone: "center"
+
+  // The selected bar as the board's live chips draw its widgets: the
+  // draft bar enriched at a fixed thickness, along a top edge (chips are
+  // rows) whatever its own, standing alone (no ends meet it)
+  readonly property var previewConfig: {
+    const bar = root.selectedBar();
+    if (!bar)
+      return null;
+    const config = BarsConfig.enrichBarConfig(Object.assign({}, bar, {
+      "thickness": Math.round(Widget.px(BarsConfig.referenceThickness)),
+      "location": "top"
+    }), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps);
+    const end = {
+      "kind": "bare",
+      "reach": 0,
+      "joinable": false
+    };
+    return Object.assign(config, {
+      "ends": {
+        "start": end,
+        "end": end
+      },
+      "outerReach": 0,
+      "stripCover": 0
+    });
+  }
 
   // Undo and redo of the draft's bars, with the selection
   readonly property EditHistory history: EditHistory {

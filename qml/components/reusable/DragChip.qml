@@ -18,6 +18,9 @@ Rectangle {
   // Drawn as hovered, for a pointer somewhere else (the bar editor's
   // chip of the widget hovered on the bar)
   property bool highlighted: false
+  // Its icon and name; off, only what's put in it shows (the bar
+  // editor's live widgets)
+  property bool showsLabel: true
   property alias dragLayer: area.dragLayer
   // What dragging it carries; null: it can't be dragged
   property alias payload: area.payload
@@ -50,12 +53,14 @@ Rectangle {
     spacing: root.compact ? Widget.spacing / 2 : Widget.spacing
 
     StyledIcon {
+      visible: root.showsLabel
       text: root.icon
       textColor: root.selected ? Theme.background : Theme.accent
       Layout.preferredWidth: Appearance.fontSize * 1.3
     }
 
     StyledText {
+      visible: root.showsLabel
       text: root.label
       textColor: root.ink
       font.bold: root.selected

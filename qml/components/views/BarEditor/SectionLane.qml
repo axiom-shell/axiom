@@ -146,14 +146,18 @@ Rectangle {
       delegate: WidgetChip {
         id: chip
         required property int index
-        readonly property var widget: root.widgets[index] ?? ({})
+        readonly property var entry: root.widgets[index] ?? ({})
 
         dragLayer: root.dragLayer
         compact: true
         width: Math.min(implicitWidth, root.maxChipWidth)
         height: root.chipHeight
-        type: root.dragLayer.libraryKey(chip.widget)
-        hiddenWidget: chip.widget.visible === false
+        type: root.dragLayer.libraryKey(chip.entry)
+        // With its Auto colours picked, as the bar draws it
+        widget: BarManager.previewConfig?.widgets?.[root.zone]?.[chip.index] ?? chip.entry
+        previewConfig: BarManager.previewConfig
+        maxPreviewWidth: Math.min(Widget.px(260), root.maxChipWidth - Widget.padding)
+        hiddenWidget: chip.entry.visible === false
         crowded: root.crowded.includes(chip.index)
         dropOrder: root.dropOrders[chip.index] ?? 0
         selected: BarManager.selectedWidget.zone === root.zone && BarManager.selectedWidget.index === chip.index

@@ -53,7 +53,7 @@ FocusScope {
       return ({});
     const widgets = BarManager.selectedBar()?.widgets ?? {};
     const names = BarsConfig.sectionNames;
-    const orders = BarLayout.dropOrder(names.map(zone => (widgets[zone] ?? []).map(w => w.visible === false || w.type === "Spacer" ? null : (w.layout?.priority ?? 0))));
+    const orders = BarLayout.dropOrder(names.map(zone => (widgets[zone] ?? []).map(w => w.visible === false || w.type === "Spacer" ? null : (w.layout?.priority ?? BarsConfig.defaultPriority(w.type)))));
     return names.reduce((out, zone, s) => {
       out[zone] = orders[s];
       return out;
