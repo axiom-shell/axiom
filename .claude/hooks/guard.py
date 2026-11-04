@@ -299,6 +299,20 @@ def axiom_live_display(env, args):
     return True
 
 
+# fcitx5's Controller1 methods that change or end the running fcitx5
+FCITX_WRITES = ("SetInputMethodGroupInfo", "SetConfig", "Save", "Restart", "Exit", "AddInputMethodGroup", "RemoveInputMethodGroup")
+
+
+def live_bus(env, args):
+    """Whether a D-Bus client reaches the live session bus: no --address (or
+    busctl's/dbus-send's/gdbus's spellings of a bus of its own) and the
+    session's DBUS_SESSION_BUS_ADDRESS (unset: the live one)."""
+    if any(a == "--address" or a.startswith("--address=") or a == "--system" for a in args):
+        return False
+    address = env.get("DBUS_SESSION_BUS_ADDRESS")
+    return address is None or address == os.environ.get("DBUS_SESSION_BUS_ADDRESS", "")
+
+
 def axiom_words(args):
     """The subcommand words of an axiom command line, flags left out."""
     words, skip = [], False
@@ -487,6 +501,24 @@ def check_argv(env, argv, cwd):
     dev_writes = ("dev.set", "dev.rebuild", "dev.config.copy", "dev.config.pull")
     if sends and any(m in a for a in args for m in dev_writes) and axiom_live_display(env, args):
         deny("Never, while testing", "dev.set / dev.rebuild / dev.config.copy|pull only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket), never the live one.")
+
+    # The live input method's settings: fcitx5's Controller1 writes and
+    # restarts, ibus's gsettings / dconf keys, and the daemon's inputMethod
+    # writes; only on a scratch session bus (--address, another
+    # DBUS_SESSION_BUS_ADDRESS) or a scratch daemon
+    if name in {"busctl", "dbus-send", "gdbus"} and any("org.fcitx.Fcitx" in a for a in args) \
+            and any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in FCITX_WRITES) and live_bus(env, args):
+        deny("Never, while testing", "don't change the live fcitx5 (SetInputMethodGroupInfo, SetConfig, Save, Restart, Exit, …); use a scratch session bus (dbus-run-session) or go test ./internal/inputmethod.")
+    ibus_keys = any(a.startswith(("org.freedesktop.ibus", "/desktop/ibus")) for a in args)
+    writes_setting = name == "gsettings" and args[:1] and args[0] in {"set", "reset", "reset-recursively"} or \
+        name == "dconf" and args[:1] and args[0] in {"write", "reset", "load"}
+    if writes_setting and ibus_keys and env.get("GSETTINGS_BACKEND", "") != "memory" and live_bus(env, args):
+        deny("Never, while testing", "don't change the live ibus settings (gsettings set org.freedesktop.ibus.*); use GSETTINGS_BACKEND=memory or a scratch session bus.")
+    im_writes = ("inputMethod.push", "inputMethod.options", "inputMethod.framework")
+    words = [a for a in args if not a.startswith("-")]
+    by_ipc = name == "axiom" and any(words[i:i + 2] == ["inputMethod", w] for i in range(len(words)) for w in ("push", "options", "framework"))
+    if sends and (by_ipc or any(m in a for a in args for m in im_writes)) and axiom_live_display(env, args):
+        deny("Never, while testing", "inputMethod.push / options / framework only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket): they rewrite the live IME's settings.")
 
     # The real config.json: deleted or moved (the file or a folder above it)
     paths = [a for a in args if not a.startswith("-")]
