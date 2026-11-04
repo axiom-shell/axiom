@@ -59,6 +59,26 @@ func TestIPCAction(t *testing.T) {
 	}
 }
 
+// What every bind merge maps an exec through: IPC first, then media
+func TestCommandAction(t *testing.T) {
+	t.Parallel()
+	tab := table(t)
+	cases := map[string]string{
+		"axiom ipc edgeMenu show 'left'":            `{"action":"edgeMenu","call":"open","argument":"left"}`,
+		"wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+": `{"action":"volumeUp"}`,
+		"foot": "null",
+	}
+	for command, want := range cases {
+		got := "null"
+		if entry := tab.CommandAction(command); entry != nil {
+			got = string(jsonx.MarshalCompact(entry))
+		}
+		if got != want {
+			t.Errorf("%q: got %s, want %s", command, got, want)
+		}
+	}
+}
+
 func TestMediaAction(t *testing.T) {
 	t.Parallel()
 	cases := map[string]string{

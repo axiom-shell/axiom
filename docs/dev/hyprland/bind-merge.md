@@ -14,7 +14,7 @@
 
 ### Where it runs
 - The merge is the binary's (`backend/internal/compositor/binds`, every compositor's `extract` and `remove` with the same JSON, documented in its package comment). The daemon runs it (managed mode: the adopted file on a takeover, all of `user/` on the Keybinds page's Merge, `compositor.merge` / `compositor.previewMerge`); `axiom compositor binds extract|remove --kind K DIR [SITES]` runs it from the command line.
-- What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) or a volume, brightness or media command maps onto comes from `compositor/actions`, from its table's `ipcActions` and `actionFlags` (`table.json`, embedded: the one table the daemon also sends the shell), so a new IPC action is a row there and nothing else. A `{call}` matches only a call's words (`toggle`, `open`/`show`/`enable`, `close`/`hide`/`disable`), so another function of the same target (`appLauncher clipboard`) is its own action. A `{0}` is one word, or a quoted one with spaces (`stopwatch timer '10m tea'`, as the bind writes it, a `'` inside as `'\''`).
+- What a command calling axiom (`axiom ipc …`, `axiom lock`, `axiom restart`) or a volume, brightness or media command maps onto comes from `compositor/actions`, from its table's `ipcActions` and `actionFlags` (`table.json`, embedded: the one table the daemon also sends the shell), so a new IPC action is a row there and nothing else. Every merge maps a command it runs through `actions.CommandAction` (an IPC action first, then a media one, else nil, then `exec`), so the same bind becomes the same action on every compositor. A `{call}` matches only a call's words (`toggle`, `open`/`show`/`enable`, `close`/`hide`/`disable`), so another function of the same target (`appLauncher clipboard`) is its own action. A `{0}` is one word, or a quoted one with spaces (`stopwatch timer '10m tea'`, as the bind writes it, a `'` inside as `'\''`).
 
 ### Extracting
 - It runs the files under gopher-lua (Lua 5.1), with no `lua` binary.
@@ -30,7 +30,7 @@
     - the run stops after 30 s (a file that never ends), and nothing moves.
   - A file using Lua 5.4's syntax (`//`, `goto`, `<const>`, bitwise operators) doesn't parse under 5.1: it's one of the `errors`, and its binds stay. `table.unpack`, `table.pack` and `math.type` are there.
 - Each dispatcher is mapped onto an action:
-  - `exec_cmd` of wpctl/pactl/brightnessctl/playerctl → the media actions
+  - `exec_cmd` of a command calling axiom → its action (with its call and argument), of wpctl/pactl/brightnessctl/playerctl → the media actions
   - the example config's exit command → `exitSession`
   - any other exec → `exec`
   - focus/move/float/pseudo/togglesplit/special/drag → their own actions

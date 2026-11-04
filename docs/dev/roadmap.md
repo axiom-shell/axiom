@@ -175,9 +175,6 @@ The config, the takeover and the session must never be damaged by a rarely taken
 
 Done: every entry is fixed, the last with backend stage 7; the hand-fix gap with no takeovers kept is [Deferred](#deferred).
 
-- [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
-- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
-
 ### Phase 2: finish stage 2
 Done: [backend stage 2](backend/roadmap.md) (Wayland), with its own entries: the hypridle autostart default (dropped, and from saved configs by the v78 step) and the D-Bus match rules' escaping.
 
@@ -335,6 +332,10 @@ Found while investigating Hyprland starting on workspace 10:
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
 
+Moved here from Phase 1, still open:
+- [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
+- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
+
 Found by the audits:
 - [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
 - [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
@@ -363,7 +364,6 @@ Found by the audits:
 - [A $' or $& in a bind's argument is read as a replacement pattern](issues.md#a--or--in-a-binds-argument-is-read-as-a-replacement-pattern)
 - [A sway bind using a variable from an include moves as a literal $name](issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
 - [A niri spawn of one word with a space moves as a broken shell command](issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)
-- [The Hyprland and sway bind merges each skip half of compositor/actions](issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
 - [The overview stays open with nothing shown after its monitor goes away](issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
 - [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
@@ -378,7 +378,6 @@ Found by the audits:
 - [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
-- [niri's confirming quit moves in as an instant log out](issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
 - [A sway exec chained with ; or , moves in as one shell command](issues.md#a-sway-exec-chained-with--or--moves-in-as-one-shell-command)
 - [A sway output rule by description misses a monitor with no serial](issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
 - [Managed mode's monitor-conflict check misses quoted and block output lines](issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
@@ -387,7 +386,6 @@ Found by the audits:
 - [sway's named workspaces all share workspace id -1](issues.md#sways-named-workspaces-all-share-workspace-id--1)
 - [sway lists disabled outputs as outputs](issues.md#sway-lists-disabled-outputs-as-outputs)
 - [niri doesn't send windowFocused for a window that opens focused](issues.md#niri-doesnt-send-windowfocused-for-a-window-that-opens-focused)
-- [sway's merge moves workspace binds as raw sway commands](issues.md#sways-merge-moves-workspace-binds-as-raw-sway-commands)
 - ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
 - [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
@@ -515,6 +513,9 @@ Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
 - [The weather TestPlace test fails now and then under load](issues.md#the-weather-testplace-test-fails-now-and-then-under-load)
+
+Found while running verify.sh --all for compositor-08 (row 20):
+- [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

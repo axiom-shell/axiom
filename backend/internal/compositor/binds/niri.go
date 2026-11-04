@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/kdl"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
@@ -50,23 +49,14 @@ var (
 		"move-window-to-workspace": "moveWindowNth"}
 )
 
-// commandAction is the axiom action for a command niri runs, `exec` at
-// least
-func commandAction(o Options, command string) *jsonx.Object {
-	if entry := actions.Default().IPCAction(command); entry != nil {
-		return entry
-	}
-	if media := mediaAction(command); media != "" {
-		return jsonx.Obj("action", media)
-	}
-	return jsonx.Obj("action", "exec", "argument", command)
-}
-
-func niriAction(o Options, node *kdl.Node) *jsonx.Object {
+func niriAction(node *kdl.Node) *jsonx.Object {
 	args := node.Args
 	plain := len(args) == 0 && node.Props.Len() == 0
-	// (quit asks first unless skip-confirmation: axiom's log out doesn't)
-	if action, ok := niriSimple[node.Name]; ok && (node.Name == "quit" || plain) {
+	// A plain quit asks first and axiom's log out doesn't: only quit
+	// skip-confirmation=true is one, a confirming quit stays niri's (raw)
+	skip, _ := node.Props.Get("skip-confirmation")
+	unconfirmed := len(args) == 0 && node.Props.Len() == 1 && skip == true
+	if action, ok := niriSimple[node.Name]; ok && (node.Name == "quit" && unconfirmed || node.Name != "quit" && plain) {
 		return jsonx.Obj("action", action)
 	}
 	if d, ok := niriDirectional[node.Name]; ok && plain {
@@ -93,14 +83,14 @@ func niriAction(o Options, node *kdl.Node) *jsonx.Object {
 		}
 		if len(words) == len(args) {
 			if len(words) == 1 {
-				return commandAction(o, words[0])
+				return execBind(words[0])
 			}
-			return commandAction(o, shellJoin(words))
+			return execBind(shellJoin(words))
 		}
 	}
 	if node.Name == "spawn-sh" && len(args) == 1 {
 		if s, ok := args[0].(string); ok {
-			return commandAction(o, s)
+			return execBind(s)
 		}
 	}
 	return jsonx.Obj("action", "raw", "argument", render.KdlNodeText(node), "compositor", "niri")
@@ -191,7 +181,7 @@ func extractNiri(ctx context.Context, o Options) *jsonx.Object {
 					extra.Set("description", title)
 				}
 				repeat, _ := bind.Props.Get("repeat")
-				entry := movedBind(key, niriAction(o, bind.Children[0]), extra, repeat != false)
+				entry := movedBind(key, niriAction(bind.Children[0]), extra, repeat != false)
 				text := ""
 				if bind.Line-1 < len(f.lines) {
 					text = f.lines[bind.Line-1]
