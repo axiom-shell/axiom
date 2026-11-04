@@ -336,6 +336,45 @@ TestCase {
     compare(BarEnds.crossGeometry("pills", 0, 0, thin).extent, 8);
   }
 
+  // ...and along it: its first and last widgets sit where windows start,
+  // the screen margin from the side edge (with the border off, at least
+  // the padding), or past the bars there it makes way for
+  function test_end_widgets_line_up_with_windows() {
+    const thin = Object.assign({}, withBorder, {
+      "borderWidth": 1
+    });
+    const off = Object.assign({}, thin, {
+      "border": false
+    });
+    // Where the end widgets lie from the screen's left edge
+    const at = (b, opts) => b.ends.start.from - b.ends.start.reach + BarEnds.endInset(b, b.ends.start, opts);
+    const make = (location, kind, opts, padding) => bar(location, kind, {
+        "insideBorder": kind !== "solid" && opts.border,
+        "edgePadding": padding ?? 4,
+        "extent": BarEnds.crossGeometry(kind, 26, padding ?? 4, opts).extent
+      });
+    [[thin, 8, 35], [off, 8, 43]].forEach(([opts, alone, past]) => {
+      const name = opts.border ? "border on" : "border off";
+      ["solid", "pills"].forEach(kind => {
+        const [b] = BarEnds.withEnds([make("top", kind, opts)], opts);
+        compare(at(b, opts), alone, `${kind} alone, ${name}`);
+        // Meeting a side bar of its kind that takes the corner
+        const [top] = BarEnds.withEnds([make("top", kind, opts), make("left", kind, opts)], opts);
+        verify(!top.ends.start.held, name);
+        compare(at(top, opts), past, `${kind} past a side bar, ${name}`);
+      });
+    });
+    // With the border off, a padding past the margin keeps it
+    ["solid", "pills"].forEach(kind => {
+      const [b] = BarEnds.withEnds([make("top", kind, off, 12)], off);
+      compare(at(b, off), 12, kind);
+    });
+    // The fillet's radius never counts: inside the border, a pill bar's
+    // window starts on the side stroke, its widgets just past it
+    const [pills] = BarEnds.withEnds([make("top", "pills", thin)], thin);
+    compare(BarEnds.endInset(pills, pills.ends.start, thin), 1);
+  }
+
   function test_stack_order_is_the_arrangement() {
     const bars = [bar("top", "floatingPills"), bar("top", "transparent", {
         "id": "t1"

@@ -93,6 +93,25 @@ QtObject {
     };
   }
 
+  /**
+   * How far along a solid or pill bar its first or last widgets sit from
+   * its window's start at `end` (one of its ends, endsOf), where that end
+   * isn't held: past the line its window counts from (`from`), as far as
+   * windows start, so solid and pills place them alike. That's the screen
+   * margin (with the border off, at least the bar's `edgePadding`), from
+   * the perpendicular screen edge or past the bars there it makes way
+   * for. A bar inside the border counts `from` from the border's margin
+   * already, and its window reaches `reach` back onto the stroke there.
+   * An end pill joins the frame (or the stroke it meets) squarely, filling
+   * the corner as a solid bar does, so no fillet's room is kept and the
+   * radius never counts. `opts`: { border, margin }.
+   */
+  function endInset(bar, end, opts) {
+    const line = opts.border ? opts.margin : Math.max(opts.margin, bar.edgePadding);
+    const counted = opts.border && !bar.solid ? opts.margin : 0;
+    return line - counted + end.reach;
+  }
+
   // Whether a bar lies along its screen's shorter edge (`width` × `height`
   // the screen's): a side bar on a landscape or square screen, a top or
   // bottom one on a portrait screen. Of two bars of a kind, it takes the

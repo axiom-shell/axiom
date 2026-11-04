@@ -46,35 +46,33 @@ Rectangle {
   readonly property real islandEnd: root.length - root._islandInset(root.ends.end)
   // Fillet room each side of a pill, as for popouts (AttachedSurface)
   readonly property int pillConnector: Appearance.connectorGap
-  // Kept clear at each end. A pill at an end instead sits flush on the
-  // perpendicular edge's stroke (bar-window 0 along a bar inside the
-  // border) and joins it, so its widgets only need the pill inset (the
-  // stroke and the padding, or the screen margin too on a bare edge). An
-  // island's widgets sit inside its stroke and padding. A transparent
-  // bar's keep the gap they keep across it, past the stroke there; a solid
-  // one's the screen margin, or on a bare edge at least that gap. At an
-  // end held clear of another bar, a pill's free end and its fillet stay
-  // past the held gap, and a plain bar's widgets at least its padding past
-  // that bar.
+  // Kept clear at each end. A solid or pill bar's widgets sit where
+  // windows start (BarEnds.endInset): an end pill fills the corner,
+  // joining the frame squarely as a solid bar does. An island's widgets
+  // sit inside its stroke and padding. A transparent bar's keep the gap
+  // they keep across it, past the stroke there (it draws nothing to fill
+  // the frame's rounded corner they'd sit over). At an end held clear of
+  // another bar, a pill's free end and its fillet stay past the held gap,
+  // and a plain bar's widgets at least its padding past that bar.
   function _endMargin(end) {
-    if (root.pills) {
-      if (!end.held)
-        return root.barConfig.pillInset;
+    if (root.islands)
+      return root._islandInset(end) + root.barConfig.islandGap;
+    if (end.held) {
+      if (!root.pills)
+        return end.over + Math.max(end.gap, root.barConfig.edgePadding);
       const fillet = Appearance.screenBorder ? EdgeAttach.filletMargin(Appearance.borderWidth, Appearance.borderRadius) : 0;
       return end.over + end.gap + fillet + root.barConfig.pillGap;
     }
-    if (root.islands)
-      return root._islandInset(end) + root.barConfig.islandGap;
-    if (end.held)
-      return end.over + Math.max(end.gap, root.barConfig.edgePadding);
-    // The gap its widgets keep across the bar, from what covers its outer
-    // edge, kept past the stroke at the end too (or the bare screen edge)
-    const across = root.barConfig.crossStart - (root.barConfig.insideBorder ? Appearance.borderWidth : 0);
-    if (!root.barConfig.solid)
-      return end.reach + across;
-    return Appearance.screenBorder ? Appearance.screenMargin : Math.max(Appearance.screenMargin, across);
+    if (root.pills || root.barConfig.solid)
+      return BarEnds.endInset(root.barConfig, end, BarsConfig.endsOptions({}, {}));
+    // The gap its widgets keep across the bar, past the stroke at the end
+    return end.reach + root.barConfig.crossStart - (root.barConfig.insideBorder ? Appearance.borderWidth : 0);
   }
   readonly property var endMargins: [root._endMargin(root.ends.start), root._endMargin(root.ends.end)]
+  // How near a pill's end may come to an unheld end of the bar and still
+  // run on to it and join it: its widgets' inset there less the pill gap
+  // (on the stroke it covers, at least)
+  readonly property real _pillJoinReach: Math.max(root.barConfig.overlap, ...[root.ends.start, root.ends.end].map((end, i) => end.held ? 0 : root.endMargins[i] - root.barConfig.pillGap)) + 0.5
 
   // One { start, length, joinStart, joinEnd } per pill along the bar: one
   // per joined group (BarLayout.joinGroups, pillRects): grown by the pill
@@ -95,7 +93,7 @@ Rectangle {
   // no stroke to join (BarEnds): within the stroke it covers there, or on
   // a bare edge, the room the end widgets keep past the pill's gap. Pills
   // too close for the fillets between them draw as one.
-  readonly property var groupPills: root.pills ? BarLayout.pillRects(root.joinedGroups, root.barConfig.pillGap, 2 * root.pillConnector, Math.max(root.barConfig.overlap, root.barConfig.pillInset - root.barConfig.pillGap) + 0.5, root.length, [root.ends.start.joinable, root.ends.end.joinable]) : []
+  readonly property var groupPills: root.pills ? BarLayout.pillRects(root.joinedGroups, root.barConfig.pillGap, 2 * root.pillConnector, root._pillJoinReach, root.length, [root.ends.start.joinable, root.ends.end.joinable]) : []
 
   // Each section's groups of widgets as drawn, along the bar ({ start,
   // end, section }). Dividers at a section's end facing another section

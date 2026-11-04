@@ -43,11 +43,6 @@ QtObject {
     const cross = BarEnds.crossGeometry(kind, thickness, edgePadding, BarsConfig.endsOptions({}, {}));
     // A pill covers the screen border's stroke where it joins it
     const overlap = Appearance.screenBorder ? Appearance.borderWidth : 0;
-    // How far in a pill's widgets sit from the bar's ends where it joins
-    // them: past the border stroke there and the padding, or on a bare
-    // edge, as far as a solid bar's (the screen margin, at least the
-    // padding)
-    const pillInset = Appearance.screenBorder ? overlap + edgePadding : Math.max(Appearance.screenMargin, edgePadding);
     // A pill's free ends sit the padding and its stroke out from its
     // widgets, as its far side does
     const pillGap = edgePadding + Appearance.borderWidth;
@@ -105,7 +100,6 @@ QtObject {
       // off it draws its own, on its innermost pixels
       "innerStroke": solid && !Appearance.screenBorder,
       "overlap": overlap,
-      "pillInset": pillInset,
       "pillGap": pillGap,
       "pillDepth": cross.pillDepth,
       "widgetGap": barConfig.widgetGap,

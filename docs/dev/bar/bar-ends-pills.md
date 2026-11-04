@@ -21,6 +21,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
 - `barId` is the bar it meets on the perpendicular edge ("" for the frame), and `from` how far from that edge its window starts, before `reach`: past every bar there it makes way for (bars stacked on one edge: [Layering and corners](layering-and-corners.md#bars-stacked-on-one-edge-barendsstackson-placestack-edgeof)). `BarContainer.barAt` finds the bar it joins by `barId`.
 - **How `BarContainer` uses the ends:**
   - It takes per-end `endMargins`; `BarLayout.layoutSections`/`overflowHidden` take `[start, end]`.
+  - **End widgets line up with windows** (`BarEnds.endInset`, `tst_BarEnds`' `test_end_widgets_line_up_with_windows`): at an end that isn't held, a solid or pill bar's first and last widgets sit where windows start, the screen margin from the side edge (with the border off, the larger of the margin and the padding), or that far past the bars there it makes way for. Solid and pills place them alike (defaults: 8 px from the screen edge, border on or off). An end pill fills the corner and joins the frame squarely, as a solid bar does, so no fillet room is kept and the radius never counts. A transparent bar's end widgets keep the gap they keep across the bar (it draws nothing to cover the frame's rounded corner they would sit over); a floating bar's sit inside its islands.
   - It takes `islandFrom`/`islandEnd`.
   - It joins an end pill only where that end is `joinable`.
   - A transparent bar's widgets keep the same gap from each end as across the bar.
@@ -51,7 +52,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - A pill bar lying on the border itself (nothing reserving outside it) reaches back over the whole frame to the screen edge: its window's outer margin is the screen margin (`BarEnds.placeStack`'s `outerReach`, `BarPanel`), so it reserves the frame's room back, and its widgets sit across from the screen edge as a solid bar's do, over the frame's fill.
   - Its pills hang off the border's stroke, `stripCover` (`margin − borderWidth`) in from the window's outer edge; between them the frame shows as ever. The bar's shadow is kept off the frame (`BarContainer._stripHole`).
   - A pill bar stacked inside another bar keeps its `-borderWidth` reach onto the stroke there (`stripCover` 0).
-  - Along the bar, a joined end pill's widgets sit `pillInset` in (past the stroke and the padding; on a bare edge, as far as a solid bar's), and a free end sits `pillGap` (the padding and its stroke) past its widgets.
+  - Along the bar, a joined end pill's widgets sit where a solid bar's do (`BarEnds.endInset`; inside the border, just past the side stroke the pill covers), and a free end sits `pillGap` (the padding and its stroke) past its widgets.
 - Each pill is an `AttachedSurface` growing out of the border's stroke, covering it (`barConfig.overlap`).
 - A pill at an end of the bar joins the perpendicular edge (`joinStart`/`joinEnd`): it sits flush on that edge's stroke, whose far corner meets it with a fillet.
 - **End reach requests.** Surfaces joining the bar from the perpendicular edge ask for a pill at an end with an `endReach` (`{ atStart, to, straight }`) in `setRequest(owner, …)`, keyed by owner.
