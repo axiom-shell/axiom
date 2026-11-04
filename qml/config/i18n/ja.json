@@ -2490,7 +2490,6 @@
     "The login screen runs under greetd, with its text login (agreety) as the fallback. Install them with your package manager.": "ログイン画面は greetd 上で動き、テキストログイン（agreety）がフォールバックになります。パッケージマネージャーでインストールしてください。",
     "axiom can't check for updates on this distribution.": "このディストリビューションでは axiom はアップデートを確認できません。",
     "Run on click. Empty uses your distribution's upgrade (`sudo pacman -Syu`, `sudo dnf upgrade`), or the AUR helper with -Syu.": "クリックで実行します。空の場合はディストリビューションのアップグレード（`sudo pacman -Syu`、`sudo dnf upgrade`）、または AUR ヘルパーの -Syu を使います。",
-    "Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).": "GTK 3 と GTK 4 の gtk.css の隣に axiom.css を書き出し、ライト/ダークに追従します。GTK3 アプリには adw-gtk3 テーマが必要です（Arch では adw-gtk-theme、Fedora では adw-gtk3-theme）。",
     "Built-in uses the Wayland session-lock protocol with PAM. None leaves locking to your own locker.": "ビルトインは Wayland のセッションロックプロトコルと PAM を使います。なしの場合、ロックは自分のロッカーに任せます。",
     "axiom's package was updated since its login screen was set up. It runs the new code already; Update refreshes its start-up files and fallback look, asking for your password.": "ログイン画面を設定した後に axiom のパッケージが更新されました。新しいコードはすでに動いています。「更新」で起動用ファイルと予備の見た目を新しくします（パスワードを求めます）。",
     "The login screen runs the copy of axiom your package manager installed, so it updates with the system. Only root can change it.": "ログイン画面はパッケージマネージャーがインストールした axiom を実行するため、システムと一緒に更新されます。変更できるのは root だけです。",
@@ -3863,6 +3862,10 @@
     "The layout's XKB variant (colemak), or empty.": "",
     "An XKB layout (us, de). For an input method, the layout it types on; empty, the first.": "",
     "Keyboard layouts and input method engines, switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.": "",
-    "Input method": ""
+    "Input method": "",
+    "Writes the \"axiom\" theme for fcitx5's candidate window and its menus. Reloads running fcitx5.": "",
+    "Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps (and ibus's candidate window) need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).": "",
+    "fcitx5": "",
+    "Theme picks the light theme and DarkTheme the dark one (with Follow system light/dark color scheme on): both name axiom, which follows axiom's variant itself. fcitx5 rewrites classicui.conf whenever its own settings are saved (fcitx5-configtool, or axiom's input settings): the theme stays, the lines Apply commented out go. Picking another theme there undoes this; Apply again to come back.": ""
   }
 }

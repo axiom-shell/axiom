@@ -90,6 +90,18 @@ var Table = map[string]Integration{
 	"firefox": {Profiles: true,
 		Missing: "no Firefox, LibreWolf, Zen, Floorp or Waterfox profile found (start the browser once)",
 		Files:   []File{{Path: "{each}/chrome/axiom.css", render: tmpl{name: "firefox.css"}}}},
+	// fcitx5's classicui theme: theme.conf and the images it names, found
+	// beside it
+	"fcitx5": {Files: []File{
+		{Path: "{data}/fcitx5/themes/axiom/theme.conf", render: tmpl{name: "fcitx5-theme.conf"}},
+		{Path: "{data}/fcitx5/themes/axiom/panel.svg", render: tmpl{name: "fcitx5-panel.svg"}},
+		{Path: "{data}/fcitx5/themes/axiom/highlight.svg", render: tmpl{name: "fcitx5-highlight.svg"}},
+		{Path: "{data}/fcitx5/themes/axiom/menu-highlight.svg", render: tmpl{name: "fcitx5-menu-highlight.svg"}},
+		{Path: "{data}/fcitx5/themes/axiom/prev.svg", render: tmpl{name: "fcitx5-prev.svg"}},
+		{Path: "{data}/fcitx5/themes/axiom/next.svg", render: tmpl{name: "fcitx5-next.svg"}},
+		{Path: "{data}/fcitx5/themes/axiom/arrow.svg", render: tmpl{name: "fcitx5-arrow.svg"}},
+		{Path: "{data}/fcitx5/themes/axiom/radio.svg", render: tmpl{name: "fcitx5-radio.svg"}},
+	}},
 	"foot":    one("{config}/foot/axiom.ini", tmpl{name: "foot.ini", format: hex}),
 	"fzf":     one("{state}/axiom/fzf-colors", tmpl{name: "fzf", text: true}),
 	"ghostty": one("{config}/ghostty/themes/axiom", tmpl{name: "ghostty"}),
