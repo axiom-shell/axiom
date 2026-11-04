@@ -500,6 +500,57 @@ TestCase {
       })], "top", withBorder).facing.kind, "transparent", "alone, it still decides");
   }
 
+  function test_a_pinned_bar_zones_but_keeps_its_slot() {
+    // An auto-hiding pill bar (reserving nothing as configured) inside a
+    // solid one, beside a top-right pill bar: pinned, it reserves its
+    // extent, but lies, stacks and yields as unpinned
+    const solid = bar("top", "solid", {
+      "insideBorder": false
+    });
+    const auto = extra => bar("top", "pills", Object.assign({
+        "id": "auto",
+        "reserveSpace": false
+      }, extra));
+    const side = bar("right", "pills");
+    const [, hidden] = placed([solid, auto({})], withBorder);
+    const [, pinned] = placed([solid, auto({
+        "pinned": true
+      })], withBorder);
+    compare(hidden.zone, 0);
+    compare(hidden.taken, 0);
+    compare(pinned.zone, 30);
+    compare(pinned.taken, 28);
+    compare(pinned.outer, hidden.outer, "the same slot");
+    compare(pinned.stackIndex, hidden.stackIndex);
+    compare(pinned.outerReach, hidden.outerReach);
+    compare(pinned.frame, hidden.frame);
+    // The edge's reserved space ends past it, pinned only
+    compare(edge([solid, auto({})], "top", withBorder).reserved, 24 + 8);
+    compare(edge([solid, auto({
+        "pinned": true
+      })], "top", withBorder).reserved, 24 + 8 + 28);
+    // The solid bar faces the windows only while nothing reserving lies
+    // inside it
+    const [outerHidden] = placed([solid, auto({})], withBorder);
+    const [outerPinned] = placed([solid, auto({
+        "pinned": true
+      })], withBorder);
+    verify(outerHidden.facesWindows && !outerPinned.facesWindows);
+    // Corners go by the configured reserve: the side bar never yields to it
+    const sideEnds = withEnds => withEnds.find(b => b.id === "right:pills").ends.start.barId;
+    compare(sideEnds(BarEnds.withEnds([auto({}), side], withBorder)), "");
+    compare(sideEnds(BarEnds.withEnds([auto({
+        "pinned": true
+      }), side], withBorder)), "");
+    // Alone on the border it lies on the frame, as a reserving pill bar
+    const [lone] = placed([auto({
+        "pinned": true
+      })], withBorder);
+    compare(lone.outerReach, 8);
+    compare(lone.zone, 30);
+    compare(lone.taken, 22);
+  }
+
   function test_popouts_grow_out_of_the_connected_run() {
     const stack = [bar("top", "solid", {
         "insideBorder": false

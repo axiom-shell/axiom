@@ -19,8 +19,14 @@ QtObject {
   // The running bars (while the bar editor has unsaved edits, those),
   // each placed in its edge's stack and with what its ends meet among the
   // bars on its screen (BarEnds.withEnds: where it lies, what it
-  // reserves, which bar a shared corner goes to)
-  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps)), root._endsOptions)
+  // reserves, which bar a shared corner goes to). An auto-hiding bar
+  // pinned shown (BarRevealManager.pinned, which changes only on a pin,
+  // never on hover) reserves its space.
+  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => {
+    const enriched = BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps);
+    enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
+    return enriched;
+  }), root._endsOptions)
   readonly property var _endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
 
   // The gaps a floating bar's Automatic float gap keeps (per edge name):

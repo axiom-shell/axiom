@@ -58,7 +58,11 @@ QtObject {
     const floatingGap = floatingGapAuto ? floatGaps[edge] ?? 0 : barConfig.floatingGap;
     const islandStart = outerCover + floatingGap;
     const islandDepth = Appearance.borderWidth + edgePadding + thickness + edgePadding + Appearance.borderWidth;
-    const borderShadowed = solid && Appearance.screenBorder && barConfig.reserveSpace;
+    // An auto-hiding bar reserves nothing unless pinned (ScreenEdgeManager
+    // sets `pinned`; BarEnds zones it by reserveSpace || pinned)
+    const autoHiding = barConfig.autoHide !== "never";
+    const reserves = barConfig.reserveSpace && !autoHiding;
+    const borderShadowed = solid && Appearance.screenBorder && reserves;
     // Shapes and grouping are for widgets drawn on a background
     const boxed = BarsConfig.boxedStyles.includes(look.widgetStyle);
     const grouping = boxed ? look.widgetGrouping : "separate";
@@ -150,13 +154,19 @@ QtObject {
       "lockCenter": barConfig.lockCenter,
       // never, always, whenCovered; what shows a hidden bar, and how long
       "autoHide": barConfig.autoHide,
+      "autoHiding": autoHiding,
+      // Pinned shown by the `bar` IPC toggle: it then reserves its space
+      // (BarRevealManager; ScreenEdgeManager sets it)
+      "pinned": false,
       "revealOnWorkspace": barConfig.revealOnWorkspace,
       "revealOnActivity": barConfig.revealOnActivity,
       "revealFor": barConfig.revealFor,
       "timing": barConfig.timing,
       "trigger": barConfig.trigger,
       "location": loc,
-      "reserveSpace": barConfig.reserveSpace,
+      // As configured: never for an auto-hiding bar (what its stack slot
+      // and corners go by, so hiding, showing and pinning never move them)
+      "reserveSpace": reserves,
       // Each Auto color picked for its place on this bar
       "widgets": BarsConfig.withAutoColors(barConfig.widgets, look.widgetStyle, grouping, look.groupColor),
       "vertical": vertical,

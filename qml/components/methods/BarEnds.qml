@@ -19,8 +19,14 @@ import QtQuick
 // A bar is an enriched bar entry (BarsConfig.enrichBarConfig): `id`,
 // `vertical`, `shortEdge`, `solid`, `kind`, `insideBorder`, `island`,
 // `extent`, `floatingGap`, `floatingGapAuto`, `trim` (how much less than its
-// extent it reserves, alone on its edge), `enabled`, `reserveSpace`,
-// `monitor`, `top`/`bottom`/`left`/`right`.
+// extent it reserves, alone on its edge), `enabled`, `reserveSpace` (as
+// configured: never for an auto-hiding bar), `pinned` (an auto-hiding bar
+// pinned shown, which reserves too: `reserves`), `monitor`,
+// `top`/`bottom`/`left`/`right`.
+//
+// Stack order, corners and connected runs go by the configured reserve
+// alone, and zones by the effective one (`reserves`), so an auto-hiding
+// bar keeps its slot and pinning it never hands a corner over.
 // `opts`: { border (the screen border is on), borderWidth, margin (the
 // border's width, Appearance.screenMargin), gapsOut (per edge name),
 // floatGaps (what an Automatic float gap keeps, per edge name) }.
@@ -43,6 +49,12 @@ import QtQuick
 // - barId, from: see endsOf
 QtObject {
   id: root
+
+  // Whether a bar reserves its space now: as configured, or pinned shown
+  // (an auto-hiding bar)
+  function reserves(bar) {
+    return !!bar.reserveSpace || !!bar.pinned;
+  }
 
   // Who wins a shared corner: solid, then pills, then floating (bars and
   // pills held off the edge), then transparent
@@ -318,7 +330,7 @@ QtObject {
         line += opts.margin;
         borderLaid = true;
       }
-      const next = stack.slice(index + 1).find(other => other.reserveSpace) ?? null;
+      const next = stack.slice(index + 1).find(other => root.reserves(other)) ?? null;
       const facesWindows = next === null;
       // Only a bar facing the windows trims (a transparent bar's gaps_out,
       // its reserveTrim): one with a reserving bar inside it reserves its
@@ -327,7 +339,7 @@ QtObject {
       const trim = facesWindows ? bar.trim : 0;
       const onStrip = bar === strip;
       let zone = 0;
-      if (bar.reserveSpace)
+      if (root.reserves(bar))
         zone = Math.max(0, (onStrip ? bar.extent - opts.margin + opts.borderWidth : bar.extent) - trim);
       // A bar inside the border reaches back onto its stroke. A pill bar
       // lying on the border itself reaches back over the whole frame to
@@ -444,7 +456,7 @@ QtObject {
   function edgeOf(placed, opts) {
     const margin = opts.border ? opts.margin : 0;
     const inner = placed.length > 0 ? placed[placed.length - 1] : null;
-    const reserving = placed.filter(bar => bar.reserveSpace);
+    const reserving = placed.filter(bar => root.reserves(bar));
     const sum = (bars, key) => bars.reduce((total, bar) => total + bar[key], 0);
     const solids = placed.filter(bar => bar.solid && bar.reserveSpace);
     const solidZone = sum(solids, "zone");

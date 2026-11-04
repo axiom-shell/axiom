@@ -518,6 +518,10 @@ Rectangle {
     }
   }
 
+  // Where the blur window cuts the bar's shapes and shadow, in screen px
+  // (BlurShape.clipRect): its window, for an auto-hiding bar sliding out
+  // of it (BarPanel); null for none
+  property var blurClip: null
   // The blur window draws the bar's fill (BlurManager), once
   // its window is placed on screen: where its shapes are, the container's
   // top-left on screen
@@ -571,6 +575,7 @@ Rectangle {
         y: root.blurOrigin?.y ?? 0
         shown: root.backed && solidFill.visible
         shadow: root.barConfig
+        clipRect: root.blurClip
       }
     }
 
@@ -684,6 +689,7 @@ Rectangle {
           y: (root.blurOrigin?.y ?? 0) + island.y
           shown: root.backed && !island.covered
           shadow: root.barConfig
+          clipRect: root.blurClip
         }
         // Inner side: bottom on a top bar, right on a left one, and so on
         topLeftRadius: root.barConfig.bottom || root.barConfig.right ? startInner : corner
@@ -858,6 +864,7 @@ Rectangle {
           y: (root.blurOrigin?.y ?? 0) + pill.y
           shown: root.backed
           shadow: root.barConfig
+          clipRect: root.blurClip
         }
       }
     }

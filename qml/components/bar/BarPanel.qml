@@ -6,8 +6,10 @@ import QtQuick
 
 import qs.config
 import qs.services.ui
+import qs.services.compositor
 import qs.components.hosts.popout
 import qs.components.methods
+import qs.components.reusable
 
 // One bar's layer-shell window (shell/Bar makes one per ScreenEdgeManager.bars
 // entry): its screen, layer and exclusive zone, holding the bar's BarContainer.
@@ -36,7 +38,8 @@ PanelWindow {
   WlrLayershell.layer: WlrLayer.Top
   // How far in from its outer edge it reserves (BarEnds.placeStack: a
   // transparent bar facing the windows less gaps_out, a solid bar under
-  // the border's strip less the strip)
+  // the border's strip less the strip; an auto-hiding bar nothing, unless
+  // pinned)
   WlrLayershell.exclusiveZone: root.barConfig.zone
   WlrLayershell.namespace: root.layerNamespace
   readonly property string layerNamespace: BarsConfig.layerNamespace(barConfig)
@@ -82,13 +85,92 @@ PanelWindow {
   implicitHeight: barConfig.vertical ? 0 : thickness
   implicitWidth: barConfig.vertical ? thickness : 0
 
+  // Its bar where it rests (not where it has slid to, so the pointer on
+  // it as it slides in still holds it); hidden, only its edge strip takes
+  // the pointer
   mask: Region {
-    item: bar
+    item: root.revealed ? barSlot : edgeStrip
+  }
+
+  // --- Auto-hide (BarRevealManager) ---
+
+  readonly property bool autoHiding: root.barConfig.autoHide !== "never"
+  // Shown: always unless it auto-hides; hidden, it slides out of its
+  // window toward its edge, behind the bars outside it, keeping its slot
+  // (it reserves nothing either way, unless pinned)
+  readonly property bool revealed: BarRevealManager.shownOf(root.barConfig)
+  property real _shown: root.revealed ? 1 : 0
+  Glide on _shown {
+    duration: Appearance.animNormal
+  }
+  // How far it has slid out: its window's whole depth, shadow included
+  readonly property real slide: (1 - root._shown) * root.thickness
+
+  // A window over its slot, or a fullscreen one on its screen
+  // (whenCovered). Fullscreen, it stays on its layer under that window:
+  // nothing maps or remaps for it
+  readonly property bool covered: root.barConfig.autoHide === "whenCovered" && !!root.screen && (CompositorManager.hasFullscreen(root.screen.name) || CompositorManager.windowsCover(root.screen, root._slotRect()))
+  onCoveredChanged: BarRevealManager.setCovered(root.barConfig.id, root.covered)
+
+  // Its slot on the screen, screen-local: along its whole edge, across
+  // from its outer edge for its extent
+  function _slotRect() {
+    const across = root.barConfig.outer;
+    const depth = root.barConfig.extent;
+    const w = root.screen.width, h = root.screen.height;
+    if (root.barConfig.top)
+      return Qt.rect(0, across, w, depth);
+    if (root.barConfig.bottom)
+      return Qt.rect(0, h - across - depth, w, depth);
+    if (root.barConfig.left)
+      return Qt.rect(across, 0, depth, h);
+    return Qt.rect(w - across - depth, 0, depth, h);
+  }
+
+  // What holds it shown: an open popout of its own, an edge menu opened
+  // from it, the bar editor with this bar selected
+  readonly property bool _popoutOpen: barPopouts.occupied
+  readonly property bool _menuOpen: Object.keys(EdgeMenuManager.openMenus).some(id => root._holds(EdgeMenuManager.anchors[id] ?? null))
+  readonly property bool _editorHeld: BarManager.editing && BarManager.selectedBar()?.id === root.barConfig.sourceId
+  on_PopoutOpenChanged: BarRevealManager.hold(root.barConfig.id, "popout", root._popoutOpen)
+  on_MenuOpenChanged: BarRevealManager.hold(root.barConfig.id, "menu", root._menuOpen)
+  on_EditorHeldChanged: BarRevealManager.hold(root.barConfig.id, "editor", root._editorHeld)
+
+  // Whether an item (an edge menu's anchor: a PopoutAnchor, a Button) is
+  // on this bar
+  function _holds(item) {
+    for (let p = item; p; p = p.parent)
+      if (p === bar)
+        return true;
+    return false;
+  }
+
+  // The bar where it rests, shown (the mask while it's revealed)
+  Item {
+    id: barSlot
+    x: root.barConfig.right ? parent.width - width : 0
+    y: root.barConfig.bottom ? parent.height - height : 0
+    width: bar.width
+    height: bar.height
+  }
+
+  // The strip at its window's outer edge (the screen edge, for a bar
+  // lying on it) that takes the pointer while it's hidden
+  Item {
+    id: edgeStrip
+    readonly property int size: root.barConfig.trigger.size
+    x: root.barConfig.right ? parent.width - width : 0
+    y: root.barConfig.bottom ? parent.height - height : 0
+    width: root.barConfig.vertical ? edgeStrip.size : parent.width
+    height: root.barConfig.vertical ? parent.height : edgeStrip.size
   }
 
   Component.onCompleted: {
     SurfaceManager.registerGrabPartner(root, root.screen?.name);
     ScreenEdgeManager.registerBar(root);
+    BarRevealManager.register(root.barConfig.id);
+    BarRevealManager.setCovered(root.barConfig.id, root.covered);
+    BarRevealManager.hold(root.barConfig.id, "editor", root._editorHeld);
   }
   // The overlay's focus grab lets input through to the bar (see
   // SurfaceManager.grabPartners)
@@ -96,6 +178,7 @@ PanelWindow {
   Component.onDestruction: {
     SurfaceManager.unregisterGrabPartner(root);
     ScreenEdgeManager.unregisterBar(root);
+    BarRevealManager.forget(root.barConfig.id);
   }
 
   // Where the window is on its screen (LayerOrigin; null until it's
@@ -125,6 +208,13 @@ PanelWindow {
   Item {
     anchors.fill: parent
     z: 1
+    // The pointer on the bar, or on its edge strip while it's hidden (the
+    // mask): what hovering shows an auto-hiding bar by
+    HoverHandler {
+      id: hover
+      enabled: root.autoHiding
+      onHoveredChanged: BarRevealManager.setHover(root.barConfig.id, hover.hovered)
+    }
     PointHandler {
       id: barPress
       enabled: BackdropManager.catching
@@ -155,14 +245,17 @@ PanelWindow {
   // undefined` binding resets width to the implicit one after the anchors
   // have sized it, and the anchors don't reapply until the window resizes,
   // leaving a short bar that hides most of its widgets as overflow.
+  // Slid out by geometry (not a Translate) while hidden, so its blur
+  // shapes and shadow follow, cut to the window (blurClip)
   BarContainer {
     id: bar
-    x: root.barConfig.right ? parent.width - width : 0
-    y: root.barConfig.bottom ? parent.height - height : 0
+    x: root.barConfig.vertical ? (root.barConfig.right ? parent.width - width + root.slide : -root.slide) : 0
+    y: root.barConfig.vertical ? 0 : (root.barConfig.bottom ? parent.height - height + root.slide : -root.slide)
     width: root.barConfig.vertical ? root.barConfig.extent : parent.width
     height: root.barConfig.vertical ? parent.height : root.barConfig.extent
     barConfig: root.barConfig
     panel: root
     screen: root.screen
+    blurClip: root.autoHiding && root.screenOrigin ? Qt.rect(root.screenOrigin.x, root.screenOrigin.y, root.width, root.height) : null
   }
 }
