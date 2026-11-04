@@ -270,7 +270,7 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   property bool _optionsAgain: false
 
   function _readOptions([gaps, split, blurEnabled, blurSize, blurPasses, animationsEnabled, animations]) {
-    root.gapsOut = _gapSides(gaps) ?? root.gapsOut;
+    root.gapsOut = HyprState.gapSides(gaps) ?? root.gapsOut;
     const multiplier = Number(split?.float);
     if (multiplier > 0)
       root.splitWidthMultiplier = multiplier;
@@ -785,20 +785,5 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
         root._fetch();
       }
     });
-  }
-
-  // A gaps option's sides from its getoption reply ({ top, right, bottom,
-  // left }), or null: its css is "top right bottom left" (CSS shorthand)
-  function _gapSides(option) {
-    const css = String(option?.css ?? "").trim().split(/\s+/).map(Number);
-    if (css.length === 0 || css.some(isNaN))
-      return null;
-    const [top, right = top, bottom = top, left = right] = css;
-    return {
-      "top": top,
-      "right": right,
-      "bottom": bottom,
-      "left": left
-    };
   }
 }

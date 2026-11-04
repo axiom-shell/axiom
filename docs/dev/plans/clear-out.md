@@ -374,7 +374,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **compositor-13** (5):
   - A user's blur off overrides axiom's blur on niri
   - Gaps to the edges are wider on sway than the setting says
-  - [A failed options read sets Hyprland's gaps to 0](../issues.md#a-failed-options-read-sets-hyprlands-gaps-to-0)
+  - A failed options read sets Hyprland's gaps to 0
   - [The Translucency card reads the window look's blur object as a switch](../issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
   - [A failed cursor theme call keeps the theme's own name all session](../issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
 - **compositor-20** (2): Two majors; may ride in compositor-13 (TranslucencyStatus is next to it).

@@ -45,6 +45,77 @@ TestCase {
     compare(HyprState.keyboard(null), null);
   }
 
+  function test_gapSides_data() {
+    return [
+      {
+        "tag": "no reply",
+        "option": null,
+        "sides": null
+      },
+      {
+        "tag": "no css",
+        "option": {
+          "int": 5
+        },
+        "sides": null
+      },
+      {
+        "tag": "empty css",
+        "option": {
+          "css": " "
+        },
+        "sides": null
+      },
+      {
+        "tag": "not numbers",
+        "option": {
+          "css": "5 x"
+        },
+        "sides": null
+      },
+      {
+        "tag": "one value",
+        "option": {
+          "css": "6"
+        },
+        "sides": {
+          "top": 6,
+          "right": 6,
+          "bottom": 6,
+          "left": 6
+        }
+      },
+      {
+        "tag": "two values",
+        "option": {
+          "css": "4 8"
+        },
+        "sides": {
+          "top": 4,
+          "right": 8,
+          "bottom": 4,
+          "left": 8
+        }
+      },
+      {
+        "tag": "four values",
+        "option": {
+          "css": " 1 2 3 4 "
+        },
+        "sides": {
+          "top": 1,
+          "right": 2,
+          "bottom": 3,
+          "left": 4
+        }
+      }
+    ];
+  }
+
+  function test_gapSides(data) {
+    compare(HyprState.gapSides(data.option), data.sides);
+  }
+
   function test_window() {
     const client = {
       "address": "0x5a",
