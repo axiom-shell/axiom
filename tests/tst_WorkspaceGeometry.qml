@@ -475,6 +475,14 @@ TestCase {
     compare(WorkspaceGeometry.orderMonitors([a, c, d], "").map(m => m.key), ["desc:a", "desc:c", "desc:d"]);
   }
 
+  function test_orderMonitors_ignores_locale() {
+    const keys = ["HDMI-A-1", "eDP-1", "desc:a", "DP-1", "dp-1"];
+    compare(WorkspaceGeometry.orderMonitors(keys.map(key => ({
+          "name": key,
+          "key": key
+        })), "").map(m => m.key), ["desc:a", "DP-1", "dp-1", "eDP-1", "HDMI-A-1"], "case-insensitive, then by code point, under any locale");
+  }
+
   // Two monitors, A (id 0, primary) focused and B (id 1)
   function _monitors(activeA, activeB) {
     return [
