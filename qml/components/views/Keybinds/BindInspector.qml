@@ -209,12 +209,19 @@ ColumnLayout {
     title: I18n.tr("When it fires")
 
     Repeater {
-      model: [["repeating", I18n.tr("Repeat while held"), I18n.tr("Fires again and again while the key stays down, as volume keys do.")], ["locked", I18n.tr("Works while locked"), I18n.tr("Also fires on the lock screen.")], ["release", I18n.tr("Fire on release"), I18n.tr("Fires when the key is let go rather than pressed.")]]
+      // [flag, title, description, the capability it needs or ""]
+      model: [["repeating", I18n.tr("Repeat while held"), I18n.tr("Fires again and again while the key stays down, as volume keys do."), ""], ["locked", I18n.tr("Works while locked"), I18n.tr("Also fires on the lock screen."), ""], ["release", I18n.tr("Fire on release"), I18n.tr("Fires when the key is let go rather than pressed."), "releaseBinds"]]
 
       delegate: RowLayout {
         id: flag
         required property var modelData
         readonly property bool on: root.bind[flag.modelData[0]] === true
+        // Greyed out, saying why, where the compositor can't do it; a flag
+        // already on (a bind merged from another compositor) can still be
+        // turned off
+        readonly property bool allowed: flag.modelData[3] === "" || CompositorManager.supports[flag.modelData[3]] === true
+        enabled: flag.allowed || flag.on
+        opacity: flag.allowed ? 1 : 0.5
         Layout.fillWidth: true
         spacing: Widget.spacing
 
@@ -229,7 +236,7 @@ ColumnLayout {
           }
 
           StyledText {
-            text: flag.modelData[2]
+            text: flag.allowed ? flag.modelData[2] : CompositorManager.unsupportedNote(flag.modelData[3])
             opacity: 0.6
             textSize: Appearance.fontSizeBy(-2)
             wrapMode: Text.WordWrap

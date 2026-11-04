@@ -77,13 +77,16 @@ Singleton {
     "inputConfig": true,
     "keyCapture": true,
     "modifierTap": true,
+    "releaseBinds": true,
     "bindMerge": true,
     "scratchpad": true,
     "namedSpecial": true,
     "mouseBinds": true,
     "splitToggle": true,
     "pin": true,
-    "windowOpacity": true
+    "windowOpacity": true,
+    "fullscreenOpacity": true,
+    "focusOnActivate": true
   }, fx ? _fxCapabilities.reduce((caps, cap) => {
     caps[cap] = true;
     return caps;
@@ -360,7 +363,7 @@ Singleton {
     return !root.fx && root._fxCapabilities.includes(capability) ? I18n.tr("SwayFX can.") : "";
   }
 
-  readonly property var _fxCapabilities: ["windowRounding", "windowBlur", "blur", "windowShadow", "windowDim"]
+  readonly property var _fxCapabilities: ["windowRounding", "windowBlur", "blurContrast", "blur", "windowShadow", "windowDim"]
 
   // Ends the sway session (the power menu's log out)
   function exitSession() {

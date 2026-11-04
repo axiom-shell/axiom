@@ -436,12 +436,13 @@ class CheckStructure(unittest.TestCase):
         "schema x-intro 'GhostIntro' has no qml/components/views/Settings/GhostIntro.qml",
         "tool page Keybinds isn't in the Overlay.items default",
         "docs/usage.md: IPC target 'phantom' has no IpcTarget",
+        "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
     ]
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "qml", "docs/usage.md")
+            root = fixture_root(tmp, "qml", "docs/usage.md", "docs/dev/compositor/contract.md")
 
             def schema(s):
                 defs = s["definitions"]
@@ -449,6 +450,7 @@ class CheckStructure(unittest.TestCase):
                 defs["TodoOverlayModule"]["x-hosts"] = ["overlay"]
                 del defs["CalculatorOverlayModule"]["x-keyboard"]
                 s["x-card"], s["x-intro"] = {"file": "Ghost"}, "GhostIntro"
+                s["x-showIf"] = {"/$supports.ghostCapability": True}
                 items = s["properties"]["Overlay"]["properties"]["items"]
                 items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
             edit_json(root / "qml/config/json/config.schema.json", schema)

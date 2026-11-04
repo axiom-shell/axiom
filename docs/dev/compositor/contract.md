@@ -78,11 +78,15 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `windowCover` | without `windowGeometry`, windows carry a `cover` (niri's tiled ones), which obscures a dock (`CompositorManager.windowsCover`) |
 | `workspaceSlide` | `travel` legs slide |
 | `windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity` | the `WindowLook` parts shown and applied |
+| `fullscreenOpacity` | the window look's fullscreen opacity (niri's opacity rules can't match a fullscreen window) |
+| `blurContrast` | the window blur's contrast (Hyprland, SwayFX; niri's blur has none) |
+| `focusOnActivate` | Windows and focus › Focus windows that ask for it (niri has no such switch: it always focuses a window that asks with a valid token) |
 | `windowRounding` | the shape part's rounding (plain sway's shape is the border width alone) |
 | `windowShadow`, `windowDim` | the window look's shadow and dim parts |
 | `inputConfig` | axiom sets the keyboard, mouse and touchpad |
 | `keyCapture` | the Keybinds page's recorder can take keys from the compositor's binds: `captureKeys`, or the recorder window's shortcut inhibitor alone (niri) |
 | `modifierTap` | a bind can be on a modifier key alone, fired when it's tapped (`KeyNames.tapModifier`: Hyprland, sway). Without it such a bind is warned about and left out (niri fires binds only on press) |
+| `releaseBinds` | a bind can fire on release (its `release` flag): without it the Keybinds inspector's Fire on release is greyed out and a bind carrying the flag (axiom's own `restartShell` and `exitSession`, one merged from another compositor) is written as a press bind (niri) |
 | `bindMerge` | the user's own binds can be read (the Keybinds page's List, conflicts, Merge) |
 | `monitorColor` | a monitor rule's bit depth, color management and SDR fields |
 | `monitorMirror` | a monitor rule can mirror another output |

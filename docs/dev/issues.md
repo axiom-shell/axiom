@@ -32,6 +32,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
 
+### TestDevImageFailingFallsBack sometimes finds no fallback exec
+- **Where:** `backend/internal/daemon/reexec_test.go` (`TestDevImageFailingFallsBack`)
+- **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The review of compositor-14 saw it again, in 0.00s: `no fallback (Run: /tmp/TestDevImageFailingFallsBack…/002 has no schema source (qml/config/schema/index.yaml))`; five reruns then passed. So `Run` failed as meant with the ctx alive (the deferred `fallBackLive` runs only with `ctx.Err() == nil`), and `fallBackCarried` returned before `execProcess`, an error only logged (`re-executing the installed axiom`). PLAUSIBLE: its `fsx.TryLock` of the config's writer lock found it still held (a parallel test, or the carried `ConfigLock` not yet let go). Next time, read the test log's `re-executing the installed axiom` error before changing the test.
+- **Size:** trivial
+- **Found:** 2026-11-04, while reviewing compositor-20 (roadmap row 20)
+
 ### TestNotifySend's no-server call can run out the test's 5 s instead of failing at once
 - **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
 - **What:** `scripts/dev/verify.sh --all` (a branch that didn't touch the daemon) once failed with `with no server: context deadline exceeded` after 5.00 s; `go test ./internal/daemon -run TestNotifySend -count=3` then passed. PLAUSIBLE: the last `notify.send` goes out right after `server.Close()`, before the test bus has dropped the closed connection's `org.freedesktop.Notifications` name, so the Notify call is routed to the dead owner and waits for a reply that never comes, until the one shared 5 s ctx (made before the bus setup and already partly spent) expires, rather than the bus answering at once with no owner (`Unavailable`). Fix: after `server.Close()`, wait until the name has no owner (poll `NameHasOwner` or watch `NameOwnerChanged`) before the last call, and give that call its own ctx.
@@ -575,12 +581,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### Wide active is hidden in the perMonitor layout but still applies there
-- **Where:** `qml/components/bar/widgets/Workspaces/schema.yaml:56` (`wideActive`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:73` (`_length`)
-- **What:** `wideActive` (default true) shows only with `{/Workspaces.layout: [standard, grid]}` or dynamic workspaces, yet `WorkspaceCellRow._length` reads `root.properties.wideActive` unconditionally, and the perMonitor layout (and `scrolling` under sway, which works as perMonitor, workspaces.md › Layouts) uses `WorkspaceStrip` → `WorkspaceCellRow` like standard. So on perMonitor the active cell is always twice as long and the toggle that would turn it off isn't on the settings page. Every layout draws through `WorkspaceCellRow`, so there is no layout where the option doesn't apply; the showIf came from when it read `{ "/Workspaces.layout": "standard" }` (f396b28 widened it to grid but not perMonitor). Fix: delete the `x-showIf` block (schema.yaml lines 60-63, 4 lines); the dynamic-workspaces sentence in workspaces.md ("`wideActive` and `relativeNumbers` show whatever the layout") then holds for `relativeNumbers` alone.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### A combo lookup says nothing holds a key the search or chips hide, and offers to bind it
 - **Where:** `qml/components/views/Keybinds/Keybinds.qml:38` (`sections`), `qml/components/views/Keybinds/Keybinds.qml:304`, `qml/components/views/Keybinds/Keybinds.qml:311` (Bind it), `qml/components/methods/KeybindFilter.qml:55` (`filter`)
 - **What:** The lookup's id is one more term in the same `KeybindFilter.filter` call as the search and the section, modifier and source chips (all ANDed, KeybindFilter.qml:55), and both the "Nothing is bound to {0}" text and the Bind it button test only that filtered result (`root.lookupId !== "" && root.sections.length === 0`). The search and chips live in `KeybindManager.page`, so they survive the page. Scenario: the search still holds "firefox" (or the "Your binds" chip is on), the user looks up SUPER + Q, which axiom binds to Close: the page says "Nothing is bound to SUPER + Q" and offers Bind it, which opens the editor with a second bind on a held key. keybinds.md says the list "offers Bind it when nothing holds it". Fix: decide "nothing holds it" from the unfiltered list, `KeybindFilter.filter(KeybindManager.keybindings, "", { "ids": [root.lookupId] }).length === 0`, for the text and the button (or clear the search and chips when a combo is looked up).
@@ -652,18 +652,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the sway system
-
-### "Fire on release" is offered on niri and silently dropped
-- **Where:** `backend/internal/compositor/render/niri.go:332` (`NiriBindNode`), `qml/components/views/Keybinds/BindInspector.qml:209`, `backend/internal/compositor/render/hyprconfig.go:144` (`BindLua`)
-- **What:** For a bind's `release` flag, Hyprland writes `release = true` and sway `--release`. `NiriBindNode` writes only `hotkey-overlay-title`, `repeat`, `allow-when-locked` and `cooldown-ms`, and reads no `release` (`grep -n release render/niri.go` hits only a comment): niri has no release binds. Nothing gates the flag: no `supports` key and no `isComplete` issue. The inspector's "Fire on release" switch is shown and saved on every compositor. Scenario on niri: a user turns it on for a bind, or a bind merged from sway or Hyprland arrives with `release: true`. axiom's own `restartShell` and `exitSession` defaults are release binds too. The action fires on press while the switch still reads on. Fix: a `releaseBinds` supports key (true on Hyprland and sway) that greys out the switch where it's false. axiom's release defaults then work on niri as press binds.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### Three settings stay editable on niri though its writer drops them
-- **Where:** `qml/config/schema/definitions/shared/Blur.yaml:73` (`contrast`), `qml/config/schema/sections/WindowLook.yaml:259` (`opacity.fullscreen`), `qml/config/schema/sections/WindowBehaviour.yaml:19` (`focusOnActivate`), `backend/internal/compositor/render/niri.go:462` (`NiriLookNodes`)
-- **What:** compositor/README.md › Hiding what a compositor can't do: settings a compositor can't apply are gated by `x-showIf`/`x-enabledIf` on a capability. These three are gated only on keys niri sets, or not at all. So on niri each is shown, editable, and does nothing, while Hyprland and sway honour it. Blur contrast has `x-enabledIf: {/$supports.windowBlur: true}`: Hyprland writes `decoration.blur.contrast` and SwayFX `blur_contrast`, while `NiriLookNodes` writes only `passes`, `offset` and `noise`. Fullscreen opacity has `x-enabledIf: {/$supports.windowOpacity: true}`: Hyprland writes `decoration.fullscreen_opacity`, sway sets it per window, and niri's opacity rules read only `active`/`inactive`. niri-backend.md says "no fullscreen opacity", but the page doesn't. `focusOnActivate` has `hyprland` and `sway` `x-compositor` specs, no `niri` one and no gate. Scenario under niri: Fullscreen opacity 100 with active 90 leaves a fullscreen video at 90 %, while the setting reads as applied. Fix: a supports key each where niri lacks the option (`blurContrast` for Hyprland and SwayFX, `fullscreenOpacity` for Hyprland and sway), or a `niri` spec where niri has one (`focusOnActivate`; otherwise a key too).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
 
 ### Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland
 - **Where:** `qml/config/schema/sections/Input.yaml:115` (`mouse.accel`), `qml/config/schema/sections/Input.yaml:128` (`mouse.sensitivity`), `qml/config/schema/sections/Input.yaml:139` (`mouse.leftHanded`)

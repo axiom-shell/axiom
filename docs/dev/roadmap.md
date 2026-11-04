@@ -165,6 +165,9 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs compositor-12 (row 20), under niri: drop a window from a stacked column onto another column in the overview (only that window moves, the output stays on its workspace), open an app with `clearOnFocus` notifications (they clear when its window opens), and unplug the monitor showing the overview (the next toggle opens it).
 - Once the shell runs compositor-13 (row 20): with the window look's defaults on sway, the gap to the screen edges is 6 px (the setting), not 9; on niri, with `blur { off }` in a `user/*.kdl` (managed) or in the user's config (included), axiom's blur still shows; the Translucency card offers "Set the compositor's blur" when the blur comes only from the user's own config; and Hyprland's gaps (and the bars that subtract them) don't drop to 0 through a busy reload.
 - Once the shell runs the bar rewrite (config v93), under Hyprland, niri and sway: switch a top bar between One bar and A pill per group, with the screen border on and off, and check windows and the widgets don't move; set Auto-hide on a bar and check the edge hover reveal and its slide (blur and shadow follow it), a workspace change and a widget's news showing it, a bar popout and an edge menu holding it, the bar editor holding the selected bar, `axiom ipc bar toggle focused` pinning it (windows make room) and `hide`, a fullscreen window over it, a side bar, and a bar stacked inside another; open an edge popout on a transparent bar's edge with a floating bar on it and check it opens past the floating bar.
+- Once the shell runs compositor-20 (row 20): with blur on and translucency below 100, a toast's tone matches the bar and edge popout beside it, and doesn't jump when the blur pauses or resumes.
+- Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
+- Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Focus windows that ask for it are greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -361,7 +364,6 @@ Found by the audits:
 - [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
-- [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
 - [The bind inspector's typed label and argument miss Save](issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
 - [Picking a key in the key map under an edit search selects a bind the list doesn't show](issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
@@ -373,8 +375,6 @@ Found by the audits:
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
 - [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
-- ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
-- [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
@@ -499,6 +499,9 @@ Found while testing removable drives:
 
 Found while running verify.sh --all for compositor-08 (row 20):
 - [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
+
+Found while reviewing compositor-20 (row 20):
+- [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
