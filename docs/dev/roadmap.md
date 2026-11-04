@@ -348,7 +348,6 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
 - [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
 - [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)

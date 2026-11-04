@@ -413,12 +413,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The Keybinds page goes stale after a detached-mode Save
-- **Where:** `qml/services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
-- **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The bind merge removes an hl.unbind whether or not its bind went
 - **Where:** `backend/internal/compositor/binds/hypr.go` (`extractHypr`'s unbind sites), `backend/internal/compositor/manager/manager.go` (`left`)
 - **What:** Extract adds an `hl.unbind(K)` site, with no binds, when K is a moved bind's key (hypr.go:459-474), and `remove` handles it on its own, per file. `left()` takes back only the binds of failed sites, matched by file and line, so the two outcomes split: the bind goes but the unbind's file fails (`syntax`, `io`, `changed`), and the user's surviving `hl.unbind(K)` runs after axiom's module and unbinds the moved bind (the key does nothing); or the unbind goes but the bind's file fails, the re-commit restores axiom's bind on K, and the user's `hl.bind(K)` fires alongside it, which bind-merge.md › Committing and removing says can't happen. Rare: needs one file of a merge to fail. Fix: give each unbind site the keys it covers; remove an unbind site only when its keys' bind sites all went, and treat a failed unbind site in `left()` as failing those binds.

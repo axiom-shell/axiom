@@ -470,6 +470,8 @@ QtObject {
   // CompositorManager.supports is filled in, and a refresh then does nothing
   readonly property bool _canRead: CompositorManager.supports.bindMerge === true
   on_CanReadChanged: refresh()
+  // A detached-mode Save re-applies binds by eval, with no reload to announce it
+  on_AppliedBindsChanged: refreshSoon()
   Component.onCompleted: {
     refresh();
     root._readActionTable();

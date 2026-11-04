@@ -389,7 +389,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - noteReload counts every compositor reload a second time
   - One refused line stops the rest of a Hyprland eval
 - **compositor-16** (6):
-  - [The Keybinds page goes stale after a detached-mode Save](../issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
+  - The Keybinds page goes stale after a detached-mode Save
   - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](../issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
   - [The bind inspector's typed label and argument miss Save](../issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
   - [Picking a key in the key map under an edit search selects a bind the list doesn't show](../issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
