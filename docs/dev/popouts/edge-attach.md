@@ -99,7 +99,7 @@ How the context a surface needs (a pill to stand on, a pill reaching along a joi
   - `strokeInsetStart`/`End`
   - `lo`/`hi` and `insetStart`/`End`. These come from held gaps, a wall, a floating bar's island reach, or `endRoom` from the frame line.
   - `straightJoinStart`/`End`
-- **Placement outputs:** `place`, `detached`, `straight`, `attachAt`/`attachFromBar`, `backfill`, `slidesUnder` (from `SurfaceContext.layout`: a detached box past a transparent bar with `supports.layerOrder`, the overlay not open over it, given as `overOverlay` and latched by the host).
+- **Placement outputs:** `place`, `detached`, `straight`, `attachAt`/`attachBase`/`attachFromBar`, `backfill`, `slidesUnder` and `slideDistance` (from `SurfaceContext.layout`: a detached box past a transparent bar with `supports.layerOrder`, the overlay not open over it, given live as `overOverlay`; the host latches `slidesUnder` while open, `BarPopouts.underBar`, `EdgePopout._under`).
 - **Look outputs:** `shadow`/`shadowLook`, `backed`/`opaque`, its openings and its `PillStretch`es.
 - **Following the bar:** it follows its bar unless held (`followsBar`), on pills and islands alike.
   - Past a transparent bar, a detached box goes past it and any bars inside it (`BarsConfig.detachedPush`).
