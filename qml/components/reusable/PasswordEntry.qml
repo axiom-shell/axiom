@@ -66,6 +66,9 @@ Item {
       placeholderText: root.inlineMessage && root._line !== "" ? root._line : root.placeholder
       input.passwordCharacter: "•"
       input.passwordMaskDelay: 0
+      // No input method sees or predicts a password, shown or not (input
+      // sources: a password types through the compositor's layout alone)
+      input.inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText | Qt.ImhHiddenText
       input.horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
       readOnly: root.readOnly
       onAccepted: root.accepted()
