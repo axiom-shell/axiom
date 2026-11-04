@@ -49,6 +49,7 @@ axiom ipc <target> <function> [args]
 | `pages` | `window <type>` (a tool page in a window of its own, or its window focused: `settings`, `themes`, `bareditor`, `keybinds`, `customwidgets`, `calendarpage`), `close <type>` (back into the overlay), `list` |
 | `edgeMenu` | `open <id>`, `close <id>`, `toggle <id>`, `pin <id>`, `unpin <id>`, `list`, `edit` |
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
+| `bar` | `reveal <id>` (shows an auto-hiding bar for its Shown for time), `toggle <id>` (pins it shown, reserving its space, or unpins it), `hide <id>` (unpins and hides it now); `<id>` is a bar's id, or `focused` (or `""`) for the auto-hiding bars on the focused monitor. Bindable as the **Auto-hiding bar** keybind action (Pin or unpin, Show, Hide) |
 | `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator` (opens on that history or picker) |
 | `powermenu` | `open`, `close`, `toggle` |
 | `osd` | `show <id>` (messages: `axiom message`) |

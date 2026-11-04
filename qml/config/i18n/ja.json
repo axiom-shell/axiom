@@ -3453,11 +3453,9 @@
     "Stopped sharing the screen": "",
     "Length, e.g. 10m or 1:30": "",
     "Switch audio output": "",
-    "Search text, page, edge menu or dock id, direction, workspace number, special workspace name, resize step (\"50 0\"), screenshot kind (region, window or screen), timer length (10m, 1:30), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout(\"swapsplit\"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).": "",
     "Start a timer": "",
     "Random wallpaper": "",
     "Reset timer": "",
-    "Search text, page, edge menu or dock id, direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.": "",
     "Reset stopwatch": "",
     "For actions that open and close or turn on and off something: whether the bind toggles it, only opens it or only closes it.": "",
     "Emoji picker": "",
@@ -3855,6 +3853,10 @@
     "Set max length": "",
     "Cap it at {0} px, so it fits on {1}": "",
     "Wants {0} px, has {1} px on {2}": "",
-    "{0} of {1} px used on {2}": ""
+    "{0} of {1} px used on {2}": "",
+    "Pin or unpin": "",
+    "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, special workspace name, resize step (\"50 0\"), screenshot kind (region, window or screen), timer length (10m, 1:30), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout(\"swapsplit\"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).": "",
+    "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.": "",
+    "Auto-hiding bar": ""
   }
 }

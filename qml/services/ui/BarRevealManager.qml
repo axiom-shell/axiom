@@ -2,7 +2,9 @@ pragma Singleton
 
 import QtQuick
 
+import qs.config
 import qs.components.methods
+import qs.services.core
 import qs.services.compositor
 
 /* Whether each running auto-hiding bar (Bars.items[].autoHide always or
@@ -223,4 +225,45 @@ QtObject {
   }
 
   Component.onCompleted: root._checkWorkspaces()
+
+  // --- IPC (`axiom ipc bar …`; the keybind action `bar`) ---
+
+  // The running auto-hiding bars a call means: a bar's config id (on
+  // every monitor it's on), or "" / "focused", those on the focused
+  // monitor
+  function _barsFor(id) {
+    const auto = ScreenEdgeManager.bars.filter(bar => bar.enabled && bar.autoHide !== "never");
+    if (id === "" || id === "focused")
+      return auto.filter(bar => bar.monitor === CompositorManager.focusedOutput);
+    const bars = auto.filter(bar => bar.sourceId === id);
+    if (bars.length === 0)
+      throw {
+        "kind": "not_found",
+        "message": "no running auto-hiding bar " + id
+      };
+    return bars;
+  }
+
+  property IpcTarget _ipc: IpcTarget {
+    target: "bar"
+    enabled: !Paths.greeter
+
+    // Shows it for its revealFor
+    function reveal(id: string): void {
+      root._barsFor(id).forEach(bar => root.reveal(bar.id, bar.revealFor));
+    }
+
+    // Pins it shown, reserving its space, or unpins it (all of them pinned
+    // when any isn't)
+    function toggle(id: string): void {
+      const bars = root._barsFor(id);
+      const pin = bars.some(bar => root._pinned[bar.id] !== true);
+      bars.forEach(bar => root.setPinned(bar.id, pin));
+    }
+
+    // Unpins and hides it now (what holds it, an open popout, still does)
+    function hide(id: string): void {
+      root._barsFor(id).forEach(bar => root.hideNow(bar.id));
+    }
+  }
 }
