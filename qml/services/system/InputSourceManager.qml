@@ -120,13 +120,18 @@ QtObject {
     return true;
   }
 
-  // The next or previous source (of the xkb ones alone with `xkbOnly`)
+  // The next or previous source (of the xkb ones alone with `xkbOnly`,
+  // or while no framework runs: an engine can't be switched to then)
   function next(xkbOnly) {
-    root.set(InputSources.step(root.sourcesFor(xkbOnly), root.currentFor(xkbOnly), 1));
+    root._step(xkbOnly || !root.running, 1);
   }
 
   function prev(xkbOnly) {
-    root.set(InputSources.step(root.sourcesFor(xkbOnly), root.currentFor(xkbOnly), -1));
+    root._step(xkbOnly || !root.running, -1);
+  }
+
+  function _step(xkbOnly, direction) {
+    root.set(InputSources.step(root.sourcesFor(xkbOnly), root.currentFor(xkbOnly), direction));
   }
 
   // The framework's list as sources (InputSources.fromGroup), for a
