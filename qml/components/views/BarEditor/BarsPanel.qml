@@ -50,16 +50,7 @@ Item {
   ]
   readonly property var _tab: root.tabs[BarManager.panelTab] ?? root.tabs[0]
   readonly property var _named: [].concat(...root.tabs.map(tab => tab.fields))
-  // Settings on their way out of the schema (`length`, `align`), never shown
-  readonly property var _dropped: ["length", "align"]
-  readonly property var fieldGroups: BarsConfig.fieldGroups.filter(group => root._tab.fields.includes(group.title) || (root._tab === root.tabs[0] && !root._named.includes(group.title))).map(group => {
-    const keys = group.keys.filter(key => !root._dropped.includes(key));
-    return {
-      "title": group.title,
-      "keys": keys,
-      "schema": Utils.pick(group.schema, keys)
-    };
-  })
+  readonly property var fieldGroups: BarsConfig.fieldGroups.filter(group => root._tab.fields.includes(group.title) || (root._tab === root.tabs[0] && !root._named.includes(group.title)))
   readonly property var styleGroups: BarsConfig.styleGroups.filter(group => root._tab.styles.includes(group.title))
 
   // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
