@@ -503,6 +503,17 @@ TestCase {
     // On the stroke of what reserves the edge
     compare(at({}).attachAt, 38);
     compare(at({}).ownSink, "border");
+    // ...its attach base, which a held box keeps (its edgeOffset is from
+    // there); on a bare edge, the edge itself
+    compare(at({}).attachBase, 38);
+    compare(at({
+      "held": true,
+      "across": 30
+    }).attachBase, 38);
+    compare(at({
+      "bareEdge": true,
+      "reserved": 0
+    }).attachBase, 0);
     // Following a solid bar (border off): its own inner stroke
     const onSolid = at({
       "bar": solid,
@@ -768,6 +779,22 @@ TestCase {
         })
       }, extra));
     verify(at({}).slidesUnder);
+    // From the bar's outer edge (the screen edge here) to its attach edge,
+    // past the border stroke a bar inside the border lies on
+    compare(at({}).slideDistance, 40);
+    compare(at({
+      "bar": Object.assign(bar("transparent"), {
+        "extent": 40,
+        "insideBorder": true
+      })
+    }).slideDistance, 38);
+    // Whether it slides under now or not: the host latches that
+    compare(at({
+      "overOverlay": true
+    }).slideDistance, 40);
+    compare(at({
+      "bar": null
+    }).slideDistance, 0);
     verify(!at({
       "layerOrder": false
     }).slidesUnder);

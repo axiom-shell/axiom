@@ -83,5 +83,5 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 - **Without layer rules** (no `CompositorManager.supports.layerOrder`: sway, niri), a window mapped as it opens lands over the bar whatever its namespace, so it never slides under: it opens over the bar as it does over the overlay ([layer arrangement](../compositor/layer-arrangement.md)).
 - **Detached edge popouts do the same as bar popouts:**
   - They slide out from under a transparent bar only (`EdgePopout.slideDistance`).
-  - While the overlay is open they open over it (`_overOverlay`). This is a `ClosedLatch`, since it changes the window's namespace.
+  - While the overlay is open they open over it. Whether they slide under is latched while open (`EdgePopout._under`, a `ClosedLatch`), since it changes the window's layer and namespace.
   - Over anything else they open on top, sliding out within their own window.

@@ -266,6 +266,9 @@ QtObject {
   // connector gap short of its box), and from its own bar's outer edge
   // (the host's: a bar popout's, past the bars it grows through)
   readonly property real attachAt: root._layout.attachAt
+  // Where it goes by default: on the stroke of what reserves the edge (the
+  // border, a bar, integrated menus; not docks), none on a bare edge
+  readonly property real attachBase: root._layout.attachBase
   readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
   // Whether the overlay is open on its screen (the host latches it while
@@ -273,6 +276,9 @@ QtObject {
   // bar, its window on that bar's layer ordered under it
   property bool overOverlay: false
   readonly property bool slidesUnder: root._layout.slidesUnder
+  // How far back toward the screen edge such a box starts, whether or not
+  // it slides under now (the host gates it on its latched slidesUnder)
+  readonly property real slideDistance: root._layout.slideDistance
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property int backfill: root._layout.backfill
   // How a joined submenu meets the stroke the box grows from, from where

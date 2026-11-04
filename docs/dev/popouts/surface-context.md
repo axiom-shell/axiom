@@ -40,7 +40,8 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
   - `joinsOf`: its joins from where it would rest
 - `layout(f, p)` gives its box (via `EdgeAttach.place`) and everything that follows from it:
   - `detached`, `straight`, backfill (`merged` and `between` boxes grow from the followed bar's outer edge: attached there, with the border as their sink)
-  - `attachAt` across
+  - `attachAt` across, and `attachBase`: where it goes by default, on the stroke of what reserves the edge (an `EdgePopout`'s `edgeOffset` is measured from there, as a floating edge menu's `before` gap)
+  - `slidesUnder`, and `slideDistance`: how far back toward the screen edge a box that slides under starts (the bar's outer edge, past the border stroke a bar inside the border lies on), given whether or not it slides under now, since the host latches that
   - `attachFill`: how deep the plain fill it joins runs from the screen edge to its attach edge: the border's margin, or a floating or pill bar's empty depth it grows over (`merged`, `between`). It is 0 on a pill or island, a solid bar or an integrated menu (each with content of its own), and for a held or detached box. `EdgePopout` takes it off its padding on the attach side (`attachExtra`, never the stroke), so an attached box's content is as far from the screen edge as from its other sides, where the padding alone used to sit on top of the margin. The dock keeps its own padding.
   - `ownSink`, shadow
 - Both work in screen px along the edge. A bar popout, an edge popout and a dock at the same intersection therefore get one answer.
