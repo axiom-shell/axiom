@@ -44,7 +44,7 @@ Loader {
   function toggle() {
     switch (root.type) {
     case "keyboardLayout":
-      KeyboardLayoutManager.cycle("next");
+      InputSourceManager.cycle("next");
       break;
     case "audio":
       AudioManager.toggleMute();
@@ -116,8 +116,8 @@ Loader {
       };
     case "keyboardLayout":
       return {
-        "layouts": KeyboardLayoutManager.layouts,
-        "index": KeyboardLayoutManager.layoutIndex
+        "layouts": InputSourceManager.layouts,
+        "index": InputSourceManager.layoutIndex
       };
     case "audio":
     case "microphone":
@@ -338,8 +338,8 @@ Loader {
 
       function _check() {
         const now = {
-          "layouts": KeyboardLayoutManager.layouts,
-          "index": KeyboardLayoutManager.layoutIndex
+          "layouts": InputSourceManager.layouts,
+          "index": InputSourceManager.layoutIndex
         };
         const switched = OSDItems.layoutSwitched(layout._last, now);
         layout._last = now;
@@ -350,7 +350,7 @@ Loader {
       Component.onCompleted: layout._check()
 
       Connections {
-        target: KeyboardLayoutManager
+        target: InputSourceManager
         function onLayoutIndexChanged() {
           Qt.callLater(layout._check);
         }

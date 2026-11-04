@@ -15,7 +15,7 @@ import (
 
 // inputPart: the xkb registry (package xkb), for the input sources' layout
 // picker and the full layout names niri and sway report
-// (KeyboardLayoutManager.registry).
+// (InputSourceManager.registry).
 func (d *Daemon) inputPart() part {
 	return part{name: "input", methods: d.inputMethods}
 }

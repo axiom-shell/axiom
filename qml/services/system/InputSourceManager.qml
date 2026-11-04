@@ -34,7 +34,7 @@ QtObject {
     BackendManager.call("input.layouts", {}, (error, result) => {
       if (error) {
         if (error.kind !== "unavailable")
-          console.warn("[KeyboardLayoutManager] Could not read the xkb registry:", error.message);
+          console.warn("[InputSourceManager] Could not read the xkb registry:", error.message);
         return;
       }
       root._registry = result;
