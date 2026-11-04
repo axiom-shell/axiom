@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/idle"
+	"github.com/axiom-shell/axiom/backend/internal/inputmethod"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
@@ -38,6 +39,8 @@ const (
 	topicClipboard  = "clipboard" // clipboard.state
 	topicVPN        = "vpn"       // vpn.state, vpn.secretRequest, vpn.secretDone
 	topicDrives     = "drives"    // drives.state, drives.event
+	// inputMethod.state
+	topicInputMethod = "inputMethod"
 )
 
 // Pushes, each declared once with the type of its params and sent to the
@@ -74,6 +77,8 @@ var (
 
 	pushDrivesState = rpc.Push[udisks.State]{Method: "drives.state", Latest: true}
 	pushDrivesEvent = rpc.Push[udisks.Event]{Method: "drives.event"}
+
+	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
 
 	// Not a hello topic: sent only to a connection watching commands
 	// (exec.watch), every watched command's output in one
@@ -197,10 +202,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicInputMethod:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, inputMethod)", t)
 		}
 	}
 	return false, topics, nil
