@@ -216,9 +216,11 @@ ColumnLayout {
         id: flag
         required property var modelData
         readonly property bool on: root.bind[flag.modelData[0]] === true
-        // Greyed out, saying why, where the compositor can't do it
+        // Greyed out, saying why, where the compositor can't do it; a flag
+        // already on (a bind merged from another compositor) can still be
+        // turned off
         readonly property bool allowed: flag.modelData[3] === "" || CompositorManager.supports[flag.modelData[3]] === true
-        enabled: flag.allowed
+        enabled: flag.allowed || flag.on
         opacity: flag.allowed ? 1 : 0.5
         Layout.fillWidth: true
         spacing: Widget.spacing
