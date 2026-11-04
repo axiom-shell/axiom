@@ -774,14 +774,14 @@ Rectangle {
         // joining end-on covers only the stroke); backed, the blur window
         // fills it
         Repeater {
-          model: root.backed ? [] : root._openingList.filter(o => o.keepFill ?? false)
+          model: root._openingList.filter(o => o.keepFill ?? false)
           Rectangle {
             required property var modelData
             readonly property real _along: root.isVertical ? pill.y : pill.x
             readonly property real _start: Math.max(modelData.start, _along)
             readonly property real _end: Math.min(modelData.end, _along + pill.alongLength)
             readonly property rect area: pill._farHole(_start, _end, true)
-            visible: _end > _start
+            visible: !root.backed && _end > _start
             // (in the content box, where a surface's children go)
             x: area.x - pill.boxRect.x
             y: area.y - pill.boxRect.y
