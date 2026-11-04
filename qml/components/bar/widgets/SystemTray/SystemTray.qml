@@ -14,8 +14,8 @@ BarWidget {
   readonly property int iconSize: Math.round(barConfig.fontSize)
   readonly property bool showPassive: properties.showPassive
   // Sized by the bar, as BarIconWidget does
-  readonly property real padding: barConfig.widgetPadding
-  readonly property real spacing: barConfig.widgetSpacing * 1.5
+  readonly property real padding: barConfig.innerPadding
+  readonly property real spacing: barConfig.innerGap * 1.5
   // No item showing (none, or only passive ones while those are hidden):
   // a zero natural size, which the bar skips, as IconTextWidget's `hidden`
   readonly property bool hidden: items.implicitWidth <= 0
@@ -23,8 +23,8 @@ BarWidget {
   hasBackground: !hidden
   accentColor: Theme.resolveColor(properties.backgroundColor)
 
-  implicitWidth: isVertical ? barConfig.widgetSize : hidden ? 0 : items.implicitWidth + padding * 2
-  implicitHeight: isVertical ? (hidden ? 0 : items.implicitHeight + padding * 2) : barConfig.widgetSize
+  implicitWidth: isVertical ? barConfig.thickness : hidden ? 0 : items.implicitWidth + padding * 2
+  implicitHeight: isVertical ? (hidden ? 0 : items.implicitHeight + padding * 2) : barConfig.thickness
 
   Grid {
     id: items

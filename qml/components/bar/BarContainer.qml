@@ -8,9 +8,9 @@ import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.reusable
 
-// Lays out a bar's five widget sections along its main axis in one pass,
+// Lays out a bar's three widget sections along its main axis in one pass,
 // so they can never overlap: `left`/`right` hug the ends, `center` stays
-// centered on the bar with `leftCenter`/`rightCenter` beside it. When the
+// centered on the bar. When the
 // side sections crowd it, the center block slides towards the roomier side
 // (unless the bar's `lockCenter` pins it, making each side make room on its
 // own half instead); then elastic widgets shrink, and if even their minimum sizes don't fit,
@@ -39,7 +39,7 @@ Rectangle {
   // stroke there (bar-window 0 past its reach onto it), or held clear of
   // a bar it makes way for, as a surface held off an edge
   function _islandInset(end) {
-    return end.held ? end.over + end.gap : end.reach + root.barConfig.floatGap;
+    return end.held ? end.over + end.gap : end.reach + root.barConfig.floatingGap;
   }
   // Where islands may reach along the bar, from its start
   readonly property real islandFrom: root._islandInset(root.ends.start)
@@ -66,7 +66,7 @@ Rectangle {
     if (root.islands)
       return root._islandInset(end) + root.barConfig.islandGap;
     if (end.held)
-      return end.over + Math.max(end.gap, root.barConfig.padding);
+      return end.over + Math.max(end.gap, root.barConfig.edgePadding);
     // The gap its widgets keep across the bar, from what covers its outer
     // edge, kept past the stroke at the end too (or the bare screen edge)
     const across = root.barConfig.crossStart - (root.barConfig.insideBorder ? Appearance.borderWidth : 0);
@@ -78,17 +78,17 @@ Rectangle {
 
   // One { start, length, joinStart, joinEnd } per pill along the bar: each
   // non-empty section, merged with its neighbour when they're at most
-  // pillMerge apart, grown by the pill gap. Pills reaching an end are
+  // joinGap apart, grown by the pill gap. Pills reaching an end are
   // stretched onto it and join it. On a floating bar, its islands
   // (BarLayout.islandRects): one along it, or one per group.
   // Pills asked to reach an end run there, or a stub grows there for them
   // (BarLayout.endReaches, setRequest).
   readonly property var pillRects: {
     if (islands)
-      return BarLayout.islandRects(root._spans, root.barConfig.islandGap, root.barConfig.pillMerge, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
+      return BarLayout.islandRects(root._spans, root.barConfig.islandGap, root.barConfig.joinGap, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
     return root.pills ? root._endReach.rects : [];
   }
-  readonly property var _endReach: BarLayout.endReaches(root.sectionPills, root._endReachList, root.length, root.barConfig.pillMerge, root.pillConnector)
+  readonly property var _endReach: BarLayout.endReaches(root.sectionPills, root._endReachList, root.length, root.barConfig.joinGap, root.pillConnector)
   readonly property var sectionPills: {
     if (!pills)
       return [];
@@ -96,7 +96,7 @@ Rectangle {
     const merged = [];
     spans.forEach(span => {
       const last = merged[merged.length - 1];
-      if (last && span.start - last.end <= root.barConfig.pillMerge)
+      if (last && span.start - last.end <= root.barConfig.joinGap)
         last.end = Math.max(last.end, span.end);
       else
         merged.push(span);
@@ -135,7 +135,7 @@ Rectangle {
 
   // The pills (or islands) as drawn: stretched to carry the surfaces open
   // on them, and joining any they then reach, while those are open
-  readonly property var pillShapes: BarLayout.stretchIslands(root.pillRects, root._shownStretches, root.barConfig.pillMerge)
+  readonly property var pillShapes: BarLayout.stretchIslands(root.pillRects, root._shownStretches, root.barConfig.joinGap)
 
   // What the surfaces standing on or joining this bar ask of it, by owner
   // (PillStretch: a bar popout, an edge popout, a dock, a submenu, a pill
@@ -286,10 +286,16 @@ Rectangle {
     id: repaint
   }
 
-  readonly property var _groups: [leftGroup, leftCenterGroup, centerGroup, rightCenterGroup, rightGroup]
+  readonly property var _groups: [leftGroup, centerGroup, rightGroup]
+  // BarLayout still lays out five sections: the three, with empty ones
+  // between them (each Section's slotIndex is its place in the five)
+  // (temporary, until BarLayout takes three)
+  function _five(values, empty) {
+    return [values[0], empty, values[1], empty, values[2]];
+  }
   // Per section, the model indices hidden so the minimum sizes fit
-  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.spacing, root.barConfig.groupSpacing, root.barConfig.lockCenter)
-  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.spacing, root.barConfig.lockCenter, centerGroup.layoutHang)
+  readonly property var hidden: BarLayout.overflowHidden(root._five(root._groups.map(g => g.measures), []), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter)
+  readonly property var slots: BarLayout.layoutSections(root._five(root._groups.map(g => g.preferredLength), 0), root._five(root._groups.map(g => g.minimumLength), 0), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang)
 
   // A section's shown widgets; `configIndex` is each one's place in the
   // section's config, which hidden widgets leave out
@@ -928,30 +934,12 @@ Rectangle {
   }
 
   Section {
-    id: leftCenterGroup
-    bar: root
-    slotIndex: 1
-    zone: "leftCenter"
-    align: 1
-    widgets: root.widgetModel(root.barConfig.widgets?.leftCenter)
-  }
-
-  Section {
     id: centerGroup
     bar: root
     slotIndex: 2
     zone: "center"
     align: 0.5
     widgets: root.widgetModel(root.barConfig.widgets?.center)
-  }
-
-  Section {
-    id: rightCenterGroup
-    bar: root
-    slotIndex: 3
-    zone: "rightCenter"
-    align: 0
-    widgets: root.widgetModel(root.barConfig.widgets?.rightCenter)
   }
 
   Section {

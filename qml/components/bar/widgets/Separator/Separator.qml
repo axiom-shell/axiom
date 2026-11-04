@@ -19,8 +19,8 @@ BarWidget {
   readonly property string sizePolicy: "fixed"
   readonly property real preferredSize: properties.size
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : properties.size
-  implicitHeight: isVertical ? properties.size : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : properties.size
+  implicitHeight: isVertical ? properties.size : root.barConfig.thickness
 
   // Across the bar, so it divides the modules on either side
   SeparatorMark {
@@ -28,7 +28,7 @@ BarWidget {
     style: root.properties.style
     color: root.color
     thickness: root.properties.thickness
-    length: root.barConfig.widgetSize * root.properties.length / 100
+    length: root.barConfig.thickness * root.properties.length / 100
     vertical: root.isVertical
   }
 }

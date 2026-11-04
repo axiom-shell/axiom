@@ -184,7 +184,7 @@ Item {
               // An override starts at what the bar uses now (`measured`)
               model: [
                 {
-                  "key": "size",
+                  "key": "maxSize",
                   "measured": "preferred",
                   "initial": 100
                 },

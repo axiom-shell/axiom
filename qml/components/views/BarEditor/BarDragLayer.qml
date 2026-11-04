@@ -37,16 +37,8 @@ DragLayer {
       "label": root.barVertical ? I18n.tr("Top") : I18n.tr("Left")
     },
     {
-      "key": "leftCenter",
-      "label": root.barVertical ? I18n.tr("Top Center") : I18n.tr("Left Center")
-    },
-    {
       "key": "center",
       "label": I18n.tr("Center")
-    },
-    {
-      "key": "rightCenter",
-      "label": root.barVertical ? I18n.tr("Bottom Center") : I18n.tr("Right Center")
     },
     {
       "key": "right",

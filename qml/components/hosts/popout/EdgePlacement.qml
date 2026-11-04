@@ -292,7 +292,7 @@ QtObject {
     "before": root.submenu?.openToLeft ?? false,
     "radius": Appearance.borderRadius,
     "stroke": Appearance.borderWidth,
-    "merge": root.barConfig?.pillMerge ?? 0,
+    "merge": root.barConfig?.joinGap ?? 0,
     "own": root._ownPill,
     "pills": root.onPill ? (root.container?.pillRects ?? []).map(p => Object.assign({}, p, {
         "start": p.start - root._toBar

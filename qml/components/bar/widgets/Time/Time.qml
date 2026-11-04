@@ -28,8 +28,8 @@ BarWidget {
   hasBackground: true
   accentColor: Theme.resolveColor(properties.backgroundColor)
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : (layoutLoader.item ? layoutLoader.item.implicitWidth + root.barConfig.widgetPadding * 2 : 0)
-  implicitHeight: isVertical ? (layoutLoader.item ? layoutLoader.item.implicitHeight + root.barConfig.widgetPadding * 2 : 0) : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : (layoutLoader.item ? layoutLoader.item.implicitWidth + root.barConfig.innerPadding * 2 : 0)
+  implicitHeight: isVertical ? (layoutLoader.item ? layoutLoader.item.implicitHeight + root.barConfig.innerPadding * 2 : 0) : root.barConfig.thickness
 
   SystemClock {
     id: clock
@@ -153,7 +153,7 @@ BarWidget {
     Component {
       id: horizontalComponent
       Row {
-        spacing: root.barConfig.widgetSpacing * 2
+        spacing: root.barConfig.innerGap * 2
 
         ClockText {
           text: root.dateText
@@ -179,7 +179,7 @@ BarWidget {
       id: verticalComponent
       // A gap, not a rule, between the time and the date
       Column {
-        spacing: root.barConfig.widgetSpacing * 2
+        spacing: root.barConfig.innerGap * 2
 
         LineStack {
           lines: root.timeLines

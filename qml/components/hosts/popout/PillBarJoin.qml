@@ -61,7 +61,7 @@ PillStretch {
   // Whether one of the bar's own pills shows past the wall near enough to
   // be carried on past a fillet: the end then curves into it rather than
   // squaring a stub at the wall (EdgeAttach.pillJoinFilleted)
-  readonly property bool filleted: root._wall !== null && EdgeAttach.pillJoinFilleted(root._panel.container.sectionPills, root._wall, root._atStart, root._radius, root._panel.barConfig.pillMerge ?? 0, Appearance.borderWidth)
+  readonly property bool filleted: root._wall !== null && EdgeAttach.pillJoinFilleted(root._panel.container.sectionPills, root._wall, root._atStart, root._radius, root._panel.barConfig.joinGap ?? 0, Appearance.borderWidth)
   // Where the joined end covers that bar's far stroke to, as drawn: the
   // fillet's tip, or the wall
   readonly property var _reach: root._drawnWall === null ? null : !root.filleted ? root._drawnWall : root._atStart ? root._drawnWall + root._radius : root._drawnWall - root._radius

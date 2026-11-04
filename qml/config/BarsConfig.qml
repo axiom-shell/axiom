@@ -20,14 +20,16 @@ QtObject {
     const look = BarsConfig.lookOf(barConfig);
     // The bar is sized by its widgets, never the other way round, so no
     // setting can leave them cut off
-    const widgetSize = barConfig.widgetSize;
-    const padding = barConfig.padding;
-    const background = barConfig.background;
-    const pills = background === "pills";
-    const solid = background === "solid";
+    const thickness = barConfig.thickness;
+    const edgePadding = barConfig.edgePadding;
+    // What it draws as: its surface (one bar, a pill per group, none) and
+    // whether that floats. With no surface it doesn't float.
+    const kind = BarsConfig.kindOf(barConfig);
+    const pills = kind === "pills";
+    const solid = kind === "solid";
     // Floating bars are islands held off the edge: one along the bar, or
     // one per group of widgets
-    const island = background === "floating" || background === "floatingPills";
+    const island = kind === "floating" || kind === "floatingPills";
     // Every bar but a solid one sits inside the screen border
     const insideBorder = !solid && Appearance.screenBorder;
     // What covers the bar's own pixels: the outer edge of a bar inside the
@@ -39,12 +41,12 @@ QtObject {
     // A solid bar reaches at least as far as the border strip laid over its
     // inner part (BarEnds.placeStack's zone), so no gap opens under the strip
     const minExtent = solid && Appearance.screenBorder ? Appearance.screenMargin - Appearance.borderWidth : 0;
-    const plainExtent = Math.max(minExtent, outerCover + padding + widgetSize + padding + innerCover);
+    const plainExtent = Math.max(minExtent, outerCover + edgePadding + thickness + edgePadding + innerCover);
     // A pill covers the screen border's stroke where it joins it
     const overlap = Appearance.screenBorder ? Appearance.borderWidth : 0;
     // Padding past the border's stroke on the pill's outer side, so its
     // widgets sit the frame plus this in from the screen edge
-    const pillPad = barConfig.pillPadding;
+    const pillPad = edgePadding;
     // How far a pill's widgets sit in from the bar's outer edge (and its
     // ends): past the border stroke, or with the border off, the screen
     // margin the frame would have taken, so they keep the same gap from the
@@ -56,7 +58,7 @@ QtObject {
     const pillGap = Math.max(Appearance.borderWidth, Appearance.screenMargin + pillPad);
     // How far a pill reaches in from the bar's outer edge: the inset, its
     // widgets, and the gap to its far side
-    const pillDepth = pillInset + widgetSize + pillGap;
+    const pillDepth = pillInset + thickness + pillGap;
     // Laid out like a tiled window: an island sits its float gap in from
     // the border's stroke (or the bare screen edge), across the bar and
     // from both its ends (Automatic, -1: the compositor's gaps_out on its
@@ -65,13 +67,17 @@ QtObject {
     // their padding inside a stroke. Windows keep gaps_out from it, as from
     // a screen edge: gaps_in is only between windows.
     const edge = ScreenEdge.name(loc);
-    const floatGap = barConfig.floatGap >= 0 ? barConfig.floatGap : floatGaps[edge] ?? 0;
-    const islandStart = outerCover + floatGap;
-    const islandDepth = Appearance.borderWidth + padding + widgetSize + padding + Appearance.borderWidth;
+    const floatingGapAuto = barConfig.floatingGap === null;
+    const floatingGap = floatingGapAuto ? floatGaps[edge] ?? 0 : barConfig.floatingGap;
+    const islandStart = outerCover + floatingGap;
+    const islandDepth = Appearance.borderWidth + edgePadding + thickness + edgePadding + Appearance.borderWidth;
     const borderShadowed = solid && Appearance.screenBorder && barConfig.reserveSpace;
     // Shapes and grouping are for widgets drawn on a background
     const boxed = BarsConfig.boxedStyles.includes(look.widgetStyle);
     const grouping = boxed ? look.widgetGrouping : "separate";
+    // Between the widgets within a section: a powerline's touch, and
+    // dividers drawn between them take their own room and margins
+    const groupSpacing = grouping === "powerline" ? 0 : look.separatorStyle !== "none" ? BarLayout.dividerGap(look.separatorStyle, look.separatorThickness, thickness, look.separatorGap) : barConfig.widgetGap;
 
     const vertical = loc === ScreenEdge.Left || loc === ScreenEdge.Right;
     const screen = General.outputs.find(s => s.name === barConfig.monitor) ?? null;
@@ -84,23 +90,24 @@ QtObject {
       // A pill bar is as thick as its pills, so the padding always fits
       // and nothing is left between them and the windows
       "extent": pills ? pillDepth : island ? islandStart + islandDepth : plainExtent,
-      "widgetSize": widgetSize,
-      "padding": padding,
+      "thickness": thickness,
+      "edgePadding": edgePadding,
       // How far the widgets sit in from the bar's outer edge: past the
       // stroke and pill padding, or centred between whatever covers the bar
-      "crossStart": pills ? pillInset : island ? islandStart + Appearance.borderWidth + padding : outerCover + (plainExtent - outerCover - innerCover - widgetSize) / 2,
-      "background": background,
+      "crossStart": pills ? pillInset : island ? islandStart + Appearance.borderWidth + edgePadding : outerCover + (plainExtent - outerCover - innerCover - thickness) / 2,
+      // solid, pills, transparent (no surface), floating, floatingPills
+      "kind": kind,
       "solid": solid,
       "pills": pills,
       "island": island,
-      "islandPills": background === "floatingPills",
+      "islandPills": kind === "floatingPills",
       // Where islands start, in from the bar window's outer edge and both
       // its ends, and the gap from their widgets to their ends
       "islandStart": islandStart,
-      "floatGap": island ? floatGap : 0,
-      // Its float gap is Automatic (Hyprland's gaps_out)
-      "floatGapAuto": barConfig.floatGap < 0,
-      "islandGap": Appearance.borderWidth + padding,
+      "floatingGap": island ? floatingGap : 0,
+      // Its floating gap is Automatic (the compositor's gaps_out)
+      "floatingGapAuto": floatingGapAuto,
+      "islandGap": Appearance.borderWidth + edgePadding,
       "insideBorder": insideBorder,
       // A solid bar's inner stroke is the border strip's; with the border
       // off it draws its own, on its innermost pixels
@@ -108,17 +115,17 @@ QtObject {
       "overlap": overlap,
       "pillInset": pillInset,
       "pillGap": pillGap,
-      "pillMerge": barConfig.pillMerge,
       "pillDepth": pillDepth,
-      "spacing": barConfig.spacing,
-      // Between the widgets within a section: a powerline's touch, and
-      // dividers drawn between them take their own room and margins
-      "groupSpacing": grouping === "powerline" ? 0 : look.separatorStyle !== "none" ? BarLayout.dividerGap(look.separatorStyle, look.separatorThickness, widgetSize, look.separatorGap) : barConfig.spacing,
+      "widgetGap": barConfig.widgetGap,
+      "groupSpacing": groupSpacing,
+      // Neighbouring groups closer than this share a pill (or an island)
+      "joinGap": Math.max(barConfig.widgetGap, groupSpacing),
       // What's drawn inside the bar follows the bar, never the Widget
       // section (that's for panels, popouts and controls)
-      "widgetPadding": barConfig.widgetPadding,
-      "widgetSpacing": barConfig.widgetSpacing,
-      "fontSize": look.fontSize ?? Appearance.baseFontSize,
+      "innerPadding": barConfig.innerPadding,
+      "innerGap": barConfig.innerGap,
+      // Its text scale of Appearance's font size
+      "fontSize": Math.round(Appearance.baseFontSize * look.textScale / 100),
       // Widget chips only, else the interior radius: pills and fillets keep
       // Appearance's, to meet the border
       "radius": look.widgetRadius ?? Widget.radius,
@@ -147,13 +154,24 @@ QtObject {
       // Cast by what the bar paints: a transparent one paints nothing. A
       // solid bar reserving its edge under the border leaves it to the
       // border, whose stroke is its inner edge (RoundedBorders)
-      "shadow": background !== "transparent" && !borderShadowed && look.shadow,
+      "shadow": kind !== "transparent" && !borderShadowed && look.shadow,
       "shadowColor": look.shadowColor,
       "shadowSize": look.shadowSize,
       // How far past the bar a shadow reaches (its blur and offset), which
       // the bar window takes on its inner side
-      "shadowReach": background !== "transparent" && !borderShadowed && look.shadow ? Math.ceil(look.shadowSize * 1.25) : 0,
+      "shadowReach": kind !== "transparent" && !borderShadowed && look.shadow ? Math.ceil(look.shadowSize * 1.25) : 0,
       "lockCenter": barConfig.lockCenter,
+      // As long as its widgets (at `align`: start, center, end), or the
+      // whole edge
+      "fit": barConfig.length === "fit",
+      "align": barConfig.align,
+      // never, always, whenCovered; what shows a hidden bar, and how long
+      "autoHide": barConfig.autoHide,
+      "revealOnWorkspace": barConfig.revealOnWorkspace,
+      "revealOnActivity": barConfig.revealOnActivity,
+      "revealFor": barConfig.revealFor,
+      "timing": barConfig.timing,
+      "trigger": barConfig.trigger,
       "location": loc,
       "reserveSpace": barConfig.reserveSpace,
       // Each Auto color picked for its place on this bar
@@ -175,6 +193,17 @@ QtObject {
     return bar;
   }
 
+  // What a bar draws as, from its surface and floating: solid, pills,
+  // transparent (no surface: a bar with none never floats), floating or
+  // floatingPills
+  function kindOf(barConfig) {
+    if (barConfig.surface === "none")
+      return "transparent";
+    if (barConfig.surface === "pills")
+      return barConfig.floating ? "floatingPills" : "pills";
+    return barConfig.floating ? "floating" : "solid";
+  }
+
   // A bar window's layer namespace, whose rule's `order` decides where
   // Hyprland arranges it (render.LayerRulesLua): by its kind
   // (solid, outside the border; pills; transparent; floating: bars and
@@ -182,7 +211,7 @@ QtObject {
   // edge, a -long one arranged after the shorter edge's bar of that kind
   // (BarEnds)
   function layerNamespace(barConfig) {
-    const kind = barConfig.solid ? "axiom-bar" : barConfig.island ? "axiom-bar-floating" : barConfig.background === "transparent" ? "axiom-bar-transparent" : "axiom-bar-pill";
+    const kind = barConfig.solid ? "axiom-bar" : barConfig.island ? "axiom-bar-floating" : barConfig.kind === "transparent" ? "axiom-bar-transparent" : "axiom-bar-pill";
     return barConfig.shortEdge ? kind : kind + "-long";
   }
 
@@ -279,7 +308,7 @@ QtObject {
   }
 
   // The bar's sections, start to end
-  readonly property var sectionNames: ["left", "leftCenter", "center", "rightCenter", "right"]
+  readonly property var sectionNames: ["left", "center", "right"]
   // Each widget type's Auto color fields: { type: { key: role } }
   readonly property var autoColorFields: (ConfigManager.configSchema?.definitions?.BarWidget?.oneOf ?? []).reduce((result, refObj) => {
     const def = ConfigManager.configSchema.definitions[refObj.$ref.replace("#/definitions/", "")];
@@ -328,7 +357,7 @@ QtObject {
   // windows keep gaps_out from it, as from a solid bar's stroke or a
   // floating bar's islands.
   function reserveTrim(barConfig, gapsOut) {
-    if (barConfig.background === "transparent" && barConfig.accentLine !== "inner")
+    if (barConfig.kind === "transparent" && barConfig.accentLine !== "inner")
       return gapsOut;
     return 0;
   }
@@ -343,7 +372,7 @@ QtObject {
   // clears the whole stack, never covering a bar. Negative when they
   // start nearer than half a connector gap: its attach edge moves in.
   function detachedPush(barConfig, windowsPast, connectorGap) {
-    if (barConfig.background !== "transparent")
+    if (barConfig.kind !== "transparent")
       return 0;
     return windowsPast - connectorGap / 2;
   }
@@ -358,8 +387,8 @@ QtObject {
   // A bar's look: its `style` (a BarStyle) with every key it leaves null
   // (inherit) taken from the Bars section's (`section`, BarStyle.values
   // when left out), its shadow as flat shadow / shadowColor / shadowSize,
-  // and the bar's own fields beside them. fontSize and widgetRadius stay
-  // null where both leave them (Appearance's and Widget's then).
+  // and the bar's own fields beside them. widgetRadius stays null where
+  // both leave it (Widget's then).
   function lookOf(barConfig, section) {
     const base = section ?? BarStyle.values;
     const own = barConfig?.style ?? {};
@@ -412,7 +441,7 @@ QtObject {
     }));
   }
 
-  // A widget's `layout` overrides (size, minSize, priority), for the bar
+  // A widget's `layout` overrides (priority, minSize, maxSize), for the bar
   // editor's inspector
   readonly property var widgetLayoutSchema: ConfigManager.configSchema.definitions.WidgetLayout
   // A bar's own fields in groups (`x-group`), for the bar editor (its
@@ -436,6 +465,11 @@ QtObject {
         "icon": def["x-icon"] ?? "widgets",
         // Its group in the widget library (`x-libraryGroup`)
         "group": def["x-libraryGroup"] ?? "",
+        // More words the library finds it by (`x-keywords`)
+        "keywords": def["x-keywords"] ?? [],
+        // It shrinks when the bar is crowded, so takes a minSize and
+        // maxSize (`x-elastic`)
+        "elastic": def["x-elastic"] ?? false,
         "propertiesSchema": def.properties?.properties?.properties || null,
         // Its options shown first, in order (their `x-order`)
         "propertiesOrder": def.properties?.properties?.["x-order"] ?? [],

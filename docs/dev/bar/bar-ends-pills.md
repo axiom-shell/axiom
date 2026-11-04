@@ -1,7 +1,7 @@
 # Bar ends and pills
 
 > **Files:** `qml/components/methods/BarEnds.qml`, `tests/tst_BarEnds.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/CornerMerge.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/PillBarJoin.qml`, `qml/components/hosts/popout/EdgePlacement.qml`, `qml/services/ui/ScreenEdgeManager.qml`
-> **Config:** `Bars[].background`, `pillMerge` (others such as `overlap`, `pillPad`, `pillConnector` are derived `barConfig` values)
+> **Config:** `Bars.items[].surface` (`joinGap`, `overlap`, `pillPad`, `pillConnector` and others are derived `barConfig` values)
 > **Related:** [Layering and corners](layering-and-corners.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md)
 
 What each end of a bar meets and whether surfaces may join it there, how two pill bars merge at a corner, and how pills are built and stretched by surfaces joining from the perpendicular edge. Which bar owns a corner is in [Layering and corners](layering-and-corners.md) (Bars sharing a corner).
@@ -43,7 +43,7 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
 - Surfaces inside the reserved space (edge popouts, docks) are arranged after every bar. They therefore meet whatever bar is on the perpendicular edge, whichever bar owns the corner.
 
 ### Pills (`BarContainer.pillRects`)
-- There is one pill per section. Pills are merged when they're at most `pillMerge` apart.
+- There is one pill per section. Pills are merged when they're at most `joinGap` apart.
 - Each pill is an `AttachedSurface` growing out of the bar's outer edge, covering the border stroke (`barConfig.overlap`).
 - Widgets sit `overlap + pillPad` in from that edge.
 - A pill at an end of the bar joins the perpendicular edge (`joinStart`/`joinEnd`): it sits flush on that edge's stroke, whose far corner meets it with a fillet.

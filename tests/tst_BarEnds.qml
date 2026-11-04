@@ -36,12 +36,12 @@ TestCase {
       "monitor": "DP-1",
       "extent": 30,
       "reserveSpace": true,
-      "background": background,
+      "kind": background,
       "solid": solid,
       "island": background === "floating" || background === "floatingPills",
       "insideBorder": !solid,
-      "floatGap": 0,
-      "floatGapAuto": true,
+      "floatingGap": 0,
+      "floatingGapAuto": true,
       "trim": background === "transparent" ? 10 : 0,
       "vertical": vertical,
       // A landscape screen: the side bars lie along its shorter edges
@@ -150,8 +150,8 @@ TestCase {
     compare(bottom.start.gap, 0);
     // A floating bar's own float gap past a bar it yields to
     const [island] = ends([bar("left", "floating", {
-        "floatGap": 6,
-        "floatGapAuto": false
+        "floatingGap": 6,
+        "floatingGapAuto": false
       }), bar("bottom", "pills")], withBorder);
     compare(island.end.kind, "bar");
     compare(island.end.over, 0);
@@ -379,7 +379,7 @@ TestCase {
     // reserves the float gap less, so the islands sit the transparent
     // bar's padding from its widgets, as the bar outside it does
     const [p, t, f] = placed([bar("top", "pills"), bar("top", "transparent"), bar("top", "floatingPills", {
-        "floatGap": 6
+        "floatingGap": 6
       })], withBorder);
     verify(!t.facesWindows);
     compare(t.trim, 6);
@@ -391,7 +391,7 @@ TestCase {
     const [, lined] = placed([bar("top", "pills"), bar("top", "transparent", {
         "accentLine": "inner"
       }), bar("top", "floating", {
-        "floatGap": 6
+        "floatingGap": 6
       })], withBorder);
     compare(lined.trim, 0);
     // A transparent bar inside: nothing trimmed but by the innermost
@@ -411,11 +411,11 @@ TestCase {
         "reserveSpace": false
       })];
     const e = edge(bars, "top", withBorder);
-    compare(e.inner.background, "transparent");
-    compare(e.facing.background, "solid");
+    compare(e.inner.kind, "transparent");
+    compare(e.facing.kind, "solid");
     compare(edge([bar("top", "transparent", {
         "reserveSpace": false
-      })], "top", withBorder).facing.background, "transparent", "alone, it still decides");
+      })], "top", withBorder).facing.kind, "transparent", "alone, it still decides");
   }
 
   function test_popouts_grow_out_of_the_connected_run() {

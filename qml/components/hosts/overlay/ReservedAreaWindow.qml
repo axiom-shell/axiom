@@ -50,7 +50,7 @@ PanelWindow {
     if (ScreenEdgeManager.screenEdgeOpen(root.screen, location))
       return 0;
     const bar = ScreenEdgeManager.edgeOn(root.screen, location).facing;
-    if (bar?.background === "transparent")
+    if (bar?.kind === "transparent")
       return bar.trim;
     return -Appearance.borderWidth;
   }

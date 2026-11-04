@@ -111,6 +111,28 @@ TestCase {
     ], "systray", label, heading)), ["SysTray"]);
   }
 
+  function test_filtered_by_keyword() {
+    const typed = [
+      {
+        "type": "Time",
+        "label": "Clock",
+        "keywords": ["Time", "Date"]
+      },
+      {
+        "type": "Battery",
+        "label": "Battery",
+        "keywords": ["Battery Status"]
+      },
+      {
+        "type": "Volume",
+        "label": "Volume"
+      }
+    ];
+    compare(names(LibraryOrder.filtered(typed, "date", label, heading)), ["Time"], "a keyword, any case");
+    compare(names(LibraryOrder.filtered(typed, "status", label, heading)), ["Battery"], "part of one");
+    compare(LibraryOrder.filtered(typed, "speaker", label, heading), [], "none matches");
+  }
+
   function test_filtered_by_group_heading() {
     compare(names(LibraryOrder.filtered(types, "time", label, heading)), ["Clock", "Agenda"]);
     compare(names(LibraryOrder.filtered(types, "other", label, heading)), ["Mystery"]);

@@ -11,7 +11,7 @@ Item {
 
   property alias content: contentLoader.sourceComponent
   // Set from the bar's barConfig: its padding, and the thickness across
-  // the bar (its widgetSize)
+  // the bar (its thickness)
   property int padding: 0
   property bool isVertical: false
   property int crossSize: 0

@@ -151,7 +151,7 @@ Item {
 
           // The thickness the size settings add up to
           StyledText {
-            visible: "widgetSize" in group.modelData.schema
+            visible: "thickness" in group.modelData.schema
             text: I18n.tr("Bar thickness: {0} px", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps).extent))
             textColor: Theme.foreground
             opacity: 0.7

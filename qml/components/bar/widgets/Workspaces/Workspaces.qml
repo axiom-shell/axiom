@@ -22,7 +22,7 @@ BarWidget {
   // A box in its own color, else clear over the bar
   readonly property bool boxed: barConfig.widgetBoxed && properties.showBackground
   // Within a colored box
-  readonly property real inset: boxed ? barConfig.widgetSpacing : 0
+  readonly property real inset: boxed ? barConfig.innerGap : 0
 
   // Its cells stay put while the strip after them comes and goes
   pinStart: true

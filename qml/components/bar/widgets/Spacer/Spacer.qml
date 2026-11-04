@@ -15,6 +15,6 @@ BarWidget {
   readonly property string sizePolicy: "fixed"
   readonly property real preferredSize: properties.minGap
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : properties.minGap
-  implicitHeight: isVertical ? properties.minGap : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : properties.minGap
+  implicitHeight: isVertical ? properties.minGap : root.barConfig.thickness
 }

@@ -54,7 +54,7 @@ TestCase {
     compare(s[0].extent, 100);
     compare(s[2].offset, 400);
     compare(s[2].extent, 200);
-    compare(s[1].offset, 345, "leftCenter sits a gap before the center");
+    compare(s[1].offset, 345, "the second section sits a gap before the center");
     compare(s[3].extent, 0);
     compare(s[4].offset, 890);
   }

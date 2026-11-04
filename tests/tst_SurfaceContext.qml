@@ -8,7 +8,7 @@ TestCase {
   // An enriched bar, as far as SurfaceContext reads it
   function bar(background) {
     return {
-      "background": background,
+      "kind": background,
       "solid": background === "solid",
       "pills": background === "pills",
       "island": background === "floating" || background === "floatingPills"
@@ -567,7 +567,7 @@ TestCase {
         "bar": Object.assign(bar(kind), {
           "extent": 40,
           "pillDepth": 30,
-          "pillMerge": 12
+          "joinGap": 12
         }),
         "pills": pills,
         "centre": 500,
@@ -607,7 +607,7 @@ TestCase {
       "bar": Object.assign(bar("pills"), {
         "extent": 40,
         "pillDepth": 30,
-        "pillMerge": 12,
+        "joinGap": 12,
         "offBorder": true
       })
     }).ownSink, null);
@@ -666,7 +666,7 @@ TestCase {
     const pills = kind => Object.assign(bar(kind), {
         "extent": 40,
         "pillDepth": 30,
-        "pillMerge": 12
+        "joinGap": 12
       });
     const floating = {
       "frameLine": 54,

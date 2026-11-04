@@ -84,7 +84,7 @@ Item {
   // chain, keeping the bar's spacing to the widgets beside it in the
   // section as between separate widgets. At the section's end the gap to
   // the next section stands in, as on any other bar.
-  readonly property real _looseGap: root.grouping === "powerline" ? root.barConfig.spacing : 0
+  readonly property real _looseGap: root.grouping === "powerline" ? root.barConfig.widgetGap : 0
   // The first and last widgets with something to show (from their
   // content, never the room they're given)
   readonly property var _hasContent: root._modules.map(m => m.naturalSize > 0)
@@ -102,11 +102,11 @@ Item {
 
   // The caps and insets at `place` in a run (BarShapes.segment)
   function segmentAt(place) {
-    return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.widgetSize);
+    return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
   }
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : usedLength
-  implicitHeight: isVertical ? usedLength : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : usedLength
+  implicitHeight: isVertical ? usedLength : root.barConfig.thickness
 
   // Merged runs' shared backgrounds, under everything
   Repeater {
@@ -158,7 +158,7 @@ Item {
       style: root.barConfig.separatorStyle
       color: Theme.resolveColor(root.barConfig.separatorColor)
       thickness: root.barConfig.separatorThickness
-      length: BarLayout.dividerLength(mark.style, root.barConfig.widgetSize)
+      length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root.isVertical
       x: root.isVertical ? Math.round((root.width - width) / 2) : mark.center - width / 2
       y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2)

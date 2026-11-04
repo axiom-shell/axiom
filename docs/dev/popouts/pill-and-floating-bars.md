@@ -9,16 +9,16 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 ### Floating bars (islands)
 - **Settings:** `background: "floating" | "floatingPills"`, with `barConfig.island`/`islandPills`.
 - **Laid out like tiled windows:** the islands are held their float gap in from the border's stroke (or from the bare screen edge). The gap applies across the bar and from both ends (`islandStart`).
-  - **`floatGap` Automatic (-1):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep. So the islands' ends line up with the windows'. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
+  - **`floatingGap` Automatic (null):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep. So the islands' ends line up with the windows'. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
   - **Each island** is a rounded box with a stroke all round, holding the widgets and their `padding`.
 - **Read as pills:** `BarContainer.pillRects` holds the islands shaped like pills (`BarLayout.islandRects`), so the popout code reads them as pills.
-  - The shape is either one island from limit to limit, or one per group, merged within `pillMerge`.
+  - The shape is either one island from limit to limit, or one per group, merged within `joinGap`.
   - They are drawn from `pillShapes` (`BarLayout.stretchIslands`).
 - **Nothing joins a floating bar.** Its edge is a wall to the surfaces beside it (`SurfaceContext.endKind`).
 - **Surfaces on an island:**
   - **Which island:** a popout, edge popout or dock uses the island under its centre, otherwise the nearest.
   - **Where it grows from:** out of the island's inner stroke (`attachAt`). It never merges (`EdgeAttach.place`, island mode).
-  - **Sides that keep their fillet:** a side whose fillet lands on the island keeps it. The same holds when it lands on a neighbour the island stretches to within `pillMerge` of; the two then draw as one while the surface is open.
+  - **Sides that keep their fillet:** a side whose fillet lands on the island keeps it. The same holds when it lands on a neighbour the island stretches to within `joinGap` of; the two then draw as one while the surface is open.
   - **Other sides:** any other side reaches to the island's end and runs flush into it. Where the box goes past the island, the island is stretched to the box.
 - **Repaint after a stretch:** a stretch changing while a surface is open is drawn by the bar, but wasn't shown until the bar committed again. So `BarContainer` paints a few frames of its own after one changes (its `FrameNudge`, `repaint`).
 - **Flush sides:** a flush side runs into the island in one straight line (`AttachedSurface.flushStart`/`flushEnd`).
@@ -38,7 +38,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
     - The reach comes from `joinReach`, the far wall's reach (`AttachedSurface.joinWall`).
     - It follows the box's far wall as it slides (`hidden`), and its far stroke opens only as far as the box has come ([Choreography](edge-attach.md#choreography)).
     - Either the end pill is stretched, or a stub is grown where the bar has no pill near its end (`BarLayout.endReaches`).
-- **Filleted join:** this applies where one of the bar's own pills (`sectionPills`, before any stretch) shows past the wall's outer edge at all (half a stroke out from where it rests, where a straight join would square it) and reaches within a fillet, a corner and `pillMerge` of it (`EdgeAttach.pillJoinFilleted`, read as `PillBarJoin.filleted`).
+- **Filleted join:** this applies where one of the bar's own pills (`sectionPills`, before any stretch) shows past the wall's outer edge at all (half a stroke out from where it rests, where a straight join would square it) and reaches within a fillet, a corner and `joinGap` of it (`EdgeAttach.pillJoinFilleted`, read as `PillBarJoin.filleted`).
   - A pill showing past the wall by less than a fillet and a corner is stretched to carry them: a stretch only grows, so it couldn't square at the wall, and a straight join met its side in a bare T.
   - The wall is where the surface's far wall rests (`EdgePlacement.joinReach`, from the layout's `attachAt`), never where it's drawn: the decision resizes the surface and its window a frame apart, and it slides in, so a measured wall moved and flipped the decision back.
   - The end curves into its far stroke with a fillet, as it would into a solid bar's.
@@ -57,10 +57,10 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - Its box stops where windows start there, lining up with a detached box.
   - Its fillet is inside the wall too, keeping the windows' gap from the bar.
 - **Every surface on a pill bar** (edge popouts and docks alike) grows out of a pill's far stroke exactly as it would out of an island:
-  - **Stretching:** the pill under it (otherwise the nearest) stretches, animated, to carry it, joining neighbours within `pillMerge`.
+  - **Stretching:** the pill under it (otherwise the nearest) stretches, animated, to carry it, joining neighbours within `joinGap`.
   - **Flush ends:** the pill squares its far corner where the box runs flush into its end (`AttachedSurface.startCornerRadius`/`endCornerRadius`, animated).
   - **Perpendicular joins:** at a pill that joins the perpendicular edge, the box joins that edge too.
-- **Between pills:** a surface centred between pills or islands (`EdgeAttach.place`'s `between` mode) that keeps more than `pillMerge` and two fillets' room from each grows from the bar's outer edge instead, over the bar's reserved area, as on a bare stretch of a solid edge.
+- **Between pills:** a surface centred between pills or islands (`EdgeAttach.place`'s `between` mode) that keeps more than `joinGap` and two fillets' room from each grows from the bar's outer edge instead, over the bar's reserved area, as on a bare stretch of a solid edge.
   - It grows out of the border's stroke (opened under it), or straight off a bare screen edge.
   - Its content starts at that edge (`attachClearance` 0, unlike `merged`), so a dock there sits in the bar's empty room. An edge popout there takes the bar's empty depth off its padding on that side (`SurfaceContext.layout`'s `attachFill`), as it does the border's margin.
   - It stretches no pill. Too close to a pill, it grows out of the nearest one as above.

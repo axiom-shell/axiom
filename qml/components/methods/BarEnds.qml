@@ -17,8 +17,8 @@ import QtQuick
 // the perpendicular edge it makes way for (endsOf).
 //
 // A bar is an enriched bar entry (BarsConfig.enrichBarConfig): `id`,
-// `vertical`, `shortEdge`, `solid`, `background`, `insideBorder`, `island`,
-// `extent`, `floatGap`, `floatGapAuto`, `trim` (how much less than its
+// `vertical`, `shortEdge`, `solid`, `kind`, `insideBorder`, `island`,
+// `extent`, `floatingGap`, `floatingGapAuto`, `trim` (how much less than its
 // extent it reserves, alone on its edge), `enabled`, `reserveSpace`,
 // `monitor`, `top`/`bottom`/`left`/`right`.
 // `opts`: { border (the screen border is on), borderWidth, margin (the
@@ -51,7 +51,7 @@ QtObject {
       return 3;
     if (bar.island)
       return 0;
-    return bar.background === "transparent" ? 1 : 2;
+    return bar.kind === "transparent" ? 1 : 2;
   }
 
   // Whether a bar lies along its screen's shorter edge (`width` × `height`
@@ -122,7 +122,7 @@ QtObject {
     // Two pill bars: the yielding one's window ends at the other's
     // reserved line, the far side of its pills, so it reaches back onto
     // their far stroke
-    if (bar.background === "pills" && other.background === "pills")
+    if (bar.kind === "pills" && other.kind === "pills")
       return root._barStroke("pillBar", opts);
     // Nothing to join: held clear of it. Its window ends at that bar's
     // reserved line, `trim` short of its inner edge (a transparent bar's
@@ -138,7 +138,7 @@ QtObject {
       "held": true,
       "reach": 0,
       "over": over,
-      "gap": bar.island && !bar.floatGapAuto ? bar.floatGap : auto
+      "gap": bar.island && !bar.floatingGapAuto ? bar.floatingGap : auto
     };
   }
 
@@ -177,7 +177,7 @@ QtObject {
   // Floating bars and floating pills share a layer rule, so their order
   // is LayerSlot's rank (layerRank).
   function kindIndex(bar) {
-    return ["solid", "pills", "transparent", "floating", "floatingPills"].indexOf(bar.background);
+    return ["solid", "pills", "transparent", "floating", "floatingPills"].indexOf(bar.kind);
   }
 
   // The enabled bars on a screen (`monitor`) by edge name, each edge's
@@ -262,8 +262,8 @@ QtObject {
       // keeps its own gap from where it would be, so it reserves that gap
       // less (windows' gaps_out, its reserveTrim; a floating bar's float
       // gap), the widgets' gap to it then matching their gap outwards
-      const openInside = bar.background === "transparent" && bar.accentLine !== "inner";
-      const trim = facesWindows ? bar.trim : openInside && next.island ? next.floatGap : 0;
+      const openInside = bar.kind === "transparent" && bar.accentLine !== "inner";
+      const trim = facesWindows ? bar.trim : openInside && next.island ? next.floatingGap : 0;
       const onStrip = bar === strip;
       let zone = 0;
       if (bar.reserveSpace)
@@ -308,7 +308,7 @@ QtObject {
     const index = placed.findIndex(other => other.id === bar.id);
     if (index < 0)
       return bar;
-    const connects = other => other.reserveSpace && (other.solid || (other.background === "pills" && !other.offBorder));
+    const connects = other => other.reserveSpace && (other.solid || (other.kind === "pills" && !other.offBorder));
     if (!connects(placed[index]))
       return placed[index];
     let last = index;
@@ -399,7 +399,7 @@ QtObject {
   // order (LayerSlot's rank). Bars on other edges never meet across it,
   // so they keep no order (one remade doesn't map the others again).
   function layerRanks(bars) {
-    const group = bar => root._edgeName(bar) + ":" + (bar.solid ? "solid" : bar.island ? "floating" : bar.background);
+    const group = bar => root._edgeName(bar) + ":" + (bar.solid ? "solid" : bar.island ? "floating" : bar.kind);
     const ranks = bars.map(() => 0);
     const entries = bars.map((bar, index) => ({
           "bar": bar,

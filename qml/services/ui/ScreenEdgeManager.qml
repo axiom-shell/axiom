@@ -147,7 +147,7 @@ QtObject {
         "end": gap
       };
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const windowGap = side => bar?.island ? bar.floatGap : Math.max(0, root.barReservedOn(screen, side) + CompositorManager.gapsOut[ScreenEdge.name(side)] - root.frameLine(screen, side));
+    const windowGap = side => bar?.island ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + CompositorManager.gapsOut[ScreenEdge.name(side)] - root.frameLine(screen, side));
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {
       "across": windowGap(location),

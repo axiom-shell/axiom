@@ -21,9 +21,10 @@ import qs.components.hosts.popout
 //   priority:      when a section can't fit even the minimum sizes, the
 //                  lowest-priority modules are hidden first (default 0)
 //
-// The widget's `layout` config (`layoutOverrides`) wins over the module's
-// own values. The host's main-axis size (`mainSize`) is assigned by
-// WidgetGroup; the cross axis is the bar's widgetSize. Modules must fit
+// The widget's `layout` config (`layoutOverrides`: priority, and on an
+// elastic module minSize and maxSize, its cap) wins over the module's own
+// values. The host's main-axis size (`mainSize`) is assigned by
+// WidgetGroup; the cross axis is the bar's thickness. Modules must fit
 // their content to whatever size they're given and report their natural
 // size through implicitWidth/implicitHeight, independent of that size.
 Item {
@@ -80,16 +81,15 @@ Item {
 
   // The module's own sizes, then with the insets
   readonly property real _preferred: {
-    const override = layoutOverrides?.size;
     if (sizePolicy === "fixed")
-      return override ?? _item?.preferredSize ?? naturalSize;
+      return _item?.preferredSize ?? naturalSize;
     if (sizePolicy === "elastic")
-      return Math.min(naturalSize, override ?? _item?.preferredSize ?? naturalSize);
-    return override ?? naturalSize;
+      return Math.min(naturalSize, layoutOverrides?.maxSize ?? _item?.preferredSize ?? naturalSize);
+    return naturalSize;
   }
   readonly property real preferredSize: _preferred + _insets
   readonly property real minimumSize: {
-    const min = layoutOverrides?.minSize ?? (sizePolicy === "elastic" ? _item?.minimumSize : undefined);
+    const min = sizePolicy === "elastic" ? layoutOverrides?.minSize ?? _item?.minimumSize : undefined;
     return (min === undefined ? _preferred : Math.min(min, _preferred)) + _insets;
   }
   readonly property int priority: layoutOverrides?.priority ?? _item?.priority ?? 0
@@ -114,10 +114,10 @@ Item {
   opacity: shown ? 1 : 0
   enabled: shown
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : preferredSize
-  implicitHeight: isVertical ? preferredSize : root.barConfig.widgetSize
-  width: isVertical ? root.barConfig.widgetSize : mainSize
-  height: isVertical ? mainSize : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : preferredSize
+  implicitHeight: isVertical ? preferredSize : root.barConfig.thickness
+  width: isVertical ? root.barConfig.thickness : mainSize
+  height: isVertical ? mainSize : root.barConfig.thickness
 
   // Its place and size as drawn glide to the layout's (x, y and the size
   // above, which its background and the bar's pills follow); the layout

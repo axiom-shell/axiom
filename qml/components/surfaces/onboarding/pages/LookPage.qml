@@ -101,34 +101,45 @@ OnboardingPage {
     columnSpacing: Widget.spacing
     rowSpacing: Widget.spacing
 
+    // Each a surface and whether it floats (BarsConfig.kindOf's kinds)
     Repeater {
       model: [
         {
           "value": "pills",
+          "surface": "pills",
+          "floating": false,
           "icon": "view_agenda",
           "title": I18n.tr("Pills"),
           "description": I18n.tr("A pill per group of widgets")
         },
         {
           "value": "solid",
+          "surface": "bar",
+          "floating": false,
           "icon": "crop_16_9",
           "title": I18n.tr("Solid"),
           "description": I18n.tr("One bar along the edge")
         },
         {
           "value": "transparent",
+          "surface": "none",
+          "floating": false,
           "icon": "blur_on",
           "title": I18n.tr("Transparent"),
           "description": I18n.tr("Widgets on the wallpaper")
         },
         {
           "value": "floating",
+          "surface": "bar",
+          "floating": true,
           "icon": "toolbar",
           "title": I18n.tr("Floating bar"),
           "description": I18n.tr("One bar held off the edge")
         },
         {
           "value": "floatingPills",
+          "surface": "pills",
+          "floating": true,
           "icon": "more_horiz",
           "title": I18n.tr("Floating pills"),
           "description": I18n.tr("A floating pill per group")
@@ -140,8 +151,13 @@ OnboardingPage {
         icon: modelData.icon
         title: modelData.title
         description: modelData.description
-        selected: root.bar?.background === modelData.value
-        onClicked: root.setBar("background", modelData.value)
+        selected: root.bar !== null && BarsConfig.kindOf(root.bar) === modelData.value
+        onClicked: {
+          const values = {};
+          values["Bars.items.0.surface"] = modelData.surface;
+          values["Bars.items.0.floating"] = modelData.floating;
+          SettingsManager.commitValues(values);
+        }
       }
     }
   }

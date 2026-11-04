@@ -36,7 +36,7 @@ Item {
   property var hitArea: null
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property real spacing: barConfig.widgetSpacing
+  readonly property real spacing: barConfig.innerGap
   // App icons on occupied cells: always where the compositor makes the
   // workspaces (niri's show only the occupied ones, so a bare number says
   // little)

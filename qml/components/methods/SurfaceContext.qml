@@ -123,7 +123,7 @@ QtObject {
       return true;
     if (!bar || bar.solid)
       return false;
-    return bar.background === "transparent" || (!!bar.island && mode === "plain");
+    return bar.kind === "transparent" || (!!bar.island && mode === "plain");
   }
 
   // How a surface casts its shadow: { look ("style": BarStyle's, "bar":
@@ -294,7 +294,7 @@ QtObject {
       "pills": p.pills ?? [],
       "pillBar": !!bar?.pills,
       "island": island,
-      "merge": bar?.pillMerge ?? 0,
+      "merge": bar?.joinGap ?? 0,
       "centre": p.centre,
       "aligned": p.aligned,
       "length": p.length,
@@ -386,7 +386,7 @@ QtObject {
       // layer rules order windows (else one mapped as it opens lands over
       // the bar), and not while the overlay, which that layer is under, is
       // open on its screen
-      "slidesUnder": detached && !p.held && bar?.background === "transparent" && !!p.layerOrder && !p.overOverlay
+      "slidesUnder": detached && !p.held && bar?.kind === "transparent" && !!p.layerOrder && !p.overOverlay
     });
   }
 
@@ -396,7 +396,7 @@ QtObject {
    * into the stroke, or running straight up into it, squared. Decided from
    * where things rest, never as drawn. `p`:
    *   wall (the submenu's outer wall, at rest), before (it opens toward
-   *   the edge's start), radius, stroke, merge (pillMerge)
+   *   the edge's start), radius, stroke, merge (joinGap)
    *   own: the parent's pill or island as its box stretches it ({ index,
    *     start, end, squareStart, squareEnd, joinStart, joinEnd }), or null
    *     off a pill (the border's or a solid bar's stroke)
