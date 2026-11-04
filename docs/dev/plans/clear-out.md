@@ -392,7 +392,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Keybinds page goes stale after a detached-mode Save
   - A combo lookup says nothing holds a key the search or chips hide, and offers to bind it
   - [The bind inspector's typed label and argument miss Save](../issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
-  - [Picking a key in the key map under an edit search selects a bind the list doesn't show](../issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
+  - Picking a key in the key map under an edit search selects a bind the list doesn't show
   - [Renaming a saved preset after switching presets renames the wrong one](../issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
   - The reference's sections and both chip rows are built while hidden
 - **compositor-17** (18): Six file groups, one commit each; fine under the gate.

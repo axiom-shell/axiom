@@ -362,7 +362,6 @@ Found by the audits:
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
 - [The bind inspector's typed label and argument miss Save](issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
-- [Picking a key in the key map under an edit search selects a bind the list doesn't show](issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
 - [Renaming a saved preset after switching presets renames the wrong one](issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
 - [The key map and the keyboard reference each carry the same modifier chips and legend](issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
 - [A reference section's folded count re-derives BindRows.byModifiers' grouping](issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)

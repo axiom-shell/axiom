@@ -28,7 +28,7 @@ ColumnLayout {
   function pick(key) {
     const held = root.held(key);
     if (held.index >= 0)
-      KeybindManager.editor.selectBind(held.index);
+      KeybindManager.editor.editBind(held.index);
     else if (held.source === "free")
       KeybindManager.editor.addBind({
         "key": KeyNames.join(KeybindManager.page.keyMapMods, key)
