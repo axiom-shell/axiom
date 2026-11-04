@@ -514,6 +514,9 @@ Found while testing removable drives:
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
 - [The weather TestPlace test fails now and then under load](issues.md#the-weather-testplace-test-fails-now-and-then-under-load)
 
+Found while running verify.sh --all for compositor-08 (row 20):
+- [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
+
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 

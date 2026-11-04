@@ -32,6 +32,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
 
+### TestNotifySend's no-server call can run out the test's 5 s instead of failing at once
+- **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
+- **What:** `scripts/dev/verify.sh --all` (a branch that didn't touch the daemon) once failed with `with no server: context deadline exceeded` after 5.00 s; `go test ./internal/daemon -run TestNotifySend -count=3` then passed. PLAUSIBLE: the last `notify.send` goes out right after `server.Close()`, before the test bus has dropped the closed connection's `org.freedesktop.Notifications` name, so the Notify call is routed to the dead owner and waits for a reply that never comes, until the one shared 5 s ctx (made before the bus setup and already partly spent) expires, rather than the bus answering at once with no owner (`Unavailable`). Fix: after `server.Close()`, wait until the name has no owner (poll `NameHasOwner` or watch `NameOwnerChanged`) before the last call, and give that call its own ctx.
+- **Size:** trivial
+- **Found:** 2026-11-04, while running verify.sh --all for roadmap row 20, compositor-08
+
 ### TestNvidiaStream can see the stream's first line before it looks
 - **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaStream`)
 - **What:** The fake stream (`streams`, line "37, 61") answers as soon as the fetch starts it, so the first `fetch` can already read its values and the check that none came yet fails: CI run 41435061352 (a branch that didn't touch sysmon) failed with `before the stream's first line: {… GPUUsage:0xc000190238 GPUTemp:0xc000190248 …}`; the rerun passed. Fix: hold the fake's first line until the test releases it (a channel), then check before and after.
