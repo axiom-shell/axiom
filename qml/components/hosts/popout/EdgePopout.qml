@@ -87,14 +87,14 @@ PopoutWrapperBase {
   // (EdgePlacement.slidesUnder: not while the overlay is open on its
   // screen, nor over a fullscreen window, nor without
   // supports.layerOrder). Anything else it opens over, sliding out within
-  // its own window. Followed only while closed, as BarPopouts.underBar:
-  // it changes the window's layer, namespace and margin.
+  // its own window. Whether it slides under follows only while closed, as
+  // BarPopouts.underBar: it changes the window's layer and namespace.
   property ClosedLatch _under: ClosedLatch {
-    source: placement.slidesUnder
+    source: placement.slidesUnder && placement.slideDistance > 0
     closed: !root.occupied
   }
-  readonly property real slideDistance: (root._under.value ?? false) ? placement.slideDistance : 0
-  readonly property bool slidesUnder: root.slideDistance > 0
+  readonly property bool slidesUnder: root._under.value ?? false
+  readonly property real slideDistance: root.slidesUnder ? placement.slideDistance : 0
   // Its window's layer: Overlay unless it slides under a bar
   readonly property int windowLayer: root.slidesUnder ? WlrLayer.Top : WlrLayer.Overlay
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
