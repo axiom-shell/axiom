@@ -147,11 +147,11 @@ Rectangle {
   //   still all behind the stroke, EdgePlacement). pillRects stays
   //   unstretched.
   // - opening: where a surface covers a pill's (or island's) inner stroke,
-  //   { start, end } along the bar (`keepFill`: while opaque, only the
-  //   stroke and its outer edge, for a surface joining it end-on, which
-  //   covers the stroke but nothing inside it). While surfaces are
-  //   translucent the stroke is left open there (their fill no longer
-  //   hides it).
+  //   { start, end } along the bar (`keepFill`: the fill inside it is
+  //   painted back while the pill fills itself, for a surface joining it
+  //   end-on, which covers the stroke but nothing inside it). While
+  //   surfaces are translucent the stroke is left open there (their fill
+  //   no longer hides it).
   // - endReach: a pill asked to run from an end of the bar ({ atStart, to,
   //   straight }, BarLayout.endReaches), by a surface joining this bar from
   //   the perpendicular edge: a pill bar merging into this one's corner
@@ -754,34 +754,33 @@ Rectangle {
             joins.push(pill._rectFrom(0, pill.farV - h - 1, h + R + 1, R + h + 2));
           if (pill.joinEnd && end >= along + L - 1)
             joins.push(pill._rectFrom(L - h - R - 1, pill.farV - h - 1, h + R + 1, R + h + 2));
-          return [pill._farHole(start, end, o.keepFill && !Appearance.translucent ? "outer" : "both")].concat(joins);
+          return [pill._farHole(start, end, false)].concat(joins);
         }))
-        // The stroke, with its anti-aliased fringe a pixel either side
-        // (`fringe` "both"), outside it alone ("outer": the fill inside
-        // stays), or that fringe's row inside the pill alone ("inner")
-        function _farHole(start, end, fringe) {
+        // The stroke, with its anti-aliased fringe a pixel either side, or
+        // (`inner`) that fringe's row inside the pill alone
+        function _farHole(start, end, inner) {
           const row = Appearance.borderWidth + 2;
           const foot = root.barConfig.pillDepth;
           const far = root.isVertical ? root.width : root.height;
           const near = root.barConfig.left || root.barConfig.top;
           const from = near ? foot - row + 1 : far - foot - 1;
-          const across = fringe === "inner" ? (near ? from : from + row - 1) : fringe === "outer" && near ? from + 1 : from;
-          const depth = fringe === "inner" ? 1 : fringe === "outer" ? row - 1 : row;
+          const across = inner ? (near ? from : from + row - 1) : from;
+          const depth = inner ? 1 : row;
           const r = root.isVertical ? Qt.rect(across, start, depth, end - start) : Qt.rect(start, across, end - start, depth);
           return Qt.rect(r.x - pill.x, r.y - pill.y, r.width, r.height);
         }
-        // Under a `keepFill` opening the stroke's soft edge inside the pill
-        // is painted over while surfaces are opaque (the surface joining
-        // end-on covers only the stroke); translucent, a second coat would
-        // show as a line
+        // Under a `keepFill` opening the fill row the hole took inside the
+        // pill is painted back while the pill fills itself (the surface
+        // joining end-on covers only the stroke); backed, the blur window
+        // fills it
         Repeater {
-          model: Appearance.translucent ? [] : root._openingList.filter(o => o.keepFill ?? false)
+          model: root.backed ? [] : root._openingList.filter(o => o.keepFill ?? false)
           Rectangle {
             required property var modelData
             readonly property real _along: root.isVertical ? pill.y : pill.x
             readonly property real _start: Math.max(modelData.start, _along)
             readonly property real _end: Math.min(modelData.end, _along + pill.alongLength)
-            readonly property rect area: pill._farHole(_start, _end, "inner")
+            readonly property rect area: pill._farHole(_start, _end, true)
             visible: _end > _start
             // (in the content box, where a surface's children go)
             x: area.x - pill.boxRect.x

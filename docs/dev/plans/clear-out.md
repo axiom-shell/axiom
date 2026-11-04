@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12 and compositor-13 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13 and compositor-20 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -85,7 +85,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 37 | compositor-11 | major | Done: Workspace blocks and switching, and sway's workspace ids | 5 | ~110 | compositor-02 |  |
 | 38 | compositor-12 | major | Done: Overview and window events | 3 | ~80 | compositor-02 |  |
 | 39 | compositor-13 | major | Done: The window look as written and read back | 5 | ~120 | compositor-03, compositor-04 | Q7 |
-| 40 | compositor-20 | major | Blur fills | 2 | ~20 | compositor-03 |  |
+| 40 | compositor-20 | major | Done: Blur fills | 2 | ~20 | compositor-03 |  |
 | 41 | compositor-14 | major | Capability gates in the schema | 3 | ~80 | none |  |
 | 42 | compositor-15 | major | The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
@@ -377,9 +377,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A failed options read sets Hyprland's gaps to 0
   - The Translucency card reads the window look's blur object as a switch
   - A failed cursor theme call keeps the theme's own name all session
-- **compositor-20** (2): Two majors; may ride in compositor-13 (TranslucencyStatus is next to it).
+- **compositor-20** (2, done): Two majors; may ride in compositor-13 (TranslucencyStatus is next to it).
   - A backed toast's blur fill is at the surface opacity twice
-  - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](../issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
+  - A keepFill opening leaves an unfilled row in an unbacked translucent pill
 - **compositor-14** (3):
   - ["Fire on release" is offered on niri and silently dropped](../issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
   - [Three settings stay editable on niri though its writer drops them](../issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)

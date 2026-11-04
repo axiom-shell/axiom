@@ -375,7 +375,7 @@ Found by the audits:
 - ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
-- [A keepFill opening leaves an unfilled row in an unbacked translucent pill](issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
+- [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 - [An open edge popout's layer and namespace still follow its edge's bar](issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
 - [EdgePopout works out its attach edge and slide distance itself](issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)

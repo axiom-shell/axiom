@@ -672,11 +672,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 
-### A keepFill opening leaves an unfilled row in an unbacked translucent pill
-- **Where:** `qml/components/bar/BarContainer.qml:750` (`strokeHoles`), `qml/components/bar/BarContainer.qml:771` (the keepFill paint `Repeater`)
-- **What:** `keepFill` openings come from `CornerMerge` (a pill bar's end pill merging into this bar's corner) and `PillBarJoin` (a popout's side joining a pill bar). The cut is `_farHole(start, end, o.keepFill && !Appearance.translucent ? "outer" : "both")`. When translucent, `"both"` also removes the stroke's inner fringe row, and that row lies inside the pill's own fill (`from = near ? foot - row + 1 : …`). The row is painted back only when opaque (`model: Appearance.translucent ? [] : …`). Backed, the blur window fills that row, so nothing is lost. But "translucent" is not "backed". A pill is unbacked yet translucent when the window look's blur part is off with opacity below 100, on the other screens during Hyprland's or SwayFX's compositor-wide pause, and before `CompositorManager.surfacesReady`. The pill then fills itself, nothing paints the cut row back, and the surface joining end-on covers only the stroke. The result is a 1px unfilled line along the whole opening. PLAUSIBLE: a nested-compositor screenshot of two pill bars meeting at a corner settles it, with translucency at 80% and the look's blur off. Fix: cut `"both"` always, and paint the row back whenever the pill fills itself: `model: root.backed ? [] : root._openingList.filter(o => o.keepFill ?? false)`, keeping `color: BlurManager.fillOn(…)`. `_farHole`'s `"outer"` mode then has no caller and goes. At opacity 100 it draws what it does today.
+### The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked
+- **Where:** `qml/components/bar/BarContainer.qml` (`borderOpening`, `joinOpening`), `qml/components/surfaces/border/RoundedBorders.qml`
+- **What:** The border leaves its inner stroke open under a joined surface whenever `Appearance.translucent`, not only while the blur window backs it. In nested niri with a top and a left pill bar meeting at the top-left corner (translucency 80%, the look's blur off, so nothing is backed), the top frame's stroke row (y = 7) is bare wallpaper across the left frame's width (x 0–6): nothing fills it there, as the keepFill row was before compositor-20. Backed, the blur window fills it. Which opening takes that stretch (the left pill's `joinOpening` or the top pill's `borderOpening`) wasn't traced.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the blur system
+- **Found:** 2026-11-04, while fixing a keepFill opening's unfilled row (compositor-20)
 
 ### On Hyprland a click back in an older popout closes it with the newer one
 - **Where:** `qml/services/compositor/FocusGrab.qml` (`dismissed`, `_outside`), `qml/services/ui/BackdropManager.qml` (`clickedOutside`)
