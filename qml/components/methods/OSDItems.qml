@@ -24,13 +24,14 @@ QtObject {
     return before[key] !== after[key];
   }
 
-  // Whether the layout switched between two keyboard states ({ layouts,
-  // index }): the same list of more than one layout, another index. A
-  // changed list is a config reload, not a switch
+  // Whether the input source switched between two states ({ ids,
+  // current }, the keyboardLayout state): the same list of more than one
+  // source, another one current (an input method's switch too). A changed
+  // list is a config reload, not a switch
   function layoutSwitched(before, after) {
-    if (!before || !after || after.layouts.length < 2)
+    if (!before || !after || (after.ids ?? []).length < 2 || after.current === "")
       return false;
-    return JSON.stringify(before.layouts) === JSON.stringify(after.layouts) && before.index !== after.index;
+    return JSON.stringify(before.ids) === JSON.stringify(after.ids) && before.current !== after.current;
   }
 
   // A status's tile from its state:
@@ -45,7 +46,8 @@ QtObject {
   // of the ordinary (the row's "What's unusual"), `hidden`
   // nothing to show (no Wi-Fi, one layout). States:
   //   capsLock / numLock / scrollLock { available, on },
-  //   keyboardLayout { layouts, index },
+  //   keyboardLayout { ids (the input sources'), current (the one in
+  //   use, "" for none), label (its own: "DE", "あ") },
   //   audio / microphone { muted, name, detail, icon (the device's,
   //   unmuted), device (its identity, deviceKey's) }, powerProfile { profile: "powerSaver" |
   //   "balanced" | "performance" | "" }, charger { available, plugged,
@@ -95,13 +97,13 @@ QtObject {
       }
     case "keyboardLayout":
       {
-        const layouts = s.layouts ?? [];
+        const ids = s.ids ?? [];
         return Object.assign(t, {
           "icon": "keyboard",
-          "label": String(layouts[s.index] ?? "").toUpperCase(),
+          "label": String(s.label ?? ""),
           "on": true,
-          "notable": (s.index ?? 0) > 0,
-          "hidden": layouts.length < 2
+          "notable": ids.length > 0 && (s.current ?? "") !== "" && s.current !== ids[0],
+          "hidden": ids.length < 2
         });
       }
     case "audio":

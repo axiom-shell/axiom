@@ -166,4 +166,119 @@ TestCase {
     compare(InputSources.label(test.mixed[1], "code", null, "あ"), "あ", "an engine's own label");
     compare(InputSources.label(test.mixed[1], "name", null, ""), "mozc");
   }
+
+  function test_effective() {
+    compare(InputSources.effective(test.mixed, ["us", "de", "jp"]), test.mixed, "the compositor has the sources' layouts");
+    compare(InputSources.effective(test.mixed, []), test.mixed, "not known yet");
+    const own = InputSources.effective(test.mixed, ["fr", "us"]);
+    compare(own.map(s => s.id), ["xkb:0:fr", "xkb:1:us", "mozc", "pinyin"], "the compositor's own layouts, then the engines");
+    compare(own[0].layout, "fr");
+    compare(InputSources.effective([xkbSource("x", ""), imeSource("e", "")], []), [], "only usable ones");
+  }
+
+  function test_xkbOnly() {
+    compare(InputSources.xkbOnly(test.mixed).map(s => s.id), ["us", "neo"]);
+  }
+
+  function test_step() {
+    compare(InputSources.step(test.mixed, "us", 1), "mozc");
+    compare(InputSources.step(test.mixed, "pinyin", 1), "us", "wraps");
+    compare(InputSources.step(test.mixed, "us", -1), "pinyin", "wraps back");
+    compare(InputSources.step(test.mixed, "gone", 1), "us");
+    compare(InputSources.step(test.mixed, "gone", -1), "pinyin");
+    compare(InputSources.step([], "us", 1), "");
+  }
+
+  function test_groupMatches() {
+    const sources = [xkbSource("us", "us"), imeSource("mozc", "mozc")];
+    verify(InputSources.groupMatches("fcitx5", sources, null, {
+      "defaultLayout": "us",
+      "group": [
+        {
+          "name": "keyboard-us",
+          "layout": ""
+        },
+        {
+          "name": "mozc",
+          "layout": "us"
+        }
+      ]
+    }), "an empty layout is the default one");
+    verify(!InputSources.groupMatches("fcitx5", sources, null, {
+      "defaultLayout": "us",
+      "group": [
+        {
+          "name": "keyboard-us",
+          "layout": "us"
+        }
+      ]
+    }), "an engine missing");
+    verify(!InputSources.groupMatches("fcitx5", sources, null, {
+      "defaultLayout": "de",
+      "group": [
+        {
+          "name": "keyboard-us",
+          "layout": "us"
+        },
+        {
+          "name": "mozc",
+          "layout": "us"
+        }
+      ]
+    }), "another default layout");
+    verify(InputSources.groupMatches("ibus", sources, test.registry, {
+      "group": [
+        {
+          "name": "xkb:us::eng",
+          "layout": ""
+        },
+        {
+          "name": "mozc",
+          "layout": ""
+        }
+      ]
+    }));
+    verify(InputSources.groupMatches("none", sources, null, null));
+  }
+
+  function test_fromGroup() {
+    compare(InputSources.fromGroup("fcitx5", {
+      "defaultLayout": "us",
+      "group": [
+        {
+          "name": "keyboard-us",
+          "layout": ""
+        },
+        {
+          "name": "keyboard-de-neo",
+          "layout": "de-neo"
+        },
+        {
+          "name": "mozc",
+          "layout": "us"
+        },
+        {
+          "name": "anthy",
+          "layout": "jp"
+        },
+        {
+          "name": "keyboard-us",
+          "layout": ""
+        }
+      ]
+    }), [xkbSource("us", "us"), xkbSource("de-neo", "de", "neo"), imeSource("mozc", "mozc"), imeSource("anthy", "anthy", "jp"), xkbSource("us2", "us")]);
+    compare(InputSources.fromGroup("ibus", {
+      "group": [
+        {
+          "name": "xkb:de:neo:deu",
+          "layout": ""
+        },
+        {
+          "name": "mozc-jp",
+          "layout": ""
+        }
+      ]
+    }), [xkbSource("de-neo", "de", "neo"), imeSource("mozc-jp", "mozc-jp")]);
+    compare(InputSources.fromGroup("fcitx5", null), []);
+  }
 }

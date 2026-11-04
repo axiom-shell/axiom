@@ -423,6 +423,17 @@ Singleton {
     }, () => callback?.());
   }
 
+  // Switches to the layout at `index`, then calls back
+  function setKeyboardLayout(index, callback) {
+    root._action({
+      "SwitchLayout": {
+        "layout": {
+          "Index": Math.max(0, Math.floor(Number(index) || 0))
+        }
+      }
+    }, () => callback?.());
+  }
+
   // Ends the niri session (the power menu's log out)
   function exitSession() {
     root._action({

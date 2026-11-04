@@ -39,6 +39,8 @@
     "mediaPrevious": ["media previous", "Previous track", "Media"],
     "mediaStop": ["media stop", "Stop playback", "Media"],
     "audioOutputNext": ["audio nextOutput", "Switch audio output", "Media"],
+    "inputSourceNext": ["inputSources next", "Next input source", "System"],
+    "inputSourcePrev": ["inputSources prev", "Previous input source", "System"],
     "clipboard": ["appLauncher clipboard", "Clipboard history", "Tools"],
     "emoji": ["appLauncher emoji", "Emoji picker", "Tools"],
     "calculator": ["appLauncher calculator", "Calculator", "Tools"],
@@ -138,7 +140,9 @@
     "mediaPlayPause": ["locked"],
     "mediaNext": ["locked"],
     "mediaPrevious": ["locked"],
-    "mediaStop": ["locked"]
+    "mediaStop": ["locked"],
+    "inputSourceNext": ["locked"],
+    "inputSourcePrev": ["locked"]
   },
   "flagNames": ["repeating", "locked", "release"],
   "switcherSteps": {

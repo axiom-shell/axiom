@@ -177,6 +177,133 @@ QtObject {
     return root._text(source?.layout);
   }
 
+  // The sources to switch between, in order: the usable ones of
+  // `sources`; while the compositor's xkb layouts (`layouts`, codes from
+  // withKeyboard, empty while unknown) aren't theirs (axiom doesn't set
+  // the keyboard: the compositor's own config's), its xkb part is an xkb
+  // source per layout the compositor has ("xkb:<index>:<code>"), then the
+  // ime sources
+  function effective(sources, layouts) {
+    const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
+    const codes = (Array.isArray(layouts) ? layouts : []).map(code => root._text(code));
+    if (codes.length === 0 || JSON.stringify(root.xkb(list).layouts) === JSON.stringify(codes))
+      return list;
+    return codes.map((code, i) => ({
+          "id": "xkb:" + i + ":" + code,
+          "kind": "xkb",
+          "layout": code,
+          "variant": "",
+          "engine": ""
+        })).concat(list.filter(s => s.kind === "ime"));
+  }
+
+  // The xkb sources alone (what a password field types through)
+  function xkbOnly(sources) {
+    return (Array.isArray(sources) ? sources : []).filter(s => s?.kind === "xkb" && root._usable(s));
+  }
+
+  // The id of the source after (`direction` 1) or before (-1) the one
+  // `id` names in `sources`, wrapping; the first (or the last) when `id`
+  // isn't there, "" with none
+  function step(sources, id, direction) {
+    const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
+    if (list.length === 0)
+      return "";
+    const at = list.findIndex(s => s.id === id);
+    const back = Number(direction) < 0;
+    if (at < 0)
+      return back ? list[list.length - 1].id : list[0].id;
+    return list[(at + (back ? -1 : 1) + list.length) % list.length].id;
+  }
+
+  // Whether the framework's list (the daemon's inputMethod state: {
+  // defaultLayout, group: [{ name, layout }] }) is the sources': fcitx5's
+  // default layout, names and layouts (an item's empty layout being the
+  // default one), ibus's names. True under no framework
+  function groupMatches(framework, sources, registry, state) {
+    const group = Array.isArray(state?.group) ? state.group : [];
+    if (framework === "ibus")
+      return JSON.stringify(group.map(item => root._text(item?.name))) === JSON.stringify(root.ibusEngines(sources, registry));
+    if (framework !== "fcitx5")
+      return true;
+    const wanted = root.fcitx5Group(sources);
+    const fallback = root._text(state?.defaultLayout);
+    const have = group.map(item => ({
+          "name": root._text(item?.name),
+          "layout": root._text(item?.layout) || fallback
+        }));
+    return fallback === wanted.defaultLayout && JSON.stringify(have) === JSON.stringify(wanted.items);
+  }
+
+  // The framework's list (as groupMatches takes it) as sources, for a
+  // draft of Input.sources: fcitx5's keyboard-<layout>[-<variant>] and
+  // ibus's xkb:<layout>:<variant>:<language> are xkb sources, anything
+  // else an engine, typing on its item's layout (fcitx5; empty when that's
+  // the default one, so it follows the first). Ids from the layout or the
+  // engine, made unique
+  function fromGroup(framework, state) {
+    const group = Array.isArray(state?.group) ? state.group : [];
+    const fallback = root._text(state?.defaultLayout);
+    const taken = [];
+    const named = base => {
+      let id = base || "source";
+      for (let n = 2; taken.includes(id); n++)
+        id = (base || "source") + n;
+      taken.push(id);
+      return id;
+    };
+    const sources = [];
+    for (const item of group) {
+      const name = root._text(item?.name);
+      if (name === "")
+        continue;
+      let xkb = null;
+      if (framework === "fcitx5" && name.startsWith("keyboard-"))
+        xkb = root._splitFcitx5(name.slice("keyboard-".length));
+      else if (framework === "ibus" && name.startsWith("xkb:")) {
+        const parts = name.split(":");
+        xkb = {
+          "layout": parts[1] ?? "",
+          "variant": parts[2] ?? ""
+        };
+      }
+      if (xkb && xkb.layout !== "") {
+        sources.push({
+          "id": named(xkb.variant !== "" ? xkb.layout + "-" + xkb.variant : xkb.layout),
+          "kind": "xkb",
+          "layout": xkb.layout,
+          "variant": xkb.variant,
+          "engine": ""
+        });
+        continue;
+      }
+      const layout = framework === "fcitx5" && root._text(item?.layout) !== fallback ? root._splitFcitx5(root._text(item?.layout)) : {
+        "layout": "",
+        "variant": ""
+      };
+      sources.push({
+        "id": named(name.replace(/[^A-Za-z0-9_-]/g, "-")),
+        "kind": "ime",
+        "layout": layout.layout,
+        "variant": layout.layout !== "" ? layout.variant : "",
+        "engine": name
+      });
+    }
+    return sources;
+  }
+
+  // fcitx5's "de-neo" as { layout, variant }
+  function _splitFcitx5(text) {
+    const at = text.indexOf("-");
+    return at < 0 ? {
+      "layout": text,
+      "variant": ""
+    } : {
+      "layout": text.slice(0, at),
+      "variant": text.slice(at + 1)
+    };
+  }
+
   // A source that names what it is (an xkb layout, an engine)
   function _usable(source) {
     return source?.kind === "ime" ? root._text(source.engine) !== "" : source?.kind === "xkb" && root._text(source.layout) !== "";

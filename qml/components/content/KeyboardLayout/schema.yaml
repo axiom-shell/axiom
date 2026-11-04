@@ -3,4 +3,4 @@ link: {setting: Input.sources}
 icon: keyboard
 group: Session
 defaultSize: [2, 1]
-hosts: {only: [greeter]}
+hosts: [lockscreen, greeter]

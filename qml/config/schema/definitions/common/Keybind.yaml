@@ -71,6 +71,8 @@ properties:
       - mediaPrevious
       - mediaStop
       - audioOutputNext
+      - inputSourceNext
+      - inputSourcePrev
       - terminal
       - fileManager
       - browser
@@ -160,6 +162,8 @@ properties:
       mediaPrevious: Previous track
       mediaStop: Stop playback
       audioOutputNext: Switch audio output
+      inputSourceNext: Next input source
+      inputSourcePrev: Previous input source
       terminal: Terminal
       fileManager: File manager
       browser: Browser

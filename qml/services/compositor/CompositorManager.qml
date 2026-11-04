@@ -84,9 +84,13 @@ Singleton {
   // What the compositor can do, by capability (contract.md › Capabilities):
   // false for anything the backend doesn't say, and for what
   // AXIOM_COMPOSITOR_OFF ("focusGrab,blur") turns off, so the
-  // fallbacks can be tried on a compositor that has them
+  // fallbacks can be tried on a compositor that has them. `inputMethod`
+  // is the daemon's Wayland registry's (WaylandManager), with or without
+  // a backend
   readonly property var supports: {
-    const own = root.backend?.supports ?? {};
+    const own = Object.assign({}, root.backend?.supports ?? {}, {
+      "inputMethod": WaylandManager.inputMethod
+    });
     const off = String(Quickshell.env("AXIOM_COMPOSITOR_OFF") ?? "").split(",").map(name => name.trim());
     return Object.keys(own).reduce((result, name) => {
       result[name] = own[name] === true && !off.includes(name);
@@ -335,6 +339,15 @@ Singleton {
   function cycleKeyboardLayout(direction, callback) {
     if (root.backend)
       root.backend.cycleKeyboardLayout(direction, callback);
+    else
+      callback?.();
+  }
+
+  // Switches every keyboard to the layout at `index` (into withKeyboard's
+  // layouts), then calls back
+  function setKeyboardLayout(index, callback) {
+    if (root.backend)
+      root.backend.setKeyboardLayout(index, callback);
     else
       callback?.();
   }

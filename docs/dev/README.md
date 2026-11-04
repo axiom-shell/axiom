@@ -206,6 +206,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [brightness](features/brightness.md): backlight / DDC, the module, OSD bars.
 - [networking-bluetooth](features/networking-bluetooth.md): Wi-Fi, wired, Bluetooth.
 - [vpn](features/vpn.md): NetworkManager's VPNs and Tailscale in one list, the secret agent.
+- [input-sources](features/input-sources.md): keyboard layouts and input method engines as one list (fcitx5, ibus): the widget and popout, the module, the OSD, switching, what the framework is given.
 - [drives](features/drives.md): removable drives through udisks2: the plug-in notification or mount, open, unlock, eject.
 - [tailscale](features/tailscale.md): the `tailscale` topic, Connect / Disconnect, the widget, popout and module.
 - [idle](features/idle.md): hypridle and idle inhibit.

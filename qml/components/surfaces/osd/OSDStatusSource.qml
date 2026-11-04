@@ -44,7 +44,7 @@ Loader {
   function toggle() {
     switch (root.type) {
     case "keyboardLayout":
-      InputSourceManager.cycle("next");
+      InputSourceManager.next(false);
       break;
     case "audio":
       AudioManager.toggleMute();
@@ -96,6 +96,16 @@ Loader {
     }
   }
 
+  // The input sources' state (OSDItems' keyboardLayout): the ids, the
+  // current one and its label
+  function _sourcesState() {
+    return {
+      "ids": InputSourceManager.sources.map(s => s.id),
+      "current": InputSourceManager.current,
+      "label": InputSourceManager.labelFor(InputSourceManager.current, "short")
+    };
+  }
+
   // Its state now, for OSDItems.tile: reads only its own type's service
   function _state() {
     switch (root.type) {
@@ -115,10 +125,7 @@ Loader {
         "on": LockKeysManager.scrollLock
       };
     case "keyboardLayout":
-      return {
-        "layouts": InputSourceManager.layouts,
-        "index": InputSourceManager.layoutIndex
-      };
+      return root._sourcesState();
     case "audio":
     case "microphone":
       {
@@ -337,10 +344,7 @@ Loader {
       property var _last: null
 
       function _check() {
-        const now = {
-          "layouts": InputSourceManager.layouts,
-          "index": InputSourceManager.layoutIndex
-        };
+        const now = root._sourcesState();
         const switched = OSDItems.layoutSwitched(layout._last, now);
         layout._last = now;
         if (switched)
@@ -351,10 +355,10 @@ Loader {
 
       Connections {
         target: InputSourceManager
-        function onLayoutIndexChanged() {
+        function onCurrentChanged() {
           Qt.callLater(layout._check);
         }
-        function onLayoutsChanged() {
+        function onSourcesChanged() {
           Qt.callLater(layout._check);
         }
       }

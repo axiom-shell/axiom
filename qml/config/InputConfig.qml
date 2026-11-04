@@ -2,11 +2,11 @@ pragma Singleton
 import QtQuick
 import qs.services.core
 
-// Reader for the Input section: the keyboard, mouse, touchpad and cursor
-// axiom sets on the compositor, a part at a time ({ sources, keyboard: {
-// enabled, options, … }, mouse, touchpad, cursor }, each set only while
-// `enabled`; the sources' layouts while the keyboard's is),
-// by the daemon (its config layer, and greeter.compositor for the greeter's).
+// Reader for the Input section: the input sources and method, and the
+// keyboard, mouse, touchpad and cursor axiom sets on the compositor, a part
+// at a time ({ sources, method, keyboard: { enabled, options, … }, mouse,
+// touchpad, cursor }, each set only while `enabled`; the sources' layouts
+// while the keyboard's is), by the daemon (its config layer, and greeter.compositor for the greeter's).
 // Named InputConfig as the section is a whole object.
 QtObject {
   id: root
@@ -21,6 +21,26 @@ QtObject {
   // The input sources ([{ id, kind: "xkb" | "ime", layout, variant, engine
   // }], methods/InputSources)
   readonly property var sources: input.sources
+  // The sources as saved (no editor's preview): what the input method
+  // framework is given (InputSourceManager)
+  readonly property var savedSources: JSON.parse(_savedSourcesJson)
+  readonly property string _savedSourcesJson: JSON.stringify(ConfigManager.config.Input.sources)
+
+  // The input method framework followed and given the sources: "fcitx5"
+  // (the default), "ibus", "auto" (whichever runs) or "none"
+  readonly property string framework: _c.method.framework
+  // (autostart and legacyApps are the daemon's managed-mode writer's,
+  // read from config.json)
+  // The framework's options axiom sets (inputMethod.options: { shareState,
+  // verticalCandidates, candidateFont, showSwitchPopup }), the same object
+  // while they're unchanged
+  readonly property var methodOptions: JSON.parse(_methodOptionsJson)
+  readonly property string _methodOptionsJson: JSON.stringify({
+    "shareState": _c.method.shareState,
+    "verticalCandidates": _c.method.verticalCandidates,
+    "candidateFont": _c.method.candidateFont,
+    "showSwitchPopup": _c.method.showSwitchPopup
+  })
 
   // The cursor theme picked, set or not ("" for none)
   readonly property string cursorTheme: _c.cursor.theme

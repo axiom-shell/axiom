@@ -65,6 +65,8 @@ properties:
             - mediaPrevious
             - mediaStop
             - audioOutputNext
+            - inputSourceNext
+            - inputSourcePrev
             - clipboard
             - emoji
             - calculator
@@ -117,6 +119,8 @@ properties:
             mediaPrevious: Previous track
             mediaStop: Stop playback
             audioOutputNext: Switch audio output
+            inputSourceNext: Next input source
+            inputSourcePrev: Previous input source
             clipboard: Clipboard history
             emoji: Emoji picker
             calculator: Calculator

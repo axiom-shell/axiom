@@ -174,6 +174,8 @@ QtObject {
       "mediaNext": "skip_next",
       "mediaPrevious": "skip_previous",
       "mediaStop": "stop",
+      "inputSourceNext": "keyboard",
+      "inputSourcePrev": "keyboard",
       "terminal": "terminal",
       "fileManager": "folder",
       "browser": "language",

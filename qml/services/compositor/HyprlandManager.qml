@@ -347,6 +347,11 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     root._request("switchxkblayout all " + direction, () => callback?.());
   }
 
+  // Switches every keyboard to the layout at `index`, then calls back
+  function setKeyboardLayout(index, callback) {
+    root._request("switchxkblayout all " + Math.max(0, Math.floor(Number(index) || 0)), () => callback?.());
+  }
+
   // Calls back with each monitor's layer surfaces (HyprState.layerRects),
   // or null when Hyprland didn't answer
   function withLayerRects(callback) {

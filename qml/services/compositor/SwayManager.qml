@@ -357,6 +357,11 @@ Singleton {
     SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${direction === "prev" ? "prev" : "next"}`, () => callback?.());
   }
 
+  // Switches every keyboard to the layout at `index`, then calls back
+  function setKeyboardLayout(index, callback) {
+    SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${Math.max(0, Math.floor(Number(index) || 0))}`, () => callback?.());
+  }
+
   // What can do what plain sway can't (CompositorManager.unsupportedNote).
   // I18n.tr("SwayFX can.")
   function unsupportedHint(capability) {
