@@ -12,7 +12,7 @@ properties:
     type: boolean
     title: GTK
     default: false
-    description: Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).
+    description: Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps (and ibus's candidate window) need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).
     # every desktop has GTK
     x-commands: []
     x-hookup:

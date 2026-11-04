@@ -3476,7 +3476,7 @@
     "Writes --color options to $XDG_STATE_HOME/axiom/fzf-colors (fzf 0.49+).": "",
     "Writes alacritty/axiom.toml. Alacritty reloads it by itself.": "",
     "Writes an \"axiom\" color scheme for qt5ct and qt6ct, and an \"Axiom\" KDE color scheme (Dolphin, Gwenview, Okular, Kate…).": "",
-    "Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).": "",
+    "Writes axiom.css beside GTK 3 and GTK 4's gtk.css, and follows light/dark. GTK3 apps (and ibus's candidate window) need the adw-gtk3 theme (adw-gtk-theme on Arch, adw-gtk3-theme on Fedora).": "",
     "Writes cava/colors/axiom.conf (and a Cava config including it, when there is none). Reloads running Cava.": "",
     "Writes chrome/axiom.css into every profile of Firefox and its forks (LibreWolf, Zen, Floorp, Waterfox; Flatpak too), recoloring the browser's tabs, toolbars, menus and sidebar. Applies from each browser's next start; websites only follow light/dark.": "",
     "Writes foot/axiom.ini. Applies to new windows.": "",

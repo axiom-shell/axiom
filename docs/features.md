@@ -307,7 +307,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 | Kind | Apps |
 | --- | --- |
 | Toolkits | GTK, Qt |
-| Input methods | fcitx5 (its candidate window and menus) |
+| Input methods | fcitx5 (its candidate window and menus); ibus's candidate window follows GTK |
 | Terminals | kitty, Alacritty, foot, WezTerm, Ghostty |
 | Editors | Neovim, Helix, VS Code, Zed |
 | Apps | Firefox (and its forks), Vesktop/Vencord, zathura |
