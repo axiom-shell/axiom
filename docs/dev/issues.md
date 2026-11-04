@@ -705,16 +705,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### A sway output rule by description misses a monitor with no serial
-- **Where:** `backend/internal/compositor/render/sway.go:721` (`SwayOutputName`), `backend/internal/compositor/ipc/sway.go:122` (`Outputs`), `docs/dev/compositor/sway-backend.md:40`
-- **What:** Profile rules name a monitor by `desc:<description>` by default. On sway the description is make, model and serial with every `Unknown` part left out (`describe`; `SwayState.output` does the same). `SwayOutputName` writes that text as the output's name in `output "Make Model" …`. sway matches an output by its name or its identifier, and the identifier keeps `Unknown` for a missing part (`output_get_identifier`). So for a monitor with no serial (common on laptop panels), the command names an output that never appears, and the saved profile does nothing on that monitor, both at runtime (`Outputs.Apply`) and in the files (`SwayOutputLines`). The doc's "sway's own identifier for an output" holds only when no part is `Unknown`. `outputs_test.go` covers `desc:` only with a full serial.
-
-  PLAUSIBLE: settle it in a nested sway with a wayland-backend output (no serial). `swaymsg -t get_outputs` shows the `Unknown` part, and `swaymsg 'output "<make> <model>" scale 2'` should do nothing.
-
-  Fix: resolve `desc:` to the connected output's name, as niri does (`connectorFor`, `render/niri.go`). Pass the details into `SwayOutputCommands` from `Outputs.Apply`, which already has them, and resolve the files' output rules the same way. Correct the doc line. [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway) changes the same sway branch: resolving through `sameDescription` there fixes its sway half too, so land the two together.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
-
 ### The detached layer's unbind list can drift from what sway holds
 - **Where:** `backend/internal/compositor/manager/sway.go:225` (`runtimeApply`), `backend/internal/compositor/manager/sway.go:193` (`sendEach`)
 - **What:** `runtimeApply` replaces and saves `SwayUnbind` (235-237) before anything is sent, and `sendEach` drops `run`'s transport failure. If the socket call fails (dial error, the 5 s timeout), neither the old unbinds nor the new binds reach sway. The old runtime binds stay bound but are no longer recorded, so a bind removed in axiom keeps firing until sway reloads.
@@ -752,12 +742,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### "Fire on release" is offered on niri and silently dropped
 - **Where:** `backend/internal/compositor/render/niri.go:332` (`NiriBindNode`), `qml/components/views/Keybinds/BindInspector.qml:209`, `backend/internal/compositor/render/hyprconfig.go:144` (`BindLua`)
 - **What:** For a bind's `release` flag, Hyprland writes `release = true` and sway `--release`. `NiriBindNode` writes only `hotkey-overlay-title`, `repeat`, `allow-when-locked` and `cooldown-ms`, and reads no `release` (`grep -n release render/niri.go` hits only a comment): niri has no release binds. Nothing gates the flag: no `supports` key and no `isComplete` issue. The inspector's "Fire on release" switch is shown and saved on every compositor. Scenario on niri: a user turns it on for a bind, or a bind merged from sway or Hyprland arrives with `release: true`. axiom's own `restartShell` and `exitSession` defaults are release binds too. The action fires on press while the switch still reads on. Fix: a `releaseBinds` supports key (true on Hyprland and sway) that greys out the switch where it's false. axiom's release defaults then work on niri as press binds.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
-
-### The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway
-- **Where:** `backend/internal/compositor/manager/outputs.go:49` (`Outputs.Apply`), `backend/internal/compositor/render/hyprlua.go:413` (`MonitorCalls`), `backend/internal/compositor/render/profiles.go:45` (`spelled`), `qml/services/compositor/MonitorManager.qml:322`
-- **What:** `hyprland/monitors.md` says a profile saved under one compositor is picked under another, and that "the daemon writes and applies such a rule in the running compositor's spelling (`render.SavedRules`)". That holds for the daemon's own profile switch (`SavedRules` → `spelled`). It doesn't hold for `outputs.apply`, which the Monitors page's Apply uses: it sends the profile's rules unchanged (`MonitorManager.qml:322`). The same `desc:PNP(AOC) …` rule (niri's spelling of a make it has no name for) gives three results. niri resolves it (`NiriOutputRequests` → `connectorFor`, through `sameDescription`). Hyprland gets `hl.monitor({ output = "desc:PNP(AOC) …" })`, because `MonitorCalls` resolves only a rule's `mirror` (416-420), never its `output`, and that misses Hyprland's "AOC …". sway gets `output "PNP(AOC) …" enable …`, which it stores for an output that doesn't exist and answers success. Scenario: a profile saved under niri for an AOC monitor, applied under sway or Hyprland. The page matches it as live (`MonitorLayout` strips `PNP(…)`), Apply reports nothing wrong, the monitor doesn't change, and the Keep/Revert countdown runs over nothing. Fix: in `Outputs.Apply`, put each rule through `render.spelled` against `details` before the Hyprland and sway branches (export it as `render.Spelled`). For sway, [A sway output rule by description misses a monitor with no serial](#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial) resolves `desc:` to the connector, which covers this too: land the two together.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor-parity system
 

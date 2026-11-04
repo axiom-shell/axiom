@@ -146,8 +146,8 @@ func TestProfileSpelling(t *testing.T) {
 			`hl.monitor({ output = "eDP-1", mode = "preferred", position = "0x0", scale = 1 })`,
 			`hl.monitor({ output = "desc:GSM LG Y2", mode = "3840x2160@60", position = "0x0", scale = 1 })`,
 		}},
-		{"sway", SwayOutputCommands(jsonx.Arr(SavedRules(underNiri, bare)...)),
-			`output "AOC CU34G4Z X1" enable mode 3440x1440@100Hz pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8`},
+		{"sway", SwayOutputCommands(SwayConnectorRules(jsonx.Arr(SavedRules(underNiri, bare)...), parse(t, `[{"name": "DP-1", "description": "AOC CU34G4Z X1"}]`))),
+			`output DP-1 enable mode 3440x1440@100Hz pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8`},
 		{"niri", items(get(items(NiriOutputNodes(jsonx.Arr(SavedRules(underHyprland, []Output{{Name: "DP-1", Description: "PNP(AOC) CU34G4Z X1"}})...)))[0], "args"))[0],
 			"PNP(AOC) CU34G4Z X1"},
 	}

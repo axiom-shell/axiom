@@ -200,11 +200,13 @@ func TestAFileThatStopsLoadingAppliesTheSavedProfile(t *testing.T) {
 
 // buildInputs gives the writers the saved profile's rules for the outputs
 // read: nil until they're read (the files keep what they
-// say), [] when no profile matches
+// say), [] when no profile matches; sway's name the output by its
+// connector
 func TestBuildInputsOutputRules(t *testing.T) {
 	t.Parallel()
 	items, _ := jsonx.Unmarshal([]byte(testProfiles))
 	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
+	deskOnSway := `{"output":"DP-1","x":0}`
 	for _, c := range []struct {
 		name    string
 		kind    string
@@ -212,8 +214,9 @@ func TestBuildInputsOutputRules(t *testing.T) {
 		want    string
 	}{
 		{"unread", "sway", nil, "null"},
-		{"both", "sway", []render.Output{mainOut, tvOut}, "[" + deskRule + "," + tvRule + "]"},
-		{"desk", "sway", []render.Output{mainOut}, "[" + deskRule + "]"},
+		{"both", "sway", []render.Output{mainOut, tvOut}, "[" + deskOnSway + "," + tvRule + "]"},
+		{"desk", "sway", []render.Output{mainOut}, "[" + deskOnSway + "]"},
+		{"desk on niri", "niri", []render.Output{mainOut}, "[" + deskRule + "]"},
 		{"no profile", "sway", []render.Output{{Name: "DP-9"}}, `[]`},
 		// Hyprland's also hold the TV's rule, which every profile naming
 		// it agrees on, for when it's plugged in

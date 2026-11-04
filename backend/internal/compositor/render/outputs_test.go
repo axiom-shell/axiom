@@ -7,6 +7,9 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
+// aocDetails: an AOC monitor connected as Hyprland and sway describe it
+const aocDetails = `[{"name": "DP-2", "description": "AOC CU34G4Z"}]`
+
 func parse(t *testing.T, text string) any {
 	t.Helper()
 	v, err := jsonx.Unmarshal([]byte(text))
@@ -38,6 +41,24 @@ func TestOutputsApplied(t *testing.T) {
 		{"sway, by description", `[{"output": "desc:AOC CU34G4Z XJ9", "mode": "3440x1440@240", "x": 15, "y": 83, "scale": 1, "transform": 0, "vrr": 1}]`,
 			func(r any) any { return SwayOutputCommands(r) },
 			`output "AOC CU34G4Z XJ9" enable mode 3440x1440@240Hz pos 15 83 scale 1 transform normal adaptive_sync on render_bit_depth 8`},
+		// as Outputs.Apply sends them: a rule saved under niri in
+		// Hyprland's spelling, sway's by the connector (a monitor with no
+		// serial has "Unknown" in sway's identifier, which the description
+		// leaves out)
+		{"hyprland, a make niri names PNP(…)", `[{"output": "desc:PNP(AOC) CU34G4Z"}]`,
+			func(r any) any { aoc := parse(t, aocDetails); return MonitorCalls(Spelled(r, aoc), MirrorNames(aoc)) },
+			[]string{`hl.monitor({ output = "desc:AOC CU34G4Z", mode = "preferred", position = "0x0", scale = 1 })`}},
+		{"sway, a make niri names PNP(…), by its connector", `[{"output": "desc:PNP(AOC) CU34G4Z", "disabled": true}]`,
+			func(r any) any { return SwayOutputCommands(SwayConnectorRules(r, parse(t, aocDetails))) },
+			`output DP-2 disable`},
+		{"sway, a monitor with no serial, by its connector", `[{"output": "desc:BOE 0x0BCA", "disabled": true}]`,
+			func(r any) any {
+				return SwayOutputCommands(SwayConnectorRules(r, parse(t, `[{"name": "eDP-1", "description": "BOE 0x0BCA"}]`)))
+			},
+			`output eDP-1 disable`},
+		{"sway, a description nothing connected has", `[{"output": "desc:Gone", "disabled": true}]`,
+			func(r any) any { return SwayOutputCommands(SwayConnectorRules(r, details)) },
+			`output Gone disable`},
 		{"sway, preferred mode and 10 bits", `[{"output": "HDMI-A-1", "mode": "preferred", "x": 0, "y": 0, "scale": 1.5, "transform": 5, "bitdepth": 10}]`,
 			func(r any) any { return SwayOutputCommands(r) },
 			`output HDMI-A-1 enable pos 0 0 scale 1.5 transform flipped-90 adaptive_sync off render_bit_depth 10`},
