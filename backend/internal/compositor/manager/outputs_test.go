@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"testing"
@@ -20,6 +21,8 @@ type fakeOutputs struct {
 	connected []render.Output
 	reads     int
 	applied   []string
+	// fail: Apply's error (nil: it succeeds); it's still counted
+	fail error
 }
 
 func (f *fakeOutputs) Read(context.Context) ([]render.Output, error) {
@@ -33,7 +36,7 @@ func (f *fakeOutputs) Apply(_ context.Context, rules, details any) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.applied = append(f.applied, string(jsonx.MarshalCompact(rules)))
-	return nil
+	return f.fail
 }
 
 func (f *fakeOutputs) connect(outputs ...render.Output) {
@@ -55,6 +58,35 @@ var (
 	mainOut      = render.Output{Name: "DP-1", Description: "Main"}
 	tvOut        = render.Output{Name: "HDMI-A-1", Description: "TV"}
 )
+
+// A failed apply doesn't count as applied: the next call for the same
+// outputs and rules tries again, and once it succeeds the call after is
+// skipped
+func TestAFailedProfileApplyIsTriedAgain(t *testing.T) {
+	t.Parallel()
+	f := &fakeOutputs{fail: errors.New("no reply")}
+	f.connect(mainOut)
+	p := &profileSwitch{io: f}
+	ctx := context.Background()
+	if err := p.read(ctx); err != nil {
+		t.Fatal(err)
+	}
+	items, _ := jsonx.Unmarshal([]byte(testProfiles))
+	if err := p.apply(ctx, items); err == nil {
+		t.Fatal("the failure isn't returned")
+	}
+	f.mu.Lock()
+	f.fail = nil
+	f.mu.Unlock()
+	for range 2 {
+		if err := p.apply(ctx, items); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, a := f.counts(); len(a) != 2 {
+		t.Fatalf("applied %d times, want 2 (the failure, then once): %v", len(a), a)
+	}
+}
 
 // On sway and niri the saved profile follows hotplugs: a burst of changes
 // is read once, settled; the profile for what's connected is applied once
@@ -168,11 +200,13 @@ func TestAFileThatStopsLoadingAppliesTheSavedProfile(t *testing.T) {
 
 // buildInputs gives the writers the saved profile's rules for the outputs
 // read: nil until they're read (the files keep what they
-// say), [] when no profile matches
+// say), [] when no profile matches; sway's name the output by its
+// connector
 func TestBuildInputsOutputRules(t *testing.T) {
 	t.Parallel()
 	items, _ := jsonx.Unmarshal([]byte(testProfiles))
 	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
+	deskOnSway := `{"output":"DP-1","x":0}`
 	for _, c := range []struct {
 		name    string
 		kind    string
@@ -180,8 +214,9 @@ func TestBuildInputsOutputRules(t *testing.T) {
 		want    string
 	}{
 		{"unread", "sway", nil, "null"},
-		{"both", "sway", []render.Output{mainOut, tvOut}, "[" + deskRule + "," + tvRule + "]"},
-		{"desk", "sway", []render.Output{mainOut}, "[" + deskRule + "]"},
+		{"both", "sway", []render.Output{mainOut, tvOut}, "[" + deskOnSway + "," + tvRule + "]"},
+		{"desk", "sway", []render.Output{mainOut}, "[" + deskOnSway + "]"},
+		{"desk on niri", "niri", []render.Output{mainOut}, "[" + deskRule + "]"},
 		{"no profile", "sway", []render.Output{{Name: "DP-9"}}, `[]`},
 		// Hyprland's also hold the TV's rule, which every profile naming
 		// it agrees on, for when it's plugged in

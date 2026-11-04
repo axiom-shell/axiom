@@ -147,10 +147,14 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 			}
 		}
 	}
-	// The saved profile's rules for what's connected ([] for none)
+	// The saved profile's rules for what's connected ([] for none); sway's
+	// name each output by its connector (SwayConnectorRules)
 	var outputRules any
 	if outputs != nil {
 		outputRules = jsonx.Arr(profileRules(f.Kind == "hyprland", at("Monitors", "items"), outputs)...)
+		if f.Kind == "sway" {
+			outputRules = render.SwayConnectorRules(outputRules, tree(outputs))
+		}
 	}
 	// Hyprland's: those rules as hl.monitor calls, a mirror named by its
 	// connector (the calls, not the outputs, so an output only turned off

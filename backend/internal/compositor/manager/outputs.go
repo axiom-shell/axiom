@@ -46,11 +46,13 @@ func (o Outputs) Read(ctx context.Context) ([]render.Output, error) {
 
 // Apply sets the rules now. details are the outputs connected (Read's, or
 // CompositorManager.withOutputDetails), which a rule naming its output or
-// mirror by description is resolved in.
+// mirror by description is resolved in: on Hyprland in its spelling (a
+// profile saved under niri may name a make as PNP(XXX)), on niri and sway
+// as the connector.
 func (o Outputs) Apply(ctx context.Context, rules, details any) error {
 	switch {
 	case o.Hypr != nil:
-		reply, err := o.Hypr.Eval(ctx, strings.Join(render.MonitorCalls(rules, render.MirrorNames(details)), "\n"))
+		reply, err := o.Hypr.Eval(ctx, strings.Join(render.MonitorCalls(render.Spelled(rules, details), render.MirrorNames(details)), "\n"))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
@@ -73,7 +75,7 @@ func (o Outputs) Apply(ctx context.Context, rules, details any) error {
 			return refused
 		}
 	case o.Sway != nil:
-		results, err := o.Sway.Run(ctx, render.SwayOutputCommands(rules))
+		results, err := o.Sway.Run(ctx, render.SwayOutputCommands(render.SwayConnectorRules(rules, details)))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from sway")
 		}
@@ -153,7 +155,8 @@ func (p *profileSwitch) matched(profiles any) string {
 }
 
 // apply applies profiles' rules for the outputs read, unless they're
-// what was applied last for the same outputs or no profile matches.
+// what was applied last for the same outputs or no profile matches. A
+// failed apply is tried again on the next call.
 func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 	rules := p.rules(profiles)
 	if rules == nil || len(rules.Items) == 0 {
@@ -168,8 +171,11 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 	if key == p.applied {
 		return nil
 	}
+	if err := p.io.Apply(ctx, rules, tree(p.outputs)); err != nil {
+		return err
+	}
 	p.applied = key
-	return p.io.Apply(ctx, rules, tree(p.outputs))
+	return nil
 }
 
 // ProfileWatch keeps a saved monitor profile applied where no config

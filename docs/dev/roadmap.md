@@ -159,6 +159,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs clear-out core-ui-theming-02 (row 20): with two players open, play one then the other and check the Media widget and NowPlaying follow the one playing (and a player picked in NowPlaying stays until another starts); with no Media widget or NowPlaying shown, check the position isn't ticking (a temporary `console.log` in `updatePosition` stays quiet while music plays); with a scheduled theme, set the other mode by hand (dark while light is scheduled) and force a reload: it stays, and goes back only at the next scheduled switch or a fresh start (logout, or the shell restarted); likewise night light and do-not-disturb.
 - Once axiom runs a build with row 20's compositor-05, start a nested niri in managed mode with a broken `user/*.kdl` (`scripts/dev/nested.sh niri --managed`) and check the Compositor card reports niri couldn't load its config rather than loaded; and with a stale `NIRI_SOCKET` (or `HYPRLAND_INSTANCE_SIGNATURE`) left in the systemd user environment under another compositor, check the shell and `axiom daemon logs` use the compositor running.
 - Once axiom runs row 20's compositor-06, under a sway started as `sway -c ~/.config/i3/config` (a scratch copy), check the Compositor page's Add it for me edits that file (not `~/.config/sway/config`) and Managed says it can't switch, naming that file.
+- On sway, with a laptop panel that has no serial (or a profile saved under niri for a PNP(…) monitor), Monitors page → Apply changes that monitor, and after a sway reload the panel is set as the profile says (compositor-09).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -343,7 +344,6 @@ Found by the audits:
 - [A shell reload during a trial monitor Apply loses the way back](issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)
 - [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
-- [A failed monitor profile apply is never retried for the same outputs](issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
 - [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
 - [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
 - [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
@@ -375,15 +375,12 @@ Found by the audits:
 - [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
-- [A sway output rule by description misses a monitor with no serial](issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
-- [Managed mode's monitor-conflict check misses quoted and block output lines](issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
 - [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
 - [niri's overview drop moves a window's whole column and switches workspace](issues.md#niris-overview-drop-moves-a-windows-whole-column-and-switches-workspace)
 - [sway's named workspaces all share workspace id -1](issues.md#sways-named-workspaces-all-share-workspace-id--1)
 - [sway lists disabled outputs as outputs](issues.md#sway-lists-disabled-outputs-as-outputs)
 - [niri doesn't send windowFocused for a window that opens focused](issues.md#niri-doesnt-send-windowfocused-for-a-window-that-opens-focused)
 - ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
-- [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
 - [A backed toast's blur fill is at the surface opacity twice](issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)

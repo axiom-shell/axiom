@@ -80,7 +80,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 32 | compositor-07 | major | Done: The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
 | 33 | compositor-08 | major | Done: What a moved bind becomes | 3 | ~120 | compositor-07 |  |
 | 34 | compositor-21 | major | Done: Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
-| 35 | compositor-09 | major | Applying monitor rules | 4 | ~150 | compositor-05 |  |
+| 35 | compositor-09 | major | Done: Applying monitor rules | 4 | ~150 | compositor-05 |  |
 | 36 | compositor-10 | major | The trial Apply and the Monitors page | 3 | ~80 | none |  |
 | 37 | compositor-11 | major | Workspace blocks and switching, and sway's workspace ids | 5 | ~110 | compositor-02 |  |
 | 38 | compositor-12 | major | Overview and window events | 3 | ~80 | compositor-02 |  |
@@ -352,11 +352,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A niri spawn of one word with a space moves as a broken shell command
   - A sway exec chained with ; or , moves in as one shell command
   - A $' or $& in a bind's argument is read as a replacement pattern
-- **compositor-09** (4):
-  - [A failed monitor profile apply is never retried for the same outputs](../issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
-  - [A sway output rule by description misses a monitor with no serial](../issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
-  - [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](../issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
-  - [Managed mode's monitor-conflict check misses quoted and block output lines](../issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)
+- **compositor-09** (4, done):
+  - A failed monitor profile apply is never retried for the same outputs
+  - A sway output rule by description misses a monitor with no serial
+  - The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway
+  - Managed mode's monitor-conflict check misses quoted and block output lines
 - **compositor-10** (3): The reload entry is a rare path: smallest fix.
   - [A trial monitor Apply that turns a monitor off drops its Keep/Revert](../issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
   - [A shell reload during a trial monitor Apply loses the way back](../issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)

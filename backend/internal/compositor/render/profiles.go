@@ -63,6 +63,22 @@ func spelled(rule any, outputs []Output) any {
 	return copied
 }
 
+// Spelled is rules with each "desc:" output in the running compositor's
+// spelling (spelled) against details (the outputs connected, as
+// Outputs.Read or the shell's withOutputDetails gives them): what
+// outputs.apply sends Hyprland, as the profile switch's rules are.
+func Spelled(rules, details any) *jsonx.Array {
+	var outputs []Output
+	for _, d := range items(details) {
+		outputs = append(outputs, Output{Name: str(or(get(d, "name"), "")), Description: str(or(get(d, "description"), ""))})
+	}
+	out := jsonx.Arr()
+	for _, rule := range items(rules) {
+		out.Append(spelled(rule, outputs))
+	}
+	return out
+}
+
 // ruleOutput is a rule's output, "" when it has none.
 func ruleOutput(rule any) string { return str(or(get(rule, "output"), "")) }
 

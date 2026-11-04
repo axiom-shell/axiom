@@ -45,7 +45,7 @@ func serveOnce(t *testing.T, path string, read func(net.Conn) string, reply func
 }
 
 // Monitor Apply (outputs.apply) goes to the compositor running, in its own
-// terms, and what it refuses comes back refused
+// terms (a description in its spelling, or as the connector), and what it refuses comes back refused
 func TestApplyOutputs(t *testing.T) {
 	t.Parallel()
 	dir, err := os.MkdirTemp("", "axout")
@@ -116,7 +116,9 @@ func TestApplyOutputs(t *testing.T) {
 	if axerr.KindOf(err) != axerr.Refused || !strings.Contains(err.Error(), "Unknown output") {
 		t.Fatalf("sway refusing: %v", err)
 	}
-	if got := <-sway; got != `output TV enable pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8; output HDMI-A-1 disable` {
+	// the description named by its connector (sway's identifier would
+	// keep "Unknown" for a part the description leaves out)
+	if got := <-sway; got != `output DP-2 enable pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8; output HDMI-A-1 disable` {
 		t.Errorf("sway: %q", got)
 	}
 

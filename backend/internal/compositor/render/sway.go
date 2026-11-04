@@ -718,6 +718,28 @@ func SwayOutputName(output any) string {
 	return SwayQuote(value)
 }
 
+// SwayConnectorRules is rules with a "desc:" output naming a connected
+// output (details, looked up as niri's connectorFor does) given as its
+// connector. sway matches an output by its connector or its identifier,
+// which keeps "Unknown" for a part it doesn't know (a monitor with no
+// serial), while the description leaves that part out: by description
+// alone such a monitor is missed. One naming nothing connected is kept.
+func SwayConnectorRules(rules, details any) *jsonx.Array {
+	out := jsonx.Arr()
+	for _, rule := range items(rules) {
+		if output := ruleOutput(rule); strings.HasPrefix(output, "desc:") {
+			if name := connectorFor(output, details); name != "" {
+				// a "desc:" output means rule is an object (get)
+				copied := jsonx.Clone(rule).(*jsonx.Object)
+				copied.Set("output", name)
+				rule = copied
+			}
+		}
+		out.Append(rule)
+	}
+	return out
+}
+
 var rateSuffix = regexp.MustCompile(`@[\d.]+$`)
 
 // SwayOutputCommand is SwayConf.outputCommand: a monitor rule as one
