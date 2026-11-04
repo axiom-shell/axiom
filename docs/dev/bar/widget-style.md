@@ -68,12 +68,12 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 
 ### Shared and per-bar style (`BarStyle`)
 - A bar's widget style, accents and shadow are a `BarStyle`: the shared one is `Bars.style` (shown in Look & Feel, reader `BarStyle`), and each bar has its own `style` (`x-inherit: Bars.style`) whose keys it leaves `null` take the shared one's.
-- `BarsConfig.lookOf` fills a bar's look from both before `enrichBarConfig`, its shadow as flat `shadow` / `shadowColor` / `shadowSize`. `fontSize` and `widgetRadius` stay `null` where both leave them (Appearance's and Widget's then).
+- `BarsConfig.lookOf` fills a bar's look from both before `enrichBarConfig`, its shadow as flat `shadow` / `shadowColor` / `shadowSize`. `widgetRadius` stays `null` where both leave it (Widget's then); `textScale` always has a value.
 - The bar editor shows the style by `x-group` (`BarsConfig.styleGroups`, from `SchemaLayout.objectGroups`), each with a "This bar's own" switch: `BarManager.ownsStyle` / `setStyleOwned` (copies what it inherits, or sets the group back to `null`) / `updateStyleField`.
 
 ### Workspaces cells
 - Workspaces sits on a background like the rest (`backgroundColor`). Its box is Auto (`neutral`).
-- Its cells (`workspaces/WorkspaceCell`) are inset by `widgetSpacing` inside that box.
+- Its cells (`workspaces/WorkspaceCell`) are inset by `innerGap` inside that box.
 - A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
 - Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
   - **Filled, tinted or outlined** styles draw boxes.

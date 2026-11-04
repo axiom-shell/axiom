@@ -7,7 +7,7 @@
 How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, corner sharing and plain pills are in [Bar layering and corners](../bar/layering-and-corners.md).
 
 ### Floating bars (islands)
-- **Settings:** `background: "floating" | "floatingPills"`, with `barConfig.island`/`islandPills`.
+- **Settings:** `floating: true` with `surface: "bar"` (one island) or `"pills"` (one per joined group), with `barConfig.island`/`islandPills`.
 - **Laid out like tiled windows:** across, the islands are held their float gap in from the border's stroke (or from the bare screen edge; `islandStart`). Along, at an end that isn't held, they end where windows start: the frame (or the bars there it makes way for) plus that side's gaps_out (`BarEnds.windowInset`, `BarContainer.islandFrom`/`islandEnd`), whatever the float gap.
   - **`floatingGap` Automatic (null):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep, so across too the islands line up with the windows. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
   - **Each island** is a rounded box with a stroke all round, holding the widgets and their `padding`.
@@ -30,7 +30,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 
 ### Bar popouts and pill bars
 - **Joining ends:** bar popouts join an end the same way edge popouts do (`EdgeAttach.joins`).
-- **Pill bar on a perpendicular edge:** bar popouts, edge popouts and docks all also join a pill bar (`background: "pills"`) there.
+- **Pill bar on a perpendicular edge:** bar popouts, edge popouts and docks all also join a pill bar (`surface: "pills"`, not floating) there.
   - **The joining piece:** `hosts/popout/PillBarJoin`, a `PillStretch` on that bar's container. Its `joined` comes from the end's `sink: "pillBar"` (`SurfaceContext.end`).
   - **Where the end sits:** on that bar's far stroke. Its window reaches a stroke's width onto it, as it does onto the border's or a solid bar's stroke.
     - Every end does this except a bare screen edge's (`EdgePopout.startStrokeInset`/`endStrokeInset`; the dock's likewise).
