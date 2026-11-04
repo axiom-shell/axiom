@@ -30,7 +30,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
   - An outline's two strokes lie on the shared seam (`seamStart`/`seamEnd`).
   - A segment's content is centred on the part of it that shows: from half a join before its box to half a join before its end. Its `trail` takes the difference.
 - **What breaks a chain:**
-  - A widget shown without a background (the Separator) splits a chain. It keeps `spacing` to the widgets beside it in its section.
+  - A widget shown without a background (the Separator) splits a chain. It keeps `widgetGap` to the widgets beside it in its section.
     - At the section's end there is no spacing; the gap to the next section stands in, as on any bar.
   - A widget showing nothing (hidden) is passed over: `runs` flags it null.
 
