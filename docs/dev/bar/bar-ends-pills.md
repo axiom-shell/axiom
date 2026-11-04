@@ -43,7 +43,9 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
 - Surfaces inside the reserved space (edge popouts, docks) are arranged after every bar. They therefore meet whatever bar is on the perpendicular edge, whichever bar owns the corner.
 
 ### Pills (`BarContainer.pillRects`)
-- There is one pill per section. Pills are merged when they're at most `joinGap` apart.
+- **Groups:** a group is a run of widgets between a section's ends and its spacers (a spacer given room splits one; `WidgetGroup.drawnGroups`, `BarContainer.groupSpans`).
+- **Joining:** neighbouring groups at most `joinGap` (the widget gap, or the room a divider mark takes) apart join (`BarLayout.joinGroups`, `BarContainer.joinedGroups`). It's the one rule for pills, a floating bar's islands and the `merged` grouping's backgrounds, which run on across a section's end where its groups join (`WidgetGroup.joinStart`/`joinEndReach`).
+- There is one pill per joined group (`BarLayout.pillRects`, `BarContainer.groupPills`), grown by `pillGap`; pills then too close for the fillets between them (two `pillConnector`s) draw as one.
 - Each pill is an `AttachedSurface` growing out of the bar's outer edge, covering the border stroke (`barConfig.overlap`).
 - Widgets sit `overlap + pillPad` in from that edge.
 - A pill at an end of the bar joins the perpendicular edge (`joinStart`/`joinEnd`): it sits flush on that edge's stroke, whose far corner meets it with a fillet.

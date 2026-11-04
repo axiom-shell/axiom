@@ -443,8 +443,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The tray menu draws its own separator](../issues.md#the-tray-menu-draws-its-own-separator)
   - [The dock's footprint assumes fillets at both ends](../issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- **bar-popouts-09** (7):
-  - [The pill merge in BarContainer repeats BarLayout's, untested](../issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
+- **bar-popouts-09** (6):
   - [Missing test rows for two helper decisions](../issues.md#missing-test-rows-for-two-helper-decisions)
   - [WindowLookConfig rebuilds BarStyle.look](../issues.md#windowlookconfig-rebuilds-barstylelook)
   - [SystemStats works out ValueStyleWidget's style fallbacks again](../issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)

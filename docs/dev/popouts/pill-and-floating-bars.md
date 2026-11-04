@@ -12,7 +12,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - **`floatingGap` Automatic (null):** this is the compositor's gaps_out on the bar's edge, the same gap windows keep. So the islands' ends line up with the windows'. With no compositor backend (gaps unknown, `gapsOut` 0) it's `Appearance.screenMargin` (`ScreenEdgeManager.floatGaps`), so the bar isn't flush on the border.
   - **Each island** is a rounded box with a stroke all round, holding the widgets and their `padding`.
 - **Read as pills:** `BarContainer.pillRects` holds the islands shaped like pills (`BarLayout.islandRects`), so the popout code reads them as pills.
-  - The shape is either one island from limit to limit, or one per group, merged within `joinGap`.
+  - The shape is either one island from limit to limit, or one per joined group (groups at most `joinGap` apart join, `BarLayout.joinGroups`; islands that then overlap draw as one).
   - They are drawn from `pillShapes` (`BarLayout.stretchIslands`).
 - **Nothing joins a floating bar.** Its edge is a wall to the surfaces beside it (`SurfaceContext.endKind`).
 - **Surfaces on an island:**
@@ -38,7 +38,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
     - The reach comes from `joinReach`, the far wall's reach (`AttachedSurface.joinWall`).
     - It follows the box's far wall as it slides (`hidden`), and its far stroke opens only as far as the box has come ([Choreography](edge-attach.md#choreography)).
     - Either the end pill is stretched, or a stub is grown where the bar has no pill near its end (`BarLayout.endReaches`).
-- **Filleted join:** this applies where one of the bar's own pills (`sectionPills`, before any stretch) shows past the wall's outer edge at all (half a stroke out from where it rests, where a straight join would square it) and reaches within a fillet, a corner and `joinGap` of it (`EdgeAttach.pillJoinFilleted`, read as `PillBarJoin.filleted`).
+- **Filleted join:** this applies where one of the bar's own pills (`groupPills`, before any stretch) shows past the wall's outer edge at all (half a stroke out from where it rests, where a straight join would square it) and reaches within a fillet, a corner and `joinGap` of it (`EdgeAttach.pillJoinFilleted`, read as `PillBarJoin.filleted`).
   - A pill showing past the wall by less than a fillet and a corner is stretched to carry them: a stretch only grows, so it couldn't square at the wall, and a straight join met its side in a bare T.
   - The wall is where the surface's far wall rests (`EdgePlacement.joinReach`, from the layout's `attachAt`), never where it's drawn: the decision resizes the surface and its window a frame apart, and it slides in, so a measured wall moved and flipped the decision back.
   - The end curves into its far stroke with a fillet, as it would into a solid bar's.

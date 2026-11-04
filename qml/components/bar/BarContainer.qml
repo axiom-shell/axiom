@@ -76,61 +76,65 @@ Rectangle {
   }
   readonly property var endMargins: [root._endMargin(root.ends.start), root._endMargin(root.ends.end)]
 
-  // One { start, length, joinStart, joinEnd } per pill along the bar: each
-  // non-empty section, merged with its neighbour when they're at most
-  // joinGap apart, grown by the pill gap. Pills reaching an end are
-  // stretched onto it and join it. On a floating bar, its islands
-  // (BarLayout.islandRects): one along it, or one per group.
-  // Pills asked to reach an end run there, or a stub grows there for them
-  // (BarLayout.endReaches, setRequest).
+  // One { start, length, joinStart, joinEnd } per pill along the bar: one
+  // per joined group (BarLayout.joinGroups, pillRects): grown by the pill
+  // gap, those reaching an end stretched onto it and joining it. On a
+  // floating bar, its islands (BarLayout.islandRects): one along it, or
+  // one per joined group. Pills asked to reach an end run there, or a
+  // stub grows there for them (BarLayout.endReaches, setRequest).
   readonly property var pillRects: {
     if (islands)
-      return BarLayout.islandRects(root._spans, root.barConfig.islandGap, root.barConfig.joinGap, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
+      return BarLayout.islandRects(root.joinedGroups, root.barConfig.islandGap, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
     return root.pills ? root._endReach.rects : [];
   }
-  readonly property var _endReach: BarLayout.endReaches(root.sectionPills, root._endReachList, root.length, root.barConfig.joinGap, root.pillConnector)
-  readonly property var sectionPills: {
-    if (!pills)
-      return [];
-    const spans = root._spans.slice();
-    const merged = [];
-    spans.forEach(span => {
-      const last = merged[merged.length - 1];
-      if (last && span.start - last.end <= root.barConfig.joinGap)
-        last.end = Math.max(last.end, span.end);
-      else
-        merged.push(span);
-    });
-    // A free end sits the pill gap out from its widgets. An end that would
-    // reach the frame (the end sections, which sit endMargin in) joins it,
-    // the frame standing in for the gap; not a bar it makes way for, which
-    // has no stroke to join (BarEnds).
-    const gap = root.barConfig.pillGap;
-    const reach = root.barConfig.overlap + 0.5;
-    return merged.map(m => {
-      const joinStart = root.ends.start.joinable && m.start - gap <= reach;
-      const joinEnd = root.ends.end.joinable && m.end + gap >= root.length - reach;
-      const start = joinStart ? 0 : m.start - gap;
-      const end = joinEnd ? root.length : m.end + gap;
-      return {
-        "start": start,
-        "length": end - start,
-        "joinStart": joinStart,
-        "joinEnd": joinEnd
-      };
-    });
-  }
+  readonly property var _endReach: BarLayout.endReaches(root.groupPills, root._endReachList, root.length, root.barConfig.joinGap, root.pillConnector)
+  // The pills of its own groups, before any end reach or stretch. A free
+  // end sits the pill gap out from its widgets; an end that would reach
+  // the frame (the end sections, which sit endMargin in) joins it, the
+  // frame standing in for the gap; not a bar it makes way for, which has
+  // no stroke to join (BarEnds). Pills too close for the fillets between
+  // them draw as one.
+  readonly property var groupPills: root.pills ? BarLayout.pillRects(root.joinedGroups, root.barConfig.pillGap, 2 * root.pillConnector, root.barConfig.overlap + 0.5, root.length, [root.ends.start.joinable, root.ends.end.joinable]) : []
 
-  // The sections with widgets showing, as { start, end } along the bar.
-  // Dividers at a section's end facing another section stand in the gap
-  // between them, outside its pill (BarLayout.edgeHang); at the first and
-  // last sections showing, they stay in it, as padding.
-  readonly property var _spans: {
-    const shown = root._groups.filter(g => g.drawnLength > 0.5).sort((a, b) => a.drawnPos - b.drawnPos);
-    return shown.map((g, i) => ({
-          "start": g.drawnPos + (i > 0 ? g.drawnHang.lead : 0),
-          "end": g.drawnPos + g.drawnLength - (i < shown.length - 1 ? g.drawnHang.trail : 0)
+  // Each section's groups of widgets as drawn, along the bar ({ start,
+  // end, section }). Dividers at a section's end facing another section
+  // stand in the gap between them, outside its group (BarLayout.edgeHang);
+  // at the first and last sections showing, they stay in it, as padding.
+  readonly property var groupSpans: {
+    const shown = root._groups.map((g, s) => ({
+          "g": g,
+          "s": s
+        })).filter(e => e.g.drawnLength > 0.5 && e.g.drawnGroups.length > 0).sort((a, b) => a.g.drawnPos - b.g.drawnPos);
+    return [].concat(...shown.map((e, i) => {
+      const groups = e.g.drawnGroups;
+      return groups.map((group, k) => ({
+            "start": e.g.drawnPos + group.start + (i > 0 && k === 0 ? e.g.drawnHang.lead : 0),
+            "end": e.g.drawnPos + group.end - (i < shown.length - 1 && k === groups.length - 1 ? e.g.drawnHang.trail : 0),
+            "section": e.s
+          }));
+    }));
+  }
+  // The groups joined where they're at most joinGap apart: one pill, one
+  // island or one merged background each
+  readonly property var joinedGroups: BarLayout.joinGroups(root.groupSpans, root.barConfig.joinGap)
+  // Per section, whether its first group joins one in the section before
+  // it, and how far past its last group the one it joins after it starts
+  // (WidgetGroup's joinStart, joinEndReach)
+  readonly property var sectionJoins: {
+    const joins = root._groups.map(() => ({
+          "start": false,
+          "endReach": 0
         }));
+    root.joinedGroups.forEach(joined => {
+      for (let k = 1; k < joined.members.length; k++) {
+        const before = root.groupSpans[joined.members[k - 1]], after = root.groupSpans[joined.members[k]];
+        if (before.section === after.section)
+          continue;
+        joins[before.section].endReach = Math.max(0, after.start - before.end);
+        joins[after.section].start = true;
+      }
+    });
+    return joins;
   }
 
   // The pills (or islands) as drawn: stretched to carry the surfaces open
@@ -927,6 +931,8 @@ Rectangle {
     zone: "left"
     align: 0
     widgets: root.widgetModel(root.barConfig.widgets?.left)
+    joinStart: root.sectionJoins[0].start
+    joinEndReach: root.sectionJoins[0].endReach
   }
 
   Section {
@@ -936,6 +942,8 @@ Rectangle {
     zone: "center"
     align: 0.5
     widgets: root.widgetModel(root.barConfig.widgets?.center)
+    joinStart: root.sectionJoins[1].start
+    joinEndReach: root.sectionJoins[1].endReach
   }
 
   Section {
@@ -945,5 +953,7 @@ Rectangle {
     zone: "right"
     align: 1
     widgets: root.widgetModel(root.barConfig.widgets?.right)
+    joinStart: root.sectionJoins[2].start
+    joinEndReach: root.sectionJoins[2].endReach
   }
 }

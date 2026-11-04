@@ -297,13 +297,66 @@ QtObject {
     return places;
   }
 
-  // A floating bar's islands along it, from its sections' spans ({ start,
-  // end }, the empty ones left out): each span grown by `gap` (its widgets'
-  // room to the island's ends) within the limits, islands at most `merge`
-  // apart joined. With `whole`, one island from limit to limit. Shaped like
-  // pills ({ start, length, joinStart, joinEnd }; an island joins nothing),
-  // so the pill code reads them.
-  function islandRects(spans, gap, merge, limitStart, limitEnd, whole) {
+  // A bar's groups joined: `spans` ({ start, end } along the bar, any
+  // order) are its groups of widgets, a group being a run of widgets
+  // between a section's ends and its spacers (a spacer given room splits
+  // one). Neighbouring groups at most `joinGap` apart join into one, the
+  // one rule pills, islands and merged backgrounds share. -> [{ start,
+  // end, members }] in order along the bar, `members` the indices into
+  // `spans` each holds.
+  function joinGroups(spans, joinGap) {
+    const sorted = (spans ?? []).map((span, i) => ({
+          "start": span.start,
+          "end": span.end,
+          "members": [i]
+        })).sort((a, b) => a.start - b.start);
+    const joined = [];
+    sorted.forEach(span => {
+      const last = joined[joined.length - 1];
+      if (!last || span.start - last.end > joinGap) {
+        joined.push(span);
+      } else {
+        last.end = Math.max(last.end, span.end);
+        last.members.push(span.members[0]);
+      }
+    });
+    return joined;
+  }
+
+  // The pills along a pill bar `length` long, one per joined group
+  // (joinGroups): grown by `gap` (its widgets' room to the pill's free
+  // ends), any then less than `apart` apart (no room for the fillets
+  // between them) drawn as one. A pill whose end reaches within `reach`
+  // of the bar's end there (the stroke it covers) runs on to it and joins
+  // it, where that end is joinable (`joinable`: [start, end], BarEnds'
+  // `joinable`): the frame stands in for its gap. -> [{ start, length,
+  // joinStart, joinEnd }]
+  function pillRects(groups, gap, apart, reach, length, joinable) {
+    const grown = (groups ?? []).map(g => ({
+          "start": g.start - gap,
+          "end": g.end + gap
+        })).sort((a, b) => a.start - b.start);
+    return root._mergeSpans(grown, apart).map(m => {
+      const joinStart = !!joinable?.[0] && m.start <= reach;
+      const joinEnd = !!joinable?.[1] && m.end >= length - reach;
+      const start = joinStart ? 0 : m.start;
+      const end = joinEnd ? length : m.end;
+      return {
+        "start": start,
+        "length": end - start,
+        "joinStart": joinStart,
+        "joinEnd": joinEnd
+      };
+    });
+  }
+
+  // A floating bar's islands along it, from its joined groups
+  // (joinGroups): each grown by `gap` (its widgets' room to the island's
+  // ends) within the limits, any that then overlap drawn as one. With
+  // `whole`, one island from limit to limit. Shaped like pills ({ start,
+  // length, joinStart, joinEnd }; an island joins nothing), so the pill
+  // code reads them.
+  function islandRects(groups, gap, limitStart, limitEnd, whole) {
     const rect = (start, end) => ({
           "start": start,
           "length": end - start,
@@ -312,11 +365,11 @@ QtObject {
         });
     if (whole)
       return [rect(limitStart, limitEnd)];
-    const grown = spans.map(span => ({
+    const grown = (groups ?? []).map(span => ({
           "start": Math.max(limitStart, span.start - gap),
           "end": Math.min(limitEnd, span.end + gap)
         })).sort((a, b) => a.start - b.start);
-    return root._mergeSpans(grown, merge).map(m => rect(m.start, m.end));
+    return root._mergeSpans(grown, 0).map(m => rect(m.start, m.end));
   }
 
   // The stretches as drawn on `rects` (the pills along a bar `length`

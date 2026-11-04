@@ -785,12 +785,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### The pill merge in BarContainer repeats BarLayout's, untested
-- **Where:** `qml/components/bar/BarContainer.qml:96` (`sectionPills`), `qml/components/methods/BarLayout.qml:523` (`_mergeSpans`)
-- **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### Missing test rows for two helper decisions
 - **Where:** `qml/components/methods/BarEnds.qml:111` (`endOf`), `qml/components/methods/BarLayout.qml:181` (`overflowHidden`)
 - **What:** `tst_BarEnds` has no row for a solid bar meeting a solid bar: the `|| bar.solid` arm (a solid bar with the border off gets `_frame`, i.e. `bare`) is untested, and changing it to `_barStroke("solidBar", opts)` passes every row. `tst_BarLayout`'s two `lockCenter` rows never let the centre alone overflow, so line 181's `return [2]` is untested: returning `[0, 1]` would hide side widgets while the centre still doesn't fit. Fix: add those two rows.

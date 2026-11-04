@@ -62,7 +62,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - Each `BarWidgetHost`'s `x`/`y`/`width`/`height` glide with animFast. This is off until `_settled`.
     - The module is laid out at its target `mainSize` and centred in the drawn box.
     - It is clipped while the two sizes differ, so labels never re-elide mid-animation.
-  - Each `Section`'s `drawnPos`/`drawnLength` glide too. `_spans`, and through it the pills, read these.
+  - Each `Section`'s `drawnPos`/`drawnLength` glide too. `groupSpans` (each section's groups of widgets as drawn, `WidgetGroup.drawnGroups`), and through it the pills, read these.
 - Backgrounds and separator marks follow the hosts as drawn.
 - A widget that is going keeps its last place and colors while its host still draws, fading with its opacity.
 - Colors (`WidgetBackground`, `IconTextWidget`) fade with ColorAnimations. The tray's icons grow in (Grid `add`/`move`).

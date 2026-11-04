@@ -353,8 +353,93 @@ TestCase {
     });
   }
 
+  function test_joinGroups() {
+    compare(BarLayout.joinGroups([], 4), []);
+    // Out of order; 100..150 and 154..200 are 4 apart (joined), 260 is
+    // 60 past: its own
+    compare(BarLayout.joinGroups([
+      {
+        "start": 260,
+        "end": 300
+      },
+      {
+        "start": 100,
+        "end": 150
+      },
+      {
+        "start": 154,
+        "end": 200
+      }
+    ], 4), [
+      {
+        "start": 100,
+        "end": 200,
+        "members": [1, 2]
+      },
+      {
+        "start": 260,
+        "end": 300,
+        "members": [0]
+      }
+    ]);
+    // 5 apart is past a joinGap of 4
+    compare(BarLayout.joinGroups([
+      {
+        "start": 0,
+        "end": 10
+      },
+      {
+        "start": 15,
+        "end": 20
+      }
+    ], 4).length, 2);
+  }
+
+  function test_pillRects_free_and_joined_ends() {
+    const groups = [
+      {
+        "start": 5,
+        "end": 100
+      },
+      {
+        "start": 400,
+        "end": 500
+      },
+      {
+        "start": 900,
+        "end": 995
+      }
+    ];
+    // Grown by 5; the end ones reach within 1.5 of the ends and join them
+    compare(BarLayout.pillRects(groups, 5, 20, 1.5, 1000, [true, true]).map(r => [r.start, r.length, r.joinStart, r.joinEnd]), [[0, 105, true, false], [395, 110, false, false], [895, 105, false, true]]);
+    // An end held clear of another bar (not joinable): a free end there
+    compare(BarLayout.pillRects(groups, 5, 20, 1.5, 1000, [false, true]).map(r => [r.start, r.length, r.joinStart, r.joinEnd]), [[0, 105, false, false], [395, 110, false, false], [895, 105, false, true]]);
+    // Pills less than `apart` apart (no room for their fillets) are one
+    const close = BarLayout.pillRects([
+      {
+        "start": 100,
+        "end": 200
+      },
+      {
+        "start": 215,
+        "end": 300
+      }
+    ], 5, 10, 1.5, 1000, [true, true]);
+    compare(close.map(r => [r.start, r.length]), [[95, 210]]);
+    compare(BarLayout.pillRects([
+      {
+        "start": 100,
+        "end": 200
+      },
+      {
+        "start": 225,
+        "end": 300
+      }
+    ], 5, 10, 1.5, 1000, [true, true]).length, 2);
+  }
+
   function test_islandRects_whole_bar() {
-    compare(BarLayout.islandRects([], 6, 12, 10, 990, true), [
+    compare(BarLayout.islandRects([], 6, 10, 990, true), [
       {
         "start": 10,
         "length": 980,
@@ -365,8 +450,8 @@ TestCase {
   }
 
   function test_islandRects_grow_clamp_and_merge() {
-    // Grown by 6 each side; kept inside 10..990; 100..110 and 115..160
-    // become islands 16 apart, within merge 20, so one
+    // Grown by 6 each side; kept inside 10..990; 8..50 and 60..75 then
+    // overlap, so they're one island
     const rects = BarLayout.islandRects([
       {
         "start": 115,
@@ -384,9 +469,9 @@ TestCase {
         "start": 60,
         "end": 75
       }
-    ], 6, 20, 10, 990, false);
+    ], 6, 10, 990, false);
     compare(rects.map(r => [r.start, r.start + r.length]), [[10, 81], [109, 166], [894, 990]]);
-    // 81 to 109 is 28 apart: past merge, so they stay apart
+    // 81 to 109 is 28 apart: they stay apart (joining is joinGroups')
     verify(rects.every(r => !r.joinStart && !r.joinEnd));
   }
 
@@ -429,7 +514,7 @@ TestCase {
         "start": 300,
         "end": 400
       }
-    ], 0, 10, 0, 1000, false);
+    ], 0, 0, 1000, false);
     compare(BarLayout.stretchIslands(rects, [], 10).map(r => [r.start, r.length]), [[100, 100], [300, 100]]);
     // Stretched to 80..250: still 50 short of the next
     const apart = BarLayout.stretchIslands(rects, [

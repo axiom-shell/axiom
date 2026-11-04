@@ -98,6 +98,52 @@ Item {
   readonly property int _firstContent: root._hasContent.indexOf(true)
   readonly property int _lastContent: root._hasContent.lastIndexOf(true)
 
+  // Its groups of widgets as drawn, [{ start, end }] along it in its own
+  // coordinates: the runs of shown widgets between its ends and its
+  // spacers, a spacer given room splitting one (BarContainer joins them
+  // into pills, islands and merged backgrounds, BarLayout.joinGroups)
+  readonly property var drawnGroups: {
+    const out = [];
+    let open = null;
+    root._modules.forEach((m, i) => {
+      const size = root.allocation.sizes[i] ?? 0;
+      if (m.fills) {
+        if (size > 0)
+          open = null;
+        return;
+      }
+      if (!(root.allocation.visible[i] ?? false) || size <= 0)
+        return;
+      const start = root.isVertical ? m.y : m.x;
+      const end = start + (root.isVertical ? m.height : m.width);
+      if (open) {
+        open.end = end;
+      } else {
+        open = {
+          "start": start,
+          "end": end
+        };
+        out.push(open);
+      }
+    });
+    return out;
+  }
+  // Its first group joins the group before it in another section, and
+  // its last the next one, `joinEndReach` on past its end
+  // (BarContainer, BarLayout.joinGroups): in a merged grouping, the runs
+  // there draw as one background across the sections
+  property bool joinStart: false
+  property real joinEndReach: 0
+  // The first and last widgets shown
+  readonly property int _firstShown: root.allocation.sizes.findIndex((size, i) => size > 0 && !root._fills[i])
+  readonly property int _lastShown: {
+    for (let i = root.allocation.sizes.length - 1; i >= 0; i--) {
+      if (root.allocation.sizes[i] > 0 && !root._fills[i])
+        return i;
+    }
+    return -1;
+  }
+
   // The index of the next widget shown after `index`, or -1
   function _nextShown(index) {
     for (let k = index + 1; k < root.allocation.sizes.length; k++) {
@@ -128,22 +174,28 @@ Item {
       }
       readonly property var first: root._modules[run.members[0]] ?? null
       readonly property var last: root._modules[run.members[run.count - 1]] ?? null
+      // Joined across a section's end to the next section's run: no cap
+      // there, the background running on over the gap between them
+      readonly property bool _joinsBack: root.joinStart && run.members[0] === root._firstShown
+      readonly property real _reach: root.joinEndReach > 0 && run.members[run.count - 1] === root._lastShown ? root.joinEndReach : 0
+      readonly property int _before: _joinsBack ? 1 : 0
+      readonly property int _count: run.count + _before + (_reach > 0 ? 1 : 0)
 
       z: -2
       barConfig: root.barConfig
       colors: BarsConfig.groupColors(root.barConfig)
       startCap: root.segmentAt({
-        "index": 0,
-        "count": run.count
+        "index": _before,
+        "count": _count
       }).startCap
       endCap: root.segmentAt({
-        "index": run.count - 1,
-        "count": run.count
+        "index": _before + run.count - 1,
+        "count": _count
       }).endCap
       x: first?.x ?? 0
       y: first?.y ?? 0
-      width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x
-      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - y : (first?.height ?? 0)
+      width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x + _reach
+      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - y + _reach : (first?.height ?? 0)
     }
   }
 
