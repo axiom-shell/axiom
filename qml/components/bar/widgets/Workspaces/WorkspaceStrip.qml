@@ -28,7 +28,7 @@ Item {
   readonly property bool isVertical: barConfig.vertical
   // A cell's thickness across the bar, and its corners within the
   // background's
-  readonly property real cell: barConfig.widgetSize - inset * 2
+  readonly property real cell: barConfig.thickness - inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(barConfig, cell, inset)
   // Along the bar: square, or narrower for dots straight on the bar
   readonly property real cellLength: barConfig.widgetBoxed || properties.labels !== "dots" || properties.showAppIcons || CompositorManager.dynamicWorkspaces ? cell : Math.round(cell * 0.6)
@@ -117,7 +117,7 @@ Item {
     readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
     rows: root.isVertical ? shown : 1
     columns: root.isVertical ? 1 : shown
-    spacing: root.barConfig.widgetSpacing
+    spacing: root.barConfig.innerGap
 
     WorkspaceCellRow {
       id: cellRow
@@ -168,7 +168,7 @@ Item {
         cellSize: root.cell,
         cellLength: root.cellLength,
         barConfig: root.barConfig,
-        cellSpacing: root.barConfig.widgetSpacing,
+        cellSpacing: root.barConfig.innerGap,
         radius: root.cellRadius,
         properties: root.properties
       })

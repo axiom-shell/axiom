@@ -94,10 +94,13 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - a slider with a value box for 7–200 steps, else a stepper, with ±10 buttons past 20 steps
   - steppers commit debounced, sliders on release
   - `x-unit` (`px`, `%`, `ms`, …) is shown after the value.
-- `x-auto: { value, start }`: a switch in front of an integer whose `value` means automatic. Turning it on stores `start`, then the number shows (an edge menu's `padding`, `triggerLength`).
+- `x-auto: { value, start }`: a switch in front of an integer whose `value` means automatic. Turning it on stores `start`, then the number shows (an edge menu's `padding`, `triggerLength`). `value` may be `null` (a bar's `floatingGap`): validation lets the `null` through, as an inheriting setting's, and the number keeps the field's whole range.
 
 ### Types (bar widgets, overlay modules, views, custom widget elements)
 - `x-icon`: a Material Symbols name on bar widget, overlay module and view definitions.
+- `x-elastic: true` (on a bar widget definition, `elastic` in its `schema.yaml`): the widget shrinks when its bar is crowded (Window title, Media), so only it takes a `layout.minSize` and `layout.maxSize` (`BarsConfig.availableWidgetTypes`' `elastic`).
+- `x-priority: N` (on a bar widget definition, `priority` in its `schema.yaml`): the widget's own priority when the bar is crowded (default 0: Clock 5, Workspaces 10), which its `layout.priority` overrides (`BarsConfig.defaultPriority`, read by `BarWidgetHost` and the editor's drop order).
+- `x-keywords` (on a bar widget definition, `keywords` in its `schema.yaml`): more words the bar editor's library finds it by (`LibraryOrder.filtered`), such as the label it had before.
 - On overlay modules:
   - `x-defaultSize` (`[w, h]` in grid units, four to a card): the size it's added at.
   - `x-minSize`: the least a drop into a gap shrinks it to; half the default when left out (`OverlayConfig.minSize`).

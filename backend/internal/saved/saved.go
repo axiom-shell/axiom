@@ -97,10 +97,12 @@ type Example struct {
 	Docks        []ExampleDock `json:"docks"`
 }
 
-// ExampleBar is an example's bar: its edge and background style.
+// ExampleBar is an example's bar: its edge, its surface (bar, pills,
+// none) and whether it floats.
 type ExampleBar struct {
-	Location   string `json:"location"`
-	Background string `json:"background"`
+	Location string `json:"location"`
+	Surface  string `json:"surface"`
+	Floating bool   `json:"floating"`
 }
 
 // ExampleDock is an example's dock: its edge.
@@ -615,7 +617,8 @@ func summarize(e *Example, cfg *jsonx.Object) {
 	if bars, ok := at("Bars.items").(*jsonx.Array); ok {
 		for _, item := range bars.Items {
 			if bar, ok := item.(*jsonx.Object); ok && shown(bar) {
-				e.Bars = append(e.Bars, ExampleBar{Location: str(bar, "location"), Background: str(bar, "background")})
+				floating, _ := bar.Value("floating").(bool)
+				e.Bars = append(e.Bars, ExampleBar{Location: str(bar, "location"), Surface: str(bar, "surface"), Floating: floating})
 			}
 		}
 	}

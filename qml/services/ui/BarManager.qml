@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.services.core
+import qs.services.compositor
 
 /* BarManager holds the bar editor's working copy of the Bars section (its
  * `style`, every bar's look unless a bar sets its own, and the bars,
@@ -15,7 +16,13 @@ import qs.services.core
  * Also keeps the page's own state (selected bar and widget), since the
  * page is unloaded whenever the overlay closes, and, while the page is on
  * screen, what the running bars report back about the selected bar.
- * The running bars themselves are ScreenEdgeManager's. */
+ * The running bars themselves are ScreenEdgeManager's.
+ *
+ * Every edit can be undone (`history`: the bars and the selection, taken
+ * before each edit; edits to one field in a row are one step). The widget
+ * hovered on the page's board is outlined on the running bars
+ * (`hoveredWidget`), and the one hovered on a running bar is reported
+ * back (`barHover`). */
 QtObject {
   id: root
 
@@ -39,9 +46,65 @@ QtObject {
   // The section last selected or added to, where the library adds
   property string lastZone: "center"
 
+  // The left panel's tab (Layout, Surface, Widgets, Behaviour), kept as
+  // the page is rebuilt
+  property int panelTab: 0
+
+  function selectPanelTab(index) {
+    root.panelTab = index;
+  }
+
+  // The selected bar as the board's live chips draw its widgets: the
+  // draft bar enriched at a fixed thickness, along a top edge (chips are
+  // rows) whatever its own, standing alone (no ends meet it)
+  readonly property var previewConfig: {
+    const bar = root.selectedBar();
+    if (!bar)
+      return null;
+    const config = BarsConfig.enrichBarConfig(Object.assign({}, bar, {
+      "thickness": Math.round(Widget.px(BarsConfig.referenceThickness)),
+      "location": "top"
+    }), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps);
+    const end = {
+      "kind": "bare",
+      "reach": 0,
+      "joinable": false
+    };
+    return Object.assign(config, {
+      "ends": {
+        "start": end,
+        "end": end
+      },
+      "outerReach": 0,
+      "stripCover": 0
+    });
+  }
+
+  // Undo and redo of the draft's bars, with the selection
+  readonly property EditHistory history: EditHistory {
+    snapshot: () => ({
+          "items": root.localConfig ?? [],
+          "bar": root.selectedBarIndex,
+          "widget": root.selectedWidget
+        })
+    restore: snap => root._restore(snap)
+  }
+
+  // The widget hovered on the editor's board, in the selected bar:
+  // { zone, index }, zone "" for none. The running bars outline it
+  readonly property var hoveredWidget: root._hoveredWidget
+  property var _hoveredWidget: ({
+      "zone": "",
+      "index": -1
+    })
+  // The widget under the pointer on a running bar, while editing:
+  // { source (its bar's config id), zone, index }, or null
+  readonly property var barHover: root._barHover
+  property var _barHover: null
+
   // A bar's look: its `style`, and its fields in the look groups
   // (`x-group`), not its identity, placement, behaviour or widgets
-  readonly property var styleGroups: ["Size", "Style"]
+  readonly property var styleGroups: ["Size", "Surface"]
   readonly property var styleKeys: ["style"].concat(...BarsConfig.fieldGroups.filter(group => root.styleGroups.includes(group.title)).map(group => group.keys))
   // The style copied with copyStyle(): { index, values }, or null. By
   // index, since ids may be empty or shared: kept pointing at its bar as
@@ -66,6 +129,10 @@ QtObject {
 
   function unwatch(owner) {
     root._watchers.release(owner);
+    if (!root.editing) {
+      root._barHover = null;
+      root.setHoveredWidget("", -1);
+    }
   }
 
   function setLive(id, report) {
@@ -93,15 +160,74 @@ QtObject {
     return root.editing && sel.zone === zone && sel.index === index && selectedBar()?.id === source;
   }
 
-  onSelectedBarIndexChanged: clearSelection()
+  // Whether a running bar shows the widget hovered on the board
+  function isHoveredWidget(source, zone, index) {
+    const hover = root.hoveredWidget;
+    return root.editing && hover.zone === zone && hover.index === index && selectedBar()?.id === source;
+  }
+
+  // The board's hovered widget (zone "" for none)
+  function setHoveredWidget(zone, index) {
+    if (root._hoveredWidget.zone !== zone || root._hoveredWidget.index !== index)
+      root._hoveredWidget = {
+        "zone": zone,
+        "index": index
+      };
+  }
+
+  // A running bar's widget the pointer entered (`hovered`) or left
+  function setBarHover(source, zone, index, hovered) {
+    const hover = root._barHover;
+    const same = hover !== null && hover.source === source && hover.zone === zone && hover.index === index;
+    if (hovered && !same)
+      root._barHover = {
+        "source": source,
+        "zone": zone,
+        "index": index
+      };
+    else if (!hovered && same)
+      root._barHover = null;
+  }
+
+  // Whether the selected bar's widget is under the pointer on a running bar
+  function isBarHovered(zone, index) {
+    const hover = root.barHover;
+    return root.editing && hover !== null && hover.zone === zone && hover.index === index && hover.source === selectedBar()?.id;
+  }
+
+  onSelectedBarIndexChanged: {
+    clearSelection();
+    setHoveredWidget("", -1);
+  }
 
   function selectBar(index) {
     root.selectedBarIndex = index;
   }
 
+  // Records an undo step before an edit; edits with the same `fieldKey`
+  // in a row (typing, a stepper) join one step, "" is a step of its own
+  function _record(fieldKey) {
+    root.history.record(fieldKey ?? "");
+  }
+
+  // Puts a snapshot (history) back: the bars, then the bar and widget
+  // selected then
+  function _restore(snap) {
+    const items = root.localConfig;
+    if (!items)
+      return;
+    items.splice(0, items.length, ...Utils.clone(snap.items));
+    root.selectedBarIndex = Math.max(0, Math.min(snap.bar, items.length - 1));
+    root.selectedWidget = snap.widget;
+    if (!selectedWidgetConfig())
+      clearSelection();
+    applyChanges();
+  }
+
   // Keeps the selected bar and widget where they still exist
   function loadConfig() {
     draft.load();
+    root.history.clear();
     ConfigManager.clearPreview("Bars");
     selectedBarIndex = Math.max(0, Math.min(selectedBarIndex, (root.localConfig?.length ?? 1) - 1));
     if (root.copiedStyle && root.copiedStyle.index >= (root.localConfig?.length ?? 0))
@@ -139,7 +265,11 @@ QtObject {
   }
 
   function _zone(zone) {
-    const bar = selectedBar();
+    return root._sectionOf(selectedBar(), zone);
+  }
+
+  // A bar's section `zone` (made where it's missing), or null for no bar
+  function _sectionOf(bar, zone) {
     if (!bar)
       return null;
     if (!bar.widgets)
@@ -149,6 +279,11 @@ QtObject {
     return bar.widgets[zone];
   }
 
+  // Every widget of a bar, its sections in order
+  function _allWidgets(bar) {
+    return [].concat(...BarsConfig.sectionNames.map(section => bar?.widgets?.[section] ?? []));
+  }
+
   // --- Bars ---
 
   function addBar() {
@@ -156,6 +291,7 @@ QtObject {
     const bar = ConfigManager.withDefaults({
       "id": _uniqueId("bar-" + (root.localConfig.length + 1))
     }, "Bar");
+    _record();
     root.localConfig.push(bar);
     root.selectedBarIndex = root.localConfig.length - 1;
     applyChanges();
@@ -168,11 +304,13 @@ QtObject {
 
   // Inserts a copy after the bar and selects it. A copy of a bar on one
   // monitor moves to the first screen with no bar on that edge yet, so it
-  // doesn't sit on the original.
+  // doesn't sit on the original. Its widgets start unselected, whichever
+  // bar was selected before.
   function duplicateBar(index) {
     const bar = root.localConfig?.[index];
     if (!bar)
       return;
+    _record();
     const copy = Utils.clone(bar);
     copy.id = _uniqueId(`${bar.id}-copy`);
     if (bar.screen.mode !== "all") {
@@ -188,6 +326,9 @@ QtObject {
     root.localConfig.splice(index + 1, 0, copy);
     _moveCopied(i => i > index ? i + 1 : i);
     root.selectedBarIndex = index + 1;
+    // Already index + 1 (a copy of the bar before the selected one), the
+    // change handler didn't clear the old bar's widget
+    clearSelection();
     applyChanges();
   }
 
@@ -229,6 +370,7 @@ QtObject {
     const bar = root.localConfig?.[index];
     if (!bar || !root.copiedStyle)
       return;
+    _record();
     _pasteStyleOnto(bar);
     applyChanges();
   }
@@ -236,24 +378,57 @@ QtObject {
   function pasteStyleToAll() {
     if (!root.copiedStyle)
       return;
+    _record();
     root.localConfig.forEach(bar => _pasteStyleOnto(bar));
     applyChanges();
   }
 
+  // The selection stays on its bar (and widget), unless that's the bar
+  // removed: then the one in its place is selected
   function removeBar(index) {
-    if (root.localConfig.length <= 1)
+    if (root.localConfig.length <= 1 || !root.localConfig[index])
       return; // never remove the last bar
+    _record();
+    const selected = root.selectedBarIndex;
+    const widget = root.selectedWidget;
     root.localConfig.splice(index, 1);
     _moveCopied(i => i === index ? -1 : i > index ? i - 1 : i);
-    root.selectedBarIndex = Math.max(0, Math.min(root.selectedBarIndex, root.localConfig.length - 1));
-    clearSelection();
+    if (index === selected) {
+      root.selectedBarIndex = Math.min(selected, root.localConfig.length - 1);
+      clearSelection();
+    } else if (index < selected) {
+      root.selectedBarIndex = selected - 1;
+      root.selectedWidget = widget;
+    }
     applyChanges();
+  }
+
+  // The saved copy of the selected bar (by its id), or null for one not
+  // saved yet
+  function _savedBar() {
+    const id = selectedBar()?.id;
+    return (root.savedConfig ?? []).find(b => b.id === id) ?? null;
+  }
+
+  // Whether the selected bar's field differs from its saved value (false
+  // for a bar not saved yet): the field's change dot
+  function barFieldChanged(key) {
+    const saved = _savedBar();
+    return saved !== null && !Utils.deepEqual(selectedBar()?.[key], saved[key]);
+  }
+
+  // Puts the selected bar's field back to its saved value
+  function discardBarField(key) {
+    const saved = _savedBar();
+    if (saved)
+      updateBarField(key, Utils.clone(saved[key]));
   }
 
   function updateBarField(key, value) {
     const bar = selectedBar();
-    if (!bar)
+    if (!bar || Utils.deepEqual(bar[key], value))
       return;
+    _record(`bar:${root.selectedBarIndex}:${key}`);
     bar[key] = value;
     applyChanges();
   }
@@ -276,6 +451,7 @@ QtObject {
     const bar = selectedBar();
     if (!bar)
       return;
+    _record();
     const style = bar.style;
     for (const key of keys) {
       if (key === "shadow") {
@@ -296,11 +472,33 @@ QtObject {
     const bar = selectedBar();
     if (!bar)
       return;
+    if (Utils.deepEqual(root._styleValue(bar.style, key, part), value))
+      return;
+    _record(`style:${root.selectedBarIndex}:${key}:${part ?? ""}`);
     if (part)
       bar.style[key][part] = value;
     else
       bar.style[key] = value;
     applyChanges();
+  }
+
+  // Whether the selected bar's own style key (`part` of its shadow)
+  // differs from its saved value: the field's change dot
+  function styleFieldChanged(key, part) {
+    const saved = _savedBar();
+    return saved !== null && !Utils.deepEqual(root._styleValue(selectedBar()?.style, key, part), root._styleValue(saved.style, key, part));
+  }
+
+  // A style's key (`part` of its shadow)
+  function _styleValue(style, key, part) {
+    return part ? style?.[key]?.[part] : style?.[key];
+  }
+
+  // Puts the selected bar's own style key back to its saved value
+  function discardStyleField(key, part) {
+    const saved = _savedBar();
+    if (saved)
+      updateStyleField(key, Utils.clone(root._styleValue(saved.style, key, part)), part);
   }
 
   // What a bar's style key is while it's null: the shared style's, or
@@ -345,6 +543,7 @@ QtObject {
     }, "BarWidget");
     if (key.properties)
       widget.properties = Object.assign({}, widget.properties, key.properties);
+    _record();
     arr.splice(at, 0, widget);
     selectWidget(zone, at);
     applyChanges();
@@ -358,15 +557,13 @@ QtObject {
     const bar = root.localConfig?.[barIndex];
     if (!bar)
       return;
-    if (!bar.widgets)
-      bar.widgets = {};
-    if (!bar.widgets[zone])
-      bar.widgets[zone] = [];
-    bar.widgets[zone].push(ConfigManager.withDefaults(Object.assign({
+    _record();
+    const section = root._sectionOf(bar, zone);
+    section.push(ConfigManager.withDefaults(Object.assign({
       "id": root._widgetId(widget.type, bar)
     }, widget), "BarWidget"));
     selectBar(barIndex);
-    selectWidget(zone, bar.widgets[zone].length - 1);
+    selectWidget(zone, section.length - 1);
     applyChanges();
   }
 
@@ -374,6 +571,7 @@ QtObject {
     const arr = selectedBar()?.widgets?.[zone];
     if (!arr || index < 0 || index >= arr.length)
       return;
+    _record();
     arr.splice(index, 1);
     const sel = root.selectedWidget;
     if (sel.zone === zone) {
@@ -389,6 +587,7 @@ QtObject {
     const arr = selectedBar()?.widgets?.[zone];
     if (!arr?.[index])
       return;
+    _record();
     const copy = Utils.clone(arr[index]);
     copy.id = root._widgetId(copy.type, selectedBar());
     arr.splice(index + 1, 0, copy);
@@ -409,6 +608,7 @@ QtObject {
       at--;
     if (fromZone === toZone && at === fromIndex)
       return;
+    _record();
 
     const sel = root.selectedWidget;
     const [item] = from.splice(fromIndex, 1);
@@ -432,8 +632,7 @@ QtObject {
   // A new widget's id: unique among every widget of the bar (they move
   // between its sections)
   function _widgetId(type, bar) {
-    const all = [].concat(...BarsConfig.sectionNames.map(section => bar?.widgets?.[section] ?? []));
-    return Utils.newId(type, all);
+    return Utils.newId(type, root._allWidgets(bar));
   }
 
   function _widget(zone, index) {
@@ -442,8 +641,9 @@ QtObject {
 
   function updateWidgetProperty(zone, index, key, value) {
     const widget = _widget(zone, index);
-    if (!widget)
+    if (!widget || Utils.deepEqual(widget.properties?.[key], value))
       return;
+    _record(`widget:${root.selectedBarIndex}:${zone}:${index}:${key}`);
     if (!widget.properties)
       widget.properties = {};
     widget.properties[key] = value;
@@ -452,8 +652,9 @@ QtObject {
 
   function setWidgetVisible(zone, index, visible) {
     const widget = _widget(zone, index);
-    if (!widget)
+    if (!widget || (widget.visible !== false) === visible)
       return;
+    _record();
     if (visible)
       delete widget.visible;
     else
@@ -471,10 +672,95 @@ QtObject {
       delete layout[key];
     else
       layout[key] = value;
+    if (Utils.deepEqual(layout, widget.layout ?? {}))
+      return;
+    _record(`layout:${root.selectedBarIndex}:${zone}:${index}:${key}`);
     if (Object.keys(layout).length > 0)
       widget.layout = layout;
     else
       delete widget.layout;
+    applyChanges();
+  }
+
+  // The saved copy of the selected bar's widget at `zone`/`index` (by its
+  // bar's id and its own, in any section), or null for one not saved yet
+  function _savedWidget(zone, index) {
+    const widget = _widget(zone, index);
+    const saved = _savedBar();
+    if (!widget || !saved)
+      return null;
+    return root._allWidgets(saved).find(w => w.id === widget.id) ?? null;
+  }
+
+  // Whether a widget's property differs from its saved value (false for a
+  // widget not saved yet)
+  function widgetPropertyChanged(zone, index, key) {
+    const saved = _savedWidget(zone, index);
+    return saved !== null && !Utils.deepEqual(_widget(zone, index)?.properties?.[key], saved.properties?.[key]);
+  }
+
+  // Puts a widget's property back to its saved value
+  function discardWidgetProperty(zone, index, key) {
+    const saved = _savedWidget(zone, index);
+    if (saved)
+      updateWidgetProperty(zone, index, key, Utils.clone(saved.properties?.[key]));
+  }
+
+  // A widget's priority: its own (layout.priority), else its type's
+  function priorityOf(widget) {
+    return widget?.layout?.priority ?? BarsConfig.defaultPriority(widget?.type ?? "");
+  }
+
+  // Raises a widget's priority above every other widget's on its bar, so
+  // a crowded bar drops it last
+  function raiseWidgetPriority(zone, index) {
+    const widget = _widget(zone, index);
+    if (!widget)
+      return;
+    const others = root._allWidgets(selectedBar()).filter(w => w !== widget && w.type !== "Spacer");
+    const top = Math.max(...others.map(w => root.priorityOf(w)), -100);
+    updateWidgetLayout(zone, index, "priority", Math.max(root.priorityOf(widget), Math.min(100, top + 1)));
+  }
+
+  // Moves the selected widget to the start or end (`atEnd`) of `zone`
+  function moveWidgetTo(zone, atEnd) {
+    const sel = root.selectedWidget;
+    if (!selectedWidgetConfig())
+      return;
+    moveWidget(sel.zone, sel.index, zone, atEnd ? (_zone(zone)?.length ?? 0) : 0);
+  }
+
+  // Moves the selected widget one place back (`step` -1) or on (1) along
+  // the bar: from a section's end into the next section's near end
+  function stepWidget(step) {
+    const sel = root.selectedWidget;
+    const arr = selectedBar()?.widgets?.[sel.zone];
+    if (!arr?.[sel.index])
+      return;
+    const to = sel.index + step;
+    if (to >= 0 && to < arr.length) {
+      // Counted as if still in place: one past the next is just after it
+      moveWidget(sel.zone, sel.index, sel.zone, step > 0 ? to + 1 : to);
+      return;
+    }
+    const zones = BarsConfig.sectionNames;
+    const next = zones[zones.indexOf(sel.zone) + step];
+    if (next)
+      moveWidget(sel.zone, sel.index, next, step > 0 ? 0 : (_zone(next)?.length ?? 0));
+  }
+
+  // Appends a copy of the selected widget to the same section of bar
+  // `barIndex` (with an id free there); the selection stays
+  function copyWidgetToBar(barIndex) {
+    const widget = selectedWidgetConfig();
+    const bar = root.localConfig?.[barIndex];
+    if (!widget || !bar || barIndex === root.selectedBarIndex)
+      return;
+    _record();
+    const zone = root.selectedWidget.zone;
+    const copy = Utils.clone(widget);
+    copy.id = root._widgetId(copy.type, bar);
+    root._sectionOf(bar, zone).push(copy);
     applyChanges();
   }
 

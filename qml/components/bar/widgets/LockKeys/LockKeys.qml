@@ -53,7 +53,7 @@ BarIconWidget {
     parent: root.lead
     anchors.centerIn: parent
     columns: root.isVertical ? 1 : root.keys.length
-    spacing: root.barConfig.widgetSpacing
+    spacing: root.barConfig.innerGap
 
     Repeater {
       model: root.keys

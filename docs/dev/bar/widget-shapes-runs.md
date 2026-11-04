@@ -22,13 +22,15 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
 - **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
+  - A section's first and last runs join the runs in the sections beside them where their groups join (at most `joinGap` apart, the pills' rule, [Bar ends and pills](bar-ends-pills.md#pills-barcontainerpillrects)): no cap there, the last run's background running on over the gap (`WidgetGroup.joinStart`/`joinEndReach`). Widget insets still keep their cap room.
+- A spacer given room splits runs, as it splits groups; a collapsed one is passed over.
 - **Powerline** chains the widgets with no gap (`groupSpacing` 0).
   - Each segment's end cap runs into the next segment, which reaches back under it (`back`).
   - With a see-through fill (tinted or outline), the next segment fits against the cap instead.
   - An outline's two strokes lie on the shared seam (`seamStart`/`seamEnd`).
   - A segment's content is centred on the part of it that shows: from half a join before its box to half a join before its end. Its `trail` takes the difference.
 - **What breaks a chain:**
-  - A widget shown without a background (the Separator) splits a chain. It keeps `spacing` to the widgets beside it in its section.
+  - A widget shown without a background (the Separator) splits a chain. It keeps `widgetGap` to the widgets beside it in its section.
     - At the section's end there is no spacing; the gap to the next section stands in, as on any bar.
   - A widget showing nothing (hidden) is passed over: `runs` flags it null.
 

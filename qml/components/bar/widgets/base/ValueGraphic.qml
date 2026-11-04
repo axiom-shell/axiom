@@ -227,6 +227,10 @@ Item {
 
       Column {
         id: stack
+        // Its two lines (about 1.4 of the font, each a line high) shrink
+        // to fit across a bar the text is large for (a text scale past
+        // 100%)
+        readonly property real fit: root.fontSize > 0 && root.crossSize > 0 ? Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize)) : 1
         anchors.centerIn: parent
         spacing: 0
 
@@ -236,7 +240,7 @@ Item {
           text: root.text
           color: root.textColor
           font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.8
+          font.pixelSize: root.fontSize * 0.8 * stack.fit
           font.bold: true
           font.features: {
             "tnum": 1
@@ -248,7 +252,7 @@ Item {
           text: root.subtext
           color: Qt.alpha(root.textColor, 0.7)
           font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.6
+          font.pixelSize: root.fontSize * 0.6 * stack.fit
         }
       }
     }

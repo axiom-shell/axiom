@@ -41,6 +41,7 @@ AttachedSurface {
   straightJoins: root.source?.straightJoins ?? false
   straightJoinStart: root.source?.straightJoinStart ?? straightJoins
   straightJoinEnd: root.source?.straightJoinEnd ?? straightJoins
+  attachFilletRadius: root.source?.attachFilletRadius ?? filletRadius
   startCornerRadius: root.source?.startCornerRadius ?? 0
   endCornerRadius: root.source?.endCornerRadius ?? 0
   startNearRadius: root.source?.startNearRadius ?? 0

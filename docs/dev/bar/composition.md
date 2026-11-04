@@ -1,10 +1,10 @@
 # Bar composition
 
-> **Files:** `qml/shell/Bar.qml`, `qml/components/bar/BarPanel.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/config/BarsConfig.qml`, `qml/services/ui/BarManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
+> **Files:** `qml/shell/Bar.qml`, `qml/components/bar/BarPanel.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/config/BarsConfig.qml`, `qml/services/ui/BarManager.qml`, `qml/services/ui/BarRevealManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
-How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and edge menus, the icon rules, and why bar motion animates what is drawn rather than what is measured.
+How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and edge menus, the icon rules, auto-hide, and why bar motion animates what is drawn rather than what is measured.
 
 ### Bars from config
 - `qml/shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
@@ -24,9 +24,14 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 
 ### Layout math
 - The main-axis layout math is pure and lives in `methods/BarLayout` (tested in `tst_BarLayout`). It covers:
-  - sections placed along the bar
-  - the widgets hidden when the bar overflows
-  - elastic widgets squeezed within a section
+  - the three sections (left, center, right) placed along the bar (`layoutSections`): the ends hug the ends, the center stays centered (with `lockCenter` dead center, each side fitting its own half)
+  - the widgets hidden when the bar overflows (`overflowHidden`): lowest priority first, ties right, then left, the center last
+  - elastic widgets squeezed within a section (`allocate`)
+- **Spacers** (the Spacer widget, `fill` in its measure) take the free room:
+  - The sections are laid out with every spacer at its `minGap` first, so a spacer never moves the center.
+  - Then a side with spacers stretches to the center's edge; with no center, the room between the sides is shared by their spacer counts. A spacer in the center keeps its `minGap`.
+  - `allocate` hands a section's room past its widgets to its spacers, equally (the remainder to the last).
+  - A spacer lies in the gap between the widgets beside it, so a collapsed one (crowded, `minGap` 0) leaves one gap. It's never hidden for want of room.
 - `BarContainer` and `WidgetGroup` only feed it measurements.
 
 ### Popouts
@@ -51,13 +56,26 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - `DependencyManager` warns once when the font is missing.
 - (Rule: AGENTS.md › UI conventions, Icons.)
 
+### Auto-hide (`autoHide`, `BarRevealManager`)
+- `autoHide`: `never` (default), `always`, or `whenCovered` (hidden only while a window covers its slot, or a fullscreen window is on its screen: `CompositorManager.windowsCover` over its whole edge, `hasFullscreen`).
+- **Shown** (`BarRevealManager.shownOf(bar)`, per running bar id): `never`, or pinned, or hovered, or held, or revealed for a moment, or (`whenCovered`) not covered. One one-shot Timer runs to the earliest deadline (a moment's end, a hover waiting on its delay).
+  - **Hover:** the bar's `HoverHandler`; hidden, its window's mask is only a `trigger.size` strip at its outer edge (`edgeStrip`). Entering a hidden bar shows it after `timing.openDelay`; leaving hides it after `timing.closeDelay`. Revealed, the mask is the bar where it rests (`barSlot`), so the pointer holds it while it slides in.
+  - **Holds** (`hold(id, key, on)`, reported by `BarPanel`): its popouts open (`BarPopouts.occupied`), an edge menu opened from a widget on it (`EdgeMenuManager.anchors`), the bar editor open with it selected. Let go, it stays one close delay longer.
+  - **Moments** (`reveal(id, ms)`): a workspace change on its monitor (`revealOnWorkspace`, from `CompositorManager.outputs`' active and special workspace; the first look only records them), a widget's news (`attention(id)`, with `revealOnActivity`; ignored in the bar's first 2 s, its widgets' startup; below) and the IPC `reveal`, each for `revealFor`.
+  - **Pinned** (`setPinned`; the IPC `toggle`): shown until unpinned, and reserving its space (below). `hideNow` unpins and drops hover and moments.
+  - **IPC** (`IpcTarget` `bar`, [usage](../../usage.md)): `reveal <id>` (a moment), `toggle <id>` (pin or unpin; all pinned when any isn't), `hide <id>` (`hideNow`), where `<id>` is a bar's config id (its instance on every monitor) or `focused` / `""` (the auto-hiding bars on the focused monitor); an unknown id is `not_found`. The keybind action `bar` calls them (toggle, open → `reveal`, close → `hide`; its argument defaults to `focused`, `KeybindManager.argumentOptions` lists the auto-hiding bars).
+- **Reserving:** an auto-hiding bar's enriched `reserveSpace` is false (`BarsConfig.enrichBarConfig`; the `reserveSpace` setting shows only for `never`), so a revealed bar lies over the windows. Pinned, `ScreenEdgeManager.bars` sets its `pinned`, and `BarEnds` zones it by `reserves(bar)` (`reserveSpace || pinned`) while stack order, corners, frames and the connected run go by `reserveSpace` alone: pinning changes only its exclusive zone and where windows start, never where any bar lies ([layering](layering-and-corners.md#bars-stacked-on-one-edge-barendsstackson-placestack-edgeof)).
+- **A widget's news** (`BaseWidget.attention()`, which `BarWidgetHost` hands to `BarRevealManager.attention`, never from a preview) fires on a change, never at startup. Most set `attentionLevel` (-1 while unknown) and the base fires when it rises past the last known one (`attentionMuted` records a rise without firing): Notifications (the unread count, muted by do-not-disturb), Battery (0, or 1 below the low threshold while discharging), Updates (the count, known once a check has ended here) and CustomWidget (its state's colour: 1 warning, 2 error). Media fires itself when the track changes while playing (not on a player's first track).
+- **Hiding** (`BarPanel`): it keeps its window and its slot; the `BarContainer` slides out toward its edge by geometry (`slide`, gliding over `animNormal`), not a Translate, so its blur shapes and shadow follow it, cut to its window (`BarContainer.blurClip`). Nothing maps, unmaps or changes layer, fullscreen included: the bar stays on Top under a fullscreen window.
+  - **What sits on it follows its reveal** (`BarPanel.present`: mapped and revealed; `onScreen`: any of it still in view). Once it has slid out of view its border openings (`borderOpening`, `joinOpening`, a solid bar's join) close, the stroke whole again. While it isn't revealed, surfaces on its edge take it as absent (`EdgePlacement.barPanel`, `ScreenEdgeManager.surfaceEnd`'s `barShowing`) and a bar beside it doesn't merge into it (`BarContainer.barAt`): a dock there stands on the frame, and moves out onto the bar when it reveals.
+
 ### Bar motion: drawn, not measured
 - **Measured, never animated:** the layout is measured from the modules' implicit sizes. That covers `naturalSize`/`preferredSize`, `WidgetGroup.allocation`, `BarContainer.slots`, and a section's `mainPos`/`usedLength`.
 - **Drawn, glides to the layout:**
   - Each `BarWidgetHost`'s `x`/`y`/`width`/`height` glide with animFast. This is off until `_settled`.
     - The module is laid out at its target `mainSize` and centred in the drawn box.
     - It is clipped while the two sizes differ, so labels never re-elide mid-animation.
-  - Each `Section`'s `drawnPos`/`drawnLength` glide too. `_spans`, and through it the pills, read these.
+  - Each `Section`'s `drawnPos`/`drawnLength` glide too. `groupSpans` (each section's groups of widgets as drawn, `WidgetGroup.drawnGroups`), and through it the pills, read these.
 - Backgrounds and separator marks follow the hosts as drawn.
 - A widget that is going keeps its last place and colors while its host still draws, fading with its opacity.
 - Colors (`WidgetBackground`, `IconTextWidget`) fade with ColorAnimations. The tray's icons grow in (Grid `add`/`move`).

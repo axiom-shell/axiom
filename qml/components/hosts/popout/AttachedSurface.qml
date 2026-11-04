@@ -218,7 +218,7 @@ Item {
   function _filletIn(margin, hidden) {
     if (margin <= 0)
       return 0;
-    const R = filletRadius, h = half;
+    const R = attachFilletRadius, h = half;
     // The stroke along the edge is a full stroke wide
     if (hidden <= strokeWidth)
       return 0;
@@ -259,6 +259,9 @@ Item {
   // radius at the far side, matching a Rectangle's radius
   readonly property real filletRadius: Appearance.borderRadius
   readonly property real cornerRadius: Math.max(0, Appearance.borderRadius - half)
+  // The attach side's fillets alone: a pill, too shallow for both a full
+  // fillet and its far corners, scales them alike (SurfaceOutline.fitRadii)
+  property real attachFilletRadius: filletRadius
   // The far corners at each end of the attach edge: 0 squares one, where a
   // box runs flush into this surface (a pill stretched to carry it)
   property real startCornerRadius: cornerRadius
@@ -282,6 +285,7 @@ Item {
       "boxDepth": root.boxDepth,
       "strokeWidth": root.strokeWidth,
       "filletRadius": root.filletRadius,
+      "attachFilletRadius": root.attachFilletRadius,
       "startCornerRadius": root.startCornerRadius,
       "endCornerRadius": root.endCornerRadius,
       "connectorGap": root.connectorGap,
@@ -376,7 +380,7 @@ Item {
   // stroke it grows from) runs on along that stroke, over the fillet
   function attachFilletHole(atStart) {
     const along = (atStart ? root.startMargin : root.endMargin) + root.strokeWidth + 1;
-    return root._rectFrom(atStart ? 0 : root.alongLength - along, -1, along, root.filletRadius + root.strokeWidth + 2);
+    return root._rectFrom(atStart ? 0 : root.alongLength - along, -1, along, root.attachFilletRadius + root.strokeWidth + 2);
   }
   // Its stroke holes under a submenu (SubPopout): `hole`, the stroke the
   // submenu covers on the box's side (in the window's coordinates, or

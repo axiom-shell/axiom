@@ -1,5 +1,7 @@
-label: Workspace Switcher
+label: Workspaces
+keywords: ['Workspace Switcher']
 icon: grid_view
+priority: 10
 group: Desktop
 popout:
   variant: own

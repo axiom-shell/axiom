@@ -1,15 +1,19 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services.ui
 import qs.components.reusable
 
-// One bar section in the bar editor's strip: its widgets in bar order,
-// along the strip (top to bottom on a vertical bar). Chips can be dragged
-// within it, to another lane, or dropped on it from the library; the chips
-// past the drop point slide aside to show where it would land.
+// One bar section on the bar editor's board: its title and buttons, then
+// its widgets in bar order as chips that wrap (a Flow): a row across the
+// board, never scrolling. Chips are dragged within it, to another lane, or dropped on
+// it from the library; a line shows where the carried one would land.
+// Hovering a chip outlines its widget on the running bars; a chip whose
+// widget the pointer is over on a running bar looks hovered. Its header's
+// meter shows how much of the section's room its widgets want on the
+// narrowest screen.
 Rectangle {
   id: root
 
@@ -17,54 +21,45 @@ Rectangle {
   // The section's key in the bar's `widgets`
   required property string zone
   required property string title
-  // Chips run top to bottom (a vertical bar's), else left to right
-  required property bool vertical
   // The selected bar's running copies (BarManager.liveReports)
   required property var reports
+  // Each widget's drop order (BarLayout.dropOrder), or [] for no badges
+  property var dropOrders: []
+  // How the section fits on the narrowest screen ({used, room}, the
+  // running bar's report), or null for no meter; and that screen's name
+  property var fit: null
+  property string fitScreen: ""
+  readonly property bool overfull: root.fit !== null && root.fit.used > root.fit.room
 
   readonly property var widgets: BarManager.selectedBar()?.widgets?.[root.zone] ?? []
   readonly property bool hovering: root.dragLayer.hoverZone === root.zone
   readonly property real chipHeight: Widget.height + Widget.padding / 2
   // The widgets a running copy hides for want of room
   readonly property var crowded: [].concat(...root.reports.map(report => report.hidden[root.zone] ?? []))
-  // More chips than the lane has room for: they scroll, with a bar beside
-  // (below a horizontal lane's, right of a vertical one's)
-  readonly property bool overflowing: root.vertical ? chips.implicitHeight > flick.height : chips.implicitWidth > flick.width
-  readonly property real scrollBarRoom: 8
-  // The room a drop opens: the carried chip's length
-  readonly property real gap: (root.vertical ? root.chipHeight : root.dragLayer.ghostLength) + Widget.spacing
 
-  // Along the strip: the length that shows every chip, and the least it
-  // takes (the chips scroll)
-  readonly property real naturalLength: Widget.padding * 2 + (root.vertical ? header.implicitHeight + Widget.spacing + Math.max(root.chipHeight, chips.implicitHeight) : Math.max(header.implicitWidth, chips.implicitWidth, empty.implicitWidth))
-  readonly property real minLength: Widget.padding * 2 + (root.vertical ? header.implicitHeight + Widget.spacing + root.chipHeight : Widget.height * 2)
-  // Across it, with room for the scroll bar
-  readonly property real depth: Widget.padding * 2 + header.implicitHeight + Widget.spacing + root.chipHeight + root.scrollBarRoom
-
-  // Where the carried chip would land, along the chips
-  readonly property real landingPos: {
+  // Where the carried chip would land: before the chip at the drop index,
+  // or after the last
+  readonly property var landing: {
     const at = root.dragLayer.hoverIndex;
     const chip = at >= 0 && at < repeater.count ? repeater.itemAt(at) : null;
+    const last = repeater.count > 0 ? repeater.itemAt(repeater.count - 1) : null;
+    const half = flow.spacing / 2;
     if (chip)
-      return root.vertical ? chip.y : chip.x;
-    return repeater.count === 0 ? 0 : (root.vertical ? chips.implicitHeight : chips.implicitWidth) + Widget.spacing;
-  }
-
-  component LaneScrollBar: ScrollBar {
-    id: laneBar
-    padding: 1
-    contentItem: Rectangle {
-      implicitWidth: root.scrollBarRoom - 2
-      implicitHeight: root.scrollBarRoom - 2
-      radius: height / 2
-      color: Theme.accent
-      opacity: laneBar.pressed ? 0.8 : 0.4
-    }
+      return Qt.rect(chip.x - half, chip.y, 0, chip.height);
+    if (last)
+      return Qt.rect(last.x + last.width + half, last.y, 0, last.height);
+    return Qt.rect(0, 0, 0, root.chipHeight);
   }
 
   // `anchor`: the + button, so the picker opens beside it
   signal addRequested(Item anchor)
+  // A chip's right click, at (x, y) in the chip
+  signal menuRequested(int index, Item chip, real x, real y)
+  // A chip was clicked (the board takes the keys then)
+  signal chipClicked(int index)
 
+  implicitWidth: Widget.padding * 2 + header.implicitWidth
+  implicitHeight: Widget.padding * 2 + header.implicitHeight + Widget.spacing + Math.max(root.chipHeight, flow.implicitHeight)
   radius: Widget.radius
   color: root.hovering ? Qt.alpha(Theme.accent, 0.1) : Theme.background
   border.color: root.hovering ? Theme.accent : Theme.border
@@ -76,176 +71,159 @@ Rectangle {
   Component.onDestruction: root.dragLayer.unregisterTarget(root)
 
   // Where a drop at `point` (in the drag layer) would insert: before the
-  // first chip whose middle is past it
+  // first chip on a later row than the point, or on its row past it.
+  // Both axes, since the chips wrap
   function indexAt(point) {
-    const p = root.dragLayer.mapToItem(chips, point.x, point.y);
+    const p = root.dragLayer.mapToItem(flow, point.x, point.y);
     for (let i = 0; i < repeater.count; i++) {
       const chip = repeater.itemAt(i);
-      if (chip && (root.vertical ? p.y < chip.y + chip.height / 2 : p.x < chip.x + chip.width / 2))
+      if (!chip)
+        continue;
+      const lineStart = chip.y;
+      const lineEnd = lineStart + chip.height + flow.spacing;
+      const middle = chip.x + chip.width / 2;
+      if (p.y < lineStart || (p.y < lineEnd && p.x < middle))
         return i;
     }
     return repeater.count;
   }
 
-  // The wheel scrolls the chips, sideways along a horizontal lane
-  WheelHandler {
-    enabled: root.overflowing
-    target: null
-    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-    onWheel: event => {
-      const pixels = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.pixelDelta.x;
-      const angle = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
-      const step = pixels !== 0 ? pixels : angle / 120 * Appearance.fontSize * 4;
-      if (root.vertical)
-        flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height, flick.contentY - step));
-      else
-        flick.contentX = Math.max(0, Math.min(flick.contentWidth - flick.width, flick.contentX - step));
+  RowLayout {
+    id: header
+    x: Widget.padding
+    y: Widget.padding
+    width: parent.width - Widget.padding * 2
+    spacing: Widget.spacing / 2
+
+    StyledText {
+      text: root.title
+      font.bold: true
+      elide: Text.ElideRight
+      Layout.fillWidth: true
+    }
+
+    // How full the section is
+    LevelMeter {
+      id: meter
+      visible: root.fit !== null && root.widgets.length > 0
+      Layout.preferredWidth: Widget.px(40)
+      Layout.preferredHeight: Widget.height - Widget.px(6)
+      thickness: Widget.px(4)
+      share: root.fit && root.fit.room > 0 ? root.fit.used / root.fit.room : 1
+      fillColor: root.overfull ? Theme.warning : Theme.accent
+
+      HoverHandler {
+        id: meterHover
+      }
+      LazyLoader {
+        active: meterHover.hovered
+        StyledToolTip {
+          target: meter
+          text: root.overfull ? I18n.tr("Wants {0} px, has {1} px on {2}", root.fit?.used ?? 0, root.fit?.room ?? 0, root.fitScreen) : I18n.tr("{0} of {1} px used on {2}", root.fit?.used ?? 0, root.fit?.room ?? 0, root.fitScreen)
+        }
+      }
+    }
+
+    // Center only: pin it dead center so the other sections can't push it
+    SquareIconButton {
+      readonly property bool locked: BarManager.selectedBar()?.lockCenter ?? false
+
+      visible: root.zone === "center"
+      size: Widget.height - Widget.px(6)
+      iconText: locked ? "lock" : "lock_open"
+      iconSize: Appearance.fontSizeBy(-1)
+      iconColor: locked ? Theme.background : Theme.foreground
+      backgroundColor: locked ? Theme.accent : Theme.backgroundAlt
+      tooltipText: I18n.tr(locked ? "Center locked: it stays dead center, other sections make room" : "Lock the center section in place")
+      onClicked: BarManager.updateBarField("lockCenter", !locked)
+    }
+
+    SquareIconButton {
+      id: addButton
+      size: Widget.height - Widget.px(6)
+      iconText: "add"
+      tooltipText: I18n.tr("Add a widget")
+      onClicked: root.addRequested(addButton)
     }
   }
 
-  ColumnLayout {
-    anchors.fill: parent
-    anchors.margins: Widget.padding
+  Flow {
+    id: flow
+    x: Widget.padding
+    y: header.y + header.implicitHeight + Widget.spacing
+    // Its chips wrap at its width
+    width: root.width - Widget.padding * 2
+    height: implicitHeight
+    flow: Flow.LeftToRight
     spacing: Widget.spacing
 
-    RowLayout {
-      id: header
-      Layout.fillWidth: true
-      spacing: Widget.spacing / 2
+    // Keyed by count: edits to a widget update its chip in place
+    Repeater {
+      id: repeater
+      model: root.widgets.length
 
-      StyledText {
-        text: root.title
-        font.bold: true
-        elide: Text.ElideRight
-        Layout.fillWidth: true
-      }
+      delegate: WidgetChip {
+        id: chip
+        required property int index
+        readonly property var entry: root.widgets[index] ?? ({})
 
-      // Center only: pin it dead center so the other sections can't push it
-      SquareIconButton {
-        readonly property bool locked: BarManager.selectedBar()?.lockCenter ?? false
-
-        visible: root.zone === "center"
-        size: Widget.height - Widget.px(6)
-        iconText: locked ? "lock" : "lock_open"
-        iconSize: Appearance.fontSizeBy(-1)
-        iconColor: locked ? Theme.background : Theme.foreground
-        backgroundColor: Qt.alpha(Theme.accent, locked ? 1 : 0)
-        tooltipText: I18n.tr(locked ? "Center locked: it stays dead center, other sections make room" : "Lock the center section in place")
-        onClicked: BarManager.updateBarField("lockCenter", !locked)
-      }
-
-      SquareIconButton {
-        id: addButton
-        size: Widget.height - Widget.px(6)
-        iconText: "add"
-        backgroundColor: "transparent"
-        tooltipText: I18n.tr("Add a widget")
-        onClicked: root.addRequested(addButton)
-      }
-    }
-
-    Flickable {
-      id: flick
-      Layout.fillWidth: true
-      Layout.fillHeight: true
-      clip: true
-      // Room past the last chip for the gap a drop opens
-      contentWidth: root.vertical ? width : chips.implicitWidth + root.gap
-      contentHeight: root.vertical ? chips.implicitHeight + root.gap : height
-      flickableDirection: root.vertical ? Flickable.VerticalFlick : Flickable.HorizontalFlick
-      boundsBehavior: Flickable.StopAtBounds
-      // Chips take mouse drags; the wheel scrolls (below)
-      interactive: false
-
-      ScrollBar.horizontal: LaneScrollBar {
-        policy: !root.vertical && root.overflowing ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-      }
-      ScrollBar.vertical: LaneScrollBar {
-        policy: root.vertical && root.overflowing ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
-      }
-
-      // Where the dragged widget would land
-      Rectangle {
-        visible: root.hovering
-        x: root.vertical ? 0 : root.landingPos
-        y: root.vertical ? root.landingPos : 0
-        width: root.vertical ? flick.width : root.gap - Widget.spacing
+        dragLayer: root.dragLayer
+        compact: true
         height: root.chipHeight
-        radius: Widget.radius
-        color: Qt.alpha(Theme.accent, 0.12)
-        border.color: Theme.accent
-        border.width: 1
-      }
-
-      Grid {
-        id: chips
-        columns: root.vertical ? 1 : Math.max(1, repeater.count)
-        spacing: Widget.spacing
-
-        // Keyed by count: edits to a widget update its chip in place
-        Repeater {
-          id: repeater
-          model: root.widgets.length
-
-          delegate: WidgetChip {
-            id: chip
-            required property int index
-            readonly property var widget: root.widgets[index] ?? ({})
-            // Chips at and past the drop point make room for it
-            readonly property real shift: root.hovering && chip.index >= root.dragLayer.hoverIndex ? root.gap : 0
-
-            dragLayer: root.dragLayer
-            compact: true
-            width: root.vertical ? flick.width - (root.overflowing ? root.scrollBarRoom : 0) : implicitWidth
-            height: root.chipHeight
-            // A custom widget by its definition's library key, so it's named
-            type: chip.widget.type === "CustomWidget" && chip.widget.properties?.definition ? "CustomWidget:" + chip.widget.properties.definition : (chip.widget.type ?? "")
-            hiddenWidget: chip.widget.visible === false
-            crowded: root.crowded.includes(chip.index)
-            selected: BarManager.selectedWidget.zone === root.zone && BarManager.selectedWidget.index === chip.index
-            faded: root.dragLayer.dragging?.kind === "move" && root.dragLayer.dragging.zone === root.zone && root.dragLayer.dragging.index === chip.index
-            payload: ({
-                "kind": "move",
-                "zone": root.zone,
-                "index": chip.index,
-                "type": chip.type,
-                "compact": true
-              })
-            onClicked: BarManager.selectWidget(root.zone, chip.index)
-
-            transform: Translate {
-              x: root.vertical ? 0 : chip.shift
-              y: root.vertical ? chip.shift : 0
-
-              Behavior on x {
-                NumberAnimation {
-                  duration: Appearance.animFast
-                  easing.type: Easing.OutCubic
-                }
-              }
-              Behavior on y {
-                NumberAnimation {
-                  duration: Appearance.animFast
-                  easing.type: Easing.OutCubic
-                }
-              }
-            }
-          }
+        type: root.dragLayer.libraryKey(chip.entry)
+        // With its Auto colours picked, as the bar draws it
+        widget: BarManager.previewConfig?.widgets?.[root.zone]?.[chip.index] ?? chip.entry
+        previewConfig: BarManager.previewConfig
+        hiddenWidget: chip.entry.visible === false
+        crowded: root.crowded.includes(chip.index)
+        dropOrder: root.dropOrders[chip.index] ?? 0
+        selected: BarManager.selectedWidget.zone === root.zone && BarManager.selectedWidget.index === chip.index
+        highlighted: BarManager.isBarHovered(root.zone, chip.index)
+        faded: root.dragLayer.dragging?.kind === "move" && root.dragLayer.dragging.zone === root.zone && root.dragLayer.dragging.index === chip.index
+        payload: ({
+            "kind": "move",
+            "zone": root.zone,
+            "index": chip.index,
+            "type": chip.type,
+            "compact": true
+          })
+        onClicked: {
+          BarManager.selectWidget(root.zone, chip.index);
+          root.chipClicked(chip.index);
+        }
+        onMenuRequested: (x, y) => root.menuRequested(chip.index, chip, x, y)
+        onHoveredChanged: {
+          if (chip.hovered)
+            BarManager.setHoveredWidget(root.zone, chip.index);
+          else if (BarManager.hoveredWidget.zone === root.zone && BarManager.hoveredWidget.index === chip.index)
+            BarManager.setHoveredWidget("", -1);
         }
       }
-
-      StyledText {
-        id: empty
-        visible: repeater.count === 0 && !root.hovering
-        width: flick.width
-        height: root.chipHeight
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
-        text: I18n.tr("Drop widgets here")
-        opacity: 0.45
-        textSize: Appearance.fontSizeBy(-1)
-      }
     }
+  }
+
+  StyledText {
+    id: empty
+    visible: repeater.count === 0 && !root.hovering
+    x: flow.x
+    y: flow.y
+    width: flow.width
+    height: root.chipHeight
+    verticalAlignment: Text.AlignVCenter
+    elide: Text.ElideRight
+    text: I18n.tr("Drop widgets here")
+    opacity: 0.45
+    textSize: Appearance.fontSizeBy(-1)
+  }
+
+  // Where the dragged widget would land
+  Rectangle {
+    visible: root.hovering
+    x: flow.x + root.landing.x - 1
+    y: flow.y + root.landing.y
+    width: 2
+    height: root.landing.height
+    radius: 1
+    color: Theme.accent
   }
 }

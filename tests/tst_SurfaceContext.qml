@@ -8,7 +8,7 @@ TestCase {
   // An enriched bar, as far as SurfaceContext reads it
   function bar(background) {
     return {
-      "background": background,
+      "kind": background,
       "solid": background === "solid",
       "pills": background === "pills",
       "island": background === "floating" || background === "floatingPills"
@@ -534,6 +534,18 @@ TestCase {
     verify(past.detached);
     compare(past.attachFromBar, 34);
     compare(past.attachAt + 24 / 2, 46);
+    // ...laid inside floating bars on its edge (transparent bars come
+    // last): its own inner side is past them all, so its box opens past
+    // them, in line with the windows there
+    const inside = at({
+      "bar": clear,
+      "frameLine": 110,
+      "reserved": 100,
+      "detachedPush": 10 - 12
+    });
+    verify(inside.detached);
+    compare(inside.barOuter, 70);
+    compare(inside.attachAt + 24 / 2, 110 + 10);
     // A solid bar outside another, the border's strip on the inner one
     // (offBorder): its popout grows from its own inner edge, wherever it
     // lies in the stack (frameLine), and opens no stroke there
@@ -567,7 +579,7 @@ TestCase {
         "bar": Object.assign(bar(kind), {
           "extent": 40,
           "pillDepth": 30,
-          "pillMerge": 12
+          "joinGap": 12
         }),
         "pills": pills,
         "centre": 500,
@@ -607,10 +619,29 @@ TestCase {
       "bar": Object.assign(bar("pills"), {
         "extent": 40,
         "pillDepth": 30,
-        "pillMerge": 12,
+        "joinGap": 12,
         "offBorder": true
       })
     }).ownSink, null);
+    // A pill bar on the border reaches back over the frame (stripCover):
+    // a box between its pills still grows out of the border's stroke,
+    // and one on a pill bar showing none clears the pills' depth past it
+    const onFrame = Object.assign(bar("pills"), {
+      "extent": 40,
+      "pillDepth": 40,
+      "joinGap": 12,
+      "stripCover": 7
+    });
+    const framed = at("pills", apart, {
+      "bar": onFrame
+    });
+    compare(framed.mode, "between");
+    compare([framed.attachFromBar, framed.attachAt], [7, 7]);
+    const none = at("pills", [], {
+      "bar": onFrame
+    });
+    verify(none.merged);
+    compare([none.attachFromBar, none.attachClearance], [7, 40 - base.stroke - 7]);
     // Too near a pill for two fillets: out of the nearest, as before
     const near = at("pills", [
       {
@@ -666,7 +697,7 @@ TestCase {
     const pills = kind => Object.assign(bar(kind), {
         "extent": 40,
         "pillDepth": 30,
-        "pillMerge": 12
+        "joinGap": 12
       });
     const floating = {
       "frameLine": 54,

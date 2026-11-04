@@ -178,12 +178,12 @@ BarWidget {
     id: box
     anchors.fill: parent
     isVertical: root.isVertical
-    crossSize: root.barConfig.widgetSize
-    padding: root.segments.length > 0 ? root.barConfig.widgetPadding : 0
+    crossSize: root.barConfig.thickness
+    padding: root.segments.length > 0 ? root.barConfig.innerPadding : 0
 
     content: Grid {
       columns: root.isVertical ? 1 : Math.max(1, root.segments.length)
-      spacing: root.isVertical ? root.barConfig.widgetSpacing : root.barConfig.widgetPadding
+      spacing: root.isVertical ? root.barConfig.innerGap : root.barConfig.innerPadding
       horizontalItemAlignment: Grid.AlignHCenter
       verticalItemAlignment: Grid.AlignVCenter
 
@@ -202,10 +202,10 @@ BarWidget {
           readonly property string style: root.style === "sparkline" && segment.metric.history === "" ? "fill" : root.style === "stacked" && root.isVertical ? "label" : root.style
 
           isVertical: root.isVertical
-          crossSize: root.barConfig.widgetSize
+          crossSize: root.barConfig.thickness
           padding: 0
           fontSize: root.barConfig.fontSize
-          spacing: root.isVertical ? 0 : root.barConfig.widgetSpacing * 1.5
+          spacing: root.isVertical ? 0 : root.barConfig.innerGap * 1.5
           textScale: root.isVertical ? 0.7 : 0.9
           uprightLabel: true
           icon: segment.stat.icon
@@ -233,7 +233,7 @@ BarWidget {
             segmentCount: root.appearance.segments
             preferredLength: root.appearance.width
             vertical: root.isVertical
-            crossSize: root.barConfig.widgetSize
+            crossSize: root.barConfig.thickness
             fontSize: root.barConfig.fontSize
             middle: segment.iconMiddle
             color: root.colors.icon

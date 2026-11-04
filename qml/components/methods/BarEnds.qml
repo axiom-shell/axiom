@@ -5,8 +5,8 @@ import QtQuick
 // What each end of a bar meets, where bars on perpendicular edges share a
 // corner (pure). Hyprland hands a corner to the bar it arranges first,
 // which the bars' layer rules decide (render.LayerRulesLua):
-// solid bars, then the border, then pill bars, then transparent ones, then
-// floating ones; between two of a kind the bar on the screen's shorter
+// solid bars, then the border, then pill bars, then floating ones, then
+// transparent ones; between two of a kind the bar on the screen's shorter
 // edge first (`shortEdge`: the side bars on a landscape monitor), so the
 // longer bar gives up its length. The other bar's window then ends at the
 // owner's reserved line.
@@ -17,10 +17,16 @@ import QtQuick
 // the perpendicular edge it makes way for (endsOf).
 //
 // A bar is an enriched bar entry (BarsConfig.enrichBarConfig): `id`,
-// `vertical`, `shortEdge`, `solid`, `background`, `insideBorder`, `island`,
-// `extent`, `floatGap`, `floatGapAuto`, `trim` (how much less than its
-// extent it reserves, alone on its edge), `enabled`, `reserveSpace`,
-// `monitor`, `top`/`bottom`/`left`/`right`.
+// `vertical`, `shortEdge`, `solid`, `kind`, `insideBorder`, `island`,
+// `extent`, `floatingGap`, `floatingGapAuto`, `trim` (how much less than its
+// extent it reserves, alone on its edge), `enabled`, `reserveSpace` (as
+// configured: never for an auto-hiding bar), `pinned` (an auto-hiding bar
+// pinned shown, which reserves too: `reserves`), `monitor`,
+// `top`/`bottom`/`left`/`right`.
+//
+// Stack order, corners and connected runs go by the configured reserve
+// alone, and zones by the effective one (`reserves`), so an auto-hiding
+// bar keeps its slot and pinning it never hands a corner over.
 // `opts`: { border (the screen border is on), borderWidth, margin (the
 // border's width, Appearance.screenMargin), gapsOut (per edge name),
 // floatGaps (what an Automatic float gap keeps, per edge name) }.
@@ -44,14 +50,93 @@ import QtQuick
 QtObject {
   id: root
 
-  // Who wins a shared corner: solid, then pills, then transparent, then
-  // floating (bars and pills held off the edge)
+  // Whether a bar reserves its space now: as configured, or pinned shown
+  // (an auto-hiding bar)
+  function reserves(bar) {
+    return !!bar.reserveSpace || !!bar.pinned;
+  }
+
+  // Who wins a shared corner: solid, then pills, then floating (bars and
+  // pills held off the edge), then transparent
   function rank(bar) {
     if (bar.solid)
       return 3;
     if (bar.island)
-      return 0;
-    return bar.background === "transparent" ? 1 : 2;
+      return 1;
+    return bar.kind === "transparent" ? 0 : 2;
+  }
+
+  /**
+   * How a full bar of `kind` ("solid", "pills" or "transparent") is built
+   * across, from its widgets' `thickness` and its `edgePadding`, with
+   * `opts` (border, borderWidth, margin). The body is the widgets and
+   * their padding either side, at least as deep as the border's strip
+   * laid over a solid bar's inner part (so no gap opens under it). A
+   * solid bar is the body, and its own stroke deeper with the border off.
+   * Pills are the body and their own far stroke, border on or off: a pill
+   * bar on the border reaches back over the frame to the screen edge
+   * (placeStack's outerReach), so solid and pills reserve the same and
+   * place their widgets alike. A transparent bar lies on the border's
+   * stroke, its widgets their padding past it.
+   * -> { extent (from the window's outer edge), crossStart (where its
+   *    widgets start, from there), pillDepth (how far a pill reaches from
+   *    there; 0 off a pill bar) }
+   */
+  function crossGeometry(kind, thickness, edgePadding, opts) {
+    const bw = opts.borderWidth;
+    const body = Math.max(opts.border ? opts.margin - bw : 0, edgePadding + thickness + edgePadding);
+    if (kind === "solid")
+      return {
+        "extent": body + (opts.border ? 0 : bw),
+        "crossStart": (body - thickness) / 2,
+        "pillDepth": 0
+      };
+    if (kind === "pills")
+      return {
+        "extent": body + bw,
+        "crossStart": (body - thickness) / 2,
+        "pillDepth": body + bw
+      };
+    const outer = opts.border ? bw : 0;
+    return {
+      "extent": outer + edgePadding + thickness + edgePadding,
+      "crossStart": outer + edgePadding,
+      "pillDepth": 0
+    };
+  }
+
+  /**
+   * How far along a solid or pill bar its first or last widgets sit from
+   * its window's start at `end` (one of its ends, endsOf), where that end
+   * isn't held: past the line its window counts from (`from`), as both
+   * are part of the frame, so solid and pills place them alike: the screen
+   * margin (with the border off, at least the bar's `edgePadding`), from
+   * the perpendicular screen edge or past the bars there it makes way
+   * for. A bar inside the border counts `from` from the border's margin
+   * already, and its window reaches `reach` back onto the stroke there.
+   * An end pill joins the frame (or the stroke it meets) squarely, filling
+   * the corner as a solid bar does, so no fillet's room is kept and the
+   * radius never counts. `opts`: { border, margin }.
+   */
+  function endInset(bar, end, opts) {
+    const line = opts.border ? opts.margin : Math.max(opts.margin, bar.edgePadding);
+    const counted = opts.border && !bar.solid ? opts.margin : 0;
+    return line - counted + end.reach;
+  }
+
+  /**
+   * Where windows start along a bar not part of the frame (floating,
+   * floating pills, transparent), from its window's start at an unheld
+   * `end` (its start with `atStart`, endsOf): past the frame, or the bars
+   * there it makes way for, by the compositor's gaps_out on that side
+   * (`floatGaps`: with no backend, what an Automatic float gap keeps).
+   * A floating bar's islands end on that line; a transparent
+   * bar's first and last widgets do. Its own float gap never counts along
+   * it. `opts`: { floatGaps }.
+   */
+  function windowInset(bar, end, atStart, opts) {
+    const side = root.endEdges(bar)[atStart ? 0 : 1];
+    return end.reach + (opts.floatGaps?.[side] ?? 0);
   }
 
   // Whether a bar lies along its screen's shorter edge (`width` × `height`
@@ -122,7 +207,7 @@ QtObject {
     // Two pill bars: the yielding one's window ends at the other's
     // reserved line, the far side of its pills, so it reaches back onto
     // their far stroke
-    if (bar.background === "pills" && other.background === "pills")
+    if (bar.kind === "pills" && other.kind === "pills")
       return root._barStroke("pillBar", opts);
     // Nothing to join: held clear of it. Its window ends at that bar's
     // reserved line, `trim` short of its inner edge (a transparent bar's
@@ -138,7 +223,7 @@ QtObject {
       "held": true,
       "reach": 0,
       "over": over,
-      "gap": bar.island && !bar.floatGapAuto ? bar.floatGap : auto
+      "gap": bar.island && !bar.floatingGapAuto ? bar.floatingGap : auto
     };
   }
 
@@ -173,11 +258,11 @@ QtObject {
   }
 
   // Where a kind of bar is arranged on its edge: solid bars (then the
-  // border), pill bars, transparent bars, floating bars, floating pills.
+  // border), pill bars, floating bars, floating pills, transparent bars.
   // Floating bars and floating pills share a layer rule, so their order
   // is LayerSlot's rank (layerRank).
   function kindIndex(bar) {
-    return ["solid", "pills", "transparent", "floating", "floatingPills"].indexOf(bar.background);
+    return ["solid", "pills", "floating", "floatingPills", "transparent"].indexOf(bar.kind);
   }
 
   // The enabled bars on a screen (`monitor`) by edge name, each edge's
@@ -227,9 +312,7 @@ QtObject {
    *   stackIndex (0 outermost), innermost (the last on the edge),
    *   facesWindows (no bar inside it reserves space, so windows start
    *     right past it), trim (reserveTrim while it faces the windows; a
-   *     transparent bar with a floating bar next inside it, that bar's
-   *     float gap; any other bar with one reserving inside it reserves
-   *     its whole extent),
+   *     bar with one reserving inside it reserves its whole extent),
    *   offBorder (the border's stroke isn't on it: a bar inside the border
    *     with another inside the border outside it, or a solid bar with
    *     the border on that the border's strip doesn't lie over, one with
@@ -237,6 +320,12 @@ QtObject {
    *   zone (the exclusive zone it sets: BarPanel), taken (how much it
    *     reserves: its zone and its -borderWidth margin inside the border),
    *   outer (where its window's outer edge is, from the screen edge),
+   *   outerReach (how far its window reaches back past where it's laid:
+   *     onto the border's stroke for a bar inside the border, or for a
+   *     pill bar on the border itself, over the whole frame: BarPanel's
+   *     outer margin), stripCover (how far in from its window's outer
+   *     edge the border's stroke lies under such a pill bar, where its
+   *     pills hang off; else 0),
    *   frame (its inner side, from the screen edge: its inner edge, the
    *     border's stroke for a solid bar it lies over, or where a solid bar
    *     reserving nothing is laid, inside the border, which it covers)
@@ -256,19 +345,24 @@ QtObject {
         line += opts.margin;
         borderLaid = true;
       }
-      const next = stack.slice(index + 1).find(other => other.reserveSpace) ?? null;
+      const next = stack.slice(index + 1).find(other => root.reserves(other)) ?? null;
       const facesWindows = next === null;
-      // A transparent bar has no inner edge to see: what lies inside it
-      // keeps its own gap from where it would be, so it reserves that gap
-      // less (windows' gaps_out, its reserveTrim; a floating bar's float
-      // gap), the widgets' gap to it then matching their gap outwards
-      const openInside = bar.background === "transparent" && bar.accentLine !== "inner";
-      const trim = facesWindows ? bar.trim : openInside && next.island ? next.floatGap : 0;
+      // Only a bar facing the windows trims (a transparent bar's gaps_out,
+      // its reserveTrim): one with a reserving bar inside it reserves its
+      // whole extent. (Transparent bars are laid last, so nothing but
+      // another transparent bar reserves inside one.)
+      const trim = facesWindows ? bar.trim : 0;
       const onStrip = bar === strip;
       let zone = 0;
-      if (bar.reserveSpace)
+      if (root.reserves(bar))
         zone = Math.max(0, (onStrip ? bar.extent - opts.margin + opts.borderWidth : bar.extent) - trim);
-      const reach = bar.insideBorder ? w : 0;
+      // A bar inside the border reaches back onto its stroke. A pill bar
+      // lying on the border itself reaches back over the whole frame to
+      // the screen edge, its pills over the strip (`stripCover`, past
+      // which they hang off the stroke), so it lies, reserves and places
+      // its widgets as a solid bar would
+      const onFrame = opts.border && bar.kind === "pills" && line === opts.margin;
+      const reach = onFrame ? opts.margin : bar.insideBorder ? w : 0;
       const taken = zone > 0 ? zone - reach : 0;
       const outer = line - reach;
       let frame = outer + bar.extent;
@@ -283,7 +377,9 @@ QtObject {
         "zone": zone,
         "taken": taken,
         "outer": outer,
-        "frame": frame
+        "frame": frame,
+        "outerReach": reach,
+        "stripCover": onFrame ? opts.margin - opts.borderWidth : 0
       }));
       if (bar.insideBorder && bar.reserveSpace)
         insideBefore = true;
@@ -308,7 +404,7 @@ QtObject {
     const index = placed.findIndex(other => other.id === bar.id);
     if (index < 0)
       return bar;
-    const connects = other => other.reserveSpace && (other.solid || (other.background === "pills" && !other.offBorder));
+    const connects = other => other.reserveSpace && (other.solid || (other.kind === "pills" && !other.offBorder));
     if (!connects(placed[index]))
       return placed[index];
     let last = index;
@@ -375,7 +471,7 @@ QtObject {
   function edgeOf(placed, opts) {
     const margin = opts.border ? opts.margin : 0;
     const inner = placed.length > 0 ? placed[placed.length - 1] : null;
-    const reserving = placed.filter(bar => bar.reserveSpace);
+    const reserving = placed.filter(bar => root.reserves(bar));
     const sum = (bars, key) => bars.reduce((total, bar) => total + bar[key], 0);
     const solids = placed.filter(bar => bar.solid && bar.reserveSpace);
     const solidZone = sum(solids, "zone");
@@ -399,7 +495,7 @@ QtObject {
   // order (LayerSlot's rank). Bars on other edges never meet across it,
   // so they keep no order (one remade doesn't map the others again).
   function layerRanks(bars) {
-    const group = bar => root._edgeName(bar) + ":" + (bar.solid ? "solid" : bar.island ? "floating" : bar.background);
+    const group = bar => root._edgeName(bar) + ":" + (bar.solid ? "solid" : bar.island ? "floating" : bar.kind);
     const ranks = bars.map(() => 0);
     const entries = bars.map((bar, index) => ({
           "bar": bar,

@@ -145,6 +145,54 @@ TestCase {
     compare(SurfaceOutline.metrics(spec({})).startCornerRadius, 27);
   }
 
+  function test_fitRadii() {
+    // Room for both: unchanged
+    compare(SurfaceOutline.fitRadii(60, 28, 27), {
+      "fillet": 28,
+      "corner": 27
+    });
+    // 55 in 33: both by 0.6, meeting in one curve
+    const fit = SurfaceOutline.fitRadii(33, 28, 27);
+    fuzzyCompare(fit.fillet, 16.8, 1e-9);
+    fuzzyCompare(fit.corner, 16.2, 1e-9);
+    // The ratio holds for unequal radii, and no room is none
+    const uneven = SurfaceOutline.fitRadii(10, 30, 10);
+    fuzzyCompare(uneven.fillet, 7.5, 1e-9);
+    fuzzyCompare(uneven.corner, 2.5, 1e-9);
+    compare(SurfaceOutline.fitRadii(-4, 28, 27), {
+      "fillet": 0,
+      "corner": 0
+    });
+  }
+
+  function test_attach_fillet_radius_fitted_pill() {
+    // A pill 7 deep past a half connector gap (28): room 28 + 7 - 2 = 33,
+    // fitted to a fillet of 16.8 and corners of 16.2, which then fit
+    // uncapped; a joined end keeps the full fillet
+    const fit = SurfaceOutline.fitRadii(33, 28, 27);
+    const s = spec({
+      "boxDepth": 7,
+      "attachFilletRadius": fit.fillet,
+      "startCornerRadius": fit.corner,
+      "endCornerRadius": fit.corner
+    });
+    const m = SurfaceOutline.withBoxStart(s, SurfaceOutline.metrics(s), 28);
+    fuzzyCompare(m.startMargin, 15.8, 1e-9);
+    fuzzyCompare(m.startCornerRadius, 16.2, 1e-9);
+    fuzzyCompare(m.endCornerRadius, 16.2, 1e-9);
+    verify(SurfaceOutline.strokePath(s, m, 300, 70).indexOf("A 16.8 16.8") >= 0, "the fillet's arc at the fitted radius");
+    const joined = spec({
+      "boxDepth": 7,
+      "attachFilletRadius": fit.fillet,
+      "joinStart": true
+    });
+    const j = SurfaceOutline.withBoxStart(joined, SurfaceOutline.metrics(joined), 28);
+    compare(j.depth, 28 + 7 + 28 + 28, "the join's fillet at the full radius");
+    fuzzyCompare(j.endMargin, 15.8, 1e-9);
+    // Without one, the attach fillets are filletRadius's
+    compare(SurfaceOutline.metrics(spec({})).attachR, 28);
+  }
+
   function test_toItem_edges() {
     // 100 wide, 50 high; u = 10 along, v = 5 away from the edge
     compare(SurfaceOutline.toItem(ScreenEdge.Top, 100, 50, 0, 10, 5), {

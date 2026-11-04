@@ -45,21 +45,30 @@ Item {
         "pref": m.preferredSize,
         "min": m.minimumSize,
         "priority": m.priority,
-        "divides": m.divides
+        "divides": m.divides,
+        "fill": m.fills
       }))
-  readonly property var _shown: root.measures.map((m, i) => m.pref > 0 && !root.hiddenIndices.includes(i))
+  // Spacers (`fill`) are shown at any size: they take the free room
+  readonly property var _fills: root.measures.map(m => m.fill)
+  readonly property var _shown: root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i))
+  // How many spacers it has: a side with any stretches to the center
+  // (BarLayout.layoutSections)
+  readonly property int fillCount: root._fills.filter(f => f).length
 
   // Main-axis size wanted with every shown module at its preferred size,
   // and the least it can be squeezed to without hiding anything more
-  readonly property real preferredLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root.spacing)
-  readonly property real minimumLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.min : 0), root.spacing)
+  readonly property real preferredLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root.spacing, root._fills)
+  readonly property real minimumLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.min : 0), root.spacing, root._fills)
+  // ...and with none hidden for want of room (for the bar editor)
+  readonly property real wantedLength: BarLayout.span(root.measures.map(m => m.pref), root.spacing, root._fills)
 
   readonly property var allocation: BarLayout.allocate(root.measures, root._shown, root.maxExtent, root.spacing)
-  readonly property real usedLength: BarLayout.span(root.allocation.sizes, root.spacing)
+  readonly property real usedLength: BarLayout.span(root.allocation.sizes, root.spacing, root._fills)
   // The dividers (Separators) at the section's ends, which the bar places
   // in the gap beside it (BarLayout.edgeHang): as measured, for laying the
-  // sections out, and as allocated, for its pill
-  readonly property var _dividers: root.measures.map(m => m.divides)
+  // sections out, and as allocated, for its pill. Not spacers: they're
+  // room of the section's own.
+  readonly property var _dividers: root.measures.map(m => m.divides && !m.fill)
   readonly property var layoutHang: BarLayout.edgeHang(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root._dividers, root.spacing)
   readonly property var drawnHang: BarLayout.edgeHang(root.allocation.sizes, root._dividers, root.spacing)
   // The widgets with something to show that are hidden for want of room,
@@ -84,12 +93,58 @@ Item {
   // chain, keeping the bar's spacing to the widgets beside it in the
   // section as between separate widgets. At the section's end the gap to
   // the next section stands in, as on any other bar.
-  readonly property real _looseGap: root.grouping === "powerline" ? root.barConfig.spacing : 0
+  readonly property real _looseGap: root.grouping === "powerline" ? root.barConfig.widgetGap : 0
   // The first and last widgets with something to show (from their
   // content, never the room they're given)
   readonly property var _hasContent: root._modules.map(m => m.naturalSize > 0)
   readonly property int _firstContent: root._hasContent.indexOf(true)
   readonly property int _lastContent: root._hasContent.lastIndexOf(true)
+
+  // Its groups of widgets as drawn, [{ start, end }] along it in its own
+  // coordinates: the runs of shown widgets between its ends and its
+  // spacers, a spacer given room splitting one (BarContainer joins them
+  // into pills, islands and merged backgrounds, BarLayout.joinGroups)
+  readonly property var drawnGroups: {
+    const out = [];
+    let open = null;
+    root._modules.forEach((m, i) => {
+      const size = root.allocation.sizes[i] ?? 0;
+      if (m.fills) {
+        if (size > 0)
+          open = null;
+        return;
+      }
+      if (!(root.allocation.visible[i] ?? false) || size <= 0)
+        return;
+      const start = root.isVertical ? m.y : m.x;
+      const end = start + (root.isVertical ? m.height : m.width);
+      if (open) {
+        open.end = end;
+      } else {
+        open = {
+          "start": start,
+          "end": end
+        };
+        out.push(open);
+      }
+    });
+    return out;
+  }
+  // Its first group joins the group before it in another section, and
+  // its last the next one, `joinEndReach` on past its end
+  // (BarContainer, BarLayout.joinGroups): in a merged grouping, the runs
+  // there draw as one background across the sections
+  property bool joinStart: false
+  property real joinEndReach: 0
+  // The first and last widgets shown
+  readonly property int _firstShown: root.allocation.sizes.findIndex((size, i) => size > 0 && !root._fills[i])
+  readonly property int _lastShown: {
+    for (let i = root.allocation.sizes.length - 1; i >= 0; i--) {
+      if (root.allocation.sizes[i] > 0 && !root._fills[i])
+        return i;
+    }
+    return -1;
+  }
 
   // The index of the next widget shown after `index`, or -1
   function _nextShown(index) {
@@ -102,11 +157,11 @@ Item {
 
   // The caps and insets at `place` in a run (BarShapes.segment)
   function segmentAt(place) {
-    return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.widgetSize);
+    return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
   }
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : usedLength
-  implicitHeight: isVertical ? usedLength : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : usedLength
+  implicitHeight: isVertical ? usedLength : root.barConfig.thickness
 
   // Merged runs' shared backgrounds, under everything
   Repeater {
@@ -121,22 +176,28 @@ Item {
       }
       readonly property var first: root._modules[run.members[0]] ?? null
       readonly property var last: root._modules[run.members[run.count - 1]] ?? null
+      // Joined across a section's end to the next section's run: no cap
+      // there, the background running on over the gap between them
+      readonly property bool _joinsBack: root.joinStart && run.members[0] === root._firstShown
+      readonly property real _reach: root.joinEndReach > 0 && run.members[run.count - 1] === root._lastShown ? root.joinEndReach : 0
+      readonly property int _before: _joinsBack ? 1 : 0
+      readonly property int _count: run.count + _before + (_reach > 0 ? 1 : 0)
 
       z: -2
       barConfig: root.barConfig
       colors: BarsConfig.groupColors(root.barConfig)
       startCap: root.segmentAt({
-        "index": 0,
-        "count": run.count
+        "index": _before,
+        "count": _count
       }).startCap
       endCap: root.segmentAt({
-        "index": run.count - 1,
-        "count": run.count
+        "index": _before + run.count - 1,
+        "count": _count
       }).endCap
       x: first?.x ?? 0
       y: first?.y ?? 0
-      width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x
-      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - y : (first?.height ?? 0)
+      width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x + _reach
+      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - y + _reach : (first?.height ?? 0)
     }
   }
 
@@ -158,7 +219,7 @@ Item {
       style: root.barConfig.separatorStyle
       color: Theme.resolveColor(root.barConfig.separatorColor)
       thickness: root.barConfig.separatorThickness
-      length: BarLayout.dividerLength(mark.style, root.barConfig.widgetSize)
+      length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root.isVertical
       x: root.isVertical ? Math.round((root.width - width) / 2) : mark.center - width / 2
       y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2)
@@ -202,7 +263,7 @@ Item {
       backgroundLevel: host?.backgroundLevel ?? -1
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       levelStart: segment.back
-      highlighted: host?.highlighted ?? false
+      highlighted: host?.editorOutlined ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
       x: (host?.x ?? 0) - (root.isVertical ? 0 : segment.back)
@@ -237,17 +298,22 @@ Item {
       // Clear of its caps; a widget with no background sits loose
       readonly property var _place: root._insetPlaces[module.index] ?? null
       readonly property var _segment: root.segmentAt(_place)
-      leadInset: module.hasBackground ? module._segment.lead : (module.index > root._firstContent ? root._looseGap : 0)
+      leadInset: module.hasBackground ? module._segment.lead : (module.index > root._firstContent && !module.fills ? root._looseGap : 0)
       // Hovered and clicked in its background's shape as drawn
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
       hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
-      trailInset: module.hasBackground ? module._segment.trail : (module.index < root._lastContent ? root._looseGap : 0)
+      trailInset: module.hasBackground ? module._segment.trail : (module.index < root._lastContent && !module.fills ? root._looseGap : 0)
 
       barConfig: root.barConfig
       properties: module.modelData.properties || {}
       layoutOverrides: module.modelData.layout || {}
+      defaultPriority: BarsConfig.defaultPriority(module.modelData.type ?? "")
       componentPath: module.modelData.component
       highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
+      hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
+      // The bar editor's chip of the widget under the pointer looks hovered
+      onPointerHoveredChanged: if (BarManager.editing)
+        BarManager.setBarHover(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1, module.pointerHovered)
       panel: root.panel
       screen: root.screen
 

@@ -19,6 +19,10 @@ BarIconWidget {
   showText: false
   iconColor: NotificationManager.dnd ? Theme.resolveColor(properties.dndColor) : colors.icon
 
+  // News: the unread count rose, with do-not-disturb off
+  attentionLevel: NotificationManager.count
+  attentionMuted: NotificationManager.dnd
+
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton
   onClicked: button => {

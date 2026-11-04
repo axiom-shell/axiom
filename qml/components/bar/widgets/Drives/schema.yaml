@@ -1,4 +1,5 @@
-label: Removable Drives
+label: Drives
+keywords: ['Removable Drives']
 icon: usb
 group: Network & devices
 popout: {variant: own, enabled: {description: 'List the drives, to open, eject or unlock one, when hovered.'}}

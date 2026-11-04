@@ -146,6 +146,14 @@ func validate(s *schema.Schema, value any, node any, path string, errs *[]string
 	if inherit, _ := get("x-inherit"); value == nil && jsonx.Truthy(inherit) {
 		return
 	}
+	// So is an automatic one whose automatic value is null (x-auto)
+	if auto, _ := get("x-auto"); value == nil {
+		if a, ok := auto.(*jsonx.Object); ok {
+			if v, ok := a.Get("value"); ok && v == nil {
+				return
+			}
+		}
+	}
 
 	if typ, _ := get("type"); jsonx.Truthy(typ) {
 		if !validateType(value, typ, path, errs) {

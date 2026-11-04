@@ -1,4 +1,5 @@
-label: Network Status
+label: Network
+keywords: ['Network Status']
 icon: wifi
 group: Network & devices
 popout: {variant: own, enabled: {description: Open the Wi-Fi menu when hovered.}}

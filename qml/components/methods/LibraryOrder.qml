@@ -16,14 +16,15 @@ QtObject {
         })).sort((a, b) => a.label.localeCompare(b.label)).map(entry => entry.type);
   }
 
-  // The types whose shown label, type or group heading holds `query`
-  // (any case); all of them for a blank one
+  // The types whose shown label, type, group heading or one of its
+  // `keywords` (a bar widget's, such as its old label) holds `query` (any
+  // case); all of them for a blank one
   function filtered(types, query, labelOf, headingOf) {
     const q = String(query ?? "").trim().toLowerCase();
     if (q === "")
       return types ?? [];
     const has = text => String(text ?? "").toLowerCase().includes(q);
-    return (types ?? []).filter(type => has(labelOf(type)) || has(type.type) || has(headingOf(type.group ?? "")));
+    return (types ?? []).filter(type => has(labelOf(type)) || has(type.type) || has(headingOf(type.group ?? "")) || (type.keywords ?? []).some(has));
   }
 
   // Sections [{ name, types }]: one per group in `groups` that has types,

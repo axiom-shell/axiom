@@ -164,6 +164,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs row 20's compositor-11: log in under Hyprland with a 3 × 3 grid and a profile naming the monitor by `desc:`, and check the session starts on the block's centre (5), not in 10–18; if `scripts/log.sh` shows `remapping workspaces` at the start, add its `from`/`to` layouts to [the startup remap entry](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded); on sway, disable an output (`swaymsg output <name> disable`) and check `CompositorManager.outputs` no longer lists it and the other monitor's perMonitor workspaces start at 1; with a fullscreen video on a named sway workspace, the dock and toasts stay off it.
 - Once the shell runs compositor-12 (row 20), under niri: drop a window from a stacked column onto another column in the overview (only that window moves, the output stays on its workspace), open an app with `clearOnFocus` notifications (they clear when its window opens), and unplug the monitor showing the overview (the next toggle opens it).
 - Once the shell runs compositor-13 (row 20): with the window look's defaults on sway, the gap to the screen edges is 6 px (the setting), not 9; on niri, with `blur { off }` in a `user/*.kdl` (managed) or in the user's config (included), axiom's blur still shows; the Translucency card offers "Set the compositor's blur" when the blur comes only from the user's own config; and Hyprland's gaps (and the bars that subtract them) don't drop to 0 through a busy reload.
+- Once the shell runs the bar rewrite (config v93), under Hyprland, niri and sway: switch a top bar between One bar and A pill per group, with the screen border on and off, and check windows and the widgets don't move; set Auto-hide on a bar and check the edge hover reveal and its slide (blur and shadow follow it), a workspace change and a widget's news showing it, a bar popout and an edge menu holding it, the bar editor holding the selected bar, `axiom ipc bar toggle focused` pinning it (windows make room) and `hide`, a fullscreen window over it, a side bar, and a bar stacked inside another; open an edge popout on a transparent bar's edge with a floating bar on it and check it opens past the floating bar.
 - Once the shell runs compositor-20 (row 20): with blur on and translucency below 100, a toast's tone matches the bar and edge popout beside it, and doesn't jump when the blur pauses or resumes.
 - Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
 - Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Focus windows that ask for it are greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
@@ -384,17 +385,15 @@ Found by the audits:
 - [The two workspace popouts share 28 lines of payload and colour properties](issues.md#the-two-workspace-popouts-share-28-lines-of-payload-and-colour-properties)
 - [Small improvements to WorkspaceGrid](issues.md#small-improvements-to-workspacegrid)
 - [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
-- [A bar made while the bar editor is open may never report to it](issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
 - [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
-- [Removing or copying another bar moves the editor's selection to a different bar](issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
-- [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
-- [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
+- [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
 - [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
 - [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [SystemStats' used memory clips on a vertical bar](issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
-- [The stacked style clips on a thin bar](issues.md#the-stacked-style-clips-on-a-thin-bar)
+- [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
+- [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [SystemStats works out ValueStyleWidget's style fallbacks again](issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)
 - [The workspace switchers find a workspace by id with hand-written loops](issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
@@ -500,6 +499,10 @@ Found while running verify.sh --all for compositor-08 (row 20):
 
 Found while reviewing compositor-20 (row 20):
 - [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
+
+Found while reviewing the bar rewrite:
+- [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
+- [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

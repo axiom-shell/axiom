@@ -25,6 +25,18 @@ ValueStyleWidget {
   readonly property int count: repoPackages.length + aurPackages.length
   readonly property bool failed: UpdatesManager.error !== ""
 
+  // News: the count rose since the last check. Unknown until a check
+  // ends here (the first one only records it)
+  property bool _checked: false
+  Connections {
+    target: UpdatesManager
+    function onCheckingChanged() {
+      if (!UpdatesManager.checking)
+        root._checked = true;
+    }
+  }
+  attentionLevel: root._checked ? root.count : -1
+
   // Shown while a check fails, so its popout can say why
   hidden: !UpdatesManager.supported || (properties.hideWhenEmpty && count === 0 && !failed)
 

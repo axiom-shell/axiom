@@ -19,10 +19,13 @@ FieldGroup {
   property string numberMode: ""
   // Fields marked `x-beside` beside the one before them (SchemaPropertiesForm)
   property bool pairs: false
+  // Each field's change marks (SchemaPropertiesForm.changedAt)
+  property var changedAt: null
   property string problem
   property string emptyText
 
   signal edited(var path, var value)
+  signal discardAt(var path)
 
   title: I18n.tr("Options")
 
@@ -43,7 +46,9 @@ FieldGroup {
     context: root.context
     numberMode: root.numberMode
     pairs: root.pairs
+    changedAt: root.changedAt
     onEdited: (path, value) => root.edited(path, value)
+    onDiscardAt: path => root.discardAt(path)
   }
 
   StyledText {

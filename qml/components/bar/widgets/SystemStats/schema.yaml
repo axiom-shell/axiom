@@ -1,4 +1,4 @@
-label: System Stats
+label: System stats
 icon: memory_alt
 group: System
 popout: {variant: own, enabled: {description: Open live graphs of the shown metrics when hovered.}}

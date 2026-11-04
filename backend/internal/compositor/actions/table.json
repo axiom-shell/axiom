@@ -6,6 +6,7 @@
     "overlayPage": ["overlay page {0}", "Overlay: {0}", "Axiom"],
     "edgeMenu": ["edgeMenu {call} {0}", "Edge menu: {0}", "Axiom"],
     "dock": ["dock {call} {0}", "Dock: {0}", "Axiom"],
+    "bar": ["bar {call} {0}", "Bar: {0}", "Axiom"],
     "workspaceOverview": ["workspaceOverlay {call}", "Workspace overview", "Workspace"],
     "powerMenu": ["powermenu {call}", "Power menu", "Axiom"],
     "lock": ["lockscreen lock", "Lock", "Axiom"],
@@ -94,6 +95,7 @@
     "overlay": {"open": "open", "close": "close"},
     "edgeMenu": {"open": "open", "close": "close"},
     "dock": {"open": "open", "close": "close"},
+    "bar": {"open": "reveal", "close": "hide"},
     "powerMenu": {"open": "open", "close": "close"},
     "workspaceOverview": {"open": "open", "close": "hide"},
     "idleInhibit": {"open": "enable", "close": "disable"},
@@ -151,6 +153,7 @@
     "overlayPage": "view",
     "edgeMenu": "edgeMenu",
     "dock": "dock",
+    "bar": "bar",
     "workspaceStep": "direction",
     "moveWindowStep": "direction",
     "moveWindowStepSilent": "direction",
@@ -170,6 +173,7 @@
   "argumentDefaults": {
     "screenshot": "region",
     "dock": "main",
+    "bar": "focused",
     "timerStart": "5m"
   }
 }

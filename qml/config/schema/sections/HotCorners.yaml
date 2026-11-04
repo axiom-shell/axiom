@@ -37,6 +37,7 @@ properties:
             - overlayPage
             - edgeMenu
             - dock
+            - bar
             - workspaceOverview
             - powerMenu
             - lock
@@ -88,6 +89,7 @@ properties:
             overlayPage: Overlay page
             edgeMenu: Edge menu
             dock: Dock
+            bar: Auto-hiding bar
             workspaceOverview: Workspace overview
             powerMenu: Power menu
             lock: Lock
@@ -137,13 +139,14 @@ properties:
           type: string
           title: Argument
           default: ''
-          description: 'Search text, page, edge menu or dock id, direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.'
+          description: 'Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.'
           x-showIf:
             action:
               - launcherSearch
               - overlayPage
               - edgeMenu
               - dock
+              - bar
               - workspaceStep
               - workspaceNth
               - scrollStep
@@ -163,6 +166,7 @@ properties:
               - overlay
               - edgeMenu
               - dock
+              - bar
               - workspaceOverview
               - powerMenu
               - idleInhibit

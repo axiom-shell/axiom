@@ -86,7 +86,7 @@ ColumnLayout {
       size: Widget.height
       iconText: "close"
       hoverColor: Theme.error
-      tooltipText: I18n.tr("Use the widget's own sizing")
+      tooltipText: root.key === "priority" ? I18n.tr("Use its type's priority") : I18n.tr("Use the widget's own sizing")
       onClicked: root.edited(undefined)
     }
   }

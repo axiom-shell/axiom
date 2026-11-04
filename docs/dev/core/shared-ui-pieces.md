@@ -43,7 +43,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - All three are `PopInRectangle`s: set `shown` (not `visible`) and they pop in and out; `pulse()` for a bump.
 - `IssueList`: `[{ level, text }]`, errors red, warnings amber.
 - `IssueIcon`: one problem's icon in those colors (`level`, `tone`), saying what's wrong in a tooltip on hover (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
-- `DropdownSurface`: the box of anything that drops down.
+- `DropdownSurface`: the box of anything that drops down. In a `Popup` (a combo box's list, `TypePickerPopup`, `StyledContextMenu`) it fills solid, `Theme.backgroundAlt`: nothing blurs behind a Popup, so a translucent fill shows the page through it.
 - `TileFlow`: equal tiles, as many columns as fit.
 - `TypeLibrary`: the editors' libraries of types to add.
   - An A–Z / By category switch over equal tiles of a caller's `delegate`, by label or under a heading per group (`methods/LibraryOrder`).
@@ -76,6 +76,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `StyledSwitch`.
 - `NotchWheel`: a `WheelHandler` that steps once per wheel notch (120, a touchpad's scroll adding up to one first), `stepped(direction)` -1 up/left, 1 down/right. Used by the workspace switchers and the overlay's page navigator.
 - `TypePickerPopup`: pick a type, `{ type, label, icon }`.
+- `StyledContextMenu`: a right-click menu on a `DropdownSurface`, opened at a point (`openAt(item, x, y)`). `items` `[{ id, text, icon, shortcut, enabled, checked, submenu }]` (or `{ separator: true }`); a `submenu` opens in place under a row leading back; `triggered(id)`. Up/Down, Enter or Right, Left, Escape; a press outside closes it (Popup's `closePolicy`, as `TypePickerPopup`). The bar editor's chips.
 - `ActionTile`: an icon well over a label. With `opens`, a right click or long press is `opened`.
 - `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens.
   - Both drain a `CountdownBar` (a bar along the bottom emptying over `duration` while `running`) over their `countdown` while active.
@@ -87,20 +88,21 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - `accepts` / `priority` hooks; `priority` defaults to a target's `dropPriority`.
   - Signals: `started` / `moved` / `dropped`.
 - `TrashTarget`: a "Drop to remove" pill shown while `active`, `targetKind: "trash"`, above overlapping targets. The layer's `accepts` says what it takes and its `dropped` removes it.
-- `DragChip`: a carryable icon + name pill.
+- `DragChip`: a carryable icon + name pill; `highlighted` draws it hovered for a pointer elsewhere, and with `hasMenu` a right click is `menuRequested(x, y)`.
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.
-- `InspectorHeader`: icon well, name, place, actions, divider.
-- `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title.
+- `InspectorHeader`: icon well, name, place, actions, then a wrapping row of `links` (shown while the host's `showsLinks`), divider.
+- `UndoRedoButtons`: an editor's Undo and Redo buttons, enabled from its `canUndo` / `canRedo` (an `EditHistory`'s, `qml/services/ui/EditHistory`: snapshots before each edit, edits to one field joining a step, up to 50).
+- `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title. Its `help` is a "?" after the title saying what the panel is for in a `StyledToolTip` on hover (wrapped at its `maxWidth`).
 
 ### Forms (`forms/`)
 - `SchemaField`: one schema row, any type. It picks `SchemaSwitch`, `SchemaNumberField` (slider or stepper), `SchemaComboBox`, `SchemaTextField` (commits on Enter, focus loss or a suggestion; a long value wraps, growing to four lines, then scrolls; a Browse button with `x-control: "folder"`) or `SchemaObjectArray` (a list of `SchemaArrayItem`s): use `SchemaField`, not those, unless you need one alone.
-- `FieldHeader`: a field's label (medium weight) with its description right under it, and a `trailing` slot on the label's line (the settings row's unsaved dot and reset, passed down as `SchemaField.headerExtra`). Every schema control draws its label through it; a switch sits at the row's right end, centred on the label and description, the row clickable. On a field at least `Widget.fieldInlineFrom` wide, a dropdown or slider sits beside the label too (`Widget.fieldControlWidth`); text boxes stay under it. The settings page's reset button's tooltip names the default.
+- `FieldHeader`: a field's label (medium weight) with its description right under it, and a `trailing` slot on the label's line (the settings row's unsaved dot and reset, passed down as `SchemaField.headerExtra`). Those marks are `FieldChangeMarks` (`schema`, `current`, `optionLabels`, `changed`; `reset(value)` with a copy of the default, `discard()`): a schema form gets them on every field with its `changedAt` hook (`SchemaPropertiesForm`, `OptionsGroup`; the dot's click is `discardAt(path)`). Every schema control draws its label through it; a switch sits at the row's right end, centred on the label and description, the row clickable. On a field at least `Widget.fieldInlineFrom` wide, a dropdown or slider sits beside the label too (`Widget.fieldControlWidth`); text boxes stay under it. The settings page's reset button's tooltip names the default.
 - `FormRow`: one row of any schema form (the settings page's `SettingsField`, `SchemaPropertiesForm`'s and `SettingRows`' rows): a hairline across the gap above it (`dividerGap`; none on the top row, which the host marks `first` from `Utils.firstFormRow`, and none above an empty row; never from the row's own `y`, which the layout sets from its height: a row flipping between the two once kept the layout polishing forever and froze the shell), an accent rail beside a row shown by a sibling's value (`indented`: `SchemaField.followsSibling`), and a fold open and shut as `shown` flips. A form's grid or column keeps no row spacing of its own.
 - `SchemaPropertiesForm`: a flat object; `order`.
 - `SettingRows`: dotted config paths as rows, saved debounced.
 - `OptionsGroup`: an inspector's Options card (problem, form, empty text).
 - `IntegrationHookup`: a theme integration's hookup (text to copy, what Apply does, Apply).
-- `SettingsLink`: an accent text link to where something else is set: a `setting` (a key path: `SettingsManager.openSetting`, which opens its card and outlines its row) or a `page` (a view type, or `Layouts:lockscreen` / `greeter` / `desktop`: `OverlayManager.followPageLink`). Named from its target unless `text` is set, and followed as a link, so the navigator offers the way back. It hides itself when its target isn't there; a host hiding it on its own condition binds `visible` to `available` and that.
+- `SettingsLink`: an accent text link to where something else is set: a `setting` (a key path: `SettingsManager.openSetting`, which opens its card and outlines its row) a `page` (a view type, or `Layouts:lockscreen` / `greeter` / `desktop`: `OverlayManager.followPageLink`), or a bar `widget` (the edge menu or page it opens, selected in the layouts editor: `OverlayManager.openedBy` / `editOpenedBy`). Named from its target unless `text` is set, and followed as a link, so the navigator offers the way back. It hides itself when its target isn't there; a host hiding it on its own condition binds `visible` to `available` and that.
 - `FieldLinks`: a schema's `x-link` (one or a list) as `SettingsLink`s, hidden while none shows. Form rows (`SettingsField`, `SchemaPropertiesForm`) put one under each field; the bar widget and module inspectors one for the type's own.
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 

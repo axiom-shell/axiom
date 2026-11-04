@@ -45,6 +45,10 @@ ValueStyleWidget {
   hasState: !!root.fields?.color
   stateColor: root.fields?.color ? Theme.resolveColor(root.fields.color) : "transparent"
 
+  // News: its state went to warning, or to critical (its colour's
+  // name, CustomWidgetData.stateColor), from a calmer one
+  attentionLevel: root.fields === null ? -1 : root.fields.color === "error" ? 2 : root.fields.color === "warning" ? 1 : 0
+
   hidden: root.fields?.hidden ?? false
   icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain

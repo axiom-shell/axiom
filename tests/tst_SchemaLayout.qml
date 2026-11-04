@@ -95,10 +95,10 @@ TestCase {
     };
     compare(SchemaLayout.rows(SchemaLayout.resolved(refSchema, refSchema), []).map(r => r.kind + ":" + r.path.join(".")), ["group:S", "group:S.style", "field:S.style.size"]);
     const resolved = SchemaLayout.resolved(schema, schema);
-    verify(SchemaLayout.rows(resolved, []).some(r => r.path.join(".") === "Bars.style.fontSize"), "the real schema's bar style");
+    verify(SchemaLayout.rows(resolved, []).some(r => r.path.join(".") === "Bars.style.textScale"), "the real schema's bar style");
     // /config (SettingsManager.settingPaths) walks the resolved schema to
     // keep them too
-    verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "fontSize"], key => undefined), "the bar style passes compositorAllows");
+    verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "textScale"], key => undefined), "the bar style passes compositorAllows");
   }
 
   function test_waitsForUser() {
@@ -688,7 +688,7 @@ TestCase {
     compare(groups.map(g => g.title + ":" + g.keys.join(",")), ["Two:b", "One:a", "Other:c"]);
     compare(Object.keys(groups[1].schema), ["a"]);
     const bar = SchemaLayout.objectGroups(schema.definitions.Bar, ["widgets", "style"]);
-    compare(bar.map(g => g.title), ["General", "Size", "Style", "Behaviour"]);
+    compare(bar.map(g => g.title), ["Placement", "Size", "Surface", "Behaviour"]);
     const style = SchemaLayout.objectGroups(schema.definitions.BarStyle, []);
     compare(style.map(g => g.title), ["Bar widgets", "Bar accents", "Surface shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.EdgeMenu, ["layout.modules"]);

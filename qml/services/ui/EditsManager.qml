@@ -16,9 +16,9 @@ import qs.services.apps
 // Enter or focus loss (a half-typed command or folder never runs).
 //
 // Also how the editors are laid out, which outlives their pages (saved in
-// state/editors.json): whether the libraries group their types, and
-// whether the bar editor stacks a horizontal bar's sections. And, in
-// memory, where each panel was scrolled to (ScrollMemory).
+// state/editors.json): whether the libraries group their types, and the
+// Keybinds editor's folded sections. And, in memory, where each panel was
+// scrolled to (ScrollMemory).
 QtObject {
   id: root
 
@@ -58,23 +58,14 @@ QtObject {
   // The widget and module libraries show their types by group (the
   // schema's `x-libraryGroups`), else by name
   readonly property bool libraryGrouped: root._libraryGrouped
-  // The bar editor draws a top or bottom bar's sections stacked down the
-  // side of the page, as a side bar's, rather than across it
-  readonly property bool barStacked: root._barStacked
   // The Keybinds editor's folded sections, by section name
   readonly property var keybindsFolded: root._keybindsFolded
   property bool _libraryGrouped: false
-  property bool _barStacked: false
   property var _keybindsFolded: []
   readonly property var _state: StateManager.createStateHandler("editors")
 
   function setLibraryGrouped(value) {
     root._libraryGrouped = value;
-    root._saveState();
-  }
-
-  function setBarStacked(value) {
-    root._barStacked = value;
     root._saveState();
   }
 
@@ -102,7 +93,6 @@ QtObject {
   function _saveState() {
     root._state.save({
       "libraryGrouped": root._libraryGrouped,
-      "barStacked": root._barStacked,
       "keybindsFolded": root._keybindsFolded
     });
   }
@@ -110,7 +100,6 @@ QtObject {
   Component.onCompleted: {
     const saved = root._state.load({});
     root._libraryGrouped = saved.libraryGrouped === true;
-    root._barStacked = saved.barStacked === true;
     root._keybindsFolded = Array.isArray(saved.keybindsFolded) ? saved.keybindsFolded : [];
   }
 

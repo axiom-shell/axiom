@@ -8,9 +8,9 @@ import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.reusable
 
-// Lays out a bar's five widget sections along its main axis in one pass,
+// Lays out a bar's three widget sections along its main axis in one pass,
 // so they can never overlap: `left`/`right` hug the ends, `center` stays
-// centered on the bar with `leftCenter`/`rightCenter` beside it. When the
+// centered on the bar. When the
 // side sections crowd it, the center block slides towards the roomier side
 // (unless the bar's `lockCenter` pins it, making each side make room on its
 // own half instead); then elastic widgets shrink, and if even their minimum sizes don't fit,
@@ -22,6 +22,8 @@ Rectangle {
   required property var barConfig
   property var screen
   property var panel
+  // Any of it in view (BarPanel.onScreen; a container with no panel is)
+  readonly property bool _onScreen: root.panel?.onScreen ?? true
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real length: isVertical ? height : width
@@ -35,107 +37,120 @@ Rectangle {
   readonly property bool islands: barConfig.island
   // What each end meets (BarEnds): the frame, or a bar it makes way for
   readonly property var ends: barConfig.ends
-  // How far in from an end islands may reach: their float gap from the
-  // stroke there (bar-window 0 past its reach onto it), or held clear of
-  // a bar it makes way for, as a surface held off an edge
-  function _islandInset(end) {
-    return end.held ? end.over + end.gap : end.reach + root.barConfig.floatGap;
+  // How far in from an end islands may reach: where windows start there
+  // (BarEnds.windowInset: the frame or the bars it makes way for, and the
+  // compositor's gaps_out on that side), or held clear of a bar it makes
+  // way for, as a surface held off an edge
+  function _islandInset(end, atStart) {
+    return end.held ? end.over + end.gap : BarEnds.windowInset(root.barConfig, end, atStart, ScreenEdgeManager.endsOptions);
   }
   // Where islands may reach along the bar, from its start
-  readonly property real islandFrom: root._islandInset(root.ends.start)
-  readonly property real islandEnd: root.length - root._islandInset(root.ends.end)
+  readonly property real islandFrom: root._islandInset(root.ends.start, true)
+  readonly property real islandEnd: root.length - root._islandInset(root.ends.end, false)
   // Fillet room each side of a pill, as for popouts (AttachedSurface)
   readonly property int pillConnector: Appearance.connectorGap
-  // Kept clear at each end. A pill at an end instead sits flush on the
-  // perpendicular edge's stroke (bar-window 0 along a bar inside the
-  // border) and joins it, so its widgets only need the pill inset (the
-  // stroke and the padding, or the screen margin too on a bare edge). An
+  // A pill's fillets off the bar's outer edge and its far corners: at a
+  // high radius both don't fit across its depth (from the stroke it hangs
+  // off to its far stroke), so they scale down by the same ratio until
+  // they meet as one curve (SurfaceOutline.fitRadii). Joined ends keep
+  // the full radius.
+  readonly property var pillRadii: SurfaceOutline.fitRadii(root.pillReach - Appearance.borderWidth, Appearance.borderRadius, Math.max(0, Appearance.borderRadius - Appearance.borderWidth / 2))
+  // A pill's depth from the stroke it hangs off (the window's outer edge,
+  // or past the frame a pill bar on the border reaches back over:
+  // stripCover)
+  readonly property real pillReach: Math.max(0, root.barConfig.pillDepth - root.barConfig.stripCover)
+  // Kept clear at each end. A solid or pill bar, part of the frame, has
+  // its widgets the screen margin in (BarEnds.endInset): an end pill fills
+  // the corner, joining the frame squarely as a solid bar does. An
   // island's widgets sit inside its stroke and padding. A transparent
-  // bar's keep the gap they keep across it, past the stroke there; a solid
-  // one's the screen margin, or on a bare edge at least that gap. At an
-  // end held clear of another bar, a pill's free end and its fillet stay
-  // past the held gap, and a plain bar's widgets at least its padding past
-  // that bar.
-  function _endMargin(end) {
-    if (root.pills) {
-      if (!end.held)
-        return root.barConfig.pillInset;
-      const fillet = Appearance.screenBorder ? EdgeAttach.filletMargin(Appearance.borderWidth, Appearance.borderRadius) : 0;
+  // bar's, not part of the frame, line up with the windows
+  // (BarEnds.windowInset). At an end held clear of another bar, a pill's
+  // free end and its fillet stay past the held gap, and a plain bar's
+  // widgets at least its padding past that bar.
+  function _endMargin(end, atStart) {
+    if (root.islands)
+      return root._islandInset(end, atStart) + root.barConfig.islandGap;
+    if (end.held) {
+      if (!root.pills)
+        return end.over + Math.max(end.gap, root.barConfig.edgePadding);
+      const fillet = Appearance.screenBorder ? EdgeAttach.filletMargin(Appearance.borderWidth, root.pillRadii.fillet) : 0;
       return end.over + end.gap + fillet + root.barConfig.pillGap;
     }
-    if (root.islands)
-      return root._islandInset(end) + root.barConfig.islandGap;
-    if (end.held)
-      return end.over + Math.max(end.gap, root.barConfig.padding);
-    // The gap its widgets keep across the bar, from what covers its outer
-    // edge, kept past the stroke at the end too (or the bare screen edge)
-    const across = root.barConfig.crossStart - (root.barConfig.insideBorder ? Appearance.borderWidth : 0);
-    if (!root.barConfig.solid)
-      return end.reach + across;
-    return Appearance.screenBorder ? Appearance.screenMargin : Math.max(Appearance.screenMargin, across);
+    if (root.pills || root.barConfig.solid)
+      return BarEnds.endInset(root.barConfig, end, ScreenEdgeManager.endsOptions);
+    return BarEnds.windowInset(root.barConfig, end, atStart, ScreenEdgeManager.endsOptions);
   }
-  readonly property var endMargins: [root._endMargin(root.ends.start), root._endMargin(root.ends.end)]
+  readonly property var endMargins: [root._endMargin(root.ends.start, true), root._endMargin(root.ends.end, false)]
+  // How near a pill's end may come to an unheld end of the bar and still
+  // run on to it and join it: its widgets' inset there less the pill gap
+  // (on the stroke it covers, at least)
+  readonly property real _pillJoinReach: Math.max(root.barConfig.overlap, ...[root.ends.start, root.ends.end].map((end, i) => end.held ? 0 : root.endMargins[i] - root.barConfig.pillGap)) + 0.5
 
-  // One { start, length, joinStart, joinEnd } per pill along the bar: each
-  // non-empty section, merged with its neighbour when they're at most
-  // pillMerge apart, grown by the pill gap. Pills reaching an end are
-  // stretched onto it and join it. On a floating bar, its islands
-  // (BarLayout.islandRects): one along it, or one per group.
-  // Pills asked to reach an end run there, or a stub grows there for them
-  // (BarLayout.endReaches, setRequest).
+  // One { start, length, joinStart, joinEnd } per pill along the bar: one
+  // per joined group (BarLayout.joinGroups, pillRects): grown by the pill
+  // gap, those reaching an end stretched onto it and joining it. On a
+  // floating bar, its islands (BarLayout.islandRects): one along it, or
+  // one per joined group. Pills asked to reach an end run there, or a
+  // stub grows there for them (BarLayout.endReaches, setRequest).
   readonly property var pillRects: {
     if (islands)
-      return BarLayout.islandRects(root._spans, root.barConfig.islandGap, root.barConfig.pillMerge, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
+      return BarLayout.islandRects(root.joinedGroups, root.barConfig.islandGap, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
     return root.pills ? root._endReach.rects : [];
   }
-  readonly property var _endReach: BarLayout.endReaches(root.sectionPills, root._endReachList, root.length, root.barConfig.pillMerge, root.pillConnector)
-  readonly property var sectionPills: {
-    if (!pills)
-      return [];
-    const spans = root._spans.slice();
-    const merged = [];
-    spans.forEach(span => {
-      const last = merged[merged.length - 1];
-      if (last && span.start - last.end <= root.barConfig.pillMerge)
-        last.end = Math.max(last.end, span.end);
-      else
-        merged.push(span);
-    });
-    // A free end sits the pill gap out from its widgets. An end that would
-    // reach the frame (the end sections, which sit endMargin in) joins it,
-    // the frame standing in for the gap; not a bar it makes way for, which
-    // has no stroke to join (BarEnds).
-    const gap = root.barConfig.pillGap;
-    const reach = root.barConfig.overlap + 0.5;
-    return merged.map(m => {
-      const joinStart = root.ends.start.joinable && m.start - gap <= reach;
-      const joinEnd = root.ends.end.joinable && m.end + gap >= root.length - reach;
-      const start = joinStart ? 0 : m.start - gap;
-      const end = joinEnd ? root.length : m.end + gap;
-      return {
-        "start": start,
-        "length": end - start,
-        "joinStart": joinStart,
-        "joinEnd": joinEnd
-      };
-    });
-  }
+  readonly property var _endReach: BarLayout.endReaches(root.groupPills, root._endReachList, root.length, root.barConfig.joinGap, root.pillConnector)
+  // The pills of its own groups, before any end reach or stretch. A free
+  // end sits the pill gap out from its widgets; an end that would reach
+  // the frame (the end sections, which sit endMargin in) joins it, the
+  // frame standing in for the gap; not a bar it makes way for, which has
+  // no stroke to join (BarEnds): within the stroke it covers there, or on
+  // a bare edge, the room the end widgets keep past the pill's gap. Pills
+  // too close for the fillets between them draw as one.
+  readonly property var groupPills: root.pills ? BarLayout.pillRects(root.joinedGroups, root.barConfig.pillGap, 2 * root.pillConnector, root._pillJoinReach, root.length, [root.ends.start.joinable, root.ends.end.joinable]) : []
 
-  // The sections with widgets showing, as { start, end } along the bar.
-  // Dividers at a section's end facing another section stand in the gap
-  // between them, outside its pill (BarLayout.edgeHang); at the first and
-  // last sections showing, they stay in it, as padding.
-  readonly property var _spans: {
-    const shown = root._groups.filter(g => g.drawnLength > 0.5).sort((a, b) => a.drawnPos - b.drawnPos);
-    return shown.map((g, i) => ({
-          "start": g.drawnPos + (i > 0 ? g.drawnHang.lead : 0),
-          "end": g.drawnPos + g.drawnLength - (i < shown.length - 1 ? g.drawnHang.trail : 0)
+  // Each section's groups of widgets as drawn, along the bar ({ start,
+  // end, section }). Dividers at a section's end facing another section
+  // stand in the gap between them, outside its group (BarLayout.edgeHang);
+  // at the first and last sections showing, they stay in it, as padding.
+  readonly property var groupSpans: {
+    const shown = root._groups.map((g, s) => ({
+          "g": g,
+          "s": s
+        })).filter(e => e.g.drawnLength > 0.5 && e.g.drawnGroups.length > 0).sort((a, b) => a.g.drawnPos - b.g.drawnPos);
+    return [].concat(...shown.map((e, i) => {
+      const groups = e.g.drawnGroups;
+      return groups.map((group, k) => ({
+            "start": e.g.drawnPos + group.start + (i > 0 && k === 0 ? e.g.drawnHang.lead : 0),
+            "end": e.g.drawnPos + group.end - (i < shown.length - 1 && k === groups.length - 1 ? e.g.drawnHang.trail : 0),
+            "section": e.s
+          }));
+    }));
+  }
+  // The groups joined where they're at most joinGap apart: one pill, one
+  // island or one merged background each
+  readonly property var joinedGroups: BarLayout.joinGroups(root.groupSpans, root.barConfig.joinGap)
+  // Per section, whether its first group joins one in the section before
+  // it, and how far past its last group the one it joins after it starts
+  // (WidgetGroup's joinStart, joinEndReach)
+  readonly property var sectionJoins: {
+    const joins = root._groups.map(() => ({
+          "start": false,
+          "endReach": 0
         }));
+    root.joinedGroups.forEach(joined => {
+      for (let k = 1; k < joined.members.length; k++) {
+        const before = root.groupSpans[joined.members[k - 1]], after = root.groupSpans[joined.members[k]];
+        if (before.section === after.section)
+          continue;
+        joins[before.section].endReach = Math.max(0, after.start - before.end);
+        joins[after.section].start = true;
+      }
+    });
+    return joins;
   }
 
   // The pills (or islands) as drawn: stretched to carry the surfaces open
   // on them, and joining any they then reach, while those are open
-  readonly property var pillShapes: BarLayout.stretchIslands(root.pillRects, root._shownStretches, root.barConfig.pillMerge)
+  readonly property var pillShapes: BarLayout.stretchIslands(root.pillRects, root._shownStretches, root.barConfig.joinGap)
 
   // What the surfaces standing on or joining this bar ask of it, by owner
   // (PillStretch: a bar popout, an edge popout, a dock, a submenu, a pill
@@ -201,10 +216,11 @@ Rectangle {
   // the border leaves its stroke open under a translucent fill: a pill, a
   // popout merged into the bar or on a solid bar's inner edge. Null while
   // surfaces are solid, with the border off, on a bar the border's stroke
-  // isn't on (stacked inside another, BarEnds' offBorder), or until the
-  // bar's place on screen is known.
+  // isn't on (stacked inside another, BarEnds' offBorder), until the
+  // bar's place on screen is known, or once an auto-hiding bar has slid
+  // out of view (BarPanel.onScreen), the stroke whole again.
   function borderOpening(from, to) {
-    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from)
+    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
     return {
@@ -218,7 +234,7 @@ Rectangle {
   // this item, joined at its start or end): it covers the perpendicular
   // edge's stroke, from the bar's outer edge to its join's fillet
   function joinOpening(surface, atStart) {
-    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin)
+    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
       return null;
     const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
     const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
@@ -238,7 +254,7 @@ Rectangle {
     if (end.kind !== kind)
       return null;
     const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right), end.barId);
-    return panel?.visible ? panel.container : null;
+    return panel?.present ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")
   readonly property var solidEnd: root.barAt(false, "solidBar")
@@ -253,7 +269,7 @@ Rectangle {
   // this bar's near side, and that bar's shadow follows round it.
   function _solidJoinOf(surface, atStart, other) {
     const origin = other?.blurOrigin ?? null;
-    if (!origin || !root.blurOrigin)
+    if (!origin || !root.blurOrigin || !root._onScreen)
       return null;
     const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
     const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
@@ -286,16 +302,19 @@ Rectangle {
     id: repaint
   }
 
-  readonly property var _groups: [leftGroup, leftCenterGroup, centerGroup, rightCenterGroup, rightGroup]
+  readonly property var _groups: [leftGroup, centerGroup, rightGroup]
   // Per section, the model indices hidden so the minimum sizes fit
-  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.spacing, root.barConfig.groupSpacing, root.barConfig.lockCenter)
-  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.spacing, root.barConfig.lockCenter, centerGroup.layoutHang)
+  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter)
+  // Each section's room along the bar; a side with spacers stretches to
+  // the center (BarLayout.layoutSections)
+  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount))
 
   // A section's shown widgets; `configIndex` is each one's place in the
   // section's config, which hidden widgets leave out
   function widgetModel(widgetConfigArray) {
     return (widgetConfigArray || []).map((widgetConf, i) => ({
           "component": Paths.widgetUrl(widgetConf.type),
+          "type": widgetConf.type,
           "properties": widgetConf.properties || {},
           "layout": widgetConf.layout || {},
           "configIndex": i,
@@ -304,17 +323,29 @@ Rectangle {
   }
 
   // While the bar editor is on screen, what it shows of this bar (see
-  // BarManager.live): the widgets hidden for want of room, by section, and
-  // how the selected widget is sized
+  // BarManager.live): the widgets hidden for want of room, by section;
+  // how the selected widget is sized; and per section (`sections`, by
+  // name) how long its widgets want to be, none hidden (`used`), and the
+  // most room it could have, the others as they are (`room`,
+  // BarLayout.sectionRooms)
   readonly property var editorReport: BarManager.editing ? {
     "source": root.barConfig.sourceId,
     "screen": root.screen?.name ?? "",
     "hidden": root._groups.reduce((out, g) => Utils.withEntry(out, g.zone, g.crowdedOut), {}),
-    "selected": root._groups.map(g => g.selectedMeasure).find(m => m !== null) ?? null
+    "selected": root._groups.map(g => g.selectedMeasure).find(m => m !== null) ?? null,
+    "sections": root._groups.reduce((out, g, s) => Utils.withEntry(out, g.zone, {
+        "used": Math.round(g.wantedLength),
+        "room": Math.round(root._sectionRooms[s])
+      }), {})
   } : null
+  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang)
   property string _reportedId: ""
   readonly property string _reportKey: JSON.stringify(root.editorReport)
   on_ReportKeyChanged: root._report()
+  // A bar made while the editor is open starts with its report: a change
+  // handler never sees a first value
+  Component.onCompleted: if (root.editorReport)
+    root._report()
   Component.onDestruction: BarManager.clearLive(root._reportedId, root.screen?.name ?? "")
 
   function _report() {
@@ -325,16 +356,21 @@ Rectangle {
     BarManager.setLive(id, root.editorReport);
   }
 
-  // A section: the group sits inside its slot at `align` (0 = start,
-  // 1 = end), which only matters once hidden modules leave it spare room.
+  // A section (`slotIndex` in BarsConfig.sectionNames: left, center,
+  // right): the group sits inside its slot at its `align` (start, middle,
+  // end), which only matters once hidden modules leave it spare room.
   // Inline components can't see this file's ids, hence `bar`.
   component Section: WidgetGroup {
     id: section
     required property Item bar
     required property int slotIndex
-    required align
 
     readonly property var slot: section.bar.slots[section.slotIndex]
+    zone: BarsConfig.sectionNames[section.slotIndex]
+    align: section.slotIndex / 2
+    widgets: section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone])
+    joinStart: section.bar.sectionJoins[section.slotIndex].start
+    joinEndReach: section.bar.sectionJoins[section.slotIndex].endReach
     readonly property real mainPos: Math.round(section.slot.offset + (section.slot.extent - section.usedLength) * section.align)
 
     barConfig: section.bar.barConfig
@@ -392,13 +428,26 @@ Rectangle {
     // cover the far stroke, whether or not the pill stretches for them),
     // from the outer edge they stand on out, nor on the solid bars its
     // ends make way for (whose stroke a pill's fillet curves into)
-    holes: [].concat(...root._openingHoles.map(h => h.rects)).concat([].concat(...root._flushEnds.map(f => f.holes)), root._endBarHole(true, root.solidStart ?? root.pillBarStart), root._endBarHole(false, root.solidEnd ?? root.pillBarEnd)).filter(hole => hole !== null)
+    holes: [].concat(...root._openingHoles.map(h => h.rects)).concat([].concat(...root._flushEnds.map(f => f.holes)), root._endBarHole(true, root.solidStart ?? root.pillBarStart), root._endBarHole(false, root.solidEnd ?? root.pillBarEnd), root._stripHole).filter(hole => hole !== null)
     // ...and a joined surface's fillet (a pill's or popout's curving into
     // a solid bar's stroke) only as far as its curve, not the square it
     // sits in: past the curve the shadow runs on round it
     fillets: [].concat(...root._openingHoles.map(h => h.fillets))
   }
   readonly property var _openingHoles: root._openingList.map(o => root._shadowHoles(o))
+  // Nor over the border's frame a pill bar on the border reaches back
+  // over (stripCover): its pills hang off the stroke past it, and cast
+  // from there as on a bar laid inside the border
+  readonly property var _stripHole: {
+    const cover = root.barConfig.stripCover;
+    if (cover <= 0)
+      return null;
+    const reach = root.barConfig.shadowSize * 2;
+    const across = root.isVertical ? root.width : root.height;
+    const far = root.barConfig.right || root.barConfig.bottom;
+    const from = far ? across - cover : -reach;
+    return root.isVertical ? Qt.rect(from, -reach, cover + reach, root.length + reach * 2) : Qt.rect(-reach, from, root.length + reach * 2, cover + reach);
+  }
   // Where an opening keeps the shadow off: `rects`, and the corners of the
   // fillets curving into it at its ends (OutsideShadow.fillets): there
   // only as far as their curve, the shadow running on round them
@@ -487,6 +536,10 @@ Rectangle {
     }
   }
 
+  // Where the blur window cuts the bar's shapes and shadow, in screen px
+  // (BlurShape.clipRect): its window, for an auto-hiding bar sliding out
+  // of it (BarPanel); null for none
+  property var blurClip: null
   // The blur window draws the bar's fill (BlurManager), once
   // its window is placed on screen: where its shapes are, the container's
   // top-left on screen
@@ -540,6 +593,7 @@ Rectangle {
         y: root.blurOrigin?.y ?? 0
         shown: root.backed && solidFill.visible
         shadow: root.barConfig
+        clipRect: root.blurClip
       }
     }
 
@@ -653,6 +707,7 @@ Rectangle {
           y: (root.blurOrigin?.y ?? 0) + island.y
           shown: root.backed && !island.covered
           shadow: root.barConfig
+          clipRect: root.blurClip
         }
         // Inner side: bottom on a top bar, right on a left one, and so on
         topLeftRadius: root.barConfig.bottom || root.barConfig.right ? startInner : corner
@@ -685,9 +740,13 @@ Rectangle {
           "squareEnd": false
         }
         readonly property real alongStart: span.start - startMargin
-        // Depth reached from the outer edge; the surface's far half-gap is empty
-        readonly property real depthBox: Math.max(0, root.barConfig.pillDepth - connectorGap / 2)
-        boxStart: connectorGap / 2
+        // Its depth (pillReach), less the surface's far half-gap, which is
+        // empty. At a high radius the half gap is deeper than the pill:
+        // the box then starts at the pill's far side, never past it (which
+        // drew the far stroke deeper than pillDepth, where what stands on
+        // it and its openings take it to be)
+        readonly property real depthBox: root.pillReach - pill.boxStart
+        boxStart: Math.min(connectorGap / 2, root.pillReach)
 
         edge: root.barConfig.location
         active: true
@@ -702,17 +761,20 @@ Rectangle {
         straight: !Appearance.screenBorder
         straightJoinStart: root.ends.start.straight || (index === 0 && root._endReach.straightStart)
         straightJoinEnd: root.ends.end.straight || (index === root.pillShapes.length - 1 && root._endReach.straightEnd)
-        // Square where a popout runs flush into it
-        startCornerRadius: span.squareStart ? 0 : cornerRadius
-        endCornerRadius: span.squareEnd ? 0 : cornerRadius
+        // Its fillets off the outer edge and its far corners, scaled
+        // alike to meet across its depth (pillRadii); square where a
+        // popout runs flush into it
+        attachFilletRadius: root.pillRadii.fillet
+        startCornerRadius: span.squareStart ? 0 : root.pillRadii.corner
+        endCornerRadius: span.squareEnd ? 0 : root.pillRadii.corner
 
         Glide on startCornerRadius {}
         Glide on endCornerRadius {}
 
         width: implicitWidth
         height: implicitHeight
-        x: root.isVertical ? (root.barConfig.right ? root.width - width : 0) : alongStart
-        y: root.isVertical ? alongStart : (root.barConfig.bottom ? root.height - height : 0)
+        x: root.isVertical ? (root.barConfig.right ? root.width - width - root.barConfig.stripCover : root.barConfig.stripCover) : alongStart
+        y: root.isVertical ? alongStart : (root.barConfig.bottom ? root.height - height - root.barConfig.stripCover : root.barConfig.stripCover)
         backed: root.backed
         opaque: BlurManager.opaqueOn(root.blurScreen)
         // Grown out of the border's stroke, which it covers there...
@@ -757,17 +819,12 @@ Rectangle {
           return [pill._farHole(start, end, false)].concat(joins);
         }))
         // The stroke, with its anti-aliased fringe a pixel either side, or
-        // (`inner`) that fringe's row inside the pill alone
+        // (`inner`) that fringe's row inside the pill alone, taken from the
+        // pill's own far stroke (`farV`, its centre line) as drawn
         function _farHole(start, end, inner) {
-          const row = Appearance.borderWidth + 2;
-          const foot = root.barConfig.pillDepth;
-          const far = root.isVertical ? root.width : root.height;
-          const near = root.barConfig.left || root.barConfig.top;
-          const from = near ? foot - row + 1 : far - foot - 1;
-          const across = inner ? (near ? from : from + row - 1) : from;
-          const depth = inner ? 1 : row;
-          const r = root.isVertical ? Qt.rect(across, start, depth, end - start) : Qt.rect(start, across, end - start, depth);
-          return Qt.rect(r.x - pill.x, r.y - pill.y, r.width, r.height);
+          const h = pill.half;
+          const along = root.isVertical ? pill.y : pill.x;
+          return pill._rectFrom(start - along, pill.farV - h - 1, end - start, inner ? 1 : 2 * h + 2);
         }
         // Under a `keepFill` opening the fill row the hole took inside the
         // pill is painted back while the pill fills itself (the surface
@@ -825,6 +882,7 @@ Rectangle {
           y: (root.blurOrigin?.y ?? 0) + pill.y
           shown: root.backed
           shadow: root.barConfig
+          clipRect: root.blurClip
         }
       }
     }
@@ -881,7 +939,7 @@ Rectangle {
     if (root.barConfig.accentLine === "outer") {
       if (root.islands)
         return root.barConfig.islandStart + Appearance.borderWidth;
-      return root.pills ? root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
+      return root.pills ? root.barConfig.stripCover + root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
     }
     if (root.pills)
       return root.barConfig.pillDepth - Appearance.borderWidth - width;
@@ -909,7 +967,7 @@ Rectangle {
         "length": 0
       }
       // Pills only round their inner side; islands both
-      readonly property real corner: root.islands || root.barConfig.accentLine === "inner" ? Appearance.borderRadius : 0
+      readonly property real corner: root.islands ? Appearance.borderRadius : root.barConfig.accentLine === "inner" ? root.pillRadii.corner : 0
 
       bar: root
       start: rect.start + (rect.joinStart ? 0 : corner)
@@ -922,44 +980,17 @@ Rectangle {
     id: leftGroup
     bar: root
     slotIndex: 0
-    zone: "left"
-    align: 0
-    widgets: root.widgetModel(root.barConfig.widgets?.left)
-  }
-
-  Section {
-    id: leftCenterGroup
-    bar: root
-    slotIndex: 1
-    zone: "leftCenter"
-    align: 1
-    widgets: root.widgetModel(root.barConfig.widgets?.leftCenter)
   }
 
   Section {
     id: centerGroup
     bar: root
-    slotIndex: 2
-    zone: "center"
-    align: 0.5
-    widgets: root.widgetModel(root.barConfig.widgets?.center)
-  }
-
-  Section {
-    id: rightCenterGroup
-    bar: root
-    slotIndex: 3
-    zone: "rightCenter"
-    align: 0
-    widgets: root.widgetModel(root.barConfig.widgets?.rightCenter)
+    slotIndex: 1
   }
 
   Section {
     id: rightGroup
     bar: root
-    slotIndex: 4
-    zone: "right"
-    align: 1
-    widgets: root.widgetModel(root.barConfig.widgets?.right)
+    slotIndex: 2
   }
 }

@@ -1,4 +1,6 @@
-label: Media Player
+label: Media
+keywords: ['Media Player']
+elastic: true
 icon: music_note
 group: Media & audio
 popout: {variant: own, enabled: {description: Open the media controls when hovered.}}

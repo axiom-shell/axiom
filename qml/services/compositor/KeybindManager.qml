@@ -100,6 +100,7 @@ QtObject {
       "overlayPage": "web_stories",
       "edgeMenu": "side_navigation",
       "dock": "dock_to_bottom",
+      "bar": "toolbar",
       "workspaceOverview": "grid_view",
       "powerMenu": "power_settings_new",
       "lock": "lock",
@@ -225,6 +226,8 @@ QtObject {
       return EdgeMenusConfig.menus.map(menu => menu.id).filter(id => id);
     case "dock":
       return DockConfig.docks.map(dock => dock.id);
+    case "bar":
+      return ["focused"].concat(BarsConfig.savedBars.filter(bar => bar.autoHide !== "never").map(bar => bar.id));
     case "view":
       return OverlayConfig.views.filter(view => view.visible !== false).map(view => view.name || view.type).concat(["Layouts"]).filter((name, i, all) => all.indexOf(name) === i);
     }
@@ -241,6 +244,13 @@ QtObject {
   function callLabels(action) {
     const record = action === "screenRecord";
     const onOff = !record && root.actionTable?.calls?.[action]?.open === "enable";
+    // A bar's toggle pins it shown; open shows it for a moment
+    if (action === "bar")
+      return {
+        "toggle": I18n.tr("Pin or unpin"),
+        "open": I18n.tr("Show"),
+        "close": I18n.tr("Hide")
+      };
     return {
       "toggle": I18n.tr("Toggle"),
       "open": record ? I18n.tr("Start") : onOff ? I18n.tr("Turn on") : I18n.tr("Open"),

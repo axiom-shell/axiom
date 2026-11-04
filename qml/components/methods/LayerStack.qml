@@ -77,28 +77,28 @@ QtObject {
       "why": "Pill bars on the longer edge."
     },
     {
-      "namespace": "bar-transparent",
+      "namespace": "bar-floating",
       "order": -3,
       "bar": true,
-      "why": "Transparent bars: make way for solid and pill bars."
-    },
-    {
-      "namespace": "bar-transparent-long",
-      "order": -4,
-      "bar": true,
-      "why": "Transparent bars on the longer edge."
-    },
-    {
-      "namespace": "bar-floating",
-      "order": -5,
-      "bar": true,
-      "why": "Floating bars and floating pills: make way for every other bar."
+      "why": "Floating bars and floating pills: make way for solid and pill bars."
     },
     {
       "namespace": "bar-floating-long",
+      "order": -4,
+      "bar": true,
+      "why": "Floating bars on the longer edge."
+    },
+    {
+      "namespace": "bar-transparent",
+      "order": -5,
+      "bar": true,
+      "why": "Transparent bars: make way for every other bar, so one is laid inside them all (and its edge popouts open past them)."
+    },
+    {
+      "namespace": "bar-transparent-long",
       "order": -6,
       "bar": true,
-      "why": "Floating bars on the longer edge: the last bar."
+      "why": "Transparent bars on the longer edge: the last bar."
     },
     {
       "namespace": "dock",

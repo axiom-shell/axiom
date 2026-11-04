@@ -5,7 +5,7 @@ import qs.components.bar.widgets.base
 
 // The Window bar widget: the focused window's title. Sized to the title,
 // shrinking (the label elides) down to just the icon when the bar is
-// crowded, as Media does; `layout.size` caps it. Its display style scrolls
+// crowded, as Media does; `layout.maxSize` caps it. Its display style scrolls
 // it (ticker) or puts it over the app (stacked).
 ValueStyleWidget {
   id: root
