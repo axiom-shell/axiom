@@ -10,6 +10,7 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
 - `views/BarEditor/BarEditor.qml`, with its pieces in `views/BarEditor/`. It follows the shared [editor pattern](../core/editors-pattern.md).
 - `BarsPanel`, `SectionsBoard` and `WidgetInspector` are streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)), as are the panel's field groups and each form field. The board's loader takes its depth from the board (`board.implicitHeight`), so a horizontal strip settles a moment after the page shows.
 - **Left: `BarsPanel`.**
+  - Save and Discard in its header (shown while the draft differs), above the bar list: they never move, while the board follows the bar's edge.
   - The bars, with duplicate and remove.
   - The selected bar's settings under four tabs (`StyledTabBar`; the tab is `BarManager.panelTab`, kept while the page is rebuilt), each showing schema groups by their `x-group` title (`BarsPanel.tabs`): **Layout** (Placement, Size, and any Bar group no tab names), **Surface** (Surface; the style's Bar accents and Surface shadow), **Widgets** (the style's Bar widgets), **Behaviour** (Behaviour). Only the shown tab's groups are built.
     - Their form reads `BarsConfig.lookOf(bar)`, so a look field's `x-showIf` sees what the bar draws, even from a group it doesn't override.
@@ -27,7 +28,7 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
 - Chips are dragged within and between lanes, or dropped in from the library.
 - Each chip is its widget, live (`WidgetChip`): a `BarWidgetHost` with `preview: true` under an `enabled: false` item, on its `WidgetBackground`, drawn on `BarManager.previewConfig` (the draft bar enriched at a fixed `Widget.px(26)` thickness, along a top edge whatever its own, with stub ends). Its properties come from that config's `widgets`, so its Auto colours are the bar's. Each streams in (`StreamedLoader`) a moment after the board. A widget showing nothing (a spacer, no tray icons) shows its type's icon and label greyed, as the drag's ghost does (no widget). With no screen, a widget that reads its screen (Workspaces) draws as on none.
 - One label everywhere: `BarDragLayer.label(type)` (the type info's `label`, a custom widget's own name), by the widget's library key (`libraryKey`: `CustomWidget:<id>` for a custom widget) on chips, the inspector's title and the fit line (`widgetLabel`).
-- The header (`CardHeader`): undo and redo (`UndoRedoButtons` over `BarManager.history`), the drop order switch, an Unsaved chip with Save and Discard, and the help in its "?" (`help`).
+- The header (`CardHeader`, no actions of its own): undo and redo (`UndoRedoButtons` over `BarManager.history`), the drop order switch, an Unsaved chip, and the help in its "?" (`help`).
   - The drop order switch badges each chip with its place in the order a crowded bar drops widgets in (`BarLayout.dropOrder`, lowest priority first, ties right, left, center and the last listed first; spacers and hidden widgets never drop). It reads `BarManager.priorityOf(widget)`: `layout.priority`, else the type's own (`BarsConfig.defaultPriority`).
 - **Fit.** Under the header, the screens the bar fits on ("Fits DP-1"), or per screen "No room on DP-1 for" and each widget hidden there as a button selecting it. While a selected widget has no room somewhere (`selectedCrowdedOn`, the narrowest such screen), two actions follow:
   - **Raise priority** (`BarManager.raiseWidgetPriority`): one above every other widget's on the bar, so it drops last.
@@ -41,10 +42,10 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
 - With nothing selected it says how to pick one.
 - Shows the widget's options, in its `x-order`, with `x-beside` fields paired (`OptionsGroup`'s `pairs`), each with its change marks (a dot while it differs from the saved widget, matched by id: `BarManager.widgetPropertyChanged` / `discardWidgetProperty`).
   - Their `x-showIf` can read the selected bar's look as `$bar.<key>` (`BarsConfig.lookContext`, passed as `context`), so colors the bar's style doesn't draw are hidden ([widget style](widget-style.md#which-color-fields-show)).
-  - Under them, the type's `x-link`s and a link to every bar's widget style (`Bars.style`).
+  - Above them, the type's `x-link`s. A palette button in the header (a `SettingsLink` it follows) opens every bar's widget style (`Bars.style`).
   - For a Button opening an edge menu or page, `OverlayManager.openedBy`/`editOpenedBy` take it to the [layouts editor](../overlay/layouts-editor.md).
 - Options and Sizing sit side by side while the inspector is wide enough, else one under the other.
-- Shows the widget's Sizing: the `LayoutOverrideField`s from `BarsConfig.widgetLayoutSchema`. They are explained from, and start at, what the bar uses now (priority: else `BarManager.priorityOf`). The minimum and maximum show only for an elastic widget (the type info's `elastic`, `x-elastic`); every widget has the priority.
+- Shows the widget's Sizing: the `LayoutOverrideField`s from `BarsConfig.widgetLayoutSchema`. They are explained from, and start at, what the bar uses now (a size less its insets, which `maxSize`/`minSize` don't count; priority: else `BarManager.priorityOf`). The Repeater's model is the fixed key list, so an edit (which rebuilds the selected widget's config) never rebuilds a field mid-step. The minimum and maximum show only for an elastic widget (the type info's `elastic`, `x-elastic`); every widget has the priority.
 - The widget library beside it: a click there adds to `BarManager.lastZone`, the section last selected or added to.
 - Edits show live on the running bars.
 

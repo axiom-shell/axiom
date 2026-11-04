@@ -156,6 +156,19 @@ Item {
           onClicked: BarManager.removeWidget(editorRoot.zone, editorRoot.index)
         }
 
+        // Where every bar's widget look is set (the bar's own, if it takes
+        // one, is in the bar's Style groups)
+        SquareIconButton {
+          readonly property SettingsLink link: SettingsLink {
+            setting: "Bars.style"
+          }
+
+          visible: link.available
+          iconText: "palette"
+          tooltipText: link.label
+          onClicked: link.follow()
+        }
+
         SquareIconButton {
           iconText: "close"
           tooltipText: I18n.tr("Close")
@@ -204,13 +217,6 @@ Item {
               links: root.dragLayer.typeInfo(editorRoot.widget.type)?.link
             }
 
-            // Where every bar's widget look is set (the bar's own, if it
-            // takes one, is in the bar's Style groups)
-            SettingsLink {
-              Layout.fillWidth: true
-              setting: "Bars.style"
-            }
-
             OptionsGroup {
               propertiesSchema: editorRoot.propertiesSchema
               order: editorRoot.propertiesOrder
@@ -233,33 +239,27 @@ Item {
             description: root.sizingText(root.measure)
 
             Repeater {
-              // An override starts at what the bar uses now (`measured`);
-              // the minimum and maximum only for an elastic widget
-              model: [
-                {
-                  "key": "maxSize",
-                  "measured": "preferred",
-                  "initial": 100
-                },
-                {
-                  "key": "minSize",
-                  "measured": "minimum",
-                  "initial": 0
-                },
-                {
-                  "key": "priority",
-                  "measured": "priority",
-                  "initial": BarManager.priorityOf(editorRoot.widget)
-                }
-              ].filter(field => editorRoot.elastic || field.key === "priority")
+              // A fixed model: one built from the widget would be rebuilt
+              // by every edit, dropping a field mid-step. The minimum and
+              // maximum only for an elastic widget.
+              model: ["maxSize", "minSize", "priority"]
 
               delegate: LayoutOverrideField {
-                required property var modelData
-                key: modelData.key
-                initial: root.measure?.[modelData.measured] ?? modelData.initial
-                fieldSchema: BarsConfig.widgetLayoutSchema.properties?.[modelData.key] ?? ({})
-                value: editorRoot.widget.layout?.[modelData.key]
-                onEdited: value => BarManager.updateWidgetLayout(editorRoot.zone, editorRoot.index, modelData.key, value)
+                required property string modelData
+                key: modelData
+                visible: editorRoot.elastic || modelData === "priority"
+                // An override starts at what the bar uses now, a size
+                // without its insets (which maxSize and minSize don't count)
+                initial: {
+                  if (modelData === "priority")
+                    return root.measure?.priority ?? BarManager.priorityOf(editorRoot.widget);
+                  if (!root.measure)
+                    return modelData === "maxSize" ? 100 : 0;
+                  return Math.max(0, root.measure[modelData === "maxSize" ? "preferred" : "minimum"] - root.measure.insets);
+                }
+                fieldSchema: BarsConfig.widgetLayoutSchema.properties?.[modelData] ?? ({})
+                value: editorRoot.widget.layout?.[modelData]
+                onEdited: value => BarManager.updateWidgetLayout(editorRoot.zone, editorRoot.index, modelData, value)
               }
             }
           }

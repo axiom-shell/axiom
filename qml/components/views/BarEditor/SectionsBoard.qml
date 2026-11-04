@@ -10,12 +10,13 @@ import qs.components.content.base
 // Bar editor: the selected bar's three sections, each a lane of draggable
 // widget chips that wrap (SectionLane): rows one under another for a top
 // or bottom bar, columns side by side for a side bar. Its header has undo
-// and redo, the drop order badges' switch, an Unsaved chip with Save and
-// Discard, and the help in a "?"; under it, how the running bar fits on
-// each screen it's on, the widgets it has no room for as buttons selecting
-// them, with Raise priority / Set max length for a selected one. A chip's right click opens its menu; while the
-// board has focus (a chip clicked) it takes Delete, Ctrl+D, Alt+arrows,
-// Escape and Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
+// and redo, the drop order badges' switch, an Unsaved chip and the help in
+// a "?" (Save and Discard are BarsPanel's, which doesn't move); under it,
+// how the running bar fits on each screen it's on, the widgets it has no
+// room for as buttons selecting them, with Raise priority / Set max length
+// for a selected one. A chip's right click opens its menu; while the board
+// has focus (a chip clicked) it takes Delete, Ctrl+D, Alt+arrows, Escape
+// and Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
 FocusScope {
   id: root
 
@@ -239,10 +240,8 @@ FocusScope {
 
       CardHeader {
         title: I18n.tr("Widgets")
-        dirty: BarManager.isDirty
+        showActions: false
         help: I18n.tr("Drag widgets to arrange them, across sections too. Click one to edit it, right-click it for more: the bar outlines it. Keys: Delete, Ctrl+D, Alt+arrows to move it, Escape, Ctrl+Z to undo. Changes show on the bar as you make them; Save keeps them.")
-        onSave: BarManager.saveChanges()
-        onReset: BarManager.resetChanges()
 
         UndoRedoButtons {
           canUndo: BarManager.history.canUndo

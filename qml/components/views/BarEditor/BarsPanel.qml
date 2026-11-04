@@ -59,7 +59,11 @@ Item {
   TitledCard {
     title: I18n.tr("Bar Editor")
     scrollKey: "BarEditor"
-    showActions: false
+    // Save and Discard here, above the bar list, where they never move
+    // (the board follows the bar's edge)
+    dirty: BarManager.isDirty
+    onSave: BarManager.saveChanges()
+    onReset: BarManager.resetChanges()
 
     headerExtras: ColumnLayout {
       Layout.fillWidth: true

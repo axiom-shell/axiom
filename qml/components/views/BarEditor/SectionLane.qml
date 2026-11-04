@@ -142,7 +142,7 @@ Rectangle {
       iconText: locked ? "lock" : "lock_open"
       iconSize: Appearance.fontSizeBy(-1)
       iconColor: locked ? Theme.background : Theme.foreground
-      backgroundColor: Qt.alpha(Theme.accent, locked ? 1 : 0)
+      backgroundColor: locked ? Theme.accent : Theme.backgroundAlt
       tooltipText: I18n.tr(locked ? "Center locked: it stays dead center, other sections make room" : "Lock the center section in place")
       onClicked: BarManager.updateBarField("lockCenter", !locked)
     }
@@ -151,7 +151,6 @@ Rectangle {
       id: addButton
       size: Widget.height - Widget.px(6)
       iconText: "add"
-      backgroundColor: "transparent"
       tooltipText: I18n.tr("Add a widget")
       onClicked: root.addRequested(addButton)
     }
