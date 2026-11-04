@@ -376,7 +376,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Gaps to the edges are wider on sway than the setting says
   - A failed options read sets Hyprland's gaps to 0
   - The Translucency card reads the window look's blur object as a switch
-  - [A failed cursor theme call keeps the theme's own name all session](../issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
+  - A failed cursor theme call keeps the theme's own name all session
 - **compositor-20** (2): Two majors; may ride in compositor-13 (TranslucencyStatus is next to it).
   - [A backed toast's blur fill is at the surface opacity twice](../issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
   - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](../issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)

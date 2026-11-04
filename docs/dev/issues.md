@@ -395,12 +395,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### A failed cursor theme call keeps the theme's own name all session
-- **Where:** `qml/services/ui/CursorThemeManager.qml` (`_resolve`)
-- **What:** When `cursor.theme` fails, `_resolve` takes the theme's own name as resolved and sets `_resolvedOnce`, and nothing asks again until the theme or size changes. The log has it three times across dev re-execs (`[CursorThemeManager] cursor.theme: the connection to axiom closed`): `xcursorTheme` is then the plain theme, so for a theme that needs its companion (Oxygen) the compositor, `XCURSOR_THEME` and GTK get the name without it, the very fallback the companion exists to stop, and the companion of the theme is never made. Related to, not covered by, Read-only daemon calls fail across a dev re-exec (this call writes, but is idempotent). Fix: pass `{ repeatable: true }`, and on an error keep `_resolved` as it was and retry on `BackendManager.ready`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### The Keybinds page goes stale after a detached-mode Save
 - **Where:** `qml/services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
 - **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).

@@ -343,7 +343,6 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
 - [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
 - [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
