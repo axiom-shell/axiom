@@ -181,6 +181,7 @@ ColumnLayout {
     }
   }
 
+  // A Flow, from the left: it wraps in a narrow Cheatsheet
   Flow {
     Layout.fillWidth: true
     Layout.topMargin: Widget.spacing
