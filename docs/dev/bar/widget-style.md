@@ -24,7 +24,8 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 ### Sizes come from the bar
 - (Rule: `qml/components/bar/widgets/AGENTS.md`, "Sized by the bar".)
 - `BarsConfig.enrichBarConfig` derives `extent` and where the widgets sit across (`crossStart`) from `thickness` and `edgePadding` (`BarEnds.crossGeometry`: solid and pill bars alike).
-- It resolves `fontSize` and `radius` from the bar's `overrideFontSize`/`overrideRadius`, else from Appearance's values and `Widget.radius`.
+- **What's inside scales with the bar's thickness** from how it's set at 26 px (`BarsConfig.referenceThickness`): `fontSize` is `Appearance.baseFontSize × thickness/26 × textScale/100`, and `innerPadding`/`innerGap` are the bar's settings × thickness/26 (rounded). At 26 px and 100% a bar looks as it always has; at 16 or 40 px its text, icons and spacing are that much smaller or larger, and everything drawn from them (graphics, cells, the stacked style's two lines, which shrink to fit a text scale too large for the bar) follows.
+- `radius` is the look's `widgetRadius`, else `Widget.radius`.
 
 ### Widget style
 - Widgets don't draw their own backgrounds. Each reports two things:

@@ -21,6 +21,8 @@ QtObject {
     // The bar is sized by its widgets, never the other way round, so no
     // setting can leave them cut off
     const thickness = barConfig.thickness;
+    // How much bigger than a 26 px bar it is: what's inside it scales so
+    const scale = thickness / BarsConfig.referenceThickness;
     const edgePadding = barConfig.edgePadding;
     // What it draws as: its surface (one bar, a pill per group, none) and
     // whether that floats. With no surface it doesn't float.
@@ -111,11 +113,12 @@ QtObject {
       // Neighbouring groups closer than this share a pill (or an island)
       "joinGap": Math.max(barConfig.widgetGap, groupSpacing),
       // What's drawn inside the bar follows the bar, never the Widget
-      // section (that's for panels, popouts and controls)
-      "innerPadding": barConfig.innerPadding,
-      "innerGap": barConfig.innerGap,
-      // Its text scale of Appearance's font size
-      "fontSize": Math.round(Appearance.baseFontSize * look.textScale / 100),
+      // section (that's for panels, popouts and controls): its text, icons
+      // and inner spacing scale with its thickness, as set at 26 px (its
+      // text scale of Appearance's font size there)
+      "innerPadding": Math.round(barConfig.innerPadding * scale),
+      "innerGap": Math.round(barConfig.innerGap * scale),
+      "fontSize": Math.round(Appearance.baseFontSize * scale * look.textScale / 100),
       // Widget chips only, else the interior radius: pills and fillets keep
       // Appearance's, to meet the border
       "radius": look.widgetRadius ?? Widget.radius,
@@ -296,6 +299,10 @@ QtObject {
     });
     return result;
   }
+
+  // The thickness a bar's inner sizes (text scale, inner padding and gap)
+  // are set at: they scale with the bar's thickness from there
+  readonly property int referenceThickness: 26
 
   // The bar's sections, start to end
   readonly property var sectionNames: ["left", "center", "right"]

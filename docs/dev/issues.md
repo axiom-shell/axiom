@@ -833,12 +833,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
-### The stacked style clips on a thin bar
-- **Where:** `qml/components/bar/widgets/base/ValueGraphic.qml:217` (value `font.pixelSize`), `qml/components/bar/widgets/base/ValueGraphic.qml:229` (caption `font.pixelSize`)
-- **What:** Stacked's two lines are `fontSize * 0.8` and `fontSize * 0.6`, sized from the font alone: about 1.17 × 1.4 × fontSize ≈ 23 px at font 14. They are centred in the widget's `widgetSize`, and the widget clips. At the default 26 px they fit. At `widgetSize` 20 with font 14, where a one-line label (about 16 px) still fits, about 1.5 px comes off the top of the value and the bottom of the caption. PLAUSIBLE: a screenshot of a stacked widget on a 20 px bar settles it. Fix: scale both lines by `Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize))`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### SystemStats works out ValueStyleWidget's style fallbacks again
 - **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:199` (segment `style`), `qml/components/bar/widgets/SystemStats/SystemStats.qml:139` (`backgroundLevelColor`), `qml/components/bar/widgets/SystemStats/SystemStats.qml:141` (`_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:34` (`style`)
 - **What:** Two rules live in both `ValueStyleWidget.style` and SystemStats' per-segment `style`: "stacked on a vertical bar is a label" and "a sparkline with no history is a fill". `Qt.alpha(colors.icon, 0.35)` and `colorText && colors.fill.a < 1` are copied word for word too. A new style rule added to one copy will be missed in the other. Fix: put the fallbacks in one function on ValueGraphic (`resolvedStyle(style, vertical, hasHistory, ratio)`) and read it from both places, about 4 lines out of SystemStats. The pill colour can be a ValueGraphic constant.

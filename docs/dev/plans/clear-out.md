@@ -426,10 +426,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Plugging in or unplugging a monitor remakes the bar that stays](../issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
   - [A bar made while the bar editor is open may never report to it](../issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
   - [Bar widget hosts settle after they're gone](../issues.md#bar-widget-hosts-settle-after-theyre-gone)
-- **bar-popouts-06** (4):
+- **bar-popouts-06** (3):
   - [Media squeezed to its minimum in the fill style shows the meter, not its icon](../issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
   - [SystemStats' used memory clips on a vertical bar](../issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
-  - [The stacked style clips on a thin bar](../issues.md#the-stacked-style-clips-on-a-thin-bar)
   - [The Workspaces widget's measured length glides when the active cell widens](../issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - **bar-popouts-07** (5): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
   - [An edge menu can be bigger than its screen](../issues.md#an-edge-menu-can-be-bigger-than-its-screen)
