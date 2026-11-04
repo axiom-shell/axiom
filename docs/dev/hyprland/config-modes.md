@@ -23,7 +23,7 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
   - a Hyprland reload resets them, along with the binds
   - they survive a qs reload
   - they are unbound before the binds are read.
-- The runtime layer starts over when Hyprland reloads while it reads the binds (`noteReload()` counts them). A plan from another config would record that config's keys in `AXIOM_RUNTIME_KEYS`, and `clear()` would then unbind them.
+- The runtime layer starts over when Hyprland reloads while it reads the binds (the event stream's `seenReload()` counts them as they come). A plan from another config would record that config's keys in `AXIOM_RUNTIME_KEYS`, and `clear()` would then unbind them.
 
 ### `included`
 - `moduleText(spec)` (`render.moduleLua`) goes to `$XDG_STATE_HOME/axiom/hyprland.lua`.

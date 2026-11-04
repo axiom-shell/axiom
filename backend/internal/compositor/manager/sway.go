@@ -30,6 +30,9 @@ type swayWriter struct {
 	ipc       *ipc.Sway
 	runtime   runtimeLayer
 	runtimeOn bool
+	// unbindAt: the reload count state.SwayUnbind was recorded at; a
+	// reload since dropped what it takes out
+	unbindAt int64
 	// unread: why the user's config couldn't be read (wholly) at the last
 	// try, or ""
 	unread string
@@ -172,6 +175,12 @@ func (w *swayWriter) validate(context.Context, string) string { return "" }
 // run runs commands as one list: true when all succeeded (criteria matching
 // no window are nothing to warn about)
 func (w *swayWriter) run(ctx context.Context, lines []string) bool {
+	ok, _ := w.send(ctx, lines)
+	return ok
+}
+
+// send is run, with the error when the list didn't reach sway
+func (w *swayWriter) send(ctx context.Context, lines []string) (bool, error) {
 	var kept []string
 	for _, l := range lines {
 		if l != "" {
@@ -180,12 +189,12 @@ func (w *swayWriter) run(ctx context.Context, lines []string) bool {
 	}
 	text := strings.Join(kept, "; ")
 	if text == "" {
-		return true
+		return true, nil
 	}
 	results, err := w.ipc.Run(ctx, text)
 	if err != nil {
 		w.logf("sway didn't take %q: %v", clip(text), err)
-		return false
+		return false, err
 	}
 	ok := true
 	for _, r := range results {
@@ -194,7 +203,7 @@ func (w *swayWriter) run(ctx context.Context, lines []string) bool {
 			ok = false
 		}
 	}
-	return ok
+	return ok, nil
 }
 
 func clip(s string) string {
@@ -205,13 +214,16 @@ func clip(s string) string {
 }
 
 // sendEach runs lines as one list; if sway refused one (an unknown key ends
-// the list there), each again alone (binding a key again is harmless)
-func (w *swayWriter) sendEach(ctx context.Context, lines []string) {
-	if !w.run(ctx, lines) && len(lines) > 1 {
+// the list there), each again alone (binding a key again is harmless); the
+// error when it didn't reach sway
+func (w *swayWriter) sendEach(ctx context.Context, lines []string) error {
+	ok, err := w.send(ctx, lines)
+	if !ok && err == nil && len(lines) > 1 {
 		for _, l := range lines {
 			w.run(ctx, []string{l})
 		}
 	}
+	return err
 }
 
 func (w *swayWriter) runLive(ctx context.Context, lines []string) bool { return w.run(ctx, lines) }
@@ -247,12 +259,15 @@ func (w *swayWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 		entries = jsonx.Arr()
 	}
 	binds := jsonx.Arr(w.runtime.plan(in, func(b any) bool { return w.complete(in, b) }, entries)...)
-	unbind := w.state.SwayUnbind
-	w.state.SwayUnbind = w.tables.SwayUnbindLines(binds, in.get("ctx"), entries)
-	w.state.save()
+	unbind := w.unbinds()
+	next := w.tables.SwayUnbindLines(binds, in.get("ctx"), entries)
+	// Recorded before anything is sent, the old list too until sway took it
+	w.setUnbind(append(slices.Clone(unbind), next...))
 	// Sent apart, in order: sway stops a command list at an invalid command,
 	// so a bind it refuses would take the look with it
-	w.sendEach(ctx, unbind)
+	if w.sendEach(ctx, unbind) == nil {
+		w.setUnbind(next)
+	}
 	w.sendEach(ctx, w.tables.SwayBindLines(binds, in.get("ctx"), true))
 	w.run(ctx, live())
 }
@@ -260,15 +275,24 @@ func (w *swayWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 func (w *swayWriter) runtimeClear(ctx context.Context) {
 	w.runtimeOn = false
 	w.runtime.clear()
-	unbind := w.state.SwayUnbind
-	w.state.SwayUnbind = nil
-	w.state.save()
-	w.sendEach(ctx, unbind)
+	if w.sendEach(ctx, w.unbinds()) == nil {
+		w.setUnbind(nil)
+	}
 }
 
-func (w *swayWriter) noteReload() {
-	w.runtime.noteReload()
-	w.state.SwayUnbind = nil
+// unbinds: the commands taking out what the runtime layer bound, none once
+// sway reloaded since they were recorded (the reload dropped those binds,
+// and the user's config may hold the keys now)
+func (w *swayWriter) unbinds() []string {
+	if w.unbindAt != w.runtime.reloads.Load() {
+		return nil
+	}
+	return w.state.SwayUnbind
+}
+
+func (w *swayWriter) setUnbind(lines []string) {
+	w.state.SwayUnbind = lines
+	w.unbindAt = w.runtime.reloads.Load()
 	w.state.save()
 }
 
@@ -303,9 +327,16 @@ func (w *swayWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 	return w.ipc.Reloads(ctx, out)
 }
 
-func (w *swayWriter) configReloaded(context.Context, Inputs) bool { return false }
-func (w *swayWriter) ownKey(Inputs) string                        { return "" }
-func (w *swayWriter) runningConfig(Inputs) string                 { return "" }
+// configReloaded forgets a list the reload made stale, so a re-exec of the
+// daemon (its count starts over) doesn't take it for a live one
+func (w *swayWriter) configReloaded(context.Context, Inputs) bool {
+	if w.state.SwayUnbind != nil && w.unbinds() == nil {
+		w.setUnbind(nil)
+	}
+	return false
+}
+func (w *swayWriter) ownKey(Inputs) string        { return "" }
+func (w *swayWriter) runningConfig(Inputs) string { return "" }
 
 // entries are the user's binds and axiom's in effect: those the runtime
 // layer bound, or all of them while the file is loaded

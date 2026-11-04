@@ -236,10 +236,6 @@ func (w *hyprWriter) runtimeClear(ctx context.Context) {
 	w.eval(ctx, hyprUnbindLua)
 }
 
-func (w *hyprWriter) noteReload() {
-	w.runtime.noteReload()
-}
-
 func (w *hyprWriter) skippedKeys() []string { return w.runtime.skipped }
 
 // checkLoaded: Hyprland answers "ok" when the file's marker is set in its

@@ -22,8 +22,6 @@ type runtimeLayer struct {
 	reported map[string]bool
 }
 
-func (r *runtimeLayer) noteReload() { r.reloads.Add(1) }
-
 // read reads the binds in effect, again when the compositor reloaded
 // meanwhile (another config's keys, or none while its file was replaced)
 func (r *runtimeLayer) read(read func() (any, any, bool)) (entries, context any, ok bool) {

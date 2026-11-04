@@ -385,8 +385,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Three settings stay editable on niri though its writer drops them
   - Wide active is hidden in the perMonitor layout but still applies there
 - **compositor-15** (3):
-  - [The detached layer's unbind list can drift from what sway holds](../issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
-  - [noteReload counts every compositor reload a second time](../issues.md#notereload-counts-every-compositor-reload-a-second-time)
+  - The detached layer's unbind list can drift from what sway holds
+  - noteReload counts every compositor reload a second time
   - [One refused line stops the rest of a Hyprland eval](../issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
 - **compositor-16** (6):
   - [The Keybinds page goes stale after a detached-mode Save](../issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)

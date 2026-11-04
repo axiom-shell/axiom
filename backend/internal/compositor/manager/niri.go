@@ -177,7 +177,6 @@ func (w *niriWriter) liveLines(Inputs, any) []string         { return nil }
 func (w *niriWriter) blurLines(Inputs, any) []string         { return nil }
 func (w *niriWriter) runLive(context.Context, []string) bool { return true }
 func (w *niriWriter) setCursor(context.Context, any)         {}
-func (w *niriWriter) noteReload()                            {}
 func (w *niriWriter) skippedKeys() []string                  { return w.runtime.skipped }
 
 var includeLine = regexp.MustCompile(`^\s*include\s`)

@@ -88,7 +88,6 @@ type writer interface {
 	// The runtime layer
 	runtimeApply(ctx context.Context, in Inputs, live func() []string)
 	runtimeClear(ctx context.Context)
-	noteReload()
 	skippedKeys() []string
 	// checkLoaded: whether the mode's file is in effect; failed when the
 	// compositor couldn't load its config at all

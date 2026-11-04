@@ -1,10 +1,13 @@
 package manager
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 )
 
 // A sway config file that's there but can't be read (here an include) is
@@ -93,5 +96,31 @@ func TestSwayMonitorPattern(t *testing.T) {
 		if got := pattern.MatchString(line); got != want {
 			t.Errorf("%q: matched %v, want %v", line, got, want)
 		}
+	}
+}
+
+// The runtime layer's unbind list stays what sway holds: kept when it
+// couldn't be sent, and none once sway reloaded (the reload dropped those
+// binds; the user's config may hold the keys now)
+func TestSwayUnbindListFollowsSway(t *testing.T) {
+	t.Parallel()
+	tables, schema := repo(t)
+	w := newSway(env2(tables, schema, func(string) string { return "" }), &ipc.Sway{Path: filepath.Join(t.TempDir(), "none.sock")})
+	w.setUnbind([]string{"unbindsym Mod4+x"})
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return nil })
+	if got := w.unbinds(); len(got) != 1 || got[0] != "unbindsym Mod4+x" {
+		t.Fatalf("an apply sway never got dropped the list: %v", got)
+	}
+	w.runtimeClear(context.Background())
+	if len(w.unbinds()) != 1 {
+		t.Fatalf("a clear sway never got dropped the list: %v", w.unbinds())
+	}
+	w.seenReload()
+	if got := w.unbinds(); got != nil {
+		t.Fatalf("a reload since left the list to send: %v", got)
+	}
+	w.configReloaded(context.Background(), Inputs{})
+	if w.state.SwayUnbind != nil {
+		t.Fatalf("the stale list kept for a re-exec: %v", w.state.SwayUnbind)
 	}
 }

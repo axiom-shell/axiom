@@ -479,12 +479,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### noteReload counts every compositor reload a second time
-- **Where:** `backend/internal/compositor/manager/manager.go` (`seenReload`, `noteReload`), `backend/internal/compositor/manager/runtime.go`, `backend/internal/compositor/manager/hypr.go`, `backend/internal/compositor/manager/sway.go`, `backend/internal/compositor/manager/niri.go`, `docs/dev/hyprland/config-modes.md`
-- **What:** `watchReloads` calls `seenReload()` from its forwarder as the event arrives (the count `runtimeLayer.read`'s retry relies on); the manager's reload handler then calls `noteReload()` (manager.go:1184), adding 1 to the same counter on the goroutine that also runs the read, where it can't land mid-read. Deletion pass, about 9 lines: drop `noteReload` from the writer interface, its three implementations, `runtimeLayer.noteReload` and the call; config-modes.md › detached names `noteReload()` and should name `seenReload`. Before deleting it, keep sway's unbind reset: `swayWriter.noteReload` also clears `state.SwayUnbind` (sway.go:256), and without that a user binding `Mod4+x` themselves after axiom bound it at runtime gets their bind removed by the stale `unbindsym` on the next `runtimeApply`; move the reset into `swayWriter.configReloaded` first (the compositor review, 2026-10-30). The sway review (2026-10-30) found an apply between the count and that reset still sends the old list: [The detached layer's unbind list can drift from what sway holds](#the-detached-layers-unbind-list-can-drift-from-what-sway-holds) wants the reset where the reload is counted; fix the two together.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### Stale lines in the Hyprland docs and comments
 - **Where:** `docs/dev/hyprland/window-switcher.md`, `qml/components/methods/WorkspaceGeometry.qml` (`orderMonitors`), `qml/components/methods/BindKeys.qml`, `backend/internal/compositor/render/keys.go` (`RuntimeBinds`), `qml/components/hosts/popout/EdgePopout.qml`
 - **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
@@ -642,16 +636,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"))` is written out in the chip labels and again in the section card. A change to one (a new kind of section) leaves the chip and the card disagreeing. Fix: one `sectionTitle(section)` in KeybindManager (beside `sectionIcon`), used by both.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The detached layer's unbind list can drift from what sway holds
-- **Where:** `backend/internal/compositor/manager/sway.go:225` (`runtimeApply`), `backend/internal/compositor/manager/sway.go:193` (`sendEach`)
-- **What:** `runtimeApply` replaces and saves `SwayUnbind` (235-237) before anything is sent, and `sendEach` drops `run`'s transport failure. If the socket call fails (dial error, the 5 s timeout), neither the old unbinds nor the new binds reach sway. The old runtime binds stay bound but are no longer recorded, so a bind removed in axiom keeps firing until sway reloads.
-
-  Second path: a reload is counted in `watchReloads`, but `SwayUnbind` is cleared only later, in `noteReload` on the manager goroutine. An apply in between still sends the old `unbindsym` lines, which can remove a key the user just bound in their reloaded config. The known entry "noteReload counts every compositor reload a second time" moves that reset into `configReloaded`; this path wants it where the reload is counted instead.
-
-  Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the sway system
 
 ### Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland
 - **Where:** `qml/config/schema/sections/Input.yaml:115` (`mouse.accel`), `qml/config/schema/sections/Input.yaml:128` (`mouse.sensitivity`), `qml/config/schema/sections/Input.yaml:139` (`mouse.leftHanded`)
