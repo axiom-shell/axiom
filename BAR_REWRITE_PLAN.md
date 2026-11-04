@@ -5,10 +5,10 @@
 
 ## Status
 - Branch: `bar-rewrite` (from main 99ae4ee). Work lands here; implementation agents use `isolation: worktree` and the lead merges their branches into `bar-rewrite`.
-- Phase: **A (schema, migration, readers) — not started.**
+- Phase: **A (schema, migration, readers) — running** (agent A in its own worktree, branch off `bar-rewrite`; lead merges it when done).
 - Done commits: none yet.
-- Running agents: none.
-- Next: brief agent A with section "A" + the Contract below.
+- Running agents: A (items 1–4).
+- Next: merge A into `bar-rewrite`, update the Contract with A's final names, then launch B (rendering) and C (editor) in parallel; D after B.
 - Notes / gotchas found: (none yet)
 
 # Bar rewrite for release: settings, schema, rendering, auto-hide, editor
