@@ -3,6 +3,7 @@ package binds
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -179,7 +180,32 @@ var (
 	swayWorkspaceStep = map[string]string{"next": "right", "prev": "left"}
 )
 
+// swayChained: whether sway runs command as several, split at a ; or ,
+// outside quotes (argsep)
+func swayChained(command string) bool {
+	inStr, inChr, escaped := false, false, false
+	for _, ch := range command {
+		switch {
+		case escaped:
+			escaped = false
+		case ch == '\\':
+			escaped = true
+		case ch == '"' && !inChr:
+			inStr = !inStr
+		case ch == '\'' && !inStr:
+			inChr = !inChr
+		case (ch == ';' || ch == ',') && !inStr && !inChr:
+			return true
+		}
+	}
+	return false
+}
+
 func swayAction(command string) *jsonx.Object {
+	// Several commands stay sway's, as it splits them
+	if swayChained(command) {
+		return jsonx.Obj("action", "raw", "argument", command, "compositor", "sway")
+	}
 	words := strings.Fields(command)
 	simple := map[string]string{"kill": "closeWindow", "fullscreen": "fullscreen", "fullscreen toggle": "fullscreen",
 		"floating toggle": "toggleFloat", "sticky toggle": "pin", "layout toggle split": "toggleSplit",
@@ -218,10 +244,17 @@ func swayFiles(o Options) []string {
 
 // extractSway reads the bindsym and bindcode lines outside a mode, in
 // files read in name order as sway includes them, with the $variables set
-// in each so far
+// so far as sway reads them: in user/'s earlier files (with --only) and
+// what each includes
 func extractSway(ctx context.Context, o Options) *jsonx.Object {
 	result := emptyResult()
 	vars := &render.Vars{}
+	// The files whose variables are read: sway includes each once
+	seen := map[string]bool{}
+	if o.Only != "" {
+		all := swayFiles(Options{Dir: o.Dir})
+		userconf.SwayVars(all[:max(0, slices.Index(all, filepath.Join(o.Dir, "user", o.Only)))], vars, seen, o.Getenv)
+	}
 	for _, path := range swayFiles(o) {
 		if o.Tracked(ctx, path) {
 			push(result, "tracked", path)
@@ -244,6 +277,10 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 			}
 			if m := render.SwaySetLine.FindStringSubmatch(line); m != nil {
 				vars.Set(m[1], strings.TrimSpace(vars.Expand(m[2])))
+				continue
+			}
+			if names, ok := userconf.SwayIncludes(line, path, vars, o.Getenv); ok {
+				userconf.SwayVars(names, vars, seen, o.Getenv)
 				continue
 			}
 			if strings.HasSuffix(line, "{") {

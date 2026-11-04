@@ -79,7 +79,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 31 | compositor-06 | major | Done: Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
 | 32 | compositor-07 | major | Done: The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
 | 33 | compositor-08 | major | Done: What a moved bind becomes | 3 | ~120 | compositor-07 |  |
-| 34 | compositor-21 | major | Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
+| 34 | compositor-21 | major | Done: Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
 | 35 | compositor-09 | major | Applying monitor rules | 4 | ~150 | compositor-05 |  |
 | 36 | compositor-10 | major | The trial Apply and the Monitors page | 3 | ~80 | none |  |
 | 37 | compositor-11 | major | Workspace blocks and switching, and sway's workspace ids | 5 | ~110 | compositor-02 |  |
@@ -347,11 +347,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Hyprland and sway bind merges each skip half of compositor/actions
   - sway's merge moves workspace binds as raw sway commands
   - niri's confirming quit moves in as an instant log out
-- **compositor-21** (4):
-  - [A sway bind using a variable from an include moves as a literal $name](../issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
-  - [A niri spawn of one word with a space moves as a broken shell command](../issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)
-  - [A sway exec chained with ; or , moves in as one shell command](../issues.md#a-sway-exec-chained-with--or--moves-in-as-one-shell-command)
-  - [A $' or $& in a bind's argument is read as a replacement pattern](../issues.md#a--or--in-a-binds-argument-is-read-as-a-replacement-pattern)
+- **compositor-21** (4, done):
+  - A sway bind using a variable from an include moves as a literal $name
+  - A niri spawn of one word with a space moves as a broken shell command
+  - A sway exec chained with ; or , moves in as one shell command
+  - A $' or $& in a bind's argument is read as a replacement pattern
 - **compositor-09** (4):
   - [A failed monitor profile apply is never retried for the same outputs](../issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
   - [A sway output rule by description misses a monitor with no serial](../issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)

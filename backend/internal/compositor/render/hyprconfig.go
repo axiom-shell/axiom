@@ -114,8 +114,8 @@ func (t *Tables) DispatcherLua(action, argument string, ctx any) string {
 // (the argument as wordFor writes it) put in
 func (t *Tables) ipcCall(bind any, argument string, wordFor func(string) string) string {
 	ipc := str(at(get(t.IPCActions, str(get(bind, "action"))), 0))
-	ipc = jsReplace(ipc, "{call}", t.CallFunction(bind))
-	return jsReplace(ipc, "{0}", wordFor(argument))
+	ipc = replaceFirst(ipc, "{call}", t.CallFunction(bind))
+	return replaceFirst(ipc, "{0}", wordFor(argument))
 }
 
 // BindLua is HyprConfigLua.bindLua: a configured bind's hl.bind() line, or

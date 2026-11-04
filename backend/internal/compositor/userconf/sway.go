@@ -73,36 +73,80 @@ func SwayText(main string, skip []string, skipHeader string, getenv func(string)
 			if m := render.SwaySetLine.FindStringSubmatch(stripped); m != nil {
 				vars.Set(m[1], strings.TrimSpace(vars.Expand(m[2])))
 			}
-			m := includeLine.FindStringSubmatch(stripped)
-			if m == nil {
+			names, ok := SwayIncludes(stripped, path, vars, getenv)
+			if !ok {
 				if !ours {
 					out = append(out, line)
 				}
 				continue
 			}
-			// As sway's wordexp reads it: one path or several, quoted or
-			// not, environment variables and ~ expanded, each a glob
-			text := vars.Expand(strings.TrimSpace(m[1]))
-			words, err := shellSplit(text)
-			if err != nil {
-				words = []string{strings.Trim(text, `"'`)}
-			}
-			for _, word := range words {
-				pattern := expandUser(expandVars(word, getenv), getenv)
-				if !filepath.IsAbs(pattern) {
-					pattern = filepath.Join(filepath.Dir(path), pattern)
-				}
-				for _, name := range glob(pattern) {
-					if fsx.IsFile(name) {
-						out = append(out, inline(name))
-					}
-				}
+			for _, name := range names {
+				out = append(out, inline(name))
 			}
 		}
 		return strings.Join(out, "\n")
 	}
 	text = inline(main)
 	return text, unread
+}
+
+// SwayIncludes are the files an `include` line (trimmed) in the file from
+// reads, as sway's wordexp reads it: one path or several, quoted or not,
+// environment variables, ~ and the $variables set so far expanded, each a
+// glob relative to from's folder. ok: line is an include.
+func SwayIncludes(line, from string, vars *render.Vars, getenv func(string) string) (names []string, ok bool) {
+	m := includeLine.FindStringSubmatch(line)
+	if m == nil {
+		return nil, false
+	}
+	text := vars.Expand(strings.TrimSpace(m[1]))
+	words, err := shellSplit(text)
+	if err != nil {
+		words = []string{strings.Trim(text, `"'`)}
+	}
+	for _, word := range words {
+		pattern := expandUser(expandVars(word, getenv), getenv)
+		if !filepath.IsAbs(pattern) {
+			pattern = filepath.Join(filepath.Dir(from), pattern)
+		}
+		for _, name := range glob(pattern) {
+			if fsx.IsFile(name) {
+				names = append(names, name)
+			}
+		}
+	}
+	return names, true
+}
+
+// SwayVars sets into vars the $variables the files at paths set, as sway
+// reads them: in order, an include's files where it is, each file once
+// (seen: the files read so far, shared by the calls of one walk).
+func SwayVars(paths []string, vars *render.Vars, seen map[string]bool, getenv func(string) string) {
+	var read func(path string)
+	read = func(path string) {
+		real := realPath(path)
+		if seen[real] {
+			return
+		}
+		seen[real] = true
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return
+		}
+		for _, line := range SplitLines(strings.ToValidUTF8(string(data), "�")) {
+			line = strings.TrimSpace(line)
+			if m := render.SwaySetLine.FindStringSubmatch(line); m != nil {
+				vars.Set(m[1], strings.TrimSpace(vars.Expand(m[2])))
+			} else if names, ok := SwayIncludes(line, path, vars, getenv); ok {
+				for _, name := range names {
+					read(name)
+				}
+			}
+		}
+	}
+	for _, path := range paths {
+		read(path)
+	}
 }
 
 // SplitLines splits text into lines at \n, \r\n or \r, without a last

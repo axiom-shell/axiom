@@ -3,7 +3,6 @@ package render
 import (
 	"regexp"
 	"slices"
-	"strings"
 )
 
 // --- BindActions' functions, on its tables ---
@@ -63,7 +62,7 @@ func (t *Tables) DefaultLabel(bind any) string {
 	if action == "exec" {
 		return argument
 	}
-	label := jsReplace(str(or(or(at(get(t.IPCActions, action), 1), at(get(t.CompositorActions, action), 0)), "")), "{0}", argument)
+	label := replaceFirst(str(or(or(at(get(t.IPCActions, action), 1), at(get(t.CompositorActions, action), 0)), "")), "{0}", argument)
 	if c := str(t.CallOf(bind)); c != "toggle" {
 		return label + " (" + c + ")"
 	}
@@ -89,35 +88,4 @@ func (t *Tables) DescriptionFor(bind any) string {
 		own = t.DefaultLabel(bind)
 	}
 	return t.SectionFor(get(bind, "action")) + ": " + own
-}
-
-// jsReplace is String.prototype.replace with a string pattern: the first
-// occurrence, with the replacement's $$, $&, $` and $' as JS reads them
-func jsReplace(s, pattern, repl string) string {
-	i := strings.Index(s, pattern)
-	if i < 0 {
-		return s
-	}
-	var b strings.Builder
-	for j := 0; j < len(repl); j++ {
-		if repl[j] != '$' || j+1 >= len(repl) {
-			b.WriteByte(repl[j])
-			continue
-		}
-		switch repl[j+1] {
-		case '$':
-			b.WriteByte('$')
-		case '&':
-			b.WriteString(pattern)
-		case '`':
-			b.WriteString(s[:i])
-		case '\'':
-			b.WriteString(s[i+len(pattern):])
-		default:
-			b.WriteByte('$')
-			continue
-		}
-		j++
-	}
-	return s[:i] + b.String() + s[i+len(pattern):]
 }

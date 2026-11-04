@@ -9,7 +9,7 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
 ### Bind actions
 - `binds` are edited on the Keybinds page, not in settings.
 - An action is one of:
-  - **An axiom IPC call** (the table's `ipcActions`). This includes the `audio`/`media` targets on AudioManager/MediaManager, so the OSD shows. The picker files them by the table's section:
+  - **An axiom IPC call** (the table's `ipcActions`; its argument goes into the call's `{0}` as written, a `$` in it no replacement pattern: `replaceFirst` in the writers, `.replace` handed a function in `BindActions`). This includes the `audio`/`media` targets on AudioManager/MediaManager, so the OSD shows. The picker files them by the table's section:
     - **Axiom**: the launcher, overlay, edge menus, docks, power menu, lock, notifications (`toggleDnd` through the `dnd` target, with toggle/on/off calls), wallpapers (`nextWallpaper`, `randomWallpaper`), `monitorsIdentify`.
     - **System**: on/off toggles with toggle/on/off calls: `idleInhibit`, `nightLight`, `darkMode` (ThemeManager), `wifi` (NetworkingManager), `bluetooth` (BluetoothManager), and `vpn` (VpnManager's `toggleLast`, as the Vpn widget's click). Networking, Bluetooth and VPN are in `qml/shell.qml`'s `_services`, so their IPC answers with no widget showing them.
     - **Tools**: the launcher's clipboard, emoji and calculator rows (`appLauncher clipboard|emoji|calculator`), `notes` (`NotesManager.openNotes`), calendar, chat, pomodoro, stopwatch and timer (`timerStart` takes a length, `10m` or `1:30`; its argument kind `duration`).

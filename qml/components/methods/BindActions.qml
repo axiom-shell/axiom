@@ -68,7 +68,7 @@ QtObject {
       "action": action,
       "call": call
     });
-    const words = template.split(" ").map(word => word === "{call}" ? fn : word.replace("{0}", text));
+    const words = template.split(" ").map(word => word === "{call}" ? fn : word.replace("{0}", () => text));
     return {
       "target": words[0],
       "function": words[1],
@@ -98,7 +98,7 @@ QtObject {
     const argument = String(bind.argument ?? "").trim();
     if (bind.action === "exec")
       return argument;
-    const label = (table?.ipcActions?.[bind.action]?.[1] ?? table?.compositorActions?.[bind.action]?.[0] ?? "").replace("{0}", argument);
+    const label = (table?.ipcActions?.[bind.action]?.[1] ?? table?.compositorActions?.[bind.action]?.[0] ?? "").replace("{0}", () => argument);
     const call = root.callOf(table, bind);
     return call === "toggle" ? label : `${label} (${call})`;
   }
