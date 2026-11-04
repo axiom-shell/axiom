@@ -349,12 +349,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while screenshotting editor pages for the form row look
 
-### Keybind sections log null reads as they're torn down
-- **Where:** `qml/components/content/parts/KeybindSection.qml` (`section`, `items`, the folded count), `qml/components/methods/KeybindFilter.qml` (`sectionKey`)
-- **What:** Tearing down the Keybinds page or the Cheatsheet (a reload) logs a burst of `TypeError: Value is null and could not be converted to an object` from `KeybindSection.qml` (lines 20, 62, 67, 75, 82, 145) and `KeybindFilter.qml[14:-1]`, about 200 lines: the delegates' `section` goes null before their bindings stop. Guarding the reads of `root.section` (and `sectionKey`'s `section`) at the source would quiet it.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the bar display styles branch
-
 ### A custom layout's element rect reads an undefined place
 - **Where:** `qml/components/content/parts/custom/CustomLayout.qml` (the `CustomElement` delegate's `r`), `qml/components/methods/CustomWidgetData.qml` (`rect`)
 - **What:** The live shell logs `CustomWidgetData.qml[649:-1]: TypeError: Value is undefined and could not be converted to an object` after a reload: the delegate passes `element.place` while its `element` is still the `({})` stand-in (or past the end of a shrunk `elements`), and `rect` reads `place.x`. `rect` returning an empty rect for no place, or the delegate waiting for one, would quiet it.
@@ -514,38 +508,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### The key map and the keyboard reference each carry the same modifier chips and legend
-- **Where:** `qml/components/views/Keybinds/KeyMapPanel.qml:57`, `qml/components/views/Keybinds/KeyMapPanel.qml:82`, `qml/components/content/parts/KeyboardReference.qml:46`, `qml/components/content/parts/KeyboardReference.qml:75`
-- **What:** KeyMapPanel.qml:57-71 (15 lines) and KeyboardReference.qml:46-61 (16) are the same `Flow` of `KeyNames.modifiers` `SegmentButton`s toggling `KeybindManager.page.keyMapMods`. The only differences are `visible: root.showMods` and `root.mods` for `keyMapMods`. KeyMapPanel.qml:82-111 and KeyboardReference.qml:75-104 (30 lines each) are the same colour legend (a swatch `Rectangle` from `root.fill(source)` plus a label). Only the entry list differs ("paused" is in one only) and Flow/Row. Both also define the same `inkOf` rule. That is about 45 repeated lines around one shared part (`KeyboardMap`, "through hooks"). Fix: give `KeyboardMap` a `legend: [[source, label]]` with a `fillFor: source => color` hook (fillOf/inkOf then read `fillFor(sourceOf(key))`), and the chips behind a `showMods`/`mods` pair. Each caller passes its entries and colours. That removes about 40 lines from one side and keeps both looks.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A reference section's folded count re-derives BindRows.byModifiers' grouping
-- **Where:** `qml/components/content/parts/KeybindSection.qml:145`, `qml/components/methods/BindRows.qml:133` (`byModifiers`)
-- **What:** A folded group's count is `root.section.binds.filter(r => (r.combos[0]?.mods ?? []).join("+") === item.modelData.mods.join("+")).length`. That is `byModifiers`' own grouping rule (`row.combos?.[0]?.mods ?? []`, joined by "+") run again in the host, once per header per re-evaluation. AGENTS.md: "A methods helper's decision … is read from its output, never re-derived in a host". Fix: the header item in `items` carries `"count": group.rows.length` (KeybindSection.qml:21-24), and :145 reads `item.modelData.count`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### PresetSheet defers its re-choose a tick for a config that updates at once
-- **Where:** `qml/components/views/Keybinds/PresetSheet.qml:51`, `qml/components/views/Keybinds/PresetSheet.qml:264`
-- **What:** `saveAs` and "Save current binds over it" run `Qt.callLater(() => root.choose(…))` ("The list follows the config"). But `savePreset` → `SettingsManager.commitValues` → `ConfigManager.commit` sets `_config` synchronously (ConfigManager.qml:146) before the daemon call, so `KeybindsConfig.presets` and `savedPresets` are already current when it returns. A `Qt.callLater` standing in for an ordering the code already has is a timing hack (review lenses › design). Fix: call `root.choose(id)` / `root.choose(root.presetId)` directly and drop the comment.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The bind list's flag icons carry tooltip strings nothing shows
-- **Where:** `qml/components/views/Keybinds/BindListRow.qml:188`
-- **What:** The flags Repeater's model is `[["repeating", "repeat", I18n.tr("Repeats while held")], ["locked", "lock", I18n.tr("Works while locked")], ["release", "keyboard_capslock", I18n.tr("Fires on release")]]`, but the delegate (a bare `StyledIcon`, :190-196) reads only `modelData[1]`. "Repeats while held" and "Fires on release" are used nowhere else (grep: one hit each), so they are two dead translation keys translated into every language. Fix: show it (a `StyledToolTip` on hover). Showing it is likely the intent, since the icons alone don't explain themselves.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "show them (a StyledToolTip on hover)"): "agree".
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A reference section's title is worked out twice
-- **Where:** `qml/components/views/Keybinds/Keybinds.qml:203`, `qml/components/content/parts/KeybindSection.qml:67`
-- **What:** `section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"))` is written out in the chip labels and again in the section card. A change to one (a new kind of section) leaves the chip and the card disagreeing. Fix: one `sectionTitle(section)` in KeybindManager (beside `sectionIcon`), used by both.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland
 - **Where:** `qml/config/schema/sections/Input.yaml:115` (`mouse.accel`), `qml/config/schema/sections/Input.yaml:128` (`mouse.sensitivity`), `qml/config/schema/sections/Input.yaml:139` (`mouse.leftHanded`)

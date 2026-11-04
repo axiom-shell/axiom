@@ -15,7 +15,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. Gaps to the edges are wider on sway than the setting says: accept the narrower gap.
-8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
+8. The bind list's flag icons carry tooltip strings nothing shows: show them.
 9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
 10. Removed: an edge popout's inconsistent size (fixed, maintainer).
 11. Deferred: [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall).
@@ -406,13 +406,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Two keybind reference paths drop a key's binds
   - KeybindManager keeps tables the methods helpers already hold (its _bindMods part, left by compositor-02)
   - A bind description's section is parsed three ways
-  - [Keybind sections log null reads as they're torn down](../issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
+  - Keybind sections log null reads as they're torn down
   - [WorkspaceStrip's Grid briefly has more items than cells](../issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
-  - [The key map and the keyboard reference each carry the same modifier chips and legend](../issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
-  - [A reference section's folded count re-derives BindRows.byModifiers' grouping](../issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
-  - [PresetSheet defers its re-choose a tick for a config that updates at once](../issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
-  - [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
-  - [A reference section's title is worked out twice](../issues.md#a-reference-sections-title-is-worked-out-twice)
+  - The key map and the keyboard reference each carry the same modifier chips and legend
+  - A reference section's folded count re-derives BindRows.byModifiers' grouping
+  - PresetSheet defers its re-choose a tick for a config that updates at once
+  - The bind list's flag icons carry tooltip strings nothing shows
+  - A reference section's title is worked out twice
   - [Stale lines in the Hyprland docs and comments](../issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - **compositor-18** (1): Decided that they separate; the plan settles how on Hyprland.
   - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](../issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)

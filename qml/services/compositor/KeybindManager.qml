@@ -75,6 +75,11 @@ QtObject {
   // I18n.tr("Special") I18n.tr("Custom")
   readonly property var actionSections: ["Axiom", "System", "Tools", "Apps", "Media", "Window", "Workspace", "Special", "Custom"]
 
+  // A reference section's title as shown (its chip and its card)
+  function sectionTitle(section) {
+    return section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"));
+  }
+
   // Material Symbols per reference section, by title ("" is Other)
   function sectionIcon(title) {
     return root._sectionIcons[title] ?? "keyboard";

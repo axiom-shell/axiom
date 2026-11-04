@@ -187,9 +187,10 @@ StyledContainer {
     Repeater {
       model: [["repeating", "repeat", I18n.tr("Repeats while held")], ["locked", "lock", I18n.tr("Works while locked")], ["release", "keyboard_capslock", I18n.tr("Fires on release")]].filter(flag => root.bind[flag[0]] === true)
 
-      delegate: StyledIcon {
+      delegate: TipIcon {
         required property var modelData
         text: modelData[1]
+        tip: modelData[2]
         textColor: root.ink
         opacity: 0.6
         textSize: Appearance.fontSizeBy(-1)

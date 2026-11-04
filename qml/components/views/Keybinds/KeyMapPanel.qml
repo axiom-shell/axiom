@@ -54,59 +54,14 @@ ColumnLayout {
     description: I18n.tr("Pick the modifiers to look under. Click a free key to bind it, or one of axiom's to edit its bind.")
   }
 
-  Flow {
-    Layout.fillWidth: true
-    spacing: Widget.spacing / 2
-
-    Repeater {
-      model: KeyNames.modifiers
-
-      delegate: SegmentButton {
-        required property string modelData
-        text: KeyNames.modifierLabel(modelData)
-        active: KeybindManager.page.keyMapMods.includes(modelData)
-        onClicked: KeybindManager.page.toggleKeyMapMod(modelData)
-      }
-    }
-  }
-
   KeyboardMap {
     Layout.fillWidth: true
-    fillOf: key => root.fill(root.held(key).source)
-    inkOf: key => root.held(key).source === "axiom" || root.held(key).source === "both" ? Theme.background : Theme.foreground
+    showMods: true
+    mods: KeybindManager.page.keyMapMods
+    sourceOf: key => root.held(key).source
+    fillFor: source => root.fill(source)
+    legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["paused", I18n.tr("Paused")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
     clickableOf: key => root.held(key).source !== "user"
     onClicked: key => root.pick(key)
-  }
-
-  // What the colours mean
-  Flow {
-    Layout.fillWidth: true
-    spacing: Widget.spacing * 2
-
-    Repeater {
-      model: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["paused", I18n.tr("Paused")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
-
-      delegate: Row {
-        id: legend
-        required property var modelData
-        spacing: Widget.spacing / 2
-
-        Rectangle {
-          anchors.verticalCenter: parent.verticalCenter
-          width: Appearance.fontSize
-          height: Appearance.fontSize
-          radius: Widget.px(3)
-          color: root.fill(legend.modelData[0])
-          border.width: 1
-          border.color: Theme.border
-        }
-
-        StyledText {
-          text: legend.modelData[1]
-          opacity: 0.7
-          textSize: Appearance.fontSizeBy(-2)
-        }
-      }
-    }
   }
 }
