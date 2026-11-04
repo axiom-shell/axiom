@@ -40,7 +40,7 @@
 #### Modal windows
 - Every focus grab lets input through to `modalWindows`:
   - the screenshot pickers (`captureWindows`)
-  - modal prompts (`registerModal` / `unregisterModal`; the polkit prompt).
+  - modal prompts while visible (`registerModal` at creation, `unregisterModal` at destruction; the polkit and monitor prompts), so a window created already shown counts too.
 - `modalShown`: one of them is up. A grab's `FocusGrab.exclusive` is off meanwhile, so the modal gets the keyboard.
 
 #### Stepping aside

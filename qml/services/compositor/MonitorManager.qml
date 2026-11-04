@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 
 import qs.config
 import qs.components.methods
@@ -19,12 +20,13 @@ import qs.services.ui
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
- * countdown running out) puts back what was there before.
+ * countdown running out) puts back what was there before. A QML reload
+ * keeps the trial (its countdown starts over).
  *
  * A monitor connected or removed (seen between two reads) is said where
  * the OSD's `monitor` status or Monitors.notify puts it (lastEvent).
  */
-QtObject {
+Singleton {
   id: root
 
   // The outputs in detail (CompositorManager.withOutputDetails), disabled
@@ -304,12 +306,29 @@ QtObject {
   // --- Apply, keep, revert ---
 
   // Waiting for keep()/revert() after Apply
-  property bool pending: false
+  readonly property bool pending: _trial.state !== ""
   property int secondsLeft: 0
   readonly property int confirmSeconds: 15
-  // The rules putting back what was there before Apply
-  property var _revertRules: []
-  property var _revertDetails: []
+
+  // The trial, kept across a QML reload so its way back is too: JSON of
+  // { rules, details } putting back what was there before Apply and the
+  // draft it tried (keep() saves it), "" when none
+  PersistentProperties {
+    id: _trial
+    reloadableId: "axiomMonitorTrial"
+    property string state: ""
+
+    // After the draft's own load
+    onLoaded: if (state !== "")
+      Qt.callLater(root._resume)
+  }
+
+  function _resume() {
+    draft.local = JSON.parse(_trial.state).draft;
+    draft.changed();
+    secondsLeft = confirmSeconds;
+    _countdown.restart();
+  }
 
   // Tries the selected profile now; keep() saves it. A profile for other
   // monitors can only be saved.
@@ -321,11 +340,13 @@ QtObject {
       return;
     }
     const all = outputs;
-    _revertRules = all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all));
-    _revertDetails = all;
+    _trial.state = JSON.stringify({
+      "rules": all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all)),
+      "details": all,
+      "draft": draft.local
+    });
     CompositorManager.applyOutputs(rules.filter(rule => monitorFor(rule) !== null), all);
     secondsLeft = confirmSeconds;
-    pending = true;
     _countdown.restart();
     _refreshSoon.restart();
   }
@@ -333,24 +354,28 @@ QtObject {
   function keep() {
     if (!pending)
       return;
-    pending = false;
-    _countdown.stop();
+    const trial = _end();
     if (!draft.save()) {
       console.warn("[MonitorManager] Could not save the monitor layout; putting the old one back");
-      _runRevert();
+      _runRevert(trial);
     }
   }
 
   function revert() {
-    if (!pending)
-      return;
-    pending = false;
-    _countdown.stop();
-    _runRevert();
+    if (pending)
+      _runRevert(_end());
   }
 
-  function _runRevert() {
-    CompositorManager.applyOutputs(_revertRules, _revertDetails);
+  // Ends the trial, returning its state
+  function _end() {
+    const trial = JSON.parse(_trial.state);
+    _trial.state = "";
+    _countdown.stop();
+    return trial;
+  }
+
+  function _runRevert(trial) {
+    CompositorManager.applyOutputs(trial.rules, trial.details);
     _refreshSoon.restart();
   }
 
@@ -397,8 +422,11 @@ QtObject {
         return;
       const before = root.outputs;
       root.outputs = outputs;
-      if (root._read)
-        root._sayHotplugs(before, outputs);
+      // A monitor connected or unplugged ends a trial without reverting:
+      // the daemon has applied the saved profile for the new set. One the
+      // trial turned off or mirrors is still listed, so it doesn't
+      if (root._read && root._sayHotplugs(before, outputs) && root.pending)
+        root._end();
       root._read = true;
     });
   }
@@ -420,7 +448,8 @@ QtObject {
   // Each monitor connected or removed between two reads (by connector,
   // disabled ones included: turning one off isn't unplugging it), where
   // the OSD's `monitor` status or Monitors.notify puts it
-  // (NotificationManager.announce): its card, a notification, or nothing
+  // (NotificationManager.announce): its card, a notification, or nothing.
+  // Returns whether there was one
   function _sayHotplugs(before, after) {
     const names = list => list.map(monitor => monitor.name);
     const added = after.filter(monitor => !names(before).includes(monitor.name));
@@ -429,6 +458,7 @@ QtObject {
       root._sayHotplug("added", monitor);
     for (const monitor of removed)
       root._sayHotplug("removed", monitor);
+    return added.length + removed.length > 0;
   }
 
   function _sayHotplug(kind, monitor) {
@@ -506,12 +536,6 @@ QtObject {
       if (root.pageShown && !root.pending && root._untouched()) {
         draft.load();
         root._detectPending = true;
-      }
-      // The daemon has applied the saved profile for the new set already:
-      // a trial Apply ends without reverting
-      if (root.pending) {
-        root.pending = false;
-        root._countdown.stop();
       }
       root._refreshSoon.restart();
     }

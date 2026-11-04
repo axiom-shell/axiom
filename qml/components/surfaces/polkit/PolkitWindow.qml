@@ -50,7 +50,6 @@ PanelWindow {
 
   // Every focus grab lets input through to it while it shows, so a prompt
   // over the overlay (the greeter's install, from Settings) closes nothing
-  onVisibleChanged: visible ? SurfaceManager.registerModal(root) : SurfaceManager.unregisterModal(root)
   Component.onDestruction: SurfaceManager.unregisterModal(root)
 
   Timer {
@@ -113,12 +112,15 @@ PanelWindow {
   WlrLayershell.namespace: "axiom-polkit"
   WlrLayershell.keyboardFocus: root.shown && root.hasCard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-  // Where the compositor blurs only what a window asks: the whole dimmed
-  // screen, while backdrops blur (LayerStack.blurBackdrops)
-  // (attached only there: attached at all, it claims the window's blur, and
-  // Hyprland's layer rules no longer blur it)
-  Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) ? dimBlur : null)
+  Component.onCompleted: {
+    SurfaceManager.registerModal(root);
+    // Where the compositor blurs only what a window asks: the whole dimmed
+    // screen, while backdrops blur (LayerStack.blurBackdrops)
+    // (attached only there: attached at all, it claims the window's blur,
+    // and Hyprland's layer rules no longer blur it)
+    if (CompositorManager.supports.blurRegion === true)
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) ? dimBlur : null);
+  }
   BoxBlurRegion {
     id: dimBlur
     target: dim

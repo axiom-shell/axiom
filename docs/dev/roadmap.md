@@ -330,6 +330,9 @@ Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 - [A monitor a profile names by description gets the next block until its description arrives](issues.md#a-monitor-a-profile-names-by-description-gets-the-next-block-until-its-description-arrives)
 
+Found while testing the trial Apply (row 20, compositor-10):
+- [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
+
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
 
@@ -340,8 +343,6 @@ Moved here from Phase 1, still open:
 Found by the audits:
 - [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
 - [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
-- [A trial monitor Apply that turns a monitor off drops its Keep/Revert](issues.md#a-trial-monitor-apply-that-turns-a-monitor-off-drops-its-keeprevert)
-- [A shell reload during a trial monitor Apply loses the way back](issues.md#a-shell-reload-during-a-trial-monitor-apply-loses-the-way-back)
 - [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
 - [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
@@ -369,7 +370,6 @@ Found by the audits:
 - [Renaming a saved preset after switching presets renames the wrong one](issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
 - [The reference's sections and both chip rows are built while hidden](issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
 - [In the standard layout, a switch past `count` slides through an unrelated workspace](issues.md#in-the-standard-layout-a-switch-past-count-slides-through-an-unrelated-workspace)
-- [Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed](issues.md#where-the-compositor-cant-mirror-a-profiles-mirror-cant-be-turned-off-or-its-monitor-placed)
 - [The key map and the keyboard reference each carry the same modifier chips and legend](issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
 - [A reference section's folded count re-derives BindRows.byModifiers' grouping](issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
 - [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
