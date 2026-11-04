@@ -88,6 +88,9 @@ Scope {
       }
 
       readonly property bool shown: root.overlayVisible && overlayWindow.modelData.name === root.openScreen
+      // Its monitor went away while it showed: nothing else would close it
+      Component.onDestruction: if (overlayWindow.shown)
+        root.overlayVisible = false
       // Room the controls hint takes under the grid
       readonly property real hintSpace: hint.visible ? hint.height + Widget.spacing : 0
 
