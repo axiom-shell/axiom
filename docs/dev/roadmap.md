@@ -393,6 +393,7 @@ Found by the audits:
 - [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
 - [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
+- [MediaManager builds its start times with Object.fromEntries, which the JS engine lacks](issues.md#mediamanager-builds-its-start-times-with-objectfromentries-which-the-js-engine-lacks)
 - [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
 - [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)

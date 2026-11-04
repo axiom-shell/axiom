@@ -4,12 +4,13 @@
 > If you are an agent picking this up: read **Status** first, then the plan below. Keep **Status** current after every commit.
 
 ## Status
-- Branch: `bar-rewrite` (from main 99ae4ee). Work lands here; implementation agents use `isolation: worktree` and the lead merges their branches into `bar-rewrite`.
-- Phase: **A (schema, migration, readers) — running** (agent A in its own worktree, branch off `bar-rewrite`; lead merges it when done).
-- Done commits: none yet.
-- Running agents: A (items 1–4).
-- Next: merge A into `bar-rewrite`, update the Contract with A's final names, then launch B (rendering) and C (editor) in parallel; D after B.
-- Notes / gotchas found: (none yet)
+- Branch: `bar-rewrite` in `~/repos/axiom`. Implementation agents work in worktrees (`.claude/worktrees/agent-*`, branches `bar-rewrite-B`, `bar-rewrite-C`, …) based on `bar-rewrite`; the lead cherry-picks their commits onto `bar-rewrite`.
+- **A: done** (b3288ea A1 annotations; bc3db71 A2 schema + migration v93 (A2+A3 squashed so each commit passes); bc71231 A4 readers). `verify.sh --all` green on bc71231.
+  - Final contract = the plan's, plus `BarsConfig.kindOf(bar)` (surface none → transparent even if floating). Pills still use the old extent maths (with edgePadding); `fontSize` = baseFontSize·textScale/100 (no thickness scaling yet); `joinGap` = max(widgetGap, groupSpacing); BarContainer has a temporary `_five()` adapter (B removes); Spacer fixed at minGap (B makes it fill); inspector shows min/max on every widget (C hides for non-elastic via `typeInfo.elastic`).
+- **B (rendering, items 5–11): running.** **C (editor, items 16–19 only): running**; C is resumed for 20–21 after B is merged (needs `BarWidgetHost.preview` + per-section usage reports).
+- **D (auto-hide, 12–15): not started**, launch after B is merged.
+- Then: review-branch --fix agent, `verify.sh --all`, PR, CI. Delete this file in the last commit.
+- Uncommitted lead edits: issues.md + roadmap.md entry "MediaManager builds its start times with Object.fromEntries…" (found by A; out of scope, logged only) — commit with the next merge.
 
 # Bar rewrite for release: settings, schema, rendering, auto-hide, editor
 
