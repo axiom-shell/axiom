@@ -12,10 +12,9 @@ QtObject {
 
   readonly property var _c: ConfigManager.live.WindowLook
 
-  // Goes through a string so a reload that leaves it unchanged doesn't
-  // apply it again
-  readonly property string _lookJson: JSON.stringify(_c)
-  readonly property var look: JSON.parse(_lookJson)
+  // Whether the window look sets the compositor's blur (off, the user's
+  // own config's applies)
+  readonly property bool blurSet: _c.blur.enabled
 
   // The border colors: the ones picked, else the theme's
   readonly property color activeBorder: _c.borders.activeColor ? Theme.resolveColor(_c.borders.activeColor) : Theme.borderFocus
