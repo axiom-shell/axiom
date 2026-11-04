@@ -228,9 +228,9 @@ func osdItemFields(cfg *jsonx.Object) {
 // the Network widget's VPN lock and its popout's VPN section)
 var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn"}
 
-// A bar's settings added since (v93: its length and auto-hide), and its
-// style's textScale (in place of a font size of null, the default)
-var barKeysAddedSinceV1 = []string{"length", "align", "autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
+// A bar's settings added since (v93: its auto-hide), and its style's
+// textScale (in place of a font size of null, the default)
+var barKeysAddedSinceV1 = []string{"autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
 
 // Every frozen corpus config (each past schema version's defaults, the
 // examples, old configs), as the legacy pipeline loads it, converts to a
