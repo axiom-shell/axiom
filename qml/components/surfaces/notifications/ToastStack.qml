@@ -349,7 +349,7 @@ Scope {
           screen: root.screenName
           x: area.origin.x + toastCard.x + toastCard.shiftX
           y: area.origin.y + toastCard.y + toastCard.shiftY
-          color: Qt.alpha(Appearance.fill(Theme.background), Appearance.fill(Theme.background).a * toastCard.opacity)
+          color: Qt.alpha(Theme.background, toastCard.opacity)
           overlayLayer: true
           shown: toastCard.backed && toastCard.visible && !toastCard.gone
           clipRect: Qt.rect(area.origin.x, area.origin.y, area.width, area.height)

@@ -378,7 +378,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Translucency card reads the window look's blur object as a switch
   - A failed cursor theme call keeps the theme's own name all session
 - **compositor-20** (2): Two majors; may ride in compositor-13 (TranslucencyStatus is next to it).
-  - [A backed toast's blur fill is at the surface opacity twice](../issues.md#a-backed-toasts-blur-fill-is-at-the-surface-opacity-twice)
+  - A backed toast's blur fill is at the surface opacity twice
   - [A keepFill opening leaves an unfilled row in an unbacked translucent pill](../issues.md#a-keepfill-opening-leaves-an-unfilled-row-in-an-unbacked-translucent-pill)
 - **compositor-14** (3):
   - ["Fire on release" is offered on niri and silently dropped](../issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
