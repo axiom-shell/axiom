@@ -88,7 +88,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 40 | compositor-20 | major | Done: Blur fills | 2 | ~20 | compositor-03 |  |
 | 41 | compositor-14 | major | Done: Capability gates in the schema | 3 | ~80 | none |  |
 | 42 | compositor-15 | major | Done: The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
-| 43 | compositor-16 | major | The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
+| 43 | compositor-16 | major | Done: The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
 | 44 | compositor-17 | minor-sweep | Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
 | 45 | compositor-18 | plan | Touchpad settings apart from the mouse's | 1 | needs a plan | none |  |
 | 46 | bar-popouts-03 | major | EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
@@ -388,13 +388,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The detached layer's unbind list can drift from what sway holds
   - noteReload counts every compositor reload a second time
   - One refused line stops the rest of a Hyprland eval
-- **compositor-16** (6):
-  - [The Keybinds page goes stale after a detached-mode Save](../issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
-  - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](../issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
-  - [The bind inspector's typed label and argument miss Save](../issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
-  - [Picking a key in the key map under an edit search selects a bind the list doesn't show](../issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
-  - [Renaming a saved preset after switching presets renames the wrong one](../issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
-  - [The reference's sections and both chip rows are built while hidden](../issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
+- **compositor-16** (6, done):
+  - The Keybinds page goes stale after a detached-mode Save
+  - A combo lookup says nothing holds a key the search or chips hide, and offers to bind it
+  - The bind inspector's typed label and argument miss Save
+  - Picking a key in the key map under an edit search selects a bind the list doesn't show
+  - Renaming a saved preset after switching presets renames the wrong one
+  - The reference's sections and both chip rows are built while hidden
 - **compositor-17** (18): Six file groups, one commit each; fine under the gate.
   - [The bind merge removes an hl.unbind whether or not its bind went](../issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
   - [A user/ file with a dot in its name never loads](../issues.md#a-user-file-with-a-dot-in-its-name-never-loads)

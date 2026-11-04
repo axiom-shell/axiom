@@ -348,7 +348,6 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
 - [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
 - [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
@@ -362,11 +361,6 @@ Found by the audits:
 - [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
-- [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
-- [The bind inspector's typed label and argument miss Save](issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
-- [Picking a key in the key map under an edit search selects a bind the list doesn't show](issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
-- [Renaming a saved preset after switching presets renames the wrong one](issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
-- [The reference's sections and both chip rows are built while hidden](issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
 - [The key map and the keyboard reference each carry the same modifier chips and legend](issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
 - [A reference section's folded count re-derives BindRows.byModifiers' grouping](issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
 - [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)

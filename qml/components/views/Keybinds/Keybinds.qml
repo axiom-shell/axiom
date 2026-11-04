@@ -41,6 +41,10 @@ BaseView {
     "sources": KeybindManager.page.sourceFilter,
     "ids": root.lookupId !== "" ? [root.lookupId] : null
   })
+  // Whether nothing holds the looked-up key, whatever the search and chips hide
+  readonly property bool lookupFree: root.lookupId !== "" && KeybindFilter.filter(KeybindManager.keybindings, "", {
+    "ids": [root.lookupId]
+  }).length === 0
   readonly property bool narrowed: root.query !== "" || KeybindManager.page.filtering || root.lookupId !== ""
 
   readonly property int shownCount: root.sections.reduce((sum, section) => sum + section.binds.length, 0)
@@ -182,6 +186,7 @@ BaseView {
         },
         StreamedLoader {
           visible: !root.editing && !root.keyboard
+          wanted: !root.editing && !root.keyboard
           Layout.fillWidth: true
           label: "keybind filter chips"
 
@@ -227,6 +232,7 @@ BaseView {
         },
         StreamedLoader {
           visible: root.editing && KeybindManager.editor.binds.length > 0
+          wanted: root.editing
           Layout.fillWidth: true
           label: "keybind filter chips"
 
@@ -292,14 +298,14 @@ BaseView {
       StyledText {
         wrapMode: Text.WordWrap
         visible: !root.editing && !root.keyboard && root.narrowed && root.sections.length === 0
-        text: root.lookupId !== "" ? I18n.tr("Nothing is bound to {0}", KeybindManager.displayCombo(KeybindManager.page.lookupCombo)) : root.query !== "" ? I18n.tr("No keybinds match \"{0}\"", root.query) : I18n.tr("No keybinds match the filters")
+        text: root.lookupFree ? I18n.tr("Nothing is bound to {0}", KeybindManager.displayCombo(KeybindManager.page.lookupCombo)) : root.query !== "" ? I18n.tr("No keybinds match \"{0}\"", root.query) : I18n.tr("No keybinds match the filters")
         opacity: 0.6
         Layout.fillWidth: true
         Layout.topMargin: Widget.padding
       }
 
       StyledTextButton {
-        visible: !root.editing && !root.keyboard && root.lookupId !== "" && root.sections.length === 0
+        visible: !root.editing && !root.keyboard && root.lookupFree
         implicitHeight: Widget.height
         iconText: "add"
         text: I18n.tr("Bind it")
@@ -352,6 +358,7 @@ BaseView {
                 required property int index
                 readonly property var modelData: root.columns[column.index]?.[sectionLoader.index] ?? null
                 Layout.fillWidth: true
+                wanted: !root.editing && !root.keyboard
                 label: "keybind section"
 
                 sourceComponent: KeybindSection {

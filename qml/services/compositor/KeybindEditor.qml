@@ -29,6 +29,8 @@ QtObject {
     if (index === root.selectedIndex)
       return;
     stopRecording();
+    // The inspector's typed label or argument, while its index is still right
+    EditsManager.commitTyping();
     root.selectedIndex = index >= 0 && index < root.binds.length ? index : -1;
     if (root.selectedIndex >= 0 && reveal !== false)
       root.reveal(root.selectedIndex);
