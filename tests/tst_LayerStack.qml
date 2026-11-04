@@ -26,10 +26,10 @@ TestCase {
     compare(names.length, new Set(names).size);
   }
 
-  // The order BarEnds.rank assumes: solid, the border, pills, transparent,
-  // floating, then docks; of a kind, the shorter edge's bar first
+  // The order BarEnds.rank assumes: solid, the border, pills, floating,
+  // transparent, then docks; of a kind, the shorter edge's bar first
   function test_bar_layers_in_corner_order() {
-    const chain = ["bar", "bar-long", "border", "bar-pill", "bar-pill-long", "bar-transparent", "bar-transparent-long", "bar-floating", "bar-floating-long", "dock"];
+    const chain = ["bar", "bar-long", "border", "bar-pill", "bar-pill-long", "bar-floating", "bar-floating-long", "bar-transparent", "bar-transparent-long", "dock"];
     for (let i = 1; i < chain.length; i++)
       verify(order(chain[i - 1]) > order(chain[i]), chain[i - 1] + " before " + chain[i]);
     compare(LayerStack.barLayers.length, 8);

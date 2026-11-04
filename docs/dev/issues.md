@@ -785,6 +785,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
+### A pill's shadow run-on rectangles log stackAfter warnings
+- **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
+- **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
+- **Size:** small
+- **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
+
 ### WindowLookConfig rebuilds BarStyle.look
 - **Where:** `qml/config/WindowLookConfig.qml:31` (`_barLook`), `qml/config/BarStyle.qml:15` (`look`)
 - **What:** `BarsConfig.lookOf({})` returns what `BarStyle.look` holds: every `Bars.style` key with the shadow flattened. Every other user of the shared look reads `BarStyle.look` (RoundedBorders, SurfaceShadow, AttachedSurface, EdgePlacement). Fix: `readonly property var _barLook: BarStyle.look`.

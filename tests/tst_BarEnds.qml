@@ -98,8 +98,8 @@ TestCase {
   }
 
   function test_kinds_in_order() {
-    // floating < transparent < pills < solid, whatever the edges
-    const kinds = ["floating", "transparent", "pills", "solid"];
+    // transparent < floating < pills < solid, whatever the edges
+    const kinds = ["transparent", "floating", "pills", "solid"];
     for (let i = 0; i < kinds.length; i++) {
       for (let j = 0; j < kinds.length; j++) {
         if (i === j)
@@ -108,7 +108,7 @@ TestCase {
         compare(BarEnds.yieldsTo(lower, higher), i < j, kinds[i] + " vs " + kinds[j]);
       }
     }
-    verify(BarEnds.yieldsTo(bar("right", "floatingPills"), bar("bottom", "transparent")), "floating pills are floating");
+    verify(BarEnds.yieldsTo(bar("right", "transparent"), bar("bottom", "floatingPills")), "floating pills are floating");
   }
 
   function test_pill_bars_merge_at_their_corner() {
@@ -156,11 +156,13 @@ TestCase {
     compare(island.end.kind, "bar");
     compare(island.end.over, 0);
     compare(island.end.gap, 6);
-    // ...and past a transparent one, which keeps the corner
-    const [under, owner] = ends([bar("left", "floating"), bar("bottom", "transparent")], withBorder);
-    compare(owner.start.kind, "border");
-    compare(under.end.kind, "bar");
-    compare(under.end.over, 10);
+    // A transparent bar makes way for a floating one, which keeps the
+    // corner: held clear of its islands, as far as windows start past it
+    const [owner, under] = ends([bar("left", "floating"), bar("bottom", "transparent")], withBorder);
+    compare(owner.end.kind, "border");
+    compare(under.start.kind, "bar");
+    compare(under.start.over, 0);
+    compare(under.start.gap, 10);
   }
 
   function test_automatic_float_gap_without_a_backend() {
@@ -346,7 +348,7 @@ TestCase {
         "reserveSpace": false
       }), bar("left", "pills")];
     const stack = BarEnds.stacksOn(bars, "DP-1").top.map(b => b.id);
-    compare(stack, ["top:solid", "top:pills", "t1", "t2", "top:floating", "top:floatingPills", "loose"]);
+    compare(stack, ["top:solid", "top:pills", "top:floating", "top:floatingPills", "t1", "t2", "loose"]);
     compare(BarEnds.edgesOn(bars, "DP-1").top.id, "loose", "the innermost");
     compare(BarEnds.edgesOn(bars, "DP-1").left.id, "left:pills");
     compare(BarEnds.edgesOn(bars, "DP-1").bottom, null);
@@ -421,26 +423,20 @@ TestCase {
     verify(f.offBorder && fp.offBorder);
   }
 
-  function test_a_transparent_bar_yields_its_inner_bars_gap() {
-    // A floating bar inside a transparent one: the transparent bar
-    // reserves the float gap less, so the islands sit the transparent
-    // bar's padding from its widgets, as the bar outside it does
-    const [p, t, f] = placed([bar("top", "pills"), bar("top", "transparent"), bar("top", "floatingPills", {
+  function test_a_transparent_bar_lies_inside_floating_ones() {
+    // Transparent bars are laid last: inside a floating bar on its edge,
+    // whatever the config order. The floating bar reserves its whole
+    // extent, the transparent bar facing the windows trims its gaps_out
+    const [t, p, f] = placed([bar("top", "transparent"), bar("top", "pills"), bar("top", "floatingPills", {
         "floatingGap": 6
       })], withBorder);
-    verify(!t.facesWindows);
-    compare(t.trim, 6);
-    compare(t.zone, 24);
-    compare(t.frame, 58, "its own popouts still grow from its inner edge");
-    compare(f.outer, 8 + 22 + 22 - 2);
-    // An inner accent line is an edge to see: the floating bar keeps its
-    // gap from it
-    const [, lined] = placed([bar("top", "pills"), bar("top", "transparent", {
-        "accentLine": "inner"
-      }), bar("top", "floating", {
-        "floatingGap": 6
-      })], withBorder);
-    compare(lined.trim, 0);
+    compare(BarEnds.stacksOn([t, p, f], "DP-1").top.map(b => b.id), ["top:pills", "top:floatingPills", "top:transparent"]);
+    verify(!f.facesWindows && t.facesWindows);
+    compare(f.trim, 0);
+    compare(f.zone, 30);
+    compare(t.trim, 10);
+    compare(t.zone, 20);
+    compare(t.outer, 8 + 22 + 28 - 2);
     // A transparent bar inside: nothing trimmed but by the innermost
     const [outer, inner] = placed([bar("top", "transparent", {
         "id": "a"
@@ -504,8 +500,8 @@ TestCase {
   function test_outer_popouts_cover_inner_bars() {
     const stack = placed([bar("top", "solid", {
         "insideBorder": false
-      }), bar("top", "pills"), bar("top", "transparent"), bar("top", "floatingPills")], withBorder);
-    const [s, p, t, f] = stack;
+      }), bar("top", "pills"), bar("top", "floatingPills"), bar("top", "transparent")], withBorder);
+    const [s, p, f, t] = stack;
     const size = {
       "width": 1000,
       "height": 500
@@ -518,7 +514,7 @@ TestCase {
         "footprint": rects
       }, extra ?? {});
     // The solid bar's popout, grown out of the pill bar, reaching down past
-    // the floating bar: the two bars inside the pill bar give way under it
+    // the transparent bar: the two bars inside the pill bar give way under it
     const deep = [claim(s.id, [Qt.rect(100, 0, 200, 300)])];
     compare(BarEnds.coveredSpans(t, stack, deep, "DP-1", 0, size), [
       {
@@ -531,9 +527,9 @@ TestCase {
     compare(BarEnds.coveredSpans(p, stack, deep, "DP-1", 0, size), []);
     compare(BarEnds.coveredSpans(s, stack, deep, "DP-1", 0, size), []);
     // A popout not reaching a bar's band leaves it
-    compare(BarEnds.coveredSpans(f, stack, [claim(s.id, [Qt.rect(100, 0, 200, t.frame - 4)])], "DP-1", 0, size), []);
+    compare(BarEnds.coveredSpans(t, stack, [claim(s.id, [Qt.rect(100, 0, 200, f.frame - 4)])], "DP-1", 0, size), []);
     // Other screens, edges and kinds, and a bar's own or inner popouts
-    compare(BarEnds.coveredSpans(t, stack, [claim(s.id, [Qt.rect(0, 0, 50, 300)], {
+    compare(BarEnds.coveredSpans(f, stack, [claim(s.id, [Qt.rect(0, 0, 50, 300)], {
         "screen": "HDMI-A-1"
       }), claim(s.id, [Qt.rect(0, 0, 50, 300)], {
         "kind": "menu"

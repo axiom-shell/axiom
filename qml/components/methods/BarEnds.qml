@@ -5,8 +5,8 @@ import QtQuick
 // What each end of a bar meets, where bars on perpendicular edges share a
 // corner (pure). Hyprland hands a corner to the bar it arranges first,
 // which the bars' layer rules decide (render.LayerRulesLua):
-// solid bars, then the border, then pill bars, then transparent ones, then
-// floating ones; between two of a kind the bar on the screen's shorter
+// solid bars, then the border, then pill bars, then floating ones, then
+// transparent ones; between two of a kind the bar on the screen's shorter
 // edge first (`shortEdge`: the side bars on a landscape monitor), so the
 // longer bar gives up its length. The other bar's window then ends at the
 // owner's reserved line.
@@ -44,14 +44,14 @@ import QtQuick
 QtObject {
   id: root
 
-  // Who wins a shared corner: solid, then pills, then transparent, then
-  // floating (bars and pills held off the edge)
+  // Who wins a shared corner: solid, then pills, then floating (bars and
+  // pills held off the edge), then transparent
   function rank(bar) {
     if (bar.solid)
       return 3;
     if (bar.island)
-      return 0;
-    return bar.kind === "transparent" ? 1 : 2;
+      return 1;
+    return bar.kind === "transparent" ? 0 : 2;
   }
 
   /**
@@ -212,11 +212,11 @@ QtObject {
   }
 
   // Where a kind of bar is arranged on its edge: solid bars (then the
-  // border), pill bars, transparent bars, floating bars, floating pills.
+  // border), pill bars, floating bars, floating pills, transparent bars.
   // Floating bars and floating pills share a layer rule, so their order
   // is LayerSlot's rank (layerRank).
   function kindIndex(bar) {
-    return ["solid", "pills", "transparent", "floating", "floatingPills"].indexOf(bar.kind);
+    return ["solid", "pills", "floating", "floatingPills", "transparent"].indexOf(bar.kind);
   }
 
   // The enabled bars on a screen (`monitor`) by edge name, each edge's
@@ -266,9 +266,7 @@ QtObject {
    *   stackIndex (0 outermost), innermost (the last on the edge),
    *   facesWindows (no bar inside it reserves space, so windows start
    *     right past it), trim (reserveTrim while it faces the windows; a
-   *     transparent bar with a floating bar next inside it, that bar's
-   *     float gap; any other bar with one reserving inside it reserves
-   *     its whole extent),
+   *     bar with one reserving inside it reserves its whole extent),
    *   offBorder (the border's stroke isn't on it: a bar inside the border
    *     with another inside the border outside it, or a solid bar with
    *     the border on that the border's strip doesn't lie over, one with
@@ -303,12 +301,11 @@ QtObject {
       }
       const next = stack.slice(index + 1).find(other => other.reserveSpace) ?? null;
       const facesWindows = next === null;
-      // A transparent bar has no inner edge to see: what lies inside it
-      // keeps its own gap from where it would be, so it reserves that gap
-      // less (windows' gaps_out, its reserveTrim; a floating bar's float
-      // gap), the widgets' gap to it then matching their gap outwards
-      const openInside = bar.kind === "transparent" && bar.accentLine !== "inner";
-      const trim = facesWindows ? bar.trim : openInside && next.island ? next.floatingGap : 0;
+      // Only a bar facing the windows trims (a transparent bar's gaps_out,
+      // its reserveTrim): one with a reserving bar inside it reserves its
+      // whole extent. (Transparent bars are laid last, so nothing but
+      // another transparent bar reserves inside one.)
+      const trim = facesWindows ? bar.trim : 0;
       const onStrip = bar === strip;
       let zone = 0;
       if (bar.reserveSpace)

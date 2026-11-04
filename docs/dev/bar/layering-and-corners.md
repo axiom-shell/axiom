@@ -33,12 +33,12 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 
 ### Bars stacked on one edge (`BarEnds.stacksOn`, `placeStack`, `edgeOf`)
 - Any number of bars may share an edge on a screen. The compositor lays each out in what the ones arranged before it left, so they lie one inside the other.
-- **Order, outer first** (`stacksOn`): the reserving bars by kind (solid, then the border's strip, pills, transparent, floating, floating pills), then the bars reserving nothing, laid over what's left. Bars of one kind keep list order.
+- **Order, outer first** (`stacksOn`): the reserving bars by kind (solid, then the border's strip, pills, floating, floating pills, transparent), then the bars reserving nothing, laid over what's left. Bars of one kind keep list order.
   - The kind decides, never the list: a floating bar is always inside a full one on its edge. It keeps its float gap from that bar's inner side (its frame line), as it would from the border's.
   - Floating bars and floating pills share a layer rule, and so do two bars of one kind, so the compositor breaks the tie by map order. Each bar's `LayerSlot` maps it by its `layerRank` (`BarEnds.layerRanks`: floating before floating pills, then list order), and a bar remade later maps again in its place ([layer arrangement](../compositor/layer-arrangement.md#mapping-in-order)).
 - **Where each lies** (`placeStack`, added to every `ScreenEdgeManager.bars` entry): `outer` (its window's outer edge from the screen edge), `zone` (the exclusive zone `BarPanel` sets), `taken` (what it reserves, its outer margin counted), `frame` (its inner side), `outerReach` (that margin: `borderWidth` inside the border, the screen margin for a pill bar on the border), `stripCover`, `innermost`, `facesWindows`, `offBorder`.
   - A bar inside the border keeps its `-borderWidth` margin when stacked: its outer edge reaches back onto the far stroke of the bar outside it (a pill's or island's), as onto the border's.
-  - **Trim:** only a bar facing the windows (`facesWindows`: none inside it reserves) reserves gaps_out short of a transparent edge. A transparent bar with a floating bar next inside it reserves that bar's float gap short, so the islands sit its padding from its widgets, as the bar outside it does (an inner accent line is an edge to see: no trim). Any other bar with a reserving bar inside it reserves its whole extent, so the next bar never overlaps it.
+  - **Trim:** only a bar facing the windows (`facesWindows`: none inside it reserves) reserves gaps_out short of a transparent edge (an inner accent line is an edge to see: no trim). Any bar with a reserving bar inside it reserves its whole extent, so the next bar never overlaps it. Transparent bars are laid last, so only another transparent bar lies inside one.
   - **Solid bars:** the border's strip lies over the innermost reserving solid bar alone, which reserves the strip's overlap less. A solid bar outside it reserves its whole extent and has no stroke at its inner edge with the border on (`offBorder`), so its popouts open no stroke there (`SurfaceContext.layout`).
   - **`offBorder`** is also a bar inside the border with another inside the border outside it: its pills open no border stroke (`BarContainer.borderOpening`), as the border's stroke isn't there.
 - **What the edge is left with** (`edgeOf`, read through `ScreenEdgeManager.edgeOn`): `reserved` (the border's margin and every bar's `taken`), `frame` (the innermost bar's), `corner` (past the reserving solid bars and the strip), `strip`, `solidZone`, `insideTaken`, `facing` (the innermost reserving bar, where `reserved` ends: the overlay's margin reads its trim, `ReservedAreaWindow`). `barReservedOn`, `frameLine` and `cornerLine` are these; `RoundedBorders` pulls its corner pieces out past `insideTaken`, insets its shadow by `solidZone`, and leaves its strip clear over a solid bar while `strip`.
@@ -51,9 +51,9 @@ How bars and the screen border share an edge through layer-shell ordering. Cover
 
 ### Bars sharing a corner (`methods/BarEnds`, `tests/tst_BarEnds.qml`)
 - Hyprland gives a corner to the bar it arranges first. The other bar's window ends at its reserved line.
-- Which bar that is depends on the layer rule, never on which mapped first. First to last: solid bars, the border, pill bars, transparent bars, floating bars and floating pills (orders: [layer stacking](../generated/layers.md), from `LayerStack.layers`; `tst_LayerStack` holds them to this order).
+- Which bar that is depends on the layer rule, never on which mapped first. First to last: solid bars, the border, pill bars, floating bars and floating pills, transparent bars (orders: [layer stacking](../generated/layers.md), from `LayerStack.layers`; `tst_LayerStack` holds them to this order).
 
-  - A floating bar always makes way.
+  - A transparent bar always makes way, and a floating bar for every bar but a transparent one.
   - Between bars of one kind, the bar on the screen's longer edge makes way (the `-long` namespace), so the shorter bar gets the corner: side bars on a landscape monitor, top and bottom ones on a portrait one (`shortEdge`, `BarEnds.onShortEdge`).
   - Solid bars can't tie with pill bars: a solid bar is arranged before the border, a pill bar after it.
   - Docks, the overlay, the OSD and popouts are ordered after every bar.

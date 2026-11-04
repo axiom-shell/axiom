@@ -534,6 +534,18 @@ TestCase {
     verify(past.detached);
     compare(past.attachFromBar, 34);
     compare(past.attachAt + 24 / 2, 46);
+    // ...laid inside floating bars on its edge (transparent bars come
+    // last): its own inner side is past them all, so its box opens past
+    // them, in line with the windows there
+    const inside = at({
+      "bar": clear,
+      "frameLine": 110,
+      "reserved": 100,
+      "detachedPush": 10 - 12
+    });
+    verify(inside.detached);
+    compare(inside.barOuter, 70);
+    compare(inside.attachAt + 24 / 2, 110 + 10);
     // A solid bar outside another, the border's strip on the inner one
     // (offBorder): its popout grows from its own inner edge, wherever it
     // lies in the stack (frameLine), and opens no stroke there

@@ -389,6 +389,7 @@ Found by the audits:
 - [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
 - [A bar made while the bar editor is open may never report to it](issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
 - [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
+- [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
 - [MediaManager builds its start times with Object.fromEntries, which the JS engine lacks](issues.md#mediamanager-builds-its-start-times-with-objectfromentries-which-the-js-engine-lacks)
 - [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
