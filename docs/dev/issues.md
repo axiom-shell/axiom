@@ -625,24 +625,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A $' or $& in a bind's argument is read as a replacement pattern
-- **Where:** `backend/internal/compositor/render/actions.go:129` (`jsReplace`), `backend/internal/compositor/render/hyprconfig.go:116` (`ipcCall`), `backend/internal/compositor/render/actions.go:101` (`DefaultLabel`), `qml/components/methods/BindActions.qml:99` (`defaultLabel`)
-- **What:** `jsReplace` reproduces JS `String.replace`'s `$$ $& $\` $'` handling, and the user's argument is passed through it as the replacement. A `launcherSearch` bind with the argument `US$'s rate` renders on sway as `exec "axiom ipc appLauncher search 'US\\''s rate'"` and on Hyprland as `exec_cmd("axiom ipc appLauncher search 'US\\''s rate'")` (scratch run): the shell gets `US\s rate`, and both descriptions read "Launcher: USs rate". niri substitutes word by word (niri.go:316-324) and passes it intact, so the same bind does different things per compositor. Fix: put user text in literally (`strings.Replace(s, "{0}", arg, 1)` in `ipcCall` and `DefaultLabel`, and for `"{}"` in sway.go's exec lines); `jsReplace` can become literal if no frozen case pins a `$` replacement. The shell's halves do the same (`BindActions.qml:69` `word.replace("{0}", text)`, :99 `.replace("{0}", argument)`, which the parity replay pins against the Go): pass a function (`() => argument`) there in the same change.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A sway bind using a variable from an include moves as a literal $name
-- **Where:** `backend/internal/compositor/binds/sway.go:270` (`extractSway`)
-- **What:** `extractSway` knows only the `set` lines of user/'s own files and never follows an `include`, while the takeover keeps the adopted file's includes live. A config setting `$term`/`$menu` in an included file (`include /etc/sway/definitions` on Manjaro's sway) with `bindsym Mod4+Return exec $term` moves that bind as `{"action":"exec","argument":"$term"}` (reproduced); the line is commented out, axiom's module is read before user/ where `$term` isn't set, so sway leaves it literal and the user's terminal and launcher binds run nothing after a Merge. Extract with `--only` has the same gap for variables set in an earlier user/ file. Fix: collect the variables as sway reads them, following `include`s (`userconf.SwayText` already expands them), before reading each file's binds; failing that, keep a bind whose command still holds a `$name`, with a reason; a `TestSwayExtract` row.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A niri spawn of one word with a space moves as a broken shell command
-- **Where:** `backend/internal/compositor/binds/niri.go:86` (`niriAction`)
-- **What:** niri's `spawn` runs its arguments without a shell; the merge makes them axiom's `exec`, which every niri writer emits as `spawn-sh` (`render/niri.go:314`). Several words are shell-quoted (`shellJoin`), one word is passed as is (`if len(words) == 1 { return execBind(words[0]) }`): `Mod+T { spawn "/opt/My App/app"; }` moves as `exec "/opt/My App/app"` (reproduced) and runs `/opt/My` with an argument; any shell character in the word (`;`, `$`, `&`, `*`, quotes) changes meaning too, and the original bind is already commented out. Fix: always `shellJoin(words)`, keeping a leading `~/` outside the quotes; a `TestNiriExtract` row with a spaced path.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### The overview stays open with nothing shown after its monitor goes away
 - **Where:** `qml/shell/WorkspaceOverlay.qml:21` (`overlayVisible`), `qml/shell/WorkspaceOverlay.qml:30` (`open`), `qml/shell/WorkspaceOverlay.qml:42` (`toggle`), `qml/shell/WorkspaceOverlay.qml:90` (`shown`)
 - **What:** Open the overview on monitor B, unplug B (or B goes to sleep and is removed). The `Variants` over `General.outputs` destroys B's `PanelWindow`, its `FocusGrab` with it; nothing resets `overlayVisible` (grep: it's set only in this file, at lines 34, 43, 69, 126, 155, 162, 176; `openScreen` likewise). Axiom's `FocusGrab` emits `cleared` only from its `_lost` timer or a caught outside click, both gone with the object (qml/services/compositor/FocusGrab.qml:51-53 only unregisters). So `overlayVisible` stays true with no window showing it: the next toggle bind only sets it false (nothing visible happens; the user has to press twice), `open()` and IPC `open` return early at line 30, and when a monitor with the same name comes back the overview reappears on it unasked. PLAUSIBLE on Hyprland only for the native grab: whether Quickshell's `HyprlandFocusGrab` emits `cleared` while being destroyed (settles with a nested Hyprland, `hyprctl output remove` while open); sway is certain from the code. Fix: in the `Scope`, `readonly property bool _screenGone: !General.outputs.some(s => s.name === root.openScreen)` with `on_ScreenGoneChanged: if (_screenGone) root.overlayVisible = false`, or make `shown` the only truth by clearing `overlayVisible` in the delegate's `Component.onDestruction` when it was `shown`.
@@ -728,14 +710,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"))` is written out in the chip labels and again in the section card. A change to one (a new kind of section) leaves the chip and the card disagreeing. Fix: one `sectionTitle(section)` in KeybindManager (beside `sectionIcon`), used by both.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A sway exec chained with ; or , moves in as one shell command
-- **Where:** `backend/internal/compositor/binds/sway.go:207` (`swayAction`)
-- **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
-
-  Fix: before the `exec` branch, a stored command holding `;` or `,` outside quotes returns `raw` for sway, which keeps sway's behaviour. That is a small scan, plus a test row for each separator.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the sway system
 
 ### A sway output rule by description misses a monitor with no serial
 - **Where:** `backend/internal/compositor/render/sway.go:721` (`SwayOutputName`), `backend/internal/compositor/ipc/sway.go:122` (`Outputs`), `docs/dev/compositor/sway-backend.md:40`
