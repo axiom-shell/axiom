@@ -409,8 +409,11 @@ func NiriInfo(files []File, nested bool) *jsonx.Object {
 		for _, node := range f.Nodes {
 			switch node.Name {
 			case "blur":
-				if node.Child("off") != nil {
-					blur.Set("enabled", false)
+				// The last of on and off (niri merges per field)
+				for _, child := range node.Children {
+					if child.Name == "on" || child.Name == "off" {
+						blur.Set("enabled", child.Name == "on")
+					}
 				}
 				for _, key := range []string{"passes", "offset"} {
 					if found := node.Child(key); found != nil && len(found.Args) > 0 {
