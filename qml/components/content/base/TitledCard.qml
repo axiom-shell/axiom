@@ -16,6 +16,7 @@ Card {
   property alias showActions: header.showActions
   property alias canSave: header.canSave
   property alias saveLabel: header.saveLabel
+  property alias help: header.help
   // Fixed content between the divider and the scrolling body
   property alias headerExtras: extras.data
   // Hides the extras with their space (hiding only what's inside can

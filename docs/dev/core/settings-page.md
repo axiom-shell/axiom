@@ -35,6 +35,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 ### Discarding
 - Three sizes: the page header's Discard (every unsaved edit, `SettingsManager.resetChanges`), a generated card's Discard (shown while it has any: its rows only), and a field's unsaved dot (click it: that edit only). The last two go through `SettingsManager.discard(paths)`, dropping text typed in that card or field (`EditsManager.discardTypingIn`). The list cards (docks, OSDs, calendar accounts) have only the page's.
 - A field's small reset button is different: it sets the schema default (an edit, which Discard undoes). The dot and reset sit right after the field's label, on its line (`FieldHeader.trailing`).
+  - Both are `forms/FieldChangeMarks`, which any schema form gives its fields through its `changedAt` hook.
 
 ### Folding
 - Clicking a card's header folds it (`SettingsManager.collapsed`, by group key, saved to `~/.local/state/axiom/ui/settings.json`). Search results never fold.

@@ -18,7 +18,7 @@
 - **`Panel`**: lays its children out in a column and works in either host.
   - In a bar popout it sizes to its content with the popout box (`wrapper` set, `hovered` read for dismissal).
   - In a card the host passes `embedded: true`: it fills the slot with the card box, and `compactContent` (e.g. a `CompactFigure`) replaces the column when `compact` (see [Writing modules](writing-modules.md)).
-- **`TitledCard`**: for titled scrolling panels (ThemePicker, the bar editor panels, the settings page's content).
+- **`TitledCard`**: for titled scrolling panels (ThemePicker, the bar editor panels, the settings page's content). Its `help` is a "?" after the title with the panel's help in a tooltip.
   - A `CardHeader` with `title`, `dirty`, `save()` / `reset()`, `headerExtras`.
   - Children go into the scrolling body.
   - `scrollTo(item, center)` (animated) brings a descendant to the top, or to the middle with `center`.
