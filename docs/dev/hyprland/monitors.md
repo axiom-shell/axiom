@@ -52,6 +52,8 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
    - It sits on the Overlay layer as `axiom-monitor-prompt`; its layer rule stacks it over the overlay.
    - It is registered in `SurfaceManager.modalWindows` while shown, so the overlay's focus grab lets clicks through to it.
 3. `keep()` saves the draft. `revert()`, or 15 s without an answer, evals the snapshot back.
+- A monitor connected or unplugged meanwhile (the connectors read differ from the last read) ends the trial without reverting: the daemon has applied the saved profile for the new set. A monitor the trial turns off or mirrors is still listed (`outputs` holds disabled ones), so Hyprland's `monitorremoved` for it doesn't end the trial.
+- The trial (the snapshot and the draft tried) is a `PersistentProperties` JSON string, so a QML reload keeps the prompt and the way back; its countdown starts over. A crash or restart of qs loses it.
 - A profile for monitors that aren't connected only saves.
 
 ### How profiles reach Hyprland
