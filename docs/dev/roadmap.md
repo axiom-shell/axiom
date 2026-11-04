@@ -343,14 +343,11 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [The Translucency card reads the window look's blur object as a switch](issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
-- [A failed cursor theme call keeps the theme's own name all session](issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)
 - [The Keybinds page goes stale after a detached-mode Save](issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
 - [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
 - [One refused line stops the rest of a Hyprland eval](issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
 - [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
 - [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
-- [A failed options read sets Hyprland's gaps to 0](issues.md#a-failed-options-read-sets-hyprlands-gaps-to-0)
 - [A workspace slide throws when animations go off between its legs](issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
 - [Direct Hyprland dispatches can overtake queued Lua](issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
 - [Recording two keys within 30 s can end the second recording early on Hyprland](issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
@@ -361,8 +358,6 @@ Found by the audits:
 - [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
 - [noteReload counts every compositor reload a second time](issues.md#notereload-counts-every-compositor-reload-a-second-time)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
-- [A user's blur off overrides axiom's blur on niri](issues.md#a-users-blur-off-overrides-axioms-blur-on-niri)
-- [Gaps to the edges are wider on sway than the setting says](issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
 - [Wide active is hidden in the perMonitor layout but still applies there](issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)

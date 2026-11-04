@@ -5,9 +5,9 @@ default_border pixel 2
 default_floating_border pixel 2
 [all] border pixel 2
 gaps inner 3
-gaps outer 6
+gaps outer 3
 gaps inner all set 3
-gaps outer all set 6
+gaps outer all set 3
 corner_radius 26
 blur_radius 5
 blur_passes 2

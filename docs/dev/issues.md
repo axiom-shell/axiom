@@ -395,18 +395,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The Translucency card reads the window look's blur object as a switch
-- **Where:** `qml/components/views/Settings/TranslucencyStatus.qml`, `qml/config/WindowLookConfig.qml` (`look`)
-- **What:** `WindowLook.blur` is the `Blur` object (`{ enabled, windowBlur, size, … }`), but the card tests `WindowLookConfig.look.blur` as a bool, so it's always truthy: the status always ends "Set in Compositor → Window look." even when the blur comes from the user's own config, and the "Set the compositor's blur" button (`root.off && !look.blur`) is never offered. Its branch would also `setValue(["WindowLook", "blur"], true)`, writing `true` over the whole object. Fix: read `blur.enabled` (a new reader property on `WindowLookConfig`, `blurSet`) and set `["WindowLook", "blur", "enabled"]`; `look` and `_lookJson` (5 lines, whose comment about applying it again is stale since the daemon applies the look) then have no reader and go.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
-### A failed cursor theme call keeps the theme's own name all session
-- **Where:** `qml/services/ui/CursorThemeManager.qml` (`_resolve`)
-- **What:** When `cursor.theme` fails, `_resolve` takes the theme's own name as resolved and sets `_resolvedOnce`, and nothing asks again until the theme or size changes. The log has it three times across dev re-execs (`[CursorThemeManager] cursor.theme: the connection to axiom closed`): `xcursorTheme` is then the plain theme, so for a theme that needs its companion (Oxygen) the compositor, `XCURSOR_THEME` and GTK get the name without it, the very fallback the companion exists to stop, and the companion of the theme is never made. Related to, not covered by, Read-only daemon calls fail across a dev re-exec (this call writes, but is idempotent). Fix: pass `{ repeatable: true }`, and on an error keep `_resolved` as it was and retry on `BackendManager.ready`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### The Keybinds page goes stale after a detached-mode Save
 - **Where:** `qml/services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
 - **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).
@@ -434,12 +422,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A moved raw bind with a Lua keyword key compiles to nothing
 - **Where:** `backend/internal/compositor/binds/hyprlua.go` (`luaSource`)
 - **What:** `luaSource` writes a table key that looks like a name bare, keywords included (hyprlua.go:467): `{ ["end"] = 1 }` becomes `{ end = 1 }`, and NaN/Inf come out as `nan`/`inf` (nil globals). A dispatcher the merge maps to `raw` keeps that source as its argument; `DispatcherLua`'s `raw` case compiles it with `load`, which fails, so the moved bind becomes `hl.dsp.no_op()` while the user's original call is already deleted. Reproduced (`{["end"]=1}` → `{ end = 1 }`). Rare. Fix: exclude Lua's keywords from the bare form; better, `load`-check the rebuilt source at extract time and keep the site when it doesn't compile.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A failed options read sets Hyprland's gaps to 0
-- **Where:** `qml/services/compositor/HyprlandManager.qml` (`_readOptions`, `_gapSides`)
-- **What:** `_readOptions` keeps every option's old value when its reply is missing, except the gaps: `gapsOut = _gapSides(gaps) ?? gapsOut` relies on `_gapSides(null)` being null, but `String(option?.css ?? "").trim().split(/\s+/)` is `[""]` → `[0]`, so it returns `{0,0,0,0}`. A failed batch (the 5 s `unavailable` while Hyprland is busy, e.g. right after a reload) gives null for every option, so `gapsOut` drops to 0 and bars that subtract it jump until the next good read. Fix: `if (typeof option?.css !== "string") return null;` first; better, move `_gapSides` into `HyprState` with test rows for a null reply and 1, 2 and 4 values.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
@@ -502,12 +484,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** window-switcher.md › Events and the manager says the list is "limited to the focused monitor", but with `scope: all` `DockLayout.inScope` keeps every monitor's windows; what's tied to the focused monitor is where it shows. `orderMonitors`' comment says CompositorManager fills its keys; `blockBases` does. BindKeys' header still lists "which of axiom's binds a runtime layer applies and which it skips", gone from QML, and keys.go's comment calls `RuntimeBinds` the copy of BindKeys' `runtimeBinds`, which no longer exists. EdgePopout.qml (outside the system, lines 89 and 383) twice credits "HyprlandManager's layer rules", which are the daemon's now (`render.LayerRulesLua`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A user's blur off overrides axiom's blur on niri
-- **Where:** `backend/internal/compositor/render/niri.go` (`NiriLookNodes`), `backend/internal/compositor/userconf/niri.go` (`NiriInfo`)
-- **What:** `niri-backend.md` says axiom's look wins over the user's files, and a boolean is written both ways so axiom's choice wins. The look's blur isn't: with blur on, `NiriLookNodes` writes `blur { passes; offset; noise }` but never `on`. A `blur { off }` in the user's config (included mode) or in a `user/*.kdl` (managed mode, e.g. the adopted `00-previous.kdl`) stays in effect, since niri merges a later definition per field, so axiom's window and surface blur silently does nothing. `niri validate` (niri 26.04) accepts `blur { on }`. `NiriInfo` has the mirror gap: it sets `enabled` false on any `off` and never back on a later `on`, so `NiriManager.blur` would read wrong once the writer writes `on`. Fix: `KdlSetPath(nodes, "blur.on", …)` with blur on; `NiriInfo` takes the last of `on` / `off`; a frozen render case.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the niri system
 
 ### Setting names that still confuse
 - **Where:** `qml/config/schema/sections/`
@@ -598,14 +574,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
-
-### Gaps to the edges are wider on sway than the setting says
-- **Where:** `backend/internal/compositor/render/sway.go:468` (`SwayLookLines`), `backend/internal/compositor/render/niri.go:456` (`NiriLookNodes`), `qml/services/compositor/SwayManager.qml:38` (`gapsOut`)
-- **What:** `WindowLook.gaps.outer` is "Gaps to the edges". Hyprland writes it as `gaps_out` (the edge gap); niri's writer writes struts of `outer - inner` so its edge comes out at `outer`; the sway writer writes `"gaps inner "+inner, "gaps outer "+outer` unchanged (468-469), and sway(5) says "Outer gaps are in addition to inner gaps. To reduce or remove outer gaps, outer gaps can be set to a negative value." (sway-backend.md and `SwayManager.gapsOut` read it back as outer + inner). At the defaults (inner 3, outer 6) Hyprland and niri leave 6 px at the edge, sway 9, and Automatic bars follow the 9. niri's writer also clamps the struts at 0 (`math.Max(0, …-inner)`), so with inner 10 and outer 0 niri keeps 10 px where Hyprland keeps 0 (`niri validate` 26.04 accepts a negative strut; PLAUSIBLE that niri draws it narrower: a nested niri with inner 10, outer 0 settles it). Fix: sway writes `outer - inner` (`gaps outer`, and `gaps outer all set` live), `SwayManager.gapsOut`'s live branch becomes `_liveGaps.outer`; drop niri's `math.Max(0, …)` around the edge; regenerate the sway and niri goldens.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "accept the narrower gap (9 to 6 px at the defaults; sway matches the setting)"): "agree".
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
 
 ### Wide active is hidden in the perMonitor layout but still applies there
 - **Where:** `qml/components/bar/widgets/Workspaces/schema.yaml:56` (`wideActive`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:73` (`_length`)

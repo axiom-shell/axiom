@@ -191,6 +191,14 @@ func TestNiriInfoBlur(t *testing.T) {
 	write(t, main, "blur {\n    off\n}\n")
 	r, _ = ResolveNiri(main, nil, "", env(nil))
 	eq(t, js(NiriInfo(r.Files, false).Value("blur")), `{"enabled":false,"passes":3,"offset":3}`)
+	// The last of on and off wins: axiom's look file's on after a user's off
+	write(t, filepath.Join(dir, "look.kdl"), "blur {\n    on\n}\n")
+	write(t, main, "blur {\n    off\n}\ninclude \"look.kdl\"\n")
+	r, _ = ResolveNiri(main, nil, "", env(nil))
+	eq(t, js(NiriInfo(r.Files, false).Value("blur")), `{"enabled":true,"passes":3,"offset":3}`)
+	write(t, main, "include \"look.kdl\"\nblur {\n    off\n}\n")
+	r, _ = ResolveNiri(main, nil, "", env(nil))
+	eq(t, js(NiriInfo(r.Files, false).Value("blur")), `{"enabled":false,"passes":3,"offset":3}`)
 }
 
 func TestNiriUnreadable(t *testing.T) {

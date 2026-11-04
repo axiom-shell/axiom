@@ -86,3 +86,14 @@ func TestBindArgumentIsLiteral(t *testing.T) {
 		t.Errorf("label: %s", got)
 	}
 }
+
+// sway's outer gaps add to the inner ones: outer - inner leaves the edge
+// at the outer gap, negative where the inner gaps are wider.
+func TestSwayLookGapsEdge(t *testing.T) {
+	t.Parallel()
+	look := jsonx.Obj("gaps", jsonx.Obj("inner", float64(10), "outer", float64(4)))
+	got := strings.Join(SwayLookLines(look, true), "; ")
+	if want := "gaps inner 10; gaps outer -6; gaps inner all set 10; gaps outer all set -6"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}

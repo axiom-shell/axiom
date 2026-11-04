@@ -34,14 +34,10 @@ Singleton {
   readonly property string activeWindowId: _focusedId
   // Sway's gap at the screen edges, after reserved zones: its outer gap
   // plus the inner one every window keeps. Sway's IPC doesn't say: it's
-  // what axiom's window look set (setLiveLook), else what sway's config
-  // sets (SwayState.configInfo)
-  readonly property var gapsOut: _liveGaps ? {
-    "top": _liveGaps.outer + _liveGaps.inner,
-    "right": _liveGaps.outer + _liveGaps.inner,
-    "bottom": _liveGaps.outer + _liveGaps.inner,
-    "left": _liveGaps.outer + _liveGaps.inner
-  } : _gaps
+  // what axiom's window look set (setLiveLook: its outer gap, which the
+  // writer leaves at the edge), else what sway's config sets
+  // (SwayState.configInfo)
+  readonly property var gapsOut: _liveGaps ?? _gaps
   // Whether sway is SwayFX (blur, rounded corners, shadows, dimming), once
   // known: its get_version reply adds sway_original_version. Kept across a
   // reload of the shell, so it's known at once then.
@@ -275,10 +271,12 @@ Singleton {
   // reloads its config, and what sway sets a window at a time (opacity;
   // SwayFX's blur, shadows, dim) is kept up as windows open and focus moves
   function setLiveLook(look) {
-    const gaps = look?.gaps;
-    root._liveGaps = gaps ? {
-      "inner": Number(gaps.inner) || 0,
-      "outer": Number(gaps.outer) || 0
+    const edge = Number(look?.gaps?.outer) || 0;
+    root._liveGaps = look?.gaps ? {
+      "top": edge,
+      "right": edge,
+      "bottom": edge,
+      "left": edge
     } : null;
     root._liveBlur = root.fx && look?.blur ? {
       "enabled": look.blur.windows || look.blur.surfaces,

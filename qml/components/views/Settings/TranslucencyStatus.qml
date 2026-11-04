@@ -49,16 +49,16 @@ ColumnLayout {
         if (root.off)
           return I18n.tr("{0}'s blur is off, so nothing blurs behind the surfaces.", CompositorManager.displayName);
         const strength = I18n.tr("{0}'s blur: size {1}, {2} passes.", CompositorManager.displayName, CompositorManager.blur.size, CompositorManager.blur.passes);
-        return strength + " " + (WindowLookConfig.look.blur ? I18n.tr("Set in Compositor → Window look.") : I18n.tr("From your compositor's config."));
+        return strength + " " + (WindowLookConfig.blurSet ? I18n.tr("Set in Compositor → Window look.") : I18n.tr("From your compositor's config."));
       }
     }
 
     StyledTextButton {
       implicitHeight: Widget.height - Widget.px(4)
-      text: root.off && !WindowLookConfig.look.blur ? I18n.tr("Set the compositor's blur") : I18n.tr("Change")
+      text: root.off && !WindowLookConfig.blurSet ? I18n.tr("Set the compositor's blur") : I18n.tr("Change")
       onClicked: {
-        if (root.off && !WindowLookConfig.look.blur)
-          SettingsManager.setValue(["WindowLook", "blur"], true);
+        if (root.off && !WindowLookConfig.blurSet)
+          SettingsManager.setValue(["WindowLook", "blur", "enabled"], true);
         SettingsManager.openSetting("WindowLook.blur");
       }
     }

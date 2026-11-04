@@ -42,10 +42,22 @@ Singleton {
       "name": ""
     })
   property bool _resolvedOnce: false
+  // The last call failed (the theme's own name stands in): asked again on
+  // the next hello, as a refused one or a daemon re-exec'd since may
+  // answer then
+  property bool _failed: false
 
   on_WantedChanged: _resolve()
   on_SizeChanged: _resolve()
   Component.onCompleted: _resolve()
+
+  property Connections _backend: Connections {
+    target: BackendManager
+    function onGreeted() {
+      if (root._failed)
+        root._resolve();
+    }
+  }
 
   function _resolve() {
     // The greeter writes nothing (services/AGENTS.md)
@@ -63,6 +75,7 @@ Singleton {
         name = result.theme || theme;
       if (theme !== root._wanted)
         return;
+      root._failed = !!error;
       root._resolved = {
         "theme": theme,
         "name": name

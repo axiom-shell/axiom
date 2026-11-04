@@ -7,7 +7,7 @@
 The themed window look axiom gives the compositor: borders, shape, gaps, blur and window opacity. The settings are compositor-neutral (`WindowLook`, Settings › Compositor). The daemon's `render.Look` decides the parts once; each backend's config writer turns it into its own text, in every mode ([config modes](config-modes.md)); on Hyprland that is one `hl.config`.
 
 ### What it covers
-- The section is `WindowLook` (`WindowLookConfig.look`; `Hyprland.look` before config version 56). It is `x-scope: look`, so exports, examples and imports carry it. It isn't `x-takeover`.
+- The section is `WindowLook` (`WindowLookConfig`, the daemon reading it whole; `Hyprland.look` before config version 56). It is `x-scope: look`, so exports, examples and imports carry it. It isn't `x-takeover`.
 - Each part's fields carry `x-enabledIf: { "/$supports.window<Part>": true }`, so a compositor without that part shows them greyed out with why ([schema annotations](../core/schema-annotations.md)); fields one compositor alone has also need `"/$compositor"`.
 - It holds:
   - themed borders: `activeColor`/`inactiveColor` (theme color names; empty follows the theme's `borderFocus`/`border`)

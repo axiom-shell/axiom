@@ -472,13 +472,16 @@ func NiriLookNodes(look any) *jsonx.Array {
 	}
 	if g := get(look, "gaps"); truthy(g) {
 		inner := math.Max(0, round(num(get(g, "inner"))))
-		edge := math.Max(0, round(num(get(g, "outer")))-inner)
+		// The struts add to the gaps at the edge (a negative one narrows it)
+		edge := round(num(get(g, "outer"))) - inner
 		layout("gaps", inner)
 		for _, side := range []string{"left", "right", "top", "bottom"} {
 			layout("struts."+side, edge)
 		}
 	}
 	if b := get(look, "blur"); truthy(b) {
+		// on, so a user's own off doesn't win
+		KdlSetPath(nodes, "blur.on", jsonx.Arr(), nil)
 		KdlSetPath(nodes, "blur.passes", jsonx.Arr(math.Max(1, round(num(get(b, "passes"))))), nil)
 		KdlSetPath(nodes, "blur.offset", jsonx.Arr(math.Max(0, round(num(get(b, "size"))))), nil)
 		KdlSetPath(nodes, "blur.noise", jsonx.Arr(real(math.Max(0, num(get(b, "noise")))/1000)), nil)

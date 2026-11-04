@@ -469,7 +469,8 @@ func SwayLookLines(look any, live bool) []string {
 		}
 	}
 	if g := get(look, "gaps"); truthy(g) {
-		inner, outer := jsCat(get(g, "inner")), jsCat(get(g, "outer"))
+		// sway's outer gaps add to the inner ones: the edge comes out at outer
+		inner, outer := jsCat(get(g, "inner")), fmtNum(num(get(g, "outer"))-num(get(g, "inner")))
 		out = append(out, "gaps inner "+inner, "gaps outer "+outer)
 		if live {
 			out = append(out, "gaps inner all set "+inner, "gaps outer all set "+outer)

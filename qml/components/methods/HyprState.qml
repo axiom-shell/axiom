@@ -22,6 +22,23 @@ QtObject {
     };
   }
 
+  // A gaps option's sides from its getoption reply ({ top, right, bottom,
+  // left }), or null without one (a failed read keeps what was read
+  // before): its css is "top right bottom left" (CSS shorthand)
+  function gapSides(option) {
+    const css = typeof option?.css === "string" ? option.css.trim() : "";
+    const sides = css.split(/\s+/).map(Number);
+    if (css === "" || sides.some(isNaN))
+      return null;
+    const [top, right = top, bottom = top, left = right] = sides;
+    return {
+      "top": top,
+      "right": right,
+      "bottom": bottom,
+      "left": left
+    };
+  }
+
   // A client from j/clients as a window (docs/dev/compositor/contract.md),
   // or null while it isn't mapped. outputNames: { [monitor id]: name }, as
   // a client names its monitor by id. Fullscreen mode is a bitmask: 1 is
