@@ -578,7 +578,7 @@ func SwayInputLines(input, inputSchema any, live bool) []string {
 			continue
 		}
 		if v, ok := swayValue(f.Spec, f.Value); ok {
-			out = append(out, jsReplace(str(get(f.Spec, "key")), "{}", v))
+			out = append(out, replaceFirst(str(get(f.Spec, "key")), "{}", v))
 		}
 	}
 	if c := get(input, "cursor"); truthy(c) {
@@ -593,7 +593,7 @@ func SwayOptionLines(sectionSchema, values any) []string {
 	out := []string{}
 	for _, f := range AnnotatedFields(sectionSchema, values, "sway", false) {
 		if v, ok := swayValue(f.Spec, f.Value); ok {
-			out = append(out, jsReplace(str(get(f.Spec, "key")), "{}", v))
+			out = append(out, replaceFirst(str(get(f.Spec, "key")), "{}", v))
 		}
 	}
 	return out

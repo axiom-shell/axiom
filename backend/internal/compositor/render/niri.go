@@ -334,7 +334,7 @@ func (t *Tables) NiriActionFor(bind, ctx any) *jsonx.Object {
 	case action == "exec":
 		return node("spawn-sh", argument)
 	case truthy(get(t.IPCActions, action)):
-		call := jsReplace(str(at(get(t.IPCActions, action), 0)), "{call}", t.CallFunction(bind))
+		call := replaceFirst(str(at(get(t.IPCActions, action), 0)), "{call}", t.CallFunction(bind))
 		var words []any
 		for _, w := range strings.Split(call, " ") {
 			if w == "{0}" {

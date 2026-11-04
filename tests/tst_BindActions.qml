@@ -80,6 +80,7 @@ TestCase {
       "function": "search",
       "args": ["two words"]
     }, "an argument with spaces stays one");
+    compare(BindActions.ipcCall(test.table, "launcherSearch", "US$'s $& rate").args, ["US$'s $& rate"], "$ in an argument is no replacement pattern");
     compare(BindActions.ipcCall(test.table, "workspaceNth", "3").args, ["3", "go"]);
     compare(BindActions.ipcCall(test.table, "workspaceNth", ""), null, "missing its argument");
     compare(BindActions.ipcCall(test.table, "screenshot", "").args, ["region"], "the table's default argument");
@@ -166,6 +167,10 @@ TestCase {
       "action": "exec",
       "argument": "kitty"
     }), "kitty", "exec shows its command");
+    compare(shared.calls.BindActions.defaultLabel(test.table, {
+      "action": "launcherSearch",
+      "argument": "US$'s $& rate"
+    }), "Launcher: US$'s $& rate", "$ in an argument is no replacement pattern");
     compare(shared.calls.BindActions.defaultLabel(test.table, {
       "action": "launcher",
       "call": "open"

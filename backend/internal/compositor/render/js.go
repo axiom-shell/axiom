@@ -111,8 +111,8 @@ func stringList(v any) []string {
 	return out
 }
 
-// replaceFirst is String.prototype.replace(string, string): the first
-// occurrence only
+// replaceFirst puts repl in for old's first occurrence, literally (the
+// shell's .replace hands a function, so no $ pattern is read)
 func replaceFirst(s, old, repl string) string { return strings.Replace(s, old, repl, 1) }
 
 var numberSplit = regexp.MustCompile(`[\s,]+`)

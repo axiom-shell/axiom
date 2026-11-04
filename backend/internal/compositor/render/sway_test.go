@@ -67,3 +67,22 @@ func TestSwayUserIncludeQuotesOnlyTheFolder(t *testing.T) {
 		t.Errorf("a plain folder: %s", got)
 	}
 }
+
+// A bind's argument goes into its IPC call as written: a $' or $& in it is
+// no replacement pattern, on sway and Hyprland alike
+func TestBindArgumentIsLiteral(t *testing.T) {
+	t.Parallel()
+	tab := repoTables(t)
+	bind := jsonx.Obj("key", "SUPER + S", "action", "launcherSearch", "argument", "US$'s $& rate")
+	ctx := jsonx.Obj("shellCommand", "axiom")
+	want := `axiom ipc appLauncher search 'US$'\''s $& rate'`
+	if got := tab.SwayCommand(bind, ctx); got != swayExec(want) {
+		t.Errorf("sway: %s", got)
+	}
+	if got := tab.BindLua(bind, ctx); !strings.Contains(got, LuaString(want)) {
+		t.Errorf("hyprland: %s", got)
+	}
+	if got := tab.DefaultLabel(bind); got != "Launcher: US$'s $& rate" {
+		t.Errorf("label: %s", got)
+	}
+}
