@@ -503,12 +503,23 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland
-- **Where:** `qml/config/schema/sections/Input.yaml:115` (`mouse.accel`), `qml/config/schema/sections/Input.yaml:128` (`mouse.sensitivity`), `qml/config/schema/sections/Input.yaml:139` (`mouse.leftHanded`)
-- **What:** The Mouse part's three fields are written as Hyprland's global `input.accel_profile` / `input.sensitivity` / `input.left_handed`, which apply to every pointer device, the touchpad included. sway's are `input type:pointer …`, which a touchpad (`type:touchpad`) doesn't match, and niri's are `input.mouse.*`. Scenario on a laptop: Mouse › Pointer speed −50 slows the touchpad on Hyprland and leaves it alone on sway and niri, and Left-handed swaps the touchpad's buttons only on Hyprland. No supports key or description says so. Decided by the maintainer (asked 2026-10-30: should the Mouse part reach the touchpad?): "Mouse and touchpad settings need to be seperate (i.e. one should be able to turn on mouse acceleration for touchpad only and adjust it seperatly)."
-  Hyprland sets these only globally (`input.*`, every pointer) or per device by name (no device rules exist in render), so a touchpad apart from the mouse there needs a design first; sway's `type:touchpad` and niri's `input.touchpad` have the fields.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
+### Hyprland writes no per-touchpad input block
+- **Where:** `backend/internal/compositor/render/hyprlua.go` (`ConfigTable`, `InputLua`, `GreeterLua`)
+- **What:** Hyprland sets accel, sensitivity and left-handed only globally (`input.*`, every pointer) or per device (`hl.device({ name = … })`); render has no device form, so a touchpad can't be set apart from the mouse there. Plan item 1 (option A): `ConfigTable` sets aside fields whose `x-compositor.hyprland` spec names `device: touchpad`, and `InputLua` / `GreeterLua` emit them as one `hl.device()` per pointer from `hl.get_devices()` whose name matches `touchpad|trackpad|clickpad`, each in a `pcall`. Go tests, goldens (`TestGoldenFiles`), and a check in nested Hyprland that a live eval reaches a connected touchpad and that the first load at start sees the devices (else the start's apply covers it, written down in the doc).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
+
+### The Touchpad part has no speed, acceleration or left-handed of its own
+- **Where:** `qml/config/schema/sections/Input.yaml` (`touchpad`), `qml/config/InputConfig.qml`
+- **What:** The Touchpad part has no `accel`, `sensitivity` or `leftHanded`, so no compositor lets a touchpad's acceleration and speed be set apart from the mouse's, as decided: "Mouse and touchpad settings need to be seperate (i.e. one should be able to turn on mouse acceleration for touchpad only and adjust it seperatly)." Plan item 2: `touchpad.accel`, `.sensitivity`, `.leftHanded` (same titles, enum, range, `x-greeter`, `x-scope` as the mouse's; sway `input type:touchpad accel_profile|pointer_accel|left_handed`, niri `input.touchpad.accel-profile|accel-speed|left-handed`, Hyprland the per-touchpad form of [Hyprland writes no per-touchpad input block](#hyprland-writes-no-per-touchpad-input-block)), their `InputConfig` reader properties, the sway and niri goldens, `docs/dev/compositor/config-modes.md`' input lines and the greeter doc's. No migration (the defaults fill at load).
+- **Size:** small
+- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
+
+### The Mouse part doesn't say it reaches the touchpad on Hyprland
+- **Where:** `qml/config/schema/sections/Input.yaml` (`mouse`)
+- **What:** On Hyprland the Mouse part's fields are global `input.*`, so with the Touchpad part off they still reach the touchpad (decided to keep it so), and nothing in the settings says so. Plan item 3: a description line on the Mouse part saying it reaches a touchpad whose own part is off on Hyprland, and that the touchpad needs independent configuration (its own acceleration) through the Touchpad part's fields.
+- **Size:** trivial
+- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
 
 ### The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked
 - **Where:** `qml/components/bar/BarContainer.qml` (`borderOpening`, `joinOpening`), `qml/components/surfaces/border/RoundedBorders.qml`

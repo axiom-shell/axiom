@@ -90,7 +90,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 42 | compositor-15 | major | Done: The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | Done: The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
 | 44 | compositor-17 | minor-sweep | Done: Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
-| 45 | compositor-18 | plan | Touchpad settings apart from the mouse's ([plan](touchpad-apart-from-the-mouse.md)) | 1 | needs a plan | none |  |
+| 45 | compositor-18 | major | Touchpad settings apart from the mouse's ([plan](touchpad-apart-from-the-mouse.md)) | 3 | ~150 | none |  |
 | 46 | bar-popouts-03 | major | EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
 | 48 | bar-popouts-06 | major | Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
@@ -414,8 +414,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The bind list's flag icons carry tooltip strings nothing shows
   - A reference section's title is worked out twice
   - Stale lines in the Hyprland docs and comments
-- **compositor-18** (1): Decided that they separate; the plan settles how on Hyprland: [touchpad-apart-from-the-mouse.md](touchpad-apart-from-the-mouse.md).
-  - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](../issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
+- **compositor-18** (3): Decided that they separate; the plan, decided 2026-11-05 (option A), split into these: [touchpad-apart-from-the-mouse.md](touchpad-apart-from-the-mouse.md).
+  - [Hyprland writes no per-touchpad input block](../issues.md#hyprland-writes-no-per-touchpad-input-block)
+  - [The Touchpad part has no speed, acceleration or left-handed of its own](../issues.md#the-touchpad-part-has-no-speed-acceleration-or-left-handed-of-its-own)
+  - [The Mouse part doesn't say it reaches the touchpad on Hyprland](../issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
 
 **bar-popouts**
 
