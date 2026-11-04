@@ -18,13 +18,13 @@ QtObject {
   property var restore: snap => {}
   property int limit: 50
 
-  readonly property bool canUndo: root._undoCount > 0
-  readonly property bool canRedo: root._redoCount > 0
+  // The lists are only ever replaced, never changed in place, so these
+  // follow them
+  readonly property bool canUndo: root._undo.length > 0
+  readonly property bool canRedo: root._redo.length > 0
 
   property var _undo: []
   property var _redo: []
-  property int _undoCount: 0
-  property int _redoCount: 0
   // The field the newest step was recorded for ("" for a whole edit)
   property string _lastKey: ""
 
@@ -38,7 +38,6 @@ QtObject {
   function push(snap) {
     root._undo = root._undo.concat([snap]).slice(-root.limit);
     root._redo = [];
-    root._sync();
     root._lastKey = "";
   }
 
@@ -58,7 +57,6 @@ QtObject {
     const snap = root._undo[root._undo.length - 1];
     root._redo = root._redo.concat([root.take()]);
     root._undo = root._undo.slice(0, -1);
-    root._sync();
     root._lastKey = "";
     root.restore(snap);
   }
@@ -69,7 +67,6 @@ QtObject {
     const snap = root._redo[root._redo.length - 1];
     root._undo = root._undo.concat([root.take()]);
     root._redo = root._redo.slice(0, -1);
-    root._sync();
     root._lastKey = "";
     root.restore(snap);
   }
@@ -77,12 +74,6 @@ QtObject {
   function clear() {
     root._undo = [];
     root._redo = [];
-    root._sync();
     root._lastKey = "";
-  }
-
-  function _sync() {
-    root._undoCount = root._undo.length;
-    root._redoCount = root._redo.length;
   }
 }

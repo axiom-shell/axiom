@@ -224,14 +224,6 @@ QtObject {
     applyChanges();
   }
 
-  function undo() {
-    root.history.undo();
-  }
-
-  function redo() {
-    root.history.redo();
-  }
-
   // Keeps the selected bar and widget where they still exist
   function loadConfig() {
     draft.load();
@@ -273,7 +265,11 @@ QtObject {
   }
 
   function _zone(zone) {
-    const bar = selectedBar();
+    return root._sectionOf(selectedBar(), zone);
+  }
+
+  // A bar's section `zone` (made where it's missing), or null for no bar
+  function _sectionOf(bar, zone) {
     if (!bar)
       return null;
     if (!bar.widgets)
@@ -281,6 +277,11 @@ QtObject {
     if (!bar.widgets[zone])
       bar.widgets[zone] = [];
     return bar.widgets[zone];
+  }
+
+  // Every widget of a bar, its sections in order
+  function _allWidgets(bar) {
+    return [].concat(...BarsConfig.sectionNames.map(section => bar?.widgets?.[section] ?? []));
   }
 
   // --- Bars ---
@@ -404,7 +405,7 @@ QtObject {
 
   // The saved copy of the selected bar (by its id), or null for one not
   // saved yet
-  function savedBar() {
+  function _savedBar() {
     const id = selectedBar()?.id;
     return (root.savedConfig ?? []).find(b => b.id === id) ?? null;
   }
@@ -412,20 +413,20 @@ QtObject {
   // Whether the selected bar's field differs from its saved value (false
   // for a bar not saved yet): the field's change dot
   function barFieldChanged(key) {
-    const saved = savedBar();
-    return saved !== null && JSON.stringify(selectedBar()?.[key]) !== JSON.stringify(saved[key]);
+    const saved = _savedBar();
+    return saved !== null && !Utils.deepEqual(selectedBar()?.[key], saved[key]);
   }
 
   // Puts the selected bar's field back to its saved value
   function discardBarField(key) {
-    const saved = savedBar();
+    const saved = _savedBar();
     if (saved)
       updateBarField(key, Utils.clone(saved[key]));
   }
 
   function updateBarField(key, value) {
     const bar = selectedBar();
-    if (!bar || JSON.stringify(bar[key]) === JSON.stringify(value))
+    if (!bar || Utils.deepEqual(bar[key], value))
       return;
     _record(`bar:${root.selectedBarIndex}:${key}`);
     bar[key] = value;
@@ -471,8 +472,7 @@ QtObject {
     const bar = selectedBar();
     if (!bar)
       return;
-    const current = part ? bar.style[key]?.[part] : bar.style[key];
-    if (JSON.stringify(current) === JSON.stringify(value))
+    if (Utils.deepEqual(root._styleValue(bar.style, key, part), value))
       return;
     _record(`style:${root.selectedBarIndex}:${key}:${part ?? ""}`);
     if (part)
@@ -485,17 +485,20 @@ QtObject {
   // Whether the selected bar's own style key (`part` of its shadow)
   // differs from its saved value: the field's change dot
   function styleFieldChanged(key, part) {
-    const saved = savedBar();
-    const style = selectedBar()?.style;
-    const pick = s => part ? s?.[key]?.[part] : s?.[key];
-    return saved !== null && JSON.stringify(pick(style)) !== JSON.stringify(pick(saved.style));
+    const saved = _savedBar();
+    return saved !== null && !Utils.deepEqual(root._styleValue(selectedBar()?.style, key, part), root._styleValue(saved.style, key, part));
+  }
+
+  // A style's key (`part` of its shadow)
+  function _styleValue(style, key, part) {
+    return part ? style?.[key]?.[part] : style?.[key];
   }
 
   // Puts the selected bar's own style key back to its saved value
   function discardStyleField(key, part) {
-    const saved = savedBar();
+    const saved = _savedBar();
     if (saved)
-      updateStyleField(key, Utils.clone(part ? saved.style?.[key]?.[part] : saved.style?.[key]), part);
+      updateStyleField(key, Utils.clone(root._styleValue(saved.style, key, part)), part);
   }
 
   // What a bar's style key is while it's null: the shared style's, or
@@ -555,15 +558,12 @@ QtObject {
     if (!bar)
       return;
     _record();
-    if (!bar.widgets)
-      bar.widgets = {};
-    if (!bar.widgets[zone])
-      bar.widgets[zone] = [];
-    bar.widgets[zone].push(ConfigManager.withDefaults(Object.assign({
+    const section = root._sectionOf(bar, zone);
+    section.push(ConfigManager.withDefaults(Object.assign({
       "id": root._widgetId(widget.type, bar)
     }, widget), "BarWidget"));
     selectBar(barIndex);
-    selectWidget(zone, bar.widgets[zone].length - 1);
+    selectWidget(zone, section.length - 1);
     applyChanges();
   }
 
@@ -632,8 +632,7 @@ QtObject {
   // A new widget's id: unique among every widget of the bar (they move
   // between its sections)
   function _widgetId(type, bar) {
-    const all = [].concat(...BarsConfig.sectionNames.map(section => bar?.widgets?.[section] ?? []));
-    return Utils.newId(type, all);
+    return Utils.newId(type, root._allWidgets(bar));
   }
 
   function _widget(zone, index) {
@@ -642,7 +641,7 @@ QtObject {
 
   function updateWidgetProperty(zone, index, key, value) {
     const widget = _widget(zone, index);
-    if (!widget || JSON.stringify(widget.properties?.[key]) === JSON.stringify(value))
+    if (!widget || Utils.deepEqual(widget.properties?.[key], value))
       return;
     _record(`widget:${root.selectedBarIndex}:${zone}:${index}:${key}`);
     if (!widget.properties)
@@ -673,7 +672,7 @@ QtObject {
       delete layout[key];
     else
       layout[key] = value;
-    if (JSON.stringify(layout) === JSON.stringify(widget.layout ?? {}))
+    if (Utils.deepEqual(layout, widget.layout ?? {}))
       return;
     _record(`layout:${root.selectedBarIndex}:${zone}:${index}:${key}`);
     if (Object.keys(layout).length > 0)
@@ -685,24 +684,24 @@ QtObject {
 
   // The saved copy of the selected bar's widget at `zone`/`index` (by its
   // bar's id and its own, in any section), or null for one not saved yet
-  function savedWidget(zone, index) {
+  function _savedWidget(zone, index) {
     const widget = _widget(zone, index);
-    const saved = savedBar();
+    const saved = _savedBar();
     if (!widget || !saved)
       return null;
-    return [].concat(...BarsConfig.sectionNames.map(s => saved.widgets?.[s] ?? [])).find(w => w.id === widget.id) ?? null;
+    return root._allWidgets(saved).find(w => w.id === widget.id) ?? null;
   }
 
   // Whether a widget's property differs from its saved value (false for a
   // widget not saved yet)
   function widgetPropertyChanged(zone, index, key) {
-    const saved = savedWidget(zone, index);
-    return saved !== null && JSON.stringify(_widget(zone, index)?.properties?.[key]) !== JSON.stringify(saved.properties?.[key]);
+    const saved = _savedWidget(zone, index);
+    return saved !== null && !Utils.deepEqual(_widget(zone, index)?.properties?.[key], saved.properties?.[key]);
   }
 
   // Puts a widget's property back to its saved value
   function discardWidgetProperty(zone, index, key) {
-    const saved = savedWidget(zone, index);
+    const saved = _savedWidget(zone, index);
     if (saved)
       updateWidgetProperty(zone, index, key, Utils.clone(saved.properties?.[key]));
   }
@@ -718,19 +717,9 @@ QtObject {
     const widget = _widget(zone, index);
     if (!widget)
       return;
-    const others = [].concat(...BarsConfig.sectionNames.map(s => selectedBar()?.widgets?.[s] ?? [])).filter(w => w !== widget && w.type !== "Spacer");
+    const others = root._allWidgets(selectedBar()).filter(w => w !== widget && w.type !== "Spacer");
     const top = Math.max(...others.map(w => root.priorityOf(w)), -100);
-    setWidgetPriority(zone, index, Math.max(root.priorityOf(widget), Math.min(100, top + 1)));
-  }
-
-  // A widget's priority (layout.priority; null drops the override)
-  function setWidgetPriority(zone, index, value) {
-    updateWidgetLayout(zone, index, "priority", value);
-  }
-
-  // The most length a widget takes (layout.maxSize; null drops it)
-  function setWidgetMax(zone, index, value) {
-    updateWidgetLayout(zone, index, "maxSize", value);
+    updateWidgetLayout(zone, index, "priority", Math.max(root.priorityOf(widget), Math.min(100, top + 1)));
   }
 
   // Moves the selected widget to the start or end (`atEnd`) of `zone`
@@ -760,11 +749,6 @@ QtObject {
       moveWidget(sel.zone, sel.index, next, step > 0 ? 0 : (_zone(next)?.length ?? 0));
   }
 
-  // Inserts a Spacer at `index` in `zone` and selects it
-  function addSpacer(zone, index) {
-    addWidget(zone, "Spacer", index);
-  }
-
   // Appends a copy of the selected widget to the same section of bar
   // `barIndex` (with an id free there); the selection stays
   function copyWidgetToBar(barIndex) {
@@ -776,11 +760,7 @@ QtObject {
     const zone = root.selectedWidget.zone;
     const copy = Utils.clone(widget);
     copy.id = root._widgetId(copy.type, bar);
-    if (!bar.widgets)
-      bar.widgets = {};
-    if (!bar.widgets[zone])
-      bar.widgets[zone] = [];
-    bar.widgets[zone].push(copy);
+    root._sectionOf(bar, zone).push(copy);
     applyChanges();
   }
 

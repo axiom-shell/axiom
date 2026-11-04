@@ -11,11 +11,12 @@ import qs.components.content.base
 // widget chips that wrap (SectionLane), one row under another whatever
 // the bar's edge. Its header has undo and redo, the drop order badges'
 // switch, an Unsaved chip and the help in a "?" (Save and Discard are
-// BarsPanel's, which doesn't move); under it, how the running bar fits on
-// each screen it's on, the widgets it has no room for as buttons selecting
-// them, with Raise priority / Set max length for a selected one. A chip's right click opens its menu; while the board
-// has focus (a chip clicked) it takes Delete, Ctrl+D, Alt+arrows, Escape
-// and Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
+// BarsPanel's); under it, how the running bar fits on each screen it's
+// on, the widgets it has no room for as buttons selecting them, with
+// Raise priority / Set max length for a selected one. A chip's right
+// click opens its menu; while the board has focus (a chip clicked) it
+// takes Delete, Ctrl+D, Alt+arrows, Escape and Ctrl+Z / Ctrl+Shift+Z /
+// Ctrl+Y.
 FocusScope {
   id: root
 
@@ -86,12 +87,10 @@ FocusScope {
     const alt = (event.modifiers & Qt.AltModifier) !== 0;
     const sel = BarManager.selectedWidget;
     const has = BarManager.selectedWidgetConfig() !== null;
-    if (ctrl && event.key === Qt.Key_Z && shift)
-      BarManager.redo();
+    if (ctrl && ((event.key === Qt.Key_Z && shift) || event.key === Qt.Key_Y))
+      BarManager.history.redo();
     else if (ctrl && event.key === Qt.Key_Z)
-      BarManager.undo();
-    else if (ctrl && event.key === Qt.Key_Y)
-      BarManager.redo();
+      BarManager.history.undo();
     else if (has && ctrl && event.key === Qt.Key_D)
       BarManager.duplicateWidget(sel.zone, sel.index);
     else if (has && !ctrl && event.key === Qt.Key_Delete)
@@ -215,7 +214,7 @@ FocusScope {
     else if (id === "start" || id === "end")
       BarManager.moveWidgetTo(sel.zone, id === "end");
     else if (id === "spacerBefore" || id === "spacerAfter")
-      BarManager.addSpacer(sel.zone, sel.index + (id === "spacerAfter" ? 1 : 0));
+      BarManager.addWidget(sel.zone, "Spacer", sel.index + (id === "spacerAfter" ? 1 : 0));
     else if (id.startsWith("copy:"))
       BarManager.copyWidgetToBar(Number(id.slice(5)));
     // "edit": the right click selected it, so the inspector shows it
@@ -240,8 +239,8 @@ FocusScope {
         UndoRedoButtons {
           canUndo: BarManager.history.canUndo
           canRedo: BarManager.history.canRedo
-          onUndo: BarManager.undo()
-          onRedo: BarManager.redo()
+          onUndo: BarManager.history.undo()
+          onRedo: BarManager.history.redo()
         }
 
         FlatIconButton {
@@ -331,7 +330,7 @@ FocusScope {
           textSize: Appearance.fontSizeBy(-2)
           textPadding: Widget.smallPadding
           tooltipText: I18n.tr("Cap it at {0} px, so it fits on {1}", root.fittingMax, root.selectedCrowdedOn?.screen ?? "")
-          onClicked: BarManager.setWidgetMax(BarManager.selectedWidget.zone, BarManager.selectedWidget.index, root.fittingMax)
+          onClicked: BarManager.updateWidgetLayout(BarManager.selectedWidget.zone, BarManager.selectedWidget.index, "maxSize", root.fittingMax)
         }
       }
 

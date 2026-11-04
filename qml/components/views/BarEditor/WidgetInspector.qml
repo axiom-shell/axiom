@@ -42,12 +42,15 @@ Item {
   // One over the other when the room is taller than wide
   readonly property bool stacked: root.height > root.width
   readonly property real _gap: OverlayConfig.cardSpacing
-  readonly property real _inspectorShare: 0.55
+  // The inspector's length along the split (about 55%); the library has
+  // the rest past the gap
+  readonly property real _inspectorLength: Math.round(((root.stacked ? root.height : root.width) - root._gap) * 0.55)
+  readonly property real _libraryLength: (root.stacked ? root.height : root.width) - root._gap - root._inspectorLength
 
   // Each card fills its box (Card)
   Item {
-    width: root.stacked ? root.width : Math.round((root.width - root._gap) * root._inspectorShare)
-    height: root.stacked ? Math.round((root.height - root._gap) * root._inspectorShare) : root.height
+    width: root.stacked ? root.width : root._inspectorLength
+    height: root.stacked ? root._inspectorLength : root.height
 
     Card {
       color: Theme.background
@@ -87,8 +90,8 @@ Item {
   Item {
     x: root.stacked ? 0 : root.width - width
     y: root.stacked ? root.height - height : 0
-    width: root.stacked ? root.width : root.width - root._gap - Math.round((root.width - root._gap) * root._inspectorShare)
-    height: root.stacked ? root.height - root._gap - Math.round((root.height - root._gap) * root._inspectorShare) : root.height
+    width: root.stacked ? root.width : root._libraryLength
+    height: root.stacked ? root._libraryLength : root.height
 
     Card {
       color: Theme.background
@@ -112,11 +115,12 @@ Item {
       readonly property int index: root.selection.index
       readonly property var widget: root.widget ?? ({})
       readonly property bool hidden: editorRoot.widget.visible === false
-      readonly property var propertiesSchema: root.dragLayer.typeInfo(editorRoot.widget.type)?.propertiesSchema ?? ({})
-      readonly property var propertiesOrder: root.dragLayer.typeInfo(editorRoot.widget.type)?.propertiesOrder ?? []
+      readonly property var typeInfo: root.dragLayer.typeInfo(editorRoot.widget.type)
+      readonly property var propertiesSchema: editorRoot.typeInfo?.propertiesSchema ?? ({})
+      readonly property var propertiesOrder: editorRoot.typeInfo?.propertiesOrder ?? []
       // It shrinks when crowded (`x-elastic`), so it takes a minimum and
       // maximum length
-      readonly property bool elastic: root.dragLayer.typeInfo(editorRoot.widget.type)?.elastic ?? false
+      readonly property bool elastic: editorRoot.typeInfo?.elastic ?? false
 
       anchors.fill: parent
       spacing: Widget.spacing
@@ -141,7 +145,7 @@ Item {
           },
           FieldLinks {
             id: typeLinks
-            links: root.dragLayer.typeInfo(editorRoot.widget.type)?.link
+            links: editorRoot.typeInfo?.link
           }
         ]
 

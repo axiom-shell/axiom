@@ -59,8 +59,7 @@ Item {
   TitledCard {
     title: I18n.tr("Bar Editor")
     scrollKey: "BarEditor"
-    // Save and Discard here, above the bar list, where they never move
-    // (the board follows the bar's edge)
+    // Save and Discard here, above the bar list
     dirty: BarManager.isDirty
     onSave: BarManager.saveChanges()
     onReset: BarManager.resetChanges()

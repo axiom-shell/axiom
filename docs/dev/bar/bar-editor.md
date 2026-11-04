@@ -8,9 +8,9 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
 
 ### Layout of the page
 - `views/BarEditor/BarEditor.qml`, with its pieces in `views/BarEditor/`. It follows the shared [editor pattern](../core/editors-pattern.md).
-- `BarsPanel`, `SectionsBoard` and `WidgetInspector` are streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)), as are the panel's field groups and each form field. The board's loader takes its depth from the board (`board.implicitHeight`), so a horizontal strip settles a moment after the page shows.
+- `BarsPanel`, `SectionsBoard` and `WidgetInspector` are streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)), as are the panel's field groups and each form field. The board's loader takes its height from the board (`board.implicitHeight`), so it settles a moment after the page shows.
 - **Left: `BarsPanel`.**
-  - Save and Discard in its header (shown while the draft differs), above the bar list: they never move, while the board follows the bar's edge.
+  - Save and Discard in its header (shown while the draft differs), above the bar list.
   - The bars, with duplicate and remove.
   - The selected bar's settings under four tabs (`StyledTabBar`; the tab is `BarManager.panelTab`, kept while the page is rebuilt), each showing schema groups by their `x-group` title (`BarsPanel.tabs`): **Layout** (Placement, Size, and any Bar group no tab names), **Surface** (Surface; the style's Bar accents and Surface shadow), **Widgets** (the style's Bar widgets), **Behaviour** (Behaviour). Only the shown tab's groups are built.
     - Their form reads `BarsConfig.lookOf(bar)`, so a look field's `x-showIf` sees what the bar draws, even from a group it doesn't override.
@@ -47,8 +47,8 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
 - Edits show live on the running bars.
 
 ### Undo and actions
-- `BarManager.history` (an `EditHistory`) snapshots the draft's bars and the selection before every edit; `undo()` / `redo()`. Field edits join by key (`bar:<bar>:<key>`, `style:…`, `widget:<bar>:<zone>:<index>:<key>`, `layout:…`), so typing or a stepper is one step; an edit that changes nothing records nothing. Loading or discarding the draft clears it.
-- Actions on the selected widget for the board's menu and keys: `moveWidgetTo(zone, atEnd)`, `stepWidget(step)` (one place along the bar, into the next section at an end), `copyWidgetToBar(barIndex)`; and `addSpacer(zone, index)`, `setWidgetPriority` / `setWidgetMax(zone, index, value)`, `raiseWidgetPriority(zone, index)`.
+- `BarManager.history` (an `EditHistory`) snapshots the draft's bars and the selection before every edit; the board calls its `undo()` / `redo()`. Field edits join by key (`bar:<bar>:<key>`, `style:…`, `widget:<bar>:<zone>:<index>:<key>`, `layout:…`), so typing or a stepper is one step; an edit that changes nothing records nothing. Loading or discarding the draft clears it.
+- Actions on the selected widget for the board's menu and keys: `moveWidgetTo(zone, atEnd)`, `stepWidget(step)` (one place along the bar, into the next section at an end), `copyWidgetToBar(barIndex)`; and `raiseWidgetPriority(zone, index)`. Add a spacer is `addWidget(zone, "Spacer", index)`, Set max length `updateWidgetLayout(zone, index, "maxSize", value)`.
 - Removing or duplicating a bar keeps the selection on its bar and widget; a removed or new bar's widgets start unselected.
 
 ### Live reports

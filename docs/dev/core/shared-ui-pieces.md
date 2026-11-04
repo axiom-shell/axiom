@@ -92,7 +92,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.
 - `InspectorHeader`: icon well, name, place, actions, then a wrapping row of `links` (shown while the host's `showsLinks`), divider.
 - `UndoRedoButtons`: an editor's Undo and Redo buttons, enabled from its `canUndo` / `canRedo` (an `EditHistory`'s, `qml/services/ui/EditHistory`: snapshots before each edit, edits to one field joining a step, up to 50).
-- `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title. Its `help` (and `TitledCard.help`) is a "?" after the title saying what the panel is for in a `StyledToolTip` on hover (wrapped at its `maxWidth`).
+- `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title. Its `help` is a "?" after the title saying what the panel is for in a `StyledToolTip` on hover (wrapped at its `maxWidth`).
 
 ### Forms (`forms/`)
 - `SchemaField`: one schema row, any type. It picks `SchemaSwitch`, `SchemaNumberField` (slider or stepper), `SchemaComboBox`, `SchemaTextField` (commits on Enter, focus loss or a suggestion; a long value wraps, growing to four lines, then scrolls; a Browse button with `x-control: "folder"`) or `SchemaObjectArray` (a list of `SchemaArrayItem`s): use `SchemaField`, not those, unless you need one alone.
