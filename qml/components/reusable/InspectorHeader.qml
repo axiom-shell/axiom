@@ -5,7 +5,9 @@ import qs.config
 
 // The top of an editor's inspector (bar widget, overlay module or cell):
 // the thing's icon in a well (accent-filled when `filled`), its name and
-// where it is, then its actions (children), over a faint divider
+// where it is, then its actions (children); under them, while
+// `showsLinks`, a wrapping row of links to where related things are set
+// (`links`), all over a faint divider
 ColumnLayout {
   id: root
 
@@ -14,6 +16,10 @@ ColumnLayout {
   property string title
   property string subtitle
   default property alias actions: row.data
+  property alias links: linkRow.data
+  // Set by the host, from whether any link leads anywhere (not from the
+  // links' `visible`, false while this row is hidden)
+  property bool showsLinks: false
 
   Layout.fillWidth: true
   spacing: Widget.spacing
@@ -58,6 +64,13 @@ ColumnLayout {
         Layout.fillWidth: true
       }
     }
+  }
+
+  Flow {
+    id: linkRow
+    visible: root.showsLinks
+    Layout.fillWidth: true
+    spacing: Widget.spacing * 2
   }
 
   StyledSeparator {

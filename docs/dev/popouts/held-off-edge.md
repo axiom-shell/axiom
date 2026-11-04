@@ -17,7 +17,7 @@ Floating edge menus, docks and OSDs with `detached` set are held off their edge 
 - **`ScreenEdgeManager.detachedGaps(screen, location, gap)`** gives the three gaps:
   - `gap` on each side, or
   - Auto (-1):
-    - When a floating bar shares the edge, its `floatGap` is used on all three sides, so the surface lines up with its islands across and at both ends.
+    - When a floating bar shares the edge, its `floatingGap` is used across, so the surface lines up with its islands; at both ends it lines up with the windows, as the islands' ends do.
     - Otherwise, per side, how far past the frame line windows start (`ScreenEdgeManager.barReservedOn` + gaps_out), so it lines up with the windows.
 - **Placement origin:** each surface places itself from where its window starts (`ScreenEdgeManager.reservedWithMenusOn`).
 

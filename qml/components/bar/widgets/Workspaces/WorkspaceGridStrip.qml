@@ -54,9 +54,9 @@ Item {
 
   // A cell's size on the bar (inside the background), and its corners
   // within the background's
-  readonly property real cell: root.barConfig.widgetSize - root.inset * 2
+  readonly property real cell: root.barConfig.thickness - root.inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(root.barConfig, root.cell, root.inset)
-  readonly property real spacing: root.barConfig.widgetSpacing
+  readonly property real spacing: root.barConfig.innerGap
   // Along the bar: square, or narrower for dots straight on the bar
   readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.labels !== "dots" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
   // Cells the bar shows: a row, or a column on a vertical bar

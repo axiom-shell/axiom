@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 // Imported (though widgets load by URL) so qs scans what they import and
@@ -18,12 +19,14 @@ import qs.components.hosts.popout
 //                                        shrinks towards minimumSize when crowded
 //   preferredSize: main-axis size (fixed: the size; elastic: the cap)
 //   minimumSize:   smallest main-axis size an elastic module accepts
-//   priority:      when a section can't fit even the minimum sizes, the
-//                  lowest-priority modules are hidden first (default 0)
+// Its priority (when a section can't fit even the minimum sizes, the
+// lowest-priority modules are hidden first) is its type's (`x-priority`,
+// default 0: `defaultPriority`)
 //
-// The widget's `layout` config (`layoutOverrides`) wins over the module's
-// own values. The host's main-axis size (`mainSize`) is assigned by
-// WidgetGroup; the cross axis is the bar's widgetSize. Modules must fit
+// The widget's `layout` config (`layoutOverrides`: priority, and on an
+// elastic module minSize and maxSize, its cap) wins over the module's own
+// values. The host's main-axis size (`mainSize`) is assigned by
+// WidgetGroup; the cross axis is the bar's thickness. Modules must fit
 // their content to whatever size they're given and report their natural
 // size through implicitWidth/implicitHeight, independent of that size.
 Item {
@@ -38,6 +41,16 @@ Item {
   property var layoutOverrides: ({})
   // The bar editor's selected widget: outlined, and its sizing reported
   property bool highlighted: false
+  // The widget hovered in the bar editor: outlined as the selected one
+  property bool hoverHighlighted: false
+  // Outlined for the bar editor: selected or hovered there
+  readonly property bool editorOutlined: root.highlighted || root.hoverHighlighted
+  // The pointer is over it (its hit area), for the bar editor's chips
+  readonly property bool pointerHovered: hitArea.hovered
+  // A live copy of a widget in the bar editor (its chips): opens no menu
+  // popout. Its host puts it under an `enabled: false` item, so it takes
+  // no input either; `panel` may be null (no bar window).
+  property bool preview: false
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -57,6 +70,9 @@ Item {
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
   // A divider of its own (Separator): the group draws none beside it
   readonly property bool divides: _item?.divides ?? false
+  // Room that takes the free space on its side of the bar (Spacer): it
+  // keeps its preferredSize at least (BarLayout.allocate)
+  readonly property bool fills: _item?.fills ?? false
   // Hovered, on a module that shows an outline then (its hoverOutline)
   readonly property bool outlined: (_item?.hoverOutline ?? false) && (_item?.hovered ?? false)
   // Room along the bar kept clear of its background's caps, at its start
@@ -80,26 +96,30 @@ Item {
 
   // The module's own sizes, then with the insets
   readonly property real _preferred: {
-    const override = layoutOverrides?.size;
     if (sizePolicy === "fixed")
-      return override ?? _item?.preferredSize ?? naturalSize;
+      return _item?.preferredSize ?? naturalSize;
     if (sizePolicy === "elastic")
-      return Math.min(naturalSize, override ?? _item?.preferredSize ?? naturalSize);
-    return override ?? naturalSize;
+      return Math.min(naturalSize, layoutOverrides?.maxSize ?? _item?.preferredSize ?? naturalSize);
+    return naturalSize;
   }
   readonly property real preferredSize: _preferred + _insets
   readonly property real minimumSize: {
-    const min = layoutOverrides?.minSize ?? (sizePolicy === "elastic" ? _item?.minimumSize : undefined);
+    const min = sizePolicy === "elastic" ? layoutOverrides?.minSize ?? _item?.minimumSize : undefined;
     return (min === undefined ? _preferred : Math.min(min, _preferred)) + _insets;
   }
-  readonly property int priority: layoutOverrides?.priority ?? _item?.priority ?? 0
+  // Its type's own priority (BarsConfig.defaultPriority, the schema's
+  // `x-priority`), which the widget's `layout.priority` overrides
+  property int defaultPriority: 0
+  readonly property int priority: layoutOverrides?.priority ?? defaultPriority
   // Its sizing as laid out, for the bar editor's inspector
   readonly property var measure: ({
       "policy": root.sizePolicy,
       "size": Math.round(root.shown ? root.mainSize : 0),
       "preferred": Math.round(root.preferredSize),
       "minimum": Math.round(root.minimumSize),
-      "priority": root.priority
+      "priority": root.priority,
+      // Its insets, which its maxSize doesn't count
+      "insets": Math.round(root._insets)
     })
 
   // Assigned by WidgetGroup; standalone hosts just
@@ -114,10 +134,10 @@ Item {
   opacity: shown ? 1 : 0
   enabled: shown
 
-  implicitWidth: isVertical ? root.barConfig.widgetSize : preferredSize
-  implicitHeight: isVertical ? preferredSize : root.barConfig.widgetSize
-  width: isVertical ? root.barConfig.widgetSize : mainSize
-  height: isVertical ? mainSize : root.barConfig.widgetSize
+  implicitWidth: isVertical ? root.barConfig.thickness : preferredSize
+  implicitHeight: isVertical ? preferredSize : root.barConfig.thickness
+  width: isVertical ? root.barConfig.thickness : mainSize
+  height: isVertical ? mainSize : root.barConfig.thickness
 
   // Its place and size as drawn glide to the layout's (x, y and the size
   // above, which its background and the bar's pills follow); the layout
@@ -206,7 +226,7 @@ Item {
   PopoutAnchor {
     hitArea: root._hitArea
     menu: EdgeMenusConfig.popoutMenuOf(root.properties)
-    active: menu !== ""
+    active: menu !== "" && !root.preview
   }
   onComponentPathChanged: _load()
 
@@ -239,10 +259,21 @@ Item {
     }
   }
 
+  // A module's news (BaseWidget.attention) shows its bar while hidden
+  // (an auto-hiding bar with revealOnActivity); a preview's goes nowhere
+  Connections {
+    target: root._item
+    enabled: !root.preview
+    ignoreUnknownSignals: true
+    function onAttention() {
+      BarRevealManager.attention(root.barConfig.id);
+    }
+  }
+
   // A module with a background shows it in its shape (WidgetBackground)
   Rectangle {
     anchors.fill: parent
-    visible: root.highlighted && !root.hasBackground
+    visible: root.editorOutlined && !root.hasBackground
     radius: root.barConfig.radius
     color: Qt.alpha(Theme.accent, 0.15)
     border.color: Theme.accent

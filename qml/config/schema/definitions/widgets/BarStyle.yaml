@@ -5,16 +5,16 @@ x-links: [BarEditor]
 description: How every bar draws its widgets, accents and shadow. A bar can take its own of any of these in the bar editor.
 additionalProperties: false
 properties:
-  fontSize:
+  textScale:
     x-group: Bar widgets
     type: integer
     x-control: stepper
-    title: Font size
-    default: null
-    minimum: 8
-    maximum: 32
-    x-unit: px
-    x-inherit: Appearance.font.size
+    title: Text size
+    default: 100
+    minimum: 50
+    maximum: 200
+    x-unit: '%'
+    description: "The widgets' text and icons, against the font size at a 26 px thickness; they grow and shrink with the bar's thickness."
   widgetRadius:
     x-group: Bar widgets
     type: integer

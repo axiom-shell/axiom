@@ -45,7 +45,7 @@ Loader {
     // Only what's shown: a Grid keeps spacing for an empty column or row
     rows: root.isVertical && !root.stripOnly ? 2 : 1
     columns: !root.isVertical && !root.stripOnly ? 2 : 1
-    spacing: root.barConfig.widgetSpacing
+    spacing: root.barConfig.innerGap
 
     SeparatorMark {
       visible: !root.stripOnly

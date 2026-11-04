@@ -1,4 +1,5 @@
-label: Tailscale Status
+label: Tailscale
+keywords: ['Tailscale Status']
 icon: vpn_lock
 group: Network & devices
 popout: {variant: own, enabled: {description: 'Show this machine, the tailnet and its devices when hovered.'}}

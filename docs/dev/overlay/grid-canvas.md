@@ -80,7 +80,7 @@ The canvas pieces name no service: they edit through `dragLayer.editor`.
 - They move as one (`planMoveGroup`, `GridPlacement.pushGroup`; the drag's `module-move` payload carries the `group`), nudge with the arrows, and go with `removeSelection`.
 
 ### Undo, normalizing and bounded grids
-- Every edit snapshots the modules first (plus the owner's `snapshotExtra`: an edge menu's offset) for `undo` / `redo`.
+- Every edit snapshots the modules first (plus the owner's `snapshotExtra`: an edge menu's offset) for `undo` / `redo`, in an `EditHistory` (`qml/services/ui/EditHistory`, shared with the bar editor); the header's buttons are `UndoRedoButtons`.
   - 50 deep; typing in one field is one step.
   - Cleared when the scope changes and by the owners' load/reset (`clearHistory`).
 - Each edit keeps the selection on its module (or group) and normalizes the grid, so a place left of or above it makes room there.

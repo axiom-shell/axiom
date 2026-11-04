@@ -174,6 +174,9 @@ var all = []Step{
 	{Version: 91, Run: v91},
 	// v92: a notification rule's toasts and history became level
 	{Version: 92, Run: v92},
+	// v93: the bar rewrite: surface and floating for background, renamed
+	// sizes, text scale for font size, three sections with Spacers (v93.go)
+	{Version: 93, Run: v93},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

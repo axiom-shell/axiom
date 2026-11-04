@@ -29,10 +29,16 @@ ColumnLayout {
   // Puts a field marked `x-beside` beside the one before it, each half wide,
   // while both are shown; off, every field takes the whole width
   property bool pairs: false
+  // Gives each field its change marks (FieldChangeMarks: reset to the
+  // default, and a dot while it has an unsaved edit) when set: a hook
+  // telling whether the field at a path ([key]) has one. null: no marks
+  property var changedAt: null
 
   // Emitted with the key ([key]) of the edited field and its value: a
   // nested object's field as the whole object
   signal edited(var path, var value)
+  // A field's unsaved-edit dot was clicked (with `changedAt`)
+  signal discardAt(var path)
 
   // Depends on the schema only, so edits update the rows in place
   readonly property var rows: Object.keys(root.propertiesSchema ?? {}).sort((a, b) => {
@@ -125,8 +131,23 @@ ColumnLayout {
             Component.onCompleted: setSource(Qt.resolvedUrl("SchemaField.qml"), {
               "row": cell.modelData,
               "form": root,
+              "headerExtra": root.changedAt ? marks : null,
               "visible": true
             })
+          }
+
+          Component {
+            id: marks
+            FieldChangeMarks {
+              readonly property var _field: field.item
+              schema: cell.modelData.schema
+              current: _field?.current
+              optionLabels: _field?.optionLabels ?? ({})
+              // The form is gone (null) a moment before its fields
+              changed: root?.changedAt ? root.changedAt(cell.modelData.path) : false
+              onReset: value => root.edit(cell.modelData.path, value)
+              onDiscard: root.discardAt(cell.modelData.path)
+            }
           }
 
           FieldLinks {

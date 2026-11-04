@@ -230,7 +230,7 @@ Scope {
   // Keeps a latched dock open; the trigger counts, so a pointer resting on
   // the edge never lets it close
   readonly property bool pointerIn: root.engaged || trigger.containsMouse
-  readonly property bool obscured: root.mode === "intellihide" && DockManager.obscured(root.screen, root._restRect())
+  readonly property bool obscured: root.mode === "intellihide" && CompositorManager.windowsCover(root.screen, root._restRect())
   // The overlay on this screen puts it away, whatever its visibility, unless
   // it reserves its strip (hiding that would retile the windows under it)
   readonly property bool overlayOpen: SurfaceManager.surfaceOpenOn("overlay", root.screen)

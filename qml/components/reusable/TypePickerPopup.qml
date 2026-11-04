@@ -76,8 +76,9 @@ Popup {
   }
   onOpened: search.input.forceActiveFocus()
 
+  // Solid, as every dropdown's list: nothing blurs behind a Popup
   background: DropdownSurface {
-    color: Appearance.fill(Theme.backgroundAlt)
+    color: Theme.backgroundAlt
     border.width: Appearance.borderWidth
   }
 

@@ -18,6 +18,8 @@ PopupWindow {
   property string text: ""
   // Side of the target to show on
   property int edges: Edges.Bottom
+  // Wraps longer text (a help text); 0 keeps it on one line
+  property real maxWidth: 0
 
   property bool _delayed: false
 
@@ -55,8 +57,8 @@ PopupWindow {
   StyledContainer {
     id: box
     anchors.fill: parent
-    implicitWidth: label.implicitWidth + Widget.padding * 2
-    implicitHeight: label.implicitHeight + Widget.spacing * 2
+    implicitWidth: label.width + Widget.padding * 2
+    implicitHeight: label.height + Widget.spacing * 2
     backgroundColor: Theme.background
     borderColor: Theme.border
     // Fades in as the window appears
@@ -67,6 +69,9 @@ PopupWindow {
     StyledText {
       id: label
       anchors.centerIn: parent
+      // Wrapped at `maxWidth`, when set
+      width: root.maxWidth > 0 ? Math.min(implicitWidth, root.maxWidth) : implicitWidth
+      wrapMode: root.maxWidth > 0 ? Text.Wrap : Text.NoWrap
       text: root.text
     }
   }

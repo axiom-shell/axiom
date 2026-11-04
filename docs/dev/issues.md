@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A bar widget's elasticity is stated twice
+- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
+- **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
+- **Size:** trivial
+- **Found:** 2026-11-05, while reviewing the bar rewrite
+
+### BarContainer's two join openings repeat their stretch
+- **Where:** `qml/components/bar/BarContainer.qml` (`joinOpening`, `_solidJoinOf`)
+- **What:** Both work out the same `from` and `span` and make the same `EdgeAttach.joinOpening` call (the border's opening also passes the fillet). One private helper returning the stretch would leave each with only what differs.
+- **Size:** trivial
+- **Found:** 2026-11-05, while reviewing the bar rewrite
+
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `qml/services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.
@@ -674,8 +686,8 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### An open edge popout's layer and namespace still follow its edge's bar
 - **Where:** `qml/components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `qml/components/hosts/popout/EdgePopout.qml:97` (`windowLayer`), `qml/components/hosts/popout/EdgePopout.qml:113` (`layerNamespace`), `qml/components/hosts/popout/EdgePopout.qml:216` (`_overlayLatch`), `qml/components/hosts/popout/BarPopouts.qml:42` (`_under`)
-- **What:** BarPopouts latches `placement.slidesUnder` in a `ClosedLatch`, so an open bar popout never changes layer. EdgePopout latches only two of that output's inputs (`_overlayLatch`, `_fullscreenLatch`) and reads `placement.slidesUnder` live. That value also depends on the edge's bar: `bar?.background === "transparent"`, from `SurfaceContext.layout`.
-  - **Scenario:** a pinned floating edge menu or an OSD is open on a transparent bar's edge, and the bar's background changes or the bar goes away (`axiom config set`, an edit, a restored setup).
+- **What:** BarPopouts latches `placement.slidesUnder` in a `ClosedLatch`, so an open bar popout never changes layer. EdgePopout latches only two of that output's inputs (`_overlayLatch`, `_fullscreenLatch`) and reads `placement.slidesUnder` live. That value also depends on the edge's bar: `bar?.kind === "transparent"`, from `SurfaceContext.layout`.
+  - **Scenario:** a pinned floating edge menu or an OSD is open on a transparent bar's edge, and the bar's surface changes or the bar goes away (`axiom config set`, an edit, a restored setup).
   - **What happens:** `slidesUnder` flips while the window shows, and with it `WlrLayershell.layer`, the namespace (`axiom-popout-under` ↔ `overNamespace`) and the margin (`slideDistance`).
   - **Rule broken:** ClosedLatch's own header ("what changes a popout's window layer or namespace … so an open popout never moves or restacks"), and AGENTS.md's "an open popout never moves".
   - PLAUSIBLE: what Hyprland does with a namespace changed on a mapped layer (ignored until a remap, or a remap) needs a nested session.
@@ -750,18 +762,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### A bar made while the bar editor is open may never report to it
-- **Where:** `qml/components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `qml/components/bar/BarContainer.qml:349` (`_report`)
-- **What:** A bar's report reaches `BarManager.setLive` only from `on_ReportKeyChanged`, and a change handler doesn't run for a property's first value.
-  - Bars that exist when the editor opens are fine: their key goes from `"null"` to the report.
-  - A BarContainer created while `BarManager.editing` is already true starts with its report. On a bar with room, `hidden` stays `{zone: []}` and `selected` stays null, so the key may never change and nothing is sent.
-  - The editor remakes bars often: changing a bar's Background, or moving it to the other axis, changes `BarsConfig.layerNamespace`, which `qml/shell/Bar.qml:25` keys the window on. Adding a bar makes a new one.
-  - The old container's `Component.onDestruction` clears the id, so `BarManager.liveReports` drops that bar. The board's "Fits …" line goes blank, and the lanes and inspector lose their crowded marks and sizing text.
-
-  PLAUSIBLE: whether the first value already has `root.screen` depends on binding order. To settle it, open the bar editor, switch a bar's Background, and check that the fit line stays. Fix: `Component.onCompleted: root._report()`. `setLive` ignores an unchanged report and an empty id.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### Plugging in or unplugging a monitor remakes the bar that stays
 - **Where:** `qml/config/BarsConfig.qml:409` (`expandBars`), `qml/shell/Bar.qml:25`
 - **What:** The id depends on how many of the bar's screens are connected.
@@ -773,27 +773,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### Removing or copying another bar moves the editor's selection to a different bar
-- **Where:** `qml/services/ui/BarManager.qml:247` (`removeBar`), `qml/services/ui/BarManager.qml:189` (`duplicateBar`)
-- **What:** The selected bar is held only as `selectedBarIndex`, and BarsPanel offers Remove and Duplicate on every row.
-  - Remove: in `[A, B, C]` with B selected, removing A leaves `selectedBarIndex` at 1 (`Math.max(0, Math.min(root.selectedBarIndex, …))`). The inspector and style groups now edit C, and the widget selection is cleared. `_moveCopied` on the line before remaps the copied style's index, but nothing remaps the selection.
-  - Duplicate: with B selected, duplicating A sets `selectedBarIndex = index + 1`, still 1, so its change handler doesn't fire. B's selected widget `{zone, index}` then applies to the new copy.
-
-  Fix: in `removeBar`, `if (index < root.selectedBarIndex) root.selectedBarIndex--;`, and clear the widget selection only when the selected bar was the one removed; `duplicateBar` calls `clearSelection()`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### The pill merge in BarContainer repeats BarLayout's, untested
-- **Where:** `qml/components/bar/BarContainer.qml:96` (`sectionPills`), `qml/components/methods/BarLayout.qml:523` (`_mergeSpans`)
-- **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.
+### A pill's shadow run-on rectangles log stackAfter warnings
+- **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
+- **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
-
-### Missing test rows for two helper decisions
-- **Where:** `qml/components/methods/BarEnds.qml:111` (`endOf`), `qml/components/methods/BarLayout.qml:181` (`overflowHidden`)
-- **What:** `tst_BarEnds` has no row for a solid bar meeting a solid bar: the `|| bar.solid` arm (a solid bar with the border off gets `_frame`, i.e. `bare`) is untested, and changing it to `_barStroke("solidBar", opts)` passes every row. `tst_BarLayout`'s two `lockCenter` rows never let the centre alone overflow, so line 181's `return [2]` is untested: returning `[0, 1]` would hide side widgets while the centre still doesn't fit. Fix: add those two rows.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
+- **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
 
 ### WindowLookConfig rebuilds BarStyle.look
 - **Where:** `qml/config/WindowLookConfig.qml:31` (`_barLook`), `qml/config/BarStyle.qml:15` (`look`)
@@ -803,7 +787,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Media squeezed to its minimum in the fill style shows the meter, not its icon
 - **Where:** `qml/components/bar/widgets/Media/Media.qml:20` (`minimumSize`), `qml/components/bar/widgets/base/IconTextWidget.qml:46` (`_leadRoom`), `qml/components/bar/widgets/base/IconTextWidget.qml:54` (`_iconStart`)
-- **What:** Media is elastic, with `minimumSize: root.iconLength + root.padding * 2`. Its header says it shrinks "down to just the icon when the bar is crowded", and a crowded section or a `layout.size` cap squeezes it to that minimum. Its schema offers `fill`. In that style the meter is a lead graphic *before* the icon (`ValueGraphic.afterIcon` is only ticker/stacked). `leadSlot` sits at x 0 with its full `leadLength` (`fontSize * 4`, 56 px at the defaults), and the icon is drawn at `_iconStart = _leadRoom`, past the room the minimum leaves. The widget clips to its box (BaseWidget `clip: true`), so a squeezed Media in fill style shows about 20 px of the progress meter and no icon. Ticker and stacked draw after the icon and are fine. Fix: count the lead in the minimum, `minimumSize: root.iconLength + (root.leadAfterIcon ? 0 : root.leadLength + root.spacing) + root.padding * 2` (or expose `_leadRoom` as `leadRoom`).
+- **What:** Media is elastic, with `minimumSize: root.iconLength + root.padding * 2`. Its header says it shrinks "down to just the icon when the bar is crowded", and a crowded section or a `layout.maxSize` cap squeezes it to that minimum. Its schema offers `fill`. In that style the meter is a lead graphic *before* the icon (`ValueGraphic.afterIcon` is only ticker/stacked). `leadSlot` sits at x 0 with its full `leadLength` (`fontSize * 4`, 56 px at the defaults), and the icon is drawn at `_iconStart = _leadRoom`, past the room the minimum leaves. The widget clips to its box (BaseWidget `clip: true`), so a squeezed Media in fill style shows about 20 px of the progress meter and no icon. Ticker and stacked draw after the icon and are fine. Fix: count the lead in the minimum, `minimumSize: root.iconLength + (root.leadAfterIcon ? 0 : root.leadLength + root.spacing) + root.padding * 2` (or expose `_leadRoom` as `leadRoom`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
@@ -821,19 +805,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A custom clock format without spaces spills past a vertical bar
 - **Where:** `qml/components/bar/widgets/Time/Time.qml:108` (`_split`)
-- **What:** On a vertical bar the clock is `widgetSize` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
+- **What:** On a vertical bar the clock is `thickness` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
 ### SystemStats' used memory clips on a vertical bar
 - **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:108` (`segmentData`, `mem`), `qml/components/bar/widgets/base/IconTextWidget.qml:140` (`elide`)
-- **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `widgetSize` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### The stacked style clips on a thin bar
-- **Where:** `qml/components/bar/widgets/base/ValueGraphic.qml:217` (value `font.pixelSize`), `qml/components/bar/widgets/base/ValueGraphic.qml:229` (caption `font.pixelSize`)
-- **What:** Stacked's two lines are `fontSize * 0.8` and `fontSize * 0.6`, sized from the font alone: about 1.17 × 1.4 × fontSize ≈ 23 px at font 14. They are centred in the widget's `widgetSize`, and the widget clips. At the default 26 px they fit. At `widgetSize` 20 with font 14, where a one-line label (about 16 px) still fits, about 1.5 px comes off the top of the value and the bottom of the caption. PLAUSIBLE: a screenshot of a stacked widget on a 20 px bar settles it. Fix: scale both lines by `Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize))`.
+- **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `thickness` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
@@ -1366,3 +1344,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The card formats `recordingElapsed` with its own `durationText` ("1:05", "1:02:03"; lines 48-54, 7 lines), the bar widget with a third inline copy that has no hours: `${Math.floor(root.elapsed / 60)}:…` shows "65:00" where the card shows "1:05:00" for the same recording. `StopwatchClock.format(ms)` already makes "mm:ss" / "h:mm:ss" and is tested. Fix: both use `StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)`; `durationText` goes (7 lines) and the bar matches the card (both then pad the minutes, "01:05", as the timer and stopwatch do).
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the screenshots-recording system
+
+### DockMenu draws its own menu rows and keys rather than StyledContextMenu's
+- **Where:** `qml/components/surfaces/dock/DockMenu.qml`, `qml/components/reusable/StyledContextMenu.qml`
+- **What:** The dock's right-click menu (Keep in dock / Remove from dock, New window, Close) builds its own rows, hover and click handling, the same items the shared right-click menu takes (`{ id, text, icon, enabled }`), with no keyboard. It's a `PopupWindow` beside the dock, where StyledContextMenu is a Popup in the page's window, so sharing them means pulling StyledContextMenu's rows and keys out into a part both draw in.
+- **Size:** small
+- **Found:** 2026-11-04, while building the bar editor's right-click menu (bar rewrite C17)
+
+### Six x-auto settings still store Automatic as -1
+- **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml:129`, `qml/config/schema/definitions/layout/EdgeMenu.yaml:150`, `qml/config/schema/definitions/common/DockEntry.yaml:51`, `qml/config/schema/definitions/common/OSDEntry.yaml:52`, `qml/config/schema/sections/Notifications.yaml:56`, `qml/config/schema/sections/Notifications.yaml:215`
+- **What:** `x-auto` now takes a `null` automatic value (validation lets it through, and the form's number keeps its whole range), which the bar's `floatingGap` uses. These six still store Automatic as `-1`, so their readers test `>= 0` / `< 0` and their minimum can't be 0 and Automatic at once without the sentinel. Moving them to `null` is a format-2 step per setting (`-1` → `null`) and a reader change each; nothing is broken meanwhile.
+- **Size:** small
+- **Found:** 2026-11-04, while building the bar rewrite (x-auto with a null value, A1)

@@ -138,7 +138,7 @@ func TestApplyExampleFormat1(t *testing.T) {
 		t.Fatalf("examples %+v", got)
 	}
 	// What its preview draws, read converted and filled
-	if bars := got[0].Bars; len(bars) != 1 || bars[0].Location != "left" || bars[0].Background == "" {
+	if bars := got[0].Bars; len(bars) != 1 || bars[0].Location != "left" || bars[0].Surface == "" {
 		t.Errorf("bars %+v", bars)
 	}
 	if got[0].Theme == "" || len(got[0].Docks) != 0 {

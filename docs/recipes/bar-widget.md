@@ -56,6 +56,7 @@ settings:
 - A widget with a value, a time or a long text picks the `appearance` part and names the display styles it draws (`appearance: {variant: value, style: {enum: [label, icon, ring, …]}}`), and extends `ValueStyleWidget` (`ratio`, `subtext`, `labelShown` in place of `showText`): [Display styles](../dev/bar/display-styles.md).
 - `WidgetColor` is the Auto color field (`default: ''`, `x-emptyLabel: Auto`, `x-autoColor: accent`, shown unless the bar's style is plain); override its title and role.
 - A section of the type's own name (`Battery`) is linked from the inspector automatically (`x-link`), unless the type says `link`.
+- `label` is one short name, the same in the library, on the board and in the inspector; other words it should be found by go in `keywords` (`x-keywords`). `priority: N` keeps it longer than the default 0 when the bar is crowded (`x-priority`). A widget that shrinks when crowded (its QML's `sizePolicy: "elastic"`) says `elastic: true` (`x-elastic`), which gives it the layout's minimum and maximum: [schema-annotations › Types](../dev/core/schema-annotations.md#types-bar-widgets-overlay-modules-views-custom-widget-elements).
 
 ## Steps
 1. Write `schema.yaml` first. Pick `group` from the root's `x-libraryGroups` (`Desktop`, `Time & weather`, `Media & audio`, `Network & devices`, `System`, `Tools`, `Look & layout`, `Session`).
@@ -66,9 +67,9 @@ settings:
 
 ## Gotchas
 - `BarWidgetHost` handles `popout.menu` itself (an edge menu instead of the popout): the widget's own `PopoutAnchor` is gated by `EdgeMenusConfig.opensOwnPopout(root.properties)`, never by `properties.popout.enabled` alone.
-- Every widget but Button, Separator and the tray has a `popout` part, even without a popout of its own (`menu`: they open an edge menu).
+- Every widget but Button, Separator, Spacer and the tray has a `popout` part, even without a popout of its own (`menu`: they open an edge menu).
 - A label's digits are always of equal width and measured as zeros, so a ticking time doesn't resize the bar. A value that gains or drops digits (a percent, a count) sets `minimumText` on its `BarIconWidget` to its widest (`"100%"`, as `Battery.qml` does).
-- Sizes come from the bar (`barConfig.widgetSize`, `barConfig` padding/spacing/font/radius), never `Widget.*`. `BarIconWidget` already does this; a widget drawing more must too.
+- Sizes come from the bar (`barConfig.thickness`, `barConfig` innerPadding/innerGap/fontSize/radius), never `Widget.*`. `BarIconWidget` already does this; a widget drawing more must too.
 - A color field the bar should pick when empty is a `WidgetColor` (`default: ''`, `x-emptyLabel: Auto`) with an `x-autoColor` role (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`). `tst_Config` checks these.
 - Color fields show only in the bar looks they do something in (`$bar.<key>` conditions; the rules are in [bar/widget-style](../dev/bar/widget-style.md#which-color-fields-show)): the state colors that feed `accentColor` hide under Plain text, and `foregroundColor` shows only when filled, not merged, with the bar's text color Auto. A widget without an icon shows its color only boxed and not merged, or underlined (`TimeWidget`).
 - The type const must not match a `qml/components/content/` file another file sees alongside it (e.g. a `Battery` widget and `Battery` content): `check_structure.py` errors.

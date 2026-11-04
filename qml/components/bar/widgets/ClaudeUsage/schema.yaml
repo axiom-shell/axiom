@@ -1,4 +1,4 @@
-label: Claude Usage
+label: Claude usage
 icon: data_usage
 group: System
 popout: {variant: own, enabled: {description: List every limit per account when hovered.}}

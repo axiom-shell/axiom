@@ -375,17 +375,9 @@ QtObject {
   // --- History ---
 
   // Snapshots of the edited modules (plus the owner's `snapshotExtra()`)
-  // before each edit, newest last
-  property var _undo: []
-  property var _redo: []
-  property int _undoCount: 0
-  property int _redoCount: 0
-  readonly property bool canUndo: root._undoCount > 0
-  readonly property bool canRedo: root._redoCount > 0
-  // What a property edit last snapshotted ("index:key"): more edits to
-  // the same field (typing) join it
-  property string _lastField: ""
-  readonly property int _historyLimit: 50
+  // before each edit
+  readonly property bool canUndo: root._history.canUndo
+  readonly property bool canRedo: root._history.canRedo
 
   // Owner state that edits change besides the modules (an edge menu's
   // offset, which keeps it in place as its grid shifts): taken with
@@ -393,14 +385,15 @@ QtObject {
   property var snapshotExtra: () => null
   property var restoreExtra: extra => {}
 
-  onScopeKeyChanged: root.clearHistory()
-
-  function _snapshot() {
-    return {
-      "modules": Utils.clone(root._modules() ?? []),
-      "extra": Utils.clone(root.snapshotExtra())
-    };
+  readonly property EditHistory _history: EditHistory {
+    snapshot: () => ({
+          "modules": root._modules() ?? [],
+          "extra": root.snapshotExtra()
+        })
+    restore: snap => root._restore(snap)
   }
+
+  onScopeKeyChanged: root.clearHistory()
 
   function _restore(snap) {
     const modules = root._modules();
@@ -411,46 +404,22 @@ QtObject {
     root._group = [];
     if (root._selected >= modules.length)
       root._selected = -1;
-    root._lastField = "";
     root.edited();
   }
 
-  function _record(snap) {
-    root._undo = root._undo.concat([snap]).slice(-root._historyLimit);
-    root._redo = [];
-    root._undoCount = root._undo.length;
-    root._redoCount = 0;
-  }
-
   function undo() {
-    if (root._undo.length === 0 || !root._modules())
-      return;
-    const snap = root._undo[root._undo.length - 1];
-    root._redo = root._redo.concat([root._snapshot()]);
-    root._undo = root._undo.slice(0, -1);
-    root._undoCount = root._undo.length;
-    root._redoCount = root._redo.length;
-    root._restore(snap);
+    if (root._modules())
+      root._history.undo();
   }
 
   function redo() {
-    if (root._redo.length === 0 || !root._modules())
-      return;
-    const snap = root._redo[root._redo.length - 1];
-    root._undo = root._undo.concat([root._snapshot()]);
-    root._redo = root._redo.slice(0, -1);
-    root._undoCount = root._undo.length;
-    root._redoCount = root._redo.length;
-    root._restore(snap);
+    if (root._modules())
+      root._history.redo();
   }
 
   // When the edited modules are reloaded (the draft loaded or reset)
   function clearHistory() {
-    root._undo = [];
-    root._redo = [];
-    root._undoCount = 0;
-    root._redoCount = 0;
-    root._lastField = "";
+    root._history.clear();
   }
 
   // --- Editing ---
@@ -463,15 +432,14 @@ QtObject {
     const modules = root._modules();
     if (!modules)
       return;
-    const snap = root._snapshot();
+    const snap = root._history.take();
     const before = modules[root.selected] ?? null;
     const groupBefore = root._group.map(i => modules[i]);
     const boundsBefore = GridPlacement.bounds(modules);
     const focus = edit(modules);
     if (focus === false)
       return;
-    root._record(snap);
-    root._lastField = "";
+    root._history.push(snap);
     if (!root.area)
       root.shifted(GridPlacement.normalize(modules, root.hold), boundsBefore);
     if (groupBefore.length > 0 && focus === undefined) {
@@ -613,10 +581,7 @@ QtObject {
   // or an owner's own setting kept in snapshotExtra); more edits to the
   // same field (typing, a stepper) join it
   function recordField(field) {
-    if (root._lastField === field)
-      return;
-    root._record(root._snapshot());
-    root._lastField = field;
+    root._history.record(field);
   }
 
   function updateModuleProperty(index, key, value) {

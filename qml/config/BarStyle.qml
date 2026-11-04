@@ -6,7 +6,7 @@ import qs.services.core
 // shadow, unless its own style sets a key (BarsConfig.lookOf). Previews of the
 // Bars section show live (the bar editor's).
 QtObject {
-  // The style's values by key ({ fontSize, widgetRadius, widgetStyle, …,
+  // The style's values by key ({ textScale, widgetRadius, widgetStyle, …,
   // shadow: { enabled, color, size } }), as a bar's own would be
   readonly property var values: ConfigManager.live.Bars.style
   // The look surfaces draw their shadow in, the way a bar's look is

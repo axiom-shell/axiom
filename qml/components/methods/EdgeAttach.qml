@@ -114,7 +114,7 @@ QtObject {
   // The box's place along the edge. `s`:
   //   pills [{ start, length, joinStart, joinEnd }], pillBar (on a pill
   //     bar, even with none showing; else whether there are pills), island
-  //     (they're a floating bar's islands), merge (pillMerge), centre
+  //     (they're a floating bar's islands), merge (joinGap), centre
   //     (picks the pill)
   //   aligned (where the content's box would start), length (its length)
   //   joinStart, joinEnd (from `joins`), joinFrom, joinTo (where joined
@@ -263,7 +263,7 @@ QtObject {
    * them), `wall` where the surface's far wall meets it (the bar's
    * coordinates), `atStart` whether the surface is at the bar's start end,
    * `radius` the fillet's (and the pill's corner's), `merge` its
-   * pillMerge, `stroke` its stroke width.
+   * joinGap, `stroke` its stroke width.
    *
    * Filleted where a pill shows past the wall at all (past its outer
    * edge, half a stroke out, where a straight join would square it) and

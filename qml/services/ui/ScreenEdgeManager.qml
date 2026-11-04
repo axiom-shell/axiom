@@ -19,9 +19,15 @@ QtObject {
   // The running bars (while the bar editor has unsaved edits, those),
   // each placed in its edge's stack and with what its ends meet among the
   // bars on its screen (BarEnds.withEnds: where it lies, what it
-  // reserves, which bar a shared corner goes to)
-  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps)), root._endsOptions)
-  readonly property var _endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
+  // reserves, which bar a shared corner goes to). An auto-hiding bar
+  // pinned shown (BarRevealManager.pinned, which changes only on a pin,
+  // never on hover) reserves its space.
+  readonly property var bars: BarEnds.withEnds(BarsConfig.expandBars(ConfigManager.live.Bars.items).map(bar => {
+    const enriched = BarsConfig.enrichBarConfig(bar, CompositorManager.gapsOut, root.floatGaps);
+    enriched.pinned = enriched.autoHiding && BarRevealManager.pinned[enriched.id] === true;
+    return enriched;
+  }), root.endsOptions)
+  readonly property var endsOptions: BarsConfig.endsOptions(CompositorManager.gapsOut, root.floatGaps)
 
   // The gaps a floating bar's Automatic float gap keeps (per edge name):
   // the compositor's outer gaps, or with no backend to ask, the screen
@@ -50,7 +56,7 @@ QtObject {
   // reserved, frame, corner, solidZone, insideTaken, inner, facing), integrated
   // menus not counted
   function edgeOn(screen, location) {
-    return BarEnds.edgeOf(root.stackOn(screen, location), root._endsOptions);
+    return BarEnds.edgeOf(root.stackOn(screen, location), root.endsOptions);
   }
 
   // Where the open popouts of the bars outside a bar (a `bars` entry)
@@ -86,7 +92,7 @@ QtObject {
     return SurfaceContext.endKind({
       "border": Appearance.screenBorder,
       "bar": bar,
-      "barShowing": !bar || (root.barOn(screen?.name ?? "", location)?.visible ?? false),
+      "barShowing": !bar || (root.barOn(screen?.name ?? "", location)?.present ?? false),
       "menuZone": root.zoneOn(screen?.name ?? "", name)
     });
   }
@@ -137,8 +143,9 @@ QtObject {
   // the frame lines (frameLine) across that edge and at its two ends (the
   // perpendicular edges at its start and end: top and bottom, or left and
   // right): `gap` on each when it's 0 or more. Automatic (-1), it lines up
-  // with a floating bar on that edge, its float gap on all three, else
-  // with the windows: how far past each frame line they start.
+  // with a floating bar on that edge (its float gap across; its islands
+  // end where windows start, BarEnds.windowInset), else with the windows:
+  // how far past each frame line they start.
   function detachedGaps(screen, location, gap) {
     if (gap >= 0)
       return {
@@ -147,7 +154,7 @@ QtObject {
         "end": gap
       };
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const windowGap = side => bar?.island ? bar.floatGap : Math.max(0, root.barReservedOn(screen, side) + CompositorManager.gapsOut[ScreenEdge.name(side)] - root.frameLine(screen, side));
+    const windowGap = side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {
       "across": windowGap(location),

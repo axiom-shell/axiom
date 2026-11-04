@@ -5,7 +5,7 @@
 x-actions: the commands a custom widget element runs, in order (keys of its `actions`; `CustomWidgetsConfig.elementKinds`).
 x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
-x-auto: a switch in front of an integer whose `value` means automatic.
+x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'
 x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
 x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
 x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
@@ -18,6 +18,7 @@ x-compositor: 'how a compositor config writer writes it, per compositor: `hyprla
 x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`; see schema-annotations.md › Fields).
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
+x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): only it takes a layout `minSize` and `maxSize`.'
 x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
 x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
@@ -33,6 +34,7 @@ x-icon: a Material Symbols name on bar widget, overlay module and view definitio
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
 x-keyboard: the module takes typing.
+x-keywords: more words a bar widget type is found by in the bar editor's library (`LibraryOrder.filtered`), such as its old label.
 x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget or overlay module type is sorted into.
 x-libraryGroups: "(root) the groups, in order, the bar editor's and layouts editor's libraries sort their types into."
 x-link: where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition.
@@ -43,6 +45,7 @@ x-multiline: a growing text area.
 x-needs: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 x-options: a dynamic option list.
 x-order: the keys shown first, in order.
+x-priority: a bar widget type's own priority when its bar is crowded (higher stays longer; default 0), which its `layout.priority` overrides (`BarsConfig.defaultPriority`).
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
 x-scope: what a snapshot, example, import or export carries.

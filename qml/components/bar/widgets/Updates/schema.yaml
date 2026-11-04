@@ -1,4 +1,5 @@
-label: Package Updates
+label: Updates
+keywords: ['Package Updates']
 icon: package_2
 group: System
 popout: {variant: own, enabled: {description: List pending packages when hovered.}}

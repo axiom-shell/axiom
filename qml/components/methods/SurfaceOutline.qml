@@ -11,36 +11,61 @@ import QtQuick
 // (v = 0 is the attach edge), laid out as if attached to the Top edge and
 // mapped onto the real one by `toItem`. `edge` is a ScreenEdge. No files,
 // services or config: the caller passes the shape's settings in a spec:
-//   { edge, boxAlong, boxDepth, strokeWidth, filletRadius, cornerRadius,
-//     startCornerRadius, endCornerRadius, connectorGap, joinStart,
-//     joinEnd, flushStart, flushEnd, flushStartThrough, flushEndThrough,
+//   { edge, boxAlong, boxDepth, strokeWidth, filletRadius,
+//     attachFilletRadius, cornerRadius, startCornerRadius,
+//     endCornerRadius, connectorGap, joinStart, joinEnd, flushStart, flushEnd, flushStartThrough, flushEndThrough,
 //     detached, detachedOffset, backfill, straight, straightJoins,
 //     straightJoinStart, straightJoinEnd, joinBackfill }
 // (straightJoinStart/End: one joined end's, where the edges it meets
 // differ, a bare screen edge at one and a solid bar's stroke at the
 // other; each defaults to straightJoins. joinBackfill: the row a surface
 // covers past its joined ends (a submenu's, beside its parent's backfill),
-// which a straight join's far wall runs on through)
+// which a straight join's far wall runs on through. attachFilletRadius:
+// the attach side's fillets' alone, where they and the far corners are
+// scaled to fit a fixed depth, fitRadii; defaults to filletRadius, which
+// joined ends keep)
 QtObject {
   id: root
+
+  // An attach-side fillet and the far corner beyond it, both scaled by the
+  // same ratio when together they're deeper than `room` (the most fillet
+  // + corner a fixed-depth box such as a pill fits: withBoxStart's room),
+  // so the two arcs meet as one S-curve rather than the corner being cut
+  // down to what the fillet leaves. -> { fillet, corner }
+  function fitRadii(room, fillet, corner) {
+    const total = fillet + corner;
+    if (!(total > room) || total <= 0)
+      return {
+        "fillet": fillet,
+        "corner": corner
+      };
+    const k = Math.max(0, room) / total;
+    return {
+      "fillet": fillet * k,
+      "corner": corner * k
+    };
+  }
 
   // Everything derived from a spec, in edge-local coordinates
   function metrics(s) {
     const half = s.strokeWidth / 2;
     const R = s.filletRadius;
+    // The attach side's fillets (their own radius: fitRadii)
+    const Ra = s.attachFilletRadius ?? R;
     const detached = !!s.detached;
     const back = detached ? 0 : (s.backfill ?? 0);
     const lead = detached ? (s.detachedOffset ?? 0) : 0;
     // A radius under half the stroke is too tight for a fillet: the walls
     // run straight into what they attach to
     const sharp = R < half;
-    const filletStart = !sharp && !s.joinStart && !s.flushStart && !s.straight;
-    const filletEnd = !sharp && !s.joinEnd && !s.flushEnd && !s.straight;
+    const attachSharp = Ra < half;
+    const filletStart = !attachSharp && !s.joinStart && !s.flushStart && !s.straight;
+    const filletEnd = !attachSharp && !s.joinEnd && !s.flushEnd && !s.straight;
     const straightJoinStart = !!(s.straightJoinStart ?? s.straightJoins) || sharp;
     const straightJoinEnd = !!(s.straightJoinEnd ?? s.straightJoins) || sharp;
     const joinFillet = (!!s.joinStart && !straightJoinStart) || (!!s.joinEnd && !straightJoinEnd);
     // A fillet's room along the edge: its arc's run (EdgeAttach.filletMargin)
-    const full = R - half;
+    const full = Ra - half;
     const startMargin = filletStart ? full : 0;
     const endMargin = filletEnd ? full : 0;
     const alongLength = startMargin + s.boxAlong + endMargin;
@@ -50,11 +75,12 @@ QtObject {
     if (detached) {
       naturalBoxStart = lead + s.connectorGap / 2;
     } else {
-      const fillet = filletStart || filletEnd ? R + half : 0;
+      const fillet = filletStart || filletEnd ? Ra + half : 0;
       naturalBoxStart = Math.max(0, Math.min(s.connectorGap / 2, fillet + Math.max(cs, ce) + half - s.boxDepth));
     }
     return withBoxStart(s, {
       "half": half,
+      "attachR": Ra,
       "back": back,
       "sharp": sharp,
       "filletStart": filletStart,
@@ -86,7 +112,7 @@ QtObject {
   // radius is: past it, a wall would run backwards and the outline cross
   // itself. The radius never changes the box's size.
   function withBoxStart(s, m, boxStart) {
-    const h = m.half, R = s.filletRadius;
+    const h = m.half, R = m.attachR;
     const along = Math.max(0, s.boxAlong / 2 - h);
     const room = filleted => Math.max(0, Math.min(along, boxStart + s.boxDepth - h - (filleted ? h + R : 0)));
     return Object.assign({}, m, {
@@ -163,7 +189,7 @@ QtObject {
   // fillet runs from `joinV` (default: where it meets the stroke it joins,
   // farV + R) along its own arc.
   function _outline(s, m, p, startWith, joinV, capInset) {
-    const R = s.filletRadius, cs = m.startCornerRadius, ce = m.endCornerRadius, h = m.half;
+    const R = s.filletRadius, Ra = m.attachR, cs = m.startCornerRadius, ce = m.endCornerRadius, h = m.half;
     const sideU = m.sideU, farSideU = m.farSideU, farV = m.farV, L = m.alongLength;
     const jv = joinV ?? farV + R;
     // How far in from the end the fillet's arc is at jv
@@ -172,7 +198,7 @@ QtObject {
     // end, or its arc does where it reaches that far (`du` past the arc's
     // end on the edge)
     const ci = capInset ?? 0;
-    const arcV = du => h + R - Math.sqrt(Math.max(0, R * R - du * du));
+    const arcV = du => h + Ra - Math.sqrt(Math.max(0, Ra * Ra - du * du));
     // A flush wall runs on through the backfill, its stroke covering the
     // end of the stroke it continues there, which the backfill leaves open
     const fv0 = m.throughStart ? -m.back : 0, fv1 = m.throughEnd ? -m.back : 0;
@@ -187,13 +213,13 @@ QtObject {
       d += p.line(sideU, farV - cs);
       d += p.arc(cs, false, sideU + cs, farV);
     } else {
-      if (sideU - R >= ci) {
+      if (sideU - Ra >= ci) {
         d += startWith(ci, h);
-        d += p.line(sideU - R, h);
+        d += p.line(sideU - Ra, h);
       } else {
-        d += startWith(ci, arcV(ci - (sideU - R)));
+        d += startWith(ci, arcV(ci - (sideU - Ra)));
       }
-      d += p.arc(R, true, sideU, h + R);
+      d += p.arc(Ra, true, sideU, h + Ra);
       d += p.line(sideU, farV - cs);
       d += p.arc(cs, false, sideU + cs, farV);
     }
@@ -209,12 +235,12 @@ QtObject {
     } else {
       d += p.line(farSideU - ce, farV);
       d += p.arc(ce, false, farSideU, farV - ce);
-      d += p.line(farSideU, h + R);
-      if (farSideU + R <= L - ci) {
-        d += p.arc(R, true, farSideU + R, h);
+      d += p.line(farSideU, h + Ra);
+      if (farSideU + Ra <= L - ci) {
+        d += p.arc(Ra, true, farSideU + Ra, h);
         d += p.line(L - ci, h);
       } else {
-        d += p.arc(R, true, L - ci, arcV(farSideU + R - (L - ci)));
+        d += p.arc(Ra, true, L - ci, arcV(farSideU + Ra - (L - ci)));
       }
     }
     return d;
@@ -278,7 +304,7 @@ QtObject {
       return [boxRect(s, m, w, h)];
     // Attached, the box reaches back to the attach edge
     const out = [rect(m.startMargin, 0, s.boxAlong, m.boxStart + s.boxDepth)];
-    const filletDeep = R + m.half;
+    const filletDeep = m.attachR + m.half;
     if (m.filletStart && m.startMargin > 0)
       out.push(rect(0, 0, m.startMargin, filletDeep));
     if (m.filletEnd && m.endMargin > 0)
@@ -303,7 +329,7 @@ QtObject {
    * rounded as drawn and its near ones `near` ({ start, end }).
    */
   function blurRegion(s, m, w, h, dx, dy, near) {
-    const R = s.filletRadius, half = m.half, L = m.alongLength, back = m.back;
+    const R = s.filletRadius, Ra = m.attachR, half = m.half, L = m.alongLength, back = m.back;
     const outer = r => r > 0 ? r + half : 0;
     const far = m.farV + half;
     // Edge-local pieces: u, v, along, deep, corner radii (start/end, far/
@@ -345,12 +371,12 @@ QtObject {
           "u": 0,
           "v": 0,
           "along": m.startMargin,
-          "deep": half + R,
+          "deep": half + Ra,
           "cuts": [
             {
               "u": 0,
-              "v": half + R,
-              "r": R - half
+              "v": half + Ra,
+              "r": Ra - half
             }
           ]
         });
@@ -359,12 +385,12 @@ QtObject {
           "u": L - m.endMargin,
           "v": 0,
           "along": m.endMargin,
-          "deep": half + R,
+          "deep": half + Ra,
           "cuts": [
             {
               "u": L,
-              "v": half + R,
-              "r": R - half
+              "v": half + Ra,
+              "r": Ra - half
             }
           ]
         });

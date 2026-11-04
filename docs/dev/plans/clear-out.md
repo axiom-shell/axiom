@@ -422,15 +422,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-03** (2):
   - [An open edge popout's layer and namespace still follow its edge's bar](../issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
   - [EdgePopout works out its attach edge and slide distance itself](../issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
-- **bar-popouts-04** (4; its three reserve entries fixed by the stacked bars PR): the editor and rebuild entries.
+- **bar-popouts-04** (2; its three reserve entries fixed by the stacked bars PR, its selection and report entries by the bar rewrite): the editor and rebuild entries.
   - [Plugging in or unplugging a monitor remakes the bar that stays](../issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
-  - [A bar made while the bar editor is open may never report to it](../issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
-  - [Removing or copying another bar moves the editor's selection to a different bar](../issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
   - [Bar widget hosts settle after they're gone](../issues.md#bar-widget-hosts-settle-after-theyre-gone)
-- **bar-popouts-06** (4):
+- **bar-popouts-06** (3):
   - [Media squeezed to its minimum in the fill style shows the meter, not its icon](../issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
   - [SystemStats' used memory clips on a vertical bar](../issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
-  - [The stacked style clips on a thin bar](../issues.md#the-stacked-style-clips-on-a-thin-bar)
   - [The Workspaces widget's measured length glides when the active cell widens](../issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - **bar-popouts-07** (5): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
   - [An edge menu can be bigger than its screen](../issues.md#an-edge-menu-can-be-bigger-than-its-screen)
@@ -444,9 +441,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The tray menu draws its own separator](../issues.md#the-tray-menu-draws-its-own-separator)
   - [The dock's footprint assumes fillets at both ends](../issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- **bar-popouts-09** (7):
-  - [The pill merge in BarContainer repeats BarLayout's, untested](../issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
-  - [Missing test rows for two helper decisions](../issues.md#missing-test-rows-for-two-helper-decisions)
+- **bar-popouts-09** (5):
   - [WindowLookConfig rebuilds BarStyle.look](../issues.md#windowlookconfig-rebuilds-barstylelook)
   - [SystemStats works out ValueStyleWidget's style fallbacks again](../issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)
   - [The workspace switchers find a workspace by id with hand-written loops](../issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)

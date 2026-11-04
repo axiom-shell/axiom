@@ -43,7 +43,7 @@ Grid {
   flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
   rows: root.isVertical ? Math.max(1, root.addresses.length) : 1
   columns: root.isVertical ? 1 : Math.max(1, root.addresses.length)
-  spacing: root.barConfig.widgetSpacing
+  spacing: root.barConfig.innerGap
 
   Repeater {
     model: root.addresses.length

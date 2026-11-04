@@ -23,8 +23,9 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 
 ### Sizes come from the bar
 - (Rule: `qml/components/bar/widgets/AGENTS.md`, "Sized by the bar".)
-- `BarsConfig.enrichBarConfig` derives `extent` from `widgetSize`, plus padding and whatever covers the bar.
-- It resolves `fontSize` and `radius` from the bar's `overrideFontSize`/`overrideRadius`, else from Appearance's values and `Widget.radius`.
+- `BarsConfig.enrichBarConfig` derives `extent` and where the widgets sit across (`crossStart`) from `thickness` and `edgePadding` (`BarEnds.crossGeometry`: solid and pill bars alike).
+- **What's inside scales with the bar's thickness** from how it's set at 26 px (`BarsConfig.referenceThickness`): `fontSize` is `Appearance.baseFontSize × thickness/26 × textScale/100`, and `innerPadding`/`innerGap` are the bar's settings × thickness/26 (rounded). At 26 px and 100% a bar looks as it always has; at 16 or 40 px its text, icons and spacing are that much smaller or larger, and everything drawn from them (graphics, cells, the stacked style's two lines, which shrink to fit a text scale too large for the bar) follows.
+- `radius` is the look's `widgetRadius`, else `Widget.radius`.
 
 ### Widget style
 - Widgets don't draw their own backgrounds. Each reports two things:
@@ -67,12 +68,12 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 
 ### Shared and per-bar style (`BarStyle`)
 - A bar's widget style, accents and shadow are a `BarStyle`: the shared one is `Bars.style` (shown in Look & Feel, reader `BarStyle`), and each bar has its own `style` (`x-inherit: Bars.style`) whose keys it leaves `null` take the shared one's.
-- `BarsConfig.lookOf` fills a bar's look from both before `enrichBarConfig`, its shadow as flat `shadow` / `shadowColor` / `shadowSize`. `fontSize` and `widgetRadius` stay `null` where both leave them (Appearance's and Widget's then).
+- `BarsConfig.lookOf` fills a bar's look from both before `enrichBarConfig`, its shadow as flat `shadow` / `shadowColor` / `shadowSize`. `widgetRadius` stays `null` where both leave it (Widget's then); `textScale` always has a value.
 - The bar editor shows the style by `x-group` (`BarsConfig.styleGroups`, from `SchemaLayout.objectGroups`), each with a "This bar's own" switch: `BarManager.ownsStyle` / `setStyleOwned` (copies what it inherits, or sets the group back to `null`) / `updateStyleField`.
 
 ### Workspaces cells
 - Workspaces sits on a background like the rest (`backgroundColor`). Its box is Auto (`neutral`).
-- Its cells (`workspaces/WorkspaceCell`) are inset by `widgetSpacing` inside that box.
+- Its cells (`workspaces/WorkspaceCell`) are inset by `innerGap` inside that box.
 - A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
 - Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
   - **Filled, tinted or outlined** styles draw boxes.

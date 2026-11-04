@@ -11,9 +11,10 @@ import qs.components.forms
 import qs.components.content.base
 
 // i18n: keys from the schema (titles, descriptions)
-// Bar editor, left: the bars, then the selected bar's own settings in
-// groups, generated from the schema's Bar definition, then its style
-// (BarStyle's groups), shared or its own
+// Bar editor, left: the bars, then the selected bar's settings under four
+// tabs (Layout, Surface, Widgets, Behaviour): its own groups, generated
+// from the schema's Bar definition, and its style's (BarStyle's groups),
+// shared or its own. Only the shown tab's groups are built.
 Item {
   id: root
 
@@ -23,13 +24,45 @@ Item {
   readonly property bool copied: BarManager.copiedStyle !== null
   readonly property bool copiedHere: BarManager.copiedStyle?.index === BarManager.selectedBarIndex
 
-  // Group titles: I18n.tr("General") I18n.tr("Size") I18n.tr("Style")
+  // The tabs, by the schema groups (`x-group` titles) each shows: a Bar
+  // group no tab names goes on the first
+  readonly property var tabs: [
+    {
+      "label": I18n.tr("Layout"),
+      "fields": ["Placement", "Size"],
+      "styles": []
+    },
+    {
+      "label": I18n.tr("Surface"),
+      "fields": ["Surface"],
+      "styles": ["Bar accents", "Surface shadow"]
+    },
+    {
+      "label": I18n.tr("Widgets"),
+      "fields": [],
+      "styles": ["Bar widgets"]
+    },
+    {
+      "label": I18n.tr("Behaviour"),
+      "fields": ["Behaviour"],
+      "styles": []
+    }
+  ]
+  readonly property var _tab: root.tabs[BarManager.panelTab] ?? root.tabs[0]
+  readonly property var _named: [].concat(...root.tabs.map(tab => tab.fields))
+  readonly property var fieldGroups: BarsConfig.fieldGroups.filter(group => root._tab.fields.includes(group.title) || (root._tab === root.tabs[0] && !root._named.includes(group.title)))
+  readonly property var styleGroups: BarsConfig.styleGroups.filter(group => root._tab.styles.includes(group.title))
+
+  // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
   // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Bar widgets")
   // I18n.tr("Bar accents") I18n.tr("Surface shadow")
   TitledCard {
     title: I18n.tr("Bar Editor")
     scrollKey: "BarEditor"
-    showActions: false
+    // Save and Discard here, above the bar list
+    dirty: BarManager.isDirty
+    onSave: BarManager.saveChanges()
+    onReset: BarManager.resetChanges()
 
     headerExtras: ColumnLayout {
       Layout.fillWidth: true
@@ -94,12 +127,20 @@ Item {
         text: I18n.tr("New bar")
         onClicked: BarManager.addBar()
       }
+
+      StyledTabBar {
+        visible: root.hasBar
+        Layout.fillWidth: true
+        tabs: root.tabs.map(tab => tab.label)
+        currentIndex: BarManager.panelTab
+        onTabClicked: index => BarManager.selectPanelTab(index)
+      }
     }
 
     // A ColumnLayout's Repeater re-runs its model on every draft edit:
     // `hasEntry` keeps the model the same while one is selected
     Repeater {
-      model: root.hasBar ? BarsConfig.fieldGroups : []
+      model: root.hasBar ? root.fieldGroups : []
 
       // Each group streamed in (StreamedLoader) as the page opens
       delegate: StreamedLoader {
@@ -113,11 +154,11 @@ Item {
           readonly property var modelData: groupLoader.modelData
           title: I18n.tr(group.modelData.title)
 
-          // The Style group carries the bar's look (BarManager.styleKeys:
-          // its Size, Style, Widgets, Accents and Shadow settings) to other bars
+          // The Surface group carries the bar's look (BarManager.styleKeys:
+          // its style and its Size and Surface settings) to other bars
           headerExtras: [
             SquareIconButton {
-              visible: group.modelData.title === "Style"
+              visible: group.modelData.title === "Surface"
               iconText: "format_paint"
               iconColor: root.copiedHere ? Theme.background : Theme.foreground
               backgroundColor: root.copiedHere ? Theme.accent : Theme.backgroundAlt
@@ -125,13 +166,13 @@ Item {
               onClicked: BarManager.copyStyle(BarManager.selectedBarIndex)
             },
             SquareIconButton {
-              visible: group.modelData.title === "Style" && root.copied && !root.copiedHere
+              visible: group.modelData.title === "Surface" && root.copied && !root.copiedHere
               iconText: "content_paste"
               tooltipText: I18n.tr("Paste the size and style of {0}", BarManager.barLabel(BarManager.copiedStyle?.index ?? 0))
               onClicked: BarManager.pasteStyle(BarManager.selectedBarIndex)
             },
             SquareIconButton {
-              visible: group.modelData.title === "Style" && root.copied
+              visible: group.modelData.title === "Surface" && root.copied
               iconText: "done_all"
               tooltipText: I18n.tr("Paste the size and style of {0} onto every bar", BarManager.barLabel(BarManager.copiedStyle?.index ?? 0))
               onClicked: BarManager.pasteStyleToAll()
@@ -146,13 +187,15 @@ Item {
             // The whole bar, so x-showIf sees keys from other groups, with
             // the look it takes from BarStyle where it doesn't override it
             values: BarsConfig.lookOf(root.bar ?? ({}))
+            changedAt: path => BarManager.barFieldChanged(path[0])
             onEdited: (path, value) => BarManager.updateBarField(path[0], value)
+            onDiscardAt: path => BarManager.discardBarField(path[0])
           }
 
-          // The thickness the size settings add up to
+          // How deep the size settings make the bar (its extent)
           StyledText {
-            visible: "widgetSize" in group.modelData.schema
-            text: I18n.tr("Bar thickness: {0} px", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps).extent))
+            visible: "thickness" in group.modelData.schema
+            text: I18n.tr("The bar is {0} px deep", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps).extent))
             textColor: Theme.foreground
             opacity: 0.7
             wrapMode: Text.WordWrap
@@ -165,7 +208,7 @@ Item {
     // The bar's style, by group: shared (Bars.style, on the settings
     // page's Look & Feel) until the bar takes its own
     Repeater {
-      model: root.hasBar ? BarsConfig.styleGroups : []
+      model: root.hasBar ? root.styleGroups : []
 
       delegate: StreamedLoader {
         id: styleLoader
@@ -209,7 +252,9 @@ Item {
               "color": styleGroup.look.shadowColor,
               "size": styleGroup.look.shadowSize
             } : styleGroup.look
+            changedAt: path => styleGroup.isShadow ? BarManager.styleFieldChanged("shadow", path[0]) : BarManager.styleFieldChanged(path[0])
             onEdited: (path, value) => styleGroup.isShadow ? BarManager.updateStyleField("shadow", value, path[0]) : BarManager.updateStyleField(path[0], value)
+            onDiscardAt: path => styleGroup.isShadow ? BarManager.discardStyleField("shadow", path[0]) : BarManager.discardStyleField(path[0])
           }
         }
       }

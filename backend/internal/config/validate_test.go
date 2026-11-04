@@ -30,7 +30,10 @@ func TestValidationErrors(t *testing.T) {
 			"nested": {"type": "object", "additionalProperties": false, "properties": {"on": {"type": "boolean", "default": true}}},
 			"widgets": {"type": "array", "default": [], "items": {"$ref": "#/definitions/Widget"}},
 			"free": {"type": "object", "additionalProperties": {"type": "integer"}},
-			"box": {"$ref": "#/definitions/Box", "default": {"items": ["a"]}}
+			"box": {"$ref": "#/definitions/Box", "default": {"items": ["a"]}},
+			"gap": {"type": "integer", "default": null, "minimum": 0, "x-auto": {"value": null, "start": 8}},
+			"pad": {"type": "integer", "default": -1, "minimum": -1, "x-auto": {"value": -1, "start": 8}},
+			"radius": {"type": "integer", "default": null, "minimum": 0, "x-inherit": "size"}
 		},
 		"definitions": {
 			"Widget": {"oneOf": [{"$ref": "#/definitions/Clock"}, {"$ref": "#/definitions/Label"}]},
@@ -57,6 +60,12 @@ func TestValidationErrors(t *testing.T) {
 		// A discriminated union reports why the matching option failed
 		{`{"widgets": [{"type": "Label"}]}`, []string{"widgets[0].text: required field missing"}},
 		{`{"widgets": [{"type": "Nope"}]}`, []string{"widgets[0]: value does not match any schema in oneOf"}},
+		// Null is an inheriting setting's, or an automatic one's whose
+		// automatic value it is (x-auto), and no other's
+		{`{"gap": null, "radius": null}`, nil},
+		{`{"gap": 12}`, nil},
+		{`{"gap": -1}`, []string{"gap: value -1 is less than minimum 0"}},
+		{`{"pad": null}`, []string{"pad: expected integer, got object"}},
 	} {
 		got := config.ValidationErrors(s, parse(t, tc.value), root)
 		if len(got) == 0 {

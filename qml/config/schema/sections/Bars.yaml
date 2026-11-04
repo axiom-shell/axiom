@@ -15,33 +15,6 @@ properties:
     x-settings: false
     default:
       - id: primary
-        location: top
-        widgetSize: 26
-        padding: 4
-        background: pills
-        lockCenter: true
-        style:
-          fontSize: null
-          widgetRadius: null
-          widgetStyle: null
-          tintOpacity: null
-          outlineWidth: null
-          lineWidth: null
-          lineSide: null
-          widgetShape: null
-          widgetGrouping: null
-          widgetEnds: null
-          groupColor: null
-          widgetTextColor: null
-          separatorStyle: null
-          separatorColor: null
-          separatorThickness: null
-          separatorGap: null
-          accentLine: null
-          accentLineColor: null
-          accentLineFade: null
-          accentLineWidth: null
-          shadow: {enabled: null, color: null, size: null}
         widgets:
           left:
             - id: button

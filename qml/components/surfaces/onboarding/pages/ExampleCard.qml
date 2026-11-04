@@ -15,7 +15,7 @@ StyledContainer {
   id: root
 
   // { name, title, description, theme, screenBorder, bars: [{ location,
-  // background }], docks: [{ edge }] }
+  // surface, floating }], docks: [{ edge }] }
   required property var example
 
   // Its theme's preview colors, or the running theme's for one not found
@@ -70,10 +70,10 @@ StyledContainer {
           id: bar
           required property var modelData
           readonly property string location: bar.modelData.location
-          readonly property string style: bar.modelData.background
+          readonly property string surface: bar.modelData.surface
           readonly property bool across: bar.location === "top" || bar.location === "bottom"
-          readonly property bool floats: bar.style === "floating" || bar.style === "floatingPills"
-          readonly property bool pills: bar.style === "pills" || bar.style === "floatingPills"
+          readonly property bool floats: bar.surface !== "none" && bar.modelData.floating
+          readonly property bool pills: bar.surface === "pills"
           readonly property real inset: bar.floats ? screen.gap : bar.pills ? screen.gap / 2 : 0
           // Its length along the edge
           readonly property real length: bar.across ? bar.width : bar.height
@@ -85,7 +85,7 @@ StyledContainer {
 
           Rectangle {
             anchors.fill: parent
-            visible: bar.style === "solid" || bar.style === "floating"
+            visible: bar.surface === "bar"
             radius: bar.floats ? Math.min(width, height) / 2 : 0
             color: Qt.alpha(root.foreground, 0.15)
           }
