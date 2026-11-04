@@ -626,14 +626,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the compositor system
 
 ### A sway bind using a variable from an include moves as a literal $name
-- **Where:** `backend/internal/compositor/binds/sway.go:256` (`extractSway`)
+- **Where:** `backend/internal/compositor/binds/sway.go:270` (`extractSway`)
 - **What:** `extractSway` knows only the `set` lines of user/'s own files and never follows an `include`, while the takeover keeps the adopted file's includes live. A config setting `$term`/`$menu` in an included file (`include /etc/sway/definitions` on Manjaro's sway) with `bindsym Mod4+Return exec $term` moves that bind as `{"action":"exec","argument":"$term"}` (reproduced); the line is commented out, axiom's module is read before user/ where `$term` isn't set, so sway leaves it literal and the user's terminal and launcher binds run nothing after a Merge. Extract with `--only` has the same gap for variables set in an earlier user/ file. Fix: collect the variables as sway reads them, following `include`s (`userconf.SwayText` already expands them), before reading each file's binds; failing that, keep a bind whose command still holds a `$name`, with a reason; a `TestSwayExtract` row.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the compositor system
 
 ### A niri spawn of one word with a space moves as a broken shell command
-- **Where:** `backend/internal/compositor/binds/niri.go:95` (`niriAction`)
-- **What:** niri's `spawn` runs its arguments without a shell; the merge makes them axiom's `exec`, which every niri writer emits as `spawn-sh` (`render/niri.go:314`). Several words are shell-quoted (`shellJoin`), one word is passed as is (`if len(words) == 1 { return commandAction(o, words[0]) }`): `Mod+T { spawn "/opt/My App/app"; }` moves as `exec "/opt/My App/app"` (reproduced) and runs `/opt/My` with an argument; any shell character in the word (`;`, `$`, `&`, `*`, quotes) changes meaning too, and the original bind is already commented out. Fix: always `shellJoin(words)`, keeping a leading `~/` outside the quotes; a `TestNiriExtract` row with a spaced path.
+- **Where:** `backend/internal/compositor/binds/niri.go:86` (`niriAction`)
+- **What:** niri's `spawn` runs its arguments without a shell; the merge makes them axiom's `exec`, which every niri writer emits as `spawn-sh` (`render/niri.go:314`). Several words are shell-quoted (`shellJoin`), one word is passed as is (`if len(words) == 1 { return execBind(words[0]) }`): `Mod+T { spawn "/opt/My App/app"; }` moves as `exec "/opt/My App/app"` (reproduced) and runs `/opt/My` with an argument; any shell character in the word (`;`, `$`, `&`, `*`, quotes) changes meaning too, and the original bind is already commented out. Fix: always `shellJoin(words)`, keeping a leading `~/` outside the quotes; a `TestNiriExtract` row with a spaced path.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
@@ -724,7 +724,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### A sway exec chained with ; or , moves in as one shell command
-- **Where:** `backend/internal/compositor/binds/sway.go:188` (`swayAction`)
+- **Where:** `backend/internal/compositor/binds/sway.go:207` (`swayAction`)
 - **What:** sway runs a bind's command as a list split at unquoted `;`/`,` (sway(5) › Command conventions). The `exec` branch (202) takes everything after `exec` as one argument (`execText(string([]rune(command)[4:]))`). A probe on `bindsym $mod+q exec notify-send bye; kill` moved it as `{"action":"exec","argument":"notify-send bye; kill"}`: the shell runs `kill` with no arguments, and the window no longer closes. `exec "foot", focus left` became an exec of `"foot", focus left`, so nothing starts. Both original lines were commented out. `TestSwayExecReadAsSwayRunsIt` covers only the quoted form, which sway keeps whole.
 
   Fix: before the `exec` branch, a stored command holding `;` or `,` outside quotes returns `raw` for sway, which keeps sway's behaviour. That is a small scan, plus a test row for each separator.
