@@ -22,6 +22,8 @@ Rectangle {
   required property var barConfig
   property var screen
   property var panel
+  // Any of it in view (BarPanel.onScreen; a container with no panel is)
+  readonly property bool _onScreen: root.panel?.onScreen ?? true
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real length: isVertical ? height : width
@@ -47,6 +49,12 @@ Rectangle {
   readonly property real islandEnd: root.length - root._islandInset(root.ends.end, false)
   // Fillet room each side of a pill, as for popouts (AttachedSurface)
   readonly property int pillConnector: Appearance.connectorGap
+  // A pill's fillets off the bar's outer edge and its far corners: at a
+  // high radius both don't fit across its depth (from the stroke it hangs
+  // off to its far stroke), so they scale down by the same ratio until
+  // they meet as one curve (SurfaceOutline.fitRadii). Joined ends keep
+  // the full radius.
+  readonly property var pillRadii: SurfaceOutline.fitRadii(root.barConfig.pillDepth - root.barConfig.stripCover - Appearance.borderWidth, Appearance.borderRadius, Math.max(0, Appearance.borderRadius - Appearance.borderWidth / 2))
   // Kept clear at each end. A solid or pill bar, part of the frame, has
   // its widgets the screen margin in (BarEnds.endInset): an end pill fills
   // the corner, joining the frame squarely as a solid bar does. An
@@ -61,7 +69,7 @@ Rectangle {
     if (end.held) {
       if (!root.pills)
         return end.over + Math.max(end.gap, root.barConfig.edgePadding);
-      const fillet = Appearance.screenBorder ? EdgeAttach.filletMargin(Appearance.borderWidth, Appearance.borderRadius) : 0;
+      const fillet = Appearance.screenBorder ? EdgeAttach.filletMargin(Appearance.borderWidth, root.pillRadii.fillet) : 0;
       return end.over + end.gap + fillet + root.barConfig.pillGap;
     }
     if (root.pills || root.barConfig.solid)
@@ -204,10 +212,11 @@ Rectangle {
   // the border leaves its stroke open under a translucent fill: a pill, a
   // popout merged into the bar or on a solid bar's inner edge. Null while
   // surfaces are solid, with the border off, on a bar the border's stroke
-  // isn't on (stacked inside another, BarEnds' offBorder), or until the
-  // bar's place on screen is known.
+  // isn't on (stacked inside another, BarEnds' offBorder), until the
+  // bar's place on screen is known, or once an auto-hiding bar has slid
+  // out of view (BarPanel.onScreen), the stroke whole again.
   function borderOpening(from, to) {
-    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from)
+    if (!Appearance.translucent || !Appearance.screenBorder || root.barConfig.offBorder || !root.blurOrigin || to <= from || !root._onScreen)
       return null;
     const at = root.isVertical ? root.blurOrigin.y : root.blurOrigin.x;
     return {
@@ -221,7 +230,7 @@ Rectangle {
   // this item, joined at its start or end): it covers the perpendicular
   // edge's stroke, from the bar's outer edge to its join's fillet
   function joinOpening(surface, atStart) {
-    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin)
+    if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
       return null;
     const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
     const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
@@ -241,7 +250,7 @@ Rectangle {
     if (end.kind !== kind)
       return null;
     const panel = ScreenEdgeManager.barOn(root.blurScreen, root.isVertical ? (atStart ? ScreenEdge.Top : ScreenEdge.Bottom) : (atStart ? ScreenEdge.Left : ScreenEdge.Right), end.barId);
-    return panel?.visible ? panel.container : null;
+    return panel?.present ? panel.container : null;
   }
   readonly property var solidStart: root.barAt(true, "solidBar")
   readonly property var solidEnd: root.barAt(false, "solidBar")
@@ -256,7 +265,7 @@ Rectangle {
   // this bar's near side, and that bar's shadow follows round it.
   function _solidJoinOf(surface, atStart, other) {
     const origin = other?.blurOrigin ?? null;
-    if (!origin || !root.blurOrigin)
+    if (!origin || !root.blurOrigin || !root._onScreen)
       return null;
     const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
     const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
@@ -725,8 +734,13 @@ Rectangle {
         // Depth reached from the stroke it hangs off (the window's outer
         // edge, or past the frame a pill bar on the border reaches back
         // over: stripCover); the surface's far half-gap is empty
-        readonly property real depthBox: Math.max(0, root.barConfig.pillDepth - root.barConfig.stripCover - connectorGap / 2)
-        boxStart: connectorGap / 2
+        // At a high radius the half gap is deeper than the pill: the box
+        // then starts at the pill's far side, never past it (which drew the
+        // far stroke deeper than pillDepth, where what stands on it and
+        // its openings take it to be)
+        readonly property real _reach: Math.max(0, root.barConfig.pillDepth - root.barConfig.stripCover)
+        readonly property real depthBox: pill._reach - pill.boxStart
+        boxStart: Math.min(connectorGap / 2, pill._reach)
 
         edge: root.barConfig.location
         active: true
@@ -741,9 +755,12 @@ Rectangle {
         straight: !Appearance.screenBorder
         straightJoinStart: root.ends.start.straight || (index === 0 && root._endReach.straightStart)
         straightJoinEnd: root.ends.end.straight || (index === root.pillShapes.length - 1 && root._endReach.straightEnd)
-        // Square where a popout runs flush into it
-        startCornerRadius: span.squareStart ? 0 : cornerRadius
-        endCornerRadius: span.squareEnd ? 0 : cornerRadius
+        // Its fillets off the outer edge and its far corners, scaled
+        // alike to meet across its depth (pillRadii); square where a
+        // popout runs flush into it
+        attachFilletRadius: root.pillRadii.fillet
+        startCornerRadius: span.squareStart ? 0 : root.pillRadii.corner
+        endCornerRadius: span.squareEnd ? 0 : root.pillRadii.corner
 
         Glide on startCornerRadius {}
         Glide on endCornerRadius {}
@@ -796,17 +813,12 @@ Rectangle {
           return [pill._farHole(start, end, false)].concat(joins);
         }))
         // The stroke, with its anti-aliased fringe a pixel either side, or
-        // (`inner`) that fringe's row inside the pill alone
+        // (`inner`) that fringe's row inside the pill alone, taken from the
+        // pill's own far stroke (`farV`, its centre line) as drawn
         function _farHole(start, end, inner) {
-          const row = Appearance.borderWidth + 2;
-          const foot = root.barConfig.pillDepth;
-          const far = root.isVertical ? root.width : root.height;
-          const near = root.barConfig.left || root.barConfig.top;
-          const from = near ? foot - row + 1 : far - foot - 1;
-          const across = inner ? (near ? from : from + row - 1) : from;
-          const depth = inner ? 1 : row;
-          const r = root.isVertical ? Qt.rect(across, start, depth, end - start) : Qt.rect(start, across, end - start, depth);
-          return Qt.rect(r.x - pill.x, r.y - pill.y, r.width, r.height);
+          const h = pill.half;
+          const along = root.isVertical ? pill.y : pill.x;
+          return pill._rectFrom(start - along, pill.farV - h - 1, end - start, inner ? 1 : 2 * h + 2);
         }
         // Under a `keepFill` opening the fill row the hole took inside the
         // pill is painted back while the pill fills itself (the surface
@@ -949,7 +961,7 @@ Rectangle {
         "length": 0
       }
       // Pills only round their inner side; islands both
-      readonly property real corner: root.islands || root.barConfig.accentLine === "inner" ? Appearance.borderRadius : 0
+      readonly property real corner: root.islands ? Appearance.borderRadius : root.barConfig.accentLine === "inner" ? root.pillRadii.corner : 0
 
       bar: root
       start: rect.start + (rect.joinStart ? 0 : corner)

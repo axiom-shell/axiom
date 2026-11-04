@@ -105,6 +105,13 @@ PanelWindow {
   }
   // How far it has slid out: its window's whole depth, shadow included
   readonly property real slide: (1 - root._shown) * root.thickness
+  // Mapped and not hiding: what surfaces on its edge stand on (a dock's
+  // or a popout's attach point) and what a bar beside it merges into.
+  // Hidden, they take it as absent: the frame, or the bar outside it.
+  readonly property bool present: root.visible && root.revealed
+  // Mapped with any of it still in view (sliding in or out): the border's
+  // stroke stays open under it until it has gone
+  readonly property bool onScreen: root.visible && root._shown > 0
 
   // A window over its slot, or a fullscreen one on its screen
   // (whenCovered). Fullscreen, it stays on its layer under that window:

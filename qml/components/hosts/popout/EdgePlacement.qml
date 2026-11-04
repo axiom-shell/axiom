@@ -39,7 +39,8 @@ QtObject {
   // included), or past the connected bars inside it the innermost of them,
   // which it grows out of as an edge popout would (BarEnds.connectedFrom,
   // `attachId`); else the bar on its edge other than a solid one, while it
-  // shows (a bar inside the border hides under fullscreen windows)
+  // shows (a bar inside the border hides under fullscreen windows; an
+  // auto-hiding one counts while revealed, BarPanel.present)
   property var followPanel: undefined
   readonly property var barPanel: {
     if (root.held)
@@ -47,14 +48,14 @@ QtObject {
     if (root.followPanel !== undefined)
       return root._attachPanel;
     const panel = ScreenEdgeManager.barOn(root.screen?.name ?? "", root.edge);
-    return panel?.visible && !panel.barConfig.solid ? panel : null;
+    return panel?.present && !panel.barConfig.solid ? panel : null;
   }
   readonly property var _attachPanel: {
     const own = root.followPanel?.barConfig;
     if (!own || !own.attachId || own.attachId === own.id)
       return root.followPanel;
     const panel = ScreenEdgeManager.barOn(root.screen?.name ?? "", root.edge, own.attachId);
-    return panel?.visible ? panel : root.followPanel;
+    return panel?.present ? panel : root.followPanel;
   }
   // How much further from the screen edge the followed bar's outer edge
   // lies than the host's own bar's (a bar popout grown out of a connected

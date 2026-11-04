@@ -55,7 +55,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 - an `AttachedSurface` growing out of the border's or a solid bar's stroke (`edgeMargin` from `attachAt`);
 - straight off a bare edge;
 - joining a perpendicular stroke at an end;
-- standing on, or merged around, a pill bar's pills, or between them over the bar where it fits (`between`);
+- standing on, or merged around, a pill bar's pills, or between them over the bar where it fits (`between`); an auto-hiding bar counts only while revealed (`BarPanel.present`): hidden, the dock stands on the frame, and moves out onto the bar when it reveals;
 - out of a floating bar's island, stretching the island while it shows;
 - a detached box past a transparent bar.
 
