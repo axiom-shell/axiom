@@ -177,10 +177,11 @@ Singleton {
   // floating at `floatAt` (global). niri moves the focused column, so the
   // window leaves a column it shares and is focused first; focusing it
   // shows its workspace, so a workspace that wasn't showing is put back
-  // after. `restore` (the cursor) goes unused.
+  // after, with the focus where it was. `restore` (the cursor) goes unused.
   function placeWindow(id, workspaceId, targetId, side, restore, reinsert, floatAt) {
     const win = Number(id);
     const focused = root.activeWindowId;
+    const output = root.focusedOutput;
     if (!reinsert)
       root._action({
         "MoveWindowToWorkspace": {
@@ -248,6 +249,8 @@ Singleton {
       });
       if (focused !== "" && focused !== String(id))
         root.activateWindow(focused);
+      else if (output !== "")
+        root.focusOutput(output);
     }
   }
 
