@@ -33,10 +33,12 @@ Popup {
   property bool savedFolded: false
 
   function choose(id) {
+    // A half-typed name stays only while the same preset is re-chosen
+    const keepName = id === root.presetId && nameField.input.activeFocus;
     root.presetId = id;
     root.plan = KeybindManager.editor.presetPlan(id);
     root.chosen = root.plan.filter(step => step.chosen).map(step => step.id);
-    if (!nameField.input.activeFocus)
+    if (!keepName)
       nameField.input.text = root.preset?.saved ? root.preset.title : "";
   }
 
