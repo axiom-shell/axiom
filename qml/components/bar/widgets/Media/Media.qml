@@ -32,8 +32,9 @@ ValueStyleWidget {
   accentColor: Theme.resolveColor(MediaManager.isPlaying ? root.properties.playingColor : root.properties.pausedColor)
 
   // News: the track changed while playing (a player appearing, its first
-  // track, isn't)
-  property string _lastTitle: MediaManager.trackTitle
+  // track, isn't). Set once at start and by the handler only: as a
+  // binding it could take the new title before the handler reads it
+  property string _lastTitle: ""
   Connections {
     target: MediaManager
     function onTrackTitleChanged() {
@@ -43,7 +44,10 @@ ValueStyleWidget {
     }
   }
 
-  Component.onCompleted: MediaManager.acquire(root)
+  Component.onCompleted: {
+    root._lastTitle = MediaManager.trackTitle;
+    MediaManager.acquire(root);
+  }
   Component.onDestruction: MediaManager.release(root)
 
   PopoutAnchor {

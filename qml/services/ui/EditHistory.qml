@@ -74,11 +74,6 @@ QtObject {
     root.restore(snap);
   }
 
-  // Ends the coalescing of field edits: the next record() is a new step
-  function breakJoin() {
-    root._lastKey = "";
-  }
-
   function clear() {
     root._undo = [];
     root._redo = [];
