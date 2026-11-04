@@ -200,7 +200,8 @@ func resolveHex(in Inputs) render.Func {
 }
 
 func startOf(in Inputs) *jsonx.Object {
-	return jsonx.Obj("command", startCommand(in), "idle", in.flag("idle"), "polkit", in.flag("polkit"))
+	return jsonx.Obj("command", startCommand(in), "idle", in.flag("idle"), "polkit", in.flag("polkit"),
+		"inputMethod", render.InputMethodCommand(in.get("inputMethod")))
 }
 
 // startCommand starts axiom: a second `axiom run` on the display exits at
@@ -210,5 +211,5 @@ func startCommand(in Inputs) string {
 }
 
 func sessionEnv(in Inputs, spec any) any {
-	return render.SessionEnv(in.get("session"), getAny(getAny(spec, "input"), "cursor"), jsonx.Obj("qt", in.flag("qt")))
+	return render.SessionEnv(in.get("session"), getAny(getAny(spec, "input"), "cursor"), jsonx.Obj("qt", in.flag("qt"), "inputMethod", in.get("inputMethod")))
 }
