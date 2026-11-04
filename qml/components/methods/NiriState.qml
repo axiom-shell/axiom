@@ -368,9 +368,10 @@ QtObject {
   }
 
   // The keyboard's layouts (KeyboardLayouts.shape), or null before niri
-  // said. `codes`: the configured xkb layouts ("us,de")
-  function keyboard(state, codes) {
+  // said. `codes`: the configured xkb layouts ("us,de"); `registry`: the
+  // xkb registry, or null
+  function keyboard(state, codes, registry) {
     const names = state.keyboard?.names ?? [];
-    return names.length > 0 ? KeyboardLayouts.shape(names, state.keyboard.current_idx, codes) : null;
+    return names.length > 0 ? KeyboardLayouts.shape(names, state.keyboard.current_idx, codes, registry) : null;
   }
 }

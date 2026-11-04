@@ -310,7 +310,16 @@ TestCase {
       "index": 1,
       "keymap": "German"
     });
-    compare(SwayState.keyboard(two, "us").layouts, ["us", "ge"]);
+    compare(SwayState.keyboard(two, "us").layouts, ["us", "ge"], "no registry: guessed");
+    compare(SwayState.keyboard(two, "us", {
+      "layouts": [
+        {
+          "name": "de",
+          "description": "German",
+          "variants": []
+        }
+      ]
+    }).layouts, ["us", "de"], "named through the registry");
     compare(SwayState.keyboard([], "us"), null);
   }
 

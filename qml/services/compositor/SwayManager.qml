@@ -345,11 +345,11 @@ Singleton {
   // --- Session and input ---
 
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
-  // SwayState.keyboard), or null
-  function withKeyboard(callback) {
+  // SwayState.keyboard), or null; `registry` names them
+  function withKeyboard(callback, registry) {
     const input = InputConfig.input;
     const codes = input.keyboard.enabled ? InputSources.xkb(InputConfig.sources).layout : root._configLayouts;
-    SwayIpcManager.json("get_inputs", inputs => callback(Array.isArray(inputs) ? SwayState.keyboard(inputs, codes) : null));
+    SwayIpcManager.json("get_inputs", inputs => callback(Array.isArray(inputs) ? SwayState.keyboard(inputs, codes, registry) : null));
   }
 
   // Switches every keyboard to its "next" or "prev" layout, then calls back

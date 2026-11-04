@@ -40,7 +40,7 @@ Outputs and workspaces come live from Quickshell's `I3` module (as Hyprland's do
 - **outputs** (`SwayState.output`): `I3.monitors` that are enabled (`get_outputs` lists disabled ones too, `active: false`); `activeWorkspaceId` as a window's `workspaceId`; `description` = `make model serial` (the parts that aren't `Unknown`), which is sway's own identifier for an output only when no part is `Unknown` (`output_get_identifier` keeps it), so axiom names an output to sway by its connector (`render.SwayConnectorRules`); `reserved` = the output's rect minus its active workspace's (from the tree); `specialWorkspaceId` always 0.
 - **workspaces** (`SwayState.workspace`): `I3.workspaces` with a number; `windowCount` from the tree.
 - **gapsOut**: sway's IPC has no gaps. Read from its config with its includes (`axiom compositor sway-text`, `SwayState.configInfo`: `get_config` holds only the main file): outer plus inner per edge, as sway leaves both at the screen edge; read again on every reload.
-- **Keyboard**: `get_inputs`, the first keyboard named like one. Sway names layouts in full ("English (US)"): their short names come from `Input.sources` (`InputSources.xkb`) when axiom sets the keyboard, else the config's `xkb_layout`, else from the name (`SwayState.keyboard`).
+- **Keyboard**: `get_inputs`, the first keyboard named like one. Sway names layouts in full ("English (US)"): their short names come from `Input.sources` (`InputSources.xkb`) when axiom sets the keyboard, else the config's `xkb_layout`, else from the name through the xkb registry (`SwayState.keyboard`, `KeyboardLayouts.code`).
 
 ### Primitives
 - `activateWindow` / `closeWindow`: `[con_id=N] focus` / `kill`.

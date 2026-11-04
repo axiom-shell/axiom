@@ -53,6 +53,7 @@ var tiers = map[string]int{
 	"internal/hookup":               tierPure,
 	"internal/greeterinstall/rules": tierPure,
 	"internal/release":              tierPure,
+	"internal/xkb":                  tierPure,
 	"internal/assets":               tierEdge,
 	"internal/brightness":           tierEdge,
 	"internal/buginfo":              tierEdge,

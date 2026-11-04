@@ -336,8 +336,9 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // shapes that don't depend on it (HyprState) ---
 
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
-  // HyprState.keyboard), or null
-  function withKeyboard(callback) {
+  // HyprState.keyboard), or null. Hyprland reports the codes itself, so
+  // `registry` goes unused
+  function withKeyboard(callback, registry) {
     root._json("devices", devices => callback(HyprState.keyboard(devices)));
   }
 

@@ -233,11 +233,11 @@ QtObject {
 
   // The main keyboard's layouts from a get_inputs reply
   // (KeyboardLayouts.shape), or null with no keyboard. `codes`: the
-  // configured xkb_layout ("us,de").
-  function keyboard(inputs, codes) {
+  // configured xkb_layout ("us,de"); `registry`: the xkb registry, or null.
+  function keyboard(inputs, codes, registry) {
     const keyboards = (inputs ?? []).filter(input => input.type === "keyboard" && (input.xkb_layout_names ?? []).length > 0);
     const main = keyboards.find(k => /keyboard/i.test(k.name ?? "")) ?? keyboards[0];
-    return main ? KeyboardLayouts.shape(main.xkb_layout_names, main.xkb_active_layout_index ?? 0, codes) : null;
+    return main ? KeyboardLayouts.shape(main.xkb_layout_names, main.xkb_active_layout_index ?? 0, codes, registry) : null;
   }
 
   // What a sway config's text (get_config) sets that axiom follows: { gaps:

@@ -322,10 +322,11 @@ Singleton {
   }
 
   // Calls back with the main keyboard's layouts ({ layouts, index,
-  // keymap }), or null
-  function withKeyboard(callback) {
+  // keymap }), or null. `registry` (the xkb registry, input.layouts) gives
+  // the codes of layouts a backend knows only by full name (niri, sway)
+  function withKeyboard(callback, registry) {
     if (root.backend)
-      root.backend.withKeyboard(callback);
+      root.backend.withKeyboard(callback, registry ?? null);
     else
       callback(null);
   }
