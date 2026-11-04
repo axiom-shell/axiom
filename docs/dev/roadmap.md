@@ -396,6 +396,7 @@ Found by the audits:
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [SystemStats' used memory clips on a vertical bar](issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
+- [The bar editor's "No room on … for" line runs past a narrow board](issues.md#the-bar-editors-no-room-on--for-line-runs-past-a-narrow-board)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [SystemStats works out ValueStyleWidget's style fallbacks again](issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)
 - [The workspace switchers find a workspace by id with hand-written loops](issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)
