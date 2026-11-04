@@ -18,8 +18,8 @@ x-compositor: 'how a compositor config writer writes it, per compositor: `hyprla
 x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`; see schema-annotations.md › Fields).
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
-x-emptyLabel: offers or renames the empty value under that label.
 x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): only it takes a layout `minSize` and `maxSize`.'
+x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
 x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
 x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
@@ -45,7 +45,7 @@ x-multiline: a growing text area.
 x-needs: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).
 x-options: a dynamic option list.
 x-order: the keys shown first, in order.
-x-priority: a bar widget type's own priority, kept while the bar is crowded longer than the default 0 (`BarsConfig.defaultPriority`), which its `layout.priority` overrides.
+x-priority: a bar widget type's own priority when its bar is crowded (higher stays longer; default 0), which its `layout.priority` overrides (`BarsConfig.defaultPriority`).
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
 x-scope: what a snapshot, example, import or export carries.

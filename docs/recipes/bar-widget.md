@@ -56,6 +56,7 @@ settings:
 - A widget with a value, a time or a long text picks the `appearance` part and names the display styles it draws (`appearance: {variant: value, style: {enum: [label, icon, ring, …]}}`), and extends `ValueStyleWidget` (`ratio`, `subtext`, `labelShown` in place of `showText`): [Display styles](../dev/bar/display-styles.md).
 - `WidgetColor` is the Auto color field (`default: ''`, `x-emptyLabel: Auto`, `x-autoColor: accent`, shown unless the bar's style is plain); override its title and role.
 - A section of the type's own name (`Battery`) is linked from the inspector automatically (`x-link`), unless the type says `link`.
+- `label` is one short name, the same in the library, on the board and in the inspector; other words it should be found by go in `keywords` (`x-keywords`). `priority: N` keeps it longer than the default 0 when the bar is crowded (`x-priority`). A widget that shrinks when crowded (its QML's `sizePolicy: "elastic"`) says `elastic: true` (`x-elastic`), which gives it the layout's minimum and maximum: [schema-annotations › Types](../dev/core/schema-annotations.md#types-bar-widgets-overlay-modules-views-custom-widget-elements).
 
 ## Steps
 1. Write `schema.yaml` first. Pick `group` from the root's `x-libraryGroups` (`Desktop`, `Time & weather`, `Media & audio`, `Network & devices`, `System`, `Tools`, `Look & layout`, `Session`).
