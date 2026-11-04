@@ -323,6 +323,23 @@ TestCase {
     ], "", 10, profiles), {
       "DP-2": 11
     }, "a monitor with no description yet keeps its block by the connector it was last seen on");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-2",
+        "description": ""
+      }
+    ], "", 10, profiles.concat([
+      {
+        "outputs": [
+          {
+            "output": "DP-2",
+            "label": "DP-2"
+          }
+        ]
+      }
+    ])), {
+      "DP-2": 31
+    }, "a rule naming the connector itself comes before one last seen on it");
   }
 
   function test_outputToward() {

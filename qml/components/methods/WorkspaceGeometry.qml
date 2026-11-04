@@ -240,9 +240,9 @@ QtObject {
   // owns a block of `size` ids. Blocks are numbered over every monitor the
   // monitor profiles name (by their rules' `output`; the primary first,
   // matched by connector or by the rule's `label` while unplugged or its
-  // description is unknown), then the
-  // connected ones none names (keyed by MonitorLayout.outputId), each part
-  // in orderMonitors' order, so a block never moves with what's connected.
+  // description is unknown), then the connected ones none names (keyed by
+  // MonitorLayout.outputId), each part in orderMonitors' order, so a block
+  // never moves with what's connected.
   // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
   // label }] }] (MonitorsConfig.profiles)
   function blockBases(outputs, primaryName, size, profiles) {
@@ -261,8 +261,9 @@ QtObject {
     const unknown = [];
     for (const o of list) {
       // An output whose description is still to come (Hyprland's, at the
-      // start) matches by the connector a rule last saw it on
-      const k = known.find(k => !k.connected && (MonitorLayout.matches(k.key, o) || (!o.description && k.name === o.name)));
+      // start) matches by the connector a rule last saw it on, after any
+      // rule naming that connector itself
+      const k = known.find(k => !k.connected && MonitorLayout.matches(k.key, o)) ?? (o.description ? undefined : known.find(k => !k.connected && k.name === o.name));
       if (k) {
         k.connected = o.name;
         k.name = o.name;
