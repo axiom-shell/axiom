@@ -390,7 +390,6 @@ Found by the audits:
 - [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
-- [MediaManager builds its start times with Object.fromEntries, which the JS engine lacks](issues.md#mediamanager-builds-its-start-times-with-objectfromentries-which-the-js-engine-lacks)
 - [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
 - [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)

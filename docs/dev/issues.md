@@ -785,12 +785,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### MediaManager builds its start times with Object.fromEntries, which the JS engine lacks
-- **Where:** `qml/services/system/MediaManager.qml` (`_startedAt`)
-- **What:** the shell's JS engine has no `Object.fromEntries` (`qml/components/methods/AGENTS.md` lists it among the gaps), so every load logs `TypeError: Property 'fromEntries' of object function Object() { [native code] } is not a function` and `_startedAt` is never set. Build it with `reduce`.
-- **Size:** trivial
-- **Found:** 2026-11-04, while rewriting the bar's schema
-
 ### Media squeezed to its minimum in the fill style shows the meter, not its icon
 - **Where:** `qml/components/bar/widgets/Media/Media.qml:20` (`minimumSize`), `qml/components/bar/widgets/base/IconTextWidget.qml:46` (`_leadRoom`), `qml/components/bar/widgets/base/IconTextWidget.qml:54` (`_iconStart`)
 - **What:** Media is elastic, with `minimumSize: root.iconLength + root.padding * 2`. Its header says it shrinks "down to just the icon when the bar is crowded", and a crowded section or a `layout.size` cap squeezes it to that minimum. Its schema offers `fill`. In that style the meter is a lead graphic *before* the icon (`ValueGraphic.afterIcon` is only ticker/stacked). `leadSlot` sits at x 0 with its full `leadLength` (`fontSize * 4`, 56 px at the defaults), and the icon is drawn at `_iconStart = _leadRoom`, past the room the minimum leaves. The widget clips to its box (BaseWidget `clip: true`), so a squeezed Media in fill style shows about 20 px of the progress meter and no icon. Ticker and stacked draw after the icon and are fine. Fix: count the lead in the minimum, `minimumSize: root.iconLength + (root.leadAfterIcon ? 0 : root.leadLength + root.spacing) + root.padding * 2` (or expose `_leadRoom` as `leadRoom`).
