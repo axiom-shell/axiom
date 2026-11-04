@@ -59,6 +59,8 @@ Item {
   // and the least it can be squeezed to without hiding anything more
   readonly property real preferredLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root.spacing, root._fills)
   readonly property real minimumLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.min : 0), root.spacing, root._fills)
+  // ...and with none hidden for want of room (for the bar editor)
+  readonly property real wantedLength: BarLayout.span(root.measures.map(m => m.pref), root.spacing, root._fills)
 
   readonly property var allocation: BarLayout.allocate(root.measures, root._shown, root.maxExtent, root.spacing)
   readonly property real usedLength: BarLayout.span(root.allocation.sizes, root.spacing, root._fills)

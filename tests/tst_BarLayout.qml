@@ -151,6 +151,15 @@ TestCase {
     compare(squeezed[2].offset + squeezed[2].extent, 500);
   }
 
+  function test_sectionRooms() {
+    // Unlocked: what the others and the gaps leave, 1000 less 10 each end
+    compare(BarLayout.sectionRooms([100, 200, 100], 1000, 10, 5, false), [980 - 300 - 10, 980 - 200 - 10, 980 - 300 - 10]);
+    // An empty side takes no gap from the others
+    compare(BarLayout.sectionRooms([100, 200, 0], 1000, 10, 5, false), [980 - 200 - 5, 980 - 100 - 5, 980 - 300 - 10]);
+    // Locked: a side gets its half beside the centered center
+    compare(BarLayout.sectionRooms([100, 200, 100], 1000, 10, 5, true), [400 - 10 - 5, 980, 1000 - 10 - 600 - 5]);
+  }
+
   function test_edgeHang() {
     // Dividers at each end, with the spacing on their inner side
     compare(BarLayout.edgeHang([10, 50, 8, 12], [true, false, true, true], 4), {

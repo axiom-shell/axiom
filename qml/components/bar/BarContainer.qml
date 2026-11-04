@@ -328,17 +328,29 @@ Rectangle {
   }
 
   // While the bar editor is on screen, what it shows of this bar (see
-  // BarManager.live): the widgets hidden for want of room, by section, and
-  // how the selected widget is sized
+  // BarManager.live): the widgets hidden for want of room, by section;
+  // how the selected widget is sized; and per section (`sections`, by
+  // name) how long its widgets want to be, none hidden (`used`), and the
+  // most room it could have, the others as they are (`room`,
+  // BarLayout.sectionRooms; a fit bar's as unlocked)
   readonly property var editorReport: BarManager.editing ? {
     "source": root.barConfig.sourceId,
     "screen": root.screen?.name ?? "",
     "hidden": root._groups.reduce((out, g) => Utils.withEntry(out, g.zone, g.crowdedOut), {}),
-    "selected": root._groups.map(g => g.selectedMeasure).find(m => m !== null) ?? null
+    "selected": root._groups.map(g => g.selectedMeasure).find(m => m !== null) ?? null,
+    "sections": root._groups.reduce((out, g, s) => Utils.withEntry(out, g.zone, {
+        "used": Math.round(g.wantedLength),
+        "room": Math.round(root._sectionRooms[s])
+      }), {})
   } : null
+  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root.barConfig.widgetGap, root._lockCenter, centerGroup.layoutHang)
   property string _reportedId: ""
   readonly property string _reportKey: JSON.stringify(root.editorReport)
   on_ReportKeyChanged: root._report()
+  // A bar made while the editor is open starts with its report: a change
+  // handler never sees a first value
+  Component.onCompleted: if (root.editorReport)
+    root._report()
   Component.onDestruction: BarManager.clearLive(root._reportedId, root.screen?.name ?? "")
 
   function _report() {

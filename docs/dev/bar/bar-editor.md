@@ -48,11 +48,13 @@ The BarEditor overlay page: the bar list and field groups, the sections board an
 - They are active while a BarEditor page is visible (`BarManager.watch(page)`/`unwatch`, a `ConsumerRegistry`: `editing`).
 - The running bars outline the selected widget (`BarManager.isSelectedWidget(source, zone, index)` → `BarWidgetHost.highlighted`).
 - They outline the widget hovered on the board the same way (`BarManager.hoveredWidget`, `isHoveredWidget` → `BarWidgetHost.hoverHighlighted`), and report the one under the pointer back (`BarWidgetHost.pointerHovered` → `WidgetGroup` → `BarManager.setBarHover`, read as `barHover` / `isBarHovered(zone, index)`), so its chip looks hovered.
-- Each `BarContainer` reports `editorReport` to `BarManager.live` (`setLive(id, report)`, and `clearLive(id, screen)` on destruction). A report holds:
+- Each `BarContainer` reports `editorReport` to `BarManager.live` (`setLive(id, report)` when it changes and once it's made, so a bar made while the editor is open reports too; `clearLive(id, screen)` on destruction). A report holds:
   - `source`: the config id.
   - `screen`.
   - `hidden`: per section, the config indices `WidgetGroup.crowdedOut` hides for want of room.
   - `selected`: the highlighted host's `measure`, i.e. `policy`, `size`, `preferred`, `minimum`, `priority`.
+  - `sections`: per section name, `{ used, room }`: how long its widgets want to be with none hidden (`WidgetGroup.wantedLength`), and the most room it could have, the other sections as they are (`BarLayout.sectionRooms`: with `lockCenter` a side's half beside the center).
+- **Live widgets in the editor** (`BarWidgetHost.preview`): a host with `preview: true` opens no menu popout; under an `Item { enabled: false }` it takes no input, with a `barConfig` from `BarsConfig.enrichBarConfig` (its `ends` stubbed) and `panel: null`.
 - `BarManager.liveReports()` gives the selected bar's reports, one per screen. They feed:
   - the board's fit line ("Fits DP-1", or what has no room where)
   - the chips' crowded badge

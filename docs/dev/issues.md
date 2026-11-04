@@ -762,18 +762,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### A bar made while the bar editor is open may never report to it
-- **Where:** `qml/components/bar/BarContainer.qml:346` (`on_ReportKeyChanged`), `qml/components/bar/BarContainer.qml:349` (`_report`)
-- **What:** A bar's report reaches `BarManager.setLive` only from `on_ReportKeyChanged`, and a change handler doesn't run for a property's first value.
-  - Bars that exist when the editor opens are fine: their key goes from `"null"` to the report.
-  - A BarContainer created while `BarManager.editing` is already true starts with its report. On a bar with room, `hidden` stays `{zone: []}` and `selected` stays null, so the key may never change and nothing is sent.
-  - The editor remakes bars often: changing a bar's Background, or moving it to the other axis, changes `BarsConfig.layerNamespace`, which `qml/shell/Bar.qml:25` keys the window on. Adding a bar makes a new one.
-  - The old container's `Component.onDestruction` clears the id, so `BarManager.liveReports` drops that bar. The board's "Fits …" line goes blank, and the lanes and inspector lose their crowded marks and sizing text.
-
-  PLAUSIBLE: whether the first value already has `root.screen` depends on binding order. To settle it, open the bar editor, switch a bar's Background, and check that the fit line stays. Fix: `Component.onCompleted: root._report()`. `setLive` ignores an unchanged report and an empty id.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### Plugging in or unplugging a monitor remakes the bar that stays
 - **Where:** `qml/config/BarsConfig.qml:409` (`expandBars`), `qml/shell/Bar.qml:25`
 - **What:** The id depends on how many of the bar's screens are connected.

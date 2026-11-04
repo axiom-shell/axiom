@@ -44,6 +44,10 @@ Item {
   property bool hoverHighlighted: false
   // The pointer is over it (its hit area), for the bar editor's chips
   readonly property bool pointerHovered: hitArea.hovered
+  // A live copy of a widget in the bar editor (its chips): opens no menu
+  // popout. Its host puts it under an `enabled: false` item, so it takes
+  // no input either; `panel` may be null (no bar window).
+  property bool preview: false
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -217,7 +221,7 @@ Item {
   PopoutAnchor {
     hitArea: root._hitArea
     menu: EdgeMenusConfig.popoutMenuOf(root.properties)
-    active: menu !== ""
+    active: menu !== "" && !root.preview
   }
   onComponentPathChanged: _load()
 

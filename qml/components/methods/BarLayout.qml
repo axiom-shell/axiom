@@ -206,6 +206,25 @@ QtObject {
     });
   }
 
+  // The most room each section (left, center, right) could have along a
+  // bar, the others at their preferred lengths (`pref`), as layoutSections
+  // would give it (for the bar editor's fit meter): with `lockCenter`, a
+  // side its half beside the full-size center (`centerHang` left out of
+  // what's centered), the center the whole bar; otherwise what the
+  // others and the gaps leave.
+  function sectionRooms(pref, length, margin, gap, lockCenter, centerHang) {
+    const [m0, m1] = root._margins(margin);
+    const room = Math.max(0, length - m0 - m1);
+    if (lockCenter) {
+      const c = Math.min(pref[1], room);
+      const start = root._centerStart(c, length, m0, length - m1 - c, centerHang);
+      return [Math.max(0, start - m0 - gap), room, Math.max(0, length - m1 - start - c - gap)];
+    }
+    const others = i => pref.reduce((sum, p, j) => sum + (j === i ? 0 : p), 0);
+    const gaps = i => gap * [0, 2].filter(s => s === i || pref[s] > 0).length;
+    return [0, 1, 2].map(i => Math.max(0, room - others(i) - gaps(i)));
+  }
+
   // measures: per section (left, center, right), [{pref, min, priority,
   // divides, fill}]. Returns, per section, the widget indices to hide so
   // that every section's minimum length, plus margins and gaps as in
