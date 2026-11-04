@@ -13,8 +13,8 @@ import qs.services.compositor
 // The docks' shared state and actions (the docks themselves are
 // shell/Dock): which apps a dock shows on a screen (its pinned ones, then
 // running ones, windows grouped by desktop entry), what a click does
-// (launch, focus, cycle), pinning (written to Dock.docks at once), whether
-// a window covers a dock (intellihide), and the `dock` IPC target.
+// (launch, focus, cycle), pinning (written to Dock.docks at once),
+// and the `dock` IPC target.
 QtObject {
   id: root
 
@@ -197,28 +197,6 @@ QtObject {
     function onConfigReloaded() {
       root.refreshSoon();
     }
-  }
-
-  // Whether a window on the screen's active workspace covers `rect`
-  // (screen-local), where it is or (supports.windowCover) where it surely
-  // is. Never where the compositor doesn't say where windows are: the dock
-  // then stays shown rather than hiding behind nothing
-  function obscured(screen, rect) {
-    if (CompositorManager.supports.windowGeometry !== true && CompositorManager.supports.windowCover !== true)
-      return false;
-    const output = CompositorManager.outputFor(screen);
-    const workspaceId = output?.activeWorkspaceId ?? -1;
-    if (workspaceId === -1)
-      return false;
-    // An open special workspace sits over the regular one
-    const specialId = output.specialWorkspaceId;
-    const windows = CompositorManager.windows.filter(w => !w.hidden && (w.workspaceId === workspaceId || (specialId !== 0 && w.workspaceId === specialId)));
-    return DockLayout.covered({
-      "x": rect.x + screen.x,
-      "y": rect.y + screen.y,
-      "width": rect.width,
-      "height": rect.height
-    }, windows);
   }
 
   function _ids(id) {

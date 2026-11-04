@@ -263,6 +263,28 @@ Singleton {
     return ids.length > 0 && root.windows.some(w => ids.includes(w.workspaceId) && w.fullscreen);
   }
 
+  // Whether a window on the screen's active workspace (or the special
+  // workspace open over it) covers `rect` (screen-local), where it is or
+  // (supports.windowCover) where it surely is. Never where the compositor
+  // doesn't say where windows are: what asks (an intellihide dock, an
+  // auto-hiding bar) then stays shown rather than hiding behind nothing
+  function windowsCover(screen, rect) {
+    if (root.supports.windowGeometry !== true && root.supports.windowCover !== true)
+      return false;
+    const output = root.outputFor(screen);
+    const workspaceId = output?.activeWorkspaceId ?? -1;
+    if (workspaceId === -1)
+      return false;
+    const specialId = output.specialWorkspaceId;
+    const windows = root.windows.filter(w => !w.hidden && (w.workspaceId === workspaceId || (specialId !== 0 && w.workspaceId === specialId)));
+    return DockLayout.covered({
+      "x": rect.x + screen.x,
+      "y": rect.y + screen.y,
+      "width": rect.width,
+      "height": rect.height
+    }, windows);
+  }
+
   // The largest window on a workspace (its icon stands for the workspace),
   // or null
   function biggestWindowForWorkspace(workspaceId) {
