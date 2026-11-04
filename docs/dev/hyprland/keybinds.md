@@ -35,7 +35,7 @@ What a bind can do, and how the Keybinds page lists the compositor's binds and e
 
 ### What the page lists
 - Streamed in as the page opens (`StreamedLoader`, [streamed building](../core/streamed-building.md)): the header's filter chips, each bind section (keyed by count, `KeybindFilter.columns`), and the presets popup (`PresetSheet`, a `Popup` in a loader covering the list). The sections and the list's chips, the editor's chips, the keyboard reference and the editing inspector (the bind or the key map) are built only in their modes (`wanted`). `KeybindManager.editor.ensureLoaded()` keeps a draft that's current (`ConfigDraft.loadIfStale`).
-- Every bind the compositor reports (`CompositorManager.withBinds`, needs `bindMerge`), grouped by "Section: Label" descriptions.
+- Every bind the compositor reports (`CompositorManager.withBinds`, needs `bindMerge`), grouped by "Section: Label" descriptions. The reference, the labels (`bindLabel`) and the editor's sections all split one through `BindActions.splitDescription` (trimmed; a colon before the section names none, as `hasOwnSection` reads it).
 - Axiom's own `Keybinds.binds` are edited in a `ConfigDraft` and saved with `save()`. Every bind needs an `id` unique in the list (the schema's `ItemId`), but added, duplicated, merged and preset binds come without one or with a copy of another's: `save()` and `savePreset` run them through `BindKeys.withIds` first, which keeps a valid id not taken earlier and names the rest from the key (`super-y`, `super-y-2`), as the config conversion does.
 - Per-bind `issues`:
   - no key, a bad modifier, a missing argument, a duplicate

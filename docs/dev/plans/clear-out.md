@@ -403,9 +403,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A workspace slide throws when animations go off between its legs
   - Direct Hyprland dispatches can overtake queued Lua
   - Recording two keys within 30 s can end the second recording early on Hyprland
-  - [Two keybind reference paths drop a key's binds](../issues.md#two-keybind-reference-paths-drop-a-keys-binds)
-  - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold) (its _bindMods part, left by compositor-02)
-  - [A bind description's section is parsed three ways](../issues.md#a-bind-descriptions-section-is-parsed-three-ways)
+  - Two keybind reference paths drop a key's binds
+  - KeybindManager keeps tables the methods helpers already hold (its _bindMods part, left by compositor-02)
+  - A bind description's section is parsed three ways
   - [Keybind sections log null reads as they're torn down](../issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
   - [WorkspaceStrip's Grid briefly has more items than cells](../issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
   - [The key map and the keyboard reference each carry the same modifier chips and legend](../issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
