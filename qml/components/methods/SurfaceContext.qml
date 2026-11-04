@@ -331,8 +331,8 @@ QtObject {
     const barOuter = bar ? p.frameLine - bar.extent : 0;
     // Where the attach edge goes, from the followed bar's outer edge: that
     // edge grown from it (the border's stroke, past the frame a pill bar
-    // on the border reaches back over: its stripCover), a pill's or island's far stroke, a solid bar's own
-    // inner stroke, or a transparent bar's inner edge (moved so its box is
+    // on the border reaches back over: its stripCover), a pill's or
+    // island's far stroke, a solid bar's own inner stroke, or a transparent bar's inner edge (moved so its box is
     // in line with the windows, BarsConfig.detachedPush)
     const attachFromBar = !bar ? 0 : fromOuter ? (bar.stripCover ?? 0) : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0);
     // Held, a connector gap short of where the box goes; following a bar,

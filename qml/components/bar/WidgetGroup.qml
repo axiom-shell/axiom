@@ -263,7 +263,7 @@ Item {
       backgroundLevel: host?.backgroundLevel ?? -1
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       levelStart: segment.back
-      highlighted: (host?.highlighted || host?.hoverHighlighted) ?? false
+      highlighted: host?.editorOutlined ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
       x: (host?.x ?? 0) - (root.isVertical ? 0 : segment.back)

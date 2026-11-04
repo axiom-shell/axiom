@@ -128,8 +128,9 @@ QtObject {
    * Where windows start along a bar not part of the frame (floating,
    * floating pills, transparent), from its window's start at an unheld
    * `end` (its start with `atStart`, endsOf): past the frame, or the bars
-   * there it makes way for, by the compositor's gaps_out on that side (`floatGaps`: with no backend, what an Automatic float gap
-   * keeps). A floating bar's islands end on that line; a transparent
+   * there it makes way for, by the compositor's gaps_out on that side
+   * (`floatGaps`: with no backend, what an Automatic float gap keeps).
+   * A floating bar's islands end on that line; a transparent
    * bar's first and last widgets do. Its own float gap never counts along
    * it. `opts`: { floatGaps }.
    */

@@ -12,8 +12,8 @@ import QtQuick
 // mapped onto the real one by `toItem`. `edge` is a ScreenEdge. No files,
 // services or config: the caller passes the shape's settings in a spec:
 //   { edge, boxAlong, boxDepth, strokeWidth, filletRadius,
-//     attachFilletRadius, cornerRadius, startCornerRadius, endCornerRadius, connectorGap, joinStart,
-//     joinEnd, flushStart, flushEnd, flushStartThrough, flushEndThrough,
+//     attachFilletRadius, cornerRadius, startCornerRadius,
+//     endCornerRadius, connectorGap, joinStart, joinEnd, flushStart, flushEnd, flushStartThrough, flushEndThrough,
 //     detached, detachedOffset, backfill, straight, straightJoins,
 //     straightJoinStart, straightJoinEnd, joinBackfill }
 // (straightJoinStart/End: one joined end's, where the edges it meets

@@ -90,6 +90,17 @@ QtObject {
     return Math.max(lo, Math.min((length - c) / 2 + skew, hi));
   }
 
+  // The center section with `lockCenter`: at its full size (`pref`, at
+  // most the room between the margins), dead center but for its dividers
+  // (`hang`), kept inside the margins. -> { start, length }
+  function _lockedCenter(pref, length, m0, m1, hang) {
+    const c = Math.min(pref, Math.max(0, length - m0 - m1));
+    return {
+      "start": root._centerStart(c, length, m0, length - m1 - c, hang),
+      "length": c
+    };
+  }
+
   // A margin as [start, end]: one number for both ends, or a pair
   function _margins(margin) {
     return Array.isArray(margin) ? margin : [margin, margin];
@@ -129,8 +140,9 @@ QtObject {
 
     let l, c, r, centerStart;
     if (lockCenter) {
-      c = Math.min(pref[1], Math.max(0, length - m0 - m1));
-      centerStart = root._centerStart(c, length, m0, length - m1 - c, centerHang);
+      const center = root._lockedCenter(pref[1], length, m0, m1, centerHang);
+      c = center.length;
+      centerStart = center.start;
       // Each side alone on its half, a gap short of the center
       const side = i => pref[i] > 0 ? gap : 0;
       l = fit([pref[0]], [min[0]], centerStart - m0 - side(0))[0];
@@ -184,9 +196,8 @@ QtObject {
     const [m0, m1] = root._margins(margin);
     const room = Math.max(0, length - m0 - m1);
     if (lockCenter) {
-      const c = Math.min(pref[1], room);
-      const start = root._centerStart(c, length, m0, length - m1 - c, centerHang);
-      return [Math.max(0, start - m0 - gap), room, Math.max(0, length - m1 - start - c - gap)];
+      const center = root._lockedCenter(pref[1], length, m0, m1, centerHang);
+      return [Math.max(0, center.start - m0 - gap), room, Math.max(0, length - m1 - center.start - center.length - gap)];
     }
     const others = i => pref.reduce((sum, p, j) => sum + (j === i ? 0 : p), 0);
     const gaps = i => gap * [0, 2].filter(s => s === i || pref[s] > 0).length;
@@ -226,10 +237,10 @@ QtObject {
       }
       if (minSpan(1) > room)
         return [1];
-      const c = Math.min(spanOf(1, "pref"), length - m0 - m1);
       const shown = kept(1);
       const hang = root.edgeHang(measures[1].map((m, i) => shown[i] ? m.pref : 0), measures[1].map(m => !!m.divides && !m.fill), spacing);
-      const start = root._centerStart(c, length, m0, length - m1 - c, hang);
+      const center = root._lockedCenter(spanOf(1, "pref"), length, m0, m1, hang);
+      const start = center.start, c = center.length;
       const need = s => {
         const len = minSpan(s);
         return len > 0 ? len + gap : 0;

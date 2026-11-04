@@ -54,7 +54,11 @@ Rectangle {
   // off to its far stroke), so they scale down by the same ratio until
   // they meet as one curve (SurfaceOutline.fitRadii). Joined ends keep
   // the full radius.
-  readonly property var pillRadii: SurfaceOutline.fitRadii(root.barConfig.pillDepth - root.barConfig.stripCover - Appearance.borderWidth, Appearance.borderRadius, Math.max(0, Appearance.borderRadius - Appearance.borderWidth / 2))
+  readonly property var pillRadii: SurfaceOutline.fitRadii(root.pillReach - Appearance.borderWidth, Appearance.borderRadius, Math.max(0, Appearance.borderRadius - Appearance.borderWidth / 2))
+  // A pill's depth from the stroke it hangs off (the window's outer edge,
+  // or past the frame a pill bar on the border reaches back over:
+  // stripCover)
+  readonly property real pillReach: Math.max(0, root.barConfig.pillDepth - root.barConfig.stripCover)
   // Kept clear at each end. A solid or pill bar, part of the frame, has
   // its widgets the screen margin in (BarEnds.endInset): an end pill fills
   // the corner, joining the frame squarely as a solid bar does. An
@@ -352,16 +356,21 @@ Rectangle {
     BarManager.setLive(id, root.editorReport);
   }
 
-  // A section: the group sits inside its slot at `align` (0 = start,
-  // 1 = end), which only matters once hidden modules leave it spare room.
+  // A section (`slotIndex` in BarsConfig.sectionNames: left, center,
+  // right): the group sits inside its slot at its `align` (start, middle,
+  // end), which only matters once hidden modules leave it spare room.
   // Inline components can't see this file's ids, hence `bar`.
   component Section: WidgetGroup {
     id: section
     required property Item bar
     required property int slotIndex
-    required align
 
     readonly property var slot: section.bar.slots[section.slotIndex]
+    zone: BarsConfig.sectionNames[section.slotIndex]
+    align: section.slotIndex / 2
+    widgets: section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone])
+    joinStart: section.bar.sectionJoins[section.slotIndex].start
+    joinEndReach: section.bar.sectionJoins[section.slotIndex].endReach
     readonly property real mainPos: Math.round(section.slot.offset + (section.slot.extent - section.usedLength) * section.align)
 
     barConfig: section.bar.barConfig
@@ -731,16 +740,13 @@ Rectangle {
           "squareEnd": false
         }
         readonly property real alongStart: span.start - startMargin
-        // Depth reached from the stroke it hangs off (the window's outer
-        // edge, or past the frame a pill bar on the border reaches back
-        // over: stripCover); the surface's far half-gap is empty
-        // At a high radius the half gap is deeper than the pill: the box
-        // then starts at the pill's far side, never past it (which drew the
-        // far stroke deeper than pillDepth, where what stands on it and
-        // its openings take it to be)
-        readonly property real _reach: Math.max(0, root.barConfig.pillDepth - root.barConfig.stripCover)
-        readonly property real depthBox: pill._reach - pill.boxStart
-        boxStart: Math.min(connectorGap / 2, pill._reach)
+        // Its depth (pillReach), less the surface's far half-gap, which is
+        // empty. At a high radius the half gap is deeper than the pill:
+        // the box then starts at the pill's far side, never past it (which
+        // drew the far stroke deeper than pillDepth, where what stands on
+        // it and its openings take it to be)
+        readonly property real depthBox: root.pillReach - pill.boxStart
+        boxStart: Math.min(connectorGap / 2, root.pillReach)
 
         edge: root.barConfig.location
         active: true
@@ -974,32 +980,17 @@ Rectangle {
     id: leftGroup
     bar: root
     slotIndex: 0
-    zone: "left"
-    align: 0
-    widgets: root.widgetModel(root.barConfig.widgets?.left)
-    joinStart: root.sectionJoins[0].start
-    joinEndReach: root.sectionJoins[0].endReach
   }
 
   Section {
     id: centerGroup
     bar: root
     slotIndex: 1
-    zone: "center"
-    align: 0.5
-    widgets: root.widgetModel(root.barConfig.widgets?.center)
-    joinStart: root.sectionJoins[1].start
-    joinEndReach: root.sectionJoins[1].endReach
   }
 
   Section {
     id: rightGroup
     bar: root
     slotIndex: 2
-    zone: "right"
-    align: 1
-    widgets: root.widgetModel(root.barConfig.widgets?.right)
-    joinStart: root.sectionJoins[2].start
-    joinEndReach: root.sectionJoins[2].endReach
   }
 }
