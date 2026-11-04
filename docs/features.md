@@ -302,11 +302,12 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Nothing else ever edits your config files.
 
 <details>
-<summary><b>Supported apps (22)</b></summary>
+<summary><b>Supported apps (23)</b></summary>
 
 | Kind | Apps |
 | --- | --- |
 | Toolkits | GTK, Qt |
+| Input methods | fcitx5 (its candidate window and menus) |
 | Terminals | kitty, Alacritty, foot, WezTerm, Ghostty |
 | Editors | Neovim, Helix, VS Code, Zed |
 | Apps | Firefox (and its forks), Vesktop/Vencord, zathura |

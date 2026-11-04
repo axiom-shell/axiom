@@ -29,6 +29,7 @@ var effects = map[string]effect{
 	// bat (and delta) only see themes from bat's cache
 	"bat":     {after: live(func(r *run) { r.command("bat", "cache", "--build") })},
 	"cava":    {after: live(func(r *run) { signalAll("cava", syscall.SIGUSR2) })},
+	"fcitx5":  {after: live(reloadFcitx5)},
 	"foot":    {adjust: footStyle},
 	"ghostty": {after: live(func(r *run) { r.signalFrom("ghostty", "1.2", syscall.SIGUSR2, "ghostty") })},
 	"gtk":     {after: gtk},
@@ -299,6 +300,22 @@ func reloadZathura(r *run) {
 			if strings.HasPrefix(name, "org.pwmt.zathura.PID-") {
 				_, _ = c.Call(ctx, name, "/org/pwmt/zathura", "org.pwmt.zathura", "SourceConfig", "")
 			}
+		}
+	})
+}
+
+// reloadFcitx5: a running fcitx5 rereads classicui.conf and its theme.
+// Only when it owns its name: the call would otherwise start fcitx5
+// through its D-Bus service file.
+func reloadFcitx5(r *run) {
+	r.bus(func(ctx context.Context, c *dbus.Conn) {
+		const name = "org.fcitx.Fcitx5"
+		reply, err := c.Call(ctx, dbus.BusName, dbus.BusPath, dbus.BusInterface, "NameHasOwner", "s", name)
+		if err != nil || len(reply.Body) == 0 {
+			return
+		}
+		if running, _ := reply.Body[0].(bool); running {
+			_, _ = c.Call(ctx, name, "/controller", "org.fcitx.Fcitx.Controller1", "ReloadAddonConfig", "s", "classicui")
 		}
 	})
 }

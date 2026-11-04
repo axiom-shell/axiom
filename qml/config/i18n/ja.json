@@ -3858,6 +3858,9 @@
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, special workspace name, resize step (\"50 0\"), screenshot kind (region, window or screen), timer length (10m, 1:30), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout(\"swapsplit\"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).": "",
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.": "",
     "Auto-hiding bar": "",
-    "Use its type's priority": ""
+    "Use its type's priority": "",
+    "Theme picks the light theme and DarkTheme the dark one (with Follow system light/dark color scheme on): both name axiom, which follows axiom's variant itself. fcitx5 rewrites classicui.conf whenever its own settings are saved (fcitx5-configtool, or axiom's input settings): the theme stays, the lines Apply commented out go. Picking another theme there undoes this; Apply again to come back.": "",
+    "Writes the \"axiom\" theme for fcitx5's candidate window and its menus. Reloads running fcitx5.": "",
+    "fcitx5": ""
   }
 }

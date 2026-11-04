@@ -56,6 +56,16 @@ properties:
         place: section
         section: UiSettings
         text: ColorScheme=Axiom
+  fcitx5:
+    type: boolean
+    title: fcitx5
+    default: false
+    description: Writes the "axiom" theme for fcitx5's candidate window and its menus. Reloads running fcitx5.
+    x-hookupNote: "Theme picks the light theme and DarkTheme the dark one (with Follow system light/dark color scheme on): both name axiom, which follows axiom's variant itself. fcitx5 rewrites classicui.conf whenever its own settings are saved (fcitx5-configtool, or axiom's input settings): the theme stays, the lines Apply commented out go. Picking another theme there undoes this; Apply again to come back."
+    x-hookup:
+      - file: '{config}/fcitx5/conf/classicui.conf'
+        place: top
+        text: "Theme=axiom\nDarkTheme=axiom"
   kitty:
     type: boolean
     title: Kitty
