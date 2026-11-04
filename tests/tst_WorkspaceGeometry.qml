@@ -315,6 +315,31 @@ TestCase {
     ], "", 10, profiles), {
       "DP-9": 21
     }, "a named monitor on another port keeps its block");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-2",
+        "description": ""
+      }
+    ], "", 10, profiles), {
+      "DP-2": 11
+    }, "a monitor with no description yet keeps its block by the connector it was last seen on");
+    compare(WorkspaceGeometry.blockBases([
+      {
+        "name": "DP-2",
+        "description": ""
+      }
+    ], "", 10, profiles.concat([
+      {
+        "outputs": [
+          {
+            "output": "DP-2",
+            "label": "DP-2"
+          }
+        ]
+      }
+    ])), {
+      "DP-2": 31
+    }, "a rule naming the connector itself comes before one last seen on it");
   }
 
   function test_outputToward() {
@@ -448,6 +473,14 @@ TestCase {
     // B disconnects, D connects later (appended, as Hyprland's own list
     // would do) — A and C should keep their relative order.
     compare(WorkspaceGeometry.orderMonitors([a, c, d], "").map(m => m.key), ["desc:a", "desc:c", "desc:d"]);
+  }
+
+  function test_orderMonitors_ignores_locale() {
+    const keys = ["HDMI-A-1", "eDP-1", "desc:a", "DP-1", "dp-1"];
+    compare(WorkspaceGeometry.orderMonitors(keys.map(key => ({
+          "name": key,
+          "key": key
+        })), "").map(m => m.key), ["desc:a", "DP-1", "dp-1", "eDP-1", "HDMI-A-1"], "case-insensitive, then by code point, under any locale");
   }
 
   // Two monitors, A (id 0, primary) focused and B (id 1)

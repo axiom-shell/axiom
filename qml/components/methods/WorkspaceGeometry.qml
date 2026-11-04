@@ -225,23 +225,29 @@ QtObject {
   // MonitorLayout.outputId, the same "follows the monitor across ports"
   // identity monitor profiles use). The compositor's own order can
   // change on a hotplug/reconnect/restart; `key`/`name` don't, so this can't
-  // reshuffle who owns which ids the way raw discovery order did.
+  // reshuffle who owns which ids the way raw discovery order did. Keys
+  // compare ignoring case, then by code point, never by locale
+  // (localeCompare puts "DP-2" before "desc:a" under C, after it under
+  // en_US), so the order is the same on every machine.
   // monitors: [{ name, key, x, y }, ...], any order.
   function orderMonitors(monitors, primaryName) {
     const list = (monitors ?? []).slice();
     const isPrimary = m => !!primaryName && m.name === primaryName;
     const primary = list.filter(isPrimary);
     const rest = list.filter(m => !isPrimary(m));
-    rest.sort((a, b) => String(a.key ?? a.name).localeCompare(String(b.key ?? b.name)));
+    const cmp = (x, y) => x < y ? -1 : x > y ? 1 : 0;
+    const key = m => String(m.key ?? m.name);
+    rest.sort((a, b) => cmp(key(a).toLowerCase(), key(b).toLowerCase()) || cmp(key(a), key(b)));
     return primary.concat(rest);
   }
 
   // Each output's first workspace id ({ [name]: id }) when every output
   // owns a block of `size` ids. Blocks are numbered over every monitor the
   // monitor profiles name (by their rules' `output`; the primary first,
-  // matched by connector or by the rule's `label` while unplugged), then the
-  // connected ones none names (keyed by MonitorLayout.outputId), each part
-  // in orderMonitors' order, so a block never moves with what's connected.
+  // matched by connector or by the rule's `label` while unplugged or its
+  // description is unknown), then the connected ones none names (keyed by
+  // MonitorLayout.outputId), each part in orderMonitors' order, so a block
+  // never moves with what's connected.
   // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
   // label }] }] (MonitorsConfig.profiles)
   function blockBases(outputs, primaryName, size, profiles) {
@@ -259,7 +265,10 @@ QtObject {
     }
     const unknown = [];
     for (const o of list) {
-      const k = known.find(k => !k.connected && MonitorLayout.matches(k.key, o));
+      // An output whose description is still to come (Hyprland's, at the
+      // start) matches by the connector a rule last saw it on, after any
+      // rule naming that connector itself
+      const k = known.find(k => !k.connected && MonitorLayout.matches(k.key, o)) ?? (o.description ? undefined : known.find(k => !k.connected && k.name === o.name));
       if (k) {
         k.connected = o.name;
         k.name = o.name;

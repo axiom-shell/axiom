@@ -467,7 +467,9 @@ Singleton {
     const from = at - base;
     const to = id - base;
     const legs = [];
-    if (WorkspacesConfig.animate && root.supports.workspaceSlide && from >= 0 && from < size) {
+    // Legs only within the block: an id past it (the standard layout's
+    // past `count`) is a plain switch
+    if (WorkspacesConfig.animate && root.supports.workspaceSlide && from >= 0 && from < size && to >= 0 && to < size) {
       if (from % cols !== to % cols)
         legs.push({
           "id": base + Math.floor(from / cols) * cols + to % cols,

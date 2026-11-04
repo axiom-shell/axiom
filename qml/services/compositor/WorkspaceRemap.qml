@@ -95,7 +95,7 @@ QtObject {
     if (!plan.changed)
       return;
     manager.noteSwitch(plan.focus[plan.focus.length - 1]?.id ?? -1);
-    console.log(`[CompositorManager] remapping workspaces: ${plan.moves.length} windows, outputs to ${plan.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
+    console.log(`[CompositorManager] remapping workspaces from ${JSON.stringify(from)} to ${JSON.stringify(to)}: ${plan.moves.length} windows, outputs to ${plan.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
     manager.backend.applyRemap(plan, outputs.map(o => o.name));
   }
 

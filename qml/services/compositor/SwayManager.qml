@@ -22,8 +22,9 @@ Singleton {
 
   // The windows (SwayState.window), most recently used ranked first
   readonly property var windows: SwayState.ranked(_info.windows, JSON.parse(_recent.idsJson), _info.order, activeWindowId)
-  // The outputs (SwayState.output)
-  readonly property var outputs: I3.monitors.values.map(m => SwayState.output(m, root._info, root.gapsOut))
+  // The enabled outputs (SwayState.output): get_outputs lists disabled
+  // ones too
+  readonly property var outputs: I3.monitors.values.filter(m => m.lastIpcObject?.active !== false).map(m => SwayState.output(m, root._info, root.gapsOut))
   // The numbered workspaces (SwayState.workspace)
   readonly property var workspaces: I3.workspaces.values.map(ws => SwayState.workspace(ws, root._info.counts)).filter(ws => ws !== null)
   // The focused output's name, or ""
