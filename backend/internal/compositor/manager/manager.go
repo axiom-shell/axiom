@@ -1184,7 +1184,6 @@ func (m *Manager) configReloaded(ctx context.Context, r ipc.Reload) {
 	if !m.live() {
 		return
 	}
-	m.w.noteReload()
 	m.st.LiveApplied = ""
 	m.st.save()
 	if m.w.configReloaded(ctx, m.in) {

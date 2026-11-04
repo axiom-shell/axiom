@@ -201,7 +201,14 @@ func (w *hyprWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 		return
 	}
 	binds := w.runtime.plan(in, func(b any) bool { return w.complete(in, b) }, entries)
-	lines := w.tables.BindLines(jsonx.Arr(binds...), in.get("ctx"))
+	keys := make([]string, len(binds))
+	for i, b := range binds {
+		keys[i] = render.LuaString(render.BindKey(getAny(b, "key")))
+	}
+	// The keys recorded right after the binds: a Lua error later in the
+	// chunk (an hl function this version lacks) would leave them unrecorded.
+	// A refused value isn't one: Hyprland reports it and runs on
+	lines := append(w.tables.BindLines(jsonx.Arr(binds...), in.get("ctx")), "AXIOM_RUNTIME_KEYS = { "+strings.Join(keys, ", ")+" }")
 	if in.flag("requiredSettings") {
 		overridden := false
 		if first, ok := getIndex(animations, 0).(*jsonx.Array); ok {
@@ -216,11 +223,6 @@ func (w *hyprWriter) runtimeApply(ctx context.Context, in Inputs, live func() []
 	}
 	lines = append(lines, live()...)
 	lines = append(lines, render.StripsRuntimeLua(w.stripsLua(in), in.str("stripsKey"))...)
-	keys := make([]string, len(binds))
-	for i, b := range binds {
-		keys[i] = render.LuaString(render.BindKey(getAny(b, "key")))
-	}
-	lines = append(lines, "AXIOM_RUNTIME_KEYS = { "+strings.Join(keys, ", ")+" }")
 	w.eval(ctx, strings.Join(lines, "\n"))
 }
 
@@ -234,10 +236,6 @@ func getIndex(v any, i int) any {
 func (w *hyprWriter) runtimeClear(ctx context.Context) {
 	w.runtime.clear()
 	w.eval(ctx, hyprUnbindLua)
-}
-
-func (w *hyprWriter) noteReload() {
-	w.runtime.noteReload()
 }
 
 func (w *hyprWriter) skippedKeys() []string { return w.runtime.skipped }

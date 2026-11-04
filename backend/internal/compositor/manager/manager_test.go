@@ -31,7 +31,7 @@ type fakeWriter struct {
 	// elsewhere: the user's config the compositor runs instead (sway's)
 	elsewhere string
 	reloadCh  chan ipc.Reload
-	// reloaded: the reloads the manager has taken (noteReload)
+	// reloaded: the reloads the manager has taken (configReloaded)
 	reloaded int
 }
 
@@ -77,13 +77,8 @@ func (f *fakeWriter) runtimeApply(_ context.Context, in Inputs, live func() []st
 	f.note("runtime:" + strings.Join(live(), ";"))
 }
 func (f *fakeWriter) runtimeClear(context.Context) { f.note("clear") }
-func (f *fakeWriter) noteReload() {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.reloaded++
-}
-func (f *fakeWriter) seenReload()           {}
-func (f *fakeWriter) skippedKeys() []string { return nil }
+func (f *fakeWriter) seenReload()                  {}
+func (f *fakeWriter) skippedKeys() []string        { return nil }
 func (f *fakeWriter) checkLoaded(context.Context, Inputs, string) (bool, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -104,7 +99,12 @@ func (f *fakeWriter) reloads(ctx context.Context, out chan<- ipc.Reload) error {
 		}
 	}
 }
-func (f *fakeWriter) configReloaded(context.Context, Inputs) bool  { return false }
+func (f *fakeWriter) configReloaded(context.Context, Inputs) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reloaded++
+	return false
+}
 func (f *fakeWriter) ownKey(Inputs) string                         { return "" }
 func (f *fakeWriter) complete(Inputs, any) bool                    { return true }
 func (f *fakeWriter) entries(context.Context, Inputs) *jsonx.Array { return nil }
