@@ -249,9 +249,11 @@ func swayFiles(o Options) []string {
 func extractSway(ctx context.Context, o Options) *jsonx.Object {
 	result := emptyResult()
 	vars := &render.Vars{}
+	// The files whose variables are read: sway includes each once
+	seen := map[string]bool{}
 	if o.Only != "" {
 		all := swayFiles(Options{Dir: o.Dir})
-		userconf.SwayVars(all[:max(0, slices.Index(all, filepath.Join(o.Dir, "user", o.Only)))], vars, o.Getenv)
+		userconf.SwayVars(all[:max(0, slices.Index(all, filepath.Join(o.Dir, "user", o.Only)))], vars, seen, o.Getenv)
 	}
 	for _, path := range swayFiles(o) {
 		if o.Tracked(ctx, path) {
@@ -278,7 +280,7 @@ func extractSway(ctx context.Context, o Options) *jsonx.Object {
 				continue
 			}
 			if names, ok := userconf.SwayIncludes(line, path, vars, o.Getenv); ok {
-				userconf.SwayVars(names, vars, o.Getenv)
+				userconf.SwayVars(names, vars, seen, o.Getenv)
 				continue
 			}
 			if strings.HasSuffix(line, "{") {

@@ -119,9 +119,9 @@ func SwayIncludes(line, from string, vars *render.Vars, getenv func(string) stri
 }
 
 // SwayVars sets into vars the $variables the files at paths set, as sway
-// reads them: in order, an include's files where it is, each file once.
-func SwayVars(paths []string, vars *render.Vars, getenv func(string) string) {
-	seen := map[string]bool{}
+// reads them: in order, an include's files where it is, each file once
+// (seen: the files read so far, shared by the calls of one walk).
+func SwayVars(paths []string, vars *render.Vars, seen map[string]bool, getenv func(string) string) {
 	var read func(path string)
 	read = func(path string) {
 		real := realPath(path)

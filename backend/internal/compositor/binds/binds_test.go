@@ -192,6 +192,9 @@ func TestSwayExtract(t *testing.T) {
 	// With --only, the variables user/'s earlier files set
 	f.write("01-later.conf", "bindsym $mod+e exec $term\n")
 	eq(t, byKey(f.extract("01-later.conf"))["SUPER + E"], `{"key":"SUPER + E","action":"exec","argument":"foot -T 'my term'"}`)
+	// A file already included isn't read again, as sway skips it
+	f.write("01-later.conf", "set $term kitty\ninclude ../definitions\nbindsym $mod+e exec $term\n")
+	eq(t, byKey(f.extract("01-later.conf"))["SUPER + E"], `{"key":"SUPER + E","action":"exec","argument":"kitty"}`)
 }
 
 // Commenting one line out of a `bindsym { … }` block would leave the rest
