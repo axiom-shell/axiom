@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 // Imported (though widgets load by URL) so qs scans what they import and
@@ -253,6 +254,17 @@ Item {
             item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
         }
       }
+    }
+  }
+
+  // A module's news (BaseWidget.attention) shows its bar while hidden
+  // (an auto-hiding bar with revealOnActivity); a preview's goes nowhere
+  Connections {
+    target: root._item
+    enabled: !root.preview
+    ignoreUnknownSignals: true
+    function onAttention() {
+      BarRevealManager.attention(root.barConfig.id);
     }
   }
 

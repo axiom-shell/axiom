@@ -31,6 +31,18 @@ ValueStyleWidget {
   subtext: root.style === "stacked" ? root.artist : ""
   accentColor: Theme.resolveColor(MediaManager.isPlaying ? root.properties.playingColor : root.properties.pausedColor)
 
+  // News: the track changed while playing (a player appearing, its first
+  // track, isn't)
+  property string _lastTitle: MediaManager.trackTitle
+  Connections {
+    target: MediaManager
+    function onTrackTitleChanged() {
+      if (MediaManager.isPlaying && root._lastTitle !== "" && MediaManager.trackTitle !== "")
+        root.attention();
+      root._lastTitle = MediaManager.trackTitle;
+    }
+  }
+
   Component.onCompleted: MediaManager.acquire(root)
   Component.onDestruction: MediaManager.release(root)
 

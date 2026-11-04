@@ -50,6 +50,10 @@ ValueStyleWidget {
     return details;
   }
 
+  // News: it fell below the low threshold (BatteryManager.level, while
+  // discharging)
+  attentionLevel: BatteryManager.isAvailable ? (BatteryManager.level === "none" ? 0 : 1) : -1
+
   // Charging: a slow pulse, back to full when it stops
   SequentialAnimation {
     running: root.isCharging && !root.hidden && Appearance.animations
