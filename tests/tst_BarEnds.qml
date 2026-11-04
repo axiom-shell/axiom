@@ -238,19 +238,22 @@ TestCase {
   }
 
   function test_a_lone_bar_places_as_before() {
-    // Pill bar inside the border: its outer edge on the stroke, reserving
-    // its extent less the -borderWidth margin it reaches out by
+    // Pill bar on the border: it reaches back over the whole frame to the
+    // screen edge, reserving its extent less that, its pills hanging off
+    // the border's stroke (stripCover in from its outer edge)
     let [b] = placed([bar("top", "pills")], withBorder);
     compare(b.zone, 30);
-    compare(b.taken, 28);
-    compare(b.outer, 6);
-    compare(b.frame, 36);
+    compare(b.taken, 22);
+    compare(b.outer, 0);
+    compare(b.frame, 30);
+    compare(b.outerReach, 8);
+    compare(b.stripCover, 6);
     verify(b.innermost && b.facesWindows && !b.offBorder);
     let e = edge([bar("top", "pills")], "top", withBorder);
-    compare(e.reserved, 36);
-    compare(e.frame, 36);
+    compare(e.reserved, 30);
+    compare(e.frame, 30);
     compare(e.corner, 8);
-    compare(e.insideTaken, 28);
+    compare(e.insideTaken, 22);
     verify(!e.strip);
     // A transparent bar keeps its trim facing the windows
     [b] = placed([bar("top", "transparent")], withBorder);
@@ -297,6 +300,40 @@ TestCase {
     compare(edge([], "top", borderless).frame, 0);
   }
 
+  // Switching a bar between solid and pills moves nothing: the same
+  // reserve (windows start at the same line), its widgets the same
+  // distance from the screen edge, border on or off
+  function test_pills_lie_as_solid() {
+    // The defaults: borderWidth 1, margin 8, padding 4, thickness 26
+    const thin = Object.assign({}, withBorder, {
+      "borderWidth": 1
+    });
+    [thin, Object.assign({}, thin, {
+        "border": false
+      })].forEach(opts => {
+      const solidGeo = BarEnds.crossGeometry("solid", 26, 4, opts);
+      const pillGeo = BarEnds.crossGeometry("pills", 26, 4, opts);
+      const [solid] = BarEnds.withEnds([bar("top", "solid", {
+          "insideBorder": false,
+          "extent": solidGeo.extent
+        })], opts);
+      const [pills] = BarEnds.withEnds([bar("top", "pills", {
+          "insideBorder": opts.border,
+          "extent": pillGeo.extent
+        })], opts);
+      const name = opts.border ? "border on" : "border off";
+      compare(BarEnds.edgeOf([solid], opts).reserved, 35, name);
+      compare(BarEnds.edgeOf([pills], opts).reserved, 35, name);
+      compare(solid.outer + solidGeo.crossStart, 4, name);
+      compare(pills.outer + pillGeo.crossStart, 4, name);
+      compare(solid.frame, pills.frame, name);
+      compare(pillGeo.pillDepth, pillGeo.extent, name + ": the pills reach the bar's inner edge");
+    });
+    // A thin bar is still as deep as the border's strip
+    compare(BarEnds.crossGeometry("solid", 0, 0, thin).extent, 7);
+    compare(BarEnds.crossGeometry("pills", 0, 0, thin).extent, 8);
+  }
+
   function test_stack_order_is_the_arrangement() {
     const bars = [bar("top", "floatingPills"), bar("top", "transparent", {
         "id": "t1"
@@ -323,17 +360,27 @@ TestCase {
     const [p, t] = placed([bar("top", "pills"), bar("top", "transparent")], withBorder);
     verify(!p.innermost && !p.facesWindows && !p.offBorder);
     compare(p.zone, 30);
-    compare(p.frame, 36);
+    compare(p.frame, 30);
     verify(t.innermost && t.facesWindows && t.offBorder);
     compare(t.trim, 10);
     compare(t.zone, 20);
-    compare(t.outer, 34);
-    compare(t.frame, 64);
+    compare(t.outer, 28);
+    compare(t.frame, 58);
+    compare(t.outerReach, 2);
+    compare(t.stripCover, 0);
     const e = edge([bar("top", "pills"), bar("top", "transparent")], "top", withBorder);
-    compare(e.reserved, 8 + 28 + 18);
-    compare(e.frame, 64);
+    compare(e.reserved, 8 + 22 + 18);
+    compare(e.frame, 58);
     compare(e.inner.id, "top:transparent");
-    compare(e.insideTaken, 28 + 18);
+    compare(e.insideTaken, 22 + 18);
+    // A pill bar inside a solid bar isn't on the border's frame: it
+    // reaches back onto the stroke alone (the strip's, on the solid bar)
+    const [, stacked] = placed([bar("top", "solid", {
+        "insideBorder": false
+      }), bar("top", "pills")], withBorder);
+    compare(stacked.outerReach, 2);
+    compare(stacked.stripCover, 0);
+    compare(stacked.outer, 24 + 8 - 2);
     // Two transparent bars: only the inner one trims
     const [outer, inner] = placed([bar("top", "transparent", {
         "id": "a"
@@ -368,9 +415,9 @@ TestCase {
     const stack = BarEnds.stacksOn(bars, "DP-1").top.map(b => b.id);
     compare(stack, ["top:pills", "top:floating", "top:floatingPills"]);
     const [fp, f, p] = placed(bars, withBorder);
-    compare(p.outer, 6);
-    compare(f.outer, 8 + 28 - 2);
-    compare(fp.outer, 8 + 28 + 28 - 2);
+    compare(p.outer, 0);
+    compare(f.outer, 8 + 22 - 2);
+    compare(fp.outer, 8 + 22 + 28 - 2);
     verify(f.offBorder && fp.offBorder);
   }
 
@@ -384,8 +431,8 @@ TestCase {
     verify(!t.facesWindows);
     compare(t.trim, 6);
     compare(t.zone, 24);
-    compare(t.frame, 64, "its own popouts still grow from its inner edge");
-    compare(f.outer, 8 + 28 + 22 - 2);
+    compare(t.frame, 58, "its own popouts still grow from its inner edge");
+    compare(f.outer, 8 + 22 + 22 - 2);
     // An inner accent line is an edge to see: the floating bar keeps its
     // gap from it
     const [, lined] = placed([bar("top", "pills"), bar("top", "transparent", {
@@ -555,14 +602,14 @@ TestCase {
     const [top, l1, l2] = placed(bars, withBorder);
     compare(top.ends.start.kind, "pillBar");
     compare(top.ends.start.barId, "l1");
-    compare(top.ends.start.from, 8 + 28);
+    compare(top.ends.start.from, 8 + 22);
     compare(top.ends.end.kind, "border");
     compare(top.ends.end.barId, "");
     compare(top.ends.end.from, 8);
     // The transparent bar makes way for the top bar, held clear of it
     compare(l2.ends.start.kind, "bar");
     compare(l2.ends.start.barId, "top:pills");
-    compare(l2.ends.start.from, 8 + 28);
+    compare(l2.ends.start.from, 8 + 22);
     // A bar making way for the whole stack meets its innermost
     const [side, s1, s2] = placed([bar("left", "transparent"), bar("top", "pills", {
         "id": "a"
@@ -570,7 +617,8 @@ TestCase {
         "id": "b"
       })], withBorder);
     compare(side.ends.start.barId, "b");
-    compare(side.ends.start.from, 8 + 28 + 28);
+    // (the outer one on the border, taking the frame's room back)
+    compare(side.ends.start.from, 8 + 22 + 28);
     // Past solid bars: the border's stroke on the inner one, the window
     // starting past them all
     const [ls] = placed([bar("left", "pills"), bar("top", "solid", {
@@ -589,6 +637,16 @@ TestCase {
         "insideBorder": false
       })], withBorder);
     compare(st.ends.start.from, 24);
+    // ...and with the border off, a solid bar meeting a solid bar meets a
+    // bare edge, not its stroke: solid bars lie side by side at the edge
+    const [sb] = placed([bar("top", "solid", {
+        "insideBorder": false
+      }), bar("left", "solid", {
+        "insideBorder": false
+      })], borderless);
+    compare(sb.ends.start.kind, "bare");
+    verify(sb.ends.start.joinable && sb.ends.start.straight);
+    compare(sb.ends.start.barId, "left:solid");
     // ...and with the border off, a pill bar joins the inner one's stroke
     const [lb] = placed([bar("left", "pills", {
         "insideBorder": false

@@ -54,6 +54,45 @@ QtObject {
     return bar.kind === "transparent" ? 1 : 2;
   }
 
+  /**
+   * How a full bar of `kind` ("solid", "pills" or "transparent") is built
+   * across, from its widgets' `thickness` and its `edgePadding`, with
+   * `opts` (border, borderWidth, margin). The body is the widgets and
+   * their padding either side, at least as deep as the border's strip
+   * laid over a solid bar's inner part (so no gap opens under it). A
+   * solid bar is the body, and its own stroke deeper with the border off.
+   * Pills are the body and their own far stroke, border on or off: a pill
+   * bar on the border reaches back over the frame to the screen edge
+   * (placeStack's outerReach), so solid and pills reserve the same and
+   * place their widgets alike. A transparent bar lies on the border's
+   * stroke, its widgets their padding past it.
+   * -> { extent (from the window's outer edge), crossStart (where its
+   *    widgets start, from there), pillDepth (how far a pill reaches from
+   *    there; 0 off a pill bar) }
+   */
+  function crossGeometry(kind, thickness, edgePadding, opts) {
+    const bw = opts.borderWidth;
+    const body = Math.max(opts.border ? opts.margin - bw : 0, edgePadding + thickness + edgePadding);
+    if (kind === "solid")
+      return {
+        "extent": body + (opts.border ? 0 : bw),
+        "crossStart": (body - thickness) / 2,
+        "pillDepth": 0
+      };
+    if (kind === "pills")
+      return {
+        "extent": body + bw,
+        "crossStart": (body - thickness) / 2,
+        "pillDepth": body + bw
+      };
+    const outer = opts.border ? bw : 0;
+    return {
+      "extent": outer + edgePadding + thickness + edgePadding,
+      "crossStart": outer + edgePadding,
+      "pillDepth": 0
+    };
+  }
+
   // Whether a bar lies along its screen's shorter edge (`width` × `height`
   // the screen's): a side bar on a landscape or square screen, a top or
   // bottom one on a portrait screen. Of two bars of a kind, it takes the
@@ -237,6 +276,12 @@ QtObject {
    *   zone (the exclusive zone it sets: BarPanel), taken (how much it
    *     reserves: its zone and its -borderWidth margin inside the border),
    *   outer (where its window's outer edge is, from the screen edge),
+   *   outerReach (how far its window reaches back past where it's laid:
+   *     onto the border's stroke for a bar inside the border, or for a
+   *     pill bar on the border itself, over the whole frame: BarPanel's
+   *     outer margin), stripCover (how far in from its window's outer
+   *     edge the border's stroke lies under such a pill bar, where its
+   *     pills hang off; else 0),
    *   frame (its inner side, from the screen edge: its inner edge, the
    *     border's stroke for a solid bar it lies over, or where a solid bar
    *     reserving nothing is laid, inside the border, which it covers)
@@ -268,7 +313,13 @@ QtObject {
       let zone = 0;
       if (bar.reserveSpace)
         zone = Math.max(0, (onStrip ? bar.extent - opts.margin + opts.borderWidth : bar.extent) - trim);
-      const reach = bar.insideBorder ? w : 0;
+      // A bar inside the border reaches back onto its stroke. A pill bar
+      // lying on the border itself reaches back over the whole frame to
+      // the screen edge, its pills over the strip (`stripCover`, past
+      // which they hang off the stroke), so it lies, reserves and places
+      // its widgets as a solid bar would
+      const onFrame = opts.border && bar.kind === "pills" && line === opts.margin;
+      const reach = onFrame ? opts.margin : bar.insideBorder ? w : 0;
       const taken = zone > 0 ? zone - reach : 0;
       const outer = line - reach;
       let frame = outer + bar.extent;
@@ -283,7 +334,9 @@ QtObject {
         "zone": zone,
         "taken": taken,
         "outer": outer,
-        "frame": frame
+        "frame": frame,
+        "outerReach": reach,
+        "stripCover": onFrame ? opts.margin - opts.borderWidth : 0
       }));
       if (bar.insideBorder && bar.reserveSpace)
         insideBefore = true;

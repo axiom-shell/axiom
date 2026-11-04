@@ -23,7 +23,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 
 ### Sizes come from the bar
 - (Rule: `qml/components/bar/widgets/AGENTS.md`, "Sized by the bar".)
-- `BarsConfig.enrichBarConfig` derives `extent` from `thickness`, plus edge padding and whatever covers the bar.
+- `BarsConfig.enrichBarConfig` derives `extent` and where the widgets sit across (`crossStart`) from `thickness` and `edgePadding` (`BarEnds.crossGeometry`: solid and pill bars alike).
 - It resolves `fontSize` and `radius` from the bar's `overrideFontSize`/`overrideRadius`, else from Appearance's values and `Widget.radius`.
 
 ### Widget style

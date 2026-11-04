@@ -611,6 +611,25 @@ TestCase {
         "offBorder": true
       })
     }).ownSink, null);
+    // A pill bar on the border reaches back over the frame (stripCover):
+    // a box between its pills still grows out of the border's stroke,
+    // and one on a pill bar showing none clears the pills' depth past it
+    const onFrame = Object.assign(bar("pills"), {
+      "extent": 40,
+      "pillDepth": 40,
+      "joinGap": 12,
+      "stripCover": 7
+    });
+    const framed = at("pills", apart, {
+      "bar": onFrame
+    });
+    compare(framed.mode, "between");
+    compare([framed.attachFromBar, framed.attachAt], [7, 7]);
+    const none = at("pills", [], {
+      "bar": onFrame
+    });
+    verify(none.merged);
+    compare([none.attachFromBar, none.attachClearance], [7, 40 - base.stroke - 7]);
     // Too near a pill for two fillets: out of the nearest, as before
     const near = at("pills", [
       {

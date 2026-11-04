@@ -51,10 +51,12 @@ PanelWindow {
   }
 
   // A bar inside the border reaches onto its strokes: its own edge (so
-  // pills cover it) and the stroke at either end (so a pill at an end can
+  // pills cover it; a pill bar on the border reaches back over the whole
+  // frame, so it lies as a solid bar does: BarEnds.placeStack's
+  // outerReach) and the stroke at either end (so a pill at an end can
   // join the perpendicular edge), but not onto a bar it makes way for at a
   // corner (BarEnds' `reach`). Margins on the unanchored side are ignored.
-  readonly property int _outerReach: barConfig.insideBorder ? Appearance.borderWidth : 0
+  readonly property int _outerReach: root.barConfig.outerReach
   margins {
     top: -(root.barConfig.vertical ? root.barConfig.ends.start.reach : root._outerReach)
     bottom: -(root.barConfig.vertical ? root.barConfig.ends.end.reach : root._outerReach)

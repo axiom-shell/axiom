@@ -33,32 +33,22 @@ QtObject {
     // Every bar but a solid one sits inside the screen border
     const insideBorder = !solid && Appearance.screenBorder;
     // What covers the bar's own pixels: the outer edge of a bar inside the
-    // border lies on the border's stroke, and a solid bar with the border
-    // off draws its own stroke on its inner edge. A solid bar's border strip
-    // only draws its stroke past the bar (RoundedBorders.frameColorFor).
+    // border lies on the border's stroke.
     const outerCover = insideBorder ? Appearance.borderWidth : 0;
-    const innerCover = solid && !Appearance.screenBorder ? Appearance.borderWidth : 0;
-    // A solid bar reaches at least as far as the border strip laid over its
-    // inner part (BarEnds.placeStack's zone), so no gap opens under the strip
-    const minExtent = solid && Appearance.screenBorder ? Appearance.screenMargin - Appearance.borderWidth : 0;
-    const plainExtent = Math.max(minExtent, outerCover + edgePadding + thickness + edgePadding + innerCover);
+    // Across: a full bar's extent, where its widgets start and how deep
+    // its pills reach (BarEnds.crossGeometry: pills and solid alike; an
+    // island's are its own, below)
+    const cross = BarEnds.crossGeometry(kind, thickness, edgePadding, BarsConfig.endsOptions({}, {}));
     // A pill covers the screen border's stroke where it joins it
     const overlap = Appearance.screenBorder ? Appearance.borderWidth : 0;
-    // Padding past the border's stroke on the pill's outer side, so its
-    // widgets sit the frame plus this in from the screen edge
-    const pillPad = edgePadding;
-    // How far a pill's widgets sit in from the bar's outer edge (and its
-    // ends): past the border stroke, or with the border off, the screen
-    // margin the frame would have taken, so they keep the same gap from the
-    // bare screen edge
-    const pillInset = overlap + (Appearance.screenBorder ? 0 : Appearance.screenMargin) + pillPad;
-    // The widgets' gap to every edge they're seen against: the screen edge
-    // (through the frame), and the pill's inner side and free ends (to the
-    // outside of its stroke)
-    const pillGap = Math.max(Appearance.borderWidth, Appearance.screenMargin + pillPad);
-    // How far a pill reaches in from the bar's outer edge: the inset, its
-    // widgets, and the gap to its far side
-    const pillDepth = pillInset + thickness + pillGap;
+    // How far in a pill's widgets sit from the bar's ends where it joins
+    // them: past the border stroke there and the padding, or on a bare
+    // edge, as far as a solid bar's (the screen margin, at least the
+    // padding)
+    const pillInset = Appearance.screenBorder ? overlap + edgePadding : Math.max(Appearance.screenMargin, edgePadding);
+    // A pill's free ends sit the padding and its stroke out from its
+    // widgets, as its far side does
+    const pillGap = edgePadding + Appearance.borderWidth;
     // Laid out like a tiled window: an island sits its float gap in from
     // the border's stroke (or the bare screen edge), across the bar and
     // from both its ends (Automatic, -1: the compositor's gaps_out on its
@@ -89,12 +79,12 @@ QtObject {
       "monitor": barConfig.monitor,
       // A pill bar is as thick as its pills, so the padding always fits
       // and nothing is left between them and the windows
-      "extent": pills ? pillDepth : island ? islandStart + islandDepth : plainExtent,
+      "extent": island ? islandStart + islandDepth : cross.extent,
       "thickness": thickness,
       "edgePadding": edgePadding,
       // How far the widgets sit in from the bar's outer edge: past the
       // stroke and pill padding, or centred between whatever covers the bar
-      "crossStart": pills ? pillInset : island ? islandStart + Appearance.borderWidth + edgePadding : outerCover + (plainExtent - outerCover - innerCover - thickness) / 2,
+      "crossStart": island ? islandStart + Appearance.borderWidth + edgePadding : cross.crossStart,
       // solid, pills, transparent (no surface), floating, floatingPills
       "kind": kind,
       "solid": solid,
@@ -115,7 +105,7 @@ QtObject {
       "overlap": overlap,
       "pillInset": pillInset,
       "pillGap": pillGap,
-      "pillDepth": pillDepth,
+      "pillDepth": cross.pillDepth,
       "widgetGap": barConfig.widgetGap,
       "groupSpacing": groupSpacing,
       // Neighbouring groups closer than this share a pill (or an island)

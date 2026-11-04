@@ -330,10 +330,11 @@ QtObject {
     const pillFoot = pillBar ? (island ? bar.extent : bar.pillDepth) - p.stroke : 0;
     const barOuter = bar ? p.frameLine - bar.extent : 0;
     // Where the attach edge goes, from the followed bar's outer edge: that
-    // edge grown from it, a pill's or island's far stroke, a solid bar's own
+    // edge grown from it (the border's stroke, past the frame a pill bar
+    // on the border reaches back over: its stripCover), a pill's or island's far stroke, a solid bar's own
     // inner stroke, or a transparent bar's inner edge (moved so its box is
     // in line with the windows, BarsConfig.detachedPush)
-    const attachFromBar = !bar ? 0 : fromOuter ? 0 : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0);
+    const attachFromBar = !bar ? 0 : fromOuter ? (bar.stripCover ?? 0) : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0);
     // Held, a connector gap short of where the box goes; following a bar,
     // as that meets it; else on the stroke of what reserves the edge
     const attachAt = p.held ? p.frameLine + (p.across ?? 0) - p.gap / 2 : bar ? barOuter + attachFromBar : p.reserved - (p.bareEdge ? 0 : p.stroke);
@@ -366,7 +367,7 @@ QtObject {
       "detached": detached,
       "straight": fromOuter ? !p.border : place.mode === "plain" && p.bareEdge,
       "backfill": !detached && onPill ? 1 : 0,
-      "attachClearance": merged ? pillFoot : 0,
+      "attachClearance": merged ? pillFoot - (bar.stripCover ?? 0) : 0,
       "attachFill": plainJoin ? Math.max(0, attachAt) : 0,
       "attachAt": attachAt,
       "attachFromBar": attachFromBar,

@@ -92,9 +92,10 @@ Rectangle {
   // end sits the pill gap out from its widgets; an end that would reach
   // the frame (the end sections, which sit endMargin in) joins it, the
   // frame standing in for the gap; not a bar it makes way for, which has
-  // no stroke to join (BarEnds). Pills too close for the fillets between
-  // them draw as one.
-  readonly property var groupPills: root.pills ? BarLayout.pillRects(root.joinedGroups, root.barConfig.pillGap, 2 * root.pillConnector, root.barConfig.overlap + 0.5, root.length, [root.ends.start.joinable, root.ends.end.joinable]) : []
+  // no stroke to join (BarEnds): within the stroke it covers there, or on
+  // a bare edge, the room the end widgets keep past the pill's gap. Pills
+  // too close for the fillets between them draw as one.
+  readonly property var groupPills: root.pills ? BarLayout.pillRects(root.joinedGroups, root.barConfig.pillGap, 2 * root.pillConnector, Math.max(root.barConfig.overlap, root.barConfig.pillInset - root.barConfig.pillGap) + 0.5, root.length, [root.ends.start.joinable, root.ends.end.joinable]) : []
 
   // Each section's groups of widgets as drawn, along the bar ({ start,
   // end, section }). Dividers at a section's end facing another section
@@ -398,13 +399,26 @@ Rectangle {
     // cover the far stroke, whether or not the pill stretches for them),
     // from the outer edge they stand on out, nor on the solid bars its
     // ends make way for (whose stroke a pill's fillet curves into)
-    holes: [].concat(...root._openingHoles.map(h => h.rects)).concat([].concat(...root._flushEnds.map(f => f.holes)), root._endBarHole(true, root.solidStart ?? root.pillBarStart), root._endBarHole(false, root.solidEnd ?? root.pillBarEnd)).filter(hole => hole !== null)
+    holes: [].concat(...root._openingHoles.map(h => h.rects)).concat([].concat(...root._flushEnds.map(f => f.holes)), root._endBarHole(true, root.solidStart ?? root.pillBarStart), root._endBarHole(false, root.solidEnd ?? root.pillBarEnd), root._stripHole).filter(hole => hole !== null)
     // ...and a joined surface's fillet (a pill's or popout's curving into
     // a solid bar's stroke) only as far as its curve, not the square it
     // sits in: past the curve the shadow runs on round it
     fillets: [].concat(...root._openingHoles.map(h => h.fillets))
   }
   readonly property var _openingHoles: root._openingList.map(o => root._shadowHoles(o))
+  // Nor over the border's frame a pill bar on the border reaches back
+  // over (stripCover): its pills hang off the stroke past it, and cast
+  // from there as on a bar laid inside the border
+  readonly property var _stripHole: {
+    const cover = root.barConfig.stripCover;
+    if (cover <= 0)
+      return null;
+    const reach = root.barConfig.shadowSize * 2;
+    const across = root.isVertical ? root.width : root.height;
+    const far = root.barConfig.right || root.barConfig.bottom;
+    const from = far ? across - cover : -reach;
+    return root.isVertical ? Qt.rect(from, -reach, cover + reach, root.length + reach * 2) : Qt.rect(-reach, from, root.length + reach * 2, cover + reach);
+  }
   // Where an opening keeps the shadow off: `rects`, and the corners of the
   // fillets curving into it at its ends (OutsideShadow.fillets): there
   // only as far as their curve, the shadow running on round them
@@ -691,8 +705,10 @@ Rectangle {
           "squareEnd": false
         }
         readonly property real alongStart: span.start - startMargin
-        // Depth reached from the outer edge; the surface's far half-gap is empty
-        readonly property real depthBox: Math.max(0, root.barConfig.pillDepth - connectorGap / 2)
+        // Depth reached from the stroke it hangs off (the window's outer
+        // edge, or past the frame a pill bar on the border reaches back
+        // over: stripCover); the surface's far half-gap is empty
+        readonly property real depthBox: Math.max(0, root.barConfig.pillDepth - root.barConfig.stripCover - connectorGap / 2)
         boxStart: connectorGap / 2
 
         edge: root.barConfig.location
@@ -717,8 +733,8 @@ Rectangle {
 
         width: implicitWidth
         height: implicitHeight
-        x: root.isVertical ? (root.barConfig.right ? root.width - width : 0) : alongStart
-        y: root.isVertical ? alongStart : (root.barConfig.bottom ? root.height - height : 0)
+        x: root.isVertical ? (root.barConfig.right ? root.width - width - root.barConfig.stripCover : root.barConfig.stripCover) : alongStart
+        y: root.isVertical ? alongStart : (root.barConfig.bottom ? root.height - height - root.barConfig.stripCover : root.barConfig.stripCover)
         backed: root.backed
         opaque: BlurManager.opaqueOn(root.blurScreen)
         // Grown out of the border's stroke, which it covers there...
@@ -887,7 +903,7 @@ Rectangle {
     if (root.barConfig.accentLine === "outer") {
       if (root.islands)
         return root.barConfig.islandStart + Appearance.borderWidth;
-      return root.pills ? root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
+      return root.pills ? root.barConfig.stripCover + root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
     }
     if (root.pills)
       return root.barConfig.pillDepth - Appearance.borderWidth - width;
