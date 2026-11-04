@@ -161,7 +161,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once axiom runs row 20's compositor-06, under a sway started as `sway -c ~/.config/i3/config` (a scratch copy), check the Compositor page's Add it for me edits that file (not `~/.config/sway/config`) and Managed says it can't switch, naming that file.
 - On sway, with a laptop panel that has no serial (or a profile saved under niri for a PNP(…) monitor), Monitors page → Apply changes that monitor, and after a sway reload the panel is set as the profile says (compositor-09).
 - Once the shell runs #318, start a trial monitor Apply that turns a monitor off (Hyprland): the Keep/Revert prompt stays, the countdown reverts it and the monitor comes back on; a profile mirror saved under Hyprland can be turned off on the Monitors page under sway and niri; the monitor prompt grabs real clicks.
-- Once the shell runs row 20's compositor-11: log in under Hyprland with a 3 × 3 grid and a profile naming the monitor by `desc:`, and check the session starts on the block's centre (5), not in 10–18, with no `remapping workspaces` in `scripts/log.sh`; on sway, disable an output (`swaymsg output <name> disable`) and check `CompositorManager.outputs` no longer lists it and the other monitor's perMonitor workspaces start at 1; with a fullscreen video on a named sway workspace, the dock and toasts stay off it.
+- Once the shell runs row 20's compositor-11: log in under Hyprland with a 3 × 3 grid and a profile naming the monitor by `desc:`, and check the session starts on the block's centre (5), not in 10–18; if `scripts/log.sh` shows `remapping workspaces` at the start, add its `from`/`to` layouts to [the startup remap entry](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded); on sway, disable an output (`swaymsg output <name> disable`) and check `CompositorManager.outputs` no longer lists it and the other monitor's perMonitor workspaces start at 1; with a fullscreen video on a named sway workspace, the dock and toasts stay off it.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -327,6 +327,9 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 | Reading | Commit | QML | Go | Scripts |
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
+
+Found while investigating Hyprland starting on workspace 10:
+- [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
 Found while testing the trial Apply (row 20, compositor-10):
 - [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)

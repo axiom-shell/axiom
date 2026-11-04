@@ -361,8 +361,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A trial monitor Apply that turns a monitor off drops its Keep/Revert
   - A shell reload during a trial monitor Apply loses the way back
   - Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed
-- **compositor-11** (5, done): Takes features' sway named-workspaces entry (SwayState, CompositorManager).
-  - A remap runs at startup, from the layout before the config loaded
+- **compositor-11** (5, done; the startup remap's cause wasn't found, so its entry stays open, linked from the roadmap): Takes features' sway named-workspaces entry (SwayState, CompositorManager).
+  - [A remap runs at startup, from the layout before the config loaded](../issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
   - A monitor a profile names by description gets the next block until its description arrives
   - sway lists disabled outputs as outputs
   - In the standard layout, a switch past `count` slides through an unrelated workspace

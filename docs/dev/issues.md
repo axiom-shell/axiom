@@ -304,6 +304,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing row 13 (stable workspace blocks)
 
+### A remap runs at startup, from the layout before the config loaded
+- **Where:** `qml/services/compositor/WorkspaceRemap.qml` (`_applied`, `_timer`, `onBlockSizeChanged`)
+- **What:** Seen 2026-10-30 under Hyprland with a 3×3 grid: the session came up on workspace 10, with `[CompositorManager] remapping workspaces: 0 windows, outputs to DP-1:10` in the debug log. The 10 was the block a `desc:` profile rule gave DP-1 before its description arrived (fixed in row 20's compositor-11), so that symptom is gone, but what restarted the 200 ms timer at the shell's start is still unknown: `begin()` records `_applied` from the config snapshot, which `ConfigManager` reads synchronously, and Qt emits no change signal for a `blockSize`, `perMonitorBlocks` or `workspaceGrid` binding re-evaluated to the same value, so a guard skipping an unchanged layout would catch only a value that changed and changed back within the 200 ms. Either a value really changed after `begin()` (the snapshot differing from the config axiom answers `config.get` with, or a value read before the backend's `supports` settled), and the remap then ran from a layout the workspaces were never in, or something else called `remap`. The log line now carries the `from` and `to` layouts: the next time it shows at a start, they say which value moved. Fix: once that's known, record `_applied` after that value settles.
+- **Size:** small
+- **Found:** 2026-10-30, while investigating Hyprland starting on workspace 10
+
 ### Calendar times in a Windows zone name with no VTIMEZONE read as local time
 - **Where:** `backend/internal/calendar/ical/zone.go` (`Zones.With`), `backend/internal/calendar/calendar.go` (`New`'s `Lookup`)
 - **What:** A TZID the zone database doesn't know is read only from the object's own VTIMEZONE. The Python helper this replaced (icalendar's `tzp.timezone`) also mapped a Windows zone name (`Pacific Standard Time`, about 140 of them in its `WINDOWS_TO_OLSON` table) and a "globally unique" `/vendor/…/Europe/Berlin` TZID to the IANA zone without one. An event naming such a zone with no VTIMEZONE beside it (rare: Outlook's feeds and invitations carry theirs) now shows at its wall time read as local time, off by the zones' difference. A fix is the CLDR windowsZones table and the prefix strip in `Lookup`; whether the rare case is worth the table is the maintainer's call.
