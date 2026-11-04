@@ -400,9 +400,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A user/ file with a dot in its name never loads
   - A moved raw bind with a Lua keyword key compiles to nothing
   - The managed file's catch-all monitor line is copied into M.monitors
-  - [A workspace slide throws when animations go off between its legs](../issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
-  - [Direct Hyprland dispatches can overtake queued Lua](../issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
-  - [Recording two keys within 30 s can end the second recording early on Hyprland](../issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
+  - A workspace slide throws when animations go off between its legs
+  - Direct Hyprland dispatches can overtake queued Lua
+  - Recording two keys within 30 s can end the second recording early on Hyprland
   - [Two keybind reference paths drop a key's binds](../issues.md#two-keybind-reference-paths-drop-a-keys-binds)
   - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold) (its _bindMods part, left by compositor-02)
   - [A bind description's section is parsed three ways](../issues.md#a-bind-descriptions-section-is-parsed-three-ways)

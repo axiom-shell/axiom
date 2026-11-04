@@ -39,7 +39,7 @@ One workspace layout serves everything that shows workspaces or moves between th
 - **In a grid** a move only reaches the monitor's own ids.
   - It goes sideways first, then vertically, sliding along each axis in turn (`animate`). Only a switch between two ids of the block slides in legs: one past it (the standard layout's past `count`, `/ws 15`) is a plain switch.
   - Each leg of a two-leg trip takes `_legSpeed` of the configured time.
-- **The slide** (`HyprlandManager.travel`) briefly overrides Hyprland's `workspaces` animation, then puts it back. The animation is read with the options (`HyprlandManager._workspaceAnim`, null with `animations:enabled` off: no slide, just the switch) at startup and on config reload.
+- **The slide** (`HyprlandManager.travel`) briefly overrides Hyprland's `workspaces` animation, then puts it back. The animation is read with the options (`HyprlandManager._workspaceAnim`, null with `animations:enabled` off: no slide, just the switch) at startup and on config reload; each leg keeps the one its travel read, so a read between two legs can't stop the second.
 - Keybinds call `axiom ipc workspaces …` rather than scripts of their own.
 
 ### Layout changes (remap)

@@ -348,9 +348,6 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [A workspace slide throws when animations go off between its legs](issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
-- [Direct Hyprland dispatches can overtake queued Lua](issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
-- [Recording two keys within 30 s can end the second recording early on Hyprland](issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
 - [Two keybind reference paths drop a key's binds](issues.md#two-keybind-reference-paths-drop-a-keys-binds)
 - [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
 - [A bind description's section is parsed three ways](issues.md#a-bind-descriptions-section-is-parsed-three-ways)
