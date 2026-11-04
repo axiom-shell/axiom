@@ -46,6 +46,14 @@ QtObject {
   // The section last selected or added to, where the library adds
   property string lastZone: "center"
 
+  // The left panel's tab (Layout, Surface, Widgets, Behaviour), kept as
+  // the page is rebuilt
+  property int panelTab: 0
+
+  function selectPanelTab(index) {
+    root.panelTab = index;
+  }
+
   // The selected bar as the board's live chips draw its widgets: the
   // draft bar enriched at a fixed thickness, along a top edge (chips are
   // rows) whatever its own, standing alone (no ends meet it)
@@ -394,6 +402,27 @@ QtObject {
     applyChanges();
   }
 
+  // The saved copy of the selected bar (by its id), or null for one not
+  // saved yet
+  function savedBar() {
+    const id = selectedBar()?.id;
+    return (root.savedConfig ?? []).find(b => b.id === id) ?? null;
+  }
+
+  // Whether the selected bar's field differs from its saved value (false
+  // for a bar not saved yet): the field's change dot
+  function barFieldChanged(key) {
+    const saved = savedBar();
+    return saved !== null && JSON.stringify(selectedBar()?.[key]) !== JSON.stringify(saved[key]);
+  }
+
+  // Puts the selected bar's field back to its saved value
+  function discardBarField(key) {
+    const saved = savedBar();
+    if (saved)
+      updateBarField(key, Utils.clone(saved[key]));
+  }
+
   function updateBarField(key, value) {
     const bar = selectedBar();
     if (!bar || JSON.stringify(bar[key]) === JSON.stringify(value))
@@ -451,6 +480,22 @@ QtObject {
     else
       bar.style[key] = value;
     applyChanges();
+  }
+
+  // Whether the selected bar's own style key (`part` of its shadow)
+  // differs from its saved value: the field's change dot
+  function styleFieldChanged(key, part) {
+    const saved = savedBar();
+    const style = selectedBar()?.style;
+    const pick = s => part ? s?.[key]?.[part] : s?.[key];
+    return saved !== null && JSON.stringify(pick(style)) !== JSON.stringify(pick(saved.style));
+  }
+
+  // Puts the selected bar's own style key back to its saved value
+  function discardStyleField(key, part) {
+    const saved = savedBar();
+    if (saved)
+      updateStyleField(key, Utils.clone(part ? saved.style?.[key]?.[part] : saved.style?.[key]), part);
   }
 
   // What a bar's style key is while it's null: the shared style's, or
@@ -636,6 +681,46 @@ QtObject {
     else
       delete widget.layout;
     applyChanges();
+  }
+
+  // The saved copy of the selected bar's widget at `zone`/`index` (by its
+  // bar's id and its own, in any section), or null for one not saved yet
+  function savedWidget(zone, index) {
+    const widget = _widget(zone, index);
+    const saved = savedBar();
+    if (!widget || !saved)
+      return null;
+    return [].concat(...BarsConfig.sectionNames.map(s => saved.widgets?.[s] ?? [])).find(w => w.id === widget.id) ?? null;
+  }
+
+  // Whether a widget's property differs from its saved value (false for a
+  // widget not saved yet)
+  function widgetPropertyChanged(zone, index, key) {
+    const saved = savedWidget(zone, index);
+    return saved !== null && JSON.stringify(_widget(zone, index)?.properties?.[key]) !== JSON.stringify(saved.properties?.[key]);
+  }
+
+  // Puts a widget's property back to its saved value
+  function discardWidgetProperty(zone, index, key) {
+    const saved = savedWidget(zone, index);
+    if (saved)
+      updateWidgetProperty(zone, index, key, Utils.clone(saved.properties?.[key]));
+  }
+
+  // A widget's priority: its own (layout.priority), else its type's
+  function priorityOf(widget) {
+    return widget?.layout?.priority ?? BarsConfig.defaultPriority(widget?.type ?? "");
+  }
+
+  // Raises a widget's priority above every other widget's on its bar, so
+  // a crowded bar drops it last
+  function raiseWidgetPriority(zone, index) {
+    const widget = _widget(zone, index);
+    if (!widget)
+      return;
+    const others = [].concat(...BarsConfig.sectionNames.map(s => selectedBar()?.widgets?.[s] ?? [])).filter(w => w !== widget && w.type !== "Spacer");
+    const top = Math.max(...others.map(w => root.priorityOf(w)), -100);
+    setWidgetPriority(zone, index, Math.max(root.priorityOf(widget), Math.min(100, top + 1)));
   }
 
   // A widget's priority (layout.priority; null drops the override)

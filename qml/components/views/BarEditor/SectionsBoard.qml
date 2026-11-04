@@ -12,7 +12,8 @@ import qs.components.content.base
 // or bottom bar, columns side by side for a side bar. Its header has undo
 // and redo, the drop order badges' switch, an Unsaved chip with Save and
 // Discard, and the help in a "?"; under it, how the running bar fits on
-// each screen it's on. A chip's right click opens its menu; while the
+// each screen it's on, the widgets it has no room for as buttons selecting
+// them, with Raise priority / Set max length for a selected one. A chip's right click opens its menu; while the
 // board has focus (a chip clicked) it takes Delete, Ctrl+D, Alt+arrows,
 // Escape and Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
 FocusScope {
@@ -30,19 +31,39 @@ FocusScope {
 
   // The selected bar as it's running, one report per screen
   readonly property var reports: BarManager.liveReports()
-  // Per screen, the names of the widgets hidden there for want of room
+  // Per screen, the widgets ({zone, index}) hidden there for want of room
   readonly property var crowded: root.reports.map(report => ({
         "screen": report.screen,
-        "names": [].concat(...Object.keys(report.hidden).map(zone => report.hidden[zone].map(index => root.dragLayer.widgetLabel(BarManager.selectedBar()?.widgets?.[zone]?.[index]))))
-      })).filter(screen => screen.names.length > 0)
-  readonly property string fitText: {
-    if (BarManager.selectedBar()?.enabled === false)
-      return I18n.tr("Turned off");
-    if (root.reports.length === 0)
-      return "";
-    if (root.crowded.length === 0)
-      return I18n.tr("Fits {0}", root.reports.map(report => report.screen).join(", "));
-    return root.crowded.map(screen => I18n.tr("No room on {0} for {1}", screen.screen, screen.names.join(", "))).join(" · ");
+        "widgets": [].concat(...Object.keys(report.hidden).map(zone => report.hidden[zone].map(index => ({
+                "zone": zone,
+                "index": index
+              }))))
+      })).filter(screen => screen.widgets.length > 0)
+  readonly property bool turnedOff: BarManager.selectedBar()?.enabled === false
+  // The narrowest screen the bar is on (the least room in all), whose
+  // fit the lanes' meters show
+  readonly property var narrowest: root._narrowestOf(root.reports)
+  // The narrowest screen with no room for the selected widget, where its
+  // actions make it fit (null when it fits everywhere)
+  readonly property var selectedCrowdedOn: {
+    const sel = BarManager.selectedWidget;
+    return root._narrowestOf(root.reports.filter(report => (report.hidden[sel.zone] ?? []).includes(sel.index)));
+  }
+  // The length to cap the selected (elastic) widget at so its section
+  // fits there, or 0 when no cap would do
+  readonly property int fittingMax: {
+    const report = root.selectedCrowdedOn;
+    const measure = report?.selected;
+    const fit = report?.sections?.[BarManager.selectedWidget.zone];
+    if (!measure || !fit)
+      return 0;
+    return Math.max(0, measure.preferred - measure.insets - (fit.used - fit.room));
+  }
+  readonly property bool selectedElastic: root.dragLayer.typeInfo(BarManager.selectedWidgetConfig()?.type ?? "")?.elastic ?? false
+
+  function _narrowestOf(reports) {
+    const room = report => Object.values(report.sections ?? {}).reduce((sum, section) => sum + section.room, 0);
+    return reports.reduce((best, report) => best === null || room(report) < room(best) ? report : best, null);
   }
 
   // Per section (BarsConfig.sectionNames), each widget's drop order
@@ -53,7 +74,7 @@ FocusScope {
       return ({});
     const widgets = BarManager.selectedBar()?.widgets ?? {};
     const names = BarsConfig.sectionNames;
-    const orders = BarLayout.dropOrder(names.map(zone => (widgets[zone] ?? []).map(w => w.visible === false || w.type === "Spacer" ? null : (w.layout?.priority ?? BarsConfig.defaultPriority(w.type)))));
+    const orders = BarLayout.dropOrder(names.map(zone => (widgets[zone] ?? []).map(w => w.visible === false || w.type === "Spacer" ? null : BarManager.priorityOf(w))));
     return names.reduce((out, zone, s) => {
       out[zone] = orders[s];
       return out;
@@ -244,14 +265,79 @@ FocusScope {
         }
       }
 
+      // How the bar fits: the screens it fits, or per screen the widgets
+      // it has no room for, each a button selecting it; for a selected
+      // one, what would make it fit
       StyledText {
-        visible: root.fitText !== ""
+        visible: root.turnedOff || (root.reports.length > 0 && root.crowded.length === 0)
         Layout.fillWidth: true
-        text: root.fitText
-        textColor: root.crowded.length > 0 ? Theme.warning : Theme.foreground
-        opacity: root.crowded.length > 0 ? 1 : 0.6
+        text: root.turnedOff ? I18n.tr("Turned off") : I18n.tr("Fits {0}", root.reports.map(report => report.screen).join(", "))
+        opacity: 0.6
         textSize: Appearance.fontSizeBy(-2)
         wrapMode: Text.WordWrap
+      }
+
+      Flow {
+        visible: !root.turnedOff && root.crowded.length > 0
+        Layout.fillWidth: true
+        spacing: Widget.spacing / 2
+
+        Repeater {
+          model: root.turnedOff ? [] : root.crowded
+
+          delegate: Flow {
+            id: screenFit
+            required property var modelData
+            spacing: Widget.spacing / 2
+
+            StyledText {
+              height: Widget.height
+              verticalAlignment: Text.AlignVCenter
+              text: I18n.tr("No room on {0} for", screenFit.modelData.screen)
+              textColor: Theme.warning
+              textSize: Appearance.fontSizeBy(-2)
+            }
+
+            Repeater {
+              model: screenFit.modelData.widgets
+
+              delegate: StyledTextButton {
+                required property var modelData
+                readonly property bool isSelected: BarManager.selectedWidget.zone === modelData.zone && BarManager.selectedWidget.index === modelData.index
+                text: root.dragLayer.widgetLabel(BarManager.selectedBar()?.widgets?.[modelData.zone]?.[modelData.index])
+                textSize: Appearance.fontSizeBy(-2)
+                textPadding: Widget.smallPadding
+                backgroundColor: isSelected ? Theme.warning : Theme.backgroundHighlight
+                textColor: isSelected ? Theme.background : Theme.foreground
+                tooltipText: I18n.tr("Select it")
+                onClicked: {
+                  BarManager.selectWidget(modelData.zone, modelData.index);
+                  root.forceActiveFocus();
+                }
+              }
+            }
+          }
+        }
+
+        StyledTextButton {
+          visible: root.selectedCrowdedOn !== null
+          iconText: "keyboard_double_arrow_up"
+          text: I18n.tr("Raise priority")
+          textSize: Appearance.fontSizeBy(-2)
+          textPadding: Widget.smallPadding
+          tooltipText: I18n.tr("Drop it last when the bar is crowded")
+          onClicked: BarManager.raiseWidgetPriority(BarManager.selectedWidget.zone, BarManager.selectedWidget.index)
+        }
+
+        StyledTextButton {
+          visible: root.selectedCrowdedOn !== null && root.selectedElastic && root.fittingMax > 0
+          iconText: "width"
+          text: I18n.tr("Set max length")
+          textSize: Appearance.fontSizeBy(-2)
+          textPadding: Widget.smallPadding
+          tooltipText: I18n.tr("Cap it at {0} px, so it fits on {1}", root.fittingMax, root.selectedCrowdedOn?.screen ?? "")
+          onClicked: BarManager.setWidgetMax(BarManager.selectedWidget.zone, BarManager.selectedWidget.index, root.fittingMax)
+        }
       }
 
       // The sections: rows down the board, or columns across it
@@ -283,6 +369,8 @@ FocusScope {
             zone: lane.modelData.key
             title: lane.modelData.label
             dropOrders: root.dropOrders[lane.modelData.key] ?? []
+            fit: root.turnedOff ? null : root.narrowest?.sections?.[lane.modelData.key] ?? null
+            fitScreen: root.narrowest?.screen ?? ""
             onAddRequested: anchor => {
               root._pendingZone = lane.modelData.key;
               addPopup.openAt(anchor);

@@ -114,7 +114,9 @@ Item {
       "size": Math.round(root.shown ? root.mainSize : 0),
       "preferred": Math.round(root.preferredSize),
       "minimum": Math.round(root.minimumSize),
-      "priority": root.priority
+      "priority": root.priority,
+      // Its insets, which its maxSize doesn't count
+      "insets": Math.round(root._insets)
     })
 
   // Assigned by WidgetGroup; standalone hosts just

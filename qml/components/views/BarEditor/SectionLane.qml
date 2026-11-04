@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.services.ui
 import qs.components.reusable
@@ -11,7 +12,9 @@ import qs.components.reusable
 // scrolling. Chips are dragged within it, to another lane, or dropped on
 // it from the library; a line shows where the carried one would land.
 // Hovering a chip outlines its widget on the running bars; a chip whose
-// widget the pointer is over on a running bar looks hovered.
+// widget the pointer is over on a running bar looks hovered. Its header's
+// meter shows how much of the section's room its widgets want on the
+// narrowest screen.
 Rectangle {
   id: root
 
@@ -26,6 +29,11 @@ Rectangle {
   required property var reports
   // Each widget's drop order (BarLayout.dropOrder), or [] for no badges
   property var dropOrders: []
+  // How the section fits on the narrowest screen ({used, room}, the
+  // running bar's report), or null for no meter; and that screen's name
+  property var fit: null
+  property string fitScreen: ""
+  readonly property bool overfull: root.fit !== null && root.fit.used > root.fit.room
   // The widest a chip may be (a column's share of a narrow board): its
   // label elides past it
   property real maxChipWidth: Infinity
@@ -101,6 +109,28 @@ Rectangle {
       font.bold: true
       elide: Text.ElideRight
       Layout.fillWidth: true
+    }
+
+    // How full the section is
+    LevelMeter {
+      id: meter
+      visible: root.fit !== null && root.widgets.length > 0
+      Layout.preferredWidth: Widget.px(40)
+      Layout.preferredHeight: Widget.height - Widget.px(6)
+      thickness: Widget.px(4)
+      share: root.fit && root.fit.room > 0 ? root.fit.used / root.fit.room : 1
+      fillColor: root.overfull ? Theme.warning : Theme.accent
+
+      HoverHandler {
+        id: meterHover
+      }
+      LazyLoader {
+        active: meterHover.hovered
+        StyledToolTip {
+          target: meter
+          text: root.overfull ? I18n.tr("Wants {0} px, has {1} px on {2}", root.fit?.used ?? 0, root.fit?.room ?? 0, root.fitScreen) : I18n.tr("{0} of {1} px used on {2}", root.fit?.used ?? 0, root.fit?.room ?? 0, root.fitScreen)
+        }
+      }
     }
 
     // Center only: pin it dead center so the other sections can't push it

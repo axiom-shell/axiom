@@ -9,9 +9,10 @@ import qs.components.forms
 import qs.components.content.base
 
 // i18n: keys from the schema (titles, descriptions, type labels)
-// Bar editor: the selected widget's options and sizing (as the running
-// bars report it), or with nothing selected, the library of widget types
-// to drag onto the bar
+// Bar editor, beside the board: the selected widget's options and sizing
+// (as the running bars report it) and the library of widget types to drag
+// onto the bar, side by side (inspector about 55%), or one over the other
+// when the room is taller than wide
 Item {
   id: root
 
@@ -38,9 +39,20 @@ Item {
     return I18n.tr("As long as its content: {0} px now.", measure.size);
   }
 
-  Card {
-    color: Theme.background
-    border.color: Theme.border
+  // One over the other when the room is taller than wide
+  readonly property bool stacked: root.height > root.width
+  readonly property real _gap: OverlayConfig.cardSpacing
+  readonly property real _inspectorShare: 0.55
+
+  // Each card fills its box (Card)
+  Item {
+    width: root.stacked ? root.width : Math.round((root.width - root._gap) * root._inspectorShare)
+    height: root.stacked ? Math.round((root.height - root._gap) * root._inspectorShare) : root.height
+
+    Card {
+      color: Theme.background
+      border.color: Theme.border
+    }
 
     Item {
       anchors.fill: parent
@@ -52,11 +64,41 @@ Item {
         sourceComponent: editor
       }
 
-      Loader {
+      // Nothing selected
+      ColumnLayout {
         anchors.fill: parent
-        active: root.selectionKey === ""
-        sourceComponent: library
+        visible: root.selectionKey === ""
+        spacing: Widget.spacing
+
+        InspectorHeader {
+          icon: "touch_app"
+          filled: false
+          title: I18n.tr("No widget selected")
+          subtitle: I18n.tr("Click a widget in a section to edit it, right-click it for more.")
+        }
+
+        Item {
+          Layout.fillHeight: true
+        }
       }
+    }
+  }
+
+  Item {
+    x: root.stacked ? 0 : root.width - width
+    y: root.stacked ? root.height - height : 0
+    width: root.stacked ? root.width : root.width - root._gap - Math.round((root.width - root._gap) * root._inspectorShare)
+    height: root.stacked ? root.height - root._gap - Math.round((root.height - root._gap) * root._inspectorShare) : root.height
+
+    Card {
+      color: Theme.background
+      border.color: Theme.border
+    }
+
+    Loader {
+      anchors.fill: parent
+      anchors.margins: Widget.padding
+      sourceComponent: library
     }
   }
 
@@ -72,6 +114,9 @@ Item {
       readonly property bool hidden: editorRoot.widget.visible === false
       readonly property var propertiesSchema: root.dragLayer.typeInfo(editorRoot.widget.type)?.propertiesSchema ?? ({})
       readonly property var propertiesOrder: root.dragLayer.typeInfo(editorRoot.widget.type)?.propertiesOrder ?? []
+      // It shrinks when crowded (`x-elastic`), so it takes a minimum and
+      // maximum length
+      readonly property bool elastic: root.dragLayer.typeInfo(editorRoot.widget.type)?.elastic ?? false
       // A page or edge menu it opens, to edit in the layouts editor
       readonly property var opens: OverlayManager.openedBy(editorRoot.widget)
 
@@ -132,9 +177,12 @@ Item {
           key: "BarEditor/" + root.selectionKey
         }
 
-        RowLayout {
+        // Options and sizing side by side, while there's room
+        GridLayout {
           width: scroll.availableWidth
-          spacing: Widget.spacing * 2
+          columns: scroll.availableWidth > Widget.px(640) ? 2 : 1
+          columnSpacing: Widget.spacing * 2
+          rowSpacing: Widget.spacing * 2
 
           ColumnLayout {
             Layout.preferredWidth: Widget.px(3)
@@ -171,17 +219,22 @@ Item {
               values: editorRoot.widget.properties ?? ({})
               context: BarsConfig.lookContext(BarManager.selectedBar())
               emptyText: I18n.tr("This widget has no options")
+              changedAt: path => BarManager.widgetPropertyChanged(editorRoot.zone, editorRoot.index, path[0])
               onEdited: (path, value) => BarManager.updateWidgetProperty(editorRoot.zone, editorRoot.index, path[0], value)
+              onDiscardAt: path => BarManager.discardWidgetProperty(editorRoot.zone, editorRoot.index, path[0])
             }
           }
 
           FieldGroup {
             Layout.preferredWidth: 2
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
             title: I18n.tr(BarsConfig.widgetLayoutSchema.title)
             description: root.sizingText(root.measure)
 
             Repeater {
-              // An override starts at what the bar uses now (`measured`)
+              // An override starts at what the bar uses now (`measured`);
+              // the minimum and maximum only for an elastic widget
               model: [
                 {
                   "key": "maxSize",
@@ -196,9 +249,9 @@ Item {
                 {
                   "key": "priority",
                   "measured": "priority",
-                  "initial": 0
+                  "initial": BarManager.priorityOf(editorRoot.widget)
                 }
-              ]
+              ].filter(field => editorRoot.elastic || field.key === "priority")
 
               delegate: LayoutOverrideField {
                 required property var modelData
@@ -228,7 +281,7 @@ Item {
 
       StyledText {
         Layout.fillWidth: true
-        text: I18n.tr("Drag a widget onto a section, or click one to add it to the {0} section. Click a widget in a section to edit it.", root.dragLayer.zoneLabel(BarManager.lastZone))
+        text: I18n.tr("Drag a widget onto a section, or click one to add it to the {0} section.", root.dragLayer.zoneLabel(BarManager.lastZone))
         opacity: 0.6
         textSize: Appearance.fontSizeBy(-2)
         wrapMode: Text.WordWrap

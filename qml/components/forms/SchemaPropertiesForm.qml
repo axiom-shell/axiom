@@ -143,7 +143,8 @@ ColumnLayout {
               schema: cell.modelData.schema
               current: _field?.current
               optionLabels: _field?.optionLabels ?? ({})
-              changed: root.changedAt ? root.changedAt(cell.modelData.path) : false
+              // The form is gone (null) a moment before its fields
+              changed: root?.changedAt ? root.changedAt(cell.modelData.path) : false
               onReset: value => root.edit(cell.modelData.path, value)
               onDiscard: root.discardAt(cell.modelData.path)
             }

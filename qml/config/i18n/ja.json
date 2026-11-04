@@ -1702,14 +1702,12 @@
     "Name and save the page to add a bar button or keybind for it.": "バーのボタンやキーバインドを追加するには、先にページに名前を付けて保存してください。",
     "The page the button opens the overlay on.": "ボタンで開くオーバーレイのページ。",
     "Turned off": "オフ",
-    "No room on {0} for {1}": "{0} では {1} が入りきりません",
     "A fixed {0} px long.": "固定の長さ {0} px。",
     "Up to {0} px long, shrinking to {1} px when the bar is crowded; {2} px now.": "最大 {0} px。バーが混み合うと {1} px まで縮みます。現在 {2} px。",
     "As long as its content: {0} px now.": "内容に合わせた長さ。現在 {0} px。",
     "hidden on the bar": "バーで非表示",
     "no room for it on {0}": "{0} では入りきりません",
     "Edit {0} in Layouts": "レイアウトで {0} を編集",
-    "Drag a widget onto a section, or click one to add it to the {0} section. Click a widget in a section to edit it.": "ウィジェットをセクションにドラッグするか、クリックして「{0}」セクションに追加します。セクション内のウィジェットをクリックすると編集できます。",
     "Copy this bar's size and style": "このバーのサイズとスタイルをコピー",
     "Paste the size and style of {0}": "{0} のサイズとスタイルを貼り付け",
     "Paste the size and style of {0} onto every bar": "{0} のサイズとスタイルをすべてのバーに貼り付け",
@@ -3846,6 +3844,17 @@
     "Hide the drop order": "",
     "Show the order widgets drop in when the bar is crowded": "",
     "Unsaved": "",
-    "The bar is {0} px deep": ""
+    "The bar is {0} px deep": "",
+    "No widget selected": "",
+    "Click a widget in a section to edit it, right-click it for more.": "",
+    "Drag a widget onto a section, or click one to add it to the {0} section.": "",
+    "No room on {0} for": "",
+    "Select it": "",
+    "Raise priority": "",
+    "Drop it last when the bar is crowded": "",
+    "Set max length": "",
+    "Cap it at {0} px, so it fits on {1}": "",
+    "Wants {0} px, has {1} px on {2}": "",
+    "{0} of {1} px used on {2}": ""
   }
 }
