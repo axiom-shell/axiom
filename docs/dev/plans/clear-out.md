@@ -14,7 +14,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 4. Done: Power repeated the session actions' icons, labels and confirm: a) "Restart" / "Shut down".
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
-7. [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says): accept the narrower gap.
+7. Gaps to the edges are wider on sway than the setting says: accept the narrower gap.
 8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
 9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
 10. Removed: an edge popout's inconsistent size (fixed, maintainer).
@@ -373,7 +373,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - niri doesn't send windowFocused for a window that opens focused
 - **compositor-13** (5):
   - A user's blur off overrides axiom's blur on niri
-  - [Gaps to the edges are wider on sway than the setting says](../issues.md#gaps-to-the-edges-are-wider-on-sway-than-the-setting-says)
+  - Gaps to the edges are wider on sway than the setting says
   - [A failed options read sets Hyprland's gaps to 0](../issues.md#a-failed-options-read-sets-hyprlands-gaps-to-0)
   - [The Translucency card reads the window look's blur object as a switch](../issues.md#the-translucency-card-reads-the-window-looks-blur-object-as-a-switch)
   - [A failed cursor theme call keeps the theme's own name all session](../issues.md#a-failed-cursor-theme-call-keeps-the-themes-own-name-all-session)

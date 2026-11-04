@@ -37,3 +37,15 @@ func TestNiriRecentWindows(t *testing.T) {
 		t.Fatalf("rest %v, recent %v", rest.Items, recent)
 	}
 }
+
+// The edge comes out at the outer gap: struts of outer - inner, negative
+// where the inner gaps are wider (niri draws the edge narrower then).
+func TestNiriLookGapsEdge(t *testing.T) {
+	t.Parallel()
+	look := jsonx.Obj("gaps", jsonx.Obj("inner", float64(10), "outer", float64(0)))
+	got := KdlSerialize(NiriLookNodes(look), 0)
+	want := "layout {\n    gaps 10\n    struts {\n        left -10\n        right -10\n        top -10\n        bottom -10\n    }\n}"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}

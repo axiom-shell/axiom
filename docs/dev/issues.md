@@ -593,14 +593,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### Gaps to the edges are wider on sway than the setting says
-- **Where:** `backend/internal/compositor/render/sway.go:468` (`SwayLookLines`), `backend/internal/compositor/render/niri.go:456` (`NiriLookNodes`), `qml/services/compositor/SwayManager.qml:38` (`gapsOut`)
-- **What:** `WindowLook.gaps.outer` is "Gaps to the edges". Hyprland writes it as `gaps_out` (the edge gap); niri's writer writes struts of `outer - inner` so its edge comes out at `outer`; the sway writer writes `"gaps inner "+inner, "gaps outer "+outer` unchanged (468-469), and sway(5) says "Outer gaps are in addition to inner gaps. To reduce or remove outer gaps, outer gaps can be set to a negative value." (sway-backend.md and `SwayManager.gapsOut` read it back as outer + inner). At the defaults (inner 3, outer 6) Hyprland and niri leave 6 px at the edge, sway 9, and Automatic bars follow the 9. niri's writer also clamps the struts at 0 (`math.Max(0, …-inner)`), so with inner 10 and outer 0 niri keeps 10 px where Hyprland keeps 0 (`niri validate` 26.04 accepts a negative strut; PLAUSIBLE that niri draws it narrower: a nested niri with inner 10, outer 0 settles it). Fix: sway writes `outer - inner` (`gaps outer`, and `gaps outer all set` live), `SwayManager.gapsOut`'s live branch becomes `_liveGaps.outer`; drop niri's `math.Max(0, …)` around the edge; regenerate the sway and niri goldens.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "accept the narrower gap (9 to 6 px at the defaults; sway matches the setting)"): "agree".
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor system
-
 ### Wide active is hidden in the perMonitor layout but still applies there
 - **Where:** `qml/components/bar/widgets/Workspaces/schema.yaml:56` (`wideActive`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:73` (`_length`)
 - **What:** `wideActive` (default true) shows only with `{/Workspaces.layout: [standard, grid]}` or dynamic workspaces, yet `WorkspaceCellRow._length` reads `root.properties.wideActive` unconditionally, and the perMonitor layout (and `scrolling` under sway, which works as perMonitor, workspaces.md › Layouts) uses `WorkspaceStrip` → `WorkspaceCellRow` like standard. So on perMonitor the active cell is always twice as long and the toggle that would turn it off isn't on the settings page. Every layout draws through `WorkspaceCellRow`, so there is no layout where the option doesn't apply; the showIf came from when it read `{ "/Workspaces.layout": "standard" }` (f396b28 widened it to grid but not perMonitor). Fix: delete the `x-showIf` block (schema.yaml lines 60-63, 4 lines); the dynamic-workspaces sentence in workspaces.md ("`wideActive` and `relativeNumbers` show whatever the layout") then holds for `relativeNumbers` alone.

@@ -472,7 +472,8 @@ func NiriLookNodes(look any) *jsonx.Array {
 	}
 	if g := get(look, "gaps"); truthy(g) {
 		inner := math.Max(0, round(num(get(g, "inner"))))
-		edge := math.Max(0, round(num(get(g, "outer")))-inner)
+		// The struts add to the gaps at the edge (a negative one narrows it)
+		edge := round(num(get(g, "outer"))) - inner
 		layout("gaps", inner)
 		for _, side := range []string{"left", "right", "top", "bottom"} {
 			layout("struts."+side, edge)
