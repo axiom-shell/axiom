@@ -78,7 +78,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 30 | compositor-05 | major | Done: The daemon's mode lifecycle (detect, load, leave, claim) | 6 | ~350 | compositor-01 |  |
 | 31 | compositor-06 | major | Done: Takeover and the user's config files | 5 | ~250 | compositor-01 |  |
 | 32 | compositor-07 | major | Done: The bind merge's remove, and reading sway and niri binds | 6 | ~200 | compositor-01 |  |
-| 33 | compositor-08 | major | What a moved bind becomes | 3 | ~120 | compositor-07 |  |
+| 33 | compositor-08 | major | Done: What a moved bind becomes | 3 | ~120 | compositor-07 |  |
 | 34 | compositor-21 | major | Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
 | 35 | compositor-09 | major | Applying monitor rules | 4 | ~150 | compositor-05 |  |
 | 36 | compositor-10 | major | The trial Apply and the Monitors page | 3 | ~80 | none |  |
@@ -343,10 +343,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A sway line continuing a non-bind line is moved as a bind of its own
   - A sway title-bar mouse bind moves in as a whole-window bind
   - The sway extract's input-device case and isSwayFlag repeat the general rule
-- **compositor-08** (3; two entries fixed by the bind actions PR):
-  - [The Hyprland and sway bind merges each skip half of compositor/actions](../issues.md#the-hyprland-and-sway-bind-merges-each-skip-half-of-compositoractions)
-  - [sway's merge moves workspace binds as raw sway commands](../issues.md#sways-merge-moves-workspace-binds-as-raw-sway-commands)
-  - [niri's confirming quit moves in as an instant log out](../issues.md#niris-confirming-quit-moves-in-as-an-instant-log-out)
+- **compositor-08** (3, done):
+  - The Hyprland and sway bind merges each skip half of compositor/actions
+  - sway's merge moves workspace binds as raw sway commands
+  - niri's confirming quit moves in as an instant log out
 - **compositor-21** (4):
   - [A sway bind using a variable from an include moves as a literal $name](../issues.md#a-sway-bind-using-a-variable-from-an-include-moves-as-a-literal-name)
   - [A niri spawn of one word with a space moves as a broken shell command](../issues.md#a-niri-spawn-of-one-word-with-a-space-moves-as-a-broken-shell-command)
