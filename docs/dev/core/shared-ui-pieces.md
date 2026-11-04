@@ -90,6 +90,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `DragChip`: a carryable icon + name pill.
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.
 - `InspectorHeader`: icon well, name, place, actions, divider.
+- `UndoRedoButtons`: an editor's Undo and Redo buttons, enabled from its `canUndo` / `canRedo` (an `EditHistory`'s, `qml/services/ui/EditHistory`: snapshots before each edit, edits to one field joining a step, up to 50).
 - `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title.
 
 ### Forms (`forms/`)

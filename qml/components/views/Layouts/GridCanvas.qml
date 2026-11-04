@@ -164,24 +164,12 @@ Card {
       Layout.minimumHeight: Widget.height + Widget.padding
       spacing: Widget.spacing
 
-      RowLayout {
+      UndoRedoButtons {
         visible: root.editable
-        spacing: 0
-
-        FlatIconButton {
-          size: Widget.iconButton
-          iconText: "undo"
-          tooltipText: I18n.tr("Undo")
-          enabled: root.dragLayer.editor.canUndo
-          onClicked: root.dragLayer.editor.undo()
-        }
-        FlatIconButton {
-          size: Widget.iconButton
-          iconText: "redo"
-          tooltipText: I18n.tr("Redo")
-          enabled: root.dragLayer.editor.canRedo
-          onClicked: root.dragLayer.editor.redo()
-        }
+        canUndo: root.dragLayer.editor.canUndo
+        canRedo: root.dragLayer.editor.canRedo
+        onUndo: root.dragLayer.editor.undo()
+        onRedo: root.dragLayer.editor.redo()
       }
 
       StyledIcon {
