@@ -353,7 +353,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A sway exec chained with ; or , moves in as one shell command
   - A $' or $& in a bind's argument is read as a replacement pattern
 - **compositor-09** (4):
-  - [A failed monitor profile apply is never retried for the same outputs](../issues.md#a-failed-monitor-profile-apply-is-never-retried-for-the-same-outputs)
+  - A failed monitor profile apply is never retried for the same outputs
   - [A sway output rule by description misses a monitor with no serial](../issues.md#a-sway-output-rule-by-description-misses-a-monitor-with-no-serial)
   - [The Monitors page's Apply misses a niri-spelled monitor on Hyprland and sway](../issues.md#the-monitors-pages-apply-misses-a-niri-spelled-monitor-on-hyprland-and-sway)
   - [Managed mode's monitor-conflict check misses quoted and block output lines](../issues.md#managed-modes-monitor-conflict-check-misses-quoted-and-block-output-lines)

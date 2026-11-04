@@ -437,12 +437,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### A failed monitor profile apply is never retried for the same outputs
-- **Where:** `backend/internal/compositor/manager/outputs.go` (`profileSwitch.apply`, `ProfileWatch`)
-- **What:** `p.applied = key` is set (outputs.go:170) before `p.io.Apply` (:171). When Apply fails (a 5 s socket timeout from a busy Hyprland, a refused rule), the same outputs and rules count as applied, and later calls return early until a hotplug, a rules edit or a compositor reload changes the key. Both callers only log the error. In the greeter nothing resets `applied`, so its monitors keep Hyprland's own layout until something is replugged. Fix: set `p.applied = key` only once Apply returns nil.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### One refused line stops the rest of a Hyprland eval
 - **Where:** `backend/internal/compositor/manager/hypr.go` (`runtimeApply`), `backend/internal/compositor/manager/outputs.go` (the Hyprland branch of `apply`)
 - **What:** Two chunks are sent as one eval with no `pcall`, unlike `addLayerRules`, which wraps each rule for exactly this. `runtimeApply` (hypr.go:221-228) puts the binds, required settings, look/input/blur and strips lines first and `AXIOM_RUNTIME_KEYS = {…}` last: a look or strips line Hyprland raises on (an option this version doesn't know) leaves the binds live but unrecorded, so the next apply unbinds nothing, reads axiom's own binds as the user's, reports them in `skippedKeys` and stops managing them until Hyprland reloads (and `AXIOM_STRIPS` stays unset). `outputs.apply` joins every `hl.monitor` call into one eval (outputs.go:52), so the first refused rule leaves the monitors after it unlaid; niri's branch below sends them one at a time for that reason. PLAUSIBLE: whether `hl.config`/`hl.monitor` raise on a bad value wants one nested Hyprland run. Fix: emit `AXIOM_RUNTIME_KEYS` right after the binds and wrap the look/input/blur and strips groups each in `pcall`; wrap each `hl.monitor` in `pcall`, collect the errors and `error(table.concat(e, "; "))` at the end so the refusal is still reported.

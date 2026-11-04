@@ -153,7 +153,8 @@ func (p *profileSwitch) matched(profiles any) string {
 }
 
 // apply applies profiles' rules for the outputs read, unless they're
-// what was applied last for the same outputs or no profile matches.
+// what was applied last for the same outputs or no profile matches. A
+// failed apply is tried again on the next call.
 func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 	rules := p.rules(profiles)
 	if rules == nil || len(rules.Items) == 0 {
@@ -168,8 +169,11 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 	if key == p.applied {
 		return nil
 	}
+	if err := p.io.Apply(ctx, rules, tree(p.outputs)); err != nil {
+		return err
+	}
 	p.applied = key
-	return p.io.Apply(ctx, rules, tree(p.outputs))
+	return nil
 }
 
 // ProfileWatch keeps a saved monitor profile applied where no config
