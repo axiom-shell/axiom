@@ -87,7 +87,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 39 | compositor-13 | major | Done: The window look as written and read back | 5 | ~120 | compositor-03, compositor-04 | Q7 |
 | 40 | compositor-20 | major | Done: Blur fills | 2 | ~20 | compositor-03 |  |
 | 41 | compositor-14 | major | Done: Capability gates in the schema | 3 | ~80 | none |  |
-| 42 | compositor-15 | major | The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
+| 42 | compositor-15 | major | Done: The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
 | 44 | compositor-17 | minor-sweep | Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
 | 45 | compositor-18 | plan | Touchpad settings apart from the mouse's | 1 | needs a plan | none |  |
@@ -384,10 +384,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - "Fire on release" is offered on niri and silently dropped
   - Three settings stay editable on niri though its writer drops them
   - Wide active is hidden in the perMonitor layout but still applies there
-- **compositor-15** (3):
+- **compositor-15** (3, done):
   - The detached layer's unbind list can drift from what sway holds
   - noteReload counts every compositor reload a second time
-  - [One refused line stops the rest of a Hyprland eval](../issues.md#one-refused-line-stops-the-rest-of-a-hyprland-eval)
+  - One refused line stops the rest of a Hyprland eval
 - **compositor-16** (6):
   - [The Keybinds page goes stale after a detached-mode Save](../issues.md#the-keybinds-page-goes-stale-after-a-detached-mode-save)
   - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](../issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)

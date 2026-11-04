@@ -13,8 +13,8 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/compositor/ipc"
 )
 
-// fakeHyprland answers every request on dir's request socket with "ok",
-// sending what it was asked on the returned channel
+// fakeHyprland answers every request on dir's request socket with "ok"
+// ("[]" to a JSON one), sending what it was asked on the returned channel
 func fakeHyprland(t *testing.T) (string, <-chan string) {
 	t.Helper()
 	// Unix socket paths are short: t.TempDir can be too long
@@ -38,7 +38,11 @@ func fakeHyprland(t *testing.T) (string, <-chan string) {
 			buf := make([]byte, 1<<20)
 			n, _ := c.Read(buf)
 			asked <- string(buf[:n])
-			io.WriteString(c, "ok")
+			if strings.HasPrefix(string(buf[:n]), "j/") {
+				io.WriteString(c, "[]")
+			} else {
+				io.WriteString(c, "ok")
+			}
 			c.Close()
 		}
 	}()
@@ -82,5 +86,23 @@ func TestLayerRules(t *testing.T) {
 	}
 	if err := (&Manager{w: &fakeWriter{}}).AddLayerRules(ctx); err == nil {
 		t.Error("layer rules added on another compositor")
+	}
+}
+
+// The runtime layer records its keys right after the binds, ahead of the
+// look and strips: a Lua error there (an hl function this version lacks)
+// would leave the binds live but unrecorded
+func TestRuntimeKeysFollowTheBinds(t *testing.T) {
+	t.Parallel()
+	tables, schema := repo(t)
+	dir, asked := fakeHyprland(t)
+	w := newHypr(env2(tables, schema, func(string) string { return "" }), &ipc.Hypr{Dir: dir})
+	w.runtimeApply(context.Background(), Inputs{}, func() []string { return []string{"hl.look()"} })
+	for range 3 { // the unbind, the binds and the animations read
+		<-asked
+	}
+	sent := <-asked
+	if k, l := strings.Index(sent, "AXIOM_RUNTIME_KEYS = {"), strings.Index(sent, "hl.look()"); k < 0 || l < k {
+		t.Errorf("the keys aren't recorded ahead of the look: %q", sent)
 	}
 }

@@ -22,7 +22,8 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
 - The keys it bound live in Hyprland's Lua state (`AXIOM_RUNTIME_KEYS`):
   - a Hyprland reload resets them, along with the binds
   - they survive a qs reload
-  - they are unbound before the binds are read.
+  - they are unbound before the binds are read
+  - they're set right after the binds, ahead of the look and strips: a Lua error there (an `hl` function this version lacks) stops the rest of the eval. A value Hyprland refuses (an option it doesn't know, a bad `hl.monitor` field) isn't one: it reports it and runs on (checked in nested Hyprland 0.57), so the monitor rules go as one eval too.
 - The runtime layer starts over when Hyprland reloads while it reads the binds (the event stream's `seenReload()` counts them as they come). A plan from another config would record that config's keys in `AXIOM_RUNTIME_KEYS`, and `clear()` would then unbind them.
 
 ### `included`
