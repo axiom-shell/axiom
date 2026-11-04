@@ -21,10 +21,10 @@ Rectangle {
   // Its icon and name; off, only what's put in it shows (the bar
   // editor's live widgets)
   property bool showsLabel: true
-  // What's put in it runs down, the chip as wide as it's otherwise high
-  // (a side bar's live widgets); a chip showing its name stays a row
+  // Runs down, as wide as it's otherwise high (a side bar's widgets):
+  // its name turned as a vertical bar turns text, the rest centred across
   property bool vertical: false
-  readonly property bool _column: root.vertical && !root.showsLabel
+  readonly property bool _column: root.vertical
   property alias dragLayer: area.dragLayer
   // What dragging it carries; null: it can't be dragged
   property alias payload: area.payload
@@ -66,11 +66,30 @@ Rectangle {
       visible: root.showsLabel
       text: root.icon
       textColor: root.selected ? Theme.background : Theme.accent
+      horizontalAlignment: Text.AlignHCenter
       Layout.preferredWidth: Appearance.fontSize * 1.3
+      Layout.alignment: Qt.AlignCenter
+    }
+
+    // In a column, turned (StyledText.isVertical), in a box its turned size
+    Item {
+      visible: root.showsLabel && root._column
+      implicitWidth: turnedLabel.implicitHeight
+      implicitHeight: turnedLabel.implicitWidth
+      Layout.alignment: Qt.AlignCenter
+
+      StyledText {
+        id: turnedLabel
+        anchors.centerIn: parent
+        isVertical: true
+        text: root.label
+        textColor: root.ink
+        font.bold: root.selected
+      }
     }
 
     StyledText {
-      visible: root.showsLabel
+      visible: root.showsLabel && !root._column
       text: root.label
       textColor: root.ink
       font.bold: root.selected

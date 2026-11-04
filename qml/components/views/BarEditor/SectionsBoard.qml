@@ -83,6 +83,7 @@ FocusScope {
   }
 
   implicitHeight: column.implicitHeight + Widget.padding * 2
+  // A side bar's: as wide as its lanes (one widget each, until one wraps)
   implicitWidth: lanes.implicitWidth + Widget.padding * 2
 
   // The bar editor's keys, while the board has focus
@@ -355,9 +356,9 @@ FocusScope {
             id: lane
             required property var modelData
 
-            // Side by side, the columns share a board narrower than
-            // they'd like
-            Layout.fillWidth: true
+            // Rows fill the board; side by side, the columns are a widget
+            // wide each (more where they wrap)
+            Layout.fillWidth: !root.vertical
             Layout.fillHeight: root.vertical
             Layout.preferredWidth: root.vertical ? lane.implicitWidth : -1
             maxChipWidth: root.vertical ? Math.max(Widget.px(60), (root.maxWidth - Widget.padding * 2 - Widget.spacing * 2) / 3 - Widget.padding * 2) : Infinity

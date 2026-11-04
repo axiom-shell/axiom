@@ -98,6 +98,7 @@ DragChip {
 
   // Hidden on the bar
   StyledIcon {
+    Layout.alignment: Qt.AlignCenter
     visible: root.hiddenWidget
     text: "visibility_off"
     textColor: root._markInk
@@ -106,6 +107,7 @@ DragChip {
 
   // No room for it on the bar
   StyledIcon {
+    Layout.alignment: Qt.AlignCenter
     visible: root.crowded && !root.hiddenWidget
     text: "compress"
     textColor: root.selected ? root._markInk : Theme.warning
@@ -113,6 +115,7 @@ DragChip {
 
   // When it goes on a crowded bar
   CountBadge {
+    Layout.alignment: Qt.AlignCenter
     shown: root.dropOrder > 0
     text: String(root.dropOrder)
     color: root.selected && root.showsLabel ? Theme.background : Theme.accent
