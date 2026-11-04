@@ -229,8 +229,10 @@ ColumnLayout {
       }
     }
 
+    // A set mirror can always be turned off: a profile saved where the
+    // compositor mirrors, opened where it can't
     FormRow {
-      shown: CompositorManager.supports.monitorMirror === true && (mirrorField.targets.length > 0 || !!root.rule?.mirror)
+      shown: !!root.rule?.mirror || (CompositorManager.supports.monitorMirror === true && mirrorField.targets.length > 0)
       bodyHeight: mirrorField.implicitHeight
 
       SchemaComboBox {

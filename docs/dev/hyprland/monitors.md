@@ -20,7 +20,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
   - `mirror` (another rule's `output`)
   - `vrr`, `bitdepth`, `cm`
   - `sdrBrightness`/`sdrSaturation`.
-- The inspector shows `mirror` only with `supports.monitorMirror`, and the color mode and SDR fields only with `supports.monitorColor`.
+- The inspector shows `mirror` only with `supports.monitorMirror` or when the rule has one (a profile saved under another compositor: it can always be turned off), and the color mode and SDR fields only with `supports.monitorColor`.
 
 ### Editing
 - The page edits a `ConfigDraft`.

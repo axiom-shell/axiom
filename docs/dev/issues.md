@@ -413,18 +413,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the compositor system
 
-### A trial monitor Apply that turns a monitor off drops its Keep/Revert
-- **Where:** `qml/services/compositor/MonitorManager.qml` (`onOutputsHotplugged`, `apply`, `revert`), `qml/services/compositor/HyprlandManager.qml` (`_announce`)
-- **What:** `apply()` evaluates the trial rules and sets `pending`; the hotplug handler (MonitorManager.qml:451-456) ends any pending trial (`pending = false; _countdown.stop()`), assuming the hotplug means the daemon already switched profiles. A trial whose rules disable or mirror a monitor makes Hyprland remove that output (`monitorremoved` → `outputsHotplugged`), so the trial ends itself: the prompt goes, the 15 s auto-revert is cancelled, `axiom ipc monitors revert` does nothing (`revert()` returns while `!pending`), and the trial layout stays live, unsaved. Turning the wrong monitor off is the case the revert exists for. Code path confirmed; that Hyprland sends `monitorremoved` for a rule-disabled monitor wants one nested Hyprland run (`scripts/dev/nested.sh hyprland`). Fix: end the trial only on a hotplug the trial's own rules don't explain (record the outputs `apply()` expects to stay enabled), or keep the countdown running. That makes a prompt window created while shown reachable, and `MonitorPromptWindow.qml:33` registers as modal only in `onVisibleChanged`: the fix should also register in `Component.onCompleted` (`PolkitWindow.qml:53` has the same pattern) (the hyprland review, 2026-10-30).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A shell reload during a trial monitor Apply loses the way back
-- **Where:** `qml/services/compositor/MonitorManager.qml` (`pending`, `_revertRules`, `_revertDetails`, the `monitors` IPC `revert`)
-- **What:** The trial state is plain properties (MonitorManager.qml:303-308), no `PersistentProperties`. A QML reload or a crash `axiom run` restarts within the 15 s leaves `pending` false and the snapshot gone: the countdown never reverts, and `axiom ipc monitors revert` (documented as the recovery from a layout that can't be seen) is a no-op. The unsaved trial layout stays until the next hotplug or config reload. PLAUSIBLE as a scenario (needs a reload or crash in the window; a monitor change is a common crash trigger). Fix: keep `pending`, `secondsLeft` and the two snapshots in `PersistentProperties`; for a crash, the daemon could own the trial (`outputs.apply` with a trial flag it reverts itself unless `outputs.keep` arrives).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### The Keybinds page goes stale after a detached-mode Save
 - **Where:** `qml/services/compositor/KeybindManager.qml` (`refreshSoon`, `_appliedBinds`, `userKeyCounts`), `backend/internal/compositor/manager/hypr.go` (`runtimeApply`)
 - **What:** In detached mode the daemon re-applies binds by eval only (`runtimeApply`, no reload, so no `configreloaded`). The page re-reads Hyprland's binds only on `configReloaded`, on open, and through `refreshSoon`, whose one caller is the merge (KeybindEditor.qml:500); the Go port (dd773ed) dropped the two `refreshSoon()` calls the QML runtime layer (`RuntimeLayer.qml`) made after each apply. `_appliedBinds` follows the daemon's state at once, so the two disagree until the page reopens: move a bind from SUPER + Q to SUPER + W and Save, and SUPER + Q shows as the user's own bind (reference, key map colour, "Your compositor config uses this key" on a new bind there) while SUPER + W is missing. Fix: `on_AppliedBindsChanged: refreshSoon()` in KeybindManager (its debounce and `_readAgain` guard already absorb bursts).
@@ -532,6 +520,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### The Monitors page's off and mirroring buttons throw when one leaves the list
+- **Where:** `qml/components/views/Monitors/MonitorCanvas.qml` (the `others` Repeater)
+- **What:** The Repeater's model is `root.others.length`, and each delegate reads `root.others[index]`: when the list shrinks (Reset, or a hotplug re-detect, after a monitor was turned off in the draft) the delegates about to go re-evaluate first with `rule` undefined, logging `TypeError: Cannot read property 'output' of undefined` and `Cannot read property 'disabled' of undefined` from `MonitorCanvas.qml` (seen in a nested Hyprland, 2026-11-04). Harmless beyond the log; the model could be the list itself, or the reads guarded.
+- **Size:** trivial
+- **Found:** 2026-11-04, while testing the trial Apply (compositor-10)
 
 ### The monitor editor shows changes nobody made
 - **Where:** `qml/services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `qml/components/views/Monitors/Monitors.qml`
@@ -664,12 +658,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### In the standard layout, a switch past `count` slides through an unrelated workspace
 - **Where:** `qml/services/compositor/CompositorManager.qml:467` (`goToWorkspace`), `qml/services/compositor/CompositorManager.qml:566` (`nthWorkspace`), `qml/services/ui/LauncherCommands.qml:375` (`/ws`)
 - **What:** The legs are planned whenever the *current* workspace is inside the block (`from >= 0 && from < size`), never checking the target. The standard layout has no block refusal (`perMonitorBlocks` false), so ids past `count` reach it: the default binds call `workspaces nth 1`..`10` (config.schema.json's `workspaceNth` defaults), which in the standard layout is `goToWorkspace(n)`, and `/ws 15` or `workspaces go 15` do the same. `cols` is `WorkspacesConfig.columns`, which is `count` outside the grid, so a target past the one row gets a sideways leg into the current row and a vertical leg on. The leg code run with real values: count 5, on workspace 3, Super+7 → `[{id:2,axis:"x"},{id:7,axis:"y"}]`; count 10, on 3, `/ws 15` → `[{id:5,axis:"x"},{id:15,axis:"y"}]`. Hyprland (the only backend with `workspaceSlide`) shows workspace 2 (or 5) — creating it if empty — then slides vertically in a layout the code's own comment says "only ever slide[s] sideways". Fix: plan legs only when both ends are in the block: `from >= 0 && from < size && to >= 0 && to < size`; otherwise one plain leg.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed
-- **Where:** `qml/components/views/Monitors/MonitorInspector.qml:230` (Mirror row `shown`), `qml/components/views/Monitors/MonitorInspector.qml:251`, `qml/components/views/Monitors/MonitorInspector.qml:268` (X/Y `shown: !root.rule?.mirror`), `qml/components/views/Monitors/MonitorCanvas.qml:19` (`others`), `qml/services/compositor/MonitorManager.qml:275` (`issues`)
-- **What:** monitors.md › Profiles: "a profile saved under one compositor is picked under another". A profile saved under Hyprland with a mirrored monitor (`mirror: "desc:…"`), opened on sway or niri (no `supports.monitorMirror`): the Mirror row is hidden (`shown: CompositorManager.supports.monitorMirror === true && (…)`), and the X/Y rows are hidden because `mirror` is set. The canvas lists the monitor as "mirrors X" under the board, not as a tile (`placedRules` drops mirrors), so it can't be dragged or moved, and the overlap and island checks skip it, though neither sway.go nor niri.go renders `mirror` (grep finds none), so that compositor lights it at its saved x/y. If X is off, the error "mirrors a monitor that isn't shown" (MonitorManager.qml:275) blocks Apply, and nothing on the page can clear it. Fix: let a set mirror always be turned off: `shown: !!root.rule?.mirror || (CompositorManager.supports.monitorMirror === true && mirrorField.targets.length > 0)`.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
