@@ -5,7 +5,7 @@
 x-actions: the commands a custom widget element runs, in order (keys of its `actions`; `CustomWidgetsConfig.elementKinds`).
 x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
-x-auto: a switch in front of an integer whose `value` means automatic.
+x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'
 x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
 x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
 x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
@@ -33,6 +33,7 @@ x-icon: a Material Symbols name on bar widget, overlay module and view definitio
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
 x-keyboard: the module takes typing.
+x-keywords: more words a bar widget type is found by in the bar editor's library (`LibraryOrder.filtered`), such as its old label.
 x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget or overlay module type is sorted into.
 x-libraryGroups: "(root) the groups, in order, the bar editor's and layouts editor's libraries sort their types into."
 x-link: where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition.

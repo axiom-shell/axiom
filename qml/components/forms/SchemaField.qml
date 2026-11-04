@@ -287,7 +287,8 @@ Loader {
 
   // An integer with an automatic value (`x-auto`: { value, start }): a
   // switch for setting it by hand, then the number. Turning it on starts
-  // at `start`; off stores `value`.
+  // at `start`; off stores `value`, which may be null (validation lets a
+  // null automatic value through, as an inheriting one's).
   Component {
     id: autoSpinField
     ColumnLayout {
@@ -310,7 +311,8 @@ Loader {
         visible: autoField.custom
         label: ""
         currentConfigValue: autoField.custom ? root.current : autoField.auto.start
-        minimum: Math.max(root.fieldSchema.minimum ?? 0, autoField.auto.value + 1)
+        // (A null automatic value leaves the whole range to the number)
+        minimum: autoField.auto.value === null ? (root.fieldSchema.minimum ?? 0) : Math.max(root.fieldSchema.minimum ?? 0, autoField.auto.value + 1)
         maximum: root.fieldSchema.maximum ?? 9999
         stepSize: root.fieldSchema.multipleOf ?? 1
         unit: root.fieldSchema["x-unit"] ?? ""
