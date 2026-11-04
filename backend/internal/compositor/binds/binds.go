@@ -220,6 +220,15 @@ func movedBind(key string, action, extra *jsonx.Object, nativeRepeat bool) *json
 	return entry
 }
 
+// execBind is a command the compositor runs as an axiom bind: the action
+// doing the same (actions.CommandAction), else an exec of it
+func execBind(command string) *jsonx.Object {
+	if entry := actions.Default().CommandAction(command); entry != nil {
+		return entry
+	}
+	return jsonx.Obj("action", "exec", "argument", command)
+}
+
 // directions are the directions focus and move take
 var directions = map[string]bool{"left": true, "right": true, "up": true, "down": true}
 

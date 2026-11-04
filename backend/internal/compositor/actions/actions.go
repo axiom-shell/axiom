@@ -163,6 +163,19 @@ func (t *Table) IPCAction(command string) *jsonx.Object {
 	return nil
 }
 
+// CommandAction is the axiom bind a command the compositor runs is when an
+// axiom action does the same: IPCAction's, else MediaAction's ({ action }),
+// else nil. Every bind merge maps an exec through it.
+func (t *Table) CommandAction(command string) *jsonx.Object {
+	if entry := t.IPCAction(command); entry != nil {
+		return entry
+	}
+	if media := MediaAction(command); media != "" {
+		return jsonx.Obj("action", media)
+	}
+	return nil
+}
+
 func unquote(text string) string {
 	text = strings.TrimSpace(text)
 	if len(text) >= 2 && text[0] == '\'' && text[len(text)-1] == '\'' {

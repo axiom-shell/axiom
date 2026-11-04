@@ -9,7 +9,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/userconf"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
@@ -172,6 +171,14 @@ func execText(arguments string) string {
 	return strings.Join(words, " ")
 }
 
+// sway's workspace switches and moves by number or next/prev, the move as
+// `move [container|window] [to] workspace`
+var (
+	swayWorkspace     = regexp.MustCompile(`^workspace (?:number )?([1-9][0-9]*|next|prev)$`)
+	swayToWorkspace   = regexp.MustCompile(`^move (?:container |window )?(?:to )?workspace (?:number )?([1-9][0-9]*|next|prev)$`)
+	swayWorkspaceStep = map[string]string{"next": "right", "prev": "left"}
+)
+
 func swayAction(command string) *jsonx.Object {
 	words := strings.Fields(command)
 	simple := map[string]string{"kill": "closeWindow", "fullscreen": "fullscreen", "fullscreen toggle": "fullscreen",
@@ -186,12 +193,19 @@ func swayAction(command string) *jsonx.Object {
 	if len(words) == 2 && words[0] == "move" && directions[words[1]] {
 		return jsonx.Obj("action", "moveWindowDir", "argument", words[1])
 	}
-	if len(words) > 0 && words[0] == "exec" {
-		argument := execText(string([]rune(command)[4:]))
-		if entry := actions.Default().IPCAction(argument); entry != nil {
-			return entry
+	for _, w := range []struct {
+		re        *regexp.Regexp
+		nth, step string
+	}{{swayWorkspace, "workspaceNth", "workspaceStep"}, {swayToWorkspace, "moveWindowNth", "moveWindowStep"}} {
+		if m := w.re.FindStringSubmatch(strings.Join(words, " ")); m != nil {
+			if d, ok := swayWorkspaceStep[m[1]]; ok {
+				return jsonx.Obj("action", w.step, "argument", d)
+			}
+			return jsonx.Obj("action", w.nth, "argument", m[1])
 		}
-		return jsonx.Obj("action", "exec", "argument", argument)
+	}
+	if len(words) > 0 && words[0] == "exec" {
+		return execBind(execText(string([]rune(command)[4:])))
 	}
 	return jsonx.Obj("action", "raw", "argument", command, "compositor", "sway")
 }

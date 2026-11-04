@@ -10,15 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/edit"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/luacheck"
 	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
-
-// mediaAction is the axiom action a volume, brightness or media command is
-var mediaAction = actions.MediaAction
 
 var (
 	// The files a takeover moves the previous hyprland.lua to
@@ -90,25 +86,22 @@ func workspaceNumber(workspace any) string {
 	return ""
 }
 
-// execAction is an exec_cmd's command as an axiom action, when one does
-// the same
-func execAction(command string) (string, string, bool) {
+// execAction is an exec_cmd's command as an axiom bind, or nil
+func execAction(command string) *jsonx.Object {
 	command = strings.TrimSpace(command)
 	if command == render.HyprExitCommand {
-		return "exitSession", "", true
+		return jsonx.Obj("action", "exitSession")
 	}
 	if command == "" {
-		return "", "", false
+		return nil
 	}
-	if media := mediaAction(command); media != "" {
-		return media, "", true
-	}
-	return "exec", command, true
+	return execBind(command)
 }
 
-// mapDispatcher is the action and argument for a dispatcher and its
-// arguments
-func mapDispatcher(name string, args []any) (string, string, bool) {
+// mapDispatcher is the axiom bind ({ action, argument, call }, the last two
+// when it has them) for a dispatcher and its arguments, or nil
+func mapDispatcher(name string, args []any) *jsonx.Object {
+	to := func(action, argument string) *jsonx.Object { return jsonx.Obj("action", action, "argument", argument) }
 	var one any
 	if len(args) == 1 {
 		one = args[0]
@@ -122,41 +115,41 @@ func mapDispatcher(name string, args []any) (string, string, bool) {
 			"window.pin": "pin", "window.center": "centerWindow", "group.toggle": "toggleGroup",
 			"window.drag": "mouseDrag", "window.resize": "mouseResize"}
 		if action, ok := simple[name]; ok {
-			return action, "", true
+			return to(action, "")
 		}
 	}
 	if name == "layout" && one == "togglesplit" {
-		return "toggleSplit", "", true
+		return to("toggleSplit", "")
 	}
 	if s, ok := one.(string); ok && name == "workspace.toggle_special" && s != "" {
-		return "toggleSpecial", s, true
+		return to("toggleSpecial", s)
 	}
 	if isTable && len(table) == 1 {
 		for key, value := range table {
 			s, isString := value.(string)
 			switch {
 			case name == "window.float" && key == "action" && value == "toggle":
-				return "toggleFloat", "", true
+				return to("toggleFloat", "")
 			case name == "focus" && key == "direction" && isString && directions[s]:
-				return "focusDir", s, true
+				return to("focusDir", s)
 			case name == "window.move" && key == "direction" && isString && directions[s]:
-				return "moveWindowDir", s, true
+				return to("moveWindowDir", s)
 			case (name == "focus" || name == "window.move") && key == "workspace":
 				goTo := name == "focus"
 				if n := workspaceNumber(value); n != "" {
 					if goTo {
-						return "workspaceNth", n, true
+						return to("workspaceNth", n)
 					}
-					return "moveWindowNth", n, true
+					return to("moveWindowNth", n)
 				}
 				if d := step(value); d != "" {
 					if goTo {
-						return "workspaceStep", d, true
+						return to("workspaceStep", d)
 					}
-					return "moveWindowStep", d, true
+					return to("moveWindowStep", d)
 				}
 				if !goTo && isString && strings.HasPrefix(s, "special:") && len([]rune(s)) > 8 {
-					return "moveToSpecial", string([]rune(s)[8:]), true
+					return to("moveToSpecial", string([]rune(s)[8:]))
 				}
 			}
 		}
@@ -165,10 +158,10 @@ func mapDispatcher(name string, args []any) (string, string, bool) {
 		x, xOK := table["x"].(float64)
 		y, yOK := table["y"].(float64)
 		if xOK && yOK {
-			return "resizeWindow", pyG(x) + " " + pyG(y), true
+			return to("resizeWindow", pyG(x)+" "+pyG(y))
 		}
 	}
-	return "", "", false
+	return nil
 }
 
 // pyG is a number as Python's :g writes it
@@ -195,15 +188,21 @@ func toAxiom(b luaBind, adopted bool) (*jsonx.Object, [2]string) {
 		sort.Strings(unknown)
 		return nil, [2]string{"options", strings.Join(unknown, ", ")}
 	}
-	action, argument, ok := mapDispatcher(b.dispatcher, b.args)
-	if !ok {
-		action, argument = "raw", b.lua
+	mapped := mapDispatcher(b.dispatcher, b.args)
+	if mapped == nil {
+		mapped = jsonx.Obj("action", "raw", "argument", b.lua)
+	}
+	action, _ := mapped.Value("action").(string)
+	argument, _ := mapped.Value("argument").(string)
+	call, hasCall := mapped.Value("call").(string)
+	if !hasCall {
+		call = "toggle"
 	}
 	key := b.key
 	if moved, ok := exampleKeys[[2]string{render.KeyID(b.key), action}]; ok && adopted {
 		key = moved
 	}
-	bind := jsonx.Obj("key", key, "action", action, "argument", argument, "call", "toggle")
+	bind := jsonx.Obj("key", key, "action", action, "argument", argument, "call", call)
 	if action == "raw" {
 		bind.Set("compositor", "hyprland")
 	}

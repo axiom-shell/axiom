@@ -127,6 +127,14 @@ bindsym --whole-window $mod+button3 floating toggle
 bindsym --input-device=1:1:kbd $mod+y kill
 exec_always foo \
 bindsym $mod+z kill
+bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace number 4:web
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move to workspace 3
+bindsym $mod+Tab workspace next
+bindsym $mod+Shift+Tab move window to workspace prev
 `
 
 func TestSwayExtract(t *testing.T) {
@@ -145,6 +153,16 @@ func TestSwayExtract(t *testing.T) {
 	eq(t, binds["SUPER + 1"], `{"key":"SUPER + 1","action":"workspaceNth","argument":"1"}`)
 	eq(t, binds["SUPER + X"], `{"key":"SUPER + X","action":"raw","argument":"layout tabbed","compositor":"sway","repeating":true}`)
 	eq(t, binds["SUPER + code:49"], `{"key":"SUPER + code:49","action":"exec","argument":"thing"}`)
+	// An exec of a media command is its action, as on the other compositors
+	eq(t, binds["XF86AudioLowerVolume"], `{"key":"XF86AudioLowerVolume","action":"volumeDown","repeating":true}`)
+	// Workspaces by number and next/prev are axiom's; a named one stays sway's
+	eq(t, binds["SUPER + 2"], `{"key":"SUPER + 2","action":"workspaceNth","argument":"2"}`)
+	eq(t, binds["SUPER + 3"], `{"key":"SUPER + 3","action":"workspaceNth","argument":"3"}`)
+	eq(t, binds["SUPER + 4"], `{"key":"SUPER + 4","action":"raw","argument":"workspace number 4:web","compositor":"sway","repeating":true}`)
+	eq(t, binds["SUPER + SHIFT + 2"], `{"key":"SUPER + SHIFT + 2","action":"moveWindowNth","argument":"2"}`)
+	eq(t, binds["SUPER + SHIFT + 3"], `{"key":"SUPER + SHIFT + 3","action":"moveWindowNth","argument":"3"}`)
+	eq(t, binds["SUPER + Tab"], `{"key":"SUPER + Tab","action":"workspaceStep","argument":"right"}`)
+	eq(t, binds["SUPER + SHIFT + Tab"], `{"key":"SUPER + SHIFT + Tab","action":"moveWindowStep","argument":"left"}`)
 	// A mode's binds aren't seen; sway options axiom binds lack stay
 	_, mode := binds["H"]
 	eq(t, mode, false)
@@ -323,6 +341,8 @@ func TestHyprMappingAndRawLua(t *testing.T) {
 		`hl.bind(mod .. " + W", hl.dsp.focus({ workspace = 3 }))`,
 		`hl.bind(mod .. " + M", hl.dsp.window.move({ workspace = "special:scratch" }))`,
 		`hl.bind(mod .. " + N", hl.dsp.window.tag({ tag = "a\nb", list = { 1, 2 } }))`,
+		`hl.bind(mod .. " + D", hl.dsp.exec_cmd("axiom ipc appLauncher toggle"))`,
+		`hl.bind(mod .. " + E", hl.dsp.exec_cmd("axiom ipc edgeMenu show 'left'"))`,
 		"",
 	}, "\n"))
 	binds := byKey(f.extract())
@@ -336,6 +356,9 @@ func TestHyprMappingAndRawLua(t *testing.T) {
 	eq(t, strings.Contains(binds["SUPER + M"], `"action":"moveToSpecial","argument":"scratch"`), true)
 	// Raw Lua as Lua writes it back: list part first, other keys sorted
 	eq(t, strings.Contains(binds["SUPER + N"], `"argument":"hl.dsp.window.tag({ list = { 1, 2 }, tag = \"a\\nb\" })"`), true)
+	// A command calling axiom is its action, with the call it names
+	eq(t, binds["SUPER + D"], `{"key":"SUPER + D","action":"launcher","argument":"","call":"toggle","locked":false,"repeating":false,"release":false,"description":""}`)
+	eq(t, strings.Contains(binds["SUPER + E"], `"action":"edgeMenu","argument":"left","call":"open"`), true)
 }
 
 func TestHyprWhatCantMoveStays(t *testing.T) {
@@ -598,6 +621,7 @@ binds {
     Mod+O repeat=false { toggle-overview; }
     Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
     Mod+Shift+E { quit; }
+    Ctrl+Alt+Delete { quit skip-confirmation=true; }
     Mod+W {
         toggle-column-tabbed-display
     }
@@ -619,7 +643,9 @@ func TestNiriExtract(t *testing.T) {
 	eq(t, binds["SUPER + Space"], `{"key":"SUPER + Space","action":"launcher","call":"toggle"}`)
 	eq(t, binds["XF86AudioRaiseVolume"], `{"key":"XF86AudioRaiseVolume","action":"volumeUp","locked":true,"repeating":true}`)
 	eq(t, binds["SUPER + O"], `{"key":"SUPER + O","action":"workspaceOverview"}`)
-	eq(t, strings.Contains(binds["SUPER + SHIFT + E"], `"exitSession"`), true)
+	// niri's quit asks first: it stays niri's; only one that doesn't is a log out
+	eq(t, strings.Contains(binds["SUPER + SHIFT + E"], `"action":"raw","argument":"quit"`), true)
+	eq(t, binds["CTRL + ALT + Delete"], `{"key":"CTRL + ALT + Delete","action":"exitSession"}`)
 	eq(t, strings.Contains(binds["SUPER + W"], `"toggleGroup"`), true)
 	eq(t, binds["SUPER + P"], `{"key":"SUPER + P","action":"exec","argument":"notify-send 'it'\"'\"'s' 'a b'"}`)
 	kept := list(found, "kept")
