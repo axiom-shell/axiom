@@ -117,8 +117,6 @@ Item {
       // It shrinks when crowded (`x-elastic`), so it takes a minimum and
       // maximum length
       readonly property bool elastic: root.dragLayer.typeInfo(editorRoot.widget.type)?.elastic ?? false
-      // A page or edge menu it opens, to edit in the layouts editor
-      readonly property var opens: OverlayManager.openedBy(editorRoot.widget)
 
       anchors.fill: parent
       spacing: Widget.spacing
@@ -134,6 +132,18 @@ Item {
             parts.push(I18n.tr("no room for it on {0}", root.crowdedOn.join(", ")));
           return parts.join(" · ");
         }
+        showsLinks: opensLink.available || typeLinks.shows
+        // What it opens, then where its feature is set (the type's `x-link`)
+        links: [
+          SettingsLink {
+            id: opensLink
+            widget: editorRoot.widget
+          },
+          FieldLinks {
+            id: typeLinks
+            links: root.dragLayer.typeInfo(editorRoot.widget.type)?.link
+          }
+        ]
 
         SquareIconButton {
           iconText: editorRoot.hidden ? "visibility_off" : "visibility"
@@ -202,20 +212,6 @@ Item {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             spacing: Widget.spacing
-
-            StyledTextButton {
-              visible: editorRoot.opens !== null
-              iconText: "edit"
-              text: I18n.tr("Edit {0} in Layouts", editorRoot.opens?.label ?? "")
-              textPadding: Widget.smallPadding
-              onClicked: OverlayManager.editOpenedBy(editorRoot.widget)
-            }
-
-            // Where its feature is set (the type's `x-link`)
-            FieldLinks {
-              Layout.fillWidth: true
-              links: root.dragLayer.typeInfo(editorRoot.widget.type)?.link
-            }
 
             OptionsGroup {
               propertiesSchema: editorRoot.propertiesSchema

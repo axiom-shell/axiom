@@ -8,13 +8,12 @@ import qs.components.reusable
 import qs.components.content.base
 
 // Bar editor: the selected bar's three sections, each a lane of draggable
-// widget chips that wrap (SectionLane): rows one under another for a top
-// or bottom bar, columns side by side for a side bar. Its header has undo
-// and redo, the drop order badges' switch, an Unsaved chip and the help in
-// a "?" (Save and Discard are BarsPanel's, which doesn't move); under it,
-// how the running bar fits on each screen it's on, the widgets it has no
-// room for as buttons selecting them, with Raise priority / Set max length
-// for a selected one. A chip's right click opens its menu; while the board
+// widget chips that wrap (SectionLane), one row under another whatever
+// the bar's edge. Its header has undo and redo, the drop order badges'
+// switch, an Unsaved chip and the help in a "?" (Save and Discard are
+// BarsPanel's, which doesn't move); under it, how the running bar fits on
+// each screen it's on, the widgets it has no room for as buttons selecting
+// them, with Raise priority / Set max length for a selected one. A chip's right click opens its menu; while the board
 // has focus (a chip clicked) it takes Delete, Ctrl+D, Alt+arrows, Escape
 // and Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
 FocusScope {
@@ -22,11 +21,7 @@ FocusScope {
 
   required property var dragLayer
 
-  readonly property bool vertical: root.dragLayer.vertical
   property string _pendingZone: ""
-  // The widest a side bar's board may be (the page gives it): its columns
-  // share it
-  property real maxWidth: Infinity
   // Each chip shows its place in the order a crowded bar drops widgets in
   property bool showDropOrder: false
 
@@ -83,8 +78,6 @@ FocusScope {
   }
 
   implicitHeight: column.implicitHeight + Widget.padding * 2
-  // A side bar's: as wide as its lanes (one widget each, until one wraps)
-  implicitWidth: lanes.implicitWidth + Widget.padding * 2
 
   // The bar editor's keys, while the board has focus
   Keys.onPressed: event => {
@@ -285,9 +278,11 @@ FocusScope {
         Repeater {
           model: root.turnedOff ? [] : root.crowded
 
+          // Wrapping at the board's width
           delegate: Flow {
             id: screenFit
             required property var modelData
+            width: parent?.width ?? 0
             spacing: Widget.spacing / 2
 
             StyledText {
@@ -340,14 +335,10 @@ FocusScope {
         }
       }
 
-      // The sections: rows down the board, or columns across it
-      GridLayout {
-        id: lanes
+      // The sections, one row under another
+      ColumnLayout {
         Layout.fillWidth: true
-        Layout.fillHeight: root.vertical
-        columns: root.vertical ? root.dragLayer.zones.length : 1
-        columnSpacing: Widget.spacing
-        rowSpacing: Widget.spacing
+        spacing: Widget.spacing
 
         Repeater {
           model: root.dragLayer.zones
@@ -356,15 +347,8 @@ FocusScope {
             id: lane
             required property var modelData
 
-            // Rows fill the board; side by side, the columns are a widget
-            // wide each (more where they wrap)
-            Layout.fillWidth: !root.vertical
-            Layout.fillHeight: root.vertical
-            Layout.preferredWidth: root.vertical ? lane.implicitWidth : -1
-            maxChipWidth: root.vertical ? Math.max(Widget.px(60), (root.maxWidth - Widget.padding * 2 - Widget.spacing * 2) / 3 - Widget.padding * 2) : Infinity
-            Layout.alignment: Qt.AlignTop
+            Layout.fillWidth: true
             dragLayer: root.dragLayer
-            vertical: root.vertical
             reports: root.reports
             zone: lane.modelData.key
             title: lane.modelData.label
@@ -382,7 +366,6 @@ FocusScope {
       }
 
       Item {
-        visible: !root.vertical
         Layout.fillHeight: true
       }
     }

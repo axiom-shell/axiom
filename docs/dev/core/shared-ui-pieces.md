@@ -90,7 +90,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `TrashTarget`: a "Drop to remove" pill shown while `active`, `targetKind: "trash"`, above overlapping targets. The layer's `accepts` says what it takes and its `dropped` removes it.
 - `DragChip`: a carryable icon + name pill; `highlighted` draws it hovered for a pointer elsewhere, and with `hasMenu` a right click is `menuRequested(x, y)`.
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.
-- `InspectorHeader`: icon well, name, place, actions, divider.
+- `InspectorHeader`: icon well, name, place, actions, then a wrapping row of `links` (shown while the host's `showsLinks`), divider.
 - `UndoRedoButtons`: an editor's Undo and Redo buttons, enabled from its `canUndo` / `canRedo` (an `EditHistory`'s, `qml/services/ui/EditHistory`: snapshots before each edit, edits to one field joining a step, up to 50).
 - `content/base/SaveResetActions`: an editor's Save/Discard pair, both shown only with unsaved edits or typed text. `compact` drops to icons, as `CardHeader` does when its row is too narrow. Items placed in a `CardHeader` sit just after its title. Its `help` (and `TitledCard.help`) is a "?" after the title saying what the panel is for in a `StyledToolTip` on hover (wrapped at its `maxWidth`).
 
@@ -102,7 +102,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `SettingRows`: dotted config paths as rows, saved debounced.
 - `OptionsGroup`: an inspector's Options card (problem, form, empty text).
 - `IntegrationHookup`: a theme integration's hookup (text to copy, what Apply does, Apply).
-- `SettingsLink`: an accent text link to where something else is set: a `setting` (a key path: `SettingsManager.openSetting`, which opens its card and outlines its row) or a `page` (a view type, or `Layouts:lockscreen` / `greeter` / `desktop`: `OverlayManager.followPageLink`). Named from its target unless `text` is set, and followed as a link, so the navigator offers the way back. It hides itself when its target isn't there; a host hiding it on its own condition binds `visible` to `available` and that.
+- `SettingsLink`: an accent text link to where something else is set: a `setting` (a key path: `SettingsManager.openSetting`, which opens its card and outlines its row) a `page` (a view type, or `Layouts:lockscreen` / `greeter` / `desktop`: `OverlayManager.followPageLink`), or a bar `widget` (the edge menu or page it opens, selected in the layouts editor: `OverlayManager.openedBy` / `editOpenedBy`). Named from its target unless `text` is set, and followed as a link, so the navigator offers the way back. It hides itself when its target isn't there; a host hiding it on its own condition binds `visible` to `available` and that.
 - `FieldLinks`: a schema's `x-link` (one or a list) as `SettingsLink`s, hidden while none shows. Form rows (`SettingsField`, `SchemaPropertiesForm`) put one under each field; the bar widget and module inspectors one for the type's own.
 - `GreeterSetup`: setting up the login screen (what Install changes, Install/Update/Remove, the commands left to run). Used by Settings' `GreeterStatusCard` and the onboarder.
 

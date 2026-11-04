@@ -1351,12 +1351,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-04, while building the bar editor's right-click menu (bar rewrite C17)
 
-### The bar editor's "No room on … for" line runs past a narrow board
-- **Where:** `qml/components/views/BarEditor/SectionsBoard.qml` (`crowded`)
-- **What:** Each screen's line of widgets with no room is a `Flow` with no width, so it never wraps: on a narrow board (a side bar's, a small screen) its buttons run past the card's edge and are cut. Wrapping it at the board's width on a side board loops (its height sets the lanes', their columns the board's width) and hung qs, so a fix wraps it only on a row board, or bounds a side board's lines first.
-- **Size:** small
-- **Found:** 2026-11-04, while making a side bar's lanes a widget wide
-
 ### Six x-auto settings still store Automatic as -1
 - **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml:129`, `qml/config/schema/definitions/layout/EdgeMenu.yaml:150`, `qml/config/schema/definitions/common/DockEntry.yaml:51`, `qml/config/schema/definitions/common/OSDEntry.yaml:52`, `qml/config/schema/sections/Notifications.yaml:56`, `qml/config/schema/sections/Notifications.yaml:215`
 - **What:** `x-auto` now takes a `null` automatic value (validation lets it through, and the form's number keeps its whole range), which the bar's `floatingGap` uses. These six still store Automatic as `-1`, so their readers test `>= 0` / `< 0` and their minimum can't be 0 and Automatic at once without the sentinel. Moving them to `null` is a format-2 step per setting (`-1` → `null`) and a reader change each; nothing is broken meanwhile.

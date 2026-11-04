@@ -17,12 +17,9 @@ DragLayer {
   readonly property string hoverZone: root.hoverTarget?.zone ?? ""
 
   readonly property string location: BarManager.selectedBar()?.location ?? "top"
-  // The bar runs down a side of the screen
+  // The bar runs down a side of the screen (its sections are then named
+  // Top, Center, Bottom)
   readonly property bool barVertical: root.location === "left" || root.location === "right"
-  // The sections are drawn top to bottom
-  readonly property bool vertical: root.barVertical
-  // The side of the page the sections are drawn along: the bar's own
-  readonly property string side: root.location
   // The bar's sections in order. On a vertical bar they run top to
   // bottom; the keys stay the same.
   readonly property var zones: [
@@ -97,10 +94,10 @@ DragLayer {
       BarManager.addWidget(target.zone, drag.type, index);
   }
 
-  // Away from the bar's edge, in the middle of the inspector side
+  // Away from the board (at the top), in the middle at the bottom
   TrashTarget {
     x: (root.width - width) / 2
-    y: root.side === "bottom" ? Widget.padding : root.height - height - Widget.padding
+    y: root.height - height - Widget.padding
     dragLayer: root
     active: root.dragging?.kind === "move"
   }

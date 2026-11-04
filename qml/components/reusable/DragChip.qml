@@ -21,10 +21,6 @@ Rectangle {
   // Its icon and name; off, only what's put in it shows (the bar
   // editor's live widgets)
   property bool showsLabel: true
-  // Runs down, as wide as it's otherwise high (a side bar's widgets):
-  // its name turned as a vertical bar turns text, the rest centred across
-  property bool vertical: false
-  readonly property bool _column: root.vertical
   property alias dragLayer: area.dragLayer
   // What dragging it carries; null: it can't be dragged
   property alias payload: area.payload
@@ -40,9 +36,8 @@ Rectangle {
   signal clicked
   signal menuRequested(real x, real y)
 
-  readonly property real _inset: root.compact ? Widget.padding / 2 : Widget.padding
-  implicitWidth: root._column ? Widget.height + Widget.padding / 2 : row.implicitWidth + root._inset * 2
-  implicitHeight: root._column ? row.implicitHeight + root._inset * 2 : Widget.height + Widget.padding / 2
+  implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
+  implicitHeight: Widget.height + Widget.padding / 2
   radius: Widget.radius
   color: root.selected ? Theme.accent : (root.hovered || root.highlighted ? Theme.backgroundHighlight : Theme.background)
   border.color: root.selected || root.hovered || root.highlighted ? Theme.accent : Theme.border
@@ -50,46 +45,22 @@ Rectangle {
 
   ColorGlide on color {}
 
-  // One row, or one column (_column)
-  GridLayout {
+  RowLayout {
     id: row
     anchors.fill: parent
-    anchors.leftMargin: root._column ? 0 : root._inset
-    anchors.rightMargin: root._column ? 0 : root._inset
-    anchors.topMargin: root._column ? root._inset : 0
-    anchors.bottomMargin: root._column ? root._inset : 0
-    flow: root._column ? GridLayout.TopToBottom : GridLayout.LeftToRight
-    rowSpacing: root.compact ? Widget.spacing / 2 : Widget.spacing
-    columnSpacing: root.compact ? Widget.spacing / 2 : Widget.spacing
+    anchors.leftMargin: root.compact ? Widget.padding / 2 : Widget.padding
+    anchors.rightMargin: root.compact ? Widget.padding / 2 : Widget.padding
+    spacing: root.compact ? Widget.spacing / 2 : Widget.spacing
 
     StyledIcon {
       visible: root.showsLabel
       text: root.icon
       textColor: root.selected ? Theme.background : Theme.accent
-      horizontalAlignment: Text.AlignHCenter
       Layout.preferredWidth: Appearance.fontSize * 1.3
-      Layout.alignment: Qt.AlignCenter
-    }
-
-    // In a column, turned (StyledText.isVertical), in a box its turned size
-    Item {
-      visible: root.showsLabel && root._column
-      implicitWidth: turnedLabel.implicitHeight
-      implicitHeight: turnedLabel.implicitWidth
-      Layout.alignment: Qt.AlignCenter
-
-      StyledText {
-        id: turnedLabel
-        anchors.centerIn: parent
-        isVertical: true
-        text: root.label
-        textColor: root.ink
-        font.bold: root.selected
-      }
     }
 
     StyledText {
-      visible: root.showsLabel && !root._column
+      visible: root.showsLabel
       text: root.label
       textColor: root.ink
       font.bold: root.selected

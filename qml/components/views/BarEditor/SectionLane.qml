@@ -8,8 +8,7 @@ import qs.components.reusable
 
 // One bar section on the bar editor's board: its title and buttons, then
 // its widgets in bar order as chips that wrap (a Flow): a row across the
-// board for a top or bottom bar, a column down it for a side bar, never
-// scrolling. Chips are dragged within it, to another lane, or dropped on
+// board, never scrolling. Chips are dragged within it, to another lane, or dropped on
 // it from the library; a line shows where the carried one would land.
 // Hovering a chip outlines its widget on the running bars; a chip whose
 // widget the pointer is over on a running bar looks hovered. Its header's
@@ -22,9 +21,6 @@ Rectangle {
   // The section's key in the bar's `widgets`
   required property string zone
   required property string title
-  // A column (a side bar's lane: chips top to bottom, wrapping into
-  // columns), else a row (left to right, wrapping into rows)
-  required property bool vertical
   // The selected bar's running copies (BarManager.liveReports)
   required property var reports
   // Each widget's drop order (BarLayout.dropOrder), or [] for no badges
@@ -34,17 +30,10 @@ Rectangle {
   property var fit: null
   property string fitScreen: ""
   readonly property bool overfull: root.fit !== null && root.fit.used > root.fit.room
-  // The widest a chip may be (a column's share of a narrow board): its
-  // label elides past it
-  property real maxChipWidth: Infinity
 
   readonly property var widgets: BarManager.selectedBar()?.widgets?.[root.zone] ?? []
   readonly property bool hovering: root.dragLayer.hoverZone === root.zone
   readonly property real chipHeight: Widget.height + Widget.padding / 2
-  // Its chips run onto a second line (column, or row): the header's items
-  // then sit at the start across it (left, or top), else centred
-  readonly property bool wrapped: (root.vertical ? flow.implicitWidth : flow.implicitHeight) > root.chipHeight + 1
-  readonly property int _headerAlign: root.vertical ? (root.wrapped ? Qt.AlignLeft : Qt.AlignHCenter) : (root.wrapped ? Qt.AlignTop : Qt.AlignVCenter)
   // The widgets a running copy hides for want of room
   readonly property var crowded: [].concat(...root.reports.map(report => report.hidden[root.zone] ?? []))
 
@@ -56,10 +45,10 @@ Rectangle {
     const last = repeater.count > 0 ? repeater.itemAt(repeater.count - 1) : null;
     const half = flow.spacing / 2;
     if (chip)
-      return root.vertical ? Qt.rect(chip.x, chip.y - half, chip.width, 0) : Qt.rect(chip.x - half, chip.y, 0, chip.height);
+      return Qt.rect(chip.x - half, chip.y, 0, chip.height);
     if (last)
-      return root.vertical ? Qt.rect(last.x, last.y + last.height + half, last.width, 0) : Qt.rect(last.x + last.width + half, last.y, 0, last.height);
-    return root.vertical ? Qt.rect(0, 0, flow.width, 0) : Qt.rect(0, 0, 0, root.chipHeight);
+      return Qt.rect(last.x + last.width + half, last.y, 0, last.height);
+    return Qt.rect(0, 0, 0, root.chipHeight);
   }
 
   // `anchor`: the + button, so the picker opens beside it
@@ -69,10 +58,8 @@ Rectangle {
   // A chip was clicked (the board takes the keys then)
   signal chipClicked(int index)
 
-  // A column is a widget wide (its header and empty text turned to fit),
-  // more as its chips wrap into further columns
-  implicitWidth: Widget.padding * 2 + (root.vertical ? Math.max(root.chipHeight, header.implicitWidth, flow.implicitWidth) : header.implicitWidth)
-  implicitHeight: Widget.padding * 2 + header.implicitHeight + Widget.spacing + (root.vertical ? root.chipHeight : Math.max(root.chipHeight, flow.implicitHeight))
+  implicitWidth: Widget.padding * 2 + header.implicitWidth
+  implicitHeight: Widget.padding * 2 + header.implicitHeight + Widget.spacing + Math.max(root.chipHeight, flow.implicitHeight)
   radius: Widget.radius
   color: root.hovering ? Qt.alpha(Theme.accent, 0.1) : Theme.background
   border.color: root.hovering ? Theme.accent : Theme.border
@@ -84,68 +71,43 @@ Rectangle {
   Component.onDestruction: root.dragLayer.unregisterTarget(root)
 
   // Where a drop at `point` (in the drag layer) would insert: before the
-  // first chip on a later line (row, or column) than the point, or on its
-  // line past it. Both axes, since the chips wrap
+  // first chip on a later row than the point, or on its row past it.
+  // Both axes, since the chips wrap
   function indexAt(point) {
     const p = root.dragLayer.mapToItem(flow, point.x, point.y);
-    const across = root.vertical ? p.x : p.y;
-    const along = root.vertical ? p.y : p.x;
     for (let i = 0; i < repeater.count; i++) {
       const chip = repeater.itemAt(i);
       if (!chip)
         continue;
-      const lineStart = root.vertical ? chip.x : chip.y;
-      const lineEnd = lineStart + (root.vertical ? chip.width : chip.height) + flow.spacing;
-      const middle = root.vertical ? chip.y + chip.height / 2 : chip.x + chip.width / 2;
-      if (across < lineStart || (across < lineEnd && along < middle))
+      const lineStart = chip.y;
+      const lineEnd = lineStart + chip.height + flow.spacing;
+      const middle = chip.x + chip.width / 2;
+      if (p.y < lineStart || (p.y < lineEnd && p.x < middle))
         return i;
     }
     return repeater.count;
   }
 
-  // A row; in a column, one item over another down to the chips, the
-  // title turned as a vertical bar turns text
-  GridLayout {
+  RowLayout {
     id: header
     x: Widget.padding
     y: Widget.padding
     width: parent.width - Widget.padding * 2
-    flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-    rowSpacing: Widget.spacing / 2
-    columnSpacing: Widget.spacing / 2
+    spacing: Widget.spacing / 2
 
     StyledText {
-      visible: !root.vertical
       text: root.title
       font.bold: true
       elide: Text.ElideRight
       Layout.fillWidth: true
-      Layout.alignment: root._headerAlign
     }
 
-    Item {
-      visible: root.vertical
-      implicitWidth: turnedTitle.implicitHeight
-      implicitHeight: turnedTitle.implicitWidth
-      Layout.alignment: root._headerAlign
-
-      StyledText {
-        id: turnedTitle
-        anchors.centerIn: parent
-        isVertical: true
-        text: root.title
-        font.bold: true
-      }
-    }
-
-    // How full the section is: filling up in a column
+    // How full the section is
     LevelMeter {
       id: meter
       visible: root.fit !== null && root.widgets.length > 0
-      vertical: root.vertical
-      Layout.alignment: root._headerAlign
-      Layout.preferredWidth: root.vertical ? Widget.height - Widget.px(6) : Widget.px(40)
-      Layout.preferredHeight: root.vertical ? Widget.px(40) : Widget.height - Widget.px(6)
+      Layout.preferredWidth: Widget.px(40)
+      Layout.preferredHeight: Widget.height - Widget.px(6)
       thickness: Widget.px(4)
       share: root.fit && root.fit.room > 0 ? root.fit.used / root.fit.room : 1
       fillColor: root.overfull ? Theme.warning : Theme.accent
@@ -167,7 +129,6 @@ Rectangle {
       readonly property bool locked: BarManager.selectedBar()?.lockCenter ?? false
 
       visible: root.zone === "center"
-      Layout.alignment: root._headerAlign
       size: Widget.height - Widget.px(6)
       iconText: locked ? "lock" : "lock_open"
       iconSize: Appearance.fontSizeBy(-1)
@@ -179,7 +140,6 @@ Rectangle {
 
     SquareIconButton {
       id: addButton
-      Layout.alignment: root._headerAlign
       size: Widget.height - Widget.px(6)
       iconText: "add"
       tooltipText: I18n.tr("Add a widget")
@@ -191,11 +151,10 @@ Rectangle {
     id: flow
     x: Widget.padding
     y: header.y + header.implicitHeight + Widget.spacing
-    // A row's chips wrap at its width; a column's at its height, the lane
-    // growing sideways with the columns
-    width: root.vertical ? implicitWidth : root.width - Widget.padding * 2
-    height: root.vertical ? root.height - y - Widget.padding : implicitHeight
-    flow: root.vertical ? Flow.TopToBottom : Flow.LeftToRight
+    // Its chips wrap at its width
+    width: root.width - Widget.padding * 2
+    height: implicitHeight
+    flow: Flow.LeftToRight
     spacing: Widget.spacing
 
     // Keyed by count: edits to a widget update its chip in place
@@ -210,16 +169,11 @@ Rectangle {
 
         dragLayer: root.dragLayer
         compact: true
-        // On a side bar, live widgets run down (as the preview bar draws
-        // them): a column as wide as a row chip is high
-        vertical: root.vertical
-        width: Math.min(implicitWidth, root.maxChipWidth)
-        height: chip._column ? implicitHeight : root.chipHeight
+        height: root.chipHeight
         type: root.dragLayer.libraryKey(chip.entry)
         // With its Auto colours picked, as the bar draws it
         widget: BarManager.previewConfig?.widgets?.[root.zone]?.[chip.index] ?? chip.entry
         previewConfig: BarManager.previewConfig
-        maxPreviewLength: root.vertical ? Widget.px(260) : Math.min(Widget.px(260), root.maxChipWidth - Widget.padding)
         hiddenWidget: chip.entry.visible === false
         crowded: root.crowded.includes(chip.index)
         dropOrder: root.dropOrders[chip.index] ?? 0
@@ -248,36 +202,27 @@ Rectangle {
     }
   }
 
-  // Turned in a column, down a chip's width
-  Item {
+  StyledText {
     id: empty
     visible: repeater.count === 0 && !root.hovering
     x: flow.x
     y: flow.y
-    width: root.vertical ? root.chipHeight : flow.width
-    height: root.vertical ? emptyText.implicitWidth : root.chipHeight
-
-    StyledText {
-      id: emptyText
-      anchors.centerIn: root.vertical ? parent : undefined
-      width: root.vertical ? implicitWidth : parent.width
-      height: root.vertical ? implicitHeight : parent.height
-      isVertical: root.vertical
-      verticalAlignment: Text.AlignVCenter
-      elide: root.vertical ? Text.ElideNone : Text.ElideRight
-      text: I18n.tr("Drop widgets here")
-      opacity: 0.45
-      textSize: Appearance.fontSizeBy(-1)
-    }
+    width: flow.width
+    height: root.chipHeight
+    verticalAlignment: Text.AlignVCenter
+    elide: Text.ElideRight
+    text: I18n.tr("Drop widgets here")
+    opacity: 0.45
+    textSize: Appearance.fontSizeBy(-1)
   }
 
   // Where the dragged widget would land
   Rectangle {
     visible: root.hovering
-    x: flow.x + root.landing.x - (root.vertical ? 0 : 1)
-    y: flow.y + root.landing.y - (root.vertical ? 1 : 0)
-    width: root.vertical ? Math.max(root.landing.width, root.chipHeight) : 2
-    height: root.vertical ? 2 : root.landing.height
+    x: flow.x + root.landing.x - 1
+    y: flow.y + root.landing.y
+    width: 2
+    height: root.landing.height
     radius: 1
     color: Theme.accent
   }
