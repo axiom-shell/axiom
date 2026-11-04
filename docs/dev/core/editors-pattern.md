@@ -50,7 +50,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - A `reusable/DragLayer` subclass covers the page and draws the ghost.
   - `BarDragLayer`: targets are the `SectionLane`s, plus a `TrashTarget` away from the bar's edge that takes a `move` and removes the widget. Payloads are `{ kind: "move" | "add", zone, index, type, compact }`.
   - `GridDragLayer`: see [Grid canvas](../overlay/grid-canvas.md).
-- Draggables are `DragArea`s (`dragLayer`, `payload`) or `DragChip`s.
+- Draggables are `DragArea`s (`dragLayer`, `payload`) or `DragChip`s. A board of chips that wrap (the bar editor's `Flow` lanes) finds its drop index on both axes.
 
 ### Inspector
 - `InspectorHeader` + a `KeyedLoader` keyed on the selection.

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.services.ui
-import qs.components.methods
 import qs.components.reusable
 
 // The bar editor's widget area (sections board and inspector): a
@@ -16,8 +15,6 @@ DragLayer {
 
   // The section under the pointer
   readonly property string hoverZone: root.hoverTarget?.zone ?? ""
-  // How long the carried chip is, for the gap a lane opens for it
-  readonly property real ghostLength: root.vertical ? ghost.height : ghost.width
 
   readonly property string location: BarManager.selectedBar()?.location ?? "top"
   // The bar runs down a side of the screen
@@ -51,25 +48,24 @@ DragLayer {
     return BarsConfig.libraryWidgetTypes.find(t => t.type === type) ?? BarsConfig.availableWidgetTypes.find(t => t.type === type) ?? null;
   }
 
-  // The type's label (its schema description), translated like titles
+  // The one label of a type or library key (its schema `label`,
+  // translated; a custom widget's own name as given), on chips, the
+  // inspector and the fit line alike
   function label(type) {
     const info = root.typeInfo(type);
-    return info ? I18n.tr(info.label) : (type || I18n.tr("Unknown"));
+    if (!info)
+      return type || I18n.tr("Unknown");
+    return info.definition ? info.label : I18n.tr(info.label);
   }
 
-  // A short name for chips in the section lanes: the type, spaced.
-  // Keys: I18n.tr("Window") I18n.tr("Media") I18n.tr("Workspaces")
-  // I18n.tr("Time") I18n.tr("Tailscale")
-  // I18n.tr("Network") I18n.tr("System Tray") I18n.tr("Notifications")
-  // I18n.tr("Button") I18n.tr("Battery") I18n.tr("System Stats")
-  // I18n.tr("Keyboard Layout") I18n.tr("Idle Inhibitor") I18n.tr("Privacy")
-  // I18n.tr("Updates") I18n.tr("Weather") I18n.tr("Separator")
-  // I18n.tr("Volume") I18n.tr("Microphone") I18n.tr("Bluetooth")
-  // I18n.tr("Screen Record")
-  function shortLabel(type) {
-    if (!type)
-      return I18n.tr("Unknown");
-    return I18n.tr(Utils.spaceWords(type));
+  // A widget's library key: a custom widget's by its definition
+  // ("CustomWidget:<id>"), so it's named and drawn as that one
+  function libraryKey(widget) {
+    return widget?.type === "CustomWidget" && widget.properties?.definition ? "CustomWidget:" + widget.properties.definition : (widget?.type ?? "");
+  }
+
+  function widgetLabel(widget) {
+    return root.label(root.libraryKey(widget));
   }
 
   // The type's Material Symbols icon (its schema `x-icon`)

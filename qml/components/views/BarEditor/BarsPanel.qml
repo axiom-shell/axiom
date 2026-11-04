@@ -149,10 +149,10 @@ Item {
             onEdited: (path, value) => BarManager.updateBarField(path[0], value)
           }
 
-          // The thickness the size settings add up to
+          // How deep the size settings make the bar (its extent)
           StyledText {
             visible: "thickness" in group.modelData.schema
-            text: I18n.tr("Bar thickness: {0} px", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps).extent))
+            text: I18n.tr("The bar is {0} px deep", Math.round(BarsConfig.enrichBarConfig(root.bar ?? ({}), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps).extent))
             textColor: Theme.foreground
             opacity: 0.7
             wrapMode: Text.WordWrap

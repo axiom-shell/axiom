@@ -7,21 +7,22 @@ import qs.components.reusable
 import qs.components.views.base
 
 // The bar editor page: the bars and the selected one's settings on the
-// left; on the right its sections drawn as a strip along the side of the
-// page its bar is on (or stacked down the left, for a top or bottom bar;
-// drag widgets within and between them), beside the
+// left; on the right its sections drawn as a board along the side of the
+// page its bar is on (drag widgets within and between them), beside the
 // selected widget's options (or the widget library). Edits go through
 // BarManager's draft and show live on the running bars, which outline the
 // selected widget and report how they fit while the page is on screen.
 BaseView {
   id: root
 
-  // The side of the page the sections are drawn along: the bar's, or the
-  // left when a top or bottom bar's are stacked
+  // The side of the page the sections are drawn along: the bar's
   readonly property string side: barDragLayer.side
   readonly property bool vertical: barDragLayer.vertical
-  // The strip's depth across the bar: a vertical one is a column of chips
-  readonly property real stripDepth: root.vertical ? root.grid.unit * 0.7 : board.implicitHeight
+  // The board's depth across the bar, from the board (its rows' height;
+  // a side bar's columns' width, at least a column's worth, at most half
+  // the page)
+  readonly property real boardMaxWidth: root.editorWidth / 2
+  readonly property real stripDepth: root.vertical ? Math.min(root.boardMaxWidth, Math.max(root.grid.unit * 0.7, board.implicitWidth)) : board.implicitHeight
 
   // Only the current page is visible; its neighbours are loaded too
   onVisibleChanged: root._watch()
@@ -61,6 +62,7 @@ BaseView {
       label: "bar sections board"
       sourceComponent: SectionsBoard {
         dragLayer: barDragLayer
+        maxWidth: root.boardMaxWidth
       }
     }
 

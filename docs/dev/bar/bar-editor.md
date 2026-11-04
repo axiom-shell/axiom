@@ -16,18 +16,19 @@ The BarEditor overlay page: the bar list and field groups, the sections board an
   - The Style group's header copies the bar's look (`BarManager.styleKeys`: its Size and Style settings) and pastes it onto one bar or onto all. The copied style follows its bar by index.
   - The style groups (`BarsConfig.styleGroups`) are shared with every bar until the bar takes its own; each links (`SettingsLink`) to its card in the shared `Bars.style` on the settings page.
 - **Right: `BarDragLayer`.** It holds `SectionsBoard` along the side of the page the selected bar is on, with `WidgetInspector` beside it.
-  - A horizontal bar gets a strip across the top or bottom. A vertical bar gets a column at the left or right.
-  - Three directions are tracked separately:
-    - `BarDragLayer.vertical`: how the board is drawn.
-    - `barVertical`: the bar's own direction, which names the sections.
-    - `side`: the page edge the board is on.
+  - A horizontal bar's board runs across the top or bottom, as deep as its rows (`board.implicitHeight`). A vertical bar's is a column at the left or right, as wide as its lanes (at most half the page).
+  - `BarDragLayer.vertical` (how the board is drawn) follows the bar's own direction (`barVertical`, which names the sections), and `side` (the page edge the board is on) is the bar's edge.
 
 ### Sections board
-- The board's five `SectionLane`s are laid out the way the bar lays out its sections (`BarLayout.layoutSections` over each lane's `naturalLength`/`minLength`).
-- Each lane is a row or column of `WidgetChip`s that scrolls when it can't show them all.
-  - Scrolling is by scroll bar, or by the wheel through the lane's `WheelHandler` (sideways on a horizontal lane).
-  - The Flickable itself isn't interactive, so chips keep their drags.
+- Three `SectionLane`s: rows one under another for a top or bottom bar, columns side by side for a side bar, in a `GridLayout`.
+- Each lane's `WidgetChip`s are a `Flow` that wraps (into more rows, or more columns), never scrolling. Its `indexAt` reads both axes: before the first chip on a later line than the point, or on its line past it. A line shows where the carried chip would land.
 - Chips are dragged within and between lanes, or dropped in from the library.
+- One label everywhere: `BarDragLayer.label(type)` (the type info's `label`, a custom widget's own name), by the widget's library key (`libraryKey`: `CustomWidget:<id>` for a custom widget) on chips, the inspector's title and the fit line (`widgetLabel`).
+- The header (`CardHeader`): undo and redo (`UndoRedoButtons` over `BarManager.history`), the drop order switch, an Unsaved chip with Save and Discard, and the help in its "?" (`help`).
+  - The drop order switch badges each chip with its place in the order a crowded bar drops widgets in (`BarLayout.dropOrder`, lowest priority first, ties right, left, center and the last listed first; spacers and hidden widgets never drop). It reads `layout.priority` (0 when unset), not a widget type's own default (Time's 5, Workspaces' 10).
+- A chip's right click selects it and opens its `StyledContextMenu`: Edit, Hide/Show, Duplicate, Remove, Move to each other section, Move to the start/end, Add a spacer before/after, Copy to bar ▸ (the other bars).
+- Clicking a chip gives the board the keys: Delete, Ctrl+D, Alt+arrows (`BarManager.stepWidget`), Escape (deselect), Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y.
+- Hovering a chip sets `BarManager.hoveredWidget` (outlined on the running bars); a chip whose widget a running bar has under the pointer (`BarManager.isBarHovered`) gets the hover look (`DragChip.highlighted`).
 
 ### Inspector
 - Shows the widget's options, in its `x-order`, with `x-beside` fields paired (`OptionsGroup`'s `pairs`).

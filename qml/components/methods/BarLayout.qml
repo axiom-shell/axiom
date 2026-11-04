@@ -575,4 +575,36 @@ QtObject {
       "visible": visible
     };
   }
+
+  // Which section a crowded bar drops from first when priorities tie, of
+  // [left, center, right]: the right, then the left, then the center
+  readonly property var dropTieOrder: [2, 0, 1]
+
+  // The order a crowded bar drops its widgets in (overflowHidden's pick):
+  // per section, each widget's place in it, 1 going first, or 0 for one
+  // that's never dropped (a null priority: a spacer). The lowest priority
+  // first; ties by section (`tieOrder`, section indices, the first going
+  // first: dropTieOrder by default), then the widget listed last first.
+  function dropOrder(priorities, tieOrder) {
+    const ties = tieOrder ?? root.dropTieOrder;
+    const rank = s => {
+      const at = ties.indexOf(s);
+      return at < 0 ? ties.length + s : at;
+    };
+    const entries = [];
+    priorities.forEach((section, s) => (section ?? []).forEach((priority, i) => {
+        if (priority !== null && priority !== undefined)
+          entries.push({
+            "section": s,
+            "index": i,
+            "priority": priority
+          });
+      }));
+    entries.sort((a, b) => a.priority - b.priority || rank(a.section) - rank(b.section) || b.index - a.index);
+    const out = priorities.map(section => (section ?? []).map(() => 0));
+    entries.forEach((e, n) => {
+      out[e.section][e.index] = n + 1;
+    });
+    return out;
+  }
 }

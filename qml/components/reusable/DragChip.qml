@@ -15,6 +15,9 @@ Rectangle {
   property bool selected: false
   // Tighter, for narrow places
   property bool compact: false
+  // Drawn as hovered, for a pointer somewhere else (the bar editor's
+  // chip of the widget hovered on the bar)
+  property bool highlighted: false
   property alias dragLayer: area.dragLayer
   // What dragging it carries; null: it can't be dragged
   property alias payload: area.payload
@@ -24,13 +27,17 @@ Rectangle {
   // The colour of text and icons after the name
   readonly property color ink: root.selected ? Theme.background : Theme.foreground
 
+  // A right click asks for a menu (`menuRequested`, at the point in it)
+  property bool hasMenu: false
+
   signal clicked
+  signal menuRequested(real x, real y)
 
   implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
   implicitHeight: Widget.height + Widget.padding / 2
   radius: Widget.radius
-  color: root.selected ? Theme.accent : (root.hovered ? Theme.backgroundHighlight : Theme.background)
-  border.color: root.selected || root.hovered ? Theme.accent : Theme.border
+  color: root.selected ? Theme.accent : (root.hovered || root.highlighted ? Theme.backgroundHighlight : Theme.background)
+  border.color: root.selected || root.hovered || root.highlighted ? Theme.accent : Theme.border
   border.width: 1
 
   ColorGlide on color {}
@@ -62,5 +69,14 @@ Rectangle {
     anchors.fill: parent
     dragEnabled: area.payload !== null
     onTapped: root.clicked()
+  }
+
+  // Over the drag area, taking only the right button (a left press goes
+  // through to it)
+  MouseArea {
+    anchors.fill: parent
+    enabled: root.hasMenu
+    acceptedButtons: Qt.RightButton
+    onClicked: mouse => root.menuRequested(mouse.x, mouse.y)
   }
 }

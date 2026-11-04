@@ -88,7 +88,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - `accepts` / `priority` hooks; `priority` defaults to a target's `dropPriority`.
   - Signals: `started` / `moved` / `dropped`.
 - `TrashTarget`: a "Drop to remove" pill shown while `active`, `targetKind: "trash"`, above overlapping targets. The layer's `accepts` says what it takes and its `dropped` removes it.
-- `DragChip`: a carryable icon + name pill.
+- `DragChip`: a carryable icon + name pill; `highlighted` draws it hovered for a pointer elsewhere, and with `hasMenu` a right click is `menuRequested(x, y)`.
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.
 - `InspectorHeader`: icon well, name, place, actions, divider.
 - `UndoRedoButtons`: an editor's Undo and Redo buttons, enabled from its `canUndo` / `canRedo` (an `EditHistory`'s, `qml/services/ui/EditHistory`: snapshots before each edit, edits to one field joining a step, up to 50).

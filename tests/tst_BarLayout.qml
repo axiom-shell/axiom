@@ -794,4 +794,11 @@ TestCase {
     ], 1000, 12, 20);
     verify(!past.stretches[0].squareStart, "not where the pill already reaches past it");
   }
+
+  function test_dropOrder() {
+    // Lowest priority first; ties right, left, center, the last listed
+    // first; a spacer (null) never goes
+    compare(BarLayout.dropOrder([[0, 0], [5, null], [0, -1]]), [[4, 3], [5, 0], [2, 1]]);
+    compare(BarLayout.dropOrder([[1], [1], [1]], [0, 1, 2]), [[1], [2], [3]]);
+  }
 }

@@ -80,7 +80,7 @@ Item {
 
       InspectorHeader {
         icon: root.dragLayer.icon(editorRoot.widget.type)
-        title: root.dragLayer.label(editorRoot.widget.type)
+        title: root.dragLayer.widgetLabel(editorRoot.widget)
         subtitle: {
           const parts = [I18n.tr("{0} section, position {1}", root.dragLayer.zoneLabel(editorRoot.zone), editorRoot.index + 1)];
           if (editorRoot.hidden)
