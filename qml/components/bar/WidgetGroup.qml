@@ -45,21 +45,28 @@ Item {
         "pref": m.preferredSize,
         "min": m.minimumSize,
         "priority": m.priority,
-        "divides": m.divides
+        "divides": m.divides,
+        "fill": m.fills
       }))
-  readonly property var _shown: root.measures.map((m, i) => m.pref > 0 && !root.hiddenIndices.includes(i))
+  // Spacers (`fill`) are shown at any size: they take the free room
+  readonly property var _fills: root.measures.map(m => m.fill)
+  readonly property var _shown: root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i))
+  // How many spacers it has: a side with any stretches to the center
+  // (BarLayout.layoutSections)
+  readonly property int fillCount: root._fills.filter(f => f).length
 
   // Main-axis size wanted with every shown module at its preferred size,
   // and the least it can be squeezed to without hiding anything more
-  readonly property real preferredLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root.spacing)
-  readonly property real minimumLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.min : 0), root.spacing)
+  readonly property real preferredLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root.spacing, root._fills)
+  readonly property real minimumLength: BarLayout.span(root.measures.map((m, i) => root._shown[i] ? m.min : 0), root.spacing, root._fills)
 
   readonly property var allocation: BarLayout.allocate(root.measures, root._shown, root.maxExtent, root.spacing)
-  readonly property real usedLength: BarLayout.span(root.allocation.sizes, root.spacing)
+  readonly property real usedLength: BarLayout.span(root.allocation.sizes, root.spacing, root._fills)
   // The dividers (Separators) at the section's ends, which the bar places
   // in the gap beside it (BarLayout.edgeHang): as measured, for laying the
-  // sections out, and as allocated, for its pill
-  readonly property var _dividers: root.measures.map(m => m.divides)
+  // sections out, and as allocated, for its pill. Not spacers: they're
+  // room of the section's own.
+  readonly property var _dividers: root.measures.map(m => m.divides && !m.fill)
   readonly property var layoutHang: BarLayout.edgeHang(root.measures.map((m, i) => root._shown[i] ? m.pref : 0), root._dividers, root.spacing)
   readonly property var drawnHang: BarLayout.edgeHang(root.allocation.sizes, root._dividers, root.spacing)
   // The widgets with something to show that are hidden for want of room,
@@ -237,11 +244,11 @@ Item {
       // Clear of its caps; a widget with no background sits loose
       readonly property var _place: root._insetPlaces[module.index] ?? null
       readonly property var _segment: root.segmentAt(_place)
-      leadInset: module.hasBackground ? module._segment.lead : (module.index > root._firstContent ? root._looseGap : 0)
+      leadInset: module.hasBackground ? module._segment.lead : (module.index > root._firstContent && !module.fills ? root._looseGap : 0)
       // Hovered and clicked in its background's shape as drawn
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
       hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
-      trailInset: module.hasBackground ? module._segment.trail : (module.index < root._lastContent ? root._looseGap : 0)
+      trailInset: module.hasBackground ? module._segment.trail : (module.index < root._lastContent && !module.fills ? root._looseGap : 0)
 
       barConfig: root.barConfig
       properties: module.modelData.properties || {}

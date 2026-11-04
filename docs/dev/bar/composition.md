@@ -24,9 +24,14 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 
 ### Layout math
 - The main-axis layout math is pure and lives in `methods/BarLayout` (tested in `tst_BarLayout`). It covers:
-  - sections placed along the bar
-  - the widgets hidden when the bar overflows
-  - elastic widgets squeezed within a section
+  - the three sections (left, center, right) placed along the bar (`layoutSections`): the ends hug the ends, the center stays centered (with `lockCenter` dead center, each side fitting its own half)
+  - the widgets hidden when the bar overflows (`overflowHidden`): lowest priority first, ties right, then left, the center last
+  - elastic widgets squeezed within a section (`allocate`)
+- **Spacers** (the Spacer widget, `fill` in its measure) take the free room:
+  - The sections are laid out with every spacer at its `minGap` first, so a spacer never moves the center.
+  - Then a side with spacers stretches to the center's edge; with no center, the room between the sides is shared by their spacer counts. A spacer in the center keeps its `minGap`.
+  - `allocate` hands a section's room past its widgets to its spacers, equally (the remainder to the last).
+  - A spacer lies in the gap between the widgets beside it, so a collapsed one (crowded, `minGap` 0) leaves one gap. It's never hidden for want of room.
 - `BarContainer` and `WidgetGroup` only feed it measurements.
 
 ### Popouts

@@ -13,19 +13,30 @@ TestCase {
     };
   }
 
+  // A spacer keeping `minGap`
+  function spacer(minGap = 0) {
+    return {
+      "pref": minGap,
+      "min": minGap,
+      "priority": 0,
+      "divides": true,
+      "fill": true
+    };
+  }
+
   function test_layoutSections_uneven_margins() {
     // A bar whose end makes way for another keeps more clear there
-    const s = BarLayout.layoutSections([100, 0, 200, 0, 100], [50, 0, 200, 0, 50], 1000, [10, 60], 5, false);
+    const s = BarLayout.layoutSections([100, 200, 100], [50, 200, 50], 1000, [10, 60], 5, false);
     compare(s[0].offset, 10);
-    compare(s[4].offset, 1000 - 60 - 100);
-    compare(s[2].offset, 400, "the center stays centered on the bar");
+    compare(s[2].offset, 1000 - 60 - 100);
+    compare(s[1].offset, 400, "the center stays centered on the bar");
     // Squeezed into what both margins leave
-    const t = BarLayout.layoutSections([300, 0, 0, 0, 300], [100, 0, 0, 0, 100], 600, [10, 70], 0, false);
-    compare(t[0].extent + t[4].extent, 520);
-    compare(t[4].offset + t[4].extent, 530);
+    const t = BarLayout.layoutSections([300, 0, 300], [100, 0, 100], 600, [10, 70], 0, false);
+    compare(t[0].extent + t[2].extent, 520);
+    compare(t[2].offset + t[2].extent, 530);
     // Overflow measures the same room
-    compare(BarLayout.overflowHidden([[m(300)], [], [], [], [m(230)]], 600, [10, 70], 0, 0, false)[4].length, 1);
-    compare(BarLayout.overflowHidden([[m(300)], [], [], [], [m(230)]], 600, 10, 0, 0, false)[4].length, 0);
+    compare(BarLayout.overflowHidden([[m(300)], [], [m(230)]], 600, [10, 70], 0, 0, false)[2].length, 1);
+    compare(BarLayout.overflowHidden([[m(300)], [], [m(230)]], 600, 10, 0, 0, false)[2].length, 0);
   }
 
   function test_span() {
@@ -34,6 +45,15 @@ TestCase {
     compare(BarLayout.span([10, 20, 30], 4), 68);
     // Zero sizes take no spacing
     compare(BarLayout.span([10, 0, 30, 0], 4), 44);
+  }
+
+  function test_span_spacers() {
+    // A spacer lies in the gap between two widgets: collapsed, one gap
+    compare(BarLayout.span([10, 0, 30], 4, [false, true, false]), 44);
+    compare(BarLayout.span([10, 20, 30], 4, [false, true, false]), 64);
+    // At an end it takes its own size, no gap
+    compare(BarLayout.span([5, 10], 4, [true, false]), 15);
+    compare(BarLayout.span([10, 0], 4, [false, true]), 10);
   }
 
   function test_dividerGap() {
@@ -49,27 +69,72 @@ TestCase {
 
   function test_layoutSections_fits() {
     // 1000 long, margin 10, gap 5: ends hug the margins, center centered
-    const s = BarLayout.layoutSections([100, 50, 200, 0, 100], [100, 50, 200, 0, 100], 1000, 10, 5, false);
+    const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false);
     compare(s[0].offset, 10);
     compare(s[0].extent, 100);
-    compare(s[2].offset, 400);
-    compare(s[2].extent, 200);
-    compare(s[1].offset, 345, "the second section sits a gap before the center");
-    compare(s[3].extent, 0);
-    compare(s[4].offset, 890);
+    compare(s[1].offset, 400);
+    compare(s[1].extent, 200);
+    compare(s[2].offset, 890);
+    compare(s[2].extent, 100);
   }
 
   function test_layoutSections_center_slides() {
     // A long left side pushes the center right (not locked)
-    const s = BarLayout.layoutSections([500, 0, 200, 0, 0], [500, 0, 200, 0, 0], 1000, 0, 10, false);
-    compare(s[2].offset, 510);
+    const s = BarLayout.layoutSections([500, 200, 0], [500, 200, 0], 1000, 0, 10, false);
+    compare(s[1].offset, 510);
   }
 
   function test_layoutSections_lockCenter() {
     // Locked, the center stays dead center and the left squeezes instead
-    const s = BarLayout.layoutSections([500, 0, 200, 0, 0], [100, 0, 200, 0, 0], 1000, 0, 10, true);
-    compare(s[2].offset, 400);
+    const s = BarLayout.layoutSections([500, 200, 0], [100, 200, 0], 1000, 0, 10, true);
+    compare(s[1].offset, 400);
     compare(s[0].extent, 390);
+  }
+
+  function test_layoutSections_spacers_reach_the_center() {
+    // A left side with a spacer stretches to a gap short of the center;
+    // the right one without keeps its own length
+    const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [1, 0, 0]);
+    compare(s[0].offset, 10);
+    compare(s[0].extent, 385);
+    compare(s[1].offset, 400);
+    compare(s[2].offset, 890);
+    compare(s[2].extent, 100);
+    // Both sides: each reaches the center
+    const both = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, true, undefined, [1, 0, 2]);
+    compare(both[0].extent, 385);
+    compare(both[2].offset, 605);
+    compare(both[2].extent, 385);
+    // A center spacer stays its own size: nothing stretches for it
+    const center = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [0, 1, 0]);
+    compare(center[1].extent, 200);
+    compare(center[0].extent, 100);
+  }
+
+  function test_layoutSections_spacers_never_move_the_center() {
+    // Laid out at their minimum gaps first: the locked center stays put,
+    // the side only reaching it
+    const s = BarLayout.layoutSections([300, 200, 0], [300, 200, 0], 1000, 0, 10, true, undefined, [1, 0, 0]);
+    compare(s[1].offset, 400);
+    compare(s[0].extent, 390);
+    // Unlocked, a long side still pushes the center as without spacers
+    const t = BarLayout.layoutSections([500, 200, 0], [500, 200, 0], 1000, 0, 10, false, undefined, [1, 0, 0]);
+    compare(t[1].offset, 510);
+    compare(t[0].extent, 500);
+  }
+
+  function test_layoutSections_spacers_share_with_no_center() {
+    // 1000 - 2 × 10 margin - 100 - 100 - a 5 gap = 775 free: one spacer
+    // left and three right share it 1:3
+    const s = BarLayout.layoutSections([100, 0, 100], [100, 0, 100], 1000, 10, 5, false, undefined, [1, 0, 3]);
+    compare(s[0].extent, 100 + 775 / 4);
+    compare(s[2].offset, 10 + 100 + 775 / 4 + 5);
+    compare(s[2].offset + s[2].extent, 990);
+    // A spacer on one side only: that side takes it all
+    const one = BarLayout.layoutSections([100, 0, 100], [100, 0, 100], 1000, 10, 5, false, undefined, [0, 0, 1]);
+    compare(one[0].extent, 100);
+    compare(one[2].offset, 115);
+    compare(one[2].extent, 875);
   }
 
   function test_edgeHang() {
@@ -97,57 +162,74 @@ TestCase {
       "lead": 0,
       "trail": 30
     };
-    const s = BarLayout.layoutSections([0, 0, 200, 100, 0], [0, 0, 200, 100, 0], 1000, 0, 10, false, hang);
-    compare(s[2].offset, 415);
-    compare(s[3].offset, 625);
-    // The same divider leading the right-center section instead: the same places
-    const t = BarLayout.layoutSections([0, 0, 170, 130, 0], [0, 0, 170, 130, 0], 1000, 0, 10, false);
-    compare(t[2].offset, 415);
-    compare(t[3].offset + 30, 625);
+    const s = BarLayout.layoutSections([0, 200, 100], [0, 200, 100], 1000, 0, 10, false, hang);
+    compare(s[1].offset, 415);
+    compare(s[2].offset, 900);
     // Locked: centered too, the right half losing the divider's room
-    const locked = BarLayout.layoutSections([0, 0, 200, 600, 0], [0, 0, 200, 0, 0], 1000, 0, 10, true, hang);
-    compare(locked[2].offset, 415);
-    compare(locked[3].extent, 375);
+    const locked = BarLayout.layoutSections([0, 200, 600], [0, 200, 0], 1000, 0, 10, true, hang);
+    compare(locked[1].offset, 415);
+    compare(locked[2].extent, 375);
   }
 
   function test_layoutSections_squeeze_and_scale() {
     // 300 of room: 400 preferred squeezed halfway to the 200 minimum
-    const squeezed = BarLayout.layoutSections([200, 0, 0, 0, 200], [100, 0, 0, 0, 100], 300, 0, 0, false);
+    const squeezed = BarLayout.layoutSections([200, 0, 200], [100, 0, 100], 300, 0, 0, false);
     compare(squeezed[0].extent, 150);
-    compare(squeezed[4].extent, 150);
+    compare(squeezed[2].extent, 150);
     // 100 of room: even the minimums don't fit, so they're scaled down
-    const scaled = BarLayout.layoutSections([200, 0, 0, 0, 200], [100, 0, 0, 0, 100], 100, 0, 0, false);
+    const scaled = BarLayout.layoutSections([200, 0, 200], [100, 0, 100], 100, 0, 0, false);
     compare(scaled[0].extent, 50);
   }
 
   function test_overflowHidden_nothing_when_it_fits() {
-    const hidden = BarLayout.overflowHidden([[m(100)], [], [m(100)], [], [m(100)]], 1000, 0, 10, 4, false);
-    compare(hidden, [[], [], [], [], []]);
+    const hidden = BarLayout.overflowHidden([[m(100)], [m(100)], [m(100)]], 1000, 0, 10, 4, false);
+    compare(hidden, [[], [], []]);
   }
 
   function test_overflowHidden_drops_lowest_priority() {
     // 250 of room for 300: the priority-0 widget goes, wherever it is
-    const hidden = BarLayout.overflowHidden([[m(100, 100, 5)], [], [m(100, 100, 0)], [], [m(100, 100, 5)]], 250, 0, 0, 0, false);
-    compare(hidden, [[], [], [0], [], []]);
+    const hidden = BarLayout.overflowHidden([[m(100, 100, 5)], [m(100, 100, 0)], [m(100, 100, 5)]], 250, 0, 0, 0, false);
+    compare(hidden, [[], [0], []]);
   }
 
-  function test_overflowHidden_ties_go_outer_and_last_first() {
+  function test_overflowHidden_ties_go_right_left_center() {
     // Equal priorities: the right section first, its last widget first
-    const hidden = BarLayout.overflowHidden([[m(100)], [], [m(100)], [], [m(50), m(50)]], 250, 0, 0, 0, false);
-    compare(hidden, [[], [], [], [], [1]]);
+    const hidden = BarLayout.overflowHidden([[m(100)], [m(100)], [m(50), m(50)]], 250, 0, 0, 0, false);
+    compare(hidden, [[], [], [1]]);
+    // ...then the left, the center last
+    const more = BarLayout.overflowHidden([[m(100)], [m(100)], [m(100)]], 150, 0, 0, 0, false);
+    compare(more, [[0], [], [0]]);
   }
 
   function test_overflowHidden_restores_what_fits() {
     // Dropping the big priority-1 widget leaves room to bring back the
     // priority-0 one dropped before it
-    const hidden = BarLayout.overflowHidden([[m(100, 100, 0), m(300, 300, 1)], [], [], [], [m(100, 100, 2)]], 350, 0, 0, 0, false);
-    compare(hidden, [[1], [], [], [], []]);
+    const hidden = BarLayout.overflowHidden([[m(100, 100, 0), m(300, 300, 1)], [], [m(100, 100, 2)]], 350, 0, 0, 0, false);
+    compare(hidden, [[1], [], []]);
+  }
+
+  function test_overflowHidden_never_drops_spacers() {
+    // A spacer's minimum gap counts, but a widget goes instead of it
+    const hidden = BarLayout.overflowHidden([[m(100), spacer(50), m(100, 100, 1)], [], []], 220, 0, 0, 10, false);
+    compare(hidden, [[0], [], []]);
+    // Collapsed spacers take no room: 100 + a gap + 100 fits 210
+    compare(BarLayout.overflowHidden([[m(100), spacer(), m(100)], [], []], 210, 0, 0, 10, false), [[], [], []]);
   }
 
   function test_overflowHidden_lockCenter_only_the_overflowing_half() {
     // Center 200 in 1000 leaves 400 each side; only the left overflows
-    const hidden = BarLayout.overflowHidden([[m(300), m(300)], [], [m(200)], [], [m(300)]], 1000, 0, 0, 0, true);
-    compare(hidden, [[1], [], [], [], []]);
+    const hidden = BarLayout.overflowHidden([[m(300), m(300)], [m(200)], [m(300)]], 1000, 0, 0, 0, true);
+    compare(hidden, [[1], [], []]);
+  }
+
+  function test_overflowHidden_lockCenter_center_alone_overflows() {
+    // The center can't fit the bar even alone: it loses its own widgets,
+    // and the sides keep theirs
+    const hidden = BarLayout.overflowHidden([[m(50)], [m(300), m(300), m(300)], [m(50)]], 800, 0, 0, 0, true);
+    compare(hidden, [[], [2], []]);
+    // A center that fits alone is never touched for a crowded side
+    const side = BarLayout.overflowHidden([[m(500)], [m(600)], []], 800, 0, 0, 0, true);
+    compare(side, [[0], [], []]);
   }
 
   function test_overflowHidden_lockCenter_center_hang() {
@@ -156,8 +238,8 @@ TestCase {
     const divider = Object.assign(m(30), {
       "divides": true
     });
-    const hidden = BarLayout.overflowHidden([[m(410)], [], [m(170), divider], [], [m(390)]], 1000, 0, 0, 0, true);
-    compare(hidden, [[], [], [], [], [0]]);
+    const hidden = BarLayout.overflowHidden([[m(410)], [m(170), divider], [m(390)]], 1000, 0, 0, 0, true);
+    compare(hidden, [[], [], [0]]);
   }
 
   function test_allocate_fits() {
@@ -183,6 +265,32 @@ TestCase {
     const a = BarLayout.allocate([m(40), m(60), m(20)], [true, false, true], 200, 4);
     compare(a.sizes, [40, 0, 20]);
     compare(a.offsets, [0, 44, 44]);
+  }
+
+  function test_allocate_spacers_take_the_room() {
+    // 200 for 40 + 60 and one gap: the spacer between takes the other 96,
+    // in the gap after the first widget
+    const a = BarLayout.allocate([m(40), spacer(), m(60)], [true, true, true], 200, 4);
+    compare(a.sizes, [40, 96, 60]);
+    compare(a.offsets, [0, 44, 140]);
+    // Two share it, the remainder to the last
+    const two = BarLayout.allocate([spacer(), m(40), spacer(), m(60)], [true, true, true, true], 200, 4);
+    compare(two.sizes, [48, 40, 48, 60]);
+    compare(two.offsets, [0, 48, 92, 140]);
+    const odd = BarLayout.allocate([spacer(), m(40), spacer()], [true, true, true], 101, 4);
+    compare(odd.sizes, [30, 40, 31]);
+    compare(odd.offsets, [0, 30, 70]);
+  }
+
+  function test_allocate_collapsed_spacer_leaves_one_gap() {
+    // Crowded: the spacer keeps its minimum gap (0), one gap between
+    const a = BarLayout.allocate([m(40, 20), spacer(), m(60)], [true, true, true], 90, 4);
+    compare(a.visible, [true, true, true]);
+    compare(a.sizes[1], 0);
+    compare(a.offsets[2], a.sizes[0] + 4);
+    // A spacer is never the one hidden
+    const b = BarLayout.allocate([m(40), spacer(10), m(60, 60, 1)], [true, true, true], 80, 4);
+    compare(b.visible, [false, true, true]);
   }
 
   function test_runs() {

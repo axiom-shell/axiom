@@ -62,6 +62,9 @@ Item {
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
   // A divider of its own (Separator): the group draws none beside it
   readonly property bool divides: _item?.divides ?? false
+  // Room that takes the free space on its side of the bar (Spacer): it
+  // keeps its preferredSize at least (BarLayout.allocate)
+  readonly property bool fills: _item?.fills ?? false
   // Hovered, on a module that shows an outline then (its hoverOutline)
   readonly property bool outlined: (_item?.hoverOutline ?? false) && (_item?.hovered ?? false)
   // Room along the bar kept clear of its background's caps, at its start

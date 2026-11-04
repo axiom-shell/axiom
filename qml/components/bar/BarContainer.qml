@@ -287,15 +287,11 @@ Rectangle {
   }
 
   readonly property var _groups: [leftGroup, centerGroup, rightGroup]
-  // BarLayout still lays out five sections: the three, with empty ones
-  // between them (each Section's slotIndex is its place in the five)
-  // (temporary, until BarLayout takes three)
-  function _five(values, empty) {
-    return [values[0], empty, values[1], empty, values[2]];
-  }
   // Per section, the model indices hidden so the minimum sizes fit
-  readonly property var hidden: BarLayout.overflowHidden(root._five(root._groups.map(g => g.measures), []), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter)
-  readonly property var slots: BarLayout.layoutSections(root._five(root._groups.map(g => g.preferredLength), 0), root._five(root._groups.map(g => g.minimumLength), 0), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang)
+  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter)
+  // Each section's room along the bar; a side with spacers stretches to
+  // the center (BarLayout.layoutSections)
+  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount))
 
   // A section's shown widgets; `configIndex` is each one's place in the
   // section's config, which hidden widgets leave out
@@ -936,7 +932,7 @@ Rectangle {
   Section {
     id: centerGroup
     bar: root
-    slotIndex: 2
+    slotIndex: 1
     zone: "center"
     align: 0.5
     widgets: root.widgetModel(root.barConfig.widgets?.center)
@@ -945,7 +941,7 @@ Rectangle {
   Section {
     id: rightGroup
     bar: root
-    slotIndex: 4
+    slotIndex: 2
     zone: "right"
     align: 1
     widgets: root.widgetModel(root.barConfig.widgets?.right)
