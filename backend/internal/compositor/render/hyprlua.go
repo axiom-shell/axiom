@@ -447,11 +447,11 @@ func MirrorNames(details any) Func {
 
 // HyprFileMonitorCalls are the hl.monitor() calls of a profile in a
 // module or managed config axiom wrote: the profile it holds until the
-// outputs are read.
+// outputs are read. The managed file's catch-all (output "") isn't one.
 func HyprFileMonitorCalls(text any) []string {
 	out := []string{}
 	for _, l := range strings.Split(str(or(text, "")), "\n") {
-		if l = strings.TrimSpace(l); strings.HasPrefix(l, `hl.monitor({ output = "`) {
+		if l = strings.TrimSpace(l); strings.HasPrefix(l, `hl.monitor({ output = "`) && !strings.HasPrefix(l, `hl.monitor({ output = "",`) {
 			out = append(out, l)
 		}
 	}

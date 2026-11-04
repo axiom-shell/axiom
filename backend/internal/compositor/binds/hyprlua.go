@@ -441,7 +441,12 @@ func isWhole(f float64) bool {
 	return f == math.Trunc(f) && math.Abs(f) < 1<<63
 }
 
-var luaName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+var (
+	luaName     = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+	luaKeywords = map[string]bool{"and": true, "break": true, "do": true, "else": true, "elseif": true, "end": true,
+		"false": true, "for": true, "function": true, "goto": true, "if": true, "in": true, "local": true, "nil": true,
+		"not": true, "or": true, "repeat": true, "return": true, "then": true, "true": true, "until": true, "while": true}
+)
 
 // luaSource is a plain value as Lua source
 func luaSource(v lua.LValue) string {
@@ -449,6 +454,15 @@ func luaSource(v lua.LValue) string {
 	case lua.LString:
 		return render.LuaString(string(v))
 	case lua.LNumber:
+		// tostring's nan and inf would read as (nil) globals
+		switch f := float64(v); {
+		case math.IsNaN(f):
+			return "(0/0)"
+		case math.IsInf(f, 1):
+			return "math.huge"
+		case math.IsInf(f, -1):
+			return "-math.huge"
+		}
 		return numberText(float64(v))
 	case lua.LBool:
 		if v {
@@ -471,7 +485,7 @@ func luaSource(v lua.LValue) string {
 		sort.SliceStable(keys, func(i, j int) bool { return luaToString(keys[i]) < luaToString(keys[j]) })
 		for _, k := range keys {
 			name := "[" + luaSource(k) + "]"
-			if s, ok := k.(lua.LString); ok && luaName.MatchString(string(s)) {
+			if s, ok := k.(lua.LString); ok && luaName.MatchString(string(s)) && !luaKeywords[string(s)] {
 				name = string(s)
 			}
 			parts = append(parts, name+" = "+luaSource(v.RawGet(k)))

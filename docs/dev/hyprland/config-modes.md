@@ -32,6 +32,7 @@ Hyprland's config writer (the daemon's `manager/hypr.go`, with its [runtime laye
 
 ### `managed`
 - `managedText(spec)` (`render.managedLua`) becomes `~/.config/hypr/hyprland.lua` itself, plus the `managed` options.
+- It loads each `user/*.lua` as `require("user.<name>")` (`render.UserFilesLua`, the released file too). A name with a dot in it (`my.binds.lua`) isn't loaded, since `require` reads a dot as a folder: it's reported with the files' errors (`hyprctl configerrors`).
 - Taking the user's existing config over (the binary's `compositor/takeover`) is described in [Managed takeover](managed-takeover.md).
 
 ### Include and autostart lines

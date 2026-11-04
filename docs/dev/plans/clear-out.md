@@ -396,10 +396,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Renaming a saved preset after switching presets renames the wrong one
   - The reference's sections and both chip rows are built while hidden
 - **compositor-17** (18): Six file groups, one commit each; fine under the gate.
-  - [The bind merge removes an hl.unbind whether or not its bind went](../issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
-  - [A user/ file with a dot in its name never loads](../issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
-  - [A moved raw bind with a Lua keyword key compiles to nothing](../issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
-  - [The managed file's catch-all monitor line is copied into M.monitors](../issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
+  - The bind merge removes an hl.unbind whether or not its bind went
+  - A user/ file with a dot in its name never loads
+  - A moved raw bind with a Lua keyword key compiles to nothing
+  - The managed file's catch-all monitor line is copied into M.monitors
   - [A workspace slide throws when animations go off between its legs](../issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
   - [Direct Hyprland dispatches can overtake queued Lua](../issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
   - [Recording two keys within 30 s can end the second recording early on Hyprland](../issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)

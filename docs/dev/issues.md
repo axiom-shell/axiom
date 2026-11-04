@@ -413,24 +413,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The bind merge removes an hl.unbind whether or not its bind went
-- **Where:** `backend/internal/compositor/binds/hypr.go` (`extractHypr`'s unbind sites), `backend/internal/compositor/manager/manager.go` (`left`)
-- **What:** Extract adds an `hl.unbind(K)` site, with no binds, when K is a moved bind's key (hypr.go:459-474), and `remove` handles it on its own, per file. `left()` takes back only the binds of failed sites, matched by file and line, so the two outcomes split: the bind goes but the unbind's file fails (`syntax`, `io`, `changed`), and the user's surviving `hl.unbind(K)` runs after axiom's module and unbinds the moved bind (the key does nothing); or the unbind goes but the bind's file fails, the re-commit restores axiom's bind on K, and the user's `hl.bind(K)` fires alongside it, which bind-merge.md › Committing and removing says can't happen. Rare: needs one file of a merge to fail. Fix: give each unbind site the keys it covers; remove an unbind site only when its keys' bind sites all went, and treat a failed unbind site in `left()` as failing those binds.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A user/ file with a dot in its name never loads
-- **Where:** `backend/internal/compositor/render/hyprconfig.go` (`UserFilesLua`), `backend/internal/compositor/binds/hypr.go` (the extract's module name)
-- **What:** The managed and released files load each `user/*.lua` as `require("user." .. name)`, and the bind extract uses the same module name. Lua's `require` turns every `.` into `/`, so `user/my.binds.lua` is looked for as `user/my/binds.lua`: it never loads (Hyprland's config errors say module not found) and the merge reports an error for it. Reproduced against the extract. Nothing warns about dotted names (docs/installation.md only says `require("user.<name>")`). Fix: load such files with `dofile` (or skip them with a reported error), and say so in config-modes.md › managed. The `dofile` fix should skip dot-files, which the managed file's `ls *.lua` never loads: `hyprFiles` (binds/hypr.go:336) has no hidden-file filter, unlike sway's and niri's (the hyprland review, 2026-10-30).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### A moved raw bind with a Lua keyword key compiles to nothing
-- **Where:** `backend/internal/compositor/binds/hyprlua.go` (`luaSource`)
-- **What:** `luaSource` writes a table key that looks like a name bare, keywords included (hyprlua.go:467): `{ ["end"] = 1 }` becomes `{ end = 1 }`, and NaN/Inf come out as `nan`/`inf` (nil globals). A dispatcher the merge maps to `raw` keeps that source as its argument; `DispatcherLua`'s `raw` case compiles it with `load`, which fails, so the moved bind becomes `hl.dsp.no_op()` while the user's original call is already deleted. Reproduced (`{["end"]=1}` → `{ end = 1 }`). Rare. Fix: exclude Lua's keywords from the bare form; better, `load`-check the rebuilt source at extract time and keep the site when it doesn't compile.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### A workspace slide throws when animations go off between its legs
 - **Where:** `qml/services/compositor/HyprlandManager.qml` (`_nextSlide`, `travel`, `travelingTo`)
 - **What:** `travel` checks `_workspaceAnim` for the first leg only; `_nextSlide` re-reads it per leg and uses `anim.bezier`/`anim.style` unchecked (HyprlandManager.qml:517-534). An options read landing in the timer gap between the two legs of a diagonal grid switch with animations now off (`animations:enabled` false, the `instant` preset) makes the second leg throw a TypeError: the switch stops at the corner workspace, and `travelingTo` keeps the first leg's id, so `CompositorManager` plans the next switch from it and `_compaction` keeps deferring (`travelingTo > 0`) until another travel resets it. Rare. Fix: snapshot `anim` into each step in `travel`, or in `_nextSlide` dispatch the rest directly and reset `_slideSteps`/`travelingTo` when it's null.
@@ -471,12 +453,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `qml/services/compositor/KeybindsPageState.qml` (`_bindMods`), `qml/components/methods/BindKeys.qml` (`decodeMods`)
 - **What:** Deletion pass. `_bindMods` parses keyId's string (`parseInt`) to get a mask back and decodes it (`BindKeys.decodeMods`); it stops decoding a mask with the fix in "Two keybind reference paths drop a key's binds". The rest of this entry (the second modifier table, the key names KeyMap holds, the skipped keys worked out twice) was done in the clear-out's compositor-02.
 - **Size:** small
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
-### The managed file's catch-all monitor line is copied into M.monitors
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`HyprFileMonitorCalls`), `backend/internal/compositor/manager/hypr.go`
-- **What:** Until the outputs are read, `M.monitors()` is refilled from the file: every line starting `hl.monitor({ output = "`. In managed mode that matches the managed file's fixed catch-all `hl.monitor({ output = "", mode = "preferred", … })` (hyprconfig.go:531) too, so each write made before the first read adds one more copy inside `M.monitors()`. Harmless (each replaces the default rule; the next write after a read cleans up) but the file churns and the layer key changes. Fix: read only the lines inside `function M.monitors()`, or skip `output = ""`.
-- **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### Stale lines in the Hyprland docs and comments
