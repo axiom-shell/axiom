@@ -449,12 +449,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the hyprland system
 
-### Text typed in the bind inspector is dropped when another row is clicked
-- **Where:** `qml/components/views/Keybinds/BindInspector.qml` (`BindTextField`), `qml/services/compositor/KeybindEditor.qml` (`selectBind`)
-- **What:** A row click takes no focus and rebuilds the inspector (a Repeater over `[selectedIndex]`), so a label or argument typed but not yet committed goes with the dying field: it releases its hold rather than committing, because a move, removal or undo has already shifted `bindIndex` onto another bind by then (and `ConfigDraft.changed` re-clones the binds, so the field can't recognise its own). Unconfirmed whether Qt emits `editingFinished` as the focused field is destroyed, which would commit it in the plain selection case. Fix: commit the typed field (`EditsManager.commitTyping()`) in `selectBind` before the selection moves, or confirm live that focus loss already covers it.
-- **Size:** trivial
-- **Found:** 2026-11-05, while fixing the Keybinds page (row 20, compositor-16)
-
 ### Two keybind reference paths drop a key's binds
 - **Where:** `qml/services/compositor/KeybindsPageState.qml` (`_bindMods`), `qml/components/methods/BindRows.qml` (`collapseDirections`)
 - **What:** `_bindMods` decodes a bind's modifiers from its `BindKeys.keyId`, which leaves a tap's own modifier out, so a hand-written or merged `SUPER + Super_L` bind has no modifiers and the SUPER chip filters it out (the recorder's plain `Super_L` is unaffected). `collapseDirections` keeps only the first row per direction and merges only those (`_merged(ordered, …)`, BindRows.qml:107-119), while `_buildKeybindings` keeps rows whose labels differ in case apart ("Focus Left" next to "Focus left"), so the second row's `ids`, `user` and `overrides` are lost and the key map and combo lookup miss its key. Both rare. Fix: take the modifiers from `KeyNames.split(bind.key).mods`; pass all `members` to `_merged` and keep `ordered` for the cluster, with a test row of two "left" rows.

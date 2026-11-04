@@ -252,7 +252,8 @@ ColumnLayout {
 
     Component.onCompleted: entry.input.text = entry.saved
     // Released, not committed: a move, removal or undo has shifted the
-    // index by the time the inspector goes
+    // index by the time the inspector goes (a selection change commits
+    // first: KeybindEditor.selectBind)
     Component.onDestruction: EditsManager.releaseTyping(entry)
     onSavedChanged: {
       if (!entry.typed)
