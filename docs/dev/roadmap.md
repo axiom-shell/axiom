@@ -361,7 +361,6 @@ Found by the audits:
 - [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
 - [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
-- [The bind inspector's typed label and argument miss Save](issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
 - [The key map and the keyboard reference each carry the same modifier chips and legend](issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
 - [A reference section's folded count re-derives BindRows.byModifiers' grouping](issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
 - [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)

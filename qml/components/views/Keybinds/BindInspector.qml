@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.compositor
+import qs.services.ui
 import qs.components.methods
 import qs.components.forms
 import qs.components.reusable
@@ -29,15 +30,6 @@ ColumnLayout {
   }
 
   spacing: Widget.spacing * 2
-
-  // Text fields keep what's being typed; otherwise they follow the bind.
-  // They commit as editing finishes, focus loss included, only once typed in.
-  onBindChanged: {
-    if (!argumentText.typed)
-      argumentText.input.text = root.bind.argument ?? "";
-    if (!label.typed)
-      label.input.text = root.bind.description ?? "";
-  }
 
   InspectorHeader {
     icon: KeybindManager.actionIcon(root.bind.action)
@@ -124,8 +116,9 @@ ColumnLayout {
       Layout.preferredHeight: Widget.height
     }
 
-    StyledTextEntry {
+    BindTextField {
       id: argumentText
+      field: "argument"
       visible: root.needed && root.argumentOptions === null
       placeholderText: {
         switch (KeybindManager.argumentKind(root.bind.action)) {
@@ -142,12 +135,6 @@ ColumnLayout {
           }[root.bind.compositor] ?? I18n.tr("Dispatcher, e.g. hl.dsp.layout(\"swapsplit\")");
         }
         return root.bind.action === "exec" ? I18n.tr("Command") : I18n.tr("Search text");
-      }
-      Component.onCompleted: input.text = root.bind.argument ?? ""
-      input.onEditingFinished: {
-        if (argumentText.typed)
-          KeybindManager.editor.setField(root.bindIndex, "argument", input.text);
-        argumentText.typed = false;
       }
       Layout.fillWidth: true
       Layout.preferredHeight: Widget.height
@@ -182,17 +169,12 @@ ColumnLayout {
         textSize: Appearance.fontSizeBy(-1)
       }
 
-      StyledTextEntry {
+      BindTextField {
         id: label
+        field: "description"
         Layout.fillWidth: true
         Layout.preferredHeight: Widget.height
         placeholderText: BindActions.defaultLabel(KeybindManager.actionTable, root.bind) || I18n.tr("Label")
-        Component.onCompleted: input.text = root.bind.description ?? ""
-        input.onEditingFinished: {
-          if (label.typed)
-            KeybindManager.editor.setField(root.bindIndex, "description", input.text);
-          label.typed = false;
-        }
       }
     }
 
@@ -258,5 +240,39 @@ ColumnLayout {
     issues: root.issues
     textSize: Appearance.fontSizeBy(-1)
     Layout.fillWidth: true
+  }
+
+  // A text field on one of the bind's fields: it keeps what's being typed,
+  // else follows the bind, and commits on Enter, focus loss or the page's
+  // Save (EditsManager.holdTyping shows Save while typed)
+  component BindTextField: StyledTextEntry {
+    id: entry
+    required property string field
+    readonly property string saved: root.bind[entry.field] ?? ""
+
+    Component.onCompleted: entry.input.text = entry.saved
+    // Released, not committed: a move, removal or undo has shifted the
+    // index by the time the inspector goes
+    Component.onDestruction: EditsManager.releaseTyping(entry)
+    onSavedChanged: {
+      if (!entry.typed)
+        entry.input.text = entry.saved;
+    }
+    onTextEdited: EditsManager.holdTyping(entry, entry.Window.window)
+    input.onEditingFinished: entry.commitTyped()
+
+    function commitTyped() {
+      if (entry.typed)
+        KeybindManager.editor.setField(root.bindIndex, entry.field, entry.input.text);
+      // The text stays: the bind follows it a tick later (ConfigDraft.changed)
+      entry.typed = false;
+      EditsManager.releaseTyping(entry);
+    }
+
+    function discardTyped() {
+      entry.typed = false;
+      entry.input.text = entry.saved;
+      EditsManager.releaseTyping(entry);
+    }
   }
 }
