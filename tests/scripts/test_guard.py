@@ -57,7 +57,8 @@ class Bash(unittest.TestCase):
                  "axiom config set Idle.enabled on --takeover", "axiom ipc monitors keep", "axiom ipc selfUpdate update",
                  f"rm {guard.LIVE_CONFIG}", f"cp /tmp/x.json {guard.LIVE_CONFIG}", "niri msg action quit",
                  f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
-                 f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'inputMethod.push'}",
+                 "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 Restart", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
                  "axiom ipc lockscreen lock", "qs kill", "gh issue create -t x", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
@@ -227,6 +228,27 @@ class Bash(unittest.TestCase):
             self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
             self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
         self.allows(f"python3 -c {call % 'dev.config.diff'}", f"python3 -c {call % 'dev.get'}")
+
+    def test_live_input_method(self):
+        fcitx = "org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1"
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        self.blocks(f"busctl --user call {fcitx} SetConfig sv fcitx://config/global x",
+                    f"busctl --user call {fcitx} Restart", f"busctl --user call {fcitx} SetInputMethodGroupInfo ssa(ss) Default us 0",
+                    "dbus-send --session --dest=org.fcitx.Fcitx5 --type=method_call /controller org.fcitx.Fcitx.Controller1.Save",
+                    "gdbus call --session -d org.fcitx.Fcitx5 -o /controller -m org.fcitx.Fcitx.Controller1.Exit",
+                    f"busctl --user call {fcitx} AddInputMethodGroup s G", f"busctl --user call {fcitx} RemoveInputMethodGroup s G",
+                    "gsettings set org.freedesktop.ibus.general preload-engines \"['mozc-jp']\"",
+                    "gsettings reset org.freedesktop.ibus.panel custom-font", "dconf write /desktop/ibus/general/use-system-keyboard-layout true",
+                    "axiom ipc inputMethod push x", f"python3 -c {call % 'inputMethod.push'}",
+                    f"printf %s {call % 'inputMethod.options'}", f"python3 -c {call % 'inputMethod.framework'}")
+        self.allows(f"busctl --user call {fcitx} CurrentInputMethod", f"busctl --user call {fcitx} FullInputMethodGroupInfo s Default",
+                    f"busctl --user introspect {fcitx}", f"busctl --address=unix:path=/tmp/bus call {fcitx} SetConfig sv x y",
+                    f"DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/bus busctl --user call {fcitx} Save",
+                    "gsettings get org.freedesktop.ibus.general preload-engines",
+                    "GSETTINGS_BACKEND=memory gsettings set org.freedesktop.ibus.general preload-engines \"[]\"",
+                    "gsettings set org.gnome.desktop.interface color-scheme prefer-dark",
+                    f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % 'inputMethod.push'}", f"python3 -c {call % 'inputMethod.get'}",
+                    "grep -rn inputMethod.push backend", "go test ./internal/inputmethod")
 
     def test_greeter_install_command(self):
         self.blocks("axiom greeter-install install . me", "sudo axiom greeter-install uninstall . me",

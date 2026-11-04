@@ -170,6 +170,14 @@ QtObject {
       "agreety": {
         "arch": "greetd-agreety",
         "fedora": "greetd"
+      },
+      "fcitx5": {
+        "arch": "fcitx5",
+        "fedora": "fcitx5"
+      },
+      "ibus-daemon": {
+        "arch": "ibus",
+        "fedora": "ibus"
       }
     })
 

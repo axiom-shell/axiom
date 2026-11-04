@@ -28,8 +28,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -66,6 +68,9 @@ type Options struct {
 	CommitBinds func(binds *jsonx.Array) error
 	// Push sends the shell a compositor.* push
 	Push func(method string, params any)
+	// LookPath finds a program (default exec.LookPath): the input method
+	// frameworks installed (Facts.Frameworks)
+	LookPath func(string) (string, error)
 	// Bin: the binary (the daemon's own, /proc/self/exe) a bind merge
 	// reads Hyprland's files in, a child with its memory limited
 	// (binds.Options.Isolate); "" reads them in this process
@@ -362,7 +367,29 @@ func (m *Manager) buildInputs() Inputs {
 	if m.profiles != nil {
 		outputs = m.profiles.outputs
 	}
-	return buildInputs(m.o.Config(), m.facts, outputs)
+	f := m.facts
+	if f != nil {
+		copied := *f
+		copied.Frameworks = m.frameworks()
+		f = &copied
+	}
+	return buildInputs(m.o.Config(), f, outputs)
+}
+
+// frameworks are the input method frameworks installed (Facts.Frameworks)
+func (m *Manager) frameworks() []string {
+	look := m.o.LookPath
+	if look == nil {
+		look = exec.LookPath
+	}
+	var out []string
+	for name, program := range map[string]string{"fcitx5": "fcitx5", "ibus": "ibus-daemon"} {
+		if _, err := look(program); err == nil {
+			out = append(out, name)
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 // OutputsChanged tells of an output connected or gone (the daemon's

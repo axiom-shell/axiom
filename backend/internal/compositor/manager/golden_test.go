@@ -56,9 +56,10 @@ func repo(t *testing.T) (*render.Tables, any) {
 // goldenInputs are what the layer is made of for kind: testdata/config.json
 // (a config's sections the layer reads) with testdata/facts.json (what a
 // shell sent as compositor.inputs, its machine's paths and names made
-// generic) and the one output its profile names connected, decoded as the
-// daemon decodes them
-func goldenInputs(t *testing.T, kind string) Inputs {
+// generic), fcitx5 installed unless noIM (the daemon's Facts.Frameworks),
+// and the one output its profile names connected, decoded as the daemon
+// decodes them
+func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join("testdata", "facts.json"))
 	if err != nil {
@@ -69,6 +70,9 @@ func goldenInputs(t *testing.T, kind string) Inputs {
 		t.Fatalf("compositor.inputs doesn't decode the shell's facts: %v", err)
 	}
 	f.Kind = kind
+	if len(noIM) == 0 || !noIM[0] {
+		f.Frameworks = []string{"fcitx5"}
+	}
 	data, err = os.ReadFile(filepath.Join("testdata", "config.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -123,6 +127,10 @@ func TestGoldenFiles(t *testing.T) {
 				"released-included" + c.ext: w.releasedText(in, "included"),
 				"empty-module" + c.ext:      w.emptyModuleText(),
 			}
+			// Without fcitx5 installed: no input method variables, the
+			// user's own fcitx5 autostart line kept
+			noIM := goldenInputs(t, c.kind, true)
+			files["managed-no-im"+c.ext] = w.managedText(noIM, noIM.get("specFile"))
 			if live := w.liveLines(in, in.get("specLive")); len(live) > 0 {
 				files["live.txt"] = strings.Join(live, "\n") + "\n"
 			}

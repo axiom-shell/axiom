@@ -410,9 +410,52 @@ var recommendedEnv = [][2]string{{"GDK_BACKEND", "wayland,x11,*"}, {"QT_QPA_PLAT
 
 var envName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
+// The input method frameworks' variables, by the fcitx5 wiki's "Using
+// Fcitx 5 on Wayland" (XMODIFIERS for XWayland, QT_IM_MODULES' fallback
+// order for Qt 6.7+, SDL_IM_MODULE for SDL2) and ibus's equivalents;
+// GLFW_IM_MODULE takes only ibus (kitty's GLFW), which fcitx5 also
+// speaks. No GTK_IM_MODULE / QT_IM_MODULE: on Wayland they bypass GTK's and
+// Qt's text-input path ("Do NOT set GTK_IM_MODULE"), so only legacyApps
+// (X11, Gtk2, Qt5 under sway) adds them.
+var inputMethodEnv = map[string][][2]string{
+	"fcitx5": {{"XMODIFIERS", "@im=fcitx"}, {"QT_IM_MODULES", "wayland;fcitx;ibus"}, {"SDL_IM_MODULE", "fcitx"}, {"GLFW_IM_MODULE", "ibus"}},
+	"ibus":   {{"XMODIFIERS", "@im=ibus"}, {"QT_IM_MODULES", "wayland;ibus"}, {"SDL_IM_MODULE", "ibus"}, {"GLFW_IM_MODULE", "ibus"}},
+}
+
+// inputMethodModule is the GTK / Qt im module legacyApps names
+var inputMethodModule = map[string]string{"fcitx5": "fcitx", "ibus": "ibus"}
+
+// The command starting each framework: fcitx5 as a daemon, replacing a
+// running one; ibus-daemon (ibus-daemon(1)) daemonized (-d), replacing (-r),
+// with XIM (-x), restarting on exit (-R)
+var inputMethodCommand = map[string]string{"fcitx5": "fcitx5 -d --replace", "ibus": "ibus-daemon -drxR"}
+
+// InputMethodEnv is the input method's variables for the session (im: {
+// framework: "fcitx5" | "ibus" | "" for none (as resolved: installed),
+// legacyApps })
+func InputMethodEnv(im any) [][2]string {
+	framework := str(or(get(im, "framework"), ""))
+	out := append([][2]string(nil), inputMethodEnv[framework]...)
+	if len(out) > 0 && truthy(get(im, "legacyApps")) {
+		m := inputMethodModule[framework]
+		out = append(out, [2]string{"GTK_IM_MODULE", m}, [2]string{"QT_IM_MODULE", m})
+	}
+	return out
+}
+
+// InputMethodCommand is the command starting the input method's framework
+// (im as InputMethodEnv's, with autostart), "" for none
+func InputMethodCommand(im any) string {
+	if !truthy(get(im, "autostart")) {
+		return ""
+	}
+	return inputMethodCommand[str(or(get(im, "framework"), ""))]
+}
+
 // SessionEnv is CompositorLayer.sessionEnv: the session's environment ([{
 // name, value }], each name once): the recommended one, the theme
-// integrations', the cursor's, then the session's own, which win.
+// integrations' and the input method's (integrations.inputMethod, as
+// InputMethodEnv's), the cursor's, then the session's own, which win.
 func SessionEnv(session, cursor, integrations any) *jsonx.Array {
 	type pair struct {
 		name  string
@@ -426,6 +469,9 @@ func SessionEnv(session, cursor, integrations any) *jsonx.Array {
 	}
 	if truthy(get(integrations, "qt")) {
 		all = append(all, pair{"QT_QPA_PLATFORMTHEME", "qt5ct"})
+	}
+	for _, p := range InputMethodEnv(get(integrations, "inputMethod")) {
+		all = append(all, pair{p[0], p[1]})
 	}
 	if truthy(cursor) {
 		all = append(all, pair{"XCURSOR_THEME", or(get(cursor, "xcursor"), get(cursor, "theme"))},
