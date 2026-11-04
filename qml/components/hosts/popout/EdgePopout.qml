@@ -80,14 +80,20 @@ PopoutWrapperBase {
   // Extra distance in from the attach edge (for a detached box)
   property real edgeOffset: root.attachAt - root.attachBase
   // How far back towards the screen edge a detached box slides in from,
-  // as a bar popout's: from under a transparent bar on its edge (its outer
-  // edge, past the border stroke it lies on inside the border), its window
-  // starting there on the bar's layer, ordered under it (the daemon's
-  // layer rules, render.LayerRulesLua), when it slides under at all (EdgePlacement.slidesUnder:
-  // not while the overlay is open on its screen, _overOverlay, nor over a
-  // fullscreen window, nor without supports.layerOrder). Anything else it
-  // opens over, sliding out within its own window.
-  readonly property real slideDistance: placement.slidesUnder ? Math.max(0, root.attachAt - root.barOuter - (root.barConfig?.insideBorder ? Appearance.borderWidth : 0)) : 0
+  // as a bar popout's: from under a transparent bar on its edge
+  // (EdgePlacement.slideDistance), its window starting there on the bar's
+  // layer, ordered under it (the daemon's layer rules,
+  // render.LayerRulesLua), when it slides under at all
+  // (EdgePlacement.slidesUnder: not while the overlay is open on its
+  // screen, nor over a fullscreen window, nor without
+  // supports.layerOrder). Anything else it opens over, sliding out within
+  // its own window. Followed only while closed, as BarPopouts.underBar:
+  // it changes the window's layer, namespace and margin.
+  property ClosedLatch _under: ClosedLatch {
+    source: placement.slidesUnder
+    closed: !root.occupied
+  }
+  readonly property real slideDistance: (root._under.value ?? false) ? placement.slideDistance : 0
   readonly property bool slidesUnder: root.slideDistance > 0
   // Its window's layer: Overlay unless it slides under a bar
   readonly property int windowLayer: root.slidesUnder ? WlrLayer.Top : WlrLayer.Overlay
@@ -188,14 +194,8 @@ PopoutWrapperBase {
   readonly property int startSide: placement.startSide
   readonly property int endSide: placement.endSide
 
-  // A bar other than a solid one on this edge, while it shows, and its
-  // outer edge across it (EdgePlacement)
-  readonly property var barConfig: placement.barConfig
-  readonly property real barOuter: placement.barOuter
-  // Where the window's attach edge goes by default: on the stroke of what
-  // reserves the edge (the border, a bar, integrated menus; not docks,
-  // which it reaches past), none on a bare edge
-  readonly property real attachBase: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) - (root.bareEdge ? 0 : Appearance.borderWidth)
+  // Where the window's attach edge goes by default (EdgePlacement.attachBase)
+  readonly property real attachBase: placement.attachBase
   // Where it goes: held, a connector gap short of where its box goes;
   // following a bar, as that meets it; else on what reserves the edge
   // (EdgePlacement.attachAt)
@@ -204,14 +204,8 @@ PopoutWrapperBase {
   // While the overlay is open on its screen a box that would slide under
   // a bar draws over the overlay instead (render.LayerRulesLua),
   // since the layer it slides out from under is one the overlay covers
-  // (as BarPopouts.underBar). Followed only while closed: the namespace
-  // changes with it.
+  // (as BarPopouts.underBar; latched in _under)
   readonly property bool overlayOpen: SurfaceManager.surfaceOpenOn("overlay", root.screen)
-  property ClosedLatch _overlayLatch: ClosedLatch {
-    source: root.overlayOpen
-    closed: !root.occupied
-  }
-  readonly property bool _overOverlay: root._overlayLatch.value ?? false
 
   // Extra box depth at the attach edge that a merged box's content keeps
   // clear of the pills by
@@ -303,7 +297,7 @@ PopoutWrapperBase {
     showing: root.occupied && root.contentItem !== null && root.claimed
     open: root.isOpen && root.claimed
     onOverlayLayer: root.onOverlayLayer
-    overOverlay: root._overOverlay
+    overOverlay: root.overlayOpen
     origin: placeOnScreen.origin
     attachedSurface: surface
     opens: surfaceWindow.visible && root.claimed

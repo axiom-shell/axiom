@@ -522,24 +522,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
 
-### An open edge popout's layer and namespace still follow its edge's bar
-- **Where:** `qml/components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `qml/components/hosts/popout/EdgePopout.qml:97` (`windowLayer`), `qml/components/hosts/popout/EdgePopout.qml:113` (`layerNamespace`), `qml/components/hosts/popout/EdgePopout.qml:216` (`_overlayLatch`), `qml/components/hosts/popout/BarPopouts.qml:42` (`_under`)
-- **What:** BarPopouts latches `placement.slidesUnder` in a `ClosedLatch`, so an open bar popout never changes layer. EdgePopout latches only two of that output's inputs (`_overlayLatch`, `_fullscreenLatch`) and reads `placement.slidesUnder` live. That value also depends on the edge's bar: `bar?.kind === "transparent"`, from `SurfaceContext.layout`.
-  - **Scenario:** a pinned floating edge menu or an OSD is open on a transparent bar's edge, and the bar's surface changes or the bar goes away (`axiom config set`, an edit, a restored setup).
-  - **What happens:** `slidesUnder` flips while the window shows, and with it `WlrLayershell.layer`, the namespace (`axiom-popout-under` ↔ `overNamespace`) and the margin (`slideDistance`).
-  - **Rule broken:** ClosedLatch's own header ("what changes a popout's window layer or namespace … so an open popout never moves or restacks"), and AGENTS.md's "an open popout never moves".
-  - PLAUSIBLE: what Hyprland does with a namespace changed on a mapped layer (ignored until a remap, or a remap) needs a nested session.
-
-  Fix: `property ClosedLatch _under: ClosedLatch { source: placement.slidesUnder; closed: !root.occupied }`, read in `slideDistance`. Then `placement.overOverlay` can take `root.overlayOpen` directly, and `_overlayLatch`/`_overOverlay` (EdgePopout.qml:216-220, 5 lines) go.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### EdgePopout works out its attach edge and slide distance itself
-- **Where:** `qml/components/hosts/popout/EdgePopout.qml:204` (`attachBase`), `qml/components/hosts/popout/EdgePopout.qml:94` (`slideDistance`), `qml/components/methods/SurfaceContext.qml:340` (`layout`)
-- **What:** `attachBase = ScreenEdgeManager.reservedWithMenusOn(screen, edge) - (bareEdge ? 0 : Appearance.borderWidth)` repeats `SurfaceContext.layout`'s no-bar `attachAt` branch, and it is read by `edgeOffset` and by FloatingEdgeMenu's `before` gap (`qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml:63`). `slideDistance` subtracts `barConfig?.insideBorder ? Appearance.borderWidth : 0`, a stroke rule `layout` doesn't return. That breaks qml/components/hosts/popout/AGENTS.md: "Never add a rule in a host: a new case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row". A change to either rule in SurfaceContext would leave the edge popout's window apart from its box. Fix: `layout` returns the attach base and the slide distance, with `tst_SurfaceContext` rows; EdgePopout reads both from `placement`, and keeps `attachBase` as that output for FloatingEdgeMenu. Both this and [An open edge popout's layer and namespace still follow its edge's bar](#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar) change `slideDistance`: take them in one batch.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### A tray submenu longer than the screen runs off it
 - **Where:** `qml/components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `qml/components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `qml/components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
 - **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
