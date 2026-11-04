@@ -16,7 +16,9 @@
 - **D items 12–15: done** (f9b1a93 D12 windowsCover; 3256259 D13 BarRevealManager; fae3d77 D14 attention; 95560c3 D15 IPC `bar` + keybind action, also in HotCorners). `verify.sh --all` green on 95560c3.
   - Agent's decisions, to show the maintainer: IPC functions take exactly one id (`focused`/`""` = the focused monitor's auto-hiding bars); toggle on a group pins all if any is unpinned; Battery news only on crossing into low/critical, CustomWidget on entering warning and warning→critical; a hidden bar's trigger strip sits at its window's outer edge, so a bar stacked inside another can't be revealed from the screen edge.
   - Not tested live (add to roadmap.md › Live checks): hover reveal, the slide and its blur clip, holds (popouts, edge menus, editor), workspace and widget-news reveal, fullscreen, side bars, a bar stacked inside another.
-- **Review: running** (review-branch --fix in the B worktree). Then: `verify.sh --all`, PR, CI. Delete this file in the last commit.
+- **Review: done** (f9d1ad4 Media track news, `EditHistory.breakJoin` dropped; b150db9 stale docs, x-auto -1 issue entry, roadmap Live checks line). `verify.sh --all` green on b150db9.
+- **Stopped here on the maintainer's word** (2026-11-04: "after the review stop and don't open a pr, just commit"). Next, when asked: PR, CI, delete this file in the last commit.
+- Open for the maintainer: B14 also lines up held Auto surfaces (OSD, floating edge menus, docks) with the windows at their ends (agent's choice); Battery news treats low and critical as one level (a low→critical drop doesn't reveal); the live config still holds `length: "fit"` / `align: "center"` on its primary bar from the interim B10 build (v93 won't rerun; no validation error logged).
 - The A-found MediaManager `Object.fromEntries` issue was logged twice; the duplicate is removed (the earlier "MediaManager's start-up pass throws…" stays).
 
 # Bar rewrite for release: settings, schema, rendering, auto-hide, editor
