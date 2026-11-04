@@ -17,7 +17,6 @@ The BarEditor overlay page: the bar list and field groups, the sections board an
   - The style groups (`BarsConfig.styleGroups`) are shared with every bar until the bar takes its own; each links (`SettingsLink`) to its card in the shared `Bars.style` on the settings page.
 - **Right: `BarDragLayer`.** It holds `SectionsBoard` along the side of the page the selected bar is on, with `WidgetInspector` beside it.
   - A horizontal bar gets a strip across the top or bottom. A vertical bar gets a column at the left or right.
-  - The button beside the Widgets title stacks a horizontal bar's board as a column at the left (`EditsManager.barStacked`).
   - Three directions are tracked separately:
     - `BarDragLayer.vertical`: how the board is drawn.
     - `barVertical`: the bar's own direction, which names the sections.
@@ -39,9 +38,15 @@ The BarEditor overlay page: the bar list and field groups, the sections board an
 - With nothing selected it shows the widget library. A click there adds to `BarManager.lastZone`, the section last selected or added to.
 - Edits show live on the running bars.
 
+### Undo and actions
+- `BarManager.history` (an `EditHistory`) snapshots the draft's bars and the selection before every edit; `undo()` / `redo()`. Field edits join by key (`bar:<bar>:<key>`, `style:…`, `widget:<bar>:<zone>:<index>:<key>`, `layout:…`), so typing or a stepper is one step; an edit that changes nothing records nothing. Loading or discarding the draft clears it.
+- Actions on the selected widget for the board's menu and keys: `moveWidgetTo(zone, atEnd)`, `stepWidget(step)` (one place along the bar, into the next section at an end), `copyWidgetToBar(barIndex)`; and `addSpacer(zone, index)`, `setWidgetPriority` / `setWidgetMax(zone, index, value)`.
+- Removing or duplicating a bar keeps the selection on its bar and widget; a removed or new bar's widgets start unselected.
+
 ### Live reports
 - They are active while a BarEditor page is visible (`BarManager.watch(page)`/`unwatch`, a `ConsumerRegistry`: `editing`).
 - The running bars outline the selected widget (`BarManager.isSelectedWidget(source, zone, index)` → `BarWidgetHost.highlighted`).
+- They outline the widget hovered on the board the same way (`BarManager.hoveredWidget`, `isHoveredWidget` → `BarWidgetHost.hoverHighlighted`), and report the one under the pointer back (`BarWidgetHost.pointerHovered` → `WidgetGroup` → `BarManager.setBarHover`, read as `barHover` / `isBarHovered(zone, index)`), so its chip looks hovered.
 - Each `BarContainer` reports `editorReport` to `BarManager.live` (`setLive(id, report)`, and `clearLive(id, screen)` on destruction). A report holds:
   - `source`: the config id.
   - `screen`.

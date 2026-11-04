@@ -422,10 +422,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-03** (2):
   - [An open edge popout's layer and namespace still follow its edge's bar](../issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
   - [EdgePopout works out its attach edge and slide distance itself](../issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
-- **bar-popouts-04** (4; its three reserve entries fixed by the stacked bars PR): the editor and rebuild entries.
+- **bar-popouts-04** (3; its three reserve entries fixed by the stacked bars PR, its selection entry by the bar rewrite): the editor and rebuild entries.
   - [Plugging in or unplugging a monitor remakes the bar that stays](../issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
   - [A bar made while the bar editor is open may never report to it](../issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
-  - [Removing or copying another bar moves the editor's selection to a different bar](../issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
   - [Bar widget hosts settle after they're gone](../issues.md#bar-widget-hosts-settle-after-theyre-gone)
 - **bar-popouts-06** (4):
   - [Media squeezed to its minimum in the fill style shows the meter, not its icon](../issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)

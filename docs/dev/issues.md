@@ -785,16 +785,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### Removing or copying another bar moves the editor's selection to a different bar
-- **Where:** `qml/services/ui/BarManager.qml:247` (`removeBar`), `qml/services/ui/BarManager.qml:189` (`duplicateBar`)
-- **What:** The selected bar is held only as `selectedBarIndex`, and BarsPanel offers Remove and Duplicate on every row.
-  - Remove: in `[A, B, C]` with B selected, removing A leaves `selectedBarIndex` at 1 (`Math.max(0, Math.min(root.selectedBarIndex, …))`). The inspector and style groups now edit C, and the widget selection is cleared. `_moveCopied` on the line before remaps the copied style's index, but nothing remaps the selection.
-  - Duplicate: with B selected, duplicating A sets `selectedBarIndex = index + 1`, still 1, so its change handler doesn't fire. B's selected widget `{zone, index}` then applies to the new copy.
-
-  Fix: in `removeBar`, `if (index < root.selectedBarIndex) root.selectedBarIndex--;`, and clear the widget selection only when the selected bar was the one removed; `duplicateBar` calls `clearSelection()`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar system
-
 ### The pill merge in BarContainer repeats BarLayout's, untested
 - **Where:** `qml/components/bar/BarContainer.qml:96` (`sectionPills`), `qml/components/methods/BarLayout.qml:523` (`_mergeSpans`)
 - **What:** `sectionPills` hand-rolls the loop that joins spans at most `pillMerge` apart (99-107), which `BarLayout._mergeSpans` already does for islands, then decides each pill's joins in the host (`root.ends.start.joinable && m.start - gap <= reach`). That breaks composition.md (main-axis layout math lives in `methods/BarLayout`) and AGENTS.md ("A methods helper's decision … is read from its output, never re-derived in a host"). No row tests when an end pill joins. The copy also writes into `_spans`' own objects (`spans.slice()` is shallow, and `last.end = …` mutates the pushed span). Fix: a BarLayout `pillRects(spans, merge, gap, reach, length, joinStart, joinEnd)` on `_mergeSpans` (which copies), with rows for a free end, a joined end at each side, and a held end. `sectionPills` (96-126, 31 lines) becomes one call of about 3 lines.

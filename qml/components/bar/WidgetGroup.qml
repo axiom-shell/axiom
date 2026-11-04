@@ -202,7 +202,7 @@ Item {
       backgroundLevel: host?.backgroundLevel ?? -1
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       levelStart: segment.back
-      highlighted: host?.highlighted ?? false
+      highlighted: (host?.highlighted || host?.hoverHighlighted) ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
       x: (host?.x ?? 0) - (root.isVertical ? 0 : segment.back)
@@ -248,6 +248,10 @@ Item {
       layoutOverrides: module.modelData.layout || {}
       componentPath: module.modelData.component
       highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
+      hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
+      // The bar editor's chip of the widget under the pointer looks hovered
+      onPointerHoveredChanged: if (BarManager.editing)
+        BarManager.setBarHover(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1, module.pointerHovered)
       panel: root.panel
       screen: root.screen
 

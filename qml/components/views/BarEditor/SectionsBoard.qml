@@ -9,8 +9,7 @@ import qs.components.content.base
 
 // Bar editor: the selected bar's five sections as a strip, laid out as
 // the bar lays them out (BarLayout.layoutSections: the ends hug the ends,
-// the center stays centered), each a lane of draggable widget chips. A
-// top or bottom bar's can be stacked instead (a column, as a side bar's). Above
+// the center stays centered), each a lane of draggable widget chips. Above
 // it, how the running bar fits on each screen it's on.
 Item {
   id: root
@@ -71,15 +70,6 @@ Item {
         dirty: BarManager.isDirty
         onSave: BarManager.saveChanges()
         onReset: BarManager.resetChanges()
-
-        // A top or bottom bar's sections across the page, or stacked
-        FlatIconButton {
-          visible: !root.dragLayer.barVertical
-          iconText: root.dragLayer.stacked ? "view_column" : "view_agenda"
-          iconColor: root.dragLayer.stacked ? Theme.accent : Theme.foregroundAlt
-          tooltipText: root.dragLayer.stacked ? I18n.tr("Lay the sections out across the page") : I18n.tr("Stack the sections down the side")
-          onClicked: EditsManager.setBarStacked(!root.dragLayer.stacked)
-        }
       }
 
       StyledText {

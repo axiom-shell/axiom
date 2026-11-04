@@ -39,6 +39,10 @@ Item {
   property var layoutOverrides: ({})
   // The bar editor's selected widget: outlined, and its sizing reported
   property bool highlighted: false
+  // The widget hovered in the bar editor: outlined as the selected one
+  property bool hoverHighlighted: false
+  // The pointer is over it (its hit area), for the bar editor's chips
+  readonly property bool pointerHovered: hitArea.hovered
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -242,7 +246,7 @@ Item {
   // A module with a background shows it in its shape (WidgetBackground)
   Rectangle {
     anchors.fill: parent
-    visible: root.highlighted && !root.hasBackground
+    visible: (root.highlighted || root.hoverHighlighted) && !root.hasBackground
     radius: root.barConfig.radius
     color: Qt.alpha(Theme.accent, 0.15)
     border.color: Theme.accent

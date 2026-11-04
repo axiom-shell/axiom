@@ -389,7 +389,6 @@ Found by the audits:
 - [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
 - [A bar made while the bar editor is open may never report to it](issues.md#a-bar-made-while-the-bar-editor-is-open-may-never-report-to-it)
 - [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
-- [Removing or copying another bar moves the editor's selection to a different bar](issues.md#removing-or-copying-another-bar-moves-the-editors-selection-to-a-different-bar)
 - [The pill merge in BarContainer repeats BarLayout's, untested](issues.md#the-pill-merge-in-barcontainer-repeats-barlayouts-untested)
 - [Missing test rows for two helper decisions](issues.md#missing-test-rows-for-two-helper-decisions)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)

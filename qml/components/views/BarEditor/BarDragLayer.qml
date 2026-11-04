@@ -22,13 +22,10 @@ DragLayer {
   readonly property string location: BarManager.selectedBar()?.location ?? "top"
   // The bar runs down a side of the screen
   readonly property bool barVertical: root.location === "left" || root.location === "right"
-  // A top or bottom bar's sections drawn stacked down the left of the
-  // page, as a side bar's (EditsManager.barStacked)
-  readonly property bool stacked: !root.barVertical && EditsManager.barStacked
   // The sections are drawn top to bottom
-  readonly property bool vertical: root.barVertical || root.stacked
-  // The side of the page the sections are drawn along
-  readonly property string side: root.stacked ? "left" : root.location
+  readonly property bool vertical: root.barVertical
+  // The side of the page the sections are drawn along: the bar's own
+  readonly property string side: root.location
   // The bar's sections in order. On a vertical bar they run top to
   // bottom; the keys stay the same.
   readonly property var zones: [
