@@ -45,7 +45,7 @@ QtObject {
 
   // Whether a bar (a ScreenEdgeManager.bars entry) shows
   function shownOf(bar) {
-    if (!bar || bar.autoHide === "never")
+    if (!bar || !bar.autoHiding)
       return true;
     const id = bar.id;
     return root._pinned[id] === true || root._hover[id] === true || Object.keys(root._holds[id] ?? {}).length > 0 || root._momentary[id] === true || (bar.autoHide === "whenCovered" && root._covered[id] !== true);
@@ -53,11 +53,6 @@ QtObject {
 
   function _bar(id) {
     return ScreenEdgeManager.bars.find(bar => bar.id === id) ?? null;
-  }
-
-  function _autoHiding(id) {
-    const bar = root._bar(id);
-    return !!bar && bar.autoHide !== "never";
   }
 
   // A bar was made (BarPanel), or gone
@@ -124,7 +119,7 @@ QtObject {
 
   // Shows the bar for `ms` (at least until any moment already under way ends)
   function reveal(id, ms) {
-    if (!root._autoHiding(id) || ms <= 0)
+    if (!root._bar(id)?.autoHiding || ms <= 0)
       return;
     const at = Math.max(root._until[id] ?? 0, Date.now() + ms);
     root._until = Utils.withEntry(root._until, id, at);
@@ -137,7 +132,7 @@ QtObject {
   // revealOnActivity, unless the bar was only just made
   function attention(id) {
     const bar = root._bar(id);
-    if (!bar || bar.autoHide === "never" || !bar.revealOnActivity)
+    if (!bar?.autoHiding || !bar.revealOnActivity)
       return;
     if (Date.now() - (root._born[id] ?? 0) < root._settleMs)
       return;
@@ -213,7 +208,7 @@ QtObject {
     Object.keys(now).forEach(name => {
       if (before[name] === undefined || before[name] === now[name])
         return;
-      ScreenEdgeManager.bars.filter(bar => bar.monitor === name && bar.enabled && bar.autoHide !== "never" && bar.revealOnWorkspace).forEach(bar => root.reveal(bar.id, bar.revealFor));
+      ScreenEdgeManager.bars.filter(bar => bar.monitor === name && bar.enabled && bar.autoHiding && bar.revealOnWorkspace).forEach(bar => root.reveal(bar.id, bar.revealFor));
     });
   }
 
@@ -232,7 +227,7 @@ QtObject {
   // every monitor it's on), or "" / "focused", those on the focused
   // monitor
   function _barsFor(id) {
-    const auto = ScreenEdgeManager.bars.filter(bar => bar.enabled && bar.autoHide !== "never");
+    const auto = ScreenEdgeManager.bars.filter(bar => bar.enabled && bar.autoHiding);
     if (id === "" || id === "focused")
       return auto.filter(bar => bar.monitor === CompositorManager.focusedOutput);
     const bars = auto.filter(bar => bar.sourceId === id);

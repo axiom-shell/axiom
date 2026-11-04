@@ -94,7 +94,6 @@ PanelWindow {
 
   // --- Auto-hide (BarRevealManager) ---
 
-  readonly property bool autoHiding: root.barConfig.autoHide !== "never"
   // Shown: always unless it auto-hides; hidden, it slides out of its
   // window toward its edge, behind the bars outside it, keeping its slot
   // (it reserves nothing either way, unless pinned)
@@ -219,7 +218,7 @@ PanelWindow {
     // mask): what hovering shows an auto-hiding bar by
     HoverHandler {
       id: hover
-      enabled: root.autoHiding
+      enabled: root.barConfig.autoHiding
       onHoveredChanged: BarRevealManager.setHover(root.barConfig.id, hover.hovered)
     }
     PointHandler {
@@ -263,6 +262,6 @@ PanelWindow {
     barConfig: root.barConfig
     panel: root
     screen: root.screen
-    blurClip: root.autoHiding && root.screenOrigin ? Qt.rect(root.screenOrigin.x, root.screenOrigin.y, root.width, root.height) : null
+    blurClip: root.barConfig.autoHiding && root.screenOrigin ? Qt.rect(root.screenOrigin.x, root.screenOrigin.y, root.width, root.height) : null
   }
 }
