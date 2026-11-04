@@ -116,6 +116,16 @@ QtObject {
     return layout === "split" + axis ? "" : axis;
   }
 
+  // A workspace's id (its tree node, or Quickshell's I3Workspace): its
+  // number, or for a named one (no number: the user's `workspace music`,
+  // axiom's special groups) minus its con id, as Hyprland gives a named
+  // workspace a negative id of its own; -1 while unknown
+  function workspaceId(ws) {
+    if (!ws)
+      return -1;
+    return ws.num > 0 ? ws.num : -(ws.id ?? 1);
+  }
+
   // A window (a get_tree leaf) on workspace `ws` (its tree node) and output
   // `output` (a name). fullscreen_mode 1 is on its workspace, 2 global: both
   // cover the screen.
@@ -126,7 +136,7 @@ QtObject {
       "appId": appId,
       "initialAppId": appId,
       "title": node.name ?? "",
-      "workspaceId": ws?.num ?? -1,
+      "workspaceId": root.workspaceId(ws),
       "workspaceName": ws?.name ?? "",
       "output": output ?? "",
       "floating": floating === true,
@@ -189,7 +199,7 @@ QtObject {
       "height": monitor?.height ?? 0,
       "scale": monitor?.scale || 1,
       "focused": monitor?.focused === true,
-      "activeWorkspaceId": (monitor?.activeWorkspace?.num ?? -1) > 0 ? monitor.activeWorkspace.num : -1,
+      "activeWorkspaceId": root.workspaceId(monitor?.activeWorkspace),
       "specialWorkspaceId": 0,
       "reserved": ws ? {
         "left": Math.max(0, ws.x - own.x - (gaps?.left ?? 0)),

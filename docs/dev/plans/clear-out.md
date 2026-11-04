@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09 and compositor-10 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10 and compositor-11 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -82,7 +82,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 34 | compositor-21 | major | Done: Command text in moved and written binds | 4 | ~150 | compositor-08 |  |
 | 35 | compositor-09 | major | Done: Applying monitor rules | 4 | ~150 | compositor-05 |  |
 | 36 | compositor-10 | major | Done: The trial Apply and the Monitors page | 3 | ~80 | none |  |
-| 37 | compositor-11 | major | Workspace blocks and switching, and sway's workspace ids | 5 | ~110 | compositor-02 |  |
+| 37 | compositor-11 | major | Done: Workspace blocks and switching, and sway's workspace ids | 5 | ~110 | compositor-02 |  |
 | 38 | compositor-12 | major | Overview and window events | 3 | ~80 | compositor-02 |  |
 | 39 | compositor-13 | major | The window look as written and read back | 5 | ~120 | compositor-03, compositor-04 | Q7 |
 | 40 | compositor-20 | major | Blur fills | 2 | ~20 | compositor-03 |  |
@@ -361,12 +361,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A trial monitor Apply that turns a monitor off drops its Keep/Revert
   - A shell reload during a trial monitor Apply loses the way back
   - Where the compositor can't mirror, a profile's mirror can't be turned off or its monitor placed
-- **compositor-11** (5): Takes features' sway named-workspaces entry (SwayState, CompositorManager).
+- **compositor-11** (5, done): Takes features' sway named-workspaces entry (SwayState, CompositorManager).
   - A remap runs at startup, from the layout before the config loaded
   - A monitor a profile names by description gets the next block until its description arrives
-  - [sway lists disabled outputs as outputs](../issues.md#sway-lists-disabled-outputs-as-outputs)
+  - sway lists disabled outputs as outputs
   - In the standard layout, a switch past `count` slides through an unrelated workspace
-  - [sway's named workspaces all share workspace id -1](../issues.md#sways-named-workspaces-all-share-workspace-id--1)
+  - sway's named workspaces all share workspace id -1
 - **compositor-12** (3):
   - [The overview stays open with nothing shown after its monitor goes away](../issues.md#the-overview-stays-open-with-nothing-shown-after-its-monitor-goes-away)
   - [niri's overview drop moves a window's whole column and switches workspace](../issues.md#niris-overview-drop-moves-a-windows-whole-column-and-switches-workspace)

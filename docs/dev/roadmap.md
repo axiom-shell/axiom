@@ -161,6 +161,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once axiom runs row 20's compositor-06, under a sway started as `sway -c ~/.config/i3/config` (a scratch copy), check the Compositor page's Add it for me edits that file (not `~/.config/sway/config`) and Managed says it can't switch, naming that file.
 - On sway, with a laptop panel that has no serial (or a profile saved under niri for a PNP(…) monitor), Monitors page → Apply changes that monitor, and after a sway reload the panel is set as the profile says (compositor-09).
 - Once the shell runs #318, start a trial monitor Apply that turns a monitor off (Hyprland): the Keep/Revert prompt stays, the countdown reverts it and the monitor comes back on; a profile mirror saved under Hyprland can be turned off on the Monitors page under sway and niri; the monitor prompt grabs real clicks.
+- Once the shell runs row 20's compositor-11: log in under Hyprland with a 3 × 3 grid and a profile naming the monitor by `desc:`, and check the session starts on the block's centre (5), not in 10–18, with no `remapping workspaces` in `scripts/log.sh`; on sway, disable an output (`swaymsg output <name> disable`) and check `CompositorManager.outputs` no longer lists it and the other monitor's perMonitor workspaces start at 1; with a fullscreen video on a named sway workspace, the dock and toasts stay off it.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -373,8 +374,6 @@ Found by the audits:
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
 - [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
 - [niri's overview drop moves a window's whole column and switches workspace](issues.md#niris-overview-drop-moves-a-windows-whole-column-and-switches-workspace)
-- [sway's named workspaces all share workspace id -1](issues.md#sways-named-workspaces-all-share-workspace-id--1)
-- [sway lists disabled outputs as outputs](issues.md#sway-lists-disabled-outputs-as-outputs)
 - [niri doesn't send windowFocused for a window that opens focused](issues.md#niri-doesnt-send-windowfocused-for-a-window-that-opens-focused)
 - ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)

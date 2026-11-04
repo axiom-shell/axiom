@@ -216,6 +216,7 @@ TestCase {
     const out = SwayState.output({
       "name": "WL-1",
       "activeWorkspace": {
+        "id": 12,
         "num": -1,
         "name": "music"
       },
@@ -225,9 +226,38 @@ TestCase {
         "serial": "Unknown"
       }
     }, null);
-    compare(out.activeWorkspaceId, -1);
+    compare(out.activeWorkspaceId, -12, "a named workspace's id is minus its con id");
     compare(out.description, "");
     compare(out.reserved.top, 0);
+    compare(SwayState.output({
+      "name": "WL-1"
+    }, null).activeWorkspaceId, -1, "unknown with no active workspace");
+  }
+
+  function test_aWindowOnANamedWorkspace() {
+    const leaf = {
+      "id": 7,
+      "app_id": "mpv",
+      "name": "video",
+      "fullscreen_mode": 1
+    };
+    const music = SwayState.window(leaf, {
+      "id": 12,
+      "num": -1,
+      "name": "music"
+    }, "WL-1", false, false);
+    compare(music.workspaceId, -12);
+    compare(music.workspaceName, "music");
+    compare(SwayState.window(leaf, {
+      "id": 13,
+      "num": -1,
+      "name": "axiom-special-scratch"
+    }, "WL-1", false, false).workspaceId, -13, "each named workspace has its own id");
+    compare(SwayState.window(leaf, {
+      "id": 5,
+      "num": 2,
+      "name": "2"
+    }, "WL-1", false, false).workspaceId, 2);
   }
 
   function test_workspace() {

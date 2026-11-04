@@ -12,6 +12,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 - **Window**: `{ id, appId, initialAppId, title, workspaceId, workspaceName, output, floating, fullscreen, maximized, hidden, focusRank, x, y, w, h }`.
   - `id` is a string, stable while the window lives (Hyprland: its `"0x…"` address).
   - `output` is the output's name.
+  - `workspaceId`: a named or special workspace has a negative id of its own (Hyprland's; sway's minus its con id), not -1 (unknown), so consumers tell them apart (`hasFullscreen`, a dock's `workspace` scope).
   - `fullscreen` means real fullscreen. A maximized window is `maximized`; it leaves reserved space alone.
   - `focusRank` 0 is the focused window, higher means used less recently. Undefined when unknown.
   - The geometry is global, in logical pixels.
