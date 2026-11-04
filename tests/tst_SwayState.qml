@@ -331,7 +331,11 @@ TestCase {
       "bottom": 5,
       "left": 9
     });
-    compare(info.layouts, "us,de");
+    compare(info.layouts, "fr", "sway applies its lines in order: the last wins");
+    compare(SwayState.configInfo("input type:keyboard {\n    xkb_layout us,de\n    xkb_variant ,neo\n}\n").layouts, "us,de", "in a block");
+    compare(SwayState.configInfo("input type:keyboard xkb_layout us,de\ninput \"1:1:AT_Translated_Set_2_keyboard\" xkb_layout fr\n").layouts, "us,de", "a device's own doesn't override every keyboard's");
+    compare(SwayState.configInfo("input 1:1:kbd {\n  xkb_layout \"de\"\n}\ninput 2:2:kbd xkb_layout fr\n").layouts, "fr", "only devices': the last");
+    compare(SwayState.configInfo("input type:keyboard { xkb_layout jp }\ninput 1:1:kbd xkb_layout fr\n").layouts, "jp", "a block on one line");
     compare(SwayState.configInfo(""), {
       "gaps": {
         "top": 0,

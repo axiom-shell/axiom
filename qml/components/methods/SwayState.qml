@@ -243,7 +243,10 @@ QtObject {
   // What a sway config's text (get_config) sets that axiom follows: { gaps:
   // the gap at each screen edge ({ top, right, bottom, left }: the outer
   // gap plus the inner one, which sway adds at the edges too), layouts (the
-  // first xkb_layout, "us,de", or ""), blur (SwayFX's: { enabled, size,
+  // xkb_layout in effect, "us,de", or "": sway applies its lines in order,
+  // so the last for every keyboard (`input *`, `input type:keyboard`, on
+  // its line or in its block) wins; without one, the last for a device),
+  // blur (SwayFX's: { enabled, size,
   // passes }), dim (SwayFX's default_dim_inactive, 0–1) }. Only the
   // defaults count, not a `workspace N gaps` override.
   function configInfo(text) {
@@ -255,6 +258,9 @@ QtObject {
     };
     let inner = 0;
     let layouts = "";
+    let deviceLayouts = "";
+    // The identifier of the `input <id> {` block a line is in
+    let block = null;
     // SwayFX's defaults
     const blur = {
       "enabled": false,
@@ -285,9 +291,20 @@ QtObject {
       const dimLine = /^default_dim_inactive\s+([\d.]+)/.exec(line);
       if (dimLine)
         dim = Math.max(0, Math.min(1, Number(dimLine[1]) || 0));
+      const opened = /^input\s+("?)([^"\s]+)\1\s*\{/.exec(line);
+      if (opened)
+        block = opened[2];
+      const own = /^input\s+("?)([^"\s]+)\1\s/.exec(line);
       const layout = /(?:^|\s)xkb_layout\s+("?)([^"\s]+)\1/.exec(line);
-      if (layout && layouts === "")
-        layouts = layout[2];
+      if (layout) {
+        const id = own && !opened ? own[2] : block;
+        if (id === "*" || id === "type:keyboard")
+          layouts = layout[2];
+        else
+          deviceLayouts = layout[2];
+      }
+      if (/\}/.test(line))
+        block = null;
     }
     return {
       "gaps": {
@@ -296,7 +313,7 @@ QtObject {
         "bottom": Math.max(0, outer.bottom + inner),
         "left": Math.max(0, outer.left + inner)
       },
-      "layouts": layouts,
+      "layouts": layouts || deviceLayouts,
       "blur": blur,
       "dim": dim
     };
