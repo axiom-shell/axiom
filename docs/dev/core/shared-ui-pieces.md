@@ -43,7 +43,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - All three are `PopInRectangle`s: set `shown` (not `visible`) and they pop in and out; `pulse()` for a bump.
 - `IssueList`: `[{ level, text }]`, errors red, warnings amber.
 - `IssueIcon`: one problem's icon in those colors (`level`, `tone`), saying what's wrong in a tooltip on hover (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
-- `DropdownSurface`: the box of anything that drops down.
+- `DropdownSurface`: the box of anything that drops down. In a `Popup` (a combo box's list, `TypePickerPopup`, `StyledContextMenu`) it fills solid, `Theme.backgroundAlt`: nothing blurs behind a Popup, so a translucent fill shows the page through it.
 - `TileFlow`: equal tiles, as many columns as fit.
 - `TypeLibrary`: the editors' libraries of types to add.
   - An A–Z / By category switch over equal tiles of a caller's `delegate`, by label or under a heading per group (`methods/LibraryOrder`).
