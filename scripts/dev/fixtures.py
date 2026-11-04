@@ -45,10 +45,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SHARED = ROOT / "tests/fixtures/shared"
 # Suites recorded from the JS helpers (the rest are written by Go's tests)
-# ConfigOps (config.set's ops, which the daemon's tests decode) and the
-# bind and layer helpers the binary also ports, still used by the shell
+# ConfigOps (config.set's ops, which the daemon's tests decode), InputSources
+# (the xkb list the renderer derives too) and the bind and layer helpers the binary also ports, still used by the shell
 # (backend/internal/compositor/render; the rest's cases are frozen there)
-HELPERS = ("BindActions", "BindKeys", "ConfigOps", "KeyNames", "LayerStack")
+HELPERS = ("BindActions", "BindKeys", "ConfigOps", "InputSources", "KeyNames", "LayerStack")
 RECORD_TESTS = ("Config", "SchemaValidation", "SchemaLayout", "GreeterBundle") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them

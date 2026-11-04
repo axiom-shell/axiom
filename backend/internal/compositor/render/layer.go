@@ -260,6 +260,71 @@ func Input(values any, xcursorTheme any) *jsonx.Object {
 	return out
 }
 
+// XkbLayouts is InputSources.xkb: the compositor's xkb layouts from the
+// input sources (Input.sources): the xkb sources' distinct layout and
+// variant pairs in order, then any an ime source types on that none has,
+// as { layouts, variants, layout: "us,de", variant: "" or ",neo" }. Never
+// empty: "us" alone.
+func XkbLayouts(sources any) *jsonx.Object {
+	type pair struct{ layout, variant string }
+	var pairs []pair
+	add := func(layout, variant string) {
+		if layout == "" {
+			return
+		}
+		for _, p := range pairs {
+			if p.layout == layout && p.variant == variant {
+				return
+			}
+		}
+		pairs = append(pairs, pair{layout, variant})
+	}
+	for _, kind := range []string{"xkb", "ime"} {
+		for _, s := range items(sources) {
+			if get(s, "kind") == kind {
+				add(text(get(s, "layout")), text(get(s, "variant")))
+			}
+		}
+	}
+	if len(pairs) == 0 {
+		add("us", "")
+	}
+	layouts, variants := make([]string, len(pairs)), make([]string, len(pairs))
+	anyVariant := false
+	for i, p := range pairs {
+		layouts[i], variants[i] = p.layout, p.variant
+		anyVariant = anyVariant || p.variant != ""
+	}
+	variant := ""
+	if anyVariant {
+		variant = strings.Join(variants, ",")
+	}
+	return jsonx.Obj("layouts", strs(layouts), "variants", strs(variants), "layout", strings.Join(layouts, ","), "variant", variant)
+}
+
+// text is String(v ?? "").trim()
+func text(v any) string {
+	if v == nil {
+		return ""
+	}
+	return trim(str(v))
+}
+
+// derived is a field's value as its spec's `from` makes it of the value
+// stored (the input sources' xkb layouts or variants), ok false for a
+// `from` it doesn't know
+func derived(spec, value any) (any, bool) {
+	switch str(or(get(spec, "from"), "")) {
+	case "":
+		return value, true
+	case "xkbLayout":
+		return XkbLayouts(value).Value("layout"), true
+	case "xkbVariant":
+		return XkbLayouts(value).Value("variant"), true
+	}
+	return nil, false
+}
+
 // Field is one of CompositorLayer.compositorFields: a setting a
 // compositor's config takes, by its x-compositor.<compositor> spec.
 type Field struct {
@@ -282,17 +347,38 @@ func CompositorFields(objectSchema, values any, compositor, prefix string) []Fie
 			continue
 		}
 		spec := get(get(fieldSchema, "x-compositor"), compositor)
+		// A list: the field writes several options (Input.sources'
+		// layouts and variants), each from its `from`
+		specs := []any{spec}
+		if list, ok := spec.(*jsonx.Array); ok {
+			specs = list.Items
+		}
 		if truthy(spec) {
-			var on any
-			if truthy(get(spec, "if")) {
-				on = isTrue(get(values, str(get(spec, "if"))))
+			for _, s := range specs {
+				v, ok := derived(s, value)
+				if !ok {
+					continue
+				}
+				var on any
+				if truthy(get(s, "if")) {
+					on = isTrue(path(values, str(get(s, "if"))))
+				}
+				out = append(out, Field{prefix + key, fieldSchema, v, s, on})
 			}
-			out = append(out, Field{prefix + key, fieldSchema, value, spec, on})
 		} else if str(get(fieldSchema, "type")) == "object" && truthy(get(fieldSchema, "properties")) {
 			out = append(out, CompositorFields(fieldSchema, value, compositor, prefix+key+".")...)
 		}
 	}
 	return out
+}
+
+// path is the value at a dotted path under v (an `if` naming a sibling
+// part's switch: "keyboard.enabled")
+func path(v any, dotted string) any {
+	for _, key := range strings.Split(dotted, ".") {
+		v = get(v, key)
+	}
+	return v
 }
 
 // AnnotatedFields is CompositorLayer.annotatedFields: with gated each
