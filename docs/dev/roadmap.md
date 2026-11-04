@@ -503,6 +503,10 @@ Found while running verify.sh --all for compositor-08 (row 20):
 Found while reviewing compositor-20 (row 20):
 - [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 
+Found while reviewing the bar rewrite:
+- [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
+- [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
+
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 
