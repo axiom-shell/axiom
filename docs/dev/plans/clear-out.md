@@ -390,11 +390,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - One refused line stops the rest of a Hyprland eval
 - **compositor-16** (6):
   - The Keybinds page goes stale after a detached-mode Save
-  - [A combo lookup says nothing holds a key the search or chips hide, and offers to bind it](../issues.md#a-combo-lookup-says-nothing-holds-a-key-the-search-or-chips-hide-and-offers-to-bind-it)
+  - A combo lookup says nothing holds a key the search or chips hide, and offers to bind it
   - [The bind inspector's typed label and argument miss Save](../issues.md#the-bind-inspectors-typed-label-and-argument-miss-save)
   - [Picking a key in the key map under an edit search selects a bind the list doesn't show](../issues.md#picking-a-key-in-the-key-map-under-an-edit-search-selects-a-bind-the-list-doesnt-show)
   - [Renaming a saved preset after switching presets renames the wrong one](../issues.md#renaming-a-saved-preset-after-switching-presets-renames-the-wrong-one)
-  - [The reference's sections and both chip rows are built while hidden](../issues.md#the-references-sections-and-both-chip-rows-are-built-while-hidden)
+  - The reference's sections and both chip rows are built while hidden
 - **compositor-17** (18): Six file groups, one commit each; fine under the gate.
   - [The bind merge removes an hl.unbind whether or not its bind went](../issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
   - [A user/ file with a dot in its name never loads](../issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
