@@ -32,6 +32,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
 
+### TestDevImageFailingFallsBack failed once under load
+- **Where:** `backend/internal/daemon/reexec_test.go` (`TestDevImageFailingFallsBack`)
+- **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The failure's message wasn't kept. PLAUSIBLE: the test runs in parallel and bounds `Run` (the dev image failing to build its schema, then the fallback exec) by one `testkit.Bound(10*time.Second)` ctx, and it reads the fallback's exec with a `select` whose `default` fails at once, so a `Run` that returned on the ctx before its fallback reached `opts.exec` reads as "no fallback". Next time it fails, keep the message (`no fallback (Run: …)` or `exec … with …`) before changing the test.
+- **Size:** trivial
+- **Found:** 2026-11-04, while reviewing compositor-20 (roadmap row 20)
+
 ### TestNotifySend's no-server call can run out the test's 5 s instead of failing at once
 - **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
 - **What:** `scripts/dev/verify.sh --all` (a branch that didn't touch the daemon) once failed with `with no server: context deadline exceeded` after 5.00 s; `go test ./internal/daemon -run TestNotifySend -count=3` then passed. PLAUSIBLE: the last `notify.send` goes out right after `server.Close()`, before the test bus has dropped the closed connection's `org.freedesktop.Notifications` name, so the Notify call is routed to the dead owner and waits for a reply that never comes, until the one shared 5 s ctx (made before the bus setup and already partly spent) expires, rather than the bus answering at once with no owner (`Unavailable`). Fix: after `server.Close()`, wait until the name has no owner (poll `NameHasOwner` or watch `NameOwnerChanged`) before the last call, and give that call its own ctx.
@@ -652,12 +658,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   Both are rare paths. Fix, about 10 lines: have `sendEach` report a transport error and keep the old list ahead of the new one when it does; skip a saved list whose reload count is older than `runtime.reloads`.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the sway system
-
-### "Fire on release" is offered on niri and silently dropped
-- **Where:** `backend/internal/compositor/render/niri.go:332` (`NiriBindNode`), `qml/components/views/Keybinds/BindInspector.qml:209`, `backend/internal/compositor/render/hyprconfig.go:144` (`BindLua`)
-- **What:** For a bind's `release` flag, Hyprland writes `release = true` and sway `--release`. `NiriBindNode` writes only `hotkey-overlay-title`, `repeat`, `allow-when-locked` and `cooldown-ms`, and reads no `release` (`grep -n release render/niri.go` hits only a comment): niri has no release binds. Nothing gates the flag: no `supports` key and no `isComplete` issue. The inspector's "Fire on release" switch is shown and saved on every compositor. Scenario on niri: a user turns it on for a bind, or a bind merged from sway or Hyprland arrives with `release: true`. axiom's own `restartShell` and `exitSession` defaults are release binds too. The action fires on press while the switch still reads on. Fix: a `releaseBinds` supports key (true on Hyprland and sway) that greys out the switch where it's false. axiom's release defaults then work on niri as press binds.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system
 
 ### Three settings stay editable on niri though its writer drops them
 - **Where:** `qml/config/schema/definitions/shared/Blur.yaml:73` (`contrast`), `qml/config/schema/sections/WindowLook.yaml:259` (`opacity.fullscreen`), `qml/config/schema/sections/WindowBehaviour.yaml:19` (`focusOnActivate`), `backend/internal/compositor/render/niri.go:462` (`NiriLookNodes`)

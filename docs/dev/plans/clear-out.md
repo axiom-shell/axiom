@@ -381,7 +381,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A backed toast's blur fill is at the surface opacity twice
   - A keepFill opening leaves an unfilled row in an unbacked translucent pill
 - **compositor-14** (3):
-  - ["Fire on release" is offered on niri and silently dropped](../issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
+  - "Fire on release" is offered on niri and silently dropped
   - [Three settings stay editable on niri though its writer drops them](../issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
   - [Wide active is hidden in the perMonitor layout but still applies there](../issues.md#wide-active-is-hidden-in-the-permonitor-layout-but-still-applies-there)
 - **compositor-15** (3):

@@ -69,6 +69,7 @@ Singleton {
       "inputConfig": true,
       "keyCapture": true,
       "modifierTap": true,
+      "releaseBinds": true,
       "bindMerge": true,
       "monitorColor": true,
       "monitorMirror": true,

@@ -83,6 +83,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `inputConfig` | axiom sets the keyboard, mouse and touchpad |
 | `keyCapture` | the Keybinds page's recorder can take keys from the compositor's binds: `captureKeys`, or the recorder window's shortcut inhibitor alone (niri) |
 | `modifierTap` | a bind can be on a modifier key alone, fired when it's tapped (`KeyNames.tapModifier`: Hyprland, sway). Without it such a bind is warned about and left out (niri fires binds only on press) |
+| `releaseBinds` | a bind can fire on release (its `release` flag): without it the Keybinds inspector's Fire on release is greyed out and a bind carrying the flag (axiom's own `restartShell` and `exitSession`, one merged from another compositor) is written as a press bind (niri) |
 | `bindMerge` | the user's own binds can be read (the Keybinds page's List, conflicts, Merge) |
 | `monitorColor` | a monitor rule's bit depth, color management and SDR fields |
 | `monitorMirror` | a monitor rule can mirror another output |

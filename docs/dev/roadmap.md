@@ -164,6 +164,8 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs row 20's compositor-11: log in under Hyprland with a 3 × 3 grid and a profile naming the monitor by `desc:`, and check the session starts on the block's centre (5), not in 10–18; if `scripts/log.sh` shows `remapping workspaces` at the start, add its `from`/`to` layouts to [the startup remap entry](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded); on sway, disable an output (`swaymsg output <name> disable`) and check `CompositorManager.outputs` no longer lists it and the other monitor's perMonitor workspaces start at 1; with a fullscreen video on a named sway workspace, the dock and toasts stay off it.
 - Once the shell runs compositor-12 (row 20), under niri: drop a window from a stacked column onto another column in the overview (only that window moves, the output stays on its workspace), open an app with `clearOnFocus` notifications (they clear when its window opens), and unplug the monitor showing the overview (the next toggle opens it).
 - Once the shell runs compositor-13 (row 20): with the window look's defaults on sway, the gap to the screen edges is 6 px (the setting), not 9; on niri, with `blur { off }` in a `user/*.kdl` (managed) or in the user's config (included), axiom's blur still shows; the Translucency card offers "Set the compositor's blur" when the blur comes only from the user's own config; and Hyprland's gaps (and the bars that subtract them) don't drop to 0 through a busy reload.
+- Once the shell runs compositor-20 (row 20): with blur on and translucency below 100, a toast's tone matches the bar and edge popout beside it, and doesn't jump when the blur pauses or resumes.
+- Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -372,7 +374,6 @@ Found by the audits:
 - [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
 - [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
 - [The detached layer's unbind list can drift from what sway holds](issues.md#the-detached-layers-unbind-list-can-drift-from-what-sway-holds)
-- ["Fire on release" is offered on niri and silently dropped](issues.md#fire-on-release-is-offered-on-niri-and-silently-dropped)
 - [Three settings stay editable on niri though its writer drops them](issues.md#three-settings-stay-editable-on-niri-though-its-writer-drops-them)
 - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
@@ -500,6 +501,9 @@ Found while testing removable drives:
 
 Found while running verify.sh --all for compositor-08 (row 20):
 - [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
+
+Found while reviewing compositor-20 (row 20):
+- [TestDevImageFailingFallsBack failed once under load](issues.md#testdevimagefailingfallsback-failed-once-under-load)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

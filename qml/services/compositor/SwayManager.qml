@@ -77,6 +77,7 @@ Singleton {
     "inputConfig": true,
     "keyCapture": true,
     "modifierTap": true,
+    "releaseBinds": true,
     "bindMerge": true,
     "scratchpad": true,
     "namedSpecial": true,
