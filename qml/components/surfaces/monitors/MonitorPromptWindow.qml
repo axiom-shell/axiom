@@ -30,14 +30,16 @@ PanelWindow {
 
   // Every focus grab lets input through to it while it shows, so Keep /
   // Revert work over the overlay the Monitors page applied from
-  onVisibleChanged: visible ? SurfaceManager.registerModal(root) : SurfaceManager.unregisterModal(root)
   Component.onDestruction: SurfaceManager.unregisterModal(root)
 
-  // Where the compositor blurs only what a window asks: the card
-  // (attached only there: attached at all, it claims the window's blur, and
-  // Hyprland's layer rules no longer blur it)
-  Component.onCompleted: if (CompositorManager.supports.blurRegion === true)
-    BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? cardBlur : null)
+  Component.onCompleted: {
+    SurfaceManager.registerModal(root);
+    // Where the compositor blurs only what a window asks: the card
+    // (attached only there: attached at all, it claims the window's blur,
+    // and Hyprland's layer rules no longer blur it)
+    if (CompositorManager.supports.blurRegion === true)
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.regionsOn(root.screen) ? cardBlur : null);
+  }
   BoxBlurRegion {
     id: cardBlur
     target: card
