@@ -57,10 +57,6 @@ settings:
     type: boolean
     title: Wide active
     default: true
-    x-showIf:
-      anyOf:
-        - {/Workspaces.layout: [standard, grid]}
-        - {/$supports.dynamicWorkspaces: true}
     description: Make the active workspace twice as long.
   showActiveIcon:
     type: boolean
