@@ -32,7 +32,6 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - Then a side with spacers stretches to the center's edge; with no center, the room between the sides is shared by their spacer counts. A spacer in the center keeps its `minGap`.
   - `allocate` hands a section's room past its widgets to its spacers, equally (the remainder to the last).
   - A spacer lies in the gap between the widgets beside it, so a collapsed one (crowded, `minGap` 0) leaves one gap. It's never hidden for want of room.
-- **`length: fit`** (`barConfig.fit`, with `align`): the sections lie end to end at the bar's `align` (start, center, end) in what its end margins leave (`BarLayout.fitSections`), spacers at their `minGap`, and `lockCenter` doesn't apply. The window still spans its edge and reserves as ever; what's drawn spans the content: a floating bar's one island (`BarContainer._contentSpan`), pills per group as always. A solid bar keeps its fill along the whole edge (the border's strip there is transparent, relying on the bar's fill), so only its widgets move.
 - `BarContainer` and `WidgetGroup` only feed it measurements.
 
 ### Popouts

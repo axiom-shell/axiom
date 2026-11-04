@@ -82,7 +82,7 @@ Rectangle {
   // stub grows there for them (BarLayout.endReaches, setRequest).
   readonly property var pillRects: {
     if (islands)
-      return BarLayout.islandRects(root.barConfig.fit && !root.barConfig.islandPills ? root._contentSpan : root.joinedGroups, root.barConfig.islandGap, root.islandFrom, root.islandEnd, !root.barConfig.islandPills && !root.barConfig.fit);
+      return BarLayout.islandRects(root.joinedGroups, root.barConfig.islandGap, root.islandFrom, root.islandEnd, !root.barConfig.islandPills);
     return root.pills ? root._endReach.rects : [];
   }
   readonly property var _endReach: BarLayout.endReaches(root.groupPills, root._endReachList, root.length, root.barConfig.joinGap, root.pillConnector)
@@ -116,13 +116,6 @@ Rectangle {
   // The groups joined where they're at most joinGap apart: one pill, one
   // island or one merged background each
   readonly property var joinedGroups: BarLayout.joinGroups(root.groupSpans, root.barConfig.joinGap)
-  // Everything shown, as one span (a fit floating bar's one island)
-  readonly property var _contentSpan: root.groupSpans.length > 0 ? [
-    {
-      "start": Math.min(...root.groupSpans.map(g => g.start)),
-      "end": Math.max(...root.groupSpans.map(g => g.end))
-    }
-  ] : []
   // Per section, whether its first group joins one in the section before
   // it, and how far past its last group the one it joins after it starts
   // (WidgetGroup's joinStart, joinEndReach)
@@ -297,20 +290,11 @@ Rectangle {
   }
 
   readonly property var _groups: [leftGroup, centerGroup, rightGroup]
-  // Per section, the model indices hidden so the minimum sizes fit. A bar
-  // as long as its widgets (`fit`) lays its sections end to end, so it
-  // never locks its center
-  readonly property bool _lockCenter: root.barConfig.lockCenter && !root.barConfig.fit
-  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root._lockCenter)
+  // Per section, the model indices hidden so the minimum sizes fit
+  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter)
   // Each section's room along the bar; a side with spacers stretches to
-  // the center (BarLayout.layoutSections). Fit, the sections lie end to
-  // end at the bar's `align`, their spacers at their minimum gaps
-  // (BarLayout.fitSections)
-  readonly property var slots: root.barConfig.fit ? BarLayout.fitSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.widgetGap, ({
-      "start": 0,
-      "center": 0.5,
-      "end": 1
-    })[root.barConfig.align] ?? 0.5) : BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.widgetGap, root._lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount))
+  // the center (BarLayout.layoutSections)
+  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount))
 
   // A section's shown widgets; `configIndex` is each one's place in the
   // section's config, which hidden widgets leave out
@@ -330,7 +314,7 @@ Rectangle {
   // how the selected widget is sized; and per section (`sections`, by
   // name) how long its widgets want to be, none hidden (`used`), and the
   // most room it could have, the others as they are (`room`,
-  // BarLayout.sectionRooms; a fit bar's as unlocked)
+  // BarLayout.sectionRooms)
   readonly property var editorReport: BarManager.editing ? {
     "source": root.barConfig.sourceId,
     "screen": root.screen?.name ?? "",
@@ -341,7 +325,7 @@ Rectangle {
         "room": Math.round(root._sectionRooms[s])
       }), {})
   } : null
-  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root.barConfig.widgetGap, root._lockCenter, centerGroup.layoutHang)
+  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang)
   property string _reportedId: ""
   readonly property string _reportKey: JSON.stringify(root.editorReport)
   on_ReportKeyChanged: root._report()

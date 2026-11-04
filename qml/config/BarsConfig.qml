@@ -148,10 +148,6 @@ QtObject {
       // the bar window takes on its inner side
       "shadowReach": kind !== "transparent" && !borderShadowed && look.shadow ? Math.ceil(look.shadowSize * 1.25) : 0,
       "lockCenter": barConfig.lockCenter,
-      // As long as its widgets (at `align`: start, center, end), or the
-      // whole edge
-      "fit": barConfig.length === "fit",
-      "align": barConfig.align,
       // never, always, whenCovered; what shows a hidden bar, and how long
       "autoHide": barConfig.autoHide,
       "revealOnWorkspace": barConfig.revealOnWorkspace,

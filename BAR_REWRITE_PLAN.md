@@ -66,7 +66,7 @@ Each item is one commit, ending with `scripts/dev/verify.sh` printing `verify ok
    - Register both in `qml/config/schema/annotations.yaml` and `docs/dev/core/schema-annotations.md`, with test rows.
 2. **Schema.**
    - `definitions/widgets/Bar.yaml`:
-     - groups Placement, Size, Surface, Behaviour; keys `length`, `align`, `thickness`, `edgePadding`, `widgetGap`, `innerPadding`, `innerGap`, `surface`, `floating`, `floatingGap`;
+     - groups Placement, Size, Surface, Behaviour; keys `thickness`, `edgePadding`, `widgetGap`, `innerPadding`, `innerGap`, `surface`, `floating`, `floatingGap`;
      - `lockCenter` (default true), `autoHide`, `reserveSpace` (showIf autoHide never), `revealOnWorkspace`, `revealOnActivity`, `revealFor`, `timing`, `trigger`;
      - `widgets: {left, center, right}`.
    - `BarStyle.yaml`: `textScale` replaces `fontSize`.
@@ -96,7 +96,7 @@ Each item is one commit, ending with `scripts/dev/verify.sh` printing `verify ok
 - **Enriched keys:**
   - `kind` (solid|pills|transparent|floating|floatingPills), `solid`, `pills`, `island`, `islandPills`;
   - `thickness`, `edgePadding`, `widgetGap`, `innerPadding`, `innerGap`, `fontSize`, `joinGap`;
-  - `floatingGap`, `floatingGapAuto`, `fit`, `align`, `autoHide`, `revealOnWorkspace`, `revealOnActivity`, `revealFor`, `timing`, `trigger`.
+  - `floatingGap`, `floatingGapAuto`, `autoHide`, `revealOnWorkspace`, `revealOnActivity`, `revealFor`, `timing`, `trigger`.
 - **Sections:** `["left","center","right"]`.
 - **Widget layout:** `{priority, minSize, maxSize}`.
 - **Type info:** `label`, `keywords`, `elastic`.

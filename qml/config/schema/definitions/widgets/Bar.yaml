@@ -28,24 +28,6 @@ properties:
     default: top
     enum: [top, bottom, left, right]
     description: "Bars can share an edge, one inside the other: bars on the screen edge nearest it, then pills, floating bars, floating pills and bars with no surface; bars alike in list order."
-  length:
-    x-group: Placement
-    type: string
-    title: Length
-    default: full
-    enum: [full, fit]
-    x-enumLabels: {full: The whole edge, fit: Its widgets}
-    description: Whether the bar runs the length of its edge or only as long as its widgets.
-  align:
-    x-group: Placement
-    type: string
-    title: Align
-    default: center
-    enum: [start, center, end]
-    x-enumLabels: {start: Start, center: Center, end: End}
-    x-beside: true
-    x-showIf: {length: fit}
-    description: Where along its edge a bar as long as its widgets sits.
   thickness:
     x-group: Size
     type: integer

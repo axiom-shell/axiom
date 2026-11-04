@@ -137,20 +137,6 @@ TestCase {
     compare(one[2].extent, 875);
   }
 
-  function test_fitSections() {
-    // 100 + 200 + 50 and two 5 gaps = 360, in 1000 less 10 each end
-    const at = align => BarLayout.fitSections([100, 200, 50], [100, 200, 50], 1000, 10, 5, align).map(s => [s.offset, s.extent]);
-    compare(at(0), [[10, 100], [115, 200], [320, 50]]);
-    compare(at(1), [[630, 100], [735, 200], [940, 50]]);
-    compare(at(0.5), [[320, 100], [425, 200], [630, 50]]);
-    // An empty section takes no gap
-    compare(BarLayout.fitSections([100, 0, 50], [100, 0, 50], 1000, 0, 10, 0).map(s => [s.offset, s.extent]), [[0, 100], [110, 0], [110, 50]]);
-    // Too long: squeezed towards the minimums from the start
-    const squeezed = BarLayout.fitSections([200, 200, 200], [100, 100, 100], 500, 0, 10, 0.5);
-    compare(squeezed[0].offset, 0);
-    compare(squeezed[2].offset + squeezed[2].extent, 500);
-  }
-
   function test_sectionRooms() {
     // Unlocked: what the others and the gaps leave, 1000 less 10 each end
     compare(BarLayout.sectionRooms([100, 200, 100], 1000, 10, 5, false), [980 - 300 - 10, 980 - 200 - 10, 980 - 300 - 10]);

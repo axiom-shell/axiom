@@ -174,38 +174,6 @@ QtObject {
     ];
   }
 
-  // A bar as long as its widgets (`length: fit`): the sections (left,
-  // center, right) laid end to end, `gap` between those showing, the
-  // whole at `align` (0 start, 0.5 center, 1 end) in what `margin` leaves
-  // of `length`; squeezed towards their minimums from the start where
-  // they don't fit (overflowHidden drops what doesn't). Their spacers keep
-  // their minimum gaps. -> [{offset, extent}] per section, as
-  // layoutSections
-  function fitSections(pref, min, length, margin, gap, align) {
-    const [m0, m1] = root._margins(margin);
-    const shown = pref.filter(p => p > 0).length;
-    const gaps = gap * Math.max(0, shown - 1);
-    const room = Math.max(0, length - m0 - m1);
-    const sum = values => values.reduce((a, b) => a + b, 0);
-    let sizes = pref.slice();
-    if (sum(pref) + gaps > room) {
-      const sumMin = sum(min);
-      const free = Math.max(0, room - gaps);
-      sizes = sumMin <= free ? pref.map((p, i) => p - (p - min[i]) * (sum(pref) - free) / Math.max(1, sum(pref) - sumMin)) : min.map(v => sumMin > 0 ? v * free / sumMin : 0);
-    }
-    const total = sum(sizes) + gaps;
-    let at = m0 + Math.max(0, room - total) * align;
-    return sizes.map(size => {
-      const slot = {
-        "offset": at,
-        "extent": size
-      };
-      if (size > 0)
-        at += size + gap;
-      return slot;
-    });
-  }
-
   // The most room each section (left, center, right) could have along a
   // bar, the others at their preferred lengths (`pref`), as layoutSections
   // would give it (for the bar editor's fit meter): with `lockCenter`, a
