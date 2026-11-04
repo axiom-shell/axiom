@@ -55,15 +55,16 @@ QtObject {
   }
 
   // The selected bar as the board's live chips draw its widgets: the
-  // draft bar enriched at a fixed thickness, along a top edge (chips are
-  // rows) whatever its own, standing alone (no ends meet it)
+  // draft bar enriched at a fixed thickness, along its own edge if it's a
+  // side bar (its widgets drawn upright, as the board's columns are) else
+  // a top edge, standing alone (no ends meet it)
   readonly property var previewConfig: {
     const bar = root.selectedBar();
     if (!bar)
       return null;
     const config = BarsConfig.enrichBarConfig(Object.assign({}, bar, {
       "thickness": Math.round(Widget.px(BarsConfig.referenceThickness)),
-      "location": "top"
+      "location": bar.location === "left" || bar.location === "right" ? bar.location : "top"
     }), CompositorManager.gapsOut, ScreenEdgeManager.floatGaps);
     const end = {
       "kind": "bare",

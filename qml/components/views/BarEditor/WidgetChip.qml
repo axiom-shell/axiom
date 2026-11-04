@@ -34,8 +34,9 @@ DragChip {
   // Its place in the order a crowded bar drops widgets in (1 goes first;
   // 0 shows none: a spacer, or the badges off)
   property int dropOrder: 0
-  // The longest a live widget is drawn (a long window title is cut)
-  property real maxPreviewWidth: Widget.px(260)
+  // The longest a live widget is drawn along its bar (a long window title
+  // is cut): its width, or its height on a side bar's chip (`vertical`)
+  property real maxPreviewLength: Widget.px(260)
 
   readonly property bool live: root.widget !== null && root.previewConfig !== null
   // Live, but drawing nothing (or not built yet)
@@ -54,8 +55,8 @@ DragChip {
   // The widget as the bar draws it
   component LivePreview: Item {
     readonly property alias host: widgetHost
-    implicitWidth: Math.min(widgetHost.width, root.maxPreviewWidth)
-    implicitHeight: widgetHost.height
+    implicitWidth: root.vertical ? widgetHost.width : Math.min(widgetHost.width, root.maxPreviewLength)
+    implicitHeight: root.vertical ? Math.min(widgetHost.height, root.maxPreviewLength) : widgetHost.height
     enabled: false
 
     WidgetBackground {
@@ -88,8 +89,9 @@ DragChip {
     readonly property real naturalSize: shownItem?.host.naturalSize ?? 0
     wanted: root.live
     label: "bar editor chip"
-    Layout.preferredWidth: root.empty ? 0 : (shownItem?.implicitWidth ?? 0)
-    Layout.preferredHeight: shownItem?.implicitHeight ?? 0
+    Layout.preferredWidth: root.empty && !root.vertical ? 0 : (shownItem?.implicitWidth ?? 0)
+    Layout.preferredHeight: root.empty && root.vertical ? 0 : (shownItem?.implicitHeight ?? 0)
+    Layout.alignment: Qt.AlignCenter
     clip: true
     sourceComponent: LivePreview {}
   }

@@ -179,13 +179,16 @@ Rectangle {
 
         dragLayer: root.dragLayer
         compact: true
+        // On a side bar, live widgets run down (as the preview bar draws
+        // them): a column as wide as a row chip is high
+        vertical: root.vertical
         width: Math.min(implicitWidth, root.maxChipWidth)
-        height: root.chipHeight
+        height: chip._column ? implicitHeight : root.chipHeight
         type: root.dragLayer.libraryKey(chip.entry)
         // With its Auto colours picked, as the bar draws it
         widget: BarManager.previewConfig?.widgets?.[root.zone]?.[chip.index] ?? chip.entry
         previewConfig: BarManager.previewConfig
-        maxPreviewWidth: Math.min(Widget.px(260), root.maxChipWidth - Widget.padding)
+        maxPreviewLength: root.vertical ? Widget.px(260) : Math.min(Widget.px(260), root.maxChipWidth - Widget.padding)
         hiddenWidget: chip.entry.visible === false
         crowded: root.crowded.includes(chip.index)
         dropOrder: root.dropOrders[chip.index] ?? 0

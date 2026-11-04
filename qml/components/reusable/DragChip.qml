@@ -21,6 +21,10 @@ Rectangle {
   // Its icon and name; off, only what's put in it shows (the bar
   // editor's live widgets)
   property bool showsLabel: true
+  // What's put in it runs down, the chip as wide as it's otherwise high
+  // (a side bar's live widgets); a chip showing its name stays a row
+  property bool vertical: false
+  readonly property bool _column: root.vertical && !root.showsLabel
   property alias dragLayer: area.dragLayer
   // What dragging it carries; null: it can't be dragged
   property alias payload: area.payload
@@ -36,8 +40,9 @@ Rectangle {
   signal clicked
   signal menuRequested(real x, real y)
 
-  implicitWidth: row.implicitWidth + (root.compact ? Widget.padding : Widget.padding * 2)
-  implicitHeight: Widget.height + Widget.padding / 2
+  readonly property real _inset: root.compact ? Widget.padding / 2 : Widget.padding
+  implicitWidth: root._column ? Widget.height + Widget.padding / 2 : row.implicitWidth + root._inset * 2
+  implicitHeight: root._column ? row.implicitHeight + root._inset * 2 : Widget.height + Widget.padding / 2
   radius: Widget.radius
   color: root.selected ? Theme.accent : (root.hovered || root.highlighted ? Theme.backgroundHighlight : Theme.background)
   border.color: root.selected || root.hovered || root.highlighted ? Theme.accent : Theme.border
@@ -45,12 +50,17 @@ Rectangle {
 
   ColorGlide on color {}
 
-  RowLayout {
+  // One row, or one column (_column)
+  GridLayout {
     id: row
     anchors.fill: parent
-    anchors.leftMargin: root.compact ? Widget.padding / 2 : Widget.padding
-    anchors.rightMargin: root.compact ? Widget.padding / 2 : Widget.padding
-    spacing: root.compact ? Widget.spacing / 2 : Widget.spacing
+    anchors.leftMargin: root._column ? 0 : root._inset
+    anchors.rightMargin: root._column ? 0 : root._inset
+    anchors.topMargin: root._column ? root._inset : 0
+    anchors.bottomMargin: root._column ? root._inset : 0
+    flow: root._column ? GridLayout.TopToBottom : GridLayout.LeftToRight
+    rowSpacing: root.compact ? Widget.spacing / 2 : Widget.spacing
+    columnSpacing: root.compact ? Widget.spacing / 2 : Widget.spacing
 
     StyledIcon {
       visible: root.showsLabel
