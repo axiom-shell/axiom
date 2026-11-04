@@ -175,9 +175,12 @@ Singleton {
   // `workspaceId`, beside `targetId`'s column on its `side` ("left" |
   // "right"), into its column ("top" | "bottom", at the column's end), or
   // floating at `floatAt` (global). niri moves the focused column, so the
-  // window is focused first; `restore` (the cursor) goes unused.
+  // window leaves a column it shares and is focused first; focusing it
+  // shows its workspace, so a workspace that wasn't showing is put back
+  // after. `restore` (the cursor) goes unused.
   function placeWindow(id, workspaceId, targetId, side, restore, reinsert, floatAt) {
     const win = Number(id);
+    const focused = root.activeWindowId;
     if (!reinsert)
       root._action({
         "MoveWindowToWorkspace": {
@@ -207,6 +210,17 @@ Singleton {
     const target = root.windows.find(w => w.id === String(targetId));
     if (!target?.column)
       return;
+    const sameWorkspace = moved?.workspaceId === target.workspaceId;
+    // Out of a shared column into its own, just after (so nothing shifts)
+    const shared = sameWorkspace && root.windows.some(w => w.id !== moved.id && w.workspaceId === moved.workspaceId && w.column === moved.column);
+    if (shared)
+      root._action({
+        "ConsumeOrExpelWindowRight": {
+          "id": win
+        }
+      });
+    const onto = root.workspaces.find(ws => ws.id === target.workspaceId);
+    const shown = onto?.active === false ? root.workspaces.find(ws => ws.output === onto.output && ws.active) : null;
     root._action({
       "FocusWindow": {
         "id": win
@@ -214,7 +228,7 @@ Singleton {
     });
     const into = side === "top" || side === "bottom";
     // The window's own column leaving from before the target's shifts it
-    const shift = moved?.workspaceId === target.workspaceId && (moved.column ?? Infinity) < target.column ? 1 : 0;
+    const shift = !shared && sameWorkspace && (moved.column ?? Infinity) < target.column ? 1 : 0;
     root._action({
       "MoveColumnToIndex": {
         "index": target.column - shift + (side === "left" ? 0 : 1)
@@ -226,6 +240,15 @@ Singleton {
           "id": win
         }
       });
+    if (shown) {
+      root._action({
+        "FocusWorkspace": {
+          "reference": root._reference(shown.id)
+        }
+      });
+      if (focused !== "" && focused !== String(id))
+        root.activateWindow(focused);
+    }
   }
 
   // Grows a window by (dw, dh) and, when floating, moves it by (dx, dy)
@@ -577,19 +600,16 @@ Singleton {
 
   function _event(event) {
     const kind = Object.keys(event)[0];
-    const before = root._state;
-    root._state = NiriState.reduce(before, event);
+    const wasFocused = root.activeWindowId;
+    root._state = NiriState.reduce(root._state, event);
+    // Any event can move the focus (a window opening focused sends no
+    // WindowFocusChanged); WindowsChanged is the stream's initial list
+    if (kind !== "WindowsChanged" && root.activeWindowId !== "" && root.activeWindowId !== wasFocused)
+      root.windowFocused(root._state.windows[root.activeWindowId].app_id ?? "");
     switch (kind) {
     case "WorkspacesChanged":
       root._outputsTimer.restart();
       break;
-    case "WindowFocusChanged":
-      {
-        const id = event[kind].id;
-        if (id !== null && id !== undefined)
-          root.windowFocused(root._state.windows[String(id)]?.app_id ?? "");
-        break;
-      }
     case "KeyboardLayoutsChanged":
     case "KeyboardLayoutSwitched":
       root.keyboardLayoutChanged();

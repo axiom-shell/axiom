@@ -157,8 +157,13 @@ TestCase {
   function test_eventStream() {
     let state = NiriState.empty();
     const lines = files.text("tests/fixtures/niri/events.jsonl").split("\n").filter(line => line !== "");
-    for (const line of lines)
+    for (const [i, line] of lines.entries()) {
+      const before = NiriState.focusedWindowId(state);
       state = NiriState.reduce(state, JSON.parse(line));
+      // Line 10: foot opens focused, with no WindowFocusChanged naming it
+      if (i === 9)
+        verify(before !== "6" && NiriState.focusedWindowId(state) === "6");
+    }
     compare(Object.keys(state.windows).sort(), ["3", "4", "5", "6"]);
     compare(NiriState.focusedWindowId(state), "3");
     compare(state.windows["3"].layout.tile_size, [684, 1226]);
