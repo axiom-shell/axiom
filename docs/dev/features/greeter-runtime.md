@@ -14,7 +14,7 @@ This doc covers what runs at the login screen and the data it reads: the bundle 
 - `GreeterBundle.exportConfig` (pure) builds the bundle from:
   - the `Greeter`, `Appearance`, `Interface` (so its controls are sized and rounded as on the desktop), `General` and `Weather` sections (its wallpaper blur is `Greeter.layout.backdrop.blur`, its own since config v67);
   - `Compositor.mode` and `Monitors.items`;
-  - the `Input` options marked `x-greeter` (the part switches, keyboard, mouse, touchpad, cursor);
+  - the `Input` options marked `x-greeter` (the part switches, the input sources, keyboard, mouse, touchpad, cursor): the greeter runs no input method, so its compositor takes only the sources' xkb layouts (`render.XkbLayouts`), the ones the password is typed on;
   - `theme.json` (`ThemeManager.currentTheme`);
   - each wallpaper showing (`ThemeManager.shownWallpapers`, exported as fixed ones in `fixed` mode, so the greeter shows what the desktop does), copied to `wallpapers/<md5 of its url>.<ext>` (cp + mv, stale ones removed). The bundle's `Appearance` names these copies.
   - the cursor theme's companion (`CursorThemeManager.xcursorTheme`, when it is one: `axiom-cursor-<theme>` in the user's `$XDG_DATA_HOME/icons`, which greetd's user can't read), copied with its links followed to `icons/`.

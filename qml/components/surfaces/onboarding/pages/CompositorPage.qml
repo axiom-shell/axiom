@@ -147,7 +147,7 @@ OnboardingPage {
 
     SettingRows {
       Layout.fillWidth: true
-      paths: ["Input.keyboard.enabled", "Input.keyboard.layout", "Input.keyboard.variant"]
+      paths: ["Input.keyboard.enabled", "Input.sources"]
     }
 
     StyledText {

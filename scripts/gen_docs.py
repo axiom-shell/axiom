@@ -522,7 +522,9 @@ class ConfigReference:
         walk(self.schema, node, section, leaves)
         leaves = leaves[1:]
         for path, child, _ in leaves:
-            for spec in resolve(self.schema, child).get("x-compositor", {}).values():
+            specs = resolve(self.schema, child).get("x-compositor", {}).values()
+            # A spec may be a list: the field writes several options
+            for spec in [s for spec in specs for s in (spec if isinstance(spec, list) else [spec])]:
                 if isinstance(spec, dict) and "if" in spec:
                     self.gates.add(path.rsplit(".", 1)[0].replace("[]", "") + "." + spec["if"])
         members = []

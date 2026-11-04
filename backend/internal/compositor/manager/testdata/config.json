@@ -1210,10 +1210,13 @@
     }
   },
   "Input": {
+    "sources": [
+      {"id": "us", "kind": "xkb", "layout": "us", "variant": "", "engine": ""},
+      {"id": "mozc", "kind": "ime", "layout": "", "variant": "", "engine": "mozc"},
+      {"id": "de-neo", "kind": "xkb", "layout": "de", "variant": "neo", "engine": ""}
+    ],
     "keyboard": {
       "enabled": true,
-      "layout": "us",
-      "variant": "",
       "options": "",
       "repeatRate": 50,
       "repeatDelay": 300,

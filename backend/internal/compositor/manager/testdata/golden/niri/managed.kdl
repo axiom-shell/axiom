@@ -259,8 +259,8 @@ input {
     warp-mouse-to-focus
     keyboard {
         xkb {
-            layout "us"
-            variant ""
+            layout "us,de"
+            variant ",neo"
             options ""
         }
         repeat-rate 50

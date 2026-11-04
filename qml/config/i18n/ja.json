@@ -678,7 +678,6 @@
     "Key repeat delay": "キーリピートの遅延",
     "Launcher with text": "テキスト入りランチャー",
     "Gaps between windows": "ウィンドウ間の間隔",
-    "XKB layouts, comma-separated (e.g. us,de).": "XKB レイアウトをカンマ区切りで指定します（例: us,de）。",
     "Key repeat rate": "キーリピートの速さ",
     "Detached (nothing to set up)": "切り離し（設定不要）",
     "Power menu": "電源メニュー",
@@ -991,7 +990,6 @@
     "How long a bound scroll ignores further scrolling.": "バインドしたスクロールの後、続くスクロールを無視する時間。",
     "Hyprland's defaults": "Hyprland の既定",
     "Keys wake the screen": "キーで画面を復帰",
-    "Layout variant": "レイアウトのバリアント",
     "Leaves focus alone": "フォーカスを変えない",
     "Left or above": "左または上",
     "Left-handed buttons": "左利き用ボタン",
@@ -1059,7 +1057,6 @@
     "Wrap workspace animations": "ワークスペースのアニメーションを循環",
     "X11 apps draw at native resolution on scaled monitors, instead of blurry.": "拡大表示のモニターで X11 アプリをぼやけさせず、本来の解像度で描きます。",
     "XKB options": "XKB オプション",
-    "XKB variants, one per layout (e.g. colemak).": "XKB のバリアント。レイアウトごとに一つ (例: colemak)。",
     "e.g. a browser window opened from a link.": "例: リンクから開いたブラウザのウィンドウ。",
     "e.g. caps:escape,grp:alt_shift_toggle.": "例: caps:escape,grp:alt_shift_toggle。",
     "x1, y1, x2, y2, as in CSS cubic-bezier().": "x1, y1, x2, y2 (CSS の cubic-bezier() と同じ)。",
@@ -2319,7 +2316,6 @@
     "Set the cursor": "カーソルを設定",
     "An installed cursor theme.": "インストール済みのカーソルテーマ。",
     "Keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.": "キーボード、マウス、タッチパッド、カーソル。オンにした項目はコンポジター自身の設定より優先され、ログイン画面にも反映されます。",
-    "Layout and key repeat. Off, your compositor's own config applies.": "レイアウトとキーリピート。オフではコンポジター自身の設定が適用されます。",
     "Set the touchpad": "タッチパッドを設定",
     "Acceleration, speed and buttons. Off, your compositor's own config applies.": "加速、速度、ボタン。オフではコンポジター自身の設定が適用されます。",
     "Off, your compositor's own config applies.": "オフではコンポジター自身の設定が適用されます。",
@@ -3858,6 +3854,15 @@
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, special workspace name, resize step (\"50 0\"), screenshot kind (region, window or screen), timer length (10m, 1:30), command, or a compositor command in its own language (Hyprland: a dispatcher as Lua, hl.dsp.layout(\"swapsplit\"); sway: a command, layout tabbed; niri: an action as its config writes it, focus-column-first).": "",
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.": "",
     "Auto-hiding bar": "",
-    "Use its type's priority": ""
+    "Use its type's priority": "",
+    "Engine": "",
+    "Variant": "",
+    "The input sources' layouts, options and key repeat. Off, your compositor's own config applies.": "",
+    "The input method's engine (mozc, pinyin, hangul).": "",
+    "Input sources": "",
+    "The layout's XKB variant (colemak), or empty.": "",
+    "An XKB layout (us, de). For an input method, the layout it types on; empty, the first.": "",
+    "Keyboard layouts and input method engines, switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.": "",
+    "Input method": ""
   }
 }

@@ -31,8 +31,8 @@ layer_effects axiom-monitor-prompt "blur enable; blur_xray disable; blur_ignore_
 layer_effects axiom-backdrop "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-polkit "blur enable; blur_xray disable; blur_ignore_transparent enable"
 layer_effects axiom-blur-backing-overlay "blur enable; blur_xray disable; blur_ignore_transparent enable"
-input type:keyboard xkb_layout us
-input type:keyboard xkb_variant ""
+input type:keyboard xkb_layout "us,de"
+input type:keyboard xkb_variant ",neo"
 input type:keyboard xkb_options ""
 input type:keyboard repeat_rate 50
 input type:keyboard repeat_delay 300

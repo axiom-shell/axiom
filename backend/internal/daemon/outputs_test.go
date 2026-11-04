@@ -147,7 +147,7 @@ func TestApplyGreeter(t *testing.T) {
 	}
 	schema, _ := jsonx.Unmarshal(data)
 	inputSchema := inputSchemaOf(schema)
-	values, _ := jsonx.Unmarshal([]byte(`{"keyboard": {"enabled": true, "layout": "us,de", "variant": "", "options": "", "repeatRate": 25, "repeatDelay": 600, "numlock": true},
+	values, _ := jsonx.Unmarshal([]byte(`{"sources": [{"id": "us", "kind": "xkb", "layout": "us"}, {"id": "mozc", "kind": "ime", "engine": "mozc"}, {"id": "de", "kind": "xkb", "layout": "de"}], "keyboard": {"enabled": true, "options": "", "repeatRate": 25, "repeatDelay": 600, "numlock": true},
 		"mouse": {"enabled": false}, "touchpad": {"enabled": false}, "cursor": {"enabled": true, "theme": "Bibata Modern", "size": 24}}`))
 	profiles, _ := jsonx.Unmarshal([]byte(`[{"name": "Desk", "outputs": [{"output": "DP-1", "mode": "2560x1440@144", "x": 0, "y": 0, "scale": 1}]}]`))
 

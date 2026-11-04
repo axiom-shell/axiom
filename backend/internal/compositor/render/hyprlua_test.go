@@ -44,11 +44,11 @@ func TestGreeterLua(t *testing.T) {
 	if none := GreeterLua(inputSchema, nil); len(none) != 0 {
 		t.Errorf("no input: nothing set:\n%s", strings.Join(none, "\n"))
 	}
-	off := parse(t, `{"keyboard": {"enabled": false, "layout": "us,de"}, "mouse": {"enabled": false, "sensitivity": -50}}`)
+	off := parse(t, `{"sources": [{"id": "us", "kind": "xkb", "layout": "us"}, {"id": "mozc", "kind": "ime", "engine": "mozc"}, {"id": "de", "kind": "xkb", "layout": "de"}], "keyboard": {"enabled": false}, "mouse": {"enabled": false, "sensitivity": -50}}`)
 	if got := GreeterLua(inputSchema, off); len(got) != 0 {
 		t.Errorf("every part off: nothing set:\n%s", strings.Join(got, "\n"))
 	}
-	on := parse(t, `{"keyboard": {"enabled": true, "layout": "us,de"}, "mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": false, "naturalScroll": true}}`)
+	on := parse(t, `{"sources": [{"id": "us", "kind": "xkb", "layout": "us"}, {"id": "mozc", "kind": "ime", "engine": "mozc"}, {"id": "de", "kind": "xkb", "layout": "de"}], "keyboard": {"enabled": true}, "mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": false, "naturalScroll": true}}`)
 	lines := GreeterLua(inputSchema, on)
 	config := lines[len(lines)-1]
 	for _, want := range []string{"hl.config(", `kb_layout = "us,de"`, "sensitivity = -0.5"} {

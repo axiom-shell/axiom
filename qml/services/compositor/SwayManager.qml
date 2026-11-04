@@ -348,7 +348,7 @@ Singleton {
   // SwayState.keyboard), or null
   function withKeyboard(callback) {
     const input = InputConfig.input;
-    const codes = input.keyboard.enabled ? input.keyboard.layout : root._configLayouts;
+    const codes = input.keyboard.enabled ? InputSources.xkb(InputConfig.sources).layout : root._configLayouts;
     SwayIpcManager.json("get_inputs", inputs => callback(Array.isArray(inputs) ? SwayState.keyboard(inputs, codes) : null));
   }
 

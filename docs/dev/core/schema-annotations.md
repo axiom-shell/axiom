@@ -123,7 +123,9 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
 - Every compositor's spec takes:
   - `key`: Hyprland's option path (or a list of paths), sway's command with `{}` for the value (`"input type:keyboard repeat_rate {}"`), or niri's node path (`"input.keyboard.repeat-rate"`, its value the node's argument).
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).
-  - `if`: a boolean beside it (a part's `enabled`): written, default or not, only when that is on.
+  - `if`: a boolean beside it (a part's `enabled`), or a dotted path to one under the same object (`keyboard.enabled`): written, default or not, only when that is on.
+  - `from`: the value written is derived from the one stored: `xkbLayout` / `xkbVariant`, the input sources' xkb layouts or variants as comma lists (`render.XkbLayouts`, the port of `InputSources.xkb`).
+  - A list of specs instead of one: the field writes several options, each its own spec (`Input.sources`: the layouts and the variants).
   - `skip`: a value written as nothing, so the compositor's own default stays (`"default"`, or niri's `0`).
 - Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
   - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).

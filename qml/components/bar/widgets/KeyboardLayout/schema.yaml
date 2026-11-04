@@ -1,5 +1,5 @@
 label: Keyboard layout
-link: {setting: Input.keyboard.layout}
+link: {setting: Input.sources}
 icon: keyboard
 group: System
 popout: menu

@@ -7,6 +7,53 @@ title: Input
 description: Keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.
 additionalProperties: false
 properties:
+  sources:
+    x-scope: personal
+    x-greeter: true
+    type: array
+    title: Input sources
+    x-group: Keyboard
+    default:
+      - {id: us, kind: xkb, layout: us, variant: '', engine: ''}
+    description: Keyboard layouts and input method engines, switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.
+    x-compositor:
+      hyprland:
+        - {key: input.kb_layout, from: xkbLayout, if: keyboard.enabled}
+        - {key: input.kb_variant, from: xkbVariant, if: keyboard.enabled}
+      sway:
+        - {key: 'input type:keyboard xkb_layout {}', from: xkbLayout, if: keyboard.enabled}
+        - {key: 'input type:keyboard xkb_variant {}', from: xkbVariant, if: keyboard.enabled}
+      niri:
+        - {key: input.keyboard.xkb.layout, from: xkbLayout, if: keyboard.enabled}
+        - {key: input.keyboard.xkb.variant, from: xkbVariant, if: keyboard.enabled}
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        id: {$ref: '#/definitions/ItemId'}
+        kind:
+          type: string
+          title: Kind
+          enum: [xkb, ime]
+          x-enumLabels: {xkb: Keyboard layout, ime: Input method}
+          default: xkb
+        layout:
+          type: string
+          title: Layout
+          default: ''
+          description: An XKB layout (us, de). For an input method, the layout it types on; empty, the first.
+        variant:
+          type: string
+          title: Variant
+          default: ''
+          description: The layout's XKB variant (colemak), or empty.
+        engine:
+          type: string
+          title: Engine
+          default: ''
+          description: The input method's engine (mozc, pinyin, hangul).
+          x-showIf: {kind: ime}
+      required: [id]
   keyboard:
     type: object
     title: Keyboard
@@ -17,31 +64,7 @@ properties:
         type: boolean
         title: Set the keyboard
         default: false
-        description: Layout and key repeat. Off, your compositor's own config applies.
-      layout:
-        x-scope: personal
-        x-greeter: true
-        type: string
-        title: Keyboard layout
-        default: us
-        description: XKB layouts, comma-separated (e.g. us,de).
-        x-compositor:
-          hyprland: {key: input.kb_layout, if: enabled}
-          sway: {key: 'input type:keyboard xkb_layout {}', if: enabled}
-          niri: {key: input.keyboard.xkb.layout, if: enabled}
-        x-showIf: {enabled: true}
-      variant:
-        x-scope: personal
-        x-greeter: true
-        type: string
-        title: Layout variant
-        default: ''
-        description: XKB variants, one per layout (e.g. colemak).
-        x-compositor:
-          hyprland: {key: input.kb_variant, if: enabled}
-          sway: {key: 'input type:keyboard xkb_variant {}', if: enabled}
-          niri: {key: input.keyboard.xkb.variant, if: enabled}
-        x-showIf: {enabled: true}
+        description: The input sources' layouts, options and key repeat. Off, your compositor's own config applies.
       options:
         x-scope: personal
         x-greeter: true
