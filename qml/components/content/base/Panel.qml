@@ -35,17 +35,10 @@ Item {
   // Card only: the content draws its own box (a `background`) even when
   // bare, so it keeps its padding (see SlotContext)
   property bool drawsBox: false
-  // Card only: the height (px) its content wants, for a grid that lets it
-  // grow (`properties.grow`, see ModuleGrid): its height plus what its
-  // scrolling list is short of, or less what it has to spare; while
-  // compact (nothing laid out to measure), any positive value. 0: nothing
-  // to show, back to its place
-  property real wantedHeight: 0
-  // What the grid grows it to: what it wants, but never less than its full
-  // layout needs (fullMinHeight), so growing shows the full layout and
-  // never shrinks it back to compact. 0 when it wants nothing, or is too
-  // narrow for the full layout (taller wouldn't help)
-  readonly property real growHeight: root.wantedHeight > 0 && !(root.width > 0 && root.width < root.fullMinWidth) ? Math.max(root.wantedHeight, root.fullMinHeight) : 0
+  // Card only: the height (px) its content wants, and what the grid grows
+  // it to (see SlotContext)
+  property alias wantedHeight: slot.wantedHeight
+  readonly property alias growHeight: slot.growHeight
   // Card only: the grid showing it, and growing a detail over it, as on
   // Card
   property var expander: null

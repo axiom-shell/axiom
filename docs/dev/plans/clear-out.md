@@ -462,7 +462,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 - **overlay-modules-02** (4): Holds the merged edge-menu padding note (confirm in an edge menu).
   - [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](../issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
-  - [Card and Panel each spell out the grow and expand members](../issues.md#card-and-panel-each-spell-out-the-grow-and-expand-members)
+  - Card and Panel each spell out the grow and expand members
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
   - [A DeviceList squeezed to nothing wants no growth](../issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
 - **overlay-modules-03** (5): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes.

@@ -684,12 +684,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### Card and Panel each spell out the grow and expand members
-- **Where:** `qml/components/content/base/Card.qml:28` (`wantedHeight`, `growHeight`), `qml/components/content/base/Panel.qml:38` (`wantedHeight`, `growHeight`)
-- **What:** Both roots declare `wantedHeight` and the same `growHeight` formula, each with its comment (11 lines each, word for word), beside an otherwise shared `SlotContext`, which already has every value `growHeight` reads (`width`, `fullMinWidth`, `fullMinHeight`). Fix: move `wantedHeight` and `growHeight` into `SlotContext`, bind `wantedHeight` in each root's `SlotContext {}` and alias `growHeight`. That is about 7 lines fewer, with one formula to change, which the padding entry above also touches. `canExpand`/`expand` stay, since their default `from ?? root` needs the root.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### Tailscale's PeerRow redraws DeviceRow without its buttons
 - **Where:** `qml/components/content/Tailscale/Tailscale.qml:103` (`PeerRow`), `qml/components/content/parts/DeviceRow.qml`
 - **What:** PeerRow (lines 103–167, 65 lines) is DeviceRow's row drawn again: the same `Rectangle` with `Widget.radius`, the hover colour with `ColorGlide`, the `RowLayout` margins, a `StyledIcon` at `Appearance.fontSize * 1.4` coloured by state, and a name (`fontSizeBy(-1)`) over a status (`fontSizeBy(-3)`), both elided. The only differences are that it has no connect or forget buttons, and that it shows "Copied" for 2 s. Fix: give DeviceRow `property bool connectable: true` to gate its connect button, and write PeerRow as a DeviceRow with `connectable: false` and its copy handler and timer. That is about 20 lines, so 45 fewer.

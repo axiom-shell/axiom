@@ -383,7 +383,6 @@ Found by the audits:
 - [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
 - [A DeviceList squeezed to nothing wants no growth](issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
 - [Parts shown in one mode are built hidden in every mode, in ten modules and parts](issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
-- [Card and Panel each spell out the grow and expand members](issues.md#card-and-panel-each-spell-out-the-grow-and-expand-members)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
