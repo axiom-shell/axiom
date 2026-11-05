@@ -556,13 +556,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-31, while reviewing the modules system
 
 ### Parts shown in one mode are built hidden in every mode, in ten modules and parts
-- **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `qml/components/content/Agenda/Agenda.qml:156` (`EventEditor`), `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
+- **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`", and "a row's expansion is built only while expanded". These parts are gated by `visible` only:
   - Network builds both its strip (lines 84–122) and its full column (124–191), each with two Sparklines, in every card.
   - AudioMixer builds its tabs and list (170–308, one `AudioRow` per playing app) in every slider-only card, and its card header in every popout.
   - WorldClocks builds both a tile and a row layout for each clock (lines 178 and 225).
-  - ClockCalendar builds two `InlineAgenda`s, of which at most one shows, and a `DayPane` (a third agenda and the 360-line `EventEditor`). Where `showEvents` is false (always on the greeter, on the lock screen unless `Calendar.showOnLockscreen`), none of them can ever show, yet every lock and greeter surface builds them.
-  - Agenda and DayPane each build an `EventEditor` that shows only after a click.
+  - DayPane builds an `EventEditor` that shows only after a click. Agenda's is built on demand now (row 20); DayPane's is left, since the Calendar popout's `maxImplicitHeight` reads `DayPane.growth`, the editor's height before it opens, to make room up front: building it on demand needs another way to know that height.
 
   This is the same rule as the NowPlaying entry, in other files. It is separate from "Compact cards still build their full layout": these parts are built at full size too. Fix: Loaders gated on each mode (`root.strip`, `!root.sliderOnly`, `showKeypad`, `tiles`, `idle`, `timerMode`, the row being renamed, `inlineAgenda && sideBySide`, `showEvents`, editing), with the Layout attached properties moved onto the Loaders. Done module by module, since ids read from the root need the loader's `item`.
 - **Size:** small
