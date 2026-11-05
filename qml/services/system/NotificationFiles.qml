@@ -108,10 +108,10 @@ QtObject {
     grab();
   }
 
-  // An entry gone: its copy too
-  function forget(entry) {
+  // An entry gone: its copy too, unless keepFile (clear() takes them all)
+  function forget(entry, keepFile) {
     delete root._sources[entry.uid];
-    if (entry.image.startsWith("file://" + root.dir))
+    if (!keepFile && entry.image.startsWith("file://" + root.dir))
       CommandManager.runDetached(["rm", "-f", root._pathOf(entry.image)]);
   }
 
