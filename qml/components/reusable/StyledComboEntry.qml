@@ -288,7 +288,7 @@ Item {
       closePolicy: Popup.CloseOnPressOutsideParent
       transformOrigin: Item.Top
 
-      // Grows down out of the field, as FloatingPopout does
+      // Grows down out of the field, fading and scaling in
       enter: Transition {
         NumberAnimation {
           property: "opacity"

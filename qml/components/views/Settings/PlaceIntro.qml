@@ -7,10 +7,11 @@ import qs.components.methods
 import qs.components.reusable
 
 // The top of a placed-anywhere surface's card (its section's `x-intro`:
-// LauncherPlace, WindowSwitcherPlace): where it opens, on a screen picker
-// with presets and a drag, as a dock's or OSD's (EntryListCard), above the
-// place fields it sets (`edge`, `position`, `detached`, `distance`). Edits
-// go through the settings draft like the fields below.
+// LauncherPlace, WindowSwitcherPlace): where it opens, on the screen
+// picker every placed surface has (ScreenSpotPicker, its nine spots and a
+// drag; a dock's or OSD's in EntryListCard), above the place fields it
+// sets (`edge`, `position`, `detached`, `distance`). Edits go through the
+// settings draft like the fields below.
 RowLayout {
   id: root
 
@@ -22,76 +23,8 @@ RowLayout {
   visible: root.section !== null
   spacing: Widget.spacing * 2
 
-  // I18n.tr("Top") I18n.tr("Upper") I18n.tr("Center") I18n.tr("Bottom")
-  // I18n.tr("Left") I18n.tr("Right")
-  readonly property var presets: [
-    {
-      "label": "Top",
-      "values": {
-        "edge": "top",
-        "position": 50,
-        "detached": false
-      },
-      "x": 0.5,
-      "y": 0
-    },
-    {
-      "label": "Upper",
-      "values": {
-        "edge": "top",
-        "position": 50,
-        "detached": true,
-        "distance": 30
-      },
-      "x": 0.5,
-      "y": 0.3
-    },
-    {
-      "label": "Center",
-      "values": {
-        "edge": "top",
-        "position": 50,
-        "detached": true,
-        "distance": 50
-      },
-      "x": 0.5,
-      "y": 0.5
-    },
-    {
-      "label": "Bottom",
-      "values": {
-        "edge": "bottom",
-        "position": 50,
-        "detached": false
-      },
-      "x": 0.5,
-      "y": 1
-    },
-    {
-      "label": "Left",
-      "values": {
-        "edge": "left",
-        "position": 50,
-        "detached": false
-      },
-      "x": 0,
-      "y": 0.5
-    },
-    {
-      "label": "Right",
-      "values": {
-        "edge": "right",
-        "position": 50,
-        "detached": false
-      },
-      "x": 1,
-      "y": 0.5
-    }
-  ]
-
   ScreenSpotPicker {
     Layout.alignment: Qt.AlignTop
-    presets: root.presets
     edge: root.section?.edge ?? "top"
     floats: true
     spot: root.section ? ScreenEdge.edgeSpot(root.section.edge, root.section.position / 100, root.section.detached ? root.section.distance / 100 : 0) : Qt.point(0.5, 0.5)

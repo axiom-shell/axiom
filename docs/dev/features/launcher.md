@@ -1,6 +1,6 @@
 # Launcher
 
-> **Files:** `qml/services/ui/LauncherManager.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/services/ui/LauncherConfigBrowser.qml`, `qml/components/surfaces/launcher/Launcher.qml`, `qml/components/surfaces/launcher/LauncherPanel.qml`, `qml/components/surfaces/launcher/LauncherRow.qml`, `qml/components/views/Settings/LauncherPlace.qml`, `qml/components/hosts/popout/FloatPlacement.qml`
+> **Files:** `qml/services/ui/LauncherManager.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/services/ui/LauncherConfigBrowser.qml`, `qml/components/surfaces/launcher/Launcher.qml`, `qml/components/surfaces/launcher/LauncherPanel.qml`, `qml/components/surfaces/launcher/LauncherRow.qml`, `qml/components/views/Settings/LauncherPlace.qml`
 > **Config:** `Launcher.*` (reader `LauncherConfig`)
 > **Related:** [Launcher providers](launcher-providers.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
 
@@ -13,21 +13,16 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 - `reverse` puts the field at the bottom and lays the list out bottom to top.
 
 ### Placement
-`Launcher.qml` places the panel the way a dock or OSD is placed (`edge`, `position` along it, `detached`), with one difference: detached, it is not held a gap in px off the edge but a `distance` (0–50%) across the free screen.
-- **Detached:** a `FloatingPopout`.
-  - It claims `launcher:<screen>` as the attached one does, so it closes the popouts it covers ([Registry](../popouts/registry.md)).
-  - Its fraction and its align across are both that distance, measured from the far side on the bottom or right edge. 0% sits against its margin; 50% is centred.
-  - Its margins are where a detached dock or OSD with an automatic gap sits (`ScreenEdgeManager.detachedGaps`, per side).
-  - `hosts/popout/FloatPlacement` works out the fractions, aligns and margins. The window switcher shares it ([Window switcher](../hyprland/window-switcher.md)).
-  - `maxContentHeight` keeps it from moving, and `growUp` keeps a reversed field in place.
-- **Attached:** an `EdgePopout` at `position` on its edge.
-  - On a side edge its height runs along the edge, so the panel holds its tallest (`LauncherPanel.holdHeight`, the blocks against the field) instead of the window keeping room across (`maxContentDepth`).
-- **Shared:** both hosts have the same API (`show`/`hide`/`isOpen`/`contentItem`/`window`). Only the host in use is created, through `LazyLoader`s.
-- **Settings card:** its top is `LauncherPlace` (the section's `x-intro`, a `PlaceIntro`): a `ScreenSpotPicker` with presets (Top, Upper, Center, Bottom, Left, Right) and a drag (at an edge it attaches, elsewhere it detaches at that distance), over the place fields.
+`Launcher.qml` places the panel in one `EdgePopout`, the way every detached surface is placed (an OSD, a dock, a floating edge menu, the window switcher): `edge`, `position` along it, `detached`, and when detached a `distance` (0–50%) across the free screen and an `animation` ([Held off an edge](../popouts/held-off-edge.md)).
+- **Detached** (`held`): its gaps are `ScreenEdgeManager.heldGaps`, the automatic gaps with the one across its edge pushed in by `distance` of the room left. 0% lines it up with the window border, 50% centres it. Its depth across is the panel's tallest (`maxContentDepth`), so it doesn't move as results come and go.
+  - `animation` Slide slides it in from off the screen (under the bars where it can); Fade fades it in where it sits.
+- **Attached:** it grows out of the border or bar at `position` on its edge.
+- **Both:** it claims `launcher:<screen>`, so it closes the popouts it covers ([Registry](../popouts/registry.md)). On a side edge its height runs along the edge, so the panel holds its tallest (`LauncherPanel.holdHeight`, the blocks against the field) instead of the window keeping room across (`maxContentDepth`); reversed under the top edge it holds it too, so the field at its bottom stays put.
+- **Settings card:** its top is `LauncherPlace` (the section's `x-intro`, a `PlaceIntro`): the `ScreenSpotPicker` every placed surface has, its nine spots (the centre, each edge's middle, the corners) and a drag (at an edge it attaches, elsewhere it detaches at that distance), over the place fields.
 
 ### Motion
 - As matches come and go, the list's frame (`LauncherPanel.listFrame`) glides to its rows' height (animFast). The list keeps its target height, clipped meanwhile.
-- Both hosts follow the panel as drawn. `FloatingPopout.animateHeight` is off, so its box doesn't chase it.
+- The box follows the panel as drawn.
 - Rows are reused across keystrokes, so nothing is created per keystroke. A row whose result changes (`kind` + `title`) dips its content and brings it back (animFast) rather than cross-fading its text.
 
 ### Row shape

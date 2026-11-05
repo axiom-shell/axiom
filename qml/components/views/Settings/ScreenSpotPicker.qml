@@ -8,16 +8,69 @@ import qs.components.reusable
 // A small screen showing where something sits (`spot`, 0-1 from the top
 // left), with `presets` to click: dots that each apply their values, and
 // a drag anywhere on it that places it on the nearest edge (`floats`:
-// also how far across, held off the edge unless dropped at it). Used for
-// docks and OSDs (EntryListCard), notifications (NotificationsPreview)
-// and the launcher and window switcher (PlaceIntro).
+// also how far across, held off the edge unless dropped at it). Placed
+// anywhere (`floats`), the dots are the same nine for every surface: the
+// centre, each edge's middle and the corners, each placing it as a drag
+// there would. Used for docks and OSDs (EntryListCard), the launcher and
+// window switcher (PlaceIntro), and notifications (NotificationsPreview,
+// its own dots).
 Rectangle {
   id: root
 
   // [{ label, values, x, y }]: a dot at (x, y) (0-1 from the top left) that
-  // applies `values`; the label is its tooltip, an I18n key the caller
-  // declares
-  property var presets: []
+  // applies `values` (by default where a drag to it would place it); the
+  // label is its tooltip, an I18n key its giver declares
+  property var presets: root.floats ? root.placeSpots : []
+  // I18n.tr("Center") I18n.tr("Top") I18n.tr("Bottom") I18n.tr("Left")
+  // I18n.tr("Right") I18n.tr("Top left") I18n.tr("Top right")
+  // I18n.tr("Bottom left") I18n.tr("Bottom right")
+  readonly property var placeSpots: [
+    {
+      "label": "Center",
+      "x": 0.5,
+      "y": 0.5
+    },
+    {
+      "label": "Top",
+      "x": 0.5,
+      "y": 0
+    },
+    {
+      "label": "Bottom",
+      "x": 0.5,
+      "y": 1
+    },
+    {
+      "label": "Left",
+      "x": 0,
+      "y": 0.5
+    },
+    {
+      "label": "Right",
+      "x": 1,
+      "y": 0.5
+    },
+    {
+      "label": "Top left",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "label": "Top right",
+      "x": 1,
+      "y": 0
+    },
+    {
+      "label": "Bottom left",
+      "x": 0,
+      "y": 1
+    },
+    {
+      "label": "Bottom right",
+      "x": 1,
+      "y": 1
+    }
+  ]
   property point spot: Qt.point(0.5, 0.5)
   // Its edge now (a name), which a drag through the middle keeps
   property string edge: "bottom"
@@ -97,7 +150,7 @@ Rectangle {
         anchors.margins: -Widget.px(4)
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.picked(preset.modelData.values)
+        onClicked: root.picked(preset.modelData.values ?? root._dragValues(preset.modelData.x, preset.modelData.y))
       }
 
       LazyLoader {

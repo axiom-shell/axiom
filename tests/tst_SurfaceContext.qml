@@ -791,10 +791,14 @@ TestCase {
         "insideBorder": true
       })
     }).slideFrom, 40);
-    // Whether it slides from there now or not: the host latches that
+    // Over the bars (the overlay open, or stacked by map order): from the
+    // frame line, coming out of the bar
     compare(at({
       "overOverlay": true
-    }).slideFrom, 40);
+    }).slideFrom, 0);
+    compare(at({
+      "layerOrder": false
+    }).slideFrom, 0);
     // Held off its edge (a detached OSD or edge menu), under a solid bar,
     // a pill bar or the border alike: a connector gap short of its box
     const held = at({
@@ -842,15 +846,16 @@ TestCase {
     verify(at({
       "overOverlay": true
     }).slidesFromEdge);
-    // Held close to a floating bar on sway or niri: from the screen edge
+    // Held on sway or niri: from the frame line, cut there
     const close = at({
       "held": true,
       "bar": null,
-      "across": 4,
+      "across": 30,
       "layerOrder": false
     });
     verify(close.slidesFromEdge);
-    compare(close.slideFrom, close.attachAt);
+    compare(close.slideFrom, close.attachAt - 40);
+    compare(close.slideFrom, 30 - base.gap / 2);
     // Over a fullscreen window: nothing to go under (and no Top window
     // maps over one), from the screen edge everywhere
     const bare = at({

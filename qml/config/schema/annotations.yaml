@@ -15,7 +15,7 @@ x-categories: 'orders the categories and gives their icons (`SchemaLayout.catego
 x-category: names its sidebar category.
 x-commands: the commands any of which shows a theme integration's app is installed (the onboarder's App colors page); `[]` for one every desktop has, the key when left out (`ThemeManager.integrationCommands`).
 x-compositor: 'how a compositor config writer writes it, per compositor: `hyprland: { key, value, scale, if, skip, always, device, from }`, `sway: { key, value, scale, if, map, skip, configOnly, from }`, `niri: { key, value, scale, if, skip, from }`, or a list of them (schema-annotations.md › Compositor).'
-x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`; see schema-annotations.md › Fields).
+x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`, `toggle`; see schema-annotations.md › Fields).
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
 x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): only it takes a layout `minSize` and `maxSize`.'

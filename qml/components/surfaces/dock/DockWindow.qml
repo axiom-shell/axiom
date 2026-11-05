@@ -44,7 +44,9 @@ Scope {
 
   // --- Attaching to the edge ---
   // As an edge popout does (EdgePlacement): held off the edge, a plain box
-  // `gap` in from the frame lines on its edge and at its ends; else growing
+  // `distance` across the free screen from its edge (at 0 its automatic
+  // gaps from the frame lines there and at its ends), sliding or fading
+  // in; else growing
   // out of the border's (or a solid bar's) stroke, or running straight off
   // a bare screen edge; with another bar on its edge, meeting it as a bar
   // popout would.
@@ -54,6 +56,8 @@ Scope {
   // and at its ends (what places it, so a change of `held` never reads
   // them before they follow)
   readonly property bool held: root.dock.detached
+  // Held off the edge, it fades in and out where it sits instead of sliding
+  readonly property bool fades: root.held && root.dock.animation === "fade"
   readonly property var gaps: placement.gaps
   // Where the window starts across the edge (what's reserved there; not
   // docks, its own included)
@@ -119,7 +123,8 @@ Scope {
     screen: root.screen
     edge: root.edge
     held: root.held
-    gap: root.dock.gap
+    distance: root.dock.distance / 100
+    heldDepth: root.thickness
     centre: root.centre
     // Its joins from where it would rest, so magnifying never joins or
     // parts an end
@@ -187,7 +192,7 @@ Scope {
   // stretch that this keeps up
   property bool _out: false
   onShownChanged: root._out = root.shown > 0
-  readonly property real slide: (1 - root.shown) * root.depth
+  readonly property real slide: root.fades ? 0 : (1 - root.shown) * root.depth
 
   // The cross-axis position (window coordinates) of something `fromEdge`
   // in from the dock's edge and `size` deep
@@ -515,6 +520,8 @@ Scope {
       id: dockContent
       anchors.fill: parent
       visible: !root.previewed
+      // Fading in and out in place, held off the edge (`fades`)
+      opacity: root.fades ? root.shown : 1
 
       HoverHandler {
         id: hover
@@ -541,6 +548,7 @@ Scope {
         strokeColor: Theme.resolveColor(root.dock.borderColor)
         // Hiding, it moves past its window's edge
         hiddenBehind: Math.max(0, root.slide)
+        hostOpacity: dockContent.opacity
       }
 
       // Between the pinned apps and the others

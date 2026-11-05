@@ -1,6 +1,6 @@
 # Popout hosts, window sizing and switching in place
 
-> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/FloatingPopout.qml`, `qml/components/hosts/popout/FloatingShadow.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/shell/OSD.qml`
+> **Files:** `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/hosts/popout/SlideAnimation.qml`, `qml/components/hosts/popout/SwitchStill.qml`, `qml/shell/OSD.qml`
 > **Config:** none directly
 > **Related:** [Surface context](surface-context.md), [Edge attach](edge-attach.md), [Submenus](submenus.md), [Registry](registry.md), [Content roots](../overlay/content-roots.md), [Pill and floating bars](pill-and-floating-bars.md)
 
@@ -11,13 +11,8 @@ This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a 
   - Open/close/queue state: `isOpen`, `show(data)`, `hide()`, and a timer that dismisses on hover loss.
 - **`AttachedSurface.hovered`:** the pointer on the whole surface (its `HoverHandler` is reparented to the surface: one declared inside it lands in the content box). `EdgePopout`'s `keepAlive`, `engaged` and `_pointerIn` read it.
   - A wrapper may switch an open popout to another payload in place instead of closing it first, via its `canSwitchTo(anchor, data)` and `prepareSwitch(done)` hooks.
-- **`FloatingPopout`:** a box floating in the free area, placed at a fraction across and down inside per-side margins. Its shadow is a `FloatingShadow`, a copy of the box that scales with it; where the blur would frost it (SwayFX, `BlurManager.shadowsApart`), that copy and the box's stroke are drawn in a window of its own (`<namespace>-shadow`, not blurred), mapped over the box's once that has committed a frame, so the stack is the popouts' (blurred fill, shadow, stroke): a stroke in the blurred window gets blur under its anti-aliased outer edge, a dark line between it and the shadow round the corners.
-  - `xAlign`/`yAlign` say which part of the box sits at that point.
-  - Over a fullscreen window (`bare`, latched while its window is down) the window spans the screen (`ExclusionMode.Ignore`) and `FloatPlacement.bare` measures its margins from the screen's edges, as for edge popouts ([Held off an edge](held-off-edge.md)). It keeps its fade and scale: it isn't tied to an edge.
-  - It fades in, once granted its `PopoutClaim` (`claimKey`; its footprint is its box where it's placed).
-  - Used by the detached launcher and the window switcher.
-- **Closing on an outside click** (`closeOnClickOutside`: the launcher, a floating edge menu with `close.onOutsideClick`): `FloatingPopout` and `EdgePopout` close on their `FocusGrab`'s `dismissed`, a real click only, never its `cleared`. So a popout opened by hover that takes the keyboard (Todo, Calculator, Stopwatch), another surface's grab starting or a polkit prompt closing leaves them open. A click on a bar closes them too; on sway and niri the bar reports it once released (`BarPanel`), after the click's own action, so the bar's launcher button closes the launcher rather than closing and reopening it.
-- **`SlideAnimation`.**
+- **Closing on an outside click** (`closeOnClickOutside`: the launcher, a floating edge menu with `close.onOutsideClick`): `EdgePopout` closes on its `FocusGrab`'s `dismissed`, a real click only, never its `cleared`. So a popout opened by hover that takes the keyboard (Todo, Calculator, Stopwatch), another surface's grab starting or a polkit prompt closing leaves it open. A click on a bar closes it too; on sway and niri the bar reports it once released (`BarPanel`), after the click's own action, so the bar's launcher button closes the launcher rather than closing and reopening it.
+- **`SlideAnimation`:** slides its content in from its edge, or with `fade` (a detached box whose `animation` is Fade: `EdgePopout.fades`) fades it in and out where it sits; its `shownOpacity` is how far it has faded in.
 - **`AttachedSurface`:** the content box, connector and `CornerPiece` fillets that make a popout look like it grows out of a bar or the screen border. `edge` is a `ScreenEdge`.
   - **Attached:**
     - The box starts on the attach edge, with the fillets curving outside its walls (`boxStart`).

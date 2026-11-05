@@ -4,7 +4,7 @@ import qs.config
 
 /**
  * Reusable slide animation container
- * Supports sliding from any direction
+ * Supports sliding from any direction, or fading in place (`fade`)
  */
 Item {
   id: root
@@ -18,6 +18,10 @@ Item {
   property bool slideFromBottom: false
 
   property int animationDuration: Appearance.animNormal
+  // Fades in and out where it sits instead of sliding
+  property bool fade: false
+  // How far it has faded in
+  readonly property real shownOpacity: contentWrapper.opacity
 
   default property alias content: contentArea.children
 
@@ -51,6 +55,8 @@ Item {
       y: root._top + slideY
 
       readonly property real hiddenX: {
+        if (root.fade)
+          return 0;
         if (root.slideFromRight)
           return root.width;
         if (root.slideFromLeft)
@@ -59,6 +65,8 @@ Item {
       }
 
       readonly property real hiddenY: {
+        if (root.fade)
+          return 0;
         if (root.slideFromBottom)
           return root.height;
         if (root.slideFromTop)
@@ -73,6 +81,7 @@ Item {
           PropertyChanges {
             contentWrapper.slideX: 0
             contentWrapper.slideY: 0
+            contentWrapper.opacity: 1
           }
         },
         State {
@@ -81,13 +90,14 @@ Item {
           PropertyChanges {
             contentWrapper.slideX: contentWrapper.hiddenX
             contentWrapper.slideY: contentWrapper.hiddenY
+            contentWrapper.opacity: root.fade ? 0 : 1
           }
         }
       ]
 
       transitions: Transition {
         NumberAnimation {
-          properties: "slideX,slideY"
+          properties: "slideX,slideY,opacity"
           duration: root.animationDuration
           easing.type: Appearance.easing
         }
@@ -108,6 +118,7 @@ Item {
         return;
       contentWrapper.slideX = root.active ? 0 : contentWrapper.hiddenX;
       contentWrapper.slideY = root.active ? 0 : contentWrapper.hiddenY;
+      contentWrapper.opacity = root.active || !root.fade ? 1 : 0;
     });
   }
 }

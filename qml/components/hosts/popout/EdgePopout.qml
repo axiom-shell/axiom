@@ -87,13 +87,15 @@ PopoutWrapperBase {
   // Overlay layer (no supports.layerOrder, or the overlay open on its
   // screen). Both follow only while closed, as BarPopouts.underBar: they
   // change the window's layer, namespace and size.
+  // One that fades (`fade`, a detached box only) fades in where it sits,
+  // on the Overlay layer.
   property ClosedLatch _under: ClosedLatch {
-    source: placement.slidesUnder
+    source: placement.slidesUnder && !root.fades
     closed: !root.occupied
   }
   readonly property bool slidesUnder: root._under.value ?? false
   property ClosedLatch _fromEdge: ClosedLatch {
-    source: placement.slidesFromEdge
+    source: placement.slidesFromEdge && !root.fades
     closed: !root.occupied
   }
   // How far back from its attach edge it slides in from: the screen edge
@@ -173,13 +175,18 @@ PopoutWrapperBase {
   readonly property bool vertical: placement.vertical
   readonly property bool bareEdge: placement.bareEdge
 
-  // Held off the edge (an edge menu's or OSD's `detached`): a detached box
-  // `gap` in from the frame lines on its edge and at its ends
-  // (ScreenEdgeManager.detachedGaps), so it lines up with a floating bar's islands, or
-  // with the windows. Its gaps are what places it, so a change of `held`
-  // never reads them before they follow.
+  // Held off the edge (a `detached` OSD, edge menu, launcher or window
+  // switcher): a detached box at its automatic gaps from the frame lines
+  // on its edge and at its ends, so it lines up with a floating bar's
+  // islands, or with the windows, and `distance` (0-0.5) across the free
+  // screen from its edge (ScreenEdgeManager.heldGaps): 0.5 centres it. Its
+  // gaps are what places it, so a change of `held` never reads them
+  // before they follow.
   property bool held: false
-  property int gap: -1
+  property real distance: 0
+  // A detached box fades in where it sits instead of sliding in
+  property bool fade: false
+  readonly property bool fades: root.fade && placement.detached
   // Over a fullscreen window, which covers the border and the bars, there's
   // nothing to join: it's held as well, with an automatic gap unless held
   // already (and slides under nothing, whose layer that window hides).
@@ -289,7 +296,10 @@ PopoutWrapperBase {
     edge: root.edge
     held: root.holds
     bare: root.bare
-    gap: root.held ? root.gap : -1
+    distance: root.held ? root.distance : 0
+    // Its box across the edge, as deep as its content gets
+    // (maxContentDepth), so a box held off the edge doesn't move as it grows
+    heldDepth: Math.max(root._contentAcross, root.maxContentDepth > 0 ? Math.ceil(root.maxContentDepth + root.contentPadding * 2) : 0)
     centre: root.edgeLength * root.position + root.positionOffset
     probeStart: placement.centre - root.naturalBox / 2
     probeLength: root.naturalBox
@@ -460,7 +470,7 @@ PopoutWrapperBase {
     // stays the window's below); none until it's granted its place, or
     // while it's given it up
     mask: Region {
-      item: !root.claimed ? null : root.slideDistance > 0 ? boxArea : surface
+      item: !root.claimed ? null : root.slideDistance > 0 || root.fades ? boxArea : surface
     }
 
     Item {
@@ -513,6 +523,7 @@ PopoutWrapperBase {
       height: implicitHeight
 
       detachedOffset: root.slideDistance
+      fade: root.fades
       // Once its pill has grown out to carry it
       // While the blur window backs surfaces, once it knows where this one
       // is (LayerOrigin.settled), so it never shows unbacked beside them

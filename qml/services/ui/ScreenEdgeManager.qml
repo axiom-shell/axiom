@@ -166,6 +166,29 @@ QtObject {
     };
   }
 
+  // The gaps a box `depth` px deep held off a screen edge (a ScreenEdge)
+  // keeps, `distance` (0-0.5) across the free screen from it: the
+  // automatic gaps (detachedGaps), the one across that edge pushed in by
+  // `distance` of the room left between the automatic gaps on that edge
+  // and the opposite one, so 0 is where the automatic gap holds it and 0.5
+  // centres it. Every detached surface (an OSD, a dock, a floating edge
+  // menu, the launcher, the window switcher) is placed by it.
+  function heldGaps(screen, location, distance, depth, bare) {
+    const gaps = root.detachedGaps(screen, location, -1, bare);
+    if (!(distance > 0))
+      return gaps;
+    const far = ScreenEdge.opposite(location);
+    const line = side => bare ? 0 : root.frameLineOn(screen, side);
+    const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
+    const span = (vertical ? screen?.width : screen?.height) ?? 0;
+    const room = span - line(location) - gaps.across - line(far) - root.detachedGaps(screen, far, -1, bare).across;
+    return {
+      "across": gaps.across + Math.min(distance, 0.5) * Math.max(0, room - depth),
+      "start": gaps.start,
+      "end": gaps.end
+    };
+  }
+
   // Space open integrated menus reserve, by "<screen>:<edge>" (edge
   // "top" | "bottom" | "left" | "right"), for surfaces that place
   // themselves against the perpendicular edges (BarPopouts)

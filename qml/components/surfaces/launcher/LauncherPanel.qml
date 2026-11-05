@@ -8,8 +8,8 @@ import qs.config
 import qs.services.ui
 
 // The launcher's contents: the search field, the results and the controls
-// hint, without a box of its own: its host's surface is the box (a
-// FloatingPopout, or on a screen edge an EdgePopout). Reversed, the
+// hint, without a box of its own: its host's surface is the box (an
+// EdgePopout, held off its edge or growing out of it). Reversed, the
 // search field is at the bottom and the best match sits just above it.
 FocusScope {
   id: root

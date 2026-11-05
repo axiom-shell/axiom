@@ -47,7 +47,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 
 ### Placement
 **Held** (`detached`, the default):
-- A plain box, `gap` away from the frame lines on its edge and at its ends.
+- A plain box at its automatic gaps from the frame lines at its ends, and `distance` (0–50%) across the free screen from its edge (`EdgePlacement.heldDepth` its thickness); it slides or fades in (`animation`, `fades`).
 - Uses `boxOffset` and `startInset` / `endInset`.
 - See [Held off an edge](../popouts/held-off-edge.md).
 

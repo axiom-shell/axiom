@@ -1,7 +1,7 @@
 # Edge menu hosts (floating and integrated)
 
 > **Files:** `qml/shell/EdgeMenus.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
-> **Config:** `EdgeMenus.items[].mode` (`floating` | `integrated` | `submenu`), `length`, `offset`, `gridOffset`, `moduleScale`, `pinButton`, `frame`, `detached`, `gap`
+> **Config:** `EdgeMenus.items[].mode` (`floating` | `integrated` | `submenu`), `length`, `offset`, `gridOffset`, `moduleScale`, `pinButton`, `frame`, `detached`, `distance`, `animation`
 > **Related:** [Overview](overview.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
 
 How an edge menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two host modes, `floating` and `integrated`. A `submenu`-mode menu has no host: see [Editing and submenus](editing-submenus.md).
@@ -46,7 +46,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 ### `floating`: `FloatingEdgeMenu`
 - An `EdgePopout` (`contentPadding`, `edgeOffset`, `fillColor` / `strokeColor`, defaulting to what the OSD uses).
 - It's `detached` (a plain box) when:
-  - held (`menu.detached`: `gap` from the frame lines on its edge and at both ends, through `EdgePopout.held` / `gap`; see [Held off an edge](../popouts/held-off-edge.md)); or
+  - held (`menu.detached`: `distance` across the free screen from its edge, at its automatic gaps at both ends, sliding or fading in, through `EdgePopout.held` / `distance` / `fade`; see [Held off an edge](../popouts/held-off-edge.md)); or
   - its edge has a transparent bar.
 - Otherwise it's attached to the border or solid bar, or meets a pill or floating bar as a bar popout does (`EdgePopout.followsBar`; see [Pill and floating bars](../popouts/pill-and-floating-bars.md)).
 - Its window sits inside what's reserved on each screen edge, `ScreenEdgeManager.reservedWithMenusOn(screen, location)`:

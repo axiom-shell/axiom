@@ -251,6 +251,9 @@ Loader {
         return searchField;
       if (fieldSchema["x-control"] === "icon")
         return iconField;
+      // Two values flipped between (`x-control: "toggle"`)
+      if (root.options?.length === 2 && fieldSchema["x-control"] === "toggle")
+        return toggleField;
       return root.options ? comboField : textField;
     }
   }
@@ -360,6 +363,19 @@ Loader {
         tooltipText: I18n.tr("Copy")
         onClicked: ClipboardManager.copyText(String(root.current ?? ""))
       }
+    }
+  }
+
+  Component {
+    id: toggleField
+    SchemaToggle {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      options: root.options
+      optionLabels: root.optionLabels
+      currentValue: root.current ?? ""
+      onPicked: value => root.commit(value)
     }
   }
 

@@ -6,7 +6,7 @@ import qs.services.ui
 import qs.components.reusable
 
 // The Dock section's first card (its `x-card`): the docks as tabs, one
-// shown at a time: where it sits (a screen picker with presets), Show, its
+// shown at a time: where it sits (the screen picker), Show, its
 // pinned apps (the shared Apps.pinned, or its own with pinnedOwn, with a
 // search to add more) and its settings (EntryListCard).
 EntryListCard {
@@ -21,7 +21,7 @@ EntryListCard {
   listKey: "items"
   entryType: "DockEntry"
   savedEntries: DockConfig.docks
-  pickerHint: I18n.tr("Click a spot or drag to place it; fine-tune below. Show slides it in for a moment.")
+  pickerHint: I18n.tr("Click a spot or drag to place it, to an edge to attach it; fine-tune below. Show brings it in for a moment.")
   idBase: "dock"
   labelOf: dock => DockConfig.labelOf(dock)
   // The dock as edited, saved or not

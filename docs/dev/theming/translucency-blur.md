@@ -19,7 +19,7 @@ The translucency setting, how fills apply it, the Hyprland layer rules axiom wri
 
 ### Fills
 - Every surface fill goes through `Appearance.fill(color)` at the shared pieces' draw sites:
-  - `AttachedSurface`, `FloatingPopout`, `CornerPiece`, `BorderPanel`;
+  - `AttachedSurface`, `CornerPiece`, `BorderPanel`;
   - the bar's background and islands, the overlay's box and navigator;
   - edge menus, docks, power menu, overview, polkit and monitor prompts;
   - `StyledContainer`, `Card`/`Panel`, buttons, inputs, `ActionTile`, `DropdownSurface`.

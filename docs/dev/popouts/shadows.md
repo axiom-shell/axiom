@@ -32,10 +32,9 @@ Every surface with an exposed border casts the shell's shadow. It uses the bars'
 ### Who casts it
 - **`AttachedSurface.castShadow`:**
   - bar popouts and submenus
-  - edge popouts: OSDs, floating edge menus, the attached launcher
+  - edge popouts: OSDs, floating edge menus, the launcher and the window switcher
   - docks
 - **The dock's detached box.**
-- **`FloatingPopout`:** a copy of its box sits behind it and casts. This covers the floating launcher and the window switcher.
 - **Not a bar's own pills:** their bar's layer casts their shadow.
 - **Only the outline casts it,** not the content.
 

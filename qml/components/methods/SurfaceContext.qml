@@ -366,6 +366,8 @@ QtObject {
     // something with content of its own (a pill or island, a solid bar,
     // an integrated menu), nor held or detached (a box of its own)
     const plainJoin = !p.held && !detached && !onPill && (bar ? fromOuter : !ownBar) && !((p.menuZone ?? 0) > 0);
+    // See slidesUnder below
+    const slidesUnder = detached && !p.bare && (p.frameLine ?? 0) > 0 && !!p.layerOrder && !p.overOverlay;
     return Object.assign({}, place, {
       "merged": merged,
       "onPill": onPill,
@@ -395,15 +397,16 @@ QtObject {
       // bars), not while the overlay, which that layer is under, is open
       // on its screen, and not over a fullscreen window (`bare`: nothing
       // to go under, and no Top window maps over one)
-      "slidesUnder": detached && !p.bare && (p.frameLine ?? 0) > 0 && !!p.layerOrder && !p.overOverlay,
-      // ...and from the screen edge always: under them where it can, else
-      // over them (stacked by map order, or over the overlay), its window
-      // on the Overlay layer
+      "slidesUnder": slidesUnder,
+      // ...and from behind its edge always: under them from the screen
+      // edge where it can, else (stacked by map order, or over the
+      // overlay, its window on the Overlay layer) from the frame line, cut
+      // there, so it comes out of the bar or border rather than over it
       "slidesFromEdge": detached,
-      // How far back from its attach edge the screen edge is, where a box
-      // sliding from it starts. Not gated on slidesFromEdge, which a host
-      // latches while open
-      "slideFrom": detached ? Math.max(0, attachAt) : 0
+      // How far back from its attach edge it starts: the screen edge under
+      // the bars, else the frame line. Not gated on slidesFromEdge, which a
+      // host latches while open
+      "slideFrom": detached ? Math.max(0, attachAt - (slidesUnder ? 0 : (p.frameLine ?? 0))) : 0
     });
   }
 

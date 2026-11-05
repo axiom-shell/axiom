@@ -9,8 +9,8 @@ import qs.components.methods
 import qs.components.reusable
 
 // A section's list of entries as one card (the Dock and OSD `x-card`s):
-// the entries as tabs, one shown at a time: where it sits (a screen picker
-// with `presets`), Show, Duplicate and Delete, then `entryContent`, its
+// the entries as tabs, one shown at a time: where it sits (the screen
+// picker every placed surface has, ScreenSpotPicker), Show, Duplicate and Delete, then `entryContent`, its
 // `sections` (each a folding part of its own; `lastSections` after the
 // rest) and its other settings. Edits go through the settings draft like
 // any other row (the list as one value), so they show live and wait for
@@ -27,77 +27,16 @@ FoldingCard {
   required property var savedEntries
   // The settings group key it folds under, from SettingsContent
   property string foldKey
-  // [{ label, values, x, y }]: a dot at (x, y) on the screen (0-1 from the
-  // top left) that applies `values`. An entry on a screen edge (`edge`,
-  // `position` along it), as docks and OSDs are: an edge's middle, or the
-  // bottom edge's ends.
-  // I18n.tr("Bottom") I18n.tr("Bottom left") I18n.tr("Bottom right") I18n.tr("Top")
-  // I18n.tr("Left") I18n.tr("Right")
-  property var presets: [
-    {
-      "label": "Bottom",
-      "values": {
-        "edge": "bottom",
-        "position": 50
-      },
-      "x": 0.5,
-      "y": 1
-    },
-    {
-      "label": "Bottom left",
-      "values": {
-        "edge": "bottom",
-        "position": 0
-      },
-      "x": 0.08,
-      "y": 1
-    },
-    {
-      "label": "Bottom right",
-      "values": {
-        "edge": "bottom",
-        "position": 100
-      },
-      "x": 0.92,
-      "y": 1
-    },
-    {
-      "label": "Top",
-      "values": {
-        "edge": "top",
-        "position": 50
-      },
-      "x": 0.5,
-      "y": 0
-    },
-    {
-      "label": "Left",
-      "values": {
-        "edge": "left",
-        "position": 50
-      },
-      "x": 0,
-      "y": 0.5
-    },
-    {
-      "label": "Right",
-      "values": {
-        "edge": "right",
-        "position": 50
-      },
-      "x": 1,
-      "y": 0.5
-    }
-  ]
   // What the picker's hint says
   property string pickerHint
   // A new entry: `idBase` numbered, over `seed`, over the schema defaults
   property string idBase
   property var seed: ({})
   // Functions: an entry's tab name, and where it sits on the screen (0-1
-  // from the top left): by default at `position` % along its `edge`
+  // from the top left): `position` % along its `edge`, and held off it
+  // (`detached`) `distance` % across
   required property var labelOf
-  property var spotOf: entry => ScreenEdge.edgeSpot(entry.edge, entry.position / 100, 0)
+  property var spotOf: entry => ScreenEdge.edgeSpot(entry.edge, entry.position / 100, entry.detached ? entry.distance / 100 : 0)
   // Between the picker and the settings
   property alias entryContent: entrySlot.data
   // Keys of object settings each shown as a folding part of its own, titled
@@ -203,7 +142,7 @@ FoldingCard {
     // drag to place it on an edge
     ScreenSpotPicker {
       Layout.alignment: Qt.AlignTop
-      presets: root.presets
+      floats: true
       spot: root.spot
       edge: root.entry?.edge ?? "bottom"
       onPicked: values => root.edit(values)

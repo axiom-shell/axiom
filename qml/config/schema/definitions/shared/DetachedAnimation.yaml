@@ -1,0 +1,10 @@
+# The DetachedAnimation definition (#/definitions/DetachedAnimation).
+
+x-inline: true
+type: string
+x-control: toggle
+title: Animation
+enum: [slide, fade]
+x-enumLabels: {slide: Slide, fade: Fade}
+default: slide
+description: 'How a detached box comes and goes: sliding in from off the screen (under the bars, where it can), or fading in where it sits.'

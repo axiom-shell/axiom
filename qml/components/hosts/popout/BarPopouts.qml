@@ -513,7 +513,7 @@ PopoutWrapperBase {
 
     // The content keeps its target size while the box animates to it,
     // hung from the box's start along the bar and from its bar side
-    // across it, and cut to the box (as FloatingPopout does)
+    // across it, and cut to the box
     Item {
       id: clipBox
       anchors.fill: parent

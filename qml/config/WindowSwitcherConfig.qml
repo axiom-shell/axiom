@@ -12,12 +12,13 @@ QtObject {
   readonly property string scope: _c.scope
   // Placed as the launcher is (LauncherConfig): a ScreenEdge, its centre's
   // position along it (0-1), and whether it floats off the edge
-  // (`distance` 0-0.5 across the free screen: 0.5 centres it) or grows out
-  // of it
+  // (`distance` 0-0.5 across the free screen: 0.5 centres it; sliding
+  // in or fading in, `fade`) or grows out of it
   readonly property int edge: ScreenEdge.fromConfig(_c.edge)
   readonly property real position: _c.position / 100
   readonly property bool detached: _c.detached
   readonly property real distance: _c.distance / 100
+  readonly property bool fade: _c.animation === "fade"
   // leftToRight | rightToLeft | topToBottom | bottomToTop
   // (WindowOrder.tileGrid's orders)
   readonly property string order: _c.order

@@ -27,17 +27,20 @@ QtObject {
   required property ShellScreen screen
   // A ScreenEdge
   property int edge: ScreenEdge.Top
-  // Held off the edge (a `detached` OSD, edge menu or dock, or a surface
-  // over a fullscreen window): it follows no bar, joins nothing, and keeps
-  // `gaps` from the frame lines (ScreenEdgeManager.detachedGaps, `gap` -1 Auto)
+  // Held off the edge (a `detached` OSD, edge menu, dock, launcher or
+  // window switcher, or a surface over a fullscreen window): it follows no
+  // bar, joins nothing, and keeps `gaps` from the frame lines: the
+  // automatic ones, `distance` (0-0.5) across the free screen from its edge
+  // for a box `heldDepth` deep (ScreenEdgeManager.heldGaps)
   property bool held: false
-  property int gap: -1
+  property real distance: 0
+  property real heldDepth: 0
   // Over a fullscreen window (a host's latched hold, with `held`), which
   // covers the bars and the border: placed as if the screen's edges were
   // bare, its window spanning the screen (ExclusionMode.Ignore), and
   // sliding in from off it
   property bool bare: false
-  readonly property var gaps: root.held ? ScreenEdgeManager.detachedGaps(root.screen, root.edge, root.gap, root.bare) : null
+  readonly property var gaps: root.held ? ScreenEdgeManager.heldGaps(root.screen, root.edge, root.distance, root.heldDepth, root.bare) : null
   readonly property int connectorGap: Appearance.connectorGap
 
   // The bar it follows: a bar popout's own (`followPanel`, solid
@@ -283,15 +286,16 @@ QtObject {
   readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
   // Whether the overlay is open on its screen (the host latches it while
-  // open). A detached box slides in from off the screen: under the bars,
-  // its window on their layer ordered under them (slidesUnder), or
-  // else over them (SurfaceContext)
+  // open). A detached box slides in from behind its edge: from the screen
+  // edge under the bars, its window on their layer ordered under them
+  // (slidesUnder), or else from the frame line, coming out of what's on
+  // the edge (SurfaceContext)
   property bool overOverlay: false
   readonly property bool slidesUnder: root._layout.slidesUnder
   readonly property bool slidesFromEdge: root._layout.slidesFromEdge
-  // How far back from its attach edge the screen edge is, whether or not
-  // it slides from there now (the host gates it on its latched
-  // slidesFromEdge)
+  // How far back from its attach edge it starts (the screen edge or the
+  // frame line), whether or not it slides from there now (the host gates
+  // it on its latched slidesFromEdge)
   readonly property real slideFrom: root._layout.slideFrom
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property int backfill: root._layout.backfill

@@ -13,7 +13,7 @@ The on-screen displays: levels (volumes, microphone, brightness) as bars, the st
   - `id`, `name`, `enabled`;
   - `screen` (monitors);
   - `edge`, `position`;
-  - `detached`, `gap`;
+  - `detached`, `distance`, `animation` (Slide or Fade);
   - `openOnHover`, `timeout`;
   - `openTogether` (off by default), `iconsPlace` (`outside` | `inside`), `holdStill` (see What shows);
   - `bars`: `orientation`, `alongEdge` (its `x-showIf` reads the entry's `edge` through `../`), `showPercent`, `items` (the bars);
@@ -114,7 +114,7 @@ The card (`OSDMediaCard`: the cover, title, artist, playing or paused), on a new
 ### Editing
 - On the section's `x-card` `views/Settings/OSDListCard`:
   - tabs, one per OSD (named by `labelOf`);
-  - an edge picker with presets;
+  - the screen picker every placed surface has (its nine spots and a drag);
   - a Show button;
   - its `sections`, each folding (`EntryListCard`): Status icons (the row's mode, then the status types as a grid of icon chips, then which of them stay quiet), Now playing, then the other settings ("Place and timing"), and Bars last (`lastSections`): their layout and list.
 - The App field's chips come from `x-suggestions: "audioApps"` (`SettingsManager.suggestionsFor`).
