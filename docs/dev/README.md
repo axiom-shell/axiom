@@ -202,6 +202,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [calendar](features/calendar.md): CalDAV / .ics / local calendars, sync helper, reminders, calendar parts.
 - [todo-pomodoro](features/todo-pomodoro.md): the todo list, the pomodoro timer, the timer & stopwatch and the Focus module.
 - [clock-timezones](features/clock-timezones.md): other time zones, Clock module styles.
+- [datetime](features/datetime.md): Settings › System › Date & time: the machine's time zone, network time and clock (timedated), and the formats every clock and date follows.
 - [screenshots-recording](features/screenshots-recording.md): screenshots, recording, the picker.
 - [brightness](features/brightness.md): backlight / DDC, the module, OSD bars.
 - [networking-bluetooth](features/networking-bluetooth.md): Wi-Fi, wired, Bluetooth.

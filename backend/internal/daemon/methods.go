@@ -23,6 +23,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
+	"github.com/axiom-shell/axiom/backend/internal/timedate"
 	"github.com/axiom-shell/axiom/backend/internal/udisks"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
 )
@@ -111,6 +112,10 @@ var (
 	// notification with buttons, once: the button picked, or "" when it
 	// closed
 	pushNotifyAction = rpc.Push[notifyAction]{Method: "notify.action"}
+
+	// Nor this: sent to the shell's connections, whenever timedated's
+	// state changes (the time zone, network time), made anywhere
+	pushDatetimeState = rpc.Push[timedate.State]{Method: "datetime.state", Latest: true}
 )
 
 // compositorPushes are the compositor's pushes by method, for its

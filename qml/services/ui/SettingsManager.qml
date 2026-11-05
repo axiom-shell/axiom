@@ -414,6 +414,9 @@ QtObject {
     case "timezones":
       // Empty: the system's
       return ["", ...TimeZoneManager.zones];
+    case "regions":
+      // Empty: the language's
+      return ["", ...DateFormats.regions];
     case "edgeMenus":
       return ["", ...EdgeMenusConfig.menus.map(menu => menu.id)];
     case "customWidgets":

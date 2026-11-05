@@ -58,6 +58,15 @@ Loader {
         labels[l.code] = l.name;
         return labels;
       }, {});
+    // A region by its own name and country ("Deutsch · Deutschland")
+    if (fieldSchema["x-options"] === "regions")
+      return DateFormats.regions.reduce((labels, code) => {
+        const locale = Qt.locale(code);
+        labels[code] = I18n.tr("{0} · {1}", locale.nativeLanguageName, locale.nativeTerritoryName);
+        return labels;
+      }, {
+        "": I18n.tr(fieldSchema["x-emptyLabel"] ?? "Same as the language")
+      });
     if (fieldSchema["x-options"] === "edgeMenus")
       return EdgeMenusConfig.menus.reduce((labels, menu) => {
         labels[menu.id] = menu.name || menu.id;

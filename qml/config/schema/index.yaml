@@ -97,6 +97,7 @@ sections:
   - Workspaces
   - WorkspaceOverlay
   - WindowSwitcher
+  - DateTime
   - SelfUpdate
   - CommunitySetups
   - Bars

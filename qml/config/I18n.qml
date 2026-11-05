@@ -4,6 +4,7 @@ import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import qs.services.core
+import qs.components.methods
 
 // Translation and locale for the shell's text (General.language).
 //
@@ -32,6 +33,32 @@ QtObject {
   readonly property var current: root.languages.find(l => l.code === root.language) ?? root._english
   // For day/month names and date formats
   readonly property var locale: Qt.locale(root.current.locale)
+  // The formats' region (DateTime.region, else the language's): its usual
+  // clock, date order and first day of the week
+  readonly property var regionLocale: DateTimeConfig.region !== "" ? Qt.locale(DateTimeConfig.region) : root.locale
+  // Times read 24-hour (DateTime.hourFormat, "auto" the region's)
+  readonly property bool use24Hour: DateFormats.use24Hour(DateTimeConfig.hourFormat, root.regionLocale.timeFormat(Locale.ShortFormat))
+  // Calendar weeks start on: 0 Sunday … 6 Saturday
+  readonly property int firstDayOfWeek: DateFormats.firstDay(DateTimeConfig.firstDayOfWeek, root.regionLocale.firstDayOfWeek)
+  // The date order (DateTime.dateStyle), null for the language's own
+  readonly property var _dateStyle: DateFormats.styleOf(DateTimeConfig.dateStyle, DateTimeConfig.region !== "", root.regionLocale.dateFormat(Locale.ShortFormat))
+
+  // Whether a clock set to `hourFormat` ("default" follows DateTime's,
+  // else "12" | "24") reads 24-hour
+  function hours24(hourFormat) {
+    return hourFormat === "24" || hourFormat !== "12" && root.use24Hour;
+  }
+
+  // A clock's pattern (clock24 / clock12, with seconds or not) for a
+  // clock set to `hourFormat` (see hours24)
+  function clockFormat(hourFormat, seconds) {
+    return root.dateFormat(DateFormats.clockName(root.hours24(hourFormat), seconds));
+  }
+
+  // An event's or file's time pattern (time24 / time12) the same way
+  function timeFormat(hourFormat) {
+    return root.dateFormat(DateFormats.timeName(root.hours24(hourFormat)));
+  }
 
   function tr(text, ...args) {
     let result = (root.current.code !== "en" && root._strings[text]) || text;
@@ -71,10 +98,11 @@ QtObject {
     return root.tr("{0}d", Math.floor(seconds / 86400));
   }
 
-  // A named date format in the shell's language: the dictionary's
-  // _meta.formats entry, else the English one below
+  // A named date format in the shell's language: DateTime.dateStyle's
+  // order when it sets one, else the dictionary's _meta.formats entry,
+  // else the English one below
   function dateFormat(name) {
-    return root.current.formats?.[name] ?? root._formats[name] ?? name;
+    return DateFormats.named(root._dateStyle, name) ?? root.current.formats?.[name] ?? root._formats[name] ?? name;
   }
 
   // -- Private --

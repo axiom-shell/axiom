@@ -108,6 +108,7 @@ var tiers = map[string]int{
 	"internal/theme":                tierEdge,
 	"internal/topics":               tierEdge,
 	"internal/tree":                 tierEdge,
+	"internal/timedate":             tierEdge,
 	"internal/tz":                   tierEdge,
 	"internal/unixmsg":              tierEdge,
 	"internal/udisks":               tierEdge,

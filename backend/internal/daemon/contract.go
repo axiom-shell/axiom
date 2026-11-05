@@ -30,7 +30,7 @@ type TopicShape struct {
 // pushShapes are every push declared in methods.go, for Contract
 // (scripts/gen_docs.py fails on a declared push missing here).
 func pushShapes() []rpc.PushShape {
-	return []rpc.PushShape{
+	return append([]rpc.PushShape{
 		pushConfigChanged.Shape(), pushConfigState.Shape(), pushSchemaChanged.Shape(), pushSchemaError.Shape(),
 		pushSavedState.Shape(),
 		pushDaemonState.Shape(), pushDevState.Shape(), pushDaemonClosing.Shape(),
@@ -48,7 +48,7 @@ func pushShapes() []rpc.PushShape {
 		pushGreeterAuthorized.Shape(),
 		pushSwitcherKey.Shape(),
 		pushNotifyAction.Shape(),
-	}
+	}, machinePushShapes()...)
 }
 
 // methodSets are every part's methods (Run's parts, which also configure

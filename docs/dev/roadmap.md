@@ -174,6 +174,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the input sources, in managed mode under Hyprland, niri and sway: turn on the input method, log out and in, and check fcitx5 starts and `XMODIFIERS` / `QT_IM_MODULES` are set in apps; with ibus installed, the same with `Input.keyboard.method.framework` `ibus`.
 - Once the shell runs the input sources, with two layouts and the second one in use, lock and unlock with the password (the lock screen's module offers the layouts alone), and lock mid-composition in a Mozc preedit and unlock.
 - Once the shell runs the input sources, with `ThemeIntegrations.fcitx5` on and its hookup applied, check the candidate window follows the axiom theme and changes live on a theme switch, and `candidateFont` empty keeps fcitx5's own font.
+- Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):

@@ -732,8 +732,11 @@ GO_ROOT = ROOT / "backend/internal"
 GO_HANDLE = re.compile(r'\brpc\.Handle\(reg,\s*"([\w.]+)"')
 GO_HELPER = re.compile(r'\b(\w+) := func\(name string\b')
 GO_PUSH_DECL = re.compile(r'\b(\w+)\s*=\s*rpc\.Push\[.*?\]\{Method:\s*"([\w.]+)"')
-GO_PUSH_SEND = re.compile(r'\b(\w+)\.Send\([\w.]*server,.*subscribedTo\((\w+)\)')
+GO_PUSH_SEND = re.compile(r'\b(\w+)\.Send\([\w.]*server,.*(?:subscribedTo\((\w+)\)|\b(fromShell)\))')
 GO_PUSH = re.compile(r'\bPush\("([\w.]+)"')
+# A push sent to every shell connection (`pushX.Send(d.server, …,
+# fromShell)`), not by a topic
+SHELL_ONLY = "(shell)"
 GO_PUSH_METHOD = re.compile(r'(?:\bMethod:\s*|\.Notify(?:Latest)?\()(push\w+)\.Method\b')
 GO_CALL = re.compile(r'\.Call\(ctx,\s*"([\w.]+)"')
 GO_TOPIC = re.compile(r'\b(topic\w+)\s*=\s*"(\w+)"')
@@ -1079,7 +1082,7 @@ def rpc_scan():
             methods[method] = {"go": rel(path), "guards": guards, "qml": set(), "cli": set()}
         declared.update(dict(GO_PUSH_DECL.findall(text)))
         for m in GO_PUSH_SEND.finditer(text):
-            sent.setdefault(m.group(1), []).append((rel(path), m.group(2)))
+            sent.setdefault(m.group(1), []).append((rel(path), m.group(2) or SHELL_ONLY))
         for m in GO_PUSH_METHOD.finditer(text):
             sent.setdefault(m.group(1), []).append((rel(path), None))
         for m in GO_SOURCE.finditer(text):
@@ -1099,7 +1102,9 @@ def rpc_scan():
             push["go"].add(file)
             push["asked"] = topic is None
     for push in pushes.values():
-        if push.get("asked"):
+        if push["topic"] == SHELL_ONLY:
+            push["topic"] = "none (to the shell's connections)"
+        elif push.get("asked"):
             push["topic"] = "none (to the connections that asked)"
         elif push.get("polled"):
             push["topic"] = f"{push['polled']} (polled)"
