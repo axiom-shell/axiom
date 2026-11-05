@@ -376,6 +376,22 @@ TestCase {
     verify(across <= 1040 && across > 1040 - 16);
   }
 
+  // A Module size shrunk until its grid fits the room, its cards and gaps
+  // together; one that fits, or no units, kept
+  function test_fitModuleScale() {
+    // One card deep, on a 1080 px screen at 150 % card size: 675 px cards
+    compare(GridPlacement.fitModuleScale(1, 4, 675, false, 1000), 1);
+    compare(GridPlacement.fitModuleScale(2, 0, 675, false, 1000), 2);
+    [false, true].forEach(fine => {
+      const count = fine ? 8 : 4;
+      const scale = GridPlacement.fitModuleScale(2, count, 675, fine, 1000);
+      verify(scale < 2, `fine ${fine}`);
+      const gap = GridPlacement.gapOf(scale);
+      const length = GridPlacement.span(count, GridPlacement.gridUnitOf(675 * scale, fine, gap), gap);
+      verify(length <= 1001 && length > 990, `fine ${fine}: ${length}`);
+    });
+  }
+
   // Two units of a double grid and the gap between them are one unit, so
   // any span doubled is as long (within rounding)
   function test_fineUnit() {

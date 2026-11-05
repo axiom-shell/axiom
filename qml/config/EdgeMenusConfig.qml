@@ -102,26 +102,41 @@ QtObject {
 
   // A menu's card size: the card size on its screen (OverlayConfig.
   // cardUnitOn, the card size setting's, not the overlay's own Module
-  // size), scaled by the menu's moduleScale. A submenu's is on the screen
-  // of the menu it opens from (`screen`)
+  // size), at the menu's Module size (scaleOf). A submenu's is on the
+  // screen of the menu it opens from (`screen`)
   function cardUnitOf(menu, screen) {
     screen = screen ?? root.screenFor(menu);
     const unit = screen ? OverlayConfig.cardUnitOn(screen.width, screen.height) : GridPlacement.cardUnit;
     // A double grid (fineGrid) splits each unit in two each way
-    return GridPlacement.gridUnitOf(unit * menu.layout.moduleScale / 100, menu.layout.grid.fine, root.gapOf(menu));
+    return GridPlacement.gridUnitOf(unit * root.scaleOf(menu, screen), menu.layout.grid.fine, root.gapOf(menu, screen));
+  }
+
+  // A menu's Module size as a factor: its moduleScale, shrunk so its
+  // modules' depth across its edge (a submenu's width) fits its screen
+  // less its padding (GridPlacement.fitModuleScale), as a screen layout's cards
+  // shrink to fit its screen. Along its edge it scrolls or is fitted
+  // instead (EdgeMenuBody)
+  function scaleOf(menu, screen) {
+    screen = screen ?? root.screenFor(menu);
+    const scale = menu.layout.moduleScale / 100;
+    if (!screen)
+      return scale;
+    const wide = root.isSubmenu(menu) || menu.edge === "left" || menu.edge === "right";
+    const bounds = GridPlacement.bounds(menu.layout.modules);
+    return GridPlacement.fitModuleScale(scale, wide ? bounds.cols : bounds.rows, OverlayConfig.cardUnitOn(screen.width, screen.height), menu.layout.grid.fine, (wide ? screen.width : screen.height) - root.paddingOf(menu) * 2);
   }
 
   // The px between a menu's cards: the layout's gap drawn at the menu's
   // zoom (GridPlacement.gapOf), so the menu is an overlay page's grid
-  function gapOf(menu) {
-    return GridPlacement.gapOf(root.zoomOf(menu));
+  function gapOf(menu, screen) {
+    return GridPlacement.gapOf(root.zoomOf(menu, screen));
   }
 
-  // What a menu's modules are drawn at: its moduleScale
-  // (GridPlacement.zoomOf), so it scales their text and controls with
-  // its cards, while the screen only changes how big the cards are
-  function zoomOf(menu) {
-    return GridPlacement.zoomOf(menu.layout.moduleScale / 100);
+  // What a menu's modules are drawn at: its Module size (scaleOf,
+  // GridPlacement.zoomOf), so it scales their text and controls with its
+  // cards, while the screen only changes how big the cards are
+  function zoomOf(menu, screen) {
+    return GridPlacement.zoomOf(root.scaleOf(menu, screen));
   }
 
   // The menu's length along its edge, from config alone (for the hover

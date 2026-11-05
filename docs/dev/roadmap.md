@@ -229,7 +229,6 @@ Done: every entry is fixed: sway and SwayFX, then Hyprland's and every composito
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
 
 - [Text clips on 1080p screens](issues.md#text-clips-on-1080p-screens)
-- [An edge menu can be bigger than its screen](issues.md#an-edge-menu-can-be-bigger-than-its-screen)
 - [A popout taller than the screen runs off it](issues.md#a-popout-taller-than-the-screen-runs-off-it)
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)

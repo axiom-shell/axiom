@@ -56,6 +56,16 @@ QtObject {
     return root.cardSpacing * zoom;
   }
 
+  // The most of Module size `scale` (a factor) at which `count` units of
+  // a grid fit `room` px, its cards `card` px at 100 % (a double grid's
+  // split with `fine`): its units and gaps (gapOf) both grow with it, so
+  // its span does in proportion. `scale` when they fit
+  function fitModuleScale(scale, count, card, fine, room) {
+    const gap = root.gapOf(scale);
+    const length = root.span(count, root.gridUnitOf(card * scale, fine, gap), gap);
+    return count > 0 && length > room ? Math.max(0.1, Math.floor(scale * room / length * 1000) / 1000) : scale;
+  }
+
   // A grid's own card size at card size `card` px, `gap` px between
   // cards: a double grid's (`fine`) units are split in two each way
   function gridUnitOf(card, fine, gap) {

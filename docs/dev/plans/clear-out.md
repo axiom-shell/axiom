@@ -432,7 +432,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - SystemStats' used memory clips on a vertical bar
   - The Workspaces widget's measured length glides when the active cell widens
 - **bar-popouts-07** (5): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
-  - [An edge menu can be bigger than its screen](../issues.md#an-edge-menu-can-be-bigger-than-its-screen)
+  - An edge menu can be bigger than its screen
   - The layouts editor says a menu fits its edge when it scrolls
   - [A whole-edge menu's hover strip covers only its modules' length while closed](../issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
   - [An integrated menu's zone stays behind when it changes edge or screen](../issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
