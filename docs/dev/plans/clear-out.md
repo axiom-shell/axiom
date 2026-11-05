@@ -500,7 +500,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Login and Password each carry the same required-field report
   - WeatherForecast repeats the Weather card's current conditions
 - **overlay-modules-11** (2): The v71 entry is a rare path: smallest fix.
-  - [Hot corners' action list is a hand-kept copy of the keybind one](../issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
+  - Hot corners' action list is a hand-kept copy of the keybind one
   - [A shared file older than v71 resets niri's hot corner](../issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
 - **overlay-modules-12** (1): Needs the live log at a first sizing; folds into overlay-modules-09 if found first.
   - [A model of size -1 when the overlay grid resizes](../issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
