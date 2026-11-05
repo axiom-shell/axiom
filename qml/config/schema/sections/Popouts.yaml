@@ -18,7 +18,6 @@ properties:
         default: 250
         minimum: 0
         maximum: 5000
-  trigger: {$ref: '#/definitions/Trigger', x-properties: {length: null}}
   padding:
     type: integer
     x-control: stepper
@@ -27,4 +26,4 @@ properties:
     default: 16
     minimum: 0
     maximum: 64
-    description: "Space between a popout's box and its content: bar popouts, OSDs, and edge menus that don't set their own."
+    description: "Space between a popout's box and its content: bar popouts, OSDs and edge menus."

@@ -44,10 +44,6 @@ properties:
         description: How long the pointer rests on the edge before the menu opens.
         x-showIf: {onHover: true}
     x-showIf: {mode: {not: submenu}}
-  trigger:
-    $ref: '#/definitions/Trigger'
-    x-group: Opening
-    x-showIf: {mode: {not: submenu}, open.onHover: true}
   edge:
     x-group: Placement
     type: string
@@ -144,19 +140,6 @@ properties:
     default: true
     description: Draw a rounded box along the whole edge, with the modules inside it, lined up with the screen border.
     x-showIf: {mode: integrated}
-  padding:
-    x-link: {setting: Popouts.padding}
-    x-group: Style
-    type: integer
-    x-control: stepper
-    x-auto: {value: -1, start: 12}
-    title: Padding
-    default: -1
-    minimum: -1
-    maximum: 64
-    x-unit: px
-    description: Space between the menu's box and its modules. Auto uses the Popouts padding.
-    x-showIf: {mode: {not: submenu}}
   pinButton:
     x-group: Style
     type: boolean

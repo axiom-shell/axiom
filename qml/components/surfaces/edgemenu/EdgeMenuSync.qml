@@ -41,12 +41,10 @@ QtObject {
   onAutoDismissChanged: root.host.updateDismissTimer()
 
   // The hover strip's length, from config alone, so it's the same open
-  // or closed: the menu's own setting, else its box's: its modules' grid
-  // with `pad` on both ends, no longer than `room` (the box's room along
-  // the edge), which a whole-edge menu takes
+  // or closed: its box's, its modules' grid with `pad` on both ends, no
+  // longer than `room` (the box's room along the edge), which a
+  // whole-edge menu takes
   function triggerLength(vertical, pad, room) {
-    if (root.menu.trigger.length > 0)
-      return root.menu.trigger.length;
     if (GridPlacement.menuFillsEdge(root.menu))
       return room;
     return Math.min(room, EdgeMenusConfig.gridLengthOf(root.menu, vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu)) + pad * 2);

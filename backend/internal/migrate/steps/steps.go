@@ -191,6 +191,10 @@ var all = []Step{
 	// v97: an OSD's, a dock's and an edge menu's `gap` dropped: detached
 	// surfaces are placed by `distance`, as the launcher (v97.go)
 	{Version: 97, Run: v97},
+	// v98: `trigger` dropped from Popouts and every bar, dock and edge
+	// menu (one fixed hover strip, its surface's length), and an edge
+	// menu's `padding` (v98.go)
+	{Version: 98, Run: v98},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.
