@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### TestNvidiaRetriedForTheTopic can stamp the failure after the clock moved
+- **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaRetriedForTheTopic`), `backend/internal/sysmon/nvidia.go` (`startStream`, `streamFailed`)
+- **What:** Under load (`-race`, the rest of the suite running beside it) it failed 2 of 300 runs with `sysmon_test.go:586: never retried` after 10.01 s. Traced: the fake `streams.start` records the start before it returns its error, and `startStream` calls `streamFailed` (which stamps `failedAt` from the fake clock) only after; the test, seeing one start, at once advances the clock a second at a time for `streamRetry`, so a `failedAt` stamped a few seconds late puts `retryAt` past the last fetch, and nothing retries. Fix: wait until the monitor has recorded the failure (`failedAt` set) before advancing the clock.
+- **Size:** trivial
+- **Found:** 2026-11-05, while hunting flaky tests (row 20)
+
 ### The tray watcher check could start a watcher by D-Bus activation
 - **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
 - **What:** `tray()` reads `org.kde.StatusNotifierWatcher`'s `RegisteredStatusNotifierItems` without the NoAutoStart flag, so on a system shipping an activatable watcher (none here: `org.x.StatusNotifierWatcher` is the only activatable one) the read would start it. Asking `NameHasOwner` first, or sending NoAutoStart, avoids it.
