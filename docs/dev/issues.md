@@ -556,15 +556,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-31, while reviewing the modules system
 
 ### Parts shown in one mode are built hidden in every mode, in ten modules and parts
-- **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/Calculator/Calculator.qml:472` (`Keypad`), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/parts/CountdownTimer.qml:50` (`TimeRing`), `qml/components/content/Stopwatch/Stopwatch.qml:78` (`CountdownTimer`), `qml/components/content/parts/TodoList.qml:120` (rename field), `qml/components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `qml/components/content/Agenda/Agenda.qml:156` (`EventEditor`), `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
+- **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `qml/components/content/Agenda/Agenda.qml:156` (`EventEditor`), `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`", and "a row's expansion is built only while expanded". These parts are gated by `visible` only:
   - Network builds both its strip (lines 84–122) and its full column (124–191), each with two Sparklines, in every card.
   - AudioMixer builds its tabs and list (170–308, one `AudioRow` per playing app) in every slider-only card, and its card header in every popout.
-  - Calculator builds its 20–24 key `Keypad` with `showKeypad` off and in every strip.
   - WorldClocks builds both a tile and a row layout for each clock (lines 178 and 225).
-  - CountdownTimer builds its ring and buttons while idle, and its duration field and presets while set.
-  - Stopwatch builds the whole `CountdownTimer` in stopwatch mode, and its time, buttons and laps in timer mode (in the Stopwatch popout too).
-  - TodoList gives every item its own rename `StyledTextEntry`, though at most one row renames at a time.
   - ClockCalendar builds two `InlineAgenda`s, of which at most one shows, and a `DayPane` (a third agenda and the 360-line `EventEditor`). Where `showEvents` is false (always on the greeter, on the lock screen unless `Calendar.showOnLockscreen`), none of them can ever show, yet every lock and greeter surface builds them.
   - Agenda and DayPane each build an `EventEditor` that shows only after a click.
 

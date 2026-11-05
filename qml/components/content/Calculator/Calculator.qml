@@ -275,8 +275,9 @@ Panel {
     columnSpacing: Widget.spacing / 2
     rowSpacing: Widget.spacing / 2
 
+    // Keys only while it shows
     Repeater {
-      model: keypad.keys
+      model: keypad.visible ? keypad.keys : []
       delegate: Key {}
     }
   }

@@ -76,51 +76,62 @@ Panel {
 
   // -- Timer --
 
-  CountdownTimer {
-    visible: root.timerMode
-    timer: StopwatchManager.timer
-    presets: StopwatchConfig.presets
-    recent: StopwatchManager.recent
-    text: StopwatchManager.timerText
-    remaining: StopwatchManager.timerRemaining
-    progress: StopwatchManager.timerProgress
-    label: StopwatchManager.timer.label
-    fill: root.embedded
-    onStarted: text => StopwatchManager.startTimerText(text)
-    onToggled: StopwatchManager.toggleTimer()
-    onReset: StopwatchManager.resetTimer()
-    onExtended: ms => StopwatchManager.addTimer(ms)
+  Loader {
+    active: root.timerMode
+    visible: active
+    Layout.fillWidth: true
+    Layout.fillHeight: root.embedded
+    Layout.preferredHeight: root.embedded ? 0 : -1
+
+    sourceComponent: CountdownTimer {
+      timer: StopwatchManager.timer
+      presets: StopwatchConfig.presets
+      recent: StopwatchManager.recent
+      text: StopwatchManager.timerText
+      remaining: StopwatchManager.timerRemaining
+      progress: StopwatchManager.timerProgress
+      label: StopwatchManager.timer.label
+      fill: root.embedded
+      onStarted: text => StopwatchManager.startTimerText(text)
+      onToggled: StopwatchManager.toggleTimer()
+      onReset: StopwatchManager.resetTimer()
+      onExtended: ms => StopwatchManager.addTimer(ms)
+    }
   }
 
   // -- Stopwatch --
 
-  DialControls {
-    visible: !root.timerMode
+  Loader {
+    active: !root.timerMode
+    visible: active
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
     // Filling: whatever is left (the laps get their share), never what
     // the ring asks (it's sized from it)
     Layout.preferredHeight: root.embedded ? 0 : -1
-    fill: root.embedded
-    // The current minute, swept round
-    progress: StopwatchManager.elapsed % 60000 / 60000
-    text: StopwatchClock.format(StopwatchManager.elapsed, true, false)
-    label: StopwatchManager.stopwatchIdle ? "" : !StopwatchManager.stopwatchRunning ? I18n.tr("Paused") : StopwatchManager.laps.length > 0 ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
-    running: StopwatchManager.stopwatchRunning
-    color: Theme.accentAlt
-    tick: 100
-    leftIcon: "restart_alt"
-    leftTip: I18n.tr("Reset")
-    leftEnabled: !StopwatchManager.stopwatchIdle
-    mainIcon: StopwatchManager.stopwatchRunning ? "pause" : "play_arrow"
-    mainTip: StopwatchManager.stopwatchRunning ? I18n.tr("Pause") : I18n.tr("Start")
-    rightIcon: "flag"
-    rightTip: I18n.tr("Lap")
-    rightEnabled: StopwatchManager.stopwatchRunning
-    rightKey: Qt.Key_L
-    onLeftClicked: StopwatchManager.resetStopwatch()
-    onMainClicked: StopwatchManager.toggleStopwatch()
-    onRightClicked: StopwatchManager.lap()
+
+    sourceComponent: DialControls {
+      fill: root.embedded
+      // The current minute, swept round
+      progress: StopwatchManager.elapsed % 60000 / 60000
+      text: StopwatchClock.format(StopwatchManager.elapsed, true, false)
+      label: StopwatchManager.stopwatchIdle ? "" : !StopwatchManager.stopwatchRunning ? I18n.tr("Paused") : StopwatchManager.laps.length > 0 ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
+      running: StopwatchManager.stopwatchRunning
+      color: Theme.accentAlt
+      tick: 100
+      leftIcon: "restart_alt"
+      leftTip: I18n.tr("Reset")
+      leftEnabled: !StopwatchManager.stopwatchIdle
+      mainIcon: StopwatchManager.stopwatchRunning ? "pause" : "play_arrow"
+      mainTip: StopwatchManager.stopwatchRunning ? I18n.tr("Pause") : I18n.tr("Start")
+      rightIcon: "flag"
+      rightTip: I18n.tr("Lap")
+      rightEnabled: StopwatchManager.stopwatchRunning
+      rightKey: Qt.Key_L
+      onLeftClicked: StopwatchManager.resetStopwatch()
+      onMainClicked: StopwatchManager.toggleStopwatch()
+      onRightClicked: StopwatchManager.lap()
+    }
   }
 
   // The laps: a heading with copy, then the latest first, the fastest and
@@ -162,7 +173,7 @@ Panel {
       spacing: 2
 
       Repeater {
-        model: StopwatchManager.laps.length
+        model: root.timerMode ? 0 : StopwatchManager.laps.length
         RowLayout {
           id: lapRow
           required property int index
