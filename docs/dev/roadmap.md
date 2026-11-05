@@ -243,7 +243,7 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-- [Bar widget hosts settle after they're gone](issues.md#bar-widget-hosts-settle-after-theyre-gone)
+- [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
 - [A custom Ring element logs an undefined `inside` on load](issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
 - [The Layouts canvas logs null reads as it's torn down](issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
 - [A custom layout's element rect reads an undefined place](issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
@@ -366,7 +366,6 @@ Found by the audits:
 - [The two workspace popouts share 28 lines of payload and colour properties](issues.md#the-two-workspace-popouts-share-28-lines-of-payload-and-colour-properties)
 - [Small improvements to WorkspaceGrid](issues.md#small-improvements-to-workspacegrid)
 - [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
-- [Plugging in or unplugging a monitor remakes the bar that stays](issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
 - [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)

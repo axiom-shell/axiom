@@ -12,7 +12,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - The compositor's `gapsOut` and `floatGaps` (what an Automatic float gap keeps: `gapsOut`, or the screen margin with no backend), which a reader can't read.
   - Each bar's place among the bars stacked on its edge (`BarEnds.withEnds`: its exclusive `zone`, `layerRank`, `ends`; [Layering and corners](layering-and-corners.md#bars-stacked-on-one-edge-barendsstackson-placestack-edgeof)).
   - What the bars leave on each screen edge: `edgesFor` (the innermost), `stackOn`, `edgeOn`, `screenEdgeOpen`, `barReservedOn`, `frameLine`, `detachedGaps`.
-- A bar whose `monitor` is `"*"` is expanded by `BarsConfig.expandBars` into one entry per screen (id `<id>@<screen>`, plus `sourceId`), the primary monitor's first.
+- A bar whose screen mode isn't `primary` (every monitor, named ones, or General's, the default) is expanded by `BarsConfig.expandBars` into one entry per screen (id `<id>@<screen>` even on one screen, so a hotplug leaves the other bars' windows, plus `sourceId`), the primary monitor's first. A bar in `primary` mode keeps its plain id.
 - Any other bar's monitor is resolved to a connected screen there.
 
 ### Widgets and their options
@@ -20,7 +20,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Each widget's options live under its `<Type>Widget.properties.properties` definition in the schema.
 - `SchemaValidation` picks the `BarWidget` oneOf option by `type`. Widget properties therefore get their defaults filled like the rest of the config, and widgets read `properties.<key>` directly.
 - Widget types come from `BarsConfig.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.
-- `WidgetGroup` models its widgets by count, so live option edits reach a widget in place instead of rebuilding the section.
+- `WidgetGroup` models its widgets by count, so live option edits reach a widget in place instead of rebuilding the section. `BarWidgetHost` takes the widget's whole config (`widget`): a changed `type` reloads the module with that type's own properties, any other change hands it the new `properties`.
 
 ### Layout math
 - The main-axis layout math is pure and lives in `methods/BarLayout` (tested in `tst_BarLayout`). It covers:
