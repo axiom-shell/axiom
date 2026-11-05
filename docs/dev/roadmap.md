@@ -428,9 +428,6 @@ Found while building dev trees and the dev config:
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
 
-Found while testing removable drives:
-- [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
-
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
 - [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)

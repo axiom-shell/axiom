@@ -140,12 +140,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding wallpaper transitions
 
-### The Vpn widget's icon and label are invisible on a filled bar
-- **Where:** `qml/components/bar/widgets/Vpn/schema.yaml`, `qml/components/bar/widgets/base/BarIconWidget.qml` (`colors`)
-- **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
-- **Size:** trivial
-- **Found:** 2026-11-01, while testing removable drives in a nested shell
-
 ### Eject may leave a USB stick powered on
 - **Where:** `backend/internal/udisks/udisks.go` (`eject`)
 - **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.
