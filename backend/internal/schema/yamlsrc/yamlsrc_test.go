@@ -3,10 +3,12 @@ package yamlsrc
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/actions"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
@@ -299,4 +301,78 @@ func TestOrderKeysKeepsAnAuthorsOrder(t *testing.T) {
 			t.Errorf("%s x-order = %s, want %s", section, got, want)
 		}
 	}
+}
+
+// x-axiomActions fills a hot corner's action from the bind actions table:
+// its ipcActions less those left out, then exec, with the Keybinds page's
+// labels, and where its argument and call show; the mark goes.
+func TestAxiomActions(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tables, err := actions.Tables()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ipc := tables.Value("ipcActions").(*jsonx.Object)
+	calls := tables.Value("calls").(*jsonx.Object)
+	binds := pointer(root, "/definitions/Keybind/properties/action").Value("x-enumLabels").(*jsonx.Object)
+	item := pointer(root, "/properties/HotCorners/properties/items/items/properties")
+	action := item.Value("action").(*jsonx.Object)
+	if action.Has("x-axiomActions") {
+		t.Error("the mark stayed in the built schema")
+	}
+	var enum, argument, call []string
+	for _, v := range action.Value("enum").(*jsonx.Array).Items {
+		enum = append(enum, v.(string))
+	}
+	for _, name := range append(ipc.Keys(), "exec") {
+		if !slices.Contains(enum, name) {
+			continue
+		}
+		if name == "exec" || strings.Contains(ipc.Value(name).(*jsonx.Array).Items[0].(string), "{0}") {
+			argument = append(argument, name)
+		}
+		if calls.Has(name) {
+			call = append(call, name)
+		}
+		if got, want := pointer(action, "/x-enumLabels").Value(name), binds.Value(name); got != want {
+			t.Errorf("%s's label = %v, want the Keybinds page's %v", name, got, want)
+		}
+	}
+	left := []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"}
+	if got, want := len(enum), ipc.Len()-len(left)+1; got != want || enum[len(enum)-1] != "exec" || slices.ContainsFunc(left, func(s string) bool { return slices.Contains(enum, s) }) {
+		t.Errorf("enum = %v: want the %d ipcActions but %v, then exec", enum, want-1, left)
+	}
+	for key, want := range map[string][]string{"argument": argument, "call": call} {
+		got := string(jsonx.MarshalCompact(pointer(item, "/"+key+"/x-showIf")))
+		if w := string(jsonx.MarshalCompact(jsonx.Obj("action", jsonx.Arr(anys(want)...)))); got != w {
+			t.Errorf("%s x-showIf = %s, want %s", key, got, w)
+		}
+	}
+
+	// Leaving out what isn't an IPC action, or an action the Keybinds page
+	// has no label for, is refused
+	fsys := fstest.MapFS{
+		IndexFile:                        {Data: []byte("type: object\nproperties: {}\nsections: [S]\n")},
+		AnnotationsFile:                  {Data: []byte("x-axiomActions: \"\"\nx-order: \"\"\nx-enumLabels: \"\"\nx-showIf: \"\"\n")},
+		SectionsDir + "/S.yaml":          {Data: []byte("type: object\nproperties:\n  action: {type: string, x-axiomActions: {except: [closeWindow]}}\n")},
+		DefinitionsDir + "/Keybind.yaml": {Data: []byte("type: object\nproperties:\n  action: {type: string, x-enumLabels: {launcher: App launcher}}\n")},
+	}
+	_, err = Assemble(fsys)
+	for _, want := range []string{"except names closeWindow", "no label for overlay"} {
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("missing %q in %v", want, err)
+		}
+	}
+}
+
+func anys(s []string) []any {
+	out := make([]any, len(s))
+	for i, v := range s {
+		out[i] = v
+	}
+	return out
 }

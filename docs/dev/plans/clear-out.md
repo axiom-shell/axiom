@@ -109,7 +109,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
 | 62 | overlay-modules-09 | minor-sweep | Done: The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
 | 63 | overlay-modules-10 | minor-sweep | Done: Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
-| 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
+| 64 | overlay-modules-11 | minor-sweep | Done: Hot corners | 2 | ~120 | none |  |
 | 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
 | 66 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
 | 67 | features-03 | major | Notifications | 3 | ~200 (net about -80) | platform-03 |  |
@@ -499,9 +499,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - WifiNetworks' WPA password form repeats WifiJoinForm's
   - Login and Password each carry the same required-field report
   - WeatherForecast repeats the Weather card's current conditions
-- **overlay-modules-11** (2): The v71 entry is a rare path: smallest fix.
-  - [Hot corners' action list is a hand-kept copy of the keybind one](../issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
-  - [A shared file older than v71 resets niri's hot corner](../issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
+- **overlay-modules-11** (2, done): The v71 entry is a rare path: smallest fix.
+  - Hot corners' action list is a hand-kept copy of the keybind one
+  - A shared file older than v71 resets niri's hot corner
 - **overlay-modules-12** (1): Needs the live log at a first sizing; folds into overlay-modules-09 if found first.
   - [A model of size -1 when the overlay grid resizes](../issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - **overlay-modules-13** (1):

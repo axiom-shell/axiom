@@ -349,7 +349,6 @@ Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 
 Moved here from Phase 1, still open:
-- [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
@@ -402,7 +401,6 @@ Found by the audits:
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
-- [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
 - [Turning the gallery on while its card is shown leaves it empty](issues.md#turning-the-gallery-on-while-its-card-is-shown-leaves-it-empty)

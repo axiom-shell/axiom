@@ -30,133 +30,15 @@ properties:
         action:
           type: string
           title: Action
-          enum:
-            - launcher
-            - launcherSearch
-            - overlay
-            - overlayPage
-            - edgeMenu
-            - dock
-            - bar
-            - workspaceOverview
-            - powerMenu
-            - lock
-            - toggleDnd
-            - idleInhibit
-            - nightLight
-            - nextWallpaper
-            - randomWallpaper
-            - monitorsIdentify
-            - darkMode
-            - wifi
-            - bluetooth
-            - vpn
-            - workspaceStep
-            - workspaceNth
-            - scrollStep
-            - volumeUp
-            - volumeDown
-            - toggleMute
-            - toggleMicMute
-            - brightnessUp
-            - brightnessDown
-            - mediaPlayPause
-            - mediaNext
-            - mediaPrevious
-            - mediaStop
-            - audioOutputNext
-            - inputSourceNext
-            - inputSourcePrev
-            - clipboard
-            - emoji
-            - calculator
-            - notes
-            - calendar
-            - calendarNewEvent
-            - chat
-            - chatNew
-            - pomodoro
-            - pomodoroSkip
-            - stopwatch
-            - stopwatchLap
-            - timerStart
-            - timerToggle
-            - screenshot
-            - screenRecord
-            - exec
-          x-enumLabels:
-            launcher: App launcher
-            launcherSearch: Launcher with text
-            overlay: Overlay
-            overlayPage: Overlay page
-            edgeMenu: Edge menu
-            dock: Dock
-            bar: Auto-hiding bar
-            workspaceOverview: Workspace overview
-            powerMenu: Power menu
-            lock: Lock
-            toggleDnd: Do not disturb
-            idleInhibit: Caffeine
-            nightLight: Night light
-            nextWallpaper: Next wallpaper
-            randomWallpaper: Random wallpaper
-            monitorsIdentify: Identify monitors
-            darkMode: Dark mode
-            wifi: Wi-Fi
-            bluetooth: Bluetooth
-            vpn: VPN on or off
-            workspaceStep: Workspace in a direction
-            workspaceNth: Workspace by number
-            scrollStep: Scroll along the layout
-            volumeUp: Volume up
-            volumeDown: Volume down
-            toggleMute: Toggle mute
-            toggleMicMute: Toggle microphone
-            brightnessUp: Brightness up
-            brightnessDown: Brightness down
-            mediaPlayPause: Play/Pause
-            mediaNext: Next track
-            mediaPrevious: Previous track
-            mediaStop: Stop playback
-            audioOutputNext: Switch audio output
-            inputSourceNext: Next input source
-            inputSourcePrev: Previous input source
-            clipboard: Clipboard history
-            emoji: Emoji picker
-            calculator: Calculator
-            notes: Notes
-            calendar: Calendar
-            calendarNewEvent: New calendar event
-            chat: Chat
-            chatNew: New chat
-            pomodoro: Pomodoro start or pause
-            pomodoroSkip: Skip pomodoro phase
-            stopwatch: Stopwatch start or pause
-            stopwatchLap: Stopwatch lap
-            timerStart: Start a timer
-            timerToggle: Pause or resume timer
-            screenshot: Screenshot
-            screenRecord: Screen recording
-            exec: Run a command
+          # A stray pointer fires a corner: none of the actions that lose state
+          # or move a window with no sign
+          x-axiomActions: {except: [clearNotifications, moveWindowStep, moveWindowStepSilent, moveWindowNth, moveWindowNthSilent, stopwatchReset, timerReset, pomodoroStop]}
           default: workspaceOverview
         argument:
           type: string
           title: Argument
           default: ''
           description: 'Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.'
-          x-showIf:
-            action:
-              - launcherSearch
-              - overlayPage
-              - edgeMenu
-              - dock
-              - bar
-              - workspaceStep
-              - workspaceNth
-              - scrollStep
-              - timerStart
-              - screenshot
-              - exec
         call:
           type: string
           title: Call
@@ -164,23 +46,6 @@ properties:
           enum: [toggle, open, close]
           x-enumLabels: {toggle: Toggle, open: Open, close: Close}
           description: 'For actions that open and close or turn on and off something: whether the corner toggles it, only opens it or only closes it.'
-          x-showIf:
-            action:
-              - launcher
-              - overlay
-              - edgeMenu
-              - dock
-              - bar
-              - workspaceOverview
-              - powerMenu
-              - idleInhibit
-              - nightLight
-              - darkMode
-              - wifi
-              - bluetooth
-              - screenRecord
-              - toggleMicMute
-              - toggleDnd
         screen:
           $ref: '#/definitions/ScreenTarget'
           title: Monitors

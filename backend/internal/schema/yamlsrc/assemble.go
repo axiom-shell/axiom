@@ -184,6 +184,7 @@ func (a *assembler) assemble() *jsonx.Object {
 	a.expandKinds(kinds, definitions, props)
 	a.inlineExtensions(root)
 	a.deriveInherits(root)
+	a.fillAxiomActions(root)
 	orderKeys(root)
 	return root
 }

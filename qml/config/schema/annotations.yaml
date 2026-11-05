@@ -3,6 +3,7 @@
 # refused, so a typo can't pass as an annotation.
 
 x-actions: the commands a custom widget element runs, in order (keys of its `actions`; `CustomWidgetsConfig.elementKinds`).
+x-axiomActions: 'an action picked from axiom''s own actions, filled from the bind actions table (the builder''s; never in the built schema).'
 x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'
