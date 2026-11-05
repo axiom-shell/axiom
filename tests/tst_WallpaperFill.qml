@@ -118,10 +118,20 @@ TestCase {
       "width": 1920,
       "height": 1080
     });
-    compare(WallpaperFill.decodeSize("fit", 1920, 1080, 0.05), {
+    compare(WallpaperFill.decodeSize("crop", 1920, 1080, 0.05), {
       "width": 1995,
       "height": 1155
     }, "grown by the travel, the same px both ways");
+    compare(WallpaperFill.decodeSize("fit", 1920, 1080, 0.05), {
+      "width": 2054,
+      "height": 1155
+    }, "fit: grown by the shorter side's share");
+    // An image a little narrower than the screen's shape, fitted: drawn
+    // 1155 px tall (grown by the travel), so decoded at least that
+    const r = WallpaperFill.rect("fit", 3800, 2160, 1920, 1080, 0.05, 0, 0);
+    const size = WallpaperFill.decodeSize("fit", 1920, 1080, 0.05);
+    const decoded = Math.min(size.width / 3800, size.height / 2160) * 2160;
+    verify(decoded >= r.height * 1080 - 1e-6, "decoded " + decoded + " for " + r.height * 1080 + " drawn");
     compare(WallpaperFill.decodeSize("center", 1920, 1080, 0), null);
     compare(WallpaperFill.decodeSize("crop", 0, 0, 0), null, "no screen yet");
   }

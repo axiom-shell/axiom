@@ -3,7 +3,7 @@ import QtQuick
 
 // Where a wallpaper sits on its screen (WallpaperView and the surfaces
 // that show it as a plain Image): the fill mode, and the workspace
-// parallax's zoom and shift. No file access, processes or services.
+// parallax's travel and shift. No file access, processes or services.
 QtObject {
   id: root
 
@@ -54,11 +54,20 @@ QtObject {
   // The size to decode an image at for a screen ({ width, height }), or
   // null for its own size ("center", or no screen yet). Crop and fit
   // decode just big enough to cover or fit it, grown by the parallax's
-  // travel (rect).
+  // travel (rect): fit by the travel's share of the side it fills, at
+  // most the shorter one's, so an image near the screen's shape isn't
+  // decoded smaller than it's drawn.
   function decodeSize(fill, screenWidth, screenHeight, travel) {
     if (fill === "center" || !(screenWidth > 0 && screenHeight > 0))
       return null;
     const px = root.travelPx(travel, screenWidth, screenHeight);
+    if (fill === "fit") {
+      const z = 1 + px / Math.min(screenWidth, screenHeight);
+      return {
+        "width": Math.ceil(screenWidth * z),
+        "height": Math.ceil(screenHeight * z)
+      };
+    }
     return {
       "width": Math.ceil(screenWidth + px),
       "height": Math.ceil(screenHeight + px)

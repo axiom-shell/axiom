@@ -84,8 +84,9 @@ Item {
   readonly property real shiftY: slide.y
 
   implicitWidth: NotificationsConfig.width
-  // Its tallest (the stack counts one not drawn yet at it)
-  property real maxHeight: Widget.px(260)
+  // Its tallest (ToastStack.toastMaxHeight: the stack counts one not
+  // drawn yet at it)
+  required property real maxHeight
   implicitHeight: Math.min(mainColumn.implicitHeight + Widget.padding * 2, root.maxHeight)
   z: root.tucked ? -1 : 0
   opacity: 0

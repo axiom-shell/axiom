@@ -46,9 +46,10 @@ Item {
     return vertical ? Widget.spacing * 2 : (root.implicitHeight - Math.max(root.pictureSize, root._textHeight)) / 2;
   }
   // Its width with the text at its most, and its height with the faint
-  // line wrapped to its most lines
+  // line wrapped to its most lines (a Text's line is its font's height
+  // rounded up)
   readonly property real maxWidth: root.implicitWidth - root.textWidth + root.maxTextWidth
-  readonly property real maxHeight: Math.max(root._minHeight, Math.ceil(titleText.implicitHeight + subtitleMetrics.height * root.subtitleLines + root._margin * 2))
+  readonly property real maxHeight: Math.max(root._minHeight, Math.ceil(titleText.implicitHeight + Math.ceil(subtitleMetrics.height) * root.subtitleLines + root._margin * 2))
   // What shows across `vertical` edges' depth at its largest, margins left
   // out: the room a host keeps for it
   function maxShown(vertical) {
@@ -98,7 +99,7 @@ Item {
         // A zero-width break after each / - _, so a path or an id wraps
         // to fill the line: line breaking allows none before a digit
         // ("9a5f-200d" stayed whole and went to the next line)
-        text: root.subtitle.replace(/([\/_-])/g, "$1​")
+        text: root.subtitle.replace(/([\/_-])/g, "$1\u200B")
         textColor: Theme.foregroundAlt
         wrapMode: Text.Wrap
         elide: Text.ElideRight
