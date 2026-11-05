@@ -100,8 +100,9 @@ Item {
       stretch: root._stretch
       host: root.host
       zoom: EdgeMenusConfig.zoomOf(root.menu, root.screen)
-      // A bottom menu's edge is under its modules
-      growTowards: root.menu.edge === "bottom" ? 1 : -1
+      // A bottom menu's edge is under its modules (a submenu has no edge:
+      // its kept `edge` is hidden)
+      growTowards: !root.submenu && root.menu.edge === "bottom" ? 1 : -1
     }
   }
 
