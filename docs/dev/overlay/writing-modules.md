@@ -26,7 +26,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - Compact shows the key figure: a `compactContent`, usually a `CompactFigure`, on Card, Panel or TitledCard.
 - Otherwise the module picks its layout from `shape` and its px room:
   - side by side when wide, stacked when tall;
-  - sections dropped or rearranged where they don't fit (Weather's hours and days, ClockCalendar's calendar, Disks' header and columns);
+  - sections dropped or rearranged where they don't fit (Weather's hours and days, ClockCalendar's calendar, Disks' header and columns, Clock's label then date, SystemGraphs' columns whose rows would be shorter than a panel);
   - a one-row form for strips where it has one (NowPlaying, AudioMixer's slider, Network).
 - Thresholds that depend on text are in px from `Appearance.fontSize`, not grid units.
 - An edge menu's units aren't square. A layout choice that must match the slot's real proportions reads `innerWidth` / `innerHeight` rather than `shape` (NowPlaying's side-by-side).

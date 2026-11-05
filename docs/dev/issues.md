@@ -572,12 +572,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns
-- **Where:** `qml/components/content/SystemGraphs/SystemGraphs.qml:105` (`columns`)
-- **What:** SystemGraphs sets no `fullMinWidth`/`fullMinHeight` (`grep -c fullMin` = 0), so it is compact only at 2×2 grid units or less. A panel (a `StatFigure` of about 53 px + spacing + a `Sparkline` of at least `Appearance.fontSize`) needs about 69 px. Scenarios: one metric in a 3x1 strip at a 60 px unit has 24 px inside, and the panel is cut to the top of its value. All five metrics in a 2x6 column at a 60 px unit get rows of 50 px, so each sparkline sits over its label. `columns` picks by aspect ratio only, never by px. Fix: `fullMinHeight` about `Appearance.fontSize * 5` (one panel) and `fullMinWidth` about 6f, and skip a column count whose rows would be shorter than one panel.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### The Clock's date and label keep their room while the time shrinks to nothing
 - **Where:** `qml/components/content/Clock/Clock.qml:48` (`captionSize`), `qml/components/content/Clock/Clock.qml:50` (`captionsHeight`), `qml/components/content/Clock/Clock.qml:54` (`faceHeight`)
 - **What:** The captions always take `captionCount * (captionSize * lineRatio + spacing)`, with `captionSize` at least `Appearance.fontSizeBy(-2)`. The face gets what's left (`faceHeight: Math.max(0, root.innerHeight - root.captionsHeight)`), and the digits are fitted to it. Clock has no `fullMin*` and no compact form. Example: the default stacked style with the date on, in a 4x1 strip at a 60 px unit, has 24 px inside. The date takes about 14 px, which leaves about 10 px for two lines of digits, so the time is about 3 px tall under a 10 px date. With a `label` as well, the face gets 0. The same happens on the lock screen and the greeter, which both host Clock. Fix: the time is the key figure, so count a caption only while the face keeps at least that caption's own height. Drop the label first, then the date.

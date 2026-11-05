@@ -466,7 +466,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
   - A DeviceList squeezed to nothing wants no growth
 - **overlay-modules-03** (4): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): Eight modules' full layouts need more room than their fullMin sizes, even inside the padding.
-  - [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](../issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
+  - SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns
   - [The Clock's date and label keep their room while the time shrinks to nothing](../issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
   - [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](../issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
   - [NowPlaying builds its strip layout and a second transport hidden in every mode](../issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)

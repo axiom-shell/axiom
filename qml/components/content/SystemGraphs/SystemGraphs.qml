@@ -25,6 +25,9 @@ Panel {
   readonly property var shown: root.compact ? root.metrics.slice(0, 1) : root.metrics
 
   implicitWidth: Widget.px(root.columns > 1 ? 520 : 360)
+  // One panel: its figure over a sparkline of at least a line
+  fullMinWidth: Appearance.fontSize * 6
+  fullMinHeight: Appearance.fontSize * 5
   // A popout's graphs are a fixed height
   readonly property real graphHeight: Widget.px(56)
 
@@ -101,7 +104,8 @@ Panel {
   Component.onDestruction: SystemManager.release(root)
 
   // A popout: one column, two past three metrics. A card: the columns
-  // whose panels come closest to a 2:1 figure-over-graph shape
+  // whose panels come closest to a 2:1 figure-over-graph shape, of those
+  // whose rows keep a panel's height (one row always does)
   readonly property int columns: {
     const n = Math.max(1, root.shown.length);
     if (!root.embedded)
@@ -110,7 +114,10 @@ Panel {
     let best = 1, bestErr = Infinity;
     for (let c = 1; c <= n; c++) {
       const r = Math.ceil(n / c);
-      const aspect = ((w - (c - 1) * root.pad) / c) / ((h - (r - 1) * root.pad) / r);
+      const rowHeight = (h - (r - 1) * root.pad) / r;
+      if (r > 1 && rowHeight < root.fullMinHeight)
+        continue;
+      const aspect = ((w - (c - 1) * root.pad) / c) / rowHeight;
       const err = Math.abs(Math.log(aspect / 2)) + (r * c - n) * 0.3;
       if (err < bestErr) {
         bestErr = err;
