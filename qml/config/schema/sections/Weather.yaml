@@ -3,25 +3,26 @@
 type: object
 x-category: Modules
 title: Weather
-description: Where and how every weather widget and module gets its weather, from Open-Meteo (no account needed).
+description: Weather from Open-Meteo (no account needed).
 additionalProperties: false
 properties:
   location:
     type: string
     title: Location
     default: ''
-    description: City name to look up. Empty uses your IP's location.
+    description: City name. Empty uses your IP's location.
   latitude:
     type: string
     title: Latitude
     default: ''
-    description: Exact coordinates; with longitude, overrides the location lookup.
+    description: With longitude, overrides the location.
   longitude: {type: string, title: Longitude, default: ''}
   units:
     x-scope: personal
     type: string
     title: Units
     default: celsius
+    x-control: toggle
     enum: [celsius, fahrenheit]
   interval:
     type: integer

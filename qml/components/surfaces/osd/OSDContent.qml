@@ -464,9 +464,9 @@ Item {
     const parts = root.statusTypes.length > 0 ? [row.maxDepth] : [];
     if (root.levelItems.length > 0)
       parts.push(root._depth(grid));
-    // (beside a side edge a card's width is its depth: the widest it
-    // may be, OSDCard.maxWidth, as it sizes to its text)
-    const cardDepth = card => (root.edgeVertical ? card.maxWidth : root._depth(card)) - card.inset(root.edgeVertical) * 2;
+    // (a card's at its largest, as it sizes to its text: OSDCard.maxShown,
+    // its widest beside a side edge, else its faint line wrapped to its most)
+    const cardDepth = card => card.maxShown(root.edgeVertical);
     const deepest = Math.max(root.hasCards ? cardDepth(statusCard) : 0, root.hasMedia ? cardDepth(mediaCard) : 0);
     if (deepest > 0)
       parts.push(deepest);

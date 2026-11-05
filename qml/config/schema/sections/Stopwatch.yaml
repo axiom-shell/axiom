@@ -4,7 +4,7 @@ type: object
 x-category: Modules
 x-scope: personal
 title: Timer and stopwatch
-description: The one-off timer and the stopwatch every Stopwatch widget and module shows.
+description: Shared by every Stopwatch widget and module.
 additionalProperties: false
 properties:
   presets:
@@ -12,7 +12,7 @@ properties:
     title: Timer presets
     default: ['1m', '5m', '10m', '25m']
     items: {type: string}
-    description: 'One-click timers, comma-separated: 5m, 1h30m, 90s, or 10m tea for a label.'
+    description: Comma-separated, e.g. 5m, 1h30m, 90s, or 10m tea for a label.
   notify:
     type: boolean
     title: Notify

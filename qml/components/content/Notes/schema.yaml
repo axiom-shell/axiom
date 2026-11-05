@@ -10,25 +10,25 @@ settings:
     title: Note
     default: ''
     x-options: notes
-    description: The note to open, as a path in the notes folder (e.g. todo.md or work/ideas.md). Empty opens the last note this module showed.
+    description: A path in the notes folder, e.g. work/ideas.md. Empty opens the last one shown.
   lockNote:
     type: boolean
     title: Only this note
     default: false
-    description: 'Always show this note, with no note list: a clean scratchpad for an edge menu.'
+    description: Always show this note, with no note list.
     x-showIf: {note: {not: ''}}
   showHeader:
     type: boolean
     title: Header
     default: true
-    description: The note's name, the note list and the new note button.
+    description: The note's name, note list and new note button.
   showToolbar:
     type: boolean
     title: Toolbar
     default: true
-    description: The checklist and bullet buttons.
+    description: Checklist and bullet buttons.
   showCompleted:
     type: boolean
     title: Show completed items
     default: true
-    description: Hidden completed items stay in the note.
+    description: Hidden items stay in the note.

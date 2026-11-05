@@ -9,5 +9,5 @@ settings:
     title: Apps
     default: []
     items: {type: string}
-    description: Desktop entry ids, comma-separated (e.g. firefox, kitty). Empty shows recently launched apps.
+    description: Desktop entry ids, comma-separated. Empty shows recent apps.
   showLabels: {type: boolean, title: Show names, default: true}

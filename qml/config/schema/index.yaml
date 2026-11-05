@@ -40,17 +40,17 @@ properties:
     const: 2
     default: 2
     x-settings: false
-    description: "The config file's grammar: 2. A file without it is format 1 (versions 1 to 75), which axiom converts once."
+    description: 'The config file''s format: 2. A file without it is format 1, which axiom converts once.'
   version:
     type: integer
-    default: 97
+    default: 98
     x-settings: false
-    description: Config version within format 2, used for automatic migration.
+    description: Config version within format 2, used for migration.
   meta:
     type: object
     x-settings: false
     x-scope: personal
-    description: 'What a saved or exported config is: its title, description and source (where it came from). A live config.json has none.'
+    description: A saved or exported config's title, description and source. A live config.json has none.
     additionalProperties: {type: string}
 sections:
   - Lockscreen

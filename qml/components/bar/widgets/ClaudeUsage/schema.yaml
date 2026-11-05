@@ -6,28 +6,30 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments, stacked]
-    description: "The value is the limit's percent: the fullest account's, or the first's. Stacked puts it over the limit's name."
+    description: The fullest account's percent, or the first's; stacked puts it over the limit's name.
 colors: standard
 settings:
   metric:
     type: string
     title: Limit shown
     default: session
+    x-control: toggle
     enum: [session, weekly]
     x-enumLabels: {session: Current session, weekly: Weekly}
   display:
     type: string
     title: Accounts shown
     default: max
+    x-control: toggle
     enum: [max, all, first]
     x-enumLabels: {max: Fullest, all: All, first: First}
-    description: Which account's usage the bar shows. The popout lists every account.
+    description: The popout lists every account.
   icon:
     type: string
     x-control: icon
     title: Icon
     default: data_usage
-    description: A Material Symbols name (fonts.google.com/icons), or text.
+    description: A Material Symbols name, or text.
   warnThreshold:
     type: integer
     title: Warning at
@@ -47,6 +49,6 @@ settings:
     type: string
     title: Click command
     default: ''
-    description: 'Run on left click (e.g. `xdg-open https://claude.ai/settings/usage`). Right click checks again now.'
+    description: Run on left click. Right click checks again.
   warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}
   criticalColor: {$ref: '#/definitions/WidgetColor', title: Critical color, x-autoColor: critical}

@@ -25,7 +25,7 @@ ValueStyleWidget {
   readonly property real maxVolume: properties.maxVolume / 100
 
   text: `${Math.round(root.level * 100)}%`
-  minimumText: "100%"
+  minimumText: "00%"
   labelShown: properties.showPercentage
   ratio: root.node ? Math.min(1, root.level) : -1
 

@@ -7,7 +7,7 @@ appearance:
   variant: value
   style:
     enum: [label, icon, stacked]
-    description: "Stacked puts the count over the AUR's share of it."
+    description: Stacked puts the count over the AUR's share.
 colors: standard
 settings:
   interval:

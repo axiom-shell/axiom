@@ -9,7 +9,6 @@ settings:
     type: boolean
     title: Show count
     default: true
-    description: Badge with the number of notifications.
   dndColor:
     type: string
     title: Do-not-disturb icon

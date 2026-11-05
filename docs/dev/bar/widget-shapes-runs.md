@@ -22,8 +22,19 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
 - **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
-  - A section's first and last runs join the runs in the sections beside them where their groups join (at most `joinGap` apart, the pills' rule, [Bar ends and pills](bar-ends-pills.md#pills-barcontainerpillrects)): no cap there, the last run's background running on over the gap (`WidgetGroup.joinStart`/`joinEndReach`). Widget insets still keep their cap room.
+  - Widget insets keep their cap room, joined or not.
 - A spacer given room splits runs, as it splits groups; a collapsed one is passed over.
+
+### Joined sections
+- A section boundary **joins** where a spacer pushed a widget against the next section (`BarLayout.sectionJoins`): left|center when the left side has a spacer or the center has one before its centered group, center|right when the right side has one or the center has one after it, left|right (no center) when either side has one, and the widgets facing the boundary are widgets (not a spacer, not a Separator). With `lockCenter` off, a spacer anywhere packs the sections end to end, so every such boundary joins. Center spacers and the unlocked layout: [Bar composition](composition.md).
+  - For example, left `[a b spacer c]`, center `[d spacer e spacer f]`, right `[g spacer h i]` joins c to d and f to g, `e` staying centered.
+  - It's decided from the config's shape and what each widget shows (its size without its insets, `WidgetGroup.joinMeasures`), never from where things land: a side with no spacer never joins, however close it's crowded. Widgets hidden for want of room still count.
+  - A join never moves the center's centered group: with `lockCenter` it stays dead center.
+- A joined boundary keeps the gap between a section's widgets (`groupSpacing`: none in a powerline, a separator mark's room with marks on) instead of the gap between sections (`BarLayout.boundaryGaps`, passed to `layoutSections`, `sectionRooms` and `overflowHidden`).
+- Across it (`BarContainer.sectionJoins`, `WidgetGroup.joinStart`/`joinEnd`):
+  - **A separator mark** is drawn in the gap, as between widgets in a section.
+  - **The run carries on** where both widgets facing it have backgrounds (`chainStart`/`chainEnd`): `BarLayout.runPlaces` counts one more member past that end, so the widget takes a middle place. A merged background has no cap there and runs on over the gap (`joinEndReach`, `BarContainer.sectionReaches`, from the groups as drawn); a powerline segment ends in its join cap and the next section's first segment reaches back under it. Sections stack left over center over right (`Section`'s `z`) so the earlier segment draws on top.
+  - A widget with no background facing it keeps `widgetGap` from it in a powerline, as inside a section.
 - **Powerline** chains the widgets with no gap (`groupSpacing` 0).
   - Each segment's end cap runs into the next segment, which reaches back under it (`back`).
   - With a see-through fill (tinted or outline), the next segment fits against the cap instead.
@@ -63,7 +74,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Separator marks (accents)
 - `WidgetGroup` draws a `SeparatorMark` in each gap between shown widgets (`separatorStyle`).
-- A widget's `backgroundLevel` (0–1, -1 for none; the pill display style) is drawn by its `WidgetBackground` as the background's own shape in `backgroundLevelColor`, seen along the bar (up a vertical one) through a `ClippingRectangle` window: the background's cap where it starts, a rounded edge (a capsule's, else the bar's radius) where it stops, and full, the background's own end unless that's flat (a merged run's middle), so a level never stops square. The window overhangs the start by the bar's thickness, so a low level keeps inside the background's cap rather than squeezing its corners square. In a merged run, where the level's starting cap (up a vertical bar, its end) isn't round or a capsule (a widget past the run's start, flat; or a slanted or arrow run end), the level is the window alone in `backgroundLevelColor`, rounded at both ends from the widget's own start (`levelStart`: how far its background reaches back under its neighbour, WidgetGroup's `segment.back`).
+- A widget's `backgroundLevel` (0–1, -1 for none; the pill display style) is drawn by its `WidgetBackground` as the background's own shape in `backgroundLevelColor`, seen along the bar (up a vertical one) through a `ClippingRectangle` window: the background's cap where it starts, a rounded edge (a capsule's, else the bar's radius) where it stops, and full, the background's own end unless that's flat, so a level never stops square. The window overhangs the start by the bar's thickness, so a low level keeps inside the background's cap rather than squeezing its corners square. Its caps are `BarShapes.segment`'s `levelStartCap` / `levelEndCap`: the widget's own, except in a merged run, where they're the caps it would have alone (not the run's flat middle), so a pill looks the same merged as separate.
 - No mark is drawn beside a widget that `divides` (the Separator), nor in a powerline.
 - With marks on, the gap between a section's widgets is the mark's room along the bar plus `separatorGap` either side (`BarLayout.dividerGap`, as `groupSpacing` in `BarsConfig.enrichBarConfig`) instead of the bar's `spacing`.
 

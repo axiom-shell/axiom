@@ -48,6 +48,13 @@ Item {
         "divides": m.divides,
         "fill": m.fills
       }))
+  // What decides the joins between sections (BarLayout.sectionJoins): a
+  // widget's own size, without the insets that follow the joins
+  readonly property var joinMeasures: root._modules.map(m => ({
+        "pref": m._preferred,
+        "divides": m.divides,
+        "fill": m.fills
+      }))
   // Spacers (`fill`) are shown at any size: they take the free room
   readonly property var _fills: root.measures.map(m => m.fill)
   readonly property var _shown: root.measures.map((m, i) => (m.pref > 0 || m.fill) && !root.hiddenIndices.includes(i))
@@ -62,7 +69,13 @@ Item {
   // ...and with none hidden for want of room (for the bar editor)
   readonly property real wantedLength: BarLayout.span(root.measures.map(m => m.pref), root.spacing, root._fills)
 
-  readonly property var allocation: BarLayout.allocate(root.measures, root._shown, root.maxExtent, root.spacing)
+  // As the center: its parts around the group it keeps centered when it
+  // has spacers (BarLayout.centerParts, for laying the sections out), and
+  // the room each of its spacers takes there (BarLayout.centerFillWeights;
+  // unset, its spacers share its room equally)
+  readonly property var centerParts: BarLayout.centerParts(root.measures, root._shown, root.spacing, "pref")
+  property var fillWeights: undefined
+  readonly property var allocation: BarLayout.allocate(root.measures, root._shown, root.maxExtent, root.spacing, root.fillWeights)
   readonly property real usedLength: BarLayout.span(root.allocation.sizes, root.spacing, root._fills)
   // The dividers (Separators) at the section's ends, which the bar places
   // in the gap beside it (BarLayout.edgeHang): as measured, for laying the
@@ -82,9 +95,19 @@ Item {
   // never from the room it's given, which they help decide; shapes from
   // what's actually shown. A widget showing nothing (null) leaves a run
   // whole; one shown without a background (false) splits it.
-  readonly property var _insetPlaces: BarLayout.runPlaces(root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null))
+  // Joined to the next section's run (chainStart/chainEnd), a run at
+  // that end carries on past it. A merged widget keeps its cap room as
+  // if alone; a powerline segment's insets are those of one mid-chain.
+  readonly property var _insetFlags: root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null)
+  readonly property bool _chainInsets: root.grouping === "powerline"
+  readonly property var _insetPlaces: BarLayout.runPlaces(root._insetFlags, root._chainInsets && root.chainStart, root._chainInsets && root.chainEnd)
   readonly property var _drawn: root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null)
-  readonly property var _drawPlaces: BarLayout.runPlaces(root._drawn)
+  readonly property var _drawPlaces: BarLayout.runPlaces(root._drawn, root.chainStart, root.chainEnd)
+  // Whether its first and last widgets with something to show have
+  // backgrounds (from content, as the insets): a joined boundary carries a
+  // run on only between two such (BarContainer.sectionJoins)
+  readonly property bool startsInRun: root._insetFlags.find(f => f !== null) === true
+  readonly property bool endsInRun: root._insetFlags.slice().reverse().find(f => f !== null) === true
   readonly property var _drawRuns: BarLayout.runs(root._drawn)
   // Opaque fills hide what's under them: a powerline segment can then
   // start square beneath the one before
@@ -130,14 +153,18 @@ Item {
     });
     return out;
   }
-  // Its first group joins the group before it in another section, and
-  // its last the next one, `joinEndReach` on past its end
-  // (BarContainer, BarLayout.joinGroups): in a merged grouping, the runs
-  // there draw as one background across the sections
+  // Its start joins the section before it, and its end the next one, the
+  // next one's widgets starting `joinEndReach` on past its last
+  // (BarContainer.sectionJoins, BarLayout.sectionJoins): a separator mark
+  // in that gap, and its run carried on where both widgets facing it have
+  // backgrounds (`chainStart`/`chainEnd`): one merged background, one
+  // powerline chain across the sections
   property bool joinStart: false
+  property bool joinEnd: false
+  property bool chainStart: false
+  property bool chainEnd: false
   property real joinEndReach: 0
-  // The first and last widgets shown
-  readonly property int _firstShown: root.allocation.sizes.findIndex((size, i) => size > 0 && !root._fills[i])
+  // The last widget shown
   readonly property int _lastShown: {
     for (let i = root.allocation.sizes.length - 1; i >= 0; i--) {
       if (root.allocation.sizes[i] > 0 && !root._fills[i])
@@ -153,6 +180,12 @@ Item {
         return k;
     }
     return -1;
+  }
+
+  // How far a run's last widget at `place` runs on past it into the next
+  // section's run it joins (chainEnd), else 0
+  function _reachOf(place) {
+    return place !== null && place.index < place.count - 1 && root.chainEnd ? root.joinEndReach : 0;
   }
 
   // The caps and insets at `place` in a run (BarShapes.segment)
@@ -176,24 +209,17 @@ Item {
       }
       readonly property var first: root._modules[run.members[0]] ?? null
       readonly property var last: root._modules[run.members[run.count - 1]] ?? null
-      // Joined across a section's end to the next section's run: no cap
-      // there, the background running on over the gap between them
-      readonly property bool _joinsBack: root.joinStart && run.members[0] === root._firstShown
-      readonly property real _reach: root.joinEndReach > 0 && run.members[run.count - 1] === root._lastShown ? root.joinEndReach : 0
-      readonly property int _before: _joinsBack ? 1 : 0
-      readonly property int _count: run.count + _before + (_reach > 0 ? 1 : 0)
+      // Joined across a section's end to the next section's run (its
+      // places carry on there): no cap there, the background running on
+      // over the gap between them
+      readonly property var _lastPlace: root._drawPlaces[run.members[run.count - 1]] ?? null
+      readonly property real _reach: root._reachOf(_lastPlace)
 
       z: -2
       barConfig: root.barConfig
       colors: BarsConfig.groupColors(root.barConfig)
-      startCap: root.segmentAt({
-        "index": _before,
-        "count": _count
-      }).startCap
-      endCap: root.segmentAt({
-        "index": _before + run.count - 1,
-        "count": _count
-      }).endCap
+      startCap: root.segmentAt(root._drawPlaces[run.members[0]] ?? null).startCap
+      endCap: root.segmentAt(_lastPlace).endCap
       x: first?.x ?? 0
       y: first?.y ?? 0
       width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x + _reach
@@ -202,7 +228,8 @@ Item {
   }
 
   // A divider in each gap between shown widgets (Bars[].separatorStyle),
-  // except beside a Separator widget
+  // and in the gap to the next section where it joins (joinEnd), except
+  // beside a Separator widget
   Repeater {
     model: root.barConfig.separatorStyle !== "none" ? root.widgets.length : 0
 
@@ -210,10 +237,11 @@ Item {
       id: mark
       required property int index
       readonly property int next: root._nextShown(index)
-      readonly property bool between: (root.allocation.sizes[index] ?? 0) > 0 && next >= 0
+      readonly property bool _joined: next < 0 && index === root._lastShown && root.joinEnd
+      readonly property bool between: (root.allocation.sizes[index] ?? 0) > 0 && (next >= 0 || _joined)
       // From its widget as drawn, so it moves with it
       readonly property var host: root._modules[index] ?? null
-      readonly property real center: (host ? (root.isVertical ? host.y + host.height : host.x + host.width) : 0) + root.spacing / 2
+      readonly property real center: (host ? (root.isVertical ? host.y + host.height : host.x + host.width) : 0) + (_joined ? root.joinEndReach : root.spacing) / 2
 
       visible: between && !(root._modules[index]?.divides ?? false) && !(root._modules[next]?.divides ?? false)
       style: root.barConfig.separatorStyle
@@ -262,7 +290,8 @@ Item {
       pressed: host?.pressed ?? false
       backgroundLevel: host?.backgroundLevel ?? -1
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
-      levelStart: segment.back
+      levelStartCap: segment.levelStartCap
+      levelEndCap: segment.levelEndCap
       highlighted: host?.editorOutlined ?? false
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
@@ -294,11 +323,11 @@ Item {
       // Clear of its caps; a widget with no background sits loose
       readonly property var _place: root._insetPlaces[module.index] ?? null
       readonly property var _segment: root.segmentAt(_place)
-      leadInset: module.hasBackground ? module._segment.lead : (module.index > root._firstContent && !module.fills ? root._looseGap : 0)
+      leadInset: module.hasBackground ? module._segment.lead : ((module.index > root._firstContent || root.joinStart) && !module.fills ? root._looseGap : 0)
       // Hovered and clicked in its background's shape as drawn
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
       hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
-      trailInset: module.hasBackground ? module._segment.trail : (module.index < root._lastContent && !module.fills ? root._looseGap : 0)
+      trailInset: module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
 
       barConfig: root.barConfig
       widget: module.modelData

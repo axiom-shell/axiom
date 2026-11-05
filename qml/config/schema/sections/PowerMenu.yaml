@@ -3,13 +3,13 @@
 type: object
 x-category: Screen & Power
 title: Power menu
-description: 'The power menu: lock, suspend, hibernate, log out, restart and shut down, opened by the power button, a keybind or `axiom ipc powermenu toggle`.'
+description: Lock, suspend, hibernate, log out, restart and shut down.
 additionalProperties: false
 properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
-    description: Where the power menu opens. As in General follows General > Monitors; the primary monitor is the one set in General; the focused monitor is the one with your active workspace (and mouse); every monitor shows it on all of them at once.
+    description: Where the power menu opens.
     x-properties:
       mode:
         x-scope: look
@@ -32,13 +32,13 @@ properties:
     items:
       type: string
       enum: [lock, suspend, hibernate, logout, reboot, poweroff]
-    description: Which actions the menu shows, in order.
+    description: In order.
   confirm:
     x-scope: look
     type: boolean
     title: Confirm destructive actions
     default: true
-    description: Log out, restart and shut down ask for a second click (or Enter) first.
+    description: Log out, restart and shut down ask for a second click first.
   tileSize:
     x-scope: look
     type: integer
@@ -47,13 +47,12 @@ properties:
     default: 120
     minimum: 80
     maximum: 200
-    description: Width and height of each action's tile.
   showHeader:
     x-scope: look
     type: boolean
     title: Greeting and uptime
     default: true
-    description: Show a greeting and how long the computer has been up above the actions.
+    description: Show a greeting and uptime above the actions.
   showHint:
     x-scope: look
     type: boolean
@@ -65,7 +64,7 @@ properties:
     type: boolean
     title: Dim background
     default: true
-    description: Dim the whole screen behind the power menu, under the bars and border.
+    description: Dim the screen behind the power menu.
   backdrop:
     x-scope: look
     type: integer
@@ -74,5 +73,4 @@ properties:
     default: 36
     minimum: 0
     maximum: 90
-    description: How dark the screen behind the power menu goes.
     x-showIf: {showBackdrop: true}

@@ -32,7 +32,6 @@ properties:
     title: Screen edge
     default: bottom
     enum: [top, bottom, left, right]
-    description: Screen edge the OSD slides out of.
   position:
     type: integer
     title: Position along edge
@@ -40,12 +39,12 @@ properties:
     default: 50
     minimum: 0
     maximum: 100
-    description: 'Where along the edge it opens: 0 is the start (left/top), 100 the end.'
+    description: 0 is the start (left/top), 100 the end.
   detached:
     type: boolean
     title: Detach from edge
     default: false
-    description: A separate box held off the edge. Off, the OSD grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.
+    description: A separate box held off the edge, instead of growing out of it.
   distance:
     type: integer
     title: Distance from edge
@@ -53,7 +52,7 @@ properties:
     default: 0
     minimum: 0
     maximum: 50
-    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
@@ -62,7 +61,7 @@ properties:
     type: boolean
     title: Open on hover
     default: false
-    description: Also open the OSD when the mouse touches the screen edge where it appears.
+    description: Also open when the pointer touches its screen edge.
   timeout:
     type: integer
     title: Timeout
@@ -70,36 +69,38 @@ properties:
     default: 1000
     minimum: 250
     maximum: 10000
-    description: How long the bars and the status icons stay out after the last change. A card has its own (Status icons › Card timeout).
+    description: How long the bars and status icons stay out after the last change.
   openTogether:
     type: boolean
     title: Bars and status icons together
     default: false
-    description: 'A change to a bar or a status icon brings out both. Off, each comes out on its own; while both are out they close together.'
+    description: A change to either brings out both.
   iconsPlace:
     type: string
     title: Status icons
     default: outside
+    x-control: toggle
     enum: [outside, inside]
     x-enumLabels:
       outside: Past the bars
       inside: By the edge
-    description: 'Where the status icons go when they''re out with the bars: past them, away from the edge, or between the bars and the edge. A card always goes last.'
+    description: Where the status icons go when shown with the bars.
   holdStill:
     type: boolean
     title: Hold still under the mouse
     default: true
-    description: 'While the mouse is on the OSD, the bars or the status icons coming in go after the others, so nothing you''re pointing at moves. Off, they take their usual place (Status icons). A card always goes last.'
+    description: While the pointer is on the OSD, nothing under it moves.
   bars:
     type: object
     title: Bars
-    description: 'The levels the OSD shows as bars, and how they''re laid out. A change to one shows the bars.'
+    description: The levels shown as bars. A change to one opens the OSD.
     additionalProperties: false
     properties:
       orientation:
         type: string
         title: Bar orientation
         default: vertical
+        x-control: toggle
         enum: [vertical, horizontal]
         description: Vertical bars sit side by side; horizontal bars stack as rows.
       alongEdge:
@@ -110,16 +111,16 @@ properties:
           anyOf:
             - {../edge: [top, bottom], orientation: horizontal}
             - {../edge: [left, right], orientation: vertical}
-        description: 'Put the bars end to end in one line along the edge, instead of stacked away from it: the OSD is longer but sticks out less. Shown only while the bars run along the edge.'
+        description: Bars end to end along the edge instead of stacked away from it.
       showPercent:
         type: boolean
         title: Show percentages
         default: true
-        description: Show each level's value as a percentage beside its icon.
+        description: Show each level as a percentage.
       items:
         type: array
         title: Bars
-        description: 'In order. System volume is the output device''s volume, Other apps is the first playing stream no App bar (in any OSD) matches, Microphone is the input device''s volume, and Brightness is the monitor''s own (a laptop panel through its backlight, an external monitor over DDC/CI through ddcutil; left out on a monitor that has neither). The same bar in two OSDs opens both.'
+        description: In order. Other apps is the first playing stream no App bar matches.
         x-link: {setting: OSD.scrollToChange}
         default:
           - {type: other, icon: music_note, showOsd: true}
@@ -148,28 +149,28 @@ properties:
               default: []
               x-showIf: {type: app}
               x-suggestions: audioApps
-              description: Comma-separated; each matched as a substring of a stream's binary or name. The bar shows the first listed app with a stream open, and a change sets every matching stream.
+              description: Comma-separated; matched against a stream's binary or name.
             allMonitors:
               type: boolean
               title: All monitors
               default: false
               x-showIf: {type: brightness}
-              description: The bar sets every monitor with a brightness control at once, instead of only the one the OSD is on.
+              description: Set every monitor at once, instead of only the OSD's.
             icon:
               type: string
               x-control: icon
               title: Icon
               default: ''
-              description: 'Icon shown with it: a Material Symbols name (fonts.google.com/icons), or text. Empty follows what it shows (the level, the device).'
+              description: A Material Symbols name, or text. Empty follows what it shows.
             showOsd:
               type: boolean
               title: Opens the OSD
               default: true
-              description: A change on it opens the OSD. Off, it still shows while the OSD is open, and a change keeps an open OSD open.
+              description: Off, it still shows while the OSD is open.
   statuses:
     type: object
     title: Status icons
-    description: 'The state of the machine as icons: a change to one shows the icons. A change with a card (a drive plugged in, a VPN connecting; see Detail cards) shows only the card; its icon is lit the next time the icons show.'
+    description: The machine's state as icons. A change to one opens the OSD.
     additionalProperties: false
     properties:
       row:
@@ -181,7 +182,7 @@ properties:
           notable: What's unusual
           all: Every one picked
           changed: Only the one that changed
-        description: 'What''s unusual shows only the states out of the ordinary (Caps Lock or Num Lock on, muted, do not disturb, on battery, a drive plugged in, …) and the one that just changed. Every one picked shows each, lit when on. Only the one that changed shows each change as it comes. Whichever you pick, an icon shown stays while the icons are out, though it turns ordinary or another one changes.'
+        description: What's unusual shows only states out of the ordinary, plus the one that changed.
       items:
         type: array
         title: Shows
@@ -233,7 +234,7 @@ properties:
           micUse: record_voice_over
           screenShare: screen_share
         default: [capsLock, numLock, keyboardLayout, microphone, audio, dnd, caffeine, nightLight, recording, drive]
-        description: 'A VPN (Tailscale too) shows each time one goes up or down, a drop included, with a card naming it as one connects. Camera, Microphone in use and Screen sharing show a card naming the app as one starts (one card for an app taking the camera and the microphone together), Wi-Fi one naming the network it joins, Charger one with the battery level when plugged in, Removable drives one as a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails to eject (a click opens the drive, or unlocks an encrypted one), and Low battery one as the battery drops to low and to critical. With Detail cards on, Removable drives and Low battery picked here show as a card instead of a notification, unless they''re among those that don''t open the OSD.'
+        description: Which statuses the OSD shows. Some also show a detail card.
       quiet:
         type: array
         title: Without opening the OSD
@@ -287,18 +288,18 @@ properties:
           micUse: record_voice_over
           screenShare: screen_share
         default: []
-        description: "Shown among the icons, but a change to one doesn't open the OSD (it shows if the OSD is already open). Removable drives or Low battery picked here is a notification instead, as it would be without the OSD."
+        description: Shown among the icons, but a change doesn't open the OSD.
   cards:
     type: object
     title: Detail cards
-    description: 'Cards with more to say than an icon: for the status icons above (an audio device switching, a VPN connecting, an app starting to use the camera or microphone or share the screen, a Wi-Fi network joined, the charger plugged in, the battery running low, something done to a removable drive), and the ones that are only ever a card, picked here.'
+    description: Cards with more detail than an icon, and the ones that are only ever a card.
     additionalProperties: false
     properties:
       enabled:
         type: boolean
         title: Show cards
         default: true
-        description: 'Off, this OSD shows no card at all: the status icons'' changes show as their icon, and a drive, low battery, monitor, screenshot or message is a notification instead.'
+        description: Off, statuses show as icons, and the rest as notifications.
       timeout:
         type: integer
         title: Card timeout
@@ -307,7 +308,7 @@ properties:
         minimum: 1000
         maximum: 15000
         x-showIf: {enabled: true}
-        description: 'How long a card stays out, keeping the OSD open. Then it slides back in, and the OSD closes with it unless the mouse is on it. Hovering the card keeps it out.'
+        description: How long a card stays out. Hovering keeps it out.
       items:
         type: array
         title: Only as cards
@@ -326,7 +327,7 @@ properties:
           message: chat
           media: music_note
         default: [message]
-        description: 'Monitors shows a card naming a monitor connected or removed and its resolution, Screenshots one with the picture as one is taken (a click opens it), Messages what `axiom message <icon> <text>` and a bind that can''t run send, and Now playing the cover, title and artist of the track playing. Picked here, Monitors, Screenshots and Messages show on this OSD instead of as notifications.'
+        description: Picked here, these show on this OSD instead of as notifications.
       onTrackChange:
         type: boolean
         title: Now playing on a new track

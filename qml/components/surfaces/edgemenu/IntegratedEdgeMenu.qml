@@ -33,7 +33,7 @@ PopoutWrapperBase {
   readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
 
   readonly property bool framed: root.menu.frame
-  readonly property int padding: EdgeMenusConfig.paddingOf(root.menu)
+  readonly property int padding: PopoutsConfig.padding
   readonly property var colors: EdgeMenusConfig.colorsOf(root.menu)
   // The frame's inset from the strip's edges (0 without one): the screen
   // margin reaches its stroke's inner edge, as the screen border's does, so
@@ -103,7 +103,6 @@ PopoutWrapperBase {
     edgeInset: Math.max(0, ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root._edgeName) - root.reserved)
     startInset: 0
     endInset: 0
-    triggerWidth: root.menu.trigger.size
     triggerLength: sync.triggerLength(root.vertical, root.pad, root.edgeLength)
     hoverDelay: root.menu.open.delay
     onTriggered: root.show()

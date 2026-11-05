@@ -5,14 +5,13 @@ type: object
 x-category: Dock & OSD
 x-card: {file: OSDList, title: OSDs, folds: true}
 title: OSD
-description: On-screen displays of volume, microphone and brightness levels, lock keys, the keyboard layout, toggles and the track playing, shown when one of them changes.
+description: Volume, brightness, lock keys, layout, toggles and the playing track, shown when they change.
 additionalProperties: false
 properties:
   scrollToChange:
     type: boolean
     title: Scroll to change
     default: true
-    description: Scrolling over a bar raises or lowers its level.
   scrollStep:
     type: integer
     title: Scroll step
@@ -21,23 +20,22 @@ properties:
     minimum: 1
     maximum: 25
     x-showIf: {scrollToChange: true}
-    description: How much one wheel notch changes the level.
   onScreenChanges:
     type: boolean
     title: Show for changes made on screen
     default: false
-    description: Open the OSD for what you change with the mouse in axiom's own bar and panels (scrolling the Volume widget, a quick toggle). Off, those change an open OSD but don't open one. Keys and other apps always open it.
+    description: Open the OSD for changes made in axiom's bar and panels. Keys and apps always open it.
   cardsToHistory:
     type: boolean
     title: Keep event cards in notifications
     default: true
-    description: "A card an OSD shows for something that happened (a drive, a low battery, a monitor, a screenshot, a message) is also kept in the notification history, without a popup. Cards for a device switching, a VPN, Wi-Fi or an app using the camera are only shown."
+    description: Also keep event cards in the notification history, without a popup.
     x-link: {setting: Notifications}
   items:
     type: array
     title: OSDs
     x-settings: false
-    description: Each OSD has its own place and items. A change opens every OSD holding that item.
+    description: A change opens every OSD holding that item.
     default:
       - id: main
         screen: {mode: inherit, names: []}

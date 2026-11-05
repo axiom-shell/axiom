@@ -5,7 +5,7 @@ type: object
 x-category: Screen & Power
 x-card: {file: IdleStatus, title: Idle}
 title: Idle
-description: 'What happens when you step away: dimming, locking, turning the screens off and suspending, and locking before the computer sleeps.'
+description: Dimming, locking, turning screens off and suspending when you step away.
 additionalProperties: false
 properties:
   enabled:
@@ -14,7 +14,7 @@ properties:
     x-takeover: true
     title: Handle idle
     default: false
-    description: axiom watches for idle itself and answers lock and sleep requests, so it replaces an idle daemon such as hypridle. Remove your own hypridle autostart line while this is on.
+    description: 'Replaces an idle daemon such as hypridle: remove yours while this is on.'
   dim:
     type: object
     title: Dim
@@ -27,14 +27,14 @@ properties:
         default: 150000
         minimum: 0
         maximum: 7200000
-        description: '0 never dims. Brightness comes back when you return.'
+        description: 0 never dims.
       mode:
         type: string
         title: Dim
         default: to
         enum: [to, by]
         x-enumLabels: {to: To a set brightness, by: By a share of the current brightness}
-        description: A set brightness leaves screens already darker as they are. A share always dims, unless a screen is already at 0.
+        description: A set level leaves darker screens alone; a share always dims.
       level:
         type: integer
         title: Dim to
@@ -42,7 +42,6 @@ properties:
         default: 30
         minimum: 5
         maximum: 100
-        description: Screens already darker stay as they are.
         x-showIf: {mode: to}
       by:
         type: integer
@@ -51,7 +50,7 @@ properties:
         default: 50
         minimum: 5
         maximum: 95
-        description: "How much of each screen's current brightness to take away: 50% takes 80% down to 40%."
+        description: 50% takes 80% down to 40%.
         x-showIf: {mode: by}
     x-showIf: {enabled: true}
     x-group: Idle
@@ -67,7 +66,7 @@ properties:
         default: 300000
         minimum: 0
         maximum: 7200000
-        description: "0 never locks on idle. Locks with the Lockscreen settings' locker."
+        description: 0 never locks on idle.
     x-showIf: {enabled: true}
     x-group: Idle
   screenOff:
@@ -82,7 +81,7 @@ properties:
         default: 330000
         minimum: 0
         maximum: 7200000
-        description: '0 keeps them on.'
+        description: 0 keeps them on.
     x-showIf: {enabled: true}
     x-group: Idle
   suspend:
@@ -97,7 +96,7 @@ properties:
         default: 0
         minimum: 0
         maximum: 14400000
-        description: '0 never suspends on idle.'
+        description: 0 never suspends on idle.
     x-showIf: {enabled: true}
     x-group: Idle
   lockBeforeSleep:
@@ -105,28 +104,26 @@ properties:
     title: Lock before sleep
     x-group: Sleep
     default: true
-    description: Lock the session before the computer suspends or hibernates.
     x-showIf: {enabled: true}
   screenOnAfterSleep:
     type: boolean
     title: Screens on after sleep
     x-group: Sleep
     default: true
-    description: Turn the screens back on when the computer wakes.
     x-showIf: {enabled: true}
   respectInhibitors:
     type: boolean
     title: Respect apps that keep the screen on
     x-group: Sleep
     default: true
-    description: Video players and browsers can ask to stay awake through the compositor, D-Bus and systemd. The caffeine widget works either way.
+    description: Let video players and browsers keep the screen awake.
     x-showIf: {enabled: true}
   caffeineWarning:
     type: boolean
     title: Warn before caffeine ends
     x-group: Caffeine
     default: true
-    description: A notification 5 minutes before a caffeine timer runs out, with a button for 30 minutes more.
+    description: A notification 5 minutes before a caffeine timer ends.
   items:
     x-scope: commands
     type: array

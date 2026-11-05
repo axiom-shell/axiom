@@ -7,4 +7,4 @@ title: Animation
 enum: [slide, fade]
 x-enumLabels: {slide: Slide, fade: Fade}
 default: slide
-description: 'How a detached box comes and goes: sliding in from off the screen (under the bars, where it can), or fading in where it sits.'
+description: Slide in from off the screen, or fade in place.

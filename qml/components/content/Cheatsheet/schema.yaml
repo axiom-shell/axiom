@@ -10,19 +10,20 @@ settings:
     title: Sections
     default: []
     items: {type: string}
-    description: Section titles to show, comma-separated (as on the Keybinds page). Empty shows them all.
+    description: Comma-separated section titles. Empty shows them all.
   showUndescribed:
     type: boolean
     title: Show undescribed binds
     default: false
-    description: Binds without a description, listed by their dispatcher.
+    description: Listed by their dispatcher.
   view:
     type: string
     title: View
+    x-control: toggle
     enum: [list, keyboard]
     x-enumLabels: {list: List, keyboard: Keyboard}
     default: list
-    description: The binds by section, or a keyboard showing what each key does under the modifiers below.
+    description: The binds by section, or a keyboard showing what each key does.
   mods:
     type: array
     title: Keyboard modifiers
@@ -31,4 +32,4 @@ settings:
       type: string
       enum: [SUPER, CTRL, ALT, SHIFT]
     x-showIf: {view: keyboard}
-    description: The modifiers held on the keyboard view.
+    description: Held on the keyboard view.

@@ -7,7 +7,7 @@ appearance:
   variant: value
   style:
     enum: [label, icon, fill, ticker, stacked]
-    description: "Fill shows how far through an event under way it is; stacked puts when over the title."
+    description: Fill shows an ongoing event's progress; stacked puts the time over the title.
 colors: standard
 settings:
   lookahead:
@@ -17,7 +17,7 @@ settings:
     default: 43200000
     minimum: 900000
     maximum: 604800000
-    description: Shows the next event starting within this long (or happening now). Hidden when there's none.
+    description: Show the next event starting within this time. Hidden when there's none.
   showAllDay:
     type: boolean
     title: All-day events
@@ -30,4 +30,4 @@ settings:
     default: 24
     minimum: 4
     maximum: 100
-    description: Longest title shown before it is shortened (characters).
+    description: In characters.

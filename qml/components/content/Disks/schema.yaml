@@ -11,4 +11,4 @@ settings:
     title: Mount points
     default: [/]
     items: {type: string}
-    description: Comma-separated, e.g. /, /home
+    description: Comma-separated, e.g. /, /home.

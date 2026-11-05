@@ -3,7 +3,6 @@
 x-inline: true
 type: object
 title: Monitors
-description: Which monitors it's shown on.
 additionalProperties: false
 properties:
   mode:

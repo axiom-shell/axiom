@@ -37,9 +37,10 @@ Item {
   // (the module's `backgroundLevel`); -1 for none
   property real backgroundLevel: -1
   property color backgroundLevelColor: "transparent"
-  // How far its start reaches back under the widget before (a merged
-  // run's powerline overlap): a merged run's level starts after it
-  property real levelStart: 0
+  // The caps the level is drawn in (BarShapes.segment's levelStartCap /
+  // levelEndCap): in a merged run the widget's own, not the run's
+  property string levelStartCap: startCap
+  property string levelEndCap: endCap
 
   readonly property string _fill: barConfig.widgetStyle
   readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
@@ -142,40 +143,33 @@ Item {
     ColorGlide on color {}
   }
 
-  // The level: the background's own shape in the level's colour, seen from
-  // where the bar's run starts (up a vertical bar, from the bottom) through
-  // a window ending on a rounded edge (a capsule's, else the bar's radius).
-  // Clipped rather than a shape of its own, so a low level stays inside the
-  // background's ends instead of squeezing its corners square. The window
-  // overhangs the start (and, full, the far end unless that's flat), so
-  // only its leading edge rounds and never by less than its radius.
-  // In a merged run a widget past the run's start starts flat (or the
-  // run's start is slanted, an arrow), so there the level is the window
-  // alone, rounded at both ends from the widget's own start; at the run's
-  // rounded start it's the shape seen through the window as elsewhere.
+  // The level: the background's own shape (in a merged run, the one the
+  // widget has alone) in the level's colour, seen from where the bar's run
+  // starts (up a vertical bar, from the bottom) through a window ending on
+  // a rounded edge (a capsule's, else the bar's radius). Clipped rather
+  // than a shape of its own, so a low level stays inside the background's
+  // ends instead of squeezing its corners square. The window overhangs
+  // the start (and, full, the far end unless that's flat), so only its
+  // leading edge rounds and never by less than its radius.
   ClippingRectangle {
     id: level
     readonly property bool vertical: root.barConfig.vertical
-    // The cap the level starts from (up a vertical bar: the bottom, its end)
-    readonly property string nearCap: vertical ? root.endCap : root.startCap
-    readonly property bool merged: root.barConfig.widgetGrouping === "merged" && !["round", "capsule"].includes(nearCap)
     readonly property real share: Math.max(0, Math.min(1, root.backgroundLevel))
     readonly property real across: vertical ? root.width : root.height
-    // The background's cap at the far end, where a full level ends
-    readonly property string farCap: vertical ? root.startCap : root.endCap
-    readonly property real overhang: merged ? 0 : across
-    readonly property real room: (vertical ? root.height : root.width) - (merged ? root.levelStart : 0)
-    readonly property real shown: room * share + (share >= 1 && farCap !== "flat" ? overhang : 0)
+    // The cap at the far end, where a full level ends
+    readonly property string farCap: vertical ? root.levelStartCap : root.levelEndCap
+    readonly property real room: vertical ? root.height : root.width
+    readonly property real shown: room * share + (share >= 1 && farCap !== "flat" ? across : 0)
 
     visible: root.backgroundLevel >= 0 && level.share > 0
-    color: merged ? root.backgroundLevelColor : "transparent"
+    color: "transparent"
     // A Rectangle keeps it to half the thickness, which the window never
     // drops below
     radius: root.barConfig.widgetShape === "capsule" ? across / 2 : root.barConfig.radius
-    x: vertical ? 0 : merged ? root.levelStart : -overhang
+    x: vertical ? 0 : -across
     y: vertical ? root.height - shown : 0
-    width: vertical ? root.width : shown + overhang
-    height: vertical ? shown + overhang : root.height
+    width: vertical ? root.width : shown + across
+    height: vertical ? shown + across : root.height
 
     Glide on width {
       duration: Appearance.animNormal
@@ -188,15 +182,14 @@ Item {
     }
 
     ShapedBox {
-      visible: !level.merged
       anchors.fill: undefined
       x: -level.x
       y: -level.y
       width: root.width
       height: root.height
       bar: root.barConfig
-      startCap: root.startCap
-      endCap: root.endCap
+      startCap: root.levelStartCap
+      endCap: root.levelEndCap
       seamStart: root.seamStart
       seamEnd: root.seamEnd
       fillColor: root.backgroundLevelColor

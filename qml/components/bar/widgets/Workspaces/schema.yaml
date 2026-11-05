@@ -11,7 +11,7 @@ popout:
         - {/Workspaces.layout: grid}
         - {/Workspaces.strips: {notEmpty: true}}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
-    description: In a grid, open the whole grid when hovered. Otherwise, on a strip monitor, open every workspace with its windows in strip order.
+    description: Open the whole grid, or on a strip monitor every workspace with its windows.
   menu:
     x-showIf:
       enabled: true
@@ -25,20 +25,21 @@ settings:
     title: Show empty workspaces
     default: true
     x-showIf: {/$supports.dynamicWorkspaces: false}
-    description: 'Off: only workspaces with windows, plus the active one (in a grid, of the row shown). Down to one on a strip monitor, its windows show alone.'
+    description: 'Off: only workspaces with windows, plus the active one.'
   monitorOnly:
     type: boolean
     title: Only this monitor
     default: false
     x-showIf: {/Workspaces.layout: standard, /$supports.dynamicWorkspaces: false}
-    description: Hide workspaces that are open on another monitor.
+    description: Hide workspaces on another monitor.
   labels:
     type: string
     title: Labels
+    x-control: toggle
     enum: [numbers, dots]
     x-enumLabels: {numbers: Numbers, dots: Dots}
     default: numbers
-    description: The workspace's number, on the bar and in the grid popout.
+    description: Workspace numbers.
   relativeNumbers:
     type: boolean
     title: Relative numbers
@@ -48,13 +49,13 @@ settings:
       anyOf:
         - {/Workspaces.layout: [perMonitor, grid, scrolling]}
         - {/$supports.dynamicWorkspaces: true}
-    description: Number each monitor's workspaces from 1 (11 to 20 on the second monitor show as 1 to 10) instead of by their workspace id, on the bar and in the grid popout.
+    description: Number each monitor's workspaces from 1.
   showAppIcons:
     type: boolean
     title: App icons
     default: false
     x-showIf: {/$supports.dynamicWorkspaces: false}
-    description: Show the largest window's icon on occupied workspaces (in a grid, on the bar and in the popout).
+    description: Show the largest window's icon on occupied workspaces.
   wideActive:
     type: boolean
     title: Wide active
@@ -65,22 +66,21 @@ settings:
     title: Active icon
     default: true
     x-showIf: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
-    description: Show an arrow on the active workspace, pointing to where the shown row (or column) is in the grid.
+    description: An arrow on the active workspace pointing to the shown grid row.
   clickToSwitch:
     type: boolean
     title: Click to switch
     default: true
-    description: Click a workspace (on the bar or in the grid popout) to go to it.
   scrollToSwitch:
     type: boolean
     title: Scroll to switch
     default: true
-    description: Scroll over the widget to step through the workspaces (along the shown row or column in a grid).
+    description: Step through workspaces by scrolling over the widget.
   showBackground:
     type: boolean
     title: Background
     default: true
-    description: "A box around the workspaces, in the bar's widget style. Off: the workspaces sit on the bar at the size of the widgets around them."
+    description: A box around the workspaces. Off, they sit on the bar.
     x-showIf: {$bar.widgetStyle: [filled, tinted, outline]}
   backgroundColor:
     type: string
@@ -93,7 +93,6 @@ settings:
       showBackground: true
       $bar.widgetStyle: [filled, tinted, outline]
       $bar.widgetGrouping: {not: merged}
-    description: Behind the workspaces, in the bar's widget style.
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active}
   occupiedColor:
     type: string
@@ -113,7 +112,7 @@ settings:
     title: Text color
     x-options: colors
     default: base00
-    description: Numbers, and the grid's active arrow. The colors also apply to the grid popout.
+    description: Numbers and the grid's active arrow.
     x-showIf: {$bar.widgetStyle: filled, $bar.widgetTextColor: ''}
   hoverColor:
     type: string
@@ -121,4 +120,4 @@ settings:
     x-options: colors
     default: ''
     x-emptyLabel: Auto
-    description: "A cell's box under the pointer. Auto: the theme's highlight."
+    description: 'A cell under the pointer. Auto: the theme''s highlight.'

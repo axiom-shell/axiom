@@ -6,7 +6,7 @@ x-showIf: {/$supports.configModes: true}
 x-links: [Keybinds, Monitors]
 x-card: {file: CompositorStatus, title: Compositor status}
 title: Compositor
-description: 'How axiom sets your compositor up: its keybinds, monitors, window look and input.'
+description: How axiom sets up your compositor.
 additionalProperties: false
 properties:
   mode:
@@ -21,14 +21,14 @@ properties:
       managed: Managed by axiom
     default: detached
     x-applyOnSave: true
-    description: Applies on Save. The status card says what the change will do.
+    description: Applies on Save.
   requiredSettings:
     type: boolean
     title: Required settings
     x-group: Compositor setup
     default: true
-    description: Lock restore after a shell restart, ignoring apps' requests to maximize themselves, and a workspace slide animation.
-    x-enabledIf: {/$compositor: hyprland}
+    description: Lock restore after a shell restart, ignoring apps' maximize requests, and a workspace slide animation.
+    x-showIf: {/$compositor: hyprland}
   hyprland:
     x-scope: personal
     type: object
@@ -45,14 +45,14 @@ properties:
         enum: [dwindle, master]
         x-enumLabels: {dwindle: Dwindle (binary splits), master: Master and stack}
         default: dwindle
-        description: How windows tile. For strips (Hyprland's scrolling columns), see Workspaces.
+        description: How windows tile.
         x-compositor: {hyprland: {key: general.layout, always: true}}
       preserveSplit:
         type: boolean
         title: Keep split direction
         x-group: Hyprland layout
         default: true
-        description: Dwindle keeps a split's direction when the window is resized or moved.
+        description: Keep a split's direction when a window is resized or moved.
         x-showIf: {layout: dwindle}
         x-compositor: {hyprland: {key: dwindle.preserve_split, always: true}}
       smartSplit:
@@ -60,7 +60,7 @@ properties:
         title: Split by cursor position
         x-group: Hyprland layout
         default: false
-        description: Dwindle splits towards the side of the window the cursor is on.
+        description: Split towards the side the cursor is on.
         x-showIf: {layout: dwindle}
         x-compositor: {hyprland: {key: dwindle.smart_split}}
       smartResizing:
@@ -161,14 +161,14 @@ properties:
           lightning: Lightning
           custom: Custom
         default: axiom
-        description: Follow axiom's motion uses Look & Feel → Motion's speed, and turns Hyprland's animations off with axiom's.
+        description: Follow axiom's motion uses axiom's animation speed and switch.
         x-showIf: {animations: true}
       workspaceWraparound:
         type: boolean
         title: Wrap workspace animations
         x-group: Hyprland animations
         default: false
-        description: Going from the last workspace to the first slides forward, not back.
+        description: Going from the last workspace to the first slides forward.
         x-showIf: {animations: true}
         x-compositor: {hyprland: {key: animations.workspace_wraparound}}
       curves:
@@ -198,7 +198,7 @@ properties:
         title: Animations
         x-group: Hyprland animations
         default: []
-        description: One entry per animation to change; a parent (windows) covers its children (windowsIn, windowsOut, windowsMove).
+        description: One entry per animation; a parent (windows) covers its children.
         x-showIf: {animationPreset: custom}
         items:
           type: object
@@ -251,7 +251,7 @@ properties:
               type: string
               title: Style
               default: ''
-              description: 'Optional: popin 80%, slide, slidevert, slidefade 20%, fade, gnomed, loop, once.'
+              description: Optional, e.g. popin 80%, slide, slidefade 20%, fade.
           required: [id]
       floatSwitchOverrideFocus:
         type: string
@@ -301,7 +301,7 @@ properties:
         title: Terminals swallow what they open
         x-group: Hyprland behaviour
         default: true
-        description: A GUI app started from a terminal takes the terminal's place until it closes.
+        description: A GUI app started from a terminal takes its place until it closes.
         x-compositor: {hyprland: {key: misc.enable_swallow, always: true}}
       swallowRegex:
         type: string
@@ -363,14 +363,14 @@ properties:
         title: Unscaled X11 apps
         x-group: Hyprland behaviour
         default: true
-        description: X11 apps draw at native resolution on scaled monitors, instead of blurry.
+        description: X11 apps draw at native resolution on scaled monitors.
         x-compositor: {hyprland: {key: xwayland.force_zero_scaling, always: true}}
   sway:
     x-scope: personal
     type: object
     x-showIf: {/$compositor: sway}
     title: Sway
-    description: Sway's own options. All but special workspaces are written while axiom manages its config; anything else goes in ~/.config/sway/user/.
+    description: Written while axiom manages sway's config. Anything else goes in ~/.config/sway/user/.
     additionalProperties: false
     properties:
       specialWorkspaces:
@@ -379,10 +379,11 @@ properties:
         enum: [scratchpad, workspace]
         x-enumLabels: {scratchpad: Scratchpad windows, workspace: A workspace of their own}
         default: scratchpad
-        description: How the special workspace binds show a group. Scratchpad windows float over the current workspace, centred and stacked; a workspace of their own tiles them and takes the screen until toggled away.
+        description: Scratchpad windows float over the current workspace; a workspace of their own tiles them.
       workspaceLayout:
         type: string
         title: New workspaces
+        x-control: toggle
         enum: [default, stacking, tabbed]
         x-enumLabels: {default: Tiled, stacking: Stacked, tabbed: Tabbed}
         default: default
@@ -449,7 +450,7 @@ properties:
         type: string
         title: Title bar font
         default: ''
-        description: "A Pango font, e.g. pango:Inter 10. Empty keeps sway's."
+        description: A Pango font, e.g. pango:Inter 10. Empty keeps sway's.
         x-compositor: {sway: {key: 'font {}', value: raw, skip: ''}}
         x-showIf: {/Compositor.mode: managed}
   niri:
@@ -457,7 +458,7 @@ properties:
     type: object
     x-showIf: {/$compositor: niri, /Compositor.mode: managed}
     title: niri
-    description: niri's own options, written while axiom manages its config. Anything else goes in ~/.config/niri/user/.
+    description: Written while axiom manages niri's config. Anything else goes in ~/.config/niri/user/.
     additionalProperties: false
     properties:
       centerFocusedColumn:
@@ -474,18 +475,18 @@ properties:
         type: boolean
         title: Center a lone column
         default: false
-        description: A column alone on its workspace sits in the middle.
         x-compositor: {niri: {key: layout.always-center-single-column}}
       emptyWorkspaceAboveFirst:
         type: boolean
         title: Empty workspace above the first
         default: false
-        description: Keeps an empty workspace above the first one, as well as below the last.
+        description: Also keep an empty workspace above the first.
         x-compositor: {niri: {key: layout.empty-workspace-above-first}}
       defaultColumnDisplay:
         x-scope: look
         type: string
         title: New columns show
+        x-control: toggle
         enum: [normal, tabbed]
         x-enumLabels: {normal: Windows stacked, tabbed: Windows as tabs}
         default: normal
@@ -495,13 +496,13 @@ properties:
         type: boolean
         title: Tab indicator
         default: true
-        description: The bar beside a tabbed column, a segment per tab. Shows for a lone window too.
+        description: A bar beside a tabbed column, a segment per tab.
         x-compositor: {niri: {key: layout.tab-indicator, value: onOff}}
       preferNoCsd:
         type: boolean
         title: No title bars on windows
         default: false
-        description: Asks apps to leave out their own title bar (with its close and maximize buttons) and window shadow. Apps that don't agree keep theirs; open ones change once restarted.
+        description: Ask apps to drop their own title bar and shadow. Open apps change once restarted.
         x-compositor: {niri: {key: prefer-no-csd}}
       overviewZoom:
         x-scope: look
@@ -511,7 +512,6 @@ properties:
         default: 50
         minimum: 10
         maximum: 75
-        description: How large workspaces show in niri's overview.
         x-compositor: {niri: {key: overview.zoom, scale: 0.01, value: float}}
       animations:
         x-scope: look
@@ -527,7 +527,7 @@ properties:
         default: 100
         minimum: 10
         maximum: 1000
-        description: "100 is niri's own speed; more is slower."
+        description: 100 is niri's own speed; more is slower.
         x-showIf: {animations: true}
         x-compositor:
           niri: {key: animations.slowdown, scale: 0.01, value: float, skip: 100}
@@ -535,18 +535,16 @@ properties:
         type: boolean
         title: Skip the hotkey help at start
         default: true
-        description: niri's list of important keys shows when it starts; axiom's binds aren't niri's.
         x-compositor: {niri: {key: hotkey-overlay.skip-at-startup}}
       primaryClipboard:
         type: boolean
         title: Middle-click paste
         default: true
-        description: Selected text pastes with the middle mouse button.
         x-compositor: {niri: {key: clipboard.disable-primary, value: not}}
       xwayland:
         x-scope: machine
         type: boolean
         title: X11 apps (xwayland-satellite)
         default: true
-        description: Runs X11 apps through xwayland-satellite, when it's installed.
+        description: Runs X11 apps when xwayland-satellite is installed.
         x-compositor: {niri: {key: xwayland-satellite, value: onOff}}

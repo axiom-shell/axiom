@@ -2,18 +2,18 @@ label: Pomodoro
 keywords: ['Pomodoro timer']
 icon: timer
 group: Tools
-popout: {variant: own, enabled: {description: The timer's controls when hovered.}}
+popout: {variant: own, enabled: {description: The timer's controls on hover.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, stacked]
-    description: "The value is how far through the session or break it is; stacked puts the time over its name."
+    description: The value is the session's progress; stacked puts the time over its name.
 settings:
   hideWhenIdle:
     type: boolean
     title: Hide when stopped
     default: false
-    description: Show only while a session or break is on (start one from the launcher's /pomodoro or a module).
+    description: Show only while a session or break runs.
   workColor: {$ref: '#/definitions/WidgetColor', title: Focus color}
   breakColor: {$ref: '#/definitions/WidgetColor', title: Break color, x-autoColor: alt}
   idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}

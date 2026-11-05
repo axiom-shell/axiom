@@ -97,6 +97,17 @@ TestCase {
     compare([last.endCap, last.trail], ["slant", 5]);
   }
 
+  function test_levels_keep_their_own_caps() {
+    const middle = BarShapes.segment("capsule", "shaped", "merged", true, 1, 3, 30);
+    compare([middle.levelStartCap, middle.levelEndCap], ["capsule", "capsule"]);
+    const first = BarShapes.segment("rounded", "shaped", "merged", true, 0, 2, 30);
+    compare([first.levelStartCap, first.levelEndCap], ["round", "round"]);
+    const lone = BarShapes.segment("arrow", "shaped", "separate", true, 0, 1, 30);
+    compare([lone.levelStartCap, lone.levelEndCap], ["arrowIn", "arrowOut"]);
+    const segment = BarShapes.segment("arrow", "shaped", "powerline", false, 1, 3, 30);
+    compare([segment.levelStartCap, segment.levelEndCap], ["arrowIn", "arrowOut"]);
+  }
+
   function test_powerline_segments_overlap() {
     const first = BarShapes.segment("arrow", "shaped", "powerline", true, 0, 2, 30);
     const second = BarShapes.segment("arrow", "shaped", "powerline", true, 1, 2, 30);

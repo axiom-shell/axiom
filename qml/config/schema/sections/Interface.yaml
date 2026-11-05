@@ -4,7 +4,7 @@ x-scope: look
 type: object
 x-category: Look & Feel
 title: Panels & controls
-description: Sizing for the overlay, edge menus, desktop, lock screen, popouts, launcher and settings. Each bar has its own, in the bar editor.
+description: Sizing outside the bars. Each bar has its own, in the bar editor.
 additionalProperties: false
 properties:
   scale:
@@ -16,7 +16,7 @@ properties:
     minimum: 75
     maximum: 150
     x-unit: '%'
-    description: "Size of text and controls everywhere outside the bars: modules, popouts, the launcher, settings and notifications. Sizes set in px there (the launcher's width, a toast's, tiles, padding) grow with it. Higher is easier to read but fits less in each card and panel."
+    description: Size of text and controls outside the bars.
   cardSize:
     x-scope: personal
     type: integer
@@ -25,15 +25,16 @@ properties:
     minimum: 50
     maximum: 150
     x-unit: '%'
-    description: "How big module cards are, as a share of the screen: at 100 two cards fill its shorter side. The overlay, edge menus, desktop, lock screen and greeter all start from it, and each can be made bigger or smaller with its own Module size. Text stays the Interface scale's size, so on a smaller screen a higher card size gives modules back their room. The overlay never grows past filling its screen."
+    description: 'Module card size, as a share of the screen: at 100 two cards fill its shorter side.'
   density:
     x-scope: personal
     type: string
     title: Density
+    x-control: toggle
     enum: [compact, normal, roomy]
     x-enumLabels: {compact: Compact, normal: Normal, roomy: Roomy}
     default: normal
-    description: How tightly controls, padding and gaps are packed in panels and cards.
+    description: How tightly controls are packed.
   radius:
     type: integer
     x-control: stepper
@@ -42,5 +43,5 @@ properties:
     minimum: 0
     maximum: 50
     x-unit: px
-    description: "Roundness of what sits inside panels, cards and bars: buttons, fields, rows, cells and bar widgets. Outer edges (screen border, bars, popouts, the overlay's outer box) keep the main radius."
+    description: Buttons, fields, rows and bar widgets. Outer edges keep the main radius.
     x-inherit: Appearance.shape.radius

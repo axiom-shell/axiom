@@ -31,7 +31,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 - Nothing may write Hyprland's config unless `supports.configModes` is set: under another compositor, managed mode would otherwise rewrite `~/.config/hypr/hyprland.lua`.
 
 ### Hiding what a compositor can't do
-- **Settings.** An `x-showIf` key starting with `/$` reads the compositor, not the config ([schema-annotations](../core/schema-annotations.md)):
+- **Settings.** An `x-showIf` key starting with `/$` reads the compositor, not the config ([schema-annotations](../core/schema-annotations.md)); a row it fails is hidden, and a window look row (`x-hintedIf`) greyed instead where an upgrade can ("SwayFX can."):
   - `"/$supports.<capability>": true`
   - `"/$compositor": "sway"`
 - A section whose own `x-showIf` fails drops out of its category (`SchemaLayout.categories`): the `Hyprland` section needs `configModes`. The `WindowLook` fields each need their part (`windowBorders`, `windowShape`, `windowGaps`, `windowBlur`, `windowOpacity`), and a field one compositor's part lacks its own key (the blur's contrast `blurContrast`, the fullscreen opacity `fullscreenOpacity`). A key the schema gates on must be in [contract.md › Capabilities](contract.md#capabilities) (`check_structure`).

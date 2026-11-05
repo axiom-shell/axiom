@@ -21,9 +21,9 @@ PanelWindow {
   property real position: 0.5
   property real positionOffset: 0
 
-  // Depth across the edge, and length along it
-  property int triggerWidth: PopoutsConfig.edgeTriggerSize
-  property int triggerLength: 200 // fixed px: a hover strip on the screen's edge, like edgeTriggerSize
+  // Length along the edge: the length of what it opens (its depth across
+  // the edge is fixed, ScreenEdge.triggerSize)
+  required property int triggerLength
   property int hoverDelay: PopoutsConfig.openDelay
 
   // Integrated edge menus' zones (ScreenEdgeManager) move the surfaces this
@@ -53,8 +53,8 @@ PanelWindow {
     bottom: root.edge !== ScreenEdge.Top
   }
 
-  implicitWidth: root._vertical ? root.triggerWidth : root.triggerLength
-  implicitHeight: root._vertical ? root.triggerLength : root.triggerWidth
+  implicitWidth: root._vertical ? ScreenEdge.triggerSize : root.triggerLength
+  implicitHeight: root._vertical ? root.triggerLength : ScreenEdge.triggerSize
 
   margins {
     left: root.edge === ScreenEdge.Left ? root.edgeInset : root._vertical ? 0 : Math.max(0, root._centre - root.triggerLength / 2)

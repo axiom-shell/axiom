@@ -2,7 +2,7 @@
 
 type: object
 x-links: [BarEditor]
-description: How every bar draws its widgets, accents and shadow. A bar can take its own of any of these in the bar editor.
+description: How every bar draws its widgets. A bar can override any of these in the bar editor.
 additionalProperties: false
 properties:
   textScale:
@@ -14,7 +14,7 @@ properties:
     minimum: 50
     maximum: 200
     x-unit: '%'
-    description: "The widgets' text and icons, against the font size at a 26 px thickness; they grow and shrink with the bar's thickness."
+    description: Relative to the font size at 26 px thickness; scales with thickness.
   widgetRadius:
     x-group: Bar widgets
     type: integer
@@ -38,7 +38,7 @@ properties:
       underline: Underline
       accentText: Colored icons
       plain: Plain text
-    description: 'How each widget shows its color: as its background, a faint tint, an outline, a line beside it, or on its icon. Plain text draws them straight onto the bar.'
+    description: How each widget shows its color.
   tintOpacity:
     x-group: Bar widgets
     type: integer
@@ -86,7 +86,7 @@ properties:
     enum: [rounded, capsule, slant, arrow]
     x-enumLabels: {rounded: Rounded, capsule: Capsule, slant: Slanted, arrow: Arrow}
     x-showIf: {widgetStyle: [filled, tinted, outline]}
-    description: Rounded follows the widget corner radius. Capsule always gives fully round pill ends, whatever the radius. Slanted and arrow widgets take a little more room for their points.
+    description: Rounded follows the corner radius. Capsule always has round ends.
   widgetGrouping:
     x-group: Bar widgets
     type: string
@@ -96,17 +96,18 @@ properties:
     x-enumLabels: {separate: Separate, merged: Merged, powerline: Powerline}
     x-beside: true
     x-showIf: {widgetStyle: [filled, tinted, outline]}
-    description: "Merged: neighbouring widgets share one background. Powerline: each widget's shape runs into the next."
+    description: 'Merged: neighbours share one background. Powerline: each runs into the next.'
   widgetEnds:
     x-group: Bar widgets
     type: string
     title: Ends
     default: shaped
+    x-control: toggle
     enum: [shaped, pointed, rounded]
     x-enumLabels: {shaped: Shaped, pointed: Pointed, rounded: Rounded}
     x-showIf: {widgetStyle: [filled, tinted, outline], widgetShape: [slant, arrow]}
     x-enumShowIf: {pointed: {widgetShape: arrow}}
-    description: 'The ends of a slanted or arrow widget, or of a run of them: as shaped, rounded, or (arrows) pointed at both.'
+    description: The ends of a slanted or arrow widget, or a run of them.
   groupColor:
     x-group: Bar widgets
     type: string
@@ -122,7 +123,7 @@ properties:
     x-options: colors
     x-emptyLabel: Auto
     default: ''
-    description: "One color for every widget's text and icons. Auto: each widget's own on a filled background, its color when tinted or outlined, else one that contrasts with the bar."
+    description: One color for every widget's text and icons. Auto picks one per widget.
   separatorStyle:
     x-group: Bar accents
     type: string
@@ -130,7 +131,7 @@ properties:
     default: none
     enum: [none, line, dot, slash, chevron]
     x-enumLabels: {none: None, line: Line, dot: Dot, slash: Slash, chevron: Chevron}
-    description: Drawn in the gap between neighbouring widgets in a section (not in a powerline). Give them room with Spacing.
+    description: Drawn between neighbouring widgets.
     x-showIf:
       anyOf:
         - {widgetGrouping: {not: powerline}}
@@ -169,7 +170,7 @@ properties:
     minimum: 0
     maximum: 24
     x-unit: px
-    description: Room between a separator and the widgets on either side of it.
+    description: Space between a separator and the widgets beside it.
     x-showIf:
       anyOf:
         - {widgetGrouping: {not: powerline}}
@@ -180,9 +181,10 @@ properties:
     type: string
     title: Accent line
     default: none
+    x-control: toggle
     enum: [none, inner, outer]
     x-enumLabels: {none: None, inner: Inner edge, outer: Outer edge}
-    description: A line along the bar's edge toward the windows (inner) or the screen edge (outer); on pills, along each pill.
+    description: A line along the bar's inner or outer edge.
   accentLineColor:
     x-group: Bar accents
     type: string
@@ -199,7 +201,7 @@ properties:
     default: ''
     x-beside: true
     x-showIf: {accentLine: {not: none}}
-    description: Runs the line from its color into this one along the bar.
+    description: Fades the line into this color along the bar.
   accentLineWidth:
     x-group: Bar accents
     type: integer
@@ -219,7 +221,7 @@ properties:
         type: boolean
         title: Shadow
         default: false
-        description: Spread evenly round every bar (or its pills), the screen border, popouts, menus and docks. A transparent bar has nothing to cast one; a solid bar on the border leaves it to the border.
+        description: Around every bar, the screen border, popouts, menus and docks.
       color:
         x-group: Surface shadow
         type: string

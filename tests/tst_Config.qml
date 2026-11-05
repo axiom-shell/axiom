@@ -64,4 +64,15 @@ TestCase {
     }, schema);
     compare(filled.id, "test");
   }
+
+  // A widget drawing a value style draws its icon and label in its
+  // foregroundColor on a filled bar: without the field they're transparent
+  function test_value_widgets_have_foreground_color() {
+    for (const option of schema.definitions.BarWidget.oneOf) {
+      const name = option.$ref.split("/").pop();
+      const settings = schema.definitions[name].properties.properties.properties;
+      if (settings.appearance)
+        verify(settings.foregroundColor !== undefined, name + " has no foregroundColor");
+    }
+  }
 }

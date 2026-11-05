@@ -4,14 +4,14 @@ x-scope: personal
 type: object
 x-category: Launcher
 title: Launcher
-description: 'The search launcher: apps, open windows, a calculator, web search, running commands, and / commands that control the shell.'
+description: Apps, windows, a calculator, web search, commands and / commands.
 x-intro: LauncherPlace
 additionalProperties: false
 properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
-    description: Where the launcher opens. As in General follows General > Monitors; the primary monitor is the one set in General; the focused monitor is the one with your active workspace (and mouse); every monitor shows it on all of them at once.
+    description: Where the launcher opens.
     x-properties:
       mode:
         x-scope: look
@@ -32,7 +32,6 @@ properties:
     title: Screen edge
     default: top
     enum: [top, bottom, left, right]
-    description: Screen edge the launcher opens from, or is held off when detached.
   position:
     x-scope: look
     type: integer
@@ -41,13 +40,13 @@ properties:
     default: 50
     minimum: 0
     maximum: 100
-    description: 'Where along the edge its centre sits: 0 is the start (left/top), 100 the end. It never runs off the screen.'
+    description: 0 is the start (left/top), 100 the end.
   detached:
     x-scope: look
     type: boolean
     title: Detach from edge
     default: true
-    description: A separate box floating off the edge. Off, the launcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.
+    description: A separate box held off the edge, instead of growing out of it.
   distance:
     x-scope: look
     type: integer
@@ -56,7 +55,7 @@ properties:
     default: 30
     minimum: 0
     maximum: 50
-    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
@@ -67,7 +66,7 @@ properties:
     type: boolean
     title: Search bar at the bottom
     default: false
-    description: Put the search field under the results, with the best match nearest to it. Suits the bottom edge.
+    description: The best match sits nearest the field. Suits the bottom edge.
   width:
     x-scope: look
     type: integer
@@ -76,7 +75,6 @@ properties:
     default: 680
     minimum: 400
     maximum: 1200
-    description: Width of the launcher.
   maxResults:
     x-scope: look
     x-group: Launcher look
@@ -86,7 +84,7 @@ properties:
     default: 8
     minimum: 3
     maximum: 20
-    description: How many rows fit before the list scrolls.
+    description: Rows shown before the list scrolls.
   iconSize:
     x-scope: look
     x-group: Launcher look
@@ -97,14 +95,13 @@ properties:
     default: 32
     minimum: 16
     maximum: 64
-    description: Size of the result icons.
   showBackdrop:
     x-scope: look
     x-group: Launcher look
     type: boolean
     title: Dim background
     default: true
-    description: Dim the whole screen behind the launcher, under the bars and border.
+    description: Dim the screen behind the launcher.
   backdrop:
     x-scope: look
     x-group: Launcher look
@@ -114,7 +111,6 @@ properties:
     default: 25
     minimum: 0
     maximum: 90
-    description: How dark the screen behind the launcher goes.
     x-showIf: {showBackdrop: true}
   showDescriptions:
     x-scope: look
@@ -122,53 +118,52 @@ properties:
     type: boolean
     title: Descriptions
     default: true
-    description: Show a second line under each result (an app's generic name, a window's class, a command's description).
+    description: A second line under each result.
   showRecent:
     x-group: Launcher look
     type: boolean
     title: Frequent apps when empty
     default: true
-    description: List your most used apps before you type anything.
+    description: List your most used apps before you type.
   showHint:
     x-scope: look
     x-group: Launcher look
     type: boolean
     title: Controls hint
     default: true
-    description: Show the search prefixes and keys under the results.
+    description: Show search prefixes and keys under the results.
   hiddenApps:
     x-group: Launcher search
     type: array
     title: Hidden apps
     default: []
     items: {type: string}
-    description: Desktop entry ids never shown, comma-separated (e.g. avahi-discover, qv4l2).
+    description: Desktop entry ids, comma-separated.
   providers:
     type: object
     title: Launcher search
-    description: What the launcher searches besides apps.
     additionalProperties: false
     properties:
       windows:
         type: boolean
         title: Open windows
         default: true
-        description: Also match open windows by title and class; picking one focuses it.
+        description: Match windows by title and class; picking one focuses it.
       calculator:
         type: boolean
         title: Calculator
         default: true
-        description: Show the result of math as you type it (or after =), using qalc. Enter copies the result.
+        description: Show the result of math as you type, using qalc. Enter copies it.
       commands:
         type: boolean
         title: Shell commands (/)
         default: true
-        description: 'Type / for commands that control the shell: themes, volume, wifi, bluetooth, overlay pages, session and more.'
+        description: Type / for commands that control the shell.
       run:
         type: boolean
         title: Run commands (>)
         default: true
-        description: Type > and a command to run it. Shift+Enter runs it in the terminal.
+        description: Type > and a command to run it. Shift+Enter runs it in a terminal.
       web:
         type: object
         title: Web search
@@ -178,7 +173,7 @@ properties:
             type: boolean
             title: Web search (?)
             default: true
-            description: Offer a web search for what you typed, last in the list (or first after ?).
+            description: Offer a web search for what you typed (first after ?).
           engine:
             type: string
             title: Search engine URL
@@ -190,7 +185,7 @@ properties:
         type: boolean
         title: Ask chat (@)
         default: true
-        description: Type @ and a question to ask it in the overlay's Chat module, with the default preset.
+        description: Type @ and a question to ask the Chat module.
       clipboard:
         type: object
         title: Clipboard history
@@ -200,17 +195,16 @@ properties:
             type: boolean
             title: 'Clipboard history (:)'
             default: true
-            description: "Type : (or /clipboard) to search what you've copied; Enter copies it again, Shift+Enter removes it. axiom keeps the history, images included, in memory only, never on disk, and skips anything a password manager marks as sensitive. Turn this off if you copy passwords from apps that don't; turning it off clears the history."
+            description: 'Type : to search what you''ve copied. Kept in memory only, skipping items marked sensitive; turning this off clears it.'
           maxEntries:
             type: integer
             title: Clipboard history size
             default: 100
             minimum: 10
             maximum: 1000
-            description: How many clips axiom keeps.
             x-showIf: {enabled: true}
       emoji:
         type: boolean
         title: Emoji (;)
         default: true
-        description: Type ; (or /emoji) to search emoji by name or keyword; Enter copies one, and Shift+Enter types it into the focused window.
+        description: Type ; to search emoji. Enter copies one, Shift+Enter types it.

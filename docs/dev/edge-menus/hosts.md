@@ -68,6 +68,6 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - The zone is set once while it's open (windows retile in one step), and the strip slides in.
 - With `frame`, a rounded stroked box runs the strip's whole length.
   - Its stroke's inner edge is `screenMargin` in from the strip's edges (as the border's is, so the two line up: `EdgeMenusConfig.frameInsetOf`, `outerPadOf`).
-  - It holds the modules `padding` in from its stroke.
+  - It holds the modules `Popouts.padding` in from its stroke.
 - It reports its zone by its id (`ScreenEdgeManager.setZone`: one that moves edge or screen leaves nothing behind, and menus on one edge add up), which `BarPopouts.borderInset` takes off the perpendicular bars' length.
 - No `SubPopout`, so Submenu rows are dimmed and inert here.

@@ -86,6 +86,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-05, while reviewing the bar rewrite
 
+### A bar widget that loses its background while shown keeps drawing the old one
+- **Where:** `qml/components/bar/WidgetGroup.qml` (the per-widget `WidgetBackground`'s `_last`)
+- **What:** A widget going away keeps its last place and colors while its host is still drawn (`_shown` falls back to `_last` while `_drawn`), so it fades with its host. A host that stays drawn but has no background any more never lets go: seen in a nested niri run, swapping a section's widgets in place (same count; the delegates are reused, so the slot that held Window now holds a Spacer) left the Spacer drawing Window's background across the whole room it took, until a change of count rebuilt the delegates. A widget turning its own `hasBackground` off would do the same. Fix: keep `_last` only while the host is fading out (its opacity or `_drawnMain` falling), or clear it when `host.background` turns null on a host still fully shown.
+- **Size:** small
+- **Found:** 2026-11-05, while joining bar runs across sections by spacers
+
+### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
+- **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
+- **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the wallpaper chunk of the tweaks-minor-complaints branch
+
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `qml/services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.
@@ -145,12 +157,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** An idea from the wallpaper transitions branch, not a bug: mp4/webm wallpapers through QtMultimedia. It adds a dependency and a steady GPU and battery cost, the transitions would need a video's frame as a texture, and generating a theme needs a still frame grabbed from it. Kept out of the branch (maintainer, 2026-11-01: not picked among the wallpaper improvements).
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding wallpaper transitions
-
-### The Vpn widget's icon and label are invisible on a filled bar
-- **Where:** `qml/components/bar/widgets/Vpn/schema.yaml`, `qml/components/bar/widgets/base/BarIconWidget.qml` (`colors`)
-- **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
-- **Size:** trivial
-- **Found:** 2026-11-01, while testing removable drives in a nested shell
 
 ### Eject may leave a USB stick powered on
 - **Where:** `backend/internal/udisks/udisks.go` (`eject`)
@@ -455,6 +461,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
 
+### TestLogindLockAndSleep failed once under verify.sh
+- **Where:** `backend/internal/idle/idle_test.go` (`TestLogindLockAndSleep`)
+- **What:** One `scripts/dev/verify.sh` run failed it at its first `h.rec.expect(t, "lock")` with `actions [], want [lock]`: nothing was recorded within the 3 s bound after `h.logind.Lock()`, though `until(s.Logind)` had passed. Three `go test -count=1 ./internal/idle/` runs right after and a second verify.sh run passed. PLAUSIBLE: the service reports `Logind` before its `Lock` signal match is in place, so a Lock sent at once is missed; settle by running the package under load (`-race`, `-cpu 1,2,4,8`, `-count` in the hundreds) and checking when the match is added against when `Logind` turns true.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the settings chunk of the tweaks-minor-complaints branch
+
 ### The guard judges a push where the line starts, not where git runs
 - **Where:** `.claude/hooks/guard.py` (`check_git`, `simple`), `tests/scripts/test_guard.py`
 - **What:** `check_git` reads the branch once, in the folder the line starts in (or `git -C`'s), before anything in the line runs, so a push to main gets past it when git runs on another branch or folder than that: `git switch main && git push` (or `git checkout main`) from a feature branch's folder; a wrapper that changes folder (`env -C <main checkout> git push`, `sudo -D`, `systemd-run --working-directory`, whose options `simple` drops); `git --git-dir=…`/`--work-tree=…` or `GIT_DIR=… git push`. Each was allowed by `guard.check` from a folder on a feature branch (2026-11-02). Fix: refuse a bare push (no refspec, or `HEAD`) after a `switch`/`checkout` in the same line, and judge the folder those options and variables name.
@@ -562,12 +574,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   **On hold** (maintainer, 2026-10-31): "put this on hold - note that growing modules kinda needs a re-work or removal". Growing modules as a whole (`grow`, [grow-expand](overlay/grow-expand.md)) need a rework or removal; this entry waits for that and is [deferred](roadmap.md#deferred). No design is recorded.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### ToastStack logs a binding loop on _attachedShowing
-- **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (`_attachedShowing`)
-- **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the OSD's statuses
 
 ### DockWindow logs a binding loop on _wouldShow
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:270` (`_wouldShow`), `qml/components/surfaces/dock/DockWindow.qml:318` (`conceal`), `qml/components/hosts/popout/PopoutClaim.qml` (`_sync`), `qml/services/ui/PopoutManager.qml` (`_refuse`), `qml/shell/Dock.qml` (the DockWindow the log names)

@@ -130,7 +130,7 @@ properties:
     x-scope: personal
     type: array
     title: Saved keybind presets
-    description: Sets of binds saved from the Keybinds page, to restore or merge later. Edited on the Keybinds page.
+    description: Saved from the Keybinds page, to restore or merge later.
     default: []
     items:
       type: object

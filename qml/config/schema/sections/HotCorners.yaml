@@ -4,7 +4,7 @@ x-scope: personal
 type: object
 x-category: Overlay & Popouts
 title: Hot corners
-description: Screen corners that run an action when the pointer reaches them, on every compositor.
+description: Screen corners that run an action when the pointer reaches them.
 additionalProperties: false
 properties:
   items:
@@ -12,7 +12,7 @@ properties:
     type: array
     title: Hot corners
     default: []
-    description: "Each runs its action once the pointer has rested in its corner for its delay, and again only after the pointer has left. A corner takes the screen's last pixel: a click there doesn't reach what's under it. Quiet over fullscreen windows."
+    description: Each runs its action once the pointer rests in its corner for its delay. Quiet over fullscreen windows.
     items:
       x-scopeIf:
         when: {action: exec}
@@ -38,14 +38,15 @@ properties:
           type: string
           title: Argument
           default: ''
-          description: 'Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.'
+          description: 'Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a timer length (10m, 1:30), or a command.'
         call:
           type: string
           title: Call
           default: toggle
+          x-control: toggle
           enum: [toggle, open, close]
           x-enumLabels: {toggle: Toggle, open: Open, close: Close}
-          description: 'For actions that open and close or turn on and off something: whether the corner toggles it, only opens it or only closes it.'
+          description: Toggle it, only open it, or only close it.
         screen:
           $ref: '#/definitions/ScreenTarget'
           title: Monitors
@@ -72,5 +73,4 @@ properties:
           default: 0
           minimum: 0
           maximum: 5000
-          description: How long the pointer rests in the corner before the action runs.
       required: [id]

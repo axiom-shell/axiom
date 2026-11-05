@@ -140,7 +140,7 @@ Edge menus are the overlay's other half. Every overlay module fits in them, plac
 - **Per-menu settings.** Each menu has its own:
   - edge, monitor and position along the edge
   - length: fit its modules, or take the whole edge
-  - module size, padding and colors
+  - module size and colors
   - hover timings
 
   An integrated menu can also draw a framed box along the whole edge.

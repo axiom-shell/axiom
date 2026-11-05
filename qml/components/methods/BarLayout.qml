@@ -7,7 +7,8 @@ import QtQuick
 // widget's measure is { pref, min, priority, divides, fill }. A `fill`
 // widget (a Spacer) takes the free room on its side of the bar, shared
 // with the other spacers there, and keeps at least its `pref` (its
-// minimum gap) when crowded; in the center it keeps just that.
+// minimum gap) when crowded; in the center it pushes the groups outside
+// the one kept centered out to the sides (centerSplit).
 QtObject {
   id: root
 
@@ -90,14 +91,29 @@ QtObject {
     return Math.max(lo, Math.min((length - c) / 2 + skew, hi));
   }
 
-  // The center section with `lockCenter`: at its full size (`pref`, at
-  // most the room between the margins), dead center but for its dividers
-  // (`hang`), kept inside the margins. -> { start, length }
-  function _lockedCenter(pref, length, m0, m1, hang) {
-    const c = Math.min(pref, Math.max(0, length - m0 - m1));
+  // A bar with `lockCenter` as layoutSections, sectionRooms and
+  // overflowHidden all see it: what's centered and the room beside it.
+  // The center (`center`: its preferred length) at its full size (at most
+  // the room between the margins), dead center but for its dividers
+  // (`hang`), kept inside the margins; with spacers (`parts`,
+  // centerParts), its pinned group is what's centered, its outer groups
+  // (`lead`, `tail`) at full size on the halves beside it. `g` is the
+  // gaps as _gaps gives them. -> { split, start, length (what's
+  // centered), lead, tail, halves: [left, right] (from the bar's end to
+  // what's centered), gaps: [left, right] (a side's gap to the section
+  // beside it) }
+  function _lockedFrame(center, length, m0, m1, g, hang, parts) {
+    const split = center > 0 && !!parts && parts.leadFills + parts.tailFills > 0;
+    const c = Math.min(split ? parts.core : center, Math.max(0, length - m0 - m1));
+    const start = root._centerStart(c, length, m0, length - m1 - c, split ? null : hang);
     return {
-      "start": root._centerStart(c, length, m0, length - m1 - c, hang),
-      "length": c
+      "split": split,
+      "start": start,
+      "length": c,
+      "lead": split ? parts.lead : 0,
+      "tail": split ? parts.tail : 0,
+      "halves": [start - m0, length - m1 - start - c],
+      "gaps": center > 0 ? [g.lc, g.cr] : [g.lr, g.lr]
     };
   }
 
@@ -106,11 +122,151 @@ QtObject {
     return Array.isArray(margin) ? margin : [margin, margin];
   }
 
+  // A gap between sections as { lc, cr, lr } (left|center, center|right,
+  // left|right with no center): one number for all, or boundaryGaps'
+  function _gaps(gap) {
+    return typeof gap === "number" ? {
+      "lc": gap,
+      "cr": gap,
+      "lr": gap
+    } : gap;
+  }
+
+  // Which section boundaries join (sectionJoins): `joinedGap` there, the
+  // sections' own `gap` elsewhere. -> { lc, cr, lr }
+  function boundaryGaps(joins, gap, joinedGap) {
+    return {
+      "lc": joins?.leftCenter ? joinedGap : gap,
+      "cr": joins?.centerRight ? joinedGap : gap,
+      "lr": joins?.leftRight ? joinedGap : gap
+    };
+  }
+
+  // How a center section's spacers split it, from its measures ([{ fill
+  // }], every widget it has): its groups between spacers, and the one
+  // pinned at the middle. With two spacers or more, what lies between the
+  // first and the last (inner spacers keeping their minimum gaps); with
+  // one, the group with more widgets (the first on a tie): from the
+  // config alone, so it never changes as widgets change width. The
+  // groups outside it are pushed out to the sides by the spacers between.
+  // -> { start, end } (the pinned indices, inclusive; start > end when
+  // empty), leadFills and tailFills (the spacers before and after it)
+  function centerSplit(measures) {
+    const spacers = (measures ?? []).map((m, i) => !!m?.fill ? i : -1).filter(i => i >= 0);
+    const n = (measures ?? []).length;
+    if (spacers.length === 0)
+      return {
+        "start": 0,
+        "end": n - 1,
+        "leadFills": 0,
+        "tailFills": 0
+      };
+    if (spacers.length >= 2)
+      return {
+        "start": spacers[0] + 1,
+        "end": spacers[spacers.length - 1] - 1,
+        "leadFills": 1,
+        "tailFills": 1
+      };
+    const s = spacers[0];
+    const pinFirst = s >= n - 1 - s;
+    return pinFirst ? {
+      "start": 0,
+      "end": s - 1,
+      "leadFills": 0,
+      "tailFills": 1
+    } : {
+      "start": s + 1,
+      "end": n - 1,
+      "leadFills": 1,
+      "tailFills": 0
+    };
+  }
+
+  // A center section's parts along it, laid out at `key` ("pref" or
+  // "min") with its spacers at their minimum gaps (`shown` as allocate
+  // takes it, `spacing` between widgets): the length before its pinned
+  // group (centerSplit), the group's, and the length after it. ->
+  // { lead, core, tail, leadFills, tailFills }
+  function centerParts(measures, shown, spacing, key) {
+    const split = root.centerSplit(measures);
+    const sized = (measures ?? []).map(m => Object.assign({}, m, {
+        "pref": m[key ?? "pref"]
+      }));
+    const laid = root.allocate(sized, shown, Infinity, spacing);
+    const total = root.span(laid.sizes, spacing, sized.map(m => !!m.fill));
+    const inCore = laid.sizes.map((size, i) => i >= split.start && i <= split.end && size > 0 ? i : -1).filter(i => i >= 0);
+    let start, end;
+    if (inCore.length > 0) {
+      start = laid.offsets[inCore[0]];
+      end = laid.offsets[inCore[inCore.length - 1]] + laid.sizes[inCore[inCore.length - 1]];
+    } else {
+      // Nothing pinned: the point between the spacers either side
+      const before = split.start - 1;
+      start = end = before >= 0 ? laid.offsets[before] + laid.sizes[before] : 0;
+    }
+    return {
+      "lead": start,
+      "core": end - start,
+      "tail": Math.max(0, total - end),
+      "leadFills": split.leadFills,
+      "tailFills": split.tailFills
+    };
+  }
+
+  // Per widget of a center section, its spacers' weights in allocate: the
+  // room before its pinned group (`leadShare`, layoutSections) shared by
+  // the spacers there, the room after it (`tailShare`) by those after,
+  // none to the spacers inside it
+  function centerFillWeights(measures, leadShare, tailShare) {
+    const split = root.centerSplit(measures);
+    return (measures ?? []).map((m, i) => {
+      if (!m?.fill)
+        return 0;
+      if (i < split.start)
+        return leadShare / split.leadFills;
+      if (i > split.end)
+        return tailShare / split.tailFills;
+      return 0;
+    });
+  }
+
+  // Which section boundaries join, from the sections' measures (left,
+  // center, right: [{ pref, fill, divides }], a widget's own size without
+  // its insets, which follow the joins): where a spacer pushed a widget
+  // against the next section, a side's (a side with spacers reaches the
+  // center, layoutSections) or the center's (pushing its outer groups out
+  // to the sides, centerSplit). Its widget there then runs on into the
+  // next section's: one merged background, one powerline chain, a
+  // separator mark between them. A boundary no spacer pushes to never
+  // joins, however close it's crowded; nor does one with a spacer or a
+  // divider (a Separator) facing it. Widgets hidden for want of room count
+  // as shown: what's hidden follows the gaps a join sets. Unlocked
+  // (`lockCenter` false), a spacer anywhere packs the sections end to end
+  // (layoutSections), so every boundary joins. -> { leftCenter,
+  // centerRight, leftRight } (leftRight: no center)
+  function sectionJoins(measures, lockCenter) {
+    const shown = s => (measures?.[s] ?? []).filter(m => m.pref > 0 || !!m.fill);
+    const sides = [0, 1, 2].map(s => shown(s));
+    const filled = s => sides[s].some(m => !!m.fill);
+    const widget = m => !!m && !m.fill && !m.divides;
+    const first = s => sides[s][0], last = s => sides[s][sides[s].length - 1];
+    const hasCenter = sides[1].some(m => m.pref > 0);
+    const center = root.centerSplit(measures?.[1] ?? []);
+    const packed = lockCenter === false && [0, 1, 2].some(filled);
+    return {
+      "leftCenter": hasCenter && (packed || filled(0) || center.leadFills > 0) && widget(last(0)) && widget(first(1)),
+      "centerRight": hasCenter && (packed || filled(2) || center.tailFills > 0) && widget(last(1)) && widget(first(2)),
+      "leftRight": !hasCenter && (filled(0) || filled(2)) && widget(last(0)) && widget(first(2))
+    };
+  }
+
   // Returns [{offset, extent}] for each section (left, center, right)
   // along the main axis, from their preferred and minimum lengths. `margin`
   // is kept clear at the ends (one number for both, or [start, end]: a
   // bar's ends may meet different things, BarEnds) and `gap` between
-  // adjacent non-empty sections. With `lockCenter`, the center section
+  // adjacent non-empty sections (one number, or per boundary:
+  // boundaryGaps). With `lockCenter`, the center section
   // always sits dead center at its full size and each side fits itself
   // into the room left on its own half; otherwise the center slides
   // towards the roomier side when crowded. `centerHang` (edgeHang) is left
@@ -119,10 +275,19 @@ QtObject {
   // free room is shared between the sides by their spacer counts), its
   // spacers taking the room (allocate). They're laid out at their minimum
   // gaps first, so they never move the center.
-  function layoutSections(pref, min, length, margin, gap, lockCenter, centerHang, fills) {
+  //
+  // A center with spacers (`parts`, centerParts) pushes its outer groups
+  // out towards the sides and keeps its pinned group centered (dead
+  // center with `lockCenter`); its section then also gets `leadShare` and
+  // `tailShare`: the room its spacers before and after the pinned group
+  // take (centerFillWeights).
+  function layoutSections(pref, min, length, margin, gap, lockCenter, centerHang, fills, parts) {
     const [m0, m1] = root._margins(margin);
+    const g = root._gaps(gap);
     const sum = values => values.reduce((a, b) => a + b, 0);
-    const gapsFor = sections => gap * sections.filter(i => pref[i] > 0).length;
+    // A side's gap to the section beside it
+    const sideGap = i => pref[1] > 0 ? (i === 0 ? g.lc : g.cr) : g.lr;
+    const gapsFor = sections => sum(sections.filter(i => pref[i] > 0).map(sideGap));
     // Preferred sizes if they fit, else squeezed towards the minimums,
     // else the minimums scaled down to whatever room there is
     const fit = (p, m, room) => {
@@ -138,33 +303,104 @@ QtObject {
       return m.map(v => sumMin > 0 ? v * room / sumMin : 0);
     };
 
+    const fitsWhole = sum(pref) + gapsFor([0, 2]) <= length - m0 - m1;
+    // Unlocked, with spacers anywhere: nothing is centered. Every spacer
+    // on the bar takes an equal share of its free room and the sections
+    // pack end to end (the center's spacers share its extent equally,
+    // allocate's default).
+    const fl = fills?.[0] ?? 0, fc = fills?.[1] ?? 0, fr = fills?.[2] ?? 0;
+    if (!lockCenter && pref[1] > 0 && fitsWhole && fl + fc + fr > 0) {
+      const each = (length - m0 - m1 - sum(pref) - gapsFor([0, 2])) / (fl + fc + fr);
+      const leftExtent = pref[0] + fl * each;
+      const centerOffset = m0 + leftExtent + (pref[0] > 0 ? g.lc : 0);
+      const centerExtent = pref[1] + fc * each;
+      const rightOffset = centerOffset + centerExtent + (pref[2] > 0 ? g.cr : 0);
+      return [
+        {
+          "offset": m0,
+          "extent": leftExtent
+        },
+        {
+          "offset": centerOffset,
+          "extent": centerExtent
+        },
+        {
+          "offset": rightOffset,
+          "extent": length - m1 - rightOffset
+        }
+      ];
+    }
+    const frame = lockCenter ? root._lockedFrame(pref[1], length, m0, m1, g, centerHang, parts) : null;
+    // Locked, a center with spacers (centerParts): its pinned part is
+    // what's centered, and each half of the bar, from its end to that
+    // part, is shared out between the spacers in it, the side's and the
+    // center's alike, equally.
+    if (frame?.split) {
+      // One half (`k`: 0 left, 1 right): the side and the center's part
+      // beside it, its spacers (`sideFills`, `partFills`) sharing what's
+      // free. -> { side: the side's extent, part: the center spacers'
+      // share }
+      const half = (k, part, partFills) => {
+        const i = 2 * k, sideFills = fills?.[i] ?? 0, room = frame.halves[k];
+        const gapThere = pref[i] > 0 ? frame.gaps[k] : 0;
+        const free = room - pref[i] - gapThere - part;
+        if (free < 0)
+          return {
+            "side": fit([pref[i]], [min[i]], room - gapThere - part)[0],
+            "part": 0
+          };
+        const each = sideFills + partFills > 0 ? free / (sideFills + partFills) : 0;
+        return {
+          "side": pref[i] + sideFills * each,
+          "part": partFills * each
+        };
+      };
+      const left = half(0, parts.lead, parts.leadFills);
+      const right = half(1, parts.tail, parts.tailFills);
+      const centerOffset = frame.start - parts.lead - left.part;
+      return [
+        {
+          "offset": m0,
+          "extent": left.side
+        },
+        {
+          "offset": centerOffset,
+          "extent": parts.lead + left.part + frame.length + right.part + parts.tail,
+          "leadShare": left.part,
+          "tailShare": right.part
+        },
+        {
+          "offset": length - m1 - right.side,
+          "extent": right.side
+        }
+      ];
+    }
+
     let l, c, r, centerStart;
-    if (lockCenter) {
-      const center = root._lockedCenter(pref[1], length, m0, m1, centerHang);
-      c = center.length;
-      centerStart = center.start;
+    if (frame) {
+      c = frame.length;
+      centerStart = frame.start;
       // Each side alone on its half, a gap short of the center
-      const side = i => pref[i] > 0 ? gap : 0;
-      l = fit([pref[0]], [min[0]], centerStart - m0 - side(0))[0];
-      r = fit([pref[2]], [min[2]], length - m1 - centerStart - c - side(2))[0];
+      const side = k => pref[2 * k] > 0 ? frame.gaps[k] : 0;
+      l = fit([pref[0]], [min[0]], frame.halves[0] - side(0))[0];
+      r = fit([pref[2]], [min[2]], frame.halves[1] - side(1))[0];
     } else {
       [l, c, r] = fit(pref, min, length - m0 - m1 - gapsFor([0, 2]));
-      const lo = m0 + (l > 0 ? l + gap : 0);
-      const hi = length - m1 - (r > 0 ? r + gap : 0) - c;
+      const lo = m0 + (l > 0 ? l + sideGap(0) : 0);
+      const hi = length - m1 - (r > 0 ? r + sideGap(2) : 0) - c;
       centerStart = root._centerStart(c, length, lo, hi, centerHang);
     }
 
     let leftEnd = m0 + l, rightStart = length - m1 - r;
-    const fl = fills?.[0] ?? 0, fr = fills?.[2] ?? 0;
     if (c > 0) {
       // A side with spacers reaches the center's edge
       if (fl > 0)
-        leftEnd = Math.max(leftEnd, centerStart - (pref[0] > 0 ? gap : 0));
+        leftEnd = Math.max(leftEnd, centerStart - (pref[0] > 0 ? g.lc : 0));
       if (fr > 0)
-        rightStart = Math.min(rightStart, centerStart + c + (pref[2] > 0 ? gap : 0));
+        rightStart = Math.min(rightStart, centerStart + c + (pref[2] > 0 ? g.cr : 0));
     } else if (fl + fr > 0) {
       // No center: the room between the sides, shared by spacer count
-      const free = Math.max(0, rightStart - leftEnd - (l > 0 && r > 0 ? gap : 0));
+      const free = Math.max(0, rightStart - leftEnd - (l > 0 && r > 0 ? g.lr : 0));
       const toLeft = free * fl / (fl + fr);
       leftEnd += toLeft;
       rightStart -= free - toLeft;
@@ -190,17 +426,20 @@ QtObject {
   // bar, the others at their preferred lengths (`pref`), as layoutSections
   // would give it (for the bar editor's fit meter): with `lockCenter`, a
   // side its half beside the full-size center (`centerHang` left out of
-  // what's centered), the center the whole bar; otherwise what the
-  // others and the gaps leave.
-  function sectionRooms(pref, length, margin, gap, lockCenter, centerHang) {
+  // what's centered; a center with spacers, `parts` (centerParts): its
+  // pinned group centered and its outer groups beside it on the halves),
+  // the center the whole bar; otherwise what the others and the gaps leave.
+  function sectionRooms(pref, length, margin, gap, lockCenter, centerHang, parts) {
     const [m0, m1] = root._margins(margin);
+    const g = root._gaps(gap);
     const room = Math.max(0, length - m0 - m1);
     if (lockCenter) {
-      const center = root._lockedCenter(pref[1], length, m0, m1, centerHang);
-      return [Math.max(0, center.start - m0 - gap), room, Math.max(0, length - m1 - center.start - center.length - gap)];
+      const frame = root._lockedFrame(pref[1], length, m0, m1, g, centerHang, parts);
+      return [Math.max(0, frame.halves[0] - frame.gaps[0] - frame.lead), room, Math.max(0, frame.halves[1] - frame.gaps[1] - frame.tail)];
     }
     const others = i => pref.reduce((sum, p, j) => sum + (j === i ? 0 : p), 0);
-    const gaps = i => gap * [0, 2].filter(s => s === i || pref[s] > 0).length;
+    const sideGap = s => pref[1] > 0 ? (s === 0 ? g.lc : g.cr) : g.lr;
+    const gaps = i => [0, 2].filter(s => s === i || pref[s] > 0).reduce((sum, s) => sum + sideGap(s), 0);
     return [0, 1, 2].map(i => Math.max(0, room - others(i) - gaps(i)));
   }
 
@@ -214,9 +453,12 @@ QtObject {
   // section to the widget listed last. Spacers (`fill`) are never hidden:
   // they keep their minimum gaps. With `lockCenter`, each half of the bar
   // must fit beside the full-size center on its own, and only the
-  // overflowing half loses widgets; the center is only touched if it
-  // can't fit the bar alone. The center's dividers (`divides`) are left
-  // out of what's centered, as in layoutSections.
+  // overflowing half loses widgets, the center's too where a center
+  // spacer pushes its outer group onto that half (centerParts); otherwise
+  // the center is only touched if it can't fit the bar alone. The
+  // center's dividers (`divides`) are left
+  // out of what's centered, as in layoutSections. `gap` is one number or
+  // per boundary (boundaryGaps).
   function overflowHidden(measures, length, margin, gap, spacing, lockCenter) {
     const [m0, m1] = root._margins(margin);
     const hidden = measures.map(() => []);
@@ -227,28 +469,34 @@ QtObject {
     };
     const minSpan = s => spanOf(s, "min");
     const room = length - m0 - m1 + 0.5;
+    const g = root._gaps(gap);
 
     // The sections to drop from (in tie order), or null when it all fits
     const overflowing = () => {
       if (!lockCenter) {
         const spans = measures.map((m, s) => minSpan(s));
-        const needed = spans.reduce((a, b) => a + b, 0) + gap * [0, 2].filter(s => spans[s] > 0).length;
+        const sideGap = s => spans[1] > 0 ? (s === 0 ? g.lc : g.cr) : g.lr;
+        const needed = spans.reduce((a, b) => a + b, 0) + [0, 2].filter(s => spans[s] > 0).reduce((sum, s) => sum + sideGap(s), 0);
         return needed > room ? root.dropTieOrder : null;
       }
       if (minSpan(1) > room)
         return [1];
       const shown = kept(1);
+      // A center with spacers: its pinned group is centered, its outer
+      // groups take room on the halves at full size, as the center is
+      // never squeezed (layoutSections)
+      const parts = root.centerParts(measures[1], shown, spacing, "pref");
       const hang = root.edgeHang(measures[1].map((m, i) => shown[i] ? m.pref : 0), measures[1].map(m => !!m.divides && !m.fill), spacing);
-      const center = root._lockedCenter(spanOf(1, "pref"), length, m0, m1, hang);
-      const start = center.start, c = center.length;
-      const need = s => {
-        const len = minSpan(s);
-        return len > 0 ? len + gap : 0;
+      const frame = root._lockedFrame(spanOf(1, "pref"), length, m0, m1, g, hang, parts);
+      // A side at its minimum and the center's outer group beside it
+      const need = k => {
+        const len = minSpan(2 * k);
+        return (len > 0 ? len + frame.gaps[k] : 0) + (k === 0 ? frame.lead : frame.tail);
       };
-      if (need(0) > start - m0 + 0.5)
-        return [0];
-      if (need(2) > length - m1 - start - c + 0.5)
-        return [2];
+      if (need(0) > frame.halves[0] + 0.5)
+        return frame.split ? [0, 1] : [0];
+      if (need(1) > frame.halves[1] + 0.5)
+        return frame.split ? [2, 1] : [2];
       return null;
     };
 
@@ -313,15 +561,22 @@ QtObject {
     return out;
   }
 
-  // Each index's place in its run, { run, index, count }, or null off them
-  function runPlaces(flags) {
+  // Each index's place in its run, { run, index, count }, or null off them.
+  // With `joinBefore` / `joinAfter` (the section's end joins the next
+  // section's run, sectionJoins), a run reaching that end goes on past it:
+  // it counts one more member there, so its widget takes a middle place.
+  function runPlaces(flags, joinBefore, joinAfter) {
     const places = flags.map(() => null);
-    root.runs(flags).forEach((run, r) => {
+    const shown = flags.map((on, i) => on === null || on === undefined ? -1 : i).filter(i => i >= 0);
+    const all = root.runs(flags);
+    all.forEach((run, r) => {
+      const before = joinBefore && run.members[0] === shown[0] ? 1 : 0;
+      const after = joinAfter && run.members[run.count - 1] === shown[shown.length - 1] ? 1 : 0;
       run.members.forEach((member, k) => {
         places[member] = {
           "run": r,
-          "index": k,
-          "count": run.count
+          "index": k + before,
+          "count": run.count + before + after
         };
       });
     });
@@ -332,7 +587,8 @@ QtObject {
   // order) are its groups of widgets, a group being a run of widgets
   // between a section's ends and its spacers (a spacer given room splits
   // one). Neighbouring groups at most `joinGap` apart join into one, the
-  // one rule pills, islands and merged backgrounds share. -> [{ start,
+  // rule pills and islands share (merged runs join by sectionJoins'
+  // rule instead). -> [{ start,
   // end, members }] in order along the bar, `members` the indices into
   // `spans` each holds.
   function joinGroups(spans, joinGap) {
@@ -656,10 +912,11 @@ QtObject {
   // last listed on a tie) are hidden, never a spacer (`fill`); then elastic
   // widgets shrink towards their minimum sizes in proportion to how much
   // they can give. Room past the preferred sizes goes to the spacers,
-  // shared equally (the remainder to the last). A spacer lies in the gap
-  // between the widgets either side of it (span), at a section's end
-  // flush against its widgets.
-  function allocate(measures, shown, maxExtent, spacing) {
+  // shared equally (the remainder to the last), or by `weights` (per
+  // widget, a center's: centerFillWeights) when given. A spacer lies in
+  // the gap between the widgets either side of it (span), at a section's
+  // end flush against its widgets.
+  function allocate(measures, shown, maxExtent, spacing, weights) {
     const visible = shown.slice();
     const fills = measures.map(m => !!m.fill);
     const total = key => root.span(measures.map((m, i) => visible[i] ? m[key] : 0), spacing, fills);
@@ -685,9 +942,16 @@ QtObject {
     // The spacers share what's left
     const spacers = sizes.map((size, i) => i).filter(i => fills[i] && visible[i]);
     const extra = squeeze === 0 && isFinite(maxExtent) ? Math.max(0, Math.floor(maxExtent - pref)) : 0;
-    if (spacers.length > 0 && extra > 0) {
-      const each = Math.floor(extra / spacers.length);
-      spacers.forEach((i, k) => sizes[i] += k === spacers.length - 1 ? extra - each * (spacers.length - 1) : each);
+    const weightOf = i => weights ? Math.max(0, weights[i] ?? 0) : 1;
+    const weighed = spacers.filter(i => weightOf(i) > 0);
+    const totalWeight = weighed.reduce((sum, i) => sum + weightOf(i), 0);
+    if (weighed.length > 0 && extra > 0 && totalWeight > 0) {
+      let given = 0;
+      weighed.forEach((i, k) => {
+        const share = k === weighed.length - 1 ? extra - given : Math.floor(extra * weightOf(i) / totalWeight);
+        sizes[i] += share;
+        given += share;
+      });
     }
     const offsets = [];
     let pos = 0;

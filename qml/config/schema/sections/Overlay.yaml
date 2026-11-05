@@ -10,7 +10,7 @@ properties:
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
-    description: Where the overlay opens. As in General follows General > Monitors; the primary monitor is the one set in General; the focused monitor is the one with your active workspace (and mouse); every monitor shows it on all of them at once.
+    description: Where the overlay opens.
     x-properties:
       mode:
         x-scope: look
@@ -36,19 +36,20 @@ properties:
     minimum: 50
     maximum: 100
     x-unit: '%'
-    description: Size of the overlay's cards, relative to the card size in Look & Feel. Their text and content shrink with them. For bigger cards, raise the card size.
+    description: Relative to the card size in Look & Feel.
   moduleBorders:
     x-scope: look
     x-group: Look
     type: boolean
     title: Module borders
     default: true
-    description: Draw each module's card box. Off shows the modules straight on the overlay's box.
+    description: Draw each module's card box.
   navigator:
     x-scope: look
     x-group: Page switcher
     type: string
     title: Position
+    x-control: toggle
     enum: [bottom, top]
     x-enumLabels: {bottom: Bottom, top: Top}
     default: bottom
@@ -61,7 +62,7 @@ properties:
     enum: [auto, current, icons]
     x-enumLabels: {auto: 'All, while they fit', current: Current page only, icons: Icons only}
     default: auto
-    description: Which pages show their name beside their icon. Tool pages are always icons, named in a tooltip.
+    description: Which pages show their name beside their icon.
   animation:
     x-scope: look
     x-group: Look
@@ -70,14 +71,13 @@ properties:
     enum: [top, bottom, fade]
     x-enumLabels: {top: Slide from the top, bottom: Slide from the bottom, fade: Fade}
     default: top
-    description: How the overlay and its dim background come in and go.
   showBackdrop:
     x-scope: look
     x-group: Look
     type: boolean
     title: Dim background
     default: true
-    description: Dim the whole screen behind the overlay, under the bars and border.
+    description: Dim the screen behind the overlay.
   backdrop:
     x-scope: look
     x-group: Look
@@ -87,23 +87,21 @@ properties:
     default: 85
     minimum: 0
     maximum: 90
-    description: How dark the screen behind the overlay goes.
     x-showIf: {showBackdrop: true}
   closeOnEscape:
     type: boolean
     title: Close on Escape
     default: false
-    description: Close the overlay when Escape is pressed (unless something in it, like a popup, uses the key first).
   closeOnOutsideClick:
     type: boolean
     title: Close on outside click
     default: false
-    description: 'Close the overlay when you click its empty background, around the page. A click on a bar, a popout or a prompt leaves it open.'
+    description: Close when you click the background around the page.
   items:
     x-scope: look
     type: array
     x-settings: false
-    description: 'Pages shown in the overlay, in order: your Custom pages, each a grid of modules, and the tool pages (shown as icons after them).'
+    description: 'Pages shown in the overlay, in order: your custom pages, then the tool pages.'
     default:
       - id: home
         type: Custom

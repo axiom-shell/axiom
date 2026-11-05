@@ -3,17 +3,21 @@ import QtQuick
 
 // Where a wallpaper sits on its screen (WallpaperView and the surfaces
 // that show it as a plain Image): the fill mode, and the workspace
-// parallax's zoom and shift. No file access, processes or services.
+// parallax's travel and shift. No file access, processes or services.
 QtObject {
   id: root
 
   // The image's rect on a screen, in screen units (the screen is 0-1 both
   // ways): { x, y, width, height }, all 0 for an image not loaded.
   // `fill`: "crop" covers the screen, "fit" shows it whole, "stretch"
-  // covers it unevenly, "center" at its own size. `zoom` (>= 1) enlarges
-  // it for the parallax, and `shiftX` / `shiftY` (-1 to 1) slide it within
-  // what overflows: -1 to its left or top edge, 1 its right or bottom.
-  function rect(fill, imageWidth, imageHeight, screenWidth, screenHeight, zoom, shiftX, shiftY) {
+  // covers it unevenly, "center" at its own size. `travel` (0 for none) is
+  // how far the parallax slides it end to end, as a share of the screen's
+  // mean side, the same px both ways; `shiftX` / `shiftY` (-1 to 1) place
+  // it along that: -1 shows its left or top end, 1 its right or bottom.
+  // The image is enlarged just enough that a side covering the screen at
+  // rest still covers it at either end (a letterboxed side's bars move
+  // with it); an aspect's crop overflow stays centred, never travel.
+  function rect(fill, imageWidth, imageHeight, screenWidth, screenHeight, travel, shiftX, shiftY) {
     if (!(imageWidth > 0 && imageHeight > 0 && screenWidth > 0 && screenHeight > 0))
       return {
         "x": 0,
@@ -21,35 +25,53 @@ QtObject {
         "width": 0,
         "height": 0
       };
-    const z = Math.max(1, zoom || 1);
-    let width = 1;
-    let height = 1;
+    const px = root.travelPx(travel, screenWidth, screenHeight);
+    const clamp = v => Math.max(-1, Math.min(1, v || 0));
+    let width = 1 + px / screenWidth;
+    let height = 1 + px / screenHeight;
     if (fill !== "stretch") {
       const scale = fill === "fit" ? Math.min(screenWidth / imageWidth, screenHeight / imageHeight) : fill === "center" ? 1 : Math.max(screenWidth / imageWidth, screenHeight / imageHeight);
-      width = imageWidth * scale / screenWidth;
-      height = imageHeight * scale / screenHeight;
+      const w = imageWidth * scale / screenWidth;
+      const h = imageHeight * scale / screenHeight;
+      // Only the sides it covers need to keep covering (1e-9: rounding)
+      const grow = Math.max(1, w >= 1 - 1e-9 ? width / w : 1, h >= 1 - 1e-9 ? height / h : 1);
+      width = w * grow;
+      height = h * grow;
     }
-    width *= z;
-    height *= z;
-    const clamp = v => Math.max(-1, Math.min(1, v || 0));
     return {
-      "x": (1 - width) / 2 * (1 + clamp(shiftX)),
-      "y": (1 - height) / 2 * (1 + clamp(shiftY)),
+      "x": (1 - width) / 2 - clamp(shiftX) * px / 2 / screenWidth,
+      "y": (1 - height) / 2 - clamp(shiftY) * px / 2 / screenHeight,
       "width": width,
       "height": height
     };
   }
 
+  // The parallax's travel end to end in px: `travel` (a share) of the
+  // screen's mean side, so both axes move the same px
+  function travelPx(travel, screenWidth, screenHeight) {
+    return Math.max(0, travel || 0) * (screenWidth + screenHeight) / 2;
+  }
+
   // The size to decode an image at for a screen ({ width, height }), or
   // null for its own size ("center", or no screen yet). Crop and fit
-  // decode just big enough to cover or fit it, zoomed for the parallax.
-  function decodeSize(fill, screenWidth, screenHeight, zoom) {
+  // decode just big enough to cover or fit it, grown by the parallax's
+  // travel (rect): fit by the travel's share of the side it fills, at
+  // most the shorter one's, so an image near the screen's shape isn't
+  // decoded smaller than it's drawn.
+  function decodeSize(fill, screenWidth, screenHeight, travel) {
     if (fill === "center" || !(screenWidth > 0 && screenHeight > 0))
       return null;
-    const z = Math.max(1, zoom || 1);
+    const px = root.travelPx(travel, screenWidth, screenHeight);
+    if (fill === "fit") {
+      const z = 1 + px / Math.min(screenWidth, screenHeight);
+      return {
+        "width": Math.ceil(screenWidth * z),
+        "height": Math.ceil(screenHeight * z)
+      };
+    }
     return {
-      "width": Math.ceil(screenWidth * z),
-      "height": Math.ceil(screenHeight * z)
+      "width": Math.ceil(screenWidth + px),
+      "height": Math.ceil(screenHeight + px)
     };
   }
 
@@ -85,9 +107,10 @@ QtObject {
   // strip ("horizontal" | "vertical" | "": the output's scrolling strip),
   // windows (the active workspace's tiled windows there, { x, y, w, h,
   // focusRank }), width / height (the output's) }.
-  // A grid moves both ways, by column and row; the rest along one axis, by
-  // place. Dynamic workspaces move a fixed step each (`steps` span it), not
-  // a share of how many there are: their count changes as windows open and
+  // A grid moves both ways, by column and row, the same step each (the
+  // longer side spans the travel); the rest along one axis, by place.
+  // Dynamic workspaces move a fixed step each (`steps` span it), not a
+  // share of how many there are: their count changes as windows open and
   // close (niri's empty last one), which would move every one. A strip takes its axis, by how far along it the view is
   // (stripShift); the workspaces' shift on that axis moves to the other
   // one while it's free.
@@ -157,9 +180,13 @@ QtObject {
       const index = activeId - spec.base;
       if (index < 0 || index >= spec.columns * spec.rows)
         return none;
+      // The same step both ways: the longer side spans the whole travel,
+      // the shorter one fewer steps, centred
+      const steps = Math.max(spec.columns, spec.rows) - 1;
+      const along = (i, count) => steps > 0 ? (i - (count - 1) / 2) * 2 / steps : 0;
       return {
-        "x": root.parallaxShift(index % spec.columns, spec.columns),
-        "y": root.parallaxShift(Math.floor(index / spec.columns), spec.rows)
+        "x": along(index % spec.columns, spec.columns),
+        "y": along(Math.floor(index / spec.columns), spec.rows)
       };
     }
     const index = spec.dynamic ? (spec.ids ?? []).indexOf(activeId) : activeId - spec.base;

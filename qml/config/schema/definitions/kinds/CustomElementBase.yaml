@@ -16,7 +16,7 @@ x-parts:
         x-options: colors
         default: ''
         x-emptyLabel: Auto
-        description: "Auto: the state's colour when the script gives one, else the accent."
+        description: 'Auto: the state''s colour if given, else the accent.'
     # Text: the text colour, or the state's when asked
     text:
       color:
@@ -30,7 +30,7 @@ x-parts:
         type: boolean
         title: Colour by state
         default: false
-        description: "The state's colour when the script gives one (over the colour above)."
+        description: The state's colour, when the script gives one.
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}
@@ -47,12 +47,12 @@ properties:
     type: object
     default: {}
     additionalProperties: {type: string}
-    description: 'Each of its slots (x-slots) → a key ("percentage"), a path ("data.temp"), a format ("{text}%") or a number ("100"). An empty slot reads the output''s own key.'
+    description: Each slot → a key ("percentage"), a path ("data.temp"), a format ("{text}%") or a number. Empty reads the output's own key.
   options: {type: object, additionalProperties: false, properties: {}}
   actions:
     type: object
     additionalProperties: false
-    description: 'Commands it runs (x-actions; {value} is filled in): a Button''s or List row''s click, a Bar''s change, a Toggle''s on and off.'
+    description: Commands it runs; {value} is filled in.
     properties:
       click: {x-scope: commands, type: string, title: On click, default: '', description: '{value} is the label, or the row''s text.'}
       change: {x-scope: commands, type: string, title: On change, default: '', description: '{value} is the new value.'}

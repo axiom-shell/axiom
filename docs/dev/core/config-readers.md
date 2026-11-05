@@ -29,7 +29,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
 - **`BarsConfig`**: from `Bars`.
   - The first bar is primary.
   - Edges are numbers from `methods/ScreenEdge` (`ScreenEdge.fromConfig(location)`), not this reader's.
-- **`PopoutsConfig`**: open/dismiss delays and edge trigger size, shared by bar and edge popouts.
+- **`PopoutsConfig`**: open/dismiss delays and the padding, shared by bar and edge popouts.
 - **`OSDConfig`**: the OSDs; see [OSD](../features/osd.md).
 - **`HotCornersConfig`**: the hot corners; see [Hot corners](../features/hot-corners.md).
 - **`LauncherConfig`**: launcher placement, size and providers.

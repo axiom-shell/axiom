@@ -11,10 +11,10 @@ settings:
     enum: [default, '12', '24']
     x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
     default: default
-    description: Default follows Settings › System › Date & time.
+    description: Default follows Date & time settings.
   showSeconds: {type: boolean, title: Show seconds, default: false}
   showEvents:
     type: boolean
     title: Events
     default: true
-    description: Dots on days with events, and the day's events under the calendar (under the clock when wide) where they fit; a click on a day shows its events. On the lock screen only with Calendar's Events on the lock screen; never on the login screen.
+    description: Dots on days with events, and the day's events where they fit.

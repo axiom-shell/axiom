@@ -2,37 +2,37 @@ label: Tailscale
 keywords: ['Tailscale Status']
 icon: vpn_lock
 group: Network & devices
-popout: {variant: own, enabled: {description: 'Show this machine, the tailnet and its devices when hovered.'}}
+popout: {variant: own, enabled: {description: 'This machine, the tailnet and its devices on hover.'}}
 appearance:
   variant: value
   style:
     enum: [label, icon, stacked]
-    description: "Stacked puts the label over this machine's tailnet address."
+    description: Stacked puts the label over this machine's address.
 settings:
   showLabel: {type: boolean, title: Show label, default: true}
   label:
     type: string
     title: Label
     default: ''
-    description: Text shown while connected. Empty shows the tailnet name.
+    description: Shown while connected. Empty shows the tailnet name.
   connectedIcon:
     type: string
     x-control: icon
     title: Connected icon
     default: shield_lock
-    description: A Material Symbols name (fonts.google.com/icons), or text.
+    description: A Material Symbols name, or text.
   disconnectedIcon:
     type: string
     x-control: icon
     title: Disconnected icon
     default: signal_disconnected
-    description: A Material Symbols name (fonts.google.com/icons), or text.
+    description: A Material Symbols name, or text.
   clickCommand:
     x-scope: commands
     type: string
     title: Click command
     default: ''
-    description: Run on left click (e.g. `tailscale-systray`). Right click checks again now.
+    description: Run on left click. Right click checks again.
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color}
   disconnectedColor:
     $ref: '#/definitions/WidgetColor'

@@ -18,7 +18,7 @@ settings:
     enum: [default, '12', '24']
     x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
     default: default
-    description: Default follows Settings › System › Date & time.
+    description: Default follows Date & time settings.
   showSeconds: {type: boolean, title: Seconds, default: true}
   showDate: {type: boolean, title: Date, default: true}
   timezone:
@@ -29,17 +29,17 @@ settings:
     x-control: search
     x-emptyLabel: System
     default: ''
-    description: Show the time in another time zone (e.g. Asia/Tokyo). Empty follows the system's.
+    description: e.g. Asia/Tokyo. Empty follows the system.
   timeFormat:
     type: string
     title: Time format
     default: ''
-    description: "Custom Qt time format (e.g. HH:mm). Empty uses the language's format."
+    description: A Qt time format, e.g. HH:mm. Empty uses the language's.
   dateFormat:
     type: string
     title: Date format
     default: ''
-    description: Custom Qt date format (e.g. ddd d MMM). Empty uses the language's format.
+    description: A Qt date format, e.g. ddd d MMM. Empty uses the language's.
   verticalDate:
     type: string
     title: Vertical date
@@ -49,5 +49,5 @@ settings:
       day: Day and weekday
       monthDay: Month, day and weekday
       numeric: Day over month number
-    description: The date's lines on a vertical bar, when no date format is set.
+    description: The date's lines on a vertical bar, without a date format.
     x-showIf: {showDate: true}

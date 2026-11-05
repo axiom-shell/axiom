@@ -11,7 +11,7 @@ settings:
     minimum: 1
     maximum: 10
     x-unit: px
-    description: Line width (px); dots are twice this across.
+    description: Line width (px).
     x-showIf: {style: {not: space}}
   length:
     type: integer
@@ -20,7 +20,7 @@ settings:
     default: 100
     minimum: 10
     maximum: 100
-    description: "Share of its box's length the line or slash spans; a chevron's of the gap it sits in."
+    description: Share of its box the line spans.
     x-showIf: {style: [line, slash, chevron]}
   color:
     type: string

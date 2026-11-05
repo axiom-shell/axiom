@@ -26,21 +26,21 @@ settings:
           type: string
           title: Label
           default: ''
-          description: The place's name. Empty uses the time zone's city.
+          description: Empty uses the time zone's city.
   showLocal:
     type: boolean
     title: Show the time here
     default: true
-    description: The system's time first, for comparison.
+    description: The system's time first.
   hourFormat:
     type: string
     title: Clock
     enum: [default, '12', '24']
     x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
     default: default
-    description: Default follows Settings › System › Date & time.
+    description: Default follows Date & time settings.
   showTimeline:
     type: boolean
     title: Show the day
     default: true
-    description: A band under each place showing its day and night, with a mark at now, when there's room.
+    description: A band showing each place's day and night, when there's room.

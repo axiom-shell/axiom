@@ -9,7 +9,7 @@ properties:
   style:
     $ref: '#/definitions/BarStyle'
     title: Widget style
-    description: How every bar draws its widgets, accents and shadow. A bar can take its own of any of these in the bar editor.
+    description: How every bar draws its widgets. A bar can override any of these in the bar editor.
   items:
     type: array
     x-settings: false

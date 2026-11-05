@@ -15,9 +15,10 @@ Item {
 
   // The wallpaper's URL
   required property string source
-  // Enlarged by this (>= 1) and slid by shiftX / shiftY (-1 to 1) within
-  // what overflows: the workspace parallax
-  property real zoom: 1
+  // The workspace parallax: how far it slides end to end (a share of the
+  // screen's mean side, WallpaperFill.rect), placed by shiftX / shiftY
+  // (-1 to 1)
+  property real travel: 0
   property real shiftX: 0
   property real shiftY: 0
 
@@ -100,7 +101,7 @@ Item {
     // size (the fill, the parallax, the screen) keeps its texture meanwhile
     if (!image || !(image.implicitWidth > 0 && image.implicitHeight > 0))
       return Qt.vector4d(0, 0, 0, 0);
-    const r = WallpaperFill.rect(Appearance.wallpaperFill, image.implicitWidth, image.implicitHeight, root._screen.width, root._screen.height, root.zoom, root.shiftX, root.shiftY);
+    const r = WallpaperFill.rect(Appearance.wallpaperFill, image.implicitWidth, image.implicitHeight, root._screen.width, root._screen.height, root.travel, root.shiftX, root.shiftY);
     return Qt.vector4d(r.x, r.y, r.width, r.height);
   }
 
@@ -113,7 +114,7 @@ Item {
     cache: false
     fillMode: WallpaperFill.fillMode(Appearance.wallpaperFill)
     sourceSize: {
-      const size = WallpaperFill.decodeSize(Appearance.wallpaperFill, root._screen.width, root._screen.height, root.zoom);
+      const size = WallpaperFill.decodeSize(Appearance.wallpaperFill, root._screen.width, root._screen.height, root.travel);
       return size ? Qt.size(size.width, size.height) : undefined;
     }
     onStatusChanged: {

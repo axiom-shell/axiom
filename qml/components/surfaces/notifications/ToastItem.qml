@@ -32,8 +32,9 @@ Item {
   // shift it leaves by (ToastMotion.leave, set as it starts leaving)
   property real hiddenDistance: 0
   property real swipeThreshold: 150
-  // A popout is shown over the stack: it slides out of sight, its timer
-  // paused, and comes back when that closes (ToastStack.covered)
+  // The stack can't show (a popout over it, or not yet placed among
+  // them): it waits out of sight, its timer paused, and comes in once it
+  // can (ToastStack.covered)
   property bool covered: false
   onCoveredChanged: {
     if (root.leaving || root.motionStyle === "none") {
@@ -83,7 +84,10 @@ Item {
   readonly property real shiftY: slide.y
 
   implicitWidth: NotificationsConfig.width
-  implicitHeight: Math.min(mainColumn.implicitHeight + Widget.padding * 2, Widget.px(260))
+  // Its tallest (ToastStack.toastMaxHeight: the stack counts one not
+  // drawn yet at it)
+  required property real maxHeight
+  implicitHeight: Math.min(mainColumn.implicitHeight + Widget.padding * 2, root.maxHeight)
   z: root.tucked ? -1 : 0
   opacity: 0
 

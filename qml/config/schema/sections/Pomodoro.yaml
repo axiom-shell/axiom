@@ -4,7 +4,7 @@ type: object
 x-category: Modules
 x-scope: personal
 title: Pomodoro timer
-description: Focus sessions and breaks, shared by every pomodoro widget and module.
+description: Shared by every pomodoro widget and module.
 additionalProperties: false
 properties:
   work:
@@ -41,7 +41,7 @@ properties:
     type: boolean
     title: Start focus sessions by themselves
     default: false
-    description: Off, a break ends waiting for you to start the next session.
+    description: Off, a break waits for you to start the next session.
   notify:
     type: boolean
     title: Notify

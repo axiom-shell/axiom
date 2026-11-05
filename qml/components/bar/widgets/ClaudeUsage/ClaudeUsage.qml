@@ -48,8 +48,8 @@ ValueStyleWidget {
       return rows.map(r => figure(r)).join(" · ");
     return figure(properties.display === "first" ? rows[0] : fullest);
   }
-  // Each shown figure at 100%
-  minimumText: rows.length === 0 ? "" : (properties.display === "all" ? rows : [rows[0]]).map(r => abbreviation(r) + "100%").join(" · ")
+  // Each shown figure at two digits (100% may widen the widget)
+  minimumText: rows.length === 0 ? "" : (properties.display === "all" ? rows : [rows[0]]).map(r => abbreviation(r) + "00%").join(" · ")
 
   readonly property int shownPercent: properties.display === "first" ? (rows.length > 0 ? percentOf(rows[0]) : -1) : maxPercent
   ratio: shownPercent < 0 ? -1 : shownPercent / 100

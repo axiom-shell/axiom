@@ -1,12 +1,12 @@
 label: System stats
 icon: memory_alt
 group: System
-popout: {variant: own, enabled: {description: Open live graphs of the shown metrics when hovered.}}
+popout: {variant: own, enabled: {description: Live graphs of the shown metrics on hover.}}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
-    description: Each metric drawn this way. Pill only with one metric shown; the disk has no sparkline (a fill instead).
+    description: Pill only with one metric shown; the disk shows a fill instead of a sparkline.
 colors: standard
 settings:
   showCpu: {type: boolean, title: CPU usage, default: true}
@@ -15,19 +15,19 @@ settings:
     type: string
     title: Memory format
     default: percent
+    x-control: toggle
     enum: [percent, used]
-    description: Percentage of RAM in use, or GiB used.
     x-showIf: {showMemory: true}
   showTemp:
     type: boolean
     title: CPU temperature
     default: true
-    description: Hidden on machines without a k10temp / coretemp / zenpower sensor.
+    description: Hidden when no temperature sensor is found.
   showGpu:
     type: boolean
     title: GPU usage
     default: false
-    description: AMD (sysfs) or NVIDIA (nvidia-smi). Hidden when no GPU is found.
+    description: Hidden when no GPU is found.
   showDisk: {type: boolean, title: Disk usage, default: false}
   diskPath:
     x-scope: machine
@@ -35,7 +35,7 @@ settings:
     title: Disk path
     x-control: folder
     default: /
-    description: Any path on the filesystem to report.
+    description: Any path on the filesystem.
     x-showIf: {showDisk: true}
   interval:
     type: integer
@@ -50,5 +50,5 @@ settings:
     default: 90
     minimum: 1
     maximum: 100
-    description: Any usage (%) or temperature (°C) at or above this switches to the warning background.
+    description: Usage (%) or temperature (°C) at or above this shows the warning background.
   warnColor: {$ref: '#/definitions/WidgetColor', title: Warning color, x-autoColor: warning}

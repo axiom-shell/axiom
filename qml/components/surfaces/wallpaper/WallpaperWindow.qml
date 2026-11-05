@@ -53,7 +53,7 @@ PanelWindow {
   WallpaperView {
     anchors.fill: parent
     source: ThemeManager.wallpaperFor(root.name)
-    zoom: Appearance.wallpaperParallax ? 1 + Appearance.wallpaperParallaxStrength / 100 : 1
+    travel: Appearance.wallpaperParallax ? Appearance.wallpaperParallaxStrength / 100 : 0
     shiftX: root._shift.x
     shiftY: root._shift.y
 

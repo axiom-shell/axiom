@@ -60,7 +60,7 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
   - `screen`.
   - `hidden`: per section, the config indices `WidgetGroup.crowdedOut` hides for want of room.
   - `selected`: the highlighted host's `measure`, i.e. `policy`, `size`, `preferred`, `minimum`, `priority`, `insets` (what its `maxSize` doesn't count).
-  - `sections`: per section name, `{ used, room }`: how long its widgets want to be with none hidden (`WidgetGroup.wantedLength`), and the most room it could have, the other sections as they are (`BarLayout.sectionRooms`: with `lockCenter` a side's half beside the center).
+  - `sections`: per section name, `{ used, room }`: how long its widgets want to be with none hidden (`WidgetGroup.wantedLength`), and the most room it could have, the other sections as they are (`BarLayout.sectionRooms`: with `lockCenter` a side's half beside the center, less the outer group a center spacer pushes onto it).
 - **Live widgets in the editor** (`BarWidgetHost.preview`): a host with `preview: true` opens no menu popout; under an `Item { enabled: false }` it takes no input, with a `barConfig` from `BarsConfig.enrichBarConfig` (its `ends` stubbed) and `panel: null`.
 - `BarManager.liveReports()` gives the selected bar's reports, one per screen. They feed:
   - the board's fit line and lane meters (above)

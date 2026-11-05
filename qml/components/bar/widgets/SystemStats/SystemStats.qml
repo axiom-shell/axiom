@@ -100,7 +100,7 @@ BarWidget {
       return {
         "icon": "memory",
         "value": `${SystemManager.cpuUsage}%`,
-        "widest": "100%",
+        "widest": "00%",
         "level": SystemManager.cpuUsage
       };
     case "mem":
@@ -111,7 +111,7 @@ BarWidget {
         return {
           "icon": "memory_alt",
           "value": p.memoryFormat === "used" ? gib.toFixed(root.isVertical && gib >= 10 ? 0 : 1) + "G" : `${SystemManager.memUsage}%`,
-          "widest": p.memoryFormat === "used" ? "00.0G" : "100%",
+          "widest": p.memoryFormat === "used" ? "00.0G" : "00%",
           "level": SystemManager.memUsage
         };
       }
@@ -119,14 +119,14 @@ BarWidget {
       return {
         "icon": "thermometer",
         "value": `${SystemManager.cpuTemp}°`,
-        "widest": "100°",
+        "widest": "00°",
         "level": SystemManager.cpuTemp
       };
     case "gpu":
       return {
         "icon": "developer_board",
         "value": `${SystemManager.gpuUsage}%`,
-        "widest": "100%",
+        "widest": "00%",
         "level": SystemManager.gpuUsage
       };
     default:
@@ -135,7 +135,7 @@ BarWidget {
         return {
           "icon": "hard_drive",
           "value": `${usage}%`,
-          "widest": "100%",
+          "widest": "00%",
           "level": usage
         };
       }

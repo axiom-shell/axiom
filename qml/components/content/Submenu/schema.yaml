@@ -12,15 +12,15 @@ settings:
     default: ''
     x-options: edgeMenus
     x-emptyLabel: None
-    description: The menu that opens beside this one. Make one with its mode set to Submenu to keep it off the screen edges, or pick any other.
+    description: The menu that opens beside this one.
   label: {type: string, title: Label, default: '', description: Empty shows none.}
   icon:
     type: string
     title: Icon
     default: menu_open
-    description: A Material Symbols icon name. Empty shows none.
+    description: A Material Symbols name. Empty shows none.
   openOnHover:
     type: boolean
     title: Open on hover
     default: true
-    description: Open when the pointer rests on it. Off, it opens when clicked.
+    description: Off, it opens on click.

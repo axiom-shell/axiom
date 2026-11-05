@@ -45,6 +45,17 @@ Scope {
   property var _leaving: ({})
 
   readonly property int spacing: Widget.padding
+  // A toast's tallest (ToastItem.maxHeight), and the height a toast not
+  // drawn yet counts as: its claim is decided before any toast draws, on
+  // a footprint at least as large as the toasts will be, so it never
+  // grows into a popout once they show (it only shrinks to fit them).
+  // Grown under a popout after showing, the claim yielded inside the
+  // attached box's show (its rows' heights arriving as it loaded), a
+  // binding loop that left the box open over the popout.
+  readonly property int toastMaxHeight: Widget.px(260)
+  function _heightOf(key) {
+    return root._heights[key] ?? root.toastMaxHeight;
+  }
   readonly property int count: root.toasts.length
   readonly property bool showing: root.count > 0
 
@@ -137,7 +148,7 @@ Scope {
   // a leaving one keeps where it was
   readonly property var _offsets: {
     const staying = root.toasts.filter(t => root._leaving[t.key] === undefined);
-    const rows = ToastMotion.rows(staying.map(t => root._heights[t.key] ?? 0), root.attached ? 0 : root.spacing);
+    const rows = ToastMotion.rows(staying.map(t => root._heightOf(t.key)), root.attached ? 0 : root.spacing);
     const out = {};
     staying.forEach((t, i) => out[t.key] = rows.offsets[i]);
     for (const key in root._leaving)
@@ -146,9 +157,12 @@ Scope {
   }
   readonly property real stackLength: {
     const staying = root.toasts.filter(t => root._leaving[t.key] === undefined);
-    return ToastMotion.rows(staying.map(t => root._heights[t.key] ?? 0), root.attached ? 0 : root.spacing).length;
+    return ToastMotion.rows(staying.map(t => root._heightOf(t.key)), root.attached ? 0 : root.spacing).length;
   }
-  readonly property real _firstHeight: root._heights[root.toasts.find(t => root._leaving[t.key] === undefined)?.key] ?? 0
+  readonly property real _firstHeight: {
+    const first = root.toasts.find(t => root._leaving[t.key] === undefined);
+    return first ? root._heightOf(first.key) : 0;
+  }
 
   // The free area the detached stack sits in (its window's size, on the
   // screen), and its insets there from each side
@@ -199,7 +213,8 @@ Scope {
 
   // Its place among the popouts (PopoutManager): under all of them, so one
   // shown over it hides it (`covered`) until it closes, and one arriving
-  // under one waits (docks aside, PopoutGeometry.resolve)
+  // under one waits (docks aside, PopoutGeometry.resolve). Its footprint
+  // counts toasts not drawn yet at their tallest (_heightOf).
   property PopoutClaim claim: PopoutClaim {
     key: "toasts:" + root.screenName
     kind: "toast"
@@ -214,7 +229,11 @@ Scope {
       return [Qt.rect(o.x + r.x, o.y + r.y, r.width, r.height)];
     }
   }
-  readonly property bool covered: root.claim.yielded
+  // Its toasts show only while the claim is granted: under a popout
+  // (yielded), or not yet placed among them (a toast just come), they
+  // wait out of sight, drawing nothing and taking no input, their timers
+  // paused
+  readonly property bool covered: !root.claim.granted
 
   // A toast's place in its window: { x, y } of its top-left
   function placeOf(key, height) {
@@ -334,6 +353,7 @@ Scope {
         slideEdge: root.slideEdge
         motionStyle: NotificationsConfig.motionStyle
         hiddenDistance: root.hiddenDistance(toastCard.place, toastCard.width, toastCard.height)
+        maxHeight: root.toastMaxHeight
         width: implicitWidth
         height: implicitHeight
         visible: !SurfaceManager.captureFrozen
@@ -373,7 +393,9 @@ Scope {
           y: area.origin.y + toastCard.y + toastCard.shiftY
           color: Qt.alpha(Theme.background, toastCard.opacity)
           overlayLayer: true
-          shown: toastCard.backed && toastCard.visible && !toastCard.gone
+          // (out of sight, faded or slid, it blurs nothing: a covered
+          // toast draws nothing)
+          shown: toastCard.backed && toastCard.visible && !toastCard.gone && toastCard.opacity > 0
           clipRect: Qt.rect(area.origin.x, area.origin.y, area.width, area.height)
         }
       }
@@ -408,7 +430,7 @@ Scope {
     keyboardOnDemand: root.replyable
     // Room for a full stack across a top or bottom edge, so the window
     // never grows while it shows
-    maxContentDepth: root.vertical ? NotificationsConfig.width : Widget.px(260) * NotificationsConfig.maxToasts
+    maxContentDepth: root.vertical ? NotificationsConfig.width : root.toastMaxHeight * NotificationsConfig.maxToasts
 
     content: Component {
       Item {
@@ -479,6 +501,7 @@ Scope {
               motionStyle: NotificationsConfig.motionStyle
               // Out of the row's clip
               hiddenDistance: root.slideEdge === ScreenEdge.Left || root.slideEdge === ScreenEdge.Right ? row.width : toast.implicitHeight
+              maxHeight: root.toastMaxHeight
               screenName: root.screenName
               covered: root.covered
 

@@ -11,13 +11,13 @@ properties:
     type: boolean
     title: Recommended environment
     default: true
-    description: 'Variables recommended on Wayland: GTK, Qt, Clutter and Electron apps run on Wayland (falling back to X11 where they can), Qt scales by pixel density and leaves window decorations to the compositor. Your own below win over them.'
+    description: Variables that make apps run on Wayland. Yours below win over them.
   env:
     x-wide: true
     type: array
     title: Environment
     default: []
-    description: Variables set before anything starts. Changes apply to apps started afterwards.
+    description: Set before anything starts. Changes apply to apps started afterwards.
     items:
       type: object
       additionalProperties: false
@@ -34,7 +34,7 @@ properties:
         command: dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
         enabled: true
       - {id: systemctl, command: systemctl --user start hyprpolkitagent, enabled: true}
-    description: Commands run once when the compositor starts, after axiom.
+    description: Commands run once when the compositor starts.
     items:
       type: object
       additionalProperties: false

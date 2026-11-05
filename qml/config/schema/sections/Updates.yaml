@@ -3,19 +3,19 @@
 type: object
 x-category: Modules
 title: Package updates
-description: How every updates widget and module checks for and installs updates.
+description: How updates widgets and modules check for and install updates.
 additionalProperties: false
 properties:
   includeAur:
     type: boolean
     title: Include AUR
     default: false
-    description: Also count outdated AUR packages.
     x-showIf: {/$distro: arch}
   aurHelper:
     type: string
     title: AUR helper
     default: paru
+    x-control: toggle
     enum: [paru, yay]
     x-showIf: {includeAur: true, /$distro: arch}
   terminal:
@@ -24,10 +24,10 @@ properties:
     type: string
     title: Terminal
     default: ''
-    description: Terminal the upgrade runs in (launched as `<terminal> -e ...`). Empty uses the default terminal (Default apps).
+    description: Empty uses the default terminal.
   upgradeCommand:
     x-scope: commands
     type: string
     title: Upgrade command
     default: ''
-    description: Run on click. Empty uses your distribution's upgrade (`sudo pacman -Syu`, `sudo dnf upgrade`), or the AUR helper with -Syu.
+    description: Run on click. Empty uses your distribution's upgrade.

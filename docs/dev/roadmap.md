@@ -167,7 +167,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the bar rewrite (config v93), under Hyprland, niri and sway: switch a top bar between One bar and A pill per group, with the screen border on and off, and check windows and the widgets don't move; set Auto-hide on a bar and check the edge hover reveal and its slide (blur and shadow follow it), a workspace change and a widget's news showing it, a bar popout and an edge menu holding it, the bar editor holding the selected bar, `axiom ipc bar toggle focused` pinning it (windows make room) and `hide`, a fullscreen window over it, a side bar, and a bar stacked inside another; open an edge popout on a transparent bar's edge with a floating bar on it and check it opens past the floating bar.
 - Once the shell runs compositor-20 (row 20): with blur on and translucency below 100, a toast's tone matches the bar and edge popout beside it, and doesn't jump when the blur pauses or resumes.
 - Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
-- Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Focus windows that ask for it are greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
+- Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Window dimming are hidden and Focus windows that ask for it greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
 - Once the shell runs the floating popouts pass: on Hyprland, a detached OSD and a floating edge menu (detached) slide in from off the screen under a solid bar, a pill bar and the border, and a bar popout on a transparent bar or a floating bar with no islands from under its bar; with the overlay open they open over it, coming out of the bars' inner side (the frame line), and keep doing so if the overlay closes while they're open; over a fullscreen window the OSD, a floating edge menu opened by its keybind, the attached and detached launcher and the window switcher sit the compositor's outer gap from the screen's edges and slide in from off the screen (toasts use the same gap); under sway and niri, the same boxes come out of the bars' inner side (a floating bar's too), and over a fullscreen window slide in from the screen edge; with blur on and a detached box's or dock's animation set to Fade, under niri no blurred box shows before it fades in, after it fades out, or while a fading dock is hidden.
 - Once the shell runs #329 (bar-popouts-03): an open edge popout on a transparent bar's edge keeps its layer and namespace when the bar changes, auto-hides, or the overlay opens (Hyprland).
 - Once the shell runs compositor-18 (row 20), on a laptop under Hyprland: with the Mouse and Touchpad parts on, give the touchpad its own speed, acceleration and left-handed and check the touchpad takes them while a mouse keeps the Mouse part's (right after login too: Hyprland's first load lists no devices, the daemon's eval sets them), a second speed change applies without a reload, and the touchpad's natural scrolling and tap to click still hold; with the Touchpad part off, the touchpad follows the Mouse part. A nested Hyprland has no touchpad to check this on.
@@ -347,6 +347,7 @@ Found while testing the trial Apply (row 20, compositor-10):
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
+- [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh)
 
 Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
@@ -368,7 +369,6 @@ Found by the audits:
 - [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
-- [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
@@ -415,12 +415,13 @@ Found while building dev trees and the dev config:
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
 
-Found while testing removable drives:
-- [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
-
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
 - [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
+- [A bar widget that loses its background while shown keeps drawing the old one](issues.md#a-bar-widget-that-loses-its-background-while-shown-keeps-drawing-the-old-one)
+
+Found while reviewing the wallpaper parallax's travel:
+- [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

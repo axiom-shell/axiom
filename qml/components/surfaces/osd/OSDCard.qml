@@ -20,24 +20,49 @@ Item {
 
   readonly property int pictureSize: Widget.px(48)
   // The text's width: its own, the longer line's, between a least (a
-  // short title doesn't make a stub of a card) and a most (a long one
-  // ends in "…"). A Text's implicit width ignores its eliding, so this
-  // reads the lines' own widths (the subtitle's by its text, not its
-  // `visible`, which reads false while the card's slot is folded)
+  // short title doesn't make a stub of a card) and a most (past it the
+  // title ends in "…" and the faint line wraps). A Text's implicit width
+  // ignores its eliding, so this reads the title's own; the faint line's
+  // is measured from its text by the font (a wrapping Text's implicit
+  // width followed its wrapped lines, so the card stayed as narrow as the
+  // title and the line wrapped at that). Both read the text, not
+  // `visible`, which reads false while the card's slot is folded
   readonly property int minTextWidth: Widget.px(160)
-  readonly property int maxTextWidth: Widget.px(360)
-  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? subtitleText.implicitWidth : 0))))
+  readonly property int maxTextWidth: Widget.px(400)
+  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? Math.ceil(subtitleMetrics.advanceWidth(root.subtitle)) : 0))))
+  // The most lines the faint line wraps to (the last ends in "…")
+  readonly property int subtitleLines: 3
+  // Its least height (one faint line), and the margin above and below
+  // what shows (the picture, or the text when it's taller)
+  readonly property int _minHeight: Widget.px(64)
+  readonly property real _margin: (root._minHeight - root.pictureSize) / 2
+  // The text's height: one title line and the faint line as it wraps
+  // (read by its text, not its `visible`, as textWidth does)
+  readonly property real _textHeight: titleText.implicitHeight + (root.subtitle !== "" ? subtitleText.implicitHeight : 0)
   // The empty margin round what shows across `vertical` edges' depth
-  // (its width) or else its height (round the picture): a host spacing
-  // it by what shows reads it
+  // (its width) or else its height (round the picture or the text): a
+  // host spacing it by what shows reads it
   function inset(vertical) {
-    return vertical ? Widget.spacing * 2 : (root.implicitHeight - root.pictureSize) / 2;
+    return vertical ? Widget.spacing * 2 : (root.implicitHeight - Math.max(root.pictureSize, root._textHeight)) / 2;
   }
-  // Its width with the text at its most: the room a host keeps for it
+  // Its width with the text at its most, and its height with the faint
+  // line wrapped to its most lines (a Text's line is its font's height
+  // rounded up)
   readonly property real maxWidth: root.implicitWidth - root.textWidth + root.maxTextWidth
+  readonly property real maxHeight: Math.max(root._minHeight, Math.ceil(titleText.implicitHeight + Math.ceil(subtitleMetrics.height) * root.subtitleLines + root._margin * 2))
+  // What shows across `vertical` edges' depth at its largest, margins left
+  // out: the room a host keeps for it
+  function maxShown(vertical) {
+    return vertical ? root.maxWidth - root.inset(true) * 2 : root.maxHeight - root._margin * 2;
+  }
 
   implicitWidth: row.implicitWidth + Widget.spacing * 4
-  implicitHeight: Widget.px(64)
+  implicitHeight: Math.max(root._minHeight, Math.ceil(root._textHeight + root._margin * 2))
+
+  FontMetrics {
+    id: subtitleMetrics
+    font: subtitleText.font
+  }
 
   RowLayout {
     id: row
@@ -52,13 +77,15 @@ Item {
       sourceComponent: root.picture
     }
 
-    ColumnLayout {
-      spacing: 0
+    // A Column, not a Layout: the faint line wraps at the text's width,
+    // set here, so its height holds while the card's slot is folded
+    Column {
       Layout.preferredWidth: root.textWidth
+      Layout.preferredHeight: root._textHeight
 
       StyledText {
         id: titleText
-        Layout.fillWidth: true
+        width: root.textWidth
         text: root.title
         textSize: Appearance.fontSizeLarge
         font.weight: Font.Medium
@@ -68,11 +95,15 @@ Item {
 
       StyledText {
         id: subtitleText
-        Layout.fillWidth: true
-        text: root.subtitle
+        width: root.textWidth
+        // A zero-width break after each / - _, so a path or an id wraps
+        // to fill the line: line breaking allows none before a digit
+        // ("9a5f-200d" stayed whole and went to the next line)
+        text: root.subtitle.replace(/([\/_-])/g, "$1\u200B")
         textColor: Theme.foregroundAlt
+        wrapMode: Text.Wrap
         elide: Text.ElideRight
-        maximumLineCount: 1
+        maximumLineCount: root.subtitleLines
         visible: text !== ""
       }
     }

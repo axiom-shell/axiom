@@ -3,14 +3,14 @@
 type: object
 x-category: General
 title: Battery
-description: 'Low and critical battery levels, on laptops: the Battery widget takes its low and critical colors at them, and a notification says when the battery drops to one.'
+description: Low and critical battery levels, on laptops.
 additionalProperties: false
 properties:
   notify:
     type: boolean
     title: Low battery notifications
     default: true
-    description: "Send a notification when the battery becomes low, and again when it becomes critical. An OSD with Low battery among its status icons (one whose detail cards are on, where it opens the OSD) shows them as a card instead; a critical battery still sends an urgent notification too while this is on."
+    description: Notify when the battery becomes low, and again when critical.
     x-link: {setting: OSD}
   lowThreshold: {type: integer, title: Low at, x-unit: '%', default: 20, minimum: 0, maximum: 100}
   criticalThreshold:
