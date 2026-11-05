@@ -373,8 +373,6 @@ Found by the audits:
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
-- [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
-- [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
