@@ -12,6 +12,7 @@ Tailscale's state for the bar widget, its popout and the overlay module, shaped 
 
 - The `tailscaledetails` topic (`DetailsSource`) adds what only the popout and module show, so the bar's poll stays one process: `tailscale debug prefs` (the switches; `debug` isn't a stable interface, so prefs it can't read are `known: false` and the switches hide) and `tailscale switch --list --json` (the accounts; refused without operator rights: `profilesDenied`). The panel `acquireDetails(owner)`s it at the same `Tailscale.interval`.
 
+- **`stateText`:** `backendState` in the user's words (`stateLabels`), for the panel and the Network card's Tailscale line.
 - **Connection note:** with `Notifications.quiet.connectivity`, connecting and disconnecting is noted silently (`ConnectionNotes`), only while something polls it.
 
 ### Actions
@@ -20,7 +21,7 @@ Tailscale's state for the bar widget, its popout and the overlay module, shaped 
 - `tailscale.set` (`setExitNode`, `setPref`) runs `tailscale set` with only the fields given, each as `--flag=value`. Never `tailscale up` with flags: it resets every pref it isn't given. The Tailscale SSH switch is left out on purpose (one click would start an SSH server).
 - Every action refreshes both topics.
 - Without operator rights tailscaled refuses (`access denied`): the method fails with kind `refused`, which the shell words as a pointer to Grant access. `tailscale.grantOperator` (the panel's Grant access, shown while `profilesDenied`) runs `pkexec tailscale set --operator=<user>`: polkit asks for an administrator's password (axiom's agent when `Polkit.enabled`). Dismissed or failed, pkexec's 126 / 127 are `unauthorized`. The message is in `TailscaleManager.lastError` until the next success.
-- The login link opens with `TailscaleManager.openLogin()` (`Qt.openUrlExternally`, never through a shell). Go tests stub the command: never run `tailscale up`, `down`, `switch`, `login`, `set` or the pkexec grant for real while testing.
+- `TailscaleManager.logIn()` opens a pending login's link (`Qt.openUrlExternally`, never through a shell), else runs `connect()`, which gives one (after a logout tailscaled is `NeedsLogin` with no link): the panel's Log in and the VPN row both use it. Go tests stub the command: never run `tailscale up`, `down`, `switch`, `login`, `set` or the pkexec grant for real while testing.
 
 ### Surfaces
 - The bar widget: connected or not, the tailnet's name (or its label); left click runs `clickCommand`, right click refreshes. Its popout is its own (`popout: {variant: own}`, `content/Tailscale`).

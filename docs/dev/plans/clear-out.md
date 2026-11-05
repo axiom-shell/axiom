@@ -120,7 +120,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 72 | features-08 | major | Done: Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
 | 73 | features-09 | major | Done: The chat | 4 | ~180 | features-01 |  |
 | 74 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
-| 75 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 4 | ~150 | features-01, overlay-modules-10 |  |
+| 75 | features-11 | major | Done: Networking and Bluetooth, the VPN list and Tailscale | 4 | ~150 | features-01, overlay-modules-10 |  |
 | 76 | features-12 | major | Community setups | 5 | ~30 | features-01 |  |
 | 77 | features-13 | major | Screenshots and recording | 4 | ~80 | features-03 |  |
 | 78 | features-14 | major | Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
@@ -535,11 +535,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-10** (6, 4 done): the folder-name entry stopped: encoding the URL doesn't fix it (see the entry), and a fix needs a choice. The missing-folder entry's fix came back out: its review found it writes the kept edits over the real note, and what they should become needs a choice too.
   - [A folder name holding `#` or `?` opens the wrong folder in the note list](../issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
   - [Typing in a note creates a linked notes folder that doesn't exist](../issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
-- **features-11** (4): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
-  - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](../issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
-  - [The join form stays incomplete when CA file is picked without a file and the security changed](../issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
-  - [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](../issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
-  - [The Network card shows Tailscale's raw state, untranslated](../issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
+- **features-11** (4, done): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
 - **features-12** (5):
   - [Re-applying a community setup over its edited copy never shows Applied](../issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
   - [IPC community apply does nothing until the catalog was read](../issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)

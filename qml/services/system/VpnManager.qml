@@ -24,7 +24,8 @@ QtObject {
 
   // Every row: { id, name, kind, state, ipv4, error, plugin }, by name, so
   // a row never moves under the pointer. Tailscale's id is "tailscale",
-  // the others' their uuid
+  // the others' their uuid; its error, while off, carries Tailscale's own
+  // words in message
   readonly property var rows: {
     const out = root.profiles.map(p => ({
           "id": p.uuid,
@@ -40,9 +41,10 @@ QtObject {
         "id": "tailscale",
         "name": TailscaleManager.tailnetName || "Tailscale",
         "kind": "tailscale",
-        "state": TailscaleManager.busy ? (TailscaleManager.connected ? "disconnecting" : "connecting") : TailscaleManager.connected ? "on" : TailscaleManager.backendState === "Starting" ? "connecting" : "off",
+        "state": TailscaleManager.pending === "tailscale.down" ? "disconnecting" : TailscaleManager.pending === "tailscale.up" ? "connecting" : TailscaleManager.connected ? "on" : TailscaleManager.backendState === "Starting" ? "connecting" : "off",
         "ipv4": TailscaleManager.ip,
-        "error": TailscaleManager.needsLogin ? "needs-login" : TailscaleManager.lastError !== "" ? "failed" : "",
+        "error": TailscaleManager.connected ? "" : TailscaleManager.lastError !== "" ? "failed" : TailscaleManager.needsLogin ? "needs-login" : "",
+        "message": TailscaleManager.lastError,
         "plugin": true
       });
     return out.sort((a, b) => a.name.localeCompare(b.name));
@@ -106,7 +108,7 @@ QtObject {
   function up(row) {
     if (row.kind === "tailscale") {
       if (TailscaleManager.needsLogin)
-        TailscaleManager.openLogin();
+        TailscaleManager.logIn();
       else
         TailscaleManager.connect();
     } else {
@@ -232,7 +234,7 @@ QtObject {
     case "needs-login":
       return I18n.tr("Needs login: click to open it");
     }
-    return I18n.tr("Couldn't connect");
+    return row.message || I18n.tr("Couldn't connect");
   }
 
   function kindLabel(kind) {

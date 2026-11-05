@@ -19,9 +19,9 @@ Card {
 
   readonly property var info: NetworkingManager.netInfo
   readonly property string kindIcon: root.info.kind === "wifi" ? "signal_wifi_4_bar" : root.info.kind === "ethernet" ? "lan" : "dns"
-  // "Running 100.x.y.z", or "" when Tailscale isn't installed or is a VPN
-  // row
-  readonly property string tailscale: TailscaleManager.available && !VpnConfig.showTailscale ? (TailscaleManager.backendState + " " + TailscaleManager.ip).trim() : ""
+  // "Connected 100.x.y.z", or "" when Tailscale isn't installed or is a
+  // VPN row
+  readonly property string tailscale: TailscaleManager.available && !VpnConfig.showTailscale ? (TailscaleManager.stateText + " " + TailscaleManager.ip).trim() : ""
   // "Work, Home", or "" with no VPN up
   readonly property string vpns: VpnManager.activeRows.map(r => r.name).join(", ")
 
@@ -169,7 +169,7 @@ Card {
           elide: Text.ElideRight
           text: I18n.tr("Tailscale · {0}", root.tailscale)
           textSize: Appearance.fontSizeBy(-2)
-          textColor: root.tailscale.startsWith("Running") ? Theme.success : Theme.foreground
+          textColor: TailscaleManager.connected ? Theme.success : Theme.foreground
           opacity: 0.8
         }
       }

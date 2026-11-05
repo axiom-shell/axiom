@@ -21,6 +21,17 @@ QtObject {
   property string backendState: ""
   readonly property bool connected: backendState === "Running"
   readonly property bool needsLogin: backendState === "NeedsLogin"
+  // I18n.tr("Connected") I18n.tr("Stopped") I18n.tr("Needs login") I18n.tr("Starting…") I18n.tr("Not running")
+  readonly property var stateLabels: ({
+      "Running": "Connected",
+      "Stopped": "Stopped",
+      "NeedsLogin": "Needs login",
+      "NeedsMachineAuth": "Needs login",
+      "Starting": "Starting…",
+      "": "Not running"
+    })
+  // backendState in the user's words
+  readonly property string stateText: I18n.tr(root.stateLabels[root.backendState] ?? root.backendState)
   property string tailnetName: ""
   // This machine's first Tailscale address, and all of them
   property string ip: ""
@@ -129,9 +140,12 @@ QtObject {
     root._run("tailscale.grantOperator");
   }
 
-  // Opens the pending login's link in the browser
-  function openLogin() {
-    if (root.authURL.startsWith("https://") || root.authURL.startsWith("http://"))
+  // Opens the pending login's link in the browser, else starts a login
+  // (`tailscale up`, which gives one): after a logout there's no link
+  function logIn() {
+    if (root.authURL === "")
+      root.connect();
+    else if (root.authURL.startsWith("https://") || root.authURL.startsWith("http://"))
       Qt.openUrlExternally(root.authURL);
   }
 

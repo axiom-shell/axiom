@@ -43,5 +43,6 @@ What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the s
 
 ### BluetoothManager
 - Over `Quickshell.Bluetooth`: adapter power, scanning, sorted device lists, and connect / pair / forget.
+- **Discovery:** runs while something holds `acquireDiscovery(owner)` (a BluetoothDevices menu on its Discover tab) and the adapter is on, so two menus share one scan. Only a scan started here is stopped, never another app's.
 - IPC `bluetooth enable|disable|toggle` (the `bluetooth` keybind action), the adapter's power. In `_services` too.
 - Not named `Bluetooth`: that would shadow Quickshell's singleton, and the name is also taken by the `Bluetooth` bar widget file.
