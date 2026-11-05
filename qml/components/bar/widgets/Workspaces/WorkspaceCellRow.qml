@@ -46,8 +46,8 @@ Item {
   property int hoveredId: -1
 
   // Measured from the cells' lengths to be, never their gliding ones
-  // (composition.md › Bar motion), and clipped to it while a cell that
-  // left the active state still shrinks
+  // (composition.md › Bar motion), and clipped to it: a cell that left the
+  // active state still shrinking, the active box wrapping past an end
   readonly property real _measured: ids.length * cellLength + Math.max(0, ids.length - 1) * spacing + (properties.wideActive && ids.indexOf(activeId) >= 0 ? cellLength : 0)
   implicitWidth: isVertical ? cells.implicitWidth : _measured
   implicitHeight: isVertical ? _measured : cells.implicitHeight
