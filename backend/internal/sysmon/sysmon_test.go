@@ -528,6 +528,14 @@ func TestNvidiaStream(t *testing.T) {
 	}
 }
 
+// failed: the stream's failed start is stamped, which comes after the
+// fake records the start (moving the clock before then moves the retry)
+func failed(mon *Monitor) bool {
+	mon.mu.Lock()
+	defer mon.mu.Unlock()
+	return !mon.gpu.failedAt.IsZero()
+}
+
 func TestNvidiaKeptAndRetried(t *testing.T) {
 	t.Parallel()
 	m := newMachine(t)
@@ -537,7 +545,7 @@ func TestNvidiaKeptAndRetried(t *testing.T) {
 	// No PCI device found: never sleeps, so the history keeps it
 	mon.Keep("shell", []string{GPU})
 	run(t, mon)
-	if !testkit.Eventually(func() bool { starts, _ := f.state(); return len(starts) == 1 }) {
+	if !testkit.Eventually(func() bool { return failed(mon) }) {
 		t.Fatal("the history never started the stream")
 	}
 	if starts, _ := f.state(); starts[0] != time.Second {
@@ -571,12 +579,7 @@ func TestNvidiaRetriedForTheTopic(t *testing.T) {
 	run(t, mon)
 	req := `{"interval": 1000, "metrics": ["gpu"]}`
 	fetch(req)
-	// Started, and its failure stamped (after the start, by the clock now)
-	if !testkit.Eventually(func() bool {
-		mon.mu.Lock()
-		defer mon.mu.Unlock()
-		return !mon.gpu.failedAt.IsZero()
-	}) {
+	if !testkit.Eventually(func() bool { return failed(mon) }) {
 		t.Fatal("the topic never started the stream")
 	}
 	f.mu.Lock()
