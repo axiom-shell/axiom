@@ -148,7 +148,7 @@ Seams: every reader user; every editor.
 ## config-pipeline
 Scope: the Go config pipeline's pure core: the ordered JSON tree, the schema (built from YAML, validation), config ops and formats, migrations (format-1 legacy, conversion, format-2 steps).
 Docs: core/config-v2.md
-Extra: backend/internal/jsonx/ backend/internal/schema/ backend/internal/config/ backend/internal/migrate/convert/ backend/internal/migrate/steps/ backend/internal/share/zz_generated_movedkeys.go
+Extra: backend/internal/jsonx/ backend/internal/schema/ backend/internal/config/ backend/internal/migrate/convert/ backend/internal/migrate/steps/ backend/internal/share/movedkeys.go
 Checks:
 - The tree keeps key order, unknown keys and old shapes, and its bytes match the JS reference (`jsonx`, the shared fixtures).
 - Nothing hand-copies a key list, default or annotation from the schema; the YAML build rejects what `strict.go` says it does.

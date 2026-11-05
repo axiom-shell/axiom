@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09 and overlay-modules-10 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10 and features-06 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -21,8 +21,8 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 11. Deferred: [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall).
 12. Deferred: [The lock screen has no settings for allowing or viewing notifications](../issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (filed apart; overlay-modules-07 goes ahead).
 13. [A dock beside another edge's reserving dock is laid out as if that dock weren't there](../issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there): b) reach past it as edge popouts do.
-14. [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished): c) count only if the session had started.
-15. [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons): accept the dots and picker under the ring.
+14. Done: Skipping a focus session counts it as finished: c) count only if the session had started.
+15. Done: PomodoroDial redraws DialControls' ring and buttons: accept the dots and picker under the ring.
 16. Deferred: [Calendar times in a Windows zone name with no VTIMEZONE read as local time](../issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time) (left logged, no table).
 
 ### Cross-area merges
@@ -109,13 +109,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
 | 62 | overlay-modules-09 | minor-sweep | Done: The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
 | 63 | overlay-modules-10 | minor-sweep | Done: Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
-| 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
+| 64 | overlay-modules-11 | minor-sweep | Done: Hot corners | 2 | ~120 | none |  |
 | 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
 | 66 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
-| 67 | features-03 | major | Notifications | 3 | ~200 (net about -80) | platform-03 |  |
+| 67 | features-03 | major | Done: Notifications | 3 | ~200 (net about -80) | platform-03 |  |
 | 68 | features-04 | major | Moved to Unconfirmed: The dock | 0 | ~30 | features-01 | Q13 |
 | 69 | features-05 | major | Todo, pomodoro and timers | 6 | ~200 | features-01 | Q14, Q15 |
-| 70 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
+| 70 | features-06 | major | Done: Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
 | 71 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
 | 72 | features-08 | major | Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
 | 73 | features-09 | major | The chat | 4 | ~180 | features-01 |  |
@@ -499,9 +499,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - WifiNetworks' WPA password form repeats WifiJoinForm's
   - Login and Password each carry the same required-field report
   - WeatherForecast repeats the Weather card's current conditions
-- **overlay-modules-11** (2): The v71 entry is a rare path: smallest fix.
-  - [Hot corners' action list is a hand-kept copy of the keybind one](../issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
-  - [A shared file older than v71 resets niri's hot corner](../issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
+- **overlay-modules-11** (2, done): The v71 entry is a rare path: smallest fix.
+  - Hot corners' action list is a hand-kept copy of the keybind one
+  - A shared file older than v71 resets niri's hot corner
 - **overlay-modules-12** (1): Needs the live log at a first sizing; folds into overlay-modules-09 if found first.
   - [A model of size -1 when the overlay grid resizes](../issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - **overlay-modules-13** (1):
@@ -509,22 +509,22 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **features**
 
-- **features-03** (3):
-  - [The notification list's delegates animate with their own easing](../issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
-  - [The history's group and entry delegates repeat one swipe-away mechanism](../issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
-  - [clearAll removes each cached image twice, one process per entry](../issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
+- **features-03** (3, done):
+  - The notification list's delegates animate with their own easing
+  - The history's group and entry delegates repeat one swipe-away mechanism
+  - clearAll removes each cached image twice, one process per entry
 - **features-04** (0): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The dock's menu and drag state outlive the icons they point at; A dock beside another edge's reserving dock is laid out as if that dock weren't there.
-- **features-05** (6): The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
-  - [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished)
-  - [A recent timer chip reads its label back as part of the duration](../issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
-  - [A todo.json deleted while unreadable blocks every save until restart](../issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
-  - [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
-  - [Focus and Pomodoro build the parts their properties turn off](../issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
+- **features-05** (6): Five fixed; the dropdown entry stays open (its cause traced: with no Flickable and a box that doesn't grow, `_roomBelow` is 0, so the list gets the two-row minimum; how much room it should take instead is a behaviour choice), so the cluster isn't done. The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
+  - Skipping a focus session counts it as finished
+  - A recent timer chip reads its label back as part of the duration
+  - A todo.json deleted while unreadable blocks every save until restart
+  - PomodoroDial redraws DialControls' ring and buttons
+  - Focus and Pomodoro build the parts their properties turn off
   - [A dropdown in an edge menu card with nothing scrolling gets two rows](../issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
-- **features-06** (3):
-  - [A save conflict reloads nothing, so trying again conflicts again](../issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)
-  - [Moving a recurring event to another calendar drops its earlier occurrences and exceptions](../issues.md#moving-a-recurring-event-to-another-calendar-drops-its-earlier-occurrences-and-exceptions)
-  - [Enter in the editor's title saves again while busy and picks All events while asking](../issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
+- **features-06** (3, done): The move is the daemon's one locked call; the Custom rule's read-only calendar picker went with the shell's re-creating move.
+  - A save conflict reloads nothing, so trying again conflicts again
+  - Moving a recurring event to another calendar drops its earlier occurrences and exceptions
+  - Enter in the editor's title saves again while busy and picks All events while asking
 - **features-07** (3):
   - [A Calendar card on the desktop or in an edge menu takes the page's request](../issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
   - [Removing a CalDAV account deletes its password before the draft is saved](../issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)

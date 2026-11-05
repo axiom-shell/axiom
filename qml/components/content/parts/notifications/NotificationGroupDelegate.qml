@@ -23,7 +23,6 @@ Item {
   property bool expanded: false
   // A group of silent ones (the Quiet section): a fainter card
   property bool quiet: false
-  property real swipeThreshold: 120
 
   readonly property var entries: root.group?.entries ?? []
   readonly property int count: root.entries.length
@@ -45,10 +44,7 @@ Item {
   property bool _dismissing: false
   function _slideOut(delay, dismiss) {
     root._dismissing = root._dismissing || dismiss;
-    if (slideOut.running)
-      return;
-    slideDelay.duration = delay;
-    slideOut.start();
+    swipe.slideOut(delay);
   }
 
   Layout.fillWidth: true
@@ -56,12 +52,9 @@ Item {
   opacity: 0
 
   // Glides into place when a group above it comes or goes; not on its
-  // own arrival, which `appear` animates
+  // own arrival, which its swipe's fade in animates
   property bool _placed: false
-  Component.onCompleted: {
-    appear.start();
-    Qt.callLater(() => root._placed = true);
-  }
+  Component.onCompleted: Qt.callLater(() => root._placed = true)
   Glide on y {
     enabled: root._placed
     duration: Appearance.animNormal
@@ -71,96 +64,16 @@ Item {
       root.expanded = false;
   }
 
-  transform: Translate {
-    id: shift
-  }
+  transform: swipe.shift
 
-  DragHandler {
+  NotificationSwipe {
     id: swipe
     enabled: !root.expanded
-    target: null
-    yAxis.enabled: false
-    onTranslationChanged: {
-      if (!active || slideOut.running)
-        return;
-      shift.x = translation.x;
-      root.opacity = 1 - Math.min(1, Math.abs(translation.x) / (root.swipeThreshold * 2));
-    }
-    onActiveChanged: {
-      if (active || slideOut.running)
-        return;
-      if (Math.abs(shift.x) > root.swipeThreshold)
-        root.dismissAll();
-      else
-        snapBack.start();
-    }
-  }
-
-  // A swipe short of the threshold: slide back and undo the fade
-  ParallelAnimation {
-    id: snapBack
-    NumberAnimation {
-      target: shift
-      property: "x"
-      to: 0
-      duration: Appearance.animFast
-      easing.type: Appearance.easing
-    }
-    NumberAnimation {
-      target: root
-      property: "opacity"
-      to: 1
-      duration: Appearance.animFast
-      easing.type: Appearance.easing
-    }
-  }
-
-  ParallelAnimation {
-    id: appear
-    NumberAnimation {
-      target: root
-      property: "opacity"
-      from: 0
-      to: 1
-      duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
-    }
-    NumberAnimation {
-      target: shift
-      property: "y"
-      from: -8
-      to: 0
-      duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
-    }
-  }
-
-  SequentialAnimation {
-    id: slideOut
-    PauseAnimation {
-      id: slideDelay
-    }
-    ParallelAnimation {
-      NumberAnimation {
-        target: shift
-        property: "x"
-        to: shift.x < 0 ? -root.width : root.width
-        duration: Appearance.animNormal
-        easing.type: Easing.InCubic
-      }
-      NumberAnimation {
-        target: root
-        property: "opacity"
-        to: 0
-        duration: Appearance.animNormal
-      }
-    }
-    ScriptAction {
-      // Snapshot: each dismiss shrinks the live list
-      script: {
-        if (root._dismissing)
-          root.entries.slice().forEach(e => NotificationManager.dismiss(e.uid));
-      }
+    onSwiped: root.dismissAll()
+    // Snapshot: each dismiss shrinks the live list
+    onOut: {
+      if (root._dismissing)
+        root.entries.slice().forEach(e => NotificationManager.dismiss(e.uid));
     }
   }
 
@@ -193,11 +106,8 @@ Item {
     border.width: root.group?.critical ? Appearance.borderWidth : 0
     border.color: Qt.alpha(Theme.error, 0.6)
 
-    Behavior on height {
-      NumberAnimation {
-        duration: Appearance.animNormal
-        easing.type: Easing.OutCubic
-      }
+    Glide on height {
+      duration: Appearance.animNormal
     }
     ColorGlide on color {}
 
@@ -301,11 +211,8 @@ Item {
             textColor: Theme.foregroundAlt
             rotation: root.expanded ? 180 : 0
 
-            Behavior on rotation {
-              NumberAnimation {
-                duration: Appearance.animNormal
-                easing.type: Easing.OutCubic
-              }
+            Glide on rotation {
+              duration: Appearance.animNormal
             }
           }
         }

@@ -208,12 +208,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while building the network popout's VPN fold and connection details
 
-### A shared file older than v71 resets niri's hot corner
-- **Where:** `backend/internal/share/zz_generated_movedkeys.go` (`movedKeys`), `backend/internal/migrate/steps/v82.go`
-- **What:** `movedKeys` lists `Compositor.niri.hotCorner` (moved into shared files at v71), but step v82 made niri's hot corner an axiom one and the key is gone from the schema. `KeepMovedKeys` looks it up in the user's current config, finds nothing, and a format-1 shared file older than v71 applies without keeping the user's hot corner. The v82 shape isn't a plain rename (it became a `HotCorners` item), so the list can't just name a new path.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the notifications revamp branch (its v83 rename had the same gap, fixed there)
-
 ### A custom element sees another kind's element as its slot changes kind
 - **Where:** `qml/components/content/parts/custom/CustomElement.qml` (`_load`), `qml/components/content/parts/custom/elements/Button/CustomButton.qml` (`label`, `icon`), `qml/components/content/parts/custom/elements/Toggle/CustomToggle.qml` (`label`)
 - **What:** When a slot's element changes kind (the default Ring + Text giving way to a definition's own elements, or an element removed in the editor), the loaded item's bound `element` takes the new kind's element before `onKindChanged` reloads it: what overlay-modules-09 gave CustomRing's `inside` a `?? ""` for. Only Ring was quieted; a Button or Toggle handed another kind's options assigns an undefined `options.label` (and Button's `options.icon`) to a string the same way. PLAUSIBLE: a Button slot turning into another kind with the log open settles it. Fix at the cause: bind the item's `element` only while its kind matches the one loaded (keep the last matching element otherwise), then drop Ring's `?? ""`.
@@ -306,7 +300,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A dropdown in an edge menu card with nothing scrolling gets two rows
 - **Where:** `qml/components/reusable/StyledComboEntry.qml` (`_roomBelow`), `qml/components/content/parts/PomodoroDial.qml`
-- **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum, and the card's rows below it are pushed out of view while it's open.
+- **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum (`_roomBelow` is 0 with no Flickable and `popoutRoom` null), and the card's rows below it are pushed out of view while it's open. Since PomodoroDial became a DialControls (row 20, features-05) the picker is the card's last row and the ring fills what's left, so there the open list shrinks the ring instead; it still gets two rows. Open question: how much room should such a list take (shrink the parts above it, or more rows over them)?
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
@@ -576,24 +570,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
 
-### The notification list's delegates animate with their own easing
-- **Where:** `qml/components/content/parts/notifications/NotificationGroupDelegate.qml:124`, `qml/components/content/parts/notifications/NotificationGroupDelegate.qml:192`, `qml/components/content/parts/notifications/NotificationGroupDelegate.qml:301`, `qml/components/content/parts/notifications/NotificationItemDelegate.qml:80`
-- **What:** AGENTS.md › Config: "a `duration:` is `Appearance.animFast` / `animNormal` / `animSlow` with `Appearance.easing`" (`check_structure` checks only the duration). Nine `easing.type: Easing.*` lines break it: `Easing.OutCubic` at NotificationGroupDelegate 124, 132, 195, 304 and NotificationItemDelegate 80, 88, 99, `Easing.InCubic` at NotificationGroupDelegate 147 and NotificationItemDelegate 117; and three opacity animations (NotificationGroupDelegate 153, NotificationItemDelegate 105, 123) have no easing at all, while the same snap-back in ToastItem uses `Appearance.easing`. (These nine are among the 24 literal easings outside the ui-kit that the ui-kit's own easing fix (`qml/components/reusable/`) left to their systems.) Two of them are whole `Behavior { NumberAnimation { duration; easing } }` blocks that `Glide` is for (shared-ui-pieces.md: "`Glide on width {}` ... `duration` for animNormal/animSlow"): the card's height (NotificationGroupDelegate 192–197) and the chevron's rotation (301–306), 12 lines. Fix: those two become `Glide on height { duration: Appearance.animNormal }` / `Glide on rotation { … }` (2 lines, 10 removed); the rest take `Appearance.easing` (or go with the shared swipe piece in [The history's group and entry delegates repeat one swipe-away mechanism](#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notifications system
-
-### The history's group and entry delegates repeat one swipe-away mechanism
-- **Where:** `qml/components/content/parts/notifications/NotificationGroupDelegate.qml:76` (`swipe`, `snapBack`, `appear`, `slideOut`), `qml/components/content/parts/notifications/NotificationItemDelegate.qml:51` (`swipe`, `snapBack`, `appear`, `slideOut`)
-- **What:** Both delegates carry the same DragHandler (sideways only, `shift.x` follows, opacity fades over twice the threshold, past `swipeThreshold` slides out else snaps back), the same `snapBack`, `appear` (fade in, drop 8 px) and `slideOut` (slide by the width the way it went, fade, then a script): NotificationGroupDelegate 76–163 (88 lines) and NotificationItemDelegate 51–129 (79 lines), differing only in what enables the swipe, the group's optional delay and what the end script dismisses. AGENTS.md › UI conventions: "a second copy of a pattern becomes a shared piece". Fix: one `parts/notifications/NotificationSwipe` (target item, `enabled`, `swipeThreshold`, `appear()`, `slideOut(delay)`, signal `out`) of about 60 lines; each delegate keeps about 8 lines (`NotificationSwipe { id: …; enabled: …; onOut: … }` and its calls). About 167 − 60 − 16 = 90 lines removed net, and the easing fix lands once.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:notifications system
-
-### clearAll removes each cached image twice, one process per entry
-- **Where:** `qml/services/system/NotificationManager.qml:132` (`clearAll`), `qml/services/system/NotificationManager.qml:422` (`_forget`)
-- **What:** `clearAll` runs `_forget` for every entry, which spawns `rm -f <image>` for each entry with a cached image (`CommandManager.runDetached(["rm", "-f", …])`), then runs `sh -c 'rm -f "$1"*.png'` over the whole image folder anyway. With a full history (`maxEntries` up to 500) one Clear all starts up to 501 processes where the one glob does it all (and also catches orphans). Fix: `clearAll` unlinks and dismisses the live ones without the per-entry rm (e.g. `_forget(entry, keepFile)`, or `old.forEach(e => { const n = root._live[e.uid]; root._unlink(e.uid); n?.dismiss(); })` and `root._sources = {}`), keeping the glob.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notifications system
-
 ### The dock's menu and drag state outlive the icons they point at
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:216` (`dragIndex`), `qml/components/surfaces/dock/DockWindow.qml:357` (`menuIndex`), `qml/components/surfaces/dock/DockWindow.qml:574` (`anchorItem`), `qml/components/surfaces/dock/DockItem.qml:100` (the hover Timer)
 - **What:** The menu is held as `menuKey`/`menuFull` and anchored on `repeater.itemAt(root.menuIndex)`; a drag as `dragIndex`. Both are cleared only by the icon or the menu itself (`closeMenu()` from DockItem's press, click and drag start, DockMenu's FocusGrab `onCleared`, `conceal()`; `dragIndex = -1` only in DockItem's `_endDrag`). Two paths leave them set:
@@ -618,62 +594,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Skipping a focus session counts it as finished
-- **Where:** `qml/services/apps/PomodoroManager.qml:71` (`skip`), `qml/components/methods/PomodoroCycle.qml:87` (`advance`), `qml/components/bar/widgets/Pomodoro/Pomodoro.qml:36`
-- **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "c) count only if the session had started"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### A recent timer chip reads its label back as part of the duration
-- **Where:** `qml/components/content/parts/CountdownTimer.qml:155` (`chipText`), `qml/components/content/parts/CountdownTimer.qml:233`
-- **What:** A recent timer is kept as `{ ms, label }`, but its chip restarts it by turning it back into text (`formatShort(ms) + " " + label`) and re-parsing that through `started(text)`. A label that starts with a duration is read into the time. Run through `StopwatchClock.parse` as written: `90 5m` is 90 min labelled `5m`, its chip reads `1h30m 5m` and starts 1h35m with no label; `1:30 5m stretch` is 90 s labelled `5m stretch`, its chip `1m30s 5m stretch` starts 6m30s labelled `stretch`. Caffeine's popout shares the part. Fix: a recent chip emits the stored values (a `startedRecent(ms, label)` signal, or `started` carrying `{ ms, label }`), and the owners call `StopwatchManager.startTimer(ms, label)` / caffeine's equivalent instead of parsing text.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### A todo.json deleted while unreadable blocks every save until restart
-- **Where:** `qml/services/apps/TodoManager.qml:97` (`_load`)
-- **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### PomodoroDial redraws DialControls' ring and buttons
-- **Where:** `qml/components/content/parts/PomodoroDial.qml:28` (`TimeRing`), `qml/components/content/parts/PomodoroDial.qml:58` (buttons), `qml/components/content/Pomodoro/Pomodoro.qml:39` (`dialSize`)
-- **What:** `DialControls` (shared by the timer, caffeine and the stopwatch since #262) is "a TimeRing over (or beside, `horizontal`) three round buttons", sized to its card with `fill`. PomodoroDial builds the same thing by hand: a TimeRing (lines 28–35, 8 lines), stop / play-pause / skip FlatIconButtons (58–82, 25), its own `horizontal` / `dialSize` / grid columns (17–18, 24–26, 5), and Pomodoro.qml works out the dial size and width test itself (32, 39, 2): 40 lines. So the pomodoro's buttons look and size differently from the other three dials, and lack the keyboard (Space) they have. Fix: PomodoroDial becomes a `DialControls` (`leftIcon: "stop"`, `leftEnabled: !idle`, `mainIcon` play/pause, `rightIcon: "skip_next"`, `color: phaseColor`, `fill` from the card) with the session dots and the task picker under it, about 20 lines; Pomodoro.qml drops its dial sizing. The dots and picker then sit under the ring rather than beside it in a wide card. About 20 lines net.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "accept: the dots and picker move under the ring in a wide card"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### Focus and Pomodoro build the parts their properties turn off
-- **Where:** `qml/components/content/Focus/Focus.qml:68` (`PomodoroDial`), `qml/components/content/Focus/Focus.qml:81` (`TodoList`), `qml/components/content/Focus/Focus.qml:89` (`DayPane`), `qml/components/content/parts/PomodoroDial.qml:84` (task picker)
-- **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Focus's `showTimer`, `showTodos` and `showAgenda` only set `visible`, so a Focus card with the agenda off still builds a `DayPane` (its calendar list), and one with todos off the whole `TodoList`. PomodoroDial's task picker is `visible: root.showTask`, and Focus always passes `showTask: false`, so every Focus card builds a hidden `StyledComboEntry` whose `options` map the todo list again on each todo change. Fix: Loaders gated on each switch (`active: root.showAgenda` and so on), and the task picker in a Loader on `showTask`.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
 ### A Calendar card on the desktop or in an edge menu takes the page's request
 - **Where:** `qml/components/content/Calendar/Calendar.qml:54` (`_takeRequest`), `qml/services/apps/CalendarManager.qml:297` (`openPage`)
 - **What:** `openPage(request)` sets `CalendarManager.request` and opens the CalendarPage view (or the page with a Calendar module). Every embedded Calendar card listens (`onRequestChanged` → `_takeRequest`, gated only on `root.embedded`), and `embedded` is true in every module grid (`OverlaySlot.qml:56`), so a Calendar card on the desktop or in a pinned edge menu (both allowed: the module's schema leaves `hosts` out) takes the request synchronously, before the page is built. Then clicking the Next event bar widget or a reminder opens the Calendar page on today instead of the event's day, and `/event` or the `calendar newEvent` IPC opens the editor on the desktop card behind the overlay. A request no page shows (no page holds a Calendar, so Settings opens) also stays set until some Calendar card is next built, which then opens a stale new-event editor. Fix: `openPage` stores the page it opens in the request (`{ kind, key, page }`, and no request when it falls back to Settings); Calendar takes it only when it sits on that overlay page (its `host`), the view only when `page === "CalendarPage"`.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### A save conflict reloads nothing, so trying again conflicts again
-- **Where:** `backend/internal/calendar/calendar.go:582` (`Save`), `backend/internal/calendar/calendar.go:618` (`Delete`), `qml/services/apps/CalendarManager.qml:325` (`errorText`), `qml/services/apps/EventDraft.qml:111` (`saveAs`)
-- **What:** An event changed elsewhere (a phone) since the last sync: axiom's PUT gets 412 and `Save` returns `conflict` before `resync`, so objects.json and events.json keep the old copy and etag. The editor says "The event changed elsewhere. It has been reloaded: check it and try again." but nothing was reloaded, and Save again sends the same draft etag (`firstOf(r.Etag, obj.Etag)`, the draft's first) and conflicts again until the next timed sync, and even then the open editor keeps the stale etag. The same holds for a local calendar's file changed on disk, and for `cachedObject`'s conflict when the event is gone from the cache. Fix: on a `Conflict` from `put` or `cachedObject`, `Save` and `Delete` run `s.resync` for that calendar before returning the error; the editor, on `conflict`, reopens on the fresh event (`CalendarEvents.draftOf` of the occurrence with the same href and rid, or closes when it's gone), so what it says is true.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### Moving a recurring event to another calendar drops its earlier occurrences and exceptions
-- **Where:** `qml/services/apps/CalendarManager.qml:205` (`save`, the move)
-- **What:** Changing the calendar of an occurrence of a weekly series (not Custom: the picker is read-only for those) skips the "Change which?" question and saves as a move: a new event made from the draft, then the old one deleted as a series. The draft is `CalendarEvents.draftOf(event)` of the clicked occurrence, so the new series starts at that occurrence: every earlier one disappears (the old object, history included, is deleted), and its EXDATEs, overrides, attendees and unknown properties are lost (`NewEvent` builds from the payload). When the delete fails after the create (a conflict, the server down), both copies stay while the editor shows the error, and trying again creates a third. Fix: do the move in the daemon: `calendar.save` with a target calendar copies the cached object, applies the series edit (`ApplySeries`, keeping its first DTSTART, overrides and properties), PUTs it to the target with `If-None-Match: *` and the same UID, then deletes the old one, in one locked call that resyncs both calendars. The Custom rule's read-only picker then has no reason left.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### Enter in the editor's title saves again while busy and picks All events while asking
-- **Where:** `qml/components/content/parts/calendar/EventEditor.qml:63` (`titleEntry`'s `onAccepted`), `qml/services/apps/EventDraft.qml:95` (`save`)
-- **What:** Only the Save button is disabled while `busy`; the title's `onAccepted: root.save()` isn't, and `save()` doesn't check `busy`. A new event saved with Enter twice on a slow server queues two `calendar.save` jobs with no href: two identical events. And while the "Change which?" row shows for a recurring event, `save()` skips the question (`root.asking === ""` is false) and calls `saveAs("series")`: pressing Enter again after editing a title changes every occurrence without the user choosing. Fix: `if (root.busy || root.asking !== "") return;` at the top of `save()` (the row's own buttons pick the scope).
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Removing a CalDAV account deletes its password before the draft is saved
@@ -810,12 +734,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Tailscale's state comes from `tailscale status --json` every `Tailscale.interval` (10 s default) while anything holds `TailscaleManager`: the Tailscale and Vpn widgets, the Network, WifiNetworks and VpnConnections cards, and now an OSD with the VPN status, which holds it for the whole session. A connect or drop shows up to 10 s late, while NetworkManager's VPNs are pushed (`vpn.state`). tailscaled's LocalAPI streams its changes (`/localapi/v0/watch-ipn-bus`, what `tailscale status --watch`-style clients use), so the daemon could watch that instead of running the CLI, with the interval left only for the peers' details if needed.
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
-
-### Hot corners' action list is a hand-kept copy of the keybind one
-- **Where:** `qml/config/schema/sections/HotCorners.yaml:30` (`action`), `qml/config/schema/sections/HotCorners.yaml:104` (`argument`), `qml/config/schema/definitions/common/Keybind.yaml`, `tests/tst_BindActions.qml:83` (`test_hotCornerActionsAreTheAxiomActions`)
-- **What:** The hot corner's `action` enum (35 lines) is the actions table's `ipcActions` keys plus `exec`, its `x-enumLabels` (35 lines) are word for word the Keybind definition's labels for those actions (a script comparing the built schema found no difference), and the argument's `x-showIf` list (15 lines) is the actions whose template has `{0}`, plus `exec`. All three are kept by hand and only a test (7 lines) catches drift, so every new axiom action is added in three more places. AGENTS.md: "Prefer a new schema annotation to a hand-kept list". Fix: let the schema assembler (`backend/internal/schema/yamlsrc`) fill an `action` marked e.g. `x-axiomActions: true` from `table.json` (`ipcActions` + `exec`, labels from the Keybind definition's `x-enumLabels`) and its argument's `x-showIf` from the templates; this removes the 85 schema lines and the test, for an assembler rule and its Go test.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the hot-corners system
 
 ### Re-applying a community setup over its edited copy never shows Applied
 - **Where:** `qml/services/apps/CommunitySetupsManager.qml:37` (`applied`), `backend/internal/saved/saved.go:651` (`apply`)

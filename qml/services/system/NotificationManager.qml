@@ -204,7 +204,7 @@ Singleton {
   function clearAll() {
     const old = root.entries;
     root.entries = [];
-    old.forEach(e => root._forget(e));
+    old.forEach(e => root._forget(e, true));
     root._files.clear();
     root._save();
   }
@@ -615,11 +615,11 @@ Singleton {
     }
   }
 
-  function _forget(entry) {
+  function _forget(entry, keepFile) {
     const notif = root._live[entry.uid];
     root._unlink(entry.uid);
     notif?.dismiss();
-    root._files.forget(entry);
+    root._files.forget(entry, keepFile);
   }
 
   // The history's file and the images' copies (NotificationFiles); a

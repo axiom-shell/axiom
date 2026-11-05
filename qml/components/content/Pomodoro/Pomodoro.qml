@@ -8,8 +8,8 @@ import qs.components.content.base
 import qs.components.content.parts
 
 // The pomodoro timer (PomodoroManager, PomodoroDial): the Pomodoro widget's
-// popout, or an overlay card, the ring beside the controls when the card
-// is wide and short. Compact, the time left.
+// popout, or an overlay card, the ring filling it (beside its buttons when
+// the card is wide and short). Compact, the time left.
 // properties (card): { showTask }
 Panel {
   id: root
@@ -29,13 +29,10 @@ Panel {
     label: PomodoroManager.phaseLabel
   }
 
-  readonly property bool wide: root.embedded && root.innerWidth > root.innerHeight * 1.6
-
   PomodoroDial {
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
-    horizontal: root.wide
+    fill: root.embedded
     showTask: !root.embedded || (root.properties.showTask ?? true)
-    dialSize: root.embedded ? Math.max(Appearance.fontSize * 4, Math.min(root.wide ? root.innerHeight : root.innerWidth, root.innerHeight - (root.wide ? 0 : Appearance.fontSize * 7))) : Appearance.fontSize * 9
   }
 }

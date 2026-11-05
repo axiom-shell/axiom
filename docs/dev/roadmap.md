@@ -349,7 +349,6 @@ Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 
 Moved here from Phase 1, still open:
-- [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
@@ -370,18 +369,7 @@ Found by the audits:
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
-- [The history's group and entry delegates repeat one swipe-away mechanism](issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
-- [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
-- [Skipping a focus session counts it as finished](issues.md#skipping-a-focus-session-counts-it-as-finished)
-- [A recent timer chip reads its label back as part of the duration](issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
-- [A todo.json deleted while unreadable blocks every save until restart](issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
-- [PomodoroDial redraws DialControls' ring and buttons](issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
-- [Focus and Pomodoro build the parts their properties turn off](issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
 - [A Calendar card on the desktop or in an edge menu takes the page's request](issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
-- [A save conflict reloads nothing, so trying again conflicts again](issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)
-- [Moving a recurring event to another calendar drops its earlier occurrences and exceptions](issues.md#moving-a-recurring-event-to-another-calendar-drops-its-earlier-occurrences-and-exceptions)
-- [Enter in the editor's title saves again while busy and picks All events while asking](issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
 - [Removing a CalDAV account deletes its password before the draft is saved](issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
 - [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
@@ -401,7 +389,6 @@ Found by the audits:
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
-- [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
 - [Turning the gallery on while its card is shown leaves it empty](issues.md#turning-the-gallery-on-while-its-card-is-shown-leaves-it-empty)

@@ -92,7 +92,7 @@ Panel {
       progress: StopwatchManager.timerProgress
       label: StopwatchManager.timer.label
       fill: root.embedded
-      onStarted: text => StopwatchManager.startTimerText(text)
+      onStarted: timer => StopwatchManager.startTimer(timer.ms, timer.label, timer.clock === true)
       onToggled: StopwatchManager.toggleTimer()
       onReset: StopwatchManager.resetTimer()
       onExtended: ms => StopwatchManager.addTimer(ms)

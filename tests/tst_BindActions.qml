@@ -104,21 +104,10 @@ TestCase {
     compare(BindActions.ipcCall(test.table, "lock", "", "open").function, "lock", "an action without calls ignores one");
   }
 
-  // A hot corner runs any axiom action (the IPC ones) but those that lose
-  // state or move a window with no sign (a corner fires on a stray
-  // pointer), or a command; its argument and call shown exactly where the
-  // action takes one
-  function test_hotCornerActionsAreTheAxiomActions() {
-    const item = files.json("qml/config/json/config.schema.json").properties.HotCorners.properties.items.items.properties;
-    const unsafe = ["clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"];
-    compare(item.action.enum, Object.keys(test.table.ipcActions).filter(action => !unsafe.includes(action)).concat(["exec"]));
-    compare(item.argument["x-showIf"].action, item.action.enum.filter(action => action === "exec" || test.table.ipcActions[action][0].includes("{0}")));
-    compare(item.call["x-showIf"].action.slice().sort(), item.action.enum.filter(action => test.table.calls[action] !== undefined).sort());
-  }
-
-  // The Keybinds page's names for the actions (the schema's), the hot
-  // corners' and the compositor's bind descriptions (the table's, where
-  // they take no argument) are one name each
+  // The Keybinds page's names for the actions (the schema's) and the
+  // compositor's bind descriptions (the table's, where they take no
+  // argument) are one name each; a hot corner's call (the table's calls,
+  // as the schema build fills it) shows where a bind's does
   function test_labelsAgree() {
     const schema = files.json("qml/config/json/config.schema.json");
     const binds = schema.definitions.Keybind.properties;
@@ -128,8 +117,6 @@ TestCase {
       if (own !== undefined && !own.includes("{0}"))
         compare(own, label, action + " in table.json");
     }
-    for (const [action, label] of Object.entries(corners.action["x-enumLabels"]))
-      compare(label, binds.action["x-enumLabels"][action], action + " in HotCorners");
     compare(corners.call["x-showIf"].action.filter(action => !binds.call["x-showIf"].action.includes(action)), [], "a corner's call shows where a bind's does");
   }
 

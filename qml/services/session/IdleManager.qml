@@ -84,13 +84,18 @@ Singleton {
     const parsed = StopwatchClock.parse(text, Date.now());
     if (parsed.ms <= 0)
       return false;
+    root.startCaffeine(parsed.ms, parsed.clock === true);
+    return true;
+  }
+
+  // On for `ms` from now; `once` (a time of day) stays out of the recent
+  // ones
+  function startCaffeine(ms, once) {
     _ticker.set({
       "caffeine": true,
-      "timer": StopwatchClock.startTimer(root.caffeineTimer, parsed.ms, Date.now(), ""),
-      // A time of day stays out of them
-      "recent": parsed.clock ? root.caffeineRecent : StopwatchClock.pushRecent(root.caffeineRecent, parsed.ms, "", 3)
+      "timer": StopwatchClock.startTimer(root.caffeineTimer, ms, Date.now(), ""),
+      "recent": once ? root.caffeineRecent : StopwatchClock.pushRecent(root.caffeineRecent, ms, "", 3)
     });
-    return true;
   }
 
   // Pause ↔ resume the timer (paused, caffeine stays on); an idle one

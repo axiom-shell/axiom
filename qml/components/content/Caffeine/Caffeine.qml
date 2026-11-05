@@ -154,9 +154,9 @@ Panel {
     moreChoices: [30 * 60000, 60 * 60000, 2 * 60 * 60000]
     wheelStep: 5 * 60000
     resetText: I18n.tr("Turn off")
-    onStarted: text => {
+    onStarted: timer => {
       ShellManager.onScreen("caffeine");
-      IdleManager.startCaffeineText(text);
+      IdleManager.startCaffeine(timer.ms, timer.clock === true);
     }
     onToggled: {
       ShellManager.onScreen("caffeine");

@@ -41,13 +41,25 @@ TestCase {
     compare([state.phase, state.completed, state.running, state.endsAt], ["short", 1, true, 100 + 5 * minute]);
     state = PomodoroCycle.advance(state, 200, settings, auto);
     compare([state.phase, state.completed, state.running], ["work", 1, false], "a break ends waiting");
-    state = PomodoroCycle.advance(state, 300, settings, auto);
+    state = PomodoroCycle.advance(PomodoroCycle.start(state, 300, settings), 300, settings, auto);
     compare([state.phase, state.completed], ["long", 2], "every second session: a long break");
     verify(PomodoroCycle.isBreak(state));
     compare(PomodoroCycle.reset(state, false), Object.assign({}, PomodoroCycle.idle, {
       "completed": 2
     }));
     compare(PomodoroCycle.reset(state, true), PomodoroCycle.idle);
+  }
+
+  function test_advance_counts_only_started() {
+    const auto = {
+      "work": false,
+      "breaks": false
+    };
+    let state = PomodoroCycle.advance(PomodoroCycle.idle, 0, settings, auto);
+    compare([state.phase, state.completed], ["short", 0], "skipped unstarted: not counted");
+    state = PomodoroCycle.pause(PomodoroCycle.start(PomodoroCycle.idle, 0, settings), minute);
+    state = PomodoroCycle.advance(state, 2 * minute, settings, auto);
+    compare([state.phase, state.completed], ["short", 1], "skipped while paused part way: counted");
   }
 
   function test_normalize() {
