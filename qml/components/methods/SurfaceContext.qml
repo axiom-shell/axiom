@@ -281,9 +281,7 @@ QtObject {
    *     overlay is open on its screen), menuZone (what integrated edge
    *     menus reserve on its edge), bare (over a fullscreen window, which
    *     covers the bars and the border: the host passes its frame and
-   *     reservations as 0), under (whether the host's window is under the bars now: it keeps
-   *     slidesUnder's answer while open, and goes over a fullscreen window;
-   *     absent, slidesUnder)
+   *     reservations as 0)
    * Returns EdgeAttach.place's result and: merged, onPill, detached,
    *   straight, backfill, attachClearance, attachFill, attachAt (across, from the
    *   screen edge), attachBase (where it goes by default: on the stroke of
@@ -407,9 +405,8 @@ QtObject {
       "slidesFromEdge": detached,
       // How far back from its attach edge it starts: the screen edge under
       // the bars, else the frame line. Not gated on slidesFromEdge, which a
-      // host latches while open; under the bars as its window is (`under`,
-      // which a host keeps while open), not as it would open now
-      "slideFrom": detached ? Math.max(0, attachAt - ((p.under ?? slidesUnder) ? 0 : (p.frameLine ?? 0))) : 0
+      // host latches while open
+      "slideFrom": detached ? Math.max(0, attachAt - (slidesUnder ? 0 : (p.frameLine ?? 0))) : 0
     });
   }
 

@@ -86,11 +86,7 @@ PopoutWrapperBase {
   // the daemon's layer rules, render.LayerRulesLua), else over them on the
   // Overlay layer (no supports.layerOrder, or the overlay open on its
   // screen). Both follow only while closed, as BarPopouts.underBar: they
-  // change the window's layer, namespace and size. Whether it slides from
-  // the edge also follows as it moves over a fullscreen window or back
-  // (`_moving`); its namespace can't change while mapped, so `_under`
-  // doesn't: over a fullscreen window its window goes to the Overlay layer
-  // (windowLayer), and back under the bars after.
+  // change the window's layer, namespace and size.
   // One that fades (`fade`, a detached box only) fades in where it sits,
   // on the Overlay layer.
   property ClosedLatch _under: ClosedLatch {
@@ -100,14 +96,12 @@ PopoutWrapperBase {
   readonly property bool slidesUnder: root._under.value ?? false
   property ClosedLatch _fromEdge: ClosedLatch {
     source: placement.slidesFromEdge && !root.fades
-    closed: !root.occupied || root._moving
+    closed: !root.occupied
   }
   // How far back from its attach edge it slides in from: the screen edge
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
-  // Its window's layer: Overlay unless it slides under a bar (and isn't
-  // over a fullscreen window, which hides that layer: the layer of a
-  // mapped window changes in place, nothing maps)
-  readonly property int windowLayer: root.slidesUnder && !root._overFullscreen ? WlrLayer.Top : WlrLayer.Overlay
+  // Its window's layer: Overlay unless it slides under a bar
+  readonly property int windowLayer: root.slidesUnder ? WlrLayer.Top : WlrLayer.Overlay
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
   readonly property bool onOverlayLayer: root.windowLayer === WlrLayer.Overlay
@@ -196,38 +190,13 @@ PopoutWrapperBase {
   // Over a fullscreen window, which covers the border and the bars, there's
   // nothing to join: it's held as well, with an automatic gap unless held
   // already (and slides under nothing, whose layer that window hides).
-  // The one change an open box moves for: it slides out where it is
-  // (`_reseating`), takes its new place once hidden (`_moving`: this and
-  // `_fromEdge` follow), and slides back in there, as it would open now.
+  // Followed only while closed, so an open box never moves.
   readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   property ClosedLatch _fullscreenLatch: ClosedLatch {
     source: root.fullscreen
-    closed: !root.occupied || root._moving
+    closed: !root.occupied
   }
   readonly property bool _overFullscreen: root._fullscreenLatch.value ?? false
-  property bool _reseating: false
-  property bool _moving: false
-  onFullscreenChanged: {
-    // Closed, it follows anyway; closing, it's on its way out
-    if (!root.occupied || root.isClosing)
-      return;
-    if (!root._shown) {
-      root._reseat();
-      return;
-    }
-    root._reseating = true;
-    reseatTimer.restart();
-  }
-  function _reseat() {
-    root._moving = true;
-    root._moving = false;
-    root._reseating = false;
-  }
-  // Once it has slid out (SlideAnimation's duration)
-  property Timer reseatTimer: Timer {
-    interval: Appearance.animNormal
-    onTriggered: root._reseat()
-  }
   // Held, by `held` or over a fullscreen window
   readonly property bool holds: root.held || root._overFullscreen
   // Placed as if the bars and the border weren't there (they're under the
@@ -344,11 +313,9 @@ PopoutWrapperBase {
     coverLength: surface.coverLength
     owner: "edgePopout:" + root
     showing: root.occupied && root.contentItem !== null && root.claimed
-    // (its pill and openings go back as it slides out to move: _reseating)
-    open: root.isOpen && root.claimed && !root._reseating
+    open: root.isOpen && root.claimed
     onOverlayLayer: root.onOverlayLayer
     overOverlay: root.overlayOpen
-    under: root.windowLayer === WlrLayer.Top
     origin: placeOnScreen.origin
     attachedSurface: surface
     opens: surfaceWindow.visible && root.claimed
@@ -398,8 +365,7 @@ PopoutWrapperBase {
   readonly property real _stretchAlongTop: root.vertical ? slot.shownStretchTop : 0
   readonly property real _stretchAlongBottom: root.vertical ? slot.shownStretchBottom : 0
   // ---- end submenu ----
-  // (and while it moves over or off a fullscreen window, out of the pointer's way)
-  keepAlive: surface.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus) || root._reseating
+  keepAlive: surface.hovered || trigger.containsMouse || (focusGrab.active && wantsKeyboardFocus)
 
   EdgeTrigger {
     id: trigger
@@ -548,8 +514,7 @@ PopoutWrapperBase {
       submenu: slot
       screenName: surfaceWindow.screenName
       windowShown: surfaceWindow.visible
-      // (not as it takes its new place, out of sight: _reseat)
-      animateShape: root.settled && !root._reseating
+      animateShape: root.settled
 
       // At the attach edge of a window that may be deeper than it
       x: root.vertical ? (root.edge === ScreenEdge.Right ? surfaceWindow.width - width : 0) : root._windowStart + root.surfaceStart
@@ -562,8 +527,7 @@ PopoutWrapperBase {
       // Once its pill has grown out to carry it
       // While the blur window backs surfaces, once it knows where this one
       // is (LayerOrigin.settled), so it never shows unbacked beside them
-      // Not while it moves over or off a fullscreen window (_reseating)
-      active: root.isOpen && root.claimed && !root._reseating && placement.stretchReady && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
+      active: root.isOpen && root.claimed && placement.stretchReady && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
       boxWidth: root.vertical ? root._contentAcross + root.attachExtra : root.boxLength
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor

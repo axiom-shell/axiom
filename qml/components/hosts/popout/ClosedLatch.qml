@@ -3,15 +3,13 @@ import QtQuick
 
 // A value that follows `source` only while its host is closed: what
 // changes a popout's window layer or namespace (Hyprland reads a layer
-// rule only as a surface maps), so an open popout never moves or restacks
-// (but as EdgePopout moves over a fullscreen window or back, `closed`).
+// rule only as a surface maps), so an open popout never moves or restacks.
 // It opens as it should next time.
 QtObject {
   id: root
 
   property var source
-  // Whether the host is closed (not occupied), or moving to where it would
-  // open now (EdgePopout over a fullscreen window or back)
+  // Whether the host is closed (not occupied)
   property bool closed: true
   property var value
 
