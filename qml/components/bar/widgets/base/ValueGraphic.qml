@@ -42,6 +42,19 @@ Item {
   property real middle: -1
   readonly property color trackColor: Qt.alpha(root.textColor, 0.2)
 
+  // The style a widget's `style` draws as where it can't draw it: stacked
+  // on a vertical bar is a label, a sparkline with no history a fill, and
+  // a value style with no value (`ratio` below 0) a label
+  function resolvedStyle(style, vertical, hasHistory, ratio) {
+    if (style === "stacked" && vertical)
+      return "label";
+    if (style === "sparkline" && !hasHistory)
+      style = "fill";
+    if (["ring", "fill", "segments", "pill"].includes(style) && ratio < 0)
+      return "label";
+    return style;
+  }
+
   // Whether this style draws anything here
   readonly property bool drawn: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)
   // Ticker and stacked sit where a label would, after the icon

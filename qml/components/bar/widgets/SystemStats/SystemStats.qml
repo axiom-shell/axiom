@@ -202,9 +202,9 @@ BarWidget {
           required property var modelData
           readonly property var stat: root.segmentData(modelData)
           readonly property var metric: root._metrics.find(m => m.key === segment.modelData)
-          // The disk keeps no history (a fill instead); stacked on a
-          // vertical bar is a label
-          readonly property string style: root.style === "sparkline" && segment.metric.history === "" ? "fill" : root.style === "stacked" && root.isVertical ? "label" : root.style
+          // The disk keeps no history (a fill instead); every segment
+          // has a value
+          readonly property string style: graphic.resolvedStyle(root.style, root.isVertical, segment.metric.history !== "", 0)
 
           isVertical: root.isVertical
           crossSize: root.barConfig.thickness

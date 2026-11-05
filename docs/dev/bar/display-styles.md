@@ -35,7 +35,7 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 - `labelShown` in place of `showText` (the widget's own "show the value" setting; the style hides the label where it's the graphic);
 - `stateColor` / `hasState`, for `colorText` (default the accent colour; a custom widget's only when its script gives a state).
 
-`style` is the style it draws now, after those fallbacks. The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
+`style` is the style it draws now, after those fallbacks (`ValueGraphic.resolvedStyle`, which SystemStats' segments read too). The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
 
 ### Which widget draws what
 | Widget | Value | Stacked caption |

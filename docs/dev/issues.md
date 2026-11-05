@@ -611,12 +611,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
-### SystemStats works out ValueStyleWidget's style fallbacks again
-- **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:199` (segment `style`), `qml/components/bar/widgets/SystemStats/SystemStats.qml:139` (`backgroundLevelColor`), `qml/components/bar/widgets/SystemStats/SystemStats.qml:141` (`_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:34` (`style`)
-- **What:** Two rules live in both `ValueStyleWidget.style` and SystemStats' per-segment `style`: "stacked on a vertical bar is a label" and "a sparkline with no history is a fill". `Qt.alpha(colors.icon, 0.35)` and `colorText && colors.fill.a < 1` are copied word for word too. A new style rule added to one copy will be missed in the other. Fix: put the fallbacks in one function on ValueGraphic (`resolvedStyle(style, vertical, hasHistory, ratio)`) and read it from both places, about 4 lines out of SystemStats. The pill colour can be a ValueGraphic constant.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### The workspace switchers find a workspace by id with hand-written loops
 - **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml:74` (`wsById`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml:83` (`hasWindows`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:56` (`_occupied`)
 - **What:** `WorkspaceStrip.wsById` and `hasWindows` (lines 74–85, 12 lines; `hasWindows` has one call, line 63), and `WorkspaceCellRow._occupied` (8 lines), each walk `CompositorManager.workspaces` with an index loop to find one id. WorkspaceGrid already does it in one line: `CompositorManager.workspaces.find(ws => ws.id === id) ?? null` (WorkspaceGrid.qml:61). Fix: `wsById` becomes that `find`, `hasWindows` is inlined at its call, and `_occupied` becomes `return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;`. That is 20 lines down to about 6, with the same results.
