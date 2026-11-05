@@ -526,8 +526,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Moving a recurring event to another calendar drops its earlier occurrences and exceptions
   - Enter in the editor's title saves again while busy and picks All events while asking
 - **features-07** (3):
-  - [A Calendar card on the desktop or in an edge menu takes the page's request](../issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
-  - [Removing a CalDAV account deletes its password before the draft is saved](../issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
+  - A Calendar card on the desktop or in an edge menu takes the page's request
+  - Removing a CalDAV account deletes its password before the draft is saved
   - [Event titles from a feed render as styled text and load remote images](../issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
 - **features-08** (1): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses.
   - [Idle dimming is forgotten across a shell reload](../issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
