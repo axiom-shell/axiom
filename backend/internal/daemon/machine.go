@@ -3,9 +3,12 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
+	"os/user"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/account"
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buginfo"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
@@ -24,7 +27,7 @@ func machinePushShapes() []rpc.PushShape {
 // changes (System info, Date & time, Account, Default apps): kept apart
 // from the parts list so they read as one group.
 func (d *Daemon) machineParts() []part {
-	return []part{d.systemPart(), d.datetimePart()}
+	return []part{d.systemPart(), d.datetimePart(), d.accountPart()}
 }
 
 // machineMethods are machineParts' methods, for Contract.
@@ -170,6 +173,67 @@ func (d *Daemon) datetimePart() part {
 				case <-time.After(time.Minute):
 				}
 			}
+		},
+	}
+}
+
+// accountPart: Settings › General › Account (AccountManager): the user's
+// names, picture and administrator flag, and the changes they make to
+// their own account. Only the shell (the user's clicks) changes anything.
+func (d *Daemon) accountPart() part {
+	login := d.opts.Getenv("USER")
+	if u, err := user.Current(); err == nil {
+		login = u.Username
+	}
+	accounts := account.New(account.Options{
+		UID:       os.Getuid(),
+		Login:     login,
+		Home:      d.opts.Getenv("HOME"),
+		SystemBus: d.systemBus,
+		Log:       d.opts.Log.With("part", "account"),
+	})
+	type iconParams struct {
+		// An image file; "" removes the picture
+		Path string `json:"path"`
+	}
+	type nameParams struct {
+		Name string `json:"name"`
+	}
+	type passwordParams struct {
+		Current string `json:"current"`
+		New     string `json:"new"`
+	}
+	shellOnly := func(c *rpc.Conn) error {
+		if !fromShell(c) {
+			return axerr.New(axerr.Refused, "only the shell changes the account")
+		}
+		return nil
+	}
+	return part{
+		name: "account",
+		methods: func(reg *rpc.Registry) {
+			rpc.Handle(reg, "account.get", func(ctx context.Context, c *rpc.Conn, _ struct{}) (account.Account, error) {
+				return accounts.Get(ctx), nil
+			})
+			rpc.Handle(reg, "account.setIcon", func(ctx context.Context, c *rpc.Conn, p iconParams) (account.Account, error) {
+				if err := shellOnly(c); err != nil {
+					return account.Account{}, err
+				}
+				return accounts.SetIcon(ctx, p.Path)
+			})
+			rpc.Handle(reg, "account.setRealName", func(ctx context.Context, c *rpc.Conn, p nameParams) (account.Account, error) {
+				if err := shellOnly(c); err != nil {
+					return account.Account{}, err
+				}
+				return accounts.SetRealName(ctx, p.Name)
+			})
+			// The passwords reach passwd's terminal only, never argv or a log
+			rpc.Handle(reg, "account.changePassword", func(ctx context.Context, c *rpc.Conn, p passwordParams) (account.PasswordResult, error) {
+				if err := shellOnly(c); err != nil {
+					return account.PasswordResult{}, err
+				}
+				return accounts.ChangePassword(ctx, p.Current, p.New)
+			})
 		},
 	}
 }

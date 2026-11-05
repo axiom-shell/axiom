@@ -37,7 +37,9 @@ Item {
       "name": Quickshell.env("USER") ?? "",
       "realName": General.displayName
     })
-  readonly property string avatar: root.active && root.showAvatar && root.user?.name ? GreetdManager.avatarOf(root.user.name) : ""
+  // The greeter's user's (AccountsService's), else the user running the
+  // shell (the lock screen's: AccountManager, ~/.face without it)
+  readonly property string avatar: !root.showAvatar ? "" : root.active ? (root.user?.name ? GreetdManager.avatarOf(root.user.name) : "") : AccountManager.iconUrl
   readonly property bool busy: root.active && GreetdManager.busy
   // greetd asked something besides the password (a one-time code)
   readonly property string prompt: root.active ? GreetdManager.prompt : ""

@@ -68,6 +68,7 @@ PACKAGES=(
   "Xwayland|xorg-xwayland|xorg-x11-server-Xwayland"
   "powerprofilesctl|power-profiles-daemon|power-profiles-daemon"
   "udisksctl|udisks2|udisks2"
+  "accountsservice|accountsservice|accountsservice"
   "xdg-desktop-portal-gtk|xdg-desktop-portal-gtk|xdg-desktop-portal-gtk"
   "greetd|greetd|greetd"
   "agreety|greetd-agreety|greetd"
@@ -96,6 +97,7 @@ FEATURES=(
   "X11 apps under sway (Steam, games, older apps)|Xwayland|sway"
   "Power profiles|powerprofilesctl|"
   "Removable drives (mount, open and eject USB sticks and memory cards)|udisksctl|"
+  "Your picture on the login screen, and your real name in Settings|accountsservice|"
   "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk|"
   # fcitx5 is Input.keyboard.method's default; ibus (in PACKAGES for the install
   # hints) is supported but not offered, so "all" doesn't take both

@@ -1,6 +1,6 @@
 # Onboarding
 
-> **Files:** `qml/services/session/OnboardingManager.qml`, `qml/shell/Onboarding.qml`, `qml/components/surfaces/onboarding/OnboardingWindow.qml`, `qml/components/surfaces/onboarding/pages/CompositorPage.qml`, `qml/components/surfaces/onboarding/pages/SystemPage.qml`, `qml/components/surfaces/onboarding/pages/AppColorsPage.qml`, `qml/components/surfaces/onboarding/pages/ChecksPage.qml`, `qml/components/surfaces/onboarding/pages/ExampleCard.qml`, `qml/services/core/DependencyManager.qml`, `qml/components/methods/Packages.qml`, `qml/components/views/Settings/OnboardingCard.qml`
+> **Files:** `qml/services/session/OnboardingManager.qml`, `qml/shell/Onboarding.qml`, `qml/components/surfaces/onboarding/OnboardingWindow.qml`, `qml/components/surfaces/onboarding/pages/CompositorPage.qml`, `qml/components/surfaces/onboarding/pages/SystemPage.qml`, `qml/components/surfaces/onboarding/pages/AppColorsPage.qml`, `qml/components/surfaces/onboarding/pages/ChecksPage.qml`, `qml/components/surfaces/onboarding/pages/ExampleCard.qml`, `qml/services/core/DependencyManager.qml`, `qml/components/methods/Packages.qml`, `qml/components/views/Settings/AccountCard.qml`
 > **Config:** none of its own (pages write other sections); state in `~/.local/state/axiom/ui/onboarding.json`
 > **Related:** [Config modes](../compositor/config-modes.md), [Hyprland's writer](../hyprland/config-modes.md), [Monitors](../hyprland/monitors.md), [Greeter install](greeter-install.md), [Pages and grid](../overlay/pages-and-grid.md)
 
@@ -78,7 +78,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
   - `reset`, which opens it at the next start;
   - `goTo <step>`.
 - Launcher `/welcome`.
-- Settings → General's `OnboardingCard`.
+- Settings → General's `AccountCard` (its Run setup button).
 
 ### Testing
 - Use `axiom ipc onboarding goTo <n>` plus grim screenshots.

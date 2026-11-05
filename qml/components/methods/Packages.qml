@@ -163,6 +163,10 @@ QtObject {
         "arch": "udisks2",
         "fedora": "udisks2"
       },
+      "accountsservice": {
+        "arch": "accountsservice",
+        "fedora": "accountsservice"
+      },
       "greetd": {
         "arch": "greetd",
         "fedora": "greetd"

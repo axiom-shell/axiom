@@ -2,7 +2,7 @@
 
 type: object
 x-category: General
-x-card: {file: Onboarding, title: First-time setup}
+x-card: {file: Account, title: Account, wide: true}
 title: General
 additionalProperties: false
 properties:

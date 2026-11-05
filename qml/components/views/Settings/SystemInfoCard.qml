@@ -286,7 +286,7 @@ FieldGroup {
         spacing: Widget.spacing * 2
 
         StyledText {
-          Layout.preferredWidth: Widget.px(110)
+          Layout.preferredWidth: Widget.px(130)
           Layout.alignment: Qt.AlignTop
           // I18n.tr: the labels are declared above
           text: I18n.tr(fact.modelData.label)

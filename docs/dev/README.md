@@ -215,5 +215,6 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [polkit](features/polkit.md): the polkit agent.
 - [onboarding](features/onboarding.md): the first-run onboarder.
 - [self-update](features/self-update.md): axiom updating its own clone.
+- [account](features/account.md): Settings › General's Account card: the user's picture, names and password (AccountsService, `~/.face`, passwd in a pty).
 - [system-info](features/system-info.md): Settings › System's first card (the machine and this axiom, Copy system info, renaming through hostnamed) and its Optional packages.
 - [community-setups](features/community-setups.md): the community setups gallery, its catalog, downloading and applying one.
