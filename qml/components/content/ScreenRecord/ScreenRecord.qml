@@ -25,7 +25,7 @@ Panel {
 
   readonly property bool recording: ScreenshotManager.recording
   readonly property bool missing: DependencyManager.found["wf-recorder"] === false
-  readonly property string elapsed: root.durationText(ScreenshotManager.recordingElapsed)
+  readonly property string elapsed: StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)
   readonly property var recordings: ScreenshotManager.recordings
   // The sound recorded with: the system's only with pactl
   readonly property bool systemAudio: ScreenshotManager.hasSystemAudio !== false
@@ -44,14 +44,6 @@ Panel {
   fullMinHeight: Appearance.fontSize * 3.5
   spacing: Widget.spacing
   wantedHeight: root.compact || root.strip ? 0 : root.height > 0 && root.showList ? root.height + list.contentHeight - list.height : 0
-
-  // "1:05", "1:02:03"
-  function durationText(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor(seconds / 60) % 60;
-    const sec = String(seconds % 60).padStart(2, "0");
-    return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
-  }
 
   function start(mode) {
     if (mode === "screen")

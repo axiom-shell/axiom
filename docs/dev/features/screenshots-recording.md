@@ -52,7 +52,7 @@ Recording lives in the service, not in the card, because the overlay destroys th
 
 **Pick-based (`toggleRecording()`):**
 - Opens the same picker with kind `record`. That kind has no save or annotate controls.
-- R, or the picker's Screenshot / Record switch (`setRecordMode`), flips an open picker between screenshot and record.
+- R, or the picker's Screenshot / Record switch (`setRecordMode`), flips an open picker between screenshot and record. Each kind still saves to its own folder, and the sound is what the start asked for (`_start`'s `audio`: none but from `startRecording`), so no picker keeps an earlier one's.
 - The pick goes to `record(area, screenName)`:
   - a region is passed as global logical `-g`;
   - a whole screen as `-o <screen>`.
@@ -68,7 +68,7 @@ Recording lives in the service, not in the card, because the overlay destroys th
 
 **Running and stopping:**
 - wf-recorder runs in axiom (`CommandManager.run`) until `stopRecording()` sends SIGINT to the wf-recorder whose parent is the daemon (`pkill -P "$PPID"` in a `sh` axiom also runs), never another one; one left from before a reload (found the same way) or whose answer an axiom re-exec lost is marked stopped at once. One killed by a signal is treated as exited.
-- On exit it notifies with the saved file (a click opens it) or with the failure.
+- On exit it notifies with the saved file (a click opens it) or with the failure. Screenshot and recording notifications share the `axiom-screenshot` handler, which opens the newest path of the clicked one's key (`_paths`): each key holds one notification.
 - While it runs, `recordingElapsed` ticks for the `ScreenRecord` bar widget. That widget is hidden otherwise; a click on it stops the recording.
 - The Privacy widget's screen indicator shows the recording (the OSD has its own `recording` status). wf-recorder uses screencopy, so Pipewire never sees it, and `PrivacyManager.screenCaptures` doesn't list it.
 
