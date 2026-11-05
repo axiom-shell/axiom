@@ -108,17 +108,21 @@ FloatingWindow {
       // Taller by what a page wider than the window is shrunk by, so the
       // shrunk page still fills the window's height
       availableHeight: body.height / pageBox.fitScale
+      drawnZoom: pageBox.contentZoom
     }
 
     // Laid out at the grid's unit and drawn at its zoom (the overlay's
     // Module size), less only when the window is narrower than the page's
-    // least width (its height follows: pageHeight fills it). `contentZoom`:
-    // what StyledIcon looks for to draw its glyphs for a scaled page
+    // least width (its height follows: pageHeight fills it); from its top
+    // left, on a whole px, as OverlayPages' views. `contentZoom`: what
+    // StyledIcon looks for to draw its glyphs for a scaled page
     Item {
       id: pageBox
-      anchors.centerIn: parent
+      x: Math.round((parent.width - width * scale) / 2)
+      y: Math.round((parent.height - height * scale) / 2)
       width: view.implicitWidth
       height: view.implicitHeight
+      transformOrigin: Item.TopLeft
       readonly property real fitScale: {
         const width = view.implicitWidth * pageGrid.zoom;
         return width > 0 && body.width > 0 ? Math.min(1, body.width / width) : 1;

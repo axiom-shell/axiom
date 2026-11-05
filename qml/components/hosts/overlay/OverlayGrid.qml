@@ -27,6 +27,10 @@ QtObject {
   // overlay has on its screen, whatever the window's size, and pages
   // filling the window's height (BaseView.pageHeight)
   property bool windowed: false
+  // What its pages are drawn at, as a whole (OverlayPages.contentZoom),
+  // so modules sit on whole drawn px (GridPlacement.rectPx); 1 where each
+  // module is zoomed instead (an edge menu's)
+  property real drawnZoom: 1
 
   readonly property var _layout: root.fixedUnit > 0 ? null : (root.windowed ? OverlayConfig.layoutFor(root.screen, root.screen?.width ?? 0, root.screen?.height ?? 0) : OverlayConfig.layoutFor(root.screen, root.availableWidth, root.availableHeight))
   // The card size content lays out at, and the one it's drawn at

@@ -189,7 +189,7 @@ Item {
           "w": 4,
           "h": 4
         }
-        readonly property var r: GridPlacement.rectPx(slot.place, root.sizes)
+        readonly property var r: GridPlacement.rectPx(slot.place, root.sizes, root.grid.drawnZoom)
 
         // The rows more its content wants, up to its `grow`
         readonly property int wantRows: {

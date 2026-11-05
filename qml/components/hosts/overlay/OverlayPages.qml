@@ -221,13 +221,17 @@ Item {
       border.width: Appearance.borderWidth
 
       // Laid out at the grid's unit and scaled as a whole, so the box's
-      // own border and radius stay crisp. `contentZoom`: what StyledIcon
-      // looks for to draw its glyphs for a scaled page
+      // own border and radius stay crisp; from its top left, placed on a
+      // whole px, so its modules' edges on whole drawn px
+      // (OverlayGrid.drawnZoom) are on the screen's. `contentZoom`: what
+      // StyledIcon looks for to draw its glyphs for a scaled page
       Item {
         id: viewsContainer
-        anchors.centerIn: parent
+        x: Math.round((parent.width - width * scale) / 2)
+        y: Math.round((parent.height - height * scale) / 2)
         width: root.currentViewWidth
         height: root.currentViewHeight
+        transformOrigin: Item.TopLeft
         scale: root.contentZoom
         readonly property real contentZoom: root.contentZoom
 

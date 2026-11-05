@@ -805,18 +805,23 @@ QtObject {
   // A place's pixel rect for trackSizes' `sizes`, its edges on whole px
   // (each rounded, so neighbours keep their gap): a slot clips its module,
   // and a clip at a fractional edge shaves the pixel a module draws its
-  // stroke in there (a borderless Chat's composer)
-  function rectPx(place, sizes) {
+  // stroke in there (a borderless Chat's composer). For a grid drawn
+  // scaled by `zoom` (an overlay page's contentZoom; 1 when left out), on
+  // whole drawn px, so every card's border falls on the screen's pixels
+  // alike
+  function rectPx(place, sizes, zoom) {
+    const z = zoom || 1;
+    const snap = value => Math.round(value * z) / z;
     const spacing = sizes.gap ?? root.cardSpacing;
     const x = place.x * (sizes.unitW + spacing);
     const y = place.y * (sizes.unitH + spacing);
-    const left = Math.round(x);
-    const top = Math.round(y);
+    const left = snap(x);
+    const top = snap(y);
     return {
       "x": left,
       "y": top,
-      "width": Math.round(x + place.w * sizes.unitW + (place.w - 1) * spacing) - left,
-      "height": Math.round(y + place.h * sizes.unitH + (place.h - 1) * spacing) - top
+      "width": snap(x + place.w * sizes.unitW + (place.w - 1) * spacing) - left,
+      "height": snap(y + place.h * sizes.unitH + (place.h - 1) * spacing) - top
     };
   }
 
