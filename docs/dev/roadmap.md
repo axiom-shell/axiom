@@ -371,7 +371,6 @@ Found by the audits:
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
-- [An attachment's thumbnail pokes past its rounded corners](issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
 - [Renaming a note whose new name holds a dot drops its extension and hides it](issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [A changed notes folder keeps showing the old folder's note and saves it into the new one](issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)
