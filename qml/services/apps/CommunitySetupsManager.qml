@@ -31,12 +31,14 @@ QtObject {
   readonly property var screenshots: _screenshots
   // The setup being downloaded and applied, "" for none
   readonly property string applying: _applying
-  // The setup whose saved config ("community-<id>", saved by the apply,
+  // The setup whose saved config ("community-<id>", or "community-<id> 2"…
+  // when an edited one was kept, saved by the apply,
   // SavedConfigsManager.activeSource) is the active one, unchanged, "" for
   // none: switching to another, changing the look or saving over it ends it
   readonly property string applied: {
     const source = SavedConfigsManager.activeSource;
-    return source !== "" && SavedConfigsManager.active === _snapshotPrefix + source && !SavedConfigsManager.modified ? source : "";
+    const name = SavedConfigsManager.active;
+    return source !== "" && (name === _snapshotPrefix + source || name.startsWith(_snapshotPrefix + source + " ")) && !SavedConfigsManager.modified ? source : "";
   }
   // What happened last, for the gallery
   readonly property string status: _status
@@ -137,9 +139,8 @@ QtObject {
     if (wallpaper)
       downloads.push(root._file(root._url(files.wallpaper), wallpaper, files.wallpaper.sha256));
     root._applying = id;
-    root._applyWallpaper = wallpaper;
     root._status = I18n.tr("Downloading \"{0}\"…", setup.title);
-    root._fetch(downloads, fetched => root._finishApply(fetched.failures));
+    root._fetch(downloads, fetched => root._finishApply(fetched.failures, wallpaper));
   }
 
   // The issue form that submits a setup, its title filled in (attachments
@@ -167,9 +168,6 @@ QtObject {
   property bool _screenshotBusy: false
   // The screenshot asked for during another's download ("" for none)
   property string _screenshotNext: ""
-  // The wallpaper file the setup being applied downloads, set once
-  // SavedConfigsManager has applied it ("" for none)
-  property string _applyWallpaper: ""
 
   readonly property string _indexFile: Paths.communityCachePath + "index.json"
   readonly property string _snapshotPrefix: "community-"
@@ -272,10 +270,12 @@ QtObject {
             fetched.ok[file.dest] = true;
         }
       done(fetched);
+    }, {
+      "repeatable": true
     });
   }
 
-  function _finishApply(failures) {
+  function _finishApply(failures, wallpaper) {
     const id = root._applying;
     const setup = root.setup(id);
     if (failures.length > 0 || !setup) {
@@ -286,7 +286,7 @@ QtObject {
     }
     if (setup.files.theme)
       ThemeManager.reloadCommunityThemes();
-    if (!SavedConfigsManager.applyShared(id, root._setupDir(id) + "config.json", setup.title, root._snapshotPrefix + id, root._applyWallpaper ? "file://" + root._applyWallpaper : "")) {
+    if (!SavedConfigsManager.applyShared(id, root._setupDir(id) + "config.json", setup.title, root._snapshotPrefix + id, wallpaper ? "file://" + wallpaper : "")) {
       root._applying = "";
       root._status = SavedConfigsManager.status;
     }
@@ -329,6 +329,9 @@ QtObject {
 
     // Applies a setup by id, without its wallpaper
     function apply(id: string): void {
+      root.open();
+      if (!root.setup(id))
+        console.warn("[CommunitySetupsManager] No setup", id, "in the catalog read so far");
       root.apply(id, false);
     }
   }

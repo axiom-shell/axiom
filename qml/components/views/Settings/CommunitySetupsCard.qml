@@ -35,6 +35,13 @@ FieldGroup {
   readonly property var detail: root.selected !== "" ? CommunitySetupsManager.setup(root.selected) : null
 
   Component.onCompleted: CommunitySetupsManager.open()
+  // Turned on while shown: read the catalog then (open() does nothing while off)
+  Connections {
+    target: CommunitySetupsManager
+    function onEnabledChanged() {
+      CommunitySetupsManager.open();
+    }
+  }
   onSelectedChanged: {
     root.armed = "";
     useWallpaper.checked = false;
