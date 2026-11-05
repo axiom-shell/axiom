@@ -654,12 +654,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
 
-### ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour
-- **Where:** `qml/components/content/ScreenRecord/ScreenRecord.qml:49` (`durationText`), `qml/components/bar/widgets/ScreenRecord/ScreenRecord.qml:17`, `qml/components/methods/StopwatchClock.qml:283` (`format`)
-- **What:** The card formats `recordingElapsed` with its own `durationText` ("1:05", "1:02:03"; lines 48-54, 7 lines), the bar widget with a third inline copy that has no hours: `${Math.floor(root.elapsed / 60)}:…` shows "65:00" where the card shows "1:05:00" for the same recording. `StopwatchClock.format(ms)` already makes "mm:ss" / "h:mm:ss" and is tested. Fix: both use `StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)`; `durationText` goes (7 lines) and the bar matches the card (both then pad the minutes, "01:05", as the timer and stopwatch do).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the screenshots-recording system
-
 ### DockMenu draws its own menu rows and keys rather than StyledContextMenu's
 - **Where:** `qml/components/surfaces/dock/DockMenu.qml`, `qml/components/reusable/StyledContextMenu.qml`
 - **What:** The dock's right-click menu (Keep in dock / Remove from dock, New window, Close) builds its own rows, hover and click handling, the same items the shared right-click menu takes (`{ id, text, icon, enabled }`), with no keyboard. It's a `PopupWindow` beside the dock, where StyledContextMenu is a Popup in the page's window, so sharing them means pulling StyledContextMenu's rows and keys out into a part both draw in.

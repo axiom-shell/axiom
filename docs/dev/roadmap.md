@@ -375,7 +375,6 @@ Found by the audits:
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
-- [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 
 Found while fixing core-ui-theming-04 (row 20):
 - [MediaManager's start-up pass throws: the engine has no Object.fromEntries](issues.md#mediamanagers-start-up-pass-throws-the-engine-has-no-objectfromentries)
