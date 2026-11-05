@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Locked on an engine's own typing layout, the lock screen shows no layout
+- **Where:** `qml/services/system/InputSourceManager.qml` (`currentXkb`), `qml/components/content/KeyboardLayout/KeyboardLayout.qml` (`current`)
+- **What:** An ime source typing on a layout no xkb source has (Mozc on `jp` with the sources `us`, `de`) puts that layout at the end of the compositor's list while `Input.method.enabled` is on. Locked while on it, `currentXkb` (the xkb sources alone, by the compositor's index) finds no source on that index and is "": the lock screen's module shows "Keyboard layout", and the password types on `jp` with nothing saying so; a click goes to the first layout. Fix: switch to an xkb source on lock, or offer the typing layouts of engines on the lock screen too (a behaviour choice).
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the input sources branch
+
 ### A bar Grid warns as its bar turns between horizontal and vertical
 - **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
 - **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.
