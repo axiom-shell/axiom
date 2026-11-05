@@ -146,9 +146,13 @@ type Service struct {
 	framework string
 	active    backend
 	// tray: fcitx5's tray item is registered, so its switches are heard
-	tray  bool
-	last  *pushed
-	state State
+	tray bool
+	last *pushed
+	// pushing: pushes in flight, while a list read may still be the one
+	// before (a read the push didn't cause, as a switch's refresh or a
+	// Poll), so OutsideEdit stays as it was
+	pushing int
+	state   State
 }
 
 // New returns a service, following any framework running until told
@@ -251,11 +255,16 @@ func (s *Service) Push(ctx context.Context, defaultLayout string, items []Item) 
 	s.mu.Lock()
 	prev := s.last
 	s.last = &pushed{framework: b.name(), defaultLayout: defaultLayout, items: slices.Clone(items)}
+	s.pushing++
 	s.mu.Unlock()
-	if err := b.push(ctx, defaultLayout, items); err != nil {
-		s.mu.Lock()
+	err = b.push(ctx, defaultLayout, items)
+	s.mu.Lock()
+	s.pushing--
+	if err != nil {
 		s.last = prev
-		s.mu.Unlock()
+	}
+	s.mu.Unlock()
+	if err != nil {
 		return err
 	}
 	wake(s.refresh)
@@ -464,7 +473,12 @@ func (s *Service) setActive(b backend) {
 // OnChange when it changed.
 func (s *Service) publish(next State) {
 	s.mu.Lock()
-	if next.Running && s.last != nil && s.last.framework == next.Framework {
+	switch {
+	case next.Running && s.pushing > 0 && s.state.Framework == next.Framework:
+		// The list read may be the one before the push: decided by the
+		// read after it (Push's refresh)
+		next.OutsideEdit = s.state.OutsideEdit
+	case next.Running && s.last != nil && s.last.framework == next.Framework:
 		next.OutsideEdit = !s.last.matches(next, next.Framework == FrameworkFcitx)
 	}
 	same := reflect.DeepEqual(s.state, next)
