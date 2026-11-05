@@ -17,7 +17,6 @@ ValueStyleWidget {
   id: root
 
   readonly property string sizePolicy: "elastic"
-  readonly property real minimumSize: root.iconLength + root.padding * 2
 
   // The artist shown before the title, or "" when there's none to show
   readonly property string artist: MediaManager.activePlayer && root.properties.showArtist ? Utils.truncate(MediaManager.trackArtist, root.properties.artistLength, "") : ""

@@ -68,6 +68,9 @@ BaseWidget {
   readonly property real _naturalLength: _leadRoom + iconLength + _gap + (_hasText ? _textLength : 0)
 
   readonly property real _padding: hidden ? 0 : padding
+  // Down to its icon, with a lead graphic drawn before it: the least an
+  // elastic widget (Media, Window) is squeezed to
+  readonly property real minimumSize: _iconStart + iconLength + _padding * 2
 
   implicitWidth: isVertical ? root.crossSize : _naturalLength + _padding * 2
   implicitHeight: isVertical ? _naturalLength + _padding * 2 : root.crossSize
