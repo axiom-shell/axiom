@@ -9,14 +9,16 @@ QtObject {
   id: root
 
   // `names` (full), the active one's `index`, and `codes` (the configured
-  // xkb layouts, "us,de"), which give their short names when there are as
-  // many, else each short name comes from its full one (code, through
-  // `registry`)
+  // xkb layouts, "us,de"). Each short name is the layout `registry` gives
+  // its full one (what the compositor has, even while the config says
+  // otherwise: an unsaved edit, the same count reordered); one it doesn't
+  // list takes the configured code at its place when there are as many,
+  // else a guess from its full name (code)
   function shape(names, index, codes, registry) {
     const configured = String(codes ?? "").split(",").map(code => code.trim()).filter(code => code !== "");
     const active = Number(index) || 0;
     return {
-      "layouts": configured.length === names.length ? configured : names.map(name => root.code(name, registry)),
+      "layouts": names.map((name, i) => root._listed(name, registry) ?? (configured.length === names.length ? configured[i] : root.code(name, registry))),
       "index": active,
       "keymap": names[active] ?? ""
     };
@@ -29,10 +31,19 @@ QtObject {
   // parentheses hold when short ("English (US)" → "us"), else its first
   // two letters
   function code(name, registry) {
+    const listed = root._listed(name, registry);
+    if (listed !== null)
+      return listed;
+    const inner = /\(([^)]{1,4})\)/.exec(name ?? "");
+    return (inner ? inner[1] : String(name ?? "").slice(0, 2)).toLowerCase();
+  }
+
+  // The layout the registry gives a full name (its own, or a variant's),
+  // or null
+  function _listed(name, registry) {
     for (const layout of registry?.layouts ?? [])
       if (layout?.description === name || (layout?.variants ?? []).some(v => v?.description === name))
         return layout.name;
-    const inner = /\(([^)]{1,4})\)/.exec(name ?? "");
-    return (inner ? inner[1] : String(name ?? "").slice(0, 2)).toLowerCase();
+    return null;
   }
 }

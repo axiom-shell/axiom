@@ -87,9 +87,11 @@ QtObject {
 
   // fcitx5's input method group for the sources ({ defaultLayout, items:
   // [{ name, layout }] }, SetInputMethodGroupInfo's): each source with the
-  // layout it types on, as fcitx5 writes one ("de-neo")
-  function fcitx5Group(sources) {
-    const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
+  // layout it types on, as fcitx5 writes one ("de-neo"). With `available`
+  // (the framework's installed engines, [{ name }]) an engine not in it is
+  // left out (installed), its typing layout still counted
+  function fcitx5Group(sources, available) {
+    const list = root.installed(sources, "fcitx5", null, available);
     const first = root.xkb(sources, true);
     return {
       "defaultLayout": root._fcitx5Layout(first.layouts[0], first.variants[0]),
@@ -116,9 +118,23 @@ QtObject {
     return "xkb:" + layout + ":" + variant + ":" + (languages[0] ?? "");
   }
 
-  // ibus's engines for the sources (its preload-engines), in order
-  function ibusEngines(sources, registry) {
-    return (Array.isArray(sources) ? sources : []).filter(s => root._usable(s)).map(s => root.ibusName(s, registry));
+  // ibus's engines for the sources (its preload-engines), in order; with
+  // `available`, an engine not in it left out (installed)
+  function ibusEngines(sources, registry, available) {
+    return root.installed(sources, "ibus", registry, available).map(s => root.ibusName(s, registry));
+  }
+
+  // The usable sources but an ime one whose engine `framework` hasn't
+  // installed (`available`: [{ name }], the daemon's inputMethod state's;
+  // anything but a list keeps every engine). What the framework is given,
+  // so a list it reads back is the one pushed: an engine missing from it
+  // stays in the config, and the settings card marks it
+  function installed(sources, framework, registry, available) {
+    const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
+    if (!Array.isArray(available))
+      return list;
+    const names = available.map(a => root._text(a?.name));
+    return list.filter(s => s.kind !== "ime" || names.includes(root.imName(s, framework, registry)));
   }
 
   // The input method `source` is under `framework` ("fcitx5", "ibus", or
@@ -145,15 +161,18 @@ QtObject {
 
   // The id of the current source, from the compositor's xkb index and the
   // framework's current input method (`im`, "" when none runs): the source
-  // that is that input method (of two, the one on that index), else the
-  // first xkb source on that index, else any on it; "" for none
+  // that is that input method (of two, the one on that index; an xkb one
+  // only on that index: the compositor switched layouts itself, a grp:
+  // option or its own bind, and the framework's keyboard-us is still
+  // current), else the first xkb source on that index, else any on it; ""
+  // for none
   function current(sources, xkbIndex, im, framework, registry) {
     const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
     const index = Number(xkbIndex) || 0;
     const onIndex = s => root.xkbIndex(sources, s) === index;
     if (String(im ?? "") !== "" && (framework === "fcitx5" || framework === "ibus")) {
       const named = list.filter(s => root.imName(s, framework, registry) === im);
-      const pick = named.find(onIndex) ?? named[0];
+      const pick = named.find(onIndex) ?? named.find(s => s.kind === "ime");
       if (pick)
         return pick.id;
     }
@@ -236,16 +255,17 @@ QtObject {
   }
 
   // Whether the framework's list (the daemon's inputMethod state: {
-  // defaultLayout, group: [{ name, layout }] }) is the sources': fcitx5's
-  // default layout, names and layouts (an item's empty layout being the
-  // default one), ibus's names. True under no framework
+  // defaultLayout, group: [{ name, layout }], available }) is the
+  // sources' as they're pushed (the engines it has installed alone):
+  // fcitx5's default layout, names and layouts (an item's empty layout
+  // being the default one), ibus's names. True under no framework
   function groupMatches(framework, sources, registry, state) {
     const group = Array.isArray(state?.group) ? state.group : [];
     if (framework === "ibus")
-      return JSON.stringify(group.map(item => root._text(item?.name))) === JSON.stringify(root.ibusEngines(sources, registry));
+      return JSON.stringify(group.map(item => root._text(item?.name))) === JSON.stringify(root.ibusEngines(sources, registry, state?.available));
     if (framework !== "fcitx5")
       return true;
-    const wanted = root.fcitx5Group(sources);
+    const wanted = root.fcitx5Group(sources, state?.available);
     const fallback = root._text(state?.defaultLayout);
     const have = group.map(item => ({
           "name": root._text(item?.name),

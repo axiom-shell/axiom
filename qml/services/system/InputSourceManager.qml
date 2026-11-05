@@ -282,13 +282,16 @@ QtObject {
       return;
     if (InputSources.groupMatches(root.framework, sources, root.registry, root._im))
       return;
+    // The installed engines alone (as groupMatches compares): one fcitx5
+    // or ibus lacks would be dropped from its list, read back unlike the
+    // push and taken for an outside edit
     const group = root.framework === "ibus" ? {
       "defaultLayout": "",
-      "items": InputSources.ibusEngines(sources, root.registry).map(name => ({
+      "items": InputSources.ibusEngines(sources, root.registry, root._im.available).map(name => ({
             "name": name,
             "layout": ""
           }))
-    } : InputSources.fcitx5Group(sources);
+    } : InputSources.fcitx5Group(sources, root._im.available);
     if (group.items.length === 0)
       return;
     const key = root.framework + JSON.stringify(group);

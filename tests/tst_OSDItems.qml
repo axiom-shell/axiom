@@ -81,11 +81,14 @@ TestCase {
       "current": "us",
       "label": "US"
     }).notable);
-    compare(OSDItems.tile("keyboardLayout", {
+    const engine = OSDItems.tile("keyboardLayout", {
       "ids": ["us", "mozc"],
       "current": "mozc",
-      "label": "あ"
-    }).label, "あ", "an engine's own label");
+      "label": "あ",
+      "icon": "translate"
+    });
+    compare([engine.label, engine.icon], ["あ", "translate"], "an engine's own label, its kind's icon");
+    compare(layout.icon, "keyboard", "without one, a keyboard");
     verify(OSDItems.tile("keyboardLayout", {
       "ids": ["us"],
       "current": "us",

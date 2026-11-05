@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.core
+import qs.services.compositor
 import qs.services.system
 import qs.services.ui
 import qs.components.methods
@@ -19,8 +20,10 @@ import qs.components.reusable
 // framework whose list differs, or after an edit in fcitx5-configtool:
 // take its list into the draft (InputSourceManager.importFromFramework),
 // or give it axiom's (Save; useOwn after an outside edit). With
-// `layoutsOnly` (the onboarder's Compositor page) it is always the off
-// form, without the offer, and saves each edit at once.
+// `layoutsOnly` (the onboarder's Compositor page), or where the
+// compositor offers no input-method-v2 (CompositorManager.supports.
+// inputMethod), it is always the off form, without the offer;
+// `layoutsOnly` saves each edit at once.
 FieldGroup {
   id: root
 
@@ -30,8 +33,12 @@ FieldGroup {
 
   // The sources as edited, saved or not
   readonly property var sources: root.layoutsOnly ? InputConfig.sources : SettingsManager.localConfig?.Input?.sources ?? InputConfig.sources
+  // The compositor offers input-method-v2 (false until the daemon said):
+  // without it the card is the layouts alone, as the Input method
+  // settings are hidden
+  readonly property bool supported: CompositorManager.supports.inputMethod === true
   // Managing the input method, as edited
-  readonly property bool managing: !root.layoutsOnly && SettingsManager.configValueAt("Input.method.enabled") === true
+  readonly property bool managing: !root.layoutsOnly && root.supported && SettingsManager.configValueAt("Input.method.enabled") === true
   // Being turned on: the framework isn't given anything until Save
   readonly property bool turningOn: root.managing && !InputConfig.savedMethodEnabled
   // The sources' indices the card lists: the xkb ones alone while off
@@ -145,7 +152,7 @@ FieldGroup {
 
   // Off, with a framework running: offer to manage it
   RowLayout {
-    visible: !root.layoutsOnly && !root.managing && InputSourceManager.detected
+    visible: !root.layoutsOnly && root.supported && !root.managing && InputSourceManager.detected
     Layout.fillWidth: true
     spacing: Widget.spacing
 

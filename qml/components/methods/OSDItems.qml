@@ -63,7 +63,8 @@ QtObject {
   // nothing to show (no Wi-Fi, one layout). States:
   //   capsLock / numLock / scrollLock { available, on },
   //   keyboardLayout { ids (the input sources'), current (the one in
-  //   use, "" for none), label (its own: "DE", "あ") },
+  //   use, "" for none), label (its own: "DE", "あ"), icon (its kind's:
+  //   "keyboard", "translate") },
   //   audio / microphone { muted, name, detail, icon (the device's,
   //   unmuted), device (its identity, deviceKey's) }, powerProfile { profile: "powerSaver" |
   //   "balanced" | "performance" | "" }, charger { available, plugged,
@@ -115,7 +116,7 @@ QtObject {
       {
         const ids = s.ids ?? [];
         return Object.assign(t, {
-          "icon": "keyboard",
+          "icon": s.icon || "keyboard",
           "label": String(s.label ?? ""),
           "on": true,
           "notable": ids.length > 0 && (s.current ?? "") !== "" && s.current !== ids[0],
