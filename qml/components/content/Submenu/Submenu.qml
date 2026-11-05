@@ -30,11 +30,13 @@ Card {
 
   // The layouts editor showing the menu it opens (OverlayManager.menus
   // previewing a submenu): held open from here, as if hovered
-  // (the first such row in the menu, if there are more)
+  // (the first such row in the menu, if there are more; found by its
+  // properties, which a module growing above it doesn't move: two rows
+  // alike open it alike)
   readonly property bool previewed: root.menuId !== "" && OverlayManager.menus.previewing === root.menuId && OverlayManager.menus.previewParent !== "" && OverlayManager.menus.previewParent === (root.host?.id ?? "") && !root.host?.submenu && root._firstOpener
   readonly property bool _firstOpener: {
     const first = (EdgeMenusConfig.menuById(root.host?.id ?? "")?.layout?.modules ?? []).find(module => module?.type === "Submenu" && module.properties?.menu === root.menuId);
-    return first?.place?.x === root.slotRect[0] && first?.place?.y === root.slotRect[1];
+    return JSON.stringify(first?.properties ?? null) === JSON.stringify(root.properties);
   }
   onPreviewedChanged: {
     if (root.previewed)
