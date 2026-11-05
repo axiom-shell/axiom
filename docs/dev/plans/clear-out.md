@@ -102,7 +102,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 54 | bar-popouts-13 | plan | Popouts and tray submenus taller than the screen | 2 | needs a plan | bar-popouts-08 |  |
 | 55 | overlay-modules-02 | major | Slot padding and grow in the module base | 4 | ~150 | overlay-modules-01 |  |
 | 56 | overlay-modules-03 | major | Done: Per-module full minimums, and NowPlaying's hidden parts | 4 | ~280 | overlay-modules-02 |  |
-| 57 | overlay-modules-04 | major | Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
+| 57 | overlay-modules-04 | major | Done: Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
 | 58 | overlay-modules-05 | major | The overlay host and the Layouts editor | 4 | ~80 | none |  |
 | 59 | overlay-modules-06 | major | Custom widgets | 3 | ~150 | none |  |
 | 60 | overlay-modules-07 | major | What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
@@ -470,8 +470,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Clock's date and label keep their room while the time shrinks to nothing
   - The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
   - NowPlaying builds its strip layout and a second transport hidden in every mode
-- **overlay-modules-04** (2): Split by file group at the gate: the images entry and seven of the ten parts landed with overlay-modules-03; AudioMixer and WorldClocks are left, and DayPane's editor, which the Calendar popout's `growth` reads before it opens (needs another way to know its height).
-  - [AudioMixer, WorldClocks and DayPane build parts shown in one mode in every mode](../issues.md#audiomixer-worldclocks-and-daypane-build-parts-shown-in-one-mode-in-every-mode)
+- **overlay-modules-04** (2, done): Split by file group at the gate: the images entry and seven of the ten parts landed with overlay-modules-03, AudioMixer and WorldClocks after. DayPane's editor is left as its own entry: the Calendar popout's `growth` reads its height before it opens, and that height can't be stated without building it.
+  - [DayPane builds its EventEditor before it opens](../issues.md#daypane-builds-its-eventeditor-before-it-opens)
   - Images decoded at full size or more than once
 - **overlay-modules-05** (4):
   - [Reopening the overlay while it closes leaves it open but hidden](../issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
