@@ -20,7 +20,10 @@ Panel {
 
   // A popout's (the bar widget's extraData); a card reads properties
   property string definitionId: ""
-  readonly property string widgetId: root.embedded ? (root.properties.definition ?? "") : root.definitionId
+  readonly property string _chosen: root.embedded ? (root.properties.definition ?? "") : root.definitionId
+  // On the lock screen a definition not offered there is none: nothing runs
+  readonly property bool _withheld: root.host?.kind === "lockscreen" && !CustomWidgetsConfig.definition(root._chosen)?.module.lockscreen
+  readonly property string widgetId: root._withheld ? "" : root._chosen
   readonly property var definition: CustomWidgetsConfig.definition(root.widgetId)
   readonly property var fields: CustomWidgetsManager.fields[root.widgetId] ?? null
   readonly property var output: CustomWidgetsManager.outputs[root.widgetId] ?? null
@@ -71,7 +74,7 @@ Panel {
           maxWidth: box.width
           availableHeight: box.height
           icon: root.definition?.icon ?? "widgets"
-          text: !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
+          text: root._withheld && root._chosen ? I18n.tr("This custom widget isn't offered on the lock screen") : !root.definition ? I18n.tr("Pick a custom widget in this module's settings") : !root.definition.command ? I18n.tr("No command set") : root.output?.error ? root.output.error : root.fields ? I18n.tr("No output") : I18n.tr("Waiting for output…")
         }
       }
     }

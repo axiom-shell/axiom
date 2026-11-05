@@ -483,7 +483,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A custom widget's Tooltip switch does nothing
   - A command naming a program shows the program as its script
 - **overlay-modules-07** (2):
-  - [Any custom widget reaches the lock screen past its Offer switch](../issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
+  - Any custom widget reaches the lock screen past its Offer switch
   - [What a lock screen module may do is a list kept by hand in two docs that disagree](../issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - **overlay-modules-08** (0): Done: its three entries were fixed with the OSD's statuses (the OSD's items, config v86), which rewrote the same files.
 - **overlay-modules-09** (6):

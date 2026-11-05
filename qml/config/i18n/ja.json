@@ -4045,6 +4045,7 @@
     "Images: a command in place of the default app, given the files.": "",
     "Terminal the upgrade runs in (launched as `<terminal> -e ...`). Empty uses the default terminal (Default apps).": "",
     "Files: a command in place of the default app, given the folder to open.": "",
-    "The output's tooltip on hover (Waybar's), when hovering doesn't open the module.": ""
+    "The output's tooltip on hover (Waybar's), when hovering doesn't open the module.": "",
+    "This custom widget isn't offered on the lock screen": ""
   }
 }
