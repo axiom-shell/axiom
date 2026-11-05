@@ -25,7 +25,24 @@ def denied(command, cwd=str(REPO)):
     return False
 
 
-class Bash(unittest.TestCase):
+class LiveSession:
+    """Pins the session the guard sees, whatever the one running the tests exports"""
+
+    def setUp(self):
+        # The live session: wayland-1's daemon in /run/user/1000, no inherited $AXIOM_SOCKET
+        self.patches = [mock.patch.object(guard, "LIVE_RUNTIME", "/run/user/1000"),
+                        mock.patch.object(guard, "LIVE_DISPLAY", "wayland-1"),
+                        mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": "/run/user/1000", "WAYLAND_DISPLAY": "wayland-1"})]
+        for p in self.patches:
+            p.start()
+        os.environ.pop("AXIOM_SOCKET", None)
+
+    def tearDown(self):
+        for p in reversed(self.patches):
+            p.stop()
+
+
+class Bash(LiveSession, unittest.TestCase):
     def blocks(self, *commands):
         for command in commands:
             self.assertTrue(denied(command), command)
@@ -318,19 +335,7 @@ class Bash(unittest.TestCase):
         self.allows("/usr/lib/qt6/bin/qmlformat shell.qml")
 
 
-class Axiom(unittest.TestCase):
-    def setUp(self):
-        # The live session: wayland-1's daemon in /run/user/1000, no inherited $AXIOM_SOCKET
-        self.patches = [mock.patch.object(guard, "LIVE_RUNTIME", "/run/user/1000"),
-                        mock.patch.object(guard, "LIVE_DISPLAY", "wayland-1"),
-                        mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": "/run/user/1000", "WAYLAND_DISPLAY": "wayland-1"})]
-        for p in self.patches:
-            p.start()
-        os.environ.pop("AXIOM_SOCKET", None)
-
-    def tearDown(self):
-        for p in reversed(self.patches):
-            p.stop()
+class Axiom(LiveSession, unittest.TestCase):
 
     def denied(self, cmd):
         try:

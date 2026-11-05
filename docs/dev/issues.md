@@ -50,30 +50,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
-### TestWatch can see one in-place edit as two
-- **Where:** `backend/internal/files/files_test.go` (`TestWatch`)
-- **What:** The test writes the file twice in a row ("the", then "theirs") and expects the burst to settle into one push, so a slow runner that lets the burst settle between the two writes gets two: CI run 41448998520 (the notifications branch, which didn't touch files) failed with `a got [/tmp/TestWatch…/001//todo.json /tmp/TestWatch…/001//todo.json]`; the rerun passed. Fix: allow one or two pushes for the in-place edit, or write it in one call and test the burst separately with a fake clock.
-- **Size:** trivial
-- **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
-
-### TestDevImageFailingFallsBack sometimes finds no fallback exec
-- **Where:** `backend/internal/daemon/reexec_test.go` (`TestDevImageFailingFallsBack`)
-- **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The review of compositor-14 saw it again, in 0.00s: `no fallback (Run: /tmp/TestDevImageFailingFallsBack…/002 has no schema source (qml/config/schema/index.yaml))`; five reruns then passed. So `Run` failed as meant with the ctx alive (the deferred `fallBackLive` runs only with `ctx.Err() == nil`), and `fallBackCarried` returned before `execProcess`, an error only logged (`re-executing the installed axiom`). PLAUSIBLE: its `fsx.TryLock` of the config's writer lock found it still held (a parallel test, or the carried `ConfigLock` not yet let go). Next time, read the test log's `re-executing the installed axiom` error before changing the test.
-- **Size:** trivial
-- **Found:** 2026-11-04, while reviewing compositor-20 (roadmap row 20)
-
-### TestNotifySend's no-server call can run out the test's 5 s instead of failing at once
-- **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
-- **What:** `scripts/dev/verify.sh --all` (a branch that didn't touch the daemon) once failed with `with no server: context deadline exceeded` after 5.00 s; `go test ./internal/daemon -run TestNotifySend -count=3` then passed. PLAUSIBLE: the last `notify.send` goes out right after `server.Close()`, before the test bus has dropped the closed connection's `org.freedesktop.Notifications` name, so the Notify call is routed to the dead owner and waits for a reply that never comes, until the one shared 5 s ctx (made before the bus setup and already partly spent) expires, rather than the bus answering at once with no owner (`Unavailable`). Fix: after `server.Close()`, wait until the name has no owner (poll `NameHasOwner` or watch `NameOwnerChanged`) before the last call, and give that call its own ctx.
-- **Size:** trivial
-- **Found:** 2026-11-04, while running verify.sh --all for roadmap row 20, compositor-08
-
-### TestNvidiaStream can see the stream's first line before it looks
-- **Where:** `backend/internal/sysmon/sysmon_test.go` (`TestNvidiaStream`)
-- **What:** The fake stream (`streams`, line "37, 61") answers as soon as the fetch starts it, so the first `fetch` can already read its values and the check that none came yet fails: CI run 41435061352 (a branch that didn't touch sysmon) failed with `before the stream's first line: {… GPUUsage:0xc000190238 GPUTemp:0xc000190248 …}`; the rerun passed. Fix: hold the fake's first line until the test releases it (a channel), then check before and after.
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing the OSD's cards (CI on commands-pass)
-
 ### Included's hookup can put sway-only lines into a config i3 still runs
 - **Where:** `backend/internal/compositor/manager/sway.go` (`userMain`)
 - **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.
@@ -133,12 +109,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The Vpn widget's schema has no `foregroundColor` (no `colors` part, no own field), so `properties.foregroundColor` is undefined, `Theme.resolveColor` makes it transparent, and on a bar whose `widgetStyle` is `filled` (the default) `BarWidgetStyle.colors` draws its icon and label in that: an empty pill. Seen with the Drives widget, which was built from it (fixed there by adding the field as IdleInhibitor has it). Fix: the same `foregroundColor` field on Vpn; a `tst_Config` check that every `BarIconWidget` type has one would keep it from coming back.
 - **Size:** trivial
 - **Found:** 2026-11-01, while testing removable drives in a nested shell
-
-### The weather TestPlace test fails now and then under load
-- **Where:** `backend/internal/weather/weather_test.go` (`TestPlace`, `newFetcher`)
-- **What:** Its parallel subtests all fetch through `http.DefaultClient`, and each one's fake server closing (`httptest.Server.Close` calls `CloseIdleConnections` on `http.DefaultTransport`) can break another's request in flight: `scripts/dev/verify.sh` once failed `TestPlace/both_IP_services_down` with `err = Get "http://127.0.0.1:…/ipapi": net/http: HTTP/1.x transport connection broken: http: CloseIdleConnections called, want "HTTP 503"`; 120 runs alone passed. Fix: `newFetcher` uses the fake server's own client (`f.Client()`), not `http.DefaultClient`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing removable drive support
 
 ### Eject may leave a USB stick powered on
 - **Where:** `backend/internal/udisks/udisks.go` (`eject`)
@@ -479,15 +449,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
-### The guard's Bash tests fail in a session that exports AXIOM_SOCKET
-- **Where:** `tests/scripts/test_guard.py` (`Bash`), `.claude/hooks/guard.py` (`axiom_live_display`)
-- **What:** `Axiom.setUp` pops an inherited `$AXIOM_SOCKET` and pins the live runtime and display, but the `Bash` class doesn't. Run from a terminal of the live session (which exports `AXIOM_SOCKET=/run/user/1000/axiom/wayland-1/axiom.sock`), six of its cases fail (`test_self_update`, `test_machine_settings`, `test_hookup_apply`, `test_greeter_apply`, `test_live_input_method`, `test_dev_writes_sent_by_hand`): `XDG_RUNTIME_DIR=/tmp/run python3 -c '…selfupdate.apply…'` is refused, since the guard rightly follows the inherited socket first. With `env -u AXIOM_SOCKET` all 47 pass, so `verify.sh --all` fails locally but not in CI. Fix: give `Bash` the same setUp as `Axiom` (or a shared mixin).
-- **Size:** trivial
-- **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
-
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)
-- **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}` and no error, while the other parallel subtests (same `Service`, same account `ID: "acc"`) passed. 200 runs alone and 50 under `-race` all passed, so it's a flake under load, cause unknown: the subtests sharing one account id across parallel `Discover` calls is the first suspect.
+- **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}`, while the other parallel subtests passed. That message didn't print the error, but there was one: traced, `discoverCalDAV` returns no calendars without an error only when its last candidate, `/.well-known/caldav`, answers, and `davServer` 404s it. Ruled out (row 20): the shared account id `acc` (only a read-only `Secrets.Lookup` of a file no test writes); `CloseIdleConnections` on the shared `http.DefaultTransport` (the weather flake's cause), hammered beside the test for about 20 000 runs, never broke a request. Not reproduced in about 15 000 runs of the package under load (`-race`, `-cpu 1,2,4,8`). The test now prints the error: read it the next time it fails before changing anything.
 - **Size:** small
 - **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
 

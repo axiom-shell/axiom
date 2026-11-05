@@ -349,7 +349,6 @@ Found while testing the trial Apply (row 20, compositor-10):
 
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
-- [The guard's Bash tests fail in a session that exports AXIOM_SOCKET](issues.md#the-guards-bash-tests-fail-in-a-session-that-exports-axiom_socket)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 
 Moved here from Phase 1, still open:
@@ -456,7 +455,6 @@ Found while building dev trees and the dev config:
 
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
-- [The weather TestPlace test fails now and then under load](issues.md#the-weather-testplace-test-fails-now-and-then-under-load)
 
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
@@ -504,8 +502,6 @@ Found meanwhile:
 - [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
 - [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp) (an idea from the wallpaper transitions branch)
 - [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification) (the maintainer's request, 2026-11-02)
-- [TestNvidiaStream can see the stream's first line before it looks](issues.md#testnvidiastream-can-see-the-streams-first-line-before-it-looks)
-- [TestWatch can see one in-place edit as two](issues.md#testwatch-can-see-one-in-place-edit-as-two)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
@@ -572,8 +568,6 @@ Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge sub
 Bugs an agent's review or audit found and marked PLAUSIBLE: no code is written for one until it's confirmed (shown on screen or in a log, or traced in the code), and then its link moves back to its phase. They block no row; they're to get to eventually. PLAUSIBLE entries a human submitted (the maintainer's notes) stay in their phase, still not built until confirmed. The maintainer (2026-11-05): "just leave plausible code reviewed only found bugs in a new list to get to eventually (i.e not human submitted".
 
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
-- [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
-- [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding) (PLAUSIBLE in its exact px)
 - [A stale exec-if check can block a widget after its exec-if changed](issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
 - [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)

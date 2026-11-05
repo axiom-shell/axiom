@@ -69,7 +69,7 @@ type clock struct{ now time.Time }
 func (c *clock) Now() time.Time { return c.now }
 
 func newFetcher(f *fake, c *clock) *fetcher {
-	return &fetcher{o: Options{Forecast: f.URL + "/forecast", Geocode: f.URL + "/geo", IPInfo: f.URL + "/ipinfo", IPAPI: f.URL + "/ipapi", Client: http.DefaultClient, Now: c.Now}}
+	return &fetcher{o: Options{Forecast: f.URL + "/forecast", Geocode: f.URL + "/geo", IPInfo: f.URL + "/ipinfo", IPAPI: f.URL + "/ipapi", Client: f.Client(), Now: c.Now}}
 }
 
 func TestPlace(t *testing.T) {
