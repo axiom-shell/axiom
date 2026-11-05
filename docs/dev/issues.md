@@ -50,12 +50,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
-### TestWatch can see one in-place edit as two
-- **Where:** `backend/internal/files/files_test.go` (`TestWatch`)
-- **What:** The test writes the file twice in a row ("the", then "theirs") and expects the burst to settle into one push, so a slow runner that lets the burst settle between the two writes gets two: CI run 41448998520 (the notifications branch, which didn't touch files) failed with `a got [/tmp/TestWatch…/001//todo.json /tmp/TestWatch…/001//todo.json]`; the rerun passed. Fix: allow one or two pushes for the in-place edit, or write it in one call and test the burst separately with a fake clock.
-- **Size:** trivial
-- **Found:** 2026-11-02, while merging the notification levels (CI on notifications-levels)
-
 ### TestDevImageFailingFallsBack sometimes finds no fallback exec
 - **Where:** `backend/internal/daemon/reexec_test.go` (`TestDevImageFailingFallsBack`)
 - **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The review of compositor-14 saw it again, in 0.00s: `no fallback (Run: /tmp/TestDevImageFailingFallsBack…/002 has no schema source (qml/config/schema/index.yaml))`; five reruns then passed. So `Run` failed as meant with the ctx alive (the deferred `fallBackLive` runs only with `ctx.Err() == nil`), and `fallBackCarried` returned before `execProcess`, an error only logged (`re-executing the installed axiom`). PLAUSIBLE: its `fsx.TryLock` of the config's writer lock found it still held (a parallel test, or the carried `ConfigLock` not yet let go). Next time, read the test log's `re-executing the installed axiom` error before changing the test.
