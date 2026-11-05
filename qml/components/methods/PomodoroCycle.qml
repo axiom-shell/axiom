@@ -4,7 +4,7 @@ import QtQuick
 // The pomodoro timer's rules, for PomodoroManager. A state is { phase
 // ("work" | "short" | "long"), running, endsAt (epoch ms while running),
 // pausedRemaining (ms left while paused, 0 for the whole phase), completed
-// (focus sessions finished since the last reset) }; settings are
+// (focus sessions started and ended since the last reset) }; settings are
 // PomodoroConfig.settings. Every function returns a new state.
 QtObject {
   id: root
@@ -80,12 +80,14 @@ QtObject {
     });
   }
 
-  // The phase after this one (a finished focus session counts, and every
-  // longBreakEvery-th is followed by a long break), started at `now` when
+  // The phase after this one (a focus session counts once started, and
+  // every longBreakEvery-th is followed by a long break; one skipped
+  // unstarted is followed by a short one), started at `now` when
   // `autoStart` says so for the phase it comes to: { work, breaks }
   function advance(state, now, settings, autoStart) {
-    const completed = state.phase === "work" ? state.completed + 1 : state.completed;
-    const phase = state.phase !== "work" ? "work" : completed % Math.max(1, settings.longBreakEvery) === 0 ? "long" : "short";
+    const counts = state.phase === "work" && !root.isIdle(state);
+    const completed = counts ? state.completed + 1 : state.completed;
+    const phase = state.phase !== "work" ? "work" : counts && completed % Math.max(1, settings.longBreakEvery) === 0 ? "long" : "short";
     const run = phase === "work" ? autoStart.work === true : autoStart.breaks === true;
     return {
       "phase": phase,

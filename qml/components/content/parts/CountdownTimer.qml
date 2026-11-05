@@ -49,8 +49,8 @@ Item {
   // The last minute (or fifth, if shorter)
   readonly property bool urgent: root.timer.running && root.remaining > 0 && root.remaining <= Math.min(60000, root.timer.duration * 0.2)
 
-  // Text StopwatchClock.parse reads as a duration
-  signal started(string text)
+  // A duration to start: { ms, label, clock } (StopwatchClock.parse's)
+  signal started(var timer)
   // Pause ↔ resume; idle, the last duration again
   signal toggled
   signal reset
@@ -178,10 +178,11 @@ Item {
           idleColumn.typed = StopwatchClock.parse(durationField.text, Date.now());
         }
         onAccepted: {
-          if (StopwatchClock.parse(durationField.text, Date.now()).ms <= 0)
+          const parsed = StopwatchClock.parse(durationField.text, Date.now());
+          if (parsed.ms <= 0)
             return;
           root._focusDial = true;
-          root.started(durationField.text);
+          root.started(parsed);
           durationField.text = "";
         }
 
@@ -229,8 +230,12 @@ Item {
                 text: idleColumn.chipText(chip)
                 tooltipText: isRecent ? I18n.tr("Again") : ""
                 onClicked: {
+                  // A recent one as kept, not its text read back
+                  const timer = isRecent ? idleColumn.recentShown[chip - root.presets.length] : StopwatchClock.parse(root.presets[chip], Date.now());
+                  if (timer.ms <= 0)
+                    return;
                   root._focusDial = true;
-                  root.started(idleColumn.chipText(chip));
+                  root.started(timer);
                 }
               }
             }

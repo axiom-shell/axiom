@@ -21,8 +21,8 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 11. Deferred: [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall).
 12. Deferred: [The lock screen has no settings for allowing or viewing notifications](../issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (filed apart; overlay-modules-07 goes ahead).
 13. [A dock beside another edge's reserving dock is laid out as if that dock weren't there](../issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there): b) reach past it as edge popouts do.
-14. [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished): c) count only if the session had started.
-15. [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons): accept the dots and picker under the ring.
+14. Done: Skipping a focus session counts it as finished: c) count only if the session had started.
+15. Done: PomodoroDial redraws DialControls' ring and buttons: accept the dots and picker under the ring.
 16. Deferred: [Calendar times in a Windows zone name with no VTIMEZONE read as local time](../issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time) (left logged, no table).
 
 ### Cross-area merges
@@ -514,12 +514,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The history's group and entry delegates repeat one swipe-away mechanism
   - clearAll removes each cached image twice, one process per entry
 - **features-04** (0): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The dock's menu and drag state outlive the icons they point at; A dock beside another edge's reserving dock is laid out as if that dock weren't there.
-- **features-05** (6): The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
-  - [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished)
-  - [A recent timer chip reads its label back as part of the duration](../issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
-  - [A todo.json deleted while unreadable blocks every save until restart](../issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
-  - [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
-  - [Focus and Pomodoro build the parts their properties turn off](../issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)
+- **features-05** (6): Five fixed; the dropdown entry stays open (its cause traced: with no Flickable and a box that doesn't grow, `_roomBelow` is 0, so the list gets the two-row minimum; how much room it should take instead is a behaviour choice), so the cluster isn't done. The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
+  - Skipping a focus session counts it as finished
+  - A recent timer chip reads its label back as part of the duration
+  - A todo.json deleted while unreadable blocks every save until restart
+  - PomodoroDial redraws DialControls' ring and buttons
+  - Focus and Pomodoro build the parts their properties turn off
   - [A dropdown in an edge menu card with nothing scrolling gets two rows](../issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - **features-06** (3):
   - [A save conflict reloads nothing, so trying again conflicts again](../issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)

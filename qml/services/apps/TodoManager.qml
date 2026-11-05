@@ -91,13 +91,15 @@ QtObject {
     }, null, 2) + "\n");
   }
 
-  // Nothing saved yet: an empty list
+  // Nothing saved yet (or a broken file deleted): nothing to save over
   function _load() {
     const text = FileManager.read(root.path);
-    if (text === null)
+    if (text === null) {
+      root._unreadable = false;
       root._loaded = true;
-    else
+    } else {
       root._parse(text);
+    }
   }
 
   function _parse(text) {
