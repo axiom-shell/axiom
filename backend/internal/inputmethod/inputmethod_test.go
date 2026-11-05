@@ -277,6 +277,80 @@ func TestFcitx(t *testing.T) {
 	}
 }
 
+// count is how many times member was called.
+func (f *fakeFcitx) count(member string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	n := 0
+	for _, c := range f.calls {
+		if c == member {
+			n++
+		}
+	}
+	return n
+}
+
+// startWatcher runs a tray's StatusNotifierWatcher listing fcitx5's item,
+// as fcitx5 registers it once one runs.
+func startWatcher(t *testing.T, bus *dbustest.Bus, f *fakeFcitx) *dbus.Conn {
+	t.Helper()
+	w := dial(t, bus)
+	if _, err := w.Export(watcherPath, dbus.Interface{Name: "org.freedesktop.DBus.Properties", Methods: map[string]dbus.Method{
+		"Get": {In: "ss", Out: "v", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
+			if m.Body[1].(string) != "RegisteredStatusNotifierItems" {
+				return nil, dbus.NewError(dbus.ErrInvalidArgs, "no property")
+			}
+			return []any{dbus.MakeVariant([]string{f.sni.UniqueName() + string(sniPath)})}, nil
+		}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.RequestName(t.Context(), watcherName, dbus.NameDoNotQueue); err != nil {
+		t.Fatal(err)
+	}
+	return w
+}
+
+// Without a tray item fcitx5 tells of no switch: Poll reads its current
+// input method; with one, Poll reads nothing (its signals do)
+func TestFcitxPollsWithoutTrayItem(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := newFakeFcitx(t, bus)
+	h := start(t, bus, nil)
+	h.await(t, "fcitx5 is followed", func(st State) bool { return st.Running && st.Current == "keyboard-us" })
+
+	// A switch made in fcitx5, no signal sent
+	f.mu.Lock()
+	f.current = "mozc"
+	f.mu.Unlock()
+	if !testkit.Eventually(func() bool { return h.s.Poll().Polling && h.s.State().Current == "mozc" }) {
+		t.Fatalf("no tray item: the poll never saw the switch; the state is %+v", h.s.State())
+	}
+
+	w := startWatcher(t, bus, f)
+	if !testkit.Eventually(func() bool { return !h.s.Poll().Polling }) {
+		t.Fatal("a tray item registered: still polling")
+	}
+	before := f.count("CurrentInputMethod")
+	f.mu.Lock()
+	f.current = "keyboard-us"
+	f.mu.Unlock()
+	for range 5 {
+		h.s.Poll()
+		time.Sleep(10 * time.Millisecond)
+	}
+	if n := f.count("CurrentInputMethod"); n != before || h.s.State().Current != "mozc" {
+		t.Errorf("with a tray item: %d reads polled, the state %+v", n-before, h.s.State())
+	}
+
+	// The watcher gone: fcitx5's item with it
+	w.Close()
+	if !testkit.Eventually(func() bool { return h.s.Poll().Polling && h.s.State().Current == "keyboard-us" }) {
+		t.Fatalf("the watcher gone: the poll never saw the switch; the state is %+v", h.s.State())
+	}
+}
+
 func TestPushRefusesBadLists(t *testing.T) {
 	t.Parallel()
 	s := New(Options{})

@@ -170,6 +170,21 @@ QtObject {
     root._sync(true);
   }
 
+  // The surfaces showing the source in use (the widget, its popout, the
+  // module, the OSD's status) hold it: fcitx5 tells of a switch made in
+  // fcitx5 itself only through its tray item, which it registers only
+  // while a tray watcher runs (a bar's SystemTray), so while one holds
+  // it and fcitx5 runs the daemon reads its current input method about
+  // once a second whenever that item is missing (the inputMethodPoll
+  // topic; nothing is read while the item is there)
+  function acquire(owner) {
+    root._consumers.acquire(owner, {});
+  }
+
+  function release(owner) {
+    root._consumers.release(owner);
+  }
+
   function refresh() {
     CompositorManager.withKeyboard(keyboard => {
       if (!keyboard)
@@ -189,6 +204,16 @@ QtObject {
   readonly property var _counted: InputSources.effective(InputConfig.sources, root.layouts, InputConfig.methodEnabled)
   // The login screen: no framework, nothing pushed
   readonly property bool _inert: Paths.greeter
+  property ConsumerRegistry _consumers: ConsumerRegistry {}
+  // Held while a surface holds it and a framework runs (the daemon reads
+  // only fcitx5, and only without its tray item)
+  readonly property bool _polls: !root._inert && root._consumers.active && root.running
+  on_PollsChanged: {
+    if (root._polls)
+      BackendManager.acquire("inputMethodPoll", {});
+    else
+      BackendManager.release("inputMethodPoll");
+  }
   // The daemon's inputMethod state, null until it said
   property var _im: null
   // Pushes follow the saved config, never an editor's preview: the

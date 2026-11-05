@@ -484,9 +484,6 @@ Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
 - [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
 
-Found while reviewing input sources (round 5):
-- [fcitx5's switches go unheard without a tray watcher](issues.md#fcitx5s-switches-go-unheard-without-a-tray-watcher)
-
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 

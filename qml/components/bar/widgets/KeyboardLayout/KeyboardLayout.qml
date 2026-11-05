@@ -46,6 +46,10 @@ BarIconWidget {
       InputSourceManager.next(false);
   }
 
+  // Switches made in fcitx5 itself are heard without a tray too
+  Component.onCompleted: InputSourceManager.acquire(root)
+  Component.onDestruction: InputSourceManager.release(root)
+
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "InputSources"

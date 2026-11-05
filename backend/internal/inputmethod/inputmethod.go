@@ -4,13 +4,16 @@
 // that name never means ibus). It follows the framework's current input
 // method, its list (fcitx5's current group, ibus's preloaded engines) and
 // the engines installed, from their signals (nothing polls but the look
-// for a framework that isn't running yet); switches the input method;
+// for a framework that isn't running yet, and fcitx5's current input
+// method while it has no tray item and the shell asks: Poll); switches
+// the input method;
 // pushes the list axiom owns (Input.keyboard.sources) to the framework; and sets
 // fcitx5's few options axiom has settings for.
 package inputmethod
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"reflect"
 	"slices"
@@ -19,6 +22,7 @@ import (
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
 // The frameworks, as Options.Framework and State.Framework name them
@@ -131,14 +135,17 @@ type Service struct {
 	o Options
 
 	// kick wakes Run to look again (the framework setting changed);
-	// refresh to read the framework again (after a switch or a push)
-	kick, refresh chan struct{}
+	// refresh to read the framework again (after a switch or a push);
+	// poll to read fcitx5's current input method (Poll)
+	kick, refresh, poll chan struct{}
 
 	mu        sync.Mutex
 	framework string
 	active    backend
-	last      *pushed
-	state     State
+	// tray: fcitx5's tray item is registered, so its switches are heard
+	tray  bool
+	last  *pushed
+	state State
 }
 
 // New returns a service, following any framework running until told
@@ -159,7 +166,7 @@ func New(o Options) *Service {
 	}
 	return &Service{
 		o: o, framework: FrameworkAuto, state: emptyState(""),
-		kick: make(chan struct{}, 1), refresh: make(chan struct{}, 1),
+		kick: make(chan struct{}, 1), refresh: make(chan struct{}, 1), poll: make(chan struct{}, 1),
 	}
 }
 
@@ -392,6 +399,56 @@ func ownerOf(m *dbus.Message) string {
 		return ""
 	}
 	return owner
+}
+
+func (s *Service) setTray(on bool) {
+	s.mu.Lock()
+	s.tray = on
+	s.mu.Unlock()
+}
+
+func (s *Service) hasTray() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.tray
+}
+
+// PollState is the inputMethodPoll topic's state: whether fcitx5's
+// current input method is being read (fcitx5 followed, without a tray
+// item to tell of its switches).
+type PollState struct {
+	Polling bool `json:"polling"`
+}
+
+// Poll has fcitx5's current input method read, a switch published, while
+// fcitx5 runs with no tray item registered: it tells of a switch only
+// through that item's signals, and registers one only while a
+// StatusNotifierWatcher runs (a bar's SystemTray). Nothing is read
+// otherwise.
+func (s *Service) Poll() PollState {
+	s.mu.Lock()
+	_, fcitx := s.active.(*fcitx)
+	polls := fcitx && !s.tray
+	s.mu.Unlock()
+	if polls {
+		wake(s.poll)
+	}
+	return PollState{Polling: polls}
+}
+
+// Source is the inputMethodPoll topic: Poll about once a second while
+// the shell's input source surfaces hold it (InputSourceManager.acquire).
+func (s *Service) Source() topics.Source {
+	return topics.Source{
+		Name:    "inputMethodPoll",
+		Floor:   500 * time.Millisecond,
+		Default: time.Second,
+		Request: reflect.TypeFor[struct{}](),
+		State:   reflect.TypeFor[PollState](),
+		Fetch: func(context.Context, []json.RawMessage) (any, error) {
+			return s.Poll(), nil
+		},
+	}
 }
 
 func (s *Service) setActive(b backend) {

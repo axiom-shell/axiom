@@ -360,7 +360,12 @@ Loader {
           root._report();
       }
 
-      Component.onCompleted: layout._check()
+      Component.onCompleted: {
+        layout._check();
+        // Switches made in fcitx5 itself are heard without a tray too
+        InputSourceManager.acquire(layout);
+      }
+      Component.onDestruction: InputSourceManager.release(layout)
 
       Connections {
         target: CompositorManager

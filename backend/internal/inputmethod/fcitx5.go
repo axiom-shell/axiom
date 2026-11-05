@@ -2,6 +2,7 @@ package inputmethod
 
 import (
 	"context"
+	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
@@ -16,6 +17,11 @@ const (
 	// no signal for the input method changing, the item's icon does
 	sniPath  = dbus.ObjectPath("/StatusNotifierItem")
 	sniIface = "org.kde.StatusNotifierItem"
+	// The tray's watcher, which fcitx5 registers that item with: only
+	// while one runs (axiom's runs while a bar has a SystemTray)
+	watcherName  = "org.kde.StatusNotifierWatcher"
+	watcherPath  = dbus.ObjectPath("/StatusNotifierWatcher")
+	watcherIface = "org.kde.StatusNotifierWatcher"
 
 	// The configs SetConfig takes (fcitx5's dbusmodule)
 	fcitxGlobalConfig    = "fcitx://config/global"
@@ -28,7 +34,9 @@ type fcitx struct {
 }
 
 // followFcitx follows fcitx5 until it stops (again: look again), the
-// setting changes (again) or the bus goes.
+// setting changes (again) or the bus goes. A switch is heard through
+// fcitx5's tray item; while it has none registered (no watcher runs) a
+// Poll reads the current input method instead.
 func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus.Subscription) (bool, error) {
 	var subs []*dbus.Subscription
 	defer func() {
@@ -40,6 +48,9 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		{Sender: fcitxName, Path: fcitxPath, Interface: fcitxController, Member: "InputMethodGroupsChanged"},
 		// Every item's: fcitx5's is told apart by its process
 		{Path: sniPath, Interface: sniIface},
+		// The watcher coming, going, and items registering with it
+		dbus.NameOwnerChanged(watcherName),
+		{Sender: watcherName, Path: watcherPath, Interface: watcherIface},
 	} {
 		sub, err := conn.Subscribe(ctx, m)
 		if err != nil {
@@ -64,6 +75,24 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		}
 		return known
 	}
+	// Whether the watcher lists an item of fcitx5's (an entry is the
+	// item's bus name, with its path or not)
+	tray := func() bool {
+		v, err := conn.GetProperty(ctx, watcherName, watcherPath, watcherIface, "RegisteredStatusNotifierItems")
+		if err != nil {
+			return false
+		}
+		list, _ := v.Value.([]string)
+		for _, entry := range list {
+			name, _, _ := strings.Cut(entry, "/")
+			if name != "" && ours(name) {
+				return true
+			}
+		}
+		return false
+	}
+	s.setTray(tray())
+	defer s.setTray(false)
 	read := func(all bool) error {
 		st, err := f.read(ctx, all, s.State())
 		if err != nil {
@@ -89,20 +118,43 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 			return false, conn.Err()
 		case <-s.refresh:
 			err = read(false)
+		case <-s.poll:
+			// No tray item tells of a switch: one is seen as a new current
+			if s.hasTray() {
+				continue
+			}
+			var current string
+			var m *dbus.Message
+			if m, err = f.call(ctx, "CurrentInputMethod"); err == nil {
+				if err = m.Store(&current); err == nil && current != s.State().Current {
+					err = read(false)
+				}
+			}
 		case m := <-signals.C:
 			switch {
 			case m.Member == "NameOwnerChanged":
 				var name, old, owner string
-				if m.Store(&name, &old, &owner) != nil || name != fcitxName {
+				if m.Store(&name, &old, &owner) != nil {
+					continue
+				}
+				if name == watcherName {
+					// A watcher came or went: fcitx5 registers with a new one
+					s.setTray(tray())
+					continue
+				}
+				if name != fcitxName {
 					continue
 				}
 				// Gone, or replaced (fcitx5 -r): looked for again
 				return true, nil
+			case m.Interface == watcherIface:
+				s.setTray(tray())
 			case m.Interface == fcitxController:
 				// The groups changed: their input methods may have too
 				err = read(true)
 			case m.Member == "NewIcon" || m.Member == "NewToolTip":
 				if ours(m.Sender) {
+					s.setTray(true)
 					err = read(false)
 				}
 			}

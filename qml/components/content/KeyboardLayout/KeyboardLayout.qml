@@ -20,6 +20,14 @@ Card {
   readonly property string current: InputSourceManager.currentFor(root.xkbOnly)
   readonly property bool canSwitch: root.live && InputSourceManager.sourcesFor(root.xkbOnly).length > 1
 
+  // Switches made in fcitx5 itself are heard without a tray too (not
+  // for the layouts editor's stand-in)
+  Component.onCompleted: {
+    if (root.live)
+      InputSourceManager.acquire(root);
+  }
+  Component.onDestruction: InputSourceManager.release(root)
+
   function _step(direction) {
     if (direction < 0)
       InputSourceManager.prev(root.xkbOnly);

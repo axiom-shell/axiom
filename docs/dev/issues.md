@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### fcitx5's switches go unheard without a tray watcher
-- **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
-- **What:** fcitx5's Controller1 has no signal for the input method changing, so the service hears a switch only through fcitx5's StatusNotifierItem (`NewIcon` / `NewToolTip`). fcitx5 registers that item only while a StatusNotifierWatcher runs (and classicui's tray is on); axiom's watcher is Quickshell's, which exists only while a bar has a SystemTray widget. Without one, a switch by fcitx5's own hotkey or menu never reaches `current`: the indicator and OSD stay on the old input method and the compositor's layout doesn't follow (`_followIm`). PLAUSIBLE: settles by switching with fcitx5's hotkey with no tray widget on any bar and reading `inputMethod.get`. Fix: another source of the switch (fcitx5's kimpanel or a watcher the daemon owns), or polling `CurrentInputMethod` only while no item is registered.
-- **Size:** needs a plan
-- **Found:** 2026-11-05, while reviewing input sources (round 5)
-
 ### Locked on an engine's own typing layout, the lock screen shows no layout
 - **Where:** `qml/services/system/InputSourceManager.qml` (`currentXkb`), `qml/components/content/KeyboardLayout/KeyboardLayout.qml` (`current`)
 - **What:** An ime source typing on a layout no xkb source has (Mozc on `jp` with the sources `us`, `de`) puts that layout at the end of the compositor's list while `Input.keyboard.method.enabled` is on. Locked while on it, `currentXkb` (the xkb sources alone, by the compositor's index) finds no source on that index and is "": the lock screen's module shows "Keyboard layout", and the password types on `jp` with nothing saying so; a click goes to the first layout. Fix: switch to an xkb source on lock, or offer the typing layouts of engines on the lock screen too (a behaviour choice).
