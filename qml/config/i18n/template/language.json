@@ -1550,7 +1550,7 @@
     "List the input sources when hovered; a click picks one.": "",
     "List the tailnet's offline devices too, after the online ones.": "",
     "List your most used apps before you type anything.": "",
-    "Lists the candidate words top to bottom instead of in a row. fcitx5 only.": "",
+    "Lists the candidate words top to bottom instead of in a row, for engines that don't choose their own layout (Pinyin, Rime, Hangul). Mozc always shows a column. fcitx5 only.": "",
     "Live": "",
     "Live changed since dev last took it over.": "",
     "Live changes brought over": "",

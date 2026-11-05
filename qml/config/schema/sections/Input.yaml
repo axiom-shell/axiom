@@ -22,6 +22,7 @@ properties:
         x-scope: personal
         x-greeter: true
         x-row: InputSourcesField
+        x-rowDraws: [method.enabled]
         type: array
         title: Layouts
         default:
@@ -74,7 +75,6 @@ properties:
         properties:
           enabled:
             x-scope: personal
-            x-settings: false
             type: boolean
             title: Type other languages with an input method
             default: false
@@ -115,7 +115,7 @@ properties:
             type: boolean
             title: Candidates in a column
             default: false
-            description: Lists the candidate words top to bottom instead of in a row. fcitx5 only.
+            description: Lists the candidate words top to bottom instead of in a row, for engines that don't choose their own layout (Pinyin, Rime, Hangul). Mozc always shows a column. fcitx5 only.
             x-showIf: {enabled: true, framework: [auto, fcitx5]}
           candidateFont:
             x-scope: look

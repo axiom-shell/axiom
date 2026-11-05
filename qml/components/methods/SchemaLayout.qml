@@ -21,7 +21,9 @@ QtObject {
   // `groupShowIf` ([{ condition, path }], path: the object's parent), on
   // every row inside it. A nested object marked `x-fold` folds its rows
   // behind its title: its group row has `fold: true`, and each row inside
-  // it `foldedBy`, the dotted path of the innermost such object. Keys go in
+  // it `foldedBy`, the dotted path of the innermost such object. A row
+  // another field's `x-row` draws (its `x-rowDraws`) has `drawnBy`, that
+  // field's dotted path. Keys go in
   // their object's `x-order` first (the schema reaches QML as a map)
   function rows(objectSchema, path) {
     const result = [];
@@ -75,6 +77,13 @@ QtObject {
           "schema": prop
         });
       }
+    }
+    // A field whose `x-row` also draws other keys of its object
+    // (`x-rowDraws`, dotted paths under it) marks their rows `drawnBy`
+    // its dotted path: on the settings page they're drawn inside it
+    for (const row of result.filter(r => r.kind !== "group" && Array.isArray(r.schema["x-rowDraws"]))) {
+      const drawn = row.schema["x-rowDraws"].map(key => path.concat(key.split(".")).join("."));
+      result.filter(r => r.kind !== "group" && drawn.includes(r.path.join("."))).forEach(r => r.drawnBy = row.path.join("."));
     }
     return result;
   }
@@ -498,7 +507,9 @@ QtObject {
   // "Appearance.shape"): { category, key, title, row } for the first card
   // holding it in page order (`key` its group key, `title` the setting's
   // or card's, `row` the exact row's path, or null for a section or
-  // object), or null when no card shows it. `valueOf` as `categories`
+  // object; the row drawing it for one another row draws, `drawnBy`;
+  // `fold` the `x-fold` it's inside, `foldedBy`, or null), or null when
+  // no card shows it. `valueOf` as `categories`
   function locate(schema, path, valueOf) {
     const target = Array.isArray(path) ? path : String(path).split(".");
     const within = p => target.length <= p.length && target.every((key, i) => p[i] === key);
@@ -512,7 +523,8 @@ QtObject {
           "category": category.name,
           "key": group.key,
           "title": exact ? exact.title : group.title,
-          "row": exact ? exact.path : null
+          "row": exact ? (exact.drawnBy ? exact.drawnBy.split(".") : exact.path) : null,
+          "fold": exact?.foldedBy ?? null
         };
       }
     }
