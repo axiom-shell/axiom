@@ -429,7 +429,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Bar widget hosts settle after they're gone
 - **bar-popouts-06** (3):
   - Media squeezed to its minimum in the fill style shows the meter, not its icon
-  - [SystemStats' used memory clips on a vertical bar](../issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
+  - SystemStats' used memory clips on a vertical bar
   - [The Workspaces widget's measured length glides when the active cell widens](../issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - **bar-popouts-07** (5): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
   - [An edge menu can be bigger than its screen](../issues.md#an-edge-menu-can-be-bigger-than-its-screen)

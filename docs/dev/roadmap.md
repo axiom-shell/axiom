@@ -372,7 +372,6 @@ Found by the audits:
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
 - [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
-- [SystemStats' used memory clips on a vertical bar](issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [SystemStats works out ValueStyleWidget's style fallbacks again](issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)

@@ -617,12 +617,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 
-### SystemStats' used memory clips on a vertical bar
-- **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:108` (`segmentData`, `mem`), `qml/components/bar/widgets/base/IconTextWidget.qml:140` (`elide`)
-- **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `thickness` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### SystemStats works out ValueStyleWidget's style fallbacks again
 - **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:199` (segment `style`), `qml/components/bar/widgets/SystemStats/SystemStats.qml:139` (`backgroundLevelColor`), `qml/components/bar/widgets/SystemStats/SystemStats.qml:141` (`_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:34` (`style`)
 - **What:** Two rules live in both `ValueStyleWidget.style` and SystemStats' per-segment `style`: "stacked on a vertical bar is a label" and "a sparkline with no history is a fill". `Qt.alpha(colors.icon, 0.35)` and `colorText && colors.fill.a < 1` are copied word for word too. A new style rule added to one copy will be missed in the other. Fix: put the fallbacks in one function on ValueGraphic (`resolvedStyle(style, vertical, hasHistory, ratio)`) and read it from both places, about 4 lines out of SystemStats. The pill colour can be a ValueGraphic constant.

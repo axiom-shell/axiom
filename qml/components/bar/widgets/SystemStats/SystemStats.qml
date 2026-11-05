@@ -104,9 +104,10 @@ BarWidget {
         "level": SystemManager.cpuUsage
       };
     case "mem":
+      // Whole GiB upright on a vertical bar: "15.6G" is wider than its column
       return {
         "icon": "memory_alt",
-        "value": p.memoryFormat === "used" ? (SystemManager.memUsedBytes / Utils.bytesPerGiB).toFixed(1) + "G" : `${SystemManager.memUsage}%`,
+        "value": p.memoryFormat === "used" ? (SystemManager.memUsedBytes / Utils.bytesPerGiB).toFixed(root.isVertical ? 0 : 1) + "G" : `${SystemManager.memUsage}%`,
         "widest": p.memoryFormat === "used" ? "00.0G" : "100%",
         "level": SystemManager.memUsage
       };
