@@ -349,6 +349,8 @@ Found while testing the trial Apply (row 20, compositor-10):
 
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
+- [The guard's Bash tests fail in a session that exports AXIOM_SOCKET](issues.md#the-guards-bash-tests-fail-in-a-session-that-exports-axiom_socket)
+- [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 
 Moved here from Phase 1, still open:
 - [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
@@ -370,10 +372,7 @@ Found by the audits:
 - [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [WindowLookConfig rebuilds BarStyle.look](issues.md#windowlookconfig-rebuilds-barstylelook)
-- [Media squeezed to its minimum in the fill style shows the meter, not its icon](issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
-- [The Workspaces widget's measured length glides when the active cell widens](issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
-- [SystemStats' used memory clips on a vertical bar](issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [SystemStats works out ValueStyleWidget's style fallbacks again](issues.md#systemstats-works-out-valuestylewidgets-style-fallbacks-again)

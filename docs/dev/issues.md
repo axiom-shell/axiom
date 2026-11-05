@@ -479,6 +479,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
+### The guard's Bash tests fail in a session that exports AXIOM_SOCKET
+- **Where:** `tests/scripts/test_guard.py` (`Bash`), `.claude/hooks/guard.py` (`axiom_live_display`)
+- **What:** `Axiom.setUp` pops an inherited `$AXIOM_SOCKET` and pins the live runtime and display, but the `Bash` class doesn't. Run from a terminal of the live session (which exports `AXIOM_SOCKET=/run/user/1000/axiom/wayland-1/axiom.sock`), six of its cases fail (`test_self_update`, `test_machine_settings`, `test_hookup_apply`, `test_greeter_apply`, `test_live_input_method`, `test_dev_writes_sent_by_hand`): `XDG_RUNTIME_DIR=/tmp/run python3 -c '…selfupdate.apply…'` is refused, since the guard rightly follows the inherited socket first. With `env -u AXIOM_SOCKET` all 47 pass, so `verify.sh --all` fails locally but not in CI. Fix: give `Bash` the same setUp as `Axiom` (or a shared mixin).
+- **Size:** trivial
+- **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
+
+### TestDiscoverCalDAV failed once under verify.sh --all
+- **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)
+- **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}` and no error, while the other parallel subtests (same `Service`, same account `ID: "acc"`) passed. 200 runs alone and 50 under `-race` all passed, so it's a flake under load, cause unknown: the subtests sharing one account id across parallel `Discover` calls is the first suspect.
+- **Size:** small
+- **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
+
 ### The guard judges a push where the line starts, not where git runs
 - **Where:** `.claude/hooks/guard.py` (`check_git`, `simple`), `tests/scripts/test_guard.py`
 - **What:** `check_git` reads the branch once, in the folder the line starts in (or `git -C`'s), before anything in the line runs, so a push to main gets past it when git runs on another branch or folder than that: `git switch main && git push` (or `git checkout main`) from a feature branch's folder; a wrapper that changes folder (`env -C <main checkout> git push`, `sudo -D`, `systemd-run --working-directory`, whose options `simple` drops); `git --git-dir=…`/`--work-tree=…` or `GIT_DIR=… git push`. Each was allowed by `guard.check` from a folder on a feature branch (2026-11-02). Fix: refuse a bare push (no refspec, or `HEAD`) after a `switch`/`checkout` in the same line, and judge the folder those options and variables name.
@@ -599,33 +611,9 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar system
 
-### Media squeezed to its minimum in the fill style shows the meter, not its icon
-- **Where:** `qml/components/bar/widgets/Media/Media.qml:20` (`minimumSize`), `qml/components/bar/widgets/base/IconTextWidget.qml:46` (`_leadRoom`), `qml/components/bar/widgets/base/IconTextWidget.qml:54` (`_iconStart`)
-- **What:** Media is elastic, with `minimumSize: root.iconLength + root.padding * 2`. Its header says it shrinks "down to just the icon when the bar is crowded", and a crowded section or a `layout.maxSize` cap squeezes it to that minimum. Its schema offers `fill`. In that style the meter is a lead graphic *before* the icon (`ValueGraphic.afterIcon` is only ticker/stacked). `leadSlot` sits at x 0 with its full `leadLength` (`fontSize * 4`, 56 px at the defaults), and the icon is drawn at `_iconStart = _leadRoom`, past the room the minimum leaves. The widget clips to its box (BaseWidget `clip: true`), so a squeezed Media in fill style shows about 20 px of the progress meter and no icon. Ticker and stacked draw after the icon and are fine. Fix: count the lead in the minimum, `minimumSize: root.iconLength + (root.leadAfterIcon ? 0 : root.leadLength + root.spacing) + root.padding * 2` (or expose `_leadRoom` as `leadRoom`).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### The Workspaces widget's measured length glides when the active cell widens
-- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCell.qml:151` (`Glide on width`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:48` (`implicitWidth: cells.implicitWidth`)
-- **What:** With `wideActive` (the default), each cell's `width`/`height` glides over animNormal. The row's implicit size is the `cells` Grid's, the sum of those drawn widths, and so is `BarWidgetHost.naturalSize`.
-  - When a switch changes the total, the measured size moves on every frame of the glide. Each frame re-runs the bar layout and re-targets the host's own animFast glide.
-  - The total changes when the new active workspace wasn't shown before (showEmpty off, and always on niri through `_hideEmpty`): its cell appears at 2× length while the old active one shrinks. It also changes when the active workspace leaves the row.
-  - This breaks composition.md › Bar motion: "**Measured, never animated:** the layout is measured from the modules' implicit sizes. That covers `naturalSize`/`preferredSize`…".
-  - `Glide on width|height` under `qml/components/bar` is otherwise only on WidgetBackground and BarWidgetHost, both drawn sizes.
-
-  PLAUSIBLE that it shows (a neighbour jittering or lagging over the glide): a TRACE of `naturalSize` while switching to a new niri workspace settles it. Fix: measure the row from its targets, `ids.length * cellLength + (wide active shown ? cellLength : 0) + (ids.length - 1) * spacing` across the main axis, and clip the row while a cell still glides.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### A custom clock format without spaces spills past a vertical bar
 - **Where:** `qml/components/bar/widgets/Time/Time.qml:108` (`_split`)
 - **What:** On a vertical bar the clock is `thickness` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### SystemStats' used memory clips on a vertical bar
-- **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:108` (`segmentData`, `mem`), `qml/components/bar/widgets/base/IconTextWidget.qml:140` (`elide`)
-- **What:** On a vertical bar each value is upright under its icon, at `textScale` 0.7 with `Text.ElideNone`, centred in the `thickness` column of a box that clips (BaseWidget `clip: true`). With `memoryFormat: used` the value is `toFixed(1) + "G"`, five characters from 10 GiB up ("15.6G"). That is about 5 × 0.6 em × 9.8 px ≈ 29.5 px in monospace, in a 26 px column, so both outer glyphs lose about 2 px; "125.3G" loses most of a glyph each side. Percent values ("100%", about 23.5 px) fit. PLAUSIBLE: a screenshot of a vertical bar with `memoryFormat: used` on a machine using 10 GiB or more settles it. Fix: whole GiB on a vertical bar (`toFixed(root.isVertical ? 0 : 1)`), or let an upright label shrink to fit (`fontSizeMode: Text.HorizontalFit` with a `minimumPixelSize`).
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 

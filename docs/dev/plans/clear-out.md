@@ -93,7 +93,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 45 | compositor-18 | major | Done: Touchpad settings apart from the mouse's | 3 | ~150 | none |  |
 | 46 | bar-popouts-03 | major | Done: EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | Done: The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
-| 48 | bar-popouts-06 | major | Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
+| 48 | bar-popouts-06 | major | Done: Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
 | 49 | bar-popouts-07 | major | Edge menu sizing, placement and zones | 5 | ~250 | bar-popouts-01, overlay-modules-02 |  |
 | 50 | bar-popouts-08 | minor-sweep | Popouts and edge menus | 5 | ~120 | bar-popouts-03, -07 |  |
 | 51 | bar-popouts-09 | minor-sweep | The bar and bar widgets, with the workspace popouts | 7 | ~200 | bar-popouts-04, -06 |  |
@@ -427,10 +427,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-04** (2, done; its three reserve entries fixed by the stacked bars PR, its selection and report entries by the bar rewrite): the editor and rebuild entries.
   - Plugging in or unplugging a monitor remakes the bar that stays
   - Bar widget hosts settle after they're gone
-- **bar-popouts-06** (3):
-  - [Media squeezed to its minimum in the fill style shows the meter, not its icon](../issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
-  - [SystemStats' used memory clips on a vertical bar](../issues.md#systemstats-used-memory-clips-on-a-vertical-bar)
-  - [The Workspaces widget's measured length glides when the active cell widens](../issues.md#the-workspaces-widgets-measured-length-glides-when-the-active-cell-widens)
+- **bar-popouts-06** (3, done):
+  - Media squeezed to its minimum in the fill style shows the meter, not its icon
+  - SystemStats' used memory clips on a vertical bar
+  - The Workspaces widget's measured length glides when the active cell widens
 - **bar-popouts-07** (5): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
   - [An edge menu can be bigger than its screen](../issues.md#an-edge-menu-can-be-bigger-than-its-screen)
   - [The layouts editor says a menu fits its edge when it scrolls](../issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
