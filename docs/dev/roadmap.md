@@ -367,7 +367,6 @@ Found by the audits:
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule)
-- [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)

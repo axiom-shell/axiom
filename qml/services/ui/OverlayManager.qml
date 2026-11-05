@@ -70,7 +70,9 @@ QtObject {
   // the page's Save and Discard and EditsManager's Save all go over them
   readonly property var drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]
   readonly property bool layoutsDirty: root.drafts.some(d => d.isDirty)
-  readonly property var layoutsProblems: [].concat(...root.drafts.map(d => d.problems))
+  // Only the dirty drafts', since only they are saved: a saved layout
+  // nobody touched never blocks saving the others
+  readonly property var layoutsProblems: [].concat(...root.drafts.filter(d => d.isDirty).map(d => d.problems))
 
   function loadLayouts() {
     root.drafts.forEach(d => d.ensureLoaded());

@@ -521,12 +521,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-05, while reviewing bar-popouts-09
 
-### A clean layout's problem blocks saving the others in the Layouts editor
-- **Where:** `qml/components/views/Layouts/Layouts.qml:78` (`canvas.canSave`), `qml/components/views/Layouts/LayoutsPanel.qml:34` (`problems`)
-- **What:** The canvas's Save is enabled only while none of the five drafts has `problems`, yet `onSave` saves only the dirty ones, and each `saveChanges()` already refuses its own problems. So a saved layout that `GridEditor.problemsFor` objects to, even one nobody touched, disables saving every page and menu. Example: a config imported or edited by hand whose lock screen layout lacks its required module ("the lock screen: needs its … module") while `Lockscreen.mode` isn't `quickshell`. The lock screen's row is then hidden (`OverlayManager.lockscreenEditable`), so it can't be fixed from the editor, and "Can't save yet" lists it under every edit. The same happens with a hidden login screen (`greeterEditable`) and with a saved overlay page whose modules overlap, a case `ModuleGrid._check` expects (it warns about them). The navigator's Save all (`EditsManager.saveAll`) already saves around it, so the two Save buttons disagree. Fix: gate `canSave`, and the problems listed, on the dirty drafts only: `drafts.every(d => !d.isDirty || d.problems.length === 0)`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the overlay system
-
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
 - **What:** Contract (writing-modules.md): a module sets `fullMinWidth` / `fullMinHeight`, "the px its full layout needs inside its padding". These don't cover it. All figures are inner px at font 14, normal density.
