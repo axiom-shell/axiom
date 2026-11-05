@@ -8,11 +8,11 @@ import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
 // The active player's track. Sized to the track, shrinking (the label
-// elides) down to just the icon when the bar is crowded; `layout.maxSize`
-// caps it. The popout centres on the widget when it opens and stays put
-// while open, so a resize doesn't move it. Its display style draws the
-// track's position (fill, pill), scrolls it (ticker) or puts the title
-// over the artist (stacked).
+// elides) down to just the icon (after the fill style's meter) when the bar
+// is crowded; `layout.maxSize` caps it. The popout centres on the widget
+// when it opens and stays put while open, so a resize doesn't move it. Its
+// display style draws the track's position (fill, pill), scrolls it
+// (ticker) or puts the title over the artist (stacked).
 ValueStyleWidget {
   id: root
 
