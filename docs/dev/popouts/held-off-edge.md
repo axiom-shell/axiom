@@ -15,7 +15,7 @@ Floating edge menus, docks, OSDs, the launcher and the window switcher with `det
   - a pill bar's far side;
   - a transparent bar's inner edge.
 - **`ScreenEdgeManager.heldGaps(screen, location, distance, depth, bare)`** gives the three gaps: the automatic ones (`detachedGaps` with -1), the one across pushed in by `distance` of the room between the automatic gaps on its edge and the opposite one, less the box's `depth` (`EdgePlacement.heldDepth`: an `EdgePopout`'s content at its deepest, `maxContentDepth`, so a growing launcher doesn't move; the dock's thickness).
-- **`ScreenEdgeManager.detachedGaps(screen, location, gap)`** gives the automatic gaps (the toasts still take a px `gap` there):
+- **`ScreenEdgeManager.detachedGaps(screen, location, gap, bare)`** gives the automatic gaps (the toasts still take a px `gap` there; `bare`, over a fullscreen window: from the screen's edges):
   - `gap` on each side, or
   - Auto (-1):
     - When a floating bar shares the edge, its `floatingGap` is used across, so the surface lines up with its islands; at both ends it lines up with the windows, as the islands' ends do.
