@@ -13,8 +13,8 @@ import qs.services.compositor
 // once at startup and again when the screens change; values are read then
 // and when the OSD opens (`refresh`), never polled. Writes show at once and
 // are coalesced per monitor, so held brightness keys don't queue slow DDC
-// calls.
-QtObject {
+// calls. Idle dimming's levels before it are kept across a QML reload.
+Singleton {
   id: root
 
   // { screenName: { kind: "backlight" | "ddc", device, bus, max, value } },
@@ -78,25 +78,34 @@ QtObject {
   // (darker ones stay), or with `relative` down by `fraction` of its own
   // brightness, then back to what each was on undim()
   function dim(fraction, relative) {
+    const dimmed = JSON.parse(_kept.dimmed);
     for (const name of Object.keys(displays)) {
-      if (_dimmed[name] !== undefined)
+      if (dimmed[name] !== undefined)
         continue;
       const value = valueFor(name);
-      _dimmed[name] = value;
+      dimmed[name] = value;
       const target = relative ? value * (1 - fraction) : fraction;
       if (value > target)
         set(name, target, true);
     }
+    _kept.dimmed = JSON.stringify(dimmed);
   }
 
   function undim() {
-    for (const name of Object.keys(_dimmed))
-      set(name, _dimmed[name], true);
-    _dimmed = {};
+    const dimmed = JSON.parse(_kept.dimmed);
+    _kept.dimmed = "{}";
+    for (const name of Object.keys(dimmed))
+      set(name, dimmed[name], true);
   }
 
-  // { screenName: value before dim() }
-  property var _dimmed: ({})
+  // A default child (a named property doesn't survive a reload), so an
+  // undim after a reload still restores the levels from before dim()
+  PersistentProperties {
+    id: _kept
+    reloadableId: "axiomBrightness"
+    // { screenName: value before dim() }, as JSON
+    property string dimmed: "{}"
+  }
 
   function stepBy(name, delta) {
     if (available(name))

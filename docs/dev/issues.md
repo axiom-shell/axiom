@@ -606,12 +606,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Idle dimming is forgotten across a shell reload
-- **Where:** `qml/services/system/BrightnessManager.qml:92` (`_dimmed`)
-- **What:** `dim` keeps each monitor's level before dimming in `_dimmed`, a plain property of the singleton. A QML reload while dimmed (an update or file change applied while the user is away, or the shell relaunched by `axiom run`) rebuilds the singleton: `_dimmed` starts empty and `detect` reads the backlight's dimmed level as its value. When the user returns, the daemon's idle resume calls `undim`, which loops over the empty `_dimmed` and does nothing: the screens stay dimmed until set by hand. Fix: keep `_dimmed` in a `PersistentProperties` that survives the reload, declared as a default child of a `Singleton` root (the root is a `QtObject` now, and a named property doesn't survive, as `DailySchedule` and `DeadlineTicker` show: [Todo and pomodoro](features/todo-pomodoro.md) › Shared plumbing).
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:brightness system
-
 ### Replacing the chat's conversation leaves its reply and attachments behind
 - **Where:** `qml/services/apps/ChatManager.qml:70` (`newConversation`), `qml/services/apps/ChatManager.qml:77` (`open`), `qml/services/apps/ChatManager.qml:166` (`ask`), `qml/services/apps/ChatManager.qml:499` (`_finish`)
 - **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
