@@ -28,10 +28,15 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - the widgets hidden when the bar overflows (`overflowHidden`): lowest priority first, ties right, then left, the center last
   - elastic widgets squeezed within a section (`allocate`)
 - **Spacers** (the Spacer widget, `fill` in its measure) take the free room:
-  - The sections are laid out with every spacer at its `minGap` first, so a spacer never moves the center.
-  - Then a side with spacers stretches to the center's edge; with no center, the room between the sides is shared by their spacer counts. A spacer in the center keeps its `minGap`.
+  - **With `lockCenter` off** and a spacer anywhere on the bar, nothing is centered: every spacer takes an equal share of the bar's free room and the sections pack end to end, so every boundary between two widgets joins. Crowded (the preferred sizes don't fit), the spacers keep their `minGap` and the sections are laid out as below. With no spacers the center is centered as ever, sliding towards the roomier side when crowded.
+  - **With `lockCenter` on**, the sections are laid out with every spacer at its `minGap` first, so a spacer never moves the center.
+  - Then a side with spacers stretches to the center's edge; with no center, the room between the sides is shared by their spacer counts.
+  - **Spacers in a locked center** push its outer groups out to the sides (`BarLayout.centerSplit`): with two or more, what lies between the first and the last stays centered (inner spacers keep their `minGap`) and the groups outside them go to the sides; with one, the group with more widgets stays centered (the first on a tie: from the config, so it never flips as widgets change width) and the other goes to its side.
+    - The centered group is what `lockCenter` keeps dead center. Each half of the bar, from its end to that group, is shared equally between all the spacers in it, the side's and the center's (`layoutSections` with `centerParts`): a side spacer and a center spacer bordering the same room meet in the middle of it.
+    - The center's spacers get their shares as weights (`leadShare`/`tailShare` → `BarLayout.centerFillWeights` → `allocate`); its inner spacers take none.
   - `allocate` hands a section's room past its widgets to its spacers, equally (the remainder to the last).
   - A spacer lies in the gap between the widgets beside it, so a collapsed one (crowded, `minGap` 0) leaves one gap. It's never hidden for want of room.
+  - A widget a spacer pushes against the next section joins it: merged backgrounds, powerline chains and separator marks carry on across, and that gap is the one between widgets ([Joined sections](widget-shapes-runs.md#joined-sections)). The center never moves for it.
 - `BarContainer` and `WidgetGroup` only feed it measurements.
 
 ### Popouts

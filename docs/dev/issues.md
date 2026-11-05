@@ -80,6 +80,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-05, while reviewing the bar rewrite
 
+### A bar widget that loses its background while shown keeps drawing the old one
+- **Where:** `qml/components/bar/WidgetGroup.qml` (the per-widget `WidgetBackground`'s `_last`)
+- **What:** A widget going away keeps its last place and colors while its host is still drawn (`_shown` falls back to `_last` while `_drawn`), so it fades with its host. A host that stays drawn but has no background any more never lets go: seen in a nested niri run, swapping a section's widgets in place (same count; the delegates are reused, so the slot that held Window now holds a Spacer) left the Spacer drawing Window's background across the whole room it took, until a change of count rebuilt the delegates. A widget turning its own `hasBackground` off would do the same. Fix: keep `_last` only while the host is fading out (its opacity or `_drawnMain` falling), or clear it when `host.background` turns null on a host still fully shown.
+- **Size:** small
+- **Found:** 2026-11-05, while joining bar runs across sections by spacers
+
 ### A VPN bind ignores Tailscale unless a VPN widget is showing
 - **Where:** `qml/services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
 - **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.

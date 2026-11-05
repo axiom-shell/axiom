@@ -125,27 +125,50 @@ Rectangle {
           }));
     }));
   }
-  // The groups joined where they're at most joinGap apart: one pill, one
-  // island or one merged background each
+  // The groups joined where they're at most joinGap apart: one pill or one
+  // island each
   readonly property var joinedGroups: BarLayout.joinGroups(root.groupSpans, root.barConfig.joinGap)
-  // Per section, whether its first group joins one in the section before
-  // it, and how far past its last group the one it joins after it starts
-  // (WidgetGroup's joinStart, joinEndReach)
+  // Which section boundaries join: where a side's spacer pushed a widget
+  // against the next section (BarLayout.sectionJoins). Decided from the
+  // config's shape, never from where things land, so a crowded side
+  // never joins and the center never moves for it. A joined boundary
+  // keeps the gap between a section's widgets (`groupSpacing`) instead
+  // of the gap between sections.
+  readonly property var _joins: BarLayout.sectionJoins(root._groups.map(g => g.joinMeasures), root.barConfig.lockCenter)
+  readonly property var _sectionGaps: BarLayout.boundaryGaps(root._joins, root.barConfig.widgetGap, root.barConfig.groupSpacing)
+  // The joined boundaries, as [before, after] section pairs
+  readonly property var _joinedPairs: [[0, 1, root._joins.leftCenter], [1, 2, root._joins.centerRight], [0, 2, root._joins.leftRight]].filter(pair => pair[2])
+  // Per section, whether its start and end join the sections beside it,
+  // and whether its run carries on there (`chainStart`/`chainEnd`: both
+  // widgets facing it have backgrounds: one merged background, one
+  // powerline chain) (WidgetGroup's joinStart, joinEnd, chainStart,
+  // chainEnd). From content alone: the insets follow it.
   readonly property var sectionJoins: {
     const joins = root._groups.map(() => ({
           "start": false,
-          "endReach": 0
+          "end": false,
+          "chainStart": false,
+          "chainEnd": false
         }));
-    root.joinedGroups.forEach(joined => {
-      for (let k = 1; k < joined.members.length; k++) {
-        const before = root.groupSpans[joined.members[k - 1]], after = root.groupSpans[joined.members[k]];
-        if (before.section === after.section)
-          continue;
-        joins[before.section].endReach = Math.max(0, after.start - before.end);
-        joins[after.section].start = true;
-      }
+    root._joinedPairs.forEach(([a, b]) => {
+      const chain = root._groups[a].endsInRun && root._groups[b].startsInRun;
+      joins[a].end = true;
+      joins[a].chainEnd = chain;
+      joins[b].start = true;
+      joins[b].chainStart = chain;
     });
     return joins;
+  }
+  // Per section, how far past its last group the one it joins after it
+  // starts, as drawn (WidgetGroup's joinEndReach)
+  readonly property var sectionReaches: {
+    const reaches = root._groups.map(() => 0);
+    root._joinedPairs.forEach(([a, b]) => {
+      const before = root.groupSpans.filter(span => span.section === a).pop();
+      const after = root.groupSpans.find(span => span.section === b);
+      reaches[a] = before && after ? Math.max(0, after.start - before.end) : 0;
+    });
+    return reaches;
   }
 
   // The pills (or islands) as drawn: stretched to carry the surfaces open
@@ -304,10 +327,10 @@ Rectangle {
 
   readonly property var _groups: [leftGroup, centerGroup, rightGroup]
   // Per section, the model indices hidden so the minimum sizes fit
-  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter)
+  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter, root.barConfig.groupSpacing)
   // Each section's room along the bar; a side with spacers stretches to
   // the center (BarLayout.layoutSections)
-  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount))
+  readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount), centerGroup.centerParts)
 
   // A section's shown widgets; `configIndex` is each one's place in the
   // section's config, which hidden widgets leave out
@@ -337,7 +360,7 @@ Rectangle {
         "room": Math.round(root._sectionRooms[s])
       }), {})
   } : null
-  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.lockCenter, centerGroup.layoutHang)
+  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang)
   property string _reportedId: ""
   readonly property string _reportKey: JSON.stringify(root.editorReport)
   on_ReportKeyChanged: root._report()
@@ -368,8 +391,18 @@ Rectangle {
     zone: BarsConfig.sectionNames[section.slotIndex]
     align: section.slotIndex / 2
     widgets: section.bar.widgetModel(section.bar.barConfig.widgets?.[section.zone])
+    // A powerline segment reaches back under the one before it, across
+    // sections too: the earlier section is drawn over the later
+    z: 2 - section.slotIndex
+    // A locked center's spacers take the room the layout gives them on
+    // each side of its centered group; otherwise they share its room
+    // equally
+    fillWeights: section.slotIndex === 1 && section.slot.leadShare !== undefined ? BarLayout.centerFillWeights(section.measures, section.slot.leadShare, section.slot.tailShare) : undefined
     joinStart: section.bar.sectionJoins[section.slotIndex].start
-    joinEndReach: section.bar.sectionJoins[section.slotIndex].endReach
+    joinEnd: section.bar.sectionJoins[section.slotIndex].end
+    chainStart: section.bar.sectionJoins[section.slotIndex].chainStart
+    chainEnd: section.bar.sectionJoins[section.slotIndex].chainEnd
+    joinEndReach: section.bar.sectionReaches[section.slotIndex]
     readonly property real mainPos: Math.round(section.slot.offset + (section.slot.extent - section.usedLength) * section.align)
 
     barConfig: section.bar.barConfig

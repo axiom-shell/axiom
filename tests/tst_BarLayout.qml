@@ -94,7 +94,7 @@ TestCase {
   function test_layoutSections_spacers_reach_the_center() {
     // A left side with a spacer stretches to a gap short of the center;
     // the right one without keeps its own length
-    const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [1, 0, 0]);
+    const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, true, undefined, [1, 0, 0]);
     compare(s[0].offset, 10);
     compare(s[0].extent, 385);
     compare(s[1].offset, 400);
@@ -105,10 +105,20 @@ TestCase {
     compare(both[0].extent, 385);
     compare(both[2].offset, 605);
     compare(both[2].extent, 385);
-    // A center spacer stays its own size: nothing stretches for it
-    const center = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [0, 1, 0]);
-    compare(center[1].extent, 200);
-    compare(center[0].extent, 100);
+  }
+
+  // Unlocked, with spacers: nothing is centered; every spacer on the bar
+  // takes an equal share of its free room, the sections packed end to end
+  function test_layoutSections_unlocked_spacers_share_the_bar() {
+    // 1000 - 2 × 10 margin - 400 - 2 × 5 gap = 570 free: 190 each
+    const s = BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [1, 1, 1]);
+    compare(s[0].extent, 290);
+    compare(s[1].offset, 305);
+    compare(s[1].extent, 390);
+    compare(s[2].offset, 700);
+    compare(s[2].offset + s[2].extent, 990);
+    // No spacers: the center is centered as ever
+    compare(BarLayout.layoutSections([100, 200, 100], [100, 200, 100], 1000, 10, 5, false, undefined, [0, 0, 0])[1].offset, 400);
   }
 
   function test_layoutSections_spacers_never_move_the_center() {
@@ -117,10 +127,11 @@ TestCase {
     const s = BarLayout.layoutSections([300, 200, 0], [300, 200, 0], 1000, 0, 10, true, undefined, [1, 0, 0]);
     compare(s[1].offset, 400);
     compare(s[0].extent, 390);
-    // Unlocked, a long side still pushes the center as without spacers
+    // Unlocked, nothing is centered: the left spacer takes the room and
+    // the center packs against the end
     const t = BarLayout.layoutSections([500, 200, 0], [500, 200, 0], 1000, 0, 10, false, undefined, [1, 0, 0]);
-    compare(t[1].offset, 510);
-    compare(t[0].extent, 500);
+    compare(t[1].offset, 800);
+    compare(t[0].extent, 790);
   }
 
   function test_layoutSections_spacers_share_with_no_center() {
@@ -360,6 +371,206 @@ TestCase {
       "index": 1,
       "count": 2
     });
+  }
+
+  // A section end joining the next section's run: the run reaching it
+  // counts one more member there, so its widget takes a middle place
+  function test_runPlaces_joined_ends() {
+    const places = BarLayout.runPlaces([null, true, true, false, true, null], true, true);
+    compare(places[1], {
+      "run": 0,
+      "index": 1,
+      "count": 3
+    });
+    compare(places[2].index, 2);
+    compare(places[4], {
+      "run": 1,
+      "index": 0,
+      "count": 2
+    });
+    // A run not reaching the joined end (a widget with no background
+    // faces it) stays as it is
+    const loose = BarLayout.runPlaces([false, true, true, false], true, true);
+    compare(loose[1], {
+      "run": 0,
+      "index": 0,
+      "count": 2
+    });
+  }
+
+  function divider() {
+    return {
+      "pref": 4,
+      "min": 4,
+      "priority": 0,
+      "divides": true
+    };
+  }
+
+  // Joined where a side's spacer pushed a widget against the next section
+  function test_sectionJoins() {
+    // left [m m spacer m], center [m spacer m], right [m spacer m m]
+    const example = [[m(40), m(40), spacer(), m(40)], [m(40), spacer(4), m(40)], [m(40), spacer(), m(40), m(40)]];
+    compare(BarLayout.sectionJoins(example), {
+      "leftCenter": true,
+      "centerRight": true,
+      "leftRight": false
+    });
+    // A spacer at the side's end facing the center: its widgets are away
+    const away = [[m(40), spacer()], [m(40)], [spacer(), m(40)]];
+    compare(BarLayout.sectionJoins(away), {
+      "leftCenter": false,
+      "centerRight": false,
+      "leftRight": false
+    });
+    // No spacer: never joined, however close the side is crowded
+    const crowded = [[m(400)], [m(200)], [m(400)]];
+    compare(BarLayout.sectionJoins(crowded).leftCenter, false);
+    // A Separator facing the boundary keeps it split
+    const divided = [[spacer(), m(40), divider()], [m(40)], []];
+    compare(BarLayout.sectionJoins(divided).leftCenter, false);
+    // A widget showing nothing is passed over: the one before it faces
+    compare(BarLayout.sectionJoins([[spacer(), m(40), m(0)], [m(40)], []]).leftCenter, true);
+    compare(BarLayout.sectionJoins([[m(40), spacer(), m(0)], [m(40)], []]).leftCenter, false);
+    // No center: the sides join where either has a spacer
+    compare(BarLayout.sectionJoins([[m(40)], [], [spacer(), m(40)]]).leftRight, false);
+    compare(BarLayout.sectionJoins([[m(40)], [], [m(40), spacer()]]).leftRight, true);
+    compare(BarLayout.sectionJoins([[m(40)], [], [m(40)]]).leftRight, false);
+  }
+
+  // A joined boundary keeps its own gap; the locked center never moves
+  function test_layoutSections_joined_gaps() {
+    const gaps = BarLayout.boundaryGaps({
+      "leftCenter": true,
+      "centerRight": false,
+      "leftRight": false
+    }, 10, 0);
+    compare(gaps, {
+      "lc": 0,
+      "cr": 10,
+      "lr": 10
+    });
+    const s = BarLayout.layoutSections([300, 200, 100], [300, 200, 100], 1000, 0, gaps, true, undefined, [1, 0, 1]);
+    compare(s[1].offset, 400);
+    compare(s[0].extent, 400);
+    compare(s[2].offset, 610);
+    compare(BarLayout.sectionRooms([300, 200, 100], 1000, 0, gaps, true), [400, 1000, 390]);
+    // A number is every boundary's gap, as before
+    compare(BarLayout.layoutSections([300, 200, 100], [300, 200, 100], 1000, 0, 10, true, undefined, [1, 0, 1])[0].extent, 390);
+  }
+
+  // Which center group stays centered: between the outer spacers, else
+  // the group with more widgets (the first on a tie)
+  function test_centerSplit() {
+    compare(BarLayout.centerSplit([m(10), m(10)]), {
+      "start": 0,
+      "end": 1,
+      "leadFills": 0,
+      "tailFills": 0
+    });
+    compare(BarLayout.centerSplit([m(10), m(10), m(10), spacer(), m(10)]), {
+      "start": 0,
+      "end": 2,
+      "leadFills": 0,
+      "tailFills": 1
+    });
+    compare(BarLayout.centerSplit([m(10), spacer(), m(10), m(10)]), {
+      "start": 2,
+      "end": 3,
+      "leadFills": 1,
+      "tailFills": 0
+    });
+    compare(BarLayout.centerSplit([m(10), spacer(), m(10)]).tailFills, 1);
+    compare(BarLayout.centerSplit([m(10), spacer(), m(10), spacer(), m(10)]), {
+      "start": 2,
+      "end": 2,
+      "leadFills": 1,
+      "tailFills": 1
+    });
+  }
+
+  function test_centerParts() {
+    // [40 40 spacer(4) 40], spacing 5: the pair pinned, then the 5 gap and
+    // the spacer's 4 before the last
+    const measures = [m(40), m(40), spacer(4), m(40)];
+    compare(BarLayout.centerParts(measures, [true, true, true, true], 5, "pref"), {
+      "lead": 0,
+      "core": 85,
+      "tail": 49,
+      "leadFills": 0,
+      "tailFills": 1
+    });
+    // Its spacers' weights: the share after the pinned group to the spacer
+    // after it
+    compare(BarLayout.centerFillWeights(measures, 0, 300), [0, 0, 300, 0]);
+  }
+
+  // A center spacer pushes the center's outer group to the side; the
+  // pinned group stays dead center
+  function test_layoutSections_center_spacers() {
+    const parts = {
+      "lead": 0,
+      "core": 120,
+      "tail": 40,
+      "leadFills": 0,
+      "tailFills": 1
+    };
+    const s = BarLayout.layoutSections([100, 160, 100], [100, 160, 100], 1000, 0, 10, true, undefined, [0, 0, 0], parts);
+    compare(s[0].extent, 100);
+    compare(s[1].offset, 440);
+    compare(s[1].tailShare, 290);
+    compare(s[1].extent, 450);
+    compare(s[2].offset, 900);
+    // Unlocked: the center's spacer shares the bar's room with any others
+    const u = BarLayout.layoutSections([100, 160, 100], [100, 160, 100], 1000, 0, 10, false, undefined, [0, 1, 0], parts);
+    compare(u[1].offset, 110);
+    compare(u[1].extent, 780);
+    compare(u[1].leadShare, undefined);
+    compare(u[2].offset, 900);
+  }
+
+  // A side's spacer and the center's beside it share the half equally
+  function test_layoutSections_center_and_side_spacers_share() {
+    const parts = {
+      "lead": 0,
+      "core": 100,
+      "tail": 0,
+      "leadFills": 1,
+      "tailFills": 0
+    };
+    const s = BarLayout.layoutSections([100, 100, 0], [100, 100, 0], 1000, 0, 10, true, undefined, [1, 0, 0], parts);
+    compare(s[0].extent, 270);
+    compare(s[1].offset, 280);
+    compare(s[1].leadShare, 170);
+    compare(s[1].offset + s[1].leadShare, 450);
+  }
+
+  function test_allocate_weights() {
+    const a = BarLayout.allocate([m(10), spacer(), m(10), spacer(), m(10)], [true, true, true, true, true], 130, 0, [0, 30, 0, 70, 0]);
+    compare(a.sizes, [10, 30, 10, 70, 10]);
+    // No weight: no room
+    compare(BarLayout.allocate([m(10), spacer(), m(10)], [true, true, true], 100, 0, [0, 0, 0]).sizes, [10, 0, 10]);
+  }
+
+  // A center spacer pushing its outer group out joins it to the side
+  function test_sectionJoins_center_spacers() {
+    const joins = BarLayout.sectionJoins([[m(40)], [m(40), spacer(), m(40), spacer(), m(40)], [m(40)]]);
+    compare(joins.leftCenter, true);
+    compare(joins.centerRight, true);
+    // The pinned group isn't pushed: no join on its side
+    compare(BarLayout.sectionJoins([[m(40)], [m(40), m(40), spacer(), m(40)], [m(40)]]).leftCenter, false);
+    // Unlocked, a spacer anywhere packs the sections: every boundary joins
+    compare(BarLayout.sectionJoins([[m(40)], [m(40), m(40), spacer(), m(40)], [m(40)]], false).leftCenter, true);
+    compare(BarLayout.sectionJoins([[m(40)], [m(40)], [m(40)]], false).leftCenter, false);
+  }
+
+  // A joined boundary's gap counts towards what fits
+  function test_overflowHidden_joined_gap() {
+    // 495 + 500 + a 10 gap overflows 1000; joined (gap 0) it fits
+    const measures = [[m(495, 495, 0), spacer(0)], [], [m(500, 500, 1)]];
+    compare(BarLayout.overflowHidden(measures, 1000, 0, 10, 0, false), [[0], [], []]);
+    const joined = [[spacer(0), m(495, 495, 0)], [], [m(500, 500, 1)]];
+    compare(BarLayout.overflowHidden(joined, 1000, 0, 10, 0, false, 0), [[], [], []]);
   }
 
   function test_joinGroups() {

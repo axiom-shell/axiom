@@ -6,7 +6,8 @@ import qs.components.bar.widgets.base
 // Layout helper for the bar: empty room between widgets, splitting a
 // section into groups. On a side of the bar it takes the free room there,
 // shared with that side's other spacers, keeping at least its minimum gap
-// (BarLayout.allocate); in the center it keeps just that.
+// (BarLayout.allocate); in the center it pushes the groups outside the one
+// kept centered out to the sides (BarLayout.centerSplit).
 BarWidget {
   id: root
 
