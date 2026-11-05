@@ -370,7 +370,6 @@ Found by the audits:
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
 - [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)

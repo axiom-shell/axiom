@@ -26,7 +26,7 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
   - `average(names)`.
   - `setMany(names, value, silent)`.
 - **IPC `brightness`:** `up`, `down`, `set <percent>`, all on the focused monitor. The bind actions are `brightnessUp` / `brightnessDown`.
-  - `dim <percent>` / `undim` are used by idle (see [Idle](idle.md)).
+  - `dim <percent>` / `undim` are used by idle (see [Idle](idle.md)). The levels from before `dim` are kept in a `PersistentProperties` (a default child of the Singleton root), so an `undim` after a QML reload still restores them.
 - Created from `qml/shell.qml`'s `_services`.
 
 ### Brightness module (`content/Brightness`)
