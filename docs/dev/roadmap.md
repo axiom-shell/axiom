@@ -380,7 +380,6 @@ Found by the audits:
 - [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
 - [The Clock's date and label keep their room while the time shrinks to nothing](issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
 - [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
-- [A DeviceList squeezed to nothing wants no growth](issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
 - [Parts shown in one mode are built hidden in every mode, in ten modules and parts](issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)

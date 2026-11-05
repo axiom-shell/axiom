@@ -464,7 +464,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - fullMinWidth and fullMinHeight are compared with the slot's size, padding included
   - Card and Panel each spell out the grow and expand members
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
-  - [A DeviceList squeezed to nothing wants no growth](../issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
+  - A DeviceList squeezed to nothing wants no growth
 - **overlay-modules-03** (5): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes.
   - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](../issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding)
   - [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](../issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)

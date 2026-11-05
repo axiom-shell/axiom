@@ -9,7 +9,7 @@ The roots, shared parts, lock screen and greeter rules and acquire/release pairi
 - Major: [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](../../docs/dev/issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
 - Major: [The Clock's date and label keep their room while the time shrinks to nothing](../../docs/dev/issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
 - Major: [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](../../docs/dev/issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
-- Major: [A DeviceList squeezed to nothing wants no growth](../../docs/dev/issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
+- Major: A DeviceList squeezed to nothing wants no growth (fixed, row 20)
 - Major: [Parts shown in one mode are built hidden in every mode, in ten modules and parts](../../docs/dev/issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
 - Major (filed from a Minor, maintainer 2026-10-31): [What a lock screen module may do is a list kept by hand in two docs that disagree](../../docs/dev/issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - Cleanup: Card and Panel each spell out the grow and expand members (fixed, row 20)

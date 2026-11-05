@@ -655,12 +655,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### A DeviceList squeezed to nothing wants no growth
-- **Where:** `qml/components/content/parts/DeviceList.qml:29` (`overflow`)
-- **What:** `overflow: scroll.height <= 0 ? 0 : …` returns 0 whenever the list has no height. So `wantedHeight` is the card's own height, and `growHeight` doesn't grow it. A list gets 0 px exactly when the controls above it take the whole card (Tailscale's 4×2 card and WifiNetworks with VPNs, in the entry above). So a WifiNetworks, Tailscale, BluetoothDevices or VpnConnections card with `properties.grow` stays at a size that shows no rows, which is the one case growing is for. Notifications handles the unmeasured case the other way (`qml/components/content/Notifications/Notifications.qml:64`: `scroll.height > 0 ? … : 1`). Fix: `root.on ? list.implicitHeight - Math.max(0, scroll.height) : -Math.max(0, scroll.height)`.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### Parts shown in one mode are built hidden in every mode, in ten modules and parts
 - **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/Calculator/Calculator.qml:472` (`Keypad`), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/parts/CountdownTimer.qml:50` (`TimeRing`), `qml/components/content/Stopwatch/Stopwatch.qml:78` (`CountdownTimer`), `qml/components/content/parts/TodoList.qml:120` (rename field), `qml/components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `qml/components/content/Agenda/Agenda.qml:156` (`EventEditor`), `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`", and "a row's expansion is built only while expanded". These parts are gated by `visible` only:
