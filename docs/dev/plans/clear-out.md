@@ -538,7 +538,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A changed notes folder keeps showing the old folder's note and saves it into the new one](../issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)
   - [Typing in a note creates a linked notes folder that doesn't exist](../issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
   - [Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives](../issues.md#two-toolbar-edits-skip-the-re-parse-so-the-editors-blocks-arent-what-parse-gives)
-  - [NotesConfig expands ~ by hand where Paths.expandHome does it](../issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
 - **features-11** (4): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
   - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](../issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
   - [The join form stays incomplete when CA file is picked without a file and the security changed](../issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
