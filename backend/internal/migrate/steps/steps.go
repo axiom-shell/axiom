@@ -180,6 +180,9 @@ var all = []Step{
 	// v94: Input.keyboard's layout and variant became the input sources,
 	// Input.keyboard.sources (v94.go)
 	{Version: 94, Run: v94},
+	// v95: the default input source binds (SUPER + CTRL + space and with
+	// SHIFT) joined configs where their keys and ids are free (v95.go)
+	{Version: 95, Run: v95},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

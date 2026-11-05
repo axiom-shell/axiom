@@ -123,6 +123,8 @@ properties:
       - {id: xf86audionext, key: XF86AudioNext, action: mediaNext, locked: true}
       - {id: xf86audioprev, key: XF86AudioPrev, action: mediaPrevious, locked: true}
       - {id: xf86audiostop, key: XF86AudioStop, action: mediaStop, locked: true}
+      - {id: super-ctrl-space, key: SUPER + CTRL + space, action: inputSourceNext, locked: true}
+      - {id: super-ctrl-shift-space, key: SUPER + CTRL + SHIFT + space, action: inputSourcePrev, locked: true}
     items: {$ref: '#/definitions/Keybind'}
   presets:
     x-scope: personal
