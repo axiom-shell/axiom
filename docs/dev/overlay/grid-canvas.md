@@ -21,7 +21,7 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
 
 ### GridCanvas: alignment guides
 Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement`).
-- The **frame** a module is aligned against (`GridEditor.guideFrame`, `GridPlacement.guideFrame`): the bounded grid (`GridEditor.area`, a screen layout), else the cover of the *other* modules (a page or a submenu: centred among the rest). An edge menu's is its screen along its edge (`GridEditor.screenBox`, `OverlayManager.menus.screenBoxOf`) and the other modules across it, so what's centred lines up with the screen's centre.
+- The **frame** a module is aligned against (`GridEditor.guideFrame`, `GridPlacement.guideFrame`): the bounded grid (`GridEditor.area`, a screen layout; not one that `shiftsBack`), else the cover of the *other* modules (a page or a submenu: centred among the rest). An edge menu's is its screen along its edge (`GridEditor.screenBox`, `OverlayManager.menus.screenBoxOf`) and the other modules across it, so what's centred lines up with the screen's centre.
 - **Centre cross** (`centreLines`, `centreGuides`): faint dashed accent lines over the tiles (the guides' `Canvas`, so a full page doesn't hide them), through the centre of the frame of every module: the screen's (screen layouts), the page's modules' bounds (what the overlay centres the page on), an edge menu's screen along its edge and its modules across it.
 - **Smart guides** while carrying or resizing (`guides`, `alignments`): a line wherever the landing place's start, end or centre on an axis equals another module's (at its previewed place), running over both; stronger where it's centred in the frame. Drawn by the same `Canvas` as the centre cross. The drag layer's `landingMembers` says which previewed places are the ones moving.
 - **Margins** on the one selected module, while nothing's carried (`margins`, `canvasMargins`): a line and its length in cards (`GridPlacement.cards`) to each frame side with room, accent where both sides on that axis match. An edge menu's screen side can fall between units: that length is rounded and shown with `≈`.
@@ -87,9 +87,10 @@ The canvas pieces name no service: they edit through `dragLayer.editor`.
   - On a `hold` axis a gap before the modules stays and only negative places are shifted back. That is a whole-edge menu's axis along its edge, since it starts at the edge's start whatever its modules reach.
   - `shifted(shift, boundsBefore)` tells the owner; EdgeMenuEditor uses it to keep a menu's modules on their cells.
 - With an `area` `{ cols, rows }` the grid is bounded instead:
-  - places stay absolute and inside it;
+  - places stay inside it, absolute (unless `shiftsBack`);
   - new modules go to `GridPlacement.firstFreeIn`;
-  - `problemsFor` flags one outside it.
+  - `problemsFor` flags one outside it;
+  - with `shiftsBack` it still normalizes and isn't a guide frame: only a size cap (a custom widget's elements, inside a module's largest).
 - Required modules (`canRemove`) are never removed or duplicated, and a grid missing one is a problem.
 
 ### Owners

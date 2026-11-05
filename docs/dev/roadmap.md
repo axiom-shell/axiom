@@ -375,7 +375,6 @@ Found by the audits:
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
 - [What a lock screen module may do is a list kept by hand in two docs that disagree](issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - [Any custom widget reaches the lock screen past its Offer switch](issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
-- [A custom widget's module past 8 grid units can't be saved](issues.md#a-custom-widgets-module-past-8-grid-units-cant-be-saved)
 - [A custom widget's Tooltip switch does nothing](issues.md#a-custom-widgets-tooltip-switch-does-nothing)
 - [A command naming a program shows the program as its script](issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)

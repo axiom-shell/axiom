@@ -15,7 +15,8 @@ import qs.services.core
  * overlay closes. Every edit keeps the selection on its module and shifts
  * the grid so its top left module sits at 0, 0: a place left of or above
  * the grid (negative x or y) makes room there. A grid with an `area` (the
- * lock screen's) is bounded instead: places are absolute, inside it.
+ * lock screen's) is bounded instead: places are absolute, inside it,
+ * unless it still `shiftsBack` (a custom widget's elements).
  * Required module types (`x-required`) are never removed or duplicated.
  *
  * Drops, moves and resizes are worked out first as a plan (planAdd,
@@ -35,6 +36,10 @@ QtObject {
   // are put, and the grid never shifts. null: it grows and shifts back
   // to 0, 0 after every edit
   property var area: null
+  // Whether edits shift the grid back to 0, 0 (an unbounded grid's
+  // way); a bounded one that does keeps its modules from the top left
+  // inside its `area`, which is then no frame to centre on
+  property bool shiftsBack: root.area === null
   // An edge menu's screen around its grid (GridPlacement.screenBox) and
   // its edge: the screen along the edge is what its modules are centred
   // on (guideFrame). null for a page or a submenu
@@ -337,7 +342,7 @@ QtObject {
   // `places` (GridPlacement.guideFrame): the `area`, else the other
   // modules, an edge menu's screen along its edge
   function guideFrame(places, exclude) {
-    return GridPlacement.guideFrame(root.area, places, exclude, root.screenBox, root.edge);
+    return GridPlacement.guideFrame(root.shiftsBack ? null : root.area, places, exclude, root.screenBox, root.edge);
   }
 
   // The selection centred across (`axis` "x") or down ("y") in its frame
@@ -427,7 +432,7 @@ QtObject {
   // Runs an edit. `edit` returns the module to select, false for no
   // change, or undefined to keep the selection on its module. Then
   // shifts the grid so nothing sits at a negative place, or past 0, 0
-  // (unless it's bounded by an `area`).
+  // (unless it's bounded by an `area` and doesn't `shiftsBack`).
   function _edit(edit) {
     const modules = root._modules();
     if (!modules)
@@ -440,7 +445,7 @@ QtObject {
     if (focus === false)
       return;
     root._history.push(snap);
-    if (!root.area)
+    if (root.shiftsBack)
       root.shifted(GridPlacement.normalize(modules, root.hold), boundsBefore);
     if (groupBefore.length > 0 && focus === undefined) {
       root.selectGroup(groupBefore.map(m => modules.indexOf(m)).filter(i => i >= 0));

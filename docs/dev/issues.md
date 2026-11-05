@@ -589,12 +589,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 
-### A custom widget's module past 8 grid units can't be saved
-- **Where:** `qml/services/apps/CustomWidgetsEditor.qml:209` (`_fitSize`), `qml/config/schema/definitions/custom/CustomWidget.yaml:89` (`module.size` items, `maximum: 8`), `qml/config/schema/definitions/kinds/CustomElementBase.yaml:44` (`place.w`, `maximum: 64`)
-- **What:** The element canvas is unbounded (`GridEditor` with no `area`), an element's place may be 64 sub-cells (16 units) wide or tall and `x`/`y` have no maximum, and every edit sets `module.size` to the elements' bounds rounded up (`CustomWidgetData.pageSize`). Resizing or dragging an element past the 32nd sub-cell (two cards) makes `module.size` 9 or more; the preview draws it, but Save sends a config the daemon's `Pipeline.Check` refuses (`module.size.0: value 9 is greater than maximum 8`): `ConfigManager.commit` logs `axiom refused the config` and the draft turns dirty again, with no word on the page about why. Fix: make the limits agree: `module.size`'s `maximum` 16 (the place's 64 sub-cells), or bound the canvas (`GridEditor.area` of 32 × 32 sub-cells, a module's largest).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
 ### A custom widget's Tooltip switch does nothing
 - **Where:** `qml/config/schema/definitions/custom/CustomWidget.yaml:66` (`tooltip`), `qml/components/views/CustomWidgets/BarTab.qml:95`, `qml/components/methods/CustomWidgetData.qml:472` (`fromWaybar`)
 - **What:** The Bar tab offers a Tooltip switch (default on) and Waybar's `"tooltip": false` imports into it, but nothing reads a definition's `tooltip` (repo-wide grep: the schema, BarTab's `order` and `fromWaybar` only). The bar widget shows no tooltip at all (no bar widget base has one: hovering opens the module popout), while the plan says every bar style shows `tooltip` (`docs/dev/plans/custom-json-widgets.md`, Bar styles). The output's `tooltip` field reaches only the Text block element.
