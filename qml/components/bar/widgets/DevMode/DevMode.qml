@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.services.core
 import qs.config
@@ -48,12 +47,9 @@ BarIconWidget {
   }
 
   // With its popout off: the dev tree and the last build
-  LazyLoader {
-    active: root.hovered && !root.hidden && !root.properties.popout.enabled
-    StyledToolTip {
-      target: root
-      text: [Paths.shortenHome(DevManager.tree), DevManager.buildText].filter(line => line !== "").join("\n")
-      edges: root.innerEdges
-    }
+  BarToolTip {
+    widget: root
+    shown: !root.hidden && !root.properties.popout.enabled
+    text: [Paths.shortenHome(DevManager.tree), DevManager.buildText].filter(line => line !== "").join("\n")
   }
 }

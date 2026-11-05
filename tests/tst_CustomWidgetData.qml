@@ -143,6 +143,18 @@ TestCase {
     verify(!f.hidden);
   }
 
+  // The bar widget's tooltip: a multi-line Pango tooltip, as rich text
+  function test_resolveTooltip() {
+    const f = CustomWidgetData.resolve({}, {
+      "text": "x",
+      "tooltip": "<span foreground='#f00'>CPU</span> 40%\n<b>RAM</b> 3 GiB"
+    });
+    compare(f.tooltip, "<span style=\"color:#f00\">CPU</span> 40%<br><b>RAM</b> 3 GiB");
+    compare(CustomWidgetData.resolve({}, {
+      "text": "x"
+    }).tooltip, "", "none: no tooltip");
+  }
+
   function test_resolveValue() {
     const p = CustomWidgetData.resolve({}, {
       "text": "40%",

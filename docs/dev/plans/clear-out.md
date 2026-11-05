@@ -479,7 +479,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The five layouts drafts are listed by hand in eight places
   - A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors
 - **overlay-modules-06** (3): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A stale exec-if check can block a widget after its exec-if changed.
-  - [A custom widget's Tooltip switch does nothing](../issues.md#a-custom-widgets-tooltip-switch-does-nothing)
   - [A command naming a program shows the program as its script](../issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - **overlay-modules-07** (2):
   - [Any custom widget reaches the lock screen past its Offer switch](../issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
