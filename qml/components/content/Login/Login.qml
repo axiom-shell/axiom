@@ -4,7 +4,6 @@ import QtQuick
 import qs.config
 import qs.components.content.base
 import qs.components.content.parts
-import qs.services.ui
 
 // The greeter's login box (x-hosts: greeter only; x-required, so every
 // greeter layout has one): who logs in and their password. It only logs
@@ -38,20 +37,9 @@ Card {
   color: "transparent"
   border.width: 0
 
-  // Tells the greeter surface a Login module shows, so it doesn't draw its
-  // own box
-  property string _reportedKey: ""
-  function _report() {
-    const key = root.onGreeter ? (root.host.key ?? "") : "";
-    if (key === root._reportedKey)
-      return;
-    SurfaceManager.reportRequiredField(root._reportedKey, false);
-    SurfaceManager.reportRequiredField(key, true);
-    root._reportedKey = key;
+  RequiredFieldReport {
+    key: root.onGreeter ? (root.host.key ?? "") : ""
   }
-  Component.onCompleted: root._report()
-  onHostChanged: root._report()
-  Component.onDestruction: SurfaceManager.reportRequiredField(root._reportedKey, false)
 
   Rectangle {
     anchors.left: parent.left

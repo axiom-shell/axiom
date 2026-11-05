@@ -497,7 +497,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A tray menu logs an undefined menu handle
   - Tailscale's PeerRow redraws DeviceRow without its buttons
   - WifiNetworks' WPA password form repeats WifiJoinForm's
-  - [Login and Password each carry the same required-field report](../issues.md#login-and-password-each-carry-the-same-required-field-report)
+  - Login and Password each carry the same required-field report
   - [WeatherForecast repeats the Weather card's current conditions](../issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
 - **overlay-modules-11** (2): The v71 entry is a rare path: smallest fix.
   - [Hot corners' action list is a hand-kept copy of the keybind one](../issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)

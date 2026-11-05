@@ -549,12 +549,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-05, while reviewing row 20's overlay-modules-04 (AudioMixer and WorldClocks build only what their mode shows)
 
-### Login and Password each carry the same required-field report
-- **Where:** `qml/components/content/Login/Login.qml:43` (`_report`), `qml/components/content/Password/Password.qml:41` (`_report`)
-- **What:** Both modules hold the same 12 lines: `_reportedKey`, a `_report()` that unreports the old key and reports the new one through `SurfaceManager.reportRequiredField`, and `Component.onCompleted`, `onHostChanged` and `Component.onDestruction`. They differ only in the host test (`onGreeter` / `onLockscreen`). Fix: one small QtObject part in `content/parts/` holding the 12 lines, given the host and whether it applies. Each module keeps 1–3 lines, so about 20 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### WeatherForecast repeats the Weather card's current conditions
 - **Where:** `qml/components/content/WeatherForecast/WeatherForecast.qml:23`, `qml/components/content/Weather/Weather.qml:70` (`Current`)
 - **What:** The popout's place name, condition icon, temperature, condition and details (lines 23–57, 35 lines) are the card's `Current` component drawn again with its own sizes. `Current`'s own comment says "as in the bar's forecast popout". A change to how the current weather reads (units, details) has to be made twice. Fix: move `Current` into a part in `content/parts/` and use it in both, so the popout is about 30 lines shorter. Or make the Weather card a Panel that is also the popout (content-roots.md's one-file shape) and drop WeatherForecast (96 lines).
