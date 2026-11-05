@@ -572,12 +572,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
-- **Where:** `qml/components/content/Cheatsheet/Cheatsheet.qml:46` (`fullMinHeight`), `qml/components/content/Cheatsheet/Cheatsheet.qml:36` (`strip`), `qml/components/content/parts/KeyboardMap.qml`
-- **What:** With `view: "keyboard"`, the module shows only `KeyboardReference`. Its height is fixed and it sits in no `Flickable`: 8 rows of `Math.round(Widget.height * 1.9)` = 57 px keys (6 `KeyMap.rows` plus the 20 `KeyMap.extras`), the gaps and the legend come to about 493 px inside, a card about 529 px tall. `fullMinHeight` is `Appearance.fontSize * 3` (42 px), the list view's figure, used for both views, and `strip` excludes the keyboard. So any card from 42 to about 529 px tall loses the legend, then the extra keys, then the lower rows, with no way to scroll to them. That includes the schema's `defaultSize: [8, 6]` at any unit under about 88 px. Across, at `fullMinWidth` (inner 160 px) a key unit is 8 px. Below about 24 px a unit, a key's corner name (never elided) spills into its neighbour. Fix: give the keyboard view its own minimums (about 28f × 38f), so a smaller slot shows the count figure, or a short key form, or put it in the list view's `Flickable`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
 ### Parts shown in one mode are built hidden in every mode, in ten modules and parts
 - **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/Calculator/Calculator.qml:472` (`Keypad`), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/parts/CountdownTimer.qml:50` (`TimeRing`), `qml/components/content/Stopwatch/Stopwatch.qml:78` (`CountdownTimer`), `qml/components/content/parts/TodoList.qml:120` (rename field), `qml/components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `qml/components/content/Agenda/Agenda.qml:156` (`EventEditor`), `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`", and "a row's expansion is built only while expanded". These parts are gated by `visible` only:
