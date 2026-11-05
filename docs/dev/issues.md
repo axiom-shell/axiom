@@ -300,7 +300,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### A dropdown in an edge menu card with nothing scrolling gets two rows
 - **Where:** `qml/components/reusable/StyledComboEntry.qml` (`_roomBelow`), `qml/components/content/parts/PomodoroDial.qml`
-- **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum, and the card's rows below it are pushed out of view while it's open.
+- **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum (`_roomBelow` is 0 with no Flickable and `popoutRoom` null), and the card's rows below it are pushed out of view while it's open. Since PomodoroDial became a DialControls (row 20, features-05) the picker is the card's last row and the ring fills what's left, so there the open list shrinks the ring instead; it still gets two rows. Open question: how much room should such a list take (shrink the parts above it, or more rows over them)?
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
