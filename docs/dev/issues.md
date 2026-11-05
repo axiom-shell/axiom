@@ -595,12 +595,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 
-### A command naming a program shows the program as its script
-- **Where:** `qml/components/views/CustomWidgets/DefinitionsPanel.qml:26` (`scriptText`), `qml/services/apps/CustomWidgetsEditor.qml:184` (`scriptPath`)
-- **What:** `scriptPath` is the command's first word whenever it starts with `/` or `~/`, so a command like `/usr/bin/sensors -j` or `/opt/cuda/bin/nvidia-smi …` names a binary: `FileManager.read` (a blocking FileView, on the UI thread, of the whole file) reads the ELF into a string, The script group shows its first 40 "lines" of binary as the script, and `signalsWaybar` regex-scans it. A large binary stalls the page while it reads. Fix: show only a script, text starting with `#!` (`scriptText.startsWith("#!")` for `scriptHead` and `signalsWaybar`); reading only the head needs a size cap `FileManager.read` doesn't have.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
 ### CustomElement's six Binding blocks are Qt.binding in its setSource
 - **Where:** `qml/components/content/parts/custom/CustomElement.qml:33` (the `Binding` blocks), `qml/components/content/parts/custom/CustomElement.qml:21` (`_load`)
 - **What:** `_load` hands the element its six properties as plain values, then six `Binding { when: root.item !== null … }` blocks (lines 33-68, 36 lines) keep them current. Passing each as `Qt.binding(() => root.element)` (and so on) in `setSource`'s properties, as `BarTab`'s `BarPreview` loads the bar widget, keeps them bound from creation, across a kind change (each `_load` binds the new item) and drops the 36 lines. Fix: wrap the six values in `Qt.binding`, delete the Binding blocks; the file goes from 69 to 33 lines.

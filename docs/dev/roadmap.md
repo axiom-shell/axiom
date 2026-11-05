@@ -375,7 +375,6 @@ Found by the audits:
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
 - [What a lock screen module may do is a list kept by hand in two docs that disagree](issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - [Any custom widget reaches the lock screen past its Offer switch](issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
-- [A command naming a program shows the program as its script](issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
 - [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)

@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03 and overlay-modules-05 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05 and overlay-modules-06 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -104,7 +104,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 56 | overlay-modules-03 | major | Done: Per-module full minimums, and NowPlaying's hidden parts | 4 | ~280 | overlay-modules-02 |  |
 | 57 | overlay-modules-04 | major | Done: Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
 | 58 | overlay-modules-05 | major | Done: The overlay host and the Layouts editor | 4 | ~80 | none |  |
-| 59 | overlay-modules-06 | major | Custom widgets | 3 | ~150 | none |  |
+| 59 | overlay-modules-06 | major | Done: Custom widgets | 3 | ~150 | none |  |
 | 60 | overlay-modules-07 | major | What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
 | 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
 | 62 | overlay-modules-09 | minor-sweep | The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
@@ -478,8 +478,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A clean layout's problem blocks saving the others in the Layouts editor
   - The five layouts drafts are listed by hand in eight places
   - A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors
-- **overlay-modules-06** (3): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A stale exec-if check can block a widget after its exec-if changed.
-  - [A command naming a program shows the program as its script](../issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
+- **overlay-modules-06** (3, done): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A stale exec-if check can block a widget after its exec-if changed. The element canvas is bounded to a module's largest; the tooltip's loader became the shared BarToolTip of six bar widgets; the script is read only when it's one, through `head` off the UI thread.
+  - A custom widget's module past 8 grid units can't be saved
+  - A custom widget's Tooltip switch does nothing
+  - A command naming a program shows the program as its script
 - **overlay-modules-07** (2):
   - [Any custom widget reaches the lock screen past its Offer switch](../issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
   - [What a lock screen module may do is a list kept by hand in two docs that disagree](../issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
