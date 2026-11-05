@@ -561,6 +561,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
+### The popout docs give AudioMixer's list two rows at least
+- **Where:** `docs/dev/popouts/hosts-and-switching.md` (Which do), `qml/components/content/AudioMixer/AudioMixer.qml:49` (`rowsHeight`)
+- **What:** hosts-and-switching lists "AudioMixer (2 to 4 rows)", but the popout's list is `Math.max(root.rowsHeight(1), Math.min(list.implicitHeight, root.listHeight))`: one row (also when empty) to four, as the file's own comment says. Fix: "1 to 4 rows" in the doc.
+- **Size:** trivial
+- **Found:** 2026-11-05, while reviewing row 20's overlay-modules-04 (AudioMixer and WorldClocks build only what their mode shows)
+
 ### Tailscale's PeerRow redraws DeviceRow without its buttons
 - **Where:** `qml/components/content/Tailscale/Tailscale.qml:103` (`PeerRow`), `qml/components/content/parts/DeviceRow.qml`
 - **What:** PeerRow (lines 103–167, 65 lines) is DeviceRow's row drawn again: the same `Rectangle` with `Widget.radius`, the hover colour with `ColorGlide`, the `RowLayout` margins, a `StyledIcon` at `Appearance.fontSize * 1.4` coloured by state, and a name (`fontSizeBy(-1)`) over a status (`fontSizeBy(-3)`), both elided. The only differences are that it has no connect or forget buttons, and that it shows "Copied" for 2 s. Fix: give DeviceRow `property bool connectable: true` to gate its connect button, and write PeerRow as a DeviceRow with `connectable: false` and its copy handler and timer. That is about 20 lines, so 45 fewer.

@@ -371,6 +371,7 @@ Found by the audits:
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
+- [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
