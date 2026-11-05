@@ -318,11 +318,7 @@ QtObject {
       return;
     }
     root._run(["sh", "-c", "cd \"$1\" 2>/dev/null || exit 2; find . -maxdepth 8 -type f " + hidden + " \\( " + names + " \\) -print", "sh", dir], (ok, out, code) => {
-      const wasMissing = root.directoryMissing;
       root.directoryMissing = code === 2 && NotesConfig.linked;
-      // Edits kept while it was missing are saved once it's back
-      if (wasMissing && !root.directoryMissing)
-        root.flushAll();
       if (dir !== root.directory)
         return;
       root.allNotes = ok ? out.split("\n").filter(line => line !== "").map(line => line.replace(/^\.\//, "")).sort((a, b) => a.localeCompare(b)) : [];
@@ -438,13 +434,6 @@ QtObject {
         doc._saveSoon.stop();
         if (!doc.dirty)
           return;
-        // A linked folder is never created: the edit waits (dirty) until
-        // the folder is back (refreshList)
-        if (root.directoryMissing) {
-          root._fail(I18n.tr("The notes folder doesn't exist: {0}", root.directory));
-          root.refreshList();
-          return;
-        }
         doc.dirty = false;
         const path = doc.path;
         FileManager.write(doc._file, doc.text, error => {
