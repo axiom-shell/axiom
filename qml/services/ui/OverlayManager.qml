@@ -67,7 +67,8 @@ QtObject {
   // The layouts editor's drafts: the pages, the edge menus and the
   // desktop's, lock screen's and login screen's layouts. Each has
   // isDirty, problems, ensureLoaded(), saveChanges() and resetChanges();
-  // the page's Save and Discard and EditsManager's Save all go over them
+  // the page's Save and Reset and EditsManager's Save all and Discard all
+  // go over them
   readonly property var drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]
   readonly property bool layoutsDirty: root.drafts.some(d => d.isDirty)
   // Only the dirty drafts', since only they are saved: a saved layout

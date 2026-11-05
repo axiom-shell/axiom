@@ -12,8 +12,9 @@ import qs.services.compositor
  * monitor's name), and the room each screen's desktop has.
  *
  * Desktop.items are layouts, each for what its `screen` picks: a monitor
- * shows one naming it if there is one, else the primary monitor's on the
- * primary monitor, else the one for all monitors (DesktopConfig.sourceFor).
+ * shows one naming it if there is one, else the primary monitor's (while
+ * it's on) on the primary monitor, else the one for all monitors
+ * (DesktopConfig.sourceFor).
  * A monitor without one of its own is edited by giving it one
  * (createForTarget), a copy of what it showed. */
 QtObject {
