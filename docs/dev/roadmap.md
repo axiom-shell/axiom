@@ -246,8 +246,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
-- [A custom Ring element logs an undefined `inside` on load](issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
-- [A custom layout's element rect reads an undefined place](issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
 - [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
 - [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
@@ -371,8 +369,6 @@ Found by the audits:
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
-- [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
-- [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)

@@ -304,6 +304,15 @@ TestCase {
       "width": 100,
       "height": 100
     }, "half the width, a gap between");
+    compare(CustomWidgetData.rect(undefined, {
+      "cols": 16,
+      "rows": 8
+    }, 210, 100, 10), {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    }, "no place yet: an empty rect");
   }
 
   function test_rows() {

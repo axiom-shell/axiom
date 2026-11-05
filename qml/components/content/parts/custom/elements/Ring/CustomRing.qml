@@ -14,7 +14,9 @@ CustomElementBase {
 
   property bool gauge: false
   readonly property real share: Math.max(0, root.ratio())
-  readonly property string inside: root.options.inside
+  // Another kind's element reaches it for a moment as its slot turns into
+  // that kind (CustomElement reloads on the kind)
+  readonly property string inside: root.options.inside ?? ""
   // The output's unit goes with its own value, not a bound one
   readonly property string unit: root.bind.value ? "" : String(root.fields?.unit ?? "")
   readonly property string label: {

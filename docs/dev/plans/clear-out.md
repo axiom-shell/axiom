@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06 and overlay-modules-07 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07 and overlay-modules-09 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -107,7 +107,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 59 | overlay-modules-06 | major | Done: Custom widgets | 3 | ~150 | none |  |
 | 60 | overlay-modules-07 | major | Done: What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
 | 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
-| 62 | overlay-modules-09 | minor-sweep | The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
+| 62 | overlay-modules-09 | minor-sweep | Done: The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
 | 63 | overlay-modules-10 | minor-sweep | Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
 | 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
 | 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
@@ -486,13 +486,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Any custom widget reaches the lock screen past its Offer switch
   - What a lock screen module may do is a list kept by hand in two docs that disagree
 - **overlay-modules-08** (0): Done: its three entries were fixed with the OSD's statuses (the OSD's items, config v86), which rewrote the same files.
-- **overlay-modules-09** (6):
+- **overlay-modules-09** (6, done): check_sizes' new `pad` and `inset` also caught polkit's and the power menu's 18 px pads and a calendar cell's inset, scaled with the rest.
   - The Layouts canvas logs null reads as it's torn down
   - The monitor prompt's padding is a bare 18 px, and check_sizes misses it
-  - [A custom Ring element logs an undefined `inside` on load](../issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
-  - [A custom layout's element rect reads an undefined place](../issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
-  - [CustomElement's six Binding blocks are Qt.binding in its setSource](../issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
-  - [A custom layout without elements rebuilds its default elements every sample](../issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
+  - A custom Ring element logs an undefined `inside` on load
+  - A custom layout's element rect reads an undefined place
+  - CustomElement's six Binding blocks are Qt.binding in its setSource
+  - A custom layout without elements rebuilds its default elements every sample
 - **overlay-modules-10** (5):
   - [A tray menu logs an undefined menu handle](../issues.md#a-tray-menu-logs-an-undefined-menu-handle)
   - [Tailscale's PeerRow redraws DeviceRow without its buttons](../issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)

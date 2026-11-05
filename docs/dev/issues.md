@@ -190,12 +190,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the notifications revamp branch (its v83 rename had the same gap, fixed there)
 
-### A custom Ring element logs an undefined `inside` on load
-- **Where:** `qml/components/content/parts/custom/elements/Ring/CustomRing.qml` (`inside`)
-- **What:** The live shell logs `CustomRing.qml[17:3]: Unable to assign [undefined] to QString` after a reload: `root.options.inside` is read before the element's options carry it (seen on main after row 17, with a custom widget's Ring element on screen). The ring draws once the options arrive, but the log isn't clean.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
-
 ### A hot corner can't close what covers it
 - **Where:** `qml/shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
 - **What:** Hot corners sit on the Top layer, so a surface on the `Overlay` layer (axiom's workspace overview, a full-screen overlay page) covers the corner pixel: a toggling action opens it from a corner but can't close it there. niri's own corner toggles its overview; the migrated corner (v82) does that only while `WorkspaceOverlay.compositorOverview` is on. Whether a corner should stay live over Overlay-layer surfaces is the maintainer's call.
@@ -318,12 +312,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-18, while adding niri's blur
 
-
-### A custom layout's element rect reads an undefined place
-- **Where:** `qml/components/content/parts/custom/CustomLayout.qml` (the `CustomElement` delegate's `r`), `qml/components/methods/CustomWidgetData.qml` (`rect`)
-- **What:** The live shell logs `CustomWidgetData.qml[649:-1]: TypeError: Value is undefined and could not be converted to an object` after a reload: the delegate passes `element.place` while its `element` is still the `({})` stand-in (or past the end of a shrunk `elements`), and `rect` reads `place.x`. `rect` returning an empty rect for no place, or the delegate waiting for one, would quiet it.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the bar display styles branch
 
 ### Quickshell's wlr screencopy crashes the shell on niri
 - **Where:** `qml/services/apps/ScreenshotManager.qml` (`grimFrames`, the workaround), `qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml` (its `ScreencopyView`); the bug is Quickshell's
@@ -564,18 +552,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A stale exec-if check can block a widget after its exec-if changed
 - **Where:** `qml/services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)
 - **What:** The check's callback only asks whether the id is still watched (`if (!(id in root._watching))`), not whether its `execIf` is still the one checked. Editing Run only if on the page re-checks on every keystroke (`_wanted` changes, `_sync` calls `_checkIf`), and clearing it watches at once (`_watch`). A check that ends after a newer one, e.g. typing `ping -c1 -W1 myhost` (the partial `ping -c1 -W1 myh` waits its second to fail while the full one answers in milliseconds), sets `_blocked`, releases the watch the newer check started and shows `"ping -c1 -W1 myh" failed` until the next refresh. PLAUSIBLE: the order the checks end in; a slow failing prefix settles it. Fix: `if (root._watching[id]?.execIf !== def.execIf) return;` in place of the `in` check (`_watching` holds each id's `execIf`).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
-### CustomElement's six Binding blocks are Qt.binding in its setSource
-- **Where:** `qml/components/content/parts/custom/CustomElement.qml:33` (the `Binding` blocks), `qml/components/content/parts/custom/CustomElement.qml:21` (`_load`)
-- **What:** `_load` hands the element its six properties as plain values, then six `Binding { when: root.item !== null … }` blocks (lines 33-68, 36 lines) keep them current. Passing each as `Qt.binding(() => root.element)` (and so on) in `setSource`'s properties, as `BarTab`'s `BarPreview` loads the bar widget, keeps them bound from creation, across a kind change (each `_load` binds the new item) and drops the 36 lines. Fix: wrap the six values in `Qt.binding`, delete the Binding blocks; the file goes from 69 to 33 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
-### A custom layout without elements rebuilds its default elements every sample
-- **Where:** `qml/components/content/parts/custom/CustomLayout.qml:24` (`elements`)
-- **What:** For a definition with no elements, `elements` reads `root.fields?.ratio`, so every push (4 a second for a stream, per surface showing it, plus the Module tab's five previews) runs `CustomWidgetsConfig.defaultElements` (two `ConfigManager.withDefaults` schema walks) and hands every element a new `element` object, re-evaluating its `place`, `bind`, `options` and `rect`. Only whether there is a value matters. Fix: `readonly property bool _hasValue: (root.fields?.ratio ?? -1) >= 0` read by `elements` (a bool that doesn't change doesn't notify), keeping the Icon/Ring switch.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 
