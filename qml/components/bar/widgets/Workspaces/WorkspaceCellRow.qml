@@ -60,18 +60,12 @@ Item {
   }
 
   function _occupied(id) {
-    const arr = CompositorManager.workspaces;
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i].id === id)
-        return arr[i].windowCount > 0;
-    }
-    return false;
+    return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;
   }
 
   // BarsConfig.cellColors for a workspace's cell, active or at rest
   function _look(id, active) {
-    const occupied = root._occupied(id);
-    return BarsConfig.cellColors(root.barConfig, active ? root.activeColor : occupied ? root.occupiedColor : root.emptyColor, active || occupied ? root.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
+    return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id));
   }
 
   function _length(active) {

@@ -54,10 +54,10 @@ Item {
   readonly property string _idsKey: {
     const ids = [];
     for (const id of CompositorManager.workspaceIds(root.output)) {
-      const ws = root.wsById(id);
+      const ws = CompositorManager.workspaces.find(ws => ws.id === id);
       if (root.properties.monitorOnly && ws?.output && root.output && ws.output !== root.output)
         continue;
-      if (root._hideEmpty && id !== root.activeId && !root.hasWindows(ws))
+      if (root._hideEmpty && id !== root.activeId && (ws?.windowCount ?? 0) === 0)
         continue;
       ids.push(id);
     }
@@ -67,19 +67,6 @@ Item {
 
   implicitWidth: layout.implicitWidth
   implicitHeight: layout.implicitHeight
-
-  function wsById(id) {
-    const arr = CompositorManager.workspaces;
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i].id === id)
-        return arr[i];
-    }
-    return null;
-  }
-
-  function hasWindows(ws) {
-    return (ws?.windowCount ?? 0) > 0;
-  }
 
   // Next/previous shown workspace, wrapping at the ends
   function step(direction) {
