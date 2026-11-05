@@ -1,6 +1,7 @@
 package share
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/config"
@@ -117,5 +118,29 @@ func TestKeepMovedKeysV2(t *testing.T) {
 	}
 	if got := string(jsonx.MarshalCompact(KeepMovedKeys(cfg, held, current, 75.0))); got != string(jsonx.MarshalCompact(cfg)) {
 		t.Errorf("a version-75 file kept the user's: %s", got)
+	}
+	// niri's hot corner (v71) is a HotCorners item since v82: the user's
+	// corners stay
+	corners := parse(t, `{"HotCorners": {"items": [{"id": "niri-corner", "corner": "topLeft"}]}}`)
+	if got := string(jsonx.MarshalCompact(KeepMovedKeys(parse(t, `{"HotCorners": {"items": []}}`), parse(t, `{}`), corners, 70.0))); got != string(jsonx.MarshalCompact(corners)) {
+		t.Errorf("a version-70 file dropped the user's hot corners: %s", got)
+	}
+}
+
+// Every moved key is a setting of the schema, so a key a format-2 step
+// renames or removes is kept at its new place, not silently lost.
+func TestMovedKeysAreSettings(t *testing.T) {
+	t.Parallel()
+	s := v2(t)
+	for _, moved := range movedKeys {
+		for _, dotted := range moved.paths {
+			node := s.Root()
+			for _, key := range strings.Split(dotted, ".") {
+				node = schema.Get(schema.Get(s.Resolve(node), "properties"), key)
+			}
+			if node == nil {
+				t.Errorf("v%v's %s isn't in the schema", moved.version, dotted)
+			}
+		}
 	}
 }
