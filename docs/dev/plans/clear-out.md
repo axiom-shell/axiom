@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14 and bar-popouts-03 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18 and bar-popouts-03 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -90,7 +90,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 42 | compositor-15 | major | Done: The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | Done: The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
 | 44 | compositor-17 | minor-sweep | Done: Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
-| 45 | compositor-18 | major | Touchpad settings apart from the mouse's ([plan](touchpad-apart-from-the-mouse.md)) | 3 | ~150 | none |  |
+| 45 | compositor-18 | major | Done: Touchpad settings apart from the mouse's | 3 | ~150 | none |  |
 | 46 | bar-popouts-03 | major | Done: EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
 | 48 | bar-popouts-06 | major | Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
@@ -414,10 +414,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The bind list's flag icons carry tooltip strings nothing shows
   - A reference section's title is worked out twice
   - Stale lines in the Hyprland docs and comments
-- **compositor-18** (3): Decided that they separate; the plan, decided 2026-11-05 (option A), split into these: [touchpad-apart-from-the-mouse.md](touchpad-apart-from-the-mouse.md).
+- **compositor-18** (3, done): Decided that they separate; the plan, decided 2026-11-05 (option A), split into these.
   - Hyprland writes no per-touchpad input block
   - The Touchpad part has no speed, acceleration or left-handed of its own
-  - [The Mouse part doesn't say it reaches the touchpad on Hyprland](../issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
+  - The Mouse part doesn't say it reaches the touchpad on Hyprland
 
 **bar-popouts**
 

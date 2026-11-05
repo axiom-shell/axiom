@@ -127,7 +127,7 @@
     "API": "",
     "AUR": "",
     "AUR helper": "",
-    "Acceleration, speed and buttons. Off, your compositor's own config applies.": "",
+    "Acceleration, speed and buttons. Off, your compositor's own config applies. On Hyprland they reach the touchpad too while its own part is off: the touchpad needs its own settings (its own acceleration) in the Touchpad part.": "",
     "Accent": "",
     "Accent color": "",
     "Accent line": "",

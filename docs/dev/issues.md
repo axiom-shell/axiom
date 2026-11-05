@@ -503,12 +503,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### The Mouse part doesn't say it reaches the touchpad on Hyprland
-- **Where:** `qml/config/schema/sections/Input.yaml` (`mouse`)
-- **What:** On Hyprland the Mouse part's fields are global `input.*`, so with the Touchpad part off they still reach the touchpad (decided to keep it so), and nothing in the settings says so. Plan item 3: a description line on the Mouse part saying it reaches a touchpad whose own part is off on Hyprland, and that the touchpad needs independent configuration (its own acceleration) through the Touchpad part's fields.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
-
 ### The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked
 - **Where:** `qml/components/bar/BarContainer.qml` (`borderOpening`, `joinOpening`), `qml/components/surfaces/border/RoundedBorders.qml`
 - **What:** The border leaves its inner stroke open under a joined surface whenever `Appearance.translucent`, not only while the blur window backs it. In nested niri with a top and a left pill bar meeting at the top-left corner (translucency 80%, the look's blur off, so nothing is backed), the top frame's stroke row (y = 7) is bare wallpaper across the left frame's width (x 0–6): nothing fills it there, as the keepFill row was before compositor-20. Backed, the blur window fills it. Which opening takes that stretch (the left pill's `joinOpening` or the top pill's `borderOpening`) wasn't traced.

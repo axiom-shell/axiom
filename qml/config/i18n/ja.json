@@ -2321,7 +2321,6 @@
     "Keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.": "キーボード、マウス、タッチパッド、カーソル。オンにした項目はコンポジター自身の設定より優先され、ログイン画面にも反映されます。",
     "Layout and key repeat. Off, your compositor's own config applies.": "レイアウトとキーリピート。オフではコンポジター自身の設定が適用されます。",
     "Set the touchpad": "タッチパッドを設定",
-    "Acceleration, speed and buttons. Off, your compositor's own config applies.": "加速、速度、ボタン。オフではコンポジター自身の設定が適用されます。",
     "Off, your compositor's own config applies.": "オフではコンポジター自身の設定が適用されます。",
     "An installed cursor theme and its size. Off, the cursor is left alone.": "インストール済みのカーソルテーマとサイズ。オフではカーソルを変更しません。",
     "Set the mouse": "マウスを設定",
@@ -3859,6 +3858,7 @@
     "Search text, page, edge menu, dock or bar id (focused: the auto-hiding bars on the focused monitor), direction, workspace number, screenshot kind (region, window or screen), timer length (10m, 1:30), or the command.": "",
     "Auto-hiding bar": "",
     "Use its type's priority": "",
-    "it goes with a call on the same key that stays": ""
+    "it goes with a call on the same key that stays": "",
+    "Acceleration, speed and buttons. Off, your compositor's own config applies. On Hyprland they reach the touchpad too while its own part is off: the touchpad needs its own settings (its own acceleration) in the Touchpad part.": ""
   }
 }
