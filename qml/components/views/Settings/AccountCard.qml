@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Widgets
 import qs.config
 import qs.services.session
@@ -88,7 +89,7 @@ FieldGroup {
 
     Item {
       id: picture
-      Layout.alignment: Qt.AlignTop
+      Layout.alignment: Qt.AlignVCenter
       implicitWidth: Widget.px(88)
       implicitHeight: Widget.px(88)
 
@@ -147,9 +148,12 @@ FieldGroup {
         onClicked: AccountManager.pickIcon()
       }
 
-      StyledToolTip {
-        target: pictureArea
-        text: I18n.tr("Change picture")
+      LazyLoader {
+        active: pictureArea.containsMouse
+        StyledToolTip {
+          target: picture
+          text: I18n.tr("Change picture")
+        }
       }
     }
 
