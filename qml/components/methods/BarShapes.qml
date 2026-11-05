@@ -75,7 +75,7 @@ QtObject {
   }
 
   // Widget `index` of a run of `count`: { startCap, endCap, shownStart,
-  // back, lead, trail, seamStart, seamEnd }. `back` is how far its background reaches
+  // levelStartCap, levelEndCap, back, lead, trail, seamStart, seamEnd }. `back` is how far its background reaches
   // back under the one before; `lead`/`trail` the room its content keeps
   // at each end. In a merged run only the run's ends have caps (the run is
   // one background). `opaque`: the fill hides what's under it, so a
@@ -84,6 +84,9 @@ QtObject {
   // neighbour's edge to edge, so an outline there is drawn on the seam
   // (see path). `shownStart`: the start as it shows, where the cap before
   // covers a square start: the shape it's outlined and hit-tested in.
+  // `levelStartCap`/`levelEndCap`: the caps a level (the pill style) is
+  // drawn in: the widget's own, but in a merged run the ones it would have
+  // alone, so a pill looks the same merged as separate.
   //
   // A powerline segment shows from the cap before it, which reaches into
   // its first `join` px, to its own end cap: on average half a join
@@ -98,10 +101,15 @@ QtObject {
     const powerline = grouping === "powerline";
     const join = root.depth(joins[0], across);
     const shift = powerline ? (first ? 0 : join / 2) + (last ? 0 : join / 2) : 0;
+    const startCap = first ? ends[0] : powerline && !opaque ? joins[1] : "flat";
+    const endCap = last ? ends[1] : powerline ? joins[0] : "flat";
+    const merged = grouping === "merged";
     return {
-      "startCap": first ? ends[0] : powerline && !opaque ? joins[1] : "flat",
+      "startCap": startCap,
       "shownStart": first ? ends[0] : powerline ? joins[1] : "flat",
-      "endCap": last ? ends[1] : powerline ? joins[0] : "flat",
+      "endCap": endCap,
+      "levelStartCap": merged ? ends[0] : startCap,
+      "levelEndCap": merged ? ends[1] : endCap,
       "back": !first && powerline ? join : 0,
       "lead": first ? root._clearOf(ends[0], across) : 0,
       "trail": (last ? root._clearOf(ends[1], across) : 0) + shift,
