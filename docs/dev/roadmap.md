@@ -370,7 +370,6 @@ Found by the audits:
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
 - [An attachment's thumbnail pokes past its rounded corners](issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)

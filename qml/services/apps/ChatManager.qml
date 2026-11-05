@@ -67,10 +67,8 @@ Singleton {
   // -- Conversations --
 
   function newConversation(presetName) {
-    if (root.busy)
-      root.stop();
+    _letGo();
     root.conversation = _blank(presetName ?? ChatConfig.defaultPreset);
-    root.attachments = [];
   }
 
   function open(id) {
@@ -81,15 +79,13 @@ Singleton {
       root.notice = I18n.tr("That conversation couldn't be opened.");
       return;
     }
-    if (root.busy)
-      root.stop();
+    _letGo();
     // A reply cut off by a reload never finished
     loaded.messages.forEach(m => {
       if (m.state === "streaming")
         m.state = "stopped";
     });
     root.conversation = loaded;
-    root.attachments = [];
   }
 
   function rename(id, title) {
@@ -350,6 +346,25 @@ Singleton {
       console.warn("[ChatManager] Could not parse conversation", id, e);
       return null;
     }
+  }
+
+  // Before the conversation is replaced: its reply is stopped and
+  // forgotten at once (its late answer and deltas then fail the id check,
+  // and a new message can go), and its unsent attachments' files deleted
+  // (a conversation never sent has no folder anything else removes)
+  function _letGo() {
+    if (root.busy) {
+      root.stop();
+      _flush.stop();
+      root._replyId = "";
+      root._pendingText = "";
+      root._pendingThinking = "";
+      root.streamingText = "";
+      root.streamingThinking = "";
+    }
+    if (root.attachments.length > 0)
+      CommandManager.runDetached(["rm", "-f", "--"].concat(root.attachments.map(a => a.path)));
+    root.attachments = [];
   }
 
   function _update(changes) {

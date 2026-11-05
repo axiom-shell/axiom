@@ -532,7 +532,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-08** (1, done): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses; the levels before idle dimming are kept in a `PersistentProperties`, a default child of BrightnessManager's Singleton root.
   - Idle dimming is forgotten across a shell reload
 - **features-09** (4): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.
-  - [Replacing the chat's conversation leaves its reply and attachments behind](../issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
   - [Images dropped together on the chat overwrite each other](../issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
   - [An attachment's thumbnail pokes past its rounded corners](../issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
 - **features-10** (6):

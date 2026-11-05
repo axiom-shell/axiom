@@ -606,15 +606,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Replacing the chat's conversation leaves its reply and attachments behind
-- **Where:** `qml/services/apps/ChatManager.qml:70` (`newConversation`), `qml/services/apps/ChatManager.qml:77` (`open`), `qml/services/apps/ChatManager.qml:166` (`ask`), `qml/services/apps/ChatManager.qml:499` (`_finish`)
-- **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
-  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 500 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
-  - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
-  Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
 ### Images dropped together on the chat overwrite each other
 - **Where:** `qml/services/apps/ChatManager.qml:367` (`_attachmentPath`), `qml/components/content/Chat/Chat.qml:141` (`onDropped`)
 - **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).

@@ -11,6 +11,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 - `conversations`: the index, newest first.
 - Actions: `send` / `stop` / `regenerate`, plus presets and models.
 - Attachments come from the clipboard, a region from `ScreenshotManager.pick`, or dropped files. axiom reads them by path on each send.
+- Opening another conversation or starting a new one (`newConversation`, `open`; `ask` too) lets go of the current one first (`_letGo`): a reply streaming in is stopped and forgotten at once, so a new message can go straight away, and unsent attachments' files are deleted.
 - **Storage:** chats are saved to `$XDG_STATE_HOME/axiom/chats/` (atomically, through axiom: `FileManager.write`):
   - `<id>.json` for each chat
   - `index.json` for the list
