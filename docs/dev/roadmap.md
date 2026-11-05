@@ -456,7 +456,6 @@ Found while building dev trees and the dev config:
 
 Found while testing removable drives:
 - [The Vpn widget's icon and label are invisible on a filled bar](issues.md#the-vpn-widgets-icon-and-label-are-invisible-on-a-filled-bar)
-- [The weather TestPlace test fails now and then under load](issues.md#the-weather-testplace-test-fails-now-and-then-under-load)
 
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
