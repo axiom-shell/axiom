@@ -1,10 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell.Widgets
 import qs.config
 import qs.components.reusable
 
-// An attached image's thumbnail; `removable` adds a remove button
-Rectangle {
+// An attached image's thumbnail, cut to the rounded border; `removable`
+// adds a remove button
+ClippingRectangle {
   id: root
 
   // { path, mime, name }
@@ -20,11 +22,10 @@ Rectangle {
   color: Theme.backgroundHighlight
   border.color: Theme.border
   border.width: 1
-  clip: true
 
+  // Inside the border: the content item is inset by its width
   Image {
     anchors.fill: parent
-    anchors.margins: 1
     source: root.attachment?.path ? "file://" + root.attachment.path : ""
     sourceSize.width: root.size * 2
     sourceSize.height: root.size * 2

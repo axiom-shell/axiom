@@ -178,6 +178,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again.
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again. In General, change your picture (the Account card, the login screen once AccountsService has it, a Greeting module with Picture on the lock screen), and change your password with a wrong current one, a weak new one, then a real one. Pick another browser and terminal under Default apps and check `~/.config/mimeapps.list` / `xdg-terminals.list` changed and the Browser and Terminal keybinds open them (after a managed or included config is written again with `axiom open`), and a notification link and a screenshot open in their defaults.
 - Once the shell runs #339 (bar-popouts-07), under niri, sway and Hyprland: with a dock and a bar popout open beside it, check the dock's reserved footprint matches its drawn shape (fillets only where it has them) and the popout doesn't overlap it.
+- Once axiom runs a binary built with row 20's features-09, ask a fast provider (Groq, Cerebras, or a local model) for a long reply in the chat: it streams as before, and `axiom daemon logs` shows no `dropping a peer that stopped reading` (the reply's pieces are gathered while the queue to the shell is backlogged; a Go test shows it, not a real shell that stalls).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -214,7 +215,6 @@ The binary's rules are enforced by its tests, and the shell–daemon contract is
 Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one floor (`topics.MinInterval`, 1 ms since 2026-10-26: each setting's schema minimum is the limit) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`); strict param decoding (`rpc.DecodeStrict`, topic requests too); the call rule in protocol.md, with `gen_docs.py` failing on a call it can't read unless marked `// rpc: unchecked (<reason>)`.
 
 Resolves:
-- [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
@@ -370,10 +370,7 @@ Found by the audits:
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
-- [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
-- [An attachment's thumbnail pokes past its rounded corners](issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
 - [Renaming a note whose new name holds a dot drops its extension and hides it](issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [A changed notes folder keeps showing the old folder's note and saves it into the new one](issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)

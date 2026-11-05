@@ -256,12 +256,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
 
-### A fast chat reply can drop the shell's connection
-- **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
-- **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
-- **Size:** small
-- **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
-
 ### With no takeovers kept, a broken config.json can still release the compositor's config
 - **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
 - **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
@@ -612,21 +606,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Replacing the chat's conversation leaves its reply and attachments behind
-- **Where:** `qml/services/apps/ChatManager.qml:70` (`newConversation`), `qml/services/apps/ChatManager.qml:77` (`open`), `qml/services/apps/ChatManager.qml:166` (`ask`), `qml/services/apps/ChatManager.qml:499` (`_finish`)
-- **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
-  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 500 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
-  - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
-  Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### Images dropped together on the chat overwrite each other
-- **Where:** `qml/services/apps/ChatManager.qml:367` (`_attachmentPath`), `qml/components/content/Chat/Chat.qml:141` (`onDropped`)
-- **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
 ### An image sent without text to Anthropic carries a whitespace-only text block
 - **Where:** `backend/internal/chat/send.go:284` (`anthropicRequest`)
 - **What:** `send` allows a message with attachments and no text, and `anthropicRequest` always appends `{"type": "text", "text": orSpace(t.text())}`, so an image-only message sends the text `" "`. The Messages API rejects whitespace-only text blocks ("text content blocks must contain non-whitespace text"), so the reply fails as `bad_reply` where OpenAI-style and Gemini requests (which skip the text when there are images) succeed. PLAUSIBLE: one Anthropic request with an image and empty text settles it (not made: paid API). The shape came over unchanged from the old ChatProtocol. Fix: append the text block only when the text is non-empty or there's no image (`if text := t.text(); text != "" || len(content) == 0 { … orSpace(text) … }`), plus a TestBuild row with an image-only user turn.
@@ -643,12 +622,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `qml/components/content/Chat/Chat.qml:58` (docked `ConversationList`), `qml/components/content/Chat/Chat.qml:116` (floating `ConversationList`), `qml/components/content/Chat/Chat.qml:126` (`ModelPicker`), `qml/components/content/parts/chat/ConversationList.qml:140` (`renameField`)
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Chat.qml always builds two `ConversationList`s, the docked one (`visible: root.listDocked`) and the floating one (`visible: !root.listDocked && root.listOpen`), so one is always hidden and usually both; each builds a row per saved conversation (`Chat.keepConversations` defaults to 50), each row with a hidden rename `StyledTextEntry` (`visible: item.editing`). The `ModelPicker` (`visible: root.pickerOpen`) builds every preset and model row while closed. Fix: wrap the three in Loaders with `active` on their conditions (`listDocked`, `!listDocked && listOpen`, `pickerOpen`), and the rename field in a Loader on `item.editing`.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### An attachment's thumbnail pokes past its rounded corners
-- **Where:** `qml/components/content/parts/chat/AttachmentChip.qml:23` (`clip`)
-- **What:** The chip is a Rectangle with `radius: Widget.radius / 2` and `clip: true`, which clips to the bounding box, so the `PreserveAspectCrop` image (inset 1 px) draws its square corners over the rounded border, in the composer and in every sent message. qml-pitfalls.md: "Rounded clipping is Quickshell.Widgets' `ClippingRectangle`". Fix: make the root a `ClippingRectangle` (with its `color` set) in place of the Rectangle and drop `clip: true`.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
 ### Renaming a note whose new name holds a dot drops its extension and hides it
