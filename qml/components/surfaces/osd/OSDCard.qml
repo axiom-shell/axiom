@@ -22,12 +22,14 @@ Item {
   // The text's width: its own, the longer line's, between a least (a
   // short title doesn't make a stub of a card) and a most (past it the
   // title ends in "…" and the faint line wraps). A Text's implicit width
-  // ignores its eliding and wrapping, so this reads the lines' own widths
-  // (the subtitle's by its text, not its `visible`, which reads false
-  // while the card's slot is folded)
+  // ignores its eliding, so this reads the title's own; the faint line's
+  // is measured from its text by the font (a wrapping Text's implicit
+  // width followed its wrapped lines, so the card stayed as narrow as the
+  // title and the line wrapped at that). Both read the text, not
+  // `visible`, which reads false while the card's slot is folded
   readonly property int minTextWidth: Widget.px(160)
   readonly property int maxTextWidth: Widget.px(400)
-  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? subtitleText.implicitWidth : 0))))
+  readonly property int textWidth: Math.round(Math.max(root.minTextWidth, Math.min(root.maxTextWidth, Math.max(titleText.implicitWidth, root.subtitle !== "" ? Math.ceil(subtitleMetrics.advanceWidth(root.subtitle)) : 0))))
   // The most lines the faint line wraps to (the last ends in "…")
   readonly property int subtitleLines: 3
   // Its least height (one faint line), and the margin above and below
@@ -93,7 +95,10 @@ Item {
       StyledText {
         id: subtitleText
         width: root.textWidth
-        text: root.subtitle
+        // A zero-width break after each / - _, so a path or an id wraps
+        // to fill the line: line breaking allows none before a digit
+        // ("9a5f-200d" stayed whole and went to the next line)
+        text: root.subtitle.replace(/([\/_-])/g, "$1​")
         textColor: Theme.foregroundAlt
         wrapMode: Text.Wrap
         elide: Text.ElideRight
