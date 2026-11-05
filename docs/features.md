@@ -191,7 +191,7 @@ axiom runs on Hyprland, niri and sway, and sets up the compositor from the same 
 - **Keybinds** on their own page, with presets, a key recorder, and warnings for keys your own config already uses, plus a reference of every bind as a list or a keyboard, where you can press a combo to see what it does.
 - **Monitors** arranged by dragging (see [the rest](#the-rest)).
 - **Window look:** theme-colored borders, rounding, gaps, shadows, dimming, opacity and blur, as far as the compositor supports them. **Match axiom's shape** keeps windows in step with axiom's own shape.
-- **Input:** keyboard layouts and repeat, mouse and touchpad, and the cursor theme.
+- **Input:** input sources (keyboard layouts and, through fcitx5 or ibus, input methods for Japanese, Chinese, Korean and more, switched from the bar, a keybind or the OSD), key repeat, mouse and touchpad, and the cursor theme.
 - **Three modes:** applied at runtime without touching your config (the default), written to a file you include, or the whole config managed by axiom with your own files loaded after it. See [Compositor modes](installation.md#compositor-modes).
 
 One config works on all three. Switch compositors and your bars, pages, theme and keybinds come along; settings only one compositor understands stay in the config for when you go back. What each compositor supports is in the [README](../README.md#compositors).

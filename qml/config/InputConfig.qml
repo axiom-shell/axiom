@@ -33,21 +33,24 @@ QtObject {
   // sources and options
   readonly property bool savedMethodEnabled: ConfigManager.config.Input.method.enabled
 
-  // The input method framework followed and given the sources: "fcitx5"
-  // (the default), "ibus", "auto" (whichever runs) or "none"
-  readonly property string framework: _c.method.framework
+  // The input method framework followed and given the sources, as saved
+  // (an editor's preview never reaches the daemon): "fcitx5" (the
+  // default), "ibus", "auto" (whichever runs) or "none"
+  readonly property string savedFramework: ConfigManager.config.Input.method.framework
   // (autostart and legacyApps are the daemon's managed-mode writer's,
   // read from config.json)
   // The framework's options axiom sets (inputMethod.options: { shareState,
-  // verticalCandidates, candidateFont, showSwitchPopup }), the same object
-  // while they're unchanged
-  readonly property var methodOptions: JSON.parse(_methodOptionsJson)
+  // verticalCandidates, candidateFont, showSwitchPopup }), as saved (they
+  // rewrite the framework's own config), the same object while they're
+  // unchanged
+  readonly property var savedMethodOptions: JSON.parse(_methodOptionsJson)
   readonly property string _methodOptionsJson: JSON.stringify({
-    "shareState": _c.method.shareState,
-    "verticalCandidates": _c.method.verticalCandidates,
-    "candidateFont": _c.method.candidateFont,
-    "showSwitchPopup": _c.method.showSwitchPopup
+    "shareState": _saved.method.shareState,
+    "verticalCandidates": _saved.method.verticalCandidates,
+    "candidateFont": _saved.method.candidateFont,
+    "showSwitchPopup": _saved.method.showSwitchPopup
   })
+  readonly property var _saved: ConfigManager.config.Input
 
   // The cursor theme picked, set or not ("" for none)
   readonly property string cursorTheme: _c.cursor.theme

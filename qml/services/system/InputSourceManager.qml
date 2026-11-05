@@ -24,10 +24,9 @@ QtObject {
 
   // --- The compositor's keyboard ---
 
-  // Its layouts' codes (["us", "de"]), the active one's index and name
+  // Its layouts' codes (["us", "de"]) and the active one's index
   property var layouts: []
   property int layoutIndex: 0
-  property string keymapName: ""
   // The xkb registry (the daemon's input.layouts: { layouts: [{ name,
   // short, description, languages, variants }] }), null until read: the
   // codes of layouts niri and sway name in full, the names of layouts
@@ -52,8 +51,6 @@ QtObject {
   // The framework's list was changed outside axiom (fcitx5-configtool,
   // ibus-setup) since axiom gave it the sources
   readonly property bool outsideEdit: root.running && root._im?.outsideEdit === true
-  // The framework's list isn't the saved sources'
-  readonly property bool differs: root.running && !root.matches(InputConfig.savedSources)
 
   // Whether the running framework's list (managed or not) is `sources`':
   // the settings card asks which list wins before axiom manages one that
@@ -67,8 +64,9 @@ QtObject {
   // Every source to switch between ({ id, kind, layout, variant, engine
   // }, InputSources.effective: the compositor's own layouts while axiom
   // doesn't set the keyboard); on the login screen, and while axiom
-  // doesn't manage the input method, the xkb ones alone
-  readonly property var sources: InputSources.effective(root.enabled ? InputConfig.sources : InputSources.xkbOnly(InputConfig.sources), root.layouts)
+  // doesn't manage the input method or no framework runs (an engine can't
+  // be switched to then), the xkb ones alone
+  readonly property var sources: InputSources.effective(root.running ? InputConfig.sources : InputSources.xkbOnly(InputConfig.sources), root.layouts)
   // The xkb ones: what a password field types through (the lock screen's
   // and the greeter's module offer only these)
   readonly property var xkbSources: InputSources.xkbOnly(root.sources)
@@ -136,14 +134,13 @@ QtObject {
     return true;
   }
 
-  // The next or previous source (of the xkb ones alone with `xkbOnly`,
-  // or while no framework runs: an engine can't be switched to then)
+  // The next or previous source (of the xkb ones alone with `xkbOnly`)
   function next(xkbOnly) {
-    root._step(xkbOnly || !root.running, 1);
+    root._step(xkbOnly, 1);
   }
 
   function prev(xkbOnly) {
-    root._step(xkbOnly || !root.running, -1);
+    root._step(xkbOnly, -1);
   }
 
   function _step(xkbOnly, direction) {
@@ -170,7 +167,6 @@ QtObject {
         return;
       root.layouts = keyboard.layouts;
       root.layoutIndex = keyboard.index;
-      root.keymapName = keyboard.keymap;
     }, root._registry);
   }
 
@@ -183,6 +179,10 @@ QtObject {
   // Pushes follow the saved config, never an editor's preview: the
   // settings card asks which list wins before Save turns managing on
   readonly property bool _pushes: !root._inert && InputConfig.savedMethodEnabled && root.running
+  // The framework running is the one chosen: just after the choice
+  // changed (or managing turned on) the daemon's state can still be the
+  // framework it followed before, whose list must not be built and pushed
+  readonly property bool _chosen: InputConfig.savedFramework === "auto" || InputConfig.savedFramework === root.framework
   // What was pushed last, so a framework keeping a list its own way isn't
   // pushed again and again; cleared when it stops
   property string _lastGroup: ""
@@ -207,10 +207,10 @@ QtObject {
   property Connections _config: Connections {
     target: InputConfig
     enabled: !root._inert
-    function onMethodOptionsChanged() {
+    function onSavedMethodOptionsChanged() {
       root._pushOptions();
     }
-    function onFrameworkChanged() {
+    function onSavedFrameworkChanged() {
       root._pushFramework();
     }
     // Turned on (saved): the framework's choice, then the list (the card
@@ -259,7 +259,7 @@ QtObject {
 
   // rpc: inputMethod.push
   function _pushGroup(edited) {
-    if (!root._pushes || (root.outsideEdit && !edited))
+    if (!root._pushes || !root._chosen || (root.outsideEdit && !edited))
       return;
     const sources = InputConfig.savedSources;
     // ibus names xkb layouts by their language, from the registry
@@ -291,9 +291,9 @@ QtObject {
 
   // rpc: inputMethod.options
   function _pushOptions() {
-    if (!root._pushes)
+    if (!root._pushes || !root._chosen)
       return;
-    const options = InputConfig.methodOptions;
+    const options = InputConfig.savedMethodOptions;
     const key = root.framework + JSON.stringify(options);
     if (key === root._lastOptions)
       return;
@@ -314,7 +314,7 @@ QtObject {
     if (root._inert || !InputConfig.savedMethodEnabled)
       return;
     BackendManager.call("inputMethod.framework", {
-      "name": InputConfig.framework
+      "name": InputConfig.savedFramework
     }, error => {
       if (error && error.kind !== "unavailable")
         console.warn("[InputSourceManager] Could not pick the input method framework:", error.message);
