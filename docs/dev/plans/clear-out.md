@@ -94,7 +94,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 46 | bar-popouts-03 | major | Done: EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | Done: The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
 | 48 | bar-popouts-06 | major | Done: Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
-| 49 | bar-popouts-07 | major | Edge menu sizing, placement and zones | 5 | ~250 | bar-popouts-01, overlay-modules-02 |  |
+| 49 | bar-popouts-07 | major | Done: Edge menu sizing, placement and zones | 5 | ~250 | bar-popouts-01, overlay-modules-02 |  |
 | 50 | bar-popouts-08 | minor-sweep | Done: Popouts and edge menus | 5 | ~120 | bar-popouts-03, -07 |  |
 | 51 | bar-popouts-09 | minor-sweep | Done: The bar and bar widgets, with the workspace popouts | 7 | ~200 | bar-popouts-04, -06 |  |
 | 52 | bar-popouts-11 | plan | The 1080p pass: text clips, and the Keybinds page on a small monitor | 2 | needs a plan | compositor-16 |  |
@@ -431,10 +431,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Media squeezed to its minimum in the fill style shows the meter, not its icon
   - SystemStats' used memory clips on a vertical bar
   - The Workspaces widget's measured length glides when the active cell widens
-- **bar-popouts-07** (5): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
+- **bar-popouts-07** (5, done): Its module-padding entry was merged into overlay-modules-02's slot padding entry.
   - An edge menu can be bigger than its screen
   - The layouts editor says a menu fits its edge when it scrolls
-  - [A whole-edge menu's hover strip covers only its modules' length while closed](../issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
+  - A whole-edge menu's hover strip covers only its modules' length while closed
   - An integrated menu's zone stays behind when it changes edge or screen
   - Previewing a submenu menu doesn't open it once a module above its row has grown
 - **bar-popouts-08** (5, done):

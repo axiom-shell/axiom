@@ -4,6 +4,7 @@ import Quickshell
 
 import qs.config
 import qs.services.ui
+import qs.components.methods
 import qs.components.hosts.popout
 
 // What both edge menu hosts (FloatingEdgeMenu, IntegratedEdgeMenu) share:
@@ -39,15 +40,16 @@ QtObject {
   readonly property bool autoDismiss: root.menu.close.onLeave && !root.held && !root.revealing
   onAutoDismissChanged: root.host.updateDismissTimer()
 
-  // The hover strip's length: the menu's own setting, else the body's
-  // length (`body`, with `pad` on both ends), or from config until the
-  // body has been loaded
-  function triggerLength(body, vertical, pad) {
+  // The hover strip's length, from config alone, so it's the same open
+  // or closed: the menu's own setting, else its box's: its modules' grid
+  // with `pad` on both ends, no longer than `room` (the box's room along
+  // the edge), which a whole-edge menu takes
+  function triggerLength(vertical, pad, room) {
     if (root.menu.trigger.length > 0)
       return root.menu.trigger.length;
-    if (body)
-      return (vertical ? body.implicitHeight : body.implicitWidth) + pad * 2;
-    return EdgeMenusConfig.lengthOf(root.menu, vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu));
+    if (GridPlacement.menuFillsEdge(root.menu))
+      return room;
+    return Math.min(room, EdgeMenusConfig.gridLengthOf(root.menu, vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu)) + pad * 2);
   }
 
   function _sync() {

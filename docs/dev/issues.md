@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A menu at the screen-size cap can still lose a bar's depth
+- **Where:** `qml/config/EdgeMenusConfig.qml` (`scaleOf`)
+- **What:** `scaleOf` shrinks a menu's Module size so its depth across its edge fits the screen less its padding (`GridPlacement.fitModuleScale`). Worked out from config alone, it doesn't take off what the bars and border reserve across that edge (EdgeMenuManager's frame, `frame.across`), so a menu at the cap sits past them and loses about their depth at the far screen edge (a nested niri run, 2026-11-05: a top menu at Module size 200 reached the screen's bottom edge). Fix: take the frame's `across` off the room too, from the hosts (which know the frame), or leave it (rare: it takes a card size and Module size high enough to reach the cap). Kept as built by the coordinator (2026-11-05): rare path, no product stake.
+- **Size:** small
+- **Found:** 2026-11-05, while fixing bar-popouts-07 (row 20)
+
 ### The tray watcher check could start a watcher by D-Bus activation
 - **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
 - **What:** `tray()` reads `org.kde.StatusNotifierWatcher`'s `RegisteredStatusNotifierItems` without the NoAutoStart flag, so on a system shipping an activatable watcher (none here: `org.x.StatusNotifierWatcher` is the only activatable one) the read would start it. Asking `NameHasOwner` first, or sending NoAutoStart, avoids it.
@@ -684,12 +690,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** hosts.md says of an integrated menu: "The zone is set once while it's open (windows retile in one step)". But `depth` is `Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)`, with `bodyDepth` the body's live `implicitHeight` on a top or bottom edge: `ModuleGrid.sizes.height`, from the grown places (`ModuleGrid.places`). `exclusiveZone` and the window's `implicitHeight` follow it. So a top menu holding a module with `grow` (Notifications, AudioMixer, WifiNetworks, …: nine modules have it) changes its exclusive zone each time that module grows or shrinks, e.g. when a notification arrives: the windows retile again, and the shown layer window grows (the squeezed flash growing popout windows show). FloatingEdgeMenu avoids this by reserving the most up front (`maxContentDepth: root._body.maxGrownHeight`). Proposed fix (not decided): reserve `maxGrownHeight` on a top or bottom integrated menu, so the zone is set once.
 
   **On hold** (maintainer, 2026-10-31): "put this on hold - note that growing modules kinda needs a re-work or removal". Growing modules as a whole (`grow`, [grow-expand](overlay/grow-expand.md)) need a rework or removal; this entry waits for that and is [deferred](roadmap.md#deferred). No design is recorded.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### A whole-edge menu's hover strip covers only its modules' length while closed
-- **Where:** `qml/components/surfaces/edgemenu/EdgeMenuSync.qml:45` (`triggerLength`), `qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml:105`, `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml:108`, `qml/config/EdgeMenusConfig.qml:114` (`lengthOf`)
-- **What:** With `trigger.length` 0 (the default) the strip is "the menu's length" (overview.md). `triggerLength(body, …)` takes the body's length while it's loaded, else `EdgeMenusConfig.lengthOf`: the modules' natural grid plus `paddingOf` twice. Both hosts load the body only while open (EdgePopout's loader is `active: root.occupied || root.keepLoaded`, IntegratedEdgeMenu's `active: root.occupied`). So a `length: "edge"` menu with `open.onHover`, closed, opens only from a strip as long as its unstretched modules, centred on the edge (`triggerCentre`/`centre` are the edge's middle); open, the strip spans the edge. Hovering near either end of the edge, where the menu draws, does nothing. For every menu the closed strip is also shorter than the open one: `lengthOf` leaves out the box's border (floating: `contentPadding` is `borderWidth + padding`) and an integrated menu's frame (`pad`). Fix: work the strip out from config alone, open or closed, with the host's own padding: `menu.trigger.length > 0 ? menu.trigger.length : menu.length === "edge" ? <the host's room along the edge> : gridLengthOf(menu, …) + pad * 2`, dropping the `body` argument; `lengthOf` (EdgeMenusConfig.qml:110–116, 7 lines) then has no caller (the editor's fit check uses the placement since roadmap row 20).
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 

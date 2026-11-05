@@ -385,7 +385,6 @@ Found by the audits:
 - [A command naming a program shows the program as its script](issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
 - [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
-- [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
@@ -436,6 +435,9 @@ Found while fixing core-ui-theming-04 (row 20):
 Found while reviewing core-ui-theming-06 (row 20):
 - [A NowPlaying seek shows the old place until the next tick, and keeps it while paused](issues.md#a-nowplaying-seek-shows-the-old-place-until-the-next-tick-and-keeps-it-while-paused)
 - [The text cursor keeps blinking with animations off](issues.md#the-text-cursor-keeps-blinking-with-animations-off)
+
+Found while fixing bar-popouts-07 (row 20):
+- [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
 
 Found while moving the backend to the qml/ layout:
 - [The compositor facts' axiomPath is read by nothing](issues.md#the-compositor-facts-axiompath-is-read-by-nothing)
