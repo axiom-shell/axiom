@@ -77,6 +77,11 @@ PanelWindow {
     const src = shape?.source ?? null;
     if (!src || !shape.shown)
       return [];
+    // None while its fill is drawn under the blur threshold, fading or
+    // faded out (an AttachedSurface's `fade`, a dock fading as it hides),
+    // as BoxBlurRegion and Hyprland's ignore_alpha compare it
+    if (Appearance.surfaceAlpha * (src.shownOpacity ?? 1) * (src.hostOpacity ?? 1) < Appearance.blurThreshold)
+      return [];
     const clip = shape.clipRect ?? {
       "x": 0,
       "y": 0,
