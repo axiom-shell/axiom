@@ -494,6 +494,9 @@ Found while running verify.sh --all for compositor-08 (row 20):
 Found while reviewing compositor-20 (row 20):
 - [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 
+Found while reviewing the input sources branch:
+- [Clearing the input method's candidate font leaves fcitx5 on the last one set](issues.md#clearing-the-input-methods-candidate-font-leaves-fcitx5-on-the-last-one-set)
+
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
 - [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)

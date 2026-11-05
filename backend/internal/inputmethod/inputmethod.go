@@ -103,8 +103,8 @@ type Options struct {
 	GSettings func(ctx context.Context, args ...string) (string, error)
 	// OnChange is told of every new state
 	OnChange func(State)
-	// Retry is how often to look again for a framework that isn't running
-	// (default 10 s: fcitx5 is also heard appearing at once)
+	// Retry is how often to look again for an ibus-daemon that isn't
+	// running (default 10 s; fcitx5 is heard appearing at once)
 	Retry time.Duration
 	Log   *slog.Logger
 }
@@ -335,7 +335,9 @@ func (s *Service) runOnce(ctx context.Context) (again bool, err error) {
 			return s.followIBus(ctx, addr, owners)
 		}
 	}
-	// Nothing running: fcitx5 is heard starting, ibus looked for again
+	// Nothing running: fcitx5 is heard starting on the connection kept
+	// open, ibus's address looked for again (only ibus is: no new
+	// connection each time)
 	empty := emptyState("")
 	if fw != FrameworkAuto {
 		empty.Framework = fw
@@ -349,6 +351,12 @@ func (s *Service) runOnce(ctx context.Context) (again bool, err error) {
 	if session != nil {
 		gone = session.Done()
 	}
+	var retry <-chan time.Time
+	if fw != FrameworkFcitx {
+		t := time.NewTicker(s.o.Retry)
+		defer t.Stop()
+		retry = t.C
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -357,8 +365,10 @@ func (s *Service) runOnce(ctx context.Context) (again bool, err error) {
 			return true, nil
 		case <-gone:
 			return false, session.Err()
-		case <-time.After(s.o.Retry):
-			return true, nil
+		case <-retry:
+			if s.o.IBusAddress() != "" {
+				return true, nil
+			}
 		case m, ok := <-appeared:
 			if !ok {
 				return false, nil
