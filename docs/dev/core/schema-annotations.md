@@ -129,6 +129,7 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `skip`: a value written as nothing, so the compositor's own default stays (`"default"`, or niri's `0`).
 - Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
   - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).
+  - `device: <kind>`: a per-device option (`key` its `hl.device` name), left out of the table and written for each device of that kind (`touchpad`: a pointer named like one; [Hyprland config modes](../hyprland/config-modes.md) › Input).
   - `always: true`: written even when it's the schema default. Other fields are only written once changed, so Hyprland's own default (and the user's files) stay in charge otherwise.
 - sway (`render.SwayOptionLines`; [Sway backend](../compositor/sway-backend.md)):
   - `value`: `"enabled"` (a boolean as `enabled`/`disabled`), `"yesNo"` (`yes`/`no`), `"enableDisable"` (`enable`/`disable`), `"raw"` (as it is, unquoted). Without one, the value is quoted as one argument (`render.SwayQuote`).

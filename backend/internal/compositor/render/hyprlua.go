@@ -69,7 +69,14 @@ func setPath(table *jsonx.Object, path string, v any) {
 // (objectSchema's fields with x-compositor.hyprland). resolveHex gives a
 // theme color's "rrggbb"; overrides map option paths to values that win.
 func ConfigTable(objectSchema, values, resolveHex, overrides any) *jsonx.Object {
-	table := jsonx.NewObject()
+	table, _ := configTables(objectSchema, values, resolveHex, overrides)
+	return table
+}
+
+// configTables is ConfigTable, with the fields whose spec names a `device`
+// set aside: { device: { option: value } }, for hl.device() (deviceLua)
+func configTables(objectSchema, values, resolveHex, overrides any) (table, devices *jsonx.Object) {
+	table, devices = jsonx.NewObject(), jsonx.NewObject()
 	for _, f := range CompositorFields(objectSchema, values, "hyprland", "") {
 		spec := f.Spec
 		if f.On != nil {
@@ -85,6 +92,10 @@ func ConfigTable(objectSchema, values, resolveHex, overrides any) *jsonx.Object 
 			continue
 		}
 		v := convert(spec, f.Value, resolveHex)
+		if device, ok := get(spec, "device").(string); ok {
+			setPath(devices, device+"."+str(get(spec, "key")), v)
+			continue
+		}
 		var paths []string
 		if s, ok := get(spec, "key").(string); ok {
 			paths = []string{s}
@@ -98,7 +109,37 @@ func ConfigTable(objectSchema, values, resolveHex, overrides any) *jsonx.Object 
 	for _, p := range keys(overrides) {
 		setPath(table, p, get(overrides, p))
 	}
-	return table
+	return table, devices
+}
+
+// deviceNames are the words a device's name holds, by the kind a spec's
+// `device` names: Hyprland types a touchpad "pointer" like a mouse, so only
+// libinput's name tells them apart
+var deviceNames = map[string][]string{"touchpad": {"touchpad", "trackpad", "clickpad"}}
+
+// deviceLua is one hl.device() per pointer Hyprland lists whose name says
+// the kind, for each kind in devices (configTables'), each in a pcall so a
+// refused one leaves the rest; a device connected later gets none until
+// the next apply
+func deviceLua(devices *jsonx.Object) []string {
+	var out []string
+	for _, kind := range devices.Keys() {
+		opts := devices.Value(kind).(*jsonx.Object)
+		ks := opts.Keys()
+		sort.Strings(ks)
+		spec := "name = d.name"
+		for _, k := range ks {
+			spec += ", " + k + " = " + LuaValue(opts.Value(k))
+		}
+		var match []string
+		for _, w := range deviceNames[kind] {
+			match = append(match, "d.name:find("+LuaString(w)+", 1, true)")
+		}
+		out = append(out, "for _, d in ipairs(hl.get_devices and hl.get_devices() or {}) do",
+			`  if d.type == "pointer" and d.name and (`+strings.Join(match, " or ")+") then",
+			"    pcall(hl.device, { "+spec+" })", "  end", "end")
+	}
+	return out
 }
 
 // Serialize is HyprLua.serialize: a table as a Lua literal, keys sorted;
@@ -459,13 +500,10 @@ func HyprFileMonitorCalls(text any) []string {
 }
 
 // InputLua is HyprLua.inputLua: the input's parts that are on as one
-// hl.config(), or none.
+// hl.config() and the touchpad's own options per touchpad (deviceLua), or
+// none.
 func InputLua(input, inputSchema any) []string {
-	table := ConfigTable(inputSchema, get(input, "values"), nil, jsonx.NewObject())
-	if table.Len() == 0 {
-		return []string{}
-	}
-	return strings.Split(hlConfig(table), "\n")
+	return append([]string{}, inputLines(inputSchema, get(input, "values"))...)
 }
 
 // GreeterLua is the greeter's Hyprland's Lua: the Input options marked
@@ -474,10 +512,13 @@ func GreeterLua(inputSchema, input any) []string {
 	if !truthy(input) {
 		return nil
 	}
-	if table := ConfigTable(greeterSchema(inputSchema), input, nil, jsonx.NewObject()); table.Len() > 0 {
-		return []string{hlConfig(table)}
-	}
-	return nil
+	return inputLines(greeterSchema(inputSchema), input)
+}
+
+// inputLines are InputLua's lines for the input's values
+func inputLines(inputSchema, values any) []string {
+	table, devices := configTables(inputSchema, values, nil, nil)
+	return append(luaLines(table), deviceLua(devices)...)
 }
 
 // greeterSchema is objectSchema with only its x-greeter settings
