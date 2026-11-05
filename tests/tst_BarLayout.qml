@@ -570,7 +570,17 @@ TestCase {
     const measures = [[m(495, 495, 0), spacer(0)], [], [m(500, 500, 1)]];
     compare(BarLayout.overflowHidden(measures, 1000, 0, 10, 0, false), [[0], [], []]);
     const joined = [[spacer(0), m(495, 495, 0)], [], [m(500, 500, 1)]];
-    compare(BarLayout.overflowHidden(joined, 1000, 0, 10, 0, false, 0), [[], [], []]);
+    compare(BarLayout.overflowHidden(joined, 1000, 0, BarLayout.boundaryGaps(BarLayout.sectionJoins(joined, false), 10, 0), 0, false), [[], [], []]);
+  }
+
+  // A locked center's outer group keeps its full size on its half (the
+  // center is never squeezed), so the side beside it must fit at its
+  // minimum in what's left, else a widget is hidden
+  function test_overflowHidden_center_outer_group_at_full_size() {
+    // Pinned [100 100] centered at 400; the left half's 400 holds the
+    // outer 200 and a 10 gap, leaving 190 for a side of minimum 300
+    const measures = [[m(380, 300, 0)], [m(200, 40, 1), spacer(), m(100, 100, 1), m(100, 100, 1)], []];
+    compare(BarLayout.overflowHidden(measures, 1000, 0, 10, 0, true), [[0], [], []]);
   }
 
   function test_joinGroups() {

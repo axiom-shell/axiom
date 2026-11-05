@@ -327,7 +327,7 @@ Rectangle {
 
   readonly property var _groups: [leftGroup, centerGroup, rightGroup]
   // Per section, the model indices hidden so the minimum sizes fit
-  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root.barConfig.widgetGap, root.barConfig.groupSpacing, root.barConfig.lockCenter, root.barConfig.groupSpacing)
+  readonly property var hidden: BarLayout.overflowHidden(root._groups.map(g => g.measures), root.length, root.endMargins, root._sectionGaps, root.barConfig.groupSpacing, root.barConfig.lockCenter)
   // Each section's room along the bar; a side with spacers stretches to
   // the center (BarLayout.layoutSections)
   readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount), centerGroup.centerParts)

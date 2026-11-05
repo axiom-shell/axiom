@@ -441,9 +441,9 @@ QtObject {
   // must fit beside the full-size center on its own, and only the
   // overflowing half loses widgets; the center is only touched if it
   // can't fit the bar alone. The center's dividers (`divides`) are left
-  // out of what's centered, as in layoutSections. A boundary that joins
-  // (sectionJoins) keeps `joinedGap` (when given) instead of `gap`.
-  function overflowHidden(measures, length, margin, gap, spacing, lockCenter, joinedGap) {
+  // out of what's centered, as in layoutSections. `gap` is one number or
+  // per boundary (boundaryGaps).
+  function overflowHidden(measures, length, margin, gap, spacing, lockCenter) {
     const [m0, m1] = root._margins(margin);
     const hidden = measures.map(() => []);
     const kept = s => measures[s].map((m, i) => !hidden[s].includes(i) && (m.pref > 0 || !!m.fill));
@@ -453,7 +453,7 @@ QtObject {
     };
     const minSpan = s => spanOf(s, "min");
     const room = length - m0 - m1 + 0.5;
-    const g = joinedGap === undefined ? root._gaps(gap) : root.boundaryGaps(root.sectionJoins(measures, lockCenter), gap, joinedGap);
+    const g = root._gaps(gap);
 
     // The sections to drop from (in tie order), or null when it all fits
     const overflowing = () => {
@@ -467,16 +467,16 @@ QtObject {
         return [1];
       const shown = kept(1);
       // A center with spacers: its pinned group is centered, its outer
-      // groups take room on the halves (layoutSections)
+      // groups take room on the halves at full size, as the center is
+      // never squeezed (layoutSections)
       const parts = root.centerParts(measures[1], shown, spacing, "pref");
       const split = parts.leadFills + parts.tailFills > 0;
-      const partsMin = split ? root.centerParts(measures[1], shown, spacing, "min") : null;
       const hang = split ? null : root.edgeHang(measures[1].map((m, i) => shown[i] ? m.pref : 0), measures[1].map(m => !!m.divides && !m.fill), spacing);
       const center = root._lockedCenter(split ? parts.core : spanOf(1, "pref"), length, m0, m1, hang);
       const start = center.start, c = center.length;
       const need = s => {
         const len = minSpan(s);
-        return (len > 0 ? len + (s === 0 ? g.lc : g.cr) : 0) + (split ? (s === 0 ? partsMin.lead : partsMin.tail) : 0);
+        return (len > 0 ? len + (s === 0 ? g.lc : g.cr) : 0) + (split ? (s === 0 ? parts.lead : parts.tail) : 0);
       };
       if (need(0) > start - m0 + 0.5)
         return split ? [0, 1] : [0];
