@@ -470,8 +470,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Clock's date and label keep their room while the time shrinks to nothing
   - The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
   - NowPlaying builds its strip layout and a second transport hidden in every mode
-- **overlay-modules-04** (2): Splits by file group if it passes the gate.
-  - [Parts shown in one mode are built hidden in every mode, in ten modules and parts](../issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
+- **overlay-modules-04** (2): Split by file group at the gate: the images entry and seven of the ten parts landed with overlay-modules-03; AudioMixer and WorldClocks are left, and DayPane's editor, which the Calendar popout's `growth` reads before it opens (needs another way to know its height).
+  - [AudioMixer, WorldClocks and DayPane build parts shown in one mode in every mode](../issues.md#audiomixer-worldclocks-and-daypane-build-parts-shown-in-one-mode-in-every-mode)
   - Images decoded at full size or more than once
 - **overlay-modules-05** (4):
   - [Reopening the overlay while it closes leaves it open but hidden](../issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
