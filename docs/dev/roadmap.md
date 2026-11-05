@@ -224,7 +224,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [An edge menu can be bigger than its screen](issues.md#an-edge-menu-can-be-bigger-than-its-screen)
 - [A popout taller than the screen runs off it](issues.md#a-popout-taller-than-the-screen-runs-off-it)
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
-- [WorkspaceStrip's Grid briefly has more items than cells](issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
@@ -241,9 +240,9 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 - [Bar widget hosts settle after they're gone](issues.md#bar-widget-hosts-settle-after-theyre-gone)
 - [A custom Ring element logs an undefined `inside` on load](issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
 - [The Layouts canvas logs null reads as it's torn down](issues.md#the-layouts-canvas-logs-null-reads-as-its-torn-down)
-- [Keybind sections log null reads as they're torn down](issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
 - [A custom layout's element rect reads an undefined place](issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
 - [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
+- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
@@ -348,29 +347,14 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [The bind merge removes an hl.unbind whether or not its bind went](issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
-- [A user/ file with a dot in its name never loads](issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
-- [A moved raw bind with a Lua keyword key compiles to nothing](issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
-- [A workspace slide throws when animations go off between its legs](issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
-- [Direct Hyprland dispatches can overtake queued Lua](issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
-- [Recording two keys within 30 s can end the second recording early on Hyprland](issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
-- [Two keybind reference paths drop a key's binds](issues.md#two-keybind-reference-paths-drop-a-keys-binds)
 - [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
-- [A bind description's section is parsed three ways](issues.md#a-bind-descriptions-section-is-parsed-three-ways)
-- [KeybindManager keeps tables the methods helpers already hold](issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold)
-- [The managed file's catch-all monitor line is copied into M.monitors](issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
-- [Stale lines in the Hyprland docs and comments](issues.md#stale-lines-in-the-hyprland-docs-and-comments)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
-- [The key map and the keyboard reference each carry the same modifier chips and legend](issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
-- [A reference section's folded count re-derives BindRows.byModifiers' grouping](issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
-- [PresetSheet defers its re-choose a tick for a config that updates at once](issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
-- [The bind list's flag icons carry tooltip strings nothing shows](issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
-- [A reference section's title is worked out twice](issues.md#a-reference-sections-title-is-worked-out-twice)
-- [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
+- [Hyprland writes no per-touchpad input block](issues.md#hyprland-writes-no-per-touchpad-input-block)
+- [The Touchpad part has no speed, acceleration or left-handed of its own](issues.md#the-touchpad-part-has-no-speed-acceleration-or-left-handed-of-its-own)
+- [The Mouse part doesn't say it reaches the touchpad on Hyprland](issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
-- [An open edge popout's layer and namespace still follow its edge's bar](issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
-- [EdgePopout works out its attach edge and slide distance itself](issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
+- [BarPopouts works out its slide distance itself](issues.md#barpopouts-works-out-its-slide-distance-itself)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
 - [SurfaceContext.layout's pill and merged results have no test row](issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
@@ -495,7 +479,6 @@ Found while reviewing compositor-20 (row 20):
 - [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 
 Found while reviewing the input sources branch:
-- [Clearing the input method's candidate font leaves fcitx5 on the last one set](issues.md#clearing-the-input-methods-candidate-font-leaves-fcitx5-on-the-last-one-set)
 
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)

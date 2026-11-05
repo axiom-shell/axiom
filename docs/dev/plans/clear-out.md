@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20 and compositor-14 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14 and bar-popouts-03 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -15,7 +15,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 5. Done: the second wallpaper backend was removed (axiom draws every wallpaper, with its own transitions).
 6. The Hyprland Go code keeps dead and doubled helpers: drop the old-claims fallback.
 7. Gaps to the edges are wider on sway than the setting says: accept the narrower gap.
-8. [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows): show them.
+8. The bind list's flag icons carry tooltip strings nothing shows: show them.
 9. Deferred: [A side edge's submenus always open away from the edge](../issues.md#a-side-edges-submenus-always-open-away-from-the-edge).
 10. Removed: an edge popout's inconsistent size (fixed, maintainer).
 11. Deferred: [A pill bar's end reach trails a sliding popout's wall](../issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall).
@@ -89,9 +89,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 41 | compositor-14 | major | Done: Capability gates in the schema | 3 | ~80 | none |  |
 | 42 | compositor-15 | major | Done: The runtime layer's record of what it bound | 3 | ~100 | compositor-05, compositor-09 |  |
 | 43 | compositor-16 | major | Done: The Keybinds page | 6 | ~120 | compositor-02, config-04 |  |
-| 44 | compositor-17 | minor-sweep | Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
-| 45 | compositor-18 | plan | Touchpad settings apart from the mouse's | 1 | needs a plan | none |  |
-| 46 | bar-popouts-03 | major | EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
+| 44 | compositor-17 | minor-sweep | Done: Hyprland, with the keybind helpers and UI it owns | 18 | ~450 | compositor-01, -02, -07, -16 | Q8 |
+| 45 | compositor-18 | major | Touchpad settings apart from the mouse's ([plan](touchpad-apart-from-the-mouse.md)) | 3 | ~150 | none |  |
+| 46 | bar-popouts-03 | major | Done: EdgePopout's placement read from SurfaceContext | 2 | ~60 | bar-popouts-01 |  |
 | 47 | bar-popouts-04 | major | The bar's reserve and rebuild identity | 7 | ~120 | bar-popouts-01 |  |
 | 48 | bar-popouts-06 | major | Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
 | 49 | bar-popouts-07 | major | Edge menu sizing, placement and zones | 5 | ~250 | bar-popouts-01, overlay-modules-02 |  |
@@ -395,33 +395,35 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Picking a key in the key map under an edit search selects a bind the list doesn't show
   - Renaming a saved preset after switching presets renames the wrong one
   - The reference's sections and both chip rows are built while hidden
-- **compositor-17** (18): Six file groups, one commit each; fine under the gate.
-  - [The bind merge removes an hl.unbind whether or not its bind went](../issues.md#the-bind-merge-removes-an-hlunbind-whether-or-not-its-bind-went)
-  - [A user/ file with a dot in its name never loads](../issues.md#a-user-file-with-a-dot-in-its-name-never-loads)
-  - [A moved raw bind with a Lua keyword key compiles to nothing](../issues.md#a-moved-raw-bind-with-a-lua-keyword-key-compiles-to-nothing)
-  - [The managed file's catch-all monitor line is copied into M.monitors](../issues.md#the-managed-files-catch-all-monitor-line-is-copied-into-mmonitors)
-  - [A workspace slide throws when animations go off between its legs](../issues.md#a-workspace-slide-throws-when-animations-go-off-between-its-legs)
-  - [Direct Hyprland dispatches can overtake queued Lua](../issues.md#direct-hyprland-dispatches-can-overtake-queued-lua)
-  - [Recording two keys within 30 s can end the second recording early on Hyprland](../issues.md#recording-two-keys-within-30-s-can-end-the-second-recording-early-on-hyprland)
-  - [Two keybind reference paths drop a key's binds](../issues.md#two-keybind-reference-paths-drop-a-keys-binds)
-  - [KeybindManager keeps tables the methods helpers already hold](../issues.md#keybindmanager-keeps-tables-the-methods-helpers-already-hold) (its _bindMods part, left by compositor-02)
-  - [A bind description's section is parsed three ways](../issues.md#a-bind-descriptions-section-is-parsed-three-ways)
-  - [Keybind sections log null reads as they're torn down](../issues.md#keybind-sections-log-null-reads-as-theyre-torn-down)
-  - [WorkspaceStrip's Grid briefly has more items than cells](../issues.md#workspacestrips-grid-briefly-has-more-items-than-cells)
-  - [The key map and the keyboard reference each carry the same modifier chips and legend](../issues.md#the-key-map-and-the-keyboard-reference-each-carry-the-same-modifier-chips-and-legend)
-  - [A reference section's folded count re-derives BindRows.byModifiers' grouping](../issues.md#a-reference-sections-folded-count-re-derives-bindrowsbymodifiers-grouping)
-  - [PresetSheet defers its re-choose a tick for a config that updates at once](../issues.md#presetsheet-defers-its-re-choose-a-tick-for-a-config-that-updates-at-once)
-  - [The bind list's flag icons carry tooltip strings nothing shows](../issues.md#the-bind-lists-flag-icons-carry-tooltip-strings-nothing-shows)
-  - [A reference section's title is worked out twice](../issues.md#a-reference-sections-title-is-worked-out-twice)
-  - [Stale lines in the Hyprland docs and comments](../issues.md#stale-lines-in-the-hyprland-docs-and-comments)
-- **compositor-18** (1): Decided that they separate; the plan settles how on Hyprland.
-  - [Mouse speed, acceleration and left-handed reach the touchpad only on Hyprland](../issues.md#mouse-speed-acceleration-and-left-handed-reach-the-touchpad-only-on-hyprland)
+- **compositor-17** (18, done): Six file groups, one commit each; fine under the gate.
+  - The bind merge removes an hl.unbind whether or not its bind went
+  - A user/ file with a dot in its name never loads
+  - A moved raw bind with a Lua keyword key compiles to nothing
+  - The managed file's catch-all monitor line is copied into M.monitors
+  - A workspace slide throws when animations go off between its legs
+  - Direct Hyprland dispatches can overtake queued Lua
+  - Recording two keys within 30 s can end the second recording early on Hyprland
+  - Two keybind reference paths drop a key's binds
+  - KeybindManager keeps tables the methods helpers already hold (its _bindMods part, left by compositor-02)
+  - A bind description's section is parsed three ways
+  - Keybind sections log null reads as they're torn down
+  - WorkspaceStrip's Grid briefly has more items than cells
+  - The key map and the keyboard reference each carry the same modifier chips and legend
+  - A reference section's folded count re-derives BindRows.byModifiers' grouping
+  - PresetSheet defers its re-choose a tick for a config that updates at once
+  - The bind list's flag icons carry tooltip strings nothing shows
+  - A reference section's title is worked out twice
+  - Stale lines in the Hyprland docs and comments
+- **compositor-18** (3): Decided that they separate; the plan, decided 2026-11-05 (option A), split into these: [touchpad-apart-from-the-mouse.md](touchpad-apart-from-the-mouse.md).
+  - [Hyprland writes no per-touchpad input block](../issues.md#hyprland-writes-no-per-touchpad-input-block)
+  - [The Touchpad part has no speed, acceleration or left-handed of its own](../issues.md#the-touchpad-part-has-no-speed-acceleration-or-left-handed-of-its-own)
+  - [The Mouse part doesn't say it reaches the touchpad on Hyprland](../issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
 
 **bar-popouts**
 
-- **bar-popouts-03** (2):
-  - [An open edge popout's layer and namespace still follow its edge's bar](../issues.md#an-open-edge-popouts-layer-and-namespace-still-follow-its-edges-bar)
-  - [EdgePopout works out its attach edge and slide distance itself](../issues.md#edgepopout-works-out-its-attach-edge-and-slide-distance-itself)
+- **bar-popouts-03** (2, done):
+  - An open edge popout's layer and namespace still follow its edge's bar
+  - EdgePopout works out its attach edge and slide distance itself
 - **bar-popouts-04** (2; its three reserve entries fixed by the stacked bars PR, its selection and report entries by the bar rewrite): the editor and rebuild entries.
   - [Plugging in or unplugging a monitor remakes the bar that stays](../issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
   - [Bar widget hosts settle after they're gone](../issues.md#bar-widget-hosts-settle-after-theyre-gone)

@@ -317,8 +317,13 @@ local errors = {}
 local files = io.popen("cd " .. "'/nonexistent/home/.config/hypr/user'" .. " 2>/dev/null && ls -1 *.lua 2>/dev/null")
 if files then
   for file in files:lines() do
-    local ok, err = pcall(require, "user." .. file:gsub("%.lua$", ""))
-    if not ok then errors[#errors + 1] = tostring(err) end
+    local name = file:gsub("%.lua$", "")
+    if name:find(".", 1, true) then
+      errors[#errors + 1] = "user/" .. file .. ": not loaded: a dot in its name reads as a folder to require, so rename it"
+    else
+      local ok, err = pcall(require, "user." .. name)
+      if not ok then errors[#errors + 1] = tostring(err) end
+    end
   end
   files:close()
 end

@@ -420,6 +420,60 @@ func TestHyprUnbindOfAMovedKeyGoesToo(t *testing.T) {
 	eq(t, f.read("binds.lua"), "hl.unbind(\"SUPER + W\")\n")
 }
 
+// A moved key's hl.unbind and its bind go together or stay together, in
+// whichever files they are: here one of them changed since extract
+func TestHyprUnbindAndItsBindStayTogether(t *testing.T) {
+	t.Parallel()
+	for _, changed := range []string{"unbinds.lua", "binds.lua"} {
+		f := newFx(t, "hyprland")
+		f.write("unbinds.lua", "hl.unbind(\"SUPER + Q\")\n")
+		f.write("binds.lua", "hl.bind(\"SUPER + Q\", hl.dsp.exec_cmd(\"foot\"))\nhl.bind(\"SUPER + W\", hl.dsp.window.pin())\n")
+		found := f.extract()
+		text := strings.Replace(f.read(changed), "SUPER + Q", "SUPER + Q ", 1)
+		f.write(changed, text)
+		done := f.remove(found.Value("sites"))
+		var failed []string
+		for _, e := range list(done, "failed") {
+			failed = append(failed, filepath.Base(e.Value("file").(string))+":"+js(e.Value("line"))+" "+e.Value("reason").(string))
+		}
+		want := map[string]string{"unbinds.lua": "binds.lua:1 paired, unbinds.lua:1 changed",
+			"binds.lua": "binds.lua:1 changed, unbinds.lua:1 paired"}[changed]
+		eq(t, strings.Join(failed, ", "), want)
+		eq(t, js(done.Value("removed")), "1")
+		eq(t, strings.Contains(f.read("binds.lua"), "SUPER + W"), false)
+		eq(t, strings.Contains(f.read("unbinds.lua"), "hl.unbind"), true)
+	}
+}
+
+// require reads a dot as a folder, so a dotted name never loads: an error,
+// and its binds stay
+func TestHyprADottedFileIsAnError(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("my.binds.lua", "hl.bind(\"SUPER + Q\", hl.dsp.window.close())\n")
+	found := f.extract()
+	eq(t, js(found.Value("binds")), "[]")
+	eq(t, strings.HasPrefix(list0(found, "errors"), "user/my.binds.lua: not loaded"), true)
+}
+
+func list0(o *jsonx.Object, key string) string {
+	items := o.Value(key).(*jsonx.Array).Items
+	if len(items) == 0 {
+		return ""
+	}
+	return items[0].(string)
+}
+
+// A raw dispatcher's table rebuilt as source that Lua reads back: a
+// keyword key bracketed, nan and inf as expressions
+func TestHyprRawLuaKeepsKeywordKeysAndOddNumbers(t *testing.T) {
+	t.Parallel()
+	f := newFx(t, "hyprland")
+	f.write("binds.lua", `hl.bind("SUPER + N", hl.dsp.window.tag({ ["end"] = 1, n = 0/0, i = 1/0, m = -1/0 }))`+"\n")
+	eq(t, byKey(f.extract())["SUPER + N"] != "", true)
+	eq(t, strings.Contains(byKey(f.extract())["SUPER + N"], `hl.dsp.window.tag({ [\"end\"] = 1, i = math.huge, m = -math.huge, n = (0/0) })`), true)
+}
+
 func TestHyprMultilineCallAndTrailingComment(t *testing.T) {
 	t.Parallel()
 	f := newFx(t, "hyprland")

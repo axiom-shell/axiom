@@ -146,13 +146,7 @@ QtObject {
   // An editor bind's section on the Keybinds page: its description's
   // "Section:" prefix, else its action's
   function _bindSection(bind) {
-    return BindActions.hasOwnSection(bind.description) ? String(bind.description).split(":")[0] : BindActions.sectionFor(KeybindManager.actionTable, bind.action);
-  }
-
-  // An editor bind's modifiers, by the names the compositor's binds decode to
-  function _bindMods(bind) {
-    const id = BindKeys.keyId(bind.key);
-    return id === "" ? [] : BindKeys.decodeMods(parseInt(id));
+    return BindActions.splitDescription(bind.description).section || BindActions.sectionFor(KeybindManager.actionTable, bind.action);
   }
 
   // The editor's chips: [{ key, title, count }] per section (actionSections
@@ -173,7 +167,7 @@ QtObject {
   readonly property var editModOptions: {
     const used = {};
     for (const bind of root.editor.binds)
-      for (const mod of root._bindMods(bind))
+      for (const mod of KeyNames.split(bind.key).mods)
         used[mod] = true;
     return BindKeys.modifierNames.filter(name => used[name]);
   }
@@ -194,7 +188,7 @@ QtObject {
       return {
         "index": index,
         "section": root._bindSection(bind),
-        "mods": root._bindMods(bind),
+        "mods": KeyNames.split(bind.key).mods,
         "text": [key, KeybindManager.displayCombo(key), label, root._bindSection(bind), bind.argument ?? "", bind.description ?? "", BindActions.defaultLabel(KeybindManager.actionTable, bind)].join("\n").toLowerCase()
       };
     }).filter(row => (query === "" || row.text.includes(query)) && (sections.length === 0 || sections.includes(row.section)) && mods.every(mod => row.mods.includes(mod)) && state(row.index)).map(row => row.index).join(",");

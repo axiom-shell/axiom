@@ -34,13 +34,14 @@ Floating edge menus, docks and OSDs with `detached` set are held off their edge 
 
 ### EdgePopout extras
 - **`edgeOffset`.**
-- **`slideDistance`:** only from under a transparent bar's outer edge, as a bar popout slides.
-  - It is none while the overlay is open on its screen (`_overOverlay`), so the popout draws over the overlay.
+- **`slideDistance`:** only from under a transparent bar's outer edge, as a bar popout slides (`EdgePlacement.slideDistance`, gated on `EdgePlacement.slidesUnder`).
+  - It is none while the overlay is open on its screen, so the popout draws over the overlay.
+  - Whether it slides under follows only while the popout is closed (`_under`, a `ClosedLatch`, as `BarPopouts.underBar`), so an open popout keeps its layer and namespace when the overlay opens, a fullscreen window appears, or its edge's bar changes or goes away.
   - See [Transparent bars](pill-and-floating-bars.md#transparent-bars-detached-popouts).
 - **Over a fullscreen window** (`CompositorManager.hasFullscreen`), which covers the border and bars, any `EdgePopout` (OSD, floating edge menu, attached launcher) is held too (`holds`: `held` or `_overFullscreen`):
   - It uses an Auto gap, unless it is already held.
   - It joins no ends and slides under nothing.
-  - Like `_overOverlay`, `_overFullscreen` follows only while the popout is closed (`ClosedLatch`), so an open box never moves.
+  - Like `_under`, `_overFullscreen` follows only while the popout is closed (`ClosedLatch`), so an open box never moves.
 
 ### The dock
 - **Placement:** the dock is not an `EdgePopout`, but it takes the same values from its own `EdgePlacement`.

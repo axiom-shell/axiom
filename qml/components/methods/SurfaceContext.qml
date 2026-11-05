@@ -282,9 +282,11 @@ QtObject {
    *     menus reserve on its edge)
    * Returns EdgeAttach.place's result and: merged, onPill, detached,
    *   straight, backfill, attachClearance, attachFill, attachAt (across, from the
-   *   screen edge), attachFromBar (the same from the followed bar's outer
-   *   edge), barOuter, ownSink, shadow, stretchFrom, stretchTo (where a
-   *   joined submenu's reach along its pill stays), slidesUnder
+   *   screen edge), attachBase (where it goes by default: on the stroke of
+   *   what reserves the edge), attachFromBar (the same from the followed
+   *   bar's outer edge), barOuter, ownSink, shadow, stretchFrom, stretchTo
+   *   (where a joined submenu's reach along its pill stays), slidesUnder,
+   *   slideDistance
    */
   function layout(f, p) {
     const bar = p.bar ?? null;
@@ -337,7 +339,8 @@ QtObject {
     const attachFromBar = !bar ? 0 : fromOuter ? (bar.stripCover ?? 0) : onPill ? pillFoot : bar.extent - (bar.innerStroke ? p.stroke : 0) + (p.detachedPush ?? 0);
     // Held, a connector gap short of where the box goes; following a bar,
     // as that meets it; else on the stroke of what reserves the edge
-    const attachAt = p.held ? p.frameLine + (p.across ?? 0) - p.gap / 2 : bar ? barOuter + attachFromBar : p.reserved - (p.bareEdge ? 0 : p.stroke);
+    const attachBase = p.reserved - (p.bareEdge ? 0 : p.stroke);
+    const attachAt = p.held ? p.frameLine + (p.across ?? 0) - p.gap / 2 : bar ? barOuter + attachFromBar : attachBase;
     // The stroke it stands on along its own edge: the border's, or with
     // the border off a solid bar's own (not a pill's or island's: the bar
     // opens that itself; nor a bare edge's; nor the border's where it
@@ -370,6 +373,7 @@ QtObject {
       "attachClearance": merged ? pillFoot - (bar.stripCover ?? 0) : 0,
       "attachFill": plainJoin ? Math.max(0, attachAt) : 0,
       "attachAt": attachAt,
+      "attachBase": attachBase,
       "attachFromBar": attachFromBar,
       "barOuter": barOuter,
       "ownSink": ownSink,
@@ -387,7 +391,12 @@ QtObject {
       // layer rules order windows (else one mapped as it opens lands over
       // the bar), and not while the overlay, which that layer is under, is
       // open on its screen
-      "slidesUnder": detached && !p.held && bar?.kind === "transparent" && !!p.layerOrder && !p.overOverlay
+      "slidesUnder": detached && !p.held && bar?.kind === "transparent" && !!p.layerOrder && !p.overOverlay,
+      // How far back toward the screen edge a box that slides under starts:
+      // the bar's outer edge, past the border stroke a bar inside the
+      // border lies on. Not gated on slidesUnder, which a host latches
+      // while open
+      "slideDistance": bar ? Math.max(0, attachAt - barOuter - (bar.insideBorder ? p.stroke : 0)) : 0
     });
   }
 

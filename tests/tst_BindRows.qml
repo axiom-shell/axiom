@@ -46,6 +46,15 @@ TestCase {
     compare(rows[2].combos[0].cluster, [["H", "L"]], "only the directions bound");
     const mixed = BindRows.collapseDirections([row("Focus left", ["SUPER"], ["H"]), row("Focus right", ["SUPER", "SHIFT"], ["L"])]);
     compare(mixed.map(r => r.label), ["Focus left", "Focus right"], "different modifiers stay apart");
+    const twice = BindRows.collapseDirections([row("Focus left", ["SUPER"], ["H"]), row("Focus Left", ["SUPER"], ["A"], {
+        "axiom": false,
+        "user": true,
+        "overrides": "Focus left"
+      }), row("Focus right", ["SUPER"], ["L"])]);
+    compare(twice[0].combos[0].cluster, [["H", "L"]], "the first row per direction shows");
+    compare(twice[0].ids, ["Focus left", "Focus Left", "Focus right"], "every row's ids are kept");
+    verify(twice[0].user);
+    compare(twice[0].overrides, "Focus left");
   }
 
   function test_byModifiers() {

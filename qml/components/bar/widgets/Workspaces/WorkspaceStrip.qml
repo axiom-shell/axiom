@@ -113,10 +113,10 @@ Item {
   Grid {
     id: layout
     anchors.centerIn: parent
-    // Only what's shown: a Grid keeps spacing for an empty column or row
-    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
-    rows: root.isVertical ? shown : 1
-    columns: root.isVertical ? 1 : shown
+    // -1: as many as are shown (a Grid keeps spacing for an empty column
+    // or row), counted by the Grid itself, so it can't lag a part showing
+    rows: root.isVertical ? -1 : 1
+    columns: root.isVertical ? 1 : -1
     spacing: root.barConfig.innerGap
 
     WorkspaceCellRow {

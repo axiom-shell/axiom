@@ -49,8 +49,7 @@ Popup {
     newName.input.text = "";
     root.mode = "replace";
     root.savedFolded = false;
-    // The list follows the config
-    Qt.callLater(() => root.choose(id));
+    root.choose(id);
   }
 
   function toggle(id) {
@@ -263,7 +262,7 @@ Popup {
             text: I18n.tr("Save current binds over it")
             onClicked: {
               KeybindManager.editor.savePreset(root.preset.title);
-              Qt.callLater(() => root.choose(root.presetId));
+              root.choose(root.presetId);
             }
           }
         }

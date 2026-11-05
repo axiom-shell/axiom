@@ -177,6 +177,29 @@ TestCase {
     }), "App launcher (open)");
   }
 
+  function test_splitDescription() {
+    compare(shared.calls.BindActions.splitDescription("Media: Play"), {
+      "section": "Media",
+      "label": "Play"
+    });
+    compare(shared.calls.BindActions.splitDescription(" Media : Play "), {
+      "section": "Media",
+      "label": "Play"
+    }, "trimmed, a leading space too");
+    compare(shared.calls.BindActions.splitDescription("a:b: c"), {
+      "section": "",
+      "label": "a:b: c"
+    }, "a colon before the section's names none, as hasOwnSection reads it");
+    compare(shared.calls.BindActions.splitDescription("Mine:no space"), {
+      "section": "",
+      "label": "Mine:no space"
+    });
+    compare(shared.calls.BindActions.splitDescription(undefined), {
+      "section": "",
+      "label": ""
+    });
+  }
+
   function test_hasOwnSection() {
     verify(shared.calls.BindActions.hasOwnSection("Mine: Kill it"));
     verify(!shared.calls.BindActions.hasOwnSection("Mine:no space"));

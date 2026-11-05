@@ -7,6 +7,7 @@
 //	extract: { binds, sites, kept, remapped, tracked, errors }
 //	  binds     axiom binds for every bind that can move
 //	  sites     [{ file, line, binds, … }]: where those are, for remove
+//	            (Hyprland's carry their keys, and unbind on an hl.unbind)
 //	  kept      [{ file, line, key, reason, detail }]: binds that stay
 //	  remapped  [{ from, to, action }]: binds moved off a key axiom's
 //	            defaults use (Hyprland's adopted example config)
@@ -24,7 +25,8 @@
 // line continued with \), block (inside a sway `bindsym { … }` block),
 // changed (the file changed since extract), notUser (not one of user/'s
 // files), syntax (the result doesn't parse: detail), io (it couldn't be
-// read, backed up or written: detail).
+// read, backed up or written: detail), paired (Hyprland: a moved key's
+// hl.unbind and binds stay together, and another of them stays).
 package binds
 
 import (
@@ -159,6 +161,10 @@ type site struct {
 	// hasText: the line as extract read it is known, so a changed one is
 	// left
 	hasText bool
+	// keys (Hyprland): the keys its calls bind or unbind (render.KeyID),
+	// and whether it's an hl.unbind, which goes only with those keys' binds
+	keys   []string
+	unbind bool
 }
 
 func readSites(sites *jsonx.Array) []site {
@@ -174,6 +180,14 @@ func readSites(sites *jsonx.Array) []site {
 		col, _ := o.Value("col").(float64)
 		s.line, s.col = int(line), int(col)
 		s.text, s.hasText = o.Value("text").(string)
+		if keys, ok := o.Value("keys").(*jsonx.Array); ok {
+			for _, k := range keys.Items {
+				if k, ok := k.(string); ok {
+					s.keys = append(s.keys, k)
+				}
+			}
+		}
+		s.unbind, _ = o.Value("unbind").(bool)
 		out = append(out, s)
 	}
 	return out

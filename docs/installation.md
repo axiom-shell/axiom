@@ -138,7 +138,7 @@ if ok then axiom.setup() end
 
 | Compositor | axiom writes | Your own files |
 | --- | --- | --- |
-| Hyprland | `~/.config/hypr/hyprland.lua` | `~/.config/hypr/user/*.lua`, loaded in name order as `require("user.<name>")`. Shared modules go in `user/lib/`, which isn't loaded on its own |
+| Hyprland | `~/.config/hypr/hyprland.lua` | `~/.config/hypr/user/*.lua`, loaded in name order as `require("user.<name>")` (so a name can't hold a dot). Shared modules go in `user/lib/`, which isn't loaded on its own |
 | niri | `~/.config/niri/config.kdl` | `~/.config/niri/user/*.kdl`, included in name order |
 | sway | `~/.config/sway/config` | `~/.config/sway/user/*`, included |
 

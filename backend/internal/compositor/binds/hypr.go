@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -349,10 +350,16 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 	if len(files) == 0 {
 		return result, nil
 	}
-	modules := make([]string, len(files))
+	var modules, dotted []string
 	allowed, adopted := map[string]bool{}, map[string]bool{}
-	for i, f := range files {
-		modules[i] = "user." + strings.TrimSuffix(filepath.Base(f), ".lua")
+	for _, f := range files {
+		// require reads a dot as a folder, so Hyprland never loads it
+		name := strings.TrimSuffix(filepath.Base(f), ".lua")
+		if strings.Contains(name, ".") {
+			dotted = append(dotted, "user/"+filepath.Base(f)+": "+render.DottedUserFile)
+			continue
+		}
+		modules = append(modules, "user."+name)
 		real := realPath(f)
 		allowed[real] = true
 		if adoptedName.MatchString(filepath.Base(f)) {
@@ -421,7 +428,7 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 			}
 			continue
 		}
-		moved := jsonx.Arr()
+		moved, keys := jsonx.Arr(), jsonx.Arr()
 		for i, e := range entries {
 			push(result, "binds", made[i])
 			moved.Append(made[i])
@@ -429,8 +436,9 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 				push(result, "remapped", jsonx.Obj("from", e.key, "to", to, "action", made[i].Value("action")))
 			}
 			movedKeys[render.KeyID(e.key)] = true
+			keys.Append(render.KeyID(e.key))
 		}
-		push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", moved, "text", text))
+		push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", moved, "keys", keys, "text", text))
 		read[k.file] = true
 	}
 
@@ -440,14 +448,17 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 		unbinds[k] = append(unbinds[k], u)
 	}
 	for _, k := range sortedSites(unbinds) {
-		all := true
+		all, keys := true, jsonx.Arr()
 		for _, u := range unbinds[k] {
 			if id := render.KeyID(u.key); id == "" || !movedKeys[id] || u.inFunction {
 				all = false
+			} else {
+				keys.Append(id)
 			}
 		}
 		if reason, text := span(k.file, k.line, "hl.unbind"); all && reason[0] == "" {
-			push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", jsonx.Arr(), "text", text))
+			push(result, "sites", jsonx.Obj("file", k.file, "line", float64(k.line), "binds", jsonx.Arr(), "keys", keys,
+				"unbind", true, "text", text))
 			read[k.file] = true
 		}
 	}
@@ -462,7 +473,7 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 			push(result, "tracked", f)
 		}
 	}
-	for _, e := range found.errors {
+	for _, e := range append(dotted, found.errors...) {
 		push(result, "errors", e)
 	}
 	return result, nil
@@ -473,97 +484,133 @@ func extractHypr(ctx context.Context, o Options) (*jsonx.Object, error) {
 // beside it (<file>.axiom-backup-<date>, which Hyprland doesn't load). A
 // file whose result doesn't parse is left alone (failed with line 0); a
 // call that isn't found any more is failed on its line; a file that can't
-// be read, backed up or written is failed (io) and the others go on.
+// be read, backed up or written is failed (io) and the others go on. A
+// moved key's hl.unbind and its binds go together or stay together
+// (paired), in whichever files they are: every file is planned before any
+// is written, so only a failed write can still split them.
 func removeHypr(ctx context.Context, o Options, sites *jsonx.Array) (*jsonx.Object, error) {
 	allowed := map[string]bool{}
 	for _, f := range hyprFiles(o.Dir, "") {
 		allowed[realPath(f)] = true
 	}
 	byFile := map[string][]site{}
+	unbound := map[string]bool{}
 	for _, s := range readSites(sites) {
 		f := realPath(s.file)
 		byFile[f] = append(byFile[f], s)
+		if s.unbind {
+			for _, k := range s.keys {
+				unbound[k] = true
+			}
+		}
 	}
 	files := make([]string, 0, len(byFile))
 	for f := range byFile {
 		files = append(files, f)
+		sort.SliceStable(byFile[f], func(i, j int) bool { return byFile[f][i].line < byFile[f][j].line })
 	}
 	sort.Strings(files)
+	// Planned again until no failed site holds back a key an unbind covers
+	plans := map[string]hyprPlan{}
+	blocked := map[string]bool{}
+	for again := true; again; {
+		again = false
+		for _, file := range files {
+			plans[file] = planHypr(ctx, o, file, byFile[file], allowed[file], blocked)
+		}
+		for _, file := range files {
+			for _, f := range plans[file].failed {
+				for _, s := range byFile[file] {
+					if line := f.Value("line"); line != 0.0 && line != float64(s.line) {
+						continue
+					}
+					for _, k := range s.keys {
+						if unbound[k] && !blocked[k] {
+							blocked[k], again = true, true
+						}
+					}
+				}
+			}
+		}
+	}
 	done := jsonx.Obj("removed", float64(0), "files", jsonx.Arr(), "failed", jsonx.Arr())
 	removed := 0
-	var failed []*jsonx.Object
 	for _, file := range files {
-		if !allowed[file] {
-			failed = append(failed, failedEntry(file, 0, "notUser", ""))
-			continue
-		}
-		data, err := os.ReadFile(file)
-		if err != nil {
-			failed = append(failed, failedEntry(file, 0, "io", err.Error()))
-			continue
-		}
-		text := string(data)
-		code := luacheck.CodeOnly(text)
-		fileSites := byFile[file]
-		sort.SliceStable(fileSites, func(i, j int) bool { return fileSites[i].line < fileSites[j].line })
-		type span struct{ start, end int }
-		var spans []span
-		last := -1
-		for _, s := range fileSites {
-			if s.line == last {
-				continue
+		p := plans[file]
+		if p.spans > 0 {
+			err := backup(o, file, filepath.Dir(file))
+			if err == nil {
+				err = edit.Replace(file, []byte(p.edited))
 			}
-			last = s.line
-			start, end, reason := statementSpan(text, code, s.line, "hl.bind")
-			if reason[0] != "" {
-				start, end, reason = statementSpan(text, code, s.line, "hl.unbind")
+			if err != nil {
+				p.failed = []*jsonx.Object{failedEntry(file, 0, "io", err.Error())}
+			} else {
+				removed += p.spans
+				push(done, "files", file)
 			}
-			// A statement other than the one extract read there is left
-			if reason[0] != "" || (s.hasText && strings.ToValidUTF8(text[start:end], "\uFFFD") != s.text) {
-				failed = append(failed, failedEntry(file, s.line, "changed", ""))
-				continue
-			}
-			spans = append(spans, span{start, end})
 		}
-		if len(spans) == 0 {
-			continue
+		for _, f := range p.failed {
+			push(done, "failed", f)
 		}
-		sort.Slice(spans, func(i, j int) bool { return spans[i].start > spans[j].start })
-		edited := text
-		for _, s := range spans {
-			edited = edited[:s.start] + edited[s.end:]
-		}
-		if err := o.Lua.Check(ctx, edited); err != nil {
-			// The file is left alone: every call in it stays, found or not
-			kept := failed[:0]
-			for _, f := range failed {
-				if f.Value("file") != file {
-					kept = append(kept, f)
-				}
-			}
-			failed = append(kept, failedEntry(file, 0, "syntax", err.Error()))
-			continue
-		}
-		err = backup(o, file, filepath.Dir(file))
-		if err == nil {
-			err = edit.Replace(file, []byte(edited))
-		}
-		if err != nil {
-			kept := failed[:0]
-			for _, f := range failed {
-				if f.Value("file") != file {
-					kept = append(kept, f)
-				}
-			}
-			failed = append(kept, failedEntry(file, 0, "io", err.Error()))
-			continue
-		}
-		removed += len(spans)
-		push(done, "files", file)
-	}
-	for _, f := range failed {
-		push(done, "failed", f)
 	}
 	done.Set("removed", float64(removed))
 	return done, nil
+}
+
+// hyprPlan is one file's edit: its text without the calls that go (spans
+// of them), and the sites that stay
+type hyprPlan struct {
+	edited string
+	spans  int
+	failed []*jsonx.Object
+}
+
+// planHypr is what removing fileSites (by line) does to file, sites holding
+// a blocked key left (paired)
+func planHypr(ctx context.Context, o Options, file string, fileSites []site, allowed bool, blocked map[string]bool) hyprPlan {
+	if !allowed {
+		return hyprPlan{failed: []*jsonx.Object{failedEntry(file, 0, "notUser", "")}}
+	}
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return hyprPlan{failed: []*jsonx.Object{failedEntry(file, 0, "io", err.Error())}}
+	}
+	text := string(data)
+	code := luacheck.CodeOnly(text)
+	type span struct{ start, end int }
+	var spans []span
+	var failed []*jsonx.Object
+	last := -1
+	for _, s := range fileSites {
+		if s.line == last {
+			continue
+		}
+		last = s.line
+		start, end, reason := statementSpan(text, code, s.line, "hl.bind")
+		if reason[0] != "" {
+			start, end, reason = statementSpan(text, code, s.line, "hl.unbind")
+		}
+		// A statement other than the one extract read there is left
+		if reason[0] != "" || (s.hasText && strings.ToValidUTF8(text[start:end], "\uFFFD") != s.text) {
+			failed = append(failed, failedEntry(file, s.line, "changed", ""))
+			continue
+		}
+		if slices.ContainsFunc(s.keys, func(k string) bool { return blocked[k] }) {
+			failed = append(failed, failedEntry(file, s.line, "paired", ""))
+			continue
+		}
+		spans = append(spans, span{start, end})
+	}
+	sort.Slice(spans, func(i, j int) bool { return spans[i].start > spans[j].start })
+	edited := text
+	for _, s := range spans {
+		edited = edited[:s.start] + edited[s.end:]
+	}
+	if len(spans) > 0 {
+		if err := o.Lua.Check(ctx, edited); err != nil {
+			// The file is left alone: every call in it stays, found or not
+			return hyprPlan{failed: []*jsonx.Object{failedEntry(file, 0, "syntax", err.Error())}}
+		}
+	}
+	return hyprPlan{edited, len(spans), failed}
 }

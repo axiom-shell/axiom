@@ -14,13 +14,22 @@ StyledContainer {
 
   // A KeybindManager section, binds possibly filtered by a search
   required property var section
+  // It, or an empty one while the delegate is torn down (section goes null
+  // before its bindings stop)
+  readonly property var _section: root.section ?? {
+    "title": "",
+    "undescribed": false,
+    "binds": []
+  }
 
   readonly property bool compact: KeybindManager.page.refDensity === "compact"
-  // Headers and rows in order: { mods, row } (row null for a header)
-  readonly property var items: [].concat(...BindRows.byModifiers(root.section.binds).map(group => (group.mods.length > 0 ? [
+  // Headers and rows in order: { mods, row, count } (row null for a
+  // header, which counts its group's rows)
+  readonly property var items: [].concat(...BindRows.byModifiers(root._section.binds).map(group => (group.mods.length > 0 ? [
         {
           "mods": group.mods,
-          "row": null
+          "row": null,
+          "count": group.rows.length
         }
       ] : []).concat(group.rows.map(row => ({
           "mods": group.mods,
@@ -59,12 +68,12 @@ StyledContainer {
       spacing: Widget.spacing
 
       StyledIcon {
-        text: root.section.undescribed ? "help" : KeybindManager.sectionIcon(root.section.title)
+        text: root._section.undescribed ? "help" : KeybindManager.sectionIcon(root._section.title)
         textColor: Theme.accent
       }
 
       StyledText {
-        text: root.section.undescribed ? I18n.tr("Undescribed") : (root.section.title ? I18n.tr(root.section.title) : I18n.tr("Other"))
+        text: KeybindManager.sectionTitle(root._section)
         textColor: Theme.accent
         font.bold: true
         elide: Text.ElideRight
@@ -72,14 +81,14 @@ StyledContainer {
       }
 
       StyledText {
-        text: root.section.binds.length
+        text: root._section.binds.length
         opacity: 0.5
         textSize: Appearance.fontSizeBy(-2)
       }
     }
 
     StyledText {
-      visible: root.section.undescribed
+      visible: root._section.undescribed
       text: I18n.tr("A bind's description sets its label, and a \"Section: Label\" prefix picks its section.")
       textColor: Theme.foregroundAlt
       textSize: Appearance.fontSizeBy(-2)
@@ -94,7 +103,7 @@ StyledContainer {
         id: item
         required property var modelData
         required property int index
-        readonly property string groupKey: KeybindManager.page.refGroupKey(root.section, item.modelData.mods)
+        readonly property string groupKey: KeybindManager.page.refGroupKey(root._section, item.modelData.mods)
         readonly property bool folded: KeybindManager.page.refFolded.includes(item.groupKey)
         readonly property bool grouped: item.modelData.mods.length > 0
         Layout.fillWidth: true
@@ -142,7 +151,7 @@ StyledContainer {
 
             StyledText {
               visible: item.folded
-              text: root.section.binds.filter(r => (r.combos[0]?.mods ?? []).join("+") === item.modelData.mods.join("+")).length
+              text: item.modelData.count ?? ""
               opacity: 0.5
               textSize: Appearance.fontSizeBy(-2)
             }

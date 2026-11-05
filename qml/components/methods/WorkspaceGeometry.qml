@@ -221,7 +221,7 @@ QtObject {
   // Stable order for assigning workspace-id blocks to monitors (grid and
   // perMonitor layouts): the primary monitor first (matched by `name`, as
   // General.primaryMonitor is stored/matched elsewhere), then the rest by
-  // `key` — a caller-supplied stable identity (CompositorManager fills it with
+  // `key` — a caller-supplied stable identity (blockBases fills it with
   // MonitorLayout.outputId, the same "follows the monitor across ports"
   // identity monitor profiles use). The compositor's own order can
   // change on a hotplug/reconnect/restart; `key`/`name` don't, so this can't

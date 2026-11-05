@@ -75,6 +75,11 @@ QtObject {
   // I18n.tr("Special") I18n.tr("Custom")
   readonly property var actionSections: ["Axiom", "System", "Tools", "Apps", "Media", "Window", "Workspace", "Special", "Custom"]
 
+  // A reference section's title as shown (its chip and its card)
+  function sectionTitle(section) {
+    return section.undescribed ? I18n.tr("Undescribed") : (section.title ? I18n.tr(section.title) : I18n.tr("Other"));
+  }
+
   // Material Symbols per reference section, by title ("" is Other)
   function sectionIcon(title) {
     return root._sectionIcons[title] ?? "keyboard";
@@ -288,9 +293,9 @@ QtObject {
 
   // A bind's label: its own (less a "Section:" prefix), else its action's
   function bindLabel(bind) {
-    const own = String(bind?.description ?? "").trim();
+    const own = BindActions.splitDescription(bind?.description).label;
     if (own !== "")
-      return BindActions.hasOwnSection(own) ? own.slice(own.indexOf(":") + 1).trim() : own;
+      return own;
     return BindActions.defaultLabel(root.actionTable, bind) || (root.actionLabels[bind?.action] ?? "");
   }
 
@@ -350,21 +355,10 @@ QtObject {
     let undescribed = null;
 
     for (const entry of entries) {
-      const description = (entry.description || "").trim();
-      const split = description.indexOf(": ");
-      let title;
-      let label;
-
-      if (!description) {
-        title = null;
-        label = "";
-      } else if (split > 0) {
-        title = description.slice(0, split).trim();
-        label = description.slice(split + 2).trim();
-      } else {
-        title = entry.submap || "";
-        label = description;
-      }
+      const description = BindActions.splitDescription(entry.description);
+      // null: undescribed
+      const title = description.label === "" ? null : description.section || entry.submap || "";
+      const label = description.label;
 
       let section = title === null ? undescribed : sectionByTitle[title];
       if (!section) {
