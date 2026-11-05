@@ -133,7 +133,9 @@ Scope {
   // screen), and its insets there from each side
   readonly property real areaWidth: area.width
   readonly property real areaHeight: area.height
-  readonly property var _gaps: ScreenEdgeManager.detachedGaps(root.screen, NotificationsConfig.edge, NotificationsConfig.gap)
+  // Over a fullscreen window (which covers the bars and the border) as if
+  // the screen's edges were bare: Auto is the gap windows keep from one
+  readonly property var _gaps: ScreenEdgeManager.detachedGaps(root.screen, NotificationsConfig.edge, NotificationsConfig.gap, root.fullscreen)
   function _inset(side) {
     const edge = NotificationsConfig.edge;
     let gap = root._gaps.end;
@@ -143,9 +145,7 @@ Scope {
       gap = root._gaps.start;
     else if (side === ScreenEdge.opposite(edge))
       gap = root._gaps.across;
-    if (root.fullscreen)
-      return Math.max(0, gap);
-    return ScreenEdgeManager.heldInset(root.screen, side, gap);
+    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.fullscreen);
   }
   readonly property real insetTop: root._inset(ScreenEdge.Top)
   readonly property real insetBottom: root._inset(ScreenEdge.Bottom)

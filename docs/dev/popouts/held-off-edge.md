@@ -34,14 +34,21 @@ Floating edge menus, docks and OSDs with `detached` set are held off their edge 
 
 ### EdgePopout extras
 - **`edgeOffset`.**
-- **`slideDistance`:** only from under a transparent bar's outer edge, as a bar popout slides (`EdgePlacement.slideDistance`, gated on `EdgePlacement.slidesUnder`).
-  - It is none while the overlay is open on its screen, so the popout draws over the overlay.
-  - Whether it slides under follows only while the popout is closed (`_under`, a `ClosedLatch`, as `BarPopouts.underBar`), so an open popout keeps its layer and namespace when the overlay opens, a fullscreen window appears, or its edge's bar changes or goes away.
-  - See [Transparent bars](pill-and-floating-bars.md#transparent-bars-detached-popouts).
-- **Over a fullscreen window** (`CompositorManager.hasFullscreen`), which covers the border and bars, any `EdgePopout` (OSD, floating edge menu, attached launcher) is held too (`holds`: `held` or `_overFullscreen`):
-  - It uses an Auto gap, unless it is already held.
-  - It joins no ends and slides under nothing.
+- **`slideDistance`:** a detached box (held, over a fullscreen window, or past a bar it doesn't grow out of) slides in from off the screen, as a bar popout's does: from the screen edge (`EdgePlacement.slideFrom`), when `EdgePlacement.slidesFromEdge` (see [Sliding in from off the screen](#sliding-in-from-off-the-screen)).
+  - Whether it does, and whether its window goes under the bars (`slidesUnder`), follow only while the popout is closed (`_fromEdge`, `_under`, `ClosedLatch`es, as `BarPopouts.underBar`), so an open popout keeps its layer, namespace and window when the overlay opens, a fullscreen window appears, or its edge's bar changes or goes away.
+  - Sliding from the screen edge, its window takes input on the box alone.
+- **Over a fullscreen window** (`CompositorManager.hasFullscreen`), which covers the border and bars, any `EdgePopout` (OSD, floating edge menu, attached launcher, attached switcher) is held too (`holds`: `held` or `_overFullscreen`), and placed as if the screen's edges were bare (`bare`, `EdgePlacement.bare`):
+  - It uses an Auto gap, unless it is already held. Bare, Auto is the gap windows keep from a bare edge (`ScreenEdgeManager.floatGaps`: gaps_out, else the screen margin), and the gaps are measured from the screen's edges (`detachedGaps`/`heldInset` with `bare`).
+  - Its window ignores every zone (`ExclusionMode.Ignore`, as the toasts' area), so it spans the screen; a floating edge menu's modules are laid out from the screen's edges too.
+  - It joins no ends, goes under nothing (no Top window maps over a fullscreen one), and slides in from off the screen on every compositor.
   - Like `_under`, `_overFullscreen` follows only while the popout is closed (`ClosedLatch`), so an open box never moves.
+
+### Sliding in from off the screen
+Every detached box slides in from off the screen, from `SurfaceContext.layout`:
+- **`slidesUnder`:** under what's on its edge (the bars, the border, an integrated menu's strip), its window on the bars' layer as `axiom-popout-under`, ordered under them by its layer rule ([layer stacking](../generated/layers.md)). Only with `supports.layerOrder` (Hyprland), not while the overlay is open on its screen (that layer is under it), and not over a fullscreen window.
+- **`slidesFromEdge`:** always, for every detached box: under the bars as above, or else over them, its window on the Overlay layer (sway and niri stack by map order, so a window mapped as it opens lands over the bars; and over the overlay), so the slide is the same on every compositor but for what it passes under.
+- **`slideFrom`:** the distance from its attach edge back to the screen edge (its `attachAt`), which the surface reaches back over (`AttachedSurface.detachedOffset`), so the slide starts with the box wholly off the screen.
+- The bar popouts' detached boxes (a transparent bar's, a floating bar's showing no islands) slide the same way ([Transparent bars](pill-and-floating-bars.md#transparent-bars-detached-popouts)). The dock and toasts don't yet: see [issues](../issues.md#a-detached-dock-and-toasts-dont-slide-in-from-under-the-bars).
 
 ### The dock
 - **Placement:** the dock is not an `EdgePopout`, but it takes the same values from its own `EdgePlacement`.

@@ -91,6 +91,16 @@ PopoutWrapperBase {
   // Granted (or closing after it was, PopoutClaim.held)
   readonly property bool claimed: root.claimKey === "" || root.claim.held
   readonly property bool _showing: root.isOpen && root.claimed
+  // Over a fullscreen window, which covers the bars and the border: its
+  // window spans the screen, and its margins (FloatPlacement.bare) are
+  // measured from the screen's edges. Followed only while its window is
+  // down, so an open box never moves.
+  readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
+  property ClosedLatch _fullscreenLatch: ClosedLatch {
+    source: root.fullscreen
+    closed: !surfaceWindow.visible
+  }
+  readonly property bool bare: root._fullscreenLatch.value ?? false
   property PopoutClaim claim: PopoutClaim {
     key: root.claimKey
     kind: root.claimKind
@@ -116,11 +126,11 @@ PopoutWrapperBase {
     focusable: root.wantsKeyboardFocus
 
     // Normal exclusion with no zone of its own: the window covers the area
-    // the bars and border leave free
+    // the bars and border leave free (over a fullscreen window, the screen)
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: root.layerNamespace
     WlrLayershell.keyboardFocus: root.wantsKeyboardFocus ? (focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
-    exclusionMode: ExclusionMode.Normal
+    exclusionMode: root.bare ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: 0
 
     anchors {
@@ -271,7 +281,7 @@ PopoutWrapperBase {
       WlrLayershell.layer: WlrLayer.Overlay
       WlrLayershell.namespace: root.layerNamespace + "-shadow"
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-      exclusionMode: ExclusionMode.Normal
+      exclusionMode: root.bare ? ExclusionMode.Ignore : ExclusionMode.Normal
       exclusiveZone: 0
 
       anchors {

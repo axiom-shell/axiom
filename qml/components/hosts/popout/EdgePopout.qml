@@ -79,22 +79,25 @@ PopoutWrapperBase {
   property real contentPadding: Appearance.borderWidth + PopoutsConfig.padding
   // Extra distance in from the attach edge (for a detached box)
   property real edgeOffset: root.attachAt - root.attachBase
-  // How far back towards the screen edge a detached box slides in from,
-  // as a bar popout's: from under a transparent bar on its edge
-  // (EdgePlacement.slideDistance), its window starting there on the bar's
-  // layer, ordered under it (the daemon's layer rules,
-  // render.LayerRulesLua), when it slides under at all
-  // (EdgePlacement.slidesUnder: not while the overlay is open on its
-  // screen, nor over a fullscreen window, nor without
-  // supports.layerOrder). Anything else it opens over, sliding out within
-  // its own window. Whether it slides under follows only while closed, as
-  // BarPopouts.underBar: it changes the window's layer and namespace.
+  // A detached box (held, over a fullscreen window, or past a bar it
+  // doesn't grow out of) slides in from off the screen
+  // (EdgePlacement.slidesFromEdge): under the bars where it can, its
+  // window on their layer ordered under them (EdgePlacement.slidesUnder;
+  // the daemon's layer rules, render.LayerRulesLua), else over them on the
+  // Overlay layer (no supports.layerOrder, or the overlay open on its
+  // screen). Both follow only while closed, as BarPopouts.underBar: they
+  // change the window's layer, namespace and size.
   property ClosedLatch _under: ClosedLatch {
-    source: placement.slidesUnder && placement.slideDistance > 0
+    source: placement.slidesUnder
     closed: !root.occupied
   }
   readonly property bool slidesUnder: root._under.value ?? false
-  readonly property real slideDistance: root.slidesUnder ? placement.slideDistance : 0
+  property ClosedLatch _fromEdge: ClosedLatch {
+    source: placement.slidesFromEdge
+    closed: !root.occupied
+  }
+  // How far back from its attach edge it slides in from: the screen edge
+  readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
   // Its window's layer: Overlay unless it slides under a bar
   readonly property int windowLayer: root.slidesUnder ? WlrLayer.Top : WlrLayer.Overlay
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
@@ -189,6 +192,10 @@ PopoutWrapperBase {
   readonly property bool _overFullscreen: root._fullscreenLatch.value ?? false
   // Held, by `held` or over a fullscreen window
   readonly property bool holds: root.held || root._overFullscreen
+  // Placed as if the bars and the border weren't there (they're under the
+  // fullscreen window): its window spans the screen, its gaps from the
+  // screen's edges (EdgePlacement.bare)
+  readonly property bool bare: root._overFullscreen
 
   // The perpendicular edges at its start and end (ScreenEdges)
   readonly property int startSide: placement.startSide
@@ -281,6 +288,7 @@ PopoutWrapperBase {
     stretchGlides: false
     edge: root.edge
     held: root.holds
+    bare: root.bare
     gap: root.held ? root.gap : -1
     centre: root.edgeLength * root.position + root.positionOffset
     probeStart: placement.centre - root.naturalBox / 2
@@ -385,7 +393,8 @@ PopoutWrapperBase {
     // picker's click point)
     readonly property var screenOrigin: placeOnScreen.origin
     WlrLayershell.keyboardFocus: root.wantsKeyboardFocus || root.keyboardOnDemand ? (focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
-    exclusionMode: ExclusionMode.Normal
+    // Over a fullscreen window, the whole screen (as the toasts' area)
+    exclusionMode: root.bare ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: 0
 
     // What PopoutAnchors in its content open in
@@ -407,13 +416,17 @@ PopoutWrapperBase {
     // on: the surface sits at the edge and runs straight off it
     // Docks reserving space inside the border don't push it in: it reaches
     // past them, on its own edge and at both ends
+    // (Over a fullscreen window it ignores every zone: none to reach past)
     readonly property string screenName: root.screen?.name ?? ""
-    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - root.slideDistance - DockManager.zoneOn(screenName, ScreenEdge.name(root.edge))
+    function _dockZone(edgeName) {
+      return root.bare ? 0 : DockManager.zoneOn(surfaceWindow.screenName, edgeName);
+    }
+    readonly property real attachMargin: (root.bareEdge ? 0 : -Appearance.borderWidth) - surface.backfill + root.edgeOffset - root.slideDistance - surfaceWindow._dockZone(ScreenEdge.name(root.edge))
     margins {
-      top: root.edge === ScreenEdge.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "top") : 0
-      bottom: root.edge === ScreenEdge.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "bottom") : 0
-      left: root.edge === ScreenEdge.Left ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.startStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "left")
-      right: root.edge === ScreenEdge.Right ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.endStrokeInset - DockManager.zoneOn(surfaceWindow.screenName, "right")
+      top: root.edge === ScreenEdge.Top ? surfaceWindow.attachMargin : root.vertical ? -root.startStrokeInset - surfaceWindow._dockZone("top") : 0
+      bottom: root.edge === ScreenEdge.Bottom ? surfaceWindow.attachMargin : root.vertical ? -root.endStrokeInset - surfaceWindow._dockZone("bottom") : 0
+      left: root.edge === ScreenEdge.Left ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.startStrokeInset - surfaceWindow._dockZone("left")
+      right: root.edge === ScreenEdge.Right ? surfaceWindow.attachMargin : root.vertical ? 0 : -root.endStrokeInset - surfaceWindow._dockZone("right")
     }
 
     // The surface, or room for it at the content's largest
@@ -436,16 +449,18 @@ PopoutWrapperBase {
         return own;
       // From this window's edge (its attach edge, less its backfill and
       // the way it slides in from) to the far edge's reserved space
-      const far = ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge === ScreenEdge.Top ? ScreenEdge.Bottom : ScreenEdge.Top);
+      const far = root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge === ScreenEdge.Top ? ScreenEdge.Bottom : ScreenEdge.Top);
       return Math.max(own, (root.screen?.height ?? 0) - far - root.attachAt + surface.backfill + root.slideDistance);
     }
     implicitWidth: root.vertical ? surfaceWindow.depth : 0
     implicitHeight: root.vertical ? 0 : surfaceWindow.depth
 
-    // One sliding under a bar takes input on its box alone; none until
-    // it's granted its place, or while it's given it up
+    // One sliding in from the screen edge takes input on its box alone
+    // (under a bar, the bar keeps its own; the strip it slides through
+    // stays the window's below); none until it's granted its place, or
+    // while it's given it up
     mask: Region {
-      item: !root.claimed ? null : root.slidesUnder ? boxArea : surface
+      item: !root.claimed ? null : root.slideDistance > 0 ? boxArea : surface
     }
 
     Item {

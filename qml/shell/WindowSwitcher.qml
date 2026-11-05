@@ -61,6 +61,7 @@ Scope {
             edge: WindowSwitcherConfig.edge
             position: WindowSwitcherConfig.position
             distance: WindowSwitcherConfig.distance
+            bare: floating.bare
           }
 
           screen: screenScope.modelData

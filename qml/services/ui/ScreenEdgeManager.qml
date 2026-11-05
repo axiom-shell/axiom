@@ -145,8 +145,11 @@ QtObject {
   // right): `gap` on each when it's 0 or more. Automatic (-1), it lines up
   // with a floating bar on that edge (its float gap across; its islands
   // end where windows start, BarEnds.windowInset), else with the windows:
-  // how far past each frame line they start.
-  function detachedGaps(screen, location, gap) {
+  // how far past each frame line they start. `bare` (over a fullscreen
+  // window, which covers the border and the bars): the screen's edges are
+  // the frame lines, and Automatic is the gap windows keep from a bare
+  // edge (floatGaps).
+  function detachedGaps(screen, location, gap, bare) {
     if (gap >= 0)
       return {
         "across": gap,
@@ -154,7 +157,7 @@ QtObject {
         "end": gap
       };
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const windowGap = side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
+    const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {
       "across": windowGap(location),
@@ -200,8 +203,12 @@ QtObject {
 
   // How far past where windows start on a screen edge (a ScreenEdge;
   // reservedWithMenusOn) a surface held `gap` off its frame line (frameLineOn) is:
-  // where a held box goes, in from its window's edge there
-  function heldInset(screen, location, gap) {
+  // where a held box goes, in from its window's edge there. `bare` (over a
+  // fullscreen window: its window spans the screen): `gap` from the
+  // screen's edge
+  function heldInset(screen, location, gap, bare) {
+    if (bare)
+      return Math.max(0, gap);
     return Math.max(0, root.frameLineOn(screen, location) + gap - root.reservedWithMenusOn(screen, location));
   }
 

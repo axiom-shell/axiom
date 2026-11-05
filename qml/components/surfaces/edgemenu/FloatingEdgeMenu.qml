@@ -40,13 +40,14 @@ EdgePopout {
 
   // Along the edge, on the menu's lattice (GridPlacement.menuAlong),
   // in screen px: this window's edge coordinates start past what's
-  // reserved on the perpendicular edge at its start
+  // reserved on the perpendicular edge at its start (over a fullscreen
+  // window, at the screen's edge: EdgePopout.bare)
   readonly property real screenLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
-  readonly property real alongOrigin: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
+  readonly property real alongOrigin: root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
   // The least room from the modules to the screen's ends: what's reserved
   // there, the box's inset and its padding
   readonly property real startPad: root.alongOrigin + root.startInset + root.contentPadding
-  readonly property real endPad: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide) + root.endInset + root.contentPadding
+  readonly property real endPad: (root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide)) + root.endInset + root.contentPadding
   // From config, so the hover strip lines up before the body has loaded
   // Its card size (EdgeMenusConfig.cardUnitOf)
   readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)

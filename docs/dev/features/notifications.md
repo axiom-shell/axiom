@@ -59,7 +59,7 @@ Every notification has a level (`methods/NotificationLevel`, the single source o
 - **One toast** is a `ToastItem`: its timer (paused while hovered or replied to; `followApps` takes the app's own timeout), a sideways swipe, its actions and reply, and its motion. It's a card of its own (detached) or a row of the attached box.
 - **Placement:** `edge`, `position`, `detached` and `gap`, as the OSD's and dock's.
   - **Detached:** cards in one Overlay-layer window covering the free area, held `gap` in from what's on each side (`ScreenEdgeManager.detachedGaps` / `heldInset`, as the detached launcher does).
-    - The window has Normal exclusion; over a fullscreen window it ignores the zones, and the gaps are measured from the screen's edges.
+    - The window has Normal exclusion; over a fullscreen window it ignores the zones, and the gaps are measured from the screen's edges, Auto as windows keep from a bare edge (`ScreenEdgeManager.detachedGaps`/`heldInset` with `bare`, as every floating popout over one: [Held off an edge](../popouts/held-off-edge.md)).
     - Its input mask is the cards' bounds.
     - It's always mapped, lending `NotificationManager` its `imageHost`.
   - **Attached:** one `EdgePopout` box (no claim, no trigger) grown out of the border or a bar exactly as an OSD's or a floating edge menu's, whatever the bar (SurfaceContext).

@@ -130,6 +130,7 @@ Scope {
         edge: LauncherConfig.edge
         position: LauncherConfig.position
         distance: LauncherConfig.distance
+        bare: floating.bare
       }
 
       screen: root.screen

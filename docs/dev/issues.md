@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A detached dock and toasts don't slide in from under the bars
+- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
+- **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.
+- **Size:** needs a plan
+- **Found:** 2026-11-05, while making every floating popout slide in from off the screen
+
 ### The tray watcher check could start a watcher by D-Bus activation
 - **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
 - **What:** `tray()` reads `org.kde.StatusNotifierWatcher`'s `RegisteredStatusNotifierItems` without the NoAutoStart flag, so on a system shipping an activatable watcher (none here: `org.x.StatusNotifierWatcher` is the only activatable one) the read would start it. Asking `NameHasOwner` first, or sending NoAutoStart, avoids it.
@@ -351,6 +357,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A bar popout's stroke flashes off its fill switching content on niri
 - **Where:** `qml/components/hosts/popout/BarPopouts.qml` (`shownBoxWidth`/`shownBoxHeight`, the box gliding to new content), `qml/shell/BlurBackingWindow.qml` (its fill), `qml/components/hosts/popout/SwitchStill.qml`
 - **What:** With blur on under niri, a bar popout switching to another widget's content in the same window shows its old stroke cutting into the box for a frame or two as it resizes: the stroke is the popout's window's, the fill the blur window's, and niri shows the two windows' frames out of step (no `supports.layerFrameSync`). Tried and reverted (2026-10-18), neither changing what the maintainer saw: holding the switch until the popout's window had drawn the new content twice (`SwitchStill`, its window's `frameSwapped`), and drawing the popout's stroke in the blur window with its fill (a stroke-only `AttachedSurfaceCopy` over the fills, the popout's own stroke transparent). That the second didn't help suggests the stroke isn't what's late: perhaps the popout's content, its clip, or the blur region. Next: log each window's `frameSwapped` with what it drew, during a switch.
+
 - **Size:** small
 - **Found:** 2026-10-18, while adding niri's blur
 
@@ -520,12 +527,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Hyprland has one native grab at a time, and its `cleared` doesn't say where the click landed. So while a newer keyboard popout (Todo, Calculator) holds the native grab over an older edge or floating popout (the launcher, a floating edge menu), a click back inside the older one clears the newer grab, which sends `BackdropManager.clickedOutside(null, null)`, and the older one is dismissed and closes too. Rare: hover popouts close once the pointer leaves them, so the pointer reaches the older popout only after the newer grab ended with no click, except where the two overlap or the newer one is held open. Accepted as is by the leader (bar-popouts-02, round 4); fixing it needs the click's position (a backdrop that takes clicks on Hyprland too).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
-
-### BarPopouts works out its slide distance itself
-- **Where:** `qml/components/hosts/popout/BarPopouts.qml:251` (`underStart`), `qml/components/hosts/popout/BarPopouts.qml:510` (`detachedOffset`), `qml/components/methods/SurfaceContext.qml:399` (`layout`)
-- **What:** `SurfaceContext.layout` now returns `slideDistance` (the bar's outer edge, past the border stroke a bar inside the border lies on), which EdgePopout reads. BarPopouts still works the same rule out itself: `underStart: barConfig.insideBorder ? Appearance.borderWidth : 0` and `detachedOffset: underBar ? attachAt - underStart : 0`. That breaks qml/components/hosts/popout/AGENTS.md: "Never add a rule in a host". Its `attachAt` is `placement.attachFromBar`, which carries `_attachShift`, so the two may differ where the followed panel isn't its own bar; check that before switching. Fix: BarPopouts reads `placement.slideDistance` (with the shift added if it belongs there) for `detachedOffset` and `surfaceFrom`, and `underStart` goes.
-- **Size:** small
-- **Found:** 2026-11-05, while reviewing bar-popouts-03 (EdgePopout's placement read from SurfaceContext)
 
 ### A tray submenu longer than the screen runs off it
 - **Where:** `qml/components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `qml/components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `qml/components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)

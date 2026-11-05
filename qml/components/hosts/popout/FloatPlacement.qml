@@ -25,6 +25,9 @@ QtObject {
   property real position: 0.5
   // 0-0.5 across the free screen from the edge
   property real distance: 0.5
+  // Over a fullscreen window (its FloatingPopout's `bare`): the margins
+  // from the screen's edges, as if bare (ScreenEdgeManager.detachedGaps)
+  property bool bare: false
 
   readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
   readonly property real across: root.edge === ScreenEdge.Bottom || root.edge === ScreenEdge.Right ? 1 - root.distance : root.distance
@@ -38,8 +41,8 @@ QtObject {
   readonly property real rightMargin: root._marginOn(ScreenEdge.Right)
   readonly property real bottomMargin: root._marginOn(ScreenEdge.Bottom)
 
-  readonly property var _edgeGaps: ScreenEdgeManager.detachedGaps(root.screen, root.edge, -1)
-  readonly property var _oppositeGaps: ScreenEdgeManager.detachedGaps(root.screen, ScreenEdge.opposite(root.edge), -1)
+  readonly property var _edgeGaps: ScreenEdgeManager.detachedGaps(root.screen, root.edge, -1, root.bare)
+  readonly property var _oppositeGaps: ScreenEdgeManager.detachedGaps(root.screen, ScreenEdge.opposite(root.edge), -1, root.bare)
 
   function _marginOn(side) {
     let gap = root._edgeGaps.end;
@@ -49,6 +52,6 @@ QtObject {
       gap = root._oppositeGaps.across;
     else if (side === (root.vertical ? ScreenEdge.Top : ScreenEdge.Left))
       gap = root._edgeGaps.start;
-    return ScreenEdgeManager.heldInset(root.screen, side, gap);
+    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.bare);
   }
 }
