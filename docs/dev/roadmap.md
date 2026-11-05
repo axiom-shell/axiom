@@ -421,6 +421,9 @@ Found while reviewing the bar rewrite:
 - [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
 - [A bar widget that loses its background while shown keeps drawing the old one](issues.md#a-bar-widget-that-loses-its-background-while-shown-keeps-drawing-the-old-one)
 
+Found while reviewing the wallpaper parallax's travel:
+- [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
+
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 

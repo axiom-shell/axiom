@@ -14,8 +14,9 @@ QtObject {
   // how far the parallax slides it end to end, as a share of the screen's
   // mean side, the same px both ways; `shiftX` / `shiftY` (-1 to 1) place
   // it along that: -1 shows its left or top end, 1 its right or bottom.
-  // The image is enlarged just enough that it still covers what it covered
-  // at either end; an aspect's crop overflow stays centred, never travel.
+  // The image is enlarged just enough that a side covering the screen at
+  // rest still covers it at either end (a letterboxed side's bars move
+  // with it); an aspect's crop overflow stays centred, never travel.
   function rect(fill, imageWidth, imageHeight, screenWidth, screenHeight, travel, shiftX, shiftY) {
     if (!(imageWidth > 0 && imageHeight > 0 && screenWidth > 0 && screenHeight > 0))
       return {
