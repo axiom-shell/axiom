@@ -15,6 +15,9 @@ BaseWidget {
 
   property string icon: ""
   property string text: ""
+  // Text.PlainText for text from outside (an event's title), which
+  // mustn't render as styled text or load images
+  property int textFormat: Text.AutoText
   property real textScale: 1.0
   property real iconScale: 1.0
   property bool showText: true
@@ -146,6 +149,7 @@ BaseWidget {
         horizontalAlignment: root.isVertical && root.uprightLabel ? Text.AlignHCenter : Text.AlignLeft
         color: root.foregroundColor
         text: root.displayText
+        textFormat: root.textFormat
         elide: root.isVertical && root.uprightLabel ? Text.ElideNone : Text.ElideRight
         font.family: Appearance.fontFamily
         font.pixelSize: root.fontSize * root.textScale

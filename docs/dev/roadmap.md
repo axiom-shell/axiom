@@ -370,9 +370,6 @@ Found by the audits:
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [A Calendar card on the desktop or in an edge menu takes the page's request](issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
-- [Removing a CalDAV account deletes its password before the draft is saved](issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
-- [Event titles from a feed render as styled text and load remote images](issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
 - [Idle dimming is forgotten across a shell reload](issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
 - [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
 - [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
@@ -408,6 +405,9 @@ Found while reviewing core-ui-theming-06 (row 20):
 
 Found while fixing bar-popouts-07 (row 20):
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
+
+Found while fixing features-07 (row 20):
+- [The Window and Media bar widgets render titles as styled text and load remote images](issues.md#the-window-and-media-bar-widgets-render-titles-as-styled-text-and-load-remote-images)
 
 Found while moving the backend to the qml/ layout:
 - [The compositor facts' axiomPath is read by nothing](issues.md#the-compositor-facts-axiompath-is-read-by-nothing)

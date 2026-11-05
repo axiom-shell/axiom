@@ -17,6 +17,9 @@ QtObject {
   readonly property var accounts: _c.items.map((account, index) => Object.assign({}, account, {
       "name": account.name || account.username || root.hostOf(account.url) || (account.kind === "local" ? I18n.tr("This computer") : I18n.tr("Account {0}", index + 1))
     }))
+  // The saved CalDAV accounts' ids, without previews: the accounts with a
+  // password (CalendarManager clears one once its removal is saved)
+  readonly property var savedPasswordIds: ConfigManager.config.Calendar.items.filter(account => account.kind === "caldav").map(account => account.id)
   readonly property string defaultCalendar: _c.defaultCalendar
   // A new event's length (minutes)
   readonly property int defaultDuration: Math.round(_c.defaultDuration / 60000)

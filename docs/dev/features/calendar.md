@@ -30,6 +30,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 ### Calls
 - `calendar.discover`, `calendar.sync`, `calendar.save`, `calendar.delete` through `BackendManager.call`; the sync, save and delete take the `range` and every account with its shown calendars (`_accounts`).
   - Passwords never pass through QML: the calls send each account's id, and package calendar looks its password up itself (`backend/internal/secrets`: the keyring, then secrets.json under `calendar:<id>`; [Secrets](../core/secrets.md)), never logging or writing it. A CalDAV account with no password saved fails as `no_password`, before any request.
+  - Removing an account in the Accounts card leaves its password: CalendarManager clears it once a save drops the id from the saved config (`CalendarConfig.savedPasswordIds`), so a reset draft keeps it. A new account's id skips the saved ones, so it never takes a removed account's password before that save.
 - A failure is an RPC error with an `axerr` kind; `_failure` turns it into the result callers get, `{ ok: false, kind, message }`. The shell adds one kind of its own, `no_calendars`; a read-only calendar's edit is `refused` before any call.
 - `errorText(result)` turns these into words by kind (`unauthorized`, `unavailable`, `not_found`, `no_calendars`, `conflict`, `refused`, `no_password`, `bad_reply`); any other kind shows its message.
 - One call runs at a time (the daemon also takes them one at a time). Later jobs are queued, and a sync isn't queued twice. `discover` isn't queued: it writes nothing a sync reads.
@@ -96,11 +97,11 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 
 ### Opening the page
 - The month's 42 day cells (`MonthGrid`, also the Clock/Calendar module's) are streamed in (`StreamedLoader`, [streamed building](../core/streamed-building.md)), each keeping its place in the grid. Paging a month updates them in place.
-- `request` (`{ kind: "new" | "day", key }`) is what `openPage(request)` asked for. It opens:
+- `request` (`{ kind: "new" | "day", key, page }`) is what `openPage(request)` asked for, with the page it opens:
   - the CalendarPage view;
   - else the page with a Calendar module;
-  - else Settings.
-- The request is taken once (`takeRequest`) by whichever page or module shows it.
+  - else Settings, and no request is kept.
+- The request is taken once (`takeRequest`) by the CalendarPage view when `page` is `"CalendarPage"`, else by a Calendar module on that Custom page (its `host.page`), never by one on the desktop or in an edge menu.
 
 ### The page's state (`CalendarManager.page`)
 - The Calendar page pops out into a window of its own ([page windows](../overlay/page-windows.md)), and a move builds a new view, so the page keeps nothing itself: `CalendarPageState` holds the selected day (`selectedKey`), the month shown (`year`, `month`, which the page's `MonthGrid` binds) and the open event (`draft`, an `EventDraft` its `DayPane` edits).
@@ -118,6 +119,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 
 ### Privacy
 - Events are private.
+- An event's title is anyone's (a subscribed feed's): it shows as plain text (`textFormat: Text.PlainText` in `EventRow`, `MonthGrid`'s chips, `CompactFigure`'s label and the Next event bar widget), never styled text that could load a remote image.
 - Calendar and Agenda don't list `lockscreen` or `greeter` in `x-hosts`.
 - ClockCalendar does list them, but shows events on the lock screen only with `Calendar.showOnLockscreen`, and read-only there:
   - `readOnly` on `DayPane` / `DayAgenda` / `EventRow`;
