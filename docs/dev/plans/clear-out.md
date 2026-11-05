@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07 and overlay-modules-09 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09 and overlay-modules-10 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -108,7 +108,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 60 | overlay-modules-07 | major | Done: What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
 | 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
 | 62 | overlay-modules-09 | minor-sweep | Done: The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
-| 63 | overlay-modules-10 | minor-sweep | Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
+| 63 | overlay-modules-10 | minor-sweep | Done: Modules | 5 | ~200 touched (~-130 net) | overlay-modules-03 |  |
 | 64 | overlay-modules-11 | minor-sweep | Hot corners | 2 | ~120 | none |  |
 | 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
 | 66 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
@@ -493,12 +493,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A custom layout's element rect reads an undefined place
   - CustomElement's six Binding blocks are Qt.binding in its setSource
   - A custom layout without elements rebuilds its default elements every sample
-- **overlay-modules-10** (5):
+- **overlay-modules-10** (5, done):
   - A tray menu logs an undefined menu handle
   - Tailscale's PeerRow redraws DeviceRow without its buttons
   - WifiNetworks' WPA password form repeats WifiJoinForm's
   - Login and Password each carry the same required-field report
-  - [WeatherForecast repeats the Weather card's current conditions](../issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
+  - WeatherForecast repeats the Weather card's current conditions
 - **overlay-modules-11** (2): The v71 entry is a rare path: smallest fix.
   - [Hot corners' action list is a hand-kept copy of the keybind one](../issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
   - [A shared file older than v71 resets niri's hot corner](../issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)

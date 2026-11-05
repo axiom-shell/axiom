@@ -67,62 +67,6 @@ Card {
     Layout.minimumHeight: Widget.spacing * 1.5
   }
 
-  // Now, as in the bar's forecast popout: the place, then the icon beside
-  // (or over, when stacked) the temperature, condition and details
-  component Current: ColumnLayout {
-    spacing: Widget.spacing
-    StyledText {
-      visible: (WeatherManager.place?.name ?? "") !== ""
-      Layout.fillWidth: true
-      horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
-      elide: Text.ElideRight
-      text: WeatherManager.place?.name ?? ""
-      font.bold: true
-      textColor: Theme.accent
-    }
-    GridLayout {
-      Layout.fillWidth: true
-      columns: root.stacked ? 1 : 2
-      columnSpacing: Widget.padding * 1.5
-      rowSpacing: Widget.spacing
-      // The current condition, cross-fading as it changes
-      CrossFade {
-        Layout.alignment: root.stacked ? Qt.AlignHCenter : Qt.AlignVCenter
-        value: WeatherManager.condition?.icon ?? ""
-        delegate: StyledIcon {
-          required property var value
-          text: value
-          textSize: Appearance.fontSize * (root.stacked ? 4 * root.heroScale : 3)
-        }
-      }
-      ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 2
-        StyledText {
-          Layout.fillWidth: true
-          horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
-          text: root.current ? `${Math.round(root.current.temperature_2m)}${WeatherManager.unitSymbol}` : ""
-          textSize: Appearance.fontSize * (root.stacked ? 2.4 * root.heroScale : 2)
-          font.bold: true
-        }
-        StyledText {
-          Layout.fillWidth: true
-          horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
-          elide: Text.ElideRight
-          text: WeatherManager.condition?.label ?? ""
-        }
-        StyledText {
-          Layout.fillWidth: true
-          horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
-          elide: Text.ElideRight
-          text: WeatherManager.details
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
-        }
-      }
-    }
-  }
-
   // The next days: name, icon, low, the day's range against the week's
   // (where there's room), high
   component DailyList: ColumnLayout {
@@ -205,7 +149,10 @@ Card {
     RowLayout {
       Layout.fillWidth: true
       spacing: root.pad * 2
-      Current {
+      WeatherCurrent {
+        stacked: root.stacked
+        iconSize: Appearance.fontSize * (root.stacked ? 4 * root.heroScale : 3)
+        temperatureSize: Appearance.fontSize * (root.stacked ? 2.4 * root.heroScale : 2)
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignVCenter
