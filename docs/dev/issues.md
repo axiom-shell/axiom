@@ -600,12 +600,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### A todo.json deleted while unreadable blocks every save until restart
-- **Where:** `qml/services/apps/TodoManager.qml:97` (`_load`)
-- **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
 ### PomodoroDial redraws DialControls' ring and buttons
 - **Where:** `qml/components/content/parts/PomodoroDial.qml:28` (`TimeRing`), `qml/components/content/parts/PomodoroDial.qml:58` (buttons), `qml/components/content/Pomodoro/Pomodoro.qml:39` (`dialSize`)
 - **What:** `DialControls` (shared by the timer, caffeine and the stopwatch since #262) is "a TimeRing over (or beside, `horizontal`) three round buttons", sized to its card with `fill`. PomodoroDial builds the same thing by hand: a TimeRing (lines 28–35, 8 lines), stop / play-pause / skip FlatIconButtons (58–82, 25), its own `horizontal` / `dialSize` / grid columns (17–18, 24–26, 5), and Pomodoro.qml works out the dial size and width test itself (32, 39, 2): 40 lines. So the pomodoro's buttons look and size differently from the other three dials, and lack the keyboard (Space) they have. Fix: PomodoroDial becomes a `DialControls` (`leftIcon: "stop"`, `leftEnabled: !idle`, `mainIcon` play/pause, `rightIcon: "skip_next"`, `color: phaseColor`, `fill` from the card) with the session dots and the task picker under it, about 20 lines; Pomodoro.qml drops its dial sizing. The dots and picker then sit under the ring rather than beside it in a wide card. About 20 lines net.
