@@ -172,7 +172,8 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 // when all, the input methods installed (else prev's).
 func (f *fcitx) read(ctx context.Context, all bool, prev State) (State, error) {
 	st := State{Framework: FrameworkFcitx, Running: true, Available: prev.Available}
-	if all || st.Available == nil {
+	// Read empty (fcitx5 still loading its addons): again until it names some
+	if all || len(st.Available) == 0 {
 		m, err := f.call(ctx, "AvailableInputMethods")
 		if err != nil {
 			return State{}, err

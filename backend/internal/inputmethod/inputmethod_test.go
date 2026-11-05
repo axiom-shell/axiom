@@ -36,6 +36,8 @@ type fakeFcitx struct {
 	group         []Item
 	calls         []string
 	configs       map[string]dbus.Variant
+	// loading: answers no input methods, as just after it started
+	loading bool
 }
 
 func newFakeFcitx(t *testing.T, bus *dbustest.Bus) *fakeFcitx {
@@ -58,6 +60,9 @@ func newFakeFcitx(t *testing.T, bus *dbustest.Bus) *fakeFcitx {
 		"CurrentInputMethod":      {Out: "s", Fn: none(func(*dbus.Message) []any { return []any{f.current} })},
 		"CurrentInputMethodGroup": {Out: "s", Fn: none(func(*dbus.Message) []any { return []any{"Default"} })},
 		"AvailableInputMethods": {Out: "a(ssssssb)", Fn: none(func(*dbus.Message) []any {
+			if f.loading {
+				return []any{[]any{}}
+			}
 			return []any{[]any{
 				[]any{"keyboard-us", "Keyboard - English (US)", "", "input-keyboard", "en", "en", true},
 				[]any{"mozc", "Mozc", "", "fcitx_mozc", "あ", "ja", true},
@@ -348,6 +353,27 @@ func TestFcitxPollsWithoutTrayItem(t *testing.T) {
 	w.Close()
 	if !testkit.Eventually(func() bool { return h.s.Poll().Polling && h.s.State().Current == "keyboard-us" }) {
 		t.Fatalf("the watcher gone: the poll never saw the switch; the state is %+v", h.s.State())
+	}
+}
+
+// Input methods read empty (fcitx5 just started) are read again with the
+// next read, not kept until its groups change
+func TestFcitxReadsEmptyInstalledAgain(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := newFakeFcitx(t, bus)
+	f.mu.Lock()
+	f.loading = true
+	f.mu.Unlock()
+	h := start(t, bus, nil)
+	h.await(t, "fcitx5 is followed", func(st State) bool { return st.Running && len(st.Available) == 0 })
+
+	f.mu.Lock()
+	f.loading = false
+	f.current = "mozc"
+	f.mu.Unlock()
+	if !testkit.Eventually(func() bool { h.s.Poll(); return len(h.s.State().Available) == 3 }) {
+		t.Fatalf("the installed input methods never read again: %+v", h.s.State())
 	}
 }
 
