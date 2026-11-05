@@ -97,7 +97,7 @@ The card (`OSDMediaCard`: the cover, title, artist, playing or paused), on a new
 ### Surface (`qml/shell/OSD`)
 - One `EdgePopout` per enabled OSD (`OSDConfig.shownIds`), on each screen its `monitors` puts it on (`General.screensFor(monitors, monitor)`).
 - It is keyed by id, so editing an OSD's settings updates it in place instead of rebuilding every OSD.
-- Placed at its `edge` / `position`. With `detached` / `gap` it is held off the edge, as a dock is (see [Held off an edge](../popouts/held-off-edge.md)).
+- Placed at its `edge` / `position`. With `detached` it is held off the edge, `distance` across the free screen, sliding or fading in (`animation`), as a dock is (see [Held off an edge](../popouts/held-off-edge.md)).
 - **Popout claim:** it uses `overNamespace: "axiom-osd"` and claims as kind `osd` (`claimKey` `osd:<id>:<screen>`), so it closes under a higher popout and won't open under one (see [Popout registry](../popouts/registry.md)).
 - `keepLoaded: true`: the items report their own changes, so they must exist while the OSD is closed.
 - Hiding: the parts' own times (`OSDContent`'s `collapse` → `hide()`, see What shows › Times); the host's own countdown (`timeout`) only runs while nothing is out (opened from its hover strip with nothing to show).

@@ -25,7 +25,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 - Style:
   - `padding`, `moduleBorders`, `pinButton`;
   - `backgroundColor` / `borderColor`, read through `EdgeMenusConfig.colorsOf`;
-  - floating: `detached` / `gap` (see [Held off an edge](../popouts/held-off-edge.md));
+  - floating: `detached` / `distance` / `animation` (see [Held off an edge](../popouts/held-off-edge.md));
   - integrated: `frame`.
 - Opening: `openOnHover`, `openDelay`, `triggerSize`, `triggerLength` (0 is the menu's length: `EdgeMenusConfig.lengthOf` from config until it's loaded).
 - Closing: `closeOnLeave`, `closeDelay`, `closeOnOutsideClick`.

@@ -22,7 +22,7 @@ Everything outside the bars follows the Interface scale and Density through `Wid
 | A hairline (0–2 px, `border.width`) | the number |
 | Measured against the screen, a measuring font, a placeholder or stand-in, a layout weight | the number, marked `// fixed px: <reason>` |
 
-A size setting in px outside the bars (`Launcher.width`, `Notifications.width`, tile sizes, `Popouts.padding`, an edge menu's `padding`) is scaled in its reader (`Widget.px(_c.width)`), so it follows the Interface scale too; gaps that line up with the compositor's (an edge menu's or dock's `gap`) and hover strips stay as set.
+A size setting in px outside the bars (`Launcher.width`, `Notifications.width`, tile sizes, `Popouts.padding`, an edge menu's `padding`) is scaled in its reader (`Widget.px(_c.width)`), so it follows the Interface scale too; gaps that line up with the compositor's (the toasts' `gap`) and hover strips stay as set.
 
 Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: a shared piece the bar uses takes its size from the bar (`CountBadge.textSize`, `IconTextWidget.spacing`).
 
