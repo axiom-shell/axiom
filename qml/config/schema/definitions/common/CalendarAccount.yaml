@@ -26,7 +26,7 @@ properties:
     type: string
     title: Address
     default: ''
-    description: "The server's address (any page on it: its calendars are found from there), or the feed's URL."
+    description: The server's address, or the feed's URL.
     x-showIf: {kind: {not: local}}
   username: {type: string, title: Username, default: '', x-showIf: {kind: caldav}}
   calendars:

@@ -38,7 +38,6 @@ x-parts:
             default: ''
             x-options: edgeMenus
             x-emptyLabel: None
-            description: The edge menu to open.
             x-showIf: {enabled: true}
     plain:
       popout:

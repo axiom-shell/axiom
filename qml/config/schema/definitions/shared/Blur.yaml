@@ -9,13 +9,13 @@ properties:
     type: boolean
     title: Set the compositor's blur
     default: false
-    description: The compositor has one blur, for windows and axiom's translucent surfaces alike. Off, your own config's applies.
+    description: The compositor has one blur, for windows and axiom alike. Off, your own config's applies.
     x-hintedIf: {/$supports.windowBlur: true}
   windowBlur:
     type: boolean
     title: Blur transparent windows
     default: true
-    description: Off, only axiom's surfaces blur (Blur behind axiom's surfaces, above).
+    description: Off, only axiom's surfaces blur.
     x-showIf: {enabled: true}
     x-hintedIf: {/$supports.windowBlur: true}
     x-compositor: {hyprland: {key: decoration.blur.enabled, if: enabled}}
@@ -42,7 +42,7 @@ properties:
     type: boolean
     title: See-through blur
     default: true
-    description: Floating windows blur only the wallpaper, not the windows under them. Cheaper.
+    description: Floating windows blur only the wallpaper. Cheaper.
     x-showIf: {enabled: true, windowBlur: true}
     x-hintedIf: {/$supports.windowBlur: true}
     x-compositor: {hyprland: {key: decoration.blur.xray, if: enabled}}
@@ -101,7 +101,7 @@ properties:
     type: boolean
     title: Blur behind special workspaces
     default: false
-    description: 'Expensive: redraws the blur on every frame.'
+    description: 'Expensive: redraws the blur every frame.'
     x-showIf: {enabled: true, /$compositor: hyprland}
     x-hintedIf: {/$supports.windowBlur: true}
     x-compositor: {hyprland: {key: decoration.blur.special, if: enabled}}

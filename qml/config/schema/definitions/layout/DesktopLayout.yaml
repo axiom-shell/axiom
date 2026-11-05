@@ -1,14 +1,14 @@
 # The DesktopLayout definition (#/definitions/DesktopLayout).
 
 $ref: '#/definitions/Layout'
-description: A desktop's overlay modules on a bounded grid, fitted to each monitor inside its bars and border at the card size (Desktop).
+description: Overlay modules on a grid fitted to each monitor.
 x-properties:
   id: {$ref: '#/definitions/ItemId'}
   enabled:
     type: boolean
     x-settings: false
     default: true
-    description: Shown. Off on a monitor's own layout leaves that monitor's desktop empty.
+    description: Off on a monitor's own layout leaves its desktop empty.
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Monitors

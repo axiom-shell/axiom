@@ -1,7 +1,7 @@
 # The ScreenLayout definition (#/definitions/ScreenLayout).
 
 $ref: '#/definitions/Layout'
-description: 'A screen of overlay modules on a bounded grid fitted to each monitor at the card size: the built-in lock screen (Lockscreen.layout) and the greeter (Greeter.layout).'
+description: 'Overlay modules on a grid fitted to each monitor: the lock screen and greeter.'
 x-properties:
   grid: {$ref: '#/definitions/ScreenGrid', x-group: Grid}
   moduleBorders:
@@ -9,7 +9,7 @@ x-properties:
     type: boolean
     title: Module borders
     default: true
-    description: Draw each module's card box. Off shows modules straight on the background. The password field and the greeting have their own switches.
+    description: Draw each module's card box. The password field and greeting have their own switches.
   otherScreens:
     x-group: Grid
     type: string
@@ -17,7 +17,7 @@ x-properties:
     enum: [layout, background]
     x-enumLabels: {layout: 'The same modules, without the password', background: The background only}
     default: layout
-    description: What monitors other than the one with the password field show.
+    description: What monitors without the password field show.
   backdrop:
     type: object
     title: Backdrop
@@ -31,7 +31,6 @@ x-properties:
         enum: [wallpaper, color]
         x-enumLabels: {wallpaper: Wallpaper, color: Color}
         default: wallpaper
-        description: Each monitor's wallpaper, or a plain color.
       blur:
         x-group: Background
         type: boolean
@@ -54,7 +53,7 @@ x-properties:
         maximum: 100
         x-unit: '%'
         x-control: slider
-        description: Darken the background so the modules stand out.
+        description: Darken the background so modules stand out.
   borders:
     type: object
     title: Borders
@@ -65,10 +64,8 @@ x-properties:
         type: boolean
         title: Password field border
         default: false
-        description: Draw a card box around the password field.
       greeting:
         x-group: Style
         type: boolean
         title: Greeting border
         default: false
-        description: Draw a card box around the greeting.

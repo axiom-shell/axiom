@@ -39,12 +39,12 @@ properties:
     default: 50
     minimum: 0
     maximum: 100
-    description: 'Where along the edge its centre sits: 0 is the start (left/top), 100 the end. It never runs off the screen.'
+    description: 'Where its centre sits: 0 is the start (left/top), 100 the end.'
   detached:
     type: boolean
     title: Detach from edge
     default: true
-    description: A separate box held off the edge. Off, the dock grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.
+    description: A separate box held off the edge, instead of growing out of it.
   distance:
     type: integer
     title: Distance from edge
@@ -52,7 +52,7 @@ properties:
     default: 0
     minimum: 0
     maximum: 50
-    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
@@ -66,13 +66,13 @@ properties:
       always: Always shown
       hover: Show on hover
       intellihide: Hide when a window overlaps
-    description: Always shown stays up. Show on hover slides in when the pointer rests on the screen edge. Hide when a window overlaps stays up until a window on the monitor's workspace covers it, then works like Show on hover.
+    description: Show on hover slides it in when the pointer reaches the edge.
   reserveSpace:
     type: boolean
     title: Reserve space
     default: true
     x-showIf: {visibility: always}
-    description: Keep windows out of the dock's strip, as a bar does. Magnified icons still grow over windows.
+    description: Keep windows out of the dock's strip.
   timing:
     $ref: '#/definitions/Timing'
     x-showIf: {visibility: [hover, intellihide]}
@@ -118,7 +118,7 @@ properties:
         type: boolean
         title: Magnify under the pointer
         default: false
-        description: Grow the icons near the pointer, as macOS does.
+        description: Grow the icons near the pointer.
       size:
         type: integer
         title: Magnified size
@@ -127,7 +127,7 @@ properties:
         maximum: 256
         x-unit: px
         x-showIf: {enabled: true}
-        description: Size of the icon right under the pointer.
+        description: Size of the icon under the pointer.
       range:
         type: integer
         x-control: stepper
@@ -136,7 +136,7 @@ properties:
         minimum: 1
         maximum: 8
         x-showIf: {enabled: true}
-        description: How many icons to each side of the pointer grow with it.
+        description: How many icons on each side grow with it.
   running:
     type: object
     title: Running apps
@@ -146,7 +146,7 @@ properties:
         type: boolean
         title: Show running apps
         default: true
-        description: Also show apps with open windows that aren't pinned, after the pinned ones.
+        description: Also show unpinned apps with open windows, after the pinned ones.
       scope:
         type: string
         title: Windows counted
@@ -156,7 +156,7 @@ properties:
           all: Every window
           monitor: Windows on this monitor
           workspace: Windows on this monitor's workspace
-        description: 'Which windows make an app running here: its indicator, what a click focuses, and the running apps shown.'
+        description: Which windows make an app count as running.
       indicator:
         type: string
         title: Running indicator
@@ -167,13 +167,13 @@ properties:
         type: boolean
         title: Separator
         default: true
-        description: A line between the pinned apps and the other running ones.
+        description: A line between pinned and other running apps.
         x-showIf: {show: true}
   showLabels:
     type: boolean
     title: Names on hover
     default: true
-    description: Show an app's name in a tooltip when the pointer rests on it.
+    description: Show an app's name when hovered.
   backgroundColor: {type: string, title: Background, x-options: colors, default: base00}
   borderColor: {type: string, title: Border, x-options: colors, default: base05}
   pinnedOwn:
@@ -181,7 +181,7 @@ properties:
     title: Own pinned apps
     x-settings: false
     default: false
-    description: The dock shows its own pinned apps (pinned) instead of Apps → pinned, the list every other dock shares.
+    description: Use its own pinned apps instead of the shared list.
   pinned:
     x-scope: personal
     type: array
@@ -189,5 +189,5 @@ properties:
     x-settings: false
     default: []
     items: {type: string}
-    description: "Desktop entry ids, in order: the dock's own, shown with pinnedOwn."
+    description: Desktop entry ids, in order.
 required: [id]

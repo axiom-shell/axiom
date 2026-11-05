@@ -2,7 +2,7 @@
 
 type: object
 title: Sizing
-description: Overrides for how much room a bar widget takes. Anything left out uses the widget's own sizing; only a widget that shrinks when crowded (Window title, Media) takes a minimum and maximum.
+description: Overrides for how much room a bar widget takes. Only shrinking widgets take a minimum and maximum.
 additionalProperties: false
 properties:
   priority:
@@ -11,18 +11,18 @@ properties:
     title: Priority
     minimum: -100
     maximum: 100
-    description: "When the bar can't fit its widgets, lower priorities are hidden first: higher ones stay longest."
+    description: Lower priorities hide first when the bar is crowded.
   minSize:
     type: integer
     title: Minimum size
     minimum: 0
     maximum: 2000
     x-unit: px
-    description: Smallest length the widget may shrink to when the bar is crowded (px).
+    description: Smallest length when the bar is crowded (px).
   maxSize:
     type: integer
     title: Maximum size
     minimum: 0
     maximum: 2000
     x-unit: px
-    description: Most length the widget takes along the bar, however long its content (px).
+    description: Most length along the bar (px).

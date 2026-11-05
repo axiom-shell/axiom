@@ -7,10 +7,10 @@ properties:
   name:
     type: string
     default: ''
-    description: A name overriding the server's, or empty (a local calendar's is its own).
+    description: Overrides the server's name. Empty keeps it.
   color:
     type: string
     default: ''
-    description: A theme color name overriding the server's, or empty.
+    description: A theme color overriding the server's. Empty keeps it.
   enabled: {type: boolean, default: true}
-description: A calendar of an account, as the user set it up. What the server says of it (its name, color, whether it's read-only) is the calendar cache's (CalendarManager).
+description: A calendar of an account.

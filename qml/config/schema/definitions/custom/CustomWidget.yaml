@@ -7,7 +7,7 @@ additionalProperties: false
 properties:
   id: {$ref: '#/definitions/ItemId'}
   name: {type: string, title: Name, default: Custom widget, description: Its name in the widget and module libraries.}
-  icon: {type: string, x-control: icon, title: Icon, default: widgets, description: 'A Material Symbols name, for the libraries and when the script gives none.'}
+  icon: {type: string, x-control: icon, title: Icon, default: widgets, description: 'A Material Symbols name, used when the script gives none.'}
   command:
     x-scope: commands
     type: string
@@ -32,16 +32,16 @@ properties:
     type: string
     title: Run only if
     default: ''
-    description: Waybar's exec-if, a command that must succeed before the script runs. Checked when the widget is first shown.
+    description: A command that must succeed before the script runs (Waybar's exec-if).
   refreshName:
     type: string
     title: Refresh name
     default: ''
-    description: '`axiom ipc customWidgets refresh <name>` runs it again now (what Waybar''s signal did).'
+    description: '`axiom ipc customWidgets refresh <name>` runs it again.'
   actions:
     type: object
     additionalProperties: false
-    description: Commands the bar widget and module run (Waybar's on-click and on-scroll). Never on the lock screen.
+    description: Commands run on click and scroll. Never on the lock screen.
     properties:
       click: {x-scope: commands, type: string, title: On click, default: ''}
       rightClick: {x-scope: commands, type: string, title: On right click, default: ''}
@@ -49,25 +49,25 @@ properties:
       scrollUp: {x-scope: commands, type: string, title: On scroll up, default: ''}
       scrollDown: {x-scope: commands, type: string, title: On scroll down, default: ''}
       refreshAfter: {type: boolean, title: Run the script again after one, default: true}
-  format: {type: string, title: Format, default: '{}', description: 'Waybar''s format: {} is the text, {icon} the icon picked below, {percentage}, {alt}, or any key or path in the output.'}
+  format: {type: string, title: Format, default: '{}', description: '{} is the text, {icon} the icon below, plus {percentage}, {alt} or any key in the output.'}
   formatIcons:
     title: Icons
     default: {}
-    description: Waybar's format-icons, as {icon} in the format. A list is picked by percentage; an object by alt, else its "default".
+    description: Shown as {icon} in the format. A list is picked by percentage; an object by alt, else its "default".
   states:
     type: object
     title: State colours
     default: {}
     additionalProperties: {type: string}
-    description: A class or state → a theme colour name (ok, warning and critical are already known).
+    description: A class or state → a theme colour name.
   maxLength: {type: integer, title: Longest text, default: 0, minimum: 0, maximum: 500, description: 0 is no limit.}
-  escape: {type: boolean, title: Text is plain, default: false, description: Waybar's escape. Show markup in the text as typed instead of drawing it.}
+  escape: {type: boolean, title: Text is plain, default: false, description: Show markup as typed instead of drawing it.}
   hideEmpty: {type: boolean, title: Hide when empty, default: true}
   tooltip:
     type: boolean
     title: Tooltip
     default: true
-    description: The output's tooltip on hover (Waybar's), when hovering doesn't open the module.
+    description: The output's tooltip, shown when hovering doesn't open the module.
     x-enabledIf: {bar.popout: false}
   bar:
     $ref: '#/definitions/BarDisplay'
@@ -88,7 +88,7 @@ properties:
       size:
         type: array
         title: Design size
-        description: In grid units (4 to a card). Where the module starts when placed on a page, and the popout's size.
+        description: In grid units (4 to a card).
         default: [4, 2]
         minItems: 2
         maxItems: 2
@@ -97,7 +97,7 @@ properties:
         type: boolean
         title: Offer on the lock screen
         default: false
-        description: "Its script keeps running while the screen is locked, and what it prints shows to anyone at the screen: offer only what's fine to show. Its clicks and commands never run there."
+        description: It keeps running while locked and shows to anyone at the screen. Clicks never run there.
       elements:
         type: array
         default: []

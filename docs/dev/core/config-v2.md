@@ -105,7 +105,7 @@ settings:
     type: boolean
     title: Show condition
     default: false
-    description: Show the condition (e.g. Rain) next to the temperature.
+    description: e.g. Rain.
 ```
 
 ### Duplicated information removed

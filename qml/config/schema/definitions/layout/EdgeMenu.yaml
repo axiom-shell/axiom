@@ -11,7 +11,7 @@ properties:
     $ref: '#/definitions/ScreenTarget'
     x-group: General
     title: Monitor
-    description: Monitor this menu is shown on. Empty uses the primary monitor.
+    description: Empty uses the primary monitor.
     x-showIf: {mode: {not: submenu}}
     x-properties:
       mode:
@@ -41,7 +41,6 @@ properties:
         minimum: 0
         maximum: 2000
         x-unit: ms
-        description: How long the pointer rests on the edge before the menu opens.
         x-showIf: {onHover: true}
     x-showIf: {mode: {not: submenu}}
   edge:
@@ -58,14 +57,14 @@ properties:
     default: floating
     enum: [floating, integrated, submenu]
     x-enumLabels: {floating: Floating, integrated: Integrated, submenu: Submenu}
-    description: 'Floating opens over your windows. Integrated opens outside the screen border and bars, pushing them and your windows inwards. Submenu has no edge of its own: it opens beside a floating menu, from a Submenu module there.'
+    description: Floating opens over windows. Integrated pushes the bars and windows inwards. Submenu opens beside a floating menu.
   offset:
     x-settings: false
     type: integer
     default: 0
     minimum: -200
     maximum: 200
-    description: Cells of its lattice the menu sits from centred along its edge, positive towards the end (right or down), kept on the screen. Set by the arrows on the layouts editor's grid.
+    description: Grid cells from centred along its edge. Set on the layouts editor's grid.
   gridOffset:
     x-settings: false
     type: integer
@@ -73,7 +72,7 @@ properties:
     minimum: -200
     maximum: 200
     x-unit: px
-    description: Shifts the lattice the menu's modules sit on along its edge (centred on the screen) by this many px, positive towards the end. Set beside the arrows on the layouts editor's grid.
+    description: Shifts the menu's grid along its edge (px). Set on the layouts editor's grid.
   length:
     x-group: Placement
     type: string
@@ -82,14 +81,14 @@ properties:
     x-control: toggle
     enum: [content, edge]
     x-enumLabels: {content: Fit its modules, edge: Whole edge}
-    description: Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge). An integrated menu always takes its whole edge.
+    description: Whole edge stretches the menu along its edge.
     x-showIf: {mode: floating}
   popoutAtWidget:
     x-group: Placement
     type: boolean
     title: Popout at its widget
     default: false
-    description: Opened as a bar widget's popout, it opens at that widget, as bar popouts do, rather than where its layout places it. Only when that bar is on the menu's edge and monitor; opened any other way, it keeps its place.
+    description: Opened as a bar widget's popout, it opens at that widget.
     x-showIf: {mode: floating, length: content}
   layout:
     $ref: '#/definitions/Layout'
@@ -105,13 +104,13 @@ properties:
         minimum: 50
         maximum: 200
         x-unit: '%'
-        description: Size of the menu's modules, relative to the card size in Look & Feel. Their text and content grow and shrink with them.
+        description: Relative to the card size in Look & Feel.
       moduleBorders:
         x-group: Style
         type: boolean
         title: Module borders
         default: true
-        description: Draw each module's card box. Turn off to show modules straight on the menu's background, e.g. a menu with a single module.
+        description: Draw each module's card box.
   detached:
     x-group: Placement
     type: boolean
@@ -127,7 +126,7 @@ properties:
     default: 0
     minimum: 0
     maximum: 50
-    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {mode: floating, detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
@@ -138,14 +137,14 @@ properties:
     type: boolean
     title: Frame
     default: true
-    description: Draw a rounded box along the whole edge, with the modules inside it, lined up with the screen border.
+    description: A rounded box along the whole edge around the modules.
     x-showIf: {mode: integrated}
   pinButton:
     x-group: Style
     type: boolean
     title: Pin button
     default: false
-    description: Show a pin in the menu's corner. A pinned menu stays open until you unpin it.
+    description: A pinned menu stays open until unpinned.
     x-showIf: {mode: {not: submenu}}
   backgroundColor:
     x-group: Style
@@ -171,7 +170,7 @@ properties:
         type: boolean
         title: Close when the pointer leaves
         default: true
-        description: Close shortly after the pointer leaves the menu. A pinned menu stays open.
+        description: A pinned menu stays open.
         x-showIf: {../mode: {not: submenu}}
       delay:
         x-group: Closing
@@ -181,7 +180,6 @@ properties:
         minimum: 0
         maximum: 5000
         x-unit: ms
-        description: How long after the pointer leaves the menu closes.
         x-showIf: {../mode: {not: submenu}, onLeave: true}
       onOutsideClick:
         x-group: Closing
