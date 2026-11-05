@@ -371,7 +371,6 @@ Found by the audits:
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
-- [The Clock's date and label keep their room while the time shrinks to nothing](issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
 - [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
 - [Parts shown in one mode are built hidden in every mode, in ten modules and parts](issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
