@@ -187,7 +187,8 @@ QtObject {
   // (xkb(sources, engines): axiom doesn't set the keyboard, the
   // compositor's own config does), its xkb part is an xkb source per
   // layout the compositor has ("xkb:<index>:<code>"), then the ime
-  // sources. Give it every source, as the compositor's list is written
+  // sources (each on its layout where the compositor has it, else on the
+  // first). Give it every source, as the compositor's list is written
   // from: a caller leaving some out (engines no framework runs) does so
   // after
   function effective(sources, layouts, engines) {
@@ -201,7 +202,18 @@ QtObject {
           "layout": code,
           "variant": "",
           "engine": ""
-        })).concat(list.filter(s => s.kind === "ime"));
+        })).concat(list.filter(s => s.kind === "ime").map(s => root._onCodes(s, codes)));
+  }
+
+  // An ime source on the compositor's own layouts: its typing layout kept
+  // when the compositor has it (their variants unknown), else the first
+  // (switching to one it lacks would ask for an index past its list)
+  function _onCodes(source, codes) {
+    const layout = codes.includes(root._text(source.layout)) ? root._text(source.layout) : "";
+    return Object.assign({}, source, {
+      "layout": layout,
+      "variant": ""
+    });
   }
 
   // The xkb sources alone (what a password field types through)

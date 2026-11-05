@@ -182,6 +182,9 @@ TestCase {
     const own = InputSources.effective(test.mixed, ["fr", "us"], true);
     compare(own.map(s => s.id), ["xkb:0:fr", "xkb:1:us", "mozc", "pinyin"], "the compositor's own layouts, then the engines");
     compare(own[0].layout, "fr");
+    compare(own[3].layout, "", "an engine's layout the compositor lacks: the first");
+    compare(InputSources.xkbIndex(own, own[3]), 0, "never an index past the compositor's list");
+    compare(InputSources.effective([xkbSource("x", "fr"), imeSource("p", "pinyin", "us", "intl")], ["us", "fr"], true)[2].layout, "us", "one the compositor has stays");
     compare(InputSources.effective([xkbSource("x", ""), imeSource("e", "")], [], true), [], "only usable ones");
   }
 

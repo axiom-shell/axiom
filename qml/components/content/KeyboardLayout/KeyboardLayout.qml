@@ -55,7 +55,7 @@ Card {
     StyledText {
       Layout.fillWidth: true
       elide: Text.ElideRight
-      text: root.live && root.current !== "" ? InputSourceManager.labelFor(root.current, "full") : I18n.tr("Keyboard layout")
+      text: root.live && root.current !== "" ? InputSourceManager.nameFor(root.current) : I18n.tr("Keyboard layout")
       textColor: area.containsMouse ? Theme.accent : Theme.foreground
     }
   }
