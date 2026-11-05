@@ -378,7 +378,9 @@ Singleton {
 
   function _attachmentPath(ext) {
     const dir = root.persistent ? root.chatDir + root.conversation.id : Paths.runtimePath + "chat/" + root.conversation.id;
-    return `${dir}/${Date.now().toString(36)}.${ext}`;
+    // Random as well as timed, as _blank's ids: files dropped together
+    // are named in the same millisecond
+    return `${dir}/${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}`;
   }
 
   function _attached(ok, path, mime, name) {

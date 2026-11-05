@@ -606,12 +606,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Images dropped together on the chat overwrite each other
-- **Where:** `qml/services/apps/ChatManager.qml:367` (`_attachmentPath`), `qml/components/content/Chat/Chat.qml:141` (`onDropped`)
-- **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
 ### An image sent without text to Anthropic carries a whitespace-only text block
 - **Where:** `backend/internal/chat/send.go:284` (`anthropicRequest`)
 - **What:** `send` allows a message with attachments and no text, and `anthropicRequest` always appends `{"type": "text", "text": orSpace(t.text())}`, so an image-only message sends the text `" "`. The Messages API rejects whitespace-only text blocks ("text content blocks must contain non-whitespace text"), so the reply fails as `bad_reply` where OpenAI-style and Gemini requests (which skip the text when there are images) succeed. PLAUSIBLE: one Anthropic request with an image and empty text settles it (not made: paid API). The shape came over unchanged from the old ChatProtocol. Fix: append the text block only when the text is non-empty or there's no image (`if text := t.text(); text != "" || len(content) == 0 { … orSpace(text) … }`), plus a TestBuild row with an image-only user turn.
