@@ -87,7 +87,7 @@ func TestDiscoverCalDAV(t *testing.T) {
 				return
 			}
 			if err != nil || !reflect.DeepEqual(got.Calendars, c.want) {
-				t.Errorf("got %+v\nwant %+v", got, c.want)
+				t.Errorf("got %+v, %v\nwant %+v", got, err, c.want)
 			}
 		})
 	}

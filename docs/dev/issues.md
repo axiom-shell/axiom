@@ -451,7 +451,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)
-- **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}` and no error, while the other parallel subtests (same `Service`, same account `ID: "acc"`) passed. 200 runs alone and 50 under `-race` all passed, so it's a flake under load, cause unknown: the subtests sharing one account id across parallel `Discover` calls is the first suspect.
+- **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}`, while the other parallel subtests passed. That message didn't print the error, but there was one: traced, `discoverCalDAV` returns no calendars without an error only when its last candidate, `/.well-known/caldav`, answers, and `davServer` 404s it. Ruled out (row 20): the shared account id `acc` (only a read-only `Secrets.Lookup` of a file no test writes); `CloseIdleConnections` on the shared `http.DefaultTransport` (the weather flake's cause), hammered beside the test for about 20 000 runs, never broke a request. Not reproduced in about 15 000 runs of the package under load (`-race`, `-cpu 1,2,4,8`). The test now prints the error: read it the next time it fails before changing anything.
 - **Size:** small
 - **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
 
