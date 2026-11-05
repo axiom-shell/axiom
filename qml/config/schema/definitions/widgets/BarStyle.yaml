@@ -92,7 +92,6 @@ properties:
     type: string
     title: Grouping
     default: separate
-    x-control: toggle
     enum: [separate, merged, powerline]
     x-enumLabels: {separate: Separate, merged: Merged, powerline: Powerline}
     x-beside: true
