@@ -102,6 +102,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 ### backend/: the axiom binary
 - [backend](backend/README.md): the Go binary (parent of the shell, owner of the config, the command line): what exists so far, building and checking it, its security rules, and the shared fixtures both sides replay.
 - [roadmap](backend/roadmap.md): the staged plan for moving the services' side effects (processes, files, sockets, HTTP, polling) into the binary: the end state, the rules for each move, and each stage's status.
+- [inputmethod](backend/inputmethod.md): the input method framework (fcitx5, ibus) from the daemon: finding it, following and switching its input method, pushing axiom's list, its options, outside edits, the `inputMethod` topic and `supports.inputMethod`.
 - [protocol](backend/protocol.md): how the shell and the binary talk: the environment, runtime files, the socket's calls and pushes, a session, topics, guards, and when to bump the protocol (every method and push: [generated/rpc.md](generated/rpc.md)).
 
 ### core/: config, services, schema, shared UI
@@ -205,6 +206,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [brightness](features/brightness.md): backlight / DDC, the module, OSD bars.
 - [networking-bluetooth](features/networking-bluetooth.md): Wi-Fi, wired, Bluetooth.
 - [vpn](features/vpn.md): NetworkManager's VPNs and Tailscale in one list, the secret agent.
+- [input-sources](features/input-sources.md): keyboard layouts and input method engines as one list (fcitx5, ibus): the widget and popout, the module, the OSD, switching, what the framework is given.
 - [drives](features/drives.md): removable drives through udisks2: the plug-in notification or mount, open, unlock, eject.
 - [tailscale](features/tailscale.md): the `tailscale` topic, Connect / Disconnect, the widget, popout and module.
 - [idle](features/idle.md): hypridle and idle inhibit.

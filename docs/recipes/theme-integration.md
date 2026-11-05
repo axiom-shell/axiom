@@ -58,7 +58,7 @@ foo:
 
 ## Verify
 - `go -C backend test ./internal/theme/...` (goldens, every shipped theme through every integration, the writer in a scratch home; the table against the schema)
-- `python3 tests/scripts/test_scripts.py HookupScript`: applies every hookup to empty configs, in a scratch home.
+- `go -C backend test ./internal/compositor/edit`: applies every schema hookup to empty configs, in a scratch home (`hookup_test.go`).
 - `scripts/dev/verify.sh` (schema, reader, generated docs, the Go checks)
 
 ## Docs to update

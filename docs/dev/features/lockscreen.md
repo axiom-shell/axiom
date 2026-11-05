@@ -80,7 +80,8 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
   - Display-only modules.
   - NowPlaying (media transport) and VolumeDials.
   - Power: suspend, restart, shut down through `SessionManager.sessionAction`; restart and shut down ask twice.
-  - Nothing that launches, dispatches, kills, writes files or shows private content.
+  - KeyboardLayout: switches the compositor's xkb layout (the compositor's layouts alone, an engine's own typing layout among them: the password types through no input method; [input sources](input-sources.md)). It's in the lock screen's library, not its default layout.
+  - Nothing else that launches, dispatches, kills, writes files or shows private content.
 - A new module stays off the lock screen unless it is added there deliberately.
 
 #### Password

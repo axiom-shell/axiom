@@ -345,16 +345,16 @@ Singleton {
   // --- Session and input ---
 
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
-  // SwayState.keyboard), or null
-  function withKeyboard(callback) {
+  // SwayState.keyboard), or null; `registry` names them
+  function withKeyboard(callback, registry) {
     const input = InputConfig.input;
-    const codes = input.keyboard.enabled ? input.keyboard.layout : root._configLayouts;
-    SwayIpcManager.json("get_inputs", inputs => callback(Array.isArray(inputs) ? SwayState.keyboard(inputs, codes) : null));
+    const codes = input.keyboard.enabled ? InputSources.xkb(InputConfig.sources, InputConfig.methodEnabled).layout : root._configLayouts;
+    SwayIpcManager.json("get_inputs", inputs => callback(Array.isArray(inputs) ? SwayState.keyboard(inputs, codes, registry) : null));
   }
 
-  // Switches every keyboard to its "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
-    SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${direction === "prev" ? "prev" : "next"}`, () => callback?.());
+  // Switches every keyboard to the layout at `index`, then calls back
+  function setKeyboardLayout(index, callback) {
+    SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${Math.max(0, Math.floor(Number(index) || 0))}`, () => callback?.());
   }
 
   // What can do what plain sway can't (CompositorManager.unsupportedNote).

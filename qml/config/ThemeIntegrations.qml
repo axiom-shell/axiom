@@ -9,6 +9,7 @@ QtObject {
 
   readonly property bool gtk: _c.gtk
   readonly property bool qt: _c.qt
+  readonly property bool fcitx5: _c.fcitx5
   readonly property bool kitty: _c.kitty
   readonly property bool alacritty: _c.alacritty
   readonly property bool foot: _c.foot

@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"os/exec"
 	"testing"
 
 	"github.com/axiom-shell/axiom/backend/internal/config"
@@ -76,5 +77,55 @@ func TestShellColors(t *testing.T) {
 	look := getAny(in.get("specLive"), "look")
 	if got := string(jsonx.MarshalCompact(getAny(look, "shadow"))); got != `{"size":8,"power":2,"color":"10101080","rgb":"101010","alpha":0.5,"baseAlpha":0.5,"strength":1,"soft":false}` {
 		t.Errorf("shadow: %s", got)
+	}
+}
+
+// The input method the session starts: none while off, its framework only
+// while installed (auto prefers fcitx5), and its switches as set.
+func TestInputMethodOf(t *testing.T) {
+	t.Parallel()
+	method := func(framework string) *jsonx.Object {
+		return jsonx.Obj("enabled", true, "framework", framework, "autostart", false, "legacyApps", true)
+	}
+	// Input.keyboard.method's schema defaults, turned on
+	defaults := jsonx.Obj("enabled", true, "framework", "fcitx5", "autostart", true, "legacyApps", false)
+	off := jsonx.Obj("enabled", false, "framework", "fcitx5", "autostart", true, "legacyApps", false)
+	for _, c := range []struct {
+		name      string
+		method    any
+		installed []string
+		want      string
+	}{
+		{"the default, installed", defaults, []string{"fcitx5"}, "fcitx5"},
+		{"the default, not installed", defaults, []string{"ibus"}, ""},
+		{"auto prefers fcitx5", method("auto"), []string{"fcitx5", "ibus"}, "fcitx5"},
+		{"auto takes ibus", method("auto"), []string{"ibus"}, "ibus"},
+		{"auto with neither", method("auto"), nil, ""},
+		{"ibus installed", method("ibus"), []string{"fcitx5", "ibus"}, "ibus"},
+		{"ibus not installed", method("ibus"), []string{"fcitx5"}, ""},
+		{"none", method("none"), []string{"fcitx5", "ibus"}, ""},
+		{"off", off, []string{"fcitx5", "ibus"}, ""},
+	} {
+		got := inputMethodOf(c.method, c.installed)
+		if f := got.Value("framework"); f != c.want {
+			t.Errorf("%s: framework %v, want %q", c.name, f, c.want)
+		}
+		if wantOn := c.method == defaults || c.method == off; got.Value("autostart") != wantOn || got.Value("legacyApps") != !wantOn {
+			t.Errorf("%s: switches %v", c.name, got)
+		}
+	}
+}
+
+// The frameworks installed are found by their programs
+func TestFrameworks(t *testing.T) {
+	t.Parallel()
+	m := &Manager{o: Options{LookPath: func(p string) (string, error) {
+		if p == "ibus-daemon" {
+			return "/usr/bin/ibus-daemon", nil
+		}
+		return "", exec.ErrNotFound
+	}}}
+	if got := m.frameworks(); len(got) != 1 || got[0] != "ibus" {
+		t.Errorf("frameworks %v, want [ibus]", got)
 	}
 }

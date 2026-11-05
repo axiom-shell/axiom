@@ -9,7 +9,7 @@ Keybinds are edited on the overlay's **Keybinds** page: the binds by section on 
 **All binds** is the quick reference: every bind your compositor has, axiom's and your own, by section and grouped under their modifiers (click a group to fold it), with direction and number sets folded into one row. Press a combo in **Look up a combo** to see what it does, or bind it if nothing does. **Keyboard** shows the same binds on a keyboard under the modifiers you pick. Click one of axiom's binds in either to edit it. The Cheatsheet module shows the reference on any page, as a list or a keyboard.
 
 A bind can run:
-- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light, do not disturb, the microphone), **Tools** (clipboard history, emoji, calculator, notes, calendar, chat, pomodoro, stopwatch and timers), media keys and switching the audio output
+- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light, do not disturb, the microphone), **Tools** (clipboard history, emoji, calculator, notes, calendar, chat, pomodoro, stopwatch and timers), media keys, switching the audio output and the next or previous input source
 - a window action (focus, move, resize, close, fullscreen, floating, special workspaces, mouse drag)
 - a raw command in the compositor's own language: a Hyprland dispatcher as Lua (`hl.dsp.layout("swapsplit")`), a sway command or a niri action. It's kept for the compositor it was written for, and skipped (with a warning) on the others
 - a command
@@ -62,6 +62,7 @@ axiom ipc <target> <function> [args]
 | `wifi` | `enable`, `disable`, `toggle` |
 | `bluetooth` | `enable`, `disable`, `toggle` |
 | `vpn` | `toggle` (the VPN last used, as the Vpn widget's click) |
+| `inputSources` | `next`, `prev` (the next or previous input source: the **Next / Previous input source** keybind actions), `set <id>` (an `Input.keyboard.sources` id), `list` (the sources as JSON, the current one marked) |
 | `drives` | `list` (the removable drives as JSON), `mount <id>` (a drive's volumes, or one volume), `eject <id>`, `ejectAll` |
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |

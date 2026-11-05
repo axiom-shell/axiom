@@ -26,46 +26,28 @@ TestCase {
   }
 
   function test_layoutSwitched() {
-    const two = ["us", "de"];
-    verify(OSDItems.layoutSwitched({
-      "layouts": two,
-      "index": 0
-    }, {
-      "layouts": ["us", "de"],
-      "index": 1
-    }));
-    verify(!OSDItems.layoutSwitched({
-      "layouts": two,
-      "index": 0
-    }, {
-      "layouts": two,
-      "index": 0
-    }), "the same layout");
-    verify(!OSDItems.layoutSwitched({
-      "layouts": two,
-      "index": 0
-    }, {
-      "layouts": ["us", "fr"],
-      "index": 1
-    }), "a new list is a config reload");
-    verify(!OSDItems.layoutSwitched({
-      "layouts": [],
-      "index": 0
-    }, {
-      "layouts": two,
-      "index": 1
-    }), "the first reading");
-    verify(!OSDItems.layoutSwitched({
-      "layouts": ["us"],
-      "index": 0
-    }, {
-      "layouts": ["us"],
-      "index": 0
-    }), "one layout never shows");
-    verify(!OSDItems.layoutSwitched(null, {
-      "layouts": two,
-      "index": 1
-    }));
+    const two = ["us", "mozc"];
+    const at = (ids, current) => ({
+          "ids": ids,
+          "current": current,
+          "label": ""
+        });
+    verify(OSDItems.layoutSwitched(at(two, "us"), at(["us", "mozc"], "mozc")), "an input method's switch too");
+    verify(!OSDItems.layoutSwitched(at(two, "us"), at(two, "us")), "the same source");
+    verify(!OSDItems.layoutSwitched(at(two, "us"), at(["us", "fr"], "fr")), "a new list is a config reload");
+    verify(!OSDItems.layoutSwitched(at([], ""), at(two, "mozc")), "the first reading");
+    verify(!OSDItems.layoutSwitched(at(["us"], "us"), at(["us"], "us")), "one source never shows");
+    verify(!OSDItems.layoutSwitched(at(two, "us"), at(two, "")), "none current");
+    verify(!OSDItems.layoutSwitched(null, at(two, "mozc")));
+    const after = (focusAge, switchAge) => Object.assign(at(two, "mozc"), {
+        "focusAge": focusAge,
+        "switchAge": switchAge
+      });
+    verify(!OSDItems.layoutSwitched(at(two, "us"), after(120, -1)), "the focused window's own input method");
+    verify(!OSDItems.layoutSwitched(at(two, "us"), after(0, 5000)), "an old switch of axiom's doesn't count");
+    verify(OSDItems.layoutSwitched(at(two, "us"), after(120, 40)), "axiom switched as the focus changed");
+    verify(OSDItems.layoutSwitched(at(two, "us"), after(OSDItems.focusFollowMs, -1)), "a focus change long before");
+    verify(OSDItems.layoutSwitched(at(two, "us"), after(-1, -1)), "no focus change at all");
   }
 
   function test_tile() {
@@ -89,18 +71,29 @@ TestCase {
     }).hidden, "no LEDs");
 
     const layout = OSDItems.tile("keyboardLayout", {
-      "layouts": ["us", "de"],
-      "index": 1
+      "ids": ["us", "de"],
+      "current": "de",
+      "label": "DE"
     });
-    compare([layout.label, layout.notable, layout.hidden], ["DE", true, false], "its code, unusual past the first");
+    compare([layout.label, layout.notable, layout.hidden], ["DE", true, false], "its label, unusual past the first");
     verify(!OSDItems.tile("keyboardLayout", {
-      "layouts": ["us", "de"],
-      "index": 0
+      "ids": ["us", "de"],
+      "current": "us",
+      "label": "US"
     }).notable);
+    const engine = OSDItems.tile("keyboardLayout", {
+      "ids": ["us", "mozc"],
+      "current": "mozc",
+      "label": "あ",
+      "icon": "translate"
+    });
+    compare([engine.label, engine.icon], ["あ", "translate"], "an engine's own label, its kind's icon");
+    compare(layout.icon, "keyboard", "without one, a keyboard");
     verify(OSDItems.tile("keyboardLayout", {
-      "layouts": ["us"],
-      "index": 0
-    }).hidden, "one layout");
+      "ids": ["us"],
+      "current": "us",
+      "label": "US"
+    }).hidden, "one source");
 
     const muted = OSDItems.tile("microphone", {
       "muted": true,
@@ -298,8 +291,8 @@ TestCase {
           "muted": !on,
           "plugged": on,
           "profile": "balanced",
-          "layouts": ["us", "de"],
-          "index": 0,
+          "ids": ["us", "de"],
+          "current": "us",
           "text": "x",
           "apps": on ? ["Firefox"] : []
         });

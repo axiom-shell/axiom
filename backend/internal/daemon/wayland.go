@@ -27,6 +27,10 @@ type waylandState struct {
 	// Clipboard: the clipboard control bound, "ext", "wlr" or ""
 	// (clipboard.*)
 	Clipboard string `json:"clipboard"`
+	// InputMethod: the compositor offers input methods (an IME's global,
+	// zwp_input_method_manager_v2), so fcitx5 or ibus can type in its
+	// windows (supports.inputMethod; inputMethod.*)
+	InputMethod bool `json:"inputMethod"`
 }
 
 func (d *Daemon) waylandNow() waylandState {
@@ -36,7 +40,7 @@ func (d *Daemon) waylandNow() waylandState {
 	if !ready || failed {
 		return waylandState{Ready: ready}
 	}
-	return waylandState{Ready: ready, Typing: d.keyboard.Available(), NightLight: d.nightLight.Mode(), Clipboard: d.clip.Protocol()}
+	return waylandState{Ready: ready, Typing: d.keyboard.Available(), NightLight: d.nightLight.Mode(), Clipboard: d.clip.Protocol(), InputMethod: d.wayland.inputMethod()}
 }
 
 // pushWayland pushes the connection's state when it changed (its clients
@@ -108,13 +112,20 @@ func (d *Daemon) newNightLight() {
 	})
 }
 
+// The input method protocol's global: the daemon binds nothing of it (the
+// IME does), it only reports that the compositor offers it
+const inputMethodGlobal = "zwp_input_method_manager_v2"
+
 // waylandSession remembers the daemon's Wayland connection for what asks
 // about the compositor behind it, and whether it's ready; a client.Client
 // binding nothing, last on the connection so its Ready follows the others'.
+// It also watches the globals only reported, never bound.
 type waylandSession struct {
 	mu    sync.Mutex
 	s     *client.Session
 	ready bool
+	// imGlobals are the input method globals offered, by name
+	imGlobals map[uint32]bool
 	// failed: the connection failed after Start (a protocol error)
 	failed bool
 	pushed *waylandState
@@ -132,15 +143,43 @@ func (w *waylandSession) CompositorPID() int {
 	return w.s.Conn.PeerPID()
 }
 
-func (w *waylandSession) Interfaces() []string { return nil }
+func (w *waylandSession) Interfaces() []string { return []string{inputMethodGlobal} }
 func (w *waylandSession) Start(s *client.Session) {
 	w.mu.Lock()
 	w.s, w.ready, w.failed = s, false, false
+	w.imGlobals = map[uint32]bool{}
 	w.mu.Unlock()
 	w.onChange()
 }
-func (w *waylandSession) Global(client.Global) {}
-func (w *waylandSession) Removed(uint32)       {}
+
+// Global and Removed see only the input method's global (Interfaces):
+// told once ready, so a compositor adding it later is heard.
+func (w *waylandSession) Global(g client.Global) {
+	w.mu.Lock()
+	w.imGlobals[g.Name] = true
+	ready := w.ready
+	w.mu.Unlock()
+	if ready {
+		w.onChange()
+	}
+}
+
+func (w *waylandSession) Removed(name uint32) {
+	w.mu.Lock()
+	delete(w.imGlobals, name)
+	ready := w.ready
+	w.mu.Unlock()
+	if ready {
+		w.onChange()
+	}
+}
+
+// inputMethod: the compositor offers the input method protocol.
+func (w *waylandSession) inputMethod() bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return len(w.imGlobals) > 0
+}
 func (w *waylandSession) Ready() {
 	w.mu.Lock()
 	w.ready = true

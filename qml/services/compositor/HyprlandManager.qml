@@ -346,14 +346,15 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
   // shapes that don't depend on it (HyprState) ---
 
   // Calls back with the main keyboard's layouts ({ layouts, index, keymap },
-  // HyprState.keyboard), or null
-  function withKeyboard(callback) {
+  // HyprState.keyboard), or null. Hyprland reports the codes itself, so
+  // `registry` goes unused
+  function withKeyboard(callback, registry) {
     root._json("devices", devices => callback(HyprState.keyboard(devices)));
   }
 
-  // Switches every keyboard to its "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
-    root._request("switchxkblayout all " + direction, () => callback?.());
+  // Switches every keyboard to the layout at `index`, then calls back
+  function setKeyboardLayout(index, callback) {
+    root._request("switchxkblayout all " + Math.max(0, Math.floor(Number(index) || 0)), () => callback?.());
   }
 
   // Calls back with each monitor's layer surfaces (HyprState.layerRects),

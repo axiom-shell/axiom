@@ -24,13 +24,30 @@ QtObject {
     return before[key] !== after[key];
   }
 
-  // Whether the layout switched between two keyboard states ({ layouts,
-  // index }): the same list of more than one layout, another index. A
-  // changed list is a config reload, not a switch
+  // How long after the focused window changes a change of the input
+  // source is the window's own (ms): fcitx5 keeps an input method per
+  // window (shareState No), so focusing one can change `current`
+  readonly property int focusFollowMs: 1000
+
+  // Whether the input source switched between two states ({ ids,
+  // current, focusAge, switchAge }: the keyboardLayout state, with the ms
+  // since the focused window changed and since axiom last switched, each
+  // negative or missing for never): the same list of more than one
+  // source, another one current (an input method's switch too). A changed
+  // list is a config reload, not a switch; a change within focusFollowMs
+  // of a focus change is the window's input method, unless axiom switched
+  // within that time too
   function layoutSwitched(before, after) {
-    if (!before || !after || after.layouts.length < 2)
+    if (!before || !after || (after.ids ?? []).length < 2 || after.current === "")
       return false;
-    return JSON.stringify(before.layouts) === JSON.stringify(after.layouts) && before.index !== after.index;
+    if (root._within(after.focusAge) && !root._within(after.switchAge))
+      return false;
+    return JSON.stringify(before.ids) === JSON.stringify(after.ids) && before.current !== after.current;
+  }
+
+  function _within(age) {
+    const ms = Number(age);
+    return Number.isFinite(ms) && ms >= 0 && ms < root.focusFollowMs;
   }
 
   // A status's tile from its state:
@@ -45,7 +62,9 @@ QtObject {
   // of the ordinary (the row's "What's unusual"), `hidden`
   // nothing to show (no Wi-Fi, one layout). States:
   //   capsLock / numLock / scrollLock { available, on },
-  //   keyboardLayout { layouts, index },
+  //   keyboardLayout { ids (the input sources'), current (the one in
+  //   use, "" for none), label (its own: "DE", "あ"), icon (its kind's:
+  //   "keyboard", "translate") },
   //   audio / microphone { muted, name, detail, icon (the device's,
   //   unmuted), device (its identity, deviceKey's) }, powerProfile { profile: "powerSaver" |
   //   "balanced" | "performance" | "" }, charger { available, plugged,
@@ -95,13 +114,13 @@ QtObject {
       }
     case "keyboardLayout":
       {
-        const layouts = s.layouts ?? [];
+        const ids = s.ids ?? [];
         return Object.assign(t, {
-          "icon": "keyboard",
-          "label": String(layouts[s.index] ?? "").toUpperCase(),
+          "icon": s.icon || "keyboard",
+          "label": String(s.label ?? ""),
           "on": true,
-          "notable": (s.index ?? 0) > 0,
-          "hidden": layouts.length < 2
+          "notable": ids.length > 0 && (s.current ?? "") !== "" && s.current !== ids[0],
+          "hidden": ids.length < 2
         });
       }
     case "audio":

@@ -68,6 +68,29 @@ TestCase {
     compare(keys(SettingsSearch.filter(index, "pixels", changed, true)), ["Bar:Bar.height"], "a query narrows the changed set");
   }
 
+  // A row another one draws (the input method switch, inside the
+  // layouts row) is found, and listed changed, as the row drawing it
+  function test_drawn_by() {
+    const drawn = row(["Kb", "method", "enabled"], "Type other languages", "");
+    drawn.drawnBy = "Kb.sources";
+    const index = SettingsSearch.index([
+      {
+        "key": "Kb",
+        "title": "Keyboard",
+        "section": "Input",
+        "rows": [row(["Kb", "sources"], "Layouts", ""), drawn]
+      }
+    ], tr);
+    compare(keys(SettingsSearch.filter(index, "other languages", {}, false)), ["Kb:Kb.sources"]);
+    compare(keys(SettingsSearch.filter(index, "", {
+      "Kb.method.enabled": true
+    }, true)), ["Kb:Kb.sources"]);
+    compare(keys(SettingsSearch.filter(index, "", {
+      "Kb.method.enabled": true,
+      "Kb.sources": true
+    }, true)), ["Kb:Kb.sources"], "listed once");
+  }
+
   function test_empty() {
     const index = SettingsSearch.index(groups, tr);
     compare(SettingsSearch.filter(index, "zzz", {}, false), []);

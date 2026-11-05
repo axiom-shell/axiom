@@ -302,16 +302,32 @@ func (t *Tables) IsAgentCommand(command any) bool {
 	return false
 }
 
-// autostartCommands are a session's autostart commands that start (enabled,
-// not empty; a plain hypridle left out while axiom runs its own idle, a
-// polkit agent while it's the agent), trimmed
+// sameProgram is whether command runs the program im starts (its first
+// word, by name or path): a user's own "fcitx5" or "/usr/bin/ibus-daemon -d"
+func sameProgram(command, im string) bool {
+	program := func(c string) string {
+		return agentQuotes.ReplaceAllString(agentPath.ReplaceAllString(spaceRun.Split(trim(c), 2)[0], ""), "")
+	}
+	return program(command) == program(im)
+}
+
+// autostartCommands are a session's autostart commands that start: the
+// input method's framework (start.inputMethod, its command) first, then
+// the user's (enabled, not empty; a plain hypridle left out while axiom
+// runs its own idle, a polkit agent while it's the agent, one starting the
+// framework while axiom starts it), trimmed
 func autostartCommands(autostart, start any, isAgent func(string) bool) []string {
 	var out []string
+	im := trim(str(or(get(start, "inputMethod"), "")))
+	if im != "" {
+		out = append(out, im)
+	}
 	for _, e := range items(autostart) {
 		command := trim(str(get(e, "command")))
 		if !truthy(get(e, "enabled")) || command == "" ||
 			(truthy(get(start, "idle")) && command == "hypridle") ||
-			(truthy(get(start, "polkit")) && isAgent(str(get(e, "command")))) {
+			(truthy(get(start, "polkit")) && isAgent(str(get(e, "command")))) ||
+			(im != "" && sameProgram(command, im)) {
 			continue
 		}
 		out = append(out, command)

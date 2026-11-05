@@ -14,7 +14,7 @@ This doc covers what runs at the login screen and the data it reads: the bundle 
 - `GreeterBundle.exportConfig` (pure) builds the bundle from:
   - the `Greeter`, `Appearance`, `Interface` (so its controls are sized and rounded as on the desktop), `General` and `Weather` sections (its wallpaper blur is `Greeter.layout.backdrop.blur`, its own since config v67);
   - `Compositor.mode` and `Monitors.items`;
-  - the `Input` options marked `x-greeter` (the part switches, keyboard, mouse, touchpad, cursor);
+  - the `Input` options marked `x-greeter` (the part switches, the input sources, keyboard, mouse, touchpad, cursor): the greeter runs no input method, so its compositor takes only the sources' xkb layouts (`render.XkbLayouts`), the ones the password is typed on;
   - `theme.json` (`ThemeManager.currentTheme`);
   - each wallpaper showing (`ThemeManager.shownWallpapers`, exported as fixed ones in `fixed` mode, so the greeter shows what the desktop does), copied to `wallpapers/<md5 of its url>.<ext>` (cp + mv, stale ones removed). The bundle's `Appearance` names these copies.
   - the cursor theme's companion (`CursorThemeManager.xcursorTheme`, when it is one: `axiom-cursor-<theme>` in the user's `$XDG_DATA_HOME/icons`, which greetd's user can't read), copied with its links followed to `icons/`.
@@ -72,10 +72,10 @@ Built on `Quickshell.Services.Greetd`.
   - It remembers the user (with `rememberUser`) and their session.
 - **Other:**
   - `power(action)` through `systemctl`.
-  - Keyboard layouts through `CompositorManager.withKeyboard` and `cycleKeyboardLayout`.
+  - Keyboard layouts are `InputSourceManager`'s, as in the session: there it serves the compositor's layouts alone (no input method runs at the login screen), pushes nothing to a framework and follows `keyboardLayoutChanged` ([input sources](input-sources.md)).
   - `avatarOf(name)` from AccountsService's icons.
 - **At start** (but not when windowed), `_applyCompositor`:
-  - it hands the bundle's monitor profiles and Input values to axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`, `daemon/compositorsocket.go`): on Hyprland axiom evals `render.GreeterLua`, one `hl.config` of the `x-greeter` input options whose parts are on (the touchpad's acceleration, speed and left-handed as an `hl.device` per touchpad: [Hyprland config modes](../hyprland/config-modes.md) › Input), then sets the cursor while the cursor part is on with a theme (`setcursor`, even when Hyprland refused the Lua); on sway it sends the live `input` / `seat` commands (`render.SwayInputLines`), the cursor theme being its companion when a folder of `XCURSOR_PATH` holds it (`greeter-session.sh` puts the bundle's `icons/` first on sway's). The keyboard layouts are read on its reply (`setUpGreeter`'s `then`, failed or not), since the compositor holds its default ones until then; windowed, at once;
+  - it hands the bundle's monitor profiles and Input values to axiom (`CompositorManager.setUpGreeter` → `greeter.compositor`, `daemon/compositorsocket.go`): on Hyprland axiom evals `render.GreeterLua`, one `hl.config` of the `x-greeter` input options whose parts are on (the touchpad's acceleration, speed and left-handed as an `hl.device` per touchpad: [Hyprland config modes](../hyprland/config-modes.md) › Input), then sets the cursor while the cursor part is on with a theme (`setcursor`, even when Hyprland refused the Lua); on sway it sends the live `input` / `seat` commands (`render.SwayInputLines`), the cursor theme being its companion when a folder of `XCURSOR_PATH` holds it (`greeter-session.sh` puts the bundle's `icons/` first on sway's). The keyboard layouts are read again on its reply (`setUpGreeter`'s `then`: `InputSourceManager.refresh`, failed or not), since the compositor holds its default ones until then; windowed, at once;
   - on Hyprland and sway the greeter's axiom also keeps the monitors in the saved profile for what's connected for the greeter's lifetime: the first `greeter.compositor` starts its own `outputs.Tracker` (`greeterProfiles`, `daemon/greeter.go`), which reads the outputs again after each hotplug and applies the profile for them (`manager.ProfileWatch`, as the session's config layer does). A windowed greeter sends no `greeter.compositor`, so it never touches the session's outputs.
 
 ### Surfaces and modules
@@ -90,7 +90,7 @@ Built on `Quickshell.Services.Greetd`.
     - In a slot shorter than one field, they shrink to fit.
   - `Session`: in a slot shorter than its card, just the field, with no card.
   - `Power`: restart and shut down ask twice. It is also on the lock screen.
-  - `KeyboardLayout`.
+  - `KeyboardLayout` (also on the lock screen and in the overlay, edge menus and the desktop): the compositor's layouts alone here, a click or the wheel switching ([input sources](input-sources.md)).
 - **Solid:** in greeter mode `Appearance.compositorBlurs` is false (`CompositorManager`), so every surface is opaque and nothing frosts; `GreeterSurface` also sets `frost: false`, so the layouts editor's preview isn't frosted either, though its cards keep the session's translucency (`Appearance.fill` is global). The wallpaper still follows `Greeter.layout.backdrop.blur` (Qt's own blur, needing nothing of the compositor).
 - **Display modules** that list `greeter` in `x-hosts`: ClockCalendar, Greeting, Weather, Battery, Network, Palette, ColorSwatch.
 - **Inert outside the greeter:** every greeter module is inert unless `host.kind === "greeter" && !host.preview && Paths.greeter`, so the user's session never talks to greetd.

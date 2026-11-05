@@ -84,9 +84,13 @@ Singleton {
   // What the compositor can do, by capability (contract.md › Capabilities):
   // false for anything the backend doesn't say, and for what
   // AXIOM_COMPOSITOR_OFF ("focusGrab,blur") turns off, so the
-  // fallbacks can be tried on a compositor that has them
+  // fallbacks can be tried on a compositor that has them. `inputMethod`
+  // is the daemon's Wayland registry's (WaylandManager), with or without
+  // a backend
   readonly property var supports: {
-    const own = root.backend?.supports ?? {};
+    const own = Object.assign({}, root.backend?.supports ?? {}, {
+      "inputMethod": WaylandManager.inputMethod
+    });
     const off = String(Quickshell.env("AXIOM_COMPOSITOR_OFF") ?? "").split(",").map(name => name.trim());
     return Object.keys(own).reduce((result, name) => {
       result[name] = own[name] === true && !off.includes(name);
@@ -322,18 +326,20 @@ Singleton {
   }
 
   // Calls back with the main keyboard's layouts ({ layouts, index,
-  // keymap }), or null
-  function withKeyboard(callback) {
+  // keymap }), or null. `registry` (the xkb registry, input.layouts) gives
+  // the codes of layouts a backend knows only by full name (niri, sway)
+  function withKeyboard(callback, registry) {
     if (root.backend)
-      root.backend.withKeyboard(callback);
+      root.backend.withKeyboard(callback, registry ?? null);
     else
       callback(null);
   }
 
-  // Switches every keyboard to its "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
+  // Switches every keyboard to the layout at `index` (into withKeyboard's
+  // layouts), then calls back
+  function setKeyboardLayout(index, callback) {
     if (root.backend)
-      root.backend.cycleKeyboardLayout(direction, callback);
+      root.backend.setKeyboardLayout(index, callback);
     else
       callback?.();
   }

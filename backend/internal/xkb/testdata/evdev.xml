@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xkbConfigRegistry SYSTEM "xkb.dtd">
+<xkbConfigRegistry version="1.1">
+  <modelList>
+    <model>
+      <configItem>
+        <name>pc105</name>
+        <description>Generic 105-key PC</description>
+      </configItem>
+    </model>
+  </modelList>
+  <layoutList>
+    <layout>
+      <configItem>
+        <name>us</name>
+        <!-- Keyboard indicator for English layouts -->
+        <shortDescription>en</shortDescription>
+        <description>English (US)</description>
+        <countryList>
+          <iso3166Id>US</iso3166Id>
+        </countryList>
+        <languageList>
+          <iso639Id>eng</iso639Id>
+        </languageList>
+      </configItem>
+      <variantList>
+        <variant>
+          <configItem>
+            <name>dvorak</name>
+            <description>English (Dvorak)</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>chr</name>
+            <shortDescription>chr</shortDescription>
+            <description>Cherokee</description>
+            <languageList>
+              <iso639Id>chr</iso639Id>
+            </languageList>
+          </configItem>
+        </variant>
+      </variantList>
+    </layout>
+    <layout>
+      <configItem>
+        <name>de</name>
+        <shortDescription>de</shortDescription>
+        <description>German</description>
+        <languageList>
+          <iso639Id>ger</iso639Id>
+        </languageList>
+      </configItem>
+      <variantList/>
+    </layout>
+    <layout>
+      <configItem>
+        <name></name>
+        <description>Nameless</description>
+      </configItem>
+    </layout>
+  </layoutList>
+  <optionList>
+    <group allowMultipleSelection="true">
+      <configItem>
+        <name>caps</name>
+        <description>Caps Lock behavior</description>
+      </configItem>
+    </group>
+  </optionList>
+</xkbConfigRegistry>

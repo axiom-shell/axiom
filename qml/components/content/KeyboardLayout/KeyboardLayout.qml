@@ -3,27 +3,52 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services.session
+import qs.services.system
 import qs.components.reusable
 import qs.components.content.base
 
-// The greeter's keyboard layout (x-hosts: greeter only): the active one,
-// and a click switches to the next (the layouts the greeter's compositor
-// has: Input's while its keyboard part is on, else its own). In the layouts
-// editor's preview it shows a stand-in.
+// The input source in use (InputSourceManager), by its full name: a click
+// switches to the next one, a right click or the wheel steps either way.
+// On the lock screen and the login screen only the xkb sources: a password
+// field types through the compositor's layout alone, never an input
+// method. In the layouts editor's preview it shows a stand-in.
 Card {
   id: root
 
-  readonly property bool live: root.host?.kind === "greeter" && root.host.preview !== true && Paths.greeter
-  readonly property bool canSwitch: root.live && GreetdManager.layouts.length > 1
+  readonly property bool live: root.host?.preview !== true
+  readonly property bool xkbOnly: ["lockscreen", "greeter"].includes(root.host?.kind ?? "")
+  readonly property string current: InputSourceManager.currentFor(root.xkbOnly)
+  readonly property bool canSwitch: root.live && InputSourceManager.sourcesFor(root.xkbOnly).length > 1
+
+  // Switches made in fcitx5 itself are heard without a tray too (not
+  // for the layouts editor's stand-in, nor where only the compositor's
+  // layout shows)
+  Component.onCompleted: {
+    if (root.live && !root.xkbOnly)
+      InputSourceManager.acquire(root);
+  }
+  Component.onDestruction: InputSourceManager.release(root)
+
+  function _step(direction) {
+    if (direction < 0)
+      InputSourceManager.prev(root.xkbOnly);
+    else
+      InputSourceManager.next(root.xkbOnly);
+  }
 
   MouseArea {
     id: area
     anchors.fill: parent
     enabled: root.canSwitch
     hoverEnabled: true
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
     cursorShape: root.canSwitch ? Qt.PointingHandCursor : Qt.ArrowCursor
-    onClicked: GreetdManager.nextLayout()
+    onClicked: mouse => root._step(mouse.button === Qt.RightButton ? -1 : 1)
+  }
+
+  NotchWheel {
+    enabled: root.canSwitch
+    onStepped: direction => root._step(direction)
   }
 
   RowLayout {
@@ -32,14 +57,14 @@ Card {
     spacing: Widget.spacing
 
     StyledIcon {
-      text: "keyboard"
+      text: root.live ? InputSourceManager.iconFor(root.current) : "keyboard"
       textColor: area.containsMouse ? Theme.accent : Theme.foreground
     }
 
     StyledText {
       Layout.fillWidth: true
       elide: Text.ElideRight
-      text: root.live ? GreetdManager.activeLayout : I18n.tr("Keyboard layout")
+      text: root.live && root.current !== "" ? InputSourceManager.nameFor(root.current) : I18n.tr("Keyboard layout")
       textColor: area.containsMouse ? Theme.accent : Theme.foreground
     }
   }

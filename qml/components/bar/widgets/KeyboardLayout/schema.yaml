@@ -1,8 +1,8 @@
 label: Keyboard layout
-link: {setting: Input.keyboard.layout}
+link: {setting: Input}
 icon: keyboard
 group: System
-popout: menu
+popout: {variant: own, enabled: {description: List the input sources when hovered; a click picks one.}}
 colors: standard
 settings:
   format:
@@ -10,9 +10,15 @@ settings:
     title: Format
     default: short
     enum: [short, full]
-    description: Layout code (US) or full keymap name (English (US)).
+    x-enumLabels: {short: Short, full: Full name}
+    description: A layout's code (DE) or its full name (German). An input method shows its own label (あ) either way.
+  showIcon:
+    type: boolean
+    title: Show icon
+    default: true
+    description: A keyboard for a layout, a translate mark for an input method.
   hideSingle:
     type: boolean
     title: Hide single layout
     default: false
-    description: Hide the widget when only one layout is configured.
+    description: Hide the widget when there's only one input source.

@@ -336,8 +336,8 @@ layer-rule {
 input {
     keyboard {
         xkb {
-            layout "us"
-            variant ""
+            layout "us,de"
+            variant ",neo"
             options ""
         }
         repeat-rate 50

@@ -179,9 +179,9 @@ function M.input()
   hl.config({
     input = {
       accel_profile = "flat",
-      kb_layout = "us",
+      kb_layout = "us,de",
       kb_options = "",
-      kb_variant = "",
+      kb_variant = ",neo",
       left_handed = false,
       numlock_by_default = true,
       repeat_delay = 300,

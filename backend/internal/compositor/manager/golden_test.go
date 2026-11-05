@@ -56,9 +56,10 @@ func repo(t *testing.T) (*render.Tables, any) {
 // goldenInputs are what the layer is made of for kind: testdata/config.json
 // (a config's sections the layer reads) with testdata/facts.json (what a
 // shell sent as compositor.inputs, its machine's paths and names made
-// generic) and the one output its profile names connected, decoded as the
-// daemon decodes them
-func goldenInputs(t *testing.T, kind string) Inputs {
+// generic), fcitx5 installed (the daemon's Facts.Frameworks), Input.keyboard.method
+// on unless noIM, and the one output its profile names connected, decoded as the daemon
+// decodes them
+func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join("testdata", "facts.json"))
 	if err != nil {
@@ -69,6 +70,7 @@ func goldenInputs(t *testing.T, kind string) Inputs {
 		t.Fatalf("compositor.inputs doesn't decode the shell's facts: %v", err)
 	}
 	f.Kind = kind
+	f.Frameworks = []string{"fcitx5"}
 	data, err = os.ReadFile(filepath.Join("testdata", "config.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -76,6 +78,9 @@ func goldenInputs(t *testing.T, kind string) Inputs {
 	cfg, err := jsonx.Unmarshal(data)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if len(noIM) > 0 && noIM[0] {
+		getAny(getAny(getAny(cfg, "Input"), "keyboard"), "method").(*jsonx.Object).Set("enabled", false)
 	}
 	return buildInputs(cfg.(*jsonx.Object), &f, []render.Output{{Name: "DP-1", Description: "Example Display 0001"}})
 }
@@ -123,6 +128,10 @@ func TestGoldenFiles(t *testing.T) {
 				"released-included" + c.ext: w.releasedText(in, "included"),
 				"empty-module" + c.ext:      w.emptyModuleText(),
 			}
+			// With Input.keyboard.method off (fcitx5 installed): no input method
+			// variables, the user's own fcitx5 autostart line kept
+			noIM := goldenInputs(t, c.kind, true)
+			files["managed-no-im"+c.ext] = w.managedText(noIM, noIM.get("specFile"))
 			if live := w.liveLines(in, in.get("specLive")); len(live) > 0 {
 				files["live.txt"] = strings.Join(live, "\n") + "\n"
 			}

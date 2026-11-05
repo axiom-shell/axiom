@@ -55,6 +55,8 @@ func (d *Daemon) sources() []topics.Source {
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 		weather.Source(weather.Options{Log: d.opts.Log}),
 		lockkeys.Source(lockkeys.Options{}),
+		// (nil in BuildContract: only its shapes are read)
+		d.inputMethod.Source(),
 	}, d.opts.topics...)
 }
 

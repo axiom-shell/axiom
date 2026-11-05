@@ -44,7 +44,7 @@ Loader {
   function toggle() {
     switch (root.type) {
     case "keyboardLayout":
-      KeyboardLayoutManager.cycle("next");
+      InputSourceManager.next(false);
       break;
     case "audio":
       AudioManager.toggleMute();
@@ -96,6 +96,17 @@ Loader {
     }
   }
 
+  // The input sources' state (OSDItems' keyboardLayout): the ids, the
+  // current one, its label and its kind's icon
+  function _sourcesState() {
+    return {
+      "ids": InputSourceManager.sources.map(s => s.id),
+      "current": InputSourceManager.current,
+      "label": InputSourceManager.labelFor(InputSourceManager.current, "short"),
+      "icon": InputSourceManager.iconFor(InputSourceManager.current)
+    };
+  }
+
   // Its state now, for OSDItems.tile: reads only its own type's service
   function _state() {
     switch (root.type) {
@@ -115,10 +126,7 @@ Loader {
         "on": LockKeysManager.scrollLock
       };
     case "keyboardLayout":
-      return {
-        "layouts": KeyboardLayoutManager.layouts,
-        "index": KeyboardLayoutManager.layoutIndex
-      };
+      return root._sourcesState();
     case "audio":
     case "microphone":
       {
@@ -335,26 +343,43 @@ Loader {
     Item {
       id: layout
       property var _last: null
+      // When the focused window last changed (ms, 0 for not yet): a
+      // change following it is the window's own input method
+      property double _focusedAt: 0
 
       function _check() {
-        const now = {
-          "layouts": KeyboardLayoutManager.layouts,
-          "index": KeyboardLayoutManager.layoutIndex
-        };
+        const at = Date.now();
+        const age = since => since > 0 ? at - since : -1;
+        const now = Object.assign(root._sourcesState(), {
+          "focusAge": age(layout._focusedAt),
+          "switchAge": age(InputSourceManager.switchedAt)
+        });
         const switched = OSDItems.layoutSwitched(layout._last, now);
         layout._last = now;
         if (switched)
           root._report();
       }
 
-      Component.onCompleted: layout._check()
+      Component.onCompleted: {
+        layout._check();
+        // Switches made in fcitx5 itself are heard without a tray too
+        InputSourceManager.acquire(layout);
+      }
+      Component.onDestruction: InputSourceManager.release(layout)
 
       Connections {
-        target: KeyboardLayoutManager
-        function onLayoutIndexChanged() {
+        target: CompositorManager
+        function onActiveWindowIdChanged() {
+          layout._focusedAt = Date.now();
+        }
+      }
+
+      Connections {
+        target: InputSourceManager
+        function onCurrentChanged() {
           Qt.callLater(layout._check);
         }
-        function onLayoutsChanged() {
+        function onSourcesChanged() {
           Qt.callLater(layout._check);
         }
       }

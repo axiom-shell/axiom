@@ -283,14 +283,14 @@ def main():
             errors.append(f"OverlayModule {const}: has a text field but no x-keyboard (true so the desktop hands it the keyboard, false to keep it read-only there)")
 
     # Hand-built settings parts: x-card's `file` loads
-    # views/Settings/<file>Card.qml, x-intro views/Settings/<Name>.qml (by
-    # URL, so a typo only shows in the log)
+    # views/Settings/<file>Card.qml, x-intro and x-row views/Settings/
+    # <Name>.qml (by URL, so a typo only shows in the log)
     def annotated(node, found):
         if isinstance(node, dict):
             for key, value in node.items():
                 if key == "x-card" and isinstance(value, dict) and value.get("file"):
                     found.append((key, value["file"]))
-                elif key == "x-intro":
+                elif key in ("x-intro", "x-row"):
                     found.append((key, value))
                 annotated(value, found)
         elif isinstance(node, list):

@@ -408,17 +408,19 @@ Singleton {
   // --- Session and input ---
 
   // Calls back with the keyboard's layouts ({ layouts, index, keymap },
-  // NiriState.keyboard), or null
-  function withKeyboard(callback) {
+  // NiriState.keyboard), or null; `registry` names them
+  function withKeyboard(callback, registry) {
     const input = InputConfig.input;
-    callback(NiriState.keyboard(root._state, input.keyboard.enabled ? input.keyboard.layout : root._configLayouts));
+    callback(NiriState.keyboard(root._state, input.keyboard.enabled ? InputSources.xkb(InputConfig.sources, InputConfig.methodEnabled).layout : root._configLayouts, registry));
   }
 
-  // Switches to the "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
+  // Switches to the layout at `index`, then calls back
+  function setKeyboardLayout(index, callback) {
     root._action({
       "SwitchLayout": {
-        "layout": direction === "prev" ? "Prev" : "Next"
+        "layout": {
+          "Index": Math.max(0, Math.floor(Number(index) || 0))
+        }
       }
     }, () => callback?.());
   }

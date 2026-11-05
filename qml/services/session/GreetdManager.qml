@@ -7,14 +7,15 @@ import qs.config
 import qs.components.methods
 import qs.services.core
 import qs.services.compositor
+import qs.services.system
 
 // The login itself, in the greeter (greeter.qml): who logs in, into which
 // session, and the conversation with greetd (Quickshell's Greetd: PAM
 // through greetd's IPC). Only the greeter references it, so the user's
 // own shell never connects to greetd; its preview leaves every action
 // inert. Also the greeter's compositor (sway, else Hyprland): the monitor
-// layouts and the input options the bundle carries, and the keyboard
-// layout switch.
+// layouts and the input options the bundle carries (the keyboard layout
+// switch is InputSourceManager's, as in the session).
 QtObject {
   id: root
 
@@ -170,25 +171,6 @@ QtObject {
       CommandManager.runDetached(["systemctl", action]);
   }
 
-  // --- Keyboard layouts ---
-
-  // The keyboard's layouts ("us,de" split) and the active one's name
-  readonly property var layouts: _layouts
-  property var _layouts: []
-  readonly property string activeLayout: _activeLayout
-  property string _activeLayout: ""
-
-  function nextLayout() {
-    CompositorManager.cycleKeyboardLayout("next", () => root._readLayouts());
-  }
-
-  function _readLayouts() {
-    CompositorManager.withKeyboard(keyboard => {
-      root._layouts = keyboard?.layouts ?? [];
-      root._activeLayout = keyboard?.keymap ?? "";
-    });
-  }
-
   // --- Remembered choices (the greeter's own state) ---
 
   property var _state: StateManager.createStateHandler("greeter")
@@ -223,11 +205,11 @@ QtObject {
   // else Hyprland: greeter-session.sh). axiom sets up the compositor and
   // keeps the monitors in the saved profile for what's connected (on each
   // hotplug: Hyprland's Lua, axiom's own watch on sway). The keyboard
-  // layouts are read once its reply is in: before, they're the
-  // compositor's default
+  // layouts (InputSourceManager, xkb sources alone here) are read again
+  // once its reply is in: before, they're the compositor's default
   function _applyCompositor() {
     const config = ConfigManager.config;
-    CompositorManager.setUpGreeter(config.Monitors.items, config.Input, root._readLayouts);
+    CompositorManager.setUpGreeter(config.Monitors.items, config.Input, InputSourceManager.refresh);
   }
 
   Component.onCompleted: {
@@ -243,7 +225,5 @@ QtObject {
     // session's own: left alone
     if (Quickshell.env("AXIOM_GREETER_WINDOWED") !== "1")
       root._applyCompositor();
-    else
-      root._readLayouts();
   }
 }

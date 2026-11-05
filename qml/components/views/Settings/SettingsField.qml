@@ -9,7 +9,10 @@ import qs.components.reusable
 // edit (clicking it discards just that edit) and a button that puts it
 // back to the schema default, and under a field with `x-hookup` (theme
 // integrations) the IntegrationHookup panel, drawn as a FormRow (the
-// divider above it, the rail, the fold as its `x-showIf` flips)
+// divider above it, the rail, the fold as its `x-showIf` flips). A field
+// with `x-row` is drawn by settings/<Name>.qml instead (given `row` and
+// `form`), and the rows its `x-rowDraws` names hide; an object with `x-fold` is a fold header, its rows shown only
+// while it's open (SettingsManager.isFoldOpen), and always in a search
 FormRow {
   id: root
 
@@ -18,13 +21,21 @@ FormRow {
 
   readonly property bool isValue: row.kind !== "group"
   readonly property bool changed: isValue && SettingsManager.isChanged(row.path)
+  // `x-row`: the hand-built piece drawing this field
+  readonly property string custom: root.isValue ? (root.row.schema?.["x-row"] ?? "") : ""
+  // `x-fold`: this row is the header of its object's fold
+  readonly property bool foldHeader: !root.isValue && root.row.fold === true
+  // Search results and the changed list show every row they match
+  readonly property bool listing: root.form?.listing === true
+  readonly property bool foldOpen: root.listing || SettingsManager.isFoldOpen(root.foldHeader ? root.row.path.join(".") : (root.row.foldedBy ?? ""))
 
-  shown: field.shown
+  // A row another field's `x-row` draws (`drawnBy`) is drawn there
+  shown: field.shown && (!root.row.foldedBy || root.foldOpen) && !root.row.drawnBy
   // A row shown by a sibling's value (Night light's times, under "On a
   // schedule")
   indented: root.isValue && field.followsSibling
-  bodyHeight: field.implicitHeight + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0)
-  railHeight: field.implicitHeight
+  bodyHeight: (root.custom !== "" ? customRow.implicitHeight : root.foldHeader ? foldTitle.implicitHeight : field.implicitHeight) + hookup.shownHeight + (links.shows ? links.implicitHeight + Widget.spacing : 0)
+  railHeight: root.custom !== "" ? 0 : field.implicitHeight
 
   // Outlines the row for a moment (a link to this setting)
   function flash() {
@@ -43,8 +54,34 @@ FormRow {
     row: root.row
     form: root.form
     headerExtra: root.isValue ? changeMarks : null
-    // Kept drawn while the row folds shut (the row hides once it has)
+    // Kept drawn while the row folds shut (the row hides once it has);
+    // not built for a row drawn otherwise (its `shown` still holds)
+    active: root.custom === "" && !root.foldHeader && !root.row.drawnBy
     visible: true
+  }
+
+  Loader {
+    id: customRow
+    width: parent.width
+    active: root.custom !== ""
+    Component.onCompleted: {
+      if (root.custom !== "")
+        customRow.setSource(Qt.resolvedUrl(root.custom + ".qml"), {
+          "row": root.row,
+          "form": root.form
+        });
+    }
+  }
+
+  FoldHeader {
+    id: foldTitle
+    visible: root.foldHeader
+    width: parent.width
+    title: I18n.tr(root.row.title)
+    collapsed: !root.foldOpen
+    foldable: !root.listing
+    marked: root.foldHeader && SettingsManager.hasChangesUnder(root.row.path.join("."))
+    onToggled: SettingsManager.setFoldOpen(root.row.path.join("."), !root.foldOpen)
   }
 
   Loader {

@@ -71,6 +71,8 @@ PACKAGES=(
   "xdg-desktop-portal-gtk|xdg-desktop-portal-gtk|xdg-desktop-portal-gtk"
   "greetd|greetd|greetd"
   "agreety|greetd-agreety|greetd"
+  "fcitx5|fcitx5|fcitx5"
+  "ibus-daemon|ibus|ibus"
 )
 # go isn't here: the axiom binary is downloaded (a package brings its own),
 # and go is installed only to build it when there's no official build
@@ -95,6 +97,9 @@ FEATURES=(
   "Power profiles|powerprofilesctl|"
   "Removable drives (mount, open and eject USB sticks and memory cards)|udisksctl|"
   "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk|"
+  # fcitx5 is Input.keyboard.method's default; ibus (in PACKAGES for the install
+  # hints) is supported but not offered, so "all" doesn't take both
+  "Typing Japanese, Chinese, Korean and more (the fcitx5 input method)|fcitx5|"
   # The login screen runs in a sway of its own, or in Hyprland where sway
   # isn't installed: with Hyprland, sway is offered on its own (recommended,
   # so "all" takes it) and declining it keeps the login screen. The first

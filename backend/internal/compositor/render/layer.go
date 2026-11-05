@@ -260,6 +260,76 @@ func Input(values any, xcursorTheme any) *jsonx.Object {
 	return out
 }
 
+// XkbLayouts is InputSources.xkb: the compositor's xkb layouts from the
+// input sources (Input.keyboard.sources): the xkb sources' distinct layout and
+// variant pairs in order, then (with engines: Input.keyboard.method.enabled) any an
+// ime source types on that none has, as { layouts, variants, layout:
+// "us,de", variant: "" or ",neo" }. Never empty: "us" alone.
+func XkbLayouts(sources any, engines bool) *jsonx.Object {
+	type pair struct{ layout, variant string }
+	var pairs []pair
+	add := func(layout, variant string) {
+		if layout == "" {
+			return
+		}
+		for _, p := range pairs {
+			if p.layout == layout && p.variant == variant {
+				return
+			}
+		}
+		pairs = append(pairs, pair{layout, variant})
+	}
+	kinds := []string{"xkb"}
+	if engines {
+		kinds = append(kinds, "ime")
+	}
+	for _, kind := range kinds {
+		for _, s := range items(sources) {
+			if get(s, "kind") == kind {
+				add(text(get(s, "layout")), text(get(s, "variant")))
+			}
+		}
+	}
+	if len(pairs) == 0 {
+		add("us", "")
+	}
+	layouts, variants := make([]string, len(pairs)), make([]string, len(pairs))
+	anyVariant := false
+	for i, p := range pairs {
+		layouts[i], variants[i] = p.layout, p.variant
+		anyVariant = anyVariant || p.variant != ""
+	}
+	variant := ""
+	if anyVariant {
+		variant = strings.Join(variants, ",")
+	}
+	return jsonx.Obj("layouts", strs(layouts), "variants", strs(variants), "layout", strings.Join(layouts, ","), "variant", variant)
+}
+
+// text is String(v ?? "").trim()
+func text(v any) string {
+	if v == nil {
+		return ""
+	}
+	return trim(str(v))
+}
+
+// derived is a field's value as its spec's `from` makes it of the value
+// stored (the input sources' xkb layouts or variants, the engines' counting
+// while its siblings' method.enabled is on), ok false for a `from` it
+// doesn't know
+func derived(spec, value, siblings any) (any, bool) {
+	switch str(or(get(spec, "from"), "")) {
+	case "":
+		return value, true
+	case "xkbLayout":
+		return XkbLayouts(value, isTrue(path(siblings, "method.enabled"))).Value("layout"), true
+	case "xkbVariant":
+		return XkbLayouts(value, isTrue(path(siblings, "method.enabled"))).Value("variant"), true
+	}
+	return nil, false
+}
+
 // Field is one of CompositorLayer.compositorFields: a setting a
 // compositor's config takes, by its x-compositor.<compositor> spec.
 type Field struct {
@@ -282,17 +352,38 @@ func CompositorFields(objectSchema, values any, compositor, prefix string) []Fie
 			continue
 		}
 		spec := get(get(fieldSchema, "x-compositor"), compositor)
+		// A list: the field writes several options (Input.keyboard.sources'
+		// layouts and variants), each from its `from`
+		specs := []any{spec}
+		if list, ok := spec.(*jsonx.Array); ok {
+			specs = list.Items
+		}
 		if truthy(spec) {
-			var on any
-			if truthy(get(spec, "if")) {
-				on = isTrue(get(values, str(get(spec, "if"))))
+			for _, s := range specs {
+				v, ok := derived(s, value, values)
+				if !ok {
+					continue
+				}
+				var on any
+				if truthy(get(s, "if")) {
+					on = isTrue(path(values, str(get(s, "if"))))
+				}
+				out = append(out, Field{prefix + key, fieldSchema, v, s, on})
 			}
-			out = append(out, Field{prefix + key, fieldSchema, value, spec, on})
 		} else if str(get(fieldSchema, "type")) == "object" && truthy(get(fieldSchema, "properties")) {
 			out = append(out, CompositorFields(fieldSchema, value, compositor, prefix+key+".")...)
 		}
 	}
 	return out
+}
+
+// path is the value at a dotted path under v (an `if` naming a sibling
+// object's switch: "method.enabled")
+func path(v any, dotted string) any {
+	for _, key := range strings.Split(dotted, ".") {
+		v = get(v, key)
+	}
+	return v
 }
 
 // AnnotatedFields is CompositorLayer.annotatedFields: with gated each
@@ -324,9 +415,52 @@ var recommendedEnv = [][2]string{{"GDK_BACKEND", "wayland,x11,*"}, {"QT_QPA_PLAT
 
 var envName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
+// The input method frameworks' variables, by the fcitx5 wiki's "Using
+// Fcitx 5 on Wayland" (XMODIFIERS for XWayland, QT_IM_MODULES' fallback
+// order for Qt 6.7+, SDL_IM_MODULE for SDL2) and ibus's equivalents;
+// GLFW_IM_MODULE takes only ibus (kitty's GLFW), which fcitx5 also
+// speaks. No GTK_IM_MODULE / QT_IM_MODULE: on Wayland they bypass GTK's and
+// Qt's text-input path ("Do NOT set GTK_IM_MODULE"), so only legacyApps
+// (X11, Gtk2, Qt5 under sway) adds them.
+var inputMethodEnv = map[string][][2]string{
+	"fcitx5": {{"XMODIFIERS", "@im=fcitx"}, {"QT_IM_MODULES", "wayland;fcitx;ibus"}, {"SDL_IM_MODULE", "fcitx"}, {"GLFW_IM_MODULE", "ibus"}},
+	"ibus":   {{"XMODIFIERS", "@im=ibus"}, {"QT_IM_MODULES", "wayland;ibus"}, {"SDL_IM_MODULE", "ibus"}, {"GLFW_IM_MODULE", "ibus"}},
+}
+
+// inputMethodModule is the GTK / Qt im module legacyApps names
+var inputMethodModule = map[string]string{"fcitx5": "fcitx", "ibus": "ibus"}
+
+// The command starting each framework: fcitx5 as a daemon, replacing a
+// running one; ibus-daemon (ibus-daemon(1)) daemonized (-d), replacing (-r),
+// with XIM (-x), restarting on exit (-R)
+var inputMethodCommand = map[string]string{"fcitx5": "fcitx5 -d --replace", "ibus": "ibus-daemon -drxR"}
+
+// InputMethodEnv is the input method's variables for the session (im: {
+// framework: "fcitx5" | "ibus" | "" for none (as resolved: installed),
+// legacyApps })
+func InputMethodEnv(im any) [][2]string {
+	framework := str(or(get(im, "framework"), ""))
+	out := append([][2]string(nil), inputMethodEnv[framework]...)
+	if len(out) > 0 && truthy(get(im, "legacyApps")) {
+		m := inputMethodModule[framework]
+		out = append(out, [2]string{"GTK_IM_MODULE", m}, [2]string{"QT_IM_MODULE", m})
+	}
+	return out
+}
+
+// InputMethodCommand is the command starting the input method's framework
+// (im as InputMethodEnv's, with autostart), "" for none
+func InputMethodCommand(im any) string {
+	if !truthy(get(im, "autostart")) {
+		return ""
+	}
+	return inputMethodCommand[str(or(get(im, "framework"), ""))]
+}
+
 // SessionEnv is CompositorLayer.sessionEnv: the session's environment ([{
 // name, value }], each name once): the recommended one, the theme
-// integrations', the cursor's, then the session's own, which win.
+// integrations' and the input method's (integrations.inputMethod, as
+// InputMethodEnv's), the cursor's, then the session's own, which win.
 func SessionEnv(session, cursor, integrations any) *jsonx.Array {
 	type pair struct {
 		name  string
@@ -340,6 +474,9 @@ func SessionEnv(session, cursor, integrations any) *jsonx.Array {
 	}
 	if truthy(get(integrations, "qt")) {
 		all = append(all, pair{"QT_QPA_PLATFORMTHEME", "qt5ct"})
+	}
+	for _, p := range InputMethodEnv(get(integrations, "inputMethod")) {
+		all = append(all, pair{p[0], p[1]})
 	}
 	if truthy(cursor) {
 		all = append(all, pair{"XCURSOR_THEME", or(get(cursor, "xcursor"), get(cursor, "theme"))},

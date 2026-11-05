@@ -170,9 +170,9 @@ local axiom = (function()
     hl.config({
       input = {
         accel_profile = "flat",
-        kb_layout = "us",
+        kb_layout = "us,de",
         kb_options = "",
-        kb_variant = "",
+        kb_variant = ",neo",
         left_handed = false,
         numlock_by_default = true,
         repeat_delay = 300,
@@ -259,6 +259,10 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 hl.env("QT_QPA_PLATFORMTHEME", "qt5ct")
+hl.env("XMODIFIERS", "@im=fcitx")
+hl.env("QT_IM_MODULES", "wayland;fcitx;ibus")
+hl.env("SDL_IM_MODULE", "fcitx")
+hl.env("GLFW_IM_MODULE", "ibus")
 hl.env("XCURSOR_THEME", "axiom-cursor-Oxygen_White")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("XDG_CONFIG_HOME", "/home/user/.config")
@@ -299,11 +303,11 @@ hl.animation({ leaf = "specialWorkspace", enabled = true, speed = 0.8, bezier = 
 hl.on("hyprland.start", function()
   hl.exec_cmd("hyprctl setcursor 'Oxygen_White' 24")
   hl.exec_cmd("'/home/user/.local/bin/axiom' run")
+  hl.exec_cmd("fcitx5 -d --replace")
   hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
   hl.exec_cmd("nm-applet")
   hl.exec_cmd("tailscale systray")
-  hl.exec_cmd("fcitx5 -d --replace")
   hl.exec_cmd("xrandr --output DP-1 --primary")
   hl.exec_cmd("easyeffects --gapplication-service")
   hl.exec_cmd("wl-paste --type text --watch cliphist store")

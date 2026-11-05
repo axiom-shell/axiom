@@ -39,6 +39,9 @@ type Facts struct {
 	// Previews are the shell's unsaved edits of the sections the layer
 	// reads (ConfigOps.previewOps), laid over the config as they show
 	Previews []config.Op `json:"previews"`
+	// Frameworks are the input method frameworks installed ("fcitx5",
+	// "ibus"): the daemon's to find (Options.LookPath), not the shell's
+	Frameworks []string `json:"-"`
 }
 
 // BindCtx is what a bind's command runs with: axiom's paths and the apps.
@@ -199,6 +202,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"idle", flag("Idle", "enabled"),
 		"polkit", flag("Polkit", "enabled"),
 		"compositorSwitcher", flag("WindowSwitcher", "compositorSwitcher") && f.Supports["compositorSwitcher"],
+		"inputMethod", inputMethodOf(at("Input", "keyboard", "method"), f.Frameworks),
 	)
 	in.Set("layerKey", string(jsonx.MarshalCompact(in)))
 	specFile, specLive := spec(true), spec(false)
@@ -283,4 +287,42 @@ func stripsOf(workspaces any, primary string) *jsonx.Array {
 		}
 	}
 	return out
+}
+
+// inputMethodOf is the input method the session starts (render.
+// InputMethodEnv's): Input.keyboard.method (schema-filled) with its framework
+// resolved to one installed, "" for none or while axiom doesn't manage the
+// input method (enabled off): auto is fcitx5 when it's installed, else
+// ibus; a framework named only while it's installed, so a session without
+// it gets no variables and no failing autostart.
+func inputMethodOf(method any, installed []string) *jsonx.Object {
+	has := func(name string) bool {
+		for _, n := range installed {
+			if n == name {
+				return true
+			}
+		}
+		return false
+	}
+	framework, _ := getAny(method, "framework").(string)
+	if enabled, _ := getAny(method, "enabled").(bool); !enabled {
+		framework = "none"
+	}
+	resolved := ""
+	switch framework {
+	case "auto":
+		for _, n := range []string{"fcitx5", "ibus"} {
+			if has(n) {
+				resolved = n
+				break
+			}
+		}
+	case "fcitx5", "ibus":
+		if has(framework) {
+			resolved = framework
+		}
+	}
+	autostart, _ := getAny(method, "autostart").(bool)
+	legacy, _ := getAny(method, "legacyApps").(bool)
+	return jsonx.Obj("framework", resolved, "autostart", autostart, "legacyApps", legacy)
 }

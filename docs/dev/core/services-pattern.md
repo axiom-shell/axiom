@@ -59,7 +59,7 @@ They follow the same pattern:
 - **BatteryManager**: also the power profile, and `level` against the `Battery` section's thresholds (`BatteryConfig`; the Battery widget and module colour from it).
   - Says each drop into low and then critical once, whatever bars exist: an OSD's `battery` card or a notification (`NotificationManager.announce`; a critical one notifies beside its card too).
   - Created from `qml/shell.qml`'s `_services` so it runs without a widget.
-- **KeyboardLayoutManager**, **MediaManager** (MPRIS), **CompositorManager** (the compositor, through its backend `HyprlandManager`: [compositor/](../compositor/README.md)), **StateManager**, **BarManager**, **LauncherManager**, **SettingsManager**, **SavedConfigsManager**, **AuthManager**, **LockManager**.
+- **InputSourceManager**, **MediaManager** (MPRIS), **CompositorManager** (the compositor, through its backend `HyprlandManager`: [compositor/](../compositor/README.md)), **StateManager**, **BarManager**, **LauncherManager**, **SettingsManager**, **SavedConfigsManager**, **AuthManager**, **LockManager**.
 
 ### One axiom per display
 - **Restarting** is `axiom restart` (`Paths.restartCommand`), what every compositor's `restartShell` bind runs (the daemon's `render`; the bind merge (`compositor/actions`) reads it back as `restartShell`). The daemon restarts its quickshell child; it keeps one instance per display itself (its instance lock), so the shell no longer checks for others ([The axiom binary](../backend/README.md)).

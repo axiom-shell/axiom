@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The tray watcher check could start a watcher by D-Bus activation
+- **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
+- **What:** `tray()` reads `org.kde.StatusNotifierWatcher`'s `RegisteredStatusNotifierItems` without the NoAutoStart flag, so on a system shipping an activatable watcher (none here: `org.x.StatusNotifierWatcher` is the only activatable one) the read would start it. Asking `NameHasOwner` first, or sending NoAutoStart, avoids it.
+- **Size:** trivial
+- **Found:** 2026-11-05, while reviewing input sources (Go, round 7)
+
 ### A bar Grid warns as its bar turns between horizontal and vertical
 - **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
 - **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.

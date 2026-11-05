@@ -67,6 +67,87 @@ TestCase {
     compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
   }
 
+  // A nested object's rows go in its `x-order`; one marked `x-fold` folds
+  // its rows behind its group row (the Keyboard card's Input method
+  // options)
+  function test_rows_order_and_fold() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "kb": {
+          "type": "object",
+          "x-order": ["enabled", "method", "a"],
+          "properties": {
+            "a": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "method": {
+              "type": "object",
+              "x-fold": true,
+              "properties": {
+                "b": {
+                  "type": "boolean"
+                },
+                "inner": {
+                  "type": "object",
+                  "properties": {
+                    "c": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.path.join(".")), ["S.kb", "S.kb.enabled", "S.kb.method", "S.kb.method.b", "S.kb.method.inner", "S.kb.method.inner.c", "S.kb.a"]);
+    compare(rows.map(r => r.fold === true), [false, false, true, false, false, false, false], "only the folding object's row heads a fold");
+    compare(rows.map(r => r.foldedBy ?? ""), ["", "", "", "S.kb.method", "S.kb.method", "S.kb.method", ""]);
+  }
+
+  // A field's `x-rowDraws` marks the rows it draws (the layouts row
+  // drawing the input method switch): `drawnBy` its path
+  function test_rows_row_draws() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "kb": {
+          "type": "object",
+          "properties": {
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              },
+              "x-row": "Field",
+              "x-rowDraws": ["method.enabled"]
+            },
+            "method": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "other": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["S.kb:", "S.kb.sources:", "S.kb.method:", "S.kb.method.enabled:S.kb.sources", "S.kb.method.other:"]);
+  }
+
   // A `$ref` property's fields are rows once the schema is resolved (the
   // settings page's Changed from default and /config list Bars.style.*)
   function test_rows_of_a_resolved_ref() {
@@ -1052,7 +1133,8 @@ TestCase {
       "category": "Look",
       "key": "Style",
       "title": "Size",
-      "row": ["Style", "size"]
+      "row": ["Style", "size"],
+      "fold": null
     });
     compare(SchemaLayout.locate(schema, ["Style", "shadow"]).key, "Style:Shadows");
     compare(SchemaLayout.locate(schema, "Style.font.family").key, "Style.font");
@@ -1061,7 +1143,8 @@ TestCase {
       "category": "Look",
       "key": "Style.font",
       "title": "Font",
-      "row": null
+      "row": null,
+      "fold": null
     });
     // A section: its first card, the hand-built one when it has one
     compare(SchemaLayout.locate(schema, "Style").key, "Style");
@@ -1069,6 +1152,16 @@ TestCase {
     compare(SchemaLayout.locate(schema, "Cards.on").key, "Cards");
     compare(SchemaLayout.locate(schema, "Style.nope"), null);
     compare(SchemaLayout.locate(schema, "Nope"), null);
+  }
+
+  // A jump to a row another one draws lands on the drawing row; one inside
+  // an `x-fold` names the fold to open (the Keyboard card's input method)
+  function test_locate_drawn_and_folded() {
+    const drawn = SchemaLayout.locate(schema, "Input.keyboard.method.enabled");
+    compare(drawn.row, ["Input", "keyboard", "sources"]);
+    const folded = SchemaLayout.locate(schema, "Input.keyboard.method.framework");
+    compare([folded.row, folded.fold], [["Input", "keyboard", "method", "framework"], "Input.keyboard.method"]);
+    compare(SchemaLayout.locate(schema, "Input.keyboard.options").fold, null);
   }
 
   // Every `x-link` leads to a setting the settings page shows, or a page

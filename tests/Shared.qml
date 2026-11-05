@@ -34,7 +34,8 @@ QtObject {
     "schema.showIfHolds": args => SchemaLayout.showIfHolds(args[0], args[1])
   })
 
-  // ConfigOps (config.set's ops, decoded by the binary's daemon tests) and
+  // ConfigOps (config.set's ops, decoded by the binary's daemon tests),
+  // InputSources (its xkb list, which the daemon's renderer derives too) and
   // the bind and layer helpers the axiom binary also ports
   // (backend/internal/compositor/render), still used by the shell itself,
   // by name (the rest went to the binary, their cases frozen there). A test calls one through
@@ -44,6 +45,7 @@ QtObject {
       "BindActions": BindActions,
       "BindKeys": BindKeys,
       "ConfigOps": ConfigOps,
+      "InputSources": InputSources,
       "KeyNames": KeyNames,
       "LayerStack": LayerStack
     })

@@ -39,6 +39,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 
 ### Folding
 - Clicking a card's header folds it (`SettingsManager.collapsed`, by group key, saved to `~/.local/state/axiom/ui/settings.json`). Search results never fold.
+- Inside a card, an object marked `x-fold` is a fold of rows (`SettingsField`: a `FoldHeader` row, the rows inside it shown only while it's open), shut until opened (`SettingsManager.isFoldOpen`, kept in the same state as `<path>:open`) and open in search results and the changed list: the Keyboard card's Input method options. A field with `x-row` is drawn by a hand-built row of its own (`SettingsField` loads `<Name>.qml` with `row` and `form`): the Keyboard card's layouts, whose `x-rowDraws` names the input method switch it draws too ([schema annotations](schema-annotations.md)).
 
 ### Columns
 - Cards fill two newspaper columns in order: the first k on the left, the rest on the right. `methods/ColumnSplit` picks k from the cards' measured heights so both columns end as close together as they can.

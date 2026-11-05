@@ -73,7 +73,7 @@ func TestSharedCases(t *testing.T) {
 	t.Parallel()
 	tab := repoTables(t)
 	ran := map[string]int{}
-	for _, suite := range []string{"BindActions.", "BindKeys.", "KeyNames.", "LayerStack."} {
+	for _, suite := range []string{"BindActions.", "BindKeys.", "InputSources.", "KeyNames.", "LayerStack."} {
 		for _, c := range testkit.Cases(t, suite) {
 			op, ok := ops[c.Op]
 			if !ok {
@@ -230,6 +230,15 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"CompositorLayer.gaussianShadow": func(t *Tables, a []any) any {
 		r, al := GaussianShadow(arg(a, 0))
 		return jsonx.Obj("radius", r, "alpha", al)
+	},
+	"InputSources.xkb": func(t *Tables, a []any) any { return XkbLayouts(arg(a, 0), isTrue(arg(a, 1))) },
+	"InputSources.methodSetup": func(t *Tables, a []any) any {
+		im := jsonx.Obj("framework", arg(a, 0), "autostart", true, "legacyApps", arg(a, 1))
+		env := jsonx.Arr()
+		for _, p := range InputMethodEnv(im) {
+			env.Append(jsonx.Obj("name", p[0], "value", p[1]))
+		}
+		return jsonx.Obj("env", env, "command", InputMethodCommand(im))
 	},
 	"CompositorLayer.input":       func(t *Tables, a []any) any { return Input(arg(a, 0), arg(a, 1)) },
 	"CompositorLayer.look":        func(t *Tables, a []any) any { return Look(arg(a, 0), arg(a, 1)) },

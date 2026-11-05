@@ -17,9 +17,44 @@ TestCase {
     compare(KeyboardLayouts.shape(["English (US)"], undefined, "").index, 0);
   }
 
+  readonly property var registry: ({
+      "layouts": [
+        {
+          "name": "us",
+          "description": "English (US)",
+          "variants": [
+            {
+              "name": "dvorak",
+              "description": "English (Dvorak)"
+            }
+          ]
+        },
+        {
+          "name": "de",
+          "description": "German",
+          "variants": [
+            {
+              "name": "neo",
+              "description": "German (Neo 2)"
+            }
+          ]
+        }
+      ]
+    })
+
+  function test_code_from_registry() {
+    compare(KeyboardLayouts.code("German", registry), "de", "not its first two letters");
+    compare(KeyboardLayouts.code("German (Neo 2)", registry), "de", "a variant's name: its layout");
+    compare(KeyboardLayouts.code("English (Dvorak)", registry), "us");
+    compare(KeyboardLayouts.code("Klingon", registry), "kl", "not listed: guessed");
+    compare(KeyboardLayouts.shape(["English (US)", "German"], 0, "us", registry).layouts, ["us", "de"]);
+    compare(KeyboardLayouts.shape(["English (US)", "German"], 0, "de,us", registry).layouts, ["us", "de"], "the registry over a config of as many in another order");
+    compare(KeyboardLayouts.shape(["Klingon", "German"], 0, "tlh,de", registry).layouts, ["tlh", "de"], "one not listed: the configured code at its place");
+  }
+
   function test_code() {
     compare(KeyboardLayouts.code("English (US)"), "us");
-    compare(KeyboardLayouts.code("German"), "ge");
+    compare(KeyboardLayouts.code("German"), "ge", "no registry: guessed");
     compare(KeyboardLayouts.code("English (Dvorak, intl.)"), "en");
   }
 }

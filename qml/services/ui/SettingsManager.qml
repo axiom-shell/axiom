@@ -110,6 +110,9 @@ QtObject {
     root.query = "";
     root.changedOnly = false;
     root.category = found.category;
+    // A row inside a shut `x-fold` shows once it's open
+    if (found.fold)
+      root.setFoldOpen(found.fold, true);
     if (link === true)
       ShellManager.followLink("Settings");
     else
@@ -172,6 +175,16 @@ QtObject {
 
   function isCollapsed(key) {
     return root.collapsed[key] === true;
+  }
+
+  // A row fold (`x-fold`, by its object's dotted path) is shut until
+  // opened, remembered with the cards' folds as "<path>:open"
+  function isFoldOpen(path) {
+    return root.collapsed[path + ":open"] === true;
+  }
+
+  function setFoldOpen(path, open) {
+    root.setCollapsed(path + ":open", open);
   }
 
   // `keys`: one group key or a list of them

@@ -259,8 +259,8 @@ input {
     warp-mouse-to-focus
     keyboard {
         xkb {
-            layout "us"
-            variant ""
+            layout "us,de"
+            variant ",neo"
             options ""
         }
         repeat-rate 50
@@ -407,16 +407,20 @@ environment {
     QT_AUTO_SCREEN_SCALE_FACTOR "1"
     QT_WAYLAND_DISABLE_WINDOWDECORATION "1"
     QT_QPA_PLATFORMTHEME "qt5ct"
+    XMODIFIERS "@im=fcitx"
+    QT_IM_MODULES "wayland;fcitx;ibus"
+    SDL_IM_MODULE "fcitx"
+    GLFW_IM_MODULE "ibus"
     XCURSOR_THEME "axiom-cursor-Oxygen_White"
     XCURSOR_SIZE "24"
     XDG_CONFIG_HOME "/home/user/.config"
 }
 spawn-sh-at-startup "'/home/user/.local/bin/axiom' run"
+spawn-sh-at-startup "fcitx5 -d --replace"
 spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
 spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP"
 spawn-sh-at-startup "nm-applet"
 spawn-sh-at-startup "tailscale systray"
-spawn-sh-at-startup "fcitx5 -d --replace"
 spawn-sh-at-startup "xrandr --output DP-1 --primary"
 spawn-sh-at-startup "easyeffects --gapplication-service"
 spawn-sh-at-startup "wl-paste --type text --watch cliphist store"

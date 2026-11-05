@@ -1,6 +1,6 @@
 label: Keyboard layout
-link: {setting: Input.keyboard.layout}
+link: {setting: Input}
 icon: keyboard
 group: Session
 defaultSize: [2, 1]
-hosts: {only: [greeter]}
+hosts: [lockscreen, greeter]
