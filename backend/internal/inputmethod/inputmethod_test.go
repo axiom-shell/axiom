@@ -356,8 +356,8 @@ func TestFcitxPollsWithoutTrayItem(t *testing.T) {
 	}
 }
 
-// Input methods read empty (fcitx5 just started) are read again with the
-// next read, not kept until its groups change
+// Input methods read empty (fcitx5 just started) are read again by the
+// poll, no switch needed, not kept until its groups change
 func TestFcitxReadsEmptyInstalledAgain(t *testing.T) {
 	t.Parallel()
 	bus := dbustest.New(t)
@@ -370,7 +370,6 @@ func TestFcitxReadsEmptyInstalledAgain(t *testing.T) {
 
 	f.mu.Lock()
 	f.loading = false
-	f.current = "mozc"
 	f.mu.Unlock()
 	if !testkit.Eventually(func() bool { h.s.Poll(); return len(h.s.State().Available) == 3 }) {
 		t.Fatalf("the installed input methods never read again: %+v", h.s.State())

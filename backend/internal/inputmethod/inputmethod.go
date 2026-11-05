@@ -413,9 +413,9 @@ func (s *Service) hasTray() bool {
 	return s.tray
 }
 
-// PollState is the inputMethodPoll topic's state: whether fcitx5's
-// current input method is being read (fcitx5 followed, without a tray
-// item to tell of its switches).
+// PollState is the inputMethodPoll topic's state: whether fcitx5 is
+// being read (fcitx5 followed, without a tray item to tell of its
+// switches or before it named its input methods).
 type PollState struct {
 	Polling bool `json:"polling"`
 }
@@ -423,12 +423,13 @@ type PollState struct {
 // Poll has fcitx5's current input method read, a switch published, while
 // fcitx5 runs with no tray item registered: it tells of a switch only
 // through that item's signals, and registers one only while a
-// StatusNotifierWatcher runs (a bar's SystemTray). Nothing is read
-// otherwise.
+// StatusNotifierWatcher runs (a bar's SystemTray); and, while fcitx5
+// named no input methods installed (still loading its addons), the state
+// again, item or not. Nothing is read otherwise.
 func (s *Service) Poll() PollState {
 	s.mu.Lock()
 	_, fcitx := s.active.(*fcitx)
-	polls := fcitx && !s.tray
+	polls := fcitx && (!s.tray || len(s.state.Available) == 0)
 	s.mu.Unlock()
 	if polls {
 		wake(s.poll)

@@ -119,14 +119,20 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		case <-s.refresh:
 			err = read(false)
 		case <-s.poll:
-			// No tray item tells of a switch: one is seen as a new current
+			// No tray item tells of a switch: one is seen as a new current.
+			// Nothing installed named yet: read again (nothing else may)
+			prev := s.State()
+			if len(prev.Available) == 0 {
+				err = read(false)
+				break
+			}
 			if s.hasTray() {
 				continue
 			}
 			var current string
 			var m *dbus.Message
 			if m, err = f.call(ctx, "CurrentInputMethod"); err == nil {
-				if err = m.Store(&current); err == nil && current != s.State().Current {
+				if err = m.Store(&current); err == nil && current != prev.Current {
 					err = read(false)
 				}
 			}
