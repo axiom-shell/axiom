@@ -228,7 +228,16 @@ func (d *Daemon) fallBackCarried(h *handoff, listener net.Listener) error {
 		return axerr.Wrap(axerr.Internal, err, "the socket to hand over")
 	}
 	defer ln.Close() // only reached when the exec failed
-	lock, err := fsx.TryLock(filepath.Join(d.dirs.Config, store.FileName+".lock"))
+	// A child of this process may still hold the copy of the lock the
+	// store just closed, for the moment between its fork and its exec
+	var lock *fsx.Lock
+	for try := 0; ; try++ {
+		lock, err = fsx.TryLock(filepath.Join(d.dirs.Config, store.FileName+".lock"))
+		if axerr.KindOf(err) != axerr.Running || try == 20 {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 	if err != nil {
 		return err
 	}

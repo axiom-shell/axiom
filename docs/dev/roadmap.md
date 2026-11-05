@@ -569,7 +569,6 @@ Bugs an agent's review or audit found and marked PLAUSIBLE: no code is written f
 
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
 - [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
-- [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding) (PLAUSIBLE in its exact px)
 - [A stale exec-if check can block a widget after its exec-if changed](issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
 - [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)

@@ -50,12 +50,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
-### TestDevImageFailingFallsBack sometimes finds no fallback exec
-- **Where:** `backend/internal/daemon/reexec_test.go` (`TestDevImageFailingFallsBack`)
-- **What:** The review of compositor-20 (#322, which didn't touch the daemon) saw the test fail once while the machine was busy; `go test ./internal/daemon -run TestDevImageFailingFallsBack` then passed three reruns. The review of compositor-14 saw it again, in 0.00s: `no fallback (Run: /tmp/TestDevImageFailingFallsBack…/002 has no schema source (qml/config/schema/index.yaml))`; five reruns then passed. So `Run` failed as meant with the ctx alive (the deferred `fallBackLive` runs only with `ctx.Err() == nil`), and `fallBackCarried` returned before `execProcess`, an error only logged (`re-executing the installed axiom`). PLAUSIBLE: its `fsx.TryLock` of the config's writer lock found it still held (a parallel test, or the carried `ConfigLock` not yet let go). Next time, read the test log's `re-executing the installed axiom` error before changing the test.
-- **Size:** trivial
-- **Found:** 2026-11-04, while reviewing compositor-20 (roadmap row 20)
-
 ### TestNotifySend's no-server call can run out the test's 5 s instead of failing at once
 - **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
 - **What:** `scripts/dev/verify.sh --all` (a branch that didn't touch the daemon) once failed with `with no server: context deadline exceeded` after 5.00 s; `go test ./internal/daemon -run TestNotifySend -count=3` then passed. PLAUSIBLE: the last `notify.send` goes out right after `server.Close()`, before the test bus has dropped the closed connection's `org.freedesktop.Notifications` name, so the Notify call is routed to the dead owner and waits for a reply that never comes, until the one shared 5 s ctx (made before the bus setup and already partly spent) expires, rather than the bus answering at once with no owner (`Unavailable`). Fix: after `server.Close()`, wait until the name has no owner (poll `NameHasOwner` or watch `NameOwnerChanged`) before the last call, and give that call its own ctx.
