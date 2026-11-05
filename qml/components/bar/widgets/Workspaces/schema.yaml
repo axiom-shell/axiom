@@ -35,6 +35,7 @@ settings:
   labels:
     type: string
     title: Labels
+    x-control: toggle
     enum: [numbers, dots]
     x-enumLabels: {numbers: Numbers, dots: Dots}
     default: numbers

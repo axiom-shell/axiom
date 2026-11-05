@@ -92,6 +92,7 @@ properties:
     type: string
     title: Grouping
     default: separate
+    x-control: toggle
     enum: [separate, merged, powerline]
     x-enumLabels: {separate: Separate, merged: Merged, powerline: Powerline}
     x-beside: true
@@ -102,6 +103,7 @@ properties:
     type: string
     title: Ends
     default: shaped
+    x-control: toggle
     enum: [shaped, pointed, rounded]
     x-enumLabels: {shaped: Shaped, pointed: Pointed, rounded: Rounded}
     x-showIf: {widgetStyle: [filled, tinted, outline], widgetShape: [slant, arrow]}
@@ -180,6 +182,7 @@ properties:
     type: string
     title: Accent line
     default: none
+    x-control: toggle
     enum: [none, inner, outer]
     x-enumLabels: {none: None, inner: Inner edge, outer: Outer edge}
     description: A line along the bar's edge toward the windows (inner) or the screen edge (outer); on pills, along each pill.

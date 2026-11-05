@@ -83,6 +83,7 @@ properties:
     type: string
     title: Length
     default: content
+    x-control: toggle
     enum: [content, edge]
     x-enumLabels: {content: Fit its modules, edge: Whole edge}
     description: Whole edge stretches the menu along its edge, sharing the room evenly between its rows (or columns on a top or bottom edge). An integrated menu always takes its whole edge.

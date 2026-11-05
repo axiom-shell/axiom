@@ -72,6 +72,7 @@ properties:
         type: string
         title: Animation
         default: slide
+        x-control: toggle
         enum: [slide, fade, none]
         x-enumLabels: {slide: Slide, fade: Fade, none: None}
         description: How toasts come and go. Either way the others glide into place.
@@ -174,6 +175,7 @@ properties:
     title: Low-urgency notifications
     x-group: Per-app rules
     default: silent
+    x-control: toggle
     enum: [silent, alert]
     x-enumLabels: {silent: Silent, alert: Alert}
     description: Where an app's notifications marked low urgency go when no rule below names the app. Silent files them in the Quiet section without a toast or a badge count.

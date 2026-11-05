@@ -110,6 +110,7 @@ properties:
         direction:
           type: string
           title: Direction
+          x-control: toggle
           enum: [horizontal, vertical]
           x-enumLabels: {horizontal: Horizontal, vertical: Vertical}
           default: horizontal

@@ -9,6 +9,7 @@ settings:
     type: string
     title: Format
     default: short
+    x-control: toggle
     enum: [short, full]
     x-enumLabels: {short: Short, full: Full name}
     description: A layout's code (DE) or its full name (German). An input method shows its own label (あ) either way.

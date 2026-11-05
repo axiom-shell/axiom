@@ -27,6 +27,7 @@ x-properties:
         x-group: Background
         type: string
         title: Background
+        x-control: toggle
         enum: [wallpaper, color]
         x-enumLabels: {wallpaper: Wallpaper, color: Color}
         default: wallpaper

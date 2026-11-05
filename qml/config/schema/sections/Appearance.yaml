@@ -109,6 +109,7 @@ properties:
           order:
             type: string
             title: Order
+            x-control: toggle
             enum: [random, sequential]
             x-enumLabels: {random: Random, sequential: 'In order, by name'}
             default: random

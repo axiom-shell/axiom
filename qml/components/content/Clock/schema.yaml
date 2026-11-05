@@ -8,6 +8,7 @@ settings:
   style:
     type: string
     title: Style
+    x-control: toggle
     enum: [digital, stacked, analog]
     x-enumLabels: {digital: Digital, stacked: Stacked, analog: Analog}
     default: stacked

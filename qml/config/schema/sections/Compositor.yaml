@@ -383,6 +383,7 @@ properties:
       workspaceLayout:
         type: string
         title: New workspaces
+        x-control: toggle
         enum: [default, stacking, tabbed]
         x-enumLabels: {default: Tiled, stacking: Stacked, tabbed: Tabbed}
         default: default
@@ -486,6 +487,7 @@ properties:
         x-scope: look
         type: string
         title: New columns show
+        x-control: toggle
         enum: [normal, tabbed]
         x-enumLabels: {normal: Windows stacked, tabbed: Windows as tabs}
         default: normal

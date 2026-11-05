@@ -16,6 +16,7 @@ properties:
   onInsert:
     type: string
     title: When a drive is plugged in
+    x-control: toggle
     enum: [ask, mount, nothing]
     x-enumLabels:
       ask: Ask

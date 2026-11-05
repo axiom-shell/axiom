@@ -254,8 +254,8 @@ Loader {
         return searchField;
       if (fieldSchema["x-control"] === "icon")
         return iconField;
-      // Two values flipped between (`x-control: "toggle"`)
-      if (root.options?.length === 2 && fieldSchema["x-control"] === "toggle")
+      // Two or three values toggled between (`x-control: "toggle"`)
+      if (root.options?.length >= 2 && root.options.length <= 3 && fieldSchema["x-control"] === "toggle")
         return toggleField;
       return root.options ? comboField : textField;
     }
@@ -377,7 +377,8 @@ Loader {
       headerExtra: root.headerExtra
       options: root.options
       optionLabels: root.optionLabels
-      currentValue: root.current ?? ""
+      // (An inheriting one shows the value it follows)
+      currentValue: root.current ?? SettingsManager.inheritedValue(root.fieldSchema) ?? ""
       onPicked: value => root.commit(value)
     }
   }

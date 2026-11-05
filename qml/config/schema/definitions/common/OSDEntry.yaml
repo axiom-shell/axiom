@@ -80,6 +80,7 @@ properties:
     type: string
     title: Status icons
     default: outside
+    x-control: toggle
     enum: [outside, inside]
     x-enumLabels:
       outside: Past the bars
@@ -100,6 +101,7 @@ properties:
         type: string
         title: Bar orientation
         default: vertical
+        x-control: toggle
         enum: [vertical, horizontal]
         description: Vertical bars sit side by side; horizontal bars stack as rows.
       alongEdge:
