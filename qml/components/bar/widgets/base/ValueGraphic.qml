@@ -23,6 +23,8 @@ Item {
   // The ticker's text, and stacked's two lines
   property string text: ""
   property string subtext: ""
+  // The widget's textFormat
+  property int textFormat: Text.AutoText
   // The value's widest (IconTextWidget's minimumText): ticker and stacked
   // never take less room, so a changing one doesn't resize the widget
   property string minimumText: ""
@@ -185,6 +187,7 @@ Item {
           id: tickerText
           anchors.verticalCenter: parent.verticalCenter
           text: root.text
+          textFormat: root.textFormat
           color: root.textColor
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize
@@ -251,6 +254,7 @@ Item {
           id: value
           anchors.horizontalCenter: parent.horizontalCenter
           text: root.text
+          textFormat: root.textFormat
           color: root.textColor
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize * 0.8 * stack.fit
@@ -263,6 +267,7 @@ Item {
           anchors.horizontalCenter: parent.horizontalCenter
           visible: text !== ""
           text: root.subtext
+          textFormat: root.textFormat
           color: Qt.alpha(root.textColor, 0.7)
           font.family: Appearance.fontFamily
           font.pixelSize: root.fontSize * 0.6 * stack.fit

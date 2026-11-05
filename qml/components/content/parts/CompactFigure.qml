@@ -105,6 +105,7 @@ Item {
         horizontalAlignment: root.wide && root.showIcon ? Text.AlignLeft : Text.AlignHCenter
         elide: Text.ElideRight
         text: root.label
+        textFormat: Text.PlainText
         textSize: Appearance.fontSizeBy(-2)
         opacity: 0.6
       }

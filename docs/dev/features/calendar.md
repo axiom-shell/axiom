@@ -119,6 +119,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 
 ### Privacy
 - Events are private.
+- An event's title is anyone's (a subscribed feed's): it shows as plain text (`textFormat: Text.PlainText` in `EventRow`, `MonthGrid`'s chips, `CompactFigure`'s label and the Next event bar widget), never styled text that could load a remote image.
 - Calendar and Agenda don't list `lockscreen` or `greeter` in `x-hosts`.
 - ClockCalendar does list them, but shows events on the lock screen only with `Calendar.showOnLockscreen`, and read-only there:
   - `readOnly` on `DayPane` / `DayAgenda` / `EventRow`;

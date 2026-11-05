@@ -44,7 +44,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - `ItemRow`: a plain list entry. An icon or rounded thumbnail, a title of `titleLines`, a muted subtitle, a muted `detail` on the right (a value), `activated` on a click (unless not `clickable`), and its children as buttons after it, faint until hovered. Used for clipboard clips, calculator answers, recordings.
 - `KeybindSection` (a section of binds as a card, grouped by modifiers), `KeybindRow` (keys first), `KeyCap` (a folded direction set in one cap) and `ModifierCap` draw keybinds read-only, for the Keybinds page and the Cheatsheet module.
 - `FigureValue`: the bold value + unit row of `StatFigure` and `CompactFigure`.
-- `CompactFigure`: fills its box (inside `pad`).
+- `CompactFigure`: fills its box (inside `pad`); its label is plain text.
   - Icon, value and label stacked, or the icon beside them in a wide box.
   - Drops the label and then the icon as room runs out, shrinking the value to fit.
 - `EmptyState`: takes an `availableHeight` and drops to its icon when short.

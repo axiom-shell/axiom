@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The Window and Media bar widgets render titles as styled text and load remote images
+- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`text`), `qml/components/bar/widgets/Media/Media.qml` (`text`, `styleText`)
+- **What:** Both show text from outside (the focused window's title, an MPRIS track title: a web page sets either) through `IconTextWidget` / `ValueGraphic`, whose `textFormat` stays Text.AutoText, so a title like `<img src="https://tracker.example/p.png"> Song` renders as styled text and makes the shell fetch the URL (the same Qt behaviour the calendar fix was tested on). Next event sets `textFormat: Text.PlainText` (features-07); these two don't. Fix: `textFormat: Text.PlainText` on both widgets.
+- **Size:** trivial
+- **Found:** 2026-11-05, while fixing features-07 (row 20)
+
 ### A fading toast keeps its full blur on niri
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
 - **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
@@ -599,12 +605,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `_arm` sets a single-shot Timer to `Math.min(left + 50, 3600000)` and only looks at `Date.now()` again when it fires. Qt's timers run on the monotonic clock, which stops while the machine sleeps. Start a 25-minute pomodoro, suspend after 5 minutes, wake an hour later: the alarm still has 20 minutes to run, so for 20 minutes the dial and bar widget read `00:00` while still running, and when it finally fires the end is over 5 minutes late, so `_end(late)` advances silently with no notification. The same holds for the one-off timer (StopwatchManager) and caffeine's timer (IdleManager), and for the warning alarm. Nothing in the shell listens for wake (the daemon's logind watcher sees `PrepareForSleep`, but no shell code reacts to it). PLAUSIBLE: settle by suspending with a 2-minute timer for 5 minutes and watching when it ends. Fix: cap both alarms at a minute instead of an hour (`Math.min(left + 50, 60000)`), bounding the lateness to a minute at the cost of one wake-up a minute while a deadline runs; update the doc's "at most an hour at a time".
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### Event titles from a feed render as styled text and load remote images
-- **Where:** `qml/components/content/parts/calendar/MonthGrid.qml:296` (the title chips), `qml/components/content/Calendar/Calendar.qml:86` (the compact card's label), `qml/components/bar/widgets/NextEvent/NextEvent.qml:51` (`text`, `subtext`)
-- **What:** `StyledText` leaves `textFormat` at Text.AutoText, so a title whose first tag is HTML (`Qt::mightBeRichText`) is rendered as styled text. An `.ics` subscription is anyone's content: an event titled `<img src="https://tracker.example/p.png"> Standup` makes the shell fetch that URL whenever the month's titles, the compact Calendar card or the Next event widget show it, telling the feed's author the user's address and when they look (events are private: calendar.md › Privacy). Tested: a Qt 6 `Text` with `"9:00 <img src=\"http://127.0.0.1:18765/pixel.png\"> Standup"`, run offscreen, made `GET /pixel.png` on a local server. `EventRow` already sets `textFormat: Text.PlainText`; these three don't. Fix: `textFormat: Text.PlainText` on the chip's StyledText, and through `CompactFigure`'s label and the bar widget's text for event titles (or plain text by default in `StyledText`, rich text opted into: a wider ui-kit change).
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
 
 ### Idle dimming is forgotten across a shell reload
 - **Where:** `qml/services/system/BrightnessManager.qml:92` (`_dimmed`)
