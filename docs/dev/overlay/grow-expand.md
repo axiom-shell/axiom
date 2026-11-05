@@ -13,7 +13,7 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
   - its height plus what its scrolling list is short of, or less what it has spare (`DeviceList.overflow`);
   - while compact (nothing laid out to measure), any positive value.
 - The grid reads `growHeight`:
-  - that, never less than `fullMinHeight` (and at least three rows for one two units wide), so growing reaches the full layout and never shrinks it back to compact;
+  - that, never less than `fullMinHeight` and the padding around it (and at least three rows for one two units wide), so growing reaches the full layout and never shrinks it back to compact;
   - nothing for a module too narrow for its full layout.
 - That figure doesn't depend on its own height once laid out, so it settles.
 

@@ -1114,6 +1114,23 @@ TestCase {
     compare(grid.width, Math.round(grid.width), "the grid's size is whole px");
   }
 
+  function test_rectPxDrawnZoom() {
+    // A page drawn scaled as a whole: every edge on a whole drawn px, so
+    // each card's border falls on the screen's pixels alike
+    const sizes = GridPlacement.trackSizes({
+      "cols": 16,
+      "rows": 8
+    }, 559);
+    const zoom = 0.697;
+    [at(0, 0, 4, 4), at(4, 0, 4, 2), at(4, 2, 4, 2), at(8, 4, 4, 4), at(12, 4, 4, 4)].forEach(entry => {
+      const r = GridPlacement.rectPx(entry.place, sizes, zoom);
+      [r.x, r.y, r.x + r.width, r.y + r.height].forEach(edge => fuzzyCompare(edge * zoom, Math.round(edge * zoom), 1e-9, "a whole drawn px"));
+      const plain = GridPlacement.rectPx(entry.place, sizes);
+      fuzzyCompare(r.x, plain.x, 1 / zoom, "within a drawn px of the layout's");
+    });
+    compare(GridPlacement.rectPx(at(4, 2, 4, 2).place, sizes, 1), GridPlacement.rectPx(at(4, 2, 4, 2).place, sizes), "at 1, the layout's own");
+  }
+
   function test_guideFrame() {
     compare(GridPlacement.guideFrame({
       "cols": 12,

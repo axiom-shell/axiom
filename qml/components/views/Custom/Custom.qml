@@ -15,6 +15,7 @@ BaseView {
 
   property OverlayGrid fineGrid: OverlayGrid {
     fixedUnit: OverlayConfig.pageUnit(root.viewConfig, root.grid?.unit ?? 0)
+    drawnZoom: root.grid?.drawnZoom ?? 1
   }
 
   ModuleGrid {

@@ -4,15 +4,15 @@ reviewed: 6678e4a 2026-10-31  (full)
 The roots, shared parts, lock screen and greeter rules and acquire/release pairing hold. Sizing is the weak spot: `SlotContext` compares `fullMin*` with the whole slot (padding included) while modules write content px, and eight modules' minimums are under their full layouts' needs anyway, so full layouts squeeze or clip just above their minimum (several at their own default size). Many modules also build parts their current mode hides.
 
 ## Open findings
-- Major: [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](../../docs/dev/issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
+- Major: fullMinWidth and fullMinHeight are compared with the slot's size, padding included (fixed, row 20)
 - Major: [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](../../docs/dev/issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding)
 - Major: [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](../../docs/dev/issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
 - Major: [The Clock's date and label keep their room while the time shrinks to nothing](../../docs/dev/issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
 - Major: [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](../../docs/dev/issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
-- Major: [A DeviceList squeezed to nothing wants no growth](../../docs/dev/issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
+- Major: A DeviceList squeezed to nothing wants no growth (fixed, row 20)
 - Major: [Parts shown in one mode are built hidden in every mode, in ten modules and parts](../../docs/dev/issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
 - Major (filed from a Minor, maintainer 2026-10-31): [What a lock screen module may do is a list kept by hand in two docs that disagree](../../docs/dev/issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
-- Cleanup: [Card and Panel each spell out the grow and expand members](../../docs/dev/issues.md#card-and-panel-each-spell-out-the-grow-and-expand-members)
+- Cleanup: Card and Panel each spell out the grow and expand members (fixed, row 20)
 - Cleanup: [Tailscale's PeerRow redraws DeviceRow without its buttons](../../docs/dev/issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - Cleanup: [WifiNetworks' WPA password form repeats WifiJoinForm's](../../docs/dev/issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
 - Cleanup: [Three row options nothing sets](../../docs/dev/issues.md#three-row-options-nothing-sets)

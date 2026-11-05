@@ -28,7 +28,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 ### Cross-area merges
 Settled in this triage. One real duplicate was merged in issues.md; the rest are entries moved into one cluster because they share code.
 
-- **Duplicate, merged:** "High module padding clips edge menu modules" (bar-popouts, from the maintainer's notes) is folded into [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](../issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included). One cause: compact compares the whole slot with the fullMin sizes, so a higher padding clips a module instead of making it compact. The note is quoted in the kept entry, its Phase 7 link removed (the kept entry is in Phase 8), the edge-menus review record points at the kept entry. Cluster overlay-modules-02.
+- **Duplicate, merged:** "High module padding clips edge menu modules" (bar-popouts, from the maintainer's notes) is folded into fullMinWidth and fullMinHeight are compared with the slot's size, padding included (fixed, row 20). One cause: compact compares the whole slot with the fullMin sizes, so a higher padding clips a module instead of making it compact. The note is quoted in the kept entry, its Phase 7 link removed (the kept entry is in Phase 8), the edge-menus review record points at the kept entry. Cluster overlay-modules-02.
 - **Takeover settings, settings page and launcher:** config's preview entry and platform's launcher /config entry are one fix, the decided SchemaLayout predicate (maintainer, 2026-10-31): config-03.
 - **Sway's named workspaces share id -1** moves from features to compositor-11, beside sway-lists-disabled-outputs (the same SwayState and CompositorManager code).
 - **A popout taller than the screen** (features, needs a plan) joins bar-popouts' tray submenu entry in the plan cluster bar-popouts-13; the tray's most-height can be the plan's first item.
@@ -101,10 +101,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 53 | bar-popouts-12 | plan | Nineteen windows mapped on one monitor | 1 | needs a plan | none |  |
 | 54 | bar-popouts-13 | plan | Popouts and tray submenus taller than the screen | 2 | needs a plan | bar-popouts-08 |  |
 | 55 | overlay-modules-02 | major | Slot padding and grow in the module base | 4 | ~150 | overlay-modules-01 |  |
-| 56 | overlay-modules-03 | major | Per-module full minimums, and NowPlaying's hidden parts | 5 | ~280 | overlay-modules-02 |  |
+| 56 | overlay-modules-03 | major | Per-module full minimums, and NowPlaying's hidden parts | 4 | ~280 | overlay-modules-02 |  |
 | 57 | overlay-modules-04 | major | Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
 | 58 | overlay-modules-05 | major | The overlay host and the Layouts editor | 4 | ~80 | none |  |
-| 59 | overlay-modules-06 | major | Custom widgets | 4 | ~150 | none |  |
+| 59 | overlay-modules-06 | major | Custom widgets | 3 | ~150 | none |  |
 | 60 | overlay-modules-07 | major | What reaches the lock screen | 2 | ~150 | overlay-modules-06 |  |
 | 61 | overlay-modules-08 | major | OSD volume and brightness (done with the OSD's statuses) | 0 | none left | overlay-modules-01 |  |
 | 62 | overlay-modules-09 | minor-sweep | The overlay and custom widgets | 6 | ~80 | overlay-modules-05, -06 |  |
@@ -113,14 +113,14 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 65 | overlay-modules-12 | live-only | The overlay grid's model of -1 | 1 | ~5 | none |  |
 | 66 | overlay-modules-13 | plan | Compact cards build their full layout | 1 | needs a plan | overlay-modules-02, -04 |  |
 | 67 | features-03 | major | Notifications | 3 | ~200 (net about -80) | platform-03 |  |
-| 68 | features-04 | major | The dock | 2 | ~30 | features-01 | Q13 |
-| 69 | features-05 | major | Todo, pomodoro and timers | 7 | ~200 | features-01 | Q14, Q15 |
+| 68 | features-04 | major | Moved to Unconfirmed: The dock | 0 | ~30 | features-01 | Q13 |
+| 69 | features-05 | major | Todo, pomodoro and timers | 6 | ~200 | features-01 | Q14, Q15 |
 | 70 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
 | 71 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
 | 72 | features-08 | major | Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
-| 73 | features-09 | major | The chat | 6 | ~180 | features-01 |  |
+| 73 | features-09 | major | The chat | 4 | ~180 | features-01 |  |
 | 74 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
-| 75 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 5 | ~150 | features-01, overlay-modules-10 |  |
+| 75 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 4 | ~150 | features-01, overlay-modules-10 |  |
 | 76 | features-12 | major | Community setups | 5 | ~30 | features-01 |  |
 | 77 | features-13 | major | Screenshots and recording | 4 | ~80 | features-03 |  |
 | 78 | features-14 | major | Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
@@ -460,13 +460,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **overlay-modules**
 
-- **overlay-modules-02** (4): Holds the merged edge-menu padding note (confirm in an edge menu).
-  - [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](../issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
-  - [Card and Panel each spell out the grow and expand members](../issues.md#card-and-panel-each-spell-out-the-grow-and-expand-members)
+- **overlay-modules-02** (4): Holds the merged edge-menu padding note (confirm in an edge menu). Three fixed and the fourth's shown cause (fractional borders under a page's zoom); its other cause, Card modules each padding their own way, stays logged as PLAUSIBLE (maintainer's rule of 2026-11-05), so the cluster isn't done.
+  - fullMinWidth and fullMinHeight are compared with the slot's size, padding included
+  - Card and Panel each spell out the grow and expand members
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
-  - [A DeviceList squeezed to nothing wants no growth](../issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
-- **overlay-modules-03** (5): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes.
-  - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](../issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding)
+  - A DeviceList squeezed to nothing wants no growth
+- **overlay-modules-03** (4): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): Eight modules' full layouts need more room than their fullMin sizes, even inside the padding.
   - [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](../issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
   - [The Clock's date and label keep their room while the time shrinks to nothing](../issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
   - [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](../issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
@@ -479,10 +478,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [A clean layout's problem blocks saving the others in the Layouts editor](../issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
   - [The five layouts drafts are listed by hand in eight places](../issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
   - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](../issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
-- **overlay-modules-06** (4):
+- **overlay-modules-06** (3): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A stale exec-if check can block a widget after its exec-if changed.
   - [A custom widget's module past 8 grid units can't be saved](../issues.md#a-custom-widgets-module-past-8-grid-units-cant-be-saved)
   - [A custom widget's Tooltip switch does nothing](../issues.md#a-custom-widgets-tooltip-switch-does-nothing)
-  - [A stale exec-if check can block a widget after its exec-if changed](../issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
   - [A command naming a program shows the program as its script](../issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - **overlay-modules-07** (2):
   - [Any custom widget reaches the lock screen past its Offer switch](../issues.md#any-custom-widget-reaches-the-lock-screen-past-its-offer-switch)
@@ -515,11 +513,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The notification list's delegates animate with their own easing](../issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
   - [The history's group and entry delegates repeat one swipe-away mechanism](../issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
   - [clearAll removes each cached image twice, one process per entry](../issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
-- **features-04** (2):
-  - [The dock's menu and drag state outlive the icons they point at](../issues.md#the-docks-menu-and-drag-state-outlive-the-icons-they-point-at)
-  - [A dock beside another edge's reserving dock is laid out as if that dock weren't there](../issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there)
-- **features-05** (7): The suspend entry gets a Live checks line.
-  - [A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking](../issues.md#a-pomodoro-timer-or-caffeine-end-due-during-a-suspend-fires-up-to-an-hour-after-waking)
+- **features-04** (0): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The dock's menu and drag state outlive the icons they point at; A dock beside another edge's reserving dock is laid out as if that dock weren't there.
+- **features-05** (6): The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
   - [Skipping a focus session counts it as finished](../issues.md#skipping-a-focus-session-counts-it-as-finished)
   - [A recent timer chip reads its label back as part of the duration](../issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
   - [A todo.json deleted while unreadable blocks every save until restart](../issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
@@ -536,12 +531,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Event titles from a feed render as styled text and load remote images](../issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
 - **features-08** (1): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses.
   - [Idle dimming is forgotten across a shell reload](../issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
-- **features-09** (6): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines.
+- **features-09** (4): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.
   - [A fast chat reply can drop the shell's connection](../issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
   - [Replacing the chat's conversation leaves its reply and attachments behind](../issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
   - [Images dropped together on the chat overwrite each other](../issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
-  - [An image sent without text to Anthropic carries a whitespace-only text block](../issues.md#an-image-sent-without-text-to-anthropic-carries-a-whitespace-only-text-block)
-  - [Stop is ignored while chat.send still looks up the key](../issues.md#stop-is-ignored-while-chatsend-still-looks-up-the-key)
   - [An attachment's thumbnail pokes past its rounded corners](../issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
 - **features-10** (6):
   - [Renaming a note whose new name holds a dot drops its extension and hides it](../issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
@@ -550,11 +543,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Typing in a note creates a linked notes folder that doesn't exist](../issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
   - [Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives](../issues.md#two-toolbar-edits-skip-the-re-parse-so-the-editors-blocks-arent-what-parse-gives)
   - [NotesConfig expands ~ by hand where Paths.expandHome does it](../issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
-- **features-11** (5): The relative-times entry gets a Live checks line.
+- **features-11** (4): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
   - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](../issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
   - [The join form stays incomplete when CA file is picked without a file and the security changed](../issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
   - [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](../issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
-  - [The panel's relative times go stale while Tailscale's state stays the same](../issues.md#the-panels-relative-times-go-stale-while-tailscales-state-stays-the-same)
   - [The Network card shows Tailscale's raw state, untranslated](../issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - **features-12** (5):
   - [Re-applying a community setup over its edited copy never shows Applied](../issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
