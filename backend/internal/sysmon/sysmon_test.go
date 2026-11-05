@@ -571,7 +571,12 @@ func TestNvidiaRetriedForTheTopic(t *testing.T) {
 	run(t, mon)
 	req := `{"interval": 1000, "metrics": ["gpu"]}`
 	fetch(req)
-	if !testkit.Eventually(func() bool { starts, _ := f.state(); return len(starts) == 1 }) {
+	// Started, and its failure stamped (after the start, by the clock now)
+	if !testkit.Eventually(func() bool {
+		mon.mu.Lock()
+		defer mon.mu.Unlock()
+		return !mon.gpu.failedAt.IsZero()
+	}) {
 		t.Fatal("the topic never started the stream")
 	}
 	f.mu.Lock()
