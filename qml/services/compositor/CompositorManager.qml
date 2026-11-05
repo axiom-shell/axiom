@@ -335,14 +335,6 @@ Singleton {
       callback(null);
   }
 
-  // Switches every keyboard to its "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
-    if (root.backend)
-      root.backend.cycleKeyboardLayout(direction, callback);
-    else
-      callback?.();
-  }
-
   // Switches every keyboard to the layout at `index` (into withKeyboard's
   // layouts), then calls back
   function setKeyboardLayout(index, callback) {

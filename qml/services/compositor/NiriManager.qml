@@ -414,15 +414,6 @@ Singleton {
     callback(NiriState.keyboard(root._state, input.keyboard.enabled ? InputSources.xkb(InputConfig.sources).layout : root._configLayouts, registry));
   }
 
-  // Switches to the "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
-    root._action({
-      "SwitchLayout": {
-        "layout": direction === "prev" ? "Prev" : "Next"
-      }
-    }, () => callback?.());
-  }
-
   // Switches to the layout at `index`, then calls back
   function setKeyboardLayout(index, callback) {
     root._action({

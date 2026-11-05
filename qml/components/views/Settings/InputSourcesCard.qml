@@ -34,6 +34,10 @@ FieldGroup {
   readonly property string framework: InputSourceManager.detectedFramework
   // The framework asked for, as edited ("fcitx5", "ibus", "auto", "none")
   readonly property string chosen: String(SettingsManager.configValueAt("Input.method.framework") ?? "")
+  // The framework running is the one chosen: until Save turns managing on
+  // the daemon follows whichever runs, which needn't be the chosen one,
+  // whose engines and list the card would offer then
+  readonly property bool chosenRuns: InputSourceManager.running && (root.chosen === "auto" || root.chosen === root.framework)
   // Installed: true, false, or undefined until checked
   readonly property var hasFcitx5: DependencyManager.has("fcitx5")
   readonly property var hasIbus: DependencyManager.has("ibus-daemon")
@@ -43,7 +47,7 @@ FieldGroup {
   // Which list wins: turning on with a framework whose list isn't the
   // sources', or after an edit made outside axiom
   readonly property string asks: {
-    if (!InputSourceManager.detected)
+    if (!root.chosenRuns)
       return "";
     if (root.turningOn && !root.answered && !InputSourceManager.matches(root.sources))
       return "first";
@@ -149,7 +153,18 @@ FieldGroup {
     StyledTextButton {
       implicitHeight: Widget.height - Widget.px(4)
       text: I18n.tr("Manage it")
-      onClicked: SettingsManager.setValue(["Input", "method", "enabled"], true)
+      // The one running becomes the chosen one, unless it already is
+      onClicked: SettingsManager.setValues([
+        {
+          "path": ["Input", "method", "enabled"],
+          "value": true
+        }
+      ].concat(root.chosen === "auto" || root.chosen === root.framework ? [] : [
+        {
+          "path": ["Input", "method", "framework"],
+          "value": root.framework
+        }
+      ]))
     }
   }
 
@@ -160,8 +175,8 @@ FieldGroup {
     spacing: Widget.spacing
 
     StatusChip {
-      text: InputSourceManager.detected ? root.framework : root.chosen === "none" ? I18n.tr("Off") : I18n.tr("Not running")
-      color: InputSourceManager.detected ? Theme.success : root.chosen === "none" ? Theme.foregroundAlt : Theme.warning
+      text: root.chosenRuns ? root.framework : root.chosen === "none" ? I18n.tr("Off") : I18n.tr("Not running")
+      color: root.chosenRuns ? Theme.success : root.chosen === "none" ? Theme.foregroundAlt : Theme.warning
     }
 
     StyledText {
@@ -169,7 +184,7 @@ FieldGroup {
       wrapMode: Text.WordWrap
       textSize: Appearance.fontSizeBy(-1)
       text: {
-        if (InputSourceManager.detected)
+        if (root.chosenRuns)
           return I18n.tr("{0} is running: its engines can be added below, and it gets these sources.", root.framework);
         if (root.chosen === "none")
           return I18n.tr("No input method framework is used (Input method, below): only keyboard layouts switch.");
@@ -291,12 +306,12 @@ FieldGroup {
           StyledText {
             Layout.fillWidth: true
             elide: Text.ElideRight
-            textColor: row.ime && InputSourceManager.running && !row.engine ? Theme.warning : Theme.foregroundAlt
+            textColor: row.ime && root.chosenRuns && !row.engine ? Theme.warning : Theme.foregroundAlt
             textSize: Appearance.fontSizeBy(-2)
             text: {
               if (!row.ime)
                 return [row.source.layout, row.source.variant].filter(t => t).join(" ");
-              if (InputSourceManager.running && !row.engine)
+              if (root.chosenRuns && !row.engine)
                 return I18n.tr("{0}: not installed in {1}", row.source.engine, root.framework);
               return row.source.engine;
             }
@@ -429,8 +444,8 @@ FieldGroup {
         Layout.preferredHeight: Widget.height
         editable: true
         icon: "translate"
-        enabled: InputSourceManager.running && enginePicker.engines.length > 0
-        placeholderText: !InputSourceManager.running ? I18n.tr("Needs fcitx5 or ibus running") : enginePicker.engines.length > 0 ? I18n.tr("Search engines (Mozc, Pinyin, Hangul…)") : I18n.tr("Every installed engine is added")
+        enabled: root.chosenRuns && enginePicker.engines.length > 0
+        placeholderText: !root.chosenRuns ? I18n.tr("Needs fcitx5 or ibus running") : enginePicker.engines.length > 0 ? I18n.tr("Search engines (Mozc, Pinyin, Hangul…)") : I18n.tr("Every installed engine is added")
         options: enginePicker.engines.map(a => ({
               "value": a.name,
               "label": (a.displayName || a.name) + (a.lang ? "  ·  " + a.lang : "")
@@ -443,7 +458,7 @@ FieldGroup {
       }
 
       StyledText {
-        visible: !InputSourceManager.running
+        visible: !root.chosenRuns
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         textColor: Theme.foregroundAlt

@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The OSD may show an input source switch on every window focus
+- **Where:** `qml/components/surfaces/osd/OSDStatusSource.qml` (`_sourcesState`), `qml/services/system/InputSourceManager.qml` (`current`, `_followIm`)
+- **What:** With fcitx5 and `Input.method.shareState` `No` (the default) each window keeps its own input method, and the daemon's `current` follows the focused window (fcitx5's tray icon). `current` changing is all `OSDItems.layoutSwitched` sees, so focusing a mozc window after a keyboard-us one would show the keyboardLayout OSD (and `_followIm` moves the compositor's layout, which is meant). PLAUSIBLE: settle in a nested shell with fcitx5 and two windows on different input methods. Fix: tell a switch from a focus change (e.g. a `current` change right after `CompositorManager.windowFocused` isn't a switch), a trade-off for the maintainer.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the input sources branch
+
 ### A bar Grid warns as its bar turns between horizontal and vertical
 - **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
 - **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.

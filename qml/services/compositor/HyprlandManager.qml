@@ -352,11 +352,6 @@ if #errs > 0 then error(table.concat(errs, "; ")) end`
     root._json("devices", devices => callback(HyprState.keyboard(devices)));
   }
 
-  // Switches every keyboard to its "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
-    root._request("switchxkblayout all " + direction, () => callback?.());
-  }
-
   // Switches every keyboard to the layout at `index`, then calls back
   function setKeyboardLayout(index, callback) {
     root._request("switchxkblayout all " + Math.max(0, Math.floor(Number(index) || 0)), () => callback?.());

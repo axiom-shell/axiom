@@ -4,6 +4,7 @@ import qs.config
 import qs.components.methods
 import qs.services.compositor
 import qs.services.core
+import qs.services.session
 
 // The input sources (Input.sources: xkb layouts and input method engines)
 // and which one is in use, for every surface that shows or switches them:
@@ -65,8 +66,10 @@ QtObject {
   // }, InputSources.effective: the compositor's own layouts while axiom
   // doesn't set the keyboard); on the login screen, and while axiom
   // doesn't manage the input method or no framework runs (an engine can't
-  // be switched to then), the xkb ones alone
-  readonly property var sources: InputSources.effective(root.running ? InputConfig.sources : InputSources.xkbOnly(InputConfig.sources), root.layouts)
+  // be switched to then), the xkb ones alone; an engine the framework
+  // hasn't installed is left out too (switching to it fails, so stepping
+  // would stop there)
+  readonly property var sources: InputSources.effective(root.running ? InputConfig.sources : InputSources.xkbOnly(InputConfig.sources), root.layouts).filter(s => s.kind !== "ime" || root._engine(s) !== null)
   // The xkb ones: what a password field types through (the lock screen's
   // and the greeter's module offer only these)
   readonly property var xkbSources: InputSources.xkbOnly(root.sources)
@@ -399,16 +402,17 @@ QtObject {
   }
 
   // `axiom ipc inputSources next|prev|set <id>|list` (the keybind actions
-  // inputSourceNext / inputSourcePrev)
+  // inputSourceNext / inputSourcePrev, which work while locked: the xkb
+  // sources alone then, as the lock screen's module offers)
   property IpcTarget _ipc: IpcTarget {
     target: "inputSources"
 
     function next(): void {
-      root.next(false);
+      root.next(LockManager.builtinLocked);
     }
 
     function prev(): void {
-      root.prev(false);
+      root.prev(LockManager.builtinLocked);
     }
 
     // Switches to the source with that id; an unknown one is the caller's

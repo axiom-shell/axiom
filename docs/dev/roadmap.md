@@ -479,6 +479,7 @@ Found while reviewing compositor-20 (row 20):
 - [TestDevImageFailingFallsBack sometimes finds no fallback exec](issues.md#testdevimagefailingfallsback-sometimes-finds-no-fallback-exec)
 
 Found while reviewing the input sources branch:
+- [The OSD may show an input source switch on every window focus](issues.md#the-osd-may-show-an-input-source-switch-on-every-window-focus)
 
 Found while reviewing the bar rewrite:
 - [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
