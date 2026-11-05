@@ -4,11 +4,10 @@
 // that name never means ibus). It follows the framework's current input
 // method, its list (fcitx5's current group, ibus's preloaded engines) and
 // the engines installed, from their signals (nothing polls but the look
-// for a framework that isn't running yet, and fcitx5's current input
-// method while it has no tray item and the shell asks: Poll); switches
-// the input method;
-// pushes the list axiom owns (Input.keyboard.sources) to the framework; and sets
-// fcitx5's few options axiom has settings for.
+// for a framework that isn't running yet, and fcitx5's state while it
+// has no tray item and the shell asks: Poll); switches the input method;
+// pushes the list axiom owns (Input.keyboard.sources) to the framework;
+// and sets fcitx5's few options axiom has settings for.
 package inputmethod
 
 import (
@@ -415,21 +414,20 @@ func (s *Service) hasTray() bool {
 
 // PollState is the inputMethodPoll topic's state: whether fcitx5 is
 // being read (fcitx5 followed, without a tray item to tell of its
-// switches or before it named its input methods).
+// switches).
 type PollState struct {
 	Polling bool `json:"polling"`
 }
 
-// Poll has fcitx5's current input method read, a switch published, while
+// Poll has fcitx5's state read again, a switch or a group edit published, while
 // fcitx5 runs with no tray item registered: it tells of a switch only
 // through that item's signals, and registers one only while a
-// StatusNotifierWatcher runs (a bar's SystemTray); and, while fcitx5
-// named no input methods installed (still loading its addons), the state
-// again, item or not. Nothing is read otherwise.
+// StatusNotifierWatcher runs (a bar's SystemTray). Nothing is read
+// otherwise.
 func (s *Service) Poll() PollState {
 	s.mu.Lock()
 	_, fcitx := s.active.(*fcitx)
-	polls := fcitx && (!s.tray || len(s.state.Available) == 0)
+	polls := fcitx && !s.tray
 	s.mu.Unlock()
 	if polls {
 		wake(s.poll)

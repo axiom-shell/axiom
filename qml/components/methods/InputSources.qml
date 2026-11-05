@@ -261,15 +261,6 @@ QtObject {
     });
   }
 
-  // Whether the daemon's inputMethod state says which engines the
-  // framework has installed: a running one always has some (fcitx5 its
-  // keyboard-* ones, ibus its xkb:*), so an empty list (just after it
-  // appeared, before its engines are read) isn't known yet, and a list
-  // pushed then would drop every engine
-  function installedKnown(state) {
-    return Array.isArray(state?.available) && state.available.length > 0;
-  }
-
   // The id of the source after (`direction` 1) or before (-1) the one
   // `id` names in `sources`, wrapping; the first (or the last) when `id`
   // isn't there, "" with none

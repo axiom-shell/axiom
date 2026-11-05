@@ -207,23 +207,6 @@ TestCase {
     compare(InputSources.compositorLayouts(own, true).map(s => s.id), ["xkb:0:fr", "xkb:1:us"], "the compositor's own layouts while axiom doesn't set them");
   }
 
-  // A list is pushed only once the framework's engines are known
-  function test_installedKnown() {
-    verify(!InputSources.installedKnown(null), "no state yet");
-    verify(!InputSources.installedKnown({
-      "running": true,
-      "available": []
-    }), "a framework just appeared: its engines not read yet");
-    verify(InputSources.installedKnown({
-      "running": true,
-      "available": [
-        {
-          "name": "keyboard-us"
-        }
-      ]
-    }));
-  }
-
   function test_step() {
     compare(InputSources.step(test.mixed, "us", 1), "mozc");
     compare(InputSources.step(test.mixed, "pinyin", 1), "us", "wraps");

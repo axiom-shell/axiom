@@ -181,8 +181,8 @@ QtObject {
   // module, the OSD's status) hold it: fcitx5 tells of a switch made in
   // fcitx5 itself only through its tray item, which it registers only
   // while a tray watcher runs (a bar's SystemTray), so while one holds
-  // it and fcitx5 runs the daemon reads its current input method about
-  // once a second whenever that item is missing (the inputMethodPoll
+  // it and fcitx5 runs the daemon reads its state again about once a
+  // second whenever that item is missing (the inputMethodPoll
   // topic; nothing is read while the item is there)
   function acquire(owner) {
     root._consumers.acquire(owner, {});
@@ -312,10 +312,6 @@ QtObject {
     const sources = InputConfig.savedSources;
     // ibus names xkb layouts by their language, from the registry
     if (root.framework === "ibus" && root._registry === null)
-      return;
-    // Until the engines installed are read: a list pushed then would
-    // drop every engine
-    if (!InputSources.installedKnown(root._im))
       return;
     if (InputSources.groupMatches(root.framework, sources, root.registry, root._im))
       return;

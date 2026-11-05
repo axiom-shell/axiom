@@ -41,8 +41,8 @@ type fcitx struct {
 
 // followFcitx follows fcitx5 until it stops (again: look again), the
 // setting changes (again) or the bus goes. A switch is heard through
-// fcitx5's tray item; while it has none registered (no watcher runs) a
-// Poll reads the current input method instead.
+// fcitx5's tray item, a group edit through its menu; while it has none
+// registered (no watcher runs) a Poll reads the state again instead.
 func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus.Subscription) (bool, error) {
 	var subs []*dbus.Subscription
 	defer func() {
@@ -128,8 +128,8 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		case <-s.poll:
 			// No tray item tells of a switch or (its menu) a group edit:
 			// the whole state is read again, an unchanged one publishing
-			// nothing. Nothing installed named yet: read again too
-			if s.hasTray() && len(s.State().Available) > 0 {
+			// nothing
+			if s.hasTray() {
 				continue
 			}
 			err = read(false)
@@ -181,8 +181,7 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 // when all, the input methods installed (else prev's).
 func (f *fcitx) read(ctx context.Context, all bool, prev State) (State, error) {
 	st := State{Framework: FrameworkFcitx, Running: true, Available: prev.Available}
-	// Read empty (fcitx5 still loading its addons): again until it names some
-	if all || len(st.Available) == 0 {
+	if all || st.Available == nil {
 		m, err := f.call(ctx, "AvailableInputMethods")
 		if err != nil {
 			return State{}, err
