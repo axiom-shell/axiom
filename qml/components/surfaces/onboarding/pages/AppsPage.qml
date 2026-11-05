@@ -3,15 +3,14 @@ import QtQuick
 import QtQuick.Layouts
 
 import qs.config
-import qs.services.core
 import qs.services.compositor
 import qs.services.ui
 import qs.components.reusable
-import qs.components.forms
+import qs.components.content.parts
 
-// The apps the keybinds open (terminal, file manager, browser), with the
-// installed ones offered to pick from, the main modifier, and the keys
-// that matter most on day one. The keys only where axiom binds them
+// The default apps the keybinds open (browser, file manager, terminal)
+// and mail (DefaultAppPickers), the main modifier, and the keys that
+// matter most on day one. The keys only where axiom binds them
 // (CompositorManager.supports.keybinds)
 OnboardingPage {
   id: root
@@ -19,69 +18,12 @@ OnboardingPage {
   readonly property bool binds: CompositorManager.supports.keybinds === true
 
   title: root.binds ? I18n.tr("Apps & keys") : I18n.tr("Apps")
-  intro: root.binds ? I18n.tr("Which apps should the keybinds open? Pick one that's installed, or type the command. Empty file manager and browser use your system's default.") : I18n.tr("Which apps should axiom open? Pick one that's installed, or type the command. Empty file manager and browser use your system's default.")
+  intro: root.binds ? I18n.tr("Which apps open links, folders and the terminal? The keybinds open these too. Every app follows them, and Settings › General › Default apps has the rest.") : I18n.tr("Which apps open links, folders and the terminal? Every app follows them, and Settings › General › Default apps has the rest.")
 
-  // Candidates offered as chips when they're installed
-  readonly property var candidates: ({
-      "Apps.terminal": ["kitty", "foot", "alacritty", "wezterm", "ghostty", "konsole", "gnome-terminal", "xfce4-terminal"],
-      "Apps.fileManager": ["nautilus", "thunar", "dolphin", "nemo", "pcmanfm-qt", "pcmanfm"],
-      "Apps.browser": ["firefox", "zen-browser", "librewolf", "chromium", "google-chrome-stable", "brave", "vivaldi-stable"]
-    })
-
-  Component.onCompleted: DependencyManager.check([].concat(...Object.keys(candidates).map(key => candidates[key])).concat([Apps.terminal, Apps.fileManager, Apps.browser]))
-
-  Connections {
-    target: ConfigManager
-    function onConfigChanged() {
-      DependencyManager.check([Apps.terminal, Apps.fileManager, Apps.browser]);
-    }
-  }
-
-  Repeater {
-    model: Object.keys(root.candidates)
-
-    delegate: ColumnLayout {
-      id: app
-      required property string modelData
-      readonly property string current: String(SettingsManager.configValueAt(modelData) ?? "")
-      readonly property var installed: root.candidates[modelData].filter(command => DependencyManager.found[command])
-      Layout.fillWidth: true
-      spacing: Widget.spacing
-
-      SettingRows {
-        id: rows
-        Layout.fillWidth: true
-        paths: [app.modelData]
-      }
-
-      Flow {
-        Layout.fillWidth: true
-        visible: app.installed.length > 0
-        spacing: Widget.spacing
-
-        Repeater {
-          model: app.installed
-
-          delegate: StyledTextButton {
-            required property string modelData
-            text: modelData
-            backgroundColor: app.current === modelData ? Theme.accent : Theme.backgroundHighlight
-            textColor: app.current === modelData ? Theme.background : Theme.foreground
-            onClicked: {
-              const values = {};
-              values[app.modelData] = modelData;
-              SettingsManager.commitValues(values);
-            }
-          }
-        }
-      }
-
-      Notice {
-        visible: app.current.trim() !== "" && DependencyManager.has(app.current) === false
-        tone: "warning"
-        text: I18n.tr("\"{0}\" isn't installed.", app.current.trim().split(/\s+/)[0])
-      }
-    }
+  // The default apps (the user's mimeapps.list): the ones the keybinds
+  // open, and mail
+  DefaultAppPickers {
+    roles: ["browser", "fileManager", "terminal", "mail"]
   }
 
   // The main modifier: Super everywhere, or Alt (they trade places, so

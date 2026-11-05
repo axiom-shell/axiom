@@ -19,12 +19,12 @@ properties:
     enum: [paru, yay]
     x-showIf: {includeAur: true, /$distro: arch}
   terminal:
-    x-link: {setting: Apps.terminal}
+    x-link: {setting: Apps}
     x-scope: commands
     type: string
     title: Terminal
     default: ''
-    description: Terminal the upgrade runs in (launched as `<terminal> -e ...`). Empty uses Apps → Terminal.
+    description: Terminal the upgrade runs in (launched as `<terminal> -e ...`). Empty uses the default terminal (Default apps).
   upgradeCommand:
     x-scope: commands
     type: string

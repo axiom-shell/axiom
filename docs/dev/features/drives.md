@@ -1,7 +1,7 @@
 # Removable drives
 
 > **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/content/parts/SecretField.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
-> **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.fileManager`; the OSD's `drive` status
+> **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.commands.fileManager`; the OSD's `drive` status
 > **Related:** [OSD](osd.md), [Notifications](notifications.md), [VPN](vpn.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
 USB sticks, memory cards and discs: an OSD card or a notification as one is plugged in, mounting, opening, unmounting, unlocking a LUKS volume and ejecting, from the bar, an overlay card, the launcher and IPC. udisks2 does the work, reached on the system bus by the axiom daemon; Quickshell has no udisks service.
@@ -18,7 +18,7 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 `DrivesManager` (`qml/services/system/`) holds the daemon's state and every action.
 - **State:** `drives.get` after each hello, then `drives.state` on every change (the shell subscribes to every topic). `drives` leaves out the ignored ones (`DrivesConfig.ignore`, matched by `DriveInfo.ignored`: a volume's UUID or label, exactly), and they're never notified or mounted either. `available` false (udisks2 not running) shows the panel's off message.
 - **Actions:** `mount`, `unmount` / `unmountAll`, `lock`, `eject` / `ejectAll`, `open`, and `askUnlock(volumeId, andOpen)` then `unlock(passphrase)` (opening the folder after only with `andOpen`: `open`'s). Each marks its drive in `pending` until the call answers ("Mounting…" on the row); a failure's error kind (`busy`, `not_authorized`, `wrong_passphrase`, `not_found`, `unavailable`, `failed`) becomes the row's red status (`errors`, `errorText`). The passphrase goes only in the call's body; nothing logs a call's params.
-- **Open:** mounts first if needed (or asks for the passphrase, and opens once unlocked), then runs `Apps.fileManager` with the folder appended (`sh -c '<command> "$1"'`), else `xdg-open <folder>`.
+- **Open:** mounts first if needed (or asks for the passphrase, and opens once unlocked), then opens it in the file manager (`DefaultAppsManager.open("fileManager", [folder])`: `Apps.commands.fileManager` with the folder appended, else the default file manager; `docs/dev/features/default-apps.md`).
 - **Unlock:** `unlockRequest` is the volume whose passphrase field shows (in its `DriveRow`). A Locked card's click or a notification's Unlock (`activate`) sets it and opens the overlay page or edge menu holding a Drives module (`ShellManager.openModule`); with none, the field waits in the bar popout. A wrong passphrase keeps the field with `unlockError`; a right one mounts the cleartext volume when the unlock's answer says there's a filesystem in it (`mountable`: not LVM).
 - **Eject:** unmounts, locks and powers off (the daemon's `drives.eject`), then says "Safe to remove" (see Who says what); `busy` warns that it's in use.
 - **Created from** `qml/shell.qml`'s `_services`, so plug-ins are noticed and IPC answers with no Drives widget or module shown.

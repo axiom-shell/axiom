@@ -276,9 +276,20 @@ func (c *Conn) forget(serial uint32) {
 // error wrapping *Error. A reply carrying descriptors is the caller's to
 // Close.
 func (c *Conn) Call(ctx context.Context, dest string, path ObjectPath, iface, member, sig string, args ...any) (*Message, error) {
+	return c.call(ctx, 0, dest, path, iface, member, sig, args...)
+}
+
+// CallInteractive is Call allowing interactive authorization: a callee
+// guarded by polkit asks the user through their polkit agent (axiom's own)
+// instead of refusing. ctx should leave the user time to answer.
+func (c *Conn) CallInteractive(ctx context.Context, dest string, path ObjectPath, iface, member, sig string, args ...any) (*Message, error) {
+	return c.call(ctx, FlagAllowInteractiveAuthorization, dest, path, iface, member, sig, args...)
+}
+
+func (c *Conn) call(ctx context.Context, flags byte, dest string, path ObjectPath, iface, member, sig string, args ...any) (*Message, error) {
 	ch := make(chan *Message, 1)
 	serial, err := c.send(&Message{
-		Type: TypeMethodCall, Destination: dest, Path: path, Interface: iface, Member: member,
+		Type: TypeMethodCall, Flags: flags, Destination: dest, Path: path, Interface: iface, Member: member,
 		Signature: Signature(sig), Body: args,
 	}, ch)
 	if err != nil {

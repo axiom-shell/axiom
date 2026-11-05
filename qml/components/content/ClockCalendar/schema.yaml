@@ -5,7 +5,13 @@ icon: calendar_clock
 group: Time & weather
 hosts: [lockscreen, greeter]
 settings:
-  use24Hour: {type: boolean, title: '24-hour clock', default: true}
+  hourFormat:
+    type: string
+    title: Clock
+    enum: [default, '12', '24']
+    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    default: default
+    description: Default follows Settings › System › Date & time.
   showSeconds: {type: boolean, title: Show seconds, default: false}
   showEvents:
     type: boolean

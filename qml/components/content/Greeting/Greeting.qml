@@ -1,6 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 
 import qs.config
 import qs.services.session
@@ -11,7 +13,10 @@ import qs.components.content.base
 // the text. {name} is the display name, {user} the user name and
 // {greeting} good morning, afternoon or evening; empty text says hey to
 // the display name. On the greeter, the names are the user logging in's.
-// properties: { text, color, alignment: "left" | "center" | "right", bold }
+// With showPicture, the user's picture goes before it (AccountManager's,
+// on the greeter the user logging in's).
+// properties: { text, color, alignment: "left" | "center" | "right", bold,
+//   showPicture }
 Card {
   id: root
 
@@ -32,6 +37,7 @@ Card {
   readonly property var greeterUser: root.onGreeter ? GreetdManager.selectedUser : null
   readonly property string displayName: root.onGreeter ? (root.greeterUser?.realName ?? "") : General.displayName
   readonly property string userName: root.onGreeter ? (root.greeterUser?.name ?? "") : (Quickshell.env("USER") ?? "")
+  readonly property string picture: !root.properties.showPicture ? "" : root.onGreeter ? (root.greeterUser?.name ? GreetdManager.avatarOf(root.greeterUser.name) : "") : AccountManager.iconUrl
   readonly property string shownText: root.template === "" ? (root.displayName ? I18n.tr("Hey {0}", root.displayName) : I18n.tr("Welcome")) : root.template.replace(/\{name\}/g, root.displayName).replace(/\{user\}/g, root.userName).replace(/\{greeting\}/g, root.greeting)
 
   color: root.boxless ? "transparent" : Theme.background
@@ -43,18 +49,43 @@ Card {
     precision: SystemClock.Hours
   }
 
-  StyledText {
+  RowLayout {
     anchors.fill: parent
     anchors.margins: root.pad
-    text: root.shownText
-    textColor: Theme.resolveColor(root.properties.color)
-    textSize: Math.max(Widget.px(8), Math.round(height))
-    font.bold: root.properties.bold
-    fontSizeMode: Text.Fit
-    minimumPixelSize: Widget.px(8)
-    wrapMode: Text.WordWrap
-    elide: Text.ElideRight
-    horizontalAlignment: root.properties.alignment === "left" ? Text.AlignLeft : root.properties.alignment === "right" ? Text.AlignRight : Text.AlignHCenter
-    verticalAlignment: Text.AlignVCenter
+    spacing: Widget.spacing * 2
+
+    ClippingRectangle {
+      visible: root.picture !== "" && pictureImage.status === Image.Ready
+      Layout.preferredHeight: Math.min(parent.height, Widget.px(160))
+      Layout.preferredWidth: Layout.preferredHeight
+      Layout.alignment: Qt.AlignVCenter
+      radius: width / 2
+      color: Theme.backgroundAlt
+
+      Image {
+        id: pictureImage
+        anchors.fill: parent
+        source: root.picture
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        cache: false
+        sourceSize: Qt.size(width * 2, height * 2)
+      }
+    }
+
+    StyledText {
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      text: root.shownText
+      textColor: Theme.resolveColor(root.properties.color)
+      textSize: Math.max(Widget.px(8), Math.round(height))
+      font.bold: root.properties.bold
+      fontSizeMode: Text.Fit
+      minimumPixelSize: Widget.px(8)
+      wrapMode: Text.WordWrap
+      elide: Text.ElideRight
+      horizontalAlignment: root.properties.alignment === "left" ? Text.AlignLeft : root.properties.alignment === "right" ? Text.AlignRight : Text.AlignHCenter
+      verticalAlignment: Text.AlignVCenter
+    }
   }
 }

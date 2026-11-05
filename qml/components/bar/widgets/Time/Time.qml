@@ -18,7 +18,8 @@ BarWidget {
   id: root
 
   readonly property bool japanese: I18n.language === "ja"
-  readonly property bool use24Hour: properties.use24Hour
+  // hourFormat: "default" (Settings › Date & time) | "12" | "24"
+  readonly property bool use24Hour: I18n.hours24(properties.hourFormat)
   readonly property bool showSeconds: properties.showSeconds
   readonly property bool showDate: properties.showDate
   readonly property color foregroundColor: colors.text
@@ -46,7 +47,7 @@ BarWidget {
     const date = root.now;
     if (properties.timeFormat)
       return I18n.formatDate(date, properties.timeFormat);
-    return I18n.formatDate(date, I18n.dateFormat((use24Hour ? "clock24" : "clock12") + (showSeconds ? "s" : "")));
+    return I18n.formatDate(date, I18n.clockFormat(properties.hourFormat, showSeconds));
   }
   readonly property string dateText: I18n.formatDate(root.now, properties.dateFormat || I18n.dateFormat("mediumDate"))
 

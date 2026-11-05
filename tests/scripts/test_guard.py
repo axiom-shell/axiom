@@ -280,6 +280,39 @@ class Bash(unittest.TestCase):
                     "cp /tmp/x.json /tmp/y.json", f"sed -n 1p {live}", f"diff {live} /tmp/x 2>/dev/null",
                     "find . -name '*.pyc' -delete", "find ~/.config -name '*.json' -exec grep -l Bar {} +")
 
+    def test_machine_settings(self):
+        """The clock, time zone, hostname, account and default apps change
+        only on a scratch bus, a scratch daemon or a scratch config home."""
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        for method in guard.SYSTEM_WRITES:
+            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
+            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
+        self.allows(f"python3 -c {call % 'datetime.get'}", f"python3 -c {call % 'account.get'}",
+                    f"python3 -c {call % 'apps.handlers'}", f"python3 -c {call % 'system.info'}")
+        self.blocks("timedatectl set-timezone Europe/Berlin", "sudo timedatectl set-ntp false",
+                    "hostnamectl set-hostname box", "hostnamectl hostname box", "passwd", "echo x | passwd --stdin",
+                    "sudo usermod -c Name me", "chfn -f Name",
+                    "busctl call org.freedesktop.timedate1 /org/freedesktop/timedate1 org.freedesktop.timedate1 SetNTP bb false false",
+                    "gdbus call --system -d org.freedesktop.Accounts -o /org/freedesktop/Accounts/User1000 -m org.freedesktop.Accounts.User.SetIconFile /tmp/a.png",
+                    "busctl set-property org.freedesktop.hostname1 /org/freedesktop/hostname1 org.freedesktop.hostname1 X s y")
+        self.allows("timedatectl", "timedatectl status", "timedatectl list-timezones", "hostnamectl", "hostnamectl status",
+                    "busctl introspect org.freedesktop.timedate1 /org/freedesktop/timedate1",
+                    "busctl get-property org.freedesktop.timedate1 /org/freedesktop/timedate1 org.freedesktop.timedate1 Timezone",
+                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.freedesktop.timedate1 / x SetNTP bb false false",
+                    "go test ./internal/timedate", "grep -rn passwd backend")
+
+    def test_default_apps_files(self):
+        self.blocks("xdg-mime default firefox.desktop x-scheme-handler/http", "xdg-settings set default-web-browser firefox.desktop",
+                    "cp /tmp/m ~/.config/mimeapps.list", "rm ~/.config/mimeapps.list", "sed -i s/a/b/ ~/.config/hyprland-mimeapps.list",
+                    "echo x > ~/.config/xdg-terminals.list", "cp /tmp/mimeapps.list ~/.config/")
+        self.allows("xdg-mime query default text/plain", "xdg-settings get default-web-browser", "cat ~/.config/mimeapps.list",
+                    "XDG_CONFIG_HOME=/tmp/cfg xdg-mime default firefox.desktop text/html", "cp /tmp/m /tmp/cfg/mimeapps.list",
+                    "cp ~/.config/mimeapps.list /tmp/backup.list")
+        for path in (f"{HOME}/.config/mimeapps.list", f"{HOME}/.config/xdg-terminals.list"):
+            with self.assertRaises(guard.Denied):
+                guard.check({"tool_name": "Write", "tool_input": {"file_path": path, "content": "x"}})
+        guard.check({"tool_name": "Write", "tool_input": {"file_path": "/tmp/cfg/mimeapps.list", "content": "x"}})
+
     def test_qmlformat_inplace(self):
         self.blocks("qmlformat -i shell.qml", "/usr/lib/qt6/bin/qmlformat --inplace shell.qml")
         self.allows("/usr/lib/qt6/bin/qmlformat shell.qml")

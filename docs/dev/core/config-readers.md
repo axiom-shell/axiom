@@ -22,6 +22,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
   - `screensFor(mode, name)`: see [Shell manager and screen targeting](shell-manager-targeting.md).
 - **`Idle`**: hypridle ([Idle](../features/idle.md)).
 - **`PolkitConfig`**: [Polkit](../features/polkit.md).
+- **`DateTimeConfig`**: the clock, date order, first day of the week and region, which `I18n` applies (`use24Hour`, `dateFormat`, `firstDayOfWeek`): [Date and time](../features/datetime.md).
 - **`GreeterConfig`**: [Greeter install](../features/greeter-install.md).
 - **`Appearance`**: theme, font, shape, motion tokens.
 - **`Widget`**: sizes for controls and panels outside the bar. `height`, `padding`, `spacing`, `cardPadding`, `iconButton`, `smallHeight` and `smallPadding` are the density preset's (`Widget.density`) times the Interface scale (`Widget.scale`, a factor), which also scales `Appearance.fontSize` / `fontSizeLarge`; `Widget.px(n)` is any other size (a panel's width, an avatar, a dot) at the scale. Which to use where: [Shared UI pieces › Sizes](shared-ui-pieces.md#sizes). Bars read `Appearance.baseFontSize` and their own sizes, so they never follow it. `cardSize` is the card size every module grid starts from (`OverlayConfig.cardUnitOn`).

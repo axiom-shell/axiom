@@ -15,7 +15,7 @@ import qs.components.content.parts
 // 19, a mark at now) when there's room; side by side as tiles in a wide,
 // short card. Rows that don't fit are left off; compact, the first place
 // away from here.
-// properties: { clocks: [{ timezone, label }], showLocal, use24Hour,
+// properties: { clocks: [{ timezone, label }], showLocal, hourFormat,
 // showTimeline }
 Card {
   id: root
@@ -58,7 +58,7 @@ Card {
   }
 
   function timeText(date) {
-    return I18n.formatDate(date, I18n.dateFormat(root.properties.use24Hour ? "clock24" : "clock12"));
+    return I18n.formatDate(date, I18n.clockFormat(root.properties.hourFormat, false));
   }
 
   // "+9 h", "−5:30 h" from here, and "Tomorrow"/"Yesterday" when its date

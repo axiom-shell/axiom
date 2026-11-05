@@ -30,7 +30,7 @@ type TopicShape struct {
 // pushShapes are every push declared in methods.go, for Contract
 // (scripts/gen_docs.py fails on a declared push missing here).
 func pushShapes() []rpc.PushShape {
-	return []rpc.PushShape{
+	return append([]rpc.PushShape{
 		pushConfigChanged.Shape(), pushConfigState.Shape(), pushSchemaChanged.Shape(), pushSchemaError.Shape(),
 		pushSavedState.Shape(),
 		pushDaemonState.Shape(), pushDevState.Shape(), pushDaemonClosing.Shape(),
@@ -48,18 +48,18 @@ func pushShapes() []rpc.PushShape {
 		pushGreeterAuthorized.Shape(),
 		pushSwitcherKey.Shape(),
 		pushNotifyAction.Shape(),
-	}
+	}, machinePushShapes()...)
 }
 
 // methodSets are every part's methods (Run's parts, which also configure
 // and run things, so Contract can't build them). A test checks a running
 // daemon registers exactly these.
 func (d *Daemon) methodSets() []func(*rpc.Registry) {
-	return []func(*rpc.Registry){
+	return append([]func(*rpc.Registry){
 		d.coreMethods, d.configMethods, d.ipcMethods, d.sharingMethods,
 		func(reg *rpc.Registry) { d.compositorMethods(reg, d.compositor) },
 		d.compositorSocketMethods, d.topicsPart().methods, d.toolsMethods, d.execMethods, d.filesMethods, d.calendarMethods, d.chatMethods, d.secretsMethods, d.themeMethods, d.hookupMethods, d.selfUpdateMethods, d.greeterInstallMethods, d.cursorMethods, d.inputMethods, d.brightnessPart().methods, d.idleMethods, d.waylandMethods, d.switcherMethods, d.clipboardMethods, d.vpnMethods, d.drivesMethods, d.inputMethodMethods, d.netMethods, d.dev.methods,
-	}
+	}, d.machineMethods()...)
 }
 
 // BuildContract builds the daemon's registry without starting anything

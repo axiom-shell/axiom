@@ -110,7 +110,7 @@ FieldGroup {
     }
     StyledText {
       wrapMode: Text.WordWrap
-      text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateFormat("mediumDate") + " " + I18n.dateFormat("time24")) : I18n.tr("Never")
+      text: SelfUpdateManager.lastChecked > 0 ? I18n.formatDate(new Date(SelfUpdateManager.lastChecked), I18n.dateTimeFormat()) : I18n.tr("Never")
       Layout.fillWidth: true
     }
   }

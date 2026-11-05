@@ -3,12 +3,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import qs.config
 
 // A choice from a list that drops down under the field, optionally typed
 // (`editable`): typing filters the list and Enter takes what was typed, or
 // the highlighted match. Up/Down move through the list (opening it), and
-// Escape closes it. `options` is [{ value, label, icon? }]; `value` is the
+// Escape closes it. `options` is [{ value, label, icon?, image? }] (icon a
+// glyph, image a picture's path: an app's icon); `value` is the
 // current choice, which the field shows unless it's being typed in (the
 // push pattern: picking emits `picked`, the owner sets `value`).
 // `search` (a function of the typed text returning options) replaces the
@@ -399,6 +401,14 @@ Item {
           visible: (option.modelData.icon ?? "") !== ""
           text: option.modelData.icon ?? ""
           textColor: Theme.accent
+        }
+
+        // An image in place of the glyph (an app's icon, by path or URL)
+        IconImage {
+          visible: (option.modelData.image ?? "") !== ""
+          source: option.modelData.image ?? ""
+          implicitSize: Appearance.fontSizeLarge
+          asynchronous: true
         }
 
         StyledText {

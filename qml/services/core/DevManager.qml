@@ -53,7 +53,7 @@ Singleton {
       } : null);
     if (!build)
       return I18n.tr("Not built this run");
-    const when = build.at ? I18n.formatDate(new Date(build.at), I18n.dateFormat("dateTime")) : "";
+    const when = build.at ? I18n.formatDate(new Date(build.at), I18n.dateTimeFormat()) : "";
     return build.ok ? I18n.tr("Built {0}", when) : I18n.tr("Build failed {0}", when);
   }
 

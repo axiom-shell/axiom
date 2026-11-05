@@ -287,7 +287,7 @@ Singleton {
 
   // Opens a link from a notification's body in its app
   function openLink(url) {
-    CommandManager.runDetached(["xdg-open", url]);
+    DefaultAppsManager.open(url);
   }
 
   // Makes clicking a notification with this desktop entry call

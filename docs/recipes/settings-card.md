@@ -1,7 +1,7 @@
 # Recipe: a hand-built settings card or intro
 
 > **Use when:** a settings section needs more than generated rows: a status card with actions, a list of entries, or a status line above the fields.
-> **Copy from:** `qml/components/views/Settings/OnboardingCard.qml` (`FieldGroup` with a header button), `qml/components/views/Settings/PolkitStatusCard.qml` (status), `qml/components/views/Settings/OSDListCard.qml` (an entry list via `EntryListCard`, folding), `qml/components/views/Settings/CalendarAccountsCard.qml` (a `FoldingCard`), `qml/components/views/Settings/NightLightStatus.qml` (an `x-intro`).
+> **Copy from:** `qml/components/views/Settings/DependenciesCard.qml` (`FieldGroup` with a header chip and button), `qml/components/views/Settings/PolkitStatusCard.qml` (status), `qml/components/views/Settings/OSDListCard.qml` (an entry list via `EntryListCard`, folding), `qml/components/views/Settings/CalendarAccountsCard.qml` (a `FoldingCard`), `qml/components/views/Settings/NightLightStatus.qml` (an `x-intro`).
 > **Docs:** [core/settings-page](../dev/core/settings-page.md), [core/schema-annotations](../dev/core/schema-annotations.md).
 
 ## The three annotations

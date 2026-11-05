@@ -33,13 +33,13 @@ To back up your setup or keep it in a dotfiles repo, `~/.config/axiom/` is the f
 
 Your whole setup (bars, overlay pages, edge menus, docks, the lock and login screens, every setting) is one file, so it can be kept and swapped as a whole:
 
-- **Settings → Maintenance → Saved configurations** saves the current config under a name, and restores or deletes saved ones. Restoring replaces the current config.
+- **Settings → System → Saved configurations** saves the current config under a name, and restores or deletes saved ones. Restoring replaces the current config.
 - The launcher does the same: `/config save <name>` and `/config restore <name>`.
 - Saved configs are plain copies of `config.json` in `~/.config/axiom/saved/`. Copy one to another machine, or share it, and restore it there.
 
 ### Example setups
 
-axiom ships the setups from the README in `data/examples/`. Apply one from **Settings → Maintenance → Example setups**, or with `/config example <name>` in the launcher.
+axiom ships the setups from the README in `data/examples/`. Apply one from **Settings → System → Example setups**, or with `/config example <name>` in the launcher.
 
 - An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, edge menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
 - Everything else stays as it is: wallpapers, monitors, apps, keybinds, calendars, chat providers, compositor settings, idle and the login screen.
@@ -49,13 +49,13 @@ axiom ships the setups from the README in `data/examples/`. Apply one from **Set
 
 ### Sharing a setup
 
-- **Settings → Maintenance → Share → Export** writes the current look and layout to `~/axiom-<name>-<date>-<time>.json`, holding only what differs from the defaults. Monitors, wallpapers, accounts and paths are never in it. Keybinds, apps and commands are left out unless you switch them on, and so are your personal preferences, such as your interface scale, card size and density.
+- **Settings → System → Share → Export** writes the current look and layout to `~/axiom-<name>-<date>-<time>.json`, holding only what differs from the defaults. Monitors, wallpapers, accounts and paths are never in it. Keybinds, apps and commands are left out unless you switch them on, and so are your personal preferences, such as your interface scale, card size and density.
 - **Import…** opens a file (an export, an example or a whole `config.json`) and applies it the way an example applies, saving changes first the same way. The result is saved as `import-<name>`, and stays until you delete it. A file without a `version`, or from a newer axiom, is refused.
 - If the file holds keybinds, apps and commands, you can take those too, but the switch is off by default: a command runs as you, so read every command in a file someone else made before turning it on.
 
 ### Community setups
 
-Setups other people built and shared at [axiom-shell/community-setups](https://github.com/axiom-shell/community-setups). Browse them in **Settings → Maintenance → Community setups**, or search with `/config community <text>` in the launcher.
+Setups other people built and shared at [axiom-shell/community-setups](https://github.com/axiom-shell/community-setups). Browse them in **Settings → System → Community setups**, or search with `/config community <text>` in the launcher.
 
 - Nothing is downloaded until you open the gallery. Every file is checked against the catalog's checksum.
 - Applying one works like an import with keybinds, apps and commands off: only the look and layout change, and changes are saved first the same way. Its wallpaper, if you take it, is part of its saved config. Shared setups never contain commands, monitors, accounts or paths, and the repository's checks refuse any that try.

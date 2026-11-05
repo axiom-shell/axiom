@@ -24,7 +24,7 @@ func TestConfigShare(t *testing.T) {
 	}{
 		{"look only", `{"format": 2, "version": 76, "meta": {"title": "T", "description": "D"},
 			"Appearance": {"theme": {"name": "nord"}}, "Apps": {"terminal": "foot"}, "Compositor": {"mode": "managed"}}`,
-			false, 0, []string{"commands Apps.terminal", "takeover Compositor.mode"}, "nord"},
+			false, 0, []string{"commands Apps.commands.terminal", "takeover Compositor.mode"}, "nord"},
 		{"places", `{"format": 2, "version": 76, "meta": {"title": "T", "description": "D"},
 			"Bars": {"items": [{"id": "side", "screen": {"mode": "named", "names": ["#2", "HDMI-A-1"]}}]}}`,
 			true, 0, []string{"machine Bars.items[side].screen.names[1]"}, ""},

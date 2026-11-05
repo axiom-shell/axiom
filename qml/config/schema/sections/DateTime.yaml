@@ -1,0 +1,50 @@
+# The DateTime section of the config (config.json's "DateTime").
+
+type: object
+x-category: System
+x-card: {file: DateTimeStatus, title: Clock}
+title: Date & time formats
+description: How times and dates read across the shell. Day and month names follow the language; the clock, the order of a date and the first day of the week follow these.
+additionalProperties: false
+properties:
+  hourFormat:
+    x-scope: personal
+    type: string
+    title: Clock
+    enum: [auto, '12', '24']
+    x-enumLabels:
+      auto: Follow the region
+      '12': '12-hour (1:30 PM)'
+      '24': '24-hour (13:30)'
+    default: auto
+    description: Every clock and time that doesn't set its own. Follow the region uses the region's (or the language's) usual clock.
+  dateStyle:
+    x-scope: personal
+    type: string
+    title: Dates
+    enum: [region, language, dmy, mdy, ymd, iso]
+    x-enumLabels:
+      region: Follow the region
+      language: "The language's"
+      dmy: Day first (5 Nov 2026)
+      mdy: 'Month first (Nov 5, 2026)'
+      ymd: Year first (2026 Nov 5)
+      iso: ISO 8601 (2026-11-05)
+    default: region
+    description: The order dates read in. Follow the region is the language's own order until a region is set.
+  firstDayOfWeek:
+    x-scope: personal
+    type: string
+    title: First day of the week
+    enum: [region, monday, sunday, saturday]
+    x-enumLabels: {region: Follow the region, monday: Monday, sunday: Sunday, saturday: Saturday}
+    default: region
+    description: Where calendar weeks start.
+  region:
+    x-scope: personal
+    type: string
+    title: Region
+    default: ''
+    x-options: regions
+    x-emptyLabel: Same as the language
+    description: The formats of another country than the language's, such as English text with German dates and a 24-hour clock.

@@ -6,7 +6,7 @@ import qs.services.core
 import qs.components.reusable
 
 /**
- * Settings page, Maintenance (the category's `card`, wide): save the config's
+ * Settings page, System (the category's `card`, wide): save the config's
  * look, layout, keybinds, apps and wallpapers under a name, and restore or
  * delete saved ones. Only the active one (last saved or restored, always
  * there) can be overwritten from its row, and only the others deleted; it's
@@ -151,7 +151,7 @@ FieldGroup {
           Subtitle {
             armed: row.pendingAction === "restore"
             restoring: row.fileBaseName
-            idle: I18n.formatDate(row.fileModified, I18n.dateFormat("dateTime"))
+            idle: I18n.formatDate(row.fileModified, I18n.dateTimeFormat())
           }
         }
 

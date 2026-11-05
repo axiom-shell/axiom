@@ -32,7 +32,13 @@ settings:
     title: Show the time here
     default: true
     description: The system's time first, for comparison.
-  use24Hour: {type: boolean, title: '24-hour clock', default: true}
+  hourFormat:
+    type: string
+    title: Clock
+    enum: [default, '12', '24']
+    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    default: default
+    description: Default follows Settings › System › Date & time.
   showTimeline:
     type: boolean
     title: Show the day

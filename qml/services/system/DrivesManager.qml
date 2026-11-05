@@ -347,15 +347,11 @@ QtObject {
     };
   }
 
-  // The file manager (Apps.fileManager, given the folder) or the
-  // desktop's default for folders
+  // The file manager (Apps.commands.fileManager, else the default one), given the
+  // folder
   function _openFolder(path) {
-    if (!path)
-      return;
-    if (Apps.fileManager !== "")
-      CommandManager.runDetached(["sh", "-c", Apps.fileManager + " \"$1\"", "sh", path]);
-    else
-      CommandManager.runDetached(["xdg-open", path]);
+    if (path)
+      DefaultAppsManager.open("fileManager", [path]);
   }
 
   function _notify(summary, body, icon, actions, onAction, key) {

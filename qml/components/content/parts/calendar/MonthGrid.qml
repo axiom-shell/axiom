@@ -115,7 +115,7 @@ Item {
   // Strings, so the grid only rebuilds when the day or month changes
   readonly property string today: clock.date.toDateString()
   readonly property string todayKey: CalendarEvents.dayKey(clock.date)
-  readonly property int firstDay: I18n.locale.firstDayOfWeek % 7
+  readonly property int firstDay: I18n.firstDayOfWeek
   readonly property var days: Utils.monthGrid(root.year, root.month, root.firstDay, root.today)
 
   ColumnLayout {

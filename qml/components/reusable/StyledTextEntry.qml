@@ -50,7 +50,9 @@ StyledContainer {
     textField.forceActiveFocus();
   }
 
-  implicitHeight: textField.implicitHeight + Widget.padding * 2
+  // A combo's height (Widget.height), growing as long text wraps; the
+  // TextField's own padding is zeroed, so the box's is the only one
+  implicitHeight: Math.max(Widget.height, textField.contentHeight + Widget.spacing * 2)
   borderColor: textField.activeFocus ? Theme.accent : Theme.border
   backgroundColor: Theme.backgroundAlt
 
@@ -64,6 +66,8 @@ StyledContainer {
     anchors.leftMargin: Widget.padding
     anchors.rightMargin: (root._clearShown ? clearButton.width + clearButton.inset + Widget.spacing : Widget.padding) + root._capsRoom
     verticalAlignment: TextInput.AlignVCenter
+    topPadding: 0
+    bottomPadding: 0
     text: root.text
     onTextChanged: root.text = text
     // TextInput emits textEdited before textChanged: `text` is brought up

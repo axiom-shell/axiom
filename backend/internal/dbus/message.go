@@ -23,6 +23,9 @@ const (
 const (
 	FlagNoReplyExpected byte = 0x1
 	FlagNoAutoStart     byte = 0x2
+	// The callee may have polkit ask the user (through their agent) before
+	// it answers: a setter that needs an administrator, called on a click
+	FlagAllowInteractiveAuthorization byte = 0x4
 )
 
 // Header field codes

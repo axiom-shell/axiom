@@ -12,13 +12,13 @@ import qs.components.content.base
 // face with hands, the second hand in the accent color). The date and a
 // `label` go under it. A `timezone` shows another zone's time
 // (TimeZoneManager), the system's until its offset is read.
-// properties: { style, use24Hour, showSeconds, showDate, timezone, label,
+// properties: { style, hourFormat, showSeconds, showDate, timezone, label,
 // color, accentColor }
 Card {
   id: root
 
   readonly property string style: root.properties.style
-  readonly property bool use24Hour: root.properties.use24Hour
+  readonly property bool use24Hour: I18n.hours24(root.properties.hourFormat)
   readonly property bool showSeconds: root.properties.showSeconds
   readonly property string timezone: root.properties.timezone
   readonly property color textColor: root.properties.color ? Theme.resolveColor(root.properties.color) : Theme.foreground

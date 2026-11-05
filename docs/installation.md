@@ -162,11 +162,11 @@ The window look and **Input** (keyboard, mouse, touchpad, cursor) apply in every
 
 ## Updates
 
-Installed from the AUR, axiom updates with the rest of your system; restart it after an update. Otherwise, axiom updates itself from the repository you cloned it from. It follows release tags (`v*`) by default, or every commit on `main` if you pick that channel under **Settings → Maintenance → axiom updates**. It checks when the shell starts and once a day, and the same page picks what happens next:
+Installed from the AUR, axiom updates with the rest of your system; restart it after an update. Otherwise, axiom updates itself from the repository you cloned it from. It follows release tags (`v*`) by default, or every commit on `main` if you pick that channel under **Settings → System → axiom updates**. It checks when the shell starts and once a day, and the same page picks what happens next:
 
 | Mode | What it does |
 | --- | --- |
-| **Notify me** (default) | Sends a notification. Clicking it opens **Settings → Maintenance → axiom updates**, which shows what's new and has an **Update** button. |
+| **Notify me** (default) | Sends a notification. Clicking it opens **Settings → System → axiom updates**, which shows what's new and has an **Update** button. |
 | **Update automatically** | Installs the update, reloads the shell, and notifies you. |
 | **Off** | Never checks. **Check now** still works. |
 

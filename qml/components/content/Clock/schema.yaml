@@ -12,10 +12,13 @@ settings:
     x-enumLabels: {digital: Digital, stacked: Stacked, analog: Analog}
     default: stacked
     description: 'Digital: the time in one large line. Stacked: the hours over the minutes. Analog: a clock face with hands.'
-  use24Hour:
-    type: boolean
-    title: '24-hour clock'
-    default: true
+  hourFormat:
+    type: string
+    title: Clock
+    enum: [default, '12', '24']
+    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    default: default
+    description: Default follows Settings › System › Date & time.
     x-showIf: {style: {not: analog}}
   showSeconds: {type: boolean, title: Show seconds, default: false}
   showDate: {type: boolean, title: Show the date, default: true}

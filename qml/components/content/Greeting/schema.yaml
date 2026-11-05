@@ -18,3 +18,8 @@ settings:
     x-enumLabels: {left: Left, center: Centre, right: Right}
     default: center
   bold: {type: boolean, title: Bold, default: false}
+  showPicture:
+    type: boolean
+    title: Picture
+    default: false
+    description: Your picture (Settings › General › Account) before the text; on the login screen, the picture of the user logging in.

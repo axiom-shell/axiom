@@ -1,7 +1,7 @@
 # The CommunitySetups section of the config (config.json's "CommunitySetups").
 
 type: object
-x-category: Maintenance
+x-category: System
 x-card: {file: CommunitySetups, title: Community setups, wide: true}
 title: Community gallery
 description: Setups other people built with axiom and shared at github.com/axiom-shell/community-setups. Applying one changes the look and layout only, never keybinds, apps, commands, monitors or accounts, and saves your current setup first.

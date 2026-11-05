@@ -40,7 +40,12 @@
       "Bash(qmlformat -i *)",
       "Bash(git push --force*)",
       "Bash(git push -f*)",
-      "Bash(git push origin main*)"
+      "Bash(git push origin main*)",
+      "Bash(passwd*)",
+      "Bash(timedatectl set-*)",
+      "Bash(hostnamectl set-*)",
+      "Bash(xdg-mime default *)",
+      "Bash(xdg-settings set *)"
     ]
   },
   "hooks": {

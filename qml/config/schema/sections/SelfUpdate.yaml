@@ -1,7 +1,7 @@
 # The SelfUpdate section of the config (config.json's "SelfUpdate").
 
 type: object
-x-category: Maintenance
+x-category: System
 x-card: {file: SelfUpdateStatus, title: Update status}
 x-showIf: {/$packaged: false}
 title: axiom updates

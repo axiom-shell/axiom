@@ -326,7 +326,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Set how long they stay (or use the app's own timeout), keep critical ones up, and keep them quiet over fullscreen windows.
   - The history can drop an app's notifications when you focus it, or when you click or close them, and has a size and age limit.
   - Do not disturb is kept across restarts.
-- **Community setups:** a gallery of looks other people built and shared ([community-setups](https://github.com/axiom-shell/community-setups)), searchable by name and tag in **Settings → Maintenance** or with `/config community`. Applying one takes its look and layout (optionally its wallpaper) and saves yours first; it never brings commands, monitors or accounts. See [Configuration](configuration.md#community-setups).
+- **Community setups:** a gallery of looks other people built and shared ([community-setups](https://github.com/axiom-shell/community-setups)), searchable by name and tag in **Settings → System** or with `/config community`. Applying one takes its look and layout (optionally its wallpaper) and saves yours first; it never brings commands, monitors or accounts. See [Configuration](configuration.md#community-setups).
 - **AI chat:** Anthropic, OpenAI, Gemini, or anything with an OpenAI-style API (Ollama, LM Studio, OpenRouter, …).
   - Replies stream in as formatted Markdown with copyable code blocks and folded thinking.
   - Saved conversations, and presets (system prompt, model, effort).
@@ -342,6 +342,9 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Set each one's mode, scale, rotation and VRR, and on Hyprland mirroring, bit depth and color management.
   - One layout is kept per set of connected monitors, and switches on its own when you plug one in.
   - **Apply** asks you to keep the change, and puts the old layout back after 15 seconds if you don't.
+- **Your account and computer:** **Settings → General** opens on your account: your picture (also on the login screen, and on the lock screen with the Greeting module's Picture), your real name, and changing your password. **Settings → System** opens on the computer: its name (rename it there), the distribution, kernel, processor, graphics, memory and disk, the versions of axiom, Quickshell and the compositor, and **Copy system info** for a bug report (versions only, never your names).
+- **Default apps:** the browser, mail, file manager, terminal, text editor, image and video viewers, music player, PDF reader and archive manager every app uses (your `mimeapps.list`), picked from the installed apps in **Settings → General → Default apps**, and any other file type by name. The keybinds and everything axiom opens follow them; `axiom open` opens a link, a file or any of them from a script. Any of them can be a custom command of your own instead, for axiom (Custom command… in its picker).
+- **Date and time:** the time zone (searched by city), network time, or the time set by hand, in **Settings → System → Date & time**, and how times and dates read everywhere: a 12- or 24-hour clock, the date order (or ISO), the first day of the week, and a region apart from the language (English text with German dates). Each clock can still keep its own.
 - **Multi-monitor:** interactive surfaces open on the primary monitor, on whichever monitor has focus, or on all of them at once.
 - **First-run setup:** a guided tour, applied as you go, through:
   - the look, monitors and workspaces

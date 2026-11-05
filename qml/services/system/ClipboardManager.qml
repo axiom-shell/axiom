@@ -60,7 +60,7 @@ Singleton {
     if (lines > 1)
       details.push(I18n.tr("{0} lines", lines));
     if (entry.time > 0)
-      details.push(I18n.formatDate(new Date(entry.time), I18n.dateFormat("time24")));
+      details.push(I18n.formatDate(new Date(entry.time), I18n.timeFormat("default")));
     return details.join(" · ");
   }
 

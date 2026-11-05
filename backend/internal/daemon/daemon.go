@@ -399,6 +399,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
 	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.inputMethodPart(), d.netPart(), d.dev.part()}
+	parts = append(parts, d.machineParts()...)
 	reg := d.registry(parts)
 	if opts.registered != nil {
 		opts.registered(reg)

@@ -189,12 +189,12 @@ Singleton {
 
   // Creates the folder, opens it in the file manager and checks it again
   function createFolder() {
-    CommandManager.runDetached(["sh", "-c", 'mkdir -p "$1" && xdg-open "$1"', "sh", Appearance.wallpaperPath]);
+    CommandManager.runDetached(["sh", "-c", 'mkdir -p "$1" && exec "$2" open fileManager "$1"', "sh", Appearance.wallpaperPath, Paths.axiomBin]);
     _recheck.restart();
   }
 
   function openFolder() {
-    CommandManager.runDetached(["xdg-open", Appearance.wallpaperPath]);
+    DefaultAppsManager.open("fileManager", [Appearance.wallpaperPath]);
   }
 
   // mkdir runs detached: look again once it has

@@ -23,7 +23,7 @@ properties:
       nothing: Do nothing
     default: ask
     description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it), whatever Drive event notifications says. Mount it mounts it at once (an encrypted drive waits to be unlocked); nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module. Drives open in the file manager."
-    x-link: {setting: Apps.fileManager}
+    x-link: {setting: Apps}
   warnUnplugged:
     type: boolean
     title: Warn when unplugged without ejecting

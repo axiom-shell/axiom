@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import qs.services.ui
 import qs.components.methods
 
-// Settings by dotted config path ("Apps.terminal"), each a SchemaField
+// Settings by dotted config path ("Apps.networkEditor"), each a SchemaField
 // row as on the settings page, saved as they change
 // (SettingsManager.commitValues), for pages that apply as the user goes
 // (the onboarder, the Themes page). Edits are gathered for a moment, so

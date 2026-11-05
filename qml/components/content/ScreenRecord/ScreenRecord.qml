@@ -336,7 +336,7 @@ Panel {
             })
           width: ListView.view.width
           icon: "movie"
-          title: row.recording.time > 0 ? I18n.formatDate(new Date(row.recording.time), I18n.dateFormat("shortDate")) + " · " + I18n.formatDate(new Date(row.recording.time), I18n.dateFormat("time24")) : row.recording.name
+          title: row.recording.time > 0 ? I18n.formatDate(new Date(row.recording.time), I18n.dateFormat("shortDate")) + " · " + I18n.formatDate(new Date(row.recording.time), I18n.timeFormat("default")) : row.recording.name
           subtitle: Utils.formatBytes(row.recording.size)
           onActivated: Qt.openUrlExternally("file://" + row.recording.path)
 

@@ -19,7 +19,7 @@ import qs.services.apps
 // the day clicked
 // until it's clicked again. Without room a clicked day covers the card.
 // Events open in the editor, over the whole card.
-// properties: { use24Hour, showSeconds, showEvents }
+// properties: { hourFormat, showSeconds, showEvents }
 Card {
   id: root
 
@@ -70,7 +70,7 @@ Card {
   readonly property real calendarHeight: root.headerHeight + root.weekdayHeight + root.cellHeight * 6
   readonly property date now: clock.date
   // The language's time format (e.g. 午後 3:05 in Japanese), seconds added after the minutes
-  readonly property string timeFormat: I18n.dateFormat(root.properties.use24Hour ? "time24" : "time12").replace("mm", root.properties.showSeconds ? "mm:ss" : "mm")
+  readonly property string timeFormat: I18n.timeFormat(root.properties.hourFormat).replace("mm", root.properties.showSeconds ? "mm:ss" : "mm")
 
   SystemClock {
     id: clock
