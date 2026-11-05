@@ -275,6 +275,8 @@ input {
         tap
         dwt
         scroll-factor 0.99
+        accel-profile "adaptive"
+        accel-speed 0.25
     }
 }
 cursor {

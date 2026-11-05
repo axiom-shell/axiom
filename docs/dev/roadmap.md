@@ -350,7 +350,6 @@ Moved here from Phase 1, still open:
 Found by the audits:
 - [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
-- [The Touchpad part has no speed, acceleration or left-handed of its own](issues.md#the-touchpad-part-has-no-speed-acceleration-or-left-handed-of-its-own)
 - [The Mouse part doesn't say it reaches the touchpad on Hyprland](issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)

@@ -1230,7 +1230,10 @@
       "naturalScroll": false,
       "tapToClick": true,
       "disableWhileTyping": true,
-      "scrollFactor": 99
+      "scrollFactor": 99,
+      "accel": "adaptive",
+      "sensitivity": 25,
+      "leftHanded": false
     },
     "cursor": {
       "enabled": true,

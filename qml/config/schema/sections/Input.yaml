@@ -198,6 +198,42 @@ properties:
           sway: {key: 'input type:touchpad scroll_factor {}', scale: 0.01, if: enabled}
           niri: {key: input.touchpad.scroll-factor, scale: 0.01, value: float, if: enabled}
         x-showIf: {enabled: true}
+      accel:
+        x-greeter: true
+        type: string
+        title: Pointer acceleration
+        enum: [default, flat, adaptive]
+        x-enumLabels: {default: Device default, flat: Flat (none), adaptive: Adaptive}
+        default: default
+        x-compositor:
+          hyprland: {device: touchpad, key: accel_profile, skip: default, if: enabled}
+          sway: {key: 'input type:touchpad accel_profile {}', skip: default, if: enabled}
+          niri: {key: input.touchpad.accel-profile, skip: default, if: enabled}
+        x-showIf: {enabled: true}
+      sensitivity:
+        x-greeter: true
+        type: integer
+        title: Pointer speed
+        default: 0
+        minimum: -100
+        maximum: 100
+        description: '-100 to 100; 0 leaves it as the device reports.'
+        x-compositor:
+          hyprland: {device: touchpad, key: sensitivity, scale: 0.01, if: enabled}
+          sway: {key: 'input type:touchpad pointer_accel {}', scale: 0.01, if: enabled}
+          niri: {key: input.touchpad.accel-speed, scale: 0.01, value: float, if: enabled}
+        x-showIf: {enabled: true}
+      leftHanded:
+        x-scope: personal
+        x-greeter: true
+        type: boolean
+        title: Left-handed buttons
+        default: false
+        x-compositor:
+          hyprland: {device: touchpad, key: left_handed, if: enabled}
+          sway: {key: 'input type:touchpad left_handed {}', value: enabled, if: enabled}
+          niri: {key: input.touchpad.left-handed, value: flag, if: enabled}
+        x-showIf: {enabled: true}
     x-group: Touchpad
   cursor:
     type: object
