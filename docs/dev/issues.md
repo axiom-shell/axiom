@@ -527,12 +527,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the overlay system
 
-### The five layouts drafts are listed by hand in eight places
-- **Where:** `qml/components/views/Layouts/Layouts.qml:38` (`Component.onCompleted`), `qml/components/views/Layouts/Layouts.qml:77` (`canvas.dirty`, `canvas.canSave`, `onSave`, `onReset`), `qml/components/views/Layouts/LayoutsPanel.qml:34` (`problems`), `qml/services/ui/EditsManager.qml:49` (the Layouts `dirty`), `qml/services/ui/EditsManager.qml:172` (`saveAll`), `qml/services/ui/EditsManager.qml:194` (`discardAll`)
-- **What:** `OverlayManager`, `OverlayManager.menus`, `DesktopManager.editor`, `LockManager.editor` and `GreeterManager.editor` share one interface (`isDirty`, `problems`, `ensureLoaded`, `saveChanges`, `resetChanges`), but every caller spells all five out. Layouts.qml loads them (7 lines), reads dirty and canSave (2) and saves and resets them (19). LayoutsPanel concatenates their problems (1). EditsManager reads dirty (1), and saves (10) and discards (10) them. That makes 50 lines, and the orders already differ: EditsManager saves the menus before the pages, Layouts.qml after. A sixth draft would need all eight edits. Fix: `OverlayManager.drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]`, with `layoutsDirty`, `layoutsProblems`, `loadLayouts()`, `saveLayouts()` and `resetLayouts()` over it (about 15 lines). Each place becomes one call (about 8 lines), about 27 lines fewer, and the Save gate above becomes one line.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the overlay system
-
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
 - **What:** Contract (writing-modules.md): a module sets `fullMinWidth` / `fullMinHeight`, "the px its full layout needs inside its padding". These don't cover it. All figures are inner px at font 14, normal density.

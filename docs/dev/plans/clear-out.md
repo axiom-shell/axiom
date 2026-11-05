@@ -475,7 +475,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Images decoded at full size or more than once
 - **overlay-modules-05** (4):
   - [A clean layout's problem blocks saving the others in the Layouts editor](../issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
-  - [The five layouts drafts are listed by hand in eight places](../issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
   - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](../issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
 - **overlay-modules-06** (3): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A stale exec-if check can block a widget after its exec-if changed.
   - [A custom widget's module past 8 grid units can't be saved](../issues.md#a-custom-widgets-module-past-8-grid-units-cant-be-saved)

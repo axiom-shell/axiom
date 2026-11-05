@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.services.session
 import qs.services.ui
 import qs.components.reusable
 import qs.components.views.base
@@ -35,13 +34,7 @@ BaseView {
     id: greeterTarget
   }
 
-  Component.onCompleted: {
-    OverlayManager.ensureLoaded();
-    OverlayManager.menus.ensureLoaded();
-    DesktopManager.editor.ensureLoaded();
-    LockManager.editor.ensureLoaded();
-    GreeterManager.editor.ensureLoaded();
-  }
+  Component.onCompleted: OverlayManager.loadLayouts()
   // The page unloads when the overlay closes (or it pages two away)
   Component.onDestruction: OverlayManager.menus.stopPreviewing()
 
@@ -74,29 +67,12 @@ BaseView {
     canvas.gridOffsetLimit: root.target.gridOffsetLimit
     canvas.setGridOffset: root.target.setGridOffset
     canvas.latticeSpan: root.target.latticeSpan
-    canvas.dirty: OverlayManager.isDirty || OverlayManager.menus.isDirty || DesktopManager.editor.isDirty || LockManager.editor.isDirty || GreeterManager.editor.isDirty
-    canvas.canSave: OverlayManager.problems.length === 0 && OverlayManager.menus.problems.length === 0 && DesktopManager.editor.problems.length === 0 && LockManager.editor.problems.length === 0 && GreeterManager.editor.problems.length === 0
+    canvas.dirty: OverlayManager.layoutsDirty
+    canvas.canSave: OverlayManager.layoutsProblems.length === 0
     inspector.editable: root.target.editable
     inspector.notEditableHint: root.target.notEditableHint
-    onSave: {
-      if (OverlayManager.isDirty)
-        OverlayManager.saveChanges();
-      if (OverlayManager.menus.isDirty)
-        OverlayManager.menus.saveChanges();
-      if (DesktopManager.editor.isDirty)
-        DesktopManager.editor.saveChanges();
-      if (LockManager.editor.isDirty)
-        LockManager.editor.saveChanges();
-      if (GreeterManager.editor.isDirty)
-        GreeterManager.editor.saveChanges();
-    }
-    onReset: {
-      OverlayManager.resetChanges();
-      OverlayManager.menus.resetChanges();
-      DesktopManager.editor.resetChanges();
-      LockManager.editor.resetChanges();
-      GreeterManager.editor.resetChanges();
-    }
+    onSave: OverlayManager.saveLayouts()
+    onReset: OverlayManager.resetLayouts()
 
     // Streamed in a moment after the page (StreamedLoader), at its size
     StreamedLoader {

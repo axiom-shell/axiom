@@ -2,7 +2,6 @@ pragma Singleton
 import QtQuick
 import qs.services.core
 import qs.services.compositor
-import qs.services.session
 import qs.services.apps
 
 // The editors' unsaved edits, by overlay page: which pages hold a dirty
@@ -46,7 +45,7 @@ QtObject {
     },
     {
       "type": "Layouts",
-      "dirty": OverlayManager.isDirty || OverlayManager.menus.isDirty || DesktopManager.editor.isDirty || LockManager.editor.isDirty || GreeterManager.editor.isDirty
+      "dirty": OverlayManager.layoutsDirty
     }
   ].filter(page => page.dirty).map(page => page.type)
 
@@ -158,16 +157,7 @@ QtObject {
       KeybindManager.editor.save();
     if (CustomWidgetsManager.editor.isDirty)
       CustomWidgetsManager.editor.save();
-    if (OverlayManager.menus.isDirty)
-      OverlayManager.menus.saveChanges();
-    if (OverlayManager.isDirty)
-      OverlayManager.saveChanges();
-    if (DesktopManager.editor.isDirty)
-      DesktopManager.editor.saveChanges();
-    if (LockManager.editor.isDirty)
-      LockManager.editor.saveChanges();
-    if (GreeterManager.editor.isDirty)
-      GreeterManager.editor.saveChanges();
+    OverlayManager.saveLayouts();
   }
 
   function discardAll() {
@@ -180,15 +170,6 @@ QtObject {
       KeybindManager.editor.reset();
     if (CustomWidgetsManager.editor.isDirty)
       CustomWidgetsManager.editor.reset();
-    if (OverlayManager.menus.isDirty)
-      OverlayManager.menus.resetChanges();
-    if (OverlayManager.isDirty)
-      OverlayManager.resetChanges();
-    if (DesktopManager.editor.isDirty)
-      DesktopManager.editor.resetChanges();
-    if (LockManager.editor.isDirty)
-      LockManager.editor.resetChanges();
-    if (GreeterManager.editor.isDirty)
-      GreeterManager.editor.resetChanges();
+    OverlayManager.resetLayouts();
   }
 }
