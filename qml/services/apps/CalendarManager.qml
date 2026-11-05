@@ -208,12 +208,12 @@ QtObject {
     const moving = from.id !== calendar.id;
     root._enqueue("save", done => BackendManager.call("calendar.save", {
         "range": root.range,
-        "accounts": root._accounts(calendar.account),
+        "accounts": root._accounts(from.account),
         "account": from.account,
         "calendar": from.href,
         "href": draft.href,
         "etag": draft.etag,
-        "scope": moving ? "series" : scope,
+        "scope": scope,
         "rid": draft.rid,
         "event": CalendarEvents.payloadOf(draft),
         "toAccount": moving ? calendar.account : "",
