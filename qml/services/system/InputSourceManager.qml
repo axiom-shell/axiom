@@ -63,20 +63,21 @@ QtObject {
   // --- The sources ---
 
   // Every source to switch between ({ id, kind, layout, variant, engine
-  // }, InputSources.effective: the compositor's own layouts while axiom
-  // doesn't set the keyboard); on the login screen, and while axiom
-  // doesn't manage the input method or no framework runs (an engine can't
-  // be switched to then), the xkb ones alone; an engine the framework
-  // hasn't installed is left out too (switching to it fails, so stepping
-  // would stop there)
-  readonly property var sources: InputSources.effective(root.running ? InputConfig.sources : InputSources.xkbOnly(InputConfig.sources), root.layouts).filter(s => s.kind !== "ime" || root._engine(s) !== null)
+  // }, of _counted); on the login screen, and while axiom doesn't manage
+  // the input method or no framework runs (an engine can't be switched to
+  // then), the xkb ones alone; an engine the framework hasn't installed is
+  // left out too (switching to it fails, so stepping would stop there)
+  readonly property var sources: root._counted.filter(s => s.kind !== "ime" || root._engine(s) !== null)
   // The xkb ones: what a password field types through (the lock screen's
   // and the greeter's module offer only these)
   readonly property var xkbSources: InputSources.xkbOnly(root.sources)
   // The id of the source in use ("" for none): the framework's input
   // method, else the compositor's layout (also while no text field had
   // focus yet, when the framework's current is "")
-  readonly property string current: InputSources.current(root.sources, root.layoutIndex, root.running ? String(root._im.current ?? "") : "", root.framework, root.registry)
+  readonly property string current: {
+    const id = InputSources.current(root._counted, root.layoutIndex, root.running ? String(root._im.current ?? "") : "", root.framework, root.registry);
+    return root._source(id) ? id : "";
+  }
   // The xkb source the compositor types on
   readonly property string currentXkb: InputSources.current(root.xkbSources, root.layoutIndex, "", "none", null)
 
@@ -124,7 +125,7 @@ QtObject {
   // Switches to the source `id`: the compositor's layout, then the
   // framework's input method. False when no source has that id
   function set(id) {
-    const target = InputSources.target(root.sources, id, root.framework, root.registry);
+    const target = root._source(id) ? InputSources.target(root._counted, id, root.framework, root.registry) : null;
     if (!target)
       return false;
     root.switchedAt = Date.now();
@@ -180,6 +181,12 @@ QtObject {
 
   // --- Internals ---
 
+  // Every source the compositor's xkb list is written from (InputSources.
+  // effective: the compositor's own layouts while axiom doesn't set the
+  // keyboard), engines no framework runs too: their typing layouts are in
+  // that list while Input.method.enabled is on, so an xkb index is read
+  // against these, never against `sources`
+  readonly property var _counted: InputSources.effective(InputConfig.sources, root.layouts, InputConfig.methodEnabled)
   // The login screen: no framework, nothing pushed
   readonly property bool _inert: Paths.greeter
   // The daemon's inputMethod state, null until it said
@@ -340,7 +347,7 @@ QtObject {
     if (im === "")
       return;
     const source = root.sources.find(s => InputSources.imName(s, root.framework, root.registry) === im);
-    const index = source ? InputSources.xkbIndex(root.sources, source) : -1;
+    const index = source ? InputSources.xkbIndex(root._counted, source) : -1;
     if (index >= 0 && index !== root.layoutIndex)
       CompositorManager.setKeyboardLayout(index, root.refresh);
   }
