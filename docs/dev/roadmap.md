@@ -385,7 +385,6 @@ Found by the audits:
 - [A command naming a program shows the program as its script](issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
 - [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
-- [An integrated menu's zone stays behind when it changes edge or screen](issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
 - [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)

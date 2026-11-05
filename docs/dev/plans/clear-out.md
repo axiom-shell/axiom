@@ -435,7 +435,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - An edge menu can be bigger than its screen
   - The layouts editor says a menu fits its edge when it scrolls
   - [A whole-edge menu's hover strip covers only its modules' length while closed](../issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
-  - [An integrated menu's zone stays behind when it changes edge or screen](../issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
+  - An integrated menu's zone stays behind when it changes edge or screen
   - Previewing a submenu menu doesn't open it once a module above its row has grown
 - **bar-popouts-08** (5, done):
   - SurfaceContext.layout's pill and merged results have no test row
