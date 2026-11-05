@@ -50,9 +50,9 @@ Panel {
   }
   Component.onDestruction: CalendarManager.release(root)
 
-  // The page's request, when this card is where it landed
+  // The page's request, when this card is on the page it opened
   function _takeRequest() {
-    if (!root.embedded || !CalendarManager.request)
+    if (!CalendarManager.request || root.host?.kind !== "overlay" || root.host.page !== CalendarManager.request.page)
       return;
     const request = CalendarManager.takeRequest();
     root.selectDay(request.key);

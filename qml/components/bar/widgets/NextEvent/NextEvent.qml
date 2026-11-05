@@ -49,6 +49,8 @@ ValueStyleWidget {
   hidden: root.event === null
   icon: "event"
   text: root.event ? I18n.tr("{0} · {1}", root.when, root.title) : ""
+  // A feed's title is anyone's: never styled text or a remote image
+  textFormat: Text.PlainText
   readonly property string title: root.event ? Utils.truncate(root.event.title || I18n.tr("(No title)"), root.properties.maxLength, "…") : ""
   // How far through an event under way (not an all-day one) it is
   ratio: root.event && !root.event.allDay && root.event.start <= root.now && root.event.end > root.event.start ? Math.min(1, (root.now - root.event.start) / (root.event.end - root.event.start)) : -1

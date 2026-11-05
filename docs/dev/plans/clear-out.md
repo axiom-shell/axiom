@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10 and features-06 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10, features-06 and features-07 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -116,7 +116,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 68 | features-04 | major | Moved to Unconfirmed: The dock | 0 | ~30 | features-01 | Q13 |
 | 69 | features-05 | major | Todo, pomodoro and timers | 6 | ~200 | features-01 | Q14, Q15 |
 | 70 | features-06 | major | Done: Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
-| 71 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
+| 71 | features-07 | major | Done: Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
 | 72 | features-08 | major | Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
 | 73 | features-09 | major | The chat | 4 | ~180 | features-01 |  |
 | 74 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
@@ -525,10 +525,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A save conflict reloads nothing, so trying again conflicts again
   - Moving a recurring event to another calendar drops its earlier occurrences and exceptions
   - Enter in the editor's title saves again while busy and picks All events while asking
-- **features-07** (3):
-  - [A Calendar card on the desktop or in an edge menu takes the page's request](../issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
-  - [Removing a CalDAV account deletes its password before the draft is saved](../issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
-  - [Event titles from a feed render as styled text and load remote images](../issues.md#event-titles-from-a-feed-render-as-styled-text-and-load-remote-images)
+- **features-07** (3, done): The request names the page it opened (a Custom page's `host.page`); a removed account's password is cleared once the save lands, and a new account never reuses a saved id; the bar's `textFormat` is per widget, the Window and Media widgets' titles filed.
+  - A Calendar card on the desktop or in an edge menu takes the page's request
+  - Removing a CalDAV account deletes its password before the draft is saved
+  - Event titles from a feed render as styled text and load remote images
 - **features-08** (1): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses.
   - [Idle dimming is forgotten across a shell reload](../issues.md#idle-dimming-is-forgotten-across-a-shell-reload)
 - **features-09** (4): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.

@@ -30,9 +30,9 @@ BaseView {
   Component.onDestruction: CalendarManager.release(root)
 
   function _takeRequest() {
-    const request = CalendarManager.takeRequest();
-    if (!request)
+    if (CalendarManager.request?.page !== "CalendarPage")
       return;
+    const request = CalendarManager.takeRequest();
     root.pageState.select(request.key);
     root.pageState.showDay(request.key);
     if (request.kind === "new")
@@ -41,8 +41,7 @@ BaseView {
   Connections {
     target: CalendarManager
     function onRequestChanged() {
-      if (CalendarManager.request)
-        root._takeRequest();
+      root._takeRequest();
     }
   }
 

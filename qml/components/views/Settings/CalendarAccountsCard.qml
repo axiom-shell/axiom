@@ -69,7 +69,7 @@ FoldingCard {
   function add() {
     const accounts = Utils.clone(root.accounts);
     accounts.push(SchemaValidation.applyDefaults({
-      "id": Utils.freeId("account", accounts.map(account => account.id))
+      "id": Utils.freeId("account", accounts.map(account => account.id).concat(CalendarConfig.savedPasswordIds))
     }, root.accountSchema, ConfigManager.configSchema));
     root._commit(accounts);
     root.selected = accounts.length - 1;
@@ -80,7 +80,6 @@ FoldingCard {
       root.confirmRemove = true;
       return;
     }
-    SecretsManager.clearSecret("calendar", root.accountId);
     const accounts = Utils.clone(root.accounts);
     accounts.splice(root.current, 1);
     root._commit(accounts);

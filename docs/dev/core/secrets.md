@@ -32,6 +32,6 @@ Package chat reads a key for `chat.send` and `chat.models`, and package calendar
 
 ### Where they're entered
 - Keys: `views/Settings/ChatProvidersCard` (the Chat section's `x-card`, with Test and Fetch models).
-- Passwords: `CalendarAccountsCard`.
+- Passwords: `CalendarAccountsCard`; a removed account's is cleared by `CalendarManager` once the removal is saved.
 - Never through the settings draft.
 - A key never goes in config.json, and no migration step pulls one out of the file (format 1's frozen migrations returned an empty `secrets`, which nothing reads).

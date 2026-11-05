@@ -38,7 +38,7 @@ QtObject {
   property var errors: []
   readonly property bool syncing: root._running?.cmd === "sync" || root._jobs.some(job => job.cmd === "sync")
   // What the page or a module was asked to show next ({ kind: "new" |
-  // "day", key }), taken by the first one that can (takeRequest)
+  // "day", key, page }), taken by the first one on that page (takeRequest)
   property var request: null
   // The Calendar page's day, month and event editor, kept past the page
   readonly property CalendarPageState page: CalendarPageState {}
@@ -279,10 +279,14 @@ QtObject {
   }
 
   // Opens the Calendar page (else the page with a Calendar module), asked
-  // to show `request` ({ kind: "new" | "day", key }) when given
+  // to show `request` ({ kind: "new" | "day", key }) when given; the
+  // request names that page, so only a Calendar there takes it (none when
+  // Settings opens instead)
   function openPage(request) {
-    root.request = request ?? null;
     const page = OverlayConfig.views.some(view => view.type === "CalendarPage" && view.visible !== false) ? "CalendarPage" : OverlayConfig.pageWithModule("Calendar");
+    root.request = page && request ? Object.assign({
+      "page": page
+    }, request) : null;
     if (page)
       ShellManager.openOverlayPage(page);
     else
@@ -344,6 +348,16 @@ QtObject {
   }
 
   property bool _loaded: false
+
+  // A removed account's password goes once the removal is saved (a draft
+  // can be reset until then)
+  property var _passwordIds: []
+  readonly property var _savedPasswordIds: CalendarConfig.savedPasswordIds
+  on_SavedPasswordIdsChanged: {
+    if (root._loaded)
+      root._passwordIds.filter(id => !root._savedPasswordIds.includes(id)).forEach(id => SecretsManager.clearSecret("calendar", id));
+    root._passwordIds = root._savedPasswordIds;
+  }
 
   property Timer _syncSoon: Timer {
     interval: 800
@@ -548,6 +562,7 @@ QtObject {
     root._fired = state.fired ?? {};
     root.info = state.info ?? {};
     root._loadEvents();
+    root._passwordIds = root._savedPasswordIds;
     root._loaded = true;
     NotificationManager.registerHandler(root._desktopEntry, () => root.openPage());
   }

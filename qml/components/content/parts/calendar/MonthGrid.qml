@@ -312,6 +312,7 @@ Item {
                     x: Widget.px(chip.event?.allDay ? 4 : 8)
                     width: parent.width - x - 2
                     text: chip.event ? (chip.event.allDay || CalendarEvents.spanOn(chip.event, cell.key) !== "single" && CalendarEvents.spanOn(chip.event, cell.key) !== "starts" ? "" : I18n.formatDate(new Date(chip.event.start), CalendarConfig.timeFormat) + " ") + (chip.event.title || I18n.tr("(No title)")) : ""
+                    textFormat: Text.PlainText
                     elide: Text.ElideRight
                     textSize: Appearance.fontSizeBy(-3)
                   }
