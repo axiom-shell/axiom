@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Clearing the input method's candidate font leaves fcitx5 on the last one set
+- **Where:** `backend/internal/inputmethod/fcitx5.go` (`fcitx.settings`)
+- **What:** `Input.method.candidateFont` empty sends no `Font` to classicui (so a font set in fcitx5-configtool survives), while ibus turns its custom font off. Set a font in axiom, then clear it: fcitx5 keeps the font axiom set, where the setting's "empty: the framework's own" suggests fcitx5's default (`Sans 10`). Writing `Sans 10` on empty would override a font set in fcitx5-configtool on every options push: the maintainer picks which wins.
+- **Size:** trivial
+- **Found:** 2026-11-05, while reviewing the input sources branch (Go side)
+
 ### A bar widget's elasticity is stated twice
 - **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
 - **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
