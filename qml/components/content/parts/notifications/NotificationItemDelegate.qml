@@ -33,109 +33,30 @@ Item {
   property bool showMeta: true
   // Collapsed, the header's time is already this one's
   property bool showTime: true
-  property real swipeThreshold: 120
   // Off while its group's card swipes away whole instead
   property bool swipeable: true
 
   readonly property bool hovered: hover.hovered
 
   function dismiss() {
-    if (!slideOut.running)
-      slideOut.start();
+    swipe.slideOut(0);
   }
 
   Layout.fillWidth: true
   implicitHeight: layout.implicitHeight
   opacity: 0
 
-  Component.onCompleted: appear.start()
-
-  transform: Translate {
-    id: shift
-  }
+  transform: swipe.shift
 
   HoverHandler {
     id: hover
   }
 
-  DragHandler {
+  NotificationSwipe {
     id: swipe
     enabled: root.swipeable
-    target: null
-    yAxis.enabled: false
-    onTranslationChanged: {
-      if (!active || slideOut.running)
-        return;
-      shift.x = translation.x;
-      root.opacity = 1 - Math.min(1, Math.abs(translation.x) / (root.swipeThreshold * 2));
-    }
-    onActiveChanged: {
-      if (active || slideOut.running)
-        return;
-      if (Math.abs(shift.x) > root.swipeThreshold)
-        root.dismiss();
-      else
-        snapBack.start();
-    }
-  }
-
-  ParallelAnimation {
-    id: appear
-    NumberAnimation {
-      target: root
-      property: "opacity"
-      from: 0
-      to: 1
-      duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
-    }
-    NumberAnimation {
-      target: shift
-      property: "y"
-      from: -8
-      to: 0
-      duration: Appearance.animNormal
-      easing.type: Easing.OutCubic
-    }
-  }
-
-  ParallelAnimation {
-    id: snapBack
-    NumberAnimation {
-      target: shift
-      property: "x"
-      to: 0
-      duration: Appearance.animFast
-      easing.type: Easing.OutCubic
-    }
-    NumberAnimation {
-      target: root
-      property: "opacity"
-      to: 1
-      duration: Appearance.animFast
-    }
-  }
-
-  SequentialAnimation {
-    id: slideOut
-    ParallelAnimation {
-      NumberAnimation {
-        target: shift
-        property: "x"
-        to: shift.x < 0 ? -root.width : root.width
-        duration: Appearance.animNormal
-        easing.type: Easing.InCubic
-      }
-      NumberAnimation {
-        target: root
-        property: "opacity"
-        to: 0
-        duration: Appearance.animNormal
-      }
-    }
-    ScriptAction {
-      script: NotificationManager.dismiss(root.entry?.uid ?? "")
-    }
+    onSwiped: root.dismiss()
+    onOut: NotificationManager.dismiss(root.entry?.uid ?? "")
   }
 
   RowLayout {

@@ -510,8 +510,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 **features**
 
 - **features-03** (3):
-  - [The notification list's delegates animate with their own easing](../issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
-  - [The history's group and entry delegates repeat one swipe-away mechanism](../issues.md#the-historys-group-and-entry-delegates-repeat-one-swipe-away-mechanism)
+  - The notification list's delegates animate with their own easing
+  - The history's group and entry delegates repeat one swipe-away mechanism
   - [clearAll removes each cached image twice, one process per entry](../issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
 - **features-04** (0): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The dock's menu and drag state outlive the icons they point at; A dock beside another edge's reserving dock is laid out as if that dock weren't there.
 - **features-05** (6): The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
