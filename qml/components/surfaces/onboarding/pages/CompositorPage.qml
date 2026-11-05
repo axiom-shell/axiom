@@ -8,6 +8,7 @@ import qs.services.session
 import qs.services.system
 import qs.components.reusable
 import qs.components.forms
+import qs.components.views.Settings
 
 // How axiom and the compositor's config fit together, on any compositor
 // axiom can set up (configModes): what its config folder holds
@@ -147,7 +148,14 @@ OnboardingPage {
 
     SettingRows {
       Layout.fillWidth: true
-      paths: ["Input.keyboard.enabled", "Input.sources"]
+      paths: ["Input.keyboard.enabled"]
+    }
+
+    // The layouts as the Input page edits them (input methods are set up
+    // there)
+    InputSourcesCard {
+      title: I18n.tr("Input sources")
+      layoutsOnly: true
     }
 
     StyledText {

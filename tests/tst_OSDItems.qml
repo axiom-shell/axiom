@@ -39,6 +39,15 @@ TestCase {
     verify(!OSDItems.layoutSwitched(at(["us"], "us"), at(["us"], "us")), "one source never shows");
     verify(!OSDItems.layoutSwitched(at(two, "us"), at(two, "")), "none current");
     verify(!OSDItems.layoutSwitched(null, at(two, "mozc")));
+    const after = (focusAge, switchAge) => Object.assign(at(two, "mozc"), {
+        "focusAge": focusAge,
+        "switchAge": switchAge
+      });
+    verify(!OSDItems.layoutSwitched(at(two, "us"), after(120, -1)), "the focused window's own input method");
+    verify(!OSDItems.layoutSwitched(at(two, "us"), after(0, 5000)), "an old switch of axiom's doesn't count");
+    verify(OSDItems.layoutSwitched(at(two, "us"), after(120, 40)), "axiom switched as the focus changed");
+    verify(OSDItems.layoutSwitched(at(two, "us"), after(OSDItems.focusFollowMs, -1)), "a focus change long before");
+    verify(OSDItems.layoutSwitched(at(two, "us"), after(-1, -1)), "no focus change at all");
   }
 
   function test_tile() {

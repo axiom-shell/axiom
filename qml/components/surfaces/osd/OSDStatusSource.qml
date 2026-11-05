@@ -342,9 +342,17 @@ Loader {
     Item {
       id: layout
       property var _last: null
+      // When the focused window last changed (ms, 0 for not yet): a
+      // change following it is the window's own input method
+      property double _focusedAt: 0
 
       function _check() {
-        const now = root._sourcesState();
+        const at = Date.now();
+        const age = since => since > 0 ? at - since : -1;
+        const now = Object.assign(root._sourcesState(), {
+          "focusAge": age(layout._focusedAt),
+          "switchAge": age(InputSourceManager.switchedAt)
+        });
         const switched = OSDItems.layoutSwitched(layout._last, now);
         layout._last = now;
         if (switched)
@@ -352,6 +360,13 @@ Loader {
       }
 
       Component.onCompleted: layout._check()
+
+      Connections {
+        target: CompositorManager
+        function onActiveWindowIdChanged() {
+          layout._focusedAt = Date.now();
+        }
+      }
 
       Connections {
         target: InputSourceManager

@@ -183,14 +183,18 @@ QtObject {
 
   // The sources to switch between, in order: the usable ones of
   // `sources`; while the compositor's xkb layouts (`layouts`, codes from
-  // withKeyboard, empty while unknown) aren't theirs (axiom doesn't set
-  // the keyboard: the compositor's own config's), its xkb part is an xkb
-  // source per layout the compositor has ("xkb:<index>:<code>"), then the
-  // ime sources
-  function effective(sources, layouts) {
+  // withKeyboard, empty while unknown) aren't what axiom writes for them
+  // (xkb(sources, engines): axiom doesn't set the keyboard, the
+  // compositor's own config does), its xkb part is an xkb source per
+  // layout the compositor has ("xkb:<index>:<code>"), then the ime
+  // sources (each on its layout where the compositor has it, else on the
+  // first). Give it every source, as the compositor's list is written
+  // from: a caller leaving some out (engines no framework runs) does so
+  // after
+  function effective(sources, layouts, engines) {
     const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
     const codes = (Array.isArray(layouts) ? layouts : []).map(code => root._text(code));
-    if (codes.length === 0 || JSON.stringify(root.xkb(list, true).layouts) === JSON.stringify(codes))
+    if (codes.length === 0 || JSON.stringify(root.xkb(list, engines).layouts) === JSON.stringify(codes))
       return list;
     return codes.map((code, i) => ({
           "id": "xkb:" + i + ":" + code,
@@ -198,7 +202,18 @@ QtObject {
           "layout": code,
           "variant": "",
           "engine": ""
-        })).concat(list.filter(s => s.kind === "ime"));
+        })).concat(list.filter(s => s.kind === "ime").map(s => root._onCodes(s, codes)));
+  }
+
+  // An ime source on the compositor's own layouts: its typing layout kept
+  // when the compositor has it (their variants unknown), else the first
+  // (switching to one it lacks would ask for an index past its list)
+  function _onCodes(source, codes) {
+    const layout = codes.includes(root._text(source.layout)) ? root._text(source.layout) : "";
+    return Object.assign({}, source, {
+      "layout": layout,
+      "variant": ""
+    });
   }
 
   // The xkb sources alone (what a password field types through)

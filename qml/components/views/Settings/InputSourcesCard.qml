@@ -18,14 +18,20 @@ import qs.components.reusable
 // runs, and a choice of which list wins while turning managing on with a
 // framework whose list differs, or after an edit in fcitx5-configtool:
 // take its list into the draft (InputSourceManager.importFromFramework),
-// or give it axiom's (Save; useOwn after an outside edit).
+// or give it axiom's (Save; useOwn after an outside edit). With
+// `layoutsOnly` (the onboarder's Compositor page) it is always the off
+// form, without the offer, and saves each edit at once.
 FieldGroup {
   id: root
 
+  // The layouts alone, saved as they change (SettingsManager.commitValues,
+  // as the onboarder's rows are), never the draft
+  property bool layoutsOnly: false
+
   // The sources as edited, saved or not
-  readonly property var sources: SettingsManager.localConfig?.Input?.sources ?? InputConfig.sources
+  readonly property var sources: root.layoutsOnly ? InputConfig.sources : SettingsManager.localConfig?.Input?.sources ?? InputConfig.sources
   // Managing the input method, as edited
-  readonly property bool managing: SettingsManager.configValueAt("Input.method.enabled") === true
+  readonly property bool managing: !root.layoutsOnly && SettingsManager.configValueAt("Input.method.enabled") === true
   // Being turned on: the framework isn't given anything until Save
   readonly property bool turningOn: root.managing && !InputConfig.savedMethodEnabled
   // The sources' indices the card lists: the xkb ones alone while off
@@ -75,7 +81,12 @@ FieldGroup {
   Component.onCompleted: DependencyManager.check(["fcitx5", "ibus-daemon"])
 
   function setSources(list) {
-    SettingsManager.setValue(["Input", "sources"], list);
+    if (root.layoutsOnly)
+      SettingsManager.commitValues({
+        "Input.sources": list
+      });
+    else
+      SettingsManager.setValue(["Input", "sources"], list);
   }
 
   function addLayout(layout, variant) {
@@ -134,7 +145,7 @@ FieldGroup {
 
   // Off, with a framework running: offer to manage it
   RowLayout {
-    visible: !root.managing && InputSourceManager.detected
+    visible: !root.layoutsOnly && !root.managing && InputSourceManager.detected
     Layout.fillWidth: true
     spacing: Widget.spacing
 
