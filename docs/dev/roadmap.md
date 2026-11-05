@@ -362,7 +362,6 @@ Found by the audits:
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 - [BarPopouts works out its slide distance itself](issues.md#barpopouts-works-out-its-slide-distance-itself)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
-- [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)

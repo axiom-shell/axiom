@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03 and bar-popouts-04 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04 and overlay-modules-03 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -101,7 +101,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 53 | bar-popouts-12 | plan | Nineteen windows mapped on one monitor | 1 | needs a plan | none |  |
 | 54 | bar-popouts-13 | plan | Popouts and tray submenus taller than the screen | 2 | needs a plan | bar-popouts-08 |  |
 | 55 | overlay-modules-02 | major | Slot padding and grow in the module base | 4 | ~150 | overlay-modules-01 |  |
-| 56 | overlay-modules-03 | major | Per-module full minimums, and NowPlaying's hidden parts | 4 | ~280 | overlay-modules-02 |  |
+| 56 | overlay-modules-03 | major | Done: Per-module full minimums, and NowPlaying's hidden parts | 4 | ~280 | overlay-modules-02 |  |
 | 57 | overlay-modules-04 | major | Parts built hidden, and images decoded more than once | 2 | ~300 | overlay-modules-03 |  |
 | 58 | overlay-modules-05 | major | The overlay host and the Layouts editor | 4 | ~80 | none |  |
 | 59 | overlay-modules-06 | major | Custom widgets | 3 | ~150 | none |  |
@@ -465,11 +465,11 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Card and Panel each spell out the grow and expand members
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
   - A DeviceList squeezed to nothing wants no growth
-- **overlay-modules-03** (4): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): Eight modules' full layouts need more room than their fullMin sizes, even inside the padding.
+- **overlay-modules-03** (4, done): Takes bar-popouts' NowPlaying entry: its Loaders gate on the switches this cluster recomputes. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): Eight modules' full layouts need more room than their fullMin sizes, even inside the padding.
   - SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns
   - The Clock's date and label keep their room while the time shrinks to nothing
   - The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
-  - [NowPlaying builds its strip layout and a second transport hidden in every mode](../issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
+  - NowPlaying builds its strip layout and a second transport hidden in every mode
 - **overlay-modules-04** (2): Splits by file group if it passes the gate.
   - [Parts shown in one mode are built hidden in every mode, in ten modules and parts](../issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
   - [Images decoded at full size or more than once](../issues.md#images-decoded-at-full-size-or-more-than-once)

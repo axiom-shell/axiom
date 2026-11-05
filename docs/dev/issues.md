@@ -270,7 +270,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Images decoded at full size or more than once
 - **Where:** `qml/components/surfaces/wallpaper/WallpaperWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/components/content/NowPlaying/NowPlaying.qml`
-- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer), and a third time in its hidden strip layout's `Art` (`NowPlaying.qml:338`; popouts audit, 2026-10-30: [NowPlaying builds its strip layout and a second transport hidden in every mode](#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode) brings it back to two).
+- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer).
 - **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
@@ -506,17 +506,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A tray submenu longer than the screen runs off it
 - **Where:** `qml/components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `qml/components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `qml/components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
 - **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### NowPlaying builds its strip layout and a second transport hidden in every mode
-- **Where:** `qml/components/content/NowPlaying/NowPlaying.qml:330` (the strip), `qml/components/content/NowPlaying/NowPlaying.qml:440` (the grid's `Transport`), `qml/components/content/NowPlaying/NowPlaying.qml:453` (the popout's `Transport`)
-- **What:** qml/components/content/AGENTS.md says "a part shown in one mode only is a Loader gated on it, not `visible: false`". All three parts here are gated by `visible` only:
-  - The strip `RowLayout` (lines 329-402, 74 lines, `visible: root.hasPlayer && root.mini`) shows only in a short card. It is built in the Media popout and in every other card too, including its `Art`, whose CrossFade decodes the cover once more while hidden.
-  - The grid's `Transport { visible: root.embedded }` is built in the popout.
-  - The popout's `Transport { visible: root.hasPlayer && !root.embedded }` is built in every card.
-
-  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode, a third beside the two [Images decoded at full size or more than once](#images-decoded-at-full-size-or-more-than-once) counts. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders). Fix it together with NowPlaying's thresholds in [the sizing entry](#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding): the Loaders gate on the `mini`/`short` switches that entry recomputes. The compact play `MediaButton` also lacks the `enabled: MediaManager.canTogglePlaying` its two siblings have (modules review, 2026-10-31).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
