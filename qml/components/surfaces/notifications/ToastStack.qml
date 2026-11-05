@@ -48,13 +48,34 @@ Scope {
   readonly property int count: root.toasts.length
   readonly property bool showing: root.count > 0
 
+  // A fullscreen window on its screen now (quietFullscreen)
+  readonly property bool fullscreenNow: CompositorManager.hasFullscreen(root.screenName)
   // Over a fullscreen window nothing else shows: the stack sits on the
-  // whole screen, its gaps from the screen's edges
-  readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screenName)
+  // whole screen, its gaps from the screen's edges. Showing toasts jump
+  // there and back at once, as an EdgePopout does: the latch follows a
+  // tick after the change (`_snap`: the handler can run before its source
+  // binding), the cards not gliding (`_still`).
+  property ClosedLatch _fullscreenLatch: ClosedLatch {
+    source: root.fullscreenNow
+    closed: !root.showing || root._snapping
+  }
+  readonly property bool fullscreen: root._fullscreenLatch.value ?? false
+  property bool _snapping: false
+  property bool _still: false
+  onFullscreenNowChanged: {
+    if (root.showing)
+      Qt.callLater(root._snap);
+  }
+  function _snap() {
+    root._still = true;
+    root._snapping = true;
+    root._snapping = false;
+    Qt.callLater(() => root._still = false);
+  }
 
-  // One box out of its edge (NotificationsConfig.detached off), but over
-  // a fullscreen window, which leaves no border or bar to grow out of
-  readonly property bool attached: !NotificationsConfig.detached && !root.fullscreen
+  // One box out of its edge (NotificationsConfig.detached off); over a
+  // fullscreen window it's held off the bare edge, as every EdgePopout
+  readonly property bool attached: !NotificationsConfig.detached
   readonly property var grow: ToastMotion.growth(NotificationsConfig.edge, NotificationsConfig.position)
   readonly property bool vertical: NotificationsConfig.edge === ScreenEdge.Left || NotificationsConfig.edge === ScreenEdge.Right
 
@@ -64,7 +85,7 @@ Scope {
     if (!ShellManager.showsOn(root.screen, NotificationsConfig.screen))
       return;
     const critical = NotificationManager.urgencyOf(notification) === NotificationUrgency.Critical;
-    if (NotificationsConfig.quietFullscreen && root.fullscreen && !critical)
+    if (NotificationsConfig.quietFullscreen && root.fullscreenNow && !critical)
       return;
     // Make room: the oldest go
     const staying = root.toasts.filter(t => root._leaving[t.key] === undefined);
@@ -322,10 +343,11 @@ Scope {
 
         x: toastCard.place.x
         y: toastCard.place.y
-        // Glides as the stack reflows; not on arrival, which slides it in
+        // Glides as the stack reflows; not on arrival, which slides it in,
+        // nor as it jumps over a fullscreen window or back (_still)
         property bool _placed: false
         Glide on y {
-          enabled: toastCard._placed
+          enabled: toastCard._placed && !root._still
           duration: Appearance.animNormal
         }
 

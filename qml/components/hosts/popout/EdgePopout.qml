@@ -86,7 +86,11 @@ PopoutWrapperBase {
   // the daemon's layer rules, render.LayerRulesLua), else over them on the
   // Overlay layer (no supports.layerOrder, or the overlay open on its
   // screen). Both follow only while closed, as BarPopouts.underBar: they
-  // change the window's layer, namespace and size.
+  // change the window's layer, namespace and size. Whether it slides from
+  // the edge also follows as it jumps over a fullscreen window or back
+  // (`_snapping`); its namespace can't change while mapped, so `_under`
+  // doesn't: over a fullscreen window its window goes to the Overlay layer
+  // (windowLayer), and back under the bars after.
   // One that fades (`fade`, a detached box only) fades in where it sits,
   // on the Overlay layer.
   property ClosedLatch _under: ClosedLatch {
@@ -96,12 +100,14 @@ PopoutWrapperBase {
   readonly property bool slidesUnder: root._under.value ?? false
   property ClosedLatch _fromEdge: ClosedLatch {
     source: placement.slidesFromEdge && !root.fades
-    closed: !root.occupied
+    closed: !root.occupied || root._snapping
   }
   // How far back from its attach edge it slides in from: the screen edge
   readonly property real slideDistance: (root._fromEdge.value ?? false) ? placement.slideFrom : 0
-  // Its window's layer: Overlay unless it slides under a bar
-  readonly property int windowLayer: root.slidesUnder ? WlrLayer.Top : WlrLayer.Overlay
+  // Its window's layer: Overlay unless it slides under a bar (and isn't
+  // over a fullscreen window, which hides that layer: the layer of a
+  // mapped window changes in place, nothing maps)
+  readonly property int windowLayer: root.slidesUnder && !root._overFullscreen ? WlrLayer.Top : WlrLayer.Overlay
   // Over the overlay and fullscreen windows (BlurManager.backsOn), it and
   // a submenu in its window
   readonly property bool onOverlayLayer: root.windowLayer === WlrLayer.Overlay
@@ -190,13 +196,30 @@ PopoutWrapperBase {
   // Over a fullscreen window, which covers the border and the bars, there's
   // nothing to join: it's held as well, with an automatic gap unless held
   // already (and slides under nothing, whose layer that window hides).
-  // Followed only while closed, so an open box never moves.
+  // The one change an open box moves for: it jumps straight to the shape
+  // and place it would open at now, with no animation (`settled` off for
+  // a tick while the latches follow, `_snapping`).
   readonly property bool fullscreen: CompositorManager.hasFullscreen(root.screen?.name ?? "")
   property ClosedLatch _fullscreenLatch: ClosedLatch {
     source: root.fullscreen
-    closed: !root.occupied
+    closed: !root.occupied || root._snapping
   }
   readonly property bool _overFullscreen: root._fullscreenLatch.value ?? false
+  property bool _snapping: false
+  onFullscreenChanged: {
+    // Closed, it follows anyway; closing, it's on its way out
+    if (!root.occupied || root.isClosing)
+      return;
+    root.settled = false;
+    // Once the latches' sources have followed: this handler can run
+    // before their bindings do, and would latch the old value
+    Qt.callLater(root._snap);
+  }
+  function _snap() {
+    root._snapping = true;
+    root._snapping = false;
+    Qt.callLater(() => root.settled = root._shown);
+  }
   // Held, by `held` or over a fullscreen window
   readonly property bool holds: root.held || root._overFullscreen
   // Placed as if the bars and the border weren't there (they're under the
@@ -316,6 +339,7 @@ PopoutWrapperBase {
     open: root.isOpen && root.claimed
     onOverlayLayer: root.onOverlayLayer
     overOverlay: root.overlayOpen
+    under: root.windowLayer === WlrLayer.Top
     origin: placeOnScreen.origin
     attachedSurface: surface
     opens: surfaceWindow.visible && root.claimed

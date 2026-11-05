@@ -35,7 +35,8 @@ QtObject {
   property bool held: false
   property real distance: 0
   property real heldDepth: 0
-  // Over a fullscreen window (a host's latched hold, with `held`), which
+  // Over a fullscreen window (a host's hold, with `held`, which an open
+  // EdgePopout takes up at once), which
   // covers the bars and the border: placed as if the screen's edges were
   // bare, its window spanning the screen (ExclusionMode.Ignore), and
   // sliding in from off it
@@ -240,7 +241,8 @@ QtObject {
     "layerOrder": CompositorManager.supports.layerOrder === true,
     "overOverlay": root.overOverlay,
     "menuZone": root.bare ? 0 : ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName),
-    "bare": root.bare
+    "bare": root.bare,
+    "under": root.under
   }))
   // EdgeAttach.place's answer in the host's coordinates
   readonly property var place: {
@@ -291,6 +293,9 @@ QtObject {
   // (slidesUnder), or else from the frame line, coming out of what's on
   // the edge (SurfaceContext)
   property bool overOverlay: false
+  // Whether the host's window is under the bars now, which it keeps while
+  // open (undefined: slidesUnder): where slideFrom starts
+  property var under: undefined
   readonly property bool slidesUnder: root._layout.slidesUnder
   readonly property bool slidesFromEdge: root._layout.slidesFromEdge
   // How far back from its attach edge it starts (the screen edge or the

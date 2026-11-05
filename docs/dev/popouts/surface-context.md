@@ -41,7 +41,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
 - `layout(f, p)` gives its box (via `EdgeAttach.place`) and everything that follows from it:
   - `detached`, `straight`, backfill (`merged` and `between` boxes grow from the followed bar's outer edge: attached there, with the border as their sink)
   - `attachAt` across, and `attachBase`: where it goes by default, on the stroke of what reserves the edge (an `EdgePopout`'s `edgeOffset` is measured from there, as a floating edge menu's `before` gap)
-  - `slidesUnder`, `slidesFromEdge` and `slideFrom`: whether a detached box slides in under the bars, from behind its edge at all, and how far back from its attach edge it starts (the screen edge under the bars, else the frame line), given whether or not it slides now, since the host latches that ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen))
+  - `slidesUnder`, `slidesFromEdge` and `slideFrom`: whether a detached box slides in under the bars, from behind its edge at all, and how far back from its attach edge it starts (the screen edge under the bars, else the frame line), given whether or not it slides now, since the host latches that; under the bars as the host's window is (`under`, which it keeps while open; absent, `slidesUnder`) ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen))
   - `attachFill`: how deep the plain fill it joins runs from the screen edge to its attach edge: the border's margin, or a floating or pill bar's empty depth it grows over (`merged`, `between`). It is 0 on a pill or island, a solid bar or an integrated menu (each with content of its own), and for a held or detached box. `EdgePopout` takes it off its padding on the attach side (`attachExtra`, never the stroke), so an attached box's content is as far from the screen edge as from its other sides, where the padding alone used to sit on top of the margin. The dock keeps its own padding.
   - `ownSink`, shadow
 - Both work in screen px along the edge. A bar popout, an edge popout and a dock at the same intersection therefore get one answer.
@@ -66,7 +66,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
 
 ### What stays a host's own
 - **Bar popout:** one window per bar spanning its edge, the anchor, and switching in place ([Hosts and switching](hosts-and-switching.md)).
-- **Edge popout:** its position, held gap and fullscreen hold ([Held off an edge](held-off-edge.md)). Over a fullscreen window a host passes `EdgePlacement.bare`: its frame lines and reservations are 0, so it's placed from the screen's edges.
+- **Edge popout:** its position, held gap and fullscreen hold ([Held off an edge](held-off-edge.md)). Over a fullscreen window (taken up at once, even while open) a host passes `EdgePlacement.bare`: its frame lines and reservations are 0, so it's placed from the screen's edges.
 - **Dock:** its magnification and hide slide.
 - **Openings:** they go out through `hosts/popout/StrokeOpening`. While translucent they go to the border; otherwise they go to a solid bar's own stroke, opaque or not.
 - **Submenus:** what a submenu meets on its parent's side is `hosts/popout/SubmenuSide`, inside the parent's `hosts/popout/SubmenuHost`. That host is the same for both parent kinds and is the submenu's `slot` ([Submenus](submenus.md)).
