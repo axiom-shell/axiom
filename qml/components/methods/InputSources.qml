@@ -235,9 +235,39 @@ QtObject {
     });
   }
 
-  // The xkb sources alone (what a password field types through)
+  // The xkb sources alone
   function xkbOnly(sources) {
     return (Array.isArray(sources) ? sources : []).filter(s => s?.kind === "xkb" && root._usable(s));
+  }
+
+  // The compositor's layouts as xkb sources, in its order, so its index
+  // is each one's place: what a password field types on (the lock screen
+  // and the login screen offer these). Each layout of xkb(sources,
+  // engines) is its xkb source, else one made for it ("xkb:<index>:
+  // <layout>[-<variant>]": an engine's typing layout no xkb source has,
+  // Mozc's jp). Give it every source, as effective() does
+  function compositorLayouts(sources, engines) {
+    const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
+    const xkb = root.xkb(list, engines);
+    return xkb.layouts.map((layout, i) => {
+      const variant = xkb.variants[i];
+      return list.find(s => s.kind === "xkb" && root._text(s.layout) === layout && root._text(s.variant) === variant) ?? {
+        "id": "xkb:" + i + ":" + layout + (variant !== "" ? "-" + variant : ""),
+        "kind": "xkb",
+        "layout": layout,
+        "variant": variant,
+        "engine": ""
+      };
+    });
+  }
+
+  // Whether the daemon's inputMethod state says which engines the
+  // framework has installed: a running one always has some (fcitx5 its
+  // keyboard-* ones, ibus its xkb:*), so an empty list (just after it
+  // appeared, before its engines are read) isn't known yet, and a list
+  // pushed then would drop every engine
+  function installedKnown(state) {
+    return Array.isArray(state?.available) && state.available.length > 0;
   }
 
   // The id of the source after (`direction` 1) or before (-1) the one

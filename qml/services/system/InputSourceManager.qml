@@ -68,9 +68,11 @@ QtObject {
   // then), the xkb ones alone; an engine the framework hasn't installed is
   // left out too (switching to it fails, so stepping would stop there)
   readonly property var sources: root._counted.filter(s => s.kind !== "ime" || root._engine(s) !== null)
-  // The xkb ones: what a password field types through (the lock screen's
-  // and the greeter's module offer only these)
-  readonly property var xkbSources: InputSources.xkbOnly(root.sources)
+  // The compositor's layouts, in its order: what a password field types
+  // through (the lock screen's and the greeter's module offer only
+  // these), an engine's typing layout no xkb source has (Mozc's jp, while
+  // the method is on) among them (InputSources.compositorLayouts)
+  readonly property var xkbSources: InputSources.compositorLayouts(root._counted, InputConfig.methodEnabled)
   // The id of the source in use ("" for none): the framework's input
   // method, else the compositor's layout (also while no text field had
   // focus yet, when the framework's current is "")
@@ -78,8 +80,8 @@ QtObject {
     const id = InputSources.current(root._counted, root.layoutIndex, root.running ? String(root._im.current ?? "") : "", root.framework, root.registry);
     return root._source(id) ? id : "";
   }
-  // The xkb source the compositor types on
-  readonly property string currentXkb: InputSources.current(root.xkbSources, root.layoutIndex, "", "none", null)
+  // The compositor's layout it types on (of xkbSources, by its index)
+  readonly property string currentXkb: root.xkbSources[root.layoutIndex]?.id ?? ""
 
   // The sources a surface offers: the xkb ones alone with `xkbOnly`
   function sourcesFor(xkbOnly) {
@@ -122,10 +124,15 @@ QtObject {
   // OSD tells it from a window's own input method coming back on focus
   property double switchedAt: 0
 
-  // Switches to the source `id`: the compositor's layout, then the
+  // Switches to the source `id` (of sources, or of xkbSources: the
+  // compositor's layout alone): the compositor's layout, then the
   // framework's input method. False when no source has that id
   function set(id) {
-    const target = root._source(id) ? InputSources.target(root._counted, id, root.framework, root.registry) : null;
+    const layout = root.xkbSources.findIndex(s => s.id === id);
+    const target = root.sources.some(s => s.id === id) ? InputSources.target(root._counted, id, root.framework, root.registry) : layout >= 0 ? {
+      "xkbIndex": layout,
+      "im": ""
+    } : null;
     if (!target)
       return false;
     root.switchedAt = Date.now();
@@ -263,8 +270,9 @@ QtObject {
     }
   }
 
+  // A source of `sources`, else a layout of xkbSources
   function _source(id) {
-    return root.sources.find(s => s.id === id) ?? null;
+    return root.sources.find(s => s.id === id) ?? root.xkbSources.find(s => s.id === id) ?? null;
   }
 
   // The framework's engine a source is (available's entry), or null
@@ -304,6 +312,10 @@ QtObject {
     const sources = InputConfig.savedSources;
     // ibus names xkb layouts by their language, from the registry
     if (root.framework === "ibus" && root._registry === null)
+      return;
+    // Until the engines installed are read: a list pushed then would
+    // drop every engine
+    if (!InputSources.installedKnown(root._im))
       return;
     if (InputSources.groupMatches(root.framework, sources, root.registry, root._im))
       return;

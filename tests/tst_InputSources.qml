@@ -194,6 +194,36 @@ TestCase {
     compare(InputSources.xkbOnly(test.mixed).map(s => s.id), ["us", "neo"]);
   }
 
+  // The lock screen's and the greeter's layouts: the compositor's, an
+  // engine's own typing layout among them while the method is on
+  function test_compositorLayouts() {
+    compare(InputSources.compositorLayouts(test.mixed, true).map(s => s.id), ["us", "neo", "xkb:2:jp"], "pinyin's jp is the compositor's third layout");
+    const jp = InputSources.compositorLayouts(test.mixed, true)[2];
+    compare([jp.kind, jp.layout, jp.variant], ["xkb", "jp", ""], "a layout, named by its own code");
+    compare(InputSources.compositorLayouts(test.mixed, false).map(s => s.id), ["us", "neo"], "off: the xkb sources' layouts alone");
+    compare(InputSources.compositorLayouts([xkbSource("us", "us"), xkbSource("us-2", "us"), imeSource("m", "mozc", "de", "neo")], true).map(s => s.id), ["us", "xkb:1:de-neo"], "a layout twice is one, a variant in the id");
+    compare(InputSources.compositorLayouts([], true).map(s => s.layout), ["us"], "never empty");
+    const own = InputSources.effective(test.mixed, ["fr", "us"], true);
+    compare(InputSources.compositorLayouts(own, true).map(s => s.id), ["xkb:0:fr", "xkb:1:us"], "the compositor's own layouts while axiom doesn't set them");
+  }
+
+  // A list is pushed only once the framework's engines are known
+  function test_installedKnown() {
+    verify(!InputSources.installedKnown(null), "no state yet");
+    verify(!InputSources.installedKnown({
+      "running": true,
+      "available": []
+    }), "a framework just appeared: its engines not read yet");
+    verify(InputSources.installedKnown({
+      "running": true,
+      "available": [
+        {
+          "name": "keyboard-us"
+        }
+      ]
+    }));
+  }
+
   function test_step() {
     compare(InputSources.step(test.mixed, "us", 1), "mozc");
     compare(InputSources.step(test.mixed, "pinyin", 1), "us", "wraps");
