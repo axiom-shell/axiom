@@ -3898,7 +3898,6 @@
     "Previous input source": "",
     "Input sources, input methods, keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.": "",
     "Start the input method": "",
-    "The font of the candidate window, with its size (\"Noto Sans CJK JP 12\"); empty, the framework's own.": "",
     "Candidates in a column": "",
     "Older and X11 apps": "",
     "No": "",
@@ -3924,6 +3923,7 @@
     "Candidate font": "",
     "Whether switching the input method in one window switches it in others too. fcitx5 only.": "",
     "Lets axiom manage fcitx5 or ibus, to type Japanese, Chinese, Korean and more. Your input sources then hold input method engines too, which axiom gives the framework (replacing the list set in fcitx5-configtool or ibus-setup) and switches with the layouts. Off, axiom switches only the keyboard layouts and leaves any framework alone.": "",
-    "Writes the \"axiom\" theme for fcitx5's candidate window and its menus. Reloads running fcitx5.": ""
+    "Writes the \"axiom\" theme for fcitx5's candidate window and its menus. Reloads running fcitx5.": "",
+    "The font of the candidate window, with its size (\"Noto Sans CJK JP 12\"). Empty leaves the framework's own font as it is: fcitx5 keeps the one its own settings have, ibus turns its custom font off.": ""
   }
 }

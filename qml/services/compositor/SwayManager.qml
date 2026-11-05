@@ -352,11 +352,6 @@ Singleton {
     SwayIpcManager.json("get_inputs", inputs => callback(Array.isArray(inputs) ? SwayState.keyboard(inputs, codes, registry) : null));
   }
 
-  // Switches every keyboard to its "next" or "prev" layout, then calls back
-  function cycleKeyboardLayout(direction, callback) {
-    SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${direction === "prev" ? "prev" : "next"}`, () => callback?.());
-  }
-
   // Switches every keyboard to the layout at `index`, then calls back
   function setKeyboardLayout(index, callback) {
     SwayIpcManager.command(`input type:keyboard xkb_switch_layout ${Math.max(0, Math.floor(Number(index) || 0))}`, () => callback?.());

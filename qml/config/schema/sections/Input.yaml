@@ -109,7 +109,7 @@ properties:
         type: string
         title: Candidate font
         default: ''
-        description: 'The font of the candidate window, with its size ("Noto Sans CJK JP 12"); empty, the framework''s own.'
+        description: 'The font of the candidate window, with its size ("Noto Sans CJK JP 12"). Empty leaves the framework''s own font as it is: fcitx5 keeps the one its own settings have, ibus turns its custom font off.'
         x-showIf: {enabled: true, framework: {not: none}}
       showSwitchPopup:
         x-scope: personal
