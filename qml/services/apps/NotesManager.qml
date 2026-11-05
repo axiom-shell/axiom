@@ -471,9 +471,9 @@ QtObject {
         onTriggered: doc.flush()
       }
 
-      // A missing file is a new note: nothing on disk until the first
-      // edit. One `followed` to (the notes folder changed) reads as empty,
-      // not as the old folder's text.
+      // A missing file `followed` to (opened, renamed, or the notes folder
+      // changed) reads as empty, a new note, not as the old folder's text;
+      // one gone while open (_changed) keeps its text.
       function _read(followed) {
         const text = FileManager.read(doc._file);
         if (text === null && !followed)

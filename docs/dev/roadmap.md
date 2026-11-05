@@ -372,6 +372,7 @@ Found by the audits:
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
+- [Edits kept while the linked notes folder was missing overwrite its note when it's back](issues.md#edits-kept-while-the-linked-notes-folder-was-missing-overwrite-its-note-when-its-back)
 - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
 - [The join form stays incomplete when CA file is picked without a file and the security changed](issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
 - [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
