@@ -190,10 +190,6 @@ TestCase {
     compare(InputSources.effective([xkbSource("x", ""), imeSource("e", "")], [], true), [], "only usable ones");
   }
 
-  function test_xkbOnly() {
-    compare(InputSources.xkbOnly(test.mixed).map(s => s.id), ["us", "neo"]);
-  }
-
   // The lock screen's and the greeter's layouts: the compositor's, an
   // engine's own typing layout among them while the method is on
   function test_compositorLayouts() {

@@ -235,11 +235,6 @@ QtObject {
     });
   }
 
-  // The xkb sources alone
-  function xkbOnly(sources) {
-    return (Array.isArray(sources) ? sources : []).filter(s => s?.kind === "xkb" && root._usable(s));
-  }
-
   // The compositor's layouts as xkb sources, in its order, so its index
   // is each one's place: what a password field types on (the lock screen
   // and the login screen offer these). Each layout of xkb(sources,
