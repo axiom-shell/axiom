@@ -109,6 +109,37 @@ TestCase {
     compare(rows.map(r => r.foldedBy ?? ""), ["", "", "", "S.kb.method", "S.kb.method", "S.kb.method", ""]);
   }
 
+  // A field's `x-rowDraws` marks the rows it draws (the layouts row
+  // drawing the input method switch): `drawnBy` its path
+  function test_rows_row_draws() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "kb": {
+          "type": "object",
+          "properties": {
+            "sources": {
+              "type": "string",
+              "x-row": "Field",
+              "x-rowDraws": ["method.enabled"]
+            },
+            "method": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "other": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["S.kb:", "S.kb.sources:", "S.kb.method:", "S.kb.method.enabled:S.kb.sources", "S.kb.method.other:"]);
+  }
+
   // A `$ref` property's fields are rows once the schema is resolved (the
   // settings page's Changed from default and /config list Bars.style.*)
   function test_rows_of_a_resolved_ref() {

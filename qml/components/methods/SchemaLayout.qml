@@ -21,7 +21,9 @@ QtObject {
   // `groupShowIf` ([{ condition, path }], path: the object's parent), on
   // every row inside it. A nested object marked `x-fold` folds its rows
   // behind its title: its group row has `fold: true`, and each row inside
-  // it `foldedBy`, the dotted path of the innermost such object. Keys go in
+  // it `foldedBy`, the dotted path of the innermost such object. A row
+  // another field's `x-row` draws (its `x-rowDraws`) has `drawnBy`, that
+  // field's dotted path. Keys go in
   // their object's `x-order` first (the schema reaches QML as a map)
   function rows(objectSchema, path) {
     const result = [];
@@ -75,6 +77,13 @@ QtObject {
           "schema": prop
         });
       }
+    }
+    // A field whose `x-row` also draws other keys of its object
+    // (`x-rowDraws`, dotted paths under it) marks their rows `drawnBy`
+    // its dotted path: on the settings page they're drawn inside it
+    for (const row of result.filter(r => r.kind === "field" && Array.isArray(r.schema["x-rowDraws"]))) {
+      const drawn = row.schema["x-rowDraws"].map(key => path.concat(key.split(".")).join("."));
+      result.filter(r => r.kind !== "group" && drawn.includes(r.path.join("."))).forEach(r => r.drawnBy = row.path.join("."));
     }
     return result;
   }

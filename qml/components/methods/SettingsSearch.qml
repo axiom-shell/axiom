@@ -28,12 +28,20 @@ QtObject {
   // The cards of `entries` (an `index`) with only their rows matching
   // `query` (lowercase; "" matches all), and with `changedOnly` only
   // settings in `changedSet` (dotted path -> true). A card whose title or
-  // section matches keeps every row. Cards left empty are dropped
+  // section matches keeps every row. A row another one draws (`drawnBy`)
+  // matches as that one, which shows it. Cards left empty are dropped
   function filter(entries, query, changedSet, changedOnly) {
     const result = [];
     for (const entry of entries) {
       const titleMatches = query === "" || entry.hay.includes(query);
-      const rows = entry.rows.filter(item => (titleMatches || item.hay.includes(query)) && (!changedOnly || (item.row.kind !== "group" && changedSet[item.row.path.join(".")] === true))).map(item => item.row);
+      const rows = [];
+      for (const item of entry.rows) {
+        if (!(titleMatches || item.hay.includes(query)) || (changedOnly && (item.row.kind === "group" || changedSet[item.row.path.join(".")] !== true)))
+          continue;
+        const row = item.row.drawnBy ? entry.rows.find(other => other.row.path.join(".") === item.row.drawnBy)?.row ?? item.row : item.row;
+        if (!rows.includes(row))
+          rows.push(row);
+      }
       if (rows.length > 0)
         result.push(Object.assign({}, entry.group, {
           "rows": rows

@@ -11,7 +11,7 @@ import qs.components.reusable
 // integrations) the IntegrationHookup panel, drawn as a FormRow (the
 // divider above it, the rail, the fold as its `x-showIf` flips). A field
 // with `x-row` is drawn by settings/<Name>.qml instead (given `row` and
-// `form`); an object with `x-fold` is a fold header, its rows shown only
+// `form`), and the rows its `x-rowDraws` names hide; an object with `x-fold` is a fold header, its rows shown only
 // while it's open (SettingsManager.isFoldOpen), and always in a search
 FormRow {
   id: root
@@ -29,7 +29,8 @@ FormRow {
   readonly property bool listing: root.form?.listing === true
   readonly property bool foldOpen: root.listing || SettingsManager.isFoldOpen(root.foldHeader ? root.row.path.join(".") : (root.row.foldedBy ?? ""))
 
-  shown: field.shown && (!root.row.foldedBy || root.foldOpen)
+  // A row another field's `x-row` draws (`drawnBy`) is drawn there
+  shown: field.shown && (!root.row.foldedBy || root.foldOpen) && !root.row.drawnBy
   // A row shown by a sibling's value (Night light's times, under "On a
   // schedule")
   indented: root.isValue && field.followsSibling
@@ -55,7 +56,7 @@ FormRow {
     headerExtra: root.isValue ? changeMarks : null
     // Kept drawn while the row folds shut (the row hides once it has);
     // not built for a row drawn otherwise (its `shown` still holds)
-    active: root.custom === "" && !root.foldHeader
+    active: root.custom === "" && !root.foldHeader && !root.row.drawnBy
     visible: true
   }
 

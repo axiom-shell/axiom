@@ -22,6 +22,7 @@ properties:
         x-scope: personal
         x-greeter: true
         x-row: InputSourcesField
+        x-rowDraws: [method.enabled]
         type: array
         title: Layouts
         default:
@@ -74,7 +75,6 @@ properties:
         properties:
           enabled:
             x-scope: personal
-            x-settings: false
             type: boolean
             title: Type other languages with an input method
             default: false
