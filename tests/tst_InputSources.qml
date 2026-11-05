@@ -253,6 +253,82 @@ TestCase {
     verify(InputSources.groupMatches("none", sources, null, null));
   }
 
+  // Only the engines the framework has installed are pushed, and compared
+  function test_installedEngines() {
+    const available = [
+      {
+        "name": "keyboard-us"
+      },
+      {
+        "name": "pinyin"
+      }
+    ];
+    compare(InputSources.installed(test.mixed, "fcitx5", null, available).map(s => s.id), ["us", "neo", "pinyin"], "an engine not installed is left out, xkb sources kept");
+    compare(InputSources.installed(test.mixed, "fcitx5", null, undefined).length, test.mixed.length, "without a list every engine stays");
+    compare(InputSources.fcitx5Group(test.mixed, available), {
+      "defaultLayout": "us",
+      "items": [
+        {
+          "name": "keyboard-us",
+          "layout": "us"
+        },
+        {
+          "name": "keyboard-de-neo",
+          "layout": "de-neo"
+        },
+        {
+          "name": "pinyin",
+          "layout": "jp"
+        }
+      ]
+    }, "mozc missing: left out, pinyin's layout kept");
+    compare(InputSources.fcitx5Group([imeSource("m", "mozc", "jp")], []), {
+      "defaultLayout": "jp",
+      "items": []
+    }, "the default layout still counts a left-out engine's");
+    compare(InputSources.ibusEngines(test.mixed, test.registry, available), ["xkb:us::eng", "xkb:de:neo:deu", "pinyin"]);
+    const sources = [xkbSource("us", "us"), imeSource("mozc", "mozc")];
+    verify(InputSources.groupMatches("fcitx5", sources, null, {
+      "defaultLayout": "us",
+      "group": [
+        {
+          "name": "keyboard-us",
+          "layout": "us"
+        }
+      ],
+      "available": [
+        {
+          "name": "keyboard-us"
+        }
+      ]
+    }), "a read-back without an engine not installed matches");
+    verify(!InputSources.groupMatches("fcitx5", sources, null, {
+      "defaultLayout": "us",
+      "group": [
+        {
+          "name": "keyboard-us",
+          "layout": "us"
+        }
+      ],
+      "available": [
+        {
+          "name": "keyboard-us"
+        },
+        {
+          "name": "mozc"
+        }
+      ]
+    }), "an installed engine missing still doesn't");
+    verify(InputSources.groupMatches("ibus", sources, test.registry, {
+      "group": [
+        {
+          "name": "xkb:us::eng"
+        }
+      ],
+      "available": []
+    }), "ibus: the same");
+  }
+
   function test_fromGroup() {
     compare(InputSources.fromGroup("fcitx5", {
       "defaultLayout": "us",
