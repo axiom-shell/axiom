@@ -503,24 +503,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
-### Hyprland writes no per-touchpad input block
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`ConfigTable`, `InputLua`, `GreeterLua`)
-- **What:** Hyprland sets accel, sensitivity and left-handed only globally (`input.*`, every pointer) or per device (`hl.device({ name = … })`); render has no device form, so a touchpad can't be set apart from the mouse there. Plan item 1 (option A): `ConfigTable` sets aside fields whose `x-compositor.hyprland` spec names `device: touchpad`, and `InputLua` / `GreeterLua` emit them as one `hl.device()` per pointer from `hl.get_devices()` whose name matches `touchpad|trackpad|clickpad`, each in a `pcall`. Go tests, goldens (`TestGoldenFiles`), and a check in nested Hyprland that a live eval reaches a connected touchpad and that the first load at start sees the devices (else the start's apply covers it, written down in the doc).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
-
-### The Touchpad part has no speed, acceleration or left-handed of its own
-- **Where:** `qml/config/schema/sections/Input.yaml` (`touchpad`), `qml/config/InputConfig.qml`
-- **What:** The Touchpad part has no `accel`, `sensitivity` or `leftHanded`, so no compositor lets a touchpad's acceleration and speed be set apart from the mouse's, as decided: "Mouse and touchpad settings need to be seperate (i.e. one should be able to turn on mouse acceleration for touchpad only and adjust it seperatly)." Plan item 2: `touchpad.accel`, `.sensitivity`, `.leftHanded` (same titles, enum, range, `x-greeter`, `x-scope` as the mouse's; sway `input type:touchpad accel_profile|pointer_accel|left_handed`, niri `input.touchpad.accel-profile|accel-speed|left-handed`, Hyprland the per-touchpad form of [Hyprland writes no per-touchpad input block](#hyprland-writes-no-per-touchpad-input-block)), their `InputConfig` reader properties, the sway and niri goldens, `docs/dev/compositor/config-modes.md`' input lines and the greeter doc's. No migration (the defaults fill at load).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
-
-### The Mouse part doesn't say it reaches the touchpad on Hyprland
-- **Where:** `qml/config/schema/sections/Input.yaml` (`mouse`)
-- **What:** On Hyprland the Mouse part's fields are global `input.*`, so with the Touchpad part off they still reach the touchpad (decided to keep it so), and nothing in the settings says so. Plan item 3: a description line on the Mouse part saying it reaches a touchpad whose own part is off on Hyprland, and that the touchpad needs independent configuration (its own acceleration) through the Touchpad part's fields.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the compositor-parity system (split out of its plan, [touchpad-apart-from-the-mouse.md](plans/touchpad-apart-from-the-mouse.md), decided 2026-11-05)
-
 ### The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked
 - **Where:** `qml/components/bar/BarContainer.qml` (`borderOpening`, `joinOpening`), `qml/components/surfaces/border/RoundedBorders.qml`
 - **What:** The border leaves its inner stroke open under a joined surface whenever `Appearance.translucent`, not only while the blur window backs it. In nested niri with a top and a left pill bar meeting at the top-left corner (translucency 80%, the look's blur off, so nothing is backed), the top frame's stroke row (y = 7) is bare wallpaper across the left frame's width (x 0–6): nothing fills it there, as the keepFill row was before compositor-20. Backed, the blur window fills it. Which opening takes that stretch (the left pill's `joinOpening` or the top pill's `borderOpening`) wasn't traced.

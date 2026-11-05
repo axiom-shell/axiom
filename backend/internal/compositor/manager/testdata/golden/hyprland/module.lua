@@ -190,6 +190,11 @@ function M.input()
       touchpad = { disable_while_typing = true, natural_scroll = false, scroll_factor = 0.99, tap_to_click = true },
     },
   })
+  for _, d in ipairs(hl.get_devices and hl.get_devices() or {}) do
+    if d.type == "pointer" and d.name and (d.name:find("touchpad", 1, true) or d.name:find("trackpad", 1, true) or d.name:find("clickpad", 1, true)) then
+      pcall(hl.device, { name = d.name, accel_profile = "adaptive", left_handed = false, sensitivity = 0.25 })
+    end
+  end
 end
 
 -- Blur behind axiom's surfaces while they're translucent (on or off, so
