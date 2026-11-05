@@ -3883,7 +3883,6 @@
     "Only if an X11 or older app can't type with it, also {0}: on Wayland they can break typing in GTK apps.": "",
     "Electron apps (VS Code, Discord, Obsidian, …) type with an input method only when started with --enable-wayland-ime: no variable turns it on.": "",
     "Starts the framework with the compositor and sets the environment apps need to use it.": "",
-    "Lists the candidate words top to bottom instead of in a row. fcitx5 only.": "",
     "Also sets GTK_IM_MODULE and QT_IM_MODULE, for X11 apps and older toolkits. Leave it off unless an app can't type with the input method: on Wayland it can break typing in GTK apps.": "",
     "Theme picks the light theme and DarkTheme the dark one (with Follow system light/dark color scheme on): both name axiom, which follows axiom's variant itself. fcitx5 rewrites classicui.conf whenever its own settings are saved (fcitx5-configtool, or axiom's input settings): the theme stays, the lines Apply commented out go. Picking another theme there undoes this; Apply again to come back.": "",
     "Windows of the same app": "",
@@ -3925,6 +3924,7 @@
     "Type other languages with an input method": "",
     "Gives the compositor the layouts below, the XKB options and key repeat. Off, your compositor's own config applies, and the layouts it has are the ones that switch.": "",
     "Input method options": "",
-    "Keyboard layouts and, with an input method, its engines (Japanese, Chinese, Korean and more), switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.": ""
+    "Keyboard layouts and, with an input method, its engines (Japanese, Chinese, Korean and more), switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.": "",
+    "Lists the candidate words top to bottom instead of in a row, for engines that don't choose their own layout (Pinyin, Rime, Hangul). Mozc always shows a column. fcitx5 only.": ""
   }
 }

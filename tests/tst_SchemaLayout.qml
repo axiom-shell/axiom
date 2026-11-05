@@ -118,7 +118,15 @@ TestCase {
           "type": "object",
           "properties": {
             "sources": {
-              "type": "string",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              },
               "x-row": "Field",
               "x-rowDraws": ["method.enabled"]
             },
@@ -1125,7 +1133,8 @@ TestCase {
       "category": "Look",
       "key": "Style",
       "title": "Size",
-      "row": ["Style", "size"]
+      "row": ["Style", "size"],
+      "fold": null
     });
     compare(SchemaLayout.locate(schema, ["Style", "shadow"]).key, "Style:Shadows");
     compare(SchemaLayout.locate(schema, "Style.font.family").key, "Style.font");
@@ -1134,7 +1143,8 @@ TestCase {
       "category": "Look",
       "key": "Style.font",
       "title": "Font",
-      "row": null
+      "row": null,
+      "fold": null
     });
     // A section: its first card, the hand-built one when it has one
     compare(SchemaLayout.locate(schema, "Style").key, "Style");
@@ -1142,6 +1152,16 @@ TestCase {
     compare(SchemaLayout.locate(schema, "Cards.on").key, "Cards");
     compare(SchemaLayout.locate(schema, "Style.nope"), null);
     compare(SchemaLayout.locate(schema, "Nope"), null);
+  }
+
+  // A jump to a row another one draws lands on the drawing row; one inside
+  // an `x-fold` names the fold to open (the Keyboard card's input method)
+  function test_locate_drawn_and_folded() {
+    const drawn = SchemaLayout.locate(schema, "Input.keyboard.method.enabled");
+    compare(drawn.row, ["Input", "keyboard", "sources"]);
+    const folded = SchemaLayout.locate(schema, "Input.keyboard.method.framework");
+    compare([folded.row, folded.fold], [["Input", "keyboard", "method", "framework"], "Input.keyboard.method"]);
+    compare(SchemaLayout.locate(schema, "Input.keyboard.options").fold, null);
   }
 
   // Every `x-link` leads to a setting the settings page shows, or a page

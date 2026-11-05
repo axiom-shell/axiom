@@ -115,7 +115,7 @@ properties:
             type: boolean
             title: Candidates in a column
             default: false
-            description: Lists the candidate words top to bottom instead of in a row. fcitx5 only.
+            description: Lists the candidate words top to bottom instead of in a row, for engines that don't choose their own layout (Pinyin, Rime, Hangul). Mozc always shows a column. fcitx5 only.
             x-showIf: {enabled: true, framework: [auto, fcitx5]}
           candidateFont:
             x-scope: look
