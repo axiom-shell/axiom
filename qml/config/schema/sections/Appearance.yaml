@@ -227,7 +227,7 @@ properties:
             minimum: 1
             maximum: 15
             x-showIf: {enabled: true}
-            description: How much larger than the screen the wallpaper is drawn, and so how far it can slide.
+            description: How far the wallpaper slides from one end to the other, as a share of the screen, the same both ways.
           workspaces:
             type: integer
             title: Workspaces it spans
