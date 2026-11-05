@@ -3,7 +3,7 @@
 type: object
 x-category: Modules
 title: Removable drives
-description: "How USB sticks, memory cards and other removable drives are announced, what plugging one in does, and the drives left alone. Drives are reached through udisks2."
+description: How removable drives are announced and handled.
 additionalProperties: false
 x-order: [notify, onInsert, warnUnplugged, ignore]
 properties:
@@ -11,7 +11,7 @@ properties:
     type: boolean
     title: Drive event notifications
     default: true
-    description: "Send a notification when a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or something went wrong. An OSD with Removable drives among its status icons (one whose detail cards are on, where it opens the OSD) shows them as a card instead (a click opens the drive, or unlocks an encrypted one). Off, and with no such OSD, they're left to the Drives widget and module. Asking what to do with a drive plugged in is always a notification."
+    description: Notify when a drive is plugged in, mounted, unmounted, safe to remove or unplugged, or fails.
     x-link: {setting: OSD}
   onInsert:
     type: string
@@ -23,17 +23,17 @@ properties:
       mount: Mount it
       nothing: Do nothing
     default: ask
-    description: "Ask sends a notification offering to mount or open it (or, for an encrypted drive, to unlock it), whatever Drive event notifications says. Mount it mounts it at once (an encrypted drive waits to be unlocked); nothing is mounted while the screen is locked, it waits for the unlock. Do nothing leaves it to the Drives widget and module. Drives open in the file manager."
+    description: Ask offers to mount or open it. Mount it mounts it at once, once unlocked. Do nothing leaves it to the Drives widget and module.
     x-link: {setting: Apps}
   warnUnplugged:
     type: boolean
     title: Warn when unplugged without ejecting
     default: true
-    description: "Warn when a mounted drive is unplugged before it's ejected: files still being written to it can be lost."
+    description: Files still being written can be lost.
   ignore:
     x-scope: machine
     type: array
     items: {type: string}
     title: Ignored drives
     default: []
-    description: "Volume UUIDs or labels of drives to leave alone: no notification, no mounting, and not listed. Find them with `lsblk -f`."
+    description: Volume UUIDs or labels to leave alone (see `lsblk -f`).

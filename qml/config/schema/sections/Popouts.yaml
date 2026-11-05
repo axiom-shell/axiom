@@ -5,7 +5,7 @@ type: object
 x-category: Overlay & Popouts
 x-links: [BarEditor]
 title: Popouts
-description: Behaviour shared by bar popouts and screen-edge popouts (side panel, OSD).
+description: Shared by bar popouts and screen-edge popouts.
 additionalProperties: false
 properties:
   timing:
@@ -26,4 +26,4 @@ properties:
     default: 16
     minimum: 0
     maximum: 64
-    description: "Space between a popout's box and its content: bar popouts, OSDs and edge menus."
+    description: Space between a popout's box and its content.

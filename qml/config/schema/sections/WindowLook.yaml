@@ -4,7 +4,7 @@ x-scope: look
 type: object
 x-category: Compositor
 title: Window look
-description: Settings that make windows match axiom. While on, they win over your compositor's own config, and they come along when you share or import a config.
+description: While on, these win over your compositor's own config.
 additionalProperties: false
 properties:
   borders:
@@ -16,7 +16,6 @@ properties:
         type: boolean
         title: Themed borders
         default: false
-        description: Window borders in theme colors.
         x-hintedIf: {/$supports.windowBorders: true}
       activeColor:
         type: string
@@ -24,7 +23,7 @@ properties:
         x-options: colors
         x-emptyLabel: Theme
         default: ''
-        description: Empty follows the theme's focused border color.
+        description: Empty follows the theme.
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowBorders: true}
       inactiveColor:
@@ -33,7 +32,7 @@ properties:
         x-options: colors
         x-emptyLabel: Theme
         default: ''
-        description: Empty follows the theme's border color.
+        description: Empty follows the theme.
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowBorders: true}
     x-group: Window look
@@ -46,14 +45,14 @@ properties:
         type: boolean
         title: Set border width and corners
         default: false
-        description: The width of window borders and the rounding of their corners. Sway draws square corners, so there only the width applies.
+        description: 'Sway draws square corners: only the width applies there.'
         x-hintedIf: {/$supports.windowShape: true}
       matchShell:
         x-link: {setting: Appearance.shape}
         type: boolean
         title: Match axiom's shape
         default: true
-        description: "Follow Look & Feel → Shape: its border width and corner radius (only the width on sway, which can't round corners; on SwayFX, open windows keep their rounding until sway reloads)."
+        description: Use Look & Feel's border width and corner radius.
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowShape: true}
       size:
@@ -72,7 +71,7 @@ properties:
         title: Corner rounding
         x-unit: px
         default: 8
-        description: On SwayFX, open windows keep their rounding until sway reloads; windows opened later take the new one.
+        description: On SwayFX, open windows keep their rounding until sway reloads.
         minimum: 0
         maximum: 50
         x-showIf: {enabled: true, matchShell: false}
@@ -87,7 +86,7 @@ properties:
         type: boolean
         title: Set window gaps
         default: false
-        description: Floating bars and detached surfaces set to Automatic keep these gaps too.
+        description: Floating bars and detached surfaces set to Automatic use these gaps too.
         x-hintedIf: {/$supports.windowGaps: true}
       inner:
         type: integer
@@ -120,21 +119,21 @@ properties:
         type: boolean
         title: Blur behind axiom's surfaces
         default: true
-        description: The compositor blurs what shows through axiom's translucent surfaces (Look & Feel → Translucency), with its blur below. It costs GPU time whenever what's behind or on a surface changes, more with a stronger blur and with windows blurred behind.
+        description: Blur what shows through axiom's translucent surfaces. Costs GPU time.
         x-showIf: {/Appearance.surface.opacity: {not: 100}}
         x-hintedIf: {/$supports.blur: true}
       throughWindows:
         type: boolean
         title: Blur windows behind surfaces
         default: true
-        description: Off, bars, the border and popouts blur the wallpaper alone, which is cheaper. Tooltips and menus always blur what's behind them, except on SwayFX.
+        description: Off, surfaces blur only the wallpaper, which is cheaper.
         x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
         x-hintedIf: {/$supports.blur: true}
       backdrops:
         type: boolean
         title: Blur backdrops
         default: false
-        description: Also blur the whole screen behind the overlay, launcher, power menu and workspace overview. Costs more while they open.
+        description: Also blur the screen behind the overlay, launcher, power menu and overview.
         x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
         x-hintedIf: {/$supports.blur: true}
       pauseFullscreen:
@@ -142,7 +141,7 @@ properties:
         type: boolean
         title: Pause blur over fullscreen apps
         default: true
-        description: While a fullscreen window (a game, a video) is open, nothing blurs on its monitor (on any monitor under Hyprland and SwayFX), so a volume popup or notification over it costs nothing extra. Surfaces on that monitor turn opaque; elsewhere they stay translucent.
+        description: No blur on a monitor showing a fullscreen window; its surfaces turn opaque.
         x-showIf: {/Appearance.surface.opacity: {not: 100}, enabled: true}
         x-hintedIf: {/$supports.blur: true}
     x-group: Blur
@@ -161,7 +160,7 @@ properties:
         type: boolean
         title: Match axiom's shadow
         default: true
-        description: 'Follow Look & Feel → Surface shadow: its color and size. With it off there, windows cast none.'
+        description: Use Look & Feel's shadow color and size.
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowShadow: true}
       size:
@@ -180,7 +179,7 @@ properties:
         default: 3
         minimum: 1
         maximum: 4
-        description: '1 fades slowly, 4 ends sharply.'
+        description: 1 fades slowly, 4 ends sharply.
         x-showIf: {enabled: true, matchShell: false, /$compositor: hyprland}
         x-hintedIf: {/$supports.windowShadow: true}
       color:
@@ -200,7 +199,6 @@ properties:
         default: 100
         minimum: 10
         maximum: 400
-        description: How strong windows cast it, matching axiom's or not. The compositor's own color keeps its strength.
         x-showIf: {enabled: true}
         x-hintedIf: {/$supports.windowShadow: true}
     x-group: Window shadows
@@ -234,7 +232,7 @@ properties:
         type: boolean
         title: Set window opacity
         default: false
-        description: Your apps' windows; the shell's own surfaces are Look & Feel → Translucency. Off, your own config's applies.
+        description: Your apps' windows. Off, your own config's applies.
         x-hintedIf: {/$supports.windowOpacity: true}
       active:
         type: integer

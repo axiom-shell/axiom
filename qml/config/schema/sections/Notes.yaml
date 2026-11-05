@@ -3,7 +3,7 @@
 type: object
 x-category: Modules
 title: Notes
-description: 'Where the Notes module keeps its notes: plain Markdown files, one per note, in folders of your own. Checklists are Markdown tasks (- [ ] item), so other Markdown editors read them too.'
+description: Notes are plain Markdown files, one per note, in folders of your own.
 additionalProperties: false
 properties:
   directory:
@@ -11,23 +11,22 @@ properties:
     title: Notes folder
     x-control: folder
     default: ''
-    description: An absolute path (~/ works), e.g. a synced folder or a Markdown vault. Empty keeps notes in ~/.local/share/axiom/notes.
+    description: An absolute path (~/ works). Empty uses ~/.local/share/axiom/notes.
   extensions:
     x-scope: personal
     type: array
     title: File types
     default: [md, txt]
     items: {type: string}
-    description: File extensions the note list shows, comma-separated. New notes are .md.
+    description: Comma-separated. New notes are .md.
   showHidden:
     x-scope: personal
     type: boolean
     title: Show hidden files
     default: false
-    description: List files and folders whose names start with a dot.
   confirmDelete:
     x-scope: personal
     type: boolean
     title: Confirm before deleting
     default: true
-    description: Deleted notes and folders go to the trash. Without gio (glib2) deleting is permanent, and always asks first.
+    description: Deleted notes go to the trash.

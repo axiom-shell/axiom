@@ -4,7 +4,7 @@ type: object
 x-category: Modules
 x-card: {file: ChatProviders, title: Chat API keys, wide: true}
 title: Chat
-description: "The Chat overlay module, and the launcher's @ prefix. API keys are never stored here: set them on the card above (they go to your keyring, or $XDG_STATE_HOME/axiom/secrets.json without one), or in each provider's environment variable."
+description: The Chat module and the launcher's @ prefix. API keys go to your keyring, never here.
 additionalProperties: false
 properties:
   defaultProvider:
@@ -13,7 +13,7 @@ properties:
     x-group: Chat conversations
     default: anthropic
     x-options: chatProviders
-    description: Used by presets that don't name a provider of their own.
+    description: Used by presets that name no provider.
   defaultPreset:
     x-scope: personal
     type: string
@@ -21,7 +21,6 @@ properties:
     x-group: Chat conversations
     default: Default
     x-options: chatPresets
-    description: What a new conversation starts with.
   maxTokens:
     type: integer
     title: Longest reply
@@ -30,7 +29,7 @@ properties:
     default: 16000
     minimum: 256
     maximum: 128000
-    description: A reply that reaches this is cut off, with a note saying so.
+    description: Longer replies are cut off.
   keepConversations:
     x-scope: personal
     type: integer
@@ -39,21 +38,21 @@ properties:
     default: 50
     minimum: 0
     maximum: 500
-    description: 'Older ones are deleted. 0 keeps none: conversations last until the shell restarts.'
+    description: Older ones are deleted. 0 keeps none past a restart.
   showThinking:
     x-scope: personal
     type: boolean
     title: Show thinking
     x-group: Chat display
     default: true
-    description: Ask models that reason for a summary of it, shown folded above the reply.
+    description: Show a summary of a reasoning model's thinking above the reply.
   renderMarkdown:
     x-scope: personal
     type: boolean
     title: Format replies
     x-group: Chat display
     default: true
-    description: Draw Markdown (headings, lists, tables, code blocks) instead of the raw text.
+    description: Render Markdown instead of raw text.
   sendKey:
     x-scope: personal
     type: string
@@ -68,7 +67,7 @@ properties:
     x-wide: true
     type: array
     title: Providers
-    description: 'Where chats are sent. The OpenAI kind also covers Ollama, LM Studio, llama.cpp, OpenRouter, Groq and anything else with an OpenAI-style API: set its address.'
+    description: 'Where chats are sent. The OpenAI kind covers any OpenAI-style API: set its address.'
     default:
       - id: anthropic
         name: Anthropic
@@ -125,7 +124,7 @@ properties:
           type: string
           title: Address
           default: ''
-          description: "The API's base URL, up to and including its version (e.g. http://localhost:11434/v1)."
+          description: The API's base URL, including its version (e.g. http://localhost:11434/v1).
         auth:
           type: string
           title: Key
@@ -136,31 +135,31 @@ properties:
           type: string
           title: Key variable
           default: ''
-          description: An environment variable that holds the key, if you keep it there. It wins over a stored key.
+          description: An environment variable holding the key. It wins over a stored key.
           x-showIf: {auth: key}
         models:
           type: array
           title: Models
           default: []
           items: {type: string}
-          description: Model ids to choose from, comma-separated. Fetch models on the card above fills this in.
+          description: Model ids, comma-separated.
         defaultModel:
           type: string
           title: Default model
           default: ''
-          description: Empty uses the first of the models.
+          description: Empty uses the first model.
         fallbacks:
           type: boolean
           title: Refusal fallback
           default: true
-          description: When the model declines a request, the API retries it on another model within the same reply.
+          description: Retry on another model when one declines a request.
           x-showIf: {kind: anthropic}
       required: [id]
   presets:
     x-scope: personal
     type: array
     title: Presets
-    description: 'Saved setups to start a conversation with: a system prompt, and optionally a provider, model and effort of their own.'
+    description: Saved setups to start a conversation with.
     default:
       - id: default
         name: Default
@@ -187,13 +186,13 @@ properties:
           x-control: icon
           title: Icon
           default: chat
-          description: A Material Symbols name (fonts.google.com/icons).
+          description: A Material Symbols name.
         systemPrompt: {type: string, title: System prompt, default: '', x-multiline: true}
         provider:
           type: string
           title: Provider
           default: ''
-          description: A provider ID. Empty uses the default provider.
+          description: Empty uses the default provider.
         model:
           type: string
           title: Model
@@ -211,5 +210,5 @@ properties:
             xhigh: Extra high
             max: Max
           default: default
-          description: How hard a reasoning model thinks. Models that don't reason ignore it.
+          description: How hard a reasoning model thinks.
       required: [id]

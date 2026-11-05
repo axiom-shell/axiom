@@ -5,7 +5,7 @@ type: object
 x-category: Compositor
 x-showIf: {/$supports.configModes: true, /Compositor.mode: managed}
 title: Windows and focus
-description: How focus and the cursor behave, written into your compositor's config while axiom manages it.
+description: Written into your compositor's config while axiom manages it.
 additionalProperties: false
 properties:
   followMouse:
@@ -41,7 +41,7 @@ properties:
     default: 0
     minimum: 0
     maximum: 600000
-    description: '0 never hides it.'
+    description: 0 never hides it.
     x-compositor:
       hyprland: {key: cursor.inactive_timeout, scale: 0.001}
       sway: {key: 'seat * hide_cursor {}'}
@@ -58,7 +58,6 @@ properties:
     type: boolean
     title: Never move the cursor
     default: false
-    description: The compositor won't move the cursor to a window it focuses.
     x-compositor:
       hyprland: {key: cursor.no_warps}
       sway: {key: 'mouse_warping {}', map: {'true': none, 'false': container}}

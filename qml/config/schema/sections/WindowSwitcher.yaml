@@ -4,7 +4,7 @@ x-scope: personal
 type: object
 x-category: Workspaces
 title: Window switcher
-description: Your windows, most recently used first, while the switch windows keys are held (ALT + Tab and ALT + SHIFT + Tab on the Keybinds page). Releasing the modifier focuses the chosen window; Escape keeps the current one.
+description: Your windows, most recent first, while the switch windows keys are held.
 x-intro: WindowSwitcherPlace
 additionalProperties: false
 properties:
@@ -13,7 +13,7 @@ properties:
     title: Use the compositor's switcher
     x-showIf: {/$supports.compositorSwitcher: true}
     default: true
-    description: The switch windows keys open the compositor's own window switcher instead of this one. Only while axiom writes the compositor's config (included or managed mode).
+    description: Open the compositor's own switcher instead. Only while axiom writes its config.
   scope:
     type: string
     title: Windows listed
@@ -29,7 +29,6 @@ properties:
     title: Screen edge
     default: top
     enum: [top, bottom, left, right]
-    description: Screen edge the switcher opens from, or is held off when detached.
   position:
     x-scope: look
     type: integer
@@ -38,13 +37,13 @@ properties:
     default: 50
     minimum: 0
     maximum: 100
-    description: 'Where along the edge its centre sits: 0 is the start (left/top), 100 the end. It never runs off the screen.'
+    description: 0 is the start (left/top), 100 the end.
   detached:
     x-scope: look
     type: boolean
     title: Detach from edge
     default: true
-    description: A separate box floating off the edge. Off, the switcher grows out of the screen border or a solid bar, as popouts do, and runs straight off a bare screen edge.
+    description: A separate box held off the edge, instead of growing out of it.
   distance:
     x-scope: look
     type: integer
@@ -53,7 +52,7 @@ properties:
     default: 50
     minimum: 0
     maximum: 50
-    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
@@ -70,13 +69,13 @@ properties:
       rightToLeft: Right to left
       topToBottom: Top to bottom
       bottomToTop: Bottom to top
-    description: Which way the windows run, most recently used first. They wrap to another row (or column) only once one runs out of room.
+    description: Which way the windows run, most recent first.
   previews:
     x-scope: look
     type: boolean
     title: Window previews
     default: true
-    description: Show each window's live contents; off shows app icons.
+    description: Off shows app icons.
   tileSize:
     x-scope: look
     type: integer
@@ -86,7 +85,6 @@ properties:
     default: 200
     minimum: 64
     maximum: 480
-    description: Width of each window's tile.
   showDelay:
     type: integer
     x-control: stepper
@@ -95,4 +93,4 @@ properties:
     default: 120
     minimum: 0
     maximum: 1000
-    description: How long the keys must be held before the switcher shows. A quicker tap swaps to the last window without showing it.
+    description: A quicker tap swaps to the last window without showing it.

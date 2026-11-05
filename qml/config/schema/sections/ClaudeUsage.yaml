@@ -3,7 +3,7 @@
 type: object
 x-category: Modules
 title: Claude usage
-description: The Claude Code logins every Claude usage widget reports on.
+description: The Claude Code logins the usage widgets report on.
 additionalProperties: false
 properties:
   items:
@@ -11,7 +11,7 @@ properties:
     title: Accounts
     default:
       - {id: personal, label: Personal, configDir: '~/.claude'}
-    description: "One per Claude Code login: the CLAUDE_CONFIG_DIR it uses (~/.claude when unset). Usage is read with that login's token, which is never changed."
+    description: One per Claude Code login, by its CLAUDE_CONFIG_DIR (~/.claude when unset).
     items:
       type: object
       additionalProperties: false
@@ -21,7 +21,7 @@ properties:
           type: string
           title: Label
           default: ''
-          description: Shown in the popout; its first letter tells accounts apart on the bar.
+          description: Its first letter tells accounts apart on the bar.
         configDir: {type: string, title: Config directory, x-control: folder, default: '~/.claude'}
       required: [id]
   interval:

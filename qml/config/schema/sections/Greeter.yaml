@@ -5,7 +5,7 @@ x-category: Screen & Power
 x-card: {file: GreeterStatus, title: greetd}
 x-links: ['Layouts:greeter']
 title: Login screen
-description: "Axiom as your login screen (a greetd greeter), laid out on the Layouts page like the lock screen. It runs as greetd's own user from a copy of axiom installed for it, and shows what axiom exports for it here: no root is needed to change it once it's set up."
+description: Axiom as your login screen (a greetd greeter), laid out on the Layouts page.
 additionalProperties: false
 properties:
   source:
@@ -15,11 +15,11 @@ properties:
     enum: [git, local]
     x-enumLabels: {git: Git (axiom's repository), local: Local (your clone)}
     default: git
-    description: "Where Install and Update take the login screen's code. Git fetches it as root from axiom's official repository, at its newest release, with the release's prebuilt axiom binary checked against its checksums: nothing that can write to your clone can change it (main, having no such binary, can't be installed; a fork uses Local). Local copies your clone as it is (the checked-out branch, uncommitted changes included) with your installed axiom binary (never a dev build), for working on axiom: any program running as you could change what the login screen runs before you next update it."
+    description: 'Git installs the newest official release, checked against its checksums. Local copies your clone as it is: anything running as you could change it.'
   screen:
     $ref: '#/definitions/ScreenTarget'
     title: Login monitor
-    description: The monitor the login box shows on. The others show the layout without it, or only the background.
+    description: The others show the layout without it, or only the background.
     x-properties:
       mode:
         x-scope: look
@@ -33,19 +33,19 @@ properties:
     type: boolean
     title: Remember the last user
     default: true
-    description: Start on whoever logged in last, and on their last session. Off starts with an empty user field.
+    description: Start on the last user and session. Off starts with an empty user field.
   enabled:
     type: boolean
     x-takeover: true
     x-settings: false
     default: false
-    description: Set up as the login screen (set by its card's Install and Remove, never by hand).
+    description: Set by the card's Install and Remove.
   layout:
     x-scope: look
     $ref: '#/definitions/ScreenLayout'
     x-settings: false
     title: Login screen
-    description: 'What the login screen shows, edited on the Layouts page: its modules on a grid of columns × rows units, fitted to each monitor.'
+    description: Edited on the Layouts page.
     default:
       modules:
         - id: clockCalendar

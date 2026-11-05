@@ -3,7 +3,7 @@
 type: object
 x-category: General
 title: Input
-description: Keyboard layouts, input methods, keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.
+description: Keyboard, input methods, mouse, touchpad and cursor. A part that's on overrides your compositor's config.
 additionalProperties: false
 properties:
   keyboard:
@@ -16,7 +16,7 @@ properties:
         type: boolean
         title: Set the keyboard
         default: false
-        description: Gives the compositor the layouts below, the XKB options and key repeat. Off, your compositor's own config applies, and the layouts it has are the ones that switch.
+        description: Off, your compositor's config applies.
         x-showIf: {/$supports.inputConfig: true}
       sources:
         x-scope: personal
@@ -27,7 +27,7 @@ properties:
         title: Layouts
         default:
           - {id: us, kind: xkb, layout: us, variant: '', engine: ''}
-        description: Keyboard layouts and, with an input method, its engines (Japanese, Chinese, Korean and more), switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.
+        description: Layouts and input method engines, switched between in order. The first is the one you start on.
         x-compositor:
           hyprland:
             - {key: input.kb_layout, from: xkbLayout, if: enabled}
@@ -63,7 +63,7 @@ properties:
               type: string
               title: Engine
               default: ''
-              description: The input method's engine (mozc, pinyin, hangul).
+              description: The input method's engine (e.g. pinyin, hangul).
               x-showIf: {kind: ime}
           required: [id]
       method:
@@ -78,7 +78,7 @@ properties:
             type: boolean
             title: Type other languages with an input method
             default: false
-            description: Lets axiom manage fcitx5 or ibus, to type Japanese, Chinese, Korean and more. Your input sources then hold input method engines too, which axiom gives the framework (replacing the list set in fcitx5-configtool or ibus-setup) and switches with the layouts. Off, axiom switches only the keyboard layouts and leaves any framework alone.
+            description: Let axiom manage fcitx5 or ibus, to type Japanese, Chinese, Korean and more.
           framework:
             x-scope: personal
             type: string
@@ -87,19 +87,19 @@ properties:
             x-enumLabels: {auto: Whichever is running, none: None, fcitx5: fcitx5 (recommended), ibus: ibus}
             default: fcitx5
             x-showIf: {enabled: true}
-            description: What types the input method engines in your input sources. fcitx5 is the recommended one, with every option below; ibus is supported for listing and switching engines. axiom gives it your input sources and follows which one is in use, but never starts or stops it outside managed mode.
+            description: fcitx5 supports every option below; ibus only listing and switching engines.
           autostart:
             x-scope: commands
             type: boolean
             title: Start the input method
             default: true
-            description: Starts the framework with the compositor and sets the environment apps need to use it.
+            description: Start the framework with the compositor and set the environment apps need.
             x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
           legacyApps:
             type: boolean
             title: Older and X11 apps
             default: false
-            description: "Also sets GTK_IM_MODULE and QT_IM_MODULE, for X11 apps and older toolkits. Leave it off unless an app can't type with the input method: on Wayland it can break typing in GTK apps."
+            description: Also set GTK_IM_MODULE and QT_IM_MODULE for X11 apps. Can break typing in GTK apps on Wayland.
             x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
           shareState:
             x-scope: personal
@@ -108,28 +108,28 @@ properties:
             enum: ['No', All, Program]
             x-enumLabels: {'No': 'No', All: Every window, Program: Windows of the same app}
             default: 'No'
-            description: Whether switching the input method in one window switches it in others too. fcitx5 only.
+            description: Switching in one window switches it in others too. fcitx5 only.
             x-showIf: {enabled: true, framework: [auto, fcitx5]}
           verticalCandidates:
             x-scope: personal
             type: boolean
             title: Candidates in a column
             default: false
-            description: Lists the candidate words top to bottom instead of in a row, for engines that don't choose their own layout (Pinyin, Rime, Hangul). Mozc always shows a column. fcitx5 only.
+            description: List candidates top to bottom instead of in a row. fcitx5 only.
             x-showIf: {enabled: true, framework: [auto, fcitx5]}
           candidateFont:
             x-scope: look
             type: string
             title: Candidate font
             default: ''
-            description: 'The font of the candidate window, with its size ("Noto Sans CJK JP 12"). Empty leaves the framework''s own font as it is: fcitx5 keeps the one its own settings have, ibus turns its custom font off.'
+            description: Font and size, e.g. "Noto Sans CJK JP 12". Empty keeps the framework's.
             x-showIf: {enabled: true, framework: {not: none}}
           showSwitchPopup:
             x-scope: personal
             type: boolean
             title: fcitx5's switch popup
             default: false
-            description: Shows fcitx5's own popup when the input method changes. Off, axiom's OSD shows the switch (its keyboard layout status). fcitx5 only.
+            description: Off, axiom's OSD shows the switch. fcitx5 only.
             x-showIf: {enabled: true, framework: [auto, fcitx5]}
       options:
         x-scope: personal
@@ -192,7 +192,7 @@ properties:
         type: boolean
         title: Set the mouse
         default: false
-        description: "Acceleration, speed and buttons. Off, your compositor's own config applies. On Hyprland they reach the touchpad too while its own part is off: the touchpad needs its own settings (its own acceleration) in the Touchpad part."
+        description: Off, your compositor's config applies.
       accel:
         x-greeter: true
         type: string
@@ -241,7 +241,7 @@ properties:
         type: boolean
         title: Set the touchpad
         default: false
-        description: Off, your compositor's own config applies.
+        description: Off, your compositor's config applies.
       naturalScroll:
         x-scope: personal
         x-greeter: true
@@ -336,7 +336,7 @@ properties:
         type: boolean
         title: Set the cursor
         default: false
-        description: An installed cursor theme and its size. Off, the cursor is left alone.
+        description: Off, the cursor is left alone.
       theme:
         x-scope: look
         x-greeter: true
@@ -345,7 +345,6 @@ properties:
         x-options: cursorThemes
         x-enumLabels: {'': None}
         default: ''
-        description: An installed cursor theme.
         x-showIf: {enabled: true}
       size:
         x-scope: look

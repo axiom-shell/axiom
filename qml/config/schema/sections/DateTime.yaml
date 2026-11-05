@@ -4,7 +4,7 @@ type: object
 x-category: System
 x-card: {file: DateTimeStatus, title: Clock}
 title: Date & time formats
-description: How times and dates read across the shell. Day and month names follow the language; the clock, the order of a date and the first day of the week follow these.
+description: How times and dates read across the shell.
 additionalProperties: false
 properties:
   hourFormat:
@@ -17,7 +17,7 @@ properties:
       '12': '12-hour (1:30 PM)'
       '24': '24-hour (13:30)'
     default: auto
-    description: Every clock and time that doesn't set its own. Follow the region uses the region's (or the language's) usual clock.
+    description: Every clock that doesn't set its own.
   dateStyle:
     x-scope: personal
     type: string
@@ -31,7 +31,7 @@ properties:
       ymd: Year first (2026 Nov 5)
       iso: ISO 8601 (2026-11-05)
     default: region
-    description: The order dates read in. Follow the region is the language's own order until a region is set.
+    description: The order dates read in.
   firstDayOfWeek:
     x-scope: personal
     type: string
@@ -39,7 +39,6 @@ properties:
     enum: [region, monday, sunday, saturday]
     x-enumLabels: {region: Follow the region, monday: Monday, sunday: Sunday, saturday: Saturday}
     default: region
-    description: Where calendar weeks start.
   region:
     x-scope: personal
     type: string
@@ -47,4 +46,4 @@ properties:
     default: ''
     x-options: regions
     x-emptyLabel: Same as the language
-    description: The formats of another country than the language's, such as English text with German dates and a 24-hour clock.
+    description: Use another country's formats than the language's.

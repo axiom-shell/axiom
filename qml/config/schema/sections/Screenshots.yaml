@@ -3,7 +3,7 @@
 type: object
 x-category: General
 title: Screenshots & recordings
-description: "Where screenshots and screen recordings are saved, whichever way they're taken: the screenshot and screenRecord binds, the launcher, the Screenshot and Screen recording cards."
+description: Where screenshots and recordings are saved.
 additionalProperties: false
 properties:
   folder:
@@ -11,16 +11,16 @@ properties:
     title: Screenshot folder
     x-control: folder
     default: ''
-    description: Where screenshots are saved (~ is your home). Empty uses Pictures/Screenshots.
+    description: ~ is your home. Empty uses Pictures/Screenshots.
   recordingFolder:
     type: string
     title: Recording folder
     x-control: folder
     default: ''
-    description: Where recordings are saved, and listed from by the Screen recording card. Empty saves them with the screenshots.
+    description: Empty saves them with the screenshots.
   notify:
     type: boolean
     title: Screenshot notifications
     default: true
-    description: "Send a notification when a screenshot is taken (a click opens it; Edit in … opens it in the annotator). An OSD picking Screenshots under its Detail cards shows it as a card instead (a click opens it). Off, and with no such OSD, nothing is shown."
+    description: Notify when a screenshot is taken.
     x-link: {setting: OSD}

@@ -11,5 +11,5 @@ properties:
   items:
     type: array
     default: []
-    description: The custom widgets, each a script drawn as a bar widget, its popout and a module.
+    description: Each a script drawn as a bar widget, a popout and a module.
     items: {$ref: '#/definitions/CustomWidget'}

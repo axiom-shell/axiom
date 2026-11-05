@@ -5,7 +5,7 @@ type: object
 x-category: General
 x-card: {file: DefaultApps, title: Default apps}
 title: Other apps
-description: "Apps axiom's own menus open. A custom command for a default app is set in its picker above (Custom command…)."
+description: Apps axiom's own menus open.
 additionalProperties: false
 properties:
   commands:
@@ -13,65 +13,65 @@ properties:
     x-settings: false
     type: object
     title: Custom commands
-    description: "Commands axiom starts in place of a default app (Default apps › Custom command…), by role: for the keybinds, `axiom open` and everything axiom opens. Empty uses the default app. Other apps still open the default."
+    description: Commands axiom starts in place of a default app. Empty uses the default app.
     additionalProperties: false
     properties:
       browser:
         type: string
         title: Web browser
         default: ''
-        description: "Web browser: a command in place of the default app, given the links to open."
+        description: Given the links to open.
       mail:
         type: string
         title: Email
         default: ''
-        description: "Email: a command in place of the default app, given the mailto: links."
+        description: 'Given the mailto: links.'
       fileManager:
         type: string
         title: Files
         default: ''
-        description: "Files: a command in place of the default app, given the folder to open."
+        description: Given the folder to open.
       terminal:
         type: string
         title: Terminal
         default: ''
-        description: "Terminal: a command in place of the default app, started as: command -e program for terminal apps and Shift+Enter commands."
+        description: 'Started as: command -e program.'
       textEditor:
         type: string
         title: Text editor
         default: ''
-        description: "Text editor: a command in place of the default app, given the files."
+        description: Given the files.
       images:
         type: string
         title: Images
         default: ''
-        description: "Images: a command in place of the default app, given the files."
+        description: Given the files.
       video:
         type: string
         title: Video
         default: ''
-        description: "Video: a command in place of the default app, given the files."
+        description: Given the files.
       music:
         type: string
         title: Music
         default: ''
-        description: "Music: a command in place of the default app, given the files."
+        description: Given the files.
       pdf:
         type: string
         title: Documents (PDF)
         default: ''
-        description: "Documents (PDF): a command in place of the default app, given the files."
+        description: Given the files.
       archives:
         type: string
         title: Archives
         default: ''
-        description: "Archives: a command in place of the default app, given the files."
+        description: Given the files.
   networkEditor:
     x-scope: commands
     type: string
     title: Network editor
     default: nm-connection-editor
-    description: "Command the Wi-Fi menu's Settings button and the VPN module's Edit connections button run, to add or change network connections and VPNs. Empty hides both."
+    description: Opened to edit network connections and VPNs. Empty hides its buttons.
   pinned:
     x-scope: personal
     type: array
@@ -79,4 +79,4 @@ properties:
     x-settings: false
     default: []
     items: {type: string}
-    description: 'Desktop entry ids, in order: the apps every dock shows first, unless it has its own (Dock → pinnedOwn).'
+    description: 'Desktop entry ids, in order: the apps every dock shows first.'

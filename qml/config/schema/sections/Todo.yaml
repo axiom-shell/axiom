@@ -4,11 +4,11 @@ type: object
 x-category: Modules
 x-scope: personal
 title: Todo list
-description: The one todo list every todo widget and module shows. The items themselves are kept in your data folder, not in the config.
+description: The todo list every todo widget and module shows.
 additionalProperties: false
 properties:
   showCompleted:
     type: boolean
     title: Show completed items
     default: true
-    description: Under the open ones, the last finished first, until you clear them.
+    description: Under the open ones, until you clear them.
