@@ -32,7 +32,9 @@ QtObject {
   id: root
 
   readonly property string _desktopEntry: "axiom-screenshot"
-  property string _lastPath: ""
+  // The newest capture's path by its notification's key ("screenshot",
+  // "recording"): each key holds one notification, so a click opens its own
+  property var _paths: ({})
 
   // The picker is open (or an immediate capture is running)
   property bool picking: false
@@ -77,7 +79,6 @@ QtObject {
   readonly property string recordingFolder: Screenshots.recordingFolder || root.folder
 
   property string _picturesDir: Quickshell.env("HOME") + "/Pictures"
-  property string _directory: ""
   readonly property string _scratchDir: Paths.runtimePath.replace(/\/$/, "")
 
   readonly property var _state: StateManager.createStateHandler("screenshot")
@@ -125,15 +126,17 @@ QtObject {
   property var _target: null
   readonly property bool forCaller: root._target !== null
 
-  function _start(kind) {
+  // audio: the sound a recording started here takes (_audioFor; none by
+  // default), so no picker keeps an earlier one's
+  function _start(kind, audio) {
     if (!["region", "window", "screen", "record", "recordScreen"].includes(kind)) {
       console.warn(`[ScreenshotManager] Unknown screenshot kind "${kind}" (region, window, screen or record)`);
       return;
     }
     if (kind === "window" && !root.kinds.includes("window"))
       kind = "region";
-    root._directory = kind.startsWith("record") ? root.recordingFolder : root.folder;
-    CommandManager.runDetached(["mkdir", "-p", root._directory, root._scratchDir]);
+    root._recordAudio = root._audioFor(audio);
+    CommandManager.runDetached(["mkdir", "-p", root.folder, root.recordingFolder, root._scratchDir]);
     root.annotate = false;
     // The screen is taken as it is (an open overlay included), but the
     // launcher closes itself after running a command: let it go first
@@ -186,12 +189,12 @@ QtObject {
       return;
     }
     const name = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".png"; // allowed: a file name, kept out of the language
-    const path = (root.copyOnly ? root._scratchDir + "/screenshot-" : root._directory + "/") + name;
+    const path = (root.copyOnly ? root._scratchDir + "/screenshot-" : root.folder + "/") + name;
     if (!result || !result.saveToFile(path)) {
-      root.fail(I18n.tr("Couldn't save the picture in {0}.", root.copyOnly ? root._scratchDir : root._directory));
+      root.fail(I18n.tr("Couldn't save the picture in {0}.", root.copyOnly ? root._scratchDir : root.folder));
       return;
     }
-    root._lastPath = path;
+    root._paths.screenshot = path;
     ClipboardManager.copyFile(path, "image/png");
     if (root.annotate && root.annotator !== "") {
       root.annotate = false;
@@ -288,8 +291,7 @@ QtObject {
     if (root.recording || root.busy || !root.hasRecorder)
       return;
     root._target = null;
-    root._recordAudio = root._audioFor(options?.audio);
-    root._start(options?.mode === "screen" ? "recordScreen" : "record");
+    root._start(options?.mode === "screen" ? "recordScreen" : "record", options?.audio);
   }
 
   // A sound choice that can be recorded: anything else, or the system's
@@ -325,7 +327,7 @@ QtObject {
     root.picking = false;
     root.request = null;
     root._watchdog.stop();
-    const path = root._directory + "/Recording_" + Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".mp4"; // allowed: a file name, kept out of the language
+    const path = root.recordingFolder + "/Recording_" + Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".mp4"; // allowed: a file name, kept out of the language
     const target = screenName ? ["-o", screenName] : ["-g", `${Math.round(area.x)},${Math.round(area.y)} ${Math.round(area.width)}x${Math.round(area.height)}`];
     root._recordPath = path;
     const args = target.concat(["-f", path]);
@@ -336,7 +338,6 @@ QtObject {
       command = ["sh", "-c", 'exec wf-recorder --audio="$(pactl get-default-sink).monitor" "$@"', "sh"].concat(args);
     else
       command = ["wf-recorder"].concat(root._recordAudio === "mic" ? ["--audio"] : [], args);
-    root._recordAudio = "none";
     root._recorderRunning = true;
     CommandManager.run(command, (code, stdout, stderr, error) => {
       root._recorderRunning = false;
@@ -456,7 +457,7 @@ QtObject {
         NotificationManager.sendNotification("axiom", I18n.tr("Recording failed"), reason);
         return;
       }
-      root._lastPath = path;
+      root._paths.recording = path;
       // If a card lists them
       if (root._listed)
         root.refreshRecordings();
@@ -531,10 +532,7 @@ QtObject {
         root._picturesDir = lines[0];
       root.recording = root.recording || lines.includes("rec");
     }, null, true);
-    NotificationManager.registerHandler(_desktopEntry, () => {
-      if (root._lastPath !== "")
-        DefaultAppsManager.open(root._lastPath);
-    });
+    NotificationManager.registerHandler(_desktopEntry, entry => root.open(root._paths[entry?.key]));
   }
 
   property IpcTarget _ipc: IpcTarget {

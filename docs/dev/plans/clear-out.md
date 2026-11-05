@@ -538,8 +538,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-11** (4, done): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
 - **features-12** (5, done): The IPC `apply` reads the cached catalog first; with no cache yet it warns and the catalog arrives for the next call.
 - **features-13** (4):
-  - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](../issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
-  - [Clicking an older capture's notification opens the newest capture](../issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
   - The screenshot's Edit notification rebuilds sendNotification's actions (done in platform-03, with notify-send's move into Go)
   - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](../issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
 - **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
