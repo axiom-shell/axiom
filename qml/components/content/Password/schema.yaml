@@ -5,6 +5,7 @@ group: Session
 defaultSize: [6, 1]
 required: true
 hosts: {only: [lockscreen]}
+lockActions: [unlock]
 settings:
   placeholder:
     type: string

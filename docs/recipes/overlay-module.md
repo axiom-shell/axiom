@@ -75,7 +75,7 @@ settings:
 ## Gotchas
 - Modules exist only while their page is shown: acquire in `Component.onCompleted`, release in `onDestruction`, keep lasting state in a service.
 - Repeater models and `acquire` requests come from config or counts, never live values (a model rebuilt per sample once pushed qs past 25 GB).
-- `lockscreen` in `hosts` only for a module that launches, dispatches and writes nothing and shows nothing private. Greeter modules are inert unless `host.kind === "greeter" && !host.preview && Paths.greeter`.
+- `lockscreen` in `hosts` only for a module that shows nothing private; what it does there is its `lockActions` (`x-lockActions`, [Schema annotations](../dev/core/schema-annotations.md)), and `check_structure` fails any other service call in it or its parts but a read. Greeter modules are inert unless `host.kind === "greeter" && !host.preview && Paths.greeter`.
 - No inline `component` using another inline component of the same file (URL-loaded: "is not a type").
 - Shared parts are in `qml/components/content/parts/` (`ModuleHeader`, `CompactFigure`, `StatFigure`, `Sparkline`, `EmptyState`, `TileGrid`, …): check them and [core/shared-ui-pieces](../dev/core/shared-ui-pieces.md) before drawing your own.
 - A module that wants more rows (`properties.grow`) or a detail view (`expand()`): [overlay/grow-expand](../dev/overlay/grow-expand.md).

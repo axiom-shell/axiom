@@ -420,6 +420,8 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "qml/shell/Motion.qml:6: a duration in ms"),
         ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
         ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens"), "qml/shell/Screens.qml:6: Quickshell.screens"),
+        ("qml/components/content/ColorSwatch/ColorSwatch.qml", qml('Component.onCompleted: CommandManager.run(["true"])'),
+         "qml/components/content/ColorSwatch/ColorSwatch.qml:6: CommandManager.run on the lock screen"),
         ("qml/components/dupa/Dup.qml", qml(), None),
         ("qml/components/dupb/Dup.qml", qml(), None),
         ("qml/shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
@@ -432,6 +434,7 @@ class CheckStructure(unittest.TestCase):
         "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
         "OverlayModule Todo: x-hosts lists overlay but not desktop",
         "OverlayModule Calculator: has a text field but no x-keyboard",
+        "OverlayModule Power: x-lockActions 'ghost' isn't one of",
         "schema x-card 'Ghost' has no qml/components/views/Settings/GhostCard.qml",
         "schema x-intro 'GhostIntro' has no qml/components/views/Settings/GhostIntro.qml",
         "tool page Keybinds isn't in the Overlay.items default",
@@ -449,6 +452,7 @@ class CheckStructure(unittest.TestCase):
                 defs["BarWidget"]["oneOf"].append({"properties": {"type": {"const": "Ghost"}}, "x-libraryGroup": "Nope"})
                 defs["TodoOverlayModule"]["x-hosts"] = ["overlay"]
                 del defs["CalculatorOverlayModule"]["x-keyboard"]
+                defs["PowerOverlayModule"]["x-lockActions"] = ["ghost"]
                 s["x-card"], s["x-intro"] = {"file": "Ghost"}, "GhostIntro"
                 s["x-showIf"] = {"/$supports.ghostCapability": True}
                 items = s["properties"]["Overlay"]["properties"]["items"]

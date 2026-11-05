@@ -4,3 +4,4 @@ icon: keyboard
 group: Session
 defaultSize: [2, 1]
 hosts: [lockscreen, greeter]
+lockActions: [layout]

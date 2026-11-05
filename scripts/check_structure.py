@@ -24,6 +24,9 @@ running anything:
   - every overlay module goes on the desktop too (`x-hosts`), and one that
     takes typing (a text field in it or its parts) says so (`x-keyboard`,
     false when it deliberately stays read-only there)
+  - a module on the lock screen (or a part it uses) calls only reads and
+    the service methods its `x-lockActions` cover, but a call marked
+    `// lock-inert: <reason>`
   - only the files in scripts/quickshell-io-allowlist.json use Process,
     FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
@@ -261,8 +264,9 @@ def main():
     # "desktop" while listing "overlay" is how new modules once missed it.
     # One with a text field (in its file or a content part it uses) must
     # say whether the desktop hands it the keyboard: `x-keyboard`
-    content_parts = {f.stem: f.read_text() for f in (ROOT / POPOUT_DIR / "parts").rglob("*.qml")}
-    content_parts.update({f.stem: f.read_text() for f in (ROOT / POPOUT_DIR).glob("*/*.qml") if f.stem != f.parent.name})
+    part_files = {f.stem: f for f in (ROOT / POPOUT_DIR / "parts").rglob("*.qml")}
+    part_files.update({f.stem: f for f in (ROOT / POPOUT_DIR).glob("*/*.qml") if f.stem != f.parent.name})
+    content_parts = {stem: f.read_text() for stem, f in part_files.items()}
     typing = re.compile(r"\b(?:StyledTextEntry|StyledTextArea|TextInput|TextEdit|TextArea|TextField)\s*\{|wantsKeyboardFocus:\s*true")
 
     def with_parts(text, seen):
@@ -281,6 +285,53 @@ def main():
         source = ROOT / POPOUT_DIR / const / f"{const}.qml"
         if "desktop" in hosts and "x-keyboard" not in target and source.exists() and typing.search(with_parts(source.read_text(), set())):
             errors.append(f"OverlayModule {const}: has a text field but no x-keyboard (true so the desktop hands it the keyboard, false to keep it read-only there)")
+
+    # What a lock screen module may do (docs/dev/features/lockscreen.md ›
+    # Which modules may go here): every `XManager.method(` call in a type
+    # hosted there, or in a part it uses, is a read, one of the methods
+    # its `x-lockActions` cover, or marked `// lock-inert: <reason>` on its
+    # line or the one above (a call that gates itself off there)
+    lock_actions = {
+        "session": {"SessionManager.sessionAction"},
+        "media": {f"MediaManager.{m}" for m in ("togglePlayPause", "next", "previous", "setPositionByRatio", "selectPlayer")},
+        "volume": {f"AudioManager.{m}" for m in ("toggleMute", "toggleSourceMute", "stepNodeVolume")} | {"ShellManager.onScreen"},
+        "layout": {"InputSourceManager.next", "InputSourceManager.prev"},
+        "unlock": {"AuthManager.authenticate", "AuthManager.clearMessage", "SurfaceManager.reportRequiredField"},
+    }
+    lock_reads = {"acquire", "release", "wants", "formatTime", "timeText", "dayLabel", "getBatteryIcon", "offsetOf", "dotsFor", "eventsOn",
+                  "ensureMonth", "avatarOf", "currentFor", "iconFor", "nameFor", "sourcesFor", "conditionFor", "sessionActionInfo", "refreshIp"}
+    service_call = re.compile(r"\b([A-Z]\w*Manager)\.(\w+)\s*\(")
+
+    def lock_files(path, seen):
+        files = [path]
+        text = path.read_text()
+        # Parts loaded by URL (CustomElement's elements/<Kind>/…) count too
+        by_url = {f for d in re.findall(r'Qt\.resolvedUrl\("(\w+)/', text) for f in (path.parent / d).rglob("*.qml")}
+        for part, f in part_files.items():
+            if part not in seen and (f in by_url or re.search(rf"\b{part}\s*\{{", text)):
+                seen.add(part)
+                files += lock_files(f, seen)
+        return files
+    for option in schema["definitions"]["OverlayModule"]["oneOf"]:
+        target = schema["definitions"].get(option.get("$ref", "").split("/")[-1], option)
+        const = target["properties"]["type"]["const"]
+        source = ROOT / POPOUT_DIR / const / f"{const}.qml"
+        if "lockscreen" not in target.get("x-hosts", []) or not source.exists():
+            continue
+        covered = set()
+        for action in target.get("x-lockActions", []):
+            if action not in lock_actions:
+                errors.append(f"OverlayModule {const}: x-lockActions {action!r} isn't one of {', '.join(lock_actions)}")
+            covered |= lock_actions.get(action, set())
+        for f in lock_files(source, set()):
+            lines = f.read_text().split("\n")
+            for n, line in enumerate(lines, 1):
+                if "// lock-inert:" in line or (n > 1 and "// lock-inert:" in lines[n - 2]):
+                    continue
+                for call in service_call.finditer(line.split("//", 1)[0]):
+                    name = f"{call.group(1)}.{call.group(2)}"
+                    if call.group(2) not in lock_reads and name not in covered:
+                        errors.append(f"{f.relative_to(ROOT)}:{n}: {name} on the lock screen (OverlayModule {const}): not a read nor covered by its x-lockActions (or mark a call that gates itself `// lock-inert: <reason>`)")
 
     # Hand-built settings parts: x-card's `file` loads
     # views/Settings/<file>Card.qml, x-intro and x-row views/Settings/
