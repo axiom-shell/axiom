@@ -91,14 +91,29 @@ QtObject {
     return Math.max(lo, Math.min((length - c) / 2 + skew, hi));
   }
 
-  // The center section with `lockCenter`: at its full size (`pref`, at
-  // most the room between the margins), dead center but for its dividers
-  // (`hang`), kept inside the margins. -> { start, length }
-  function _lockedCenter(pref, length, m0, m1, hang) {
-    const c = Math.min(pref, Math.max(0, length - m0 - m1));
+  // A bar with `lockCenter` as layoutSections, sectionRooms and
+  // overflowHidden all see it: what's centered and the room beside it.
+  // The center (`center`: its preferred length) at its full size (at most
+  // the room between the margins), dead center but for its dividers
+  // (`hang`), kept inside the margins; with spacers (`parts`,
+  // centerParts), its pinned group is what's centered, its outer groups
+  // (`lead`, `tail`) at full size on the halves beside it. `g` is the
+  // gaps as _gaps gives them. -> { split, start, length (what's
+  // centered), lead, tail, halves: [left, right] (from the bar's end to
+  // what's centered), gaps: [left, right] (a side's gap to the section
+  // beside it) }
+  function _lockedFrame(center, length, m0, m1, g, hang, parts) {
+    const split = center > 0 && !!parts && parts.leadFills + parts.tailFills > 0;
+    const c = Math.min(split ? parts.core : center, Math.max(0, length - m0 - m1));
+    const start = root._centerStart(c, length, m0, length - m1 - c, split ? null : hang);
     return {
-      "start": root._centerStart(c, length, m0, length - m1 - c, hang),
-      "length": c
+      "split": split,
+      "start": start,
+      "length": c,
+      "lead": split ? parts.lead : 0,
+      "tail": split ? parts.tail : 0,
+      "halves": [start - m0, length - m1 - start - c],
+      "gaps": center > 0 ? [g.lc, g.cr] : [g.lr, g.lr]
     };
   }
 
@@ -288,7 +303,6 @@ QtObject {
       return m.map(v => sumMin > 0 ? v * room / sumMin : 0);
     };
 
-    const split = pref[1] > 0 && parts && parts.leadFills + parts.tailFills > 0;
     const fitsWhole = sum(pref) + gapsFor([0, 2]) <= length - m0 - m1;
     // Unlocked, with spacers anywhere: nothing is centered. Every spacer
     // on the bar takes an equal share of its free room and the sections
@@ -316,19 +330,19 @@ QtObject {
         }
       ];
     }
+    const frame = lockCenter ? root._lockedFrame(pref[1], length, m0, m1, g, centerHang, parts) : null;
     // Locked, a center with spacers (centerParts): its pinned part is
     // what's centered, and each half of the bar, from its end to that
     // part, is shared out between the spacers in it, the side's and the
     // center's alike, equally.
-    if (split && lockCenter) {
-      const c = Math.min(parts.core, Math.max(0, length - m0 - m1));
-      const coreStart = root._centerStart(c, length, m0, length - m1 - c, null);
-      // One half: the side (`i`) and the center's part beside it in
-      // `room`, its spacers (`sideFills`, `partFills`) sharing what's
+    if (frame?.split) {
+      // One half (`k`: 0 left, 1 right): the side and the center's part
+      // beside it, its spacers (`sideFills`, `partFills`) sharing what's
       // free. -> { side: the side's extent, part: the center spacers'
       // share }
-      const half = (i, sideFills, part, partFills, room) => {
-        const gapThere = pref[i] > 0 ? sideGap(i) : 0;
+      const half = (k, part, partFills) => {
+        const i = 2 * k, sideFills = fills?.[i] ?? 0, room = frame.halves[k];
+        const gapThere = pref[i] > 0 ? frame.gaps[k] : 0;
         const free = room - pref[i] - gapThere - part;
         if (free < 0)
           return {
@@ -341,9 +355,9 @@ QtObject {
           "part": partFills * each
         };
       };
-      const left = half(0, fills?.[0] ?? 0, parts.lead, parts.leadFills, coreStart - m0);
-      const right = half(2, fills?.[2] ?? 0, parts.tail, parts.tailFills, length - m1 - coreStart - c);
-      const centerOffset = coreStart - parts.lead - left.part;
+      const left = half(0, parts.lead, parts.leadFills);
+      const right = half(1, parts.tail, parts.tailFills);
+      const centerOffset = frame.start - parts.lead - left.part;
       return [
         {
           "offset": m0,
@@ -351,7 +365,7 @@ QtObject {
         },
         {
           "offset": centerOffset,
-          "extent": parts.lead + left.part + c + right.part + parts.tail,
+          "extent": parts.lead + left.part + frame.length + right.part + parts.tail,
           "leadShare": left.part,
           "tailShare": right.part
         },
@@ -363,14 +377,13 @@ QtObject {
     }
 
     let l, c, r, centerStart;
-    if (lockCenter) {
-      const center = root._lockedCenter(pref[1], length, m0, m1, centerHang);
-      c = center.length;
-      centerStart = center.start;
+    if (frame) {
+      c = frame.length;
+      centerStart = frame.start;
       // Each side alone on its half, a gap short of the center
-      const side = i => pref[i] > 0 ? sideGap(i) : 0;
-      l = fit([pref[0]], [min[0]], centerStart - m0 - side(0))[0];
-      r = fit([pref[2]], [min[2]], length - m1 - centerStart - c - side(2))[0];
+      const side = k => pref[2 * k] > 0 ? frame.gaps[k] : 0;
+      l = fit([pref[0]], [min[0]], frame.halves[0] - side(0))[0];
+      r = fit([pref[2]], [min[2]], frame.halves[1] - side(1))[0];
     } else {
       [l, c, r] = fit(pref, min, length - m0 - m1 - gapsFor([0, 2]));
       const lo = m0 + (l > 0 ? l + sideGap(0) : 0);
@@ -421,10 +434,8 @@ QtObject {
     const g = root._gaps(gap);
     const room = Math.max(0, length - m0 - m1);
     if (lockCenter) {
-      const split = pref[1] > 0 && parts && parts.leadFills + parts.tailFills > 0;
-      const center = root._lockedCenter(split ? parts.core : pref[1], length, m0, m1, split ? null : centerHang);
-      const lead = split ? parts.lead : 0, tail = split ? parts.tail : 0;
-      return [Math.max(0, center.start - m0 - g.lc - lead), room, Math.max(0, length - m1 - center.start - center.length - g.cr - tail)];
+      const frame = root._lockedFrame(pref[1], length, m0, m1, g, centerHang, parts);
+      return [Math.max(0, frame.halves[0] - frame.gaps[0] - frame.lead), room, Math.max(0, frame.halves[1] - frame.gaps[1] - frame.tail)];
     }
     const others = i => pref.reduce((sum, p, j) => sum + (j === i ? 0 : p), 0);
     const sideGap = s => pref[1] > 0 ? (s === 0 ? g.lc : g.cr) : g.lr;
@@ -475,18 +486,17 @@ QtObject {
       // groups take room on the halves at full size, as the center is
       // never squeezed (layoutSections)
       const parts = root.centerParts(measures[1], shown, spacing, "pref");
-      const split = parts.leadFills + parts.tailFills > 0;
-      const hang = split ? null : root.edgeHang(measures[1].map((m, i) => shown[i] ? m.pref : 0), measures[1].map(m => !!m.divides && !m.fill), spacing);
-      const center = root._lockedCenter(split ? parts.core : spanOf(1, "pref"), length, m0, m1, hang);
-      const start = center.start, c = center.length;
-      const need = s => {
-        const len = minSpan(s);
-        return (len > 0 ? len + (s === 0 ? g.lc : g.cr) : 0) + (split ? (s === 0 ? parts.lead : parts.tail) : 0);
+      const hang = root.edgeHang(measures[1].map((m, i) => shown[i] ? m.pref : 0), measures[1].map(m => !!m.divides && !m.fill), spacing);
+      const frame = root._lockedFrame(spanOf(1, "pref"), length, m0, m1, g, hang, parts);
+      // A side at its minimum and the center's outer group beside it
+      const need = k => {
+        const len = minSpan(2 * k);
+        return (len > 0 ? len + frame.gaps[k] : 0) + (k === 0 ? frame.lead : frame.tail);
       };
-      if (need(0) > start - m0 + 0.5)
-        return split ? [0, 1] : [0];
-      if (need(2) > length - m1 - start - c + 0.5)
-        return split ? [2, 1] : [2];
+      if (need(0) > frame.halves[0] + 0.5)
+        return frame.split ? [0, 1] : [0];
+      if (need(1) > frame.halves[1] + 0.5)
+        return frame.split ? [2, 1] : [2];
       return null;
     };
 

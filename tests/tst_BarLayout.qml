@@ -576,6 +576,18 @@ TestCase {
     compare(BarLayout.overflowHidden(joined, 1000, 0, BarLayout.boundaryGaps(BarLayout.sectionJoins(joined, false), 10, 0), 0, false), [[], [], []]);
   }
 
+  // Locked with no center, a side's gap is the left|right one, as the
+  // layout takes it: joined (gap 0), 495 and 500 fit their halves
+  function test_locked_no_center_joined_gap() {
+    const measures = [[spacer(0), m(495)], [], [m(500)]];
+    const gaps = BarLayout.boundaryGaps(BarLayout.sectionJoins(measures, true), 10, 0);
+    compare(gaps.lr, 0);
+    const s = BarLayout.layoutSections([495, 0, 500], [495, 0, 500], 1000, 0, gaps, true, undefined, [1, 0, 0]);
+    compare([s[0].extent, s[2].extent], [500, 500]);
+    compare(BarLayout.overflowHidden(measures, 1000, 0, gaps, 0, true), [[], [], []]);
+    compare(BarLayout.sectionRooms([495, 0, 500], 1000, 0, gaps, true), [500, 1000, 500]);
+  }
+
   // A locked center's outer group keeps its full size on its half (the
   // center is never squeezed), so the side beside it must fit at its
   // minimum in what's left, else a widget is hidden

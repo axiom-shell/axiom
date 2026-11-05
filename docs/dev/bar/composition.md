@@ -27,6 +27,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - the three sections (left, center, right) placed along the bar (`layoutSections`): the ends hug the ends, the center stays centered (with `lockCenter` dead center, each side fitting its own half)
   - the widgets hidden when the bar overflows (`overflowHidden`): lowest priority first, ties right, then left, the center last
   - elastic widgets squeezed within a section (`allocate`)
+  - With `lockCenter`, `layoutSections`, `overflowHidden` and the bar editor's `sectionRooms` read what's centered and the room on each half from one place (`_lockedFrame`), so what's hidden and what the editor shows always match the layout.
 - **Spacers** (the Spacer widget, `fill` in its measure) take the free room:
   - **With `lockCenter` off** and a spacer anywhere on the bar, nothing is centered: every spacer takes an equal share of the bar's free room and the sections pack end to end, so every boundary between two widgets joins. Crowded (the preferred sizes don't fit), the spacers keep their `minGap` and the sections are laid out as below. With no spacers the center is centered as ever, sliding towards the roomier side when crowded.
   - **With `lockCenter` on**, the sections are laid out with every spacer at its `minGap` first, so a spacer never moves the center.
