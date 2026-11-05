@@ -10,4 +10,4 @@ settings:
     default: '*'
     x-options: screens
     x-allScreens: true
-    description: Empty uses the primary monitor. All monitors sets every monitor at once, with a slider for each below where there's room.
+    description: Empty uses the primary monitor.

@@ -16,7 +16,6 @@ settings:
     default: 5
     minimum: 1
     maximum: 25
-    description: Volume change per scroll notch.
   maxVolume:
     type: integer
     title: Maximum volume
@@ -24,11 +23,10 @@ settings:
     default: 100
     minimum: 100
     maximum: 150
-    description: Highest volume scrolling and the mixer sliders allow.
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: pavucontrol
-    description: Shell command run on middle click. Empty does nothing.
+    description: Empty does nothing.
   mutedColor: {$ref: '#/definitions/WidgetColor', title: Muted color, x-autoColor: 'off'}

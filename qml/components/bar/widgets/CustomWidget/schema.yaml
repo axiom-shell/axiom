@@ -9,4 +9,4 @@ settings:
     title: Custom widget
     default: ''
     x-options: customWidgets
-    description: Which custom widget it shows. Its look is set on the Custom widgets page.
+    description: Set its look on the Custom widgets page.

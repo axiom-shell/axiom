@@ -2,6 +2,6 @@ label: Todo
 keywords: ['Todo list']
 icon: checklist
 group: Tools
-popout: {variant: own, enabled: {description: 'The list, to add to and tick off, when hovered.'}}
+popout: {variant: own, enabled: {description: 'The list on hover, to add to and tick off.'}}
 colors: standard
 settings: {hideWhenEmpty: {type: boolean, title: Hide when nothing is open, default: false}}

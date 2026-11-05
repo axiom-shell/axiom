@@ -12,12 +12,11 @@ settings:
     minimum: 0
     maximum: 16
     x-unit: rows
-    description: 'Rows it may take while its list needs them: free rows towards the edge first (above it, or below it in a bottom menu), then away from it, pushing the modules there along (not on the lock or login screen). 0 keeps it at its size.'
+    description: Extra rows it takes while its list needs them. 0 keeps its size.
   days:
     type: integer
     title: Days ahead
     default: 7
     minimum: 1
     maximum: 60
-    description: Events from today through this many days.
   maxEvents: {type: integer, title: Most events, default: 20, minimum: 1, maximum: 100}

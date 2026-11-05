@@ -13,7 +13,7 @@ settings:
     items: {type: string}
     title: Ignored apps
     default: [cava]
-    description: App names that never trigger an indicator, comma-separated.
+    description: Comma-separated.
   activeColor: {$ref: '#/definitions/WidgetColor', x-autoColor: critical}
   foregroundColor:
     type: string

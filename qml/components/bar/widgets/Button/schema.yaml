@@ -6,10 +6,10 @@ popout:
   variant: menu
   enabled:
     title: Hover popout
-    description: "Open an edge menu while the button is hovered, like other widgets' popouts: it closes when the pointer leaves, and a neighbouring popout replaces it. Separate from the click action."
+    description: Open an edge menu while the button is hovered, as other widgets' popouts do.
   menu:
     title: Popout menu
-    description: The edge menu shown on hover. It can differ from the one a click opens.
+    description: Can differ from the one a click opens.
     x-emptyLabel: null
 colors: standard
 settings:
@@ -18,18 +18,17 @@ settings:
     x-control: icon
     title: Icon
     default: apps
-    description: 'Icon shown on the button: a Material Symbols name (fonts.google.com/icons), or text.'
+    description: A Material Symbols name, or text.
   label:
     type: string
     title: Label
     default: ''
-    description: Text next to the icon. Replaced by the label command's output when that is set.
+    description: Replaced by the label command's output when set.
   tooltip: {type: string, title: Tooltip, default: '', description: Shown when hovering the button.}
   action:
     type: string
     title: Click action
     default: powerMenu
-    description: What a left click does.
     enum:
       - powerMenu
       - appLauncher
@@ -54,14 +53,13 @@ settings:
     type: string
     title: Overlay page
     default: ''
-    description: The page the button opens the overlay on.
     x-options: overlayPages
     x-showIf: {action: overlayPage}
   menu:
     type: string
     title: Edge menu
     default: ''
-    description: "The edge menu a click opens and closes, as a full menu: hovering another widget's popout doesn't replace it."
+    description: The edge menu a click opens and closes.
     x-options: edgeMenus
     x-showIf: {action: edgeMenu}
   command:
@@ -69,25 +67,24 @@ settings:
     type: string
     title: Command
     default: ''
-    description: Shell command run on left click.
     x-showIf: {action: command}
   rightCommand:
     x-scope: commands
     type: string
     title: Right-click command
     default: ''
-    description: Shell command run on right click. Empty does nothing.
+    description: Empty does nothing.
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: ''
-    description: Shell command run on middle click. Empty does nothing.
+    description: Empty does nothing.
   hoverActivate:
     type: boolean
     title: Activate on hover
     default: false
-    description: Run the click action after hovering for the popout open delay. Doesn't close a launcher, overlay or power menu that is already open. For an edge menu on hover, use Hover popout.
+    description: Run the click action after hovering for the popout delay.
     x-showIf:
       action: [powerMenu, appLauncher, overlay, overlayPage, workspaceOverlay, command]
   labelCommand:
@@ -95,7 +92,7 @@ settings:
     type: string
     title: Label command
     default: ''
-    description: Shell command whose first line of output is shown as the label, re-run on an interval.
+    description: Its first line of output is shown as the label.
   labelInterval:
     type: integer
     title: Label interval
@@ -103,5 +100,4 @@ settings:
     default: 5000
     minimum: 500
     maximum: 3600000
-    description: How often the label command runs.
     x-showIf: {labelCommand: {not: ''}}

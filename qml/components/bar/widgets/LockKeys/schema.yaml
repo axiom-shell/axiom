@@ -10,7 +10,7 @@ settings:
     type: boolean
     title: Hide when off
     default: true
-    description: Show the widget only while one of the keys above is on.
+    description: Show only while one of the keys is on.
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active color, x-autoColor: warning}
   inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
   foregroundColor:

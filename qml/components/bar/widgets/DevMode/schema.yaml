@@ -3,5 +3,5 @@ icon: code
 group: System
 popout:
   variant: own
-  enabled: {description: 'Rebuild, open the Development settings or turn dev mode off, when hovered.'}
+  enabled: {description: 'On hover: rebuild, open Development settings or turn dev mode off.'}
 colors: standard

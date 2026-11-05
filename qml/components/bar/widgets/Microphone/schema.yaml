@@ -16,7 +16,6 @@ settings:
     default: 5
     minimum: 1
     maximum: 25
-    description: Volume change per scroll notch.
   maxVolume:
     type: integer
     title: Maximum volume
@@ -24,21 +23,20 @@ settings:
     default: 100
     minimum: 100
     maximum: 150
-    description: Highest volume scrolling and the mixer sliders allow.
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: pavucontrol
-    description: Shell command run on middle click. Empty does nothing.
+    description: Empty does nothing.
   activeColor:
     $ref: '#/definitions/WidgetColor'
     title: In-use color
     x-autoColor: alt
-    description: Used while an app is recording from the microphone.
+    description: While an app records from the microphone.
   hideWhenIdle:
     type: boolean
     title: Hide when idle
     default: false
-    description: Only show the widget while the microphone is in use or muted.
+    description: Show only while the microphone is in use or muted.
   mutedColor: {$ref: '#/definitions/WidgetColor', title: Muted color, x-autoColor: 'off'}

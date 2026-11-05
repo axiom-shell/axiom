@@ -9,7 +9,7 @@ settings:
     type: boolean
     title: Show passive
     default: true
-    description: Also show items that report themselves as passive (idle).
+    description: Also show idle items.
   backgroundColor:
     type: string
     title: Background

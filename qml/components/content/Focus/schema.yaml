@@ -11,4 +11,4 @@ settings:
     type: boolean
     title: Today's events
     default: true
-    description: Today in the shown calendars, with + to add an event.
+    description: Today's events, with + to add one.

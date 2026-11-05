@@ -2,7 +2,7 @@ label: Drives
 keywords: ['Removable Drives']
 icon: usb
 group: Network & devices
-popout: {variant: own, enabled: {description: 'List the drives, to open, eject or unlock one, when hovered.'}}
+popout: {variant: own, enabled: {description: 'List the drives on hover, to open, eject or unlock one.'}}
 appearance:
   variant: value
   style:
@@ -13,12 +13,12 @@ settings:
     type: boolean
     title: Show count
     default: true
-    description: Show how many drives are plugged in next to the icon.
+    description: Show how many drives are plugged in.
   hideWhenEmpty:
     type: boolean
     title: Hide with no drives
     default: true
-    description: Show the widget only while a removable drive is plugged in.
+    description: Show only while a removable drive is plugged in.
   mountedColor: {$ref: '#/definitions/WidgetColor', title: Mounted color}
   idleColor:
     $ref: '#/definitions/WidgetColor'

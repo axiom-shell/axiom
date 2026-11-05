@@ -4,18 +4,18 @@ icon: timer_play
 group: Tools
 popout:
   variant: own
-  enabled: {description: 'The timer and stopwatch, to set and start, when hovered.'}
+  enabled: {description: The timer and stopwatch on hover.}
 appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, stacked]
-    description: "The value is how far through the timer it is, or the stopwatch's way round the minute; stacked puts the time over Timer or the lap."
+    description: The value is the timer's progress or the stopwatch's second hand; stacked puts the time over its label.
 settings:
   hideWhenIdle:
     type: boolean
     title: Hide when stopped
     default: false
-    description: Show only while the timer or stopwatch runs or is paused (start one from the launcher's /timer or /stopwatch, or a module).
+    description: Show only while the timer or stopwatch runs or is paused.
   timerColor: {$ref: '#/definitions/WidgetColor', title: Timer color}
   stopwatchColor: {$ref: '#/definitions/WidgetColor', title: Stopwatch color, x-autoColor: alt}
   idleColor: {$ref: '#/definitions/WidgetColor', title: Stopped color, x-autoColor: 'off'}

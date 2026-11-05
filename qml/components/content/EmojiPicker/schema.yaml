@@ -8,4 +8,4 @@ settings:
     type: boolean
     title: Show the groups
     default: true
-    description: Tabs for Unicode's groups (smileys, animals, food, …) over the grid, when there's room.
+    description: Group tabs over the grid, when there's room.

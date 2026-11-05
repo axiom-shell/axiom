@@ -12,20 +12,19 @@ settings:
     enum: [list, typed]
     x-enumLabels: {list: 'Pick from a list, or type', typed: Type the name}
     default: list
-    description: Typed only shows no one's name before they type it.
+    description: Typed shows no name until one is typed.
   showAvatar:
     type: boolean
     title: Picture
     default: true
-    description: The user's picture (AccountsService's), when they have one.
   placeholder:
     type: string
     title: Placeholder
     default: ''
-    description: Shown in the empty password field. Empty says Enter password...
+    description: Empty says Enter password...
   centered: {type: boolean, title: Centre the text, default: true}
   showMessages:
     type: boolean
     title: Messages
     default: true
-    description: 'Show what the login checks say under the field: prompts, failures and errors.'
+    description: Show login prompts, failures and errors under the field.

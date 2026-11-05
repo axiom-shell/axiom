@@ -10,4 +10,4 @@ settings:
     minimum: 0
     maximum: 500
     x-unit: px
-    description: The least room it keeps when the bar is crowded (px). It takes the free room on its side of the bar, shared with the other spacers there; in the center it keeps this.
+    description: Room it keeps when the bar is crowded (px).

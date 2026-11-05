@@ -7,7 +7,7 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ticker, stacked]
-    description: "Ticker scrolls a long title; stacked puts it over the app's id."
+    description: Ticker scrolls a long title; stacked puts it over the app id.
 colors: standard
 settings:
   icon:
@@ -15,7 +15,7 @@ settings:
     x-control: icon
     title: Icon
     default: ''
-    description: 'Icon shown before the title: a Material Symbols name (fonts.google.com/icons), or text. Empty shows none.'
+    description: A Material Symbols name, or text. Empty shows none.
   emptyText:
     type: string
     title: Empty text

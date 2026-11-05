@@ -2,7 +2,7 @@ label: VPN
 keywords: ['VPN Status']
 icon: vpn_lock
 group: Network & devices
-popout: {variant: own, enabled: {description: 'Show every VPN, to connect or disconnect one, when hovered.'}}
+popout: {variant: own, enabled: {description: 'Every VPN on hover, to connect or disconnect one.'}}
 appearance:
   variant: value
   style:
@@ -13,18 +13,18 @@ settings:
     type: boolean
     title: Show name
     default: true
-    description: "Show the VPN that's up next to the icon."
+    description: Show the active VPN's name.
   hideWhenOff:
     type: boolean
     title: Hide when off
     default: false
-    description: Show the widget only while a VPN is up.
+    description: Show only while a VPN is up.
   middleCommand:
     x-scope: commands
     type: string
     title: Middle-click command
     default: ''
-    description: Shell command run on middle click (e.g. nm-connection-editor). Empty does nothing. A left click connects or disconnects the VPN used last.
+    description: Empty does nothing. A left click toggles the last VPN.
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color}
   disconnectedColor:
     $ref: '#/definitions/WidgetColor'

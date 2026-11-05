@@ -11,4 +11,4 @@ settings:
     type: string
     title: Label
     default: ''
-    description: Secondary label, e.g. the semantic role.
+    description: e.g. the semantic role.

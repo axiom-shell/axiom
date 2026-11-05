@@ -6,19 +6,19 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, stacked]
-    description: "Ring and fill show the connected device's battery, when it reports one; stacked puts the device over it."
+    description: Ring and fill show the device's battery; stacked puts the device over it.
 colors: standard
 settings:
   showDevice:
     type: boolean
     title: Show device
     default: true
-    description: Show the connected device name (or count) next to the icon.
+    description: Show the connected device's name (or count).
   showBattery:
     type: boolean
     title: Show battery
     default: true
-    description: Append the connected device's battery level, when it reports one.
+    description: Show the connected device's battery level.
     x-showIf: {showDevice: true}
   hideWhenOff: {type: boolean, title: Hide when off, default: false}
   middleCommand:
@@ -26,6 +26,6 @@ settings:
     type: string
     title: Middle-click command
     default: ''
-    description: Shell command run on middle click (e.g. blueman-manager). Empty does nothing.
+    description: Empty does nothing.
   connectedColor: {$ref: '#/definitions/WidgetColor', title: Connected color, x-autoColor: alt}
   disabledColor: {$ref: '#/definitions/WidgetColor', title: Off color, x-autoColor: 'off'}

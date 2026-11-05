@@ -17,10 +17,10 @@ settings:
     x-link: {setting: Battery.lowThreshold}
     title: Low color
     x-autoColor: warning
-    description: At or below Battery > Low at (in settings).
+    description: At or below Battery's low level.
   criticalColor:
     $ref: '#/definitions/WidgetColor'
     x-link: {setting: Battery.criticalThreshold}
     title: Critical color
     x-autoColor: critical
-    description: At or below Battery > Critical at (in settings).
+    description: At or below Battery's critical level.
