@@ -76,6 +76,7 @@ properties:
       icon:
         type: string
         title: Icon
+        x-control: toggle
         enum: [none, glyph, material]
         default: material
         description: Before the text, the format's icon is drawn in the text itself.

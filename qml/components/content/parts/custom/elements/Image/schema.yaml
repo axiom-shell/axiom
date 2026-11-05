@@ -7,6 +7,7 @@ settings:
     type: string
     title: Fit
     default: crop
+    x-control: toggle
     enum: [crop, fit]
     x-enumLabels: {crop: Crop, fit: Fit}
   round: {type: boolean, title: Round, default: false}

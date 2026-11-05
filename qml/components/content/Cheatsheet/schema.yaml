@@ -19,6 +19,7 @@ settings:
   view:
     type: string
     title: View
+    x-control: toggle
     enum: [list, keyboard]
     x-enumLabels: {list: List, keyboard: Keyboard}
     default: list

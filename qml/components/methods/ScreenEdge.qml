@@ -16,6 +16,10 @@ QtObject {
 
   readonly property var _names: ["top", "bottom", "left", "right"]
 
+  // How deep a hover strip on a screen edge is, in px (EdgeTrigger, a
+  // hidden bar's edge strip): one fixed size, not a setting
+  readonly property int triggerSize: 4
+
   // A ScreenEdge as the edge names config, zones and Hyprland use: "top" |
   // "bottom" | "left" | "right"
   function name(edge) {

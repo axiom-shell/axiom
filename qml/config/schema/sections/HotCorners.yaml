@@ -161,6 +161,7 @@ properties:
           type: string
           title: Call
           default: toggle
+          x-control: toggle
           enum: [toggle, open, close]
           x-enumLabels: {toggle: Toggle, open: Open, close: Close}
           description: 'For actions that open and close or turn on and off something: whether the corner toggles it, only opens it or only closes it.'

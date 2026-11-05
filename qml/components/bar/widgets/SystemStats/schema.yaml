@@ -15,6 +15,7 @@ settings:
     type: string
     title: Memory format
     default: percent
+    x-control: toggle
     enum: [percent, used]
     description: Percentage of RAM in use, or GiB used.
     x-showIf: {showMemory: true}

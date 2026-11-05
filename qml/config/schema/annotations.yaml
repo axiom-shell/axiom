@@ -28,6 +28,7 @@ x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn'
 x-fold: 'a nested object whose rows fold behind its title on its settings card, closed until opened (`SettingsField`; the Keyboard card''s Input method options).'
 x-greeter: the greeter's compositor takes it (`methods/GreeterBundle`).
 x-group: puts a field on a card of that name.
+x-hintedIf: 'as `x-enabledIf` for a compositor condition, but a field whose condition fails is hidden, unless every failing key is a `/$supports.<capability>` the backend names an upgrade for (`CompositorManager.unsupportedHint`, SwayFX on sway): then it''s greyed out with that note.'
 x-hookup: how the integration hooks into its app (targets, place, text).
 x-hookupNote: a note shown with it.
 x-hosts: '`overlay`, `edgeMenu`, `lockscreen`, `greeter`, `desktop`.'

@@ -46,6 +46,7 @@ settings:
     type: string
     title: Names
     default: auto
+    x-control: toggle
     enum: [auto, show, hide]
     x-enumLabels: {auto: Auto, show: Show, hide: Hide}
     description: Auto shows the names only when every tile has room for its whole name.
@@ -53,6 +54,7 @@ settings:
     type: string
     title: Style
     default: tiles
+    x-control: toggle
     enum: [tiles, pills]
     x-enumLabels: {tiles: Tiles, pills: Pills}
     description: "Pills are wide, with a status line beside the icon. Wi-Fi, Bluetooth and Do not disturb open their networks, devices or notifications over the menu or page: from beside a pill's icon, or a tile's right click or long press."

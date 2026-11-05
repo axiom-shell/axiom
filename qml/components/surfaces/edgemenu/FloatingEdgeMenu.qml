@@ -98,12 +98,11 @@ EdgePopout {
   roomForSubmenus: root.menu.layout.modules.some(module => module?.type === "Submenu")
   // Read through a var: EdgeMenuBody's members, on EdgePopout's Item
   readonly property var _body: root.contentItem
-  contentPadding: Appearance.borderWidth + EdgeMenusConfig.paddingOf(root.menu)
+  contentPadding: Appearance.borderWidth + PopoutsConfig.padding
   fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
   strokeColor: EdgeMenusConfig.colorsOf(root.menu).stroke
   triggerEnabled: root.menu.open.onHover
   hoverDelay: root.menu.open.delay
-  triggerWidth: root.menu.trigger.size
   triggerLength: sync.triggerLength(root.vertical, root.contentPadding, root.screenLength - root.startPad - root.endPad + root.contentPadding * 2)
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')

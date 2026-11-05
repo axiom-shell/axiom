@@ -109,6 +109,7 @@ properties:
           order:
             type: string
             title: Order
+            x-control: toggle
             enum: [random, sequential]
             x-enumLabels: {random: Random, sequential: 'In order, by name'}
             default: random
@@ -313,7 +314,7 @@ properties:
         minimum: 60
         maximum: 100
         description: "How solid the shell's surfaces are: bars, the screen border, popouts, menus and panels (not your apps' windows: Compositor → Window look → Window opacity). 100 is fully solid. A translucent surface needs the compositor to blur behind it (Compositor → Window look → Blur)."
-        x-enabledIf: {/$supports.blur: true}
+        x-hintedIf: {/$supports.blur: true}
   motion:
     x-scope: look
     type: object

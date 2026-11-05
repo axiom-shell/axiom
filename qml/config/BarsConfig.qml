@@ -164,7 +164,6 @@ QtObject {
       "revealOnActivity": barConfig.revealOnActivity,
       "revealFor": barConfig.revealFor,
       "timing": barConfig.timing,
-      "trigger": barConfig.trigger,
       "location": loc,
       // As configured: never for an auto-hiding bar (what its stack slot
       // and corners go by, so hiding, showing and pinning never move them)

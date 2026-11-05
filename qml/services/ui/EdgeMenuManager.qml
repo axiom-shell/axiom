@@ -59,7 +59,7 @@ Singleton {
     if (live && live.screen === screenName)
       return live;
     const integrated = menu?.mode === "integrated";
-    const pad = (integrated ? EdgeMenusConfig.outerPadOf(menu) : Appearance.borderWidth) + EdgeMenusConfig.paddingOf(menu);
+    const pad = (integrated ? EdgeMenusConfig.outerPadOf(menu) : Appearance.borderWidth) + PopoutsConfig.padding;
     return {
       "screen": screenName,
       "startPad": pad,

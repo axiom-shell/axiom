@@ -49,6 +49,7 @@ properties:
     x-group: Page switcher
     type: string
     title: Position
+    x-control: toggle
     enum: [bottom, top]
     x-enumLabels: {bottom: Bottom, top: Top}
     default: bottom

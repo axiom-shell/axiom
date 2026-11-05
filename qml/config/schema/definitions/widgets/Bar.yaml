@@ -171,21 +171,6 @@ properties:
         default: 400
         minimum: 0
         maximum: 5000
-  trigger:
-    $ref: '#/definitions/Trigger'
-    x-group: Behaviour
-    x-showIf: {autoHide: {not: never}}
-    x-properties:
-      size:
-        type: integer
-        x-control: stepper
-        title: Trigger size
-        x-unit: px
-        default: 3
-        minimum: 1
-        maximum: 50
-        description: How far from the screen edge the pointer shows the bar.
-      length: null
   style: {$ref: '#/definitions/BarStyle', x-inherit: Bars.style, title: Widget style}
   widgets:
     type: object

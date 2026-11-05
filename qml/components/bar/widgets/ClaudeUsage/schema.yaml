@@ -13,12 +13,14 @@ settings:
     type: string
     title: Limit shown
     default: session
+    x-control: toggle
     enum: [session, weekly]
     x-enumLabels: {session: Current session, weekly: Weekly}
   display:
     type: string
     title: Accounts shown
     default: max
+    x-control: toggle
     enum: [max, all, first]
     x-enumLabels: {max: Fullest, all: All, first: First}
     description: Which account's usage the bar shows. The popout lists every account.

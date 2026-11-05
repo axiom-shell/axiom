@@ -91,20 +91,6 @@ properties:
         default: 400
         minimum: 0
         maximum: 5000
-  trigger:
-    $ref: '#/definitions/Trigger'
-    x-showIf: {visibility: [hover, intellihide]}
-    x-properties:
-      size:
-        type: integer
-        x-control: stepper
-        title: Trigger size
-        x-unit: px
-        default: 4
-        minimum: 1
-        maximum: 50
-        description: How far from the screen edge the pointer opens it.
-      length: null
   iconSize: {type: integer, title: Icon size, default: 48, minimum: 16, maximum: 128, x-unit: px}
   spacing:
     type: integer

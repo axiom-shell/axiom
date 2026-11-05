@@ -30,6 +30,7 @@ properties:
     x-scope: personal
     type: string
     title: Density
+    x-control: toggle
     enum: [compact, normal, roomy]
     x-enumLabels: {compact: Compact, normal: Normal, roomy: Roomy}
     default: normal

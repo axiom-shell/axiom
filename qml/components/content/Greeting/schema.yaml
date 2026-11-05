@@ -14,6 +14,7 @@ settings:
   alignment:
     type: string
     title: Alignment
+    x-control: toggle
     enum: [left, center, right]
     x-enumLabels: {left: Left, center: Centre, right: Right}
     default: center

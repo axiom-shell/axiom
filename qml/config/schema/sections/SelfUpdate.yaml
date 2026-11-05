@@ -18,6 +18,7 @@ properties:
   channel:
     type: string
     title: Follow
+    x-control: toggle
     enum: [tags, main]
     x-enumLabels: {tags: Releases, main: Main branch}
     default: tags

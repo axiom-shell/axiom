@@ -42,7 +42,6 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 | `Blur` | `{ enabled, size, passes, … }` | `WindowLook.blur*` |
 | `Shadow` | `{ enabled, size, color, strength, … }` | `WindowLook.shadow*`, `BarStyle.shadow*`, a bar's `overrideShadow` + `shadow*` |
 | `Timing` | `{ openDelay, closeDelay }` (ms) | `Popouts.openDelay/dismissDelay`, Dock / EdgeMenu `openDelay` / `closeDelay` |
-| `Trigger` | `{ onHover, size, length }` | EdgeMenu `openOnHover` / `triggerSize` / `triggerLength`, Dock `triggerSize`, `Popouts.edgeTriggerSize` |
 
 ## Sections
 

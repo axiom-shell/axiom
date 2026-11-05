@@ -12,7 +12,7 @@ QtObject {
 
   // EdgeMenus.items: [EdgeMenu], each { id, name, enabled, screen, edge,
   // mode, …, layout: { grid, moduleScale, moduleBorders, modules }, open,
-  // trigger, close }
+  // close }
   readonly property var menus: ConfigManager.live.EdgeMenus.items
   readonly property var enabledMenus: root.menus.filter(menu => menu.enabled && menu.id)
   // A menu's own fields in groups (`x-group`), for the edge menu editor
@@ -77,12 +77,6 @@ QtObject {
     };
   }
 
-  // Space between the menu's box and its modules: its own, else (-1) the
-  // popouts'
-  function paddingOf(menu) {
-    return menu.padding >= 0 ? Widget.px(menu.padding) : PopoutsConfig.padding;
-  }
-
   // An integrated menu's frame's inset from its strip's edges (0 without
   // one): the screen margin reaches its stroke's inner edge, as the screen
   // border's does, so the two strokes line up
@@ -123,7 +117,7 @@ QtObject {
       return scale;
     const wide = root.isSubmenu(menu) || menu.edge === "left" || menu.edge === "right";
     const bounds = GridPlacement.bounds(menu.layout.modules);
-    return GridPlacement.fitModuleScale(scale, wide ? bounds.cols : bounds.rows, OverlayConfig.cardUnitOn(screen.width, screen.height), menu.layout.grid.fine, (wide ? screen.width : screen.height) - root.paddingOf(menu) * 2);
+    return GridPlacement.fitModuleScale(scale, wide ? bounds.cols : bounds.rows, OverlayConfig.cardUnitOn(screen.width, screen.height), menu.layout.grid.fine, (wide ? screen.width : screen.height) - PopoutsConfig.padding * 2);
   }
 
   // The px between a menu's cards: the layout's gap drawn at the menu's

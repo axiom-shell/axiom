@@ -16,6 +16,7 @@ properties:
     type: string
     title: AUR helper
     default: paru
+    x-control: toggle
     enum: [paru, yay]
     x-showIf: {includeAur: true, /$distro: arch}
   terminal:

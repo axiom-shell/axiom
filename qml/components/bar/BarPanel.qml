@@ -164,7 +164,7 @@ PanelWindow {
   // lying on it) that takes the pointer while it's hidden
   Item {
     id: edgeStrip
-    readonly property int size: root.barConfig.trigger.size
+    readonly property int size: ScreenEdge.triggerSize
     x: root.barConfig.right ? parent.width - width : 0
     y: root.barConfig.bottom ? parent.height - height : 0
     width: root.barConfig.vertical ? edgeStrip.size : parent.width

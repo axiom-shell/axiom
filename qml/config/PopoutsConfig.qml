@@ -10,7 +10,6 @@ QtObject {
 
   readonly property int openDelay: _c.timing.openDelay
   readonly property int dismissDelay: _c.timing.closeDelay
-  readonly property int edgeTriggerSize: _c.trigger.size
   // Space between a popout's box (inside its stroke) and its content
   readonly property int padding: Widget.px(_c.padding)
 }
