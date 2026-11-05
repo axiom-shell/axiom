@@ -390,3 +390,65 @@ func TestLocalCalendar(t *testing.T) {
 		t.Errorf("escape: %v", err)
 	}
 }
+
+// A conflict syncs the calendar again, so the next try has the new etag;
+// a move takes the whole series (its first start, exceptions and other
+// properties) to the other calendar, and a failed delete of the old one
+// removes the copy again
+func TestConflictAndMove(t *testing.T) {
+	t.Parallel()
+	gym := strings.Replace(series, "RRULE:FREQ=WEEKLY\r\n", "RRULE:FREQ=WEEKLY\r\nEXDATE:20260720T180000Z\r\n", 1)
+	fake := newCalServer(map[string]string{"gym.ics": gym})
+	ts := httptest.NewServer(fake)
+	t.Cleanup(ts.Close)
+	s := newService(t)
+	ctx := context.Background()
+	cal := ts.URL + "/cal/"
+	accounts := []Account{account("acc", "caldav", cal), account("here", "local", "personal")}
+	if _, err := s.Sync(ctx, SyncRequest{Range: july, Accounts: accounts}); err != nil {
+		t.Fatal(err)
+	}
+	stale := fake.etag("gym.ics")
+	// Changed elsewhere since the sync
+	fake.mu.Lock()
+	fake.version++
+	fake.objects["gym.ics"], fake.etags["gym.ics"] = strings.Replace(gym, "SUMMARY:Gym", "SUMMARY:Gym (phone)", 1), fake.version
+	fake.mu.Unlock()
+	start := ms(13, 18)
+	edit := SaveRequest{
+		EditRequest: EditRequest{Range: july, Accounts: accounts, Account: "acc", Calendar: cal, Href: cal + "gym.ics", Etag: stale, Scope: "series"},
+		Event:       ical.Event{Title: "Gym", Start: start, End: ms(13, 19), Repeat: "weekly", OrigStart: &start},
+	}
+	if _, err := s.Save(ctx, edit); axerr.KindOf(err) != axerr.Conflict {
+		t.Fatalf("stale save: %v", err)
+	}
+	if got := titles(t, s); len(got) != 3 || got[0] != "Gym (phone)" {
+		t.Errorf("after the conflict %v", got)
+	}
+	folder := filepath.Join(s.o.DataDir, "calendars", "personal")
+	edit.ToAccount, edit.ToCalendar = "here", "personal"
+	if _, err := s.Delete(ctx, edit.EditRequest); axerr.KindOf(err) != axerr.Conflict {
+		t.Errorf("stale delete: %v", err)
+	}
+	if _, err := s.Save(ctx, edit); axerr.KindOf(err) != axerr.Conflict {
+		t.Fatalf("stale move: %v", err)
+	}
+	if files, _ := os.ReadDir(folder); len(files) != 0 || fake.objects["gym.ics"] == "" {
+		t.Fatalf("stale move left %v", files)
+	}
+	edit.Etag = readEvents(t, s).Events[0].Etag
+	moved, err := s.Save(ctx, edit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(filepath.Join(s.o.DataDir, "calendars", moved.Href))
+	for _, kept := range []string{"UID:gym", "DTSTART:20260706T180000Z", "EXDATE:20260720T180000Z", "X-KEPT:yes"} {
+		if !strings.Contains(string(data), kept) {
+			t.Errorf("moved lost %s:\n%s", kept, data)
+		}
+	}
+	e := readEvents(t, s).Events
+	if _, still := fake.objects["gym.ics"]; still || len(e) != 3 || e[0].Calendar != "here|personal" || e[0].Title != "Gym" {
+		t.Errorf("after the move %+v", e)
+	}
+}

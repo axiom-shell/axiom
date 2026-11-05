@@ -239,18 +239,24 @@ type events struct {
 func (s *Service) Sync(ctx context.Context, r SyncRequest) (SyncResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.sync(ctx, r, "", "")
+	return s.sync(ctx, r)
 }
 
-// sync refetches the calendar onlyAccount|onlyCalendar whatever its ctag,
-// keeping the others' copies, when one is given
-func (s *Service) sync(ctx context.Context, r SyncRequest, onlyAccount, onlyCalendar string) (SyncResult, error) {
+// sync refetches the calendars `only` names ("<account>|<href>") whatever
+// their ctags, keeping the others' copies, when it names any
+func (s *Service) sync(ctx context.Context, r SyncRequest, only ...string) (SyncResult, error) {
 	saved := s.load()
 	result := SyncResult{Errors: []SyncError{}}
 	calendars := map[string]*cached{}
+	force := len(only) > 0
 	for _, account := range r.Accounts {
+		synced := func(href string) bool { return !force || slices.Contains(only, account.ID+"|"+href) }
+		fetched := false
+		for _, cal := range account.Calendars {
+			fetched = fetched || synced(cal.Href)
+		}
 		d, noPassword := s.dav("", ""), error(nil)
-		if account.Kind == "caldav" && (onlyAccount == "" || onlyAccount == account.ID) {
+		if account.Kind == "caldav" && fetched {
 			d, noPassword = s.caldav(ctx, account.ID, account.Username)
 			if ctx.Err() != nil {
 				return SyncResult{}, ctx.Err()
@@ -259,8 +265,7 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, onlyAccount, onlyCale
 		for _, cal := range account.Calendars {
 			id := account.ID + "|" + cal.Href
 			old := saved.Calendars[id]
-			force := onlyAccount != ""
-			if force && (onlyAccount != account.ID || onlyCalendar != cal.Href) {
+			if !synced(cal.Href) {
 				if old != nil {
 					calendars[id] = old
 				}
@@ -527,6 +532,9 @@ type EditRequest struct {
 type SaveRequest struct {
 	EditRequest
 	Event ical.Event `json:"event"`
+	// Where the event moves to (its account and calendar href; "" to stay)
+	ToAccount  string `json:"toAccount"`
+	ToCalendar string `json:"toCalendar"`
 }
 
 // EditResult is the event's href (the sync after writes its errors to
@@ -541,12 +549,12 @@ type writer struct {
 	d *dav
 }
 
-func (s *Service) writer(ctx context.Context, r EditRequest) (writer, error) {
-	i := slices.IndexFunc(r.Accounts, func(a Account) bool { return a.ID == r.Account })
+func (s *Service) writer(ctx context.Context, accounts []Account, id string) (writer, error) {
+	i := slices.IndexFunc(accounts, func(a Account) bool { return a.ID == id })
 	if i < 0 {
 		return writer{}, fail(axerr.NotFound, "Unknown account")
 	}
-	switch account := r.Accounts[i]; {
+	switch account := accounts[i]; {
 	case account.Kind == "local":
 		return writer{}, nil
 	case account.Kind != "caldav":
@@ -570,47 +578,81 @@ func (s *Service) cachedObject(r EditRequest) (object, *ical.Component, error) {
 	return obj, cal, nil
 }
 
-// resync syncs the edited calendar again
-func (s *Service) resync(ctx context.Context, r EditRequest, href string) (EditResult, error) {
-	_, err := s.sync(ctx, SyncRequest{Range: r.Range, Accounts: r.Accounts}, r.Account, r.Calendar)
-	return EditResult{Href: href}, err
+// synced syncs the edited calendars again once an edit is written, and
+// after a conflict too, so a retry starts from what's there now
+func (s *Service) synced(ctx context.Context, r EditRequest, href string, err error, calendars ...string) (EditResult, error) {
+	if err != nil && axerr.KindOf(err) != axerr.Conflict {
+		return EditResult{}, err
+	}
+	if _, syncErr := s.sync(ctx, SyncRequest{Range: r.Range, Accounts: r.Accounts}, calendars...); err == nil {
+		err = syncErr
+	}
+	if err != nil {
+		return EditResult{}, err
+	}
+	return EditResult{Href: href}, nil
 }
 
 // Save writes an event: a new one (no Href) in the local zone, else the
 // stored object edited in place (unknown properties kept) for the whole
-// series or one occurrence; then syncs its calendar again.
+// series or one occurrence, or with ToCalendar moved there; then syncs
+// the calendars again.
 func (s *Service) Save(ctx context.Context, r SaveRequest) (EditResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	w, err := s.writer(ctx, r.EditRequest)
+	href, err := s.save(ctx, r)
+	calendars := []string{r.Account + "|" + r.Calendar}
+	if r.ToCalendar != "" {
+		calendars = append(calendars, r.ToAccount+"|"+r.ToCalendar)
+	}
+	return s.synced(ctx, r.EditRequest, href, err, calendars...)
+}
+
+func (s *Service) save(ctx context.Context, r SaveRequest) (string, error) {
+	w, err := s.writer(ctx, r.Accounts, r.Account)
 	if err != nil {
-		return EditResult{}, err
+		return "", err
 	}
 	tz, now := *s.o.Zone, s.o.Now()
 	if r.Href == "" {
 		uid := newUID()
 		href := strings.TrimRight(r.Calendar, "/") + "/" + uid + ".ics"
-		if err := s.put(ctx, w, href, s.zones.NewEvent(r.Event, tz, uid, now), ""); err != nil {
-			return EditResult{}, err
-		}
-		return s.resync(ctx, r.EditRequest, href)
+		return href, s.put(ctx, w, href, s.zones.NewEvent(r.Event, tz, uid, now), "")
 	}
 	obj, cal, err := s.cachedObject(r.EditRequest)
 	if err != nil {
-		return EditResult{}, err
+		return "", err
 	}
-	if r.Scope == "occurrence" && r.Rid != "" {
+	if r.Scope == "occurrence" && r.Rid != "" && r.ToCalendar == "" {
 		err = s.zones.ApplyOccurrence(cal, r.Event, r.Rid, tz, now)
 	} else {
 		err = s.zones.ApplySeries(cal, r.Event, tz, now)
 	}
 	if err != nil {
-		return EditResult{}, fail(axerr.BadReply, "%v", err)
+		return "", fail(axerr.BadReply, "%v", err)
 	}
-	if err := s.put(ctx, w, r.Href, cal, firstOf(r.Etag, obj.Etag)); err != nil {
-		return EditResult{}, err
+	etag := firstOf(r.Etag, obj.Etag)
+	if r.ToCalendar == "" {
+		return r.Href, s.put(ctx, w, r.Href, cal, etag)
 	}
-	return s.resync(ctx, r.EditRequest, r.Href)
+	// A move: the whole edited object (its UID, first start, exceptions
+	// and other properties) written to the new calendar, then the old one
+	// deleted; the copy is removed again when that fails
+	to, err := s.writer(ctx, r.Accounts, r.ToAccount)
+	if err != nil {
+		return "", err
+	}
+	href := strings.TrimRight(r.ToCalendar, "/") + "/" + newUID() + ".ics"
+	if err := s.put(ctx, to, href, cal, ""); err != nil {
+		return "", err
+	}
+	if err := s.remove(ctx, w, r.Href, etag); err != nil {
+		if undo := s.remove(ctx, to, href, ""); undo != nil {
+			s.o.Log.Warn("calendar: a moved event's copy stays", "href", href, "err", undo)
+		}
+		return "", err
+	}
+	return href, nil
 }
 
 // Delete removes an event, or with scope "occurrence" excludes the one at
@@ -618,50 +660,51 @@ func (s *Service) Save(ctx context.Context, r SaveRequest) (EditResult, error) {
 func (s *Service) Delete(ctx context.Context, r EditRequest) (EditResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	w, err := s.writer(ctx, r)
+	return s.synced(ctx, r, r.Href, s.delete(ctx, r), r.Account+"|"+r.Calendar)
+}
+
+func (s *Service) delete(ctx context.Context, r EditRequest) error {
+	w, err := s.writer(ctx, r.Accounts, r.Account)
 	if err != nil {
-		return EditResult{}, err
+		return err
 	}
 	if r.Scope == "occurrence" && r.Rid != "" {
 		obj, cal, err := s.cachedObject(r)
 		if err != nil {
-			return EditResult{}, err
+			return err
 		}
 		if s.zones.ExcludeOccurrence(cal, r.Rid, *s.o.Zone, s.o.Now()) {
-			if err := s.put(ctx, w, r.Href, cal, firstOf(r.Etag, obj.Etag)); err != nil {
-				return EditResult{}, err
-			}
-			return s.resync(ctx, r, r.Href)
+			return s.put(ctx, w, r.Href, cal, firstOf(r.Etag, obj.Etag))
 		}
 	}
+	return s.remove(ctx, w, r.Href, r.Etag)
+}
+
+// remove deletes an event: DELETE with If-Match (one already gone is
+// fine), or a local calendar's file, its etag checked
+func (s *Service) remove(ctx context.Context, w writer, href, etag string) error {
 	if w.d == nil {
-		path, err := s.localPath(r.Href)
+		path, err := s.localPath(href)
 		if err != nil {
-			return EditResult{}, err
+			return err
 		}
-		etag := localEtag(path)
-		if etag != "" && r.Etag != "" && etag != r.Etag {
-			return EditResult{}, fail(axerr.Conflict, "The event changed on disk")
+		if current := localEtag(path); current != "" && etag != "" && current != etag {
+			return fail(axerr.Conflict, "The event changed on disk")
 		}
 		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return EditResult{}, err
+			return err
 		}
-		return s.resync(ctx, r, r.Href)
+		return nil
 	}
 	headers := map[string]string{}
-	if r.Etag != "" {
-		headers["If-Match"] = r.Etag
+	if etag != "" {
+		headers["If-Match"] = etag
 	}
-	resp, err := w.d.request(ctx, "DELETE", r.Href, nil, headers, "")
-	if err != nil {
-		return EditResult{}, err
+	resp, err := w.d.request(ctx, "DELETE", href, nil, headers, "")
+	if err != nil || resp.status == 404 {
+		return err
 	}
-	if resp.status != 404 {
-		if err := checkWrite(resp, "DELETE"); err != nil {
-			return EditResult{}, err
-		}
-	}
-	return s.resync(ctx, r, r.Href)
+	return checkWrite(resp, "DELETE")
 }
 
 // newUID is a random (version 4) UUID
