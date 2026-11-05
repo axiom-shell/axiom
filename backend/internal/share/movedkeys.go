@@ -1,4 +1,8 @@
-// Code generated from components/methods/ConfigExamples.qml (movedKeys) once, when the binary took the config over, and translated to format 2's paths with the conversion (internal/migrate/convert). DO NOT EDIT.
+// movedKeys was generated once, when the binary took the config over, from
+// the JS list (components/methods/ConfigExamples.qml, gone since) translated
+// to format 2's paths with the conversion (internal/migrate/convert). Nothing
+// regenerates it: it is kept by hand, and TestMovedKeysAreSettings holds
+// every path to a setting of the schema.
 
 package share
 
