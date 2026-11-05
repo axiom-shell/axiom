@@ -22,8 +22,8 @@ The daemon's side of input sources: it finds the input method framework (fcitx5 
 
 ### ibus
 `org.freedesktop.IBus` at `/org/freedesktop/IBus` on its own bus.
-- **Read:** the `Engines` property (installed), `ActiveEngines` (the list) and `GlobalEngine` (current; an error, read as `""`, when there is none). Each is a serialized `IBusEngineDesc`: its type name and attachments, then name, long name, description, language, license, author, icon, layout, rank, hotkeys, symbol, … (an order ibus keeps). The label is the symbol, else the language; a layout of `default` reads `""`.
-- **When it changes:** every signal of its (`GlobalEngineChanged`, `RegistryChanged`, `PropertiesChanged`) reads it again.
+- **Read:** the `Engines` property (installed) and `GlobalEngine` (current; an error, read as `""`, when there is none). The list is the `org.freedesktop.ibus.general preload-engines` setting (`gsettings get`; each item's layout its engine's), which a push and ibus-setup write and ibus's panel preloads: the daemon has no readable list (`PreloadEngines` is write-only, `ActiveEngines` only the engines of components registered while it runs). Without gsettings, or when it fails, the list reads empty. An engine read is a serialized `IBusEngineDesc`: its type name and attachments, then name, long name, description, language, license, author, icon, layout, rank, hotkeys, symbol, … (an order ibus keeps). The label is the symbol, else the language; a layout of `default` reads `""`.
+- **When it changes:** every signal of its (`GlobalEngineChanged`, `RegistryChanged`, `PropertiesChanged`) reads it again, the list too except on a switch (`GlobalEngineChanged`).
 - **Switch:** `SetGlobalEngine`.
 - **Push:** the `PreloadEngines` property (applied at once; ibus refuses an engine it doesn't know), then `gsettings set org.freedesktop.ibus.general preload-engines`, which its panel and its next start read. ibus engines carry their own layouts, so `defaultLayout` and the items' layouts aren't used.
 - **Options:** only the font (`org.freedesktop.ibus.panel` `custom-font`, and `use-custom-font`; an empty font turns it off). ibus has no equivalent of the others.

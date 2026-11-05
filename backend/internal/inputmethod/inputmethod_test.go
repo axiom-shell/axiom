@@ -128,6 +128,8 @@ type harness struct {
 
 	mu        sync.Mutex
 	gsettings [][]string
+	// stored is what the fake gsettings holds, by "schema key"
+	stored map[string]string
 }
 
 func (h *harness) settingsRun() [][]string {
@@ -138,7 +140,7 @@ func (h *harness) settingsRun() [][]string {
 
 func start(t *testing.T, session *dbustest.Bus, ibusAddr func() string) *harness {
 	t.Helper()
-	h := &harness{}
+	h := &harness{stored: map[string]string{ibusGeneral + " preload-engines": "['xkb:us::eng']"}}
 	if ibusAddr == nil {
 		ibusAddr = func() string { return "" }
 	}
@@ -149,8 +151,12 @@ func start(t *testing.T, session *dbustest.Bus, ibusAddr func() string) *harness
 		IBusAddress: ibusAddr,
 		GSettings: func(_ context.Context, args ...string) (string, error) {
 			h.mu.Lock()
+			defer h.mu.Unlock()
+			if args[0] == "get" {
+				return h.stored[args[1]+" "+args[2]] + "\n", nil
+			}
 			h.gsettings = append(h.gsettings, args)
-			h.mu.Unlock()
+			h.stored[args[1]+" "+args[2]] = args[3]
 			return "", nil
 		},
 		Retry: 20 * time.Millisecond,
@@ -305,12 +311,11 @@ type fakeIBus struct {
 	mu      sync.Mutex
 	engines map[string]dbus.Variant
 	global  string
-	active  []string
 }
 
 func newFakeIBus(t *testing.T, bus *dbustest.Bus) *fakeIBus {
 	t.Helper()
-	f := &fakeIBus{conn: dial(t, bus), active: []string{"xkb:us::eng"}, engines: map[string]dbus.Variant{
+	f := &fakeIBus{conn: dial(t, bus), engines: map[string]dbus.Variant{
 		"xkb:us::eng": desc("xkb:us::eng", "English (US)", "en", "us", ""),
 		"mozc-jp":     desc("mozc-jp", "Mozc", "ja", "default", "あ"),
 	}}
@@ -340,7 +345,8 @@ func newFakeIBus(t *testing.T, bus *dbustest.Bus) *fakeIBus {
 			case "Engines":
 				return []any{list([]string{"mozc-jp", "xkb:us::eng"})}, nil
 			case "ActiveEngines":
-				return []any{list(f.active)}, nil
+				// The engines of components registered at runtime: none
+				return []any{list(nil)}, nil
 			case "GlobalEngine":
 				if f.global == "" {
 					return nil, dbus.NewError(dbus.ErrFailed, "No global engine.")
@@ -358,9 +364,8 @@ func newFakeIBus(t *testing.T, bus *dbustest.Bus) *fakeIBus {
 					return nil, dbus.NewError(dbus.ErrFailed, "Cannot find engine %s.", n)
 				}
 			}
-			f.active = names
 			f.mu.Unlock()
-			f.conn.Emit(ibusPath, "org.freedesktop.DBus.Properties", "PropertiesChanged", "sa{sv}as", ibusIface, map[string]dbus.Variant{}, []string{"ActiveEngines"})
+			f.conn.Emit(ibusPath, "org.freedesktop.DBus.Properties", "PropertiesChanged", "sa{sv}as", ibusIface, map[string]dbus.Variant{}, []string{"PreloadEngines"})
 			return nil, nil
 		}},
 	}}); err != nil {
@@ -405,6 +410,15 @@ func TestIBus(t *testing.T) {
 	if got := h.settingsRun(); !reflect.DeepEqual(got, wantSet) {
 		t.Errorf("gsettings %v, want %v", got, wantSet)
 	}
+	if st.Group[1] != (Item{"mozc-jp", ""}) {
+		t.Errorf("the list read back: %+v", st.Group)
+	}
+	// ibus-setup edits the list: its panel preloads it
+	h.mu.Lock()
+	h.stored[ibusGeneral+" preload-engines"] = "['mozc-jp']"
+	h.mu.Unlock()
+	f.conn.Emit(ibusPath, "org.freedesktop.DBus.Properties", "PropertiesChanged", "sa{sv}as", ibusIface, map[string]dbus.Variant{}, []string{"PreloadEngines"})
+	h.await(t, "the outside edit", func(st State) bool { return st.OutsideEdit && len(st.Group) == 1 })
 	if err := h.s.Push(t.Context(), "us", []Item{{"pinyin", ""}}); axerr.KindOf(err) != axerr.Failed {
 		t.Errorf("an engine ibus lacks: %v", err)
 	}
@@ -425,7 +439,6 @@ func TestIBus(t *testing.T) {
 	if st.OutsideEdit {
 		t.Errorf("the list pushed to ibus reads as an outside edit of fcitx5's: %+v", st)
 	}
-	_ = f
 }
 
 func TestIBusAddressFile(t *testing.T) {
@@ -457,5 +470,14 @@ func TestGVariantStrings(t *testing.T) {
 	t.Parallel()
 	if got := gvariantStrings([]string{"a", `it's`, `b\c`}); got != `['a', 'it\'s', 'b\\c']` {
 		t.Errorf("got %s", got)
+	}
+	for text, want := range map[string][]string{
+		"['xkb:us::eng', 'mozc-jp']\n": {"xkb:us::eng", "mozc-jp"},
+		"@as []\n":                     {},
+		`['it\'s', "b\\c"]`:            {"it's", `b\c`},
+	} {
+		if got := parseGVariantStrings(text); !reflect.DeepEqual(got, want) {
+			t.Errorf("%q: got %q, want %q", text, got, want)
+		}
 	}
 }

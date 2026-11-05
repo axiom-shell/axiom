@@ -165,15 +165,15 @@ func (s *Service) followIBus(ctx context.Context, addr string, owners *dbus.Subs
 
 	b := &ibus{conn: conn, gsettings: s.o.GSettings}
 	s.setActive(b)
-	read := func() error {
-		st, err := b.read(ctx)
+	read := func(list bool) error {
+		st, err := b.read(ctx, list, s.State())
 		if err != nil {
 			return err
 		}
 		s.publish(st)
 		return nil
 	}
-	if err := read(); err != nil {
+	if err := read(true); err != nil {
 		return false, err
 	}
 	for {
@@ -187,7 +187,7 @@ func (s *Service) followIBus(ctx context.Context, addr string, owners *dbus.Subs
 			// ibus-daemon exited (or restarted, with a new address)
 			return true, nil
 		case <-s.refresh:
-			err = read()
+			err = read(true)
 		case m := <-signals.C:
 			if m.Member == "NameOwnerChanged" {
 				// fcitx5 started: it wins
@@ -196,7 +196,8 @@ func (s *Service) followIBus(ctx context.Context, addr string, owners *dbus.Subs
 				}
 				continue
 			}
-			err = read()
+			// A switch leaves the list as it was
+			err = read(m.Member != "GlobalEngineChanged")
 		}
 		if err != nil {
 			if axerr.KindOf(err) == axerr.Unavailable {
@@ -207,7 +208,9 @@ func (s *Service) followIBus(ctx context.Context, addr string, owners *dbus.Subs
 	}
 }
 
-func (b *ibus) read(ctx context.Context) (State, error) {
+// read reads ibus's state: the engines installed, the current one and,
+// when list, its list (else prev's, while that is ibus's).
+func (b *ibus) read(ctx context.Context, list bool, prev State) (State, error) {
 	st := State{Framework: FrameworkIBus, Running: true, Group: []Item{}, Available: []Engine{}}
 	engines, err := b.engines(ctx, "Engines")
 	if err != nil {
@@ -216,12 +219,10 @@ func (b *ibus) read(ctx context.Context) (State, error) {
 	for _, d := range engines {
 		st.Available = append(st.Available, d.engine())
 	}
-	active, err := b.engines(ctx, "ActiveEngines")
-	if err != nil {
-		return State{}, err
-	}
-	for _, d := range active {
-		st.Group = append(st.Group, Item{Name: d.name, Layout: d.layout})
+	if !list && prev.Framework == FrameworkIBus && prev.Running {
+		st.Group = prev.Group
+	} else {
+		st.Group = b.list(ctx, engines)
 	}
 	// An error when there is none ("No global engine.")
 	if v, err := b.conn.GetProperty(ctx, ibusName, ibusPath, ibusIface, "GlobalEngine"); err == nil {
@@ -232,6 +233,30 @@ func (b *ibus) read(ctx context.Context) (State, error) {
 		return State{}, err
 	}
 	return st, nil
+}
+
+// list is ibus's list: its preload-engines setting, which a push and
+// ibus-setup write and its panel preloads (the daemon has no readable list:
+// PreloadEngines is write-only, ActiveEngines the engines of components
+// registered while it runs), each with the layout its engine carries.
+// Empty without gsettings, or when it fails (ibus is followed all the same).
+func (b *ibus) list(ctx context.Context, engines []ibusEngine) []Item {
+	out := []Item{}
+	if b.gsettings == nil {
+		return out
+	}
+	text, err := b.gsettings(ctx, "get", ibusGeneral, "preload-engines")
+	if err != nil {
+		return out
+	}
+	layouts := map[string]string{}
+	for _, d := range engines {
+		layouts[d.name] = d.layout
+	}
+	for _, name := range parseGVariantStrings(text) {
+		out = append(out, Item{Name: name, Layout: layouts[name]})
+	}
+	return out
 }
 
 // engines reads a property listing engines (av of IBusEngineDesc).
@@ -346,4 +371,25 @@ func gvariantStrings(list []string) string {
 		quoted[i] = gvariantString(s)
 	}
 	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+// parseGVariantStrings reads a string array in GVariant's text format, as
+// gsettings prints it ("['xkb:us::eng', 'mozc-jp']", "@as []").
+func parseGVariantStrings(text string) []string {
+	out := []string{}
+	for i := 0; i < len(text); i++ {
+		q := text[i]
+		if q != '\'' && q != '"' {
+			continue
+		}
+		var b strings.Builder
+		for i++; i < len(text) && text[i] != q; i++ {
+			if text[i] == '\\' && i+1 < len(text) {
+				i++
+			}
+			b.WriteByte(text[i])
+		}
+		out = append(out, b.String())
+	}
+	return out
 }
