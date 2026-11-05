@@ -24,14 +24,30 @@ QtObject {
     return before[key] !== after[key];
   }
 
+  // How long after the focused window changes a change of the input
+  // source is the window's own (ms): fcitx5 keeps an input method per
+  // window (shareState No), so focusing one can change `current`
+  readonly property int focusFollowMs: 1000
+
   // Whether the input source switched between two states ({ ids,
-  // current }, the keyboardLayout state): the same list of more than one
+  // current, focusAge, switchAge }: the keyboardLayout state, with the ms
+  // since the focused window changed and since axiom last switched, each
+  // negative or missing for never): the same list of more than one
   // source, another one current (an input method's switch too). A changed
-  // list is a config reload, not a switch
+  // list is a config reload, not a switch; a change within focusFollowMs
+  // of a focus change is the window's input method, unless axiom switched
+  // within that time too
   function layoutSwitched(before, after) {
     if (!before || !after || (after.ids ?? []).length < 2 || after.current === "")
       return false;
+    if (root._within(after.focusAge) && !root._within(after.switchAge))
+      return false;
     return JSON.stringify(before.ids) === JSON.stringify(after.ids) && before.current !== after.current;
+  }
+
+  function _within(age) {
+    const ms = Number(age);
+    return Number.isFinite(ms) && ms >= 0 && ms < root.focusFollowMs;
   }
 
   // A status's tile from its state:

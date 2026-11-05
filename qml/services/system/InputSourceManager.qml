@@ -117,12 +117,17 @@ QtObject {
     return root._source(id)?.kind === "ime" ? "translate" : "keyboard";
   }
 
+  // When axiom last switched (set, next, prev: ms, 0 for never): the
+  // OSD tells it from a window's own input method coming back on focus
+  property double switchedAt: 0
+
   // Switches to the source `id`: the compositor's layout, then the
   // framework's input method. False when no source has that id
   function set(id) {
     const target = InputSources.target(root.sources, id, root.framework, root.registry);
     if (!target)
       return false;
+    root.switchedAt = Date.now();
     const im = () => {
       if (target.im !== "" && root.running)
         root._setIm(target.im);
