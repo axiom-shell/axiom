@@ -517,6 +517,7 @@ Steps:
 - **Done:** **Input sources** (the maintainer's request: "Axiom owns it (Recommended)", "Same model, fewer extras (Recommended)", "Yes, one switch (Recommended)", fcitx5 the default: "keep as planned but default for fcixt (allowing ibus for support of switching since it is cheap", and "the pr gate is lifted. Everything goes through a single PR for 1 pr with full support"): one `Input.keyboard.sources` list of xkb layouts and fcitx5/ibus engines, pushed to the compositor's xkb and, while `Input.keyboard.method.enabled` is on (off by default, shown only with `supports.inputMethod`), to the framework over D-Bus with its options and, in managed mode, its environment and autostart. `InputSourceManager` owns the switch for the bar widget and its popout, the module, the OSD, IPC and keybinds ([input sources](features/input-sources.md)).
 
 Found meanwhile:
+- [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)

@@ -22,6 +22,12 @@ const (
 	watcherName  = "org.kde.StatusNotifierWatcher"
 	watcherPath  = dbus.ObjectPath("/StatusNotifierWatcher")
 	watcherIface = "org.kde.StatusNotifierWatcher"
+	// The item's menu: on 5.1 its LayoutUpdated is the only signal a group
+	// edit sends (SetInputMethodGroupInfo, fcitx5-configtool), seen on a
+	// real fcitx5; InputMethodGroupsChanged comes only with a group added
+	// or removed
+	menuPath  = dbus.ObjectPath("/MenuBar")
+	menuIface = "com.canonical.dbusmenu"
 
 	// The configs SetConfig takes (fcitx5's dbusmodule)
 	fcitxGlobalConfig    = "fcitx://config/global"
@@ -48,6 +54,7 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		{Sender: fcitxName, Path: fcitxPath, Interface: fcitxController, Member: "InputMethodGroupsChanged"},
 		// Every item's: fcitx5's is told apart by its process
 		{Path: sniPath, Interface: sniIface},
+		{Path: menuPath, Interface: menuIface, Member: "LayoutUpdated"},
 		// The watcher coming, going, and items registering with it
 		dbus.NameOwnerChanged(watcherName),
 		{Sender: watcherName, Path: watcherPath, Interface: watcherIface},
@@ -119,23 +126,13 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		case <-s.refresh:
 			err = read(false)
 		case <-s.poll:
-			// No tray item tells of a switch: one is seen as a new current.
-			// Nothing installed named yet: read again (nothing else may)
-			prev := s.State()
-			if len(prev.Available) == 0 {
-				err = read(false)
-				break
-			}
-			if s.hasTray() {
+			// No tray item tells of a switch or (its menu) a group edit:
+			// the whole state is read again, an unchanged one publishing
+			// nothing. Nothing installed named yet: read again too
+			if s.hasTray() && len(s.State().Available) > 0 {
 				continue
 			}
-			var current string
-			var m *dbus.Message
-			if m, err = f.call(ctx, "CurrentInputMethod"); err == nil {
-				if err = m.Store(&current); err == nil && current != prev.Current {
-					err = read(false)
-				}
-			}
+			err = read(false)
 		case m := <-signals.C:
 			switch {
 			case m.Member == "NameOwnerChanged":
@@ -158,6 +155,12 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 			case m.Interface == fcitxController:
 				// The groups changed: their input methods may have too
 				err = read(true)
+			case m.Interface == menuIface:
+				// fcitx5's menu changed: its group may have (an edit sends
+				// nothing else)
+				if ours(m.Sender) {
+					err = read(false)
+				}
 			case m.Member == "NewIcon" || m.Member == "NewToolTip":
 				if ours(m.Sender) {
 					s.setTray(true)

@@ -89,7 +89,8 @@ func newFakeFcitx(t *testing.T, bus *dbustest.Bus) *fakeFcitx {
 				v := it.([]any)
 				f.group = append(f.group, Item{v[0].(string), v[1].(string)})
 			}
-			f.conn.Emit(fcitxPath, fcitxController, "InputMethodGroupsChanged", "")
+			// As fcitx5 5.1: only its tray menu tells (seen on a real one)
+			f.menuChanged()
 			return nil
 		})},
 		"Save": {Fn: none(func(*dbus.Message) []any { return nil })},
@@ -111,7 +112,14 @@ func (f *fakeFcitx) editOutside(group []Item) {
 	f.mu.Lock()
 	f.group = group
 	f.mu.Unlock()
-	f.conn.Emit(fcitxPath, fcitxController, "InputMethodGroupsChanged", "")
+	f.menuChanged()
+}
+
+// menuChanged is what fcitx5 5.1 sends when its group changes, by
+// SetInputMethodGroupInfo or its config tool: its tray menu's
+// LayoutUpdated, nothing on Controller1.
+func (f *fakeFcitx) menuChanged() {
+	f.sni.Emit(menuPath, menuIface, "LayoutUpdated", "ui", uint32(1), int32(0))
 }
 
 func (f *fakeFcitx) took(member string) bool {
@@ -331,6 +339,13 @@ func TestFcitxPollsWithoutTrayItem(t *testing.T) {
 	f.mu.Unlock()
 	if !testkit.Eventually(func() bool { return h.s.Poll().Polling && h.s.State().Current == "mozc" }) {
 		t.Fatalf("no tray item: the poll never saw the switch; the state is %+v", h.s.State())
+	}
+	// A group edit made in fcitx5, no tray menu to tell of it
+	f.mu.Lock()
+	f.group = []Item{{"keyboard-us", ""}}
+	f.mu.Unlock()
+	if !testkit.Eventually(func() bool { return h.s.Poll().Polling && len(h.s.State().Group) == 1 }) {
+		t.Fatalf("no tray item: the poll never saw the group edit; the state is %+v", h.s.State())
 	}
 
 	w := startWatcher(t, bus, f)
