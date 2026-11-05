@@ -28,6 +28,8 @@ Scope {
       readonly property bool wanted: WindowSwitcherManager.shown && screenScope.modelData.name === WindowSwitcherManager.screenName
 
       onWantedChanged: screenScope.sync()
+      // A screen added while it's open on it
+      Component.onCompleted: screenScope.sync()
 
       function sync() {
         if (screenScope.wanted)
