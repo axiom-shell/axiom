@@ -39,7 +39,8 @@ FocusScope {
 
   // Holds its tallest (maxHeight), the blocks against the field's end: for
   // a host that lays its height along a screen edge (the left or right
-  // one), where a box resized around its centre would move the field
+  // one), where a box resized around its centre would move the field, or
+  // one grown from the edge away from the field
   property bool holdHeight: false
 
   implicitWidth: LauncherConfig.width

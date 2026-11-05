@@ -21,8 +21,7 @@ Scope {
 
   required property ShellScreen screen
 
-  readonly property var host: popout
-  readonly property bool shown: root.host?.isOpen ?? false
+  readonly property bool shown: popout.isOpen
   // What the panel searches for when it's created (it only exists while
   // the host is open)
   property string _openText: ""
@@ -32,16 +31,14 @@ Scope {
     // Searched first, so instances this opens on other monitors (see
     // SurfaceGroup) show the same text
     LauncherManager.query(root._openText);
-    if (!root.host)
-      return;
-    if (root.host.isOpen)
-      root.host.contentItem?.reset(root._openText);
+    if (popout.isOpen)
+      (popout.contentItem as LauncherPanel)?.reset(root._openText);
     else
-      root.host.show();
+      popout.show();
   }
 
   function close() {
-    root.host?.hide();
+    popout.hide();
   }
 
   function toggle() {
@@ -57,7 +54,7 @@ Scope {
     kind: "launcher"
     target: LauncherConfig.screen
     screen: root.screen
-    window: root.host?.window ?? null
+    window: popout.window
     shown: root.shown
     onSyncRequested: shown => shown ? root.open(LauncherManager.text) : root.close()
   }
@@ -143,9 +140,11 @@ Scope {
         // Stays open until Esc, a pick or a click elsewhere
         readonly property bool autoDismiss: false
         implicitWidth: Math.min(LauncherConfig.width, root.screen.width - Widget.px(64))
-        // On a side edge the panel runs along it; reversed under the
-        // top edge, its search field at the bottom stays put
-        holdHeight: popout.vertical || (LauncherConfig.reverse && popout.edge === ScreenEdge.Top)
+        // On a side edge the panel runs along it; on the top or bottom
+        // edge, the box grows from that edge, so a search field at its
+        // other end (reversed under the top edge, not reversed over the
+        // bottom one) stays put
+        holdHeight: popout.vertical || LauncherConfig.reverse === (popout.edge === ScreenEdge.Top)
         shown: popout.isOpen
         onCloseRequested: popout.hide()
         Component.onCompleted: reset(root._openText)

@@ -26,15 +26,14 @@ Scope {
       required property ShellScreen modelData
 
       readonly property bool wanted: WindowSwitcherManager.shown && screenScope.modelData.name === WindowSwitcherManager.screenName
-      readonly property var host: popout
 
       onWantedChanged: screenScope.sync()
 
       function sync() {
         if (screenScope.wanted)
-          screenScope.host?.show();
+          popout.show();
         else
-          screenScope.host?.hide();
+          popout.hide();
       }
 
       // Wraps to another row or column past 80% of the screen
