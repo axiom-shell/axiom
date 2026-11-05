@@ -232,6 +232,8 @@ PopoutWrapperBase {
     open: still.showing && !root.isClosing && root.claimed
     onOverlayLayer: root.onOverlayLayer
     overOverlay: SurfaceManager.surfaceOpenOn("overlay", root.screen)
+    // Where a detached box slides from follows its latched window
+    under: root.underBar
     origin: slot.popupScreenOrigin
     attachedSurface: surface
     opens: root._out
