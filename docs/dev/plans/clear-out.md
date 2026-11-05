@@ -96,7 +96,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 48 | bar-popouts-06 | major | Done: Bar widgets that clip or glide | 4 | ~60 | bar-popouts-01 |  |
 | 49 | bar-popouts-07 | major | Edge menu sizing, placement and zones | 5 | ~250 | bar-popouts-01, overlay-modules-02 |  |
 | 50 | bar-popouts-08 | minor-sweep | Popouts and edge menus | 5 | ~120 | bar-popouts-03, -07 |  |
-| 51 | bar-popouts-09 | minor-sweep | The bar and bar widgets, with the workspace popouts | 7 | ~200 | bar-popouts-04, -06 |  |
+| 51 | bar-popouts-09 | minor-sweep | Done: The bar and bar widgets, with the workspace popouts | 7 | ~200 | bar-popouts-04, -06 |  |
 | 52 | bar-popouts-11 | plan | The 1080p pass: text clips, and the Keybinds page on a small monitor | 2 | needs a plan | compositor-16 |  |
 | 53 | bar-popouts-12 | plan | Nineteen windows mapped on one monitor | 1 | needs a plan | none |  |
 | 54 | bar-popouts-13 | plan | Popouts and tray submenus taller than the screen | 2 | needs a plan | bar-popouts-08 |  |
@@ -443,12 +443,12 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The tray menu draws its own separator](../issues.md#the-tray-menu-draws-its-own-separator)
   - [The dock's footprint assumes fillets at both ends](../issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
-- **bar-popouts-09** (5):
+- **bar-popouts-09** (5, done):
   - WindowLookConfig rebuilds BarStyle.look
   - SystemStats works out ValueStyleWidget's style fallbacks again
-  - [The workspace switchers find a workspace by id with hand-written loops](../issues.md#the-workspace-switchers-find-a-workspace-by-id-with-hand-written-loops)
-  - [The two workspace popouts share 28 lines of payload and colour properties](../issues.md#the-two-workspace-popouts-share-28-lines-of-payload-and-colour-properties)
-  - [Small improvements to WorkspaceGrid](../issues.md#small-improvements-to-workspacegrid)
+  - The workspace switchers find a workspace by id with hand-written loops
+  - The two workspace popouts share 28 lines of payload and colour properties
+  - Small improvements to WorkspaceGrid
 - **bar-popouts-11** (2): Takes compositor's small-monitor Keybinds entry, which says to ride the 1080p pass.
   - [Text clips on 1080p screens](../issues.md#text-clips-on-1080p-screens)
   - [The keybinds page on a small monitor with large binds](../issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds)

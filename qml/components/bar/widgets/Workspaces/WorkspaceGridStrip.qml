@@ -199,7 +199,6 @@ Item {
         barConfig: root.barConfig,
         cellSpacing: root.spacing,
         radius: root.cellRadius,
-        fontSize: root.barConfig.fontSize,
         properties: root.properties
       })
   }

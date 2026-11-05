@@ -579,20 +579,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### The two workspace popouts share 28 lines of payload and colour properties
-- **Where:** `qml/components/content/WorkspaceStrips/WorkspaceStrips.qml:18`, `qml/components/content/WorkspaceGrid/WorkspaceGrid.qml:18`
-- **What:** `diff` shows the same payload comment and members in both files: `output`, `monitor`, `vertical`, `cellSize`, `cellLength`, `barConfig`, `cellSpacing`, `radius`, the four colours, `base` and `activeId` (23 lines), plus the `_settled` latch and its comment (5 lines). AGENTS.md: "a second copy of a pattern becomes a shared piece". Fix: a `WorkspacePopoutPanel.qml` (a `Panel`) in qml/components/bar/widgets/Workspaces/, which both already import, holds those 28 lines. Each panel keeps only its own members (`stripVertical`/`ids`; `emptyColor`, `gridColumns`, `gridRows`, `activeIndex`). About 23 lines fewer. BarPopouts' `hasOwnProperty` copy covers inherited properties, so the payload still lands.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Small improvements to WorkspaceGrid
-- **Where:** `qml/components/content/WorkspaceGrid/WorkspaceGrid.qml:36` (`fontSize`), `qml/components/bar/widgets/Workspaces/WorkspaceGridStrip.qml:218`, `qml/components/content/WorkspaceGrid/WorkspaceGrid.qml:87` (`look`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:69` (`_look`)
-- **What:** Two small fixes:
-  1. **`fontSize` is dead.** `grep -cw fontSize` in WorkspaceGrid.qml is 1 (the declaration), yet the widget still sends `fontSize: root.barConfig.fontSize,`. WorkspaceCell reads `barConfig.fontSize` itself. Fix: delete both lines (2 lines).
-  2. **The cell's `look` is a copy.** It repeats `WorkspaceCellRow._look`'s `BarsConfig.cellColors(…)` expression with only the variable names changed, so a change to how the bar colours cells would leave the popout behind. Fix: one `BarsConfig` function both call.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### The dock's footprint assumes fillets at both ends
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:298` (`_footprint`)
 - **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
@@ -608,12 +594,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A custom clock format without spaces spills past a vertical bar
 - **Where:** `qml/components/bar/widgets/Time/Time.qml:108` (`_split`)
 - **What:** On a vertical bar the clock is `thickness` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### The workspace switchers find a workspace by id with hand-written loops
-- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml:74` (`wsById`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml:83` (`hasWindows`), `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml:56` (`_occupied`)
-- **What:** `WorkspaceStrip.wsById` and `hasWindows` (lines 74–85, 12 lines; `hasWindows` has one call, line 63), and `WorkspaceCellRow._occupied` (8 lines), each walk `CompositorManager.workspaces` with an index loop to find one id. WorkspaceGrid already does it in one line: `CompositorManager.workspaces.find(ws => ws.id === id) ?? null` (WorkspaceGrid.qml:61). Fix: `wsById` becomes that `find`, `hasWindows` is inlined at its call, and `_occupied` becomes `return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;`. That is 20 lines down to about 6, with the same results.
 - **Size:** trivial
 - **Found:** 2026-10-30, while reviewing the bar-widgets system
 

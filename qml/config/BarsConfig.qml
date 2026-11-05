@@ -236,6 +236,12 @@ QtObject {
     return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false), color, own, state);
   }
 
+  // A Workspaces cell's colors (cellColors) by its state, in the widget's
+  // `colors` ({ activeColor, occupiedColor, emptyColor, textColor })
+  function workspaceCellColors(barConfig, colors, active, occupied) {
+    return BarsConfig.cellColors(barConfig, active ? colors.activeColor : occupied ? colors.occupiedColor : colors.emptyColor, active || occupied ? colors.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
+  }
+
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its
   // widget: a pill for capsule widgets, else the widgets' radius less the
   // inset
