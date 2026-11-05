@@ -441,7 +441,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [SurfaceContext.layout's pill and merged results have no test row](../issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
   - Both tray menu lists override the same width cap
   - The tray menu draws its own separator
-  - [The dock's footprint assumes fillets at both ends](../issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
+  - The dock's footprint assumes fillets at both ends
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - **bar-popouts-09** (5, done):
   - WindowLookConfig rebuilds BarStyle.look

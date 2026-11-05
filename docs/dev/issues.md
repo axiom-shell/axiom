@@ -531,12 +531,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### The dock's footprint assumes fillets at both ends
-- **Where:** `qml/components/surfaces/dock/DockWindow.qml:298` (`_footprint`)
-- **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### A pill's shadow run-on rectangles log stackAfter warnings
 - **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
 - **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
