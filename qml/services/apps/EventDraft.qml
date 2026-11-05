@@ -92,7 +92,11 @@ QtObject {
     return "";
   }
 
+  // Enter in the title saves too: not again while saving, nor past the
+  // question (its own buttons pick)
   function save() {
+    if (root.busy || root.asking !== "")
+      return;
     const draft = root._collect();
     const problems = CalendarEvents.problems(draft);
     if (problems.length > 0) {
@@ -100,7 +104,7 @@ QtObject {
       return;
     }
     // A change to the repeat or the calendar is the whole series'
-    if (draft.recurring && root.asking === "" && draft.repeat === draft.origRepeat && draft.calendar === draft.originalCalendar) {
+    if (draft.recurring && draft.repeat === draft.origRepeat && draft.calendar === draft.originalCalendar) {
       root.asking = "save";
       return;
     }
@@ -134,9 +138,15 @@ QtObject {
     if (!root)
       return;
     root.busy = false;
-    if (result.ok)
+    // A conflict synced the event again: reopened on what's there now,
+    // closed when it's gone
+    const fresh = result.kind === "conflict" && !root.isNew ? CalendarManager.events.find(e => e.href === root.draft.href && e.rid === root.draft.rid) : root.draft;
+    if (result.ok || !fresh) {
       root.close();
-    else
-      root.error = CalendarManager.errorText(result);
+      return;
+    }
+    if (fresh !== root.draft)
+      root.open(CalendarEvents.draftOf(fresh));
+    root.error = CalendarManager.errorText(result);
   }
 }

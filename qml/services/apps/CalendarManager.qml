@@ -190,48 +190,34 @@ QtObject {
   }
 
   // Saves a draft (CalendarEvents.newDraft/draftOf): a new event without an
-  // href; `scope` "series" or "occurrence". Calls back with { ok, kind,
-  // message }.
+  // href; `scope` "series" or "occurrence". A changed calendar moves the
+  // whole event (the daemon writes it there, then deletes the old one).
+  // Calls back with { ok, kind, message }; a conflict has synced the
+  // event's calendar again.
   function save(draft, scope, callback) {
     if (Paths.greeter)
       return;
     const calendar = root.calendar(draft.calendar);
-    if (!calendar?.writable)
+    const from = draft.href ? root.calendar(draft.originalCalendar) : calendar;
+    if (!calendar?.writable || !from?.writable)
       return callback?.({
         "ok": false,
         "kind": "refused",
         "message": "That calendar can't be changed"
       });
-    // Moving an event to another calendar: a new one there, then the old
-    // one deleted
-    if (draft.href && draft.originalCalendar && draft.originalCalendar !== draft.calendar) {
-      const moved = Object.assign({}, draft, {
-        "href": "",
-        "etag": "",
-        "rid": ""
-      });
-      return root.save(moved, "series", result => {
-        if (!result.ok)
-          return callback?.(result);
-        root.remove({
-          "calendar": draft.originalCalendar,
-          "href": draft.href,
-          "etag": draft.etag,
-          "rid": "",
-          "key": ""
-        }, "series", callback);
-      });
-    }
+    const moving = from.id !== calendar.id;
     root._enqueue("save", done => BackendManager.call("calendar.save", {
         "range": root.range,
         "accounts": root._accounts(calendar.account),
-        "account": calendar.account,
-        "calendar": calendar.href,
+        "account": from.account,
+        "calendar": from.href,
         "href": draft.href,
         "etag": draft.etag,
-        "scope": scope,
+        "scope": moving ? "series" : scope,
         "rid": draft.rid,
-        "event": CalendarEvents.payloadOf(draft)
+        "event": CalendarEvents.payloadOf(draft),
+        "toAccount": moving ? calendar.account : "",
+        "toCalendar": moving ? calendar.href : ""
       }, (error, result) => done(error ? root._failure(error) : {
           "ok": true,
           "href": result.href
