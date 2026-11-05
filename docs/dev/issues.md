@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A fading toast keeps its full blur on niri
+- **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
+- **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the floating popouts branch
+
 ### A reserving held dock reserves the screen up to its distance
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`panelWindow.exclusiveZone`)
 - **What:** An always-shown held dock with Reserve space (both defaults) reserves `boxOffset + thickness`, from its edge to the box's far side. With `distance` (0–50% across the free screen, new in place of a px `gap` of at most 200) a dock at 50% reserves half the screen, and the windows tile into the other half. A layer surface can only reserve from its edge, so the choice is the maintainer's: hide Reserve space past a distance of 0, reserve only at 0, or keep it.
