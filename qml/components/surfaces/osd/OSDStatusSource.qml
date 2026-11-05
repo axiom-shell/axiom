@@ -97,12 +97,13 @@ Loader {
   }
 
   // The input sources' state (OSDItems' keyboardLayout): the ids, the
-  // current one and its label
+  // current one, its label and its kind's icon
   function _sourcesState() {
     return {
       "ids": InputSourceManager.sources.map(s => s.id),
       "current": InputSourceManager.current,
-      "label": InputSourceManager.labelFor(InputSourceManager.current, "short")
+      "label": InputSourceManager.labelFor(InputSourceManager.current, "short"),
+      "icon": InputSourceManager.iconFor(InputSourceManager.current)
     };
   }
 

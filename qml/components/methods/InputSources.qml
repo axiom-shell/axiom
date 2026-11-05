@@ -161,15 +161,18 @@ QtObject {
 
   // The id of the current source, from the compositor's xkb index and the
   // framework's current input method (`im`, "" when none runs): the source
-  // that is that input method (of two, the one on that index), else the
-  // first xkb source on that index, else any on it; "" for none
+  // that is that input method (of two, the one on that index; an xkb one
+  // only on that index: the compositor switched layouts itself, a grp:
+  // option or its own bind, and the framework's keyboard-us is still
+  // current), else the first xkb source on that index, else any on it; ""
+  // for none
   function current(sources, xkbIndex, im, framework, registry) {
     const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
     const index = Number(xkbIndex) || 0;
     const onIndex = s => root.xkbIndex(sources, s) === index;
     if (String(im ?? "") !== "" && (framework === "fcitx5" || framework === "ibus")) {
       const named = list.filter(s => root.imName(s, framework, registry) === im);
-      const pick = named.find(onIndex) ?? named[0];
+      const pick = named.find(onIndex) ?? named.find(s => s.kind === "ime");
       if (pick)
         return pick.id;
     }

@@ -48,6 +48,8 @@ TestCase {
     compare(KeyboardLayouts.code("English (Dvorak)", registry), "us");
     compare(KeyboardLayouts.code("Klingon", registry), "kl", "not listed: guessed");
     compare(KeyboardLayouts.shape(["English (US)", "German"], 0, "us", registry).layouts, ["us", "de"]);
+    compare(KeyboardLayouts.shape(["English (US)", "German"], 0, "de,us", registry).layouts, ["us", "de"], "the registry over a config of as many in another order");
+    compare(KeyboardLayouts.shape(["Klingon", "German"], 0, "tlh,de", registry).layouts, ["tlh", "de"], "one not listed: the configured code at its place");
   }
 
   function test_code() {

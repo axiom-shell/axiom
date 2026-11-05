@@ -156,6 +156,8 @@ TestCase {
   function test_current() {
     compare(InputSources.current(test.mixed, 0, "mozc", "fcitx5", null), "mozc");
     compare(InputSources.current(test.mixed, 0, "keyboard-us", "fcitx5", null), "us");
+    compare(InputSources.current(test.mixed, 1, "keyboard-us", "fcitx5", null), "neo", "the compositor switched layouts itself: its index, not fcitx5's keyboard-us");
+    compare(InputSources.current(test.mixed, 1, "mozc", "fcitx5", null), "mozc", "an engine stays current on another layout");
     compare(InputSources.current(test.mixed, 1, "", "none", null), "neo", "without a framework, the xkb index");
     compare(InputSources.current(test.mixed, 1, "something-else", "fcitx5", null), "neo", "an input method not listed falls back to the index");
     compare(InputSources.current(test.mixed, 2, "", "none", null), "pinyin", "no xkb source on that index: any");
