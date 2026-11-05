@@ -21,8 +21,8 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
   - `shape`: `square` while the longer side is under 1.5× the shorter, else `horizontal` / `vertical` (`GridPlacement.slotShape`)
   - `compact`, plus `pad`.
 - A unit is 25 to 140 px depending on the screen or menu (`OverlayGrid`; an edge menu uses its screen's overlay's), and text doesn't scale with it.
-  - So a module sets `fullMinWidth` / `fullMinHeight`, the px its full layout needs.
-  - `compact` is a quarter card or less (`cols <= 2 && rows <= 2`) or, once laid out, smaller than those.
+  - So a module sets `fullMinWidth` / `fullMinHeight`, the px its full layout needs inside its padding (as `innerWidth` / `innerHeight` measure).
+  - `compact` is a quarter card or less (`cols <= 2 && rows <= 2`) or, once laid out, its room inside the full layout's padding (`SlotContext.fullPad`) is smaller than those.
 - Compact shows the key figure: a `compactContent`, usually a `CompactFigure`, on Card, Panel or TitledCard.
 - Otherwise the module picks its layout from `shape` and its px room:
   - side by side when wide, stacked when tall;

@@ -21,8 +21,8 @@ Rectangle {
   property var host: ({
       "kind": "overlay"
     })
-  // The least width and height (px) the module's full layout needs; a
-  // smaller slot is compact (see SlotContext)
+  // The least width and height (px, inside the padding) the module's full
+  // layout needs; a smaller slot is compact (see SlotContext)
   property real fullMinWidth: 0
   property real fullMinHeight: 0
   // The height (px) its content wants, and what the grid grows it to (see

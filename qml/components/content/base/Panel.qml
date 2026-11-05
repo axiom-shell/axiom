@@ -28,8 +28,8 @@ Item {
   property var host: ({
       "kind": "overlay"
     })
-  // Card only: the least width and height (px) the full column needs; a
-  // smaller slot is compact (see SlotContext)
+  // Card only: the least width and height (px, inside the padding) the
+  // full column needs; a smaller slot is compact (see SlotContext)
   property real fullMinWidth: 0
   property real fullMinHeight: 0
   // Card only: the content draws its own box (a `background`) even when

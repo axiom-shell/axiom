@@ -376,7 +376,6 @@ Found by the audits:
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
-- [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding)
 - [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
 - [The Clock's date and label keep their room while the time shrinks to nothing](issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)

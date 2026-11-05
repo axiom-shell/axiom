@@ -28,7 +28,7 @@ The product questions, answered in one sitting (step 2.5); each entry quotes its
 ### Cross-area merges
 Settled in this triage. One real duplicate was merged in issues.md; the rest are entries moved into one cluster because they share code.
 
-- **Duplicate, merged:** "High module padding clips edge menu modules" (bar-popouts, from the maintainer's notes) is folded into [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](../issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included). One cause: compact compares the whole slot with the fullMin sizes, so a higher padding clips a module instead of making it compact. The note is quoted in the kept entry, its Phase 7 link removed (the kept entry is in Phase 8), the edge-menus review record points at the kept entry. Cluster overlay-modules-02.
+- **Duplicate, merged:** "High module padding clips edge menu modules" (bar-popouts, from the maintainer's notes) is folded into fullMinWidth and fullMinHeight are compared with the slot's size, padding included (fixed, row 20). One cause: compact compares the whole slot with the fullMin sizes, so a higher padding clips a module instead of making it compact. The note is quoted in the kept entry, its Phase 7 link removed (the kept entry is in Phase 8), the edge-menus review record points at the kept entry. Cluster overlay-modules-02.
 - **Takeover settings, settings page and launcher:** config's preview entry and platform's launcher /config entry are one fix, the decided SchemaLayout predicate (maintainer, 2026-10-31): config-03.
 - **Sway's named workspaces share id -1** moves from features to compositor-11, beside sway-lists-disabled-outputs (the same SwayState and CompositorManager code).
 - **A popout taller than the screen** (features, needs a plan) joins bar-popouts' tray submenu entry in the plan cluster bar-popouts-13; the tray's most-height can be the plan's first item.
@@ -461,7 +461,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 **overlay-modules**
 
 - **overlay-modules-02** (4): Holds the merged edge-menu padding note (confirm in an edge menu).
-  - [fullMinWidth and fullMinHeight are compared with the slot's size, padding included](../issues.md#fullminwidth-and-fullminheight-are-compared-with-the-slots-size-padding-included)
+  - fullMinWidth and fullMinHeight are compared with the slot's size, padding included
   - Card and Panel each spell out the grow and expand members
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
   - [A DeviceList squeezed to nothing wants no growth](../issues.md#a-devicelist-squeezed-to-nothing-wants-no-growth)
