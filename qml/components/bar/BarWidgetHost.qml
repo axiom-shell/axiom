@@ -36,9 +36,10 @@ Item {
   property var panel
   property var screen
 
-  required property var properties
-  required property string componentPath
-  property var layoutOverrides: ({})
+  // The widget's config ({ type, properties, layout })
+  required property var widget
+  readonly property var properties: root.widget.properties ?? {}
+  readonly property var layoutOverrides: root.widget.layout ?? {}
   // The bar editor's selected widget: outlined, and its sizing reported
   property bool highlighted: false
   // The widget hovered in the bar editor: outlined as the selected one
@@ -109,7 +110,7 @@ Item {
   }
   // Its type's own priority (BarsConfig.defaultPriority, the schema's
   // `x-priority`), which the widget's `layout.priority` overrides
-  property int defaultPriority: 0
+  readonly property int defaultPriority: BarsConfig.defaultPriority(root.widget.type ?? "")
   readonly property int priority: layoutOverrides?.priority ?? defaultPriority
   // Its sizing as laid out, for the bar editor's inspector
   readonly property var measure: ({
@@ -147,7 +148,12 @@ Item {
   property bool _settled: false
   Component.onCompleted: {
     _load();
-    Qt.callLater(() => root._settled = true);
+    // A method, not a closure: the call is dropped if the host is gone
+    // by then (a bar rebuilt)
+    Qt.callLater(root._settle);
+  }
+  function _settle() {
+    root._settled = true;
   }
   readonly property real _drawnMain: isVertical ? height : width
   readonly property bool _resizing: Math.abs(_drawnMain - mainSize) > 0.5
@@ -166,16 +172,28 @@ Item {
     enabled: root._settled
   }
 
+  // The type loaded
+  property string _type: ""
   // Created with its inputs already set, so the module's own bindings
   // never see them undefined; bound afterwards so later changes (e.g. edits
-  // live in the bar editor) reach it
+  // live in the bar editor) reach it. Its `properties` are handed over
+  // from `widget` whole (not `properties`, which may not have caught up):
+  // a new type is loaded with its own, so a module never sees another
+  // type's (a bar's widgets swapped by a saved config)
   function _load() {
-    contentLoader.setSource(root.componentPath, {
+    root._type = root.widget.type ?? "";
+    contentLoader.setSource(root._type ? Paths.widgetUrl(root._type) : "", {
       "barConfig": root.barConfig,
       "panel": root.panel,
       "screen": root.screen,
-      "properties": root.properties
+      "properties": root.widget.properties ?? {}
     });
+  }
+  onWidgetChanged: {
+    if ((root.widget.type ?? "") !== root._type)
+      root._load();
+    else if (root._item)
+      root._item.properties = root.widget.properties ?? {};
   }
 
   // Where the module's pointer areas go (BarWidget.hitArea), over the
@@ -228,7 +246,6 @@ Item {
     menu: EdgeMenusConfig.popoutMenuOf(root.properties)
     active: menu !== "" && !root.preview
   }
-  onComponentPathChanged: _load()
 
   // The module at its laid-out size, centred in the size drawn (or at its
   // start, with `pinStart`): it never re-fits (eliding its label)
@@ -251,7 +268,6 @@ Item {
           item.barConfig = Qt.binding(() => root.barConfig);
           item.panel = Qt.binding(() => root.panel);
           item.screen = Qt.binding(() => root.screen);
-          item.properties = Qt.binding(() => root.properties);
           if ("hitArea" in item)
             item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
         }

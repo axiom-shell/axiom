@@ -70,11 +70,16 @@ Item {
     if (root.index < 0)
       root._placed = false;
     else
-      Qt.callLater(() => root._placed = root.index >= 0);
+      Qt.callLater(root._place);
   }
   Component.onCompleted: {
     _lastIndex = index;
-    Qt.callLater(() => root._placed = root.index >= 0);
+    Qt.callLater(root._place);
+  }
+  // Called later, as a method: the call is dropped if the indicator is gone
+  // by then (a bar rebuilt), as a closure's isn't
+  function _place() {
+    root._placed = root.index >= 0;
   }
 
   // From `fromAlong` out past the end it's leaving, then in from the other

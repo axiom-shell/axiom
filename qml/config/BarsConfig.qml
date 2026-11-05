@@ -422,13 +422,15 @@ QtObject {
 
   // Each bar as one entry per screen it's on (its `screen`, a
   // ScreenTarget): the primary monitor, every monitor, or those named
-  // (the primary monitor when none of them is connected). A bar on more
-  // than one screen gets an id per screen (keying its BarPanel), `sourceId`
-  // its own; `monitor` is the screen's name.
+  // (the primary monitor when none of them is connected). A bar whose
+  // mode isn't primary (inherit included) gets an id per screen, even on
+  // one (keying its BarPanel, so it depends only on its screen: a monitor
+  // plugged in or out leaves the others' windows), `sourceId` its own;
+  // `monitor` is the screen's name.
   function expandBars(bars) {
     return [].concat(...bars.map(bar => {
       const screens = General.screensFor(bar.screen);
-      if (screens.length <= 1 || bar.screen.mode === "primary")
+      if (screens.length === 0 || bar.screen.mode === "primary")
         return [Object.assign({}, bar, {
             "monitor": screens[0]?.name ?? ""
           })];

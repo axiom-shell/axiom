@@ -485,11 +485,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
-### Bar widget hosts settle after they're gone
-- **Where:** `qml/components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `qml/components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`), `qml/components/bar/BarContainer.qml` (the inline `Section`'s `Component.onCompleted`)
-- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced. BarContainer's inline `Section` settles through the same `Qt.callLater`; the fix should cover it too (bar audit, 2026-10-30).
-- **Size:** small
-- **Found:** 2026-10-29, while building the revamped example setups
+### The window switcher reads a removed screen's name
+- **Where:** `qml/shell/WindowSwitcher.qml` (`claimKey`)
+- **What:** Unplugging a monitor logs `TypeError: Cannot read property 'name' of null` from `@shell/WindowSwitcher.qml[79:-1]` (`claimKey: "switcher:" + screenScope.modelData.name`): the Variants delegate's screen is gone before the delegate is (seen in a nested Hyprland, removing a headless output). Fix: `screenScope.modelData?.name ?? ""`, or read the name once.
+- **Size:** trivial
+- **Found:** 2026-11-05, while keeping the bar across a hotplug (bar-popouts-04)
 
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`
@@ -580,17 +580,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
-
-### Plugging in or unplugging a monitor remakes the bar that stays
-- **Where:** `qml/config/BarsConfig.qml:409` (`expandBars`), `qml/shell/Bar.qml:25`
-- **What:** The id depends on how many of the bar's screens are connected.
-  - A bar on every monitor (or on several named ones) keeps the plain `bar.id` while one of its screens is connected (`if (screens.length <= 1 || bar.screen.mode === "primary")`). It gets `<id>@<screen>` once two are.
-  - `qml/shell/Bar.qml` keys each `BarPanel` on `b.id + "|" + namespace`. Docking a laptop with an "Every monitor" bar changes the laptop bar's key from `bar` to `bar@eDP-1`, so its window is destroyed and rebuilt. Undocking does the same to the bar that stays.
-  - That bar flickers and loses its open popout and its owner-keyed requests (`"corner:" + id`, `"barPopout:" + id`). On sway and niri, the remade bar maps after the border, which then maps the border again (layering-and-corners.md › Build order).
-
-  Running bars already carry `sourceId` for the config entry. Fix: suffix `@<screen>` whenever `bar.screen.mode !== "primary"`, so an entry's id depends only on its screen. Check every reader that compares a running id with a config id first; `liveReports` and `isSelectedWidget` match on `sourceId`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the bar system
 
 ### A pill's shadow run-on rectangles log stackAfter warnings
 - **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)

@@ -7,7 +7,6 @@
     "missing-property: Member \"barConfig\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1,
     "missing-property: Member \"hitArea\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1,
     "missing-property: Member \"panel\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1,
-    "missing-property: Member \"properties\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1,
     "missing-property: Member \"screen\" not found on type (component in components/bar/BarWidgetHost.qml)::item with type QObject": 1
   },
   "components/bar/widgets/Time/Time.qml": {

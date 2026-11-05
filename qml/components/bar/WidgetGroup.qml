@@ -289,11 +289,7 @@ Item {
     delegate: BarWidgetHost {
       id: module
       required property int index
-      readonly property var modelData: root.widgets[index] ?? {
-        "component": "",
-        "properties": {},
-        "layout": {}
-      }
+      readonly property var modelData: root.widgets[index] ?? {}
 
       // Clear of its caps; a widget with no background sits loose
       readonly property var _place: root._insetPlaces[module.index] ?? null
@@ -305,10 +301,7 @@ Item {
       trailInset: module.hasBackground ? module._segment.trail : (module.index < root._lastContent && !module.fills ? root._looseGap : 0)
 
       barConfig: root.barConfig
-      properties: module.modelData.properties || {}
-      layoutOverrides: module.modelData.layout || {}
-      defaultPriority: BarsConfig.defaultPriority(module.modelData.type ?? "")
-      componentPath: module.modelData.component
+      widget: module.modelData
       highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
       hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
       // The bar editor's chip of the widget under the pointer looks hovered
