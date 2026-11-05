@@ -304,8 +304,11 @@ def main():
 
     def lock_files(path, seen):
         files = [path]
+        text = path.read_text()
+        # Parts loaded by URL (CustomElement's elements/<Kind>/…) count too
+        by_url = {f for d in re.findall(r'Qt\.resolvedUrl\("(\w+)/', text) for f in (path.parent / d).rglob("*.qml")}
         for part, f in part_files.items():
-            if part not in seen and re.search(rf"\b{part}\s*\{{", path.read_text()):
+            if part not in seen and (f in by_url or re.search(rf"\b{part}\s*\{{", text)):
                 seen.add(part)
                 files += lock_files(f, seen)
         return files
