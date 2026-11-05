@@ -8,18 +8,10 @@ QtObject {
 
   readonly property var _c: ConfigManager.live.Notes
 
-  // $XDG_DATA_HOME/axiom/notes/
-  readonly property string defaultDirectory: Paths.defaultNotesPath
   readonly property bool linked: _c.directory.trim() !== ""
-  // The notes folder, absolute with a trailing slash
-  readonly property string directory: {
-    let dir = _c.directory.trim();
-    if (dir === "")
-      return root.defaultDirectory;
-    if (dir === "~" || dir.startsWith("~/"))
-      dir = Paths.homeDirectory + dir.slice(2);
-    return dir.replace(/\/*$/, "/");
-  }
+  // The notes folder, absolute with a trailing slash ($XDG_DATA_HOME/axiom/notes/
+  // when none is linked)
+  readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath
   // Without dots, lower case
   readonly property var extensions: _c.extensions.map(ext => ext.trim().replace(/^\.+/, "").toLowerCase()).filter(ext => ext !== "")
   readonly property bool showHidden: _c.showHidden

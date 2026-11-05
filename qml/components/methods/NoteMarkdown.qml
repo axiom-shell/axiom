@@ -445,13 +445,10 @@ QtObject {
         });
       }
       copy.blocks.push(root.newTask());
-      return {
-        "doc": copy,
-        "focus": {
-          "block": copy.blocks.length - 1,
-          "pos": 0
-        }
-      };
+      return root.reparse(copy, {
+        "block": copy.blocks.length - 1,
+        "pos": 0
+      });
     }
     if (block.kind === "task") {
       copy.blocks[index] = {
@@ -505,12 +502,9 @@ QtObject {
     const indent = /^\s*/.exec(at.line)[0];
     const line = bullet ? indent + at.line.slice(bullet[0].length) : indent + "- " + at.line.slice(indent.length);
     block.text = block.text.slice(0, at.start) + line + block.text.slice(at.end);
-    return {
-      "doc": copy,
-      "focus": {
-        "block": index,
-        "pos": at.start + line.length
-      }
-    };
+    return root.reparse(copy, {
+      "block": index,
+      "pos": at.start + line.length
+    });
   }
 }

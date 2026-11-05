@@ -532,13 +532,9 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-08** (1, done): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses; the levels before idle dimming are kept in a `PersistentProperties`, a default child of BrightnessManager's Singleton root.
   - Idle dimming is forgotten across a shell reload
 - **features-09** (4, done): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.
-- **features-10** (6):
-  - [Renaming a note whose new name holds a dot drops its extension and hides it](../issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
+- **features-10** (6, 4 done): the folder-name entry stopped: encoding the URL doesn't fix it (see the entry), and a fix needs a choice. The missing-folder entry's fix came back out: its review found it writes the kept edits over the real note, and what they should become needs a choice too.
   - [A folder name holding `#` or `?` opens the wrong folder in the note list](../issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
-  - [A changed notes folder keeps showing the old folder's note and saves it into the new one](../issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)
   - [Typing in a note creates a linked notes folder that doesn't exist](../issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
-  - [Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives](../issues.md#two-toolbar-edits-skip-the-re-parse-so-the-editors-blocks-arent-what-parse-gives)
-  - [NotesConfig expands ~ by hand where Paths.expandHome does it](../issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
 - **features-11** (4): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
   - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](../issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
   - [The join form stays incomplete when CA file is picked without a file and the security changed](../issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)

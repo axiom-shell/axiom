@@ -252,7 +252,7 @@ QtObject {
   // a taken name gets a number
   function createNote(folder, name, callback) {
     const base = root._fileName(name) || I18n.tr("Untitled");
-    const hasExtension = NotesConfig.extensions.some(ext => base.toLowerCase().endsWith("." + ext));
+    const hasExtension = root._hasExtension(base);
     root._create(folder, hasExtension ? base.replace(/\.[^.]*$/, "") : base, hasExtension ? base.replace(/^.*\./, "") : "md", callback);
   }
 
@@ -261,7 +261,7 @@ QtObject {
   }
 
   // Renames a note or folder in place (same parent). A note keeps its
-  // extension when the new name has none.
+  // extension when the new name doesn't end in one of NotesConfig.extensions.
   function rename(path, name, isFolder, callback) {
     const from = root.clean(path);
     let base = root._fileName(name);
@@ -269,7 +269,7 @@ QtObject {
       return;
     const oldName = root.nameOf(from);
     const ext = /\.[^.]+$/.exec(oldName);
-    if (ext && !isFolder && !/\.[^.]+$/.test(base))
+    if (ext && !isFolder && !root._hasExtension(base))
       base += ext[0];
     const parent = root.parentOf(from);
     const to = parent === "" ? base : parent + "/" + base;
@@ -328,6 +328,11 @@ QtObject {
   function _fileName(name) {
     // One path segment: no slashes, no leading dots or spaces
     return String(name ?? "").replace(/[\/\x00]/g, "-").replace(/^[\s.]+/, "").trim();
+  }
+
+  // `name` ends in one of NotesConfig.extensions (a note's file name)
+  function _hasExtension(name) {
+    return NotesConfig.extensions.some(ext => name.toLowerCase().endsWith("." + ext));
   }
 
   // Makes <folder>/<base>[ n][.ext] (a file, or a folder without ext)
@@ -455,13 +460,15 @@ QtObject {
         onTriggered: doc.flush()
       }
 
-      // A new note: nothing on disk until the first edit
-      function _read() {
+      // A missing file `followed` to (opened, renamed, or the notes folder
+      // changed) reads as empty, a new note, not as the old folder's text;
+      // one gone while open (_changed) keeps its text.
+      function _read(followed) {
         const text = FileManager.read(doc._file);
-        if (text === null)
+        if (text === null && !followed)
           doc.loaded = true;
         else
-          doc._fromDisk(text);
+          doc._fromDisk(text ?? "");
       }
 
       // maybe: axiom (re)connected, and the file may not have changed
@@ -476,7 +483,7 @@ QtObject {
       function _follow() {
         FileManager.unwatch(doc._watch);
         doc._watch = FileManager.watch(doc._file, maybe => doc._changed(maybe));
-        doc._read();
+        doc._read(true);
       }
 
       on_FileChanged: doc._follow()

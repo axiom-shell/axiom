@@ -21,10 +21,12 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 - Modules showing the same note therefore stay in sync.
 - `release(path)` flushes.
 - A document is read at once and saved and watched through axiom (`FileManager.write` / `watch`; a save makes the note's missing folders). A change on disk reloads it, unless it has edits waiting, in which case the edits win; its own saves don't count as changes.
+- A document follows its file when its path or the notes folder changes; a file missing there reads as empty (a new note), not as the old file's text.
 
 ### File operations
 - `createNote` / `createFolder` / `rename` / `trash` run argv processes.
   - Trash uses `gio trash`, falling back to `rm` behind a confirm.
+  - A name "has an extension" when it ends in one of `NotesConfig.extensions` (`_hasExtension`): `createNote` adds `.md` otherwise, and `rename` keeps the note's own.
 - They emit `moved` / `removed` for the modules showing those notes.
 
 ### The editor (`parts/notes/NoteEditor`)

@@ -246,6 +246,65 @@ TestCase {
     compare(NoteMarkdown.serialize(off.doc), "a\n  b");
   }
 
+  // Every structural edit leaves the blocks parse() gives for its text
+  function test_edits_match_a_fresh_parse_data() {
+    const parse = NoteMarkdown.parse;
+    return [
+      {
+        tag: "toggleBullet on a bracketed line",
+        result: NoteMarkdown.toggleBullet(parse("[ ] foo"), 0, 0)
+      },
+      {
+        tag: "toggleBullet on a line",
+        result: NoteMarkdown.toggleBullet(parse("a\n  b"), 0, 3)
+      },
+      {
+        tag: "toggleBullet on a task",
+        result: NoteMarkdown.toggleBullet(parse("- [ ] a"), 0, 0)
+      },
+      {
+        tag: "toggleBullet without focus",
+        result: NoteMarkdown.toggleBullet(parse("a"), -1, 0)
+      },
+      {
+        tag: "toggleTask without focus after an open fence",
+        result: NoteMarkdown.toggleTask(parse("```\ncode"), -1, 0)
+      },
+      {
+        tag: "toggleTask without focus after a task",
+        result: NoteMarkdown.toggleTask(parse("- [ ] a"), -1, 0)
+      },
+      {
+        tag: "toggleTask on a line",
+        result: NoteMarkdown.toggleTask(parse("one\n- two\nthree"), 0, 5)
+      },
+      {
+        tag: "toggleTask on a task",
+        result: NoteMarkdown.toggleTask(parse("- [ ] a"), 0, 0)
+      },
+      {
+        tag: "splitTask",
+        result: NoteMarkdown.splitTask(parse("- [ ] ab"), 0, 1)
+      },
+      {
+        tag: "mergeBack",
+        result: NoteMarkdown.mergeBack(parse("- [ ] a\nb"), 1)
+      },
+      {
+        tag: "joinNext",
+        result: NoteMarkdown.joinNext(parse("- [ ] a\nb"), 0)
+      },
+      {
+        tag: "indentTask",
+        result: NoteMarkdown.indentTask(parse("- [ ] a"), 0, 1)
+      }
+    ];
+  }
+
+  function test_edits_match_a_fresh_parse(data) {
+    compare(data.result.doc, NoteMarkdown.parse(NoteMarkdown.serialize(data.result.doc)));
+  }
+
   function test_set_text_keeps_a_task_on_one_line() {
     const doc = NoteMarkdown.setText(NoteMarkdown.parse("- [ ] a"), 0, "pasted\ntext");
     compare(NoteMarkdown.serialize(doc), "- [ ] pasted text");
