@@ -262,10 +262,10 @@ func Input(values any, xcursorTheme any) *jsonx.Object {
 
 // XkbLayouts is InputSources.xkb: the compositor's xkb layouts from the
 // input sources (Input.sources): the xkb sources' distinct layout and
-// variant pairs in order, then any an ime source types on that none has,
-// as { layouts, variants, layout: "us,de", variant: "" or ",neo" }. Never
-// empty: "us" alone.
-func XkbLayouts(sources any) *jsonx.Object {
+// variant pairs in order, then (with engines: Input.method.enabled) any an
+// ime source types on that none has, as { layouts, variants, layout:
+// "us,de", variant: "" or ",neo" }. Never empty: "us" alone.
+func XkbLayouts(sources any, engines bool) *jsonx.Object {
 	type pair struct{ layout, variant string }
 	var pairs []pair
 	add := func(layout, variant string) {
@@ -279,7 +279,11 @@ func XkbLayouts(sources any) *jsonx.Object {
 		}
 		pairs = append(pairs, pair{layout, variant})
 	}
-	for _, kind := range []string{"xkb", "ime"} {
+	kinds := []string{"xkb"}
+	if engines {
+		kinds = append(kinds, "ime")
+	}
+	for _, kind := range kinds {
 		for _, s := range items(sources) {
 			if get(s, "kind") == kind {
 				add(text(get(s, "layout")), text(get(s, "variant")))
@@ -311,16 +315,17 @@ func text(v any) string {
 }
 
 // derived is a field's value as its spec's `from` makes it of the value
-// stored (the input sources' xkb layouts or variants), ok false for a
-// `from` it doesn't know
-func derived(spec, value any) (any, bool) {
+// stored (the input sources' xkb layouts or variants, the engines' counting
+// while its siblings' method.enabled is on), ok false for a `from` it
+// doesn't know
+func derived(spec, value, siblings any) (any, bool) {
 	switch str(or(get(spec, "from"), "")) {
 	case "":
 		return value, true
 	case "xkbLayout":
-		return XkbLayouts(value).Value("layout"), true
+		return XkbLayouts(value, isTrue(path(siblings, "method.enabled"))).Value("layout"), true
 	case "xkbVariant":
-		return XkbLayouts(value).Value("variant"), true
+		return XkbLayouts(value, isTrue(path(siblings, "method.enabled"))).Value("variant"), true
 	}
 	return nil, false
 }
@@ -355,7 +360,7 @@ func CompositorFields(objectSchema, values any, compositor, prefix string) []Fie
 		}
 		if truthy(spec) {
 			for _, s := range specs {
-				v, ok := derived(s, value)
+				v, ok := derived(s, value, values)
 				if !ok {
 					continue
 				}

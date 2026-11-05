@@ -411,7 +411,7 @@ Singleton {
   // NiriState.keyboard), or null; `registry` names them
   function withKeyboard(callback, registry) {
     const input = InputConfig.input;
-    callback(NiriState.keyboard(root._state, input.keyboard.enabled ? InputSources.xkb(InputConfig.sources).layout : root._configLayouts, registry));
+    callback(NiriState.keyboard(root._state, input.keyboard.enabled ? InputSources.xkb(InputConfig.sources, InputConfig.methodEnabled).layout : root._configLayouts, registry));
   }
 
   // Switches to the "next" or "prev" layout, then calls back

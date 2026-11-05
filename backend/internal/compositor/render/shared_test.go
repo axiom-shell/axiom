@@ -231,7 +231,7 @@ var ops = map[string]func(t *Tables, a []any) any{
 		r, al := GaussianShadow(arg(a, 0))
 		return jsonx.Obj("radius", r, "alpha", al)
 	},
-	"InputSources.xkb": func(t *Tables, a []any) any { return XkbLayouts(arg(a, 0)) },
+	"InputSources.xkb": func(t *Tables, a []any) any { return XkbLayouts(arg(a, 0), isTrue(arg(a, 1))) },
 	"InputSources.methodSetup": func(t *Tables, a []any) any {
 		im := jsonx.Obj("framework", arg(a, 0), "autostart", true, "legacyApps", arg(a, 1))
 		env := jsonx.Arr()

@@ -4,7 +4,7 @@ import qs.components.methods
 
 // InputSources: the input sources as the compositor, fcitx5 and ibus take
 // them. xkb() goes through Shared: its cases are replayed by the Go port
-// (render.XkbLayouts).
+// (render.XkbLayouts, with Input.method.enabled as `engines`).
 TestCase {
   id: test
   name: "InputSources"
@@ -77,14 +77,21 @@ TestCase {
       "variant": ""
     });
     compare(shared.calls.InputSources.xkb([xkbSource("us", "us"), xkbSource("de", "de")]).variant, "", "no variant at all is written empty");
-    compare(shared.calls.InputSources.xkb(test.mixed), {
+    compare(shared.calls.InputSources.xkb(test.mixed, true), {
       "layouts": ["us", "de", "jp"],
       "variants": ["", "neo", ""],
       "layout": "us,de,jp",
       "variant": ",neo,"
     }, "xkb sources first, then the layouts an ime one adds");
+    compare(shared.calls.InputSources.xkb(test.mixed, false), {
+      "layouts": ["us", "de"],
+      "variants": ["", "neo"],
+      "layout": "us,de",
+      "variant": ",neo"
+    }, "with the input method off, only the xkb sources count");
     compare(shared.calls.InputSources.xkb([xkbSource("a", "us"), xkbSource("b", "us"), xkbSource("c", "us", "dvorak")]).layout, "us,us", "each pair once");
-    compare(shared.calls.InputSources.xkb([imeSource("mozc", "mozc")]).layout, "us", "never empty");
+    compare(shared.calls.InputSources.xkb([imeSource("mozc", "mozc")], true).layout, "us", "never empty");
+    compare(shared.calls.InputSources.xkb([imeSource("pinyin", "pinyin", "jp")], false).layout, "us", "an engine's layout left out while off");
     compare(shared.calls.InputSources.xkb([]).layout, "us");
     compare(shared.calls.InputSources.xkb(null).layout, "us");
     compare(shared.calls.InputSources.xkb([xkbSource("x", " de "), xkbSource("e", "")]).layout, "de", "trimmed, an empty layout skipped");

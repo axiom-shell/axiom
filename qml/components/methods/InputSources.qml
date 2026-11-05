@@ -18,10 +18,13 @@ QtObject {
   readonly property string fallbackLayout: "us"
 
   // The compositor's xkb layouts: the xkb sources' distinct layout and
-  // variant pairs in order, then any an ime source types on that none
+  // variant pairs in order, then (with `engines`: axiom manages the input
+  // method, Input.method.enabled) any an ime source types on that none
   // has, as { layouts, variants, layout: "us,de", variant: "" or ",neo" }
-  // (variant empty when no layout has one). Never empty: "us" alone
-  function xkb(sources) {
+  // (variant empty when no layout has one). Never empty: "us" alone. The
+  // other helpers take the sources they're given as counting (a caller
+  // drops the engines while off: xkbOnly)
+  function xkb(sources, engines) {
     const list = Array.isArray(sources) ? sources : [];
     const pairs = [];
     const add = (layout, variant) => {
@@ -35,7 +38,7 @@ QtObject {
       if (source?.kind === "xkb")
         add(root._text(source.layout), root._text(source.variant));
     for (const source of list)
-      if (source?.kind === "ime" && root._text(source.layout) !== "")
+      if (engines === true && source?.kind === "ime" && root._text(source.layout) !== "")
         add(root._text(source.layout), root._text(source.variant));
     if (pairs.length === 0)
       add(root.fallbackLayout, "");
@@ -57,7 +60,7 @@ QtObject {
         "layout": own,
         "variant": root._text(source.variant)
       };
-    const first = root.xkb(sources);
+    const first = root.xkb(sources, true);
     return {
       "layout": first.layouts[0],
       "variant": first.variants[0]
@@ -67,7 +70,7 @@ QtObject {
   // The index into xkb(sources).layouts `source` types on (-1 for none)
   function xkbIndex(sources, source) {
     const typing = root.typingLayout(sources, source);
-    const list = root.xkb(sources);
+    const list = root.xkb(sources, true);
     for (let i = 0; i < list.layouts.length; i++)
       if (list.layouts[i] === typing.layout && list.variants[i] === typing.variant)
         return i;
@@ -87,7 +90,7 @@ QtObject {
   // layout it types on, as fcitx5 writes one ("de-neo")
   function fcitx5Group(sources) {
     const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
-    const first = root.xkb(sources);
+    const first = root.xkb(sources, true);
     return {
       "defaultLayout": root._fcitx5Layout(first.layouts[0], first.variants[0]),
       "items": list.map(source => {
@@ -187,7 +190,7 @@ QtObject {
   function effective(sources, layouts) {
     const list = (Array.isArray(sources) ? sources : []).filter(s => root._usable(s));
     const codes = (Array.isArray(layouts) ? layouts : []).map(code => root._text(code));
-    if (codes.length === 0 || JSON.stringify(root.xkb(list).layouts) === JSON.stringify(codes))
+    if (codes.length === 0 || JSON.stringify(root.xkb(list, true).layouts) === JSON.stringify(codes))
       return list;
     return codes.map((code, i) => ({
           "id": "xkb:" + i + ":" + code,

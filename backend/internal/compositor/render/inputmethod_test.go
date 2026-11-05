@@ -56,3 +56,22 @@ func TestInputMethod(t *testing.T) {
 		t.Errorf("without axiom's: %v", got)
 	}
 }
+
+// The xkb layouts written: an engine's typing layout joins them only
+// while Input.method.enabled is on.
+func TestXkbLayoutsFollowMethodEnabled(t *testing.T) {
+	t.Parallel()
+	schema := jsonx.Obj("properties", jsonx.Obj("sources", jsonx.Obj("x-compositor",
+		jsonx.Obj("sway", jsonx.Arr(jsonx.Obj("key", "xkb_layout", "from", "xkbLayout"))))))
+	for _, enabled := range []bool{false, true} {
+		values := jsonx.Obj("sources", jsonx.Arr(
+			jsonx.Obj("id", "us", "kind", "xkb", "layout", "us"),
+			jsonx.Obj("id", "pinyin", "kind", "ime", "layout", "cn", "engine", "pinyin")),
+			"method", jsonx.Obj("enabled", enabled))
+		fields := CompositorFields(schema, values, "sway", "")
+		want := map[bool]string{false: "us", true: "us,cn"}[enabled]
+		if len(fields) != 1 || fields[0].Value != want {
+			t.Errorf("method.enabled %v: %+v, want %q", enabled, fields, want)
+		}
+	}
+}
