@@ -42,6 +42,7 @@ ReservedAreaWindow {
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
 
   function open() {
+    hideTimer.stop();
     visible = true;
     isOpen = true;
     slideContainer.forceActiveFocus();

@@ -474,7 +474,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [DayPane builds its EventEditor before it opens](../issues.md#daypane-builds-its-eventeditor-before-it-opens)
   - Images decoded at full size or more than once
 - **overlay-modules-05** (4):
-  - [Reopening the overlay while it closes leaves it open but hidden](../issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
   - [A clean layout's problem blocks saving the others in the Layouts editor](../issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
   - [The five layouts drafts are listed by hand in eight places](../issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
   - [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](../issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
