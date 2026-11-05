@@ -4,7 +4,7 @@ import qs.components.methods
 
 // InputSources: the input sources as the compositor, fcitx5 and ibus take
 // them. xkb() goes through Shared: its cases are replayed by the Go port
-// (render.XkbLayouts, with Input.method.enabled as `engines`).
+// (render.XkbLayouts, with Input.keyboard.method.enabled as `engines`).
 TestCase {
   id: test
   name: "InputSources"

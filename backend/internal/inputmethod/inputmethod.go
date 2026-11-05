@@ -5,7 +5,7 @@
 // method, its list (fcitx5's current group, ibus's preloaded engines) and
 // the engines installed, from their signals (nothing polls but the look
 // for a framework that isn't running yet); switches the input method;
-// pushes the list axiom owns (Input.sources) to the framework; and sets
+// pushes the list axiom owns (Input.keyboard.sources) to the framework; and sets
 // fcitx5's few options axiom has settings for.
 package inputmethod
 

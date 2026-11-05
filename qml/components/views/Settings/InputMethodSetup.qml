@@ -10,9 +10,9 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.content.parts
 
-// The top of the Input method card (its `x-intro`), shown while axiom
-// manages the input method but doesn't write the compositor's config (any
-// mode but managed) and a framework is chosen: the session's variables
+// Under the Keyboard card's input method switch (InputSourcesField),
+// shown while axiom manages the input method but doesn't write the
+// compositor's config (any mode but managed) and a framework is chosen: the session's variables
 // and the command starting it, to add by hand, with Copy (InputSources.
 // methodSetup: the values the managed session's writer has), and
 // Electron's flag.
@@ -20,7 +20,7 @@ ColumnLayout {
   id: root
 
   // As edited, saved or not
-  readonly property string chosen: String(SettingsManager.configValueAt("Input.method.framework") ?? "")
+  readonly property string chosen: String(SettingsManager.configValueAt("Input.keyboard.method.framework") ?? "")
   readonly property bool managed: CompositorManager.supports.configModes === true && SettingsManager.configValueAt("Compositor.mode") === "managed"
   // The framework the lines are for: auto is the running one, else the
   // one installed (fcitx5 first), else fcitx5
@@ -34,7 +34,7 @@ ColumnLayout {
   readonly property var setup: InputSources.methodSetup(root.framework, false)
   readonly property var legacy: InputSources.methodSetup(root.framework, true).env.slice(root.setup.env.length)
 
-  readonly property bool shown: SettingsManager.configValueAt("Input.method.enabled") === true && !root.managed && root.setup.command !== ""
+  readonly property bool shown: SettingsManager.configValueAt("Input.keyboard.method.enabled") === true && !root.managed && root.setup.command !== ""
 
   spacing: Widget.spacing
 

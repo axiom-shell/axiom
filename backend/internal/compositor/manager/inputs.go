@@ -202,7 +202,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		"idle", flag("Idle", "enabled"),
 		"polkit", flag("Polkit", "enabled"),
 		"compositorSwitcher", flag("WindowSwitcher", "compositorSwitcher") && f.Supports["compositorSwitcher"],
-		"inputMethod", inputMethodOf(at("Input", "method"), f.Frameworks),
+		"inputMethod", inputMethodOf(at("Input", "keyboard", "method"), f.Frameworks),
 	)
 	in.Set("layerKey", string(jsonx.MarshalCompact(in)))
 	specFile, specLive := spec(true), spec(false)
@@ -290,7 +290,7 @@ func stripsOf(workspaces any, primary string) *jsonx.Array {
 }
 
 // inputMethodOf is the input method the session starts (render.
-// InputMethodEnv's): Input.method (schema-filled) with its framework
+// InputMethodEnv's): Input.keyboard.method (schema-filled) with its framework
 // resolved to one installed, "" for none or while axiom doesn't manage the
 // input method (enabled off): auto is fcitx5 when it's installed, else
 // ibus; a framework named only while it's installed, so a session without

@@ -26,7 +26,7 @@ TestCase {
     };
     config.Compositor.mode = mode;
     config.Input.keyboard.enabled = mode === "managed";
-    config.Input.sources = [
+    config.Input.keyboard.sources = [
       {
         "id": "us",
         "kind": "xkb",
@@ -85,9 +85,9 @@ TestCase {
   function test_export_takes_only_greeter_options() {
     const bundle = GreeterBundle.exportConfig(config("managed"), inputSchema, copies);
     compare(bundle.Input.keyboard.enabled, true);
-    compare(bundle.Input.sources.map(source => source.layout), ["us", "de"], "the layouts the greeter types the password on");
+    compare(bundle.Input.keyboard.sources.map(source => source.layout), ["us", "de"], "the layouts the greeter types the password on");
     verify(bundle.Input.mouse.sensitivity !== undefined);
-    verify(Object.keys(bundle.Input).every(group => ["sources", "keyboard", "mouse", "touchpad", "cursor"].includes(group)), "x-greeter options only");
+    verify(Object.keys(bundle.Input).every(group => ["keyboard", "mouse", "touchpad", "cursor"].includes(group)), "x-greeter options only");
   }
 
   // The exported bundle fills to a whole config (valid: the binary's

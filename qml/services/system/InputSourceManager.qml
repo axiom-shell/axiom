@@ -6,7 +6,7 @@ import qs.services.compositor
 import qs.services.core
 import qs.services.session
 
-// The input sources (Input.sources: xkb layouts and input method engines)
+// The input sources (Input.keyboard.sources: xkb layouts and input method engines)
 // and which one is in use, for every surface that shows or switches them:
 // the KeyboardLayout widget and its popout, the module, the OSD's
 // keyboardLayout status, keybinds and IPC (docs/dev/features/
@@ -15,9 +15,9 @@ import qs.services.session
 // the daemon's input method framework (the inputMethod topic: fcitx5 or
 // ibus), through methods/InputSources. Switching sets the compositor's
 // layout first, then the framework's input method. While axiom manages
-// the input method (Input.method.enabled) it gives the framework the
+// the input method (Input.keyboard.method.enabled) it gives the framework the
 // sources (inputMethod.push), its choice (inputMethod.framework) and
-// Input.method's options; off, only the xkb sources count and the
+// the method's options; off, only the xkb sources count and the
 // framework is left alone. On the login screen no framework runs: only the
 // xkb sources, nothing pushed.
 QtObject {
@@ -36,7 +36,7 @@ QtObject {
 
   // --- The framework (the daemon's inputMethod.state) ---
 
-  // axiom manages the input method (Input.method.enabled, as shown):
+  // axiom manages the input method (Input.keyboard.method.enabled, as shown):
   // off, the engine sources are left out everywhere
   readonly property bool enabled: !root._inert && InputConfig.methodEnabled
   // fcitx5 or ibus runs, whether axiom manages it or not (the settings
@@ -157,7 +157,7 @@ QtObject {
   }
 
   // The framework's list as sources (InputSources.fromGroup), for a
-  // draft of Input.sources (the settings card's "Use fcitx5's list");
+  // draft of Input.keyboard.sources (the settings card's "Use fcitx5's list");
   // [] while none runs
   function importFromFramework() {
     return root.detected ? InputSources.fromGroup(root.detectedFramework, root._im) : [];
@@ -184,7 +184,7 @@ QtObject {
   // Every source the compositor's xkb list is written from (InputSources.
   // effective: the compositor's own layouts while axiom doesn't set the
   // keyboard), engines no framework runs too: their typing layouts are in
-  // that list while Input.method.enabled is on, so an xkb index is read
+  // that list while the method is on, so an xkb index is read
   // against these, never against `sources`
   readonly property var _counted: InputSources.effective(InputConfig.sources, root.layouts, InputConfig.methodEnabled)
   // The login screen: no framework, nothing pushed

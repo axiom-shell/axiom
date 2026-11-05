@@ -97,7 +97,7 @@ FEATURES=(
   "Power profiles|powerprofilesctl|"
   "Removable drives (mount, open and eject USB sticks and memory cards)|udisksctl|"
   "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk|"
-  # fcitx5 is Input.method's default; ibus (in PACKAGES for the install
+  # fcitx5 is Input.keyboard.method's default; ibus (in PACKAGES for the install
   # hints) is supported but not offered, so "all" doesn't take both
   "Typing Japanese, Chinese, Korean and more (the fcitx5 input method)|fcitx5|"
   # The login screen runs in a sway of its own, or in Hyprland where sway

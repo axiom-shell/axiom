@@ -261,8 +261,8 @@ func Input(values any, xcursorTheme any) *jsonx.Object {
 }
 
 // XkbLayouts is InputSources.xkb: the compositor's xkb layouts from the
-// input sources (Input.sources): the xkb sources' distinct layout and
-// variant pairs in order, then (with engines: Input.method.enabled) any an
+// input sources (Input.keyboard.sources): the xkb sources' distinct layout and
+// variant pairs in order, then (with engines: Input.keyboard.method.enabled) any an
 // ime source types on that none has, as { layouts, variants, layout:
 // "us,de", variant: "" or ",neo" }. Never empty: "us" alone.
 func XkbLayouts(sources any, engines bool) *jsonx.Object {
@@ -352,7 +352,7 @@ func CompositorFields(objectSchema, values any, compositor, prefix string) []Fie
 			continue
 		}
 		spec := get(get(fieldSchema, "x-compositor"), compositor)
-		// A list: the field writes several options (Input.sources'
+		// A list: the field writes several options (Input.keyboard.sources'
 		// layouts and variants), each from its `from`
 		specs := []any{spec}
 		if list, ok := spec.(*jsonx.Array); ok {
@@ -378,7 +378,7 @@ func CompositorFields(objectSchema, values any, compositor, prefix string) []Fie
 }
 
 // path is the value at a dotted path under v (an `if` naming a sibling
-// part's switch: "keyboard.enabled")
+// object's switch: "method.enabled")
 func path(v any, dotted string) any {
 	for _, key := range strings.Split(dotted, ".") {
 		v = get(v, key)

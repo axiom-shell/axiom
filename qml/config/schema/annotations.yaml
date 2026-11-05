@@ -25,6 +25,7 @@ x-enumFrom: on an array of enum strings, offers only the options a sibling array
 x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
 x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'
 x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn''t hold.'
+x-fold: 'a nested object whose rows fold behind its title on its settings card, closed until opened (`SettingsField`; the Keyboard card''s Input method options).'
 x-greeter: the greeter's compositor takes it (`methods/GreeterBundle`).
 x-group: puts a field on a card of that name.
 x-hookup: how the integration hooks into its app (targets, place, text).
@@ -48,6 +49,7 @@ x-order: the keys shown first, in order.
 x-priority: a bar widget type's own priority when its bar is crowded (higher stays longer; default 0), which its `layout.priority` overrides (`BarsConfig.defaultPriority`).
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
+x-row: 'a field''s settings row drawn by `views/Settings/<Name>.qml` (given `row` and `form`) instead of a generated control (the Keyboard card''s layouts, `InputSourcesField`).'
 x-scope: what a snapshot, example, import or export carries.
 x-scopeIf: 'an item that matches `when` (`x-showIf`''s form, over the item''s keys) has `scope` as its own: an exec bind is `commands`, an app''s OSD bar `personal`.'
 x-settings: hides a key from the settings page (edited elsewhere, or UI-owned state).

@@ -87,7 +87,7 @@ func TestInputMethodOf(t *testing.T) {
 	method := func(framework string) *jsonx.Object {
 		return jsonx.Obj("enabled", true, "framework", framework, "autostart", false, "legacyApps", true)
 	}
-	// Input.method's schema defaults, turned on
+	// Input.keyboard.method's schema defaults, turned on
 	defaults := jsonx.Obj("enabled", true, "framework", "fcitx5", "autostart", true, "legacyApps", false)
 	off := jsonx.Obj("enabled", false, "framework", "fcitx5", "autostart", true, "legacyApps", false)
 	for _, c := range []struct {

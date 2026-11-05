@@ -28,7 +28,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `showIf` hides the whole category, its sections with it, as a section's `x-showIf` does (`/` keys only). Development's is `{"/$devOptions": true}`.
 - `x-links` (on a section): pages its category's header links to: a view type (`Themes`, `BarEditor`), `Layouts`, or the layouts editor on a screen (`Layouts:lockscreen`, `Layouts:greeter`, `Layouts:desktop`). Labels, icons, availability and following go through `OverlayManager.pageLinkLabel` / `pageLinkIcon` / `pageLinkAvailable` / `followPageLink`.
 - `x-link` (on a field, or a widget/module definition): where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition. `{ "setting": "<key path>" }` (a field, an object or a section: `SchemaLayout.locate` finds its card) or `{ "page": "<page link>" }` (as `x-links`), or a list of them. A link hides itself when its setting has no card or its page isn't shown. Examples: a bar's `style.shadow` → `Bars.style.shadow`, every `moduleScale` → `Widget.cardSize`, the Battery widget → `Battery`. `tst_SchemaLayout`'s `test_real_schema_links_resolve` checks every target.
-- `x-order` (on an object): the keys shown first, in order. This applies to its form, or to its settings cards, whose order is their first field's. The build writes it from the properties' order on every object with more than one; one written in the YAML is kept.
+- `x-order` (on an object): the keys shown first, in order. This applies to its form, its rows on a settings card (`SchemaLayout.rows`), or to its settings cards, whose order is their first field's. The build writes it from the properties' order on every object with more than one; one written in the YAML is kept.
 - `x-group`: puts a field on a card of that name. One section or object can make several cards.
   - The bar and edge menu editors group a `Bar`'s / `EdgeMenu`'s own fields the same way (`SchemaLayout.objectGroups`, as `BarsConfig.fieldGroups` / `EdgeMenusConfig.fieldGroups`).
   - A nested object with an `x-group` joins that card (a group heading repeating the card's title is left out); `objectGroups` places a nested object's fields by their own or an ancestor's `x-group`.
@@ -48,6 +48,8 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `perField: true` (with or without a `file`): each direct field becomes a card of its own, titled and described by the field, sorted by title, a switch's row labelled "Enabled" (`row.label`, `row.description` override the field's in `SchemaField`). The section's description gets a card first. Example: `ThemeIntegrations`, one card per app.
   - `check_structure.py` checks the file exists.
 - `x-intro: "<Name>"`: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
+- `x-row: "<Name>"` (field): its settings row is `views/Settings/<Name>.qml`, given the row (`row`) and the form (`form`), instead of the control its type picks (`SettingsField`), on its card among the generated rows and in search results (by its title and description). Only the settings page draws it; other forms leave it to its type. Example: `Input.keyboard.sources`, the Keyboard card's layouts (`InputSourcesField`).
+- `x-fold: true` (nested object): its rows fold behind its title, a `FoldHeader` row on its card, shut until opened (`SettingsManager.isFoldOpen`, kept as the cards' folds are) and always open in search results and the changed list (`SchemaLayout.rows`: the group row's `fold`, each row inside's `foldedBy`). Example: the Keyboard card's Input method options.
 
 ### Behaviour
 - `x-showIf`: hides a field unless a condition holds. `SchemaField` evaluates it (`SchemaLayout.showIfHolds`), so it works in every form; on a nested object it hides that object's cards.
@@ -125,7 +127,7 @@ A setting a compositor's config takes says how, per compositor: `x-compositor: {
   - `scale`: a factor for a value stored scaled (0.01 for a percent, 0.001 for ms written as seconds).
   - `if`: a boolean beside it (a part's `enabled`), or a dotted path to one under the same object (`keyboard.enabled`): written, default or not, only when that is on.
   - `from`: the value written is derived from the one stored: `xkbLayout` / `xkbVariant`, the input sources' xkb layouts or variants as comma lists (`render.XkbLayouts`, the port of `InputSources.xkb`; an engine's layout counts only while the section's `method.enabled` is on).
-  - A list of specs instead of one: the field writes several options, each its own spec (`Input.sources`: the layouts and the variants).
+  - A list of specs instead of one: the field writes several options, each its own spec (`Input.keyboard.sources`: the layouts and the variants).
   - `skip`: a value written as nothing, so the compositor's own default stays (`"default"`, or niri's `0`).
 - Hyprland (`render.ConfigTable`, one value of a nested `hl.config({...})` table):
   - `value`: `"int"` (a boolean as 0/1), `"number"` (an enum of numbers written as strings), `"color"` (a theme color name as `rgba(hex + alpha)`, `alpha` `"ff"` unless given).

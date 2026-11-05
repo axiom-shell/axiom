@@ -67,6 +67,48 @@ TestCase {
     compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
   }
 
+  // A nested object's rows go in its `x-order`; one marked `x-fold` folds
+  // its rows behind its group row (the Keyboard card's Input method
+  // options)
+  function test_rows_order_and_fold() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "kb": {
+          "type": "object",
+          "x-order": ["enabled", "method", "a"],
+          "properties": {
+            "a": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "method": {
+              "type": "object",
+              "x-fold": true,
+              "properties": {
+                "b": {
+                  "type": "boolean"
+                },
+                "inner": {
+                  "type": "object",
+                  "properties": {
+                    "c": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.path.join(".")), ["S.kb", "S.kb.enabled", "S.kb.method", "S.kb.method.b", "S.kb.method.inner", "S.kb.method.inner.c", "S.kb.a"]);
+    compare(rows.map(r => r.fold === true), [false, false, true, false, false, false, false], "only the folding object's row heads a fold");
+    compare(rows.map(r => r.foldedBy ?? ""), ["", "", "", "S.kb.method", "S.kb.method", "S.kb.method", ""]);
+  }
+
   // A `$ref` property's fields are rows once the schema is resolved (the
   // settings page's Changed from default and /config list Bars.style.*)
   function test_rows_of_a_resolved_ref() {

@@ -41,7 +41,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - A blocked managed card says why (`blockedReason`: a symlink, a git repository, or the compositor running another config of the user's, `CompositorConfigManager.elsewhereReason`).
 - **Hookups:** for included and detached it shows `forms/IntegrationHookup` for `compositorInclude` / `compositorAutostart` (copy, or Apply after a backup).
   - `includeDone` / `autostartDone` drop the "won't start axiom" warnings, both there and on Finish.
-- **Input:** the keyboard switch, the input sources as the Input page's card edits them (`InputSourcesCard` with `layoutsOnly`: the layouts alone, saved at once; [input sources](input-sources.md)), and the touchpad's rows on a machine with a battery.
+- **Input:** the keyboard switch, the input sources as the Keyboard card edits them (`InputSourcesField` with `layoutsOnly`, in a `FieldGroup`: the layouts alone, saved at once; [input sources](input-sources.md)), and the touchpad's rows on a machine with a battery.
 - See [Config modes](../compositor/config-modes.md).
 
 ### Monitors

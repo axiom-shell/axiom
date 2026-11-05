@@ -1,124 +1,11 @@
 # The Input section of the config (config.json's "Input").
 
 type: object
-x-category: Compositor
-x-card: {file: InputSources, title: Input sources}
+x-category: General
 title: Input
-description: Input sources, input methods, keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.
+description: Keyboard layouts, input methods, keyboard, mouse, touchpad and cursor. A part that's on wins over your compositor's own config; the login screen follows it too.
 additionalProperties: false
 properties:
-  sources:
-    x-scope: personal
-    x-greeter: true
-    x-settings: false
-    type: array
-    title: Input sources
-    default:
-      - {id: us, kind: xkb, layout: us, variant: '', engine: ''}
-    description: Keyboard layouts and input method engines, switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.
-    x-compositor:
-      hyprland:
-        - {key: input.kb_layout, from: xkbLayout, if: keyboard.enabled}
-        - {key: input.kb_variant, from: xkbVariant, if: keyboard.enabled}
-      sway:
-        - {key: 'input type:keyboard xkb_layout {}', from: xkbLayout, if: keyboard.enabled}
-        - {key: 'input type:keyboard xkb_variant {}', from: xkbVariant, if: keyboard.enabled}
-      niri:
-        - {key: input.keyboard.xkb.layout, from: xkbLayout, if: keyboard.enabled}
-        - {key: input.keyboard.xkb.variant, from: xkbVariant, if: keyboard.enabled}
-    items:
-      type: object
-      additionalProperties: false
-      properties:
-        id: {$ref: '#/definitions/ItemId'}
-        kind:
-          type: string
-          title: Kind
-          enum: [xkb, ime]
-          x-enumLabels: {xkb: Keyboard layout, ime: Input method}
-          default: xkb
-        layout:
-          type: string
-          title: Layout
-          default: ''
-          description: An XKB layout (us, de). For an input method, the layout it types on; empty, the first.
-        variant:
-          type: string
-          title: Variant
-          default: ''
-          description: The layout's XKB variant (colemak), or empty.
-        engine:
-          type: string
-          title: Engine
-          default: ''
-          description: The input method's engine (mozc, pinyin, hangul).
-          x-showIf: {kind: ime}
-      required: [id]
-  method:
-    type: object
-    title: Input method
-    x-intro: InputMethodSetup
-    x-showIf: {/$supports.inputMethod: true}
-    additionalProperties: false
-    properties:
-      enabled:
-        x-scope: personal
-        type: boolean
-        title: Manage input methods
-        default: false
-        description: Lets axiom manage fcitx5 or ibus, to type Japanese, Chinese, Korean and more. Your input sources then hold input method engines too, which axiom gives the framework (replacing the list set in fcitx5-configtool or ibus-setup) and switches with the layouts. Off, axiom switches only the keyboard layouts and leaves any framework alone.
-      framework:
-        x-scope: personal
-        type: string
-        title: Input method framework
-        enum: [auto, none, fcitx5, ibus]
-        x-enumLabels: {auto: Whichever is running, none: None, fcitx5: fcitx5 (recommended), ibus: ibus}
-        default: fcitx5
-        x-showIf: {enabled: true}
-        description: What types the input method engines in your input sources. fcitx5 is the recommended one, with every option below; ibus is supported for listing and switching engines. axiom gives it your input sources and follows which one is in use, but never starts or stops it outside managed mode.
-      autostart:
-        x-scope: commands
-        type: boolean
-        title: Start the input method
-        default: true
-        description: Starts the framework with the compositor and sets the environment apps need to use it.
-        x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
-      legacyApps:
-        type: boolean
-        title: Older and X11 apps
-        default: false
-        description: "Also sets GTK_IM_MODULE and QT_IM_MODULE, for X11 apps and older toolkits. Leave it off unless an app can't type with the input method: on Wayland it can break typing in GTK apps."
-        x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
-      shareState:
-        x-scope: personal
-        type: string
-        title: Share the input method between windows
-        enum: ['No', All, Program]
-        x-enumLabels: {'No': 'No', All: Every window, Program: Windows of the same app}
-        default: 'No'
-        description: Whether switching the input method in one window switches it in others too. fcitx5 only.
-        x-showIf: {enabled: true, framework: [auto, fcitx5]}
-      verticalCandidates:
-        x-scope: personal
-        type: boolean
-        title: Candidates in a column
-        default: false
-        description: Lists the candidate words top to bottom instead of in a row. fcitx5 only.
-        x-showIf: {enabled: true, framework: [auto, fcitx5]}
-      candidateFont:
-        x-scope: look
-        type: string
-        title: Candidate font
-        default: ''
-        description: 'The font of the candidate window, with its size ("Noto Sans CJK JP 12"). Empty leaves the framework''s own font as it is: fcitx5 keeps the one its own settings have, ibus turns its custom font off.'
-        x-showIf: {enabled: true, framework: {not: none}}
-      showSwitchPopup:
-        x-scope: personal
-        type: boolean
-        title: fcitx5's switch popup
-        default: false
-        description: Shows fcitx5's own popup when the input method changes. Off, axiom's OSD shows the switch (its keyboard layout status). fcitx5 only.
-        x-showIf: {enabled: true, framework: [auto, fcitx5]}
   keyboard:
     type: object
     title: Keyboard
@@ -129,7 +16,121 @@ properties:
         type: boolean
         title: Set the keyboard
         default: false
-        description: The input sources' layouts, options and key repeat. Off, your compositor's own config applies.
+        description: Gives the compositor the layouts below, the XKB options and key repeat. Off, your compositor's own config applies, and the layouts it has are the ones that switch.
+        x-showIf: {/$supports.inputConfig: true}
+      sources:
+        x-scope: personal
+        x-greeter: true
+        x-row: InputSourcesField
+        type: array
+        title: Layouts
+        default:
+          - {id: us, kind: xkb, layout: us, variant: '', engine: ''}
+        description: Keyboard layouts and, with an input method, its engines (Japanese, Chinese, Korean and more), switched between in order. The compositor gets every layout (the first is the one you start on); an engine types on the layout it names, or the first.
+        x-compositor:
+          hyprland:
+            - {key: input.kb_layout, from: xkbLayout, if: enabled}
+            - {key: input.kb_variant, from: xkbVariant, if: enabled}
+          sway:
+            - {key: 'input type:keyboard xkb_layout {}', from: xkbLayout, if: enabled}
+            - {key: 'input type:keyboard xkb_variant {}', from: xkbVariant, if: enabled}
+          niri:
+            - {key: input.keyboard.xkb.layout, from: xkbLayout, if: enabled}
+            - {key: input.keyboard.xkb.variant, from: xkbVariant, if: enabled}
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            id: {$ref: '#/definitions/ItemId'}
+            kind:
+              type: string
+              title: Kind
+              enum: [xkb, ime]
+              x-enumLabels: {xkb: Keyboard layout, ime: Input method}
+              default: xkb
+            layout:
+              type: string
+              title: Layout
+              default: ''
+              description: An XKB layout (us, de). For an input method, the layout it types on; empty, the first.
+            variant:
+              type: string
+              title: Variant
+              default: ''
+              description: The layout's XKB variant (colemak), or empty.
+            engine:
+              type: string
+              title: Engine
+              default: ''
+              description: The input method's engine (mozc, pinyin, hangul).
+              x-showIf: {kind: ime}
+          required: [id]
+      method:
+        type: object
+        title: Input method options
+        x-fold: true
+        x-showIf: {/$supports.inputMethod: true, method.enabled: true}
+        additionalProperties: false
+        properties:
+          enabled:
+            x-scope: personal
+            x-settings: false
+            type: boolean
+            title: Type other languages with an input method
+            default: false
+            description: Lets axiom manage fcitx5 or ibus, to type Japanese, Chinese, Korean and more. Your input sources then hold input method engines too, which axiom gives the framework (replacing the list set in fcitx5-configtool or ibus-setup) and switches with the layouts. Off, axiom switches only the keyboard layouts and leaves any framework alone.
+          framework:
+            x-scope: personal
+            type: string
+            title: Input method framework
+            enum: [auto, none, fcitx5, ibus]
+            x-enumLabels: {auto: Whichever is running, none: None, fcitx5: fcitx5 (recommended), ibus: ibus}
+            default: fcitx5
+            x-showIf: {enabled: true}
+            description: What types the input method engines in your input sources. fcitx5 is the recommended one, with every option below; ibus is supported for listing and switching engines. axiom gives it your input sources and follows which one is in use, but never starts or stops it outside managed mode.
+          autostart:
+            x-scope: commands
+            type: boolean
+            title: Start the input method
+            default: true
+            description: Starts the framework with the compositor and sets the environment apps need to use it.
+            x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
+          legacyApps:
+            type: boolean
+            title: Older and X11 apps
+            default: false
+            description: "Also sets GTK_IM_MODULE and QT_IM_MODULE, for X11 apps and older toolkits. Leave it off unless an app can't type with the input method: on Wayland it can break typing in GTK apps."
+            x-showIf: {enabled: true, /$supports.configModes: true, /Compositor.mode: managed, framework: {not: none}}
+          shareState:
+            x-scope: personal
+            type: string
+            title: Share the input method between windows
+            enum: ['No', All, Program]
+            x-enumLabels: {'No': 'No', All: Every window, Program: Windows of the same app}
+            default: 'No'
+            description: Whether switching the input method in one window switches it in others too. fcitx5 only.
+            x-showIf: {enabled: true, framework: [auto, fcitx5]}
+          verticalCandidates:
+            x-scope: personal
+            type: boolean
+            title: Candidates in a column
+            default: false
+            description: Lists the candidate words top to bottom instead of in a row. fcitx5 only.
+            x-showIf: {enabled: true, framework: [auto, fcitx5]}
+          candidateFont:
+            x-scope: look
+            type: string
+            title: Candidate font
+            default: ''
+            description: 'The font of the candidate window, with its size ("Noto Sans CJK JP 12"). Empty leaves the framework''s own font as it is: fcitx5 keeps the one its own settings have, ibus turns its custom font off.'
+            x-showIf: {enabled: true, framework: {not: none}}
+          showSwitchPopup:
+            x-scope: personal
+            type: boolean
+            title: fcitx5's switch popup
+            default: false
+            description: Shows fcitx5's own popup when the input method changes. Off, axiom's OSD shows the switch (its keyboard layout status). fcitx5 only.
+            x-showIf: {enabled: true, framework: [auto, fcitx5]}
       options:
         x-scope: personal
         x-greeter: true
@@ -141,7 +142,7 @@ properties:
           hyprland: {key: input.kb_options, if: enabled}
           sway: {key: 'input type:keyboard xkb_options {}', if: enabled}
           niri: {key: input.keyboard.xkb.options, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$supports.inputConfig: true}
       repeatRate:
         x-scope: personal
         x-greeter: true
@@ -155,7 +156,7 @@ properties:
           hyprland: {key: input.repeat_rate, if: enabled}
           sway: {key: 'input type:keyboard repeat_rate {}', if: enabled}
           niri: {key: input.keyboard.repeat-rate, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$supports.inputConfig: true}
       repeatDelay:
         x-scope: personal
         x-greeter: true
@@ -168,7 +169,7 @@ properties:
           hyprland: {key: input.repeat_delay, if: enabled}
           sway: {key: 'input type:keyboard repeat_delay {}', if: enabled}
           niri: {key: input.keyboard.repeat-delay, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$supports.inputConfig: true}
       numlock:
         x-scope: personal
         x-greeter: true
@@ -179,9 +180,8 @@ properties:
           hyprland: {key: input.numlock_by_default, if: enabled}
           sway: {key: 'input type:keyboard xkb_numlock {}', value: enabled, configOnly: true, if: enabled}
           niri: {key: input.keyboard.numlock, if: enabled}
-        x-showIf: {enabled: true}
+        x-showIf: {enabled: true, /$supports.inputConfig: true}
     x-group: Keyboard
-    x-showIf: {/$supports.inputConfig: true}
   mouse:
     type: object
     title: Mouse

@@ -62,7 +62,7 @@ axiom ipc <target> <function> [args]
 | `wifi` | `enable`, `disable`, `toggle` |
 | `bluetooth` | `enable`, `disable`, `toggle` |
 | `vpn` | `toggle` (the VPN last used, as the Vpn widget's click) |
-| `inputSources` | `next`, `prev` (the next or previous input source: the **Next / Previous input source** keybind actions), `set <id>` (an `Input.sources` id), `list` (the sources as JSON, the current one marked) |
+| `inputSources` | `next`, `prev` (the next or previous input source: the **Next / Previous input source** keybind actions), `set <id>` (an `Input.keyboard.sources` id), `list` (the sources as JSON, the current one marked) |
 | `drives` | `list` (the removable drives as JSON), `mount <id>` (a drive's volumes, or one volume), `eject <id>`, `ejectAll` |
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |

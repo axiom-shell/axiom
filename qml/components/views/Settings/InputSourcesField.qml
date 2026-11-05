@@ -7,38 +7,47 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.ui
 import qs.components.methods
+import qs.components.forms
 import qs.components.reusable
 
-// The Input section's first card (its `x-card`): the input sources
-// (Input.sources) as edited, saved or not, through the settings draft: the
+// The Keyboard card's layouts row (Input.keyboard.sources' `x-row`): the
+// input sources as edited, saved or not, through the settings draft: the
 // keyboard layouts (added from the xkb registry, layout and variant) and,
-// while axiom manages the input method (Input.method.enabled), the engines
-// (added from the running framework's), in order, each moved or removed,
-// an engine's typing layout picked. Off, it lists the layouts alone, and
-// with fcitx5 or ibus running offers to manage it. On, which framework
-// runs, and a choice of which list wins while turning managing on with a
-// framework whose list differs, or after an edit in fcitx5-configtool:
-// take its list into the draft (InputSourceManager.importFromFramework),
-// or give it axiom's (Save; useOwn after an outside edit). With
-// `layoutsOnly` (the onboarder's Compositor page), or where the
-// compositor offers no input-method-v2 (CompositorManager.supports.
-// inputMethod), it is always the off form, without the offer;
-// `layoutsOnly` saves each edit at once.
-FieldGroup {
+// while axiom manages the input method (Input.keyboard.method.enabled),
+// the engines (added from the running framework's), in order, each moved
+// or removed, an engine's typing layout picked; then that switch, its last
+// row. Off, it lists the layouts alone, and with fcitx5 or ibus running
+// offers to manage it. On, which framework runs, and a choice of which
+// list wins while turning managing on with a framework whose list
+// differs, or after an edit in fcitx5-configtool: take its list into the
+// draft (InputSourceManager.importFromFramework), or give it axiom's
+// (Save; useOwn after an outside edit), and outside managed mode what to
+// add by hand (InputMethodSetup). With `layoutsOnly` (the onboarder's
+// Compositor page), or where the compositor offers no input-method-v2
+// (CompositorManager.supports.inputMethod), it is always the off form,
+// without the switch or the offer; `layoutsOnly` saves each edit at once.
+ColumnLayout {
   id: root
 
+  // The settings row (SettingsField's `x-row`) and its form; null in the
+  // onboarder, which titles it itself
+  property var row: null
+  property var form: null
   // The layouts alone, saved as they change (SettingsManager.commitValues,
   // as the onboarder's rows are), never the draft
   property bool layoutsOnly: false
 
+  Layout.fillWidth: true
+  spacing: Widget.spacing * 1.5
+
   // The sources as edited, saved or not
-  readonly property var sources: root.layoutsOnly ? InputConfig.sources : SettingsManager.localConfig?.Input?.sources ?? InputConfig.sources
+  readonly property var sources: root.layoutsOnly ? InputConfig.sources : SettingsManager.localConfig?.Input?.keyboard?.sources ?? InputConfig.sources
   // The compositor offers input-method-v2 (false until the daemon said):
   // without it the card is the layouts alone, as the Input method
   // settings are hidden
   readonly property bool supported: CompositorManager.supports.inputMethod === true
   // Managing the input method, as edited
-  readonly property bool managing: !root.layoutsOnly && root.supported && SettingsManager.configValueAt("Input.method.enabled") === true
+  readonly property bool managing: !root.layoutsOnly && root.supported && SettingsManager.configValueAt("Input.keyboard.method.enabled") === true
   // Being turned on: the framework isn't given anything until Save
   readonly property bool turningOn: root.managing && !InputConfig.savedMethodEnabled
   // The sources' indices the card lists: the xkb ones alone while off
@@ -46,7 +55,7 @@ FieldGroup {
   readonly property var registry: InputSourceManager.registry
   readonly property string framework: InputSourceManager.detectedFramework
   // The framework asked for, as edited ("fcitx5", "ibus", "auto", "none")
-  readonly property string chosen: String(SettingsManager.configValueAt("Input.method.framework") ?? "")
+  readonly property string chosen: String(SettingsManager.configValueAt("Input.keyboard.method.framework") ?? "")
   // The framework running is the one chosen: until Save turns managing on
   // the daemon follows whichever runs, which needn't be the chosen one,
   // whose engines and list the card would offer then
@@ -90,10 +99,10 @@ FieldGroup {
   function setSources(list) {
     if (root.layoutsOnly)
       SettingsManager.commitValues({
-        "Input.sources": list
+        "Input.keyboard.sources": list
       });
     else
-      SettingsManager.setValue(["Input", "sources"], list);
+      SettingsManager.setValue(["Input", "keyboard", "sources"], list);
   }
 
   function addLayout(layout, variant) {
@@ -150,127 +159,10 @@ FieldGroup {
     return InputSourceManager.available.find(a => a.name === name) ?? null;
   }
 
-  // Off, with a framework running: offer to manage it
-  RowLayout {
-    visible: !root.layoutsOnly && root.supported && !root.managing && InputSourceManager.detected
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StyledIcon {
-      text: "translate"
-      textColor: Theme.foregroundAlt
-    }
-
-    StyledText {
-      Layout.fillWidth: true
-      wrapMode: Text.WordWrap
-      textSize: Appearance.fontSizeBy(-1)
-      text: I18n.tr("{0} is running: let axiom manage it?", root.framework)
-    }
-
-    StyledTextButton {
-      implicitHeight: Widget.height - Widget.px(4)
-      text: I18n.tr("Manage it")
-      // The one running becomes the chosen one, unless it already is
-      onClicked: SettingsManager.setValues([
-        {
-          "path": ["Input", "method", "enabled"],
-          "value": true
-        }
-      ].concat(root.chosen === "auto" || root.chosen === root.framework ? [] : [
-        {
-          "path": ["Input", "method", "framework"],
-          "value": root.framework
-        }
-      ]))
-    }
-  }
-
-  // On: which framework runs, or why none does
-  RowLayout {
-    visible: root.managing
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    StatusChip {
-      text: root.chosenRuns ? root.framework : root.chosen === "none" ? I18n.tr("Off") : I18n.tr("Not running")
-      color: root.chosenRuns ? Theme.success : root.chosen === "none" ? Theme.foregroundAlt : Theme.warning
-    }
-
-    StyledText {
-      Layout.fillWidth: true
-      wrapMode: Text.WordWrap
-      textSize: Appearance.fontSizeBy(-1)
-      text: {
-        if (root.chosenRuns)
-          return I18n.tr("{0} is running: its engines can be added below, and it gets these sources.", root.framework);
-        if (root.chosen === "none")
-          return I18n.tr("No input method framework is used (Input method, below): only keyboard layouts switch.");
-        const wanted = root.chosen === "ibus" ? root.hasIbus : root.chosen === "fcitx5" ? root.hasFcitx5 : (root.hasFcitx5 === true || root.hasIbus === true ? true : root.hasFcitx5 === false && root.hasIbus === false ? false : undefined);
-        if (wanted === false)
-          return root.chosen === "auto" ? I18n.tr("Neither fcitx5 nor ibus is installed: install fcitx5 to type Japanese, Chinese, Korean and more.") : I18n.tr("{0} isn't installed: install it to type Japanese, Chinese, Korean and more.", root.chosen);
-        return root.chosen === "auto" ? I18n.tr("No input method framework is running.") : I18n.tr("{0} isn't running.", root.chosen);
-      }
-    }
-  }
-
-  // The framework's list isn't axiom's: which wins
-  StyledContainer {
-    visible: root.asks !== ""
-    Layout.fillWidth: true
-    implicitHeight: askColumn.implicitHeight + Widget.padding * 1.5
-    backgroundColor: Qt.alpha(Theme.warning, 0.12)
-    borderColor: Theme.warning
-
-    ColumnLayout {
-      id: askColumn
-      anchors.top: parent.top
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.margins: Widget.padding * 0.75
-      spacing: Widget.spacing
-
-      StyledText {
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        text: root.asks === "outside" ? I18n.tr("{0}'s list was changed outside axiom since axiom gave it these sources.", root.framework) : I18n.tr("{0} has a list of its own that isn't these sources. Which should it keep?", root.framework)
-      }
-
-      RowLayout {
-        spacing: Widget.spacing
-
-        StyledTextButton {
-          implicitHeight: Widget.height - Widget.px(4)
-          text: I18n.tr("Use {0}'s list", root.framework)
-          iconText: "download"
-          onClicked: {
-            const imported = InputSourceManager.importFromFramework();
-            if (imported.length > 0)
-              root.setSources(imported);
-          }
-        }
-
-        StyledTextButton {
-          implicitHeight: Widget.height - Widget.px(4)
-          text: I18n.tr("Use axiom's")
-          iconText: "upload"
-          onClicked: {
-            if (root.asks === "outside")
-              InputSourceManager.useOwn();
-            else
-              root.answered = true;
-          }
-        }
-      }
-
-      StyledText {
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-        text: root.asks === "outside" ? I18n.tr("Using its list puts it here unsaved: Save to keep it. Using axiom's gives {0} these sources again now.", root.framework) : I18n.tr("Using its list puts it here unsaved. Either way, {0} gets these sources when you Save.", root.framework)
-      }
-    }
+  FieldHeader {
+    visible: root.row !== null
+    label: root.row?.title ?? ""
+    description: root.row?.schema?.description ?? ""
   }
 
   StyledText {
@@ -484,5 +376,157 @@ FieldGroup {
         text: I18n.tr("Input methods (Japanese, Chinese, Korean, …) are engines of fcitx5 or ibus: start one to pick from the engines it has installed.")
       }
     }
+  }
+
+  // Off, with a framework running: offer to manage it
+  RowLayout {
+    visible: !root.layoutsOnly && root.supported && !root.managing && InputSourceManager.detected
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    StyledIcon {
+      text: "translate"
+      textColor: Theme.foregroundAlt
+    }
+
+    StyledText {
+      Layout.fillWidth: true
+      wrapMode: Text.WordWrap
+      textSize: Appearance.fontSizeBy(-1)
+      text: I18n.tr("{0} is running: let axiom manage it?", root.framework)
+    }
+
+    StyledTextButton {
+      implicitHeight: Widget.height - Widget.px(4)
+      text: I18n.tr("Manage it")
+      // The one running becomes the chosen one, unless it already is
+      onClicked: SettingsManager.setValues([
+        {
+          "path": ["Input", "keyboard", "method", "enabled"],
+          "value": true
+        }
+      ].concat(root.chosen === "auto" || root.chosen === root.framework ? [] : [
+        {
+          "path": ["Input", "keyboard", "method", "framework"],
+          "value": root.framework
+        }
+      ]))
+    }
+  }
+
+  // The input method switch (Input.keyboard.method.enabled), the last row
+  // of the layouts, as a settings row (its unsaved dot and reset)
+  Loader {
+    active: !root.layoutsOnly && root.form !== null
+    visible: active
+    Layout.fillWidth: true
+    sourceComponent: SettingsField {
+      readonly property var path: ["Input", "keyboard", "method", "enabled"]
+      row: ({
+          "kind": "field",
+          "title": SettingsManager.schemaAt(path)?.title ?? "",
+          "path": path,
+          "schema": Object.assign({}, SettingsManager.schemaAt(path), {
+            "x-showIf": {
+              "/$supports.inputMethod": true
+            }
+          })
+        })
+      form: root.form
+    }
+  }
+
+  // On: which framework runs, or why none does
+  RowLayout {
+    visible: root.managing
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    StatusChip {
+      text: root.chosenRuns ? root.framework : root.chosen === "none" ? I18n.tr("Off") : I18n.tr("Not running")
+      color: root.chosenRuns ? Theme.success : root.chosen === "none" ? Theme.foregroundAlt : Theme.warning
+    }
+
+    StyledText {
+      Layout.fillWidth: true
+      wrapMode: Text.WordWrap
+      textSize: Appearance.fontSizeBy(-1)
+      text: {
+        if (root.chosenRuns)
+          return I18n.tr("{0} is running: its engines can be added above, and it gets these sources.", root.framework);
+        if (root.chosen === "none")
+          return I18n.tr("No input method framework is used (Input method options, below): only keyboard layouts switch.");
+        const wanted = root.chosen === "ibus" ? root.hasIbus : root.chosen === "fcitx5" ? root.hasFcitx5 : (root.hasFcitx5 === true || root.hasIbus === true ? true : root.hasFcitx5 === false && root.hasIbus === false ? false : undefined);
+        if (wanted === false)
+          return root.chosen === "auto" ? I18n.tr("Neither fcitx5 nor ibus is installed: install fcitx5 to type Japanese, Chinese, Korean and more.") : I18n.tr("{0} isn't installed: install it to type Japanese, Chinese, Korean and more.", root.chosen);
+        return root.chosen === "auto" ? I18n.tr("No input method framework is running.") : I18n.tr("{0} isn't running.", root.chosen);
+      }
+    }
+  }
+
+  // The framework's list isn't axiom's: which wins
+  StyledContainer {
+    visible: root.asks !== ""
+    Layout.fillWidth: true
+    implicitHeight: askColumn.implicitHeight + Widget.padding * 1.5
+    backgroundColor: Qt.alpha(Theme.warning, 0.12)
+    borderColor: Theme.warning
+
+    ColumnLayout {
+      id: askColumn
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.margins: Widget.padding * 0.75
+      spacing: Widget.spacing
+
+      StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        text: root.asks === "outside" ? I18n.tr("{0}'s list was changed outside axiom since axiom gave it these sources.", root.framework) : I18n.tr("{0} has a list of its own that isn't these sources. Which should it keep?", root.framework)
+      }
+
+      RowLayout {
+        spacing: Widget.spacing
+
+        StyledTextButton {
+          implicitHeight: Widget.height - Widget.px(4)
+          text: I18n.tr("Use {0}'s list", root.framework)
+          iconText: "download"
+          onClicked: {
+            const imported = InputSourceManager.importFromFramework();
+            if (imported.length > 0)
+              root.setSources(imported);
+          }
+        }
+
+        StyledTextButton {
+          implicitHeight: Widget.height - Widget.px(4)
+          text: I18n.tr("Use axiom's")
+          iconText: "upload"
+          onClicked: {
+            if (root.asks === "outside")
+              InputSourceManager.useOwn();
+            else
+              root.answered = true;
+          }
+        }
+      }
+
+      StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        textColor: Theme.foregroundAlt
+        textSize: Appearance.fontSizeBy(-2)
+        text: root.asks === "outside" ? I18n.tr("Using its list puts it here unsaved: Save to keep it. Using axiom's gives {0} these sources again now.", root.framework) : I18n.tr("Using its list puts it here unsaved. Either way, {0} gets these sources when you Save.", root.framework)
+      }
+    }
+  }
+
+  // Outside managed mode: what to add by hand
+  InputMethodSetup {
+    id: setupLines
+    visible: !root.layoutsOnly && root.supported && setupLines.shown
+    Layout.fillWidth: true
   }
 }

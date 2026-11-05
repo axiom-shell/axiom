@@ -178,7 +178,7 @@ var all = []Step{
 	// sizes, text scale for font size, three sections with Spacers (v93.go)
 	{Version: 93, Run: v93},
 	// v94: Input.keyboard's layout and variant became the input sources,
-	// Input.sources (v94.go)
+	// Input.keyboard.sources (v94.go)
 	{Version: 94, Run: v94},
 }
 

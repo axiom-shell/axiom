@@ -3,7 +3,7 @@
 > **Files:** `backend/internal/inputmethod/inputmethod.go`, `backend/internal/inputmethod/fcitx5.go`, `backend/internal/inputmethod/ibus.go`, `backend/internal/daemon/inputmethod.go`, `backend/internal/daemon/wayland.go`
 > **Related:** [D-Bus](dbus.md), [Wayland](wayland.md), [Protocol](protocol.md)
 
-The daemon's side of input sources: it finds the input method framework (fcitx5 or ibus), follows its current input method, its list and the engines installed, switches input methods, pushes the list axiom owns (`Input.sources`) to the framework, and sets fcitx5's few options axiom has settings for. The shell's side (`InputSourceManager`) reads it through the `inputMethod` topic.
+The daemon's side of input sources: it finds the input method framework (fcitx5 or ibus), follows its current input method, its list and the engines installed, switches input methods, pushes the list axiom owns (`Input.keyboard.sources`) to the framework, and sets fcitx5's few options axiom has settings for. The shell's side (`InputSourceManager`) reads it through the `inputMethod` topic.
 
 ### Finding the framework
 `inputmethod.Service.Run` looks for one, follows it while it runs, and looks again when it stops, when it appears, or when `inputMethod.framework` changes the choice. It never starts or stops a framework.

@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// The input sources (Input.sources: xkb layouts and IME engines, `{ id,
+// The input sources (Input.keyboard.sources: xkb layouts and IME engines, `{ id,
 // kind: "xkb" | "ime", layout, variant, engine }`) as each consumer takes
 // them: the compositor's xkb list, fcitx5's group, ibus's engines, what a
 // source switches to, which one is current and its label. An ime source
@@ -19,7 +19,7 @@ QtObject {
 
   // The compositor's xkb layouts: the xkb sources' distinct layout and
   // variant pairs in order, then (with `engines`: axiom manages the input
-  // method, Input.method.enabled) any an ime source types on that none
+  // method, Input.keyboard.method.enabled) any an ime source types on that none
   // has, as { layouts, variants, layout: "us,de", variant: "" or ",neo" }
   // (variant empty when no layout has one). Never empty: "us" alone. The
   // other helpers take the sources they're given as counting (a caller
@@ -275,7 +275,7 @@ QtObject {
   }
 
   // The framework's list (as groupMatches takes it) as sources, for a
-  // draft of Input.sources: fcitx5's keyboard-<layout>[-<variant>] and
+  // draft of Input.keyboard.sources: fcitx5's keyboard-<layout>[-<variant>] and
   // ibus's xkb:<layout>:<variant>:<language> are xkb sources, anything
   // else an engine, typing on its item's layout (fcitx5; empty when that's
   // the default one, so it follows the first). Ids from the layout or the

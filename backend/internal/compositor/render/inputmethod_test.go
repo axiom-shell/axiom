@@ -58,7 +58,7 @@ func TestInputMethod(t *testing.T) {
 }
 
 // The xkb layouts written: an engine's typing layout joins them only
-// while Input.method.enabled is on.
+// while Input.keyboard.method.enabled is on.
 func TestXkbLayoutsFollowMethodEnabled(t *testing.T) {
 	t.Parallel()
 	schema := jsonx.Obj("properties", jsonx.Obj("sources", jsonx.Obj("x-compositor",

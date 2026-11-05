@@ -19,10 +19,20 @@ QtObject {
   //   { kind: "array", title, path, schema }  for an array of objects
   // A nested object's `x-showIf` goes on its group row and, as
   // `groupShowIf` ([{ condition, path }], path: the object's parent), on
-  // every row inside it
+  // every row inside it. A nested object marked `x-fold` folds its rows
+  // behind its title: its group row has `fold: true`, and each row inside
+  // it `foldedBy`, the dotted path of the innermost such object. Keys go in
+  // their object's `x-order` first (the schema reaches QML as a map)
   function rows(objectSchema, path) {
     const result = [];
-    for (const key in objectSchema.properties ?? {}) {
+    const order = objectSchema["x-order"] ?? [];
+    const keys = Object.keys(objectSchema.properties ?? {});
+    // (Ties keep their place: the engine's sort isn't stable)
+    const rank = key => {
+      const index = order.indexOf(key);
+      return index < 0 ? order.length + keys.indexOf(key) : index;
+    };
+    for (const key of keys.slice().sort((a, b) => rank(a) - rank(b))) {
       const prop = objectSchema.properties[key];
       if (prop["x-settings"] === false)
         continue;
@@ -31,12 +41,16 @@ QtObject {
         const children = rows(prop, propPath);
         if (children.length > 0) {
           const showIf = prop["x-showIf"] ?? null;
+          const fold = prop["x-fold"] === true;
           result.push({
             "kind": "group",
             "title": prop.title ?? key,
             "path": propPath,
-            "showIf": showIf
+            "showIf": showIf,
+            "fold": fold
           });
+          if (fold)
+            children.forEach(child => child.foldedBy = child.foldedBy ?? propPath.join("."));
           if (showIf)
             children.forEach(child => child.groupShowIf = [
                 {

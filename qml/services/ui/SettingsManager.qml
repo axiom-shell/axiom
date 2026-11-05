@@ -174,6 +174,16 @@ QtObject {
     return root.collapsed[key] === true;
   }
 
+  // A row fold (`x-fold`, by its object's dotted path) is shut until
+  // opened, remembered with the cards' folds as "<path>:open"
+  function isFoldOpen(path) {
+    return root.collapsed[path + ":open"] === true;
+  }
+
+  function setFoldOpen(path, open) {
+    root.setCollapsed(path + ":open", open);
+  }
+
   // `keys`: one group key or a list of them
   function setCollapsed(keys, value) {
     const next = Object.assign({}, root.collapsed);

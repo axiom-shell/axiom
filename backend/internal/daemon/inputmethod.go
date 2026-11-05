@@ -52,7 +52,7 @@ func (d *Daemon) inputMethodMethods(reg *rpc.Registry) {
 		Items         []inputmethod.Item `json:"items"`
 	}
 	// Only the shell changes what the framework keeps: it owns the list
-	// (Input.sources) and the settings
+	// (Input.keyboard.sources) and the settings
 	refuse := func(c *rpc.Conn) error {
 		if !fromShell(c) {
 			return axerr.New(axerr.Refused, "only the shell changes the input method framework's settings")

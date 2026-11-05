@@ -8,7 +8,7 @@ import (
 )
 
 // v94: the keyboard's layouts and variants (Input.keyboard.layout "us,de",
-// variant ",neo") became the input sources (Input.sources), an xkb source
+// variant ",neo") became the input sources (Input.keyboard.sources), an xkb source
 // per layout, which IME engines join. A layout left empty is dropped; with
 // none at all the default fills the list. Sources already there win.
 func v94(cfg *jsonx.Object) []string {
@@ -20,9 +20,8 @@ func v94(cfg *jsonx.Object) []string {
 	variant, _ := keyboard.Value("variant").(string)
 	keyboard.Delete("layout")
 	keyboard.Delete("variant")
-	input := object(cfg, "Input")
-	if input.Has("sources") {
-		return []string{"Input.keyboard.layout and variant were dropped: Input.sources holds the layouts"}
+	if keyboard.Has("sources") {
+		return []string{"Input.keyboard.layout and variant were dropped: Input.keyboard.sources holds the layouts"}
 	}
 	variants := strings.Split(variant, ",")
 	sources := jsonx.Arr()
@@ -47,8 +46,8 @@ func v94(cfg *jsonx.Object) []string {
 		sources.Append(jsonx.Obj("id", id, "kind", "xkb", "layout", l, "variant", v, "engine", ""))
 	}
 	if len(sources.Items) == 0 {
-		return []string{"Input.keyboard.layout was empty: Input.sources starts from its default"}
+		return []string{"Input.keyboard.layout was empty: Input.keyboard.sources starts from its default"}
 	}
-	input.Set("sources", sources)
-	return []string{fmt.Sprintf("Input.keyboard.layout and variant became Input.sources: %d keyboard layout(s)", len(sources.Items))}
+	keyboard.Set("sources", sources)
+	return []string{fmt.Sprintf("Input.keyboard.layout and variant became Input.keyboard.sources: %d keyboard layout(s)", len(sources.Items))}
 }

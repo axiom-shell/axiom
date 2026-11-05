@@ -153,9 +153,12 @@ OnboardingPage {
 
     // The layouts as the Input page edits them (input methods are set up
     // there)
-    InputSourcesCard {
+    FieldGroup {
       title: I18n.tr("Input sources")
-      layoutsOnly: true
+
+      InputSourcesField {
+        layoutsOnly: true
+      }
     }
 
     StyledText {
