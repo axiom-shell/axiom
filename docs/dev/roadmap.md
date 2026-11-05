@@ -349,6 +349,8 @@ Found while testing the trial Apply (row 20, compositor-10):
 
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [The guard judges a push where the line starts, not where git runs](issues.md#the-guard-judges-a-push-where-the-line-starts-not-where-git-runs)
+- [The guard's Bash tests fail in a session that exports AXIOM_SOCKET](issues.md#the-guards-bash-tests-fail-in-a-session-that-exports-axiom_socket)
+- [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 
 Moved here from Phase 1, still open:
 - [A shared file older than v71 resets niri's hot corner](issues.md#a-shared-file-older-than-v71-resets-niris-hot-corner)
