@@ -20,7 +20,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 ### Requests (axiom's package chat)
 - Each reply is one `chat.send` call (`ChatManager._reply`): the provider (no key), the model, the messages (only what goes to the provider: role, text, state, who wrote a reply and its `blocks`, attachments' `path` and `mime`) and the preset's options, under an `id`.
 - axiom (`backend/internal/chat`) reads the key itself (`keys.go`: `keyEnv` in the shell's environment, then `secret-tool`, then secrets.json; see [Secrets](../core/secrets.md)), reads each attachment by path (one it can't read goes without its image), builds the request and streams the reply:
-  - each piece is a `chat.delta` push (`{ id, kind: "text" | "thinking", text }`) to the connection that asked;
+  - each piece is a `chat.delta` push (`{ id, kind: "text" | "thinking", text }`) to the connection that asked; while a quarter of that connection's write queue waits (`Conn.Backlogged`), pieces are gathered into one push per kind (`gatherDeltas`), so a fast reply to a shell that stopped reading never fills the queue and gets it dropped;
   - the call answers when the reply ends: `{ model, blocks, notice: "refusal" | "length" | "", stopped }`;
   - a failure is an error by kind, which `ChatManager` maps to the message's `errorKind`: `unauthorized` (401, 403) → `auth`, `not_found` (no key) → `nokey`, `unavailable` (no answer, or the reply cut off midway) → `network`, else `bad_reply` (another status, an error event in the stream).
 - `chat.stop { id }` ends a reply early; `chat.send` then answers `stopped`, with what streamed kept.
