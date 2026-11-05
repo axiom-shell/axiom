@@ -326,7 +326,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
   - Set how long they stay (or use the app's own timeout), keep critical ones up, and keep them quiet over fullscreen windows.
   - The history can drop an app's notifications when you focus it, or when you click or close them, and has a size and age limit.
   - Do not disturb is kept across restarts.
-- **Community setups:** a gallery of looks other people built and shared ([community-setups](https://github.com/axiom-shell/community-setups)), searchable by name and tag in **Settings → Maintenance** or with `/config community`. Applying one takes its look and layout (optionally its wallpaper) and saves yours first; it never brings commands, monitors or accounts. See [Configuration](configuration.md#community-setups).
+- **Community setups:** a gallery of looks other people built and shared ([community-setups](https://github.com/axiom-shell/community-setups)), searchable by name and tag in **Settings → System** or with `/config community`. Applying one takes its look and layout (optionally its wallpaper) and saves yours first; it never brings commands, monitors or accounts. See [Configuration](configuration.md#community-setups).
 - **AI chat:** Anthropic, OpenAI, Gemini, or anything with an OpenAI-style API (Ollama, LM Studio, OpenRouter, …).
   - Replies stream in as formatted Markdown with copyable code blocks and folded thinking.
   - Saved conversations, and presets (system prompt, model, effort).

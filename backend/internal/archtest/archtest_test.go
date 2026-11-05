@@ -102,6 +102,7 @@ var tiers = map[string]int{
 	"internal/nmvpn":                tierEdge,
 	"internal/store":                tierEdge,
 	"internal/supervise":            tierEdge,
+	"internal/sysinfo":              tierEdge,
 	"internal/sysmon":               tierEdge,
 	"internal/tailscale":            tierEdge,
 	"internal/theme":                tierEdge,

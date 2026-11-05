@@ -720,6 +720,28 @@ TestCase {
     compare(groups[5].key, "Cat:Second");
     compare(groups[5].card, "Second");
     compare(groups.map(group => group.wide), [true, false, false, true, true, true]);
+    // `first` cards lead, in their order, ahead of the sections' wide ones
+    const led = SchemaLayout.categoryGroups(schema, {
+      "name": "Cat",
+      "sections": ["S"],
+      "cards": [
+        {
+          "card": "Own",
+          "title": "Own card"
+        },
+        {
+          "card": "Info",
+          "title": "Info",
+          "first": true
+        },
+        {
+          "card": "More",
+          "title": "More",
+          "first": true
+        }
+      ]
+    });
+    compare(led.map(group => group.title), ["Info", "More", "S", "A", "B", "W", "Own card"]);
   }
 
   // A hand-built card is titled by `x-card.title`, which every real one has

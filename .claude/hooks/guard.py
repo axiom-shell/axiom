@@ -520,6 +520,11 @@ def check_argv(env, argv, cwd):
     if sends and (by_ipc or any(m in a for a in args for m in im_writes)) and axiom_live_display(env, args):
         deny("Never, while testing", "inputMethod.push / options / framework only to a nested or scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket): they rewrite the live IME's settings.")
 
+    # The machine's own settings: its clock and time zone, hostname, the
+    # user's account (password, picture, name) and default apps. Only
+    # against a scratch system bus (dbus-run-session) or a scratch daemon
+    check_system_settings(env, name, args, cwd, sends)
+
     # The real config.json: deleted or moved (the file or a folder above it)
     paths = [a for a in args if not a.startswith("-")]
     holding = {LIVE_CONFIG, *LIVE_CONFIG.parents}
@@ -548,6 +553,70 @@ def check_argv(env, argv, cwd):
     if name == "qmlformat" and any(a in {"-i", "--inplace"} for a in args):
         deny("Formatting", "qmlformat -i replaces the file's inode, so qs stops reloading it; verify.sh formats in place.")
 
+
+
+# The daemon's methods that change the machine's settings (Settings ›
+# Account, Date & time, Default apps, System info)
+SYSTEM_WRITES = ("datetime.setTimezone", "datetime.setNtp", "datetime.setTime", "system.setHostname",
+                 "account.setIcon", "account.setRealName", "account.changePassword", "apps.setDefault")
+# Their system-bus services, and the programs that change the same settings
+SYSTEM_BUS_SERVICES = ("org.freedesktop.timedate1", "org.freedesktop.hostname1", "org.freedesktop.Accounts")
+BUS_CALLERS = {"busctl", "gdbus", "dbus-send", "qdbus", "qdbus6"}
+ACCOUNT_PROGRAMS = {"passwd", "chpasswd", "chfn", "usermod", "chsh"}
+# The default-apps files, under the live XDG_CONFIG_HOME
+DEFAULT_APPS_FILES = {"mimeapps.list", "xdg-terminals.list"}
+
+
+def scratch_system_bus(env):
+    """A system bus address the command names itself (a dbus-run-session
+    or test bus), not the machine's."""
+    address = env.get("DBUS_SYSTEM_BUS_ADDRESS", "")
+    return bool(address) and "/run/dbus/system_bus_socket" not in address
+
+
+def default_apps_name(name):
+    return name in DEFAULT_APPS_FILES or name.endswith("-mimeapps.list") or name.endswith("-xdg-terminals.list")
+
+
+def live_default_apps_file(path, cwd, env):
+    """Whether path is mimeapps.list, a desktop-specific one
+    (hyprland-mimeapps.list) or xdg-terminals.list in a live config folder."""
+    p = Path(path)
+    return default_apps_name(p.name) and live_config_path(str(p.parent), cwd, env)
+
+
+def check_system_settings(env, name, args, cwd, sends):
+    if name == "timedatectl" and any(a.startswith("set-") for a in args):
+        deny("Never, while testing", "don't change the machine's clock or time zone; test datetime against a scratch system bus (tests in backend/internal/timedate).")
+    if name == "hostnamectl" and len([a for a in args if not a.startswith("-")]) > 1:
+        deny("Never, while testing", "don't rename the machine or change its hostname1 settings; test against a scratch system bus.")
+    if name in ACCOUNT_PROGRAMS:
+        deny("Never, while testing", f"`{name}` changes the user's account; only the user changes their password or account (test with the fakes in backend/internal/account).")
+    if name in BUS_CALLERS and any(s in a for a in args for s in SYSTEM_BUS_SERVICES):
+        writes = any(re.match(r"Set[A-Z]", a) or ".Set" in a for a in args) or "set-property" in args
+        if writes and not scratch_system_bus(env):
+            deny("Never, while testing", "don't call timedate1 / hostname1 / Accounts setters on the machine's bus; use a scratch one (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
+    if sends and any(m in a for a in args for m in SYSTEM_WRITES) and axiom_live_display(env, args):
+        deny("Never, while testing", "datetime.set* / system.setHostname / account.* / apps.setDefault only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: they change the machine's settings.")
+    if (name == "xdg-mime" and args[:1] == ["default"] or name == "xdg-settings" and args[:1] == ["set"]) and not scratch(env.get("XDG_CONFIG_HOME", "")):
+        deny("Never, while testing", f"`{name} {args[0]}` changes the user's default apps; only with a scratch XDG_CONFIG_HOME=<dir>.")
+    paths = [a for a in args if not a.startswith("-")]
+    if name in {"cp", "mv", "install"} and len(paths) > 1:
+        written = [paths[-1]]
+        into_dir = resolve(paths[-1], cwd, env).is_dir() and any(default_apps_name(Path(p).name) for p in paths[:-1])
+    elif name in {">", "tee", "rm", "unlink"} or name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
+        written, into_dir = paths, False
+    else:
+        written, into_dir = [], False
+    for a in written:
+        if live_default_apps_file(a, cwd, env) or into_dir and live_config_path(a, cwd, env):
+            deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
+
+
+def check_default_apps_edit(tool_input):
+    path = tool_input.get("file_path", "")
+    if path and live_default_apps_file(path, "/", {}):
+        deny("Never, while testing", "don't edit the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
 
 
 def check_qs(env, args):
@@ -683,6 +752,7 @@ def check(call):
     elif tool in {"Edit", "Write"}:
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)
+        check_default_apps_edit(tool_input)
 
 
 def main():

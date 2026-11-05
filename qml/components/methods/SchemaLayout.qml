@@ -474,14 +474,17 @@ QtObject {
     return result.concat(cards);
   }
 
-  // A category's cards in page order: its sections' (`groups`), then its
-  // own `cards`, in order. Wide cards ahead of every narrow one stay at
-  // the top; any other goes to the bottom, so none cuts the columns
-  // partway down (`methods/ColumnSplit` lays them out)
+  // A category's cards in page order: its own `cards` marked `first`, its
+  // sections' (`groups`), then its other own `cards`, in order. Wide cards
+  // ahead of every narrow one stay at the top; any other goes to the
+  // bottom, so none cuts the columns partway down (`methods/ColumnSplit`
+  // lays them out)
   function categoryGroups(schema, category) {
     const all = [].concat(...(category?.sections ?? []).map(section => root.groups(schema, section)));
-    for (const own of category?.cards ?? [])
-      all.push({
+    const owns = Array.prototype.filter.call(category?.cards ?? [], own => own.first).concat(Array.prototype.filter.call(category?.cards ?? [], own => !own.first));
+    let firsts = 0;
+    for (const own of owns)
+      all.splice(own.first ? firsts++ : all.length, 0, {
         "kind": "card",
         "key": category.name + ":" + own.card,
         "card": own.card,
@@ -531,10 +534,11 @@ QtObject {
     return null;
   }
 
-  // [{ name, icon, cards: [{ card, title }], sections: [key], links: [page
-  // type] }]: the root's `x-categories` in order (`icon`, and `cards`, the
-  // category's own hand-built cards: settings/<card>Card.qml, wide, titled
-  // `title` in the sidebar), then any
+  // [{ name, icon, cards: [{ card, title, first }], sections: [key], links:
+  // [page type] }]: the root's `x-categories` in order (`icon`, and
+  // `cards`, the category's own hand-built cards: settings/<card>Card.qml,
+  // wide, titled `title` in the sidebar, ahead of the sections' with
+  // `first`), then any
   // other `x-category` in schema order. A section without `x-category` is
   // a category of its own. A declared category with no sections and no
   // card is left out, as is one whose `showIf` fails and a section whose
@@ -545,10 +549,12 @@ QtObject {
     const make = (name, declared) => ({
           "name": name,
           "icon": declared?.icon ?? "settings",
-          "cards": Array.prototype.map.call(declared?.cards ?? [], own => ({
-                "card": own.card,
-                "title": own.title ?? ""
-              })),
+          "cards": Array.prototype.map.call(declared?.cards ?? [], own => Object.assign({
+              "card": own.card,
+              "title": own.title ?? ""
+            }, own.first === true ? {
+              "first": true
+            } : {})),
           "sections": [],
           "links": []
         });

@@ -9,7 +9,7 @@ import qs.services.apps
 import qs.components.reusable
 
 /**
- * Settings page, Maintenance › Community setups (the section's `x-card`,
+ * Settings page, System › Community setups (the section's `x-card`,
  * wide): the gallery of setups shared at axiom-shell/community-setups.
  * The catalog is downloaded when this card is first shown (never before),
  * with each setup's thumbnail. Search and tag chips narrow the grid; a
