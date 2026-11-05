@@ -68,7 +68,7 @@ Item {
 
   // Run one of the element's actions with `value` filled in
   function act(action, value) {
-    if (root.actionsEnabled)
+    if (root.actionsEnabled) // lock-inert: actionsEnabled is off on the lock screen
       CustomWidgetsManager.runCommand(root.widgetId, root.actions[action] ?? "", value);
   }
 }

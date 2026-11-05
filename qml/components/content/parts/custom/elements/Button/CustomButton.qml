@@ -22,7 +22,7 @@ CustomElementBase {
       if (root.actions.click !== "")
         root.act("click", root.label);
       else
-        CustomWidgetsManager.act(root.widgetId, "click");
+        CustomWidgetsManager.act(root.widgetId, "click"); // lock-inert: the button is disabled without actionsEnabled
     }
   }
 }

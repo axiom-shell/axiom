@@ -108,7 +108,7 @@ ColumnLayout {
       text: I18n.tr("Calendar settings")
       iconText: "chevron_right"
       iconAfter: true
-      onClicked: SettingsManager.openSetting("Calendar", true)
+      onClicked: SettingsManager.openSetting("Calendar", true) // lock-inert: hidden while readOnly (the lock screen's)
     }
     // Filling the width too, so the column spans the pane and centres
     Item {
