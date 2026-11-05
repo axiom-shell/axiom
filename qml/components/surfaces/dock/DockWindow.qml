@@ -470,10 +470,11 @@ Scope {
     // The box and the icons grown out of it, and the gap to the edge (so
     // the pointer doesn't leave the dock on its way from the edge); nothing
     // while it's hidden, or for a preview (the overlay under it keeps the
-    // pointer). A held dock keeps no gap where nothing would close it as
-    // the pointer leaves: always shown, or intellihide showing over no
-    // window until something latches it (the trigger does, on the way in):
-    // `distance` can stretch that gap to half the screen, over what's there
+    // pointer). A held dock keeps the gap only while latched (the trigger
+    // latches it on the way in, and the pointer leaving closes it), never
+    // always shown: `distance` can stretch that gap to half the screen,
+    // over what's there, which a dock shown without a latch (intellihide
+    // over no window, or sliding out) would otherwise catch the pointer in
     mask: Region {
       item: inputArea
     }
@@ -483,7 +484,7 @@ Scope {
       readonly property real alongStart: root.surfaceBoxStart
       readonly property bool open: root.shown > 0 && !root.preview
       readonly property real alongLength: open ? root.surfaceBoxLength : 0
-      readonly property real fromEdge: open && root.held && (root.mode === "always" || (root.mode === "intellihide" && !root.obscured && !root.latched)) ? root.boxOffset : 0
+      readonly property real fromEdge: open && root.held && (root.mode === "always" || !root.latched) ? root.boxOffset : 0
       readonly property real crossDepth: open ? root.boxOffset + root.thickness + root.grown - fromEdge : 0
 
       x: root.vertical ? root.crossAt(fromEdge, crossDepth) : alongStart
