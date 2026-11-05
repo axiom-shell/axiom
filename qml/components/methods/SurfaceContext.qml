@@ -279,14 +279,18 @@ QtObject {
    *     line across the edge), layerOrder (the compositor orders layer
    *     windows by namespace, supports.layerOrder), overOverlay (the
    *     overlay is open on its screen), menuZone (what integrated edge
-   *     menus reserve on its edge)
+   *     menus reserve on its edge), bare (over a fullscreen window, which
+   *     covers the bars and the border: the host passes its frame and
+   *     reservations as 0), under (whether the host's window is under the
+   *     bars now: it keeps slidesUnder's answer while open, and goes over a
+   *     fullscreen window; absent, slidesUnder)
    * Returns EdgeAttach.place's result and: merged, onPill, detached,
    *   straight, backfill, attachClearance, attachFill, attachAt (across, from the
    *   screen edge), attachBase (where it goes by default: on the stroke of
    *   what reserves the edge), attachFromBar (the same from the followed
    *   bar's outer edge), barOuter, ownSink, shadow, stretchFrom, stretchTo
    *   (where a joined submenu's reach along its pill stays), slidesUnder,
-   *   slideDistance
+   *   slidesFromEdge, slideFrom
    */
   function layout(f, p) {
     const bar = p.bar ?? null;
@@ -364,6 +368,8 @@ QtObject {
     // something with content of its own (a pill or island, a solid bar,
     // an integrated menu), nor held or detached (a box of its own)
     const plainJoin = !p.held && !detached && !onPill && (bar ? fromOuter : !ownBar) && !((p.menuZone ?? 0) > 0);
+    // See slidesUnder below
+    const slidesUnder = detached && !p.bare && (p.frameLine ?? 0) > 0 && !!p.layerOrder && !p.overOverlay;
     return Object.assign({}, place, {
       "merged": merged,
       "onPill": onPill,
@@ -386,17 +392,24 @@ QtObject {
       // the strokes at the edge's ends
       "stretchFrom": f.strokeFrom,
       "stretchTo": f.strokeTo,
-      // Slides out from under its bar, its window on the bar's layer
-      // ordered under it: a detached box past a transparent bar. Only where
-      // layer rules order windows (else one mapped as it opens lands over
-      // the bar), and not while the overlay, which that layer is under, is
-      // open on its screen
-      "slidesUnder": detached && !p.held && bar?.kind === "transparent" && !!p.layerOrder && !p.overOverlay,
-      // How far back toward the screen edge a box that slides under starts:
-      // the bar's outer edge, past the border stroke a bar inside the
-      // border lies on. Not gated on slidesUnder, which a host latches
-      // while open
-      "slideDistance": bar ? Math.max(0, attachAt - barOuter - (bar.insideBorder ? p.stroke : 0)) : 0
+      // A detached box slides in from off the screen. Under what's on its
+      // edge (the bars, the border, an integrated menu's strip), its
+      // window on the bars' layer ordered under them: only where layer
+      // rules order windows (else one mapped as it opens lands over the
+      // bars), not while the overlay, which that layer is under, is open
+      // on its screen, and not over a fullscreen window (`bare`: nothing
+      // to go under, and no Top window maps over one)
+      "slidesUnder": slidesUnder,
+      // ...and from behind its edge always: under them from the screen
+      // edge where it can, else (stacked by map order, or over the
+      // overlay, its window on the Overlay layer) from the frame line, cut
+      // there, so it comes out of the bar or border rather than over it
+      "slidesFromEdge": detached,
+      // How far back from its attach edge it starts: the screen edge under
+      // the bars, else the frame line. Not gated on slidesFromEdge, which a
+      // host latches while open; under the bars as its window is (`under`,
+      // which a host keeps while open), not as it would open now
+      "slideFrom": detached ? Math.max(0, attachAt - ((p.under ?? slidesUnder) ? 0 : (p.frameLine ?? 0))) : 0
     });
   }
 

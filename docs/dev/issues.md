@@ -20,6 +20,36 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A fading toast keeps its full blur on niri
+- **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
+- **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the floating popouts branch
+
+### A latched held dock's gap to its edge swallows clicks while the pointer is in it
+- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`inputArea.fromEdge`, `hover`, `pointerIn`)
+- **What:** A held hover or intellihide dock takes the gap from the screen edge to its box into its input mask while latched, so the pointer coming in from the trigger doesn't leave it on the way. The `HoverHandler` covers the whole window (`dockContent` fills it), so once latched, the pointer anywhere in that gap counts as on the dock: moving from the box toward the edge keeps it open (`closeTimer` stopped) and clicks on the windows there go to the dock. With `distance` (up to 50% of the free screen, where the old px `gap` was at most 200) that strip can be half the screen. Options: the gap only until the pointer first reaches the box, hover only on the box (the gap kept for the trigger's path alone), or keep it.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the floating popouts branch
+
+### A reserving held dock reserves the screen up to its distance
+- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`panelWindow.exclusiveZone`)
+- **What:** An always-shown held dock with Reserve space (both defaults) reserves `boxOffset + thickness`, from its edge to the box's far side. With `distance` (0–50% across the free screen, new in place of a px `gap` of at most 200) a dock at 50% reserves half the screen, and the windows tile into the other half. A layer surface can only reserve from its edge, so the choice is the maintainer's: hide Reserve space past a distance of 0, reserve only at 0, or keep it.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the floating popouts branch (round 2)
+
+### A hide while a popout closes leaves its queued show to open it
+- **Where:** `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`, `safeOpenPopout`), `qml/shell/WindowSwitcher.qml` (`sync`)
+- **What:** `show()` during the close animation queues the open (`hasPendingOpen`), but `hide()` acts only `if (isOpen)`, false while closing, so a hide before the close finishes leaves the queued open to fire (`closeDelayTimer` → `_openPending`): the popout opens with nothing wanting it. The window switcher reaches it: `showDelay` (default 120 ms) is under `animNormal` (150 ms), so released, pressed again and released within the close (held past `showDelay`) leaves the strip up with `autoDismiss: false` until the switcher opens again. Fix: `hide()` also drops a pending open (`hasPendingOpen = false`).
+- **Size:** trivial
+- **Found:** 2026-11-05, while reviewing the floating popouts branch (round 3)
+
+### A detached dock and toasts don't slide in from under the bars
+- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
+- **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.
+- **Size:** needs a plan
+- **Found:** 2026-11-05, while making every floating popout slide in from off the screen
+
 ### A menu at the screen-size cap can still lose a bar's depth
 - **Where:** `qml/config/EdgeMenusConfig.qml` (`scaleOf`)
 - **What:** `scaleOf` shrinks a menu's Module size so its depth across its edge fits the screen less its padding (`GridPlacement.fitModuleScale`). Worked out from config alone, it doesn't take off what the bars and border reserve across that edge (EdgeMenuManager's frame, `frame.across`), so a menu at the cap sits past them and loses about their depth at the far screen edge (a nested niri run, 2026-11-05: a top menu at Module size 200 reached the screen's bottom edge). Fix: take the frame's `across` off the room too, from the hosts (which know the frame), or leave it (rare: it takes a card size and Module size high enough to reach the cap). Kept as built by the coordinator (2026-11-05): rare path, no product stake.
@@ -472,12 +502,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Hyprland has one native grab at a time, and its `cleared` doesn't say where the click landed. So while a newer keyboard popout (Todo, Calculator) holds the native grab over an older edge or floating popout (the launcher, a floating edge menu), a click back inside the older one clears the newer grab, which sends `BackdropManager.clickedOutside(null, null)`, and the older one is dismissed and closes too. Rare: hover popouts close once the pointer leaves them, so the pointer reaches the older popout only after the newer grab ended with no click, except where the two overlap or the newer one is held open. Accepted as is by the leader (bar-popouts-02, round 4); fixing it needs the click's position (a backdrop that takes clicks on Hyprland too).
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
-
-### BarPopouts works out its slide distance itself
-- **Where:** `qml/components/hosts/popout/BarPopouts.qml:251` (`underStart`), `qml/components/hosts/popout/BarPopouts.qml:510` (`detachedOffset`), `qml/components/methods/SurfaceContext.qml:399` (`layout`)
-- **What:** `SurfaceContext.layout` now returns `slideDistance` (the bar's outer edge, past the border stroke a bar inside the border lies on), which EdgePopout reads. BarPopouts still works the same rule out itself: `underStart: barConfig.insideBorder ? Appearance.borderWidth : 0` and `detachedOffset: underBar ? attachAt - underStart : 0`. That breaks qml/components/hosts/popout/AGENTS.md: "Never add a rule in a host". Its `attachAt` is `placement.attachFromBar`, which carries `_attachShift`, so the two may differ where the followed panel isn't its own bar; check that before switching. Fix: BarPopouts reads `placement.slideDistance` (with the shift added if it belongs there) for `detachedOffset` and `surfaceFrom`, and `underStart` goes.
-- **Size:** small
-- **Found:** 2026-11-05, while reviewing bar-popouts-03 (EdgePopout's placement read from SurfaceContext)
 
 ### A tray submenu longer than the screen runs off it
 - **Where:** `qml/components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `qml/components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `qml/components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)

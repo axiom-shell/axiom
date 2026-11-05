@@ -122,18 +122,19 @@ properties:
     default: false
     description: A separate box held off the edge, instead of growing out of it.
     x-showIf: {mode: floating}
-  gap:
+  distance:
     x-group: Placement
     type: integer
-    x-control: stepper
-    x-auto: {value: -1, start: 8}
-    x-beside: true
-    title: Gap
-    default: -1
-    minimum: -1
-    maximum: 200
-    x-unit: px
-    description: Space between the menu and the border or bar on its edge, and at its ends. Auto lines it up with a floating bar on its edge, else with your windows.
+    title: Distance from edge
+    x-unit: '%'
+    default: 0
+    minimum: 0
+    maximum: 50
+    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    x-showIf: {mode: floating, detached: true}
+  animation:
+    $ref: '#/definitions/DetachedAnimation'
+    x-group: Placement
     x-showIf: {mode: floating, detached: true}
   frame:
     x-group: Style

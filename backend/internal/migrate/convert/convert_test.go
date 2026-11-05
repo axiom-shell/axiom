@@ -151,6 +151,8 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	}
 	osdItemFields(converted)
 	osdItemFields(defaults.(*jsonx.Object))
+	detachedPlaceFields(converted)
+	detachedPlaceFields(defaults.(*jsonx.Object))
 	dropModuleKeys(defaults)
 	var out []string
 	diffs(converted, defaults, "", &out)
@@ -161,7 +163,29 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Bars.style.textScale", "Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method"}
+var addedSinceV1 = []string{"Bars.style.textScale", "Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method"}
+
+// detachedPlaceFields drops what an OSD and a dock gained since format 1
+// in place of their `gap` (v97 drops it): `distance` and `animation`,
+// filled from their defaults at load
+func detachedPlaceFields(cfg *jsonx.Object) {
+	for _, name := range []string{"OSD", "Dock"} {
+		section, _ := cfg.Value(name).(*jsonx.Object)
+		if section == nil {
+			continue
+		}
+		list, _ := section.Value("items").(*jsonx.Array)
+		if list == nil {
+			continue
+		}
+		for _, entry := range list.Items {
+			if e, _ := entry.(*jsonx.Object); e != nil {
+				e.Delete("distance")
+				e.Delete("animation")
+			}
+		}
+	}
+}
 
 // osdItemFields drops what an OSD gained since format 1 that no step
 // writes: every bar's fields but its type, icon and showOsd (each kind's

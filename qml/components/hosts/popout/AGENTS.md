@@ -4,7 +4,7 @@ The shared pieces every popout is built from: bar popouts, edge popouts (OSDs, f
 
 - **Geometry has one source.** What each end meets, where the box goes, whether it's detached, its shadow and where strokes open come from `methods/SurfaceContext` (`frame`/`layout`) and `methods/EdgeAttach`, gathered by `EdgePlacement` and drawn by `EdgeSurface` (`SubmenuHost` for submenus). Never add a rule in a host: a new case is a `SurfaceContext` rule plus a `tst_SurfaceContext` row.
 - A new host keeps only its window and content.
-- **Every popout holds a `PopoutClaim`** in `PopoutManager` with its footprint; never check other popouts yourself. An open popout never moves.
+- **Every popout holds a `PopoutClaim`** in `PopoutManager` with its footprint; never check other popouts yourself. An open popout never moves, with one exception: an `EdgePopout` whose screen gains or loses a fullscreen window jumps, unanimated, to where it would open now, its window kept mapped (only its layer changes in place; `docs/dev/popouts/held-off-edge.md` › EdgePopout extras).
 - Shadows of visible surfaces go through `OutsideShadow` (explicit padding), never a `MultiEffect` on the item's own layer.
 - Layer order comes from `LayerStack.layers` (`docs/dev/generated/layers.md`; see `qml/components/bar/AGENTS.md`). Bars and the border must never draw over fullscreen; never map a Top window in response to fullscreen (`docs/dev/testing.md`).
 - Verify with `tst_SurfaceContext` rows and one targeted screenshot.

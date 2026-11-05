@@ -35,7 +35,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
   - dragging an icon off the dock unpins it.
 
 ### The window
-- `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box.
+- `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box and the icons grown out of it. One that hides takes the gap to its edge too, so the pointer doesn't leave it on its way from the edge; a held one takes it only while latched (the trigger latches it on the way in, and the pointer leaving closes it), never always shown, as `distance` can stretch that gap to half the screen, over windows and desktop modules: shown without a latch (intellihide over no window, or sliding out, as when a window comes over it under the pointer) it would catch the pointer there and hold.
 - **Layer order:** its layer rule arranges it after the border and every bar ([layer stacking](../generated/layers.md)).
   - It sits inside them, and never shortens the bars on other edges.
   - It is blurred.
@@ -47,7 +47,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
 
 ### Placement
 **Held** (`detached`, the default):
-- A plain box, `gap` away from the frame lines on its edge and at its ends.
+- A plain box at its automatic gaps from the frame lines at its ends, and `distance` (0–50%) across the free screen from its edge (`EdgePlacement.heldDepth` its thickness); it slides or fades in (`animation`, `fades`).
 - Uses `boxOffset` and `startInset` / `endInset`.
 - See [Held off an edge](../popouts/held-off-edge.md).
 

@@ -13,7 +13,7 @@ The on-screen displays: levels (volumes, microphone, brightness) as bars, the st
   - `id`, `name`, `enabled`;
   - `screen` (monitors);
   - `edge`, `position`;
-  - `detached`, `gap`;
+  - `detached`, `distance`, `animation` (Slide or Fade);
   - `openOnHover`, `timeout`;
   - `openTogether` (off by default), `iconsPlace` (`outside` | `inside`), `holdStill` (see What shows);
   - `bars`: `orientation`, `alongEdge` (its `x-showIf` reads the entry's `edge` through `../`), `showPercent`, `items` (the bars);
@@ -97,7 +97,7 @@ The card (`OSDMediaCard`: the cover, title, artist, playing or paused), on a new
 ### Surface (`qml/shell/OSD`)
 - One `EdgePopout` per enabled OSD (`OSDConfig.shownIds`), on each screen its `monitors` puts it on (`General.screensFor(monitors, monitor)`).
 - It is keyed by id, so editing an OSD's settings updates it in place instead of rebuilding every OSD.
-- Placed at its `edge` / `position`. With `detached` / `gap` it is held off the edge, as a dock is (see [Held off an edge](../popouts/held-off-edge.md)).
+- Placed at its `edge` / `position`. With `detached` it is held off the edge, `distance` across the free screen, sliding or fading in (`animation`), as a dock is (see [Held off an edge](../popouts/held-off-edge.md)).
 - **Popout claim:** it uses `overNamespace: "axiom-osd"` and claims as kind `osd` (`claimKey` `osd:<id>:<screen>`), so it closes under a higher popout and won't open under one (see [Popout registry](../popouts/registry.md)).
 - `keepLoaded: true`: the items report their own changes, so they must exist while the OSD is closed.
 - Hiding: the parts' own times (`OSDContent`'s `collapse` → `hide()`, see What shows › Times); the host's own countdown (`timeout`) only runs while nothing is out (opened from its hover strip with nothing to show).
@@ -114,7 +114,7 @@ The card (`OSDMediaCard`: the cover, title, artist, playing or paused), on a new
 ### Editing
 - On the section's `x-card` `views/Settings/OSDListCard`:
   - tabs, one per OSD (named by `labelOf`);
-  - an edge picker with presets;
+  - the screen picker every placed surface has (its nine spots and a drag);
   - a Show button;
   - its `sections`, each folding (`EntryListCard`): Status icons (the row's mode, then the status types as a grid of icon chips, then which of them stay quiet), Now playing, then the other settings ("Place and timing"), and Bars last (`lastSections`): their layout and list.
 - The App field's chips come from `x-suggestions: "audioApps"` (`SettingsManager.suggestionsFor`).

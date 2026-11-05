@@ -10,14 +10,15 @@ QtObject {
 
   // The ScreenTarget it opens on (see General.screensFor)
   readonly property var screen: _c.screen
-  // Placed as docks and OSDs are: a ScreenEdge, its centre's position
-  // along it (0-1), and whether it floats off the edge (a FloatingPopout,
-  // `distance` 0-0.5 across the free screen: 0.5 centres it) or grows out
-  // of it (an EdgePopout)
+  // Placed as every detached surface is (an EdgePopout): a ScreenEdge,
+  // its centre's position along it (0-1), and whether it's held off the
+  // edge (`distance` 0-0.5 across the free screen: 0.5 centres it; it
+  // slides in or fades in, `fade`) or grows out of it
   readonly property int edge: ScreenEdge.fromConfig(_c.edge)
   readonly property real position: _c.position / 100
   readonly property bool detached: _c.detached
   readonly property real distance: _c.distance / 100
+  readonly property bool fade: _c.animation === "fade"
   // Search field under the results
   readonly property bool reverse: _c.reverse
   readonly property int width: Widget.px(_c.width)

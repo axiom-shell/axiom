@@ -74,14 +74,11 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - Across, they sit in line with the windows (`BarsConfig.detachedPush`). Transparent bars are laid inside every other kind on their edge (floating bars and floating pills included), so the box opens past them all, never covering a bar; with another transparent bar inside it, past that too, sliding further. Edge popouts on such an edge meet the transparent bar, the innermost, and are detached past the whole stack as well.
 - **Their window:**
   - Whether it slides under is `EdgePlacement.slidesUnder` (`SurfaceContext.layout`), for bar and edge popouts alike.
-  - It is on the bar's layer: the bar popout's window, `BarPopouts.underBar`.
+  - It is on the bar's layer: the bar popout's window, `BarPopouts.underBar`, which it also hands its `EdgePlacement` as `under`, so `slideFrom` stays at the screen edge when the overlay opens over it.
   - Its namespace is `axiom-popout-under`, whose layer rule ([layer stacking](../generated/layers.md)) stacks it under the bars and border.
-  - It starts at the bar's outer edge, and the box (`AttachedSurface.detachedOffset`) slides out from beneath the bar.
+  - The surface reaches back to the screen edge (`EdgePlacement.slideFrom`), and the box (`AttachedSurface.detachedOffset`) slides in from off the screen, beneath every bar on its edge ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)). A floating bar's popout with no island to grow from (`detached`) does the same.
 - **Over the overlay:** that same rule also stacks the window under the overlay.
-  - So while the overlay is open on its screen (`SurfaceManager.surfaceOpenOn("overlay", screen)`), the window opens on the Overlay layer instead (`axiom-popout`), over the overlay, without the slide.
+  - So while the overlay is open on its screen (`SurfaceManager.surfaceOpenOn("overlay", screen)`), the window opens on the Overlay layer instead (`axiom-popout`), over the overlay, coming out of the bars' inner side (the frame line) instead of passing under them.
   - That's latched while the popout is open, so the overlay opening closes the bar popouts and floating edge menus on its screen (`PopoutManager.closeOn`, from `OverlayPanel`); opened again, they open over it. Integrated menus, docks, OSDs and the launcher stay.
-- **Without layer rules** (no `CompositorManager.supports.layerOrder`: sway, niri), a window mapped as it opens lands over the bar whatever its namespace, so it never slides under: it opens over the bar as it does over the overlay ([layer arrangement](../compositor/layer-arrangement.md)).
-- **Detached edge popouts do the same as bar popouts:**
-  - They slide out from under a transparent bar only (`EdgePopout.slideDistance`).
-  - While the overlay is open they open over it. Whether they slide under is latched while open (`EdgePopout._under`, a `ClosedLatch`), since it changes the window's layer and namespace.
-  - Over anything else they open on top, sliding out within their own window.
+- **Without layer rules** (no `CompositorManager.supports.layerOrder`: sway, niri), a window mapped as it opens lands over the bar whatever its namespace, so it never slides under: it comes out of the bar's inner side instead, cut at the frame line, as it does over the overlay ([layer arrangement](../compositor/layer-arrangement.md)).
+- **Detached edge popouts do the same as bar popouts**, held ones included (OSDs, floating edge menus): they slide in from off the screen under whatever is on their edge ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)), latched while open (`EdgePopout._under`, `_fromEdge`).

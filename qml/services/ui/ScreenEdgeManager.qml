@@ -145,8 +145,11 @@ QtObject {
   // right): `gap` on each when it's 0 or more. Automatic (-1), it lines up
   // with a floating bar on that edge (its float gap across; its islands
   // end where windows start, BarEnds.windowInset), else with the windows:
-  // how far past each frame line they start.
-  function detachedGaps(screen, location, gap) {
+  // how far past each frame line they start. `bare` (over a fullscreen
+  // window, which covers the border and the bars): the screen's edges are
+  // the frame lines, and Automatic is the gap windows keep from a bare
+  // edge (floatGaps).
+  function detachedGaps(screen, location, gap, bare) {
     if (gap >= 0)
       return {
         "across": gap,
@@ -154,12 +157,35 @@ QtObject {
         "end": gap
       };
     const bar = root.edgesFor(screen)[ScreenEdge.name(location)];
-    const windowGap = side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
+    const windowGap = bare ? side => root.floatGaps[ScreenEdge.name(side)] ?? 0 : side => bar?.island && side === location ? bar.floatingGap : Math.max(0, root.barReservedOn(screen, side) + (bar?.island ? root.floatGaps : CompositorManager.gapsOut)[ScreenEdge.name(side)] - root.frameLine(screen, side));
     const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
     return {
       "across": windowGap(location),
       "start": windowGap(vertical ? ScreenEdge.Top : ScreenEdge.Left),
       "end": windowGap(vertical ? ScreenEdge.Bottom : ScreenEdge.Right)
+    };
+  }
+
+  // The gaps a box `depth` px deep held off a screen edge (a ScreenEdge)
+  // keeps, `distance` (0-0.5) across the free screen from it: the
+  // automatic gaps (detachedGaps), the one across that edge pushed in by
+  // `distance` of the room left between the automatic gaps on that edge
+  // and the opposite one, so 0 is where the automatic gap holds it and 0.5
+  // centres it. Every detached surface (an OSD, a dock, a floating edge
+  // menu, the launcher, the window switcher) is placed by it.
+  function heldGaps(screen, location, distance, depth, bare) {
+    const gaps = root.detachedGaps(screen, location, -1, bare);
+    if (!(distance > 0))
+      return gaps;
+    const far = ScreenEdge.opposite(location);
+    const line = side => bare ? 0 : root.frameLineOn(screen, side);
+    const vertical = location === ScreenEdge.Left || location === ScreenEdge.Right;
+    const span = (vertical ? screen?.width : screen?.height) ?? 0;
+    const room = span - line(location) - gaps.across - line(far) - root.detachedGaps(screen, far, -1, bare).across;
+    return {
+      "across": gaps.across + Math.min(distance, 0.5) * Math.max(0, room - depth),
+      "start": gaps.start,
+      "end": gaps.end
     };
   }
 
@@ -208,8 +234,12 @@ QtObject {
 
   // How far past where windows start on a screen edge (a ScreenEdge;
   // reservedWithMenusOn) a surface held `gap` off its frame line (frameLineOn) is:
-  // where a held box goes, in from its window's edge there
-  function heldInset(screen, location, gap) {
+  // where a held box goes, in from its window's edge there. `bare` (over a
+  // fullscreen window: its window spans the screen): `gap` from the
+  // screen's edge
+  function heldInset(screen, location, gap, bare) {
+    if (bare)
+      return Math.max(0, gap);
     return Math.max(0, root.frameLineOn(screen, location) + gap - root.reservedWithMenusOn(screen, location));
   }
 

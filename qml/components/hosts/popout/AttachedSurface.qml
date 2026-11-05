@@ -64,6 +64,13 @@ Item {
   // The surface starts at the attach edge, so the box slides in from
   // there: placed under a bar, from beneath it.
   property real detachedOffset: 0
+  // A detached box fades in and out in place instead of sliding
+  property bool fade: false
+  // How far it has faded in (1 unless it fades)
+  readonly property real shownOpacity: slideContainer.shownOpacity
+  // The opacity its host draws it at, fading it itself (a detached dock
+  // fading in): its copies (the blur window's fill) draw at it too
+  property real hostOpacity: 1
   // Fill drawn this far behind the attach edge (the surface grows by it,
   // and v = 0 stays on the attach edge). A popout on a pill's far stroke
   // takes a pixel, to cover the pill stroke's anti-aliased fringe on the
@@ -414,6 +421,7 @@ Item {
     anchors.fill: parent
 
     active: root.active
+    fade: root.fade
     slideFromRight: root.attachRight
     slideFromLeft: root.attachLeft
     slideFromTop: root.attachTop
