@@ -250,10 +250,10 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, only ...string) (Sync
 	calendars := map[string]*cached{}
 	force := len(only) > 0
 	for _, account := range r.Accounts {
-		synced := func(href string) bool { return !force || slices.Contains(only, account.ID+"|"+href) }
+		refetch := func(href string) bool { return !force || slices.Contains(only, account.ID+"|"+href) }
 		fetched := false
 		for _, cal := range account.Calendars {
-			fetched = fetched || synced(cal.Href)
+			fetched = fetched || refetch(cal.Href)
 		}
 		d, noPassword := s.dav("", ""), error(nil)
 		if account.Kind == "caldav" && fetched {
@@ -265,7 +265,7 @@ func (s *Service) sync(ctx context.Context, r SyncRequest, only ...string) (Sync
 		for _, cal := range account.Calendars {
 			id := account.ID + "|" + cal.Href
 			old := saved.Calendars[id]
-			if !synced(cal.Href) {
+			if !refetch(cal.Href) {
 				if old != nil {
 					calendars[id] = old
 				}
