@@ -230,9 +230,12 @@ Item {
                 text: idleColumn.chipText(chip)
                 tooltipText: isRecent ? I18n.tr("Again") : ""
                 onClicked: {
-                  root._focusDial = true;
                   // A recent one as kept, not its text read back
-                  root.started(isRecent ? idleColumn.recentShown[chip - root.presets.length] : StopwatchClock.parse(root.presets[chip], Date.now()));
+                  const timer = isRecent ? idleColumn.recentShown[chip - root.presets.length] : StopwatchClock.parse(root.presets[chip], Date.now());
+                  if (timer.ms <= 0)
+                    return;
+                  root._focusDial = true;
+                  root.started(timer);
                 }
               }
             }
