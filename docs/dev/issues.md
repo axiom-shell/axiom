@@ -576,12 +576,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the OSD's statuses
 
-### clearAll removes each cached image twice, one process per entry
-- **Where:** `qml/services/system/NotificationManager.qml:132` (`clearAll`), `qml/services/system/NotificationManager.qml:422` (`_forget`)
-- **What:** `clearAll` runs `_forget` for every entry, which spawns `rm -f <image>` for each entry with a cached image (`CommandManager.runDetached(["rm", "-f", …])`), then runs `sh -c 'rm -f "$1"*.png'` over the whole image folder anyway. With a full history (`maxEntries` up to 500) one Clear all starts up to 501 processes where the one glob does it all (and also catches orphans). Fix: `clearAll` unlinks and dismisses the live ones without the per-entry rm (e.g. `_forget(entry, keepFile)`, or `old.forEach(e => { const n = root._live[e.uid]; root._unlink(e.uid); n?.dismiss(); })` and `root._sources = {}`), keeping the glob.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notifications system
-
 ### The dock's menu and drag state outlive the icons they point at
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:216` (`dragIndex`), `qml/components/surfaces/dock/DockWindow.qml:357` (`menuIndex`), `qml/components/surfaces/dock/DockWindow.qml:574` (`anchorItem`), `qml/components/surfaces/dock/DockItem.qml:100` (the hover Timer)
 - **What:** The menu is held as `menuKey`/`menuFull` and anchored on `repeater.itemAt(root.menuIndex)`; a drag as `dragIndex`. Both are cleared only by the icon or the menu itself (`closeMenu()` from DockItem's press, click and drag start, DockMenu's FocusGrab `onCleared`, `conceal()`; `dragIndex = -1` only in DockItem's `_endDrag`). Two paths leave them set:

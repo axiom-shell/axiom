@@ -370,7 +370,6 @@ Found by the audits:
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [clearAll removes each cached image twice, one process per entry](issues.md#clearall-removes-each-cached-image-twice-one-process-per-entry)
 - [Skipping a focus session counts it as finished](issues.md#skipping-a-focus-session-counts-it-as-finished)
 - [A recent timer chip reads its label back as part of the duration](issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
 - [A todo.json deleted while unreadable blocks every save until restart](issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
