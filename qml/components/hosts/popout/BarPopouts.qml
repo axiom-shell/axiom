@@ -232,6 +232,9 @@ PopoutWrapperBase {
     open: still.showing && !root.isClosing && root.claimed
     onOverlayLayer: root.onOverlayLayer
     overOverlay: SurfaceManager.surfaceOpenOn("overlay", root.screen)
+    // Its window under the bars as latched, so slideFrom (and the surface
+    // reaching back to it) doesn't change as the overlay opens over it
+    under: root.underBar
     origin: slot.popupScreenOrigin
     attachedSurface: surface
     opens: root._out

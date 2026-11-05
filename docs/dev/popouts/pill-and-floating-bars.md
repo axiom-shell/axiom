@@ -74,7 +74,7 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
   - Across, they sit in line with the windows (`BarsConfig.detachedPush`). Transparent bars are laid inside every other kind on their edge (floating bars and floating pills included), so the box opens past them all, never covering a bar; with another transparent bar inside it, past that too, sliding further. Edge popouts on such an edge meet the transparent bar, the innermost, and are detached past the whole stack as well.
 - **Their window:**
   - Whether it slides under is `EdgePlacement.slidesUnder` (`SurfaceContext.layout`), for bar and edge popouts alike.
-  - It is on the bar's layer: the bar popout's window, `BarPopouts.underBar`.
+  - It is on the bar's layer: the bar popout's window, `BarPopouts.underBar`, which it also hands its `EdgePlacement` as `under`, so `slideFrom` stays at the screen edge when the overlay opens over it.
   - Its namespace is `axiom-popout-under`, whose layer rule ([layer stacking](../generated/layers.md)) stacks it under the bars and border.
   - The surface reaches back to the screen edge (`EdgePlacement.slideFrom`), and the box (`AttachedSurface.detachedOffset`) slides in from off the screen, beneath every bar on its edge ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)). A floating bar's popout with no island to grow from (`detached`) does the same.
 - **Over the overlay:** that same rule also stacks the window under the overlay.
