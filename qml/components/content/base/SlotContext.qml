@@ -16,8 +16,9 @@ QtObject {
   // Shown as a card (false: a bar popout, which is never compact or bare)
   property bool embedded: true
   // The slot's size in px, and the least the module's full layout needs
-  // inside its padding (0: any). A unit is 25 to 140 px depending on the screen or menu, and
-  // text doesn't scale with it, so modules say what they need in px
+  // inside its padding (0: any). A unit is 25 to 140 px depending on the
+  // screen or menu, and text doesn't scale with it, so modules say what
+  // they need in px
   property real width: 0
   property real height: 0
   property real fullMinWidth: 0
