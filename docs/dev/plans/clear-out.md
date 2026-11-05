@@ -516,7 +516,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-04** (0): Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The dock's menu and drag state outlive the icons they point at; A dock beside another edge's reserving dock is laid out as if that dock weren't there.
 - **features-05** (6): The suspend entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking.
   - Skipping a focus session counts it as finished
-  - [A recent timer chip reads its label back as part of the duration](../issues.md#a-recent-timer-chip-reads-its-label-back-as-part-of-the-duration)
+  - A recent timer chip reads its label back as part of the duration
   - [A todo.json deleted while unreadable blocks every save until restart](../issues.md#a-todojson-deleted-while-unreadable-blocks-every-save-until-restart)
   - [PomodoroDial redraws DialControls' ring and buttons](../issues.md#pomodorodial-redraws-dialcontrols-ring-and-buttons)
   - [Focus and Pomodoro build the parts their properties turn off](../issues.md#focus-and-pomodoro-build-the-parts-their-properties-turn-off)

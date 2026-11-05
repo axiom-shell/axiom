@@ -600,12 +600,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### A recent timer chip reads its label back as part of the duration
-- **Where:** `qml/components/content/parts/CountdownTimer.qml:155` (`chipText`), `qml/components/content/parts/CountdownTimer.qml:233`
-- **What:** A recent timer is kept as `{ ms, label }`, but its chip restarts it by turning it back into text (`formatShort(ms) + " " + label`) and re-parsing that through `started(text)`. A label that starts with a duration is read into the time. Run through `StopwatchClock.parse` as written: `90 5m` is 90 min labelled `5m`, its chip reads `1h30m 5m` and starts 1h35m with no label; `1:30 5m stretch` is 90 s labelled `5m stretch`, its chip `1m30s 5m stretch` starts 6m30s labelled `stretch`. Caffeine's popout shares the part. Fix: a recent chip emits the stored values (a `startedRecent(ms, label)` signal, or `started` carrying `{ ms, label }`), and the owners call `StopwatchManager.startTimer(ms, label)` / caffeine's equivalent instead of parsing text.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
 ### A todo.json deleted while unreadable blocks every save until restart
 - **Where:** `qml/services/apps/TodoManager.qml:97` (`_load`)
 - **What:** `_unreadable` is set when the file holds broken JSON and cleared only by a successful parse. When the file is then deleted (the obvious way out of a broken hand edit), `FileManager.read` returns null, `_load` sets only `_loaded`, and `_unreadable` stays true: every add, tick and delete is dropped with `Not saving over` warnings although there is nothing left to protect, until a valid file appears or the shell restarts. Fix: `if (text === null) { root._unreadable = false; root._loaded = true; }` (2 lines).
