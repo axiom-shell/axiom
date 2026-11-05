@@ -190,6 +190,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the notifications revamp branch (its v83 rename had the same gap, fixed there)
 
+### A custom element sees another kind's element as its slot changes kind
+- **Where:** `qml/components/content/parts/custom/CustomElement.qml` (`_load`), `qml/components/content/parts/custom/elements/Button/CustomButton.qml` (`label`, `icon`), `qml/components/content/parts/custom/elements/Toggle/CustomToggle.qml` (`label`)
+- **What:** When a slot's element changes kind (the default Ring + Text giving way to a definition's own elements, or an element removed in the editor), the loaded item's bound `element` takes the new kind's element before `onKindChanged` reloads it: what overlay-modules-09 gave CustomRing's `inside` a `?? ""` for. Only Ring was quieted; a Button or Toggle handed another kind's options assigns an undefined `options.label` (and Button's `options.icon`) to a string the same way. PLAUSIBLE: a Button slot turning into another kind with the log open settles it. Fix at the cause: bind the item's `element` only while its kind matches the one loaded (keep the last matching element otherwise), then drop Ring's `?? ""`.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the overlay and custom widgets minor sweep (overlay-modules-09)
+
 ### A hot corner can't close what covers it
 - **Where:** `qml/shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
 - **What:** Hot corners sit on the Top layer, so a surface on the `Overlay` layer (axiom's workspace overview, a full-screen overlay page) covers the corner pixel: a toggling action opens it from a corner but can't close it there. niri's own corner toggles its overview; the migrated corner (v82) does that only while `WorkspaceOverlay.compositorOverview` is on. Whether a corner should stay live over Overlay-layer surfaces is the maintainer's call.

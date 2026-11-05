@@ -247,6 +247,7 @@ A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
 - [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
+- [A custom element sees another kind's element as its slot changes kind](issues.md#a-custom-element-sees-another-kinds-element-as-its-slot-changes-kind)
 - [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
