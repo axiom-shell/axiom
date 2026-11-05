@@ -2,7 +2,10 @@ package daemon
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/cursortheme"
@@ -29,10 +32,17 @@ func (d *Daemon) cursorMethods(reg *rpc.Registry) {
 	})
 }
 
-// gsettings runs gsettings (an error where it isn't installed).
+// gsettings runs gsettings (an error where it isn't installed), its
+// output; a failure's error says what it printed on stderr.
 func gsettings(ctx context.Context, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "gsettings", args...).Output()
+	var exit *exec.ExitError
+	if errors.As(err, &exit) {
+		if msg := strings.TrimSpace(string(exit.Stderr)); msg != "" {
+			err = fmt.Errorf("%w: %s", err, msg)
+		}
+	}
 	return string(out), err
 }

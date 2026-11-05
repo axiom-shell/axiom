@@ -130,6 +130,8 @@ type harness struct {
 	gsettings [][]string
 	// stored is what the fake gsettings holds, by "schema key"
 	stored map[string]string
+	// outsideEdits counts the states published with OutsideEdit
+	outsideEdits int
 }
 
 func (h *harness) settingsRun() [][]string {
@@ -150,6 +152,10 @@ func start(t *testing.T, session *dbustest.Bus, ibusAddr func() string) *harness
 		},
 		IBusAddress: ibusAddr,
 		GSettings: func(_ context.Context, args ...string) (string, error) {
+			if args[0] == "set" {
+				// A process: slower than a D-Bus round trip
+				time.Sleep(20 * time.Millisecond)
+			}
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			if args[0] == "get" {
@@ -158,6 +164,13 @@ func start(t *testing.T, session *dbustest.Bus, ibusAddr func() string) *harness
 			h.gsettings = append(h.gsettings, args)
 			h.stored[args[1]+" "+args[2]] = args[3]
 			return "", nil
+		},
+		OnChange: func(st State) {
+			if st.OutsideEdit {
+				h.mu.Lock()
+				h.outsideEdits++
+				h.mu.Unlock()
+			}
 		},
 		Retry: 20 * time.Millisecond,
 		Log:   slog.New(slog.NewTextHandler(testLog{t}, &slog.HandlerOptions{Level: slog.LevelDebug})),
@@ -403,8 +416,13 @@ func TestIBus(t *testing.T) {
 		t.Fatal(err)
 	}
 	st = h.await(t, "the push", func(st State) bool { return len(st.Group) == 2 })
-	if st.OutsideEdit {
-		t.Errorf("the push reads as an outside edit: %+v", st)
+	// Not even for a moment: the PropertiesChanged the push causes rereads
+	// the setting, written before it
+	h.mu.Lock()
+	edits := h.outsideEdits
+	h.mu.Unlock()
+	if st.OutsideEdit || edits > 0 {
+		t.Errorf("the push reads as an outside edit (%d times): %+v", edits, st)
 	}
 	wantSet := [][]string{{"set", ibusGeneral, "preload-engines", "['xkb:us::eng', 'mozc-jp']"}}
 	if got := h.settingsRun(); !reflect.DeepEqual(got, wantSet) {

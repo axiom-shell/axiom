@@ -6,6 +6,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -321,19 +322,29 @@ func (b *ibus) set(ctx context.Context, name string) error {
 	return mapError(err)
 }
 
-// push preloads the items' engines now (the PreloadEngines property,
-// which refuses an engine it doesn't know), and keeps them in ibus's
-// settings, which its panel and the next start read. ibus engines carry
+// push keeps the items' engines in ibus's settings, which its panel and
+// the next start read, then preloads them now (the PreloadEngines
+// property). The setting goes first: the property's PropertiesChanged
+// rereads the list from it, which would otherwise read the old one and
+// show the push as an outside edit. An engine ibus doesn't have is
+// refused before either (as the property would). ibus engines carry
 // their layouts: defaultLayout and the items' layouts aren't ibus's.
 func (b *ibus) push(ctx context.Context, _ string, items []Item) error {
+	engines, err := b.engines(ctx, "Engines")
+	if err != nil {
+		return err
+	}
 	names := make([]string, 0, len(items))
 	for _, it := range items {
+		if !slices.ContainsFunc(engines, func(d ibusEngine) bool { return d.name == it.Name }) {
+			return axerr.New(axerr.Failed, "ibus has no engine %s", it.Name)
+		}
 		names = append(names, it.Name)
 	}
-	if err := b.conn.SetProperty(ctx, ibusName, ibusPath, ibusIface, "PreloadEngines", dbus.MakeVariant(names)); err != nil {
-		return mapError(err)
+	if err := b.setting(ctx, ibusGeneral, "preload-engines", gvariantStrings(names)); err != nil {
+		return err
 	}
-	return b.setting(ctx, ibusGeneral, "preload-engines", gvariantStrings(names))
+	return mapError(b.conn.SetProperty(ctx, ibusName, ibusPath, ibusIface, "PreloadEngines", dbus.MakeVariant(names)))
 }
 
 // settings sets what ibus has of them: the candidate font.
@@ -354,8 +365,8 @@ func (b *ibus) setting(ctx context.Context, schema, key, value string) error {
 	if b.gsettings == nil {
 		return nil
 	}
-	if out, err := b.gsettings(ctx, "set", schema, key, value); err != nil {
-		return axerr.Wrap(axerr.Failed, err, "gsettings set %s %s: %s", schema, key, strings.TrimSpace(out))
+	if _, err := b.gsettings(ctx, "set", schema, key, value); err != nil {
+		return axerr.Wrap(axerr.Failed, err, "gsettings set %s %s", schema, key)
 	}
 	return nil
 }
