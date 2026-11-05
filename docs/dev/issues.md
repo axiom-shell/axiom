@@ -50,12 +50,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the bindable commands
 
-### TestNotifySend's no-server call can run out the test's 5 s instead of failing at once
-- **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
-- **What:** `scripts/dev/verify.sh --all` (a branch that didn't touch the daemon) once failed with `with no server: context deadline exceeded` after 5.00 s; `go test ./internal/daemon -run TestNotifySend -count=3` then passed. PLAUSIBLE: the last `notify.send` goes out right after `server.Close()`, before the test bus has dropped the closed connection's `org.freedesktop.Notifications` name, so the Notify call is routed to the dead owner and waits for a reply that never comes, until the one shared 5 s ctx (made before the bus setup and already partly spent) expires, rather than the bus answering at once with no owner (`Unavailable`). Fix: after `server.Close()`, wait until the name has no owner (poll `NameHasOwner` or watch `NameOwnerChanged`) before the last call, and give that call its own ctx.
-- **Size:** trivial
-- **Found:** 2026-11-04, while running verify.sh --all for roadmap row 20, compositor-08
-
 ### Included's hookup can put sway-only lines into a config i3 still runs
 - **Where:** `backend/internal/compositor/manager/sway.go` (`userMain`)
 - **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.

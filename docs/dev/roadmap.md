@@ -568,7 +568,6 @@ Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge sub
 Bugs an agent's review or audit found and marked PLAUSIBLE: no code is written for one until it's confirmed (shown on screen or in a log, or traced in the code), and then its link moves back to its phase. They block no row; they're to get to eventually. PLAUSIBLE entries a human submitted (the maintainer's notes) stay in their phase, still not built until confirmed. The maintainer (2026-11-05): "just leave plausible code reviewed only found bugs in a new list to get to eventually (i.e not human submitted".
 
 - [Eject may leave a USB stick powered on](issues.md#eject-may-leave-a-usb-stick-powered-on)
-- [TestNotifySend's no-server call can run out the test's 5 s instead of failing at once](issues.md#testnotifysends-no-server-call-can-run-out-the-tests-5-s-instead-of-failing-at-once)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding) (PLAUSIBLE in its exact px)
 - [A stale exec-if check can block a widget after its exec-if changed](issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
 - [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)
