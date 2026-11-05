@@ -12,7 +12,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
   - The compositor's `gapsOut` and `floatGaps` (what an Automatic float gap keeps: `gapsOut`, or the screen margin with no backend), which a reader can't read.
   - Each bar's place among the bars stacked on its edge (`BarEnds.withEnds`: its exclusive `zone`, `layerRank`, `ends`; [Layering and corners](layering-and-corners.md#bars-stacked-on-one-edge-barendsstackson-placestack-edgeof)).
   - What the bars leave on each screen edge: `edgesFor` (the innermost), `stackOn`, `edgeOn`, `screenEdgeOpen`, `barReservedOn`, `frameLine`, `detachedGaps`.
-- A bar whose `monitor` is `"*"` is expanded by `BarsConfig.expandBars` into one entry per screen (id `<id>@<screen>`, plus `sourceId`), the primary monitor's first.
+- A bar on every monitor or on named ones is expanded by `BarsConfig.expandBars` into one entry per screen (id `<id>@<screen>` even on one screen, so a hotplug leaves the other bars' windows, plus `sourceId`), the primary monitor's first. A bar on the primary monitor keeps its plain id.
 - Any other bar's monitor is resolved to a connected screen there.
 
 ### Widgets and their options

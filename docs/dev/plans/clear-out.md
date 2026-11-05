@@ -425,7 +425,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - An open edge popout's layer and namespace still follow its edge's bar
   - EdgePopout works out its attach edge and slide distance itself
 - **bar-popouts-04** (2; its three reserve entries fixed by the stacked bars PR, its selection and report entries by the bar rewrite): the editor and rebuild entries.
-  - [Plugging in or unplugging a monitor remakes the bar that stays](../issues.md#plugging-in-or-unplugging-a-monitor-remakes-the-bar-that-stays)
+  - Plugging in or unplugging a monitor remakes the bar that stays
   - [Bar widget hosts settle after they're gone](../issues.md#bar-widget-hosts-settle-after-theyre-gone)
 - **bar-popouts-06** (3):
   - [Media squeezed to its minimum in the fill style shows the meter, not its icon](../issues.md#media-squeezed-to-its-minimum-in-the-fill-style-shows-the-meter-not-its-icon)
