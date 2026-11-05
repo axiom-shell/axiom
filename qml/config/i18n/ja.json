@@ -3479,7 +3479,6 @@
     "Also list the images in the folders inside it, at any depth.": "",
     "Collection": "",
     "The transitions Random chooses between. None ticked chooses from all of them.": "",
-    "How much larger than the screen the wallpaper is drawn, and so how far it can slide.": "",
     "On battery": "",
     "While a window is fullscreen": "",
     "While the screen is locked": "",
@@ -4043,6 +4042,7 @@
     "How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.": "",
     "How a detached box comes and goes: sliding in from off the screen (under the bars, where it can), or fading in where it sits.": "",
     "The output's tooltip on hover (Waybar's), when hovering doesn't open the module.": "",
-    "This custom widget isn't offered on the lock screen": ""
+    "This custom widget isn't offered on the lock screen": "",
+    "How far the wallpaper slides from one end to the other, as a share of the screen, the same both ways.": ""
   }
 }

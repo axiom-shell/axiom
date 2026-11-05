@@ -563,12 +563,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### ToastStack logs a binding loop on _attachedShowing
-- **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (`_attachedShowing`)
-- **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the OSD's statuses
-
 ### DockWindow logs a binding loop on _wouldShow
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:270` (`_wouldShow`), `qml/components/surfaces/dock/DockWindow.qml:318` (`conceal`), `qml/components/hosts/popout/PopoutClaim.qml` (`_sync`), `qml/services/ui/PopoutManager.qml` (`_refuse`), `qml/shell/Dock.qml` (the DockWindow the log names)
 - **What:** The live shell logged `Binding loop detected for property "_wouldShow"` (`@shell/Dock.qml[35:19]`) after a reload on 2026-11-02. main's code has the loop (none of these files differ on the maintainer's branch): when `_wouldShow` turns true (the dock latches) while a popout covers its spot, the claim's `wanted:` binding (line 247) makes `PopoutClaim._sync` call `PopoutManager.claim`, which refuses a resident synchronously (`_refuse` puts it `yielded`); `away` turns true and `onAwayChanged` runs `conceal()`, setting `latched = false` while `_wouldShow`'s binding is still writing its value. The dock ends hidden, as wanted, but with the warning. Fix: drop the latch a turn later (`Qt.callLater` in `onAwayChanged`), or have `conceal` skip `latched` when `away` already hides it.
