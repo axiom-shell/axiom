@@ -169,6 +169,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
 - Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Focus windows that ask for it are greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
 - Once the shell runs #329 (bar-popouts-03): an open edge popout on a transparent bar's edge keeps its layer and namespace when the bar changes, auto-hides, or the overlay opens (Hyprland).
+- Once the shell runs compositor-18 (row 20), on a laptop under Hyprland: with the Mouse and Touchpad parts on, give the touchpad its own speed, acceleration and left-handed and check the touchpad takes them while a mouse keeps the Mouse part's (right after login too: Hyprland's first load lists no devices, the daemon's eval sets them), a second speed change applies without a reload, and the touchpad's natural scrolling and tap to click still hold; with the Touchpad part off, the touchpad follows the Mouse part. A nested Hyprland has no touchpad to check this on.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
