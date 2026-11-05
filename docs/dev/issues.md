@@ -449,6 +449,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
 
+### TestLogindLockAndSleep failed once under verify.sh
+- **Where:** `backend/internal/idle/idle_test.go` (`TestLogindLockAndSleep`)
+- **What:** One `scripts/dev/verify.sh` run failed it at its first `h.rec.expect(t, "lock")` with `actions [], want [lock]`: nothing was recorded within the 3 s bound after `h.logind.Lock()`, though `until(s.Logind)` had passed. Three `go test -count=1 ./internal/idle/` runs right after and a second verify.sh run passed. PLAUSIBLE: the service reports `Logind` before its `Lock` signal match is in place, so a Lock sent at once is missed; settle by running the package under load (`-race`, `-cpu 1,2,4,8`, `-count` in the hundreds) and checking when the match is added against when `Logind` turns true.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the settings chunk of the tweaks-minor-complaints branch
+
 ### The guard judges a push where the line starts, not where git runs
 - **Where:** `.claude/hooks/guard.py` (`check_git`, `simple`), `tests/scripts/test_guard.py`
 - **What:** `check_git` reads the branch once, in the folder the line starts in (or `git -C`'s), before anything in the line runs, so a push to main gets past it when git runs on another branch or folder than that: `git switch main && git push` (or `git checkout main`) from a feature branch's folder; a wrapper that changes folder (`env -C <main checkout> git push`, `sudo -D`, `systemd-run --working-directory`, whose options `simple` drops); `git --git-dir=…`/`--work-tree=…` or `GIT_DIR=… git push`. Each was allowed by `guard.check` from a folder on a feature branch (2026-11-02). Fix: refuse a bare push (no refspec, or `HEAD`) after a `switch`/`checkout` in the same line, and judge the folder those options and variables name.

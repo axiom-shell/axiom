@@ -3744,7 +3744,6 @@
     "Under the open ones, until you clear them.": "",
     "Also list images in subfolders.": "",
     "Also keep an empty workspace above the first.": "",
-    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, or a command.": "",
     "Neovim has no single line to add: copy the axiom_theme module into your config, then call its setup() once your plugins are loaded.": "",
     "Nothing is downloaded until you open the gallery.": "",
     "Off, each monitor gets its own.": "",
@@ -3934,6 +3933,7 @@
     "Writes the colors into ncspot's config.toml between axiom's markers.": "",
     "Empty follows the theme.": "",
     "No toasts on a monitor showing a fullscreen window. Critical ones still show.": "",
-    "Desktop entry ids, in order: the apps every dock shows first.": ""
+    "Desktop entry ids, in order: the apps every dock shows first.": "",
+    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a timer length (10m, 1:30), or a command.": ""
   }
 }
