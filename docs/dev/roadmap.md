@@ -503,7 +503,6 @@ Found meanwhile:
 - [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
 - [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp) (an idea from the wallpaper transitions branch)
 - [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification) (the maintainer's request, 2026-11-02)
-- [TestNvidiaStream can see the stream's first line before it looks](issues.md#testnvidiastream-can-see-the-streams-first-line-before-it-looks)
 - [TestWatch can see one in-place edit as two](issues.md#testwatch-can-see-one-in-place-edit-as-two)
 
 Needs a plan:
