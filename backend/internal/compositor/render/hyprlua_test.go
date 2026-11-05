@@ -50,7 +50,7 @@ func TestGreeterLua(t *testing.T) {
 	}
 	on := parse(t, `{"keyboard": {"enabled": true, "layout": "us,de"}, "mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": false, "naturalScroll": true}}`)
 	lines := GreeterLua(inputSchema, on)
-	config := lines[len(lines)-1]
+	config := strings.Join(lines, "\n")
 	for _, want := range []string{"hl.config(", `kb_layout = "us,de"`, "sensitivity = -0.5"} {
 		if !strings.Contains(config, want) {
 			t.Errorf("no %q in %s", want, config)
@@ -70,6 +70,51 @@ func TestGreeterLua(t *testing.T) {
 			t.Errorf("accel %s: want %q in %s", accel, want, got)
 		}
 	}
+}
+
+// A field whose spec names `device: touchpad` (InputLua, GreeterLua)
+// leaves the hl.config() table for one hl.device() per pointer named like
+// a touchpad, each in a pcall; a mouse is left to the global options
+func TestTouchpadDeviceLua(t *testing.T) {
+	t.Parallel()
+	schema := parse(t, `{"type": "object", "properties": {
+		"mouse": {"type": "object", "properties": {"enabled": {"type": "boolean", "x-greeter": true},
+			"sensitivity": {"type": "integer", "x-greeter": true, "x-compositor": {"hyprland": {"key": "input.sensitivity", "scale": 0.01, "if": "enabled"}}}}},
+		"touchpad": {"type": "object", "properties": {"enabled": {"type": "boolean", "x-greeter": true},
+			"accel": {"type": "string", "x-greeter": true, "x-compositor": {"hyprland": {"device": "touchpad", "key": "accel_profile", "skip": "default", "if": "enabled"}}},
+			"sensitivity": {"type": "integer", "x-greeter": true, "x-compositor": {"hyprland": {"device": "touchpad", "key": "sensitivity", "scale": 0.01, "if": "enabled"}}},
+			"leftHanded": {"type": "boolean", "x-greeter": true, "x-compositor": {"hyprland": {"device": "touchpad", "key": "left_handed", "if": "enabled"}}}}}}}`)
+	values := parse(t, `{"mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": true, "accel": "adaptive", "sensitivity": 25, "leftHanded": true}}`)
+	stub := `set = {}
+hl = { config = function(t) config = t end,
+  get_devices = function() return {
+    { name = "logitech-g502", type = "pointer" }, { name = "elan0001:00-04f3:3138-touchpad", type = "pointer" },
+    { name = "bcm5974-trackpad", type = "pointer" }, { name = "at-translated-set-2-keyboard", type = "keyboard" }, { type = "pointer" } } end,
+  device = function(spec)
+    if spec.name == "elan0001:00-04f3:3138-touchpad" and set.refuse then error("refused") end
+    set[spec.name] = spec
+  end }`
+	check := `assert(config.input.sensitivity == -0.5 and config.input.accel_profile == nil, "the mouse stays global")
+for _, name in ipairs({ "elan0001:00-04f3:3138-touchpad", "bcm5974-trackpad" }) do
+  local s = set[name]
+  assert(s and s.accel_profile == "adaptive" and s.sensitivity == 0.25 and s.left_handed == true, name)
+end
+assert(set["logitech-g502"] == nil and set["at-translated-set-2-keyboard"] == nil, "only touchpads")`
+	for name, lines := range map[string][]string{"input": InputLua(jsonx.Obj("values", values), schema), "greeter": GreeterLua(schema, values)} {
+		t.Run(name, func(t *testing.T) {
+			lua := strings.Join(lines, "\n")
+			runLua(t, stub, lua, check)
+			// One touchpad refusing leaves the others
+			runLua(t, stub, "set.refuse = true", lua, `assert(set["bcm5974-trackpad"])`)
+		})
+	}
+	// The touchpad's part off: no hl.device(), so it follows the mouse
+	off := parse(t, `{"mouse": {"enabled": true, "sensitivity": -50}, "touchpad": {"enabled": false, "sensitivity": 25}}`)
+	if got := strings.Join(GreeterLua(schema, off), "\n"); strings.Contains(got, "hl.device") {
+		t.Errorf("touchpad part off: %s", got)
+	}
+	// An older Hyprland with no hl.get_devices runs it all the same
+	runLua(t, "hl = { config = function(t) end, device = function() error(\"called\") end }", strings.Join(GreeterLua(schema, values), "\n"))
 }
 
 // Every managed Hyprland option, each changed from its default, makes Lua

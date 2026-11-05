@@ -168,6 +168,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs compositor-20 (row 20): with blur on and translucency below 100, a toast's tone matches the bar and edge popout beside it, and doesn't jump when the blur pauses or resumes.
 - Once the shell runs compositor-20 (row 20), during Hyprland's or SwayFX's compositor-wide blur pause (a fullscreen window on another screen): a pill bar's end merged into another bar's corner shows no unfilled 1px row.
 - Once the shell runs compositor-14 (row 20), under niri: the bind inspector's Fire on release is greyed with "niri can't do this." (on for Restart axiom, and can be turned off there), Blur contrast, Fullscreen opacity and Focus windows that ask for it are greyed with the same note, and Wide active shows in every workspace layout; under Hyprland all of them are editable.
+- Once the shell runs #329 (bar-popouts-03): an open edge popout on a transparent bar's edge keeps its layer and namespace when the bar changes, auto-hides, or the overlay opens (Hyprland).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -349,7 +350,6 @@ Moved here from Phase 1, still open:
 Found by the audits:
 - [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
 - [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
-- [Hyprland writes no per-touchpad input block](issues.md#hyprland-writes-no-per-touchpad-input-block)
 - [The Touchpad part has no speed, acceleration or left-handed of its own](issues.md#the-touchpad-part-has-no-speed-acceleration-or-left-handed-of-its-own)
 - [The Mouse part doesn't say it reaches the touchpad on Hyprland](issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)

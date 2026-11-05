@@ -415,7 +415,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A reference section's title is worked out twice
   - Stale lines in the Hyprland docs and comments
 - **compositor-18** (3): Decided that they separate; the plan, decided 2026-11-05 (option A), split into these: [touchpad-apart-from-the-mouse.md](touchpad-apart-from-the-mouse.md).
-  - [Hyprland writes no per-touchpad input block](../issues.md#hyprland-writes-no-per-touchpad-input-block)
+  - Hyprland writes no per-touchpad input block
   - [The Touchpad part has no speed, acceleration or left-handed of its own](../issues.md#the-touchpad-part-has-no-speed-acceleration-or-left-handed-of-its-own)
   - [The Mouse part doesn't say it reaches the touchpad on Hyprland](../issues.md#the-mouse-part-doesnt-say-it-reaches-the-touchpad-on-hyprland)
 
