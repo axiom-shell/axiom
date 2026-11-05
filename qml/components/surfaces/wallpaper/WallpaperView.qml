@@ -22,7 +22,7 @@ Item {
   property real shiftY: 0
 
   // The image on top, and the one it replaced (what a transition starts
-  // from)
+  // from, until it ends)
   property Image current: null
   property Image previous: null
   // The transition playing: { name, angle, origin, sweep, seed }
@@ -56,13 +56,7 @@ Item {
       progress.stop();
       root._rest();
     }
-    const next = root.current === first ? second : first;
-    // Back to the one it held last (dark, light, dark): the same source
-    // doesn't load again, so no status change would bring it up
-    if (next.source.toString() === root.source && next.status === Image.Ready && root.source !== "")
-      Qt.callLater(root._reveal, next);
-    else
-      next.source = root.source;
+    (root.current === first ? second : first).source = root.source;
   }
 
   function _reveal(image) {
@@ -89,11 +83,16 @@ Item {
     progress.restart();
   }
 
+  // At rest only the image shown is drawn: the one it replaced lets its
+  // screen-size decode go
   function _rest() {
     root._transition = Object.assign({}, root._transition, {
       "name": "show"
     });
     shader.progress = 1;
+    if (root.previous)
+      root.previous.source = "";
+    root.previous = null;
   }
 
   function _rect(image) {

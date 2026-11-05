@@ -268,12 +268,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-27, while measuring the shell's memory
 
-### Images decoded at full size or more than once
-- **Where:** `qml/components/surfaces/wallpaper/WallpaperWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/components/content/NowPlaying/NowPlaying.qml`
-- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer).
-- **Size:** small
-- **Found:** 2026-10-27, while measuring the shell's memory
-
 ### Text clips on 1080p screens
 - **Where:** `qml/components/views/Layouts/MenuOpening.qml` (the Show on screen / Show other menus buttons)
 - **What:** On a 1920×1080 monitor at the default Interface scale, the edge menu editor's two buttons side by side ("Show on screen", "Show other menus", and their Hide labels) don't fit their halves of the inspector and their labels clip. Likely not the only place: much of the UI was laid out on a 1440 px screen, and since the sizing revamp text keeps its size on every monitor while panels and cards follow the screen. Wants a pass over the overlay pages and inspectors at 1080p (`scripts/dev/nested.sh` with a 1080p output), wrapping or stacking what doesn't fit.

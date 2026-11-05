@@ -23,6 +23,8 @@ Item {
         required property var value
         readonly property bool ready: status !== Image.Loading
         source: value
+        // fixed px: a decode cap, past the largest a cover is drawn at
+        sourceSize: Qt.size(640, 640)
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         visible: status === Image.Ready

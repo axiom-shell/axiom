@@ -457,7 +457,6 @@ The shell's RSS at rest and after use, measured rather than guessed: about 840 M
 
 - **Done:** the shell's heap never shrinking after a spike (row 9; maintainer, 2026-10-27: "yes, opt the shell out of THP"): qs runs with transparent huge pages off, 110–125 MB less at rest and after use; the daemon and what it launches keep them ([memory](core/memory.md) › Transparent huge pages).
 - [Nineteen windows stay mapped on one monitor](issues.md#nineteen-windows-stay-mapped-on-one-monitor)
-- [Images decoded at full size or more than once](issues.md#images-decoded-at-full-size-or-more-than-once)
 
 ### Phase 13: the maintainer's notes
 Bugs and small features from the maintainer's own use, filed from their notes on 2026-10-28 (compositor-specific ones are in [Phase 6](#phase-6-compositor-parity), fit ones in [Phase 7](#phase-7-fit-geometry-and-performance)). Each feature step follows its recipe (`setting`, `settings-card`, …); the plans go through [Items that need a plan](#items-that-need-a-plan).

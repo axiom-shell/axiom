@@ -472,7 +472,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - NowPlaying builds its strip layout and a second transport hidden in every mode
 - **overlay-modules-04** (2): Splits by file group if it passes the gate.
   - [Parts shown in one mode are built hidden in every mode, in ten modules and parts](../issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
-  - [Images decoded at full size or more than once](../issues.md#images-decoded-at-full-size-or-more-than-once)
+  - Images decoded at full size or more than once
 - **overlay-modules-05** (4):
   - [Reopening the overlay while it closes leaves it open but hidden](../issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
   - [A clean layout's problem blocks saving the others in the Layouts editor](../issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)

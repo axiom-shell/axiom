@@ -249,6 +249,8 @@ Panel {
           required property var value
           readonly property bool ready: status !== Image.Loading
           source: value
+          // fixed px: blurred to a wash, so a small decode does
+          sourceSize: Qt.size(128, 128)
           fillMode: Image.PreserveAspectCrop
           asynchronous: true
           layer.enabled: true
