@@ -30,9 +30,10 @@ QtObject {
   readonly property int maxDots: _c.maxDots
   // The Clock & calendar module's events on the lock screen too
   readonly property bool showOnLockscreen: _c.showOnLockscreen
-  readonly property bool use24Hour: _c.use24Hour
+  // "default" (DateTime's clock) | "12" | "24"
+  readonly property string hourFormat: _c.hourFormat
   // The language's time format, for event times
-  readonly property string timeFormat: I18n.dateFormat(root.use24Hour ? "time24" : "time12")
+  readonly property string timeFormat: I18n.timeFormat(root.hourFormat)
   // Kinds whose events axiom can change: CalDAV accounts and local
   // calendars (.ics subscriptions are read-only)
   function writableKind(kind) {

@@ -401,7 +401,7 @@ QtObject {
       kind: "run",
       glyph: "terminal",
       title: command || I18n.tr("Type a command"),
-      subtitle: I18n.tr("Enter runs it, Shift+Enter runs it in {0}", Apps.terminal.trim() || "xdg-terminal-exec"),
+      subtitle: I18n.tr("Enter runs it, Shift+Enter runs it in {0}", Apps.terminal.trim() || I18n.tr("the terminal")),
       run: shift => {
         if (command === "")
           return false;

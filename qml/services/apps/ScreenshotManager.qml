@@ -246,7 +246,7 @@ QtObject {
   // Opens a picture taken (the OSD card's click)
   function open(path) {
     if (path)
-      CommandManager.runDetached(["xdg-open", path]);
+      DefaultAppsManager.open(path);
   }
 
   // Opens a picture in the annotator, which saves over it
@@ -533,7 +533,7 @@ QtObject {
     }, null, true);
     NotificationManager.registerHandler(_desktopEntry, () => {
       if (root._lastPath !== "")
-        CommandManager.runDetached(["xdg-open", root._lastPath]);
+        DefaultAppsManager.open(root._lastPath);
     });
   }
 

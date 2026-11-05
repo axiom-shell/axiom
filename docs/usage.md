@@ -90,7 +90,7 @@ axiom ipc <target> <function> [args]
 
 </details>
 
-The common actions also have their own commands, which are easier to remember: `axiom launcher toggle`, `axiom overlay toggle`, `axiom volume up`, `axiom mic toggle`, `axiom dnd on`, `axiom message info "Backup done"`, `axiom brightness down`, `axiom media play-pause`, `axiom screenshot take region`, `axiom lock`. `axiom --help` lists them all, and `axiom <command> --help` each one's options.
+The common actions also have their own commands, which are easier to remember: `axiom launcher toggle`, `axiom overlay toggle`, `axiom volume up`, `axiom mic toggle`, `axiom dnd on`, `axiom message info "Backup done"`, `axiom brightness down`, `axiom media play-pause`, `axiom screenshot take region`, `axiom lock`, and `axiom open browser` / `axiom open ~/Downloads` (your default apps, Settings → General → Default apps). `axiom --help` lists them all, and `axiom <command> --help` each one's options.
 
 To bind them in your compositor's own config instead, run the same command. On Hyprland, a `"Section: Label"` description also sets where the bind appears on the Keybinds page:
 

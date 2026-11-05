@@ -12,7 +12,13 @@ colors:
         - {$bar.widgetStyle: [filled, tinted, outline], $bar.widgetGrouping: {not: merged}}
         - {$bar.widgetStyle: underline}
 settings:
-  use24Hour: {type: boolean, title: '24-hour', default: false}
+  hourFormat:
+    type: string
+    title: Clock
+    enum: [default, '12', '24']
+    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    default: default
+    description: Default follows Settings › System › Date & time.
   showSeconds: {type: boolean, title: Seconds, default: true}
   showDate: {type: boolean, title: Date, default: true}
   timezone:

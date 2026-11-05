@@ -69,13 +69,15 @@ properties:
     default: 12
     minimum: 1
     maximum: 60
-  use24Hour:
+  hourFormat:
     x-scope: look
-    type: boolean
-    title: '24-hour times'
+    type: string
+    title: Event times
     x-group: Display
-    default: true
-    description: How event times show everywhere events do.
+    enum: [default, '12', '24']
+    x-enumLabels: {default: 'Date & time setting', '12': 12-hour, '24': 24-hour}
+    default: default
+    description: How event times show everywhere events do. Default follows Settings › System › Date & time.
   maxDots:
     x-scope: look
     type: integer

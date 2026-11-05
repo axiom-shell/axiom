@@ -183,6 +183,10 @@ var all = []Step{
 	// v95: the default input source binds (CTRL + space and with SHIFT)
 	// joined configs where their keys and ids are free (v95.go)
 	{Version: 95, Run: v95},
+	// v96: the settings overhaul: clocks' use24Hour became hourFormat
+	// (default follows Date & time), Apps.terminal's old default kitty
+	// empty (v96.go)
+	{Version: 96, Run: v96},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

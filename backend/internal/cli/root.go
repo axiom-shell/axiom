@@ -29,6 +29,7 @@ func Root() *Command {
 			messageCommand(),
 			ipcCommand(),
 			execCommand(),
+			openCommand(),
 			compositorCommand(),
 			debugCommand(),
 			bugInfoCommand(),

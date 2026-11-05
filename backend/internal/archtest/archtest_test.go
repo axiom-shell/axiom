@@ -90,6 +90,7 @@ var tiers = map[string]int{
 	"internal/logfile":              tierEdge,
 	"internal/logind":               tierEdge,
 	"internal/media":                tierEdge,
+	"internal/mimeapps":             tierEdge,
 	"internal/netif":                tierEdge,
 	"internal/nightlight":           tierEdge,
 	"internal/notification":         tierEdge,

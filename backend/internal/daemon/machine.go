@@ -12,7 +12,10 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buginfo"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
+	"github.com/axiom-shell/axiom/backend/internal/mimeapps"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/sysinfo"
 	"github.com/axiom-shell/axiom/backend/internal/timedate"
@@ -27,7 +30,7 @@ func machinePushShapes() []rpc.PushShape {
 // changes (System info, Date & time, Account, Default apps): kept apart
 // from the parts list so they read as one group.
 func (d *Daemon) machineParts() []part {
-	return []part{d.systemPart(), d.datetimePart(), d.accountPart()}
+	return []part{d.systemPart(), d.datetimePart(), d.accountPart(), d.appsPart()}
 }
 
 // machineMethods are machineParts' methods, for Contract.
@@ -233,6 +236,77 @@ func (d *Daemon) accountPart() part {
 					return account.PasswordResult{}, err
 				}
 				return accounts.ChangePassword(ctx, p.Current, p.New)
+			})
+		},
+	}
+}
+
+// appsPart: Settings › General › Default apps (DefaultAppsManager) and
+// opening anything with them (apps.open, `axiom open`): the desktop
+// entries and mimeapps lists are read again for every call, so a change
+// made anywhere is seen.
+func (d *Daemon) appsPart() part {
+	load := func() *mimeapps.Apps { return mimeapps.Load(mimeapps.FromEnv(d.opts.Getenv)) }
+	type typeParams struct {
+		Mime string `json:"mime"`
+	}
+	type typeResult struct {
+		Default  string           `json:"default"`
+		Handlers []mimeapps.Entry `json:"handlers"`
+	}
+	type setParams struct {
+		// A role id, or a MIME type's (Other file types) in mime
+		Role string `json:"role,omitempty"`
+		Mime string `json:"mime,omitempty"`
+		ID   string `json:"id"`
+	}
+	type openParams struct {
+		// A role id, a URL or a path
+		Target string   `json:"target"`
+		Args   []string `json:"args,omitempty"`
+	}
+	type openResult struct {
+		Argv []string `json:"argv"`
+	}
+	return part{
+		name: "apps",
+		methods: func(reg *rpc.Registry) {
+			rpc.Handle(reg, "apps.roles", func(ctx context.Context, c *rpc.Conn, _ struct{}) ([]mimeapps.RoleState, error) {
+				return load().State(), nil
+			})
+			rpc.Handle(reg, "apps.handlers", func(ctx context.Context, c *rpc.Conn, p typeParams) (typeResult, error) {
+				a := load()
+				return typeResult{Default: a.Default(p.Mime), Handlers: a.Handlers(p.Mime)}, nil
+			})
+			// Only the shell (a pick in Settings) changes the defaults
+			rpc.Handle(reg, "apps.setDefault", func(ctx context.Context, c *rpc.Conn, p setParams) ([]mimeapps.RoleState, error) {
+				if !fromShell(c) {
+					return nil, axerr.New(axerr.Refused, "only the shell changes the default apps")
+				}
+				a := load()
+				var err error
+				if p.Role != "" {
+					err = a.SetDefault(p.Role, p.ID)
+				} else {
+					err = a.SetTypes([]string{p.Mime}, p.ID)
+				}
+				if err != nil {
+					return nil, err
+				}
+				return load().State(), nil
+			})
+			// Starts what opens target, as the shell's commands start
+			// (command.Spawn: the shell's environment, its own session)
+			rpc.Handle(reg, "apps.open", func(ctx context.Context, c *rpc.Conn, p openParams) (openResult, error) {
+				var cfg *jsonx.Object
+				if d.store != nil {
+					cfg, _ = d.store.Config()
+				}
+				argv, err := load().Command(p.Target, p.Args, mimeapps.OverridesFrom(cfg))
+				if err != nil {
+					return openResult{}, err
+				}
+				return openResult{Argv: argv}, command.Spawn(ctx, d.commandOptions(), argv, "")
 			})
 		},
 	}

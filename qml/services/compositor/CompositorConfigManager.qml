@@ -325,7 +325,7 @@ Singleton {
 
   function openConfigDir() {
     if (root.configDir !== "")
-      CommandManager.runDetached(["xdg-open", root.configDir]);
+      DefaultAppsManager.open("fileManager", [root.configDir]);
   }
 
   // Adds the include lines to the user's config (the include hookup, with a

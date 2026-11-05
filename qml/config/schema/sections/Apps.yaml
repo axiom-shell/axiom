@@ -3,28 +3,29 @@
 x-scope: personal
 type: object
 x-category: General
-title: Apps
-description: "The apps axiom opens: by the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and the network editor."
+x-card: {file: DefaultApps, title: Default apps}
+title: App commands
+description: "Commands axiom runs in place of the default apps above, for the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and opening folders; and the network editor. Empty uses the default app."
 additionalProperties: false
 properties:
   terminal:
     x-scope: commands
     type: string
     title: Terminal
-    default: kitty
-    description: "Terminal used for commands run with Shift+Enter, for terminal apps and by the Terminal keybind. It's started as: terminal -e command."
+    default: ''
+    description: "A terminal command in place of the default terminal, for the Terminal keybind, terminal apps and Shift+Enter commands, started as: terminal -e command. Empty uses the default terminal."
   fileManager:
     x-scope: commands
     type: string
     title: File manager
     default: ''
-    description: Command the File manager keybind runs. Empty opens your home folder in the system's default file manager.
+    description: A file manager command in place of the default one, given the folder to open. Empty uses the default file manager.
   browser:
     x-scope: commands
     type: string
     title: Browser
     default: ''
-    description: Command the Browser keybind runs. Empty starts the system's default web browser.
+    description: A browser command in place of the default browser, given the link to open. Empty uses the default browser.
   networkEditor:
     x-scope: commands
     type: string
