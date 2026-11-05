@@ -461,12 +461,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
-### The guard's Bash tests fail in a session that exports AXIOM_SOCKET
-- **Where:** `tests/scripts/test_guard.py` (`Bash`), `.claude/hooks/guard.py` (`axiom_live_display`)
-- **What:** `Axiom.setUp` pops an inherited `$AXIOM_SOCKET` and pins the live runtime and display, but the `Bash` class doesn't. Run from a terminal of the live session (which exports `AXIOM_SOCKET=/run/user/1000/axiom/wayland-1/axiom.sock`), six of its cases fail (`test_self_update`, `test_machine_settings`, `test_hookup_apply`, `test_greeter_apply`, `test_live_input_method`, `test_dev_writes_sent_by_hand`): `XDG_RUNTIME_DIR=/tmp/run python3 -c '…selfupdate.apply…'` is refused, since the guard rightly follows the inherited socket first. With `env -u AXIOM_SOCKET` all 47 pass, so `verify.sh --all` fails locally but not in CI. Fix: give `Bash` the same setUp as `Axiom` (or a shared mixin).
-- **Size:** trivial
-- **Found:** 2026-11-05, while running verify.sh --all for row 20 (bar-popouts-06)
-
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)
 - **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}` and no error, while the other parallel subtests (same `Service`, same account `ID: "acc"`) passed. 200 runs alone and 50 under `-race` all passed, so it's a flake under load, cause unknown: the subtests sharing one account id across parallel `Discover` calls is the first suspect.
