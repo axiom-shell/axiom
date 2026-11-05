@@ -360,7 +360,7 @@ Rectangle {
         "room": Math.round(root._sectionRooms[s])
       }), {})
   } : null
-  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang)
+  readonly property var _sectionRooms: BarLayout.sectionRooms(root._groups.map(g => g.preferredLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang, centerGroup.centerParts)
   property string _reportedId: ""
   readonly property string _reportKey: JSON.stringify(root.editorReport)
   on_ReportKeyChanged: root._report()

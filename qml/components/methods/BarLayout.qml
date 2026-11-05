@@ -413,15 +413,18 @@ QtObject {
   // bar, the others at their preferred lengths (`pref`), as layoutSections
   // would give it (for the bar editor's fit meter): with `lockCenter`, a
   // side its half beside the full-size center (`centerHang` left out of
-  // what's centered), the center the whole bar; otherwise what the
-  // others and the gaps leave.
-  function sectionRooms(pref, length, margin, gap, lockCenter, centerHang) {
+  // what's centered; a center with spacers, `parts` (centerParts): its
+  // pinned group centered and its outer groups beside it on the halves),
+  // the center the whole bar; otherwise what the others and the gaps leave.
+  function sectionRooms(pref, length, margin, gap, lockCenter, centerHang, parts) {
     const [m0, m1] = root._margins(margin);
     const g = root._gaps(gap);
     const room = Math.max(0, length - m0 - m1);
     if (lockCenter) {
-      const center = root._lockedCenter(pref[1], length, m0, m1, centerHang);
-      return [Math.max(0, center.start - m0 - g.lc), room, Math.max(0, length - m1 - center.start - center.length - g.cr)];
+      const split = pref[1] > 0 && parts && parts.leadFills + parts.tailFills > 0;
+      const center = root._lockedCenter(split ? parts.core : pref[1], length, m0, m1, split ? null : centerHang);
+      const lead = split ? parts.lead : 0, tail = split ? parts.tail : 0;
+      return [Math.max(0, center.start - m0 - g.lc - lead), room, Math.max(0, length - m1 - center.start - center.length - g.cr - tail)];
     }
     const others = i => pref.reduce((sum, p, j) => sum + (j === i ? 0 : p), 0);
     const sideGap = s => pref[1] > 0 ? (s === 0 ? g.lc : g.cr) : g.lr;
@@ -439,8 +442,10 @@ QtObject {
   // section to the widget listed last. Spacers (`fill`) are never hidden:
   // they keep their minimum gaps. With `lockCenter`, each half of the bar
   // must fit beside the full-size center on its own, and only the
-  // overflowing half loses widgets; the center is only touched if it
-  // can't fit the bar alone. The center's dividers (`divides`) are left
+  // overflowing half loses widgets, the center's too where a center
+  // spacer pushes its outer group onto that half (centerParts); otherwise
+  // the center is only touched if it can't fit the bar alone. The
+  // center's dividers (`divides`) are left
   // out of what's centered, as in layoutSections. `gap` is one number or
   // per boundary (boundaryGaps).
   function overflowHidden(measures, length, margin, gap, spacing, lockCenter) {

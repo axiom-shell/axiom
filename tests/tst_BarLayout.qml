@@ -521,6 +521,9 @@ TestCase {
     compare(s[1].tailShare, 290);
     compare(s[1].extent, 450);
     compare(s[2].offset, 900);
+    // The editor's rooms: each side's half beside the pinned group and the
+    // outer group pushed onto it
+    compare(BarLayout.sectionRooms([100, 160, 100], 1000, 0, 10, true, undefined, parts), [430, 1000, 390]);
     // Unlocked: the center's spacer shares the bar's room with any others
     const u = BarLayout.layoutSections([100, 160, 100], [100, 160, 100], 1000, 0, 10, false, undefined, [0, 1, 0], parts);
     compare(u[1].offset, 110);
