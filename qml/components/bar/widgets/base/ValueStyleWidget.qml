@@ -31,17 +31,7 @@ BarIconWidget {
   property color stateColor: root.accentColor
   property bool hasState: true
 
-  readonly property string style: {
-    let style = root.appearance.style;
-    // Stacked draws its own two lines; on a vertical bar it's a label
-    if (style === "stacked" && root.isVertical)
-      return "label";
-    if (style === "sparkline" && root.history === null)
-      style = "fill";
-    if (["ring", "fill", "segments", "pill"].includes(style) && root.ratio < 0)
-      return "label";
-    return style;
-  }
+  readonly property string style: graphic.resolvedStyle(root.appearance.style, root.isVertical, root.history !== null, root.ratio)
 
   showText: root.labelShown && !["icon", "ticker", "stacked"].includes(root.style)
   leadLength: graphic.drawn ? graphic.length : 0

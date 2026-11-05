@@ -19,7 +19,10 @@ Item {
   readonly property int itemHeight: Widget.height
   readonly property int itemPadding: Widget.padding
   property real minWidth: Widget.height * 4
-  property real maxWidth: Widget.px(600)
+  property real maxWidth: (_window?.screen?.width ?? 2000) * 0.3 // fixed px: a stand-in screen width
+
+  // Read through a var: QsWindow.window is typed QObject
+  readonly property var _window: root.QsWindow.window
 
   signal itemClicked
   signal submenuRequested(Item itemDelegate)

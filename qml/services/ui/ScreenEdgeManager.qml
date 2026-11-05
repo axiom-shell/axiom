@@ -189,19 +189,27 @@ QtObject {
     };
   }
 
-  // Space open integrated menus reserve, by "<screen>:<edge>" (edge
-  // "top" | "bottom" | "left" | "right"), for surfaces that place
-  // themselves against the perpendicular edges (BarPopouts)
+  // Space open integrated menus reserve, by menu id: { screen, edge
+  // ("top" | "bottom" | "left" | "right"), size }, for surfaces that place
+  // themselves against the perpendicular edges (BarPopouts). A menu's
+  // replaces what it set before, so one that moves edge or screen leaves
+  // nothing behind; 0 clears it
   property var zones: ({})
 
-  function setZone(screenName, edge, size) {
-    const key = `${screenName}:${edge}`;
-    if ((root.zones[key] ?? 0) !== size)
-      root.zones = Utils.withEntry(root.zones, key, size > 0 ? size : undefined);
+  function setZone(menuId, screenName, edge, size) {
+    const old = root.zones[menuId];
+    if ((old?.size ?? 0) === size && (size === 0 || (old.screen === screenName && old.edge === edge)))
+      return;
+    root.zones = Utils.withEntry(root.zones, menuId, size > 0 ? {
+      "screen": screenName,
+      "edge": edge,
+      "size": size
+    } : undefined);
   }
 
+  // What the menus open on a screen edge reserve, together
   function zoneOn(screenName, edge) {
-    return root.zones[`${screenName}:${edge}`] ?? 0;
+    return Object.values(root.zones).filter(zone => zone.screen === screenName && zone.edge === edge).reduce((sum, zone) => sum + zone.size, 0);
   }
 
   // Where windows start on a screen edge (a ScreenEdge), in px from it,

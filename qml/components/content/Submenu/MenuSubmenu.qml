@@ -3,12 +3,12 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
-import qs.components.hosts.overlay
+import qs.components.surfaces.edgemenu
 
 // An edge menu's modules in another menu's submenu (SubPopout, loaded as
-// "Submenu/MenuSubmenu" by a Submenu module), on a grid at the card size of
-// the menu it opens from, scaled by this one's moduleScale. Its modules'
-// host is this menu's, marked `submenu`.
+// "Submenu/MenuSubmenu" by a Submenu module): its EdgeMenuBody, at the card
+// size of the menu it opens from, scaled by this one's moduleScale. Its
+// modules' host is this menu's, marked `submenu`.
 Item {
   id: root
 
@@ -19,31 +19,10 @@ Item {
 
   readonly property var menu: EdgeMenusConfig.menuById(root.menuId)
   readonly property var parentMenu: EdgeMenusConfig.menuById(root.parentId)
+  readonly property bool empty: (root.menu?.layout?.modules ?? []).length === 0
 
-  // Modules re-read only when they actually change (as EdgeMenuBody)
-  readonly property string _modulesKey: JSON.stringify(root.menu?.layout?.modules ?? [])
-  property var modules: []
-  on_ModulesKeyChanged: root.modules = JSON.parse(root._modulesKey)
-  Component.onCompleted: root.modules = JSON.parse(root._modulesKey)
-
-  readonly property var host: ({
-      "kind": "edgeMenu",
-      "id": root.menuId,
-      "bare": !(root.menu?.layout?.moduleBorders ?? true),
-      "submenu": true
-    })
-
-  OverlayGrid {
-    id: overlayGrid
-    fixedUnit: root.menu ? EdgeMenusConfig.cardUnitOf(root.menu, root.parentMenu ? EdgeMenusConfig.screenFor(root.parentMenu) : null) : 0
-    gap: root.menu ? EdgeMenusConfig.gapOf(root.menu) : OverlayConfig.cardSpacing
-  }
-
-  readonly property bool empty: root.modules.length === 0
-
-  implicitWidth: root.empty ? emptyText.implicitWidth : moduleGrid.implicitWidth
-  // Kept on the screen: past its room, it scrolls (SubPopout.maxContentHeight)
-  implicitHeight: root.empty ? emptyText.implicitHeight : Math.min(moduleGrid.implicitHeight, root.wrapper?.maxContentHeight ?? moduleGrid.implicitHeight)
+  implicitWidth: root.empty ? emptyText.implicitWidth : body.implicitWidth
+  implicitHeight: root.empty ? emptyText.implicitHeight : body.implicitHeight
 
   // What keeps the submenu up (SubPopout's dismiss logic)
   property alias hovered: hoverHandler.hovered
@@ -51,22 +30,17 @@ Item {
     id: hoverHandler
   }
 
-  Flickable {
+  Loader {
+    id: body
     anchors.fill: parent
-    visible: !root.empty
-    contentWidth: moduleGrid.implicitWidth
-    contentHeight: moduleGrid.implicitHeight
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    flickableDirection: Flickable.VerticalFlick
-    interactive: moduleGrid.implicitHeight > root.height
-
-    ModuleGrid {
-      id: moduleGrid
-      modules: root.modules
-      grid: overlayGrid
-      host: root.host
-      zoom: root.menu ? EdgeMenusConfig.zoomOf(root.menu) : 1
+    active: !root.empty
+    sourceComponent: EdgeMenuBody {
+      menu: root.menu
+      vertical: true
+      submenu: true
+      screen: root.parentMenu ? EdgeMenusConfig.screenFor(root.parentMenu) : null
+      // Kept on the screen: past its room, it scrolls (SubPopout.maxContentHeight)
+      maxLength: root.wrapper?.maxContentHeight ?? 0
     }
   }
 

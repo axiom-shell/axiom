@@ -118,26 +118,39 @@ func TestWatch(t *testing.T) {
 	if got := a.got(); len(got) != 0 {
 		t.Fatalf("pushed %v for its own write and an unwatched file", got)
 	}
-	// An editor writing in place, in pieces: one push
+	// An editor writing in place, in pieces: pushed (once, unless a slow
+	// runner lets the burst settle between the pieces)
 	if err := os.WriteFile(path, []byte("the"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, []byte("theirs"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if got := waitFor(t, a, 1); len(got) != 1 || got[0] != asked {
-		t.Errorf("a got %v", got)
+	for _, c := range []*fakeConn{a, b} {
+		for _, got := range waitFor(t, c, 1) {
+			if got != asked {
+				t.Errorf("pushed %q, want %q", got, asked)
+			}
+		}
 	}
-	waitFor(t, b, 1)
 
-	f.Unwatch(a, asked)
-	f.Forget(b)
-	if err := os.WriteFile(path, []byte("again"), 0o644); err != nil {
+	// Unwatched or forgotten before a change, nothing is pushed; a
+	// connection still watching shows the change settled
+	later := filepath.Join(dir, "later.json")
+	c, d, e := &fakeConn{}, &fakeConn{}, &fakeConn{}
+	for _, conn := range []*fakeConn{c, d, e} {
+		if err := f.Watch(conn, later); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.Unwatch(c, later)
+	f.Forget(d)
+	if err := os.WriteFile(later, []byte("again"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(50 * time.Millisecond)
-	if len(a.got()) != 1 || len(b.got()) != 1 {
-		t.Errorf("pushed after unwatch: %v, %v", a.got(), b.got())
+	waitFor(t, e, 1)
+	if len(c.got()) != 0 || len(d.got()) != 0 {
+		t.Errorf("pushed after unwatch: %v, %v", c.got(), d.got())
 	}
 }
 

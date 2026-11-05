@@ -4041,6 +4041,7 @@
     "Click a spot or drag to place it, to an edge to attach it; fine-tune below. Show opens it as a change would.": "",
     "Click a spot or drag to place it, to an edge to attach it; fine-tune below. Show brings it in for a moment.": "",
     "How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.": "",
-    "How a detached box comes and goes: sliding in from off the screen (under the bars, where it can), or fading in where it sits.": ""
+    "How a detached box comes and goes: sliding in from off the screen (under the bars, where it can), or fading in where it sits.": "",
+    "The output's tooltip on hover (Waybar's), when hovering doesn't open the module.": ""
   }
 }

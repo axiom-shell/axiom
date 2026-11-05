@@ -77,10 +77,11 @@ func (c *clock) add(d time.Duration) {
 }
 
 // streams is a fake nvidia-smi: each start is recorded, prints line once
-// and runs until stopped
+// (once hold, if set, is closed) and runs until stopped
 type streams struct {
 	mu     sync.Mutex
 	line   string
+	hold   chan struct{}
 	fail   bool
 	starts []time.Duration
 	live   int
@@ -96,6 +97,12 @@ func (f *streams) start(ctx context.Context, bin string, every time.Duration) (i
 	f.live++
 	r, w := io.Pipe()
 	go func() {
+		if f.hold != nil {
+			select {
+			case <-f.hold:
+			case <-ctx.Done():
+			}
+		}
 		w.Write([]byte(f.line))
 		<-ctx.Done()
 		w.Close()
@@ -481,7 +488,7 @@ func TestNvidiaStream(t *testing.T) {
 	m.write("sys/bus/pci/devices/0000:01:00.0/power/control", "on\n")
 	m.write("sys/bus/pci/devices/0000:01:00.0/power/runtime_status", "active\n")
 	c := &clock{now: time.UnixMilli(0)}
-	f := &streams{line: "37, 61\n"}
+	f := &streams{line: "37, 61\n", hold: make(chan struct{})}
 	mon := m.monitor(c, true, f)
 	fetch := m.fetcher(mon)
 	run(t, mon)
@@ -489,6 +496,7 @@ func TestNvidiaStream(t *testing.T) {
 	if st := fetch(req); !st.HasGPU || st.GPUUsage != nil {
 		t.Fatalf("before the stream's first line: %+v", st)
 	}
+	close(f.hold)
 	if !testkit.Eventually(func() bool {
 		st := fetch(req)
 		return st.GPUUsage != nil && *st.GPUUsage == 37 && *st.GPUTemp == 61
@@ -520,6 +528,14 @@ func TestNvidiaStream(t *testing.T) {
 	}
 }
 
+// failed: the stream's failed start is stamped, which comes after the
+// fake records the start (moving the clock before then moves the retry)
+func failed(mon *Monitor) bool {
+	mon.mu.Lock()
+	defer mon.mu.Unlock()
+	return !mon.gpu.failedAt.IsZero()
+}
+
 func TestNvidiaKeptAndRetried(t *testing.T) {
 	t.Parallel()
 	m := newMachine(t)
@@ -529,7 +545,7 @@ func TestNvidiaKeptAndRetried(t *testing.T) {
 	// No PCI device found: never sleeps, so the history keeps it
 	mon.Keep("shell", []string{GPU})
 	run(t, mon)
-	if !testkit.Eventually(func() bool { starts, _ := f.state(); return len(starts) == 1 }) {
+	if !testkit.Eventually(func() bool { return failed(mon) }) {
 		t.Fatal("the history never started the stream")
 	}
 	if starts, _ := f.state(); starts[0] != time.Second {
@@ -563,7 +579,7 @@ func TestNvidiaRetriedForTheTopic(t *testing.T) {
 	run(t, mon)
 	req := `{"interval": 1000, "metrics": ["gpu"]}`
 	fetch(req)
-	if !testkit.Eventually(func() bool { starts, _ := f.state(); return len(starts) == 1 }) {
+	if !testkit.Eventually(func() bool { return failed(mon) }) {
 		t.Fatal("the topic never started the stream")
 	}
 	f.mu.Lock()

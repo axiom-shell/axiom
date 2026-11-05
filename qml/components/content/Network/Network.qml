@@ -81,111 +81,119 @@ Card {
   }
 
   // A strip: the graphs faint behind the connection and its rates
-  Graphs {
-    visible: root.strip
+  Loader {
     anchors.fill: parent
-    anchors.margins: Appearance.borderWidth
-    opacity: 0.5
-    fade: 0.6
+    active: root.strip
+
+    sourceComponent: Item {
+      Graphs {
+        anchors.fill: parent
+        anchors.margins: Appearance.borderWidth
+        opacity: 0.5
+        fade: 0.6
+      }
+      RowLayout {
+        anchors.fill: parent
+        anchors.margins: root.pad
+        spacing: Widget.spacing
+
+        StyledIcon {
+          text: root.kindIcon
+          textColor: Theme.accent
+          textSize: Appearance.fontSizeBy(2)
+        }
+        StyledText {
+          Layout.fillWidth: true
+          text: root.info.name || I18n.tr("Disconnected")
+          elide: Text.ElideRight
+          font.bold: true
+        }
+        RateLabel {
+          rate: SystemManager.netRx
+          textColor: Theme.accentAlt
+        }
+        RateLabel {
+          visible: root.width > Appearance.fontSize * 22
+          direction: "up"
+          rate: SystemManager.netTx
+          textColor: Theme.accent
+        }
+        ExpandButton {
+          module: root
+          type: NetworkingManager.available ? "WifiNetworks" : ""
+        }
+      }
+    }
   }
-  RowLayout {
-    visible: root.strip
+
+  Loader {
     anchors.fill: parent
     anchors.margins: root.pad
-    spacing: Widget.spacing
+    active: !root.strip
 
-    StyledIcon {
-      text: root.kindIcon
-      textColor: Theme.accent
-      textSize: Appearance.fontSizeBy(2)
-    }
-    StyledText {
-      Layout.fillWidth: true
-      text: root.info.name || I18n.tr("Disconnected")
-      elide: Text.ElideRight
-      font.bold: true
-    }
-    RateLabel {
-      rate: SystemManager.netRx
-      textColor: Theme.accentAlt
-    }
-    RateLabel {
-      visible: root.width > Appearance.fontSize * 22
-      direction: "up"
-      rate: SystemManager.netTx
-      textColor: Theme.accent
-    }
-    ExpandButton {
-      module: root
-      type: NetworkingManager.available ? "WifiNetworks" : ""
-    }
-  }
+    sourceComponent: ColumnLayout {
+      spacing: Widget.spacing / 2
 
-  ColumnLayout {
-    visible: !root.strip
-    anchors.fill: parent
-    anchors.margins: root.pad
-    spacing: Widget.spacing / 2
-
-    ModuleHeader {
-      icon: root.kindIcon
-      title: root.info.name || I18n.tr("Disconnected")
-      StyledText {
-        visible: root.info.kind === "wifi"
-        text: `${root.info.signal}%`
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
+      ModuleHeader {
+        icon: root.kindIcon
+        title: root.info.name || I18n.tr("Disconnected")
+        StyledText {
+          visible: root.info.kind === "wifi"
+          text: `${root.info.signal}%`
+          textSize: Appearance.fontSizeBy(-2)
+          opacity: 0.7
+        }
       }
-    }
-    // Address, the VPNs and Tailscale on one line where there's room
-    Flow {
-      Layout.fillWidth: true
-      spacing: Widget.spacing * 1.5
-      StyledText {
-        visible: root.info.ip !== ""
-        text: root.info.ip
-        textSize: Appearance.fontSizeBy(-2)
-        opacity: 0.7
-      }
-      StyledText {
-        visible: root.vpns !== ""
-        width: Math.min(implicitWidth, parent.width)
-        elide: Text.ElideRight
-        text: I18n.tr("VPN · {0}", root.vpns)
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: Theme.success
-        opacity: 0.8
-      }
-      StyledText {
-        visible: root.tailscale !== ""
-        width: Math.min(implicitWidth, parent.width)
-        elide: Text.ElideRight
-        text: I18n.tr("Tailscale · {0}", root.tailscale)
-        textSize: Appearance.fontSizeBy(-2)
-        textColor: root.tailscale.startsWith("Running") ? Theme.success : Theme.foreground
-        opacity: 0.8
-      }
-    }
-
-    Graphs {
-      Layout.fillWidth: true
-      Layout.fillHeight: true
-      Layout.topMargin: Widget.spacing / 2
-    }
-
-    RowLayout {
-      Layout.fillWidth: true
-      RateLabel {
-        rate: SystemManager.netRx
-        textColor: Theme.accentAlt
-      }
-      Item {
+      // Address, the VPNs and Tailscale on one line where there's room
+      Flow {
         Layout.fillWidth: true
+        spacing: Widget.spacing * 1.5
+        StyledText {
+          visible: root.info.ip !== ""
+          text: root.info.ip
+          textSize: Appearance.fontSizeBy(-2)
+          opacity: 0.7
+        }
+        StyledText {
+          visible: root.vpns !== ""
+          width: Math.min(implicitWidth, parent.width)
+          elide: Text.ElideRight
+          text: I18n.tr("VPN · {0}", root.vpns)
+          textSize: Appearance.fontSizeBy(-2)
+          textColor: Theme.success
+          opacity: 0.8
+        }
+        StyledText {
+          visible: root.tailscale !== ""
+          width: Math.min(implicitWidth, parent.width)
+          elide: Text.ElideRight
+          text: I18n.tr("Tailscale · {0}", root.tailscale)
+          textSize: Appearance.fontSizeBy(-2)
+          textColor: root.tailscale.startsWith("Running") ? Theme.success : Theme.foreground
+          opacity: 0.8
+        }
       }
-      RateLabel {
-        direction: "up"
-        rate: SystemManager.netTx
-        textColor: Theme.accent
+
+      Graphs {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.topMargin: Widget.spacing / 2
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        RateLabel {
+          rate: SystemManager.netRx
+          textColor: Theme.accentAlt
+        }
+        Item {
+          Layout.fillWidth: true
+        }
+        RateLabel {
+          direction: "up"
+          rate: SystemManager.netTx
+          textColor: Theme.accent
+        }
       }
     }
   }

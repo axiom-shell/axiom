@@ -89,12 +89,7 @@ ColumnLayout {
               size: Math.round(Appearance.fontSize * 1.8)
               iconText: "edit"
               tooltipText: I18n.tr("Rename")
-              onClicked: {
-                root.editing = entry.item.uid;
-                renameField.text = entry.item.summary;
-                renameField.input.forceActiveFocus();
-                renameField.input.selectAll();
-              }
+              onClicked: root.editing = entry.item.uid
             }
             FlatIconButton {
               visible: !entry.item.done
@@ -115,15 +110,25 @@ ColumnLayout {
             }
           }
 
-          StyledTextEntry {
-            id: renameField
-            visible: entry.renaming
+          // Built only while this row renames
+          Loader {
+            active: entry.renaming
+            visible: active
             Layout.fillWidth: true
             Layout.preferredHeight: Widget.height
-            onAccepted: root.rename(entry.item.uid, renameField.text)
-            input.onActiveFocusChanged: {
-              if (!renameField.input.activeFocus && entry.renaming)
-                root.rename(entry.item.uid, renameField.text);
+
+            sourceComponent: StyledTextEntry {
+              id: renameField
+              onAccepted: root.rename(entry.item.uid, renameField.text)
+              input.onActiveFocusChanged: {
+                if (!renameField.input.activeFocus && entry.renaming)
+                  root.rename(entry.item.uid, renameField.text);
+              }
+              Component.onCompleted: {
+                renameField.text = entry.item.summary;
+                renameField.input.forceActiveFocus();
+                renameField.input.selectAll();
+              }
             }
           }
         }

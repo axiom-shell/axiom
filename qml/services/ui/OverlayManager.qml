@@ -64,6 +64,30 @@ QtObject {
     return out;
   }
 
+  // The layouts editor's drafts: the pages, the edge menus and the
+  // desktop's, lock screen's and login screen's layouts. Each has
+  // isDirty, problems, ensureLoaded(), saveChanges() and resetChanges();
+  // the page's Save and Reset and EditsManager's Save all and Discard all
+  // go over them
+  readonly property var drafts: [root, root.menus, DesktopManager.editor, LockManager.editor, GreeterManager.editor]
+  readonly property bool layoutsDirty: root.drafts.some(d => d.isDirty)
+  // Only the dirty drafts', since only they are saved: a saved layout
+  // nobody touched never blocks saving the others
+  readonly property var layoutsProblems: [].concat(...root.drafts.filter(d => d.isDirty).map(d => d.problems))
+
+  function loadLayouts() {
+    root.drafts.forEach(d => d.ensureLoaded());
+  }
+
+  // Each save merges onto the latest config; a rejected one stays dirty
+  function saveLayouts() {
+    root.drafts.filter(d => d.isDirty).forEach(d => d.saveChanges());
+  }
+
+  function resetLayouts() {
+    root.drafts.filter(d => d.isDirty).forEach(d => d.resetChanges());
+  }
+
   // Keeps the selected page where it still exists
   function loadConfig() {
     draft.load();

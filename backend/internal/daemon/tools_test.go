@@ -11,6 +11,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/dbus/dbustest"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
 
 // notify.send reaches the notification server on the session bus and,
@@ -76,8 +77,12 @@ func TestNotifySend(t *testing.T) {
 		t.Fatal("no notify.action")
 	}
 
-	// No notification server on the bus: unavailable
+	// No notification server on the bus: unavailable (once the bus has
+	// seen it go: a call routed to it before then waits for no reply)
 	server.Close()
+	if !testkit.Eventually(func() bool { return bus.Owner("org.freedesktop.Notifications") == "" }) {
+		t.Fatal("the bus never dropped the closed server")
+	}
 	if err := c.Call(ctx, "notify.send", map[string]any{"appName": "axiom", "summary": "s", "body": "b"}, nil); axerr.KindOf(err) != axerr.Unavailable {
 		t.Fatalf("with no server: %v", err)
 	}

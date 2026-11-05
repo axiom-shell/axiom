@@ -376,6 +376,22 @@ TestCase {
     verify(across <= 1040 && across > 1040 - 16);
   }
 
+  // A Module size shrunk until its grid fits the room, its cards and gaps
+  // together; one that fits, or no units, kept
+  function test_fitModuleScale() {
+    // One card deep, on a 1080 px screen at 150 % card size: 675 px cards
+    compare(GridPlacement.fitModuleScale(1, 4, 675, false, 1000), 1);
+    compare(GridPlacement.fitModuleScale(2, 0, 675, false, 1000), 2);
+    [false, true].forEach(fine => {
+      const count = fine ? 8 : 4;
+      const scale = GridPlacement.fitModuleScale(2, count, 675, fine, 1000);
+      verify(scale < 2, `fine ${fine}`);
+      const gap = GridPlacement.gapOf(scale);
+      const length = GridPlacement.span(count, GridPlacement.gridUnitOf(675 * scale, fine, gap), gap);
+      verify(length <= 1001 && length > 990, `fine ${fine}: ${length}`);
+    });
+  }
+
   // Two units of a double grid and the gap between them are one unit, so
   // any span doubled is as long (within rounding)
   function test_fineUnit() {
@@ -1112,6 +1128,23 @@ TestCase {
       "fit": true
     });
     compare(grid.width, Math.round(grid.width), "the grid's size is whole px");
+  }
+
+  function test_rectPxDrawnZoom() {
+    // A page drawn scaled as a whole: every edge on a whole drawn px, so
+    // each card's border falls on the screen's pixels alike
+    const sizes = GridPlacement.trackSizes({
+      "cols": 16,
+      "rows": 8
+    }, 559);
+    const zoom = 0.697;
+    [at(0, 0, 4, 4), at(4, 0, 4, 2), at(4, 2, 4, 2), at(8, 4, 4, 4), at(12, 4, 4, 4)].forEach(entry => {
+      const r = GridPlacement.rectPx(entry.place, sizes, zoom);
+      [r.x, r.y, r.x + r.width, r.y + r.height].forEach(edge => fuzzyCompare(edge * zoom, Math.round(edge * zoom), 1e-9, "a whole drawn px"));
+      const plain = GridPlacement.rectPx(entry.place, sizes);
+      fuzzyCompare(r.x, plain.x, 1 / zoom, "within a drawn px of the layout's");
+    });
+    compare(GridPlacement.rectPx(at(4, 2, 4, 2).place, sizes, 1), GridPlacement.rectPx(at(4, 2, 4, 2).place, sizes), "at 1, the layout's own");
   }
 
   function test_guideFrame() {

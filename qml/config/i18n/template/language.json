@@ -3098,6 +3098,7 @@
     "The order dates read in. Follow the region is the language's own order until a region is set.": "",
     "The output (as in `output`) this one mirrors, or empty.": "",
     "The output's own": "",
+    "The output's tooltip on hover (Waybar's), when hovering doesn't open the module.": "",
     "The page the button opens the overlay on.": "",
     "The password prompt apps show when they need administrator rights (polkit): installing updates, mounting drives, changing system settings.": "",
     "The password prompt was dismissed.": "",

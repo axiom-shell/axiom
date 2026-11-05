@@ -56,6 +56,16 @@ QtObject {
     return root.cardSpacing * zoom;
   }
 
+  // The most of Module size `scale` (a factor) at which `count` units of
+  // a grid fit `room` px, its cards `card` px at 100 % (a double grid's
+  // split with `fine`): its units and gaps (gapOf) both grow with it, so
+  // its span does in proportion. `scale` when they fit
+  function fitModuleScale(scale, count, card, fine, room) {
+    const gap = root.gapOf(scale);
+    const length = root.span(count, root.gridUnitOf(card * scale, fine, gap), gap);
+    return count > 0 && length > room ? Math.max(0.1, Math.floor(scale * room / length * 1000) / 1000) : scale;
+  }
+
   // A grid's own card size at card size `card` px, `gap` px between
   // cards: a double grid's (`fine`) units are split in two each way
   function gridUnitOf(card, fine, gap) {
@@ -805,18 +815,23 @@ QtObject {
   // A place's pixel rect for trackSizes' `sizes`, its edges on whole px
   // (each rounded, so neighbours keep their gap): a slot clips its module,
   // and a clip at a fractional edge shaves the pixel a module draws its
-  // stroke in there (a borderless Chat's composer)
-  function rectPx(place, sizes) {
+  // stroke in there (a borderless Chat's composer). For a grid drawn
+  // scaled by `zoom` (an overlay page's contentZoom; 1 when left out), on
+  // whole drawn px, so every card's border falls on the screen's pixels
+  // alike
+  function rectPx(place, sizes, zoom) {
+    const z = zoom || 1;
+    const snap = value => Math.round(value * z) / z;
     const spacing = sizes.gap ?? root.cardSpacing;
     const x = place.x * (sizes.unitW + spacing);
     const y = place.y * (sizes.unitH + spacing);
-    const left = Math.round(x);
-    const top = Math.round(y);
+    const left = snap(x);
+    const top = snap(y);
     return {
       "x": left,
       "y": top,
-      "width": Math.round(x + place.w * sizes.unitW + (place.w - 1) * spacing) - left,
-      "height": Math.round(y + place.h * sizes.unitH + (place.h - 1) * spacing) - top
+      "width": snap(x + place.w * sizes.unitW + (place.w - 1) * spacing) - left,
+      "height": snap(y + place.h * sizes.unitH + (place.h - 1) * spacing) - top
     };
   }
 

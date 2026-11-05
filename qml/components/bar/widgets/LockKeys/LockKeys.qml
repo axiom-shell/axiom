@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.services.system
 import qs.config
@@ -74,12 +73,9 @@ BarIconWidget {
   }
 
   // Each shown key, on or off, on the bar's inner side
-  LazyLoader {
-    active: !root.hidden && root.hovered
-    StyledToolTip {
-      target: root
-      text: root.keys.map(k => root.isOn(k) ? I18n.tr("{0}: on", root.keyName(k)) : I18n.tr("{0}: off", root.keyName(k))).join("\n")
-      edges: root.innerEdges
-    }
+  BarToolTip {
+    widget: root
+    shown: !root.hidden
+    text: root.keys.map(k => root.isOn(k) ? I18n.tr("{0}: on", root.keyName(k)) : I18n.tr("{0}: off", root.keyName(k))).join("\n")
   }
 }

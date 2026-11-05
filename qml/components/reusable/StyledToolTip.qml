@@ -20,6 +20,9 @@ PopupWindow {
   property int edges: Edges.Bottom
   // Wraps longer text (a help text); 0 keeps it on one line
   property real maxWidth: 0
+  // The text is rich text (a script's markup, its line breaks already
+  // <br>); else it's drawn as Text reads it (AutoText)
+  property bool rich: false
 
   property bool _delayed: false
 
@@ -72,6 +75,7 @@ PopupWindow {
       // Wrapped at `maxWidth`, when set
       width: root.maxWidth > 0 ? Math.min(implicitWidth, root.maxWidth) : implicitWidth
       wrapMode: root.maxWidth > 0 ? Text.Wrap : Text.NoWrap
+      textFormat: root.rich ? Text.RichText : Text.AutoText
       text: root.text
     }
   }

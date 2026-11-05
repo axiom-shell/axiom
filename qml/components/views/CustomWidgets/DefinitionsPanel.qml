@@ -22,8 +22,22 @@ Item {
   readonly property var definition: root.editor.selected
   readonly property var schema: ConfigManager.configSchema.definitions.CustomWidget.properties
   readonly property string scriptPath: root.editor.scriptPath(root.definition?.command)
-  // The script, read when its path changes
-  readonly property string scriptText: root.scriptPath === "" ? "" : (FileManager.read(root.scriptPath) ?? "")
+  // The script, read (its first 256 KiB, off the UI thread) when its path
+  // changes: only a script, text starting with #!, not a program the
+  // command names (an ELF)
+  property string scriptText: ""
+  onScriptPathChanged: root._readScript()
+  Component.onCompleted: root._readScript()
+
+  function _readScript() {
+    const path = root.scriptPath;
+    root.scriptText = "";
+    if (path !== "")
+      CommandManager.run(["head", "-c", "262144", "--", path], (code, out) => {
+        if (path === root.scriptPath)
+          root.scriptText = code === 0 && out.startsWith("#!") ? out : "";
+      });
+  }
   // Its first lines
   readonly property string scriptHead: root.scriptText.split("\n").slice(0, 40).join("\n")
   // The script refreshes Waybar by signal (pkill -RTMIN+N waybar), which

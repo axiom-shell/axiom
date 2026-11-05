@@ -175,100 +175,104 @@ Card {
         Layout.preferredHeight: root.tiles ? root.tileHeight : root.rowHeight
 
         // A tile: the place over its time and the difference
-        ColumnLayout {
-          visible: root.tiles
+        Loader {
+          active: root.tiles
           anchors.centerIn: parent
           width: parent.width
-          spacing: 0
+          sourceComponent: ColumnLayout {
+            spacing: 0
 
-          RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: parent.width
-            spacing: Widget.spacing / 2
-            StyledIcon {
-              text: entry.day ? "light_mode" : "dark_mode"
-              textColor: entry.local ? Theme.accent : Theme.foregroundAlt
-              textSize: Appearance.fontSizeBy(-1)
-            }
-            StyledText {
-              Layout.fillWidth: true
-              text: root.cityOf(entry.place)
-              textSize: Appearance.fontSizeBy(-1)
-              elide: Text.ElideRight
-            }
-          }
-          StyledText {
-            Layout.alignment: Qt.AlignHCenter
-            text: root.timeText(entry.there)
-            textSize: Appearance.fontSize * 1.6
-            textColor: entry.local ? Theme.accent : Theme.foreground
-            font.bold: true
-            font.features: {
-              "tnum": 1
-            }
-          }
-          StyledText {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.maximumWidth: parent.width
-            text: root.detailOf(entry.place.timezone, entry.there)
-            textSize: Appearance.fontSizeBy(-3)
-            textColor: Theme.foregroundAlt
-            elide: Text.ElideRight
-          }
-        }
-
-        // A row: the place and the difference, the time on the right, the
-        // day's band under them
-        ColumnLayout {
-          visible: !root.tiles
-          anchors.left: parent.left
-          anchors.right: parent.right
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: Widget.spacing / 2
-
-          RowLayout {
-            Layout.fillWidth: true
-            spacing: Widget.spacing
-
-            StyledIcon {
-              text: entry.day ? "light_mode" : "dark_mode"
-              textColor: entry.local ? Theme.accent : Theme.foregroundAlt
-              textSize: Appearance.fontSizeBy(2)
-            }
-            ColumnLayout {
-              Layout.fillWidth: true
-              spacing: 0
+            RowLayout {
+              Layout.alignment: Qt.AlignHCenter
+              Layout.maximumWidth: parent.width
+              spacing: Widget.spacing / 2
+              StyledIcon {
+                text: entry.day ? "light_mode" : "dark_mode"
+                textColor: entry.local ? Theme.accent : Theme.foregroundAlt
+                textSize: Appearance.fontSizeBy(-1)
+              }
               StyledText {
                 Layout.fillWidth: true
                 text: root.cityOf(entry.place)
-                textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 1.3, root.rowHeight * 0.24))
-                font.bold: entry.local
-                elide: Text.ElideRight
-              }
-              StyledText {
-                Layout.fillWidth: true
-                visible: text !== "" && root.rowHeight >= Appearance.fontSize * 2.6
-                text: root.detailOf(entry.place.timezone, entry.there)
-                textSize: Appearance.fontSizeBy(-3)
-                textColor: Theme.foregroundAlt
+                textSize: Appearance.fontSizeBy(-1)
                 elide: Text.ElideRight
               }
             }
             StyledText {
+              Layout.alignment: Qt.AlignHCenter
               text: root.timeText(entry.there)
-              textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 2, root.rowHeight * 0.42))
+              textSize: Appearance.fontSize * 1.6
               textColor: entry.local ? Theme.accent : Theme.foreground
               font.bold: true
               font.features: {
                 "tnum": 1
               }
             }
+            StyledText {
+              Layout.alignment: Qt.AlignHCenter
+              Layout.maximumWidth: parent.width
+              text: root.detailOf(entry.place.timezone, entry.there)
+              textSize: Appearance.fontSizeBy(-3)
+              textColor: Theme.foregroundAlt
+              elide: Text.ElideRight
+            }
           }
+        }
 
-          DayBand {
-            visible: root.timeline
-            Layout.fillWidth: true
-            there: entry.there
+        // A row: the place and the difference, the time on the right, the
+        // day's band under them
+        Loader {
+          active: !root.tiles
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          sourceComponent: ColumnLayout {
+            spacing: Widget.spacing / 2
+
+            RowLayout {
+              Layout.fillWidth: true
+              spacing: Widget.spacing
+
+              StyledIcon {
+                text: entry.day ? "light_mode" : "dark_mode"
+                textColor: entry.local ? Theme.accent : Theme.foregroundAlt
+                textSize: Appearance.fontSizeBy(2)
+              }
+              ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+                StyledText {
+                  Layout.fillWidth: true
+                  text: root.cityOf(entry.place)
+                  textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 1.3, root.rowHeight * 0.24))
+                  font.bold: entry.local
+                  elide: Text.ElideRight
+                }
+                StyledText {
+                  Layout.fillWidth: true
+                  visible: text !== "" && root.rowHeight >= Appearance.fontSize * 2.6
+                  text: root.detailOf(entry.place.timezone, entry.there)
+                  textSize: Appearance.fontSizeBy(-3)
+                  textColor: Theme.foregroundAlt
+                  elide: Text.ElideRight
+                }
+              }
+              StyledText {
+                text: root.timeText(entry.there)
+                textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 2, root.rowHeight * 0.42))
+                textColor: entry.local ? Theme.accent : Theme.foreground
+                font.bold: true
+                font.features: {
+                  "tnum": 1
+                }
+              }
+            }
+
+            DayBand {
+              visible: root.timeline
+              Layout.fillWidth: true
+              there: entry.there
+            }
           }
         }
       }

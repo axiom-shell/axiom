@@ -21,12 +21,12 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
   - `shape`: `square` while the longer side is under 1.5× the shorter, else `horizontal` / `vertical` (`GridPlacement.slotShape`)
   - `compact`, plus `pad`.
 - A unit is 25 to 140 px depending on the screen or menu (`OverlayGrid`; an edge menu uses its screen's overlay's), and text doesn't scale with it.
-  - So a module sets `fullMinWidth` / `fullMinHeight`, the px its full layout needs.
-  - `compact` is a quarter card or less (`cols <= 2 && rows <= 2`) or, once laid out, smaller than those.
+  - So a module sets `fullMinWidth` / `fullMinHeight`, the px its full layout needs inside its padding (as `innerWidth` / `innerHeight` measure).
+  - `compact` is a quarter card or less (`cols <= 2 && rows <= 2`) or, once laid out, its room inside the full layout's padding (`SlotContext.fullPad`) is smaller than those.
 - Compact shows the key figure: a `compactContent`, usually a `CompactFigure`, on Card, Panel or TitledCard.
 - Otherwise the module picks its layout from `shape` and its px room:
   - side by side when wide, stacked when tall;
-  - sections dropped or rearranged where they don't fit (Weather's hours and days, ClockCalendar's calendar, Disks' header and columns);
+  - sections dropped or rearranged where they don't fit (Weather's hours and days, ClockCalendar's calendar, Disks' header and columns, Clock's label then date, SystemGraphs' columns whose rows would be shorter than a panel);
   - a one-row form for strips where it has one (NowPlaying, AudioMixer's slider, Network).
 - Thresholds that depend on text are in px from `Appearance.fontSize`, not grid units.
 - An edge menu's units aren't square. A layout choice that must match the slot's real proportions reads `innerWidth` / `innerHeight` rather than `shape` (NowPlaying's side-by-side).

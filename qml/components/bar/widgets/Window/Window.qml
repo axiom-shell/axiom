@@ -11,7 +11,6 @@ ValueStyleWidget {
   id: root
 
   readonly property string sizePolicy: "elastic"
-  readonly property real minimumSize: root.iconLength + root.padding * 2
 
   icon: properties.icon
   text: ToplevelManager.activeToplevel?.title || properties.emptyText

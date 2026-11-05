@@ -41,9 +41,14 @@ Panel {
     ShellManager.openOverlayPage("Keybinds");
   }
 
+  // The keyboard's own room (it doesn't scroll): KeyboardMap's tall rows
+  // of keys, ten extras to a row, and the legend under them; a smaller
+  // card shows the count
+  readonly property real keyboardHeight: (KeyMap.rows.length + Math.ceil(KeyMap.extras.length / 10)) * (Math.round(Widget.height * 1.9) + Widget.spacing / 2) + Widget.spacing + Appearance.fontSize * 2
+
   implicitWidth: Appearance.fontSize * 30
-  fullMinWidth: Appearance.fontSize * 14
-  fullMinHeight: Appearance.fontSize * 3
+  fullMinWidth: Appearance.fontSize * (root.keyboard ? 28 : 14)
+  fullMinHeight: root.keyboard ? root.keyboardHeight : Appearance.fontSize * 3
   wantsKeyboardFocus: root.showSearch
   spacing: Widget.spacing
 

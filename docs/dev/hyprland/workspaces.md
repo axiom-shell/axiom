@@ -70,6 +70,7 @@ One workspace layout serves everything that shows workspaces or moves between th
 - **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`.
   - It holds every shown workspace, or one grid row.
   - `glyphOf` gives the grid's position arrow.
+  - It's measured from its cells' target lengths, never their gliding ones ([composition › Bar motion](../bar/composition.md#bar-motion-drawn-not-measured)), and clips them while one glides.
 - **Active cell.** The active cell's box is one `workspaces/ActiveCellIndicator` sliding along the row.
   - It is drawn between the cells' two parts (`WorkspaceCell`'s `part`): the boxes at rest are under it, the labels and icons over it.
   - A step past an end (`CompositorManager.workspaceWrapped`, or the strip's own wheel wrap) sends it out of that end and in at the other.

@@ -30,6 +30,13 @@ ColumnLayout {
       Qt.callLater(() => titleEntry.input.forceActiveFocus());
   }
 
+  // Built for an event already open (a Loader's): a new one takes the
+  // keyboard as open() gives it
+  Component.onCompleted: {
+    if (root.session.active && root.session.isNew)
+      Qt.callLater(() => titleEntry.input.forceActiveFocus());
+  }
+
   Connections {
     target: root.session
     function onFinished() {

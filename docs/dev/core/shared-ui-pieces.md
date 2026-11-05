@@ -57,7 +57,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Controls (`reusable/`)
 - `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors). `StyledIconButton` is a square of side `size` that doesn't stretch in a layout; `FlatIconButton` is one with a dimmer icon.
-- `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
+- `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`; `rich` draws rich text (line breaks as `<br>`); a bar widget's is a `BarToolTip`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
 - `StyledSlider`: trough, accent fill and a round handle (`handleSize`); `moved` while dragged, `released` at the end (still `pressed`, so a value pushed in from it shows without a snap back). `value` is only pushed in (a drag never writes it, so bind it) and animates when it changes; `position` is what it shows (the drag's place while `pressed`).
 - `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll; its trough clips the fill, so a low level keeps to its rounded ends); muted, its icon (the base one) is a `SlashedIcon`; with `iconClickable` the icon is a button (`iconClicked`, hover highlight, `iconTip`); `surfaces/osd/PipewireVolumeBar` binds one to a Pipewire stream or the system volume (the OSD's).
 - `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
@@ -118,6 +118,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - Lives in `WorkspaceCellRow`; cells it stands in for set `indicated`.
   - Dots-only bars keep the cells' own recolour.
 - **Strip windows** (`bar/widgets/Workspaces/StripWindows`): a workspace's windows in strip order as bar `WorkspaceCell`s (app icons, the last focused active, click focuses). Used by `ActiveStrip` (both switchers: a `Loader` that loads only on a strip monitor, shows only with windows, and says when the strip shows alone, `stripOnly`) and the `WorkspaceStrips` popout.
+- **Workspace popout root** (`bar/widgets/Workspaces/WorkspacePopoutPanel`): the `Panel` both workspace popouts (`WorkspaceGrid`, `WorkspaceStrips`) are, with the widget's payload (output, cell size and spacing, the bar's config) and the cells' colours. A cell's colours by state are `BarsConfig.workspaceCellColors`, which the bar's row reads too.
 - **Window previews** (`surfaces/workspaces/WindowPreview`): a Hyprland client's capture, rounded.
   - Shows the app icon until it gives a frame.
   - One frame per open unless `live` (or `hovered` / `resizing`).
@@ -134,7 +135,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - (Rule: AGENTS.md › Config, "Animation".)
 
 ### Small helpers
-- **Cover art** (`reusable/CoverArt`): a track's cover (`source`, `MediaManager.artSource`), rounded, a new one fading in over the old (`CrossFade`), a note while there's none. The Now Playing module's and the OSD's now playing card's.
+- **Cover art** (`reusable/CoverArt`): a track's cover (`source`, `MediaManager.artSource`), rounded, a new one fading in over the old (`CrossFade`), decoded at most 640 px across, a note while there's none. The Now Playing module's and the OSD's now playing card's.
 - **Confirm gate** (`qml/services/core/ConfirmGate`, a services part so the launcher can use it too): the press-twice gate of a destructive action. `pass(key, needsConfirm)` arms `key` and refuses, or passes when it's already armed (or needs no confirm); `armed` (the key waiting) and `timeout` (3 s, an armed tile's `countdown`) drive the tile; `disarm()` drops it, `expired` says it ran out. The power menu's, the QuickActions module's and the Power module's session actions, and the launcher's confirming commands.
 - **Last found** (`reusable/LastFound`): the last non-null `source`, for an entry looked up by id whose delegates must never be handed null as it's removed (`qml/shell/Dock`, `qml/shell/OSD`).
 - **Frame nudge** (`reusable/FrameNudge`): `burst()` makes its window draw and commit a few more frames. For where Hyprland keeps showing a layer's frame from before a change (a bar's stretches, the blur window's shapes).

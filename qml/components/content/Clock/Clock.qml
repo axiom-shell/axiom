@@ -41,13 +41,16 @@ Card {
   readonly property string meridiem: root.use24Hour ? "" : I18n.meridiem(root.now)
 
   // The lines under the clock: the date (shorter where it's narrow) and
-  // the label
+  // the label, each only while the time keeps at least a caption's room
+  // (the label goes first, then the date)
   readonly property string dateText: root.properties.showDate ? I18n.formatDate(root.now, I18n.dateFormat(root.innerWidth < Appearance.fontSize * 14 ? "shortDate" : "longDate")) : ""
   readonly property string label: root.properties.label
-  readonly property int captionCount: (root.dateText !== "" ? 1 : 0) + (root.label !== "" ? 1 : 0)
   readonly property real captionSize: Math.max(Appearance.fontSizeBy(-2), Math.min(Appearance.fontSize * 1.6, root.innerHeight / 12))
   readonly property real spacing: Widget.spacing / 2
-  readonly property real captionsHeight: root.captionCount * (root.captionSize * root.lineRatio + root.spacing)
+  readonly property real captionLine: root.captionSize * root.lineRatio + root.spacing
+  readonly property bool dateShown: root.dateText !== "" && root.innerHeight >= root.captionLine * 2
+  readonly property bool labelShown: root.label !== "" && root.innerHeight >= root.captionLine * (root.dateShown ? 3 : 2)
+  readonly property real captionsHeight: ((root.dateShown ? 1 : 0) + (root.labelShown ? 1 : 0)) * root.captionLine
 
   // The room the clock itself has
   readonly property real faceWidth: Math.max(0, root.innerWidth)
@@ -154,7 +157,7 @@ Card {
     Text {
       width: parent.width
       height: root.captionSize * root.lineRatio
-      visible: root.dateText !== ""
+      visible: root.dateShown
       horizontalAlignment: Text.AlignHCenter
       elide: Text.ElideRight
       text: root.dateText
@@ -167,7 +170,7 @@ Card {
     Text {
       width: parent.width
       height: root.captionSize * root.lineRatio
-      visible: root.label !== ""
+      visible: root.labelShown
       horizontalAlignment: Text.AlignHCenter
       elide: Text.ElideRight
       text: root.label

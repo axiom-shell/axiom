@@ -45,8 +45,13 @@ Item {
   // it) shows
   property int hoveredId: -1
 
-  implicitWidth: cells.implicitWidth
-  implicitHeight: cells.implicitHeight
+  // Measured from the cells' lengths to be, never their gliding ones
+  // (composition.md › Bar motion), and clipped to it: a cell that left the
+  // active state still shrinking, the active box wrapping past an end
+  readonly property real _measured: ids.length * cellLength + Math.max(0, ids.length - 1) * spacing + (properties.wideActive && ids.indexOf(activeId) >= 0 ? cellLength : 0)
+  implicitWidth: isVertical ? cells.implicitWidth : _measured
+  implicitHeight: isVertical ? _measured : cells.implicitHeight
+  clip: true
 
   // A step past one end is coming: the active box leaves that end and
   // comes in at the other
@@ -55,18 +60,12 @@ Item {
   }
 
   function _occupied(id) {
-    const arr = CompositorManager.workspaces;
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i].id === id)
-        return arr[i].windowCount > 0;
-    }
-    return false;
+    return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;
   }
 
   // BarsConfig.cellColors for a workspace's cell, active or at rest
   function _look(id, active) {
-    const occupied = root._occupied(id);
-    return BarsConfig.cellColors(root.barConfig, active ? root.activeColor : occupied ? root.occupiedColor : root.emptyColor, active || occupied ? root.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
+    return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id));
   }
 
   function _length(active) {

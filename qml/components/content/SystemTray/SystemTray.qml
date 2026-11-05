@@ -33,7 +33,6 @@ Item {
     anchors.fill: parent
     menu: root.trayItem?.menu
     openToLeft: root.openToLeft
-    maxWidth: (root.wrapper.screen?.width ?? 2000) * 0.3 // fixed px: a stand-in screen width
 
     onSubmenuRequested: function (itemDelegate) {
       // Beside this popout's box, level with the item

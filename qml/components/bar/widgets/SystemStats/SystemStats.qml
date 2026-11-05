@@ -104,12 +104,17 @@ BarWidget {
         "level": SystemManager.cpuUsage
       };
     case "mem":
-      return {
-        "icon": "memory_alt",
-        "value": p.memoryFormat === "used" ? (SystemManager.memUsedBytes / Utils.bytesPerGiB).toFixed(1) + "G" : `${SystemManager.memUsage}%`,
-        "widest": p.memoryFormat === "used" ? "00.0G" : "100%",
-        "level": SystemManager.memUsage
-      };
+      {
+        // Whole GiB from 10 upright on a vertical bar: "15.6G" is wider
+        // than its column
+        const gib = SystemManager.memUsedBytes / Utils.bytesPerGiB;
+        return {
+          "icon": "memory_alt",
+          "value": p.memoryFormat === "used" ? gib.toFixed(root.isVertical && gib >= 10 ? 0 : 1) + "G" : `${SystemManager.memUsage}%`,
+          "widest": p.memoryFormat === "used" ? "00.0G" : "100%",
+          "level": SystemManager.memUsage
+        };
+      }
     case "temp":
       return {
         "icon": "thermometer",
@@ -197,9 +202,9 @@ BarWidget {
           required property var modelData
           readonly property var stat: root.segmentData(modelData)
           readonly property var metric: root._metrics.find(m => m.key === segment.modelData)
-          // The disk keeps no history (a fill instead); stacked on a
-          // vertical bar is a label
-          readonly property string style: root.style === "sparkline" && segment.metric.history === "" ? "fill" : root.style === "stacked" && root.isVertical ? "label" : root.style
+          // The disk keeps no history (a fill instead); every segment
+          // has a value
+          readonly property string style: graphic.resolvedStyle(root.style, root.isVertical, segment.metric.history !== "", 0)
 
           isVertical: root.isVertical
           crossSize: root.barConfig.thickness

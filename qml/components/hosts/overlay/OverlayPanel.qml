@@ -42,6 +42,7 @@ ReservedAreaWindow {
   WlrLayershell.keyboardFocus: root.steppedAside ? WlrKeyboardFocus.None : grab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
 
   function open() {
+    hideTimer.stop();
     visible = true;
     isOpen = true;
     slideContainer.forceActiveFocus();
@@ -250,6 +251,7 @@ ReservedAreaWindow {
       screen: root.screen
       availableWidth: overlayPages.maxWidth - OverlayConfig.boxPadding * 2
       availableHeight: overlayPages.maxHeight - OverlayConfig.boxPadding * 2
+      drawnZoom: overlayPages.contentZoom
 
       readonly property string areaKey: [grid.roomWidth, grid.roomHeight, grid.unit].join(",")
       onAreaKeyChanged: report()

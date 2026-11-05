@@ -1,13 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.services.core
 import qs.services.session
 import qs.services.ui
-import qs.components.reusable
 import qs.components.bar.widgets.base
 
 // An icon (and optional label) that runs a built-in shell action or a
@@ -113,13 +111,8 @@ BarIconWidget {
     onTriggered: root.hoverAction()
   }
 
-  // Tooltip after hovering for a moment, on the bar's inner side
-  LazyLoader {
-    active: root.hovered && root.properties.tooltip !== ""
-    StyledToolTip {
-      target: root
-      text: root.properties.tooltip
-      edges: root.innerEdges
-    }
+  BarToolTip {
+    widget: root
+    text: root.properties.tooltip
   }
 }

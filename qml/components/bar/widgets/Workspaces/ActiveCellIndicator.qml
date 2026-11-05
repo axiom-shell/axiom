@@ -9,7 +9,7 @@ import qs.components.reusable
 // its WorkspaceCells in two layers around it), sliding from cell to cell as
 // the active workspace changes, where the cells would each recolour. Placed
 // by the active cell's index, as every cell before it is at its rest
-// length. It fills the row, which it's clipped to while it wraps: a step
+// length. It fills the row, which clips it: a step
 // past one end (`expectWrap`) leaves that end and comes in at the other
 // rather than sliding back across.
 Item {
@@ -124,7 +124,6 @@ Item {
   }
 
   anchors.fill: parent
-  clip: wrapAnimation.running
   visible: slides && index >= 0
 
   Item {

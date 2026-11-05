@@ -98,13 +98,9 @@ Rectangle {
     }
   }
 
-  // Separator line
-  Rectangle {
+  StyledSeparator {
     anchors.centerIn: parent
-    width: parent.width - (root.itemPadding * 2)
-    height: 1
-    color: Theme.foreground
-    opacity: 0.2
+    width: parent.width - root.itemPadding * 2
     visible: root.menuItem.isSeparator
   }
 
