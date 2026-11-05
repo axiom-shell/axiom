@@ -413,7 +413,6 @@ Found by the audits:
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
-- [A turned-off primary desktop layout blanks the primary monitor instead of falling back to all monitors](issues.md#a-turned-off-primary-desktop-layout-blanks-the-primary-monitor-instead-of-falling-back-to-all-monitors)
 - [Hot corners' action list is a hand-kept copy of the keybind one](issues.md#hot-corners-action-list-is-a-hand-kept-copy-of-the-keybind-one)
 - [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
 - [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)

@@ -22,11 +22,12 @@ QtObject {
   // that isn't plugged in falls back to the first screen)
   readonly property string primaryName: General.screensNamed(General.primaryMonitor)[0]?.name ?? ""
   // The layout the screen named `name` matches in `desktop` (a Desktop
-  // section; the live one when left out), most specific first, enabled or
-  // not; null for none
+  // section; the live one when left out), most specific first: one naming
+  // it, enabled or not (it's final), else the primary monitor's while
+  // enabled, else the one for all monitors; null for none
   function matchFor(name, desktop) {
     const items = (desktop ?? root.desktop).items;
-    return items.find(layout => layout.screen.mode === "named" && layout.screen.names.includes(name)) ?? (name === root.primaryName ? items.find(layout => layout.screen.mode === "primary") : undefined) ?? items.find(layout => layout.screen.mode === "all") ?? null;
+    return items.find(layout => layout.screen.mode === "named" && layout.screen.names.includes(name)) ?? (name === root.primaryName ? items.find(layout => layout.screen.mode === "primary" && layout.enabled) : undefined) ?? items.find(layout => layout.screen.mode === "all") ?? null;
   }
   // Which layout the screen named `name` shows in `desktop`: "named" (one
   // naming it), "primary", "all", or "" for none (none matches, or the
