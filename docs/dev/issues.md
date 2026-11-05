@@ -196,12 +196,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while filing the maintainer's notes
 
-### A tray menu logs an undefined menu handle
-- **Where:** `qml/components/content/parts/TrayMenuList.qml` (`menuOpener`)
-- **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
-- **Size:** small
-- **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
-
 ### A VPN's password request can go unseen
 - **Where:** `qml/services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
 - **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, the `vpn` keybind action, or a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).

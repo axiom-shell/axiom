@@ -494,7 +494,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - CustomElement's six Binding blocks are Qt.binding in its setSource
   - A custom layout without elements rebuilds its default elements every sample
 - **overlay-modules-10** (5):
-  - [A tray menu logs an undefined menu handle](../issues.md#a-tray-menu-logs-an-undefined-menu-handle)
+  - A tray menu logs an undefined menu handle
   - [Tailscale's PeerRow redraws DeviceRow without its buttons](../issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
   - [WifiNetworks' WPA password form repeats WifiJoinForm's](../issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
   - [Login and Password each carry the same required-field report](../issues.md#login-and-password-each-carry-the-same-required-field-report)

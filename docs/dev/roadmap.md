@@ -247,7 +247,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
-- [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
 - [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
