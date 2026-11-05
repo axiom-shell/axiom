@@ -30,7 +30,7 @@ The daemon's side of input sources: it finds the input method framework (fcitx5 
 - gsettings runs as a process with its arguments, no shell, the value in GVariant's text form (`['xkb:us::eng', 'mozc-jp']`).
 
 ### Outside edits
-The service remembers the list it pushed last (in memory, for the daemon's life). Whenever the list read differs from it (fcitx5: the default layout, names and layouts; ibus: the names), `outsideEdit` is true: fcitx5-configtool or ibus-setup changed it. Before any push it stays false. Pushing again, or pushing the list read, clears it.
+The service remembers the list it pushed last and the framework it went to (in memory, for the daemon's life). Whenever the same framework's list read differs from it (fcitx5: the default layout, names and layouts; ibus: the names), `outsideEdit` is true: fcitx5-configtool or ibus-setup changed it. Before any push, and for another framework than the one pushed to (fcitx5 taking over from ibus, or the choice changed), it stays false. Pushing again, or pushing the list read, clears it.
 
 ### Protocol
 - **Topic `inputMethod`:** `inputMethod.state` (latest-wins), also `inputMethod.get`: `{framework, running, current, defaultLayout, group: [{name, layout}], available: [{name, label, displayName, icon, lang}], outsideEdit}`. `framework` is the one followed (`fcitx5`, `ibus`), or the one asked for while it isn't running, `""` for none.

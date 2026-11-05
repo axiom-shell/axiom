@@ -418,9 +418,13 @@ func TestIBus(t *testing.T) {
 		t.Errorf("gsettings %v, want %v", got, wantSet)
 	}
 
-	// fcitx5 starting wins
+	// fcitx5 starting wins; ibus's list pushed last is no outside edit of
+	// fcitx5's
 	newFakeFcitx(t, session)
-	h.await(t, "fcitx5 takes over", func(st State) bool { return st.Framework == FrameworkFcitx && st.Running })
+	st = h.await(t, "fcitx5 takes over", func(st State) bool { return st.Framework == FrameworkFcitx && st.Running })
+	if st.OutsideEdit {
+		t.Errorf("the list pushed to ibus reads as an outside edit of fcitx5's: %+v", st)
+	}
 	_ = f
 }
 

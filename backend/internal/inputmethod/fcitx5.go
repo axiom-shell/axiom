@@ -193,6 +193,8 @@ func (f *fcitx) call(ctx context.Context, member string, sigArgs ...any) (*dbus.
 	return m, mapError(err)
 }
 
+func (f *fcitx) name() string { return FrameworkFcitx }
+
 func (f *fcitx) set(ctx context.Context, name string) error {
 	_, err := f.call(ctx, "SetCurrentIM", "s", name)
 	return err

@@ -111,13 +111,17 @@ type Options struct {
 
 // backend is the framework followed while it runs.
 type backend interface {
+	// name is the framework's (FrameworkFcitx, FrameworkIBus)
+	name() string
 	set(ctx context.Context, name string) error
 	push(ctx context.Context, defaultLayout string, items []Item) error
 	settings(ctx context.Context, s Settings) error
 }
 
-// pushed is the list axiom pushed last, to tell an outside edit apart.
+// pushed is the list axiom pushed last, to tell an outside edit apart,
+// and the framework it went to (another one's list is no outside edit).
 type pushed struct {
+	framework     string
 	defaultLayout string
 	items         []Item
 }
@@ -236,7 +240,7 @@ func (s *Service) Push(ctx context.Context, defaultLayout string, items []Item) 
 	// before the call's reply
 	s.mu.Lock()
 	prev := s.last
-	s.last = &pushed{defaultLayout: defaultLayout, items: slices.Clone(items)}
+	s.last = &pushed{framework: b.name(), defaultLayout: defaultLayout, items: slices.Clone(items)}
 	s.mu.Unlock()
 	if err := b.push(ctx, defaultLayout, items); err != nil {
 		s.mu.Lock()
@@ -400,7 +404,7 @@ func (s *Service) setActive(b backend) {
 // OnChange when it changed.
 func (s *Service) publish(next State) {
 	s.mu.Lock()
-	if next.Running && s.last != nil {
+	if next.Running && s.last != nil && s.last.framework == next.Framework {
 		next.OutsideEdit = !s.last.matches(next, next.Framework == FrameworkFcitx)
 	}
 	same := reflect.DeepEqual(s.state, next)

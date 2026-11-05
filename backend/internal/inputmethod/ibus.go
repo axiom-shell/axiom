@@ -289,6 +289,8 @@ func engineDesc(v any) (ibusEngine, bool) {
 	return d, true
 }
 
+func (b *ibus) name() string { return FrameworkIBus }
+
 func (b *ibus) set(ctx context.Context, name string) error {
 	_, err := b.conn.Call(ctx, ibusName, ibusPath, ibusIface, "SetGlobalEngine", "s", name)
 	return mapError(err)
