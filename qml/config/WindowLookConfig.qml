@@ -25,8 +25,8 @@ QtObject {
   // (Appearance.shadowAlphaMax keeps the chrome's under the blur
   // threshold; no blur reaches a window's)
   readonly property bool shadowMatched: _c.shadow.matchShell
-  // The Bars section's look, its shadow flat (BarsConfig.lookOf)
-  readonly property var _barLook: BarsConfig.lookOf({})
+  // The Bars section's look, its shadow flat
+  readonly property var _barLook: BarStyle.look
   readonly property bool shadowOn: _c.shadow.enabled && !(shadowMatched && !_barLook.shadow)
   readonly property int shadowSize: shadowMatched ? _barLook.shadowSize : _c.shadow.size
   // Its color: axiom's, the one picked, or none for the compositor's own
