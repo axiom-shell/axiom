@@ -371,12 +371,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
-### The monitor prompt's padding is a bare 18 px, and check_sizes misses it
-- **Where:** `qml/components/surfaces/monitors/MonitorPromptWindow.qml` (`pad`), `scripts/check_sizes.py` (`SIZE_WORD`)
-- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it). The overlay's page navigator has the same gap: `readonly property real inset: 6` (`qml/components/hosts/overlay/OverlayPageNavigator.qml:38`) insets its arrows, tabs and pill in a bar whose height follows `Widget.height`. It should be `Widget.px(6)`, and `inset` belongs in `SIZE_WORD` too (found while reviewing the overlay system, 2026-10-31).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
-
 ### Setting names that still confuse
 - **Where:** `qml/config/schema/sections/`
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.

@@ -35,7 +35,7 @@ Rectangle {
   signal next
   signal select(int index)
 
-  readonly property real inset: 6
+  readonly property real inset: Widget.px(6)
   // Extra room at the ends, so the end buttons clear the rounded border
   readonly property real endInset: Widget.spacing / 2
   readonly property real controlHeight: root.height - root.inset * 2

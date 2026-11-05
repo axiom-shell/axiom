@@ -634,11 +634,14 @@ class CheckSizes(unittest.TestCase):
             "  textSize: Appearance.fontSize - 2",
             "  iconSize: Appearance.fontSize * 2",
             "  pixelSize: Appearance.fontSizeBy(-2)",
+            "  readonly property int pad: 18",
+            "  readonly property real inset: 6",
+            "  readonly property real endInset: Widget.px(6)",
             "}",
         ])
         self.assertEqual([(n, name) for n, name, _ in find_literals(qml)],
                          [(2, "implicitWidth"), (5, "listMargin"), (9, "Layout.preferredHeight"),
-                          (11, "fontSize")])
+                          (11, "fontSize"), (14, "pad"), (15, "inset")])
 
     def test_finds_literals_in_expressions(self):
         sys.path.insert(0, str(SCRIPTS))

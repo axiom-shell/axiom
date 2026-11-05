@@ -8,7 +8,7 @@ same at every scale, so next to the text around it it comes out cramped at
 150 % and loose at 75 %. This fails on:
 
   - a size property (one named …width, …height, …size, …spacing,
-    …margin(s), …padding, …radius, …length or …thickness: width,
+    …margin(s), …padding, …pad, …radius, …length, …thickness or …inset: width,
     Layout.preferredHeight, anchors.leftMargin, textSize), or a
     `property int|real` of that name, set to a number of 3 or more
   - a number of 3 or more inside such a property's expression, added,
@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DIRS = ["qml/components", "qml/shell"]
 SKIP = ["qml/components/bar/", "qml/components/methods/"]
 
-SIZE_WORD = r"(?:[wW]idth|[hH]eight|[sS]ize|[sS]pacing|[mM]argins?|[pP]adding|[rR]adius|[lL]ength|[tT]hickness)"
+SIZE_WORD = r"(?:[wW]idth|[hH]eight|[sS]ize|[sS]pacing|[mM]argins?|[pP]adding|[rR]adius|[lL]ength|[tT]hickness|[pP]ad|[iI]nset)"
 # width, Layout.preferredHeight, anchors.leftMargin, textSize, troughHeight, …
 SIZE_NAME = r"(?:[\w.]*" + SIZE_WORD + r")"
 NUMBER = r"(\d+(?:\.\d+)?)"

@@ -16,7 +16,7 @@ PanelWindow {
 
   readonly property bool asking: MonitorManager.pending
   readonly property bool shown: asking || MonitorManager.identifying
-  readonly property int pad: 18
+  readonly property int pad: Widget.px(18)
 
   visible: shown || card.opacity > 0
   color: "transparent"

@@ -24,7 +24,7 @@ PanelWindow {
   // "3h 12m", read from /proc/uptime when it opens
   property string uptime: ""
 
-  readonly property int pad: 18
+  readonly property int pad: Widget.px(18)
 
   function toggle() {
     shown = !shown;

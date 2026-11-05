@@ -488,7 +488,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **overlay-modules-08** (0): Done: its three entries were fixed with the OSD's statuses (the OSD's items, config v86), which rewrote the same files.
 - **overlay-modules-09** (6):
   - The Layouts canvas logs null reads as it's torn down
-  - [The monitor prompt's padding is a bare 18 px, and check_sizes misses it](../issues.md#the-monitor-prompts-padding-is-a-bare-18-px-and-check_sizes-misses-it)
+  - The monitor prompt's padding is a bare 18 px, and check_sizes misses it
   - [A custom Ring element logs an undefined `inside` on load](../issues.md#a-custom-ring-element-logs-an-undefined-inside-on-load)
   - [A custom layout's element rect reads an undefined place](../issues.md#a-custom-layouts-element-rect-reads-an-undefined-place)
   - [CustomElement's six Binding blocks are Qt.binding in its setSource](../issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
