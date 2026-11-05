@@ -192,16 +192,19 @@ Item {
             "tnum": 1
           }
           readonly property real overflow: Math.max(0, implicitWidth - strip.width)
-          x: 0
+          // At rest, centred in its room (wider than the text when its
+          // minimum measures wider), on a whole pixel
+          readonly property real restX: overflow > 0 ? 0 : Math.round((strip.width - implicitWidth) / 2)
+          x: restX
 
           // The pauses and the scroll's speed are behaviour, not motion.
-          // Stopped (the text now fits), it's back at the start
+          // Stopped (the text now fits), it's back at rest
           SequentialAnimation on x {
             running: tickerText.overflow > 0 && Appearance.animations
             loops: Animation.Infinite
             onRunningChanged: {
               if (!running)
-                tickerText.x = 0;
+                tickerText.x = Qt.binding(() => tickerText.restX);
             }
             PauseAnimation {
               duration: 1500 // behaviour timing: the ticker rests at each end

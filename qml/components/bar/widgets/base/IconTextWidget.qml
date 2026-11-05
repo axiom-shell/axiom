@@ -25,8 +25,9 @@ BaseWidget {
   property int fontSize: 0
   // The label's digits are of equal width (tabular figures), and it takes
   // the room of its text with every digit a 0, never less than
-  // `minimumText`'s (its widest value, "100%" for a percent): a ticking or
-  // sampled value never resizes the widget, or the bar around it
+  // `minimumText`'s (its widest usual value, "00%" for a percent: 100%
+  // may widen it), centred in that room: a ticking or sampled value never
+  // resizes the widget, or the bar around it
   property string minimumText: ""
   // Draws nothing and takes no room, padding included (a widget with
   // nothing to show). Not `visible: false`, which would still be measured.
@@ -134,9 +135,13 @@ BaseWidget {
         // icon's middle is (the run's, with none) on a whole pixel: centred
         // as a box, a label sits high, its box holding the descent
         readonly property rect _figure: figureMetrics.tightBoundingRect
-        x: root._turned ? (textSlot.width - width) / 2 : 0
+        // Along the bar, centred in its room (wider than the text when its
+        // minimum or its zeros measure wider), on a whole pixel; given less,
+        // it fills the room and elides
+        readonly property real _alongRoom: root._turned ? textSlot.height : textSlot.width
+        x: root._turned ? (textSlot.width - width) / 2 : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
         y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - baselineOffset + _figure.height / 2)
-        width: root._turned ? textSlot.height : textSlot.width
+        width: root.isVertical && root.uprightLabel ? textSlot.width : Math.min(Math.ceil(implicitWidth), _alongRoom)
         rotation: root._turned ? -90 : 0
         horizontalAlignment: root.isVertical && root.uprightLabel ? Text.AlignHCenter : Text.AlignLeft
         color: root.foregroundColor
