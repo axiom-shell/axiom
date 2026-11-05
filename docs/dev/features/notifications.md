@@ -57,13 +57,14 @@ Every notification has a level (`methods/NotificationLevel`, the single source o
 - `qml/shell/Notifications` builds a `surfaces/notifications/ToastStack` per screen of `NotificationsConfig.screen` (`ShellManager.showsOn`). A toast goes on every screen (`hideEverywhere`) when the user closes it, or when its app or the list closes it.
 - Toasts take their entry's uid when they're created (`uidOf`), because invoking an action can close the notification.
 - **One toast** is a `ToastItem`: its timer (paused while hovered or replied to; `followApps` takes the app's own timeout), a sideways swipe, its actions and reply, and its motion. It's a card of its own (detached) or a row of the attached box.
-- **Placement:** `edge`, `position`, `detached` and `gap`, as the OSD's and dock's.
-  - **Detached:** cards in one Overlay-layer window covering the free area, held `gap` in from what's on each side (`ScreenEdgeManager.detachedGaps` / `heldInset`, as the detached launcher does).
-    - The window has Normal exclusion; over a fullscreen window it ignores the zones, and the gaps are measured from the screen's edges.
+- **Placement:** `edge`, `position`, `detached` and `gap` (a px gap, where the OSD and the dock take a `distance`).
+  - **Detached:** cards in one Overlay-layer window covering the free area, held `gap` in from what's on each side (`ScreenEdgeManager.detachedGaps` / `heldInset`).
+    - The window has Normal exclusion; over a fullscreen window it ignores the zones, and the gaps are measured from the screen's edges, Auto as windows keep from a bare edge (`ScreenEdgeManager.detachedGaps`/`heldInset` with `bare`, as every floating popout over one: [Held off an edge](../popouts/held-off-edge.md)). Whether the screen has one (`ToastStack.fullscreen`: the gaps and the exclusion) is a `ClosedLatch` that showing toasts update a tick after the change (`_snap`), so they jump to their new place at once, the cards not gliding (`_still`), as an open `EdgePopout` does ([Held off an edge › EdgePopout extras](../popouts/held-off-edge.md#edgepopout-extras)); `quietFullscreen` reads it live (`fullscreenNow`).
     - Its input mask is the cards' bounds.
     - It's always mapped, lending `NotificationManager` its `imageHost`.
   - **Attached:** one `EdgePopout` box (no claim, no trigger) grown out of the border or a bar exactly as an OSD's or a floating edge menu's, whatever the bar (SurfaceContext).
     - The toasts are its rows, divided by hairlines.
+    - Over a fullscreen window it stays one box, held off the bare edge with no joins as every `EdgePopout` over one, and jumps there and back while showing.
     - Each row grows in from nothing and collapses as it leaves, and the rows' places follow their heights, so the box and the rows move as one.
 - **Order and motion** (`methods/ToastMotion`):
   - Newest at the stack's start, the rest pushed along. A top or bottom stack grows away from its edge, a side one along it (down from its middle).

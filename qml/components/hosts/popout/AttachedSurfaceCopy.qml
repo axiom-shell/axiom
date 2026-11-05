@@ -35,6 +35,8 @@ AttachedSurface {
   flushEndThrough: root.source?.flushEndThrough ?? true
   detached: root.source?.detached ?? false
   detachedOffset: root.source?.detachedOffset ?? 0
+  fade: root.source?.fade ?? false
+  opacity: root.source?.hostOpacity ?? 1
   backfill: root.source?.backfill ?? 0
   joinBackfill: root.source?.joinBackfill ?? 0
   straight: root.source?.straight ?? false

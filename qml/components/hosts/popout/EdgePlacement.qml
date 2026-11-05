@@ -27,12 +27,21 @@ QtObject {
   required property ShellScreen screen
   // A ScreenEdge
   property int edge: ScreenEdge.Top
-  // Held off the edge (a `detached` OSD, edge menu or dock, or a surface
-  // over a fullscreen window): it follows no bar, joins nothing, and keeps
-  // `gaps` from the frame lines (ScreenEdgeManager.detachedGaps, `gap` -1 Auto)
+  // Held off the edge (a `detached` OSD, edge menu, dock, launcher or
+  // window switcher, or a surface over a fullscreen window): it follows no
+  // bar, joins nothing, and keeps `gaps` from the frame lines: the
+  // automatic ones, `distance` (0-0.5) across the free screen from its edge
+  // for a box `heldDepth` deep (ScreenEdgeManager.heldGaps)
   property bool held: false
-  property int gap: -1
-  readonly property var gaps: root.held ? ScreenEdgeManager.detachedGaps(root.screen, root.edge, root.gap) : null
+  property real distance: 0
+  property real heldDepth: 0
+  // Over a fullscreen window (a host's hold, with `held`, which an open
+  // EdgePopout takes up at once), which
+  // covers the bars and the border: placed as if the screen's edges were
+  // bare, its window spanning the screen (ExclusionMode.Ignore), and
+  // sliding in from off it
+  property bool bare: false
+  readonly property var gaps: root.held ? ScreenEdgeManager.heldGaps(root.screen, root.edge, root.distance, root.heldDepth, root.bare) : null
   readonly property int connectorGap: Appearance.connectorGap
 
   // The bar it follows: a bar popout's own (`followPanel`, solid
@@ -70,7 +79,7 @@ QtObject {
   readonly property bool pillBar: root.followsBar && ((root.barConfig?.pills ?? false) || root.island)
 
   // Where the host's coordinates start along the screen edge
-  property real alongStart: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
+  property real alongStart: root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
 
   // The box, in the host's coordinates: its centre (picks the pill), where
   // its content would start and its length, and where it would like to be
@@ -117,7 +126,7 @@ QtObject {
   readonly property int endSide: root.vertical ? ScreenEdge.Bottom : ScreenEdge.Right
   readonly property real _span: (root.vertical ? root.screen?.height : root.screen?.width) ?? 0
   readonly property real _spanAcross: (root.vertical ? root.screen?.width : root.screen?.height) ?? 0
-  readonly property bool bareEdge: ScreenEdgeManager.screenEdgeOpen(root.screen, root.edge)
+  readonly property bool bareEdge: root.bare || ScreenEdgeManager.screenEdgeOpen(root.screen, root.edge)
   // The bar it grows out of, whatever it is (an enriched bar entry): the
   // followed bar, else the innermost on the edge, or null
   readonly property var ownBar: root.barConfig ?? ScreenEdgeManager.edgesFor(root.screen)[root.edgeName] ?? null
@@ -137,13 +146,18 @@ QtObject {
   // --- Its frame (SurfaceContext.frame): ends and room ---
   function _side(location, held) {
     const name = ScreenEdge.name(location);
-    const frame = ScreenEdgeManager.frameLineOn(root.screen, location);
-    const reserved = ScreenEdgeManager.reservedWithMenusOn(root.screen, location);
+    const frame = root.bare ? 0 : ScreenEdgeManager.frameLineOn(root.screen, location);
+    const reserved = root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, location);
     return {
-      "kind": ScreenEdgeManager.surfaceEnd(root.screen, location),
+      "kind": root.bare ? SurfaceContext.endKind({
+        "border": false,
+        "bar": null,
+        "barShowing": true,
+        "menuZone": 0
+      }) : ScreenEdgeManager.surfaceEnd(root.screen, location),
       "frame": frame,
       "reserved": reserved,
-      "corner": ScreenEdgeManager.cornerLineOn(root.screen, location),
+      "corner": root.bare ? 0 : ScreenEdgeManager.cornerLineOn(root.screen, location),
       "gapsOut": CompositorManager.gapsOut[name] ?? 0,
       "barHeld": held
     };
@@ -203,7 +217,7 @@ QtObject {
   // Where windows past a perpendicular edge start, or a frame line plus
   // `gap`, in from where windows start there (a held box's room)
   function heldInset(side, gap) {
-    return ScreenEdgeManager.heldInset(root.screen, side, gap);
+    return ScreenEdgeManager.heldInset(root.screen, side, gap, root.bare);
   }
 
   // --- Its box (SurfaceContext.layout) ---
@@ -219,14 +233,16 @@ QtObject {
     // The followed bar's own inner side (a bar popout's, past the
     // connected bars inside its own), wherever it lies among the bars
     // stacked on the edge; else the innermost's
-    "frameLine": root.barConfig ? ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig) : ScreenEdgeManager.frameLineOn(root.screen, root.edge),
-    "reserved": ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge),
+    "frameLine": root.bare ? 0 : root.barConfig ? ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig) : ScreenEdgeManager.frameLineOn(root.screen, root.edge),
+    "reserved": root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge),
     "detachedPush": root.barConfig ? BarsConfig.detachedPush(root.barConfig, ScreenEdgeManager.reservedWithMenusOn(root.screen, root.edge) + (CompositorManager.gapsOut[root.edgeName] ?? 0) - ScreenEdgeManager.barFrameLineOn(root.screen, root.barConfig), root.connectorGap) : 0,
     "ownBar": root.ownBar,
     "across": root.gaps?.across ?? 0,
     "layerOrder": CompositorManager.supports.layerOrder === true,
     "overOverlay": root.overOverlay,
-    "menuZone": ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName)
+    "menuZone": root.bare ? 0 : ScreenEdgeManager.zoneOn(root.screen?.name ?? "", root.edgeName),
+    "bare": root.bare,
+    "under": root.under
   }))
   // EdgeAttach.place's answer in the host's coordinates
   readonly property var place: {
@@ -272,13 +288,20 @@ QtObject {
   readonly property real attachFromBar: root._layout.attachFromBar + root._attachShift
   readonly property real barOuter: root._layout.barOuter
   // Whether the overlay is open on its screen (the host latches it while
-  // open), and whether a detached box slides out from under a transparent
-  // bar, its window on that bar's layer ordered under it
+  // open). A detached box slides in from behind its edge: from the screen
+  // edge under the bars, its window on their layer ordered under them
+  // (slidesUnder), or else from the frame line, coming out of what's on
+  // the edge (SurfaceContext)
   property bool overOverlay: false
+  // Whether the host's window is under the bars now, which it keeps while
+  // open (undefined: slidesUnder): where slideFrom starts
+  property var under: undefined
   readonly property bool slidesUnder: root._layout.slidesUnder
-  // How far back toward the screen edge such a box starts, whether or not
-  // it slides under now (the host gates it on its latched slidesUnder)
-  readonly property real slideDistance: root._layout.slideDistance
+  readonly property bool slidesFromEdge: root._layout.slidesFromEdge
+  // How far back from its attach edge it starts (the screen edge or the
+  // frame line), whether or not it slides from there now (the host gates
+  // it on its latched slidesFromEdge)
+  readonly property real slideFrom: root._layout.slideFrom
   // On a pill's far stroke the surface covers that stroke's inner fringe
   readonly property int backfill: root._layout.backfill
   // How a joined submenu meets the stroke the box grows from, from where

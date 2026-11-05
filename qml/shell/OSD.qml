@@ -39,9 +39,11 @@ Scope {
           screen: modelData
           edge: ScreenEdge.fromConfig(entry.osd.edge)
           position: entry.osd.position / 100
-          // Held off the edge, `gap` in from the frame lines there
+          // Held off the edge, `distance` across the free screen from it,
+          // sliding or fading in
           held: entry.osd.detached
-          gap: entry.osd.gap
+          distance: entry.osd.distance / 100
+          fade: entry.osd.animation === "fade"
           triggerEnabled: entry.osd.openOnHover
           overNamespace: "axiom-osd"
           // Closes under a higher popout, and won't open under one

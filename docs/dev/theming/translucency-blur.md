@@ -19,7 +19,7 @@ The translucency setting, how fills apply it, the Hyprland layer rules axiom wri
 
 ### Fills
 - Every surface fill goes through `Appearance.fill(color)` at the shared pieces' draw sites:
-  - `AttachedSurface`, `FloatingPopout`, `CornerPiece`, `BorderPanel`;
+  - `AttachedSurface`, `CornerPiece`, `BorderPanel`;
   - the bar's background and islands, the overlay's box and navigator;
   - edge menus, docks, power menu, overview, polkit and monitor prompts;
   - `StyledContainer`, `Card`/`Panel`, buttons, inputs, `ActionTile`, `DropdownSurface`.
@@ -43,9 +43,9 @@ Written by `render.BlurLua` from `render.SurfaceBlur`'s rule groups (the ones Sw
 
 ### niri: blur regions
 niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a rule would frost axiom's full-screen windows edge to edge. Instead each window sends what blurs through ext-background-effect (`supports.blurRegion`, Quickshell's `BackgroundEffect.blurRegion`):
-- The blur window sends its shapes as drawn (`BlurBackingWindow.regionPieces`): an `AttachedSurface`'s fill (`blurPieces()`, from `SurfaceOutline.blurRegion`: the box out to the stroke's outer edge, its far corners rounded, each fillet's square less its circle), a rect with its radii, and the border's frame (the screen less its inner rounded rect), each placed and cut to its `clipRect` (`SurfaceOutline.placeRegion`), through `reusable/BlurRegion`.
+- The blur window sends its shapes as drawn (`BlurBackingWindow.regionPieces`): an `AttachedSurface`'s fill (`blurPieces()`, from `SurfaceOutline.blurRegion`: the box out to the stroke's outer edge, its far corners rounded, each fillet's square less its circle), a rect with its radii, and the border's frame (the screen less its inner rounded rect), each placed and cut to its `clipRect` (`SurfaceOutline.placeRegion`), through `reusable/BlurRegion`; an `AttachedSurface` fading (`shownOpacity`, `hostOpacity`: a detached box's Fade, a fading dock hidden) sends none while its fill is under `Appearance.blurThreshold`, as `BoxBlurRegion` does.
   - Its shadows lie outside every region, so they stay in it unblurred: no `axiom-shadows` windows (`BlurManager.shadowsApart`).
-- Each surface that blurs itself (`LayerStack.blurSurfaces`: the overlay's box and navigator, floating popouts, toasts, the power menu, the workspace overview, the monitor prompt, the dock's preview) and the chrome's popups (tooltips, the dock's menu) sends its box (`reusable/BoxBlurRegion`), mapped as it slides, scales and fades: nothing while its fill's alpha (`Appearance.surfaceAlpha`, or a dim's color, × its opacity) is under `Appearance.blurThreshold`, as Hyprland's `ignore_alpha` compares each pixel's, so a fade starts and stops blurring at the same point on both.
+- Each surface that blurs itself (`LayerStack.blurSurfaces`: the overlay's box and navigator, the power menu, the workspace overview, the monitor prompt, the dock's preview) and the chrome's popups (tooltips, the dock's menu) sends its box (`reusable/BoxBlurRegion`), mapped as it slides, scales and fades: nothing while its fill's alpha (`Appearance.surfaceAlpha`, or a dim's color, × its opacity) is under `Appearance.blurThreshold`, as Hyprland's `ignore_alpha` compares each pixel's, so a fade starts and stops blurring at the same point on both.
 - Backdrops and polkit's dim send their whole rect while `blurBackdrops` (at any alpha, `threshold` 0.01).
 - They do while `BlurManager.regionsOn(screen)` (`backdropRegionsOn`): the pause, per screen there, never touches niri's config.
 - `BackgroundEffect` is attached only where `supports.blurRegion`, from `Component.onCompleted` (`BackgroundEffect.blurRegion = Qt.binding(…)`), never as a binding: attached at all, even with a null region, Quickshell creates the window's ext-background-effect object, and Hyprland (which speaks the protocol too) then blurs only what it asks, ignoring the layer rules.
@@ -70,7 +70,7 @@ niri (26.04) blurs a layer rule's whole rectangle, with no alpha threshold, so a
     - the rules are taken back at runtime, as is Hyprland's blur where the window look kept it on for the surfaces alone (the module file keeps the saved setting);
   - where each window asks for its own blur (niri, `supports.blurRegion`), only on that screen: its windows send no region (`regionsOn`), and `active` stays on;
   - the blur window goes there (`backingOn`) and the chrome fills itself.
-- On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` for floating popouts, `StyledContainer.solid` for toasts.
+- On the screens showing one, surfaces fill solid (`opaqueOn`): `AttachedSurface.opaque`, `BlurManager.fillOn` for the bars and integrated edge menus, `StyledContainer.solid` for toasts.
 - Elsewhere they stay translucent.
 
 ### Stacking

@@ -252,7 +252,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 
 **Both:**
 - **Placement:** have any number, on any edge, at any position along it. Put them on a named monitor, the primary, the focused one (following focus) or every monitor.
-- **Edges:** at no gap they grow out of the screen border or a solid bar, like the popouts. Held off the edge, *Auto* lines them up with a floating bar.
+- **Edges:** attached, they grow out of the screen border or a solid bar, like the popouts. Detached, they're a box held a distance across the free screen (0 lines it up with your windows, 50% centres it) that slides in from off the screen or fades in where it sits.
 - **Sharing an edge:** a dock gives way to an OSD, and both give way to a floating edge menu opened on their edge.
 - Edit them under **Settings → Dock & OSD**.
 

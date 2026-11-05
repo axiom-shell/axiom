@@ -23,7 +23,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - A section with `x-cardPerField` (Theme integrations) makes a card per field, after one with the section's description; its switches are relabelled "Enabled" (`row.label`), the card carrying the field's title and description.
 - The Dock and OSD list cards are `EntryListCard`s:
   - entries as tabs
-  - a screen picker with presets: by default an edge's middle or the bottom edge's ends, with `spotOf` reading `edge`/`position`; a drag on it sets `edge` and `position` (nearest edge)
+  - the screen picker every placed surface has (a floating `ScreenSpotPicker`: its nine spots, the centre, each edge's middle and the corners), with `spotOf` reading `edge`/`position` and, detached, `distance`; a click or drag on it sets `edge` and `position` (nearest edge), and `detached` and `distance` (attached within its snap of an edge)
   - Show/Duplicate/Delete
   - `entryContent` for extras such as the dock's pinned apps
   - `sections`: object settings each drawn as a `FoldingSection` of its own (its schema's title and description; the OSD's status icons, now playing and bars), its fields at their paths in the entry so an `x-showIf` reaches the entry's own keys through `../`; `lastSections` go after the rest

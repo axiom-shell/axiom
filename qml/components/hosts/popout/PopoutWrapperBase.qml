@@ -9,7 +9,7 @@ import qs.services.compositor
  * timing.
  *
  * Concrete wrappers (BarPopouts, SubPopout, EdgePopout,
- * FloatingPopout, IntegratedEdgeMenu) use this as their root type and add
+ * IntegratedEdgeMenu) use this as their root type and add
  * their own window, positioning, and content Loader as children, binding
  * `currentItem` to their Loader's item.
  *

@@ -30,15 +30,17 @@ PopoutWrapperBase {
   required property QtObject panel
 
   // The window showing the popout, a layer surface along the bar's edge.
-  // On a transparent bar it's on the bar's layer, ordered under it, so a
-  // detached box slides out from beneath the bar rather than out of thin
-  // air at its invisible inner edge; else on the Overlay layer, over the
-  // bar. That under-bar layer is also under the overlay: while that's open
-  // here, the box shows over it instead, without sliding (LayerStack), as
-  // it does where the compositor stacks by map order alone (no
+  // A detached box (a transparent bar's, a floating bar's showing no
+  // islands) slides in from off the screen, its window on the bars' layer
+  // ordered under them, so it comes out from beneath every bar rather than
+  // out of thin air past them; else on the Overlay layer, over the bar.
+  // That under-bar layer is also under the overlay: while that's open
+  // here, the box shows over it instead (LayerStack), coming out of the
+  // bars' inner side (the frame line, EdgePlacement.slideFrom), as it
+  // does where the compositor stacks by map order alone (no
   // supports.layerOrder: a window mapped as it opens lands over the bar).
-  // Followed only while closed, since it changes the window's layer.
-  // (EdgePlacement.slidesUnder)
+  // Followed only while closed, since it changes the window's layer. (EdgePlacement.slidesUnder; a bar popout never opens over a
+  // fullscreen window, which covers its bar)
   property ClosedLatch _under: ClosedLatch {
     source: placement.slidesUnder
     closed: !root.occupied
@@ -230,6 +232,9 @@ PopoutWrapperBase {
     open: still.showing && !root.isClosing && root.claimed
     onOverlayLayer: root.onOverlayLayer
     overOverlay: SurfaceManager.surfaceOpenOn("overlay", root.screen)
+    // Its window under the bars as latched, so slideFrom (and the surface
+    // reaching back to it) doesn't change as the overlay opens or closes over it
+    under: root.underBar
     origin: slot.popupScreenOrigin
     attachedSurface: surface
     opens: root._out
@@ -246,12 +251,12 @@ PopoutWrapperBase {
   readonly property var _panel: root.panel
   // The bar window's thickness (more than the bar's extent with pills)
   readonly property real panelThickness: root.panel?.thickness ?? root.barConfig.extent
-  // Where the under-bar window starts, from the bar's outer edge: past the
-  // border stroke the outer edge of a bar inside the border lies on
-  readonly property real underStart: root.barConfig.insideBorder ? Appearance.borderWidth : 0
+  // How far back from its attach edge a detached box starts, sliding
+  // under the bars or over them: the screen edge (EdgePlacement.slideFrom)
+  readonly property real slideDistance: surface.detached ? placement.slideFrom : 0
   // Where the surface starts, from the bar's outer edge: a detached box's
-  // reaches back to the under-bar window's edge, to slide in from there
-  readonly property real surfaceFrom: surface.detached && root.underBar ? root.underStart : root.attachAt
+  // reaches back to the screen edge, to slide in from there
+  readonly property real surfaceFrom: root.attachAt - root.slideDistance
 
   // Resizing a window while it shows is a round trip to the compositor
   // (a popup's reposition, a layer surface's configure), so the outline
@@ -438,10 +443,10 @@ PopoutWrapperBase {
       }
     }
 
-    // Only the surface takes input (under the bar, only its box: the bar
-    // over it keeps its own)
+    // Only the surface takes input (sliding from the screen edge, only its
+    // box: the bars keep their own, and windows the strip it slid through)
     mask: Region {
-      item: root.underBar ? boxArea : surface
+      item: root.slideDistance > 0 ? boxArea : surface
     }
     Item {
       id: boxArea
@@ -475,7 +480,7 @@ PopoutWrapperBase {
         return 0;
       if (root.barConfig.vertical)
         return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Top) - ScreenEdgeManager.frameLineOn(root.screen, ScreenEdge.Bottom) - root.targetBoxHeight;
-      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear - root.surfaceFrom - root._boxAcross;
+      return root.screen.height - ScreenEdgeManager.frameLineOn(root.screen, root.barConfig.top ? ScreenEdge.Bottom : ScreenEdge.Top) - mainPopup._barNear - root.attachAt - root._boxAcross;
     }
     // The surface in this window: where it is in the bar's, moved by where
     // the bar is on the screen
@@ -506,12 +511,12 @@ PopoutWrapperBase {
     // A submenu's stretch: along the bar on a vertical one, away from it
     // on a horizontal one
     boxHeight: root.shownBoxHeight + slot.shownStretchTop + slot.shownStretchBottom
-    // A detached box on a transparent bar slides out from under it
-    detachedOffset: root.underBar ? root.attachAt - root.underStart : 0
+    // A detached box slides out from under the bars, from the screen edge
+    detachedOffset: root.slideDistance
 
     // The content keeps its target size while the box animates to it,
     // hung from the box's start along the bar and from its bar side
-    // across it, and cut to the box (as FloatingPopout does)
+    // across it, and cut to the box
     Item {
       id: clipBox
       anchors.fill: parent

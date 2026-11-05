@@ -17,6 +17,4 @@ QtObject {
     "shadowColor": values.shadow.color,
     "shadowSize": values.shadow.size
   })
-  // Whether surfaces cast the shadow
-  readonly property bool shadowed: values.shadow.enabled
 }

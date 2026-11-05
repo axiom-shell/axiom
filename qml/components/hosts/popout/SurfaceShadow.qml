@@ -13,7 +13,7 @@ import qs.config
 // `cut` keeps only the shadow outside the source's shape, dropping the
 // source too: for a translucent surface, whose own shadow would otherwise
 // show through it. Its source then is a copy of the shape (a layer of its
-// own, as FloatingPopout's copy, or a capture of it: OutsideShadow). Only
+// own, or a capture of it: OutsideShadow). Only
 // what the shape covers fully is cut: under its anti-aliased edge the
 // shadow stays, as the stroke drawn over it hides it there, or a pixel's
 // gap shows between the surface and its shadow.

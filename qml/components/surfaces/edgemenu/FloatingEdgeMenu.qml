@@ -11,20 +11,21 @@ import qs.components.hosts.popout
 // border or a solid bar on its edge, and meeting any other bar there as a
 // bar popout does (EdgePlacement): out of a pill or a floating bar's
 // island, or a detached box past a transparent bar. One held off the edge
-// (`detached`) is an island: `gap`
-// in from the frame lines on its edge and at both ends
-// (ScreenEdgeManager.detachedGaps), so it lines up with a floating bar's islands, or
-// with the windows.
+// (`detached`) is an island, placed as every detached surface is
+// (ScreenEdgeManager.heldGaps): `distance` across the free screen from its
+// edge, at 0 lined up with a floating bar's islands, or with the windows,
+// sliding or fading in (`animation`).
 EdgePopout {
   id: root
 
   required property var menu
   readonly property string menuId: root.menu.id
 
-  // Held off the edge, its gaps from the frame lines across its edge and
-  // at its ends (EdgePlacement.gaps)
+  // Held off the edge, `distance` across the free screen from it
+  // (EdgePlacement.gaps)
   held: root.menu.detached
-  gap: root.menu.gap
+  distance: root.menu.distance / 100
+  fade: root.menu.animation === "fade"
 
   // Closes what it covers below it (PopoutManager); pinned, it ranks
   // lowest, and pinned or previewing it gives way and comes back
@@ -40,13 +41,14 @@ EdgePopout {
 
   // Along the edge, on the menu's lattice (GridPlacement.menuAlong),
   // in screen px: this window's edge coordinates start past what's
-  // reserved on the perpendicular edge at its start
+  // reserved on the perpendicular edge at its start (over a fullscreen
+  // window, at the screen's edge: EdgePopout.bare)
   readonly property real screenLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
-  readonly property real alongOrigin: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
+  readonly property real alongOrigin: root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.startSide)
   // The least room from the modules to the screen's ends: what's reserved
   // there, the box's inset and its padding
   readonly property real startPad: root.alongOrigin + root.startInset + root.contentPadding
-  readonly property real endPad: ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide) + root.endInset + root.contentPadding
+  readonly property real endPad: (root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide)) + root.endInset + root.contentPadding
   // From config, so the hover strip lines up before the body has loaded
   // Its card size (EdgeMenusConfig.cardUnitOf)
   readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)

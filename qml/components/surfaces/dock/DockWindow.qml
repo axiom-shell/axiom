@@ -44,7 +44,9 @@ Scope {
 
   // --- Attaching to the edge ---
   // As an edge popout does (EdgePlacement): held off the edge, a plain box
-  // `gap` in from the frame lines on its edge and at its ends; else growing
+  // `distance` across the free screen from its edge (at 0 its automatic
+  // gaps from the frame lines there and at its ends), sliding or fading
+  // in; else growing
   // out of the border's (or a solid bar's) stroke, or running straight off
   // a bare screen edge; with another bar on its edge, meeting it as a bar
   // popout would.
@@ -54,6 +56,8 @@ Scope {
   // and at its ends (what places it, so a change of `held` never reads
   // them before they follow)
   readonly property bool held: root.dock.detached
+  // Held off the edge, it fades in and out where it sits instead of sliding
+  readonly property bool fades: root.held && root.dock.animation === "fade"
   readonly property var gaps: placement.gaps
   // Where the window starts across the edge (what's reserved there; not
   // docks, its own included)
@@ -119,7 +123,8 @@ Scope {
     screen: root.screen
     edge: root.edge
     held: root.held
-    gap: root.dock.gap
+    distance: root.dock.distance / 100
+    heldDepth: root.thickness
     centre: root.centre
     // Its joins from where it would rest, so magnifying never joins or
     // parts an end
@@ -187,7 +192,7 @@ Scope {
   // stretch that this keeps up
   property bool _out: false
   onShownChanged: root._out = root.shown > 0
-  readonly property real slide: (1 - root.shown) * root.depth
+  readonly property real slide: root.fades ? 0 : (1 - root.shown) * root.depth
 
   // The cross-axis position (window coordinates) of something `fromEdge`
   // in from the dock's edge and `size` deep
@@ -465,7 +470,11 @@ Scope {
     // The box and the icons grown out of it, and the gap to the edge (so
     // the pointer doesn't leave the dock on its way from the edge); nothing
     // while it's hidden, or for a preview (the overlay under it keeps the
-    // pointer)
+    // pointer). A held dock keeps the gap only while latched (the trigger
+    // latches it on the way in, and the pointer leaving closes it), never
+    // always shown: `distance` can stretch that gap to half the screen,
+    // over what's there, which a dock shown without a latch (intellihide
+    // over no window, or sliding out) would otherwise catch the pointer in
     mask: Region {
       item: inputArea
     }
@@ -475,10 +484,11 @@ Scope {
       readonly property real alongStart: root.surfaceBoxStart
       readonly property bool open: root.shown > 0 && !root.preview
       readonly property real alongLength: open ? root.surfaceBoxLength : 0
-      readonly property real crossDepth: open ? root.boxOffset + root.thickness + root.grown : 0
+      readonly property real fromEdge: open && root.held && (root.mode === "always" || !root.latched) ? root.boxOffset : 0
+      readonly property real crossDepth: open ? root.boxOffset + root.thickness + root.grown - fromEdge : 0
 
-      x: root.vertical ? root.crossAt(0, crossDepth) : alongStart
-      y: root.vertical ? alongStart : root.crossAt(0, crossDepth)
+      x: root.vertical ? root.crossAt(fromEdge, crossDepth) : alongStart
+      y: root.vertical ? alongStart : root.crossAt(fromEdge, crossDepth)
       width: root.vertical ? crossDepth : alongLength
       height: root.vertical ? alongLength : crossDepth
     }
@@ -506,6 +516,8 @@ Scope {
       id: dockContent
       anchors.fill: parent
       visible: !root.previewed
+      // Fading in and out in place, held off the edge (`fades`)
+      opacity: root.fades ? root.shown : 1
 
       HoverHandler {
         id: hover
@@ -532,6 +544,7 @@ Scope {
         strokeColor: Theme.resolveColor(root.dock.borderColor)
         // Hiding, it moves past its window's edge
         hiddenBehind: Math.max(0, root.slide)
+        hostOpacity: dockContent.opacity
       }
 
       // Between the pinned apps and the others

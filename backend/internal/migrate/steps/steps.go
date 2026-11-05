@@ -188,6 +188,9 @@ var all = []Step{
 	// browser moved into Apps.commands, the old default kitty dropped
 	// (v96.go)
 	{Version: 96, Run: v96},
+	// v97: an OSD's, a dock's and an edge menu's `gap` dropped: detached
+	// surfaces are placed by `distance`, as the launcher (v97.go)
+	{Version: 97, Run: v97},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

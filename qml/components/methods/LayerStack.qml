@@ -135,7 +135,7 @@ QtObject {
     {
       "namespace": "edge-popout",
       "order": -11,
-      "why": "Edge popouts (floating edge menus): after the dock and the OSD, so a menu opened over the overlay draws over both."
+      "why": "Edge popouts (floating edge menus, the launcher, the window switcher): after the dock and the OSD, so a menu opened over the overlay draws over both."
     },
     {
       "namespace": "popout",
@@ -178,7 +178,7 @@ QtObject {
   // Layers blurred whole, their transparent pixels left out: the blur
   // window (drawing the chrome's fills: the chrome doesn't blur itself)
   // and the big surfaces that blur themselves
-  readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "launcher", "switcher", "floating-popout", "powermenu", "workspaces", "monitor-prompt"]
+  readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "powermenu", "workspaces", "monitor-prompt"]
   // Backdrops (and the polkit prompt, whose window holds its own dim),
   // only when asked: the whole screen, at every alpha
   readonly property var blurBackdrops: ["backdrop", "polkit"]

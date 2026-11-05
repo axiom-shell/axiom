@@ -53,7 +53,11 @@ properties:
     default: 50
     minimum: 0
     maximum: 50
-    description: 'How far across the free screen it sits: 0 lines it up with a detached dock or OSD on that edge, 50 centres it.'
+    description: 'How far across the free screen it sits: 0 lines it up with your window border, 50 centres it.'
+    x-showIf: {detached: true}
+  animation:
+    $ref: '#/definitions/DetachedAnimation'
+    x-scope: look
     x-showIf: {detached: true}
   order:
     x-scope: look
