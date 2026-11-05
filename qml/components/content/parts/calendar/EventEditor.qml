@@ -70,12 +70,10 @@ ColumnLayout {
         onAccepted: root.session.save()
       }
 
-      // A rule written elsewhere (Custom) can't be carried to another
-      // calendar: a move re-creates the event, with a simple rule
       StyledComboEntry {
         Layout.fillWidth: true
         icon: "event"
-        readOnly: root.session.readOnly || root.session.draft?.origRepeat === "custom"
+        readOnly: root.session.readOnly
         options: (root.session.readOnly ? CalendarManager.calendars : CalendarManager.writableCalendars).map(calendar => ({
               "value": calendar.id,
               "label": CalendarConfig.accounts.length > 1 ? I18n.tr("{0} · {1}", calendar.name, calendar.accountName) : calendar.name

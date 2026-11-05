@@ -606,24 +606,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the calendar system
 
-### A save conflict reloads nothing, so trying again conflicts again
-- **Where:** `backend/internal/calendar/calendar.go:582` (`Save`), `backend/internal/calendar/calendar.go:618` (`Delete`), `qml/services/apps/CalendarManager.qml:325` (`errorText`), `qml/services/apps/EventDraft.qml:111` (`saveAs`)
-- **What:** An event changed elsewhere (a phone) since the last sync: axiom's PUT gets 412 and `Save` returns `conflict` before `resync`, so objects.json and events.json keep the old copy and etag. The editor says "The event changed elsewhere. It has been reloaded: check it and try again." but nothing was reloaded, and Save again sends the same draft etag (`firstOf(r.Etag, obj.Etag)`, the draft's first) and conflicts again until the next timed sync, and even then the open editor keeps the stale etag. The same holds for a local calendar's file changed on disk, and for `cachedObject`'s conflict when the event is gone from the cache. Fix: on a `Conflict` from `put` or `cachedObject`, `Save` and `Delete` run `s.resync` for that calendar before returning the error; the editor, on `conflict`, reopens on the fresh event (`CalendarEvents.draftOf` of the occurrence with the same href and rid, or closes when it's gone), so what it says is true.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### Moving a recurring event to another calendar drops its earlier occurrences and exceptions
-- **Where:** `qml/services/apps/CalendarManager.qml:205` (`save`, the move)
-- **What:** Changing the calendar of an occurrence of a weekly series (not Custom: the picker is read-only for those) skips the "Change which?" question and saves as a move: a new event made from the draft, then the old one deleted as a series. The draft is `CalendarEvents.draftOf(event)` of the clicked occurrence, so the new series starts at that occurrence: every earlier one disappears (the old object, history included, is deleted), and its EXDATEs, overrides, attendees and unknown properties are lost (`NewEvent` builds from the payload). When the delete fails after the create (a conflict, the server down), both copies stay while the editor shows the error, and trying again creates a third. Fix: do the move in the daemon: `calendar.save` with a target calendar copies the cached object, applies the series edit (`ApplySeries`, keeping its first DTSTART, overrides and properties), PUTs it to the target with `If-None-Match: *` and the same UID, then deletes the old one, in one locked call that resyncs both calendars. The Custom rule's read-only picker then has no reason left.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the calendar system
-
-### Enter in the editor's title saves again while busy and picks All events while asking
-- **Where:** `qml/components/content/parts/calendar/EventEditor.qml:63` (`titleEntry`'s `onAccepted`), `qml/services/apps/EventDraft.qml:95` (`save`)
-- **What:** Only the Save button is disabled while `busy`; the title's `onAccepted: root.save()` isn't, and `save()` doesn't check `busy`. A new event saved with Enter twice on a slow server queues two `calendar.save` jobs with no href: two identical events. And while the "Change which?" row shows for a recurring event, `save()` skips the question (`root.asking === ""` is false) and calls `saveAs("series")`: pressing Enter again after editing a title changes every occurrence without the user choosing. Fix: `if (root.busy || root.asking !== "") return;` at the top of `save()` (the row's own buttons pick the scope).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the calendar system
-
 ### Removing a CalDAV account deletes its password before the draft is saved
 - **Where:** `qml/components/views/Settings/CalendarAccountsCard.qml:83` (`remove`)
 - **What:** The account's removal goes through the settings draft (`SettingsManager.setValue`), which Reset changes or leaving without saving undoes, but `SecretsManager.clearSecret("calendar", root.accountId)` runs at the click. Removing an account and then resetting brings the account back with no password: every sync fails `no_password` until it's typed again. calendar.md keeps local calendars' folders for this very reason ("a draft can be reverted, so nothing is deleted"). Fix: leave the secret on remove, and clear the secrets of account ids gone from `Calendar.items` once a save lands (CalendarManager, on `CalendarConfig.accounts` changing).

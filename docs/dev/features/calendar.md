@@ -77,10 +77,10 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
   - `series` moves a recurring series by however far the edited occurrence moved; its overrides' RECURRENCE-IDs and its EXDATEs move with it.
   - `occurrence` adds or edits a RECURRENCE-ID override.
 - **`delete`:** DELETEs the event, or adds an EXDATE for a single occurrence.
-- **Conflicts:** a 412 is `conflict`. The editor keeps the draft and says so.
-- **Moving to another calendar:** a new event there, then the old one is deleted.
+- **Conflicts:** a 412 (or a local file's changed etag) is `conflict`. The daemon syncs that calendar again before answering, and the editor reopens on the fresh event (it closes when the event is gone) and says so.
+- **Moving to another calendar:** `calendar.save` with `toAccount` / `toCalendar` moves it in one call: the stored object with the series edit applied (its UID, first start, exceptions and other properties kept) is PUT to the new calendar with `If-None-Match: *`, then the old one is deleted (the copy is removed again when that fails), and both calendars sync again.
 - **Local calendars:** the same edits, written to the event's file atomically (mode 600) or unlinked, instead of a PUT or DELETE.
-- After a save or delete, the daemon syncs that calendar again (whatever its ctag), so `events.json` has the change when the call answers.
+- After a save or delete, the daemon syncs the calendars it wrote to again (whatever their ctags), so `events.json` has the change when the call answers.
 
 ### Reads
 - `byDay` (`CalendarEvents.byDay` over the shown calendars)

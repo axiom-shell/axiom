@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09 and overlay-modules-10 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10 and features-06 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -115,7 +115,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 67 | features-03 | major | Done: Notifications | 3 | ~200 (net about -80) | platform-03 |  |
 | 68 | features-04 | major | Moved to Unconfirmed: The dock | 0 | ~30 | features-01 | Q13 |
 | 69 | features-05 | major | Todo, pomodoro and timers | 6 | ~200 | features-01 | Q14, Q15 |
-| 70 | features-06 | major | Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
+| 70 | features-06 | major | Done: Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
 | 71 | features-07 | major | Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
 | 72 | features-08 | major | Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
 | 73 | features-09 | major | The chat | 4 | ~180 | features-01 |  |
@@ -521,10 +521,10 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - PomodoroDial redraws DialControls' ring and buttons
   - Focus and Pomodoro build the parts their properties turn off
   - [A dropdown in an edge menu card with nothing scrolling gets two rows](../issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
-- **features-06** (3):
-  - [A save conflict reloads nothing, so trying again conflicts again](../issues.md#a-save-conflict-reloads-nothing-so-trying-again-conflicts-again)
-  - [Moving a recurring event to another calendar drops its earlier occurrences and exceptions](../issues.md#moving-a-recurring-event-to-another-calendar-drops-its-earlier-occurrences-and-exceptions)
-  - [Enter in the editor's title saves again while busy and picks All events while asking](../issues.md#enter-in-the-editors-title-saves-again-while-busy-and-picks-all-events-while-asking)
+- **features-06** (3, done): The move is the daemon's one locked call; the Custom rule's read-only calendar picker went with the shell's re-creating move.
+  - A save conflict reloads nothing, so trying again conflicts again
+  - Moving a recurring event to another calendar drops its earlier occurrences and exceptions
+  - Enter in the editor's title saves again while busy and picks All events while asking
 - **features-07** (3):
   - [A Calendar card on the desktop or in an edge menu takes the page's request](../issues.md#a-calendar-card-on-the-desktop-or-in-an-edge-menu-takes-the-pages-request)
   - [Removing a CalDAV account deletes its password before the draft is saved](../issues.md#removing-a-caldav-account-deletes-its-password-before-the-draft-is-saved)
