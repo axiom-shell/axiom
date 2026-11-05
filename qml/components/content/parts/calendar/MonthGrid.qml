@@ -198,7 +198,7 @@ Item {
             readonly property bool selected: cell.key === root.selectedKey
             readonly property real numberSize: Appearance.fontSize * 1.5
             // Titles: the number's inset, clear of the cell's rounded border
-            readonly property real inset: Math.max(4, Widget.radius / 2 + 2)
+            readonly property real inset: Math.max(Widget.px(4), Widget.radius / 2 + 2)
             // Titles: as many lines as fit under the day's number
             readonly property real lineHeight: Appearance.fontSize * 1.25
             readonly property int lines: root.titles ? Math.floor((cell.height - cell.inset * 2 - cell.numberSize - 2) / (cell.lineHeight + 1)) : 0

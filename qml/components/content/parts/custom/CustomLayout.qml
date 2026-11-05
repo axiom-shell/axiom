@@ -21,9 +21,12 @@ Item {
 
   readonly property var size: root.definition?.module?.size ?? [4, 2]
   readonly property var grid: CustomWidgetData.lattice(root.definition?.module?.elements, root.size)
+  // Whether there's a value (a ring, else an icon, without elements): a
+  // bool that holds still across samples, so they don't rebuild the defaults
+  readonly property bool _hasValue: (root.fields?.ratio ?? -1) >= 0
   readonly property var elements: {
     const own = root.definition?.module?.elements ?? [];
-    return own.length ? own : CustomWidgetsConfig.defaultElements(root.size, (root.fields?.ratio ?? -1) >= 0);
+    return own.length ? own : CustomWidgetsConfig.defaultElements(root.size, root._hasValue);
   }
 
   // By count: a new sample never rebuilds the elements

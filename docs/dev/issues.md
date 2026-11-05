@@ -220,11 +220,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the notifications revamp branch (its v83 rename had the same gap, fixed there)
 
-### A custom Ring element logs an undefined `inside` on load
-- **Where:** `qml/components/content/parts/custom/elements/Ring/CustomRing.qml` (`inside`)
-- **What:** The live shell logs `CustomRing.qml[17:3]: Unable to assign [undefined] to QString` after a reload: `root.options.inside` is read before the element's options carry it (seen on main after row 17, with a custom widget's Ring element on screen). The ring draws once the options arrive, but the log isn't clean.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
+### A custom element sees another kind's element as its slot changes kind
+- **Where:** `qml/components/content/parts/custom/CustomElement.qml` (`_load`), `qml/components/content/parts/custom/elements/Button/CustomButton.qml` (`label`, `icon`), `qml/components/content/parts/custom/elements/Toggle/CustomToggle.qml` (`label`)
+- **What:** When a slot's element changes kind (the default Ring + Text giving way to a definition's own elements, or an element removed in the editor), the loaded item's bound `element` takes the new kind's element before `onKindChanged` reloads it: what overlay-modules-09 gave CustomRing's `inside` a `?? ""` for. Only Ring was quieted; a Button or Toggle handed another kind's options assigns an undefined `options.label` (and Button's `options.icon`) to a string the same way. PLAUSIBLE: a Button slot turning into another kind with the log open settles it. Fix at the cause: bind the item's `element` only while its kind matches the one loaded (keep the last matching element otherwise), then drop Ring's `?? ""`.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the overlay and custom widgets minor sweep (overlay-modules-09)
 
 ### A hot corner can't close what covers it
 - **Where:** `qml/shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
@@ -349,18 +349,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-18, while adding niri's blur
 
 
-### The Layouts canvas logs null reads as it's torn down
-- **Where:** `qml/components/views/Layouts/CanvasModule.qml` (`editor`, `carried`, the label and icon bindings), `qml/components/views/Layouts/GridCanvas.qml` (its `CanvasModule` Loader)
-- **What:** Tearing down a page with a layout canvas (a reload, or the overlay closing after moving between pages) logs a burst of `TypeError: Cannot read property 'editor' of null` from `CanvasModule.qml[25:-1]`, then `draggingKind`, `moduleIcon`, `moduleLabel`, `dragging` of null, once per module: `dragLayer` is gone before the modules' bindings stop. Likely `root.dragLayer?.editor` at the source (`editor`), with the other reads following it.
-- **Size:** small
-- **Found:** 2026-10-29, while screenshotting editor pages for the form row look
-
-### A custom layout's element rect reads an undefined place
-- **Where:** `qml/components/content/parts/custom/CustomLayout.qml` (the `CustomElement` delegate's `r`), `qml/components/methods/CustomWidgetData.qml` (`rect`)
-- **What:** The live shell logs `CustomWidgetData.qml[649:-1]: TypeError: Value is undefined and could not be converted to an object` after a reload: the delegate passes `element.place` while its `element` is still the `({})` stand-in (or past the end of a shrunk `elements`), and `rect` reads `place.x`. `rect` returning an empty rect for no place, or the delegate waiting for one, would quiet it.
-- **Size:** trivial
-- **Found:** 2026-10-29, while reviewing the bar display styles branch
-
 ### Quickshell's wlr screencopy crashes the shell on niri
 - **Where:** `qml/services/apps/ScreenshotManager.qml` (`grimFrames`, the workaround), `qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml` (its `ScreencopyView`); the bug is Quickshell's
 - **What:** Without ext-image-copy-capture (niri 26.04 has only wlr-screencopy), Quickshell's wlr screencopy binds a second `wl_output` of its own (`WlrScreencopyContext::OutputTransformQuery`, a `QtWayland::wl_output`; still so in upstream master). niri then sends `wl_surface.enter` for it to every surface; Qt takes it for one of its screens (`QWaylandScreen::fromWlOutput` casts it) and keeps a bogus screen in each surface's list. The next `enter`/`leave` on such a surface crashes in `QWaylandWindow::handleScreensChanged` → `QPlatformScreen::screen()` (at once with a popout open, which unmaps as the picker opens). WAYLAND_DEBUG: `bind(46, "wl_output", 3, …)` beside `zwlr_screencopy_manager_v1.capture_output`, `wl_surface.enter(wl_output#198)` on every surface, then `axiom-edge-popout`'s surface `leave(wl_output#19)` and the crash. Worked around: niri has no `supports.outputCapture`, so the picker's frame is grim's. Left: report it upstream (awaiting a second person to confirm), then drop the workaround once fixed. Sway and Hyprland 0.55 keep `outputCapture` (Hyprland checked by hand: no crash with a popout open).
@@ -406,12 +394,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Readers read only the data owners and each other (AGENTS.md › Layering), but `Paths.packagedVersion` calls `FileManager.read`, and `I18n` reads with both `FileManager.read` and a FileView of its own. Either the rule names `FileManager` as allowed in readers, or the reads move to a data owner.
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
-
-### The monitor prompt's padding is a bare 18 px, and check_sizes misses it
-- **Where:** `qml/components/surfaces/monitors/MonitorPromptWindow.qml` (`pad`), `scripts/check_sizes.py` (`SIZE_WORD`)
-- **What:** `readonly property int pad: 18` (MonitorPromptWindow.qml:19, used at :50-51) stays 18 px at every Interface scale while the card's text scales; AGENTS.md has sizes outside the bars from `Widget.px(n)`. `check_sizes.py` doesn't flag it because its size words have no `pad`. Fix: `Widget.px(18)`, and add `pad` to `SIZE_WORD` (the check that would have caught it). The overlay's page navigator has the same gap: `readonly property real inset: 6` (`qml/components/hosts/overlay/OverlayPageNavigator.qml:38`) insets its arrows, tabs and pill in a bar whose height follows `Widget.height`. It should be `Widget.px(6)`, and `inset` belongs in `SIZE_WORD` too (found while reviewing the overlay system, 2026-10-31).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the hyprland system
 
 ### Setting names that still confuse
 - **Where:** `qml/config/schema/sections/`
@@ -600,18 +582,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A stale exec-if check can block a widget after its exec-if changed
 - **Where:** `qml/services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)
 - **What:** The check's callback only asks whether the id is still watched (`if (!(id in root._watching))`), not whether its `execIf` is still the one checked. Editing Run only if on the page re-checks on every keystroke (`_wanted` changes, `_sync` calls `_checkIf`), and clearing it watches at once (`_watch`). A check that ends after a newer one, e.g. typing `ping -c1 -W1 myhost` (the partial `ping -c1 -W1 myh` waits its second to fail while the full one answers in milliseconds), sets `_blocked`, releases the watch the newer check started and shows `"ping -c1 -W1 myh" failed` until the next refresh. PLAUSIBLE: the order the checks end in; a slow failing prefix settles it. Fix: `if (root._watching[id]?.execIf !== def.execIf) return;` in place of the `in` check (`_watching` holds each id's `execIf`).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
-### CustomElement's six Binding blocks are Qt.binding in its setSource
-- **Where:** `qml/components/content/parts/custom/CustomElement.qml:33` (the `Binding` blocks), `qml/components/content/parts/custom/CustomElement.qml:21` (`_load`)
-- **What:** `_load` hands the element its six properties as plain values, then six `Binding { when: root.item !== null … }` blocks (lines 33-68, 36 lines) keep them current. Passing each as `Qt.binding(() => root.element)` (and so on) in `setSource`'s properties, as `BarTab`'s `BarPreview` loads the bar widget, keeps them bound from creation, across a kind change (each `_load` binds the new item) and drops the 36 lines. Fix: wrap the six values in `Qt.binding`, delete the Binding blocks; the file goes from 69 to 33 lines.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
-### A custom layout without elements rebuilds its default elements every sample
-- **Where:** `qml/components/content/parts/custom/CustomLayout.qml:24` (`elements`)
-- **What:** For a definition with no elements, `elements` reads `root.fields?.ratio`, so every push (4 a second for a stream, per surface showing it, plus the Module tab's five previews) runs `CustomWidgetsConfig.defaultElements` (two `ConfigManager.withDefaults` schema walks) and hands every element a new `element` object, re-evaluating its `place`, `bind`, `options` and `rect`. Only whether there is a value matters. Fix: `readonly property bool _hasValue: (root.fields?.ratio ?? -1) >= 0` read by `elements` (a bool that doesn't change doesn't notify), keeping the Icon/Ring switch.
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 

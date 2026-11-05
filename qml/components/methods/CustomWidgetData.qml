@@ -640,8 +640,16 @@ QtObject {
 
   // An element's rect in px: `place` { x, y, w, h } in sub-cells on a
   // lattice of { cols, rows }, laid over `width` × `height` with `gap`
-  // between neighbours (proportional: any size works)
+  // between neighbours (proportional: any size works). Empty without a
+  // place (an element slot before its element arrives)
   function rect(place, grid, width, height, gap) {
+    if (!place)
+      return {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+      };
     const g = gap ?? 0;
     const cw = (width + g) / grid.cols;
     const ch = (height + g) / grid.rows;

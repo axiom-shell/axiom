@@ -23,7 +23,7 @@ PanelWindow {
   readonly property bool shown: flow !== null
   // The card shows here: the picked screen, else (it's gone) the primary
   readonly property bool hasCard: !!screen && General.screensNamed(PolkitManager.screenName)[0] === screen
-  readonly property int pad: 18
+  readonly property int pad: Widget.px(18)
 
   // The request's fixed text, kept while the card fades out after it ends
   property string message: ""
