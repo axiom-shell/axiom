@@ -600,14 +600,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Skipping a focus session counts it as finished
-- **Where:** `qml/services/apps/PomodoroManager.qml:71` (`skip`), `qml/components/methods/PomodoroCycle.qml:87` (`advance`), `qml/components/bar/widgets/Pomodoro/Pomodoro.qml:36`
-- **What:** `skip()` calls `PomodoroCycle.advance`, which counts `completed + 1` whenever the phase was `work`, whether it ran out or was skipped. The doc and PomodoroCycle's header define `completed` as focus sessions *finished* ("Every `longBreakEvery`-th finished focus session is followed by a long break"). A right click on the idle Pomodoro widget (its skip) therefore counts a session that never started, lights a dot, and with `autoStartBreaks` (default on) starts a 5-minute break running; four stray right clicks bring a long break. Question for the maintainer: should a skipped focus session count (some apps count it), not count, or count only once started? Fix (if it shouldn't count): give `advance` a `finished` flag (true from `_finish`, false from `skip`) that gates the `+ 1`, with a `tst_PomodoroCycle` row.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "c) count only if the session had started"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
 ### A recent timer chip reads its label back as part of the duration
 - **Where:** `qml/components/content/parts/CountdownTimer.qml:155` (`chipText`), `qml/components/content/parts/CountdownTimer.qml:233`
 - **What:** A recent timer is kept as `{ ms, label }`, but its chip restarts it by turning it back into text (`formatShort(ms) + " " + label`) and re-parsing that through `started(text)`. A label that starts with a duration is read into the time. Run through `StopwatchClock.parse` as written: `90 5m` is 90 min labelled `5m`, its chip reads `1h30m 5m` and starts 1h35m with no label; `1:30 5m stretch` is 90 s labelled `5m stretch`, its chip `1m30s 5m stretch` starts 6m30s labelled `stretch`. Caffeine's popout shares the part. Fix: a recent chip emits the stored values (a `startedRecent(ms, label)` signal, or `started` carrying `{ ms, label }`), and the owners call `StopwatchManager.startTimer(ms, label)` / caffeine's equivalent instead of parsing text.

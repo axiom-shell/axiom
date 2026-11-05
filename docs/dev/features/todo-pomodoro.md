@@ -20,7 +20,7 @@ One todo list, one pomodoro timer and one one-off timer + stopwatch, each shown 
 
 ### Pomodoro timer
 - **State** (`PomodoroCycle`, pure, `tst_PomodoroCycle`): `{ phase (work | short | long), running, endsAt, pausedRemaining, completed }`. An absolute `endsAt`, so the time left is worked out, never counted down.
-  - Every `longBreakEvery`-th finished focus session is followed by a long break.
+  - Every `longBreakEvery`-th finished focus session is followed by a long break. A focus session counts once started (`advance`): one skipped before it started goes to a short break uncounted.
   - `Pomodoro.autoStartBreaks` / `autoStartWork` say whether the next phase starts by itself.
 - **Shared plumbing:** both services own a `DeadlineTicker` (`qml/services/apps/`): their saved values, the alarm at the deadline, the ticking `now` with its `acquire`/`release`, and the notification (`notify`, `notificationClicked`). Each service keeps only its own state shape (`restore`) and what its end does (`ended`). The ticker is a `Scope` declared as its service's default child (`DeadlineTicker { id: _ticker … }`), never in a named property: a Singleton passes a reload only to its default Reloadable children, matched by order, so anything else starts with empty values on every reload. Its `PersistentProperties`' `loaded` restores the values (from the state file when there's nothing to copy, a restart) and sets `ready`; nothing acts on `values` before.
 - **Kept:** in the ticker's `PersistentProperties` (a QML reload) and StateManager `pomodoro` (a restart), with the todo it's for (`todoUid`).
