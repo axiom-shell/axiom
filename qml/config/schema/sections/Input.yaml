@@ -58,6 +58,7 @@ properties:
     type: object
     title: Input method
     x-intro: InputMethodSetup
+    x-showIf: {/$supports.inputMethod: true}
     additionalProperties: false
     properties:
       enabled:
