@@ -4,7 +4,6 @@ import QtQuick
 import qs.config
 import qs.components.content.base
 import qs.components.content.parts
-import qs.services.ui
 
 // The lock screen's password field (x-hosts: lockscreen only; x-required,
 // so every lock screen layout has one). It only unlocks on the screen the
@@ -36,20 +35,9 @@ Card {
   color: "transparent"
   border.width: 0
 
-  // Tells the lock surface a Password module shows, so it doesn't draw its
-  // own field
-  property string _reportedKey: ""
-  function _report() {
-    const key = root.onLockscreen ? (root.host.key ?? "") : "";
-    if (key === root._reportedKey)
-      return;
-    SurfaceManager.reportRequiredField(root._reportedKey, false);
-    SurfaceManager.reportRequiredField(key, true);
-    root._reportedKey = key;
+  RequiredFieldReport {
+    key: root.onLockscreen ? (root.host.key ?? "") : ""
   }
-  Component.onCompleted: root._report()
-  onHostChanged: root._report()
-  Component.onDestruction: SurfaceManager.reportRequiredField(root._reportedKey, false)
 
   // Boxed, it's drawn like LockSurface's fallback field: a box as tall as
   // the field plus padding, across the slot. Its height doesn't change

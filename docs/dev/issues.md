@@ -196,12 +196,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while filing the maintainer's notes
 
-### A tray menu logs an undefined menu handle
-- **Where:** `qml/components/content/parts/TrayMenuList.qml` (`menuOpener`)
-- **What:** Using the tray logged `@components/content/parts/TrayMenuList.qml[45:5]: Unable to assign [undefined] to qs::menu::QsMenuHandle*`: `QsMenuOpener.menu` is bound to `root.menu` while that's still (or again) undefined, likely as a menu opens or closes. Seen once in the live log (not reproduced).
-- **Size:** small
-- **Found:** 2026-10-30, while moving the Wi-Fi popout's buttons
-
 ### A VPN's password request can go unseen
 - **Where:** `qml/services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
 - **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, the `vpn` keybind action, or a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
@@ -554,30 +548,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** hosts-and-switching lists "AudioMixer (2 to 4 rows)", but the popout's list is `Math.max(root.rowsHeight(1), Math.min(list.implicitHeight, root.listHeight))`: one row (also when empty) to four, as the file's own comment says. Fix: "1 to 4 rows" in the doc.
 - **Size:** trivial
 - **Found:** 2026-11-05, while reviewing row 20's overlay-modules-04 (AudioMixer and WorldClocks build only what their mode shows)
-
-### Tailscale's PeerRow redraws DeviceRow without its buttons
-- **Where:** `qml/components/content/Tailscale/Tailscale.qml:103` (`PeerRow`), `qml/components/content/parts/DeviceRow.qml`
-- **What:** PeerRow (lines 103–167, 65 lines) is DeviceRow's row drawn again: the same `Rectangle` with `Widget.radius`, the hover colour with `ColorGlide`, the `RowLayout` margins, a `StyledIcon` at `Appearance.fontSize * 1.4` coloured by state, and a name (`fontSizeBy(-1)`) over a status (`fontSizeBy(-3)`), both elided. The only differences are that it has no connect or forget buttons, and that it shows "Copied" for 2 s. Fix: give DeviceRow `property bool connectable: true` to gate its connect button, and write PeerRow as a DeviceRow with `connectable: false` and its copy handler and timer. That is about 20 lines, so 45 fewer.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### WifiNetworks' WPA password form repeats WifiJoinForm's
-- **Where:** `qml/components/content/WifiNetworks/WifiNetworks.qml:179` (`pskForm`), `qml/components/content/parts/WifiJoinForm.qml`
-- **What:** For `row.kind === "psk"`, the row loads `pskForm` (lines 179–209, 31 lines): a password field (echo Password, Enter submits, Escape calls `NetworkingManager.cancelPassword()`, focused on load) and a connect button enabled while the field isn't empty. `WifiJoinForm { security: "psk" }` draws the same: only its password row and connect button, focused first, and complete when the password isn't empty. The only difference is where the password goes, Quickshell's `connectWithPsk` rather than `join`. Fix: drop `pskForm` and the `sourceComponent` switch, and make the join form's `onSubmitted` choose `NetworkingManager.connectWithPsk(row.network, fields.password)` for psk rows. That is 32 lines fewer. Check that WifiJoinForm's Escape also reaches `cancelPassword`.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### Login and Password each carry the same required-field report
-- **Where:** `qml/components/content/Login/Login.qml:43` (`_report`), `qml/components/content/Password/Password.qml:41` (`_report`)
-- **What:** Both modules hold the same 12 lines: `_reportedKey`, a `_report()` that unreports the old key and reports the new one through `SurfaceManager.reportRequiredField`, and `Component.onCompleted`, `onHostChanged` and `Component.onDestruction`. They differ only in the host test (`onGreeter` / `onLockscreen`). Fix: one small QtObject part in `content/parts/` holding the 12 lines, given the host and whether it applies. Each module keeps 1–3 lines, so about 20 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### WeatherForecast repeats the Weather card's current conditions
-- **Where:** `qml/components/content/WeatherForecast/WeatherForecast.qml:23`, `qml/components/content/Weather/Weather.qml:70` (`Current`)
-- **What:** The popout's place name, condition icon, temperature, condition and details (lines 23–57, 35 lines) are the card's `Current` component drawn again with its own sizes. `Current`'s own comment says "as in the bar's forecast popout". A change to how the current weather reads (units, details) has to be made twice. Fix: move `Current` into a part in `content/parts/` and use it in both, so the popout is about 30 lines shorter. Or make the Weather card a Panel that is also the popout (content-roots.md's one-file shape) and drop WeatherForecast (96 lines).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
 
 ### A stale exec-if check can block a widget after its exec-if changed
 - **Where:** `qml/services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)

@@ -6,54 +6,24 @@ import qs.config
 import qs.services.apps
 import qs.components.reusable
 import qs.components.content.base
+import qs.components.content.parts
 
 // Current conditions and a 5-day forecast: the Weather widget's popout,
 // from WeatherManager (the widget keeps it acquired).
 Panel {
   id: root
 
-  readonly property var current: WeatherManager.current
-  readonly property var condition: WeatherManager.condition
   readonly property var daily: WeatherManager.weather?.daily ?? null
 
   spacing: Widget.padding
 
   implicitWidth: Math.max(Widget.px(300), body.implicitWidth + margins * 2)
 
-  StyledText {
-    visible: text !== ""
-    text: WeatherManager.place?.name ?? ""
-    font.bold: true
-    textColor: Theme.accent
-  }
-
-  RowLayout {
-    spacing: Widget.padding * 1.5
-
-    // The current condition, cross-fading as it changes
-    CrossFade {
-      value: root.condition?.icon ?? ""
-      delegate: StyledIcon {
-        required property var value
-        text: value
-        textSize: Appearance.fontSize * 3
-      }
-    }
-
-    ColumnLayout {
-      spacing: 2
-
-      StyledText {
-        text: root.current ? `${Math.round(root.current.temperature_2m)}${WeatherManager.unitSymbol}  ${root.condition?.label ?? ""}` : ""
-        textSize: Appearance.fontSize * 1.3
-        font.bold: true
-      }
-      StyledText {
-        text: WeatherManager.details
-        textColor: Theme.foregroundAlt
-        textSize: Appearance.fontSizeBy(-2)
-      }
-    }
+  WeatherCurrent {
+    Layout.fillWidth: true
+    spacing: Widget.padding
+    labelInline: true
+    temperatureSize: Appearance.fontSize * 1.3
   }
 
   StyledSeparator {

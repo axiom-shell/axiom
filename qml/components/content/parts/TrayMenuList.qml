@@ -43,9 +43,11 @@ Item {
     onTriggered: root._waitedForMenu = true
   }
 
+  // A host's `?.` read gives undefined as its popout closes (its data
+  // cleared), which a QsMenuHandle can't take
   QsMenuOpener {
     id: menuOpener
-    menu: root.menu
+    menu: root.menu ?? null
   }
 
   ColumnLayout {

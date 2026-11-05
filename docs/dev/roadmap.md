@@ -247,7 +247,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 A reload, and a session's normal use, log nothing but the two reload lines.
 
 - [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
-- [A tray menu logs an undefined menu handle](issues.md#a-tray-menu-logs-an-undefined-menu-handle)
 - [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
@@ -370,10 +369,6 @@ Found by the audits:
 - [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
-- [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
-- [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
-- [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
-- [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
