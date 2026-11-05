@@ -90,6 +90,10 @@ type Settings struct {
 	// ShowSwitchPopup is fcitx5's own popup on a switch
 	// (ShowInputMethodInformation; off while axiom's OSD shows it)
 	ShowSwitchPopup *bool `json:"showSwitchPopup,omitempty"`
+	// TriggerKeys are fcitx5's own switch hotkeys (Hotkey/TriggerKeys,
+	// "Control+space"): the shell sends none, so axiom's binds alone
+	// switch
+	TriggerKeys *[]string `json:"triggerKeys,omitempty"`
 }
 
 // Options configure the service.

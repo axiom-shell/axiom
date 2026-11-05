@@ -2,6 +2,7 @@ package inputmethod
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -285,7 +286,8 @@ func (f *fcitx) push(ctx context.Context, defaultLayout string, items []Item) er
 }
 
 // settings sets the global config's and classicui's options asked for:
-// SetConfig loads what it's given over the rest (a partial config).
+// SetConfig loads what it's given over the rest (a partial config). A
+// list is its items keyed "0", "1", …: an empty one empties it.
 func (f *fcitx) settings(ctx context.Context, s Settings) error {
 	behavior := map[string]dbus.Variant{}
 	if s.ShareState != nil {
@@ -294,6 +296,14 @@ func (f *fcitx) settings(ctx context.Context, s Settings) error {
 	if s.ShowSwitchPopup != nil {
 		behavior["ShowInputMethodInformation"] = dbus.MakeVariant(fcitxBool(*s.ShowSwitchPopup))
 	}
+	hotkey := map[string]dbus.Variant{}
+	if s.TriggerKeys != nil {
+		keys := map[string]dbus.Variant{}
+		for i, k := range *s.TriggerKeys {
+			keys[strconv.Itoa(i)] = dbus.MakeVariant(k)
+		}
+		hotkey["TriggerKeys"] = dbus.MakeVariant(keys)
+	}
 	ui := map[string]dbus.Variant{}
 	if s.VerticalCandidates != nil {
 		ui["Vertical Candidate List"] = dbus.MakeVariant(fcitxBool(*s.VerticalCandidates))
@@ -301,8 +311,14 @@ func (f *fcitx) settings(ctx context.Context, s Settings) error {
 	if s.CandidateFont != nil && *s.CandidateFont != "" {
 		ui["Font"] = dbus.MakeVariant(*s.CandidateFont)
 	}
-	if len(behavior) > 0 {
-		global := map[string]dbus.Variant{"Behavior": dbus.MakeVariant(behavior)}
+	if len(behavior) > 0 || len(hotkey) > 0 {
+		global := map[string]dbus.Variant{}
+		if len(behavior) > 0 {
+			global["Behavior"] = dbus.MakeVariant(behavior)
+		}
+		if len(hotkey) > 0 {
+			global["Hotkey"] = dbus.MakeVariant(hotkey)
+		}
 		if _, err := f.call(ctx, "SetConfig", "sv", fcitxGlobalConfig, dbus.MakeVariant(global)); err != nil {
 			return err
 		}

@@ -18,7 +18,7 @@ The daemon's side of input sources: it finds the input method framework (fcitx5 
 - **`current` is `""`** while no text field had focus yet: fcitx5's current input method is the most recent input context's. The shell takes the list's first then.
 - **Switch:** `SetCurrentIM`.
 - **Push:** `SetInputMethodGroupInfo(<current group>, defaultLayout, items)`, then `Save`.
-- **Options:** `SetConfig`, which loads a partial config over the rest: `fcitx://config/global` `Behavior/ShareInputState` (`No` / `All` / `Program`) and `Behavior/ShowInputMethodInformation`; `fcitx://config/addon/classicui` `Vertical Candidate List` and `Font`. fcitx5 writes booleans as `True` / `False`.
+- **Options:** `SetConfig`, which loads a partial config over the rest: `fcitx://config/global` `Behavior/ShareInputState` (`No` / `All` / `Program`), `Behavior/ShowInputMethodInformation` and `Hotkey/TriggerKeys` (a list: its items keyed `0`, `1`, …, so an empty map empties it); `fcitx://config/addon/classicui` `Vertical Candidate List` and `Font`. fcitx5 writes booleans as `True` / `False`.
 
 ### ibus
 `org.freedesktop.IBus` at `/org/freedesktop/IBus` on its own bus.
@@ -36,7 +36,7 @@ The service remembers the list it pushed last and the framework it went to (in m
 - **Topic `inputMethod`:** `inputMethod.state` (latest-wins), also `inputMethod.get`: `{framework, running, current, defaultLayout, group: [{name, layout}], available: [{name, label, displayName, icon, lang}], outsideEdit}`. `framework` is the one followed (`fcitx5`, `ibus`), or the one asked for while it isn't running, `""` for none.
 - **`inputMethod.set {name}`:** switch (any client: switching is what a keybind does).
 - **`inputMethod.push {defaultLayout, items: [{name, layout}]}`** (shell only): an empty list, an item without a name or one twice is `bad_request`.
-- **`inputMethod.options {shareState?, verticalCandidates?, candidateFont?, showSwitchPopup?}`** (shell only): a key left out is left as it is.
+- **`inputMethod.options {shareState?, verticalCandidates?, candidateFont?, showSwitchPopup?, triggerKeys?}`** (shell only; `triggerKeys` fcitx5's switch hotkeys, `[]` for none): a key left out is left as it is.
 - **`inputMethod.framework {name}`** (shell only).
 - With no framework running, the writes answer `unavailable`.
 

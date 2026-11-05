@@ -349,11 +349,14 @@ QtObject {
     if (key === root._lastOptions)
       return;
     root._lastOptions = key;
+    // triggerKeys: fcitx5's own switch hotkey (Ctrl+Space) off, so axiom's
+    // binds switch, everywhere rather than only in a text field
     BackendManager.call("inputMethod.options", {
       "shareState": options.shareState,
       "verticalCandidates": options.verticalCandidates,
       "candidateFont": options.candidateFont,
-      "showSwitchPopup": options.showSwitchPopup
+      "showSwitchPopup": options.showSwitchPopup,
+      "triggerKeys": []
     }, error => {
       if (error && error.kind !== "unavailable")
         console.warn("[InputSourceManager] Could not set", root.framework + "'s options:", error.message);

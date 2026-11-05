@@ -260,14 +260,18 @@ func TestFcitx(t *testing.T) {
 	}
 	h.await(t, "pushed again", func(st State) bool { return !st.OutsideEdit && len(st.Group) == 2 })
 
-	share, on, font := "All", true, "Noto Sans CJK JP 12"
-	if err := h.s.Configure(t.Context(), Settings{ShareState: &share, VerticalCandidates: &on, CandidateFont: &font}); err != nil {
+	share, on, font, keys := "All", true, "Noto Sans CJK JP 12", []string{}
+	if err := h.s.Configure(t.Context(), Settings{ShareState: &share, VerticalCandidates: &on, CandidateFont: &font, TriggerKeys: &keys}); err != nil {
 		t.Fatal(err)
 	}
 	f.mu.Lock()
 	configs := f.configs
 	f.mu.Unlock()
-	wantGlobal := dbus.MakeVariant(map[string]dbus.Variant{"Behavior": dbus.MakeVariant(map[string]dbus.Variant{"ShareInputState": dbus.MakeVariant("All")})})
+	wantGlobal := dbus.MakeVariant(map[string]dbus.Variant{
+		"Behavior": dbus.MakeVariant(map[string]dbus.Variant{"ShareInputState": dbus.MakeVariant("All")}),
+		// No trigger keys: an empty list, which fcitx5 loads as one
+		"Hotkey": dbus.MakeVariant(map[string]dbus.Variant{"TriggerKeys": dbus.MakeVariant(map[string]dbus.Variant{})}),
+	})
 	wantUI := dbus.MakeVariant(map[string]dbus.Variant{"Vertical Candidate List": dbus.MakeVariant("True"), "Font": dbus.MakeVariant(font)})
 	if !reflect.DeepEqual(configs[fcitxGlobalConfig], wantGlobal) || !reflect.DeepEqual(configs[fcitxClassicUIConfig], wantUI) {
 		t.Errorf("SetConfig got %v", configs)

@@ -11,12 +11,13 @@ import (
 // inputSourceBinds are the default binds stepping through the input
 // sources (added in v95), as id, key and action.
 var inputSourceBinds = [][3]string{
-	{"super-ctrl-space", "SUPER + CTRL + space", "inputSourceNext"},
-	{"super-ctrl-shift-space", "SUPER + CTRL + SHIFT + space", "inputSourcePrev"},
+	{"ctrl-space", "CTRL + space", "inputSourceNext"},
+	{"ctrl-shift-space", "CTRL + SHIFT + space", "inputSourcePrev"},
 }
 
-// v95: the input source binds joined the defaults: fcitx5's own hotkey
-// reaches it only while a text field has focus, a compositor bind
+// v95: the input source binds joined the defaults, on fcitx5's own
+// hotkey's key (which axiom clears while it manages fcitx5): fcitx5's
+// hotkey reaches it only while a text field has focus, a compositor bind
 // everywhere. Each is added unless the config has a bind with its id, its
 // key or its action already.
 func v95(cfg *jsonx.Object) []string {
