@@ -76,12 +76,9 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 - **`bare`** is `!moduleBorders`: no card box.
   - Unlike a bare edge menu module, it keeps its padding (`SlotContext.pad`), since nothing else pads it.
 - **`Password` and `Greeting`** ignore `bare` here. Their boxes follow the layout's own `passwordBorder` / `greetingBorder` (off by default).
-- **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`.
-  - Display-only modules.
-  - NowPlaying (media transport) and VolumeDials.
-  - Power: suspend, restart, shut down through `SessionManager.sessionAction`; restart and shut down ask twice.
-  - KeyboardLayout: switches the compositor's xkb layout (the compositor's layouts alone, an engine's own typing layout among them: the password types through no input method; [input sources](input-sources.md)). It's in the lock screen's library, not its default layout.
-  - Nothing else that launches, dispatches, kills, writes files or shows private content.
+- **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`, showing nothing private. What each may do there is its `x-lockActions` ([Schema annotations](../core/schema-annotations.md)); with none it only shows. `check_structure` fails any `XManager.method(` call in such a type or a part it uses that is neither a read (its allowlist) nor one of its actions' methods, but one marked `// lock-inert: <reason>` (a call that gates itself off there).
+  - Power's `session` restarts and shuts down asking twice, and never logs out.
+  - KeyboardLayout's `layout` switches the compositor's layouts alone, an engine's own typing layout among them: the password types through no input method ([input sources](input-sources.md)). It's in the lock screen's library, not its default layout.
 - A new module stays off the lock screen unless it is added there deliberately.
 
 #### Password

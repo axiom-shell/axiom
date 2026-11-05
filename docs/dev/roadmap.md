@@ -373,7 +373,6 @@ Found by the audits:
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
 - [WeatherForecast repeats the Weather card's current conditions](issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
-- [What a lock screen module may do is a list kept by hand in two docs that disagree](issues.md#what-a-lock-screen-module-may-do-is-a-list-kept-by-hand-in-two-docs-that-disagree)
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
 - [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)

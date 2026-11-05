@@ -26,7 +26,7 @@ Card {
   function press(action) {
     if (!gate.pass(action, SessionManager.destructiveActions.includes(action)) || !root.live)
       return;
-    if (root.kind === "greeter")
+    if (root.kind === "greeter") // lock-inert: the greeter's alone
       GreetdManager.power(action);
     else
       SessionManager.sessionAction(action);
