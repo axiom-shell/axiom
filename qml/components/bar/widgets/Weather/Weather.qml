@@ -1,11 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.config
 import qs.services.apps
 import qs.components.hosts.popout
-import qs.components.reusable
 import qs.components.bar.widgets.base
 
 // Current conditions (from WeatherManager, for the Weather settings). Hovering opens a 5-day forecast,
@@ -33,12 +31,9 @@ ValueStyleWidget {
   }
 
   // With no weather, why, on the bar's inner side
-  LazyLoader {
-    active: root.hovered && WeatherManager.error !== ""
-    StyledToolTip {
-      target: root
-      text: I18n.tr("Couldn't load the weather: {0}", WeatherManager.error)
-      edges: root.innerEdges
-    }
+  BarToolTip {
+    widget: root
+    shown: WeatherManager.error !== ""
+    text: I18n.tr("Couldn't load the weather: {0}", WeatherManager.error)
   }
 }

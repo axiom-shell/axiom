@@ -589,30 +589,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 
-### A custom widget's module past 8 grid units can't be saved
-- **Where:** `qml/services/apps/CustomWidgetsEditor.qml:209` (`_fitSize`), `qml/config/schema/definitions/custom/CustomWidget.yaml:89` (`module.size` items, `maximum: 8`), `qml/config/schema/definitions/kinds/CustomElementBase.yaml:44` (`place.w`, `maximum: 64`)
-- **What:** The element canvas is unbounded (`GridEditor` with no `area`), an element's place may be 64 sub-cells (16 units) wide or tall and `x`/`y` have no maximum, and every edit sets `module.size` to the elements' bounds rounded up (`CustomWidgetData.pageSize`). Resizing or dragging an element past the 32nd sub-cell (two cards) makes `module.size` 9 or more; the preview draws it, but Save sends a config the daemon's `Pipeline.Check` refuses (`module.size.0: value 9 is greater than maximum 8`): `ConfigManager.commit` logs `axiom refused the config` and the draft turns dirty again, with no word on the page about why. Fix: make the limits agree: `module.size`'s `maximum` 16 (the place's 64 sub-cells), or bound the canvas (`GridEditor.area` of 32 × 32 sub-cells, a module's largest).
-- **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
-### A custom widget's Tooltip switch does nothing
-- **Where:** `qml/config/schema/definitions/custom/CustomWidget.yaml:66` (`tooltip`), `qml/components/views/CustomWidgets/BarTab.qml:95`, `qml/components/methods/CustomWidgetData.qml:472` (`fromWaybar`)
-- **What:** The Bar tab offers a Tooltip switch (default on) and Waybar's `"tooltip": false` imports into it, but nothing reads a definition's `tooltip` (repo-wide grep: the schema, BarTab's `order` and `fromWaybar` only). The bar widget shows no tooltip at all (no bar widget base has one: hovering opens the module popout), while the plan says every bar style shows `tooltip` (`docs/dev/plans/custom-json-widgets.md`, Bar styles). The output's `tooltip` field reaches only the Text block element.
-
-  **Decided** (maintainer, 2026-10-31): "Use reccomendation as described". Fix: draw the tooltip when the popout is off (Waybar's behaviour: `tooltip: false` disables hover; json output's `tooltip` field is the text). One property (`popoutOpens`) holds `PopoutAnchor`'s current `active` expression (`qml/components/bar/widgets/CustomWidget/CustomWidget.qml:91`), read by both; the tooltip shows when `definition.tooltip && !popoutOpens && fields.tooltip !== ""`. Button's `LazyLoader` + `StyledToolTip` (`qml/components/bar/widgets/Button/Button.qml:115-123`) lifts into a shared `BarToolTip` used by both. StyledToolTip's text takes rich text, with `\n` → `<br>`. The switch gets an `x-enabledIf` for `bar.popout: false`. No migration. A `tst_CustomWidgetData` row for a multi-line Pango tooltip.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
 ### A stale exec-if check can block a widget after its exec-if changed
 - **Where:** `qml/services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)
 - **What:** The check's callback only asks whether the id is still watched (`if (!(id in root._watching))`), not whether its `execIf` is still the one checked. Editing Run only if on the page re-checks on every keystroke (`_wanted` changes, `_sync` calls `_checkIf`), and clearing it watches at once (`_watch`). A check that ends after a newer one, e.g. typing `ping -c1 -W1 myhost` (the partial `ping -c1 -W1 myh` waits its second to fail while the full one answers in milliseconds), sets `_blocked`, releases the watch the newer check started and shows `"ping -c1 -W1 myh" failed` until the next refresh. PLAUSIBLE: the order the checks end in; a slow failing prefix settles it. Fix: `if (root._watching[id]?.execIf !== def.execIf) return;` in place of the `in` check (`_watching` holds each id's `execIf`).
 - **Size:** trivial
-- **Found:** 2026-10-31, while reviewing the custom-widgets system
-
-### A command naming a program shows the program as its script
-- **Where:** `qml/components/views/CustomWidgets/DefinitionsPanel.qml:26` (`scriptText`), `qml/services/apps/CustomWidgetsEditor.qml:184` (`scriptPath`)
-- **What:** `scriptPath` is the command's first word whenever it starts with `/` or `~/`, so a command like `/usr/bin/sensors -j` or `/opt/cuda/bin/nvidia-smi …` names a binary: `FileManager.read` (a blocking FileView, on the UI thread, of the whole file) reads the ELF into a string, The script group shows its first 40 "lines" of binary as the script, and `signalsWaybar` regex-scans it. A large binary stalls the page while it reads. Fix: show only a script, text starting with `#!` (`scriptText.startsWith("#!")` for `scriptHead` and `signalsWaybar`); reading only the head needs a size cap `FileManager.read` doesn't have.
-- **Size:** small
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 
 ### CustomElement's six Binding blocks are Qt.binding in its setSource

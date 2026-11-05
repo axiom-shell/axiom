@@ -10,8 +10,9 @@ import qs.components.bar.widgets.base
 // A custom widget on the bar (docs/dev/features/custom-widgets.md): its
 // script's output (CustomWidgetsManager) in the definition's bar style
 // (ValueStyleWidget's: label is Waybar's look). Clicks and scrolls run its
-// actions; hovering opens its module. Hidden while the script says so
-// (empty text, as Waybar).
+// actions; hovering opens its module, else shows the output's tooltip
+// (Waybar's; the definition's Tooltip switch). Hidden while the script
+// says so (empty text, as Waybar).
 ValueStyleWidget {
   id: root
 
@@ -89,12 +90,22 @@ ValueStyleWidget {
   scrollable: !!(root.actions.scrollUp || root.actions.scrollDown)
   onScrolled: steps => CustomWidgetsManager.act(root.widgetId, steps > 0 ? "scrollUp" : "scrollDown")
 
+  // Whether hovering opens its module; the tooltip shows only when not
+  readonly property bool popoutOpens: EdgeMenusConfig.opensOwnPopout(root.properties) && root.bar.popout && root.fields !== null
+
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "CustomWidget"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && root.bar.popout && root.fields !== null
+    active: root.popoutOpens
     extraData: ({
         "definitionId": root.widgetId
       })
+  }
+
+  BarToolTip {
+    widget: root
+    shown: !!root.definition?.tooltip && !root.popoutOpens
+    text: root.fields?.tooltip ?? ""
+    rich: true
   }
 }

@@ -63,7 +63,12 @@ properties:
   maxLength: {type: integer, title: Longest text, default: 0, minimum: 0, maximum: 500, description: 0 is no limit.}
   escape: {type: boolean, title: Text is plain, default: false, description: Waybar's escape. Show markup in the text as typed instead of drawing it.}
   hideEmpty: {type: boolean, title: Hide when empty, default: true}
-  tooltip: {type: boolean, title: Tooltip, default: true}
+  tooltip:
+    type: boolean
+    title: Tooltip
+    default: true
+    description: The output's tooltip on hover (Waybar's), when hovering doesn't open the module.
+    x-enabledIf: {bar.popout: false}
   bar:
     $ref: '#/definitions/BarDisplay'
     x-order: [style, icon, segments, width, colorText, popout]

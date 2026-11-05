@@ -23,11 +23,17 @@ QtObject {
   readonly property string selectedId: selected?.id ?? ""
   // The selected definition's module elements on their lattice, edited as
   // the layouts editor edits a submenu's modules: moves, resizes, pushes,
-  // the selection and undo (GridEditor; unbounded, kept from the top left,
-  // so the module's box fits its elements)
+  // the selection and undo (GridEditor; kept from the top left, so the
+  // module's box fits its elements, and inside a module's largest,
+  // module.size's maximum of 8 units, so the definition can be saved)
   readonly property GridEditor elements: GridEditor {
     modulesOf: () => root._elements()
     host: "overlay"
+    area: ({
+        "cols": 8 * CustomWidgetData.subCells,
+        "rows": 8 * CustomWidgetData.subCells
+      })
+    shiftsBack: true
     scopeKey: root.selectedId
     factory: ({
         "make": (type, place) => CustomWidgetsConfig.newElement(type, Utils.newId(type, root._elements()), place),

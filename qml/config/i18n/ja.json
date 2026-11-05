@@ -4044,6 +4044,7 @@
     "Commands axiom starts in place of a default app (Default apps › Custom command…), by role: for the keybinds, `axiom open` and everything axiom opens. Empty uses the default app. Other apps still open the default.": "",
     "Images: a command in place of the default app, given the files.": "",
     "Terminal the upgrade runs in (launched as `<terminal> -e ...`). Empty uses the default terminal (Default apps).": "",
-    "Files: a command in place of the default app, given the folder to open.": ""
+    "Files: a command in place of the default app, given the folder to open.": "",
+    "The output's tooltip on hover (Waybar's), when hovering doesn't open the module.": ""
   }
 }

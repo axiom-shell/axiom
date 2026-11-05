@@ -1,11 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.services.system
 import qs.config
 import qs.components.hosts.popout
-import qs.components.reusable
 import qs.components.bar.widgets.base
 
 // Pending package updates from UpdatesManager: repo packages the way this
@@ -76,12 +74,9 @@ ValueStyleWidget {
   }
 
   // With its popout off, the tooltip says why the check failed
-  LazyLoader {
-    active: root.hovered && root.failed && !root.properties.popout.enabled
-    StyledToolTip {
-      target: root
-      text: I18n.tr("Couldn't check for updates: {0}", UpdatesManager.error)
-      edges: root.innerEdges
-    }
+  BarToolTip {
+    widget: root
+    shown: root.failed && !root.properties.popout.enabled
+    text: I18n.tr("Couldn't check for updates: {0}", UpdatesManager.error)
   }
 }
