@@ -35,11 +35,11 @@ PopoutWrapperBase {
   // ordered under them, so it comes out from beneath every bar rather than
   // out of thin air past them; else on the Overlay layer, over the bar.
   // That under-bar layer is also under the overlay: while that's open
-  // here, the box shows over it instead (LayerStack), still sliding in
-  // from off the screen, over the bars, as it does where the compositor
-  // stacks by map order alone (no supports.layerOrder: a window mapped as
-  // it opens lands over the bar). Followed only while closed, since it changes the window's
-  // layer. (EdgePlacement.slidesUnder; a bar popout never opens over a
+  // here, the box shows over it instead (LayerStack), coming out of the
+  // bars' inner side (the frame line, EdgePlacement.slideFrom), as it
+  // does where the compositor stacks by map order alone (no
+  // supports.layerOrder: a window mapped as it opens lands over the bar).
+  // Followed only while closed, since it changes the window's layer. (EdgePlacement.slidesUnder; a bar popout never opens over a
   // fullscreen window, which covers its bar)
   property ClosedLatch _under: ClosedLatch {
     source: placement.slidesUnder
