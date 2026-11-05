@@ -281,4 +281,64 @@ TestCase {
     }), [xkbSource("de-neo", "de", "neo"), imeSource("mozc-jp", "mozc-jp")]);
     compare(InputSources.fromGroup("fcitx5", null), []);
   }
+
+  function test_searchLayouts() {
+    compare(InputSources.searchLayouts(test.registry, "german").map(r => r.layout + ":" + r.variant), ["de:", "de:neo"], "a layout before its variants");
+    compare(InputSources.searchLayouts(test.registry, "NEO"), [
+      {
+        "layout": "de",
+        "variant": "neo",
+        "description": "German (Neo 2)"
+      }
+    ], "any case, by the variant's name");
+    compare(InputSources.searchLayouts(test.registry, "us dvorak").length, 1, "every word holds");
+    compare(InputSources.searchLayouts(test.registry, "").length, 4, "everything without a query");
+    compare(InputSources.searchLayouts(test.registry, "", 3).length, 3, "at most limit");
+    compare(InputSources.searchLayouts(null, "de"), [], "none without a registry");
+  }
+
+  function test_freeId() {
+    compare(InputSources.freeId(test.mixed, "de"), "de");
+    compare(InputSources.freeId(test.mixed, "us"), "us2", "numbered when taken");
+    compare(InputSources.freeId([xkbSource("us", "us"), xkbSource("us2", "us")], "us"), "us3");
+    compare(InputSources.freeId([], "mozc:jp"), "mozc-jp", "made an id");
+    compare(InputSources.freeId(null, " -x"), "x", "starting with a letter or digit");
+    compare(InputSources.freeId([], ""), "source");
+  }
+
+  // Through Shared: render.InputMethodEnv / InputMethodCommand replay these
+  function test_methodSetup() {
+    compare(shared.calls.InputSources.methodSetup("fcitx5", false), {
+      "env": [
+        {
+          "name": "XMODIFIERS",
+          "value": "@im=fcitx"
+        },
+        {
+          "name": "QT_IM_MODULES",
+          "value": "wayland;fcitx;ibus"
+        },
+        {
+          "name": "SDL_IM_MODULE",
+          "value": "fcitx"
+        },
+        {
+          "name": "GLFW_IM_MODULE",
+          "value": "ibus"
+        }
+      ],
+      "command": "fcitx5 -d --replace"
+    });
+    const legacy = shared.calls.InputSources.methodSetup("fcitx5", true).env.map(e => e.name + "=" + e.value);
+    compare(legacy.slice(4), ["GTK_IM_MODULE=fcitx", "QT_IM_MODULE=fcitx"], "legacyApps adds the im modules");
+    const ibus = shared.calls.InputSources.methodSetup("ibus", true);
+    compare(ibus.env.map(e => e.name + "=" + e.value), ["XMODIFIERS=@im=ibus", "QT_IM_MODULES=wayland;ibus", "SDL_IM_MODULE=ibus", "GLFW_IM_MODULE=ibus", "GTK_IM_MODULE=ibus", "QT_IM_MODULE=ibus"]);
+    compare(ibus.command, "ibus-daemon -drxR");
+    compare(shared.calls.InputSources.methodSetup("ibus", false).env.length, 4);
+    for (const none of ["none", "auto", ""])
+      compare(shared.calls.InputSources.methodSetup(none, true), {
+        "env": [],
+        "command": ""
+      }, none);
+  }
 }

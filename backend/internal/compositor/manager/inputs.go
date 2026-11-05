@@ -290,10 +290,11 @@ func stripsOf(workspaces any, primary string) *jsonx.Array {
 }
 
 // inputMethodOf is the input method the session starts (render.
-// InputMethodEnv's): Input.method with its framework resolved to one
-// installed, "" for none: auto is fcitx5 when it's installed, else ibus;
-// a framework named (fcitx5 by default) only while it's installed, so a
-// session without it gets no variables and no failing autostart.
+// InputMethodEnv's): Input.method (schema-filled) with its framework
+// resolved to one installed, "" for none or while axiom doesn't manage the
+// input method (enabled off): auto is fcitx5 when it's installed, else
+// ibus; a framework named only while it's installed, so a session without
+// it gets no variables and no failing autostart.
 func inputMethodOf(method any, installed []string) *jsonx.Object {
 	has := func(name string) bool {
 		for _, n := range installed {
@@ -304,8 +305,8 @@ func inputMethodOf(method any, installed []string) *jsonx.Object {
 		return false
 	}
 	framework, _ := getAny(method, "framework").(string)
-	if framework == "" {
-		framework = "fcitx5"
+	if enabled, _ := getAny(method, "enabled").(bool); !enabled {
+		framework = "none"
 	}
 	resolved := ""
 	switch framework {
@@ -321,10 +322,7 @@ func inputMethodOf(method any, installed []string) *jsonx.Object {
 			resolved = framework
 		}
 	}
-	autostart, ok := getAny(method, "autostart").(bool)
-	if !ok {
-		autostart = true
-	}
+	autostart, _ := getAny(method, "autostart").(bool)
 	legacy, _ := getAny(method, "legacyApps").(bool)
 	return jsonx.Obj("framework", resolved, "autostart", autostart, "legacyApps", legacy)
 }

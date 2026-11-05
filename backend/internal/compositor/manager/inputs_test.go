@@ -80,33 +80,37 @@ func TestShellColors(t *testing.T) {
 	}
 }
 
-// The input method the session starts: its framework only while installed
-// (fcitx5 by default; auto prefers fcitx5), and its switches' defaults.
+// The input method the session starts: none while off, its framework only
+// while installed (auto prefers fcitx5), and its switches as set.
 func TestInputMethodOf(t *testing.T) {
 	t.Parallel()
 	method := func(framework string) *jsonx.Object {
-		return jsonx.Obj("framework", framework, "autostart", false, "legacyApps", true)
+		return jsonx.Obj("enabled", true, "framework", framework, "autostart", false, "legacyApps", true)
 	}
+	// Input.method's schema defaults, turned on
+	defaults := jsonx.Obj("enabled", true, "framework", "fcitx5", "autostart", true, "legacyApps", false)
+	off := jsonx.Obj("enabled", false, "framework", "fcitx5", "autostart", true, "legacyApps", false)
 	for _, c := range []struct {
 		name      string
 		method    any
 		installed []string
 		want      string
 	}{
-		{"the default, installed", nil, []string{"fcitx5"}, "fcitx5"},
-		{"the default, not installed", nil, []string{"ibus"}, ""},
+		{"the default, installed", defaults, []string{"fcitx5"}, "fcitx5"},
+		{"the default, not installed", defaults, []string{"ibus"}, ""},
 		{"auto prefers fcitx5", method("auto"), []string{"fcitx5", "ibus"}, "fcitx5"},
 		{"auto takes ibus", method("auto"), []string{"ibus"}, "ibus"},
 		{"auto with neither", method("auto"), nil, ""},
 		{"ibus installed", method("ibus"), []string{"fcitx5", "ibus"}, "ibus"},
 		{"ibus not installed", method("ibus"), []string{"fcitx5"}, ""},
 		{"none", method("none"), []string{"fcitx5", "ibus"}, ""},
+		{"off", off, []string{"fcitx5", "ibus"}, ""},
 	} {
 		got := inputMethodOf(c.method, c.installed)
 		if f := got.Value("framework"); f != c.want {
 			t.Errorf("%s: framework %v, want %q", c.name, f, c.want)
 		}
-		if wantOn := c.method == nil; got.Value("autostart") != wantOn || got.Value("legacyApps") != !wantOn {
+		if wantOn := c.method == defaults || c.method == off; got.Value("autostart") != wantOn || got.Value("legacyApps") != !wantOn {
 			t.Errorf("%s: switches %v", c.name, got)
 		}
 	}

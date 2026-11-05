@@ -1,5 +1,5 @@
 label: Keyboard layout
-link: {setting: Input.sources}
+link: {setting: Input}
 icon: keyboard
 group: System
 popout: {variant: own, enabled: {description: List the input sources when hovered; a click picks one.}}

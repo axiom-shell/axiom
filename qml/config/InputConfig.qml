@@ -26,6 +26,13 @@ QtObject {
   readonly property var savedSources: JSON.parse(_savedSourcesJson)
   readonly property string _savedSourcesJson: JSON.stringify(ConfigManager.config.Input.sources)
 
+  // axiom manages the input method framework (Input.method.enabled): off,
+  // only the xkb sources count and the framework is left alone
+  readonly property bool methodEnabled: _c.method.enabled
+  // As saved (no editor's preview): whether the framework is given the
+  // sources and options
+  readonly property bool savedMethodEnabled: ConfigManager.config.Input.method.enabled
+
   // The input method framework followed and given the sources: "fcitx5"
   // (the default), "ibus", "auto" (whichever runs) or "none"
   readonly property string framework: _c.method.framework

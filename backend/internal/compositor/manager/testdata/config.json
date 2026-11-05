@@ -1215,6 +1215,16 @@
       {"id": "mozc", "kind": "ime", "layout": "", "variant": "", "engine": "mozc"},
       {"id": "de-neo", "kind": "xkb", "layout": "de", "variant": "neo", "engine": ""}
     ],
+    "method": {
+      "enabled": true,
+      "framework": "fcitx5",
+      "autostart": true,
+      "legacyApps": false,
+      "shareState": "No",
+      "verticalCandidates": false,
+      "candidateFont": "",
+      "showSwitchPopup": false
+    },
     "keyboard": {
       "enabled": true,
       "options": "",

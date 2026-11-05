@@ -13,10 +13,12 @@ import qs.services.core
 // again on every keyboardLayoutChanged or config reload, no polling) and
 // the daemon's input method framework (the inputMethod topic: fcitx5 or
 // ibus), through methods/InputSources. Switching sets the compositor's
-// layout first, then the framework's input method. It gives the framework
-// the sources (inputMethod.push) once axiom owns its list (_owned), its
-// choice (inputMethod.framework) and Input.method's options. On the login
-// screen no framework runs: only the xkb sources, nothing pushed.
+// layout first, then the framework's input method. While axiom manages
+// the input method (Input.method.enabled) it gives the framework the
+// sources (inputMethod.push), its choice (inputMethod.framework) and
+// Input.method's options; off, only the xkb sources count and the
+// framework is left alone. On the login screen no framework runs: only the
+// xkb sources, nothing pushed.
 QtObject {
   id: root
 
@@ -34,25 +36,39 @@ QtObject {
 
   // --- The framework (the daemon's inputMethod.state) ---
 
-  // fcitx5 or ibus runs and is followed
-  readonly property bool running: !root._inert && root._im?.running === true
-  // "fcitx5", "ibus", or "" while none runs
-  readonly property string framework: root.running ? String(root._im.framework ?? "") : ""
+  // axiom manages the input method (Input.method.enabled, as shown):
+  // off, the engine sources are left out everywhere
+  readonly property bool enabled: !root._inert && InputConfig.methodEnabled
+  // fcitx5 or ibus runs, whether axiom manages it or not (the settings
+  // card's "let axiom manage it?")
+  readonly property bool detected: !root._inert && root._im?.running === true
+  readonly property string detectedFramework: root.detected ? String(root._im.framework ?? "") : ""
+  // fcitx5 or ibus runs and axiom manages it
+  readonly property bool running: root.enabled && root.detected
+  // "fcitx5", "ibus", or "" while none runs (or axiom doesn't manage it)
+  readonly property string framework: root.running ? root.detectedFramework : ""
   // The engines installed: [{ name, label, displayName, icon, lang }]
   readonly property var available: root.running ? root._im.available ?? [] : []
   // The framework's list was changed outside axiom (fcitx5-configtool,
   // ibus-setup) since axiom gave it the sources
   readonly property bool outsideEdit: root.running && root._im?.outsideEdit === true
-  // The framework's list isn't the sources' (on a first run axiom gives
-  // it the sources only once it owns the list: keepOwn())
-  readonly property bool differs: root.running && !InputSources.groupMatches(root.framework, InputConfig.savedSources, root.registry, root._im)
+  // The framework's list isn't the saved sources'
+  readonly property bool differs: root.running && !root.matches(InputConfig.savedSources)
+
+  // Whether the running framework's list (managed or not) is `sources`':
+  // the settings card asks which list wins before axiom manages one that
+  // isn't. True while none runs
+  function matches(sources) {
+    return !root.detected || InputSources.groupMatches(root.detectedFramework, sources, root.registry, root._im);
+  }
 
   // --- The sources ---
 
   // Every source to switch between ({ id, kind, layout, variant, engine
   // }, InputSources.effective: the compositor's own layouts while axiom
-  // doesn't set the keyboard); on the login screen the xkb ones alone
-  readonly property var sources: InputSources.effective(root._inert ? InputSources.xkbOnly(InputConfig.sources) : InputConfig.sources, root.layouts)
+  // doesn't set the keyboard); on the login screen, and while axiom
+  // doesn't manage the input method, the xkb ones alone
+  readonly property var sources: InputSources.effective(root.enabled ? InputConfig.sources : InputSources.xkbOnly(InputConfig.sources), root.layouts)
   // The xkb ones: what a password field types through (the lock screen's
   // and the greeter's module offer only these)
   readonly property var xkbSources: InputSources.xkbOnly(root.sources)
@@ -138,13 +154,12 @@ QtObject {
   // draft of Input.sources (the settings card's "Use fcitx5's list");
   // [] while none runs
   function importFromFramework() {
-    return root.running ? InputSources.fromGroup(root.framework, root._im) : [];
+    return root.detected ? InputSources.fromGroup(root.detectedFramework, root._im) : [];
   }
 
-  // Gives the framework the sources, over its own list: axiom owns the
-  // list from now on (the settings card's "Keep axiom's")
-  function keepOwn() {
-    root._own();
+  // Gives the framework the sources again, over an edit made outside axiom
+  // (the settings card's "Use axiom's")
+  function useOwn() {
     root._lastGroup = "";
     root._sync(true);
   }
@@ -165,11 +180,9 @@ QtObject {
   readonly property bool _inert: Paths.greeter
   // The daemon's inputMethod state, null until it said
   property var _im: null
-  // Whether axiom owns the framework's list: set once the sources are
-  // saved changed, or by keepOwn(); kept in state (inputSources.json).
-  // Until then a framework's own list is left alone (differs says so)
-  property bool _owned: false
-  property var _state: StateManager.createStateHandler("inputSources")
+  // Pushes follow the saved config, never an editor's preview: the
+  // settings card asks which list wins before Save turns managing on
+  readonly property bool _pushes: !root._inert && InputConfig.savedMethodEnabled && root.running
   // What was pushed last, so a framework keeping a list its own way isn't
   // pushed again and again; cleared when it stops
   property string _lastGroup: ""
@@ -180,9 +193,6 @@ QtObject {
   readonly property string _frameworkKey: root.running ? root.framework : ""
 
   on_SourcesJsonChanged: {
-    if (root._inert)
-      return;
-    root._own();
     root._lastGroup = "";
     root._sync(true);
   }
@@ -203,6 +213,14 @@ QtObject {
     function onFrameworkChanged() {
       root._pushFramework();
     }
+    // Turned on (saved): the framework's choice, then the list (the card
+    // asked which wins first) and the options, once the bindings follow
+    function onSavedMethodEnabledChanged() {
+      root._lastGroup = "";
+      root._lastOptions = "";
+      root._pushFramework();
+      Qt.callLater(() => root._sync(true));
+    }
   }
 
   function _source(id) {
@@ -217,15 +235,6 @@ QtObject {
     return root.available.find(a => a.name === name) ?? null;
   }
 
-  function _own() {
-    if (root._owned)
-      return;
-    root._owned = true;
-    root._state.save({
-      "owned": true
-    });
-  }
-
   // rpc: inputMethod.set
   function _setIm(name) {
     BackendManager.call("inputMethod.set", {
@@ -236,10 +245,10 @@ QtObject {
     });
   }
 
-  // The state changed: the list given once axiom owns it (`edited`: the
-  // user changed the sources, given even over an outside edit), the
-  // options, and the compositor's layout following an input method
-  // switched in the framework itself
+  // The state changed: the list given while axiom manages the framework
+  // (`edited`: the user changed the sources or turned managing on, given
+  // even over an outside edit), the options, and the compositor's layout
+  // following an input method switched in the framework itself
   function _sync(edited) {
     if (!root.running)
       return;
@@ -250,7 +259,7 @@ QtObject {
 
   // rpc: inputMethod.push
   function _pushGroup(edited) {
-    if (!root._owned || (root.outsideEdit && !edited))
+    if (!root._pushes || (root.outsideEdit && !edited))
       return;
     const sources = InputConfig.savedSources;
     // ibus names xkb layouts by their language, from the registry
@@ -282,7 +291,7 @@ QtObject {
 
   // rpc: inputMethod.options
   function _pushOptions() {
-    if (!root.running)
+    if (!root._pushes)
       return;
     const options = InputConfig.methodOptions;
     const key = root.framework + JSON.stringify(options);
@@ -302,7 +311,7 @@ QtObject {
 
   // rpc: inputMethod.framework
   function _pushFramework() {
-    if (root._inert)
+    if (root._inert || !InputConfig.savedMethodEnabled)
       return;
     BackendManager.call("inputMethod.framework", {
       "name": InputConfig.framework
@@ -381,7 +390,6 @@ QtObject {
     _readRegistry();
     if (root._inert)
       return;
-    root._owned = root._state.load({}).owned === true;
     BackendManager.listen("inputMethod.state", state => root._showIm(state));
     // Made after the hello (a QML reload): no greeted to wait for
     if (BackendManager.ready) {

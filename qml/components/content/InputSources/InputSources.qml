@@ -32,7 +32,7 @@ Panel {
     FlatIconButton {
       iconText: "settings"
       tooltipText: I18n.tr("Input settings")
-      onClicked: SettingsManager.openSetting("Input.sources", true)
+      onClicked: SettingsManager.openSetting("Input", true)
     }
   }
 

@@ -6,7 +6,8 @@ import QtQuick
 // them: the compositor's xkb list, fcitx5's group, ibus's engines, what a
 // source switches to, which one is current and its label. An ime source
 // types on the xkb layout it names (empty: the first xkb source's). The Go
-// renderer ports xkb() (render.XkbLayouts), replaying its shared cases.
+// renderer ports xkb() (render.XkbLayouts) and methodSetup() (render.
+// InputMethodEnv / InputMethodCommand), replaying their shared cases.
 // `registry` is the xkb registry (the daemon's input.layouts: { layouts:
 // [{ name, short, description, languages, variants: [{ name, short,
 // description, languages }] }] }), or null.
@@ -290,6 +291,80 @@ QtObject {
       });
     }
     return sources;
+  }
+
+  // The registry's layouts and variants whose name or code holds `query`
+  // (any case), as [{ layout, variant, description }], a layout before
+  // its variants, at most `limit` (the settings' layout picker); none
+  // without a registry
+  function searchLayouts(registry, query, limit) {
+    const words = root._text(query).toLowerCase().split(/\s+/).filter(w => w !== "");
+    const max = Number(limit) > 0 ? Number(limit) : 50;
+    const out = [];
+    const holds = text => words.every(w => text.toLowerCase().includes(w));
+    for (const entry of registry?.layouts ?? []) {
+      const layout = root._text(entry?.name);
+      if (layout === "")
+        continue;
+      const description = root._text(entry.description) || layout;
+      const rows = [
+        {
+          "layout": layout,
+          "variant": "",
+          "description": description
+        }
+      ].concat((entry.variants ?? []).filter(v => root._text(v?.name) !== "").map(v => ({
+            "layout": layout,
+            "variant": root._text(v.name),
+            "description": root._text(v.description) || description + " (" + root._text(v.name) + ")"
+          })));
+      for (const row of rows) {
+        if (!holds([row.layout, row.variant, row.description].join(" ")))
+          continue;
+        out.push(row);
+        if (out.length >= max)
+          return out;
+      }
+    }
+    return out;
+  }
+
+  // An id for a new source in `sources`: `base` with what an id can't
+  // hold made "-", numbered when one has it already ("de", "de2")
+  function freeId(sources, base) {
+    const taken = (Array.isArray(sources) ? sources : []).map(s => String(s?.id ?? ""));
+    const clean = root._text(base).replace(/[^A-Za-z0-9._-]/g, "-").replace(/^[^A-Za-z0-9]+/, "") || "source";
+    let id = clean;
+    for (let n = 2; taken.includes(id); n++)
+      id = clean + n;
+    return id;
+  }
+
+  // What a framework needs where axiom doesn't write the compositor's
+  // config (the Input method settings' intro): the session's variables
+  // ([{ name, value }]; `legacyApps` adds GTK_IM_MODULE / QT_IM_MODULE)
+  // and the command starting it, as the managed session's writer has them
+  // (render.InputMethodEnv / InputMethodCommand, which replay these cases
+  // through Shared). Empty for anything but "fcitx5" and "ibus"
+  function methodSetup(framework, legacyApps) {
+    if (framework !== "fcitx5" && framework !== "ibus")
+      return {
+        "env": [],
+        "command": ""
+      };
+    const env = {
+      "fcitx5": [["XMODIFIERS", "@im=fcitx"], ["QT_IM_MODULES", "wayland;fcitx;ibus"], ["SDL_IM_MODULE", "fcitx"], ["GLFW_IM_MODULE", "ibus"]],
+      "ibus": [["XMODIFIERS", "@im=ibus"], ["QT_IM_MODULES", "wayland;ibus"], ["SDL_IM_MODULE", "ibus"], ["GLFW_IM_MODULE", "ibus"]]
+    }[framework];
+    const module = framework === "fcitx5" ? "fcitx" : "ibus";
+    const pairs = legacyApps === true ? env.concat([["GTK_IM_MODULE", module], ["QT_IM_MODULE", module]]) : env;
+    return {
+      "env": pairs.map(p => ({
+            "name": p[0],
+            "value": p[1]
+          })),
+      "command": framework === "fcitx5" ? "fcitx5 -d --replace" : "ibus-daemon -drxR"
+    };
   }
 
   // fcitx5's "de-neo" as { layout, variant }
