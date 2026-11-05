@@ -259,6 +259,42 @@ func TestDisks(t *testing.T) {
 	if _, ok := st.Disks["/no/such/path"]; ok {
 		t.Errorf("a missing path has no usage")
 	}
+	// #74: three paths with a bogus one in the middle. The old `df`
+	// sampler matched output lines to paths by position, so every path
+	// after the missing one showed the next path's numbers and the last
+	// showed nothing. Each path is now read on its own (statfs), so
+	// each keeps its own numbers and the missing one is simply absent.
+	dirA, dirB := t.TempDir(), t.TempDir()
+	st = fetch(`{"metrics": ["disk"], "diskPaths": ["` + dirA + `", "/no/such/path", "` + dirB + `"]}`)
+	if len(st.Disks) != 2 {
+		t.Fatalf("disks %+v, want only the two real paths", st.Disks)
+	}
+	for _, dir := range []string{dirA, dirB} {
+		u, ok := st.Disks[dir]
+		if !ok {
+			t.Fatalf("disks %+v, want %s", st.Disks, dir)
+		}
+		// Its own filesystem's size, read independently: Used is a
+		// live counter (other tests write under /tmp too), so only
+		// its range is pinned, not its exact value.
+		var fs syscall.Statfs_t
+		if err := syscall.Statfs(dir, &fs); err != nil {
+			t.Fatal(err)
+		}
+		bs := int64(fs.Frsize)
+		if bs == 0 {
+			bs = int64(fs.Bsize)
+		}
+		if want := int64(fs.Blocks) * bs; u.Total != want {
+			t.Errorf("%s total %d, want %d (its own filesystem)", dir, u.Total, want)
+		}
+		if u.Used < 0 || u.Used > u.Total || u.Usage < 0 || u.Usage > 100 {
+			t.Errorf("%s usage %+v, out of range", dir, u)
+		}
+	}
+	if _, ok := st.Disks["/no/such/path"]; ok {
+		t.Errorf("a missing path in the middle has no usage")
+	}
 	if st := fetch(`{"metrics": ["cpu"], "diskPaths": ["/"]}`); st.Disks != nil {
 		t.Errorf("disk wasn't asked for")
 	}
