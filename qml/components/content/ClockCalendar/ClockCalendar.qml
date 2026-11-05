@@ -77,17 +77,23 @@ Card {
     precision: root.properties.showSeconds ? SystemClock.Seconds : SystemClock.Minutes
   }
 
-  // The day's events, in the card's layout
-  component InlineAgenda: DayAgenda {
-    dayKey: root.shownDay
-    closable: root.openDay !== ""
-    readOnly: root.eventsReadOnly
+  // The day's events, in the card's layout, built only where `shown`
+  component InlineAgenda: Loader {
+    property bool shown
+    active: shown
+    visible: active
     Layout.fillWidth: true
     Layout.fillHeight: true
     Layout.minimumHeight: root.agendaMinHeight
-    onEventClicked: event => pane.edit(event)
-    onAddClicked: pane.newEvent()
-    onClosed: root.openDay = ""
+
+    sourceComponent: DayAgenda {
+      dayKey: root.shownDay
+      closable: root.openDay !== ""
+      readOnly: root.eventsReadOnly
+      onEventClicked: event => (pane.item as DayPane)?.edit(event)
+      onAddClicked: (pane.item as DayPane)?.newEvent()
+      onClosed: root.openDay = ""
+    }
   }
 
   GridLayout {
@@ -147,7 +153,7 @@ Card {
       }
 
       InlineAgenda {
-        visible: root.inlineAgenda && root.sideBySide
+        shown: root.inlineAgenda && root.sideBySide
       }
     }
 
@@ -176,20 +182,24 @@ Card {
     }
 
     InlineAgenda {
-      visible: root.inlineAgenda && !root.sideBySide
+      shown: root.inlineAgenda && !root.sideBySide
     }
   }
 
   // Over the whole card: the editor, or the opened day when the card has
-  // no room to list it
-  DayPane {
+  // no room to list it (only where events show)
+  Loader {
     id: pane
     anchors.fill: parent
     anchors.margins: root.pad
-    visible: pane.editing || (root.openDay !== "" && !root.inlineAgenda)
-    dayKey: root.shownDay
-    closable: true
-    readOnly: root.eventsReadOnly
-    onClosed: root.openDay = ""
+    active: root.showEvents
+    visible: ((pane.item as DayPane)?.editing ?? false) || (root.openDay !== "" && !root.inlineAgenda)
+
+    sourceComponent: DayPane {
+      dayKey: root.shownDay
+      closable: true
+      readOnly: root.eventsReadOnly
+      onClosed: root.openDay = ""
+    }
   }
 }

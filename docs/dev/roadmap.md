@@ -176,6 +176,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the input sources, with `ThemeIntegrations.fcitx5` on and its hookup applied, check the candidate window follows the axiom theme and changes live on a theme switch, and `candidateFont` empty keeps fcitx5's own font.
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again.
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again. In General, change your picture (the Account card, the login screen once AccountsService has it, a Greeting module with Picture on the lock screen), and change your password with a wrong current one, a weak new one, then a real one. Pick another browser and terminal under Default apps and check `~/.config/mimeapps.list` / `xdg-terminals.list` changed and the Browser and Terminal keybinds open them (after a managed or included config is written again with `axiom open`), and a notification link and a screenshot open in their defaults.
+- Once the shell runs #339 (bar-popouts-07), under niri, sway and Hyprland: with a dock and a bar popout open beside it, check the dock's reserved footprint matches its drawn shape (fillets only where it has them) and the popout doesn't overlap it.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -361,7 +362,6 @@ Found by the audits:
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 - [BarPopouts works out its slide distance itself](issues.md#barpopouts-works-out-its-slide-distance-itself)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
-- [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
@@ -370,10 +370,7 @@ Found by the audits:
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)
-- [SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns](issues.md#systemgraphs-has-no-px-minimum-so-its-full-panels-are-cut-on-strips-and-tall-columns)
-- [The Clock's date and label keep their room while the time shrinks to nothing](issues.md#the-clocks-date-and-label-keep-their-room-while-the-time-shrinks-to-nothing)
-- [The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout](issues.md#the-cheatsheets-keyboard-view-is-cut-off-below-about-530-px-with-no-scroll-and-no-small-layout)
-- [Parts shown in one mode are built hidden in every mode, in ten modules and parts](issues.md#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts)
+- [AudioMixer, WorldClocks and DayPane build parts shown in one mode in every mode](issues.md#audiomixer-worldclocks-and-daypane-build-parts-shown-in-one-mode-in-every-mode)
 - [Tailscale's PeerRow redraws DeviceRow without its buttons](issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
 - [WifiNetworks' WPA password form repeats WifiJoinForm's](issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
 - [Login and Password each carry the same required-field report](issues.md#login-and-password-each-carry-the-same-required-field-report)
@@ -460,7 +457,6 @@ The shell's RSS at rest and after use, measured rather than guessed: about 840 M
 
 - **Done:** the shell's heap never shrinking after a spike (row 9; maintainer, 2026-10-27: "yes, opt the shell out of THP"): qs runs with transparent huge pages off, 110–125 MB less at rest and after use; the daemon and what it launches keep them ([memory](core/memory.md) › Transparent huge pages).
 - [Nineteen windows stay mapped on one monitor](issues.md#nineteen-windows-stay-mapped-on-one-monitor)
-- [Images decoded at full size or more than once](issues.md#images-decoded-at-full-size-or-more-than-once)
 
 ### Phase 13: the maintainer's notes
 Bugs and small features from the maintainer's own use, filed from their notes on 2026-10-28 (compositor-specific ones are in [Phase 6](#phase-6-compositor-parity), fit ones in [Phase 7](#phase-7-fit-geometry-and-performance)). Each feature step follows its recipe (`setting`, `settings-card`, …); the plans go through [Items that need a plan](#items-that-need-a-plan).

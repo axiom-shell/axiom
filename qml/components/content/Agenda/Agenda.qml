@@ -18,6 +18,9 @@ import qs.components.content.parts.calendar
 Panel {
   id: root
 
+  // The event open in the editor (built only while one is)
+  property EventDraft session: EventDraft {}
+
   spacing: Widget.spacing
   fullMinWidth: Appearance.fontSize * 12
   fullMinHeight: Appearance.fontSize * 8
@@ -66,7 +69,7 @@ Panel {
   }
 
   ModuleHeader {
-    visible: !editor.visible
+    visible: !root.session.active
     icon: "event_note"
     title: I18n.tr("Agenda")
     FlatIconButton {
@@ -75,20 +78,17 @@ Panel {
       iconText: "add"
       iconColor: Theme.accent
       tooltipText: I18n.tr("New event")
-      onClicked: {
-        editor.open(CalendarEvents.newDraft(root.todayKey, Date.now(), CalendarManager.newEventCalendar, CalendarConfig.defaultDuration, CalendarConfig.defaultReminder));
-        editor.visible = true;
-      }
+      onClicked: root.session.open(CalendarEvents.newDraft(root.todayKey, Date.now(), CalendarManager.newEventCalendar, CalendarConfig.defaultDuration, CalendarConfig.defaultReminder))
     }
   }
 
   // Grows to list every day (from compact, to the full layout); empty,
   // back to its place; editing, as it is
-  wantedHeight: editor.visible ? root.height : root.groups.length === 0 ? 0 : days.height > 0 ? root.height + list.implicitHeight - days.height : 1
+  wantedHeight: root.session.active ? root.height : root.groups.length === 0 ? 0 : days.height > 0 ? root.height + list.implicitHeight - days.height : 1
 
   Flickable {
     id: days
-    visible: !editor.visible && root.groups.length > 0
+    visible: !root.session.active && root.groups.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: true
     contentHeight: list.implicitHeight
@@ -126,10 +126,7 @@ Panel {
               event: group.day.events[index] ?? null
               dayKey: group.day.key
               twoLines: root.innerWidth < Appearance.fontSize * 22
-              onClicked: {
-                editor.open(CalendarEvents.draftOf(event));
-                editor.visible = true;
-              }
+              onClicked: root.session.open(CalendarEvents.draftOf(event))
             }
           }
         }
@@ -140,7 +137,7 @@ Panel {
   // A plain Item takes the free height (a layout's maximum would cap it,
   // and the column would spread the rest around the header)
   Item {
-    visible: !editor.visible && root.groups.length === 0
+    visible: !root.session.active && root.groups.length === 0
     Layout.fillWidth: true
     Layout.fillHeight: true
 
@@ -153,11 +150,13 @@ Panel {
     }
   }
 
-  EventEditor {
-    id: editor
-    visible: false
+  Loader {
+    active: root.session.active
+    visible: active
     Layout.fillWidth: true
     Layout.fillHeight: true
-    onFinished: visible = false
+    sourceComponent: EventEditor {
+      session: root.session
+    }
   }
 }

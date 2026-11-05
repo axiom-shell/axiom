@@ -252,7 +252,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Compact cards still build their full layout
 - **Where:** `qml/components/content/base/Card.qml` (`full`), `qml/components/content/base/Panel.qml` (`column`, `background`)
-- **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md). The modules review (2026-10-31) found the same in Tailscale, VpnConnections, BluetoothDevices, AudioMixer, Palette, Pomodoro, Focus, Todo, Battery and TopProcesses; Notes always builds both its `tiny` figure and its editor; Disks, SystemGraphs and VolumeDials already skip part of their layout while compact. Parts hidden by mode rather than by compactness are [their own entry](#parts-shown-in-one-mode-are-built-hidden-in-every-mode-in-ten-modules-and-parts).
+- **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md). The modules review (2026-10-31) found the same in Tailscale, VpnConnections, BluetoothDevices, AudioMixer, Palette, Pomodoro, Focus, Todo, Battery and TopProcesses; Notes always builds both its `tiny` figure and its editor; Disks, SystemGraphs and VolumeDials already skip part of their layout while compact. Parts hidden by mode rather than by compactness are [their own entry](#audiomixer-worldclocks-and-daypane-build-parts-shown-in-one-mode-in-every-mode).
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
@@ -266,12 +266,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/backdrop/ScreenBackdrop.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`
 - **What:** Each window has its own render thread and GL context (19 `QSGRenderThread`s on one niri monitor). 9 are the border (4 strips, 4 corners, the shadow); the backdrop, blur backing and border shadow are `held` only for niri's map-order stacking. About 25 more (overlay, launcher, a submenu per popout host, edge-popout bodies, power menu, overview, switcher, prompts) keep their context for the session once shown. Options: strips drawing their own corners, windows unloaded a while after they hide, one stacking anchor instead of three held windows ([layer arrangement](compositor/layer-arrangement.md)).
 - **Size:** needs a plan
-- **Found:** 2026-10-27, while measuring the shell's memory
-
-### Images decoded at full size or more than once
-- **Where:** `qml/components/surfaces/wallpaper/WallpaperWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/components/content/NowPlaying/NowPlaying.qml`
-- **What:** The wallpaper window keeps two screen-size decodes (the previous one past its crossfade, `cache: false`), about 20 MB each at 3440×1440; the desktop's `ScreenLayoutView` decodes it a third time (`cache: false`) and keeps screen-size frost captures. NowPlaying decodes album art with no `sourceSize`, twice (once under a blur layer), and a third time in its hidden strip layout's `Art` (`NowPlaying.qml:338`; popouts audit, 2026-10-30: [NowPlaying builds its strip layout and a second transport hidden in every mode](#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode) brings it back to two).
-- **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
 ### Text clips on 1080p screens
@@ -509,17 +503,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### NowPlaying builds its strip layout and a second transport hidden in every mode
-- **Where:** `qml/components/content/NowPlaying/NowPlaying.qml:330` (the strip), `qml/components/content/NowPlaying/NowPlaying.qml:440` (the grid's `Transport`), `qml/components/content/NowPlaying/NowPlaying.qml:453` (the popout's `Transport`)
-- **What:** qml/components/content/AGENTS.md says "a part shown in one mode only is a Loader gated on it, not `visible: false`". All three parts here are gated by `visible` only:
-  - The strip `RowLayout` (lines 329-402, 74 lines, `visible: root.hasPlayer && root.mini`) shows only in a short card. It is built in the Media popout and in every other card too, including its `Art`, whose CrossFade decodes the cover once more while hidden.
-  - The grid's `Transport { visible: root.embedded }` is built in the popout.
-  - The popout's `Transport { visible: root.hasPlayer && !root.embedded }` is built in every card.
-
-  So each opening of the Media popout builds a seek slider, two time labels and three buttons it never shows, and a hidden cover decode, a third beside the two [Images decoded at full size or more than once](#images-decoded-at-full-size-or-more-than-once) counts. Fix: Loaders gated on `root.mini` for the strip and grid, and on `root.embedded` / `!root.embedded` for the two transports (Layout attached properties on the Loaders). Fix it together with NowPlaying's thresholds in [the sizing entry](#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding): the Loaders gate on the `mini`/`short` switches that entry recomputes. The compact play `MediaButton` also lacks the `enabled: MediaManager.canTogglePlaying` its two siblings have (modules review, 2026-10-31).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### A pill's shadow run-on rectangles log stackAfter warnings
 - **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
 - **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
@@ -572,38 +555,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 
-### SystemGraphs has no px minimum, so its full panels are cut on strips and tall columns
-- **Where:** `qml/components/content/SystemGraphs/SystemGraphs.qml:105` (`columns`)
-- **What:** SystemGraphs sets no `fullMinWidth`/`fullMinHeight` (`grep -c fullMin` = 0), so it is compact only at 2×2 grid units or less. A panel (a `StatFigure` of about 53 px + spacing + a `Sparkline` of at least `Appearance.fontSize`) needs about 69 px. Scenarios: one metric in a 3x1 strip at a 60 px unit has 24 px inside, and the panel is cut to the top of its value. All five metrics in a 2x6 column at a 60 px unit get rows of 50 px, so each sparkline sits over its label. `columns` picks by aspect ratio only, never by px. Fix: `fullMinHeight` about `Appearance.fontSize * 5` (one panel) and `fullMinWidth` about 6f, and skip a column count whose rows would be shorter than one panel.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### The Clock's date and label keep their room while the time shrinks to nothing
-- **Where:** `qml/components/content/Clock/Clock.qml:48` (`captionSize`), `qml/components/content/Clock/Clock.qml:50` (`captionsHeight`), `qml/components/content/Clock/Clock.qml:54` (`faceHeight`)
-- **What:** The captions always take `captionCount * (captionSize * lineRatio + spacing)`, with `captionSize` at least `Appearance.fontSizeBy(-2)`. The face gets what's left (`faceHeight: Math.max(0, root.innerHeight - root.captionsHeight)`), and the digits are fitted to it. Clock has no `fullMin*` and no compact form. Example: the default stacked style with the date on, in a 4x1 strip at a 60 px unit, has 24 px inside. The date takes about 14 px, which leaves about 10 px for two lines of digits, so the time is about 3 px tall under a 10 px date. With a `label` as well, the face gets 0. The same happens on the lock screen and the greeter, which both host Clock. Fix: the time is the key figure, so count a caption only while the face keeps at least that caption's own height. Drop the label first, then the date.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
-- **Where:** `qml/components/content/Cheatsheet/Cheatsheet.qml:46` (`fullMinHeight`), `qml/components/content/Cheatsheet/Cheatsheet.qml:36` (`strip`), `qml/components/content/parts/KeyboardMap.qml`
-- **What:** With `view: "keyboard"`, the module shows only `KeyboardReference`. Its height is fixed and it sits in no `Flickable`: 8 rows of `Math.round(Widget.height * 1.9)` = 57 px keys (6 `KeyMap.rows` plus the 20 `KeyMap.extras`), the gaps and the legend come to about 493 px inside, a card about 529 px tall. `fullMinHeight` is `Appearance.fontSize * 3` (42 px), the list view's figure, used for both views, and `strip` excludes the keyboard. So any card from 42 to about 529 px tall loses the legend, then the extra keys, then the lower rows, with no way to scroll to them. That includes the schema's `defaultSize: [8, 6]` at any unit under about 88 px. Across, at `fullMinWidth` (inner 160 px) a key unit is 8 px. Below about 24 px a unit, a key's corner name (never elided) spills into its neighbour. Fix: give the keyboard view its own minimums (about 28f × 38f), so a smaller slot shows the count figure, or a short key form, or put it in the list view's `Flickable`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### Parts shown in one mode are built hidden in every mode, in ten modules and parts
-- **Where:** `qml/components/content/Network/Network.qml:84` (strip `Graphs`), `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/Calculator/Calculator.qml:472` (`Keypad`), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/parts/CountdownTimer.qml:50` (`TimeRing`), `qml/components/content/Stopwatch/Stopwatch.qml:78` (`CountdownTimer`), `qml/components/content/parts/TodoList.qml:120` (rename field), `qml/components/content/ClockCalendar/ClockCalendar.qml:149` (`InlineAgenda`), `qml/components/content/Agenda/Agenda.qml:156` (`EventEditor`), `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
+### AudioMixer, WorldClocks and DayPane build parts shown in one mode in every mode
+- **Where:** `qml/components/content/AudioMixer/AudioMixer.qml:170` (tabs and list), `qml/components/content/WorldClocks/WorldClocks.qml:178`, `qml/components/content/parts/calendar/DayPane.qml:69` (`EventEditor`)
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`", and "a row's expansion is built only while expanded". These parts are gated by `visible` only:
-  - Network builds both its strip (lines 84–122) and its full column (124–191), each with two Sparklines, in every card.
   - AudioMixer builds its tabs and list (170–308, one `AudioRow` per playing app) in every slider-only card, and its card header in every popout.
-  - Calculator builds its 20–24 key `Keypad` with `showKeypad` off and in every strip.
   - WorldClocks builds both a tile and a row layout for each clock (lines 178 and 225).
-  - CountdownTimer builds its ring and buttons while idle, and its duration field and presets while set.
-  - Stopwatch builds the whole `CountdownTimer` in stopwatch mode, and its time, buttons and laps in timer mode (in the Stopwatch popout too).
-  - TodoList gives every item its own rename `StyledTextEntry`, though at most one row renames at a time.
-  - ClockCalendar builds two `InlineAgenda`s, of which at most one shows, and a `DayPane` (a third agenda and the 360-line `EventEditor`). Where `showEvents` is false (always on the greeter, on the lock screen unless `Calendar.showOnLockscreen`), none of them can ever show, yet every lock and greeter surface builds them.
-  - Agenda and DayPane each build an `EventEditor` that shows only after a click.
+  - DayPane builds an `EventEditor` that shows only after a click. Agenda's is built on demand now (row 20); DayPane's is left, since the Calendar popout's `maxImplicitHeight` reads `DayPane.growth`, the editor's height before it opens, to make room up front: building it on demand needs another way to know that height.
 
-  This is the same rule as the NowPlaying entry, in other files. It is separate from "Compact cards still build their full layout": these parts are built at full size too. Fix: Loaders gated on each mode (`root.strip`, `!root.sliderOnly`, `showKeypad`, `tiles`, `idle`, `timerMode`, the row being renamed, `inlineAgenda && sideBySide`, `showEvents`, editing), with the Layout attached properties moved onto the Loaders. Done module by module, since ids read from the root need the loader's `item`.
+  The other seven of the ten modules and parts first listed were fixed in row 20 (overlay-modules-04: Network, Calculator, Stopwatch, TodoList, ClockCalendar, Agenda; CountdownTimer earlier); AudioMixer and WorldClocks were left at its size gate, DayPane for the reason above. It is separate from "Compact cards still build their full layout": these parts are built at full size too. Fix: Loaders gated on each mode (`!root.sliderOnly`, `tiles`), with the Layout attached properties moved onto the Loaders.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 

@@ -249,6 +249,8 @@ Panel {
           required property var value
           readonly property bool ready: status !== Image.Loading
           source: value
+          // fixed px: blurred to a wash, so a small decode does
+          sourceSize: Qt.size(128, 128)
           fillMode: Image.PreserveAspectCrop
           asynchronous: true
           layer.enabled: true
@@ -279,6 +281,7 @@ Panel {
       primary: true
       size: Math.min(parent.width, parent.height) * 0.4
       icon: MediaManager.isPlaying ? "pause" : "play_arrow"
+      enabled: MediaManager.canTogglePlaying
       onClicked: MediaManager.togglePlayPause()
     }
   }
@@ -299,131 +302,143 @@ Panel {
   }
 
   // --- A strip: art, track and buttons in a row ---
-  RowLayout {
-    visible: root.hasPlayer && root.mini
+  Loader {
+    active: root.hasPlayer && root.mini
+    visible: active
     Layout.fillWidth: true
     Layout.fillHeight: true
-    spacing: Widget.spacing
-    // Room for previous and next beside play/pause
-    readonly property bool wide: root.width >= Appearance.fontSize * 22
 
-    Art {
-      readonly property real side: root.innerHeight
-      visible: side >= 24
-      Layout.preferredWidth: side
-      Layout.preferredHeight: side
-    }
-    // The track opens the whole player over the grid
-    ColumnLayout {
-      Layout.fillWidth: true
-      Layout.minimumWidth: 0
-      spacing: 0
-      TapHandler {
-        enabled: root.canExpand("NowPlaying")
-        onTapped: root.expand("NowPlaying", root.properties)
+    sourceComponent: RowLayout {
+      spacing: Widget.spacing
+      // Room for previous and next beside play/pause
+      readonly property bool wide: root.width >= Appearance.fontSize * 22
+
+      Art {
+        readonly property real side: root.innerHeight
+        visible: side >= 24
+        Layout.preferredWidth: side
+        Layout.preferredHeight: side
       }
-      HoverHandler {
-        enabled: root.canExpand("NowPlaying")
-        cursorShape: Qt.PointingHandCursor
-      }
-      CrossFade {
+      // The track opens the whole player over the grid
+      ColumnLayout {
         Layout.fillWidth: true
-        value: MediaManager.trackTitle || I18n.tr("Unknown track")
-        delegate: StyledText {
-          required property var value
-          elide: Text.ElideRight
-          text: value
-          textColor: Theme.accent
-          font.bold: true
+        Layout.minimumWidth: 0
+        spacing: 0
+        TapHandler {
+          enabled: root.canExpand("NowPlaying")
+          onTapped: root.expand("NowPlaying", root.properties)
+        }
+        HoverHandler {
+          enabled: root.canExpand("NowPlaying")
+          cursorShape: Qt.PointingHandCursor
+        }
+        CrossFade {
+          Layout.fillWidth: true
+          value: MediaManager.trackTitle || I18n.tr("Unknown track")
+          delegate: StyledText {
+            required property var value
+            elide: Text.ElideRight
+            text: value
+            textColor: Theme.accent
+            font.bold: true
+          }
+        }
+        CrossFade {
+          visible: root.innerHeight >= Appearance.fontSize * 2.6
+          Layout.fillWidth: true
+          opacity: 0.8
+          value: MediaManager.trackArtist
+          delegate: StyledText {
+            required property var value
+            elide: Text.ElideRight
+            text: value
+            textSize: Appearance.fontSizeBy(-2)
+          }
         }
       }
-      CrossFade {
-        visible: root.innerHeight >= Appearance.fontSize * 2.6
-        Layout.fillWidth: true
-        opacity: 0.8
-        value: MediaManager.trackArtist
-        delegate: StyledText {
-          required property var value
-          elide: Text.ElideRight
-          text: value
-          textSize: Appearance.fontSizeBy(-2)
-        }
+      MediaButton {
+        visible: parent.wide
+        size: Math.min(Widget.height, root.innerHeight)
+        icon: "skip_previous"
+        enabled: MediaManager.canGoPrevious
+        onClicked: MediaManager.previous()
       }
-    }
-    MediaButton {
-      visible: parent.wide
-      size: Math.min(Widget.height, root.innerHeight)
-      icon: "skip_previous"
-      enabled: MediaManager.canGoPrevious
-      onClicked: MediaManager.previous()
-    }
-    MediaButton {
-      primary: true
-      size: Math.min(Widget.height * 1.2, root.innerHeight)
-      icon: MediaManager.isPlaying ? "pause" : "play_arrow"
-      enabled: MediaManager.canTogglePlaying
-      onClicked: MediaManager.togglePlayPause()
-    }
-    MediaButton {
-      visible: parent.wide
-      size: Math.min(Widget.height, root.innerHeight)
-      icon: "skip_next"
-      enabled: MediaManager.canGoNext
-      onClicked: MediaManager.next()
+      MediaButton {
+        primary: true
+        size: Math.min(Widget.height * 1.2, root.innerHeight)
+        icon: MediaManager.isPlaying ? "pause" : "play_arrow"
+        enabled: MediaManager.canTogglePlaying
+        onClicked: MediaManager.togglePlayPause()
+      }
+      MediaButton {
+        visible: parent.wide
+        size: Math.min(Widget.height, root.innerHeight)
+        icon: "skip_next"
+        enabled: MediaManager.canGoNext
+        onClicked: MediaManager.next()
+      }
     }
   }
 
   // --- Art and info (and, wide, the controls) ---
-  GridLayout {
-    visible: root.hasPlayer && !root.mini
+  Loader {
+    active: root.hasPlayer && !root.mini
+    visible: active
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
-    columns: root.stacked ? 1 : 2
-    columnSpacing: root.embedded ? root.pad : Widget.spacing * 1.5
-    rowSpacing: Widget.spacing
 
-    Art {
-      // From the card's size, not the grid's: that depends on this
-      // Beside the info, never over 40% of the width, so the text keeps room;
-      // stacked, whatever height the info and controls leave (a small card
-      // would otherwise push them out of the box)
-      readonly property real side: !root.embedded ? root.artSize : root.sideBySide ? Math.min(root.innerHeight, root.innerWidth * 0.4) : Math.max(0, Math.min(root.innerWidth, root.innerHeight * 0.5, root.innerHeight - details.implicitHeight - Widget.spacing))
-      visible: side >= 32
-      Layout.preferredWidth: side
-      Layout.preferredHeight: side
-      Layout.alignment: root.stacked ? Qt.AlignHCenter : root.sideBySide ? Qt.AlignVCenter : Qt.AlignTop
-    }
+    sourceComponent: GridLayout {
+      columns: root.stacked ? 1 : 2
+      columnSpacing: root.embedded ? root.pad : Widget.spacing * 1.5
+      rowSpacing: Widget.spacing
 
-    ColumnLayout {
-      id: details
-      Layout.fillWidth: true
-      Layout.fillHeight: true
-      Layout.minimumWidth: 0
-      spacing: root.short ? 2 : Widget.spacing
-      // Large: the track and controls centred, not spread down the side
-      Item {
-        visible: root.large
-        Layout.fillHeight: true
+      Art {
+        // From the card's size, not the grid's: that depends on this
+        // Beside the info, never over 40% of the width, so the text keeps room;
+        // stacked, whatever height the info and controls leave (a small card
+        // would otherwise push them out of the box)
+        readonly property real side: !root.embedded ? root.artSize : root.sideBySide ? Math.min(root.innerHeight, root.innerWidth * 0.4) : Math.max(0, Math.min(root.innerWidth, root.innerHeight * 0.5, root.innerHeight - details.implicitHeight - Widget.spacing))
+        visible: side >= 32
+        Layout.preferredWidth: side
+        Layout.preferredHeight: side
+        Layout.alignment: root.stacked ? Qt.AlignHCenter : root.sideBySide ? Qt.AlignVCenter : Qt.AlignTop
       }
-      TrackInfo {
+
+      ColumnLayout {
+        id: details
         Layout.fillWidth: true
-        Layout.fillHeight: !root.large
-      }
-      Transport {
-        visible: root.embedded
-        Layout.fillWidth: true
-        Layout.topMargin: root.large ? Widget.spacing : 0
-      }
-      Item {
-        visible: root.large
         Layout.fillHeight: true
+        Layout.minimumWidth: 0
+        spacing: root.short ? 2 : Widget.spacing
+        // Large: the track and controls centred, not spread down the side
+        Item {
+          visible: root.large
+          Layout.fillHeight: true
+        }
+        TrackInfo {
+          Layout.fillWidth: true
+          Layout.fillHeight: !root.large
+        }
+        Loader {
+          active: root.embedded
+          visible: active
+          Layout.fillWidth: true
+          Layout.topMargin: root.large ? Widget.spacing : 0
+          sourceComponent: Transport {}
+        }
+        Item {
+          visible: root.large
+          Layout.fillHeight: true
+        }
       }
     }
   }
 
   // --- Popout: the controls beneath ---
-  Transport {
-    visible: root.hasPlayer && !root.embedded
+  Loader {
+    active: root.hasPlayer && !root.embedded
+    visible: active
     Layout.fillWidth: true
+    sourceComponent: Transport {}
   }
 }
