@@ -100,69 +100,33 @@ Panel {
     return parts.filter(s => s).join(" · ");
   }
 
-  component PeerRow: Rectangle {
+  // Online peers read as connected, without the connected row's highlight
+  component PeerRow: DeviceRow {
     id: row
     required property int index
     readonly property var peer: root.shownPeers[index] ?? null
     property bool copied: false
 
-    width: ListView.view?.width ?? implicitWidth
-    implicitHeight: list.rowHeight
-    radius: Widget.radius
-    color: rowHover.hovered ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
+    rowHeight: list.rowHeight
+    connectable: false
+    icon: root.osIcon(row.peer?.os ?? "")
+    title: row.peer?.name ?? ""
+    status: row.copied ? I18n.tr("Copied {0}", row.peer?.ips[0] ?? "") : row.peer ? root.peerStatus(row.peer) : ""
+    statusColor: row.copied ? Theme.accent : Theme.foregroundAlt
+    connected: row.peer?.online ?? false
+    color: row.hovered ? Qt.alpha(Theme.backgroundHighlight, 0.5) : Qt.alpha(Theme.backgroundHighlight, 0)
     onPeerChanged: row.copied = false
-
-    ColorGlide on color {}
-
-    HoverHandler {
-      id: rowHover
+    onActivated: {
+      if ((row.peer?.ips.length ?? 0) === 0)
+        return;
+      ClipboardManager.copyText(row.peer.ips[0]);
+      row.copied = true;
     }
+
     Timer {
       running: row.copied
       interval: 2000
       onTriggered: row.copied = false
-    }
-    MouseArea {
-      anchors.fill: parent
-      enabled: (row.peer?.ips.length ?? 0) > 0
-      cursorShape: Qt.PointingHandCursor
-      onClicked: {
-        ClipboardManager.copyText(row.peer.ips[0]);
-        row.copied = true;
-      }
-    }
-
-    RowLayout {
-      anchors.fill: parent
-      anchors.leftMargin: Widget.padding
-      anchors.rightMargin: Widget.padding
-      spacing: Widget.padding
-
-      StyledIcon {
-        Layout.preferredWidth: Widget.iconButton
-        horizontalAlignment: Text.AlignHCenter
-        text: root.osIcon(row.peer?.os ?? "")
-        textSize: Appearance.fontSize * 1.4
-        textColor: row.peer?.online ? Theme.accent : Theme.foregroundAlt
-      }
-      ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 0
-        StyledText {
-          Layout.fillWidth: true
-          text: row.peer?.name ?? ""
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-1)
-          textColor: row.peer?.online ? Theme.foreground : Theme.foregroundAlt
-        }
-        StyledText {
-          Layout.fillWidth: true
-          text: row.copied ? I18n.tr("Copied {0}", row.peer?.ips[0] ?? "") : row.peer ? root.peerStatus(row.peer) : ""
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-3)
-          textColor: row.copied ? Theme.accent : Theme.foregroundAlt
-        }
-      }
     }
   }
 

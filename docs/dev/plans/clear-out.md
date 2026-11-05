@@ -495,8 +495,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - A custom layout without elements rebuilds its default elements every sample
 - **overlay-modules-10** (5):
   - A tray menu logs an undefined menu handle
-  - [Tailscale's PeerRow redraws DeviceRow without its buttons](../issues.md#tailscales-peerrow-redraws-devicerow-without-its-buttons)
-  - [WifiNetworks' WPA password form repeats WifiJoinForm's](../issues.md#wifinetworks-wpa-password-form-repeats-wifijoinforms)
+  - Tailscale's PeerRow redraws DeviceRow without its buttons
+  - WifiNetworks' WPA password form repeats WifiJoinForm's
   - [Login and Password each carry the same required-field report](../issues.md#login-and-password-each-carry-the-same-required-field-report)
   - [WeatherForecast repeats the Weather card's current conditions](../issues.md#weatherforecast-repeats-the-weather-cards-current-conditions)
 - **overlay-modules-11** (2): The v71 entry is a rare path: smallest fix.

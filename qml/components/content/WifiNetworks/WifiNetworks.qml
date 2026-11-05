@@ -180,49 +180,12 @@ Panel {
     Loader {
       width: parent.width
       active: row.asking
-      sourceComponent: row.kind === "psk" ? pskForm : joinForm
 
-      Component {
-        id: pskForm
-
-        RowLayout {
-          spacing: Widget.spacing
-
-          StyledTextEntry {
-            id: passwordField
-            Layout.fillWidth: true
-            placeholderText: I18n.tr("Password")
-            input.echoMode: TextInput.Password
-            input.wrapMode: Text.NoWrap
-            onAccepted: NetworkingManager.connectWithPsk(row.network, passwordField.text)
-            // The field leaves Escape to its parents
-            Keys.onEscapePressed: NetworkingManager.cancelPassword()
-            Component.onCompleted: Qt.callLater(() => passwordField.input.forceActiveFocus())
-          }
-
-          StyledRectButton {
-            size: Widget.iconButton
-            enabled: passwordField.text !== ""
-            opacity: enabled ? 1 : 0.5
-            iconText: "link"
-            iconColor: Theme.accent
-            backgroundColor: "transparent"
-            borderHoverColor: Theme.accent
-            tooltipText: I18n.tr("Connect")
-            onClicked: NetworkingManager.connectWithPsk(row.network, passwordField.text)
-          }
-        }
-      }
-
-      Component {
-        id: joinForm
-
-        WifiJoinForm {
-          security: row.kind
-          error: NetworkingManager.joinError
-          onSubmitted: fields => NetworkingManager.join(row.network, fields)
-          onCancelled: NetworkingManager.cancelPassword()
-        }
+      sourceComponent: WifiJoinForm {
+        security: row.kind
+        error: NetworkingManager.joinError
+        onSubmitted: fields => row.kind === "psk" ? NetworkingManager.connectWithPsk(row.network, fields.password) : NetworkingManager.join(row.network, fields)
+        onCancelled: NetworkingManager.cancelPassword()
       }
     }
   }

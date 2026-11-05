@@ -11,7 +11,8 @@ import qs.components.reusable
 // end of the name, so every row lays out alike. Clicking the row
 // `activated`s it. Children go under the row, shown while `expanded` (e.g.
 // a password field). The button at the end connects or disconnects, or
-// does what `actionIcon` says.
+// does what `actionIcon` says; a row only to read (`connectable` off) has
+// none.
 Rectangle {
   id: root
 
@@ -29,6 +30,7 @@ Rectangle {
   // Highlighted without being connected (e.g. asking for a password)
   property bool selected: false
   property bool expanded: false
+  property bool connectable: true
   property string connectTip: I18n.tr("Connect")
   // The button at the end: connect / disconnect, unless a row sets
   // another (a drive's eject)
@@ -36,6 +38,7 @@ Rectangle {
   property string actionTip: root.connected ? I18n.tr("Disconnect") : root.connectTip
   // A small icon on the icon's bottom-right corner (e.g. "lock")
   property string iconBadge: ""
+  property color statusColor: root._confirmForget || root.failed ? Theme.error : root.busy || root.connected ? Theme.accent : Theme.foregroundAlt
   // Buttons before forget, shown with it on hover (e.g. autoconnect)
   property alias hoverActions: hoverActionsRow.data
   readonly property bool hovered: rowHover.hovered
@@ -88,7 +91,7 @@ Rectangle {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.leftMargin: Widget.padding
-    anchors.rightMargin: Widget.spacing
+    anchors.rightMargin: root.connectable ? Widget.spacing : Widget.padding
     spacing: Widget.padding
 
     StyledIcon {
@@ -134,7 +137,7 @@ Rectangle {
           text: root._confirmForget ? I18n.tr("Click again to forget") : root.status
           elide: Text.ElideRight
           textSize: Appearance.fontSizeBy(-3)
-          textColor: root._confirmForget || root.failed ? Theme.error : root.busy || root.connected ? Theme.accent : Theme.foregroundAlt
+          textColor: root.statusColor
         }
       }
 
@@ -175,6 +178,7 @@ Rectangle {
 
     StyledRectButton {
       size: Widget.iconButton
+      visible: root.connectable
       enabled: !root.busy
       opacity: enabled ? 1 : 0.5
       iconText: root.actionIcon
