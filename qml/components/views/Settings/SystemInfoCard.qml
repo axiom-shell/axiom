@@ -222,7 +222,7 @@ FieldGroup {
       }
 
       StyledText {
-        visible: root.info.prettyHostname && root.info.hostname && root.info.prettyHostname !== root.info.hostname && !root.renaming
+        visible: !!root.info.prettyHostname && root.info.hostname && root.info.prettyHostname !== root.info.hostname && !root.renaming
         text: I18n.tr("Hostname {0}", root.info.hostname)
         textColor: Theme.foregroundAlt
         textFamily: "monospace"

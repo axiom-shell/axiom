@@ -60,6 +60,12 @@ QtObject {
     return root.dateFormat(DateFormats.timeName(root.hours24(hourFormat)));
   }
 
+  // A file's or build's date and time (saved configs, dev builds): the
+  // medium date, then the time on the Date & time clock
+  function dateTimeFormat() {
+    return root.dateFormat("mediumDate") + " " + root.timeFormat("default");
+  }
+
   function tr(text, ...args) {
     let result = (root.current.code !== "en" && root._strings[text]) || text;
     args.forEach((arg, i) => result = result.split(`{${i}}`).join(String(arg)));
@@ -117,8 +123,6 @@ QtObject {
       "shortDate": "ddd d MMM",
       "monthYear": "MMMM yyyy",
       "fullDate": "dddd, MMMM d, yyyy",
-      // A file's time (saved configs)
-      "dateTime": "MMM d, yyyy HH:mm",
       "time24": "HH:mm",
       "time12": "h:mm AP",
       // The bar clock (s: with seconds)

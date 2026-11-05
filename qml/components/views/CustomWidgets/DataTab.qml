@@ -36,7 +36,7 @@ ColumnLayout {
     }
     StyledText {
       Layout.fillWidth: true
-      text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateFormat("dateTime"))) : ""
+      text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateTimeFormat())) : ""
       elide: Text.ElideRight
       opacity: 0.7
     }

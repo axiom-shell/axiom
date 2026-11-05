@@ -22,8 +22,8 @@ func openCommand() *Command {
 Settings › General › Default apps sets:
   browser mail fileManager terminal textEditor images video music pdf archives
 followed by what it's given (the URLs or files; the terminal's command to run).
-An app the config sets (Apps.terminal, Apps.fileManager, Apps.browser) is used
-in place of the default. The keybinds run it, e.g.:
+A custom command the config sets (Apps.commands.<role>) is used in place of
+the default. The keybinds run it, e.g.:
   axiom open browser
   axiom open terminal -- htop
   axiom open ~/Downloads

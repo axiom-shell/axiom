@@ -15,8 +15,8 @@ import (
 )
 
 // Overrides are the commands the config sets in place of a role's
-// default app (Apps.terminal, Apps.fileManager, Apps.browser), by role
-// id; "" or missing: the default app.
+// default app (Apps.commands.<role id>), by role id; "" or missing: the
+// default app.
 type Overrides map[string]string
 
 // A URL's scheme ("https:", "mailto:"), not a Windows-style path
@@ -200,17 +200,17 @@ func (a *Apps) globs() []glob {
 	return a.globList
 }
 
-// OverridesFrom reads the config's Apps.terminal, Apps.fileManager and
-// Apps.browser (nil cfg: none).
+// OverridesFrom reads the config's Apps.commands, a command per role
+// (nil cfg: none).
 func OverridesFrom(cfg *jsonx.Object) Overrides {
 	ov := Overrides{}
 	if cfg == nil {
 		return ov
 	}
-	for _, role := range []string{"terminal", "fileManager", "browser"} {
-		if v, ok := config.Lookup(cfg, config.Keys("Apps", role)); ok {
+	for _, r := range Roles {
+		if v, ok := config.Lookup(cfg, config.Keys("Apps", "commands", r.ID)); ok {
 			if s, _ := v.(string); strings.TrimSpace(s) != "" {
-				ov[role] = strings.TrimSpace(s)
+				ov[r.ID] = strings.TrimSpace(s)
 			}
 		}
 	}

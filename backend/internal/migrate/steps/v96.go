@@ -2,6 +2,7 @@ package steps
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -13,15 +14,16 @@ import (
 //     it was its type's old default, else "12" or "24" as it was. The old
 //     defaults: the bar Time widget 12-hour, the Clock, ClockCalendar and
 //     World clocks modules and Calendar's event times 24-hour.
-//   - Apps.terminal, Apps.fileManager and Apps.browser are commands in
-//     place of the default apps (mimeapps.list), empty by default: the old
-//     default terminal, "kitty", became empty, so the default terminal is
-//     the one the system says (kitty, where it was).
+//   - Apps.terminal, Apps.fileManager and Apps.browser moved into
+//     Apps.commands (a custom command per default app role, in place of
+//     the default app the mimeapps lists name), set where they were: the
+//     old default terminal, "kitty", is dropped, so the default terminal
+//     is the one the system says (kitty, where it was).
 func v96(cfg *jsonx.Object) []string {
 	var changes []string
 	clocks := 0
-	var walk func(v any, inBar bool)
-	walk = func(v any, inBar bool) {
+	var walk func(v any)
+	walk = func(v any) {
 		switch t := v.(type) {
 		case *jsonx.Object:
 			if props, _ := t.Value("properties").(*jsonx.Object); props != nil {
@@ -30,24 +32,53 @@ func v96(cfg *jsonx.Object) []string {
 				}
 			}
 			for _, k := range t.Keys() {
-				walk(t.Value(k), inBar)
+				walk(t.Value(k))
 			}
 		case *jsonx.Array:
 			for _, item := range t.Items {
-				walk(item, inBar)
+				walk(item)
 			}
 		}
 	}
-	walk(cfg, false)
+	walk(cfg)
 	if clocks > 0 {
 		changes = append(changes, fmt.Sprintf("%d clock(s): use24Hour became hourFormat (default follows Date & time where it was the old default)", clocks))
 	}
 	if cal := object(cfg, "Calendar"); cal != nil && hourFormat(cal, true) {
 		changes = append(changes, "Calendar.use24Hour became Calendar.hourFormat")
 	}
-	if apps := object(cfg, "Apps"); apps != nil && apps.Value("terminal") == "kitty" {
-		apps.Set("terminal", "")
-		changes = append(changes, `Apps.terminal "kitty" (the old default) became empty: the default terminal starts`)
+	if apps := object(cfg, "Apps"); apps != nil {
+		changes = append(changes, appCommands(apps)...)
+	}
+	return changes
+}
+
+// appCommands moves Apps' terminal, fileManager and browser into
+// Apps.commands, the ones set (and not the old default terminal).
+func appCommands(apps *jsonx.Object) []string {
+	var changes []string
+	var commands *jsonx.Object
+	for _, role := range []string{"terminal", "fileManager", "browser"} {
+		if !apps.Has(role) {
+			continue
+		}
+		v := strings.TrimSpace(jsonx.ToString(apps.Value(role)))
+		apps.Delete(role)
+		if role == "terminal" && v == "kitty" {
+			changes = append(changes, `Apps.terminal "kitty" (the old default) dropped: the default terminal starts`)
+			continue
+		}
+		if v == "" {
+			continue
+		}
+		if commands == nil {
+			if commands, _ = apps.Value("commands").(*jsonx.Object); commands == nil {
+				commands = jsonx.NewObject()
+				apps.Set("commands", commands)
+			}
+		}
+		commands.Set(role, v)
+		changes = append(changes, fmt.Sprintf("Apps.%s became Apps.commands.%s", role, role))
 	}
 	return changes
 }

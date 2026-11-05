@@ -4,28 +4,68 @@ x-scope: personal
 type: object
 x-category: General
 x-card: {file: DefaultApps, title: Default apps}
-title: App commands
-description: "Commands axiom runs in place of the default apps above, for the Terminal, File manager and Browser keybinds, the launcher's terminal apps and Shift+Enter commands, and opening folders; and the network editor. Empty uses the default app."
+title: Other apps
+description: "Apps axiom's own menus open. A custom command for a default app is set in its picker above (Custom command…)."
 additionalProperties: false
 properties:
-  terminal:
+  commands:
     x-scope: commands
-    type: string
-    title: Terminal
-    default: ''
-    description: "A terminal command in place of the default terminal, for the Terminal keybind, terminal apps and Shift+Enter commands, started as: terminal -e command. Empty uses the default terminal."
-  fileManager:
-    x-scope: commands
-    type: string
-    title: File manager
-    default: ''
-    description: A file manager command in place of the default one, given the folder to open. Empty uses the default file manager.
-  browser:
-    x-scope: commands
-    type: string
-    title: Browser
-    default: ''
-    description: A browser command in place of the default browser, given the link to open. Empty uses the default browser.
+    x-settings: false
+    type: object
+    title: Custom commands
+    description: "Commands axiom starts in place of a default app (Default apps › Custom command…), by role: for the keybinds, `axiom open` and everything axiom opens. Empty uses the default app. Other apps still open the default."
+    additionalProperties: false
+    properties:
+      browser:
+        type: string
+        title: Web browser
+        default: ''
+        description: "Web browser: a command in place of the default app, given the links to open."
+      mail:
+        type: string
+        title: Email
+        default: ''
+        description: "Email: a command in place of the default app, given the mailto: links."
+      fileManager:
+        type: string
+        title: Files
+        default: ''
+        description: "Files: a command in place of the default app, given the folder to open."
+      terminal:
+        type: string
+        title: Terminal
+        default: ''
+        description: "Terminal: a command in place of the default app, started as: command -e program for terminal apps and Shift+Enter commands."
+      textEditor:
+        type: string
+        title: Text editor
+        default: ''
+        description: "Text editor: a command in place of the default app, given the files."
+      images:
+        type: string
+        title: Images
+        default: ''
+        description: "Images: a command in place of the default app, given the files."
+      video:
+        type: string
+        title: Video
+        default: ''
+        description: "Video: a command in place of the default app, given the files."
+      music:
+        type: string
+        title: Music
+        default: ''
+        description: "Music: a command in place of the default app, given the files."
+      pdf:
+        type: string
+        title: Documents (PDF)
+        default: ''
+        description: "Documents (PDF): a command in place of the default app, given the files."
+      archives:
+        type: string
+        title: Archives
+        default: ''
+        description: "Archives: a command in place of the default app, given the files."
   networkEditor:
     x-scope: commands
     type: string

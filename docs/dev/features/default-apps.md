@@ -1,7 +1,7 @@
 # Default apps
 
 > **Files:** `backend/internal/mimeapps/`, `backend/internal/daemon/machine.go`, `backend/internal/cli/open.go`, `qml/services/system/DefaultAppsManager.qml`, `qml/components/views/Settings/DefaultAppsCard.qml`, `qml/components/content/parts/DefaultAppPickers.qml`, `qml/config/Apps.qml`, `qml/components/surfaces/onboarding/pages/AppsPage.qml`
-> **Config:** `Apps.terminal`, `Apps.fileManager`, `Apps.browser` (commands in place of the defaults, empty by default); the defaults themselves are the user's mimeapps.list and xdg-terminals.list
+> **Config:** `Apps.commands` (a custom command per role, keyed by role id, in place of the default app; empty by default); the defaults themselves are the user's mimeapps.list and xdg-terminals.list
 > **Related:** [Launcher](launcher.md), [Onboarding](onboarding.md), [Testing](../testing.md) › Machine settings
 
 Which app opens each kind of link and file, and which terminal starts, kept the freedesktop way so every app agrees with axiom. Tests: `backend/internal/mimeapps`'s Go tests (scratch XDG folders).
@@ -19,11 +19,11 @@ Which app opens each kind of link and file, and which terminal starts, kept the 
 
 ### Opening things (`apps.open`, `axiom open`)
 - `Apps.Command(target, args, overrides)`: a role id opens its app given `args`; a URL its scheme's app (http and https the browser's, mailto mail's); a path its type's (a folder the file manager's; a file by shared-mime-info's `globs2`, the heaviest then longest pattern); nothing found, `xdg-open`.
-- The Apps section's commands (`mimeapps.OverridesFrom`) stand in for the terminal, file manager and browser: their words, then the args (the terminal's command after `-e`).
+- `Apps.commands` (`mimeapps.OverridesFrom`, one key per `mimeapps.Roles` id: `TestRolesMatchTheSchema` keeps them in step) stands in for a role's app, for the role id and for links and files of the role's types: its words, then the args (the terminal's command after `-e`).
 - An entry's command is its Exec line with the field codes expanded (`%f %u` one, `%F %U` all, `%i`, `%c`, `%k`; the spec's quoting), the target appended when it has no file code; a `Terminal=true` entry runs in the terminal (its `X-TerminalArgExec`, else `-e`), as do flatpak's `@@u … @@` markers pass through to `flatpak run`.
-- The daemon starts it as the shell's commands start (`command.Spawn`). `axiom open TARGET [ARG…]` asks the daemon, or works it out itself when none runs; `--print` prints the command and starts nothing. The keybinds run it (`Apps.terminalCommand` is `axiom open terminal`, …), so a new default needs no new compositor config; `Apps.inTerminal` runs a command in `axiom open terminal --`.
+- The daemon starts it as the shell's commands start (`command.Spawn`). `axiom open TARGET [ARG…]` asks the daemon, or works it out itself when none runs; `--print` prints the command and starts nothing. The keybinds run it (`Apps.terminalCommand` is `axiom open terminal`, …), so a new default needs no new compositor config. Binds call the installed binary, which in dev mode is built from the install tree and may predate `open`: each bind falls back to the freedesktop opener (`|| exec xdg-terminal-exec`, `xdg-open`). `Apps.inTerminal` runs a command in `axiom open terminal --` by `Paths.toolBin` (the daemon's own binary, so the dev build's in dev mode).
 - Everything the shell opened with `xdg-open` before goes through `DefaultAppsManager.open`: notification links, screenshots, the wallpaper and compositor config folders, drives.
 
 ### The settings
-- Settings › General › Default apps (`DefaultAppsCard`): `DefaultAppPickers` (a picker per role, app icons from `AppIconManager`), then Other file types. A pick is saved at once (not a config edit); a role whose Apps command is set says axiom runs that instead. App commands (the Apps section) follows, its three commands empty unless set.
+- Settings › General › Default apps (`DefaultAppsCard`): `DefaultAppPickers` (a picker per role, app icons from `AppIconManager`), then Other file types. A pick is saved at once (not a config edit). Every picker ends with Custom command…, which opens a field for the role's `Apps.commands.<role>` (`x-settings: false`: edited only here), saved at once (`SettingsManager.commitValues`); picking an app clears it. Other apps (the Apps section: the network editor) follows.
 - The onboarder's Apps page shows the browser, files, terminal and mail pickers.

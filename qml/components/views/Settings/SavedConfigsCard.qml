@@ -151,7 +151,7 @@ FieldGroup {
           Subtitle {
             armed: row.pendingAction === "restore"
             restoring: row.fileBaseName
-            idle: I18n.formatDate(row.fileModified, I18n.dateFormat("dateTime"))
+            idle: I18n.formatDate(row.fileModified, I18n.dateTimeFormat())
           }
         }
 

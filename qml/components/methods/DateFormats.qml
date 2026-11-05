@@ -89,29 +89,25 @@ QtObject {
         "longDate": "dddd, d MMMM",
         "mediumDate": "d MMM yyyy",
         "shortDate": "ddd d MMM",
-        "fullDate": "dddd, d MMMM yyyy",
-        "dateTime": "d MMM yyyy HH:mm"
+        "fullDate": "dddd, d MMMM yyyy"
       },
       "mdy": {
         "longDate": "dddd, MMMM d",
         "mediumDate": "MMM d, yyyy",
         "shortDate": "ddd, MMM d",
-        "fullDate": "dddd, MMMM d, yyyy",
-        "dateTime": "MMM d, yyyy HH:mm"
+        "fullDate": "dddd, MMMM d, yyyy"
       },
       "ymd": {
         "longDate": "dddd, MMMM d",
         "mediumDate": "yyyy MMM d",
         "shortDate": "ddd MMM d",
-        "fullDate": "dddd, yyyy MMMM d",
-        "dateTime": "yyyy MMM d HH:mm"
+        "fullDate": "dddd, yyyy MMMM d"
       },
       "iso": {
         "longDate": "dddd yyyy-MM-dd",
         "mediumDate": "yyyy-MM-dd",
         "shortDate": "ddd MM-dd",
-        "fullDate": "dddd yyyy-MM-dd",
-        "dateTime": "yyyy-MM-dd HH:mm"
+        "fullDate": "dddd yyyy-MM-dd"
       }
     })
 }

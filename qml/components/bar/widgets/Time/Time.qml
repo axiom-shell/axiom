@@ -47,7 +47,7 @@ BarWidget {
     const date = root.now;
     if (properties.timeFormat)
       return I18n.formatDate(date, properties.timeFormat);
-    return I18n.formatDate(date, I18n.dateFormat((use24Hour ? "clock24" : "clock12") + (showSeconds ? "s" : "")));
+    return I18n.formatDate(date, I18n.clockFormat(properties.hourFormat, showSeconds));
   }
   readonly property string dateText: I18n.formatDate(root.now, properties.dateFormat || I18n.dateFormat("mediumDate"))
 

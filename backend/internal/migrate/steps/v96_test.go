@@ -18,12 +18,13 @@ func TestV96ClocksFollowDateAndTime(t *testing.T) {
 	})
 }
 
-func TestV96TerminalFollowsTheSystem(t *testing.T) {
+func TestV96AppCommands(t *testing.T) {
 	t.Parallel()
 	runStepCases(t, 96, []stepCase{
-		{"the old default", `{"Apps":{"terminal":"kitty","browser":""}}`, `{"Apps":{"terminal":"","browser":""}}`, true},
-		{"one of the user's", `{"Apps":{"terminal":"foot"}}`, `{"Apps":{"terminal":"foot"}}`, false},
-		{"kitty with options", `{"Apps":{"terminal":"kitty --single-instance"}}`, `{"Apps":{"terminal":"kitty --single-instance"}}`, false},
+		{"the old default terminal is dropped", `{"Apps":{"terminal":"kitty","browser":"","networkEditor":"nm-connection-editor"}}`, `{"Apps":{"networkEditor":"nm-connection-editor"}}`, true},
+		{"the user's commands move", `{"Apps":{"terminal":"foot","fileManager":"thunar","browser":"firefox --new-window"}}`, `{"Apps":{"commands":{"terminal":"foot","fileManager":"thunar","browser":"firefox --new-window"}}}`, true},
+		{"kitty with options is the user's", `{"Apps":{"terminal":"kitty --single-instance"}}`, `{"Apps":{"commands":{"terminal":"kitty --single-instance"}}}`, true},
 		{"no Apps", `{"General":{}}`, `{"General":{}}`, false},
+		{"nothing to move", `{"Apps":{"networkEditor":""}}`, `{"Apps":{"networkEditor":""}}`, false},
 	})
 }

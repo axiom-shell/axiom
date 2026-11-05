@@ -566,7 +566,7 @@ QtObject {
     return true;
   }
 
-  // Sets config values by dotted path ({ "Apps.terminal": "foot" }) and
+  // Sets config values by dotted path ({ "Apps.commands.terminal": "foot" }) and
   // saves them at once; false if saves can't be made. For pages
   // that apply as they go (SettingRows), not the settings page's draft.
   function commitValues(values) {

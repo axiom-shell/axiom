@@ -17,7 +17,7 @@ const userConfig = `{"format": 2, "version": 76,
 	"WindowLook": {"gaps": {"inner": 9}},
 	"Battery": {"lowThreshold": 12},
 	"Weather": {"location": "Oslo"},
-	"Apps": {"terminal": "foot"},
+	"Apps": {"networkEditor": "foot"},
 	"Compositor": {"mode": "managed"},
 	"Idle": {"enabled": true},
 	"Keybinds": {"binds": [
@@ -59,9 +59,9 @@ func TestPickTakesScopes(t *testing.T) {
 		in, out []string
 		binds   []string
 	}{
-		{"look", nil, []string{"Appearance.theme.name", "WindowLook.gaps", "Bars.items", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax"}, []string{"Battery", "Weather", "Keybinds", "Apps.terminal", "Appearance.wallpaper.file", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode"}, []string{}},
-		{"personal", []string{"personal"}, []string{"Appearance.theme.name", "Keybinds.binds"}, []string{"Battery", "Apps.terminal"}, []string{"super-space"}},
-		{"everything", Everything, []string{"Keybinds.binds", "Apps.terminal"}, []string{"Battery", "Weather.location", "Appearance.wallpaper.file", "Appearance.wallpaper.folder"}, []string{"super-space", "mine"}},
+		{"look", nil, []string{"Appearance.theme.name", "WindowLook.gaps", "Bars.items", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax"}, []string{"Battery", "Weather", "Keybinds", "Apps.networkEditor", "Appearance.wallpaper.file", "Appearance.wallpaper.folder", "Appearance.wallpaper.mode"}, []string{}},
+		{"personal", []string{"personal"}, []string{"Appearance.theme.name", "Keybinds.binds"}, []string{"Battery", "Apps.networkEditor"}, []string{"super-space"}},
+		{"everything", Everything, []string{"Keybinds.binds", "Apps.networkEditor"}, []string{"Battery", "Weather.location", "Appearance.wallpaper.file", "Appearance.wallpaper.folder"}, []string{"super-space", "mine"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -149,7 +149,7 @@ func TestApplyKeepsWhatIsntShared(t *testing.T) {
 	if got := bindIDs(personal); !reflect.DeepEqual(got, []string{"theirs", "mine"}) {
 		t.Errorf("binds with personal (the user's exec bind kept): %v", got)
 	}
-	if value(personal, "Apps.terminal") != "foot" {
+	if value(personal, "Apps.networkEditor") != "foot" {
 		t.Error("a command was taken without commands")
 	}
 	if errs := config.ValidationErrors(s, personal, s.Root()); len(errs) > 0 {
@@ -165,7 +165,7 @@ func TestExportRoundTrips(t *testing.T) {
 	s := v2(t)
 	cfg := filled(t, s, userConfig)
 	defaults := filled(t, s, `{"format": 2, "version": 76}`)
-	other := filled(t, s, `{"format": 2, "version": 76, "Battery": {"lowThreshold": 30}, "Apps": {"terminal": "alacritty"},
+	other := filled(t, s, `{"format": 2, "version": 76, "Battery": {"lowThreshold": 30}, "Apps": {"networkEditor": "alacritty"},
 		"Keybinds": {"binds": [{"id": "x", "key": "SUPER + Y", "action": "exec", "argument": "y"}]}}`)
 	for _, carry := range [][]string{nil, {"personal"}, Everything} {
 		for name, base := range map[string]*jsonx.Object{"defaults": defaults, "other": other} {
@@ -197,7 +197,7 @@ func TestSnapshotRoundTrip(t *testing.T) {
 	if value(restored, "Appearance.wallpaper.file") != "file:///home/u/a.png" || value(restored, "Appearance.wallpaper.mode") != "rotate" {
 		t.Errorf("wallpaper setup: %s", jsonx.MarshalCompact(value(restored, "Appearance.wallpaper")))
 	}
-	if value(restored, "Battery.lowThreshold") != 30.0 || value(restored, "Appearance.theme.name") != "nord" || value(restored, "Apps.terminal") != "foot" {
+	if value(restored, "Battery.lowThreshold") != 30.0 || value(restored, "Appearance.theme.name") != "nord" || value(restored, "Apps.networkEditor") != "foot" {
 		t.Error("machine settings weren't kept, or the look and commands not restored")
 	}
 	// A wallpaper whose file is gone keeps the current one
@@ -250,7 +250,7 @@ func TestDropped(t *testing.T) {
 	s := v2(t)
 	cfg := Sparse(s, filled(t, s, `{"format": 2,
 		"Appearance": {"theme": {"name": "nord"}, "wallpaper": {"folder": "~/walls"}},
-		"Apps": {"terminal": "foot"},
+		"Apps": {"networkEditor": "foot"},
 		"Compositor": {"mode": "managed"},
 		"Keybinds": {"binds": [{"id": "mine", "key": "SUPER + T", "action": "exec", "argument": "foot"}]},
 		"Bars": {"items": [{"id": "side", "screen": {"mode": "named", "names": ["#2", "DP-3"]}}]}}`))
@@ -260,9 +260,9 @@ func TestDropped(t *testing.T) {
 		monitors Monitors
 		want     []string
 	}{
-		{"look", nil, nil, []string{"machine Appearance.wallpaper.folder", "commands Apps.terminal", "takeover Compositor.mode", "personal Keybinds.binds", "machine Bars.items[side].screen.names"}},
-		{"places", nil, Monitors{}, []string{"machine Appearance.wallpaper.folder", "commands Apps.terminal", "takeover Compositor.mode", "personal Keybinds.binds", "machine Bars.items[side].screen.names[1]"}},
-		{"personal", []string{"personal"}, Monitors{}, []string{"machine Appearance.wallpaper.folder", "commands Apps.terminal", "takeover Compositor.mode", "commands Keybinds.binds[mine]", "machine Bars.items[side].screen.names[1]"}},
+		{"look", nil, nil, []string{"machine Appearance.wallpaper.folder", "commands Apps.networkEditor", "takeover Compositor.mode", "personal Keybinds.binds", "machine Bars.items[side].screen.names"}},
+		{"places", nil, Monitors{}, []string{"machine Appearance.wallpaper.folder", "commands Apps.networkEditor", "takeover Compositor.mode", "personal Keybinds.binds", "machine Bars.items[side].screen.names[1]"}},
+		{"personal", []string{"personal"}, Monitors{}, []string{"machine Appearance.wallpaper.folder", "commands Apps.networkEditor", "takeover Compositor.mode", "commands Keybinds.binds[mine]", "machine Bars.items[side].screen.names[1]"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()

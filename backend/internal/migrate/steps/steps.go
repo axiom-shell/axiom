@@ -184,8 +184,9 @@ var all = []Step{
 	// joined configs where their keys and ids are free (v95.go)
 	{Version: 95, Run: v95},
 	// v96: the settings overhaul: clocks' use24Hour became hourFormat
-	// (default follows Date & time), Apps.terminal's old default kitty
-	// empty (v96.go)
+	// (default follows Date & time), Apps' terminal, fileManager and
+	// browser moved into Apps.commands, the old default kitty dropped
+	// (v96.go)
 	{Version: 96, Run: v96},
 }
 

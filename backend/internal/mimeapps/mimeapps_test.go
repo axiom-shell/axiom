@@ -210,6 +210,8 @@ func TestCommand(t *testing.T) {
 		{"terminal", []string{"htop"}, Overrides{"terminal": "kitty --single-instance"}, "kitty --single-instance -e htop"},
 		{"notes.TXT", nil, nil, "foot -- nvim notes.TXT"}, // nvim is Terminal=true
 		{"photo.png", nil, nil, "gimp photo.png"},         // no default: the first by name
+		{"photo.png", nil, Overrides{"images": "imv -f"}, "imv -f photo.png"},
+		{"textEditor", []string{"a.txt"}, Overrides{"textEditor": "gedit"}, "gedit a.txt"},
 		{"file:///tmp/photo.png", nil, nil, "gimp file:///tmp/photo.png"},
 	} {
 		got, err := a.Command(c.target, c.args, c.ov)

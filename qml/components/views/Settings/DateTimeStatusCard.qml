@@ -38,13 +38,18 @@ FieldGroup {
   }
 
   function startEditing() {
-    root.typedDate = I18n.formatDate(clock.date, "yyyy-MM-dd");
-    root.typedTime = I18n.formatDate(clock.date, "HH:mm");
+    const now = new Date();
+    root.typedDate = I18n.formatDate(now, "yyyy-MM-dd");
+    root.typedTime = I18n.formatDate(now, "HH:mm");
     dateEntry.text = root.typedDate;
     timeEntry.text = root.typedTime;
   }
 
-  Component.onCompleted: DateTimeManager.refresh()
+  Component.onCompleted: {
+    DateTimeManager.refresh();
+    // Filled for a clock already set by hand
+    root.startEditing();
+  }
 
   SystemClock {
     id: clock
@@ -139,10 +144,12 @@ FieldGroup {
       enabled: DateTimeManager.canNtp && !DateTimeManager.busy
       checked: DateTimeManager.ntp
       onToggled: {
-        DateTimeManager.setNtp(ntpSwitch.checked);
+        const on = ntpSwitch.checked;
+        DateTimeManager.setNtp(on);
         // Follows timedated's answer, not the click
         ntpSwitch.checked = Qt.binding(() => DateTimeManager.ntp);
-        if (!ntpSwitch.checked)
+        // The fields below start at the time now
+        if (!on)
           root.startEditing();
       }
     }

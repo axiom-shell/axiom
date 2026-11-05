@@ -347,7 +347,7 @@ QtObject {
     };
   }
 
-  // The file manager (Apps.fileManager, else the default one), given the
+  // The file manager (Apps.commands.fileManager, else the default one), given the
   // folder
   function _openFolder(path) {
     if (path)
