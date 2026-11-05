@@ -520,17 +520,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### SurfaceContext.layout's pill and merged results have no test row
-- **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `qml/components/methods/SurfaceContext.qml:337` (`layout`)
-- **What:** No row pins `layout`'s result for:
-  - a box on a pill: `backfill` 1, `attachFromBar` = pill foot, `ownSink` null, shadow look `"bar"`. The one pill-mode row checks only `mode` and `pill.index`.
-  - a pill bar showing no pills (`merged`): `attachClearance`, `straight`, `ownSink`.
-  - `ownSink`'s null branches: a bare edge and a non-solid bar.
-
-  A slip in any of these passes today (63 rows pass). A lost backfill shows the pill stroke's fringe as a line; a wrong `attachClearance` puts a merged box's content where the pills would be. Fix: add `test_layout_on_pill`, `test_layout_merged` and a bare-edge `ownSink` row.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### A pill's shadow run-on rectangles log stackAfter warnings
 - **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
 - **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.

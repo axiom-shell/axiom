@@ -438,7 +438,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [An integrated menu's zone stays behind when it changes edge or screen](../issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
   - [Previewing a submenu menu doesn't open it once a module above its row has grown](../issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - **bar-popouts-08** (5):
-  - [SurfaceContext.layout's pill and merged results have no test row](../issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
+  - SurfaceContext.layout's pill and merged results have no test row
   - Both tray menu lists override the same width cap
   - The tray menu draws its own separator
   - The dock's footprint assumes fillets at both ends
