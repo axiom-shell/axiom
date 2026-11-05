@@ -372,6 +372,7 @@ Found by the audits:
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
+- [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule)
 - [Reopening the overlay while it closes leaves it open but hidden](issues.md#reopening-the-overlay-while-it-closes-leaves-it-open-but-hidden)
 - [A clean layout's problem blocks saving the others in the Layouts editor](issues.md#a-clean-layouts-problem-blocks-saving-the-others-in-the-layouts-editor)
 - [The five layouts drafts are listed by hand in eight places](issues.md#the-five-layouts-drafts-are-listed-by-hand-in-eight-places)

@@ -445,7 +445,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - **bar-popouts-09** (5, done):
   - WindowLookConfig rebuilds BarStyle.look
-  - SystemStats works out ValueStyleWidget's style fallbacks again
+  - SystemStats works out ValueStyleWidget's style fallbacks again (the style rules; its pill colour and text-by-state rule are filed again as [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](../issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule))
   - The workspace switchers find a workspace by id with hand-written loops
   - The two workspace popouts share 28 lines of payload and colour properties
   - Small improvements to WorkspaceGrid
