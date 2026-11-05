@@ -180,7 +180,6 @@ Panel {
     Loader {
       width: parent.width
       active: row.asking
-
       sourceComponent: WifiJoinForm {
         security: row.kind
         error: NetworkingManager.joinError
