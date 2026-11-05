@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.core
+import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
@@ -71,11 +72,17 @@ Item {
   }
 
   // A card from an object with `x-showIf` (e.g. managed-only settings), or
-  // one whose every row is hidden by its own `x-showIf` (an `x-group` card)
+  // one whose every row is hidden by its own `x-showIf` or `x-hintedIf`
+  // (an `x-group` card; a window look card the compositor can't do)
   function _groupShown(group) {
     if (!root.conditionHolds(group.showIf, group.showIfParent))
       return false;
-    return group.kind !== "rows" || group.rows.length === 0 || group.rows.some(row => row.kind === "group" || (root.conditionHolds(row.schema?.["x-showIf"], row.path.slice(0, -1)) && (row.groupShowIf ?? []).every(outer => root.conditionHolds(outer.condition, outer.path))));
+    return group.kind !== "rows" || group.rows.length === 0 || group.rows.some(row => row.kind === "group" || (root.conditionHolds(row.schema?.["x-showIf"], row.path.slice(0, -1)) && !root._hintHides(row) && (row.groupShowIf ?? []).every(outer => root.conditionHolds(outer.condition, outer.path))));
+  }
+
+  // A row's `x-hintedIf` hides it (SchemaLayout.hintedHides)
+  function _hintHides(row) {
+    return SchemaLayout.hintedHides(row.schema?.["x-hintedIf"], key => key.startsWith("/") ? SettingsManager.configValueAt(key.slice(1)) : root.valueAt(SchemaLayout.keyPath(row.path.slice(0, -1), key)), capability => CompositorManager.unsupportedHint(capability));
   }
 
   // Every category's cards with rows, carrying their category's name, as

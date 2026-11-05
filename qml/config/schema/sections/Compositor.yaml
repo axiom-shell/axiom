@@ -28,7 +28,7 @@ properties:
     x-group: Compositor setup
     default: true
     description: Lock restore after a shell restart, ignoring apps' requests to maximize themselves, and a workspace slide animation.
-    x-enabledIf: {/$compositor: hyprland}
+    x-showIf: {/$compositor: hyprland}
   hyprland:
     x-scope: personal
     type: object

@@ -8,7 +8,7 @@ The themed window look axiom gives the compositor: borders, shape, gaps, blur an
 
 ### What it covers
 - The section is `WindowLook` (`WindowLookConfig`, the daemon reading it whole; `Hyprland.look` before config version 56). It is `x-scope: look`, so exports, examples and imports carry it. It isn't `x-takeover`.
-- Each part's fields carry `x-enabledIf: { "/$supports.window<Part>": true }`, so a compositor without that part shows them greyed out with why ([schema annotations](../core/schema-annotations.md)); fields one compositor alone has also need `"/$compositor"`.
+- Each part's fields carry `x-hintedIf: { "/$supports.window<Part>": true }`: a compositor without that part hides them, unless an upgrade of it can (plain sway: "SwayFX can."), when they're greyed out with why ([schema annotations](../core/schema-annotations.md)); fields one compositor alone has also carry `"/$compositor"` in their `x-showIf`, hidden elsewhere.
 - It holds:
   - themed borders: `activeColor`/`inactiveColor` (theme color names; empty follows the theme's `borderFocus`/`border`)
   - the shape: border width and corner rounding, axiom's (`Appearance.borderWidth`/`borderRadius`) while `matchShell`, else `borderSize`/`rounding`. Hyprland's managed options held these before config version 58.

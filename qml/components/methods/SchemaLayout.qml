@@ -198,18 +198,36 @@ QtObject {
     }) ?? "";
   }
 
+  // `x-hintedIf` (a compositor condition): whether its row is hidden. A
+  // failing key hides it, unless every failing key is a
+  // `/$supports.<capability>` the backend names an upgrade for
+  // (hintOf(capability), CompositorManager.unsupportedHint, isn't ""):
+  // then the row is greyed out as an `x-enabledIf` one (failingKey says
+  // why)
+  function hintedHides(condition, valueOf, hintOf) {
+    if (!condition)
+      return false;
+    return Object.keys(condition).some(key => {
+      const one = {};
+      one[key] = condition[key];
+      if (root.showIfHolds(one, valueOf))
+        return false;
+      return !key.startsWith("/$supports.") || hintOf(key.slice("/$supports.".length)) === "";
+    });
+  }
+
   // Whether the setting at `path` (from the schema's root) can be set at
   // all under the running compositor: the `/$` keys (SettingsManager.
-  // configValueAt) of the `x-showIf` and `x-enabledIf` of its section, the
-  // objects it's in and its own hold. Other keys depend on the config, and
-  // are left out.
+  // configValueAt) of the `x-showIf`, `x-enabledIf` and `x-hintedIf` of its
+  // section, the objects it's in and its own hold. Other keys depend on
+  // the config, and are left out.
   function compositorAllows(schema, path, valueOf) {
     let node = schema;
     for (const key of path) {
       node = node?.properties?.[key];
       if (!node)
         return false;
-      const condition = Object.assign({}, node["x-showIf"] ?? {}, node["x-enabledIf"] ?? {});
+      const condition = Object.assign({}, node["x-showIf"] ?? {}, node["x-enabledIf"] ?? {}, node["x-hintedIf"] ?? {});
       const own = Object.keys(condition).filter(name => name.startsWith("/$")).reduce((result, name) => {
         result[name] = condition[name];
         return result;

@@ -909,6 +909,100 @@ TestCase {
     verify(!SchemaLayout.compositorAllows(greyed, ["Look", "round"], none));
     verify(SchemaLayout.compositorAllows(greyed, ["Look", "round"], all));
     verify(!SchemaLayout.compositorAllows(schema, ["Look", "missing"], all));
+    // So does hidden or greyed by x-hintedIf
+    const hinted = {
+      "properties": {
+        "Look": {
+          "properties": {
+            "dim": {
+              "type": "boolean",
+              "x-hintedIf": {
+                "/$supports.windowDim": true
+              }
+            }
+          }
+        }
+      }
+    };
+    verify(!SchemaLayout.compositorAllows(hinted, ["Look", "dim"], none));
+    verify(SchemaLayout.compositorAllows(hinted, ["Look", "dim"], all));
+  }
+
+  // `x-hintedIf`: hidden while it fails, unless every failing key is a
+  // capability the backend names an upgrade for (then greyed, failingKey)
+  function test_hintedHides_data() {
+    const sway = capability => ["windowRounding", "windowDim"].includes(capability) ? "SwayFX can." : "";
+    const none = capability => "";
+    return [
+      {
+        "tag": "no condition",
+        "condition": undefined,
+        "supports": [],
+        "hint": none,
+        "hides": false
+      },
+      {
+        "tag": "holds",
+        "condition": {
+          "/$supports.windowDim": true
+        },
+        "supports": ["windowDim"],
+        "hint": none,
+        "hides": false
+      },
+      {
+        "tag": "fails, no upgrade (niri)",
+        "condition": {
+          "/$supports.windowDim": true
+        },
+        "supports": [],
+        "hint": none,
+        "hides": true
+      },
+      {
+        "tag": "fails, an upgrade can (plain sway)",
+        "condition": {
+          "/$supports.windowDim": true
+        },
+        "supports": [],
+        "hint": sway,
+        "hides": false
+      },
+      {
+        "tag": "one failing key without an upgrade hides",
+        "condition": {
+          "/$supports.windowShape": true,
+          "/$supports.windowRounding": true
+        },
+        "supports": [],
+        "hint": sway,
+        "hides": true
+      },
+      {
+        "tag": "only the failing key's upgrade counts",
+        "condition": {
+          "/$supports.windowShape": true,
+          "/$supports.windowRounding": true
+        },
+        "supports": ["windowShape"],
+        "hint": sway,
+        "hides": false
+      },
+      {
+        "tag": "a compositor key always hides",
+        "condition": {
+          "/$compositor": "hyprland"
+        },
+        "supports": [],
+        "hint": capability => "SwayFX can.",
+        "hides": true
+      }
+    ];
+  }
+
+  function test_hintedHides(data) {
+    const valueOf = key => key === "/$compositor" ? "sway" : data.supports.includes(key.slice("/$supports.".length));
+    compare(SchemaLayout.hintedHides(data.condition, valueOf, data.hint), data.hides);
   }
 
   // `x-categories` orders them and names their icon and page; others

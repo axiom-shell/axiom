@@ -140,14 +140,17 @@ Loader {
 
   // `x-showIf` (a group row's object's own), and those of the objects the
   // row is inside (`groupShowIf`), checked against _valueOf
-  readonly property bool shown: SchemaLayout.showIfHolds(row.kind === "group" ? row.showIf : fieldSchema["x-showIf"], root._valueOf) && (row.groupShowIf ?? []).every(outer => SchemaLayout.showIfHolds(outer.condition, key => root._valueFrom(outer.path, key)))
+  // and `x-hintedIf` (SchemaLayout.hintedHides: hidden where the compositor
+  // can't do it and the backend names nothing that can)
+  readonly property bool shown: SchemaLayout.showIfHolds(row.kind === "group" ? row.showIf : fieldSchema["x-showIf"], root._valueOf) && (row.groupShowIf ?? []).every(outer => SchemaLayout.showIfHolds(outer.condition, key => root._valueFrom(outer.path, key))) && !SchemaLayout.hintedHides(fieldSchema["x-hintedIf"], root._valueOf, capability => CompositorManager.unsupportedHint(capability))
 
-  // `x-enabledIf` (as x-showIf): while it doesn't hold the row is greyed
-  // out, its value kept, and says why (`x-disabledNote`, else what the
-  // compositor can't do, CompositorManager.unsupportedNote). Only a row
-  // shown on its own says it: one shown by a sibling (a part's fields,
-  // under its switch) is greyed with it, without repeating it.
-  readonly property string _blockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf)
+  // `x-enabledIf` (as x-showIf), or a shown `x-hintedIf`: while it doesn't
+  // hold the row is greyed out, its value kept, and says why
+  // (`x-disabledNote`, else what the compositor can't do and what can,
+  // CompositorManager.unsupportedNote). Only a row shown on its own says
+  // it: one shown by a sibling (a part's fields, under its switch) is
+  // greyed with it, without repeating it.
+  readonly property string _blockedBy: SchemaLayout.failingKey(fieldSchema["x-enabledIf"], root._valueOf) || SchemaLayout.failingKey(fieldSchema["x-hintedIf"], root._valueOf)
   readonly property bool allowed: _blockedBy === ""
   // Shown by a sibling's value (a part's fields, under its switch)
   readonly property bool followsSibling: Object.keys(fieldSchema["x-showIf"] ?? {}).some(key => !key.startsWith("/"))
