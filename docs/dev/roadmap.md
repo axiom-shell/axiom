@@ -390,7 +390,6 @@ Found by the audits:
 - [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
 - [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
 - [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
-- [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)

@@ -717,12 +717,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 
-### MenuSubmenu repeats EdgeMenuBody's module grid
-- **Where:** `qml/components/content/Submenu/MenuSubmenu.qml:24` (`_modulesKey`, `host`, `overlayGrid`), `qml/components/surfaces/edgemenu/EdgeMenuBody.qml:25` (`_modulesKey`)
-- **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
 ### ToastStack logs a binding loop on _attachedShowing
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (`_attachedShowing`)
 - **What:** The live shell logged `Binding loop detected for property "_attachedShowing"` (`@shell/Notifications.qml[42:15]`, ToastStack.qml:485) on two reloads on 2026-11-01, not on the next. `_attachedShowing` reads `attached`, `covered`, `toasts` and `_leaving`, and its change handler calls `box.show()` / `box.hide()`; one of those likely writes back a value it reads during the same evaluation. Not traced.

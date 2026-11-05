@@ -19,7 +19,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - Each module's content is zoomed as on the overlay (`ModuleGrid.zoom` → `OverlaySlot.zoom`, `ExpandedModule.zoom`): laid out at its slot's size over `EdgeMenusConfig.zoomOf` and scaled back to fill it.
   - `zoomOf`: the menu's `moduleScale` as a factor (`GridPlacement.zoomOf`, 1 within 2 %).
   - So `moduleScale` scales text with the cards, while the screen only changes how big the cards are. Text size itself is the Interface scale's (`Widget.scale`, through `Appearance.fontSize` and the Widget sizes).
-  - Submenus (`MenuSubmenu`) do the same on their parent menu's screen.
+  - Submenus (`MenuSubmenu`) are an `EdgeMenuBody` too, with `submenu` set and `screen` that of their parent menu: the same grid and zoom on its screen, only capped (never stretched), with no pin or Escape of its own.
 - Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
 - Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.
 - With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`).

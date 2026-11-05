@@ -41,8 +41,8 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 
 ### Submenus: the Submenu module
 - `content/Submenu`: icon, label, an arrow pointing where it opens; `openOnHover`, else a click.
-- In a floating menu it opens another menu (`menu`) in the menu's `SubPopout` beside it, as `content/parts/MenuSubmenu`:
-  - that menu's modules on a grid at the card size of the opening menu's screen and its own `moduleScale`;
+- In a floating menu it opens another menu (`menu`) in the menu's `SubPopout` beside it, as `content/Submenu/MenuSubmenu`:
+  - that menu's `EdgeMenuBody` (`submenu` set): its modules on a grid at the card size of the opening menu's screen and its own `moduleScale`;
   - their `host` is that menu's with `submenu: true` (no pin).
 - In an integrated menu (no `SubPopout`) the row is dimmed and inert.
 - How the `SubPopout` itself is placed and joined: see [Popout submenus](../popouts/submenus.md).
