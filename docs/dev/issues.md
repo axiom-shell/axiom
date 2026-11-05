@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### fcitx5's switches go unheard without a tray watcher
+- **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
+- **What:** fcitx5's Controller1 has no signal for the input method changing, so the service hears a switch only through fcitx5's StatusNotifierItem (`NewIcon` / `NewToolTip`). fcitx5 registers that item only while a StatusNotifierWatcher runs (and classicui's tray is on); axiom's watcher is Quickshell's, which exists only while a bar has a SystemTray widget. Without one, a switch by fcitx5's own hotkey or menu never reaches `current`: the indicator and OSD stay on the old input method and the compositor's layout doesn't follow (`_followIm`). PLAUSIBLE: settles by switching with fcitx5's hotkey with no tray widget on any bar and reading `inputMethod.get`. Fix: another source of the switch (fcitx5's kimpanel or a watcher the daemon owns), or polling `CurrentInputMethod` only while no item is registered.
+- **Size:** needs a plan
+- **Found:** 2026-11-05, while reviewing input sources (round 5)
+
 ### A bar Grid warns as its bar turns between horizontal and vertical
 - **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
 - **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.

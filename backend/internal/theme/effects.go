@@ -310,11 +310,7 @@ func reloadZathura(r *run) {
 func reloadFcitx5(r *run) {
 	r.bus(func(ctx context.Context, c *dbus.Conn) {
 		const name = "org.fcitx.Fcitx5"
-		reply, err := c.Call(ctx, dbus.BusName, dbus.BusPath, dbus.BusInterface, "NameHasOwner", "s", name)
-		if err != nil || len(reply.Body) == 0 {
-			return
-		}
-		if running, _ := reply.Body[0].(bool); running {
+		if owner, _ := c.NameOwner(ctx, name); owner != "" {
 			_, _ = c.Call(ctx, name, "/controller", "org.fcitx.Fcitx.Controller1", "ReloadAddonConfig", "s", "classicui")
 		}
 	})
