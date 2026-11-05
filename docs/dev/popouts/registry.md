@@ -60,3 +60,4 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
 ### An open popout never moves
 - A bar popout keeps the anchor rect it opened at; a widget moving or growing meanwhile doesn't drag it.
 - It opens where it belongs the next time.
+- The one exception: an open `EdgePopout` whose screen gains or loses a fullscreen window slides out and back in where it would open now ([Held off an edge › EdgePopout extras](held-off-edge.md#edgepopout-extras)).

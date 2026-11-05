@@ -799,6 +799,17 @@ TestCase {
     compare(at({
       "layerOrder": false
     }).slideFrom, 0);
+    // As its window is (`under`, which the host keeps while open), not as
+    // it would open now: opened over a fullscreen window and still over
+    // the bars once that's gone, from the frame line; opened under them
+    // with the overlay open since, from the screen edge
+    compare(at({
+      "under": false
+    }).slideFrom, 0);
+    compare(at({
+      "under": true,
+      "overOverlay": true
+    }).slideFrom, 40);
     // Held off its edge (a detached OSD or edge menu), under a solid bar,
     // a pill bar or the border alike: a connector gap short of its box
     const held = at({
