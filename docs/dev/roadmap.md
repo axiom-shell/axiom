@@ -373,7 +373,6 @@ Found by the audits:
 - [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
-- [Two Bluetooth menus share one discovery scan, and one closing stops the other's](issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
 - [The join form stays incomplete when CA file is picked without a file and the security changed](issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
 - [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
 - [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)

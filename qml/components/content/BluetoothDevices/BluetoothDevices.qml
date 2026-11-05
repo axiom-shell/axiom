@@ -20,8 +20,6 @@ Panel {
   id: root
 
   property int currentTab: 0
-  // Only stop a scan this popout started
-  property bool _startedScan: false
 
   readonly property var shownDevices: currentTab === 0 ? BluetoothManager.pairedDevices : BluetoothManager.discoveredDevices
   readonly property string offMessage: I18n.tr(!BluetoothManager.available ? "No Bluetooth adapter found" : BluetoothManager.blocked ? "Bluetooth is blocked (rfkill)" : "Bluetooth is off")
@@ -42,31 +40,14 @@ Panel {
   flips: true
   maxImplicitHeight: root.implicitHeight + list.growRoom
 
-  function updateScan() {
-    const want = currentTab === 1 && BluetoothManager.enabled;
-    if (want && !BluetoothManager.discovering) {
-      BluetoothManager.setDiscovering(true);
-      _startedScan = true;
-    } else if (!want && _startedScan) {
-      BluetoothManager.setDiscovering(false);
-      _startedScan = false;
-    }
-  }
-
   onCurrentTabChanged: {
-    updateScan();
+    if (currentTab === 1)
+      BluetoothManager.acquireDiscovery(root);
+    else
+      BluetoothManager.releaseDiscovery(root);
     list.fadeIn();
   }
-  Connections {
-    target: BluetoothManager
-    function onEnabledChanged() {
-      root.updateScan();
-    }
-  }
-  Component.onDestruction: {
-    if (_startedScan)
-      BluetoothManager.setDiscovering(false);
-  }
+  Component.onDestruction: BluetoothManager.releaseDiscovery(root)
 
   component BluetoothRow: DeviceRow {
     id: row
