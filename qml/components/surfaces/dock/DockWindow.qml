@@ -245,7 +245,8 @@ Scope {
     screen: root.screen?.name ?? ""
     edge: root._edgeName
     wanted: !root.preview && !root.underOverlay && root._wouldShow
-    footprint: root._footprint()
+    // What it covers shown, in screen px (SurfaceOutline.footprint)
+    footprint: PopoutGeometry.offset(surface.footprint, Qt.point(placeOnScreen.placed.x + surface.x, placeOnScreen.placed.y + surface.y))
   }
   readonly property bool away: !root.preview && (root.underOverlay || root.claim.yielded)
   // Its preview shows in its place, so it hides at once (keeping its zone)
@@ -291,16 +292,6 @@ Scope {
       return Qt.rect(w - reserved[2] - across - root.thickness, reserved[1] + along, root.thickness, root.restLength);
     }
     return Qt.rect(reserved[0] + along, h - reserved[3] - across - root.thickness, root.restLength, root.thickness);
-  }
-
-  // What it covers shown, in screen px: its box, and the fillets beside it
-  // when it grows out of the edge
-  function _footprint() {
-    const r = root._restRect();
-    if (!root.attached)
-      return [r];
-    const m = EdgeAttach.filletMargin(Appearance.borderWidth, Appearance.borderRadius);
-    return [root.vertical ? Qt.rect(r.x, r.y - m, r.width, r.height + m * 2) : Qt.rect(r.x - m, r.y, r.width + m * 2, r.height)];
   }
 
   function reveal(byPointer) {

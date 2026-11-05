@@ -102,7 +102,7 @@ EdgePopout {
   triggerEnabled: root.menu.open.onHover
   hoverDelay: root.menu.open.delay
   triggerWidth: root.menu.trigger.size
-  triggerLength: sync.triggerLength(root.contentItem, root.vertical, root.contentPadding)
+  triggerLength: sync.triggerLength(root.vertical, root.contentPadding, root.screenLength - root.startPad - root.endPad + root.contentPadding * 2)
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
   triggerCentre: GridPlacement.menuFillsEdge(root.menu) ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2

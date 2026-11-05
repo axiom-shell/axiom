@@ -229,7 +229,6 @@ Done: every entry is fixed: sway and SwayFX, then Hyprland's and every composito
 Nothing runs off a screen or clips at 1080p, and pages stay fast as their data grows. Take the 1080p entries as one pass in a nested compositor with a 1080p output.
 
 - [Text clips on 1080p screens](issues.md#text-clips-on-1080p-screens)
-- [An edge menu can be bigger than its screen](issues.md#an-edge-menu-can-be-bigger-than-its-screen)
 - [A popout taller than the screen runs off it](issues.md#a-popout-taller-than-the-screen-runs-off-it)
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
@@ -363,10 +362,6 @@ Found by the audits:
 - [BarPopouts works out its slide distance itself](issues.md#barpopouts-works-out-its-slide-distance-itself)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [NowPlaying builds its strip layout and a second transport hidden in every mode](issues.md#nowplaying-builds-its-strip-layout-and-a-second-transport-hidden-in-every-mode)
-- [SurfaceContext.layout's pill and merged results have no test row](issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
-- [Both tray menu lists override the same width cap](issues.md#both-tray-menu-lists-override-the-same-width-cap)
-- [The tray menu draws its own separator](issues.md#the-tray-menu-draws-its-own-separator)
-- [The dock's footprint assumes fillets at both ends](issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
@@ -390,11 +385,6 @@ Found by the audits:
 - [A command naming a program shows the program as its script](issues.md#a-command-naming-a-program-shows-the-program-as-its-script)
 - [CustomElement's six Binding blocks are Qt.binding in its setSource](issues.md#customelements-six-binding-blocks-are-qtbinding-in-its-setsource)
 - [A custom layout without elements rebuilds its default elements every sample](issues.md#a-custom-layout-without-elements-rebuilds-its-default-elements-every-sample)
-- [An integrated menu's zone stays behind when it changes edge or screen](issues.md#an-integrated-menus-zone-stays-behind-when-it-changes-edge-or-screen)
-- [A whole-edge menu's hover strip covers only its modules' length while closed](issues.md#a-whole-edge-menus-hover-strip-covers-only-its-modules-length-while-closed)
-- [The layouts editor says a menu fits its edge when it scrolls](issues.md#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)
-- [Previewing a submenu menu doesn't open it once a module above its row has grown](issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
-- [MenuSubmenu repeats EdgeMenuBody's module grid](issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - [ToastStack logs a binding loop on _attachedShowing](issues.md#toaststack-logs-a-binding-loop-on-_attachedshowing)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
 - [The notification list's delegates animate with their own easing](issues.md#the-notification-lists-delegates-animate-with-their-own-easing)
@@ -445,6 +435,9 @@ Found while fixing core-ui-theming-04 (row 20):
 Found while reviewing core-ui-theming-06 (row 20):
 - [A NowPlaying seek shows the old place until the next tick, and keeps it while paused](issues.md#a-nowplaying-seek-shows-the-old-place-until-the-next-tick-and-keeps-it-while-paused)
 - [The text cursor keeps blinking with animations off](issues.md#the-text-cursor-keeps-blinking-with-animations-off)
+
+Found while fixing bar-popouts-07 (row 20):
+- [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
 
 Found while moving the backend to the qml/ layout:
 - [The compositor facts' axiomPath is read by nothing](issues.md#the-compositor-facts-axiompath-is-read-by-nothing)

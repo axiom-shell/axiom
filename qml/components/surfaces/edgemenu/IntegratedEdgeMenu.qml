@@ -81,12 +81,15 @@ PopoutWrapperBase {
     frame: root.frame
     onWarpRequested: CompositorManager.warpCursorToLayer("axiom-edge-menu", root.screen?.name ?? "", panel.width, panel.height, loader.x + loader.width / 2, loader.y + loader.height / 2)
   }
-  Component.onDestruction: ScreenEdgeManager.setZone(root.screen?.name ?? "", root._edgeName, 0)
+  Component.onDestruction: ScreenEdgeManager.setZone(root._zoneId, "", "", 0)
 
   // Report the space taken, for surfaces laid out against this edge
   readonly property string _edgeName: ScreenEdge.name(root.edge)
   readonly property int reserved: panel.visible && !menuSlot.idle ? root.depth : 0
-  onReservedChanged: ScreenEdgeManager.setZone(root.screen?.name ?? "", root._edgeName, root.reserved)
+  // Its zone, by its id (kept for onDestruction)
+  readonly property string _zoneId: root.menu.id
+  readonly property var _zone: [root.screen?.name ?? "", root._edgeName, root.reserved]
+  on_ZoneChanged: ScreenEdgeManager.setZone(root._zoneId, ...root._zone)
 
   EdgeTrigger {
     id: trigger
@@ -101,7 +104,7 @@ PopoutWrapperBase {
     startInset: 0
     endInset: 0
     triggerWidth: root.menu.trigger.size
-    triggerLength: sync.triggerLength(loader.item, root.vertical, root.pad)
+    triggerLength: sync.triggerLength(root.vertical, root.pad, root.edgeLength)
     hoverDelay: root.menu.open.delay
     onTriggered: root.show()
   }

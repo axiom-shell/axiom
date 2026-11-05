@@ -22,7 +22,7 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
   - Set a tick later (`Qt.callLater`), so a module's size never feeds back into itself in one pass.
 - It shows `places`, from `GridPlacement.grown(places, growth, growTowards)`. Each grown module:
   1. first takes the free rows in its columns towards the grid's edge;
-     - `growTowards` -1: up to row 0, on pages and top or side menus;
+     - `growTowards` -1: up to row 0, on pages, top or side menus and submenus;
      - `growTowards` 1: down to the last row, on a bottom menu, whose edge is under it;
   2. then grows away from it, pushing what's there along (others stay);
   3. the result is shifted back to row 0.

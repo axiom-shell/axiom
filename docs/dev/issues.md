@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A menu at the screen-size cap can still lose a bar's depth
+- **Where:** `qml/config/EdgeMenusConfig.qml` (`scaleOf`)
+- **What:** `scaleOf` shrinks a menu's Module size so its depth across its edge fits the screen less its padding (`GridPlacement.fitModuleScale`). Worked out from config alone, it doesn't take off what the bars and border reserve across that edge (EdgeMenuManager's frame, `frame.across`), so a menu at the cap sits past them and loses about their depth at the far screen edge (a nested niri run, 2026-11-05: a top menu at Module size 200 reached the screen's bottom edge). Fix: take the frame's `across` off the room too, from the hosts (which know the frame), or leave it (rare: it takes a card size and Module size high enough to reach the cap). Kept as built by the coordinator (2026-11-05): rare path, no product stake.
+- **Size:** small
+- **Found:** 2026-11-05, while fixing bar-popouts-07 (row 20)
+
 ### The tray watcher check could start a watcher by D-Bus activation
 - **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
 - **What:** `tray()` reads `org.kde.StatusNotifierWatcher`'s `RegisteredStatusNotifierItems` without the NoAutoStart flag, so on a system shipping an activatable watcher (none here: `org.x.StatusNotifierWatcher` is the only activatable one) the read would start it. Asking `NameHasOwner` first, or sending NoAutoStart, avoids it.
@@ -268,12 +274,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-27, while measuring the shell's memory
 
-### An edge menu can be bigger than its screen
-- **Where:** `qml/config/EdgeMenusConfig.qml` (`cardUnitOf`), `qml/components/methods/GridPlacement.qml` (`menuPlacement`)
-- **What:** A menu's cards are the card size on its screen (`OverlayConfig.cardUnitOn`, `Widget.cardSize` up to 150 %) times its own `moduleScale` (up to 200 %), and nothing caps the result to the screen: `menuPlacement` sizes the menu from its modules (`trackSizes`) and only places it along the edge. With a high card size and Module size (a 1080 px screen at 150 % × 200 %: cards of about 1350 px), a menu's depth or length passes the screen and the rest is cut off. A fix would shrink its cards to fit, as `screenArrangement` does for screen layouts.
-- **Size:** small
-- **Found:** 2026-10-21, while reviewing the sizing revamp (overlaySettingsRevamp)
-
 ### Text clips on 1080p screens
 - **Where:** `qml/components/views/Layouts/MenuOpening.qml` (the Show on screen / Show other menus buttons)
 - **What:** On a 1920×1080 monitor at the default Interface scale, the edge menu editor's two buttons side by side ("Show on screen", "Show other menus", and their Hide labels) don't fit their halves of the inspector and their labels clip. Likely not the only place: much of the UI was laid out on a 1440 px screen, and since the sizing revamp text keeps its size on every monitor while panels and cards follow the screen. Wants a pass over the overlay pages and inspectors at 1080p (`scripts/dev/nested.sh` with a 1080p output), wrapping or stacking what doesn't fit.
@@ -520,35 +520,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### SurfaceContext.layout's pill and merged results have no test row
-- **Where:** `tests/tst_SurfaceContext.qml:553` (`test_layout_between_pills`), `qml/components/methods/SurfaceContext.qml:337` (`layout`)
-- **What:** No row pins `layout`'s result for:
-  - a box on a pill: `backfill` 1, `attachFromBar` = pill foot, `ownSink` null, shadow look `"bar"`. The one pill-mode row checks only `mode` and `pill.index`.
-  - a pill bar showing no pills (`merged`): `attachClearance`, `straight`, `ownSink`.
-  - `ownSink`'s null branches: a bare edge and a non-solid bar.
-
-  A slip in any of these passes today (63 rows pass). A lost backfill shows the pill stroke's fringe as a line; a wrong `attachClearance` puts a merged box's content where the pills would be. Fix: add `test_layout_on_pill`, `test_layout_merged` and a bare-edge `ownSink` row.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### Both tray menu lists override the same width cap
-- **Where:** `qml/components/content/parts/TrayMenuList.qml:22` (`maxWidth`), `qml/components/content/SystemTray/SystemTray.qml:38`, `qml/components/content/parts/TraySubmenu.qml:21` (`_window`), `qml/components/content/parts/TraySubmenu.qml:34`
-- **What:** TrayMenuList's only two users both replace its default `Widget.px(600)` with the same stand-in, 30% of the screen's width: `(root.wrapper.screen?.width ?? 2000) * 0.3` and `(root._window?.screen?.width ?? 2000) * 0.3`, each marked `// fixed px`. TraySubmenu keeps `_window` only for this, and the default is never used. Fix: make the stand-in TrayMenuList's default, read through its own `QsWindow.window`, and drop SystemTray.qml:38 and TraySubmenu.qml:20-21 and 34 (4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### The tray menu draws its own separator
-- **Where:** `qml/components/content/parts/TrayMenuItem.qml:99` (the separator `Rectangle`)
-- **What:** A separator entry draws a hand-made line (lines 98-106, 9 lines: `height: 1`, `color: Theme.foreground`, `opacity: 0.2`). docs/dev/core/shared-ui-pieces.md lists `StyledSeparator` ("border-coloured divider"), and AGENTS.md says "Reuse before building". It is the only popout divider that ignores the theme's border colour and width. Fix: `StyledSeparator { anchors.centerIn: parent; width: parent.width - root.itemPadding * 2; visible: root.menuItem.isSeparator }`, 4 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### The dock's footprint assumes fillets at both ends
-- **Where:** `qml/components/surfaces/dock/DockWindow.qml:298` (`_footprint`)
-- **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### A pill's shadow run-on rectangles log stackAfter warnings
 - **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
 - **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
@@ -714,41 +685,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-31, while reviewing the custom-widgets system
 
-### An integrated menu's zone stays behind when it changes edge or screen
-- **Where:** `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml:93` (`onReservedChanged`), `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml:88` (`Component.onDestruction`), `qml/services/ui/ScreenEdgeManager.qml:155` (`setZone`)
-- **What:** The menu reports its zone with `ScreenEdgeManager.setZone(root.screen?.name ?? "", root._edgeName, root.reserved)` only when `reserved` changes, and clears it on destruction under the screen and edge it has then. `EdgeMenu` keeps the host across edits (keyed by id, loaded by mode), so changing an open menu's edge or monitor in the layouts editor (open while previewing, or pinned) moves `_edgeName` or `screen` without clearing the old key: `zones["DP-1:top"]` keeps the old depth until qs restarts. Everything reading `zoneOn`/`reservedWithMenusOn` for that edge (floating menus, edge popouts, `BarPopouts.borderInset`, the hover strips' `edgeInset`) then sits past a strip that isn't there. Zones are also keyed per screen and edge only, so two integrated menus open on one edge overwrite each other's, and closing one zeroes the other's. DockWindow already solves both (`_zoneSet`, the key set last, and `DockManager.setZone`'s per-dock key). Fix: as DockWindow, remember the key last set and clear it when the key changes or on destruction, and key the zone by menu id too, summed per edge.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
 ### An integrated top or bottom menu's zone follows its growing modules
 - **Where:** `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml:49` (`depth`), `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml:135` (`exclusiveZone`), `qml/components/surfaces/edgemenu/EdgeMenuBody.qml` (`maxGrownHeight`)
 - **What:** hosts.md says of an integrated menu: "The zone is set once while it's open (windows retile in one step)". But `depth` is `Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)`, with `bodyDepth` the body's live `implicitHeight` on a top or bottom edge: `ModuleGrid.sizes.height`, from the grown places (`ModuleGrid.places`). `exclusiveZone` and the window's `implicitHeight` follow it. So a top menu holding a module with `grow` (Notifications, AudioMixer, WifiNetworks, …: nine modules have it) changes its exclusive zone each time that module grows or shrinks, e.g. when a notification arrives: the windows retile again, and the shown layer window grows (the squeezed flash growing popout windows show). FloatingEdgeMenu avoids this by reserving the most up front (`maxContentDepth: root._body.maxGrownHeight`). Proposed fix (not decided): reserve `maxGrownHeight` on a top or bottom integrated menu, so the zone is set once.
 
   **On hold** (maintainer, 2026-10-31): "put this on hold - note that growing modules kinda needs a re-work or removal". Growing modules as a whole (`grow`, [grow-expand](overlay/grow-expand.md)) need a rework or removal; this entry waits for that and is [deferred](roadmap.md#deferred). No design is recorded.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### A whole-edge menu's hover strip covers only its modules' length while closed
-- **Where:** `qml/components/surfaces/edgemenu/EdgeMenuSync.qml:45` (`triggerLength`), `qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml:105`, `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml:108`, `qml/config/EdgeMenusConfig.qml:114` (`lengthOf`)
-- **What:** With `trigger.length` 0 (the default) the strip is "the menu's length" (overview.md). `triggerLength(body, …)` takes the body's length while it's loaded, else `EdgeMenusConfig.lengthOf`: the modules' natural grid plus `paddingOf` twice. Both hosts load the body only while open (EdgePopout's loader is `active: root.occupied || root.keepLoaded`, IntegratedEdgeMenu's `active: root.occupied`). So a `length: "edge"` menu with `open.onHover`, closed, opens only from a strip as long as its unstretched modules, centred on the edge (`triggerCentre`/`centre` are the edge's middle); open, the strip spans the edge. Hovering near either end of the edge, where the menu draws, does nothing. For every menu the closed strip is also shorter than the open one: `lengthOf` leaves out the box's border (floating: `contentPadding` is `borderWidth + padding`) and an integrated menu's frame (`pad`). Fix: work the strip out from config alone, open or closed, with the host's own padding: `menu.trigger.length > 0 ? menu.trigger.length : menu.length === "edge" ? <the host's room along the edge> : gridLengthOf(menu, …) + pad * 2`, dropping the `body` argument; `lengthOf` (EdgeMenusConfig.qml:110–116, 7 lines) then has no caller once the editor's fit check uses the placement ([its entry](#the-layouts-editor-says-a-menu-fits-its-edge-when-it-scrolls)).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### The layouts editor says a menu fits its edge when it scrolls
-- **Where:** `qml/components/views/Layouts/MenuTarget.qml:22` (`tooLong`), `qml/components/views/Layouts/MenuTarget.qml:18` (`length`)
-- **What:** `tooLong` is `root.length > root.edgeLength`: `lengthOf` (the grid plus `paddingOf` twice) against the screen's whole edge. On screen the menu's room is the edge less what the perpendicular edges reserve and the box's insets (`frame.startPad`/`endPad`), and `GridPlacement.menuCell` decides it doesn't fit (`cell` null: it starts at `startPad` and scrolls). Scenario: a right-edge menu on a 1080 px screen with a 40 px top bar, its grid 1000 px and padding 8: the editor says "1016 px along its edge" with no warning, the nudge arrows vanish (`onLattice` false) with no reason given, and on screen it scrolls. AGENTS.md: "A methods helper's decision … is read from its output, never re-derived in a host". Fix: `tooLong: root.menu?.length !== "edge" && root.place !== null && root.place.cell === null`, and the px text from `root.place.length` (the grid along the edge, as `menuPlacement` returns it), dropping `length`.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### Previewing a submenu menu doesn't open it once a module above its row has grown
-- **Where:** `qml/components/content/Submenu/Submenu.qml:35` (`_firstOpener`)
-- **What:** "Show on screen" on a submenu menu holds the parent open, and the parent's first Submenu row opening it opens it (`previewed` needs `_firstOpener`). `_firstOpener` finds that row by comparing the config's `place.x`/`place.y` with `root.slotRect[0]`/`[1]`, but `slotRect` is `GridPlacement.rectOf(slot.place)` from `ModuleGrid.places`, the grown places: a growing module above the row in its columns (Notifications with a notification, say) pushes it down (`GridPlacement.grown`), the coordinates differ, no row is the first opener, and the submenu never opens while the editor says it's shown. Fix: match the row by something growth doesn't move: hand modules their config place beside `slotRect` (OverlaySlot) and compare that, or compare the row's `properties` with the first opener's (two identical rows open the same menu alike).
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the edge-menus system
-
-### MenuSubmenu repeats EdgeMenuBody's module grid
-- **Where:** `qml/components/content/Submenu/MenuSubmenu.qml:24` (`_modulesKey`, `host`, `overlayGrid`), `qml/components/surfaces/edgemenu/EdgeMenuBody.qml:25` (`_modulesKey`)
-- **What:** MenuSubmenu copies EdgeMenuBody's parts one for one: the `_modulesKey` re-parse ("as EdgeMenuBody", lines 24–27), the `host` map (29–34, adding `submenu`), the `OverlayGrid` at `cardUnitOf`/`gapOf` (36–40, on the parent's screen) and the clipped Flickable around a `ModuleGrid` at the menu's `zoomOf` (54–71): 33 lines that must change together (a fix to how a menu's modules are keyed, zoomed or hosted lands twice). Fix: EdgeMenuBody takes a `screen` (for `cardUnitOf`) and `submenu` (no pin, no Escape, no stretch, `host.submenu`), and MenuSubmenu becomes an `EdgeMenuBody` (`vertical: true`, `maxLength` from `root.wrapper?.maxContentHeight`) plus its empty text: 33 lines out, about 12 in.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
 

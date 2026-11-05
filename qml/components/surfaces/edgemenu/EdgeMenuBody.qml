@@ -13,6 +13,8 @@ import qs.components.hosts.overlay
 // GridPlacement.menuFillsEdge) the grid fits the edge exactly, its rows
 // (or columns) growing or shrinking evenly to `maxLength` (scrolling only
 // past half a unit); otherwise it's capped there and scrolls past that.
+// In another menu's submenu (`submenu`, MenuSubmenu) it's only capped, with
+// no pin or Escape of its own.
 Item {
   id: root
 
@@ -20,6 +22,10 @@ Item {
   required property bool vertical
   // Room along the edge
   property real maxLength: 0
+  property bool submenu: false
+  // The screen its cards are sized on (EdgeMenusConfig.cardUnitOf): a
+  // submenu's, that of the menu it opens from; null for the menu's own
+  property var screen: null
 
   // Modules re-read only when they actually change, so an unrelated config
   // save doesn't rebuild every module. As the menu lays them out
@@ -33,17 +39,18 @@ Item {
   readonly property var host: ({
       "kind": "edgeMenu",
       "id": root.menu.id,
-      "bare": !root.menu.layout.moduleBorders
+      "bare": !root.menu.layout.moduleBorders,
+      "submenu": root.submenu
     })
 
   OverlayGrid {
     id: overlayGrid
-    fixedUnit: EdgeMenusConfig.cardUnitOf(root.menu)
-    gap: EdgeMenusConfig.gapOf(root.menu)
+    fixedUnit: EdgeMenusConfig.cardUnitOf(root.menu, root.screen)
+    gap: EdgeMenusConfig.gapOf(root.menu, root.screen)
   }
 
-  // Whether the menu takes its whole edge
-  readonly property bool fillsEdge: GridPlacement.menuFillsEdge(root.menu)
+  // Whether the menu takes its whole edge (a submenu has none)
+  readonly property bool fillsEdge: !root.submenu && GridPlacement.menuFillsEdge(root.menu)
   // As its modules are shown: grown ones included (ModuleGrid.places)
   readonly property var _natural: overlayGrid.sizes(moduleGrid.bounds, null)
   // Its height with every growing module at its most, so a floating top
@@ -71,6 +78,7 @@ Item {
   // Escape closes the menu once it has the keyboard (both hosts take it
   // on demand, when clicked)
   focus: true
+  Keys.enabled: !root.submenu
   Keys.onEscapePressed: EdgeMenuManager.close(root.menu.id)
 
   implicitWidth: root.vertical ? moduleGrid.implicitWidth : root.length
@@ -91,9 +99,10 @@ Item {
       grid: overlayGrid
       stretch: root._stretch
       host: root.host
-      zoom: EdgeMenusConfig.zoomOf(root.menu)
-      // A bottom menu's edge is under its modules
-      growTowards: root.menu.edge === "bottom" ? 1 : -1
+      zoom: EdgeMenusConfig.zoomOf(root.menu, root.screen)
+      // A bottom menu's edge is under its modules (a submenu has no edge:
+      // its kept `edge` is hidden)
+      growTowards: !root.submenu && root.menu.edge === "bottom" ? 1 : -1
     }
   }
 
@@ -101,7 +110,7 @@ Item {
   // end, over the modules' corner
   readonly property bool pinned: EdgeMenuManager.isPinned(root.menu.id)
   StyledIconButton {
-    visible: root.menu.pinButton
+    visible: root.menu.pinButton && !root.submenu
     z: 2
     size: Widget.height
     anchors.top: root.menu.edge === "top" ? undefined : parent.top

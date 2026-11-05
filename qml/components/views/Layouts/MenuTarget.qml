@@ -15,11 +15,11 @@ EditTarget {
   readonly property bool submenu: EdgeMenusConfig.isSubmenu(root.menu)
   readonly property bool vertical: root.menu?.edge === "left" || root.menu?.edge === "right"
   readonly property var screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
-  readonly property real length: root.menu ? EdgeMenusConfig.lengthOf(root.menu, root.vertical, EdgeMenusConfig.cardUnitOf(root.menu), EdgeMenusConfig.gapOf(root.menu)) : 0
-  readonly property real edgeLength: root.screen ? (root.vertical ? root.screen.height : root.screen.width) : 0
   // Where the menu's modules sit on its screen (OverlayManager.menus.placementOf)
   readonly property var place: root.menu ? OverlayManager.menus.placementOf(root.menu) : null
-  readonly property bool tooLong: root.menu !== null && !GridPlacement.menuFillsEdge(root.menu) && root.edgeLength > 0 && root.length > root.edgeLength
+  // Longer than its room on the edge: no cell on its lattice
+  // (GridPlacement.menuCell), so it starts at the room's start and scrolls
+  readonly property bool tooLong: root.place !== null && !GridPlacement.menuFillsEdge(root.menu) && root.place.cell === null
   // Whether it has a place on its lattice (not taking its whole edge or
   // longer than it), the offsets that keep it there, and its offset among
   // them (a config's can be past them, kept on the lattice)
@@ -51,7 +51,7 @@ EditTarget {
       return I18n.tr("Takes its whole edge");
     if (root.tooLong)
       return I18n.tr("Longer than its edge: it scrolls");
-    return I18n.tr("{0} px along its edge", Math.round(root.length));
+    return root.place ? I18n.tr("{0} px along its edge", Math.round(root.place.length)) : "";
   }
   fitWarning: root.tooLong && !root.submenu
   nudgeText: {

@@ -668,6 +668,108 @@ TestCase {
     compare(near.pill.index, 1);
   }
 
+  // On a pill (or island): grown from its far stroke, a row of fill behind
+  // its attach edge over the pill's stroke, no stroke of its own to open,
+  // its shadow the bar's
+  function test_layout_on_pill() {
+    const base = params();
+    const f = SurfaceContext.frame(base);
+    for (const kind of ["pills", "floatingPills"]) {
+      const pillBar = Object.assign(bar(kind), {
+        "extent": 40,
+        "pillDepth": 30,
+        "joinGap": 12
+      });
+      const l = SurfaceContext.layout(f, Object.assign({}, base, {
+        "bar": pillBar,
+        "ownBar": pillBar,
+        "pills": [
+          {
+            "start": 400,
+            "length": 200
+          }
+        ],
+        "centre": 500,
+        "aligned": 450,
+        "length": 100,
+        "joinStart": false,
+        "joinEnd": false,
+        "frameLine": 40,
+        "reserved": 40
+      }));
+      verify(l.onPill && !l.detached && !l.merged, kind);
+      compare(l.backfill, 1, kind);
+      // The pill's foot: its depth (an island's, the bar's) less its stroke
+      compare(l.attachFromBar, kind === "pills" ? 28 : 38, kind);
+      compare(l.ownSink, null, kind);
+      compare(l.shadow.look, "bar", kind);
+    }
+  }
+
+  // A pill bar showing no pills: grown from its outer edge, its content
+  // clearing the pills' depth, the border's stroke opened under it
+  function test_layout_merged() {
+    const base = params();
+    const f = SurfaceContext.frame(base);
+    const at = extra => SurfaceContext.layout(f, Object.assign({}, base, {
+        "bar": Object.assign(bar("pills"), {
+          "extent": 40,
+          "pillDepth": 30,
+          "joinGap": 12
+        }),
+        "pills": [],
+        "centre": 500,
+        "aligned": 450,
+        "length": 100,
+        "joinStart": false,
+        "joinEnd": false,
+        "frameLine": 40,
+        "reserved": 40
+      }, extra));
+    const l = at({});
+    verify(l.merged && !l.onPill && !l.detached);
+    compare(l.backfill, 0);
+    compare([l.attachFromBar, l.attachClearance], [0, 28]);
+    compare(l.ownSink, "border");
+    verify(!l.straight);
+    // With the border off: straight off the screen edge, no stroke to open
+    const off = at({
+      "border": false
+    });
+    verify(off.straight);
+    compare(off.ownSink, null);
+  }
+
+  // No stroke of its own to open on a bare edge, nor past a bar that isn't
+  // solid
+  function test_layout_own_sink_none() {
+    const base = params();
+    const f = SurfaceContext.frame(base);
+    const at = extra => SurfaceContext.layout(f, Object.assign({}, base, {
+        "centre": 500,
+        "aligned": 450,
+        "length": 100,
+        "joinStart": false,
+        "joinEnd": false,
+        "frameLine": 0,
+        "reserved": 0
+      }, extra));
+    const bare = at({
+      "border": false,
+      "bareEdge": true
+    });
+    compare(bare.mode, "plain");
+    compare(bare.ownSink, null);
+    verify(bare.straight);
+    compare(at({
+      "bar": Object.assign(bar("transparent"), {
+        "extent": 40
+      }),
+      "frameLine": 40,
+      "reserved": 40
+    }).ownSink, null);
+  }
+
   // The plain fill joined between the screen edge and the attach edge,
   // which a host takes off its padding there: the border's margin, or a
   // floating or pill bar's empty depth it grows over; none on anything
