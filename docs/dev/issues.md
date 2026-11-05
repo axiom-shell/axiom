@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### Unused blur namespaces for the detached launcher and switcher
-- **Where:** `qml/components/methods/LayerStack.qml` (`blurSurfaces`)
-- **What:** `blurSurfaces` still lists `launcher`, `switcher` and `floating-popout`, but nothing maps a window in those namespaces any more: the detached launcher and window switcher are `EdgePopout`s (`axiom-edge-popout`, backed by the blur window) since every detached surface is placed the same way. The compositor configs axiom writes still carry them (Hyprland's `axiom-blur` rule, niri's, sway's `layer_effects`). Dropping them changes the rendered configs, their goldens and the frozen render cases (`compositor/render/testdata/frozen.jsonl.gz`).
-- **Size:** small
-- **Found:** 2026-11-05, while giving every detached popout one placement config
-
 ### A detached dock and toasts don't slide in from under the bars
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
 - **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.

@@ -362,7 +362,6 @@ Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 - [A detached dock and toasts don't slide in from under the bars](issues.md#a-detached-dock-and-toasts-dont-slide-in-from-under-the-bars)
-- [Unused blur namespaces for the detached launcher and switcher](issues.md#unused-blur-namespaces-for-the-detached-launcher-and-switcher)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
