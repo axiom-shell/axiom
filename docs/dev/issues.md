@@ -531,18 +531,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### Both tray menu lists override the same width cap
-- **Where:** `qml/components/content/parts/TrayMenuList.qml:22` (`maxWidth`), `qml/components/content/SystemTray/SystemTray.qml:38`, `qml/components/content/parts/TraySubmenu.qml:21` (`_window`), `qml/components/content/parts/TraySubmenu.qml:34`
-- **What:** TrayMenuList's only two users both replace its default `Widget.px(600)` with the same stand-in, 30% of the screen's width: `(root.wrapper.screen?.width ?? 2000) * 0.3` and `(root._window?.screen?.width ?? 2000) * 0.3`, each marked `// fixed px`. TraySubmenu keeps `_window` only for this, and the default is never used. Fix: make the stand-in TrayMenuList's default, read through its own `QsWindow.window`, and drop SystemTray.qml:38 and TraySubmenu.qml:20-21 and 34 (4 lines).
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
-### The tray menu draws its own separator
-- **Where:** `qml/components/content/parts/TrayMenuItem.qml:99` (the separator `Rectangle`)
-- **What:** A separator entry draws a hand-made line (lines 98-106, 9 lines: `height: 1`, `color: Theme.foreground`, `opacity: 0.2`). docs/dev/core/shared-ui-pieces.md lists `StyledSeparator` ("border-coloured divider"), and AGENTS.md says "Reuse before building". It is the only popout divider that ignores the theme's border colour and width. Fix: `StyledSeparator { anchors.centerIn: parent; width: parent.width - root.itemPadding * 2; visible: root.menuItem.isSeparator }`, 4 lines fewer.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### The dock's footprint assumes fillets at both ends
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:298` (`_footprint`)
 - **What:** The dock's collision footprint is its rest rect grown by `EdgeAttach.filletMargin` at both ends whenever it's attached. `SurfaceOutline.footprint` adds fillet squares only at filleted ends (none at joined, flush or straight ends, none on a bare edge), and it covers the backfill row. So on a bare edge the dock claims `R - half` px past each end, and PopoutGeometry reports a collision with a popout beside it that early. Fix: use the dock's EdgeSurface `footprint` mapped to the screen, and drop the hand-built one (about 6 lines).

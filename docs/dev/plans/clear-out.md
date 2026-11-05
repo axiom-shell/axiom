@@ -439,8 +439,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [Previewing a submenu menu doesn't open it once a module above its row has grown](../issues.md#previewing-a-submenu-menu-doesnt-open-it-once-a-module-above-its-row-has-grown)
 - **bar-popouts-08** (5):
   - [SurfaceContext.layout's pill and merged results have no test row](../issues.md#surfacecontextlayouts-pill-and-merged-results-have-no-test-row)
-  - [Both tray menu lists override the same width cap](../issues.md#both-tray-menu-lists-override-the-same-width-cap)
-  - [The tray menu draws its own separator](../issues.md#the-tray-menu-draws-its-own-separator)
+  - Both tray menu lists override the same width cap
+  - The tray menu draws its own separator
   - [The dock's footprint assumes fillets at both ends](../issues.md#the-docks-footprint-assumes-fillets-at-both-ends)
   - [MenuSubmenu repeats EdgeMenuBody's module grid](../issues.md#menusubmenu-repeats-edgemenubodys-module-grid)
 - **bar-popouts-09** (5, done):
