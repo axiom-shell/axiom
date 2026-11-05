@@ -1,7 +1,7 @@
 # Window switcher (Alt+Tab)
 
 > **Files:** `qml/services/compositor/WindowSwitcherManager.qml`, `qml/config/WindowSwitcherConfig.qml`, `backend/internal/compositor/render/hyprlua.go` (`SwitcherBindLua`, `SwitcherLua`), `qml/components/methods/WindowOrder.qml`, `qml/shell/WindowSwitcher.qml`, `qml/components/views/Settings/WindowSwitcherPlace.qml`, `qml/components/surfaces/switcher/SwitcherStrip.qml`, `backend/internal/wayland/keyhold/`, `backend/internal/daemon/switcher.go`
-> **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`, `compositorSwitcher`, `edge`, `position`, `detached`, `distance`, `order`)
+> **Config:** `WindowSwitcher.*` (`showDelay`, `scope`, `previews`, `compositorSwitcher`, `edge`, `position`, `detached`, `distance`, `animation`, `order`)
 > **Related:** [Keybinds](keybinds.md), [Config modes](config-modes.md), [Workspaces](workspaces.md)
 
 Alt+Tab is the bind actions `windowSwitcher` and `windowSwitcherReverse`.

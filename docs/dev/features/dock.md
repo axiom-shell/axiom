@@ -35,7 +35,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
   - dragging an icon off the dock unpins it.
 
 ### The window
-- `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box.
+- `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box and the icons grown out of it. One that hides takes the gap to its edge too, so the pointer doesn't leave it on its way from the edge; a held, always-shown one doesn't (`distance` can stretch that gap to half the screen, over windows).
 - **Layer order:** its layer rule arranges it after the border and every bar ([layer stacking](../generated/layers.md)).
   - It sits inside them, and never shortens the bars on other edges.
   - It is blurred.

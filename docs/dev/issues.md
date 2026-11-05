@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A reserving held dock reserves the screen up to its distance
+- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`panelWindow.exclusiveZone`)
+- **What:** An always-shown held dock with Reserve space (both defaults) reserves `boxOffset + thickness`, from its edge to the box's far side. With `distance` (0–50% across the free screen, new in place of a px `gap` of at most 200) a dock at 50% reserves half the screen, and the windows tile into the other half. A layer surface can only reserve from its edge, so the choice is the maintainer's: hide Reserve space past a distance of 0, reserve only at 0, or keep it.
+- **Size:** small
+- **Found:** 2026-11-05, while reviewing the floating popouts branch (round 2)
+
 ### A detached dock and toasts don't slide in from under the bars
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
 - **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.
