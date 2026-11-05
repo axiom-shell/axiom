@@ -460,7 +460,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 
 **overlay-modules**
 
-- **overlay-modules-02** (4): Holds the merged edge-menu padding note (confirm in an edge menu).
+- **overlay-modules-02** (4): Holds the merged edge-menu padding note (confirm in an edge menu). Three fixed and the fourth's shown cause (fractional borders under a page's zoom); its other cause, Card modules each padding their own way, stays logged as PLAUSIBLE (maintainer's rule of 2026-11-05), so the cluster isn't done.
   - fullMinWidth and fullMinHeight are compared with the slot's size, padding included
   - Card and Panel each spell out the grow and expand members
   - [Modules inside borders aren't sized evenly](../issues.md#modules-inside-borders-arent-sized-evenly)
