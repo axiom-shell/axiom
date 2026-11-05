@@ -73,10 +73,7 @@ DragChip {
       panel: null
       screen: null
       barConfig: root.previewConfig
-      properties: root.widget?.properties ?? ({})
-      componentPath: Paths.widgetUrl(root.widget?.type ?? "")
-      layoutOverrides: root.widget?.layout ?? ({})
-      defaultPriority: BarsConfig.defaultPriority(root.widget?.type ?? "")
+      widget: root.widget ?? ({})
       leadInset: widgetHost.hasBackground ? root.previewConfig.innerPadding : 0
       trailInset: widgetHost.hasBackground ? root.previewConfig.innerPadding : 0
     }

@@ -313,7 +313,6 @@ Rectangle {
   // section's config, which hidden widgets leave out
   function widgetModel(widgetConfigArray) {
     return (widgetConfigArray || []).map((widgetConf, i) => ({
-          "component": Paths.widgetUrl(widgetConf.type),
           "type": widgetConf.type,
           "properties": widgetConf.properties || {},
           "layout": widgetConf.layout || {},
@@ -394,7 +393,12 @@ Rectangle {
     property real drawnPos: section.mainPos
     property real drawnLength: section.usedLength
     property bool _settled: false
-    Component.onCompleted: Qt.callLater(() => section._settled = true)
+    // A method, not a closure: the call is dropped if the section is gone
+    // by then (a bar rebuilt)
+    Component.onCompleted: Qt.callLater(section._settle)
+    function _settle() {
+      section._settled = true;
+    }
     Glide on drawnPos {
       enabled: section._settled
     }

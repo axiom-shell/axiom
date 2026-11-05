@@ -485,11 +485,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
-### Bar widget hosts settle after they're gone
-- **Where:** `qml/components/bar/BarWidgetHost.qml` (`Component.onCompleted`'s `Qt.callLater`), `qml/components/bar/widgets/Workspaces/ActiveCellIndicator.qml` (`_placed`), `qml/components/bar/BarContainer.qml` (the inline `Section`'s `Component.onCompleted`)
-- **What:** Restoring a saved config that rebuilds the bars logs `TypeError: Value is null and could not be converted to an object` (8–12 per rebuild) and `Cannot read property 'index' of null` from `ActiveCellIndicator`: the `Qt.callLater` closures run after their item was destroyed. Also on the same swaps, `Button.qml` logs `Unable to assign [undefined] to QString` for `icon`/`text` while its properties are being replaced. BarContainer's inline `Section` settles through the same `Qt.callLater`; the fix should cover it too (bar audit, 2026-10-30).
-- **Size:** small
-- **Found:** 2026-10-29, while building the revamped example setups
+### The window switcher reads a removed screen's name
+- **Where:** `qml/shell/WindowSwitcher.qml` (`claimKey`)
+- **What:** Unplugging a monitor logs `TypeError: Cannot read property 'name' of null` from `@shell/WindowSwitcher.qml[79:-1]` (`claimKey: "switcher:" + screenScope.modelData.name`): the Variants delegate's screen is gone before the delegate is (seen in a nested Hyprland, removing a headless output). Fix: `screenScope.modelData?.name ?? ""`, or read the name once.
+- **Size:** trivial
+- **Found:** 2026-11-05, while keeping the bar across a hotplug (bar-popouts-04)
 
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`
