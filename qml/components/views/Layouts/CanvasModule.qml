@@ -22,7 +22,7 @@ Rectangle {
   required property real step
   required property real gap
 
-  readonly property GridEditor editor: root.dragLayer.editor
+  readonly property GridEditor editor: root.dragLayer?.editor ?? null
   readonly property string type: root.module?.type ?? ""
   readonly property var place: root.module?.place ?? {
     "x": 0,
@@ -30,10 +30,10 @@ Rectangle {
     "w": 1,
     "h": 1
   }
-  readonly property bool selected: root.editor.isSelected(root.index)
+  readonly property bool selected: root.editor?.isSelected(root.index) ?? false
   // Part of a group selected together: dragging it moves them all
-  readonly property bool grouped: root.editor.group.includes(root.index)
-  readonly property bool carried: root.dragLayer.draggingKind === "module-move" && (root.dragLayer.dragging.index === root.index || (root.dragLayer.dragging.group ?? []).includes(root.index))
+  readonly property bool grouped: root.editor?.group.includes(root.index) ?? false
+  readonly property bool carried: root.dragLayer?.draggingKind === "module-move" && (root.dragLayer.dragging.index === root.index || (root.dragLayer.dragging.group ?? []).includes(root.index))
   // Whether the press was with Shift or Ctrl (a tap then toggles it in
   // the selection)
   property bool _toggling: false
@@ -103,7 +103,7 @@ Rectangle {
     StyledIcon {
       width: parent.width
       horizontalAlignment: Text.AlignHCenter
-      text: root.dragLayer.moduleIcon(root.type)
+      text: root.dragLayer?.moduleIcon(root.type) ?? ""
       textColor: root.filled ? root.ink : Theme.accent
       textSize: root.small ? Appearance.fontSizeBy(2) : Appearance.fontSizeBy(8)
     }
@@ -113,7 +113,7 @@ Rectangle {
       visible: !root.small
       horizontalAlignment: Text.AlignHCenter
       elide: Text.ElideRight
-      text: root.dragLayer.moduleLabel(root.type)
+      text: root.dragLayer?.moduleLabel(root.type) ?? ""
       textColor: root.ink
       textSize: Appearance.fontSizeBy(-1)
       font.bold: true
@@ -134,15 +134,15 @@ Rectangle {
   DragArea {
     id: area
     anchors.fill: parent
-    cursorShape: root.dragLayer.dragging !== null ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+    cursorShape: root.dragLayer?.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
     dragLayer: root.dragLayer
     payload: ({
         "kind": "module-move",
         "index": root.index,
         "group": root.grouped ? root.editor.group : [],
         "type": root.type,
-        "icon": root.grouped ? "select_all" : root.dragLayer.moduleIcon(root.type),
-        "label": root.grouped ? root.dragLayer.countLabel(root.editor.group.length) : root.dragLayer.moduleLabel(root.type)
+        "icon": root.grouped ? "select_all" : root.dragLayer?.moduleIcon(root.type),
+        "label": root.grouped ? root.dragLayer.countLabel(root.editor.group.length) : root.dragLayer?.moduleLabel(root.type)
       })
     onPressed: mouse => root._toggling = (mouse.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0
     onTapped: {
@@ -168,8 +168,8 @@ Rectangle {
     StyledText {
       id: sizeText
       anchors.centerIn: parent
-      readonly property var place: root.dragLayer.landingPlace ?? root.place
-      text: root.dragLayer.sizeLabel(sizeText.place.w, sizeText.place.h)
+      readonly property var place: root.dragLayer?.landingPlace ?? root.place
+      text: root.dragLayer?.sizeLabel(sizeText.place.w, sizeText.place.h) ?? ""
       textColor: Theme.background
       textSize: Appearance.fontSizeBy(-2)
       font.bold: true
@@ -180,7 +180,7 @@ Rectangle {
   // tile so its middle is still there to move it by. Dragging one moves
   // that side (or both, at a corner) by whole units; the others stay
   Repeater {
-    model: root.dragLayer.dragging === null ? ["n", "ne", "e", "se", "s", "sw", "w", "nw"] : []
+    model: root.dragLayer?.dragging === null ? ["n", "ne", "e", "se", "s", "sw", "w", "nw"] : []
 
     MouseArea {
       id: zone

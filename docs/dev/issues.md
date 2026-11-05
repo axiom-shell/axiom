@@ -319,12 +319,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-10-18, while adding niri's blur
 
 
-### The Layouts canvas logs null reads as it's torn down
-- **Where:** `qml/components/views/Layouts/CanvasModule.qml` (`editor`, `carried`, the label and icon bindings), `qml/components/views/Layouts/GridCanvas.qml` (its `CanvasModule` Loader)
-- **What:** Tearing down a page with a layout canvas (a reload, or the overlay closing after moving between pages) logs a burst of `TypeError: Cannot read property 'editor' of null` from `CanvasModule.qml[25:-1]`, then `draggingKind`, `moduleIcon`, `moduleLabel`, `dragging` of null, once per module: `dragLayer` is gone before the modules' bindings stop. Likely `root.dragLayer?.editor` at the source (`editor`), with the other reads following it.
-- **Size:** small
-- **Found:** 2026-10-29, while screenshotting editor pages for the form row look
-
 ### A custom layout's element rect reads an undefined place
 - **Where:** `qml/components/content/parts/custom/CustomLayout.qml` (the `CustomElement` delegate's `r`), `qml/components/methods/CustomWidgetData.qml` (`rect`)
 - **What:** The live shell logs `CustomWidgetData.qml[649:-1]: TypeError: Value is undefined and could not be converted to an object` after a reload: the delegate passes `element.place` while its `element` is still the `({})` stand-in (or past the end of a shrunk `elements`), and `rect` reads `place.x`. `rect` returning an empty rect for no place, or the delegate waiting for one, would quiet it.
