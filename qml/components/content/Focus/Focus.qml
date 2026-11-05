@@ -65,12 +65,15 @@ Panel {
       Layout.preferredWidth: 1
       spacing: Widget.spacing
 
-      PomodoroDial {
-        visible: root.showTimer
+      Loader {
+        active: root.showTimer
+        visible: active
         Layout.fillWidth: true
-        horizontal: true
-        showTask: false
-        dialSize: Appearance.fontSize * 6
+        sourceComponent: PomodoroDial {
+          horizontal: true
+          showTask: false
+          dialSize: Appearance.fontSize * 6
+        }
       }
 
       StyledSeparator {
@@ -78,20 +81,25 @@ Panel {
         Layout.fillWidth: true
       }
 
-      TodoList {
-        visible: root.showTodos
+      Loader {
+        active: root.showTodos
+        visible: active
         Layout.fillWidth: true
         Layout.fillHeight: true
-        fill: true
+        sourceComponent: TodoList {
+          fill: true
+        }
       }
     }
 
-    DayPane {
-      visible: root.showAgenda
+    Loader {
+      active: root.showAgenda
+      visible: active
       Layout.fillWidth: true
       Layout.fillHeight: true
       Layout.preferredWidth: 1
       Layout.minimumHeight: Appearance.fontSize * 8
+      sourceComponent: DayPane {}
     }
   }
 }

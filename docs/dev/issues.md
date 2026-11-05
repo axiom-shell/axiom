@@ -600,20 +600,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### PomodoroDial redraws DialControls' ring and buttons
-- **Where:** `qml/components/content/parts/PomodoroDial.qml:28` (`TimeRing`), `qml/components/content/parts/PomodoroDial.qml:58` (buttons), `qml/components/content/Pomodoro/Pomodoro.qml:39` (`dialSize`)
-- **What:** `DialControls` (shared by the timer, caffeine and the stopwatch since #262) is "a TimeRing over (or beside, `horizontal`) three round buttons", sized to its card with `fill`. PomodoroDial builds the same thing by hand: a TimeRing (lines 28–35, 8 lines), stop / play-pause / skip FlatIconButtons (58–82, 25), its own `horizontal` / `dialSize` / grid columns (17–18, 24–26, 5), and Pomodoro.qml works out the dial size and width test itself (32, 39, 2): 40 lines. So the pomodoro's buttons look and size differently from the other three dials, and lack the keyboard (Space) they have. Fix: PomodoroDial becomes a `DialControls` (`leftIcon: "stop"`, `leftEnabled: !idle`, `mainIcon` play/pause, `rightIcon: "skip_next"`, `color: phaseColor`, `fill` from the card) with the session dots and the task picker under it, about 20 lines; Pomodoro.qml drops its dial sizing. The dots and picker then sit under the ring rather than beside it in a wide card. About 20 lines net.
-
-  **Decided** (maintainer, 2026-11-01, on the recommendation "accept: the dots and picker move under the ring in a wide card"): "agree".
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
-### Focus and Pomodoro build the parts their properties turn off
-- **Where:** `qml/components/content/Focus/Focus.qml:68` (`PomodoroDial`), `qml/components/content/Focus/Focus.qml:81` (`TodoList`), `qml/components/content/Focus/Focus.qml:89` (`DayPane`), `qml/components/content/parts/PomodoroDial.qml:84` (task picker)
-- **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Focus's `showTimer`, `showTodos` and `showAgenda` only set `visible`, so a Focus card with the agenda off still builds a `DayPane` (its calendar list), and one with todos off the whole `TodoList`. PomodoroDial's task picker is `visible: root.showTask`, and Focus always passes `showTask: false`, so every Focus card builds a hidden `StyledComboEntry` whose `options` map the todo list again on each todo change. Fix: Loaders gated on each switch (`active: root.showAgenda` and so on), and the task picker in a Loader on `showTask`.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
-
 ### A Calendar card on the desktop or in an edge menu takes the page's request
 - **Where:** `qml/components/content/Calendar/Calendar.qml:54` (`_takeRequest`), `qml/services/apps/CalendarManager.qml:297` (`openPage`)
 - **What:** `openPage(request)` sets `CalendarManager.request` and opens the CalendarPage view (or the page with a Calendar module). Every embedded Calendar card listens (`onRequestChanged` → `_takeRequest`, gated only on `root.embedded`), and `embedded` is true in every module grid (`OverlaySlot.qml:56`), so a Calendar card on the desktop or in a pinned edge menu (both allowed: the module's schema leaves `hosts` out) takes the request synchronously, before the page is built. Then clicking the Next event bar widget or a reminder opens the Calendar page on today instead of the event's day, and `/event` or the `calendar newEvent` IPC opens the editor on the desktop card behind the overlay. A request no page shows (no page holds a Calendar, so Settings opens) also stays set until some Calendar card is next built, which then opens a stale new-event editor. Fix: `openPage` stores the page it opens in the request (`{ kind, key, page }`, and no request when it falls back to Settings); Calendar takes it only when it sits on that overlay page (its `host`), the view only when `page === "CalendarPage"`.
