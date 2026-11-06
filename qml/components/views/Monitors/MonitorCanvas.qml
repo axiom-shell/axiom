@@ -221,12 +221,13 @@ ColumnLayout {
 
       delegate: SegmentButton {
         required property int index
-        readonly property var rule: root.others[index]
-        readonly property bool selected: MonitorManager.selectedOutput === rule.output
+        // Null while the list shrinks, before this delegate goes
+        readonly property var rule: root.others[index] ?? null
+        readonly property bool selected: MonitorManager.selectedOutput === rule?.output
         implicitHeight: Widget.height
-        iconText: rule.disabled ? "desktop_access_disabled" : "screen_share"
-        text: rule.disabled ? I18n.tr("{0}: off", MonitorManager.labelFor(rule)) : I18n.tr("{0}: mirrors {1}", MonitorManager.labelFor(rule), MonitorManager.labelFor(MonitorManager.rules.find(other => other.output === rule.mirror) ?? {
-          "output": rule.mirror
+        iconText: rule?.disabled ? "desktop_access_disabled" : "screen_share"
+        text: rule?.disabled ? I18n.tr("{0}: off", MonitorManager.labelFor(rule)) : I18n.tr("{0}: mirrors {1}", MonitorManager.labelFor(rule), MonitorManager.labelFor(MonitorManager.rules.find(other => other.output === rule?.mirror) ?? {
+          "output": rule?.mirror
         }))
         active: selected
         onClicked: MonitorManager.selectedOutput = rule.output

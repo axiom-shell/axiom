@@ -614,6 +614,28 @@ TestCase {
     compare(_focus(plan), "B:202 A:1");
   }
 
+  function test_remap_follows_a_block_order_change() {
+    // A new primary, B, takes the first block: A's moves to the second
+    const windows = _windows([["a1", 1, 0], ["a3", 3, 0], ["b2", 12, 1]]);
+    const plan = WorkspaceGeometry.remapWorkspaces(_monitors(3, 12), windows, {
+      "blocks": true,
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, {
+      "blocks": true,
+      "size": 10,
+      "bases": {
+        "A": 11,
+        "B": 1
+      }
+    });
+    compare(_moves(plan), "a1>11 a3>13 b2>2");
+    compare(_focus(plan), "B:2 A:13");
+  }
+
   function test_centreWorkspace() {
     compare(WorkspaceGeometry.centreWorkspace(1, 3, 3), 5, "3 × 3: the middle");
     compare(WorkspaceGeometry.centreWorkspace(10, 3, 3), 14, "a second block's middle");

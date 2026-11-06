@@ -246,8 +246,9 @@ QtObject {
   // monitor profiles name (by their rules' `output`; the primary first,
   // matched by connector or by the rule's `label` while unplugged or its
   // description is unknown), then the connected ones none names (keyed by
-  // MonitorLayout.outputId), each part in orderMonitors' order, so a block
-  // never moves with what's connected.
+  // MonitorLayout.outputId), each part in orderMonitors' order, so a named
+  // monitor's block never moves with what's connected (an unnamed one's
+  // can, when another unnamed one comes or goes before it).
   // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
   // label }] }] (MonitorsConfig.profiles)
   function blockBases(outputs, primaryName, size, profiles) {
@@ -366,16 +367,18 @@ QtObject {
   // else take a free one. Where two want one id (the shared 1..size of the
   // standard layout, or a smaller block), the first in monitor order keeps
   // it and the rest take free ids; windows only merge when none is free.
-  // from/to: { blocks, size } (blocks: each monitor owns `size` ids, else
-  // all share 1..size). monitors: [{ name, block, active, focused }] in
-  // block order (block: its index from 0, as blockBases numbers them);
+  // from/to: { blocks, size, bases } (blocks: each monitor owns `size` ids,
+  // else all share 1..size; bases: each monitor's first id by name, as
+  // blockBases gives them, else its `block`'s). monitors: [{ name, block,
+  // active, focused }] in block order (block: its index from 0, as
+  // blockBases numbers them);
   // windows: [{ id, workspace, output }] (workspace an id, output a
   // monitor's name). Returns { moves: [{ id, to }], focus:
   // [{ monitor, id }]
   // (every monitor's mapped active workspace, the focused one last),
   // changed }.
   function remapWorkspaces(monitors, windows, from, to) {
-    const base = (layout, i) => layout.blocks ? monitors[i].block * layout.size + 1 : 1;
+    const base = (layout, i) => layout.blocks ? layout.bases?.[monitors[i].name] ?? monitors[i].block * layout.size + 1 : 1;
     const taken = {};
     const target = {};
     const preferred = (i, id) => {

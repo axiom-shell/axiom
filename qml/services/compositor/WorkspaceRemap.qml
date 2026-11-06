@@ -21,14 +21,15 @@ QtObject {
   // --- Layout changes ---
 
   // The layout the workspaces were last laid out for ({ blocks, size,
-  // grid })
+  // grid, bases })
   property var _applied: null
 
   function _layout() {
     return {
       "blocks": WorkspacesConfig.perMonitorBlocks,
       "size": root.manager.blockSize,
-      "grid": root.manager.workspaceGrid
+      "grid": root.manager.workspaceGrid,
+      "bases": root.manager._bases
     };
   }
 
@@ -67,6 +68,29 @@ QtObject {
     // perMonitor to a grid of as many keeps blocks and size
     function onWorkspaceGridChanged() {
       root._timer.restart();
+    }
+
+    // A block order change with the same outputs connected (a profile
+    // naming a new monitor, a new primary): remap. A hotplug never remaps
+    // (an unnamed output's block can shift then, as it always has): just
+    // record the bases (a pending remap's too, so it doesn't move them),
+    // at the size last applied, which a pending size change remaps from
+    function on_BasesChanged() {
+      const applied = root._applied;
+      if (!applied)
+        return;
+      const bases = root.manager._bases;
+      const names = Object.keys(bases);
+      const sameOutputs = names.length === Object.keys(applied.bases).length && names.every(name => name in applied.bases);
+      if (applied.blocks && sameOutputs && names.some(name => applied.bases[name] !== bases[name]))
+        root._timer.restart();
+      else
+        root._applied = Object.assign({}, applied, {
+          "bases": names.reduce((all, name) => {
+            all[name] = (bases[name] - 1) / root.manager.blockSize * applied.size + 1;
+            return all;
+          }, {})
+        });
     }
   }
 

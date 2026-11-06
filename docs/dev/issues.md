@@ -269,17 +269,17 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
+### A hotplug can shift an unnamed output's block, and nothing remaps it
+- **Where:** `qml/components/methods/WorkspaceGeometry.qml` (`blockBases`), `qml/services/compositor/WorkspaceRemap.qml` (`on_BasesChanged`)
+- **What:** `blockBases` numbers the outputs no monitor profile names after the named ones, in `orderMonitors`' order, so plugging in or unplugging an unnamed output that sorts before another unnamed one moves that one's block. A hotplug never remaps (it only records the new bases), so that output's workspaces sit outside its new block, missed by its list and steps, until `axiom ipc workspaces reconcile`. Same as on main. A hotplug doesn't remap so that a reconnected monitor's windows return as they did before (the leader's decision in row 20's Monitors batch); what Hyprland itself does with a returning monitor's workspaces is unverified. Fix: number an unnamed output by an identity that doesn't depend on the others connected, or remap only the outputs that stayed connected.
+- **Size:** small
+- **Found:** 2026-11-06, while reviewing the Monitors batch (row 20)
+
 ### Surfaces touch a dead screen after the outputs go away
 - **Where:** `qml/config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
 - **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `qml/shell.qml`.
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while reviewing the popouts system
-
-### Saving a profile that names a new monitor can move other monitors' blocks
-- **Where:** `qml/components/methods/WorkspaceGeometry.qml` (`blockBases`), `qml/services/compositor/CompositorManager.qml` (`_bases`), `qml/services/compositor/WorkspaceRemap.qml` (`remap`)
-- **What:** Blocks are numbered over the monitors the saved profiles name, sorted by output identity, so saving a profile that names a monitor no profile named before puts it among them: every monitor sorting after it gets a new base, its workspaces sit outside its block, and in the `perMonitor` and `grid` layouts its list and steps miss them (the scrolling layout lists them as borrowed, which compaction leaves) until `axiom ipc workspaces reconcile`. The same happens once on updating to row 13 where the profiles name a monitor that isn't connected. Nothing remaps when `_bases` changes; a remap from the old block order to the new one would (`remapWorkspaces` takes each monitor's `block`, one per layout today). Rare: a per-monitor layout, a newly saved monitor, and its identity sorting before a connected one. Less rare than that (the hyprland review, 2026-10-30): the Monitors inspector's Primary switch (`qml/components/views/Monitors/MonitorInspector.qml:99`, committed at once) is a common trigger, as `WorkspaceGeometry.orderMonitors` puts the primary first.
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing row 13 (stable workspace blocks)
 
 ### A remap runs at startup, from the layout before the config loaded
 - **Where:** `qml/services/compositor/WorkspaceRemap.qml` (`_applied`, `_timer`, `onBlockSizeChanged`)
@@ -354,12 +354,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
-
-### The Monitors page's off and mirroring buttons throw when one leaves the list
-- **Where:** `qml/components/views/Monitors/MonitorCanvas.qml` (the `others` Repeater)
-- **What:** The Repeater's model is `root.others.length`, and each delegate reads `root.others[index]`: when the list shrinks (Reset, or a hotplug re-detect, after a monitor was turned off in the draft) the delegates about to go re-evaluate first with `rule` undefined, logging `TypeError: Cannot read property 'output' of undefined` and `Cannot read property 'disabled' of undefined` from `MonitorCanvas.qml` (seen in a nested Hyprland, 2026-11-04). Harmless beyond the log; the model could be the list itself, or the reads guarded.
-- **Size:** trivial
-- **Found:** 2026-11-04, while testing the trial Apply (compositor-10)
 
 ### The monitor editor shows changes nobody made
 - **Where:** `qml/services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `qml/components/views/Monitors/Monitors.qml`

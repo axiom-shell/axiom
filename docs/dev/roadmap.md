@@ -312,10 +312,6 @@ Steps:
 #### Ready for the autopilot
 The maintainer (2026-11-06): "right now, everything deferred or hold that it small and has a traced fix move to ready and waiting for the autopilot. After all of that is done the autopilot will stop. (i.e. unconfirmed, weird vaguely described ui problems from developer notes, and plans done stay)". So the loop takes only the entries below (moved here from Phase 8, Phase 13 and [Deferred](#deferred), with row 20's own traced ones), grouped by area so a batch stays in one; when this list is empty it stops the loop and reports, whatever row 20 still holds. The maintainer's answers of 2026-11-06 (quoted under each entry's **Decided**) added the dock, wallpaper, notes, config, dev-config copy, dropdown, hot corner and close-on-outside-click entries. It opens no plan PR and no `needs-decision` PR: an entry that turns out to need a choice or isn't as traced is skipped and its link moved back where it came from.
 
-**Monitors and workspace blocks:**
-- [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
-- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks)
-
 **Shell surfaces and services:**
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - [A hot corner can't close what covers it](issues.md#a-hot-corner-cant-close-what-covers-it)
@@ -388,6 +384,9 @@ Found while reviewing the guard's leading `cd` (row 20, config-05):
 
 Found while reviewing the guard's gh and push allowlists (row 20):
 - [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config)
+
+Found while reviewing the Monitors batch (row 20):
+- [A hotplug can shift an unnamed output's block, and nothing remaps it](issues.md#a-hotplug-can-shift-an-unnamed-outputs-block-and-nothing-remaps-it)
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
