@@ -4,8 +4,9 @@
 // the shell's PipeWire links never show them using it. The devices are
 // watched with inotify (an open or a close by any process, and /dev for
 // devices coming and going or their access changing; no polling), and
-// after each burst of events /proc is read for who holds one open. PipeWire and WirePlumber are left
-// out: an app reading the camera through them shows as a link already.
+// after each burst of events /proc is read for who holds one open.
+// PipeWire and WirePlumber are left out: an app reading the camera
+// through them shows as a link already.
 package camera
 
 import (
@@ -175,7 +176,8 @@ func (s *Service) read(ctx context.Context, f *os.File, w *watches, events chan<
 			}
 			return
 		}
-		devices := false
+		// seen: an event about a video device (not another device in /dev)
+		seen, devices := false, false
 		for off := 0; off+unix.SizeofInotifyEvent <= n; {
 			ev := (*unix.InotifyEvent)(unsafe.Pointer(&buf[off]))
 			name := ""
@@ -190,11 +192,15 @@ func (s *Service) read(ctx context.Context, f *os.File, w *watches, events chan<
 				}
 				devices = true
 			}
+			seen = true
 			if ev.Mask&unix.IN_IGNORED != 0 {
 				// A device's watch went with it
 				w.forget(int(ev.Wd))
 				devices = true
 			}
+		}
+		if !seen {
+			continue
 		}
 		select {
 		case events <- devices:
