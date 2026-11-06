@@ -25,7 +25,8 @@ import (
 //   - a type naming a section of its own name links to it (x-link) unless
 //     it says `link` or the section isn't on the settings page.
 //
-// The kind's own definition is generated: a oneOf of every type, by name.
+// The kind's own definition is generated: a oneOf of every type, by name;
+// for a base with x-hosts, one per host too (hostKinds).
 
 // Keys of a type's schema.yaml the builder reads itself (the rest become
 // annotations)
@@ -60,6 +61,36 @@ func (a *assembler) expandKinds(kinds []Kind, defs, sections *jsonx.Object) {
 			continue
 		}
 		defs.Set(k.Name, jsonx.Obj("type", "object", "required", jsonx.Arr("type"), "oneOf", oneOf))
+		if base.Has("x-hosts") {
+			hostKinds(k.Name, oneOf, defs)
+		}
+	}
+}
+
+// hostKinds adds, for each host a type of the kind names in its x-hosts,
+// the kind's definition with only that host's types: <Kind>@<host>
+// (OverlayModule@greeter), which a host's list refers to so a type can't
+// be put where it doesn't work.
+func hostKinds(kind string, oneOf *jsonx.Array, defs *jsonx.Object) {
+	byHost := map[string]*jsonx.Array{}
+	var hosts []string
+	for _, ref := range oneOf.Items {
+		name := strings.TrimPrefix(ref.(*jsonx.Object).Value("$ref").(string), "#/definitions/")
+		list, _ := defs.Value(name).(*jsonx.Object).Value("x-hosts").(*jsonx.Array)
+		if list == nil {
+			continue
+		}
+		for _, h := range list.Items {
+			host, _ := h.(string)
+			if byHost[host] == nil {
+				byHost[host] = jsonx.Arr()
+				hosts = append(hosts, host)
+			}
+			byHost[host].Items = append(byHost[host].Items, ref)
+		}
+	}
+	for _, host := range hosts {
+		defs.Set(kind+"@"+host, jsonx.Obj("type", "object", "required", jsonx.Arr("type"), "oneOf", byHost[host]))
 	}
 }
 

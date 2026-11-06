@@ -66,7 +66,7 @@ settings:
 
 ## Steps
 1. Schema first. `defaultSize: [w, h]` in grid units (four to a card) if one card is the wrong starting size; `minSize` if it can't shrink that far.
-2. Hosts: the base lists `overlay`, `edgeMenu` and `desktop` (**every module goes on the desktop**); a type's `hosts` adds to them, `lockscreen` and `greeter` only under their rules (below).
+2. Hosts: the base lists `overlay`, `edgeMenu` and `desktop` (**every module goes on the desktop**); a type's `hosts` adds to them (`{only: [...]}` replaces them), `lockscreen` and `greeter` only under their rules (below). Each host's module list takes only the types that list it (`OverlayModule@<host>`), so a config putting one elsewhere fails validation.
 3. Typing: a module with a text field (in its file or a part it uses) sets `keyboard: true`, so the desktop hands it the keyboard on a click; `false` only to keep it read-only there on purpose (ClockCalendar). `check_structure` fails a text field with neither.
 4. Write the module: `Card` for free-form, `Panel` for a column that can also be a bar popout. Read settings as `root.properties.<key>`.
 5. Make it work at any size: `fullMinWidth`/`fullMinHeight` plus `compactContent`, and a layout that adapts to `shape` (`"horizontal"`, …) and `compact`.

@@ -82,7 +82,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 Sections that are already one concept with plain keys stay as they are, apart from the units, enum case and ids above: `Battery`, `Polkit`, `NightLight`, `Screenshots`, `Apps`, `PowerMenu`, `Todo`, `Stopwatch`, `Workspaces`, `WorkspaceOverlay`, `WindowSwitcher`, `SelfUpdate`, `CommunitySetups`, `ThemeIntegrations`, `Icons`, `Notes`, `Weather` (bar its interval), `Session`.
 
 ## Schema source: what the builder supplies
-`axiom schema build` finds every `schema.yaml` under the three roots, so `index.yaml` lists no type definitions and `BarWidget`, `OverlayModule` and `OverlayView` have no hand-written `oneOf`. A `schema.yaml` writes only what is particular to its type; the builder adds each kind's common part, which is itself data (a base definition per kind in `qml/config/schema/`, merged in), not Go code:
+`axiom schema build` finds every `schema.yaml` under the three roots, so `index.yaml` lists no type definitions and `BarWidget`, `OverlayModule` and `OverlayView` have no hand-written `oneOf` (nor `OverlayModule@<host>`, each host's types by `x-hosts`, which that host's `modules` takes). A `schema.yaml` writes only what is particular to its type; the builder adds each kind's common part, which is itself data (a base definition per kind in `qml/config/schema/`, merged in), not Go code:
 
 | Kind | Added by the builder | Written in `schema.yaml` |
 |---|---|---|

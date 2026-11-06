@@ -319,7 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification)
 
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
