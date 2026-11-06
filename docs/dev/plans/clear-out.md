@@ -455,7 +455,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **bar-popouts-12** (1): Phase 12.
   - [Nineteen windows stay mapped on one monitor](../issues.md#nineteen-windows-stay-mapped-on-one-monitor)
 - **bar-popouts-13** (2): Takes features' popout entry; the tray fix (a most-height on TrayMenuList) can be the plan's first item.
-  - [A tray submenu longer than the screen runs off it](../issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
+  - A tray submenu longer than the screen runs off it
   - [A popout taller than the screen runs off it](../issues.md#a-popout-taller-than-the-screen-runs-off-it)
 
 **overlay-modules**

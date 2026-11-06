@@ -360,7 +360,6 @@ Found by the audits:
 - [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
 - [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
 - [A fading toast keeps its full blur on niri](issues.md#a-fading-toast-keeps-its-full-blur-on-niri)
-- [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
