@@ -349,6 +349,13 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
+### A greeter-only module validates on any page
+- **Where:** `qml/components/content/Session/schema.yaml` (`hosts`), `qml/components/content/Login/schema.yaml`, `qml/components/content/Password/schema.yaml`
+- **What:** `hosts: {only: [greeter]}` keeps Session out of the layouts editor's library elsewhere, but the built schema still lists it in every host's `oneOf`: a config with Session in an edge menu and on an overlay page passed `axiom config validate`, and it drew as a bare "Session" field on an empty card. So an import, a community setup or a hand edit can put a greeter- or lock-only module (Session, Login, Password) where it can't work.
+- **Size:** small
+- **Needs a decision:** a review of the fix (roadmap/20-daemon-cli, 2026-11-06) found that once the built schema rejects these modules outside their hosts, a config already holding one there (Session, Login, Password or Power, only by a hand edit or an import) fails validation and won't load. Should a format-2 migration step remove such modules first? The fix (per-host `OverlayModule@<host>` kinds from `x-hosts` in `schema/yamlsrc/kinds.go`) is ready to rebuild once that is decided.
+- **Found:** 2026-10-29, while building the revamped example setups
+
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)
 - **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}`, while the other parallel subtests passed. That message didn't print the error, but there was one: traced, `discoverCalDAV` returns no calendars without an error only when its last candidate, `/.well-known/caldav`, answers, and `davServer` 404s it. Ruled out (row 20): the shared account id `acc` (only a read-only `Secrets.Lookup` of a file no test writes); `CloseIdleConnections` on the shared `http.DefaultTransport` (the weather flake's cause), hammered beside the test for about 20 000 runs, never broke a request. Not reproduced in about 15 000 runs of the package under load (`-race`, `-cpu 1,2,4,8`). The test now prints the error: read it the next time it fails before changing anything.

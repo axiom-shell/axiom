@@ -8,9 +8,4 @@ settings:
     title: Icon
     default: ''
     description: 'Shown in the page navigator: a Material Symbols name. Empty shows the default.'
-  layout:
-    $ref: '#/definitions/Layout'
-    x-properties:
-      moduleScale: null
-      moduleBorders: null
-      modules: {type: array, default: [], x-settings: false, items: {$ref: '#/definitions/OverlayModule@overlay'}}
+  layout: {$ref: '#/definitions/Layout', x-properties: {moduleScale: null, moduleBorders: null}}

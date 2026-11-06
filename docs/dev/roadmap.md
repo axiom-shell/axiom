@@ -420,6 +420,7 @@ Steps:
 
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page) (back from Ready for the autopilot, 2026-11-06: rejecting it can stop an existing config from loading; whether a migration removes misplaced modules first is a decision)
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
 
 Needs a plan:

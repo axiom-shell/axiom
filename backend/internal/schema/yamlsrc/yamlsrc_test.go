@@ -30,16 +30,6 @@ func TestRepoSchemaAssembles(t *testing.T) {
 	if root.Has("kinds") {
 		t.Error("kinds leaked into the schema")
 	}
-	// A greeter-only module is in the greeter's list, not an edge menu's
-	takes := func(host, typ string) bool {
-		list := defs.Value("OverlayModule@" + host).(*jsonx.Object).Value("oneOf").(*jsonx.Array)
-		return slices.ContainsFunc(list.Items, func(v any) bool {
-			return v.(*jsonx.Object).Value("$ref") == "#/definitions/"+typ+"OverlayModule"
-		})
-	}
-	if !takes("greeter", "Session") || takes("edgeMenu", "Session") || takes("overlay", "Password") {
-		t.Error("the hosts' module lists don't follow x-hosts")
-	}
 }
 
 // Each kind's type folders are definitions <Type><suffix>; lowercase
@@ -178,10 +168,7 @@ settings:
 		`"properties":{"type":"object","properties":{"seconds":{"type":"boolean","default":false},` +
 		`"showPopout":{"type":"boolean","default":true,"title":"Popout","description":"Open the calendar."}},"x-order":["seconds","showPopout"]},` +
 		`"type":{"const":"Clock","description":"Clock"}},"x-icon":"schedule","x-libraryGroup":"Time","x-link":{"setting":"Clock"},"x-order":["id","properties","type"]},` +
-		`"Widget":{"type":"object","required":["type"],"oneOf":[{"$ref":"#/definitions/ClockW"}]},` +
-		// One per host, of the types it takes
-		`"Widget@overlay":{"type":"object","required":["type"],"oneOf":[{"$ref":"#/definitions/ClockW"}]},` +
-		`"Widget@lockscreen":{"type":"object","required":["type"],"oneOf":[{"$ref":"#/definitions/ClockW"}]}}`
+		`"Widget":{"type":"object","required":["type"],"oneOf":[{"$ref":"#/definitions/ClockW"}]}}`
 	if got != want {
 		t.Errorf("got  %s\nwant %s", got, want)
 	}

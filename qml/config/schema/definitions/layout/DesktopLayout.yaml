@@ -30,4 +30,3 @@ x-properties:
         items: {type: string, x-options: screens}
         x-showIf: {mode: named}
   grid: {$ref: '#/definitions/ScreenGrid'}
-  modules: {type: array, default: [], x-settings: false, items: {$ref: '#/definitions/OverlayModule@desktop'}}

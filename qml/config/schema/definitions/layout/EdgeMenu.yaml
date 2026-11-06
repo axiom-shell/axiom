@@ -94,7 +94,6 @@ properties:
     $ref: '#/definitions/Layout'
     x-properties:
       grid: {$ref: '#/definitions/Grid', x-group: Placement}
-      modules: {type: array, default: [], x-settings: false, items: {$ref: '#/definitions/OverlayModule@edgeMenu'}}
       moduleScale:
         x-link: {setting: Interface.cardSize}
         x-group: Placement

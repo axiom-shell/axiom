@@ -24,8 +24,6 @@ properties:
   layout:
     x-scope: look
     $ref: '#/definitions/ScreenLayout'
-    x-properties:
-      modules: {type: array, default: [], x-settings: false, items: {$ref: '#/definitions/OverlayModule@lockscreen'}}
     x-settings: false
     title: Built-in lock screen
     description: Edited on the Layouts page.
