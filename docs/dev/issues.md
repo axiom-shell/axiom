@@ -110,12 +110,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-02, while reviewing roadmap row 20's compositor-06
 
-### The text cursor keeps blinking with animations off
-- **Where:** `qml/components/reusable/TextCursor.qml`
-- **What:** its `SequentialAnimation on opacity` loops whenever the input has focus, whatever `Appearance.animations` says, against AGENTS.md › Config: "looping animations gate `running` on `Appearance.animations`" (`check_structure` doesn't check it). Carried over from StyledTextEntry's and StyledTextArea's copies. Fix: `running: root._focused && Appearance.animations`, and opacity back to 1 when it stops (a stop leaves it wherever the blink was, maybe 0).
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
-
 ### The compositor facts' axiomPath is read by nothing
 - **Where:** `backend/internal/compositor/manager/inputs.go` (`BindCtx`), `qml/services/compositor/CompositorConfigManager.qml` (`axiomPath`)
 - **What:** The shell sends `ctx.axiomPath` (`Paths.axiomPath`, the QML dir) with the compositor facts, and `BindCtx.AxiomPath` decodes it, but no renderer reads it: the binds' commands use only `axiomBin`, `shellCommand` and `restartCommand` (`grep 'get(ctx, "' backend/internal/compositor`). A dead field both sides keep up, which the move to `qml/` had to update in `manager/testdata/facts.json` all the same. Fix: drop the field and the shell's key (and the fixture's).

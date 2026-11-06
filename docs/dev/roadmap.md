@@ -373,9 +373,6 @@ Found by the audits:
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
 
-Found while reviewing core-ui-theming-06 (row 20):
-- [The text cursor keeps blinking with animations off](issues.md#the-text-cursor-keeps-blinking-with-animations-off)
-
 Found while fixing bar-popouts-07 (row 20):
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
 
