@@ -193,13 +193,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
 
-### Close on outside click differs on Hyprland since the overlay ignores its grab ending
-- **Where:** `qml/components/hosts/overlay/OverlayPanel.qml` (`grab`, `onClickedOutside`), `qml/services/compositor/FocusGrab.qml` (`clickedOutside`)
-- **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland closing on `FocusGrab.dismissed` (a native grab cleared with no newer grab started, as edge and floating popouts do since bar-popouts-02) or a backdrop that takes the click.
-  **Decided** (maintainer, 2026-11-06, on a) every compositor closes only on the overlay's own background, b) close on any outside click everywhere; recommended a)): "rec. click to close requires a click on its own monitor"
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
-
 ### The overlay's gaps can't be adjusted
 - **Where:** `qml/components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `qml/config/OverlayConfig.qml` (`boxPadding`)
 - **What:** The maintainer's note: "the overlay's gaps become adjustable". The gaps are one design value, `GridPlacement.cardSpacing` = 20: the gap between modules, the margin around the grid, the overlay box's padding and the tool pages' spacing; through `baseCard` and `gapOf` edge menus, the desktop, the lock screen and the greeter are drawn as the overlay's grid scaled. Answered so far (2026-10-29): "one setting, gaps between modules and edges of the overlay page look the same". Open: the overlay's alone, or one Look & Feel setting for the overlay, lock screen, greeter and desktop with edge menus kept at today's value (the maintainer: "Menus already seem smaller"); a bigger gap shrinks the cards on a page fitted to its screen. Deferred: "defer for now, still unsure".
