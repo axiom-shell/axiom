@@ -61,7 +61,9 @@ Card {
       opacity: enabled ? 1 : 0
       Layout.fillWidth: true
       Layout.fillHeight: true
+      Layout.minimumHeight: 0
       Layout.maximumHeight: enabled ? Infinity : 0
+      clip: true
       columns: root.sideBySide ? 2 : 1
       columnSpacing: root.pad
       rowSpacing: Widget.spacing
@@ -120,6 +122,8 @@ Card {
           required property int index
           readonly property var peripheral: BatteryManager.peripherals[line.index] ?? null
           Layout.fillWidth: true
+          // A child layout fills by default: the lines keep to the top
+          Layout.fillHeight: false
           spacing: Widget.spacing
 
           StyledIcon {
