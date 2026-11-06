@@ -29,7 +29,6 @@
   },
   "fx": true,
   "ctx": {
-    "axiomPath": "/home/user/.local/share/axiom-shell/qml",
     "axiomBin": "/home/user/.local/bin/axiom",
     "shellCommand": "'/home/user/.local/bin/axiom'",
     "restartCommand": "'/home/user/.local/bin/axiom' restart",

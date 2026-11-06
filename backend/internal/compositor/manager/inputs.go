@@ -46,7 +46,6 @@ type Facts struct {
 
 // BindCtx is what a bind's command runs with: axiom's paths and the apps.
 type BindCtx struct {
-	AxiomPath      string `json:"axiomPath"`
 	AxiomBin       string `json:"axiomBin"`
 	ShellCommand   string `json:"shellCommand"`
 	RestartCommand string `json:"restartCommand"`

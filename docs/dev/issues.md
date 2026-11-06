@@ -92,12 +92,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-02, while reviewing roadmap row 20's compositor-06
 
-### The compositor facts' axiomPath is read by nothing
-- **Where:** `backend/internal/compositor/manager/inputs.go` (`BindCtx`), `qml/services/compositor/CompositorConfigManager.qml` (`axiomPath`)
-- **What:** The shell sends `ctx.axiomPath` (`Paths.axiomPath`, the QML dir) with the compositor facts, and `BindCtx.AxiomPath` decodes it, but no renderer reads it: the binds' commands use only `axiomBin`, `shellCommand` and `restartCommand` (`grep 'get(ctx, "' backend/internal/compositor`). A dead field both sides keep up, which the move to `qml/` had to update in `manager/testdata/facts.json` all the same. Fix: drop the field and the shell's key (and the fixture's).
-- **Size:** trivial
-- **Found:** 2026-11-03, while moving the backend to the qml/ layout
-
 ### The dev config's diff compares lists whole
 - **Where:** `backend/internal/devconfig/diff.go` (`Rows`), `qml/components/views/Settings/DevConfigDiffCard.qml`
 - **What:** `dev.config.diff` takes its paths from `config.Diff`, which sets a list whole, so a list differing anywhere (one bar widget's setting in `Bars`, one page in `Overlay.items`) is one row holding the whole list, and copying it copies every item, dev's other edits and live's alike. Lists of objects with ids (bars, pages, edge menus, OSDs, widgets) should compare per id: a row per item added, removed or changed, each copied on its own (`{id}` selectors, as `config.set` takes). Decided for v1 (the restructure's plan, Decided 8): "Lists are compared whole in v1 (per-id rows are an issues.md follow-up)".

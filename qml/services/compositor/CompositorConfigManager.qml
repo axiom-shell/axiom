@@ -159,7 +159,6 @@ Singleton {
       "supports": CompositorManager.supports,
       "fx": CompositorManager.backend.fx === true,
       "ctx": {
-        "axiomPath": Paths.axiomPath.replace(/\/$/, ""),
         "axiomBin": Paths.axiomBin,
         "shellCommand": Paths.shellCommand,
         "restartCommand": Paths.restartCommand,
