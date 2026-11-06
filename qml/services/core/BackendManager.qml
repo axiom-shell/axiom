@@ -195,6 +195,29 @@ QtObject {
     return names;
   }
 
+  // Calls one of the shell's own IPC targets in place, as `axiom ipc`
+  // would through axiom (the same checks: an enabled target, its function,
+  // the argument count), with no round trip; its result, or undefined
+  // when it refused (logged)
+  function callLocal(target, fn, args) {
+    try {
+      const enabled = root._targets.find(t => t.target === target && t.enabled);
+      if (enabled && typeof enabled[fn] === "function" && enabled[fn].length !== args.length)
+        throw {
+          "kind": "bad_request",
+          "message": fn + " takes " + enabled[fn].length + " arguments, got " + args.length
+        };
+      return root._callTarget({
+        "target": target,
+        "function": fn,
+        "args": args
+      });
+    } catch (e) {
+      console.warn("[BackendManager]", target, fn, "failed:", e?.message ?? e);
+      return undefined;
+    }
+  }
+
   function _callTarget(params) {
     const target = root._targets.find(t => t.target === params.target && t.enabled);
     if (!target)

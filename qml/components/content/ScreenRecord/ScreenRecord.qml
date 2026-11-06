@@ -56,7 +56,9 @@ Panel {
 
   function toggle() {
     if (root.recording)
-      ScreenshotManager.stopRecording();
+      ActionsManager.run("screenRecord", {
+        "call": "close"
+      });
     else
       root.start("pick");
   }
@@ -184,7 +186,9 @@ Panel {
       iconText: "stop"
       iconColor: Theme.error
       tooltipText: I18n.tr("Stop")
-      onClicked: ScreenshotManager.stopRecording()
+      onClicked: ActionsManager.run("screenRecord", {
+        "call": "close"
+      })
     }
   }
 
@@ -236,7 +240,9 @@ Panel {
           label: I18n.tr("Stop · {0}", root.elapsed)
           active: true
           activeColor: Theme.error
-          onClicked: ScreenshotManager.stopRecording()
+          onClicked: ActionsManager.run("screenRecord", {
+            "call": "close"
+          })
         }
       }
 

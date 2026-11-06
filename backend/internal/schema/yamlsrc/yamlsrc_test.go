@@ -305,7 +305,8 @@ func TestOrderKeysKeepsAnAuthorsOrder(t *testing.T) {
 
 // x-axiomActions fills a hot corner's action from the bind actions table:
 // its ipcActions less those left out, then exec, with the Keybinds page's
-// labels, and where its argument and call show; the mark goes.
+// labels and the table's icons and sections, and where its argument and
+// call show; the mark goes.
 func TestAxiomActions(t *testing.T) {
 	t.Parallel()
 	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
@@ -318,6 +319,7 @@ func TestAxiomActions(t *testing.T) {
 	}
 	ipc := tables.Value("ipcActions").(*jsonx.Object)
 	calls := tables.Value("calls").(*jsonx.Object)
+	icons := tables.Value("icons").(*jsonx.Object)
 	binds := pointer(root, "/definitions/Keybind/properties/action").Value("x-enumLabels").(*jsonx.Object)
 	item := pointer(root, "/properties/HotCorners/properties/items/items/properties")
 	action := item.Value("action").(*jsonx.Object)
@@ -341,8 +343,17 @@ func TestAxiomActions(t *testing.T) {
 		if got, want := pointer(action, "/x-enumLabels").Value(name), binds.Value(name); got != want {
 			t.Errorf("%s's label = %v, want the Keybinds page's %v", name, got, want)
 		}
+		if name == "exec" {
+			continue
+		}
+		if got, want := pointer(action, "/x-enumIcons").Value(name), icons.Value(name); got != want {
+			t.Errorf("%s's icon = %v, want the table's %v", name, got, want)
+		}
+		if got, want := pointer(action, "/x-enumGroups").Value(name), ipc.Value(name).(*jsonx.Array).Items[2]; got != want {
+			t.Errorf("%s's group = %v, want the table's section %v", name, got, want)
+		}
 	}
-	left := []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"}
+	left := []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop", "reboot", "poweroff"}
 	if got, want := len(enum), ipc.Len()-len(left)+1; got != want || enum[len(enum)-1] != "exec" || slices.ContainsFunc(left, func(s string) bool { return slices.Contains(enum, s) }) {
 		t.Errorf("enum = %v: want the %d ipcActions but %v, then exec", enum, want-1, left)
 	}

@@ -6,6 +6,7 @@ import Quickshell.Services.Notifications
 
 import qs.services.system
 import qs.config
+import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 import qs.components.content.parts
@@ -195,7 +196,7 @@ Panel {
       duration: Math.min(Math.max(0, root._leaving - 1), root._staggerSteps) * root._stagger + Appearance.animNormal
     }
     ScriptAction {
-      script: NotificationManager.clearAll()
+      script: ActionsManager.run("clearNotifications")
     }
   }
 

@@ -73,10 +73,10 @@ Panel {
     scanning: BluetoothManager.discovering
     checked: BluetoothManager.enabled
     switchEnabled: BluetoothManager.available && !BluetoothManager.blocked
-    onToggled: checked => {
-      ShellManager.onScreen("bluetooth");
-      BluetoothManager.setEnabled(checked);
-    }
+    onToggled: checked => ActionsManager.run("bluetooth", {
+        "call": checked ? "open" : "close",
+        "fromScreen": true
+      })
   }
 
   StyledSeparator {

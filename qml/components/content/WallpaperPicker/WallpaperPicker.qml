@@ -127,7 +127,7 @@ Card {
         visible: root.mode === "rotate"
         iconText: "skip_next"
         tooltipText: I18n.tr("Next wallpaper")
-        onClicked: WallpaperManager.next()
+        onClicked: ActionsManager.run("nextWallpaper")
       }
     }
 

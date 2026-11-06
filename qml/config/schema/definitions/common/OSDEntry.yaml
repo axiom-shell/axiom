@@ -186,6 +186,7 @@ properties:
       items:
         type: array
         title: Shows
+        x-ordered: true
         items:
           type: string
           enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, recording, camera, micUse, screenShare]

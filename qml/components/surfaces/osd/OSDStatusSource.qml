@@ -6,6 +6,7 @@ import qs.services.compositor
 import qs.services.system
 import qs.services.apps
 import qs.components.methods
+import qs.services.ui
 
 // One status type of an OSD, or its now playing card (OSDContent builds
 // one per status and one for the card): its state now, as a tile
@@ -35,52 +36,20 @@ Loader {
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
   readonly property var tile: OSDItems.tile(root.type, root._state())
 
-  // A click on its icon can change it (toggle)
-  // (a recording only stops)
-  readonly property bool canToggle: root.type === "recording" ? ScreenshotManager.recording : ["keyboardLayout", "audio", "microphone", "powerProfile", "caffeine", "dnd", "nightLight", "wifi", "bluetooth", "airplane", "vpn"].includes(root.type)
+  // The action a click on its icon runs (ActionsManager.osdStatusAction:
+  // the layout to the next, the profile between power saver and
+  // balanced, …), "" for a status nothing switches
+  readonly property string action: ActionsManager.osdStatusAction(root.type)
+  // A click on its icon can change it (toggle) (a recording only stops)
+  readonly property bool canToggle: root.type === "recording" ? ScreenshotManager.recording : root.action !== ""
 
-  // Flips it, as its own control would (the layout to the next, the
-  // profile between power saver and the rest)
+  // Runs its action, as its keybind would. Not marked as the pointer's:
+  // this OSD is showing, and shows the change
   function toggle() {
-    switch (root.type) {
-    case "keyboardLayout":
-      InputSourceManager.next(false);
-      break;
-    case "audio":
-      AudioManager.toggleMute();
-      break;
-    case "microphone":
-      AudioManager.toggleSourceMute();
-      break;
-    case "powerProfile":
-      BatteryManager.setPowerSaver(BatteryManager.profile !== "powerSaver");
-      break;
-    case "caffeine":
-      IdleManager.toggle();
-      break;
-    case "dnd":
-      NotificationManager.toggleDnd();
-      break;
-    case "nightLight":
-      NightLightManager.toggle();
-      break;
-    case "wifi":
-      NetworkingManager.toggleWifi();
-      break;
-    case "bluetooth":
-      BluetoothManager.toggleEnabled();
-      break;
-    case "airplane":
-      NetworkingManager.setAirplane(!NetworkingManager.airplane);
-      break;
-    case "vpn":
-      VpnManager.toggleLast();
-      break;
-    case "recording":
-      if (ScreenshotManager.recording)
-        ScreenshotManager.stopRecording();
-      break;
-    }
+    if (root.canToggle)
+      ActionsManager.run(root.action, {
+        "call": root.type === "recording" ? "close" : "toggle"
+      });
   }
 
   // A click on its card (OSDItems.clickableCards): a drive's opens or

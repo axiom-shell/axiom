@@ -238,11 +238,11 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Shell-wide: windows, screens, reloads and actions
 
-### Toggles are switched in several places, and most have no IPC
-- **Where:** `qml/components/content/QuickActions/QuickActions.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml` (toggle), `qml/services/ui/LauncherCommands.qml`
-- **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
+### Quick actions can't hold custom toggles or commands
+- **Where:** `qml/components/content/QuickActions/QuickActions.qml`, `qml/services/ui/ActionsManager.qml`
+- **What:** A tile can be any action of the catalogue, and the Button widget can run a command, but there's no tile of the user's own: a toggle with an on and an off command and a status command (exit 0 = on), or an action with a module as its detail. A plan was drafted on the unified-actions branch (a `CustomActions` section of items, `custom:<id>` tile ids run and judged by ActionsManager, a card to add them) and set aside by the maintainer (2026-11-06) as more than that branch needed. Its open questions: a toggle's state lags its command (hold the expected state until the status command agrees?); status commands poll while a tile shows (cost, a slow script makes the tile slow); the lock screen and greeter must never run them; a detail opens only in overlay pages and edge menus; a detail module's own settings nested in the item's form; a deleted item leaves `custom:x` in modules and Buttons; whether keybinds, hot corners and the launcher reach them too (`customActions run <id>`).
 - **Size:** needs a plan
-- **Found:** 2026-11-01, while making the OSD's status icons clickable
+- **Found:** 2026-11-06, while finishing the unified-actions branch
 
 ### BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload
 - **Where:** `qml/services/ui/BlurManager.qml` (`paused`), `qml/services/ui/WallpaperManager.qml` (`rotationHeld`), `qml/services/compositor/HyprlandManager.qml` (`activeWindowId`)

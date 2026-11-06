@@ -71,7 +71,7 @@ Built on `Quickshell.Services.Greetd`.
   - The session launches with `XDG_SESSION_TYPE` / `XDG_CURRENT_DESKTOP` / `XDG_SESSION_DESKTOP`.
   - It remembers the user (with `rememberUser`) and their session.
 - **Other:**
-  - `power(action)` through `systemctl`.
+  - `power(action)` through `systemctl`: suspend, hibernate, restart, shut down.
   - Keyboard layouts are `InputSourceManager`'s, as in the session: there it serves the compositor's layouts alone (no input method runs at the login screen), pushes nothing to a framework and follows `keyboardLayoutChanged` ([input sources](input-sources.md)).
   - `avatarOf(name)` from AccountsService's icons.
 - **At start** (but not when windowed), `_applyCompositor`:
@@ -89,7 +89,7 @@ Built on `Quickshell.Services.Greetd`.
     - In a slot too short to stack them, the two fields go side by side.
     - In a slot shorter than one field, they shrink to fit.
   - `Session`: in a slot shorter than its card, just the field, with no card.
-  - `Power`: restart and shut down ask twice. It is also on the lock screen.
+  - `Power`: suspend, hibernate (only where logind's `CanHibernate` says it can: `SessionManager.canHibernate`), restart and shut down, in the order set; restart and shut down ask twice. It is also on the lock screen.
   - `KeyboardLayout` (also on the lock screen and in the overlay, edge menus and the desktop): the compositor's layouts alone here, a click or the wheel switching ([input sources](input-sources.md)).
 - **Solid:** in greeter mode `Appearance.compositorBlurs` is false (`CompositorManager`), so every surface is opaque and nothing frosts; `GreeterSurface` also sets `frost: false`, so the layouts editor's preview isn't frosted either, though its cards keep the session's translucency (`Appearance.fill` is global). The wallpaper still follows `Greeter.layout.backdrop.blur` (Qt's own blur, needing nothing of the compositor).
 - **Display modules** that list `greeter` in `x-hosts`: ClockCalendar, Greeting, Weather, Battery, Network, Palette, ColorSwatch.

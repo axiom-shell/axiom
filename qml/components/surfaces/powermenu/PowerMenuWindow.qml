@@ -34,7 +34,7 @@ PanelWindow {
     if (!gate.pass(action, PowerMenuConfig.confirm && SessionManager.destructiveActions.includes(action)))
       return;
     shown = false;
-    SessionManager.sessionAction(action);
+    ActionsManager.run(action);
   }
 
   function select(index) {

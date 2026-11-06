@@ -97,100 +97,6 @@ QtObject {
       "": "more_horiz"
     })
 
-  // Material Symbols per action (the picker and its button)
-  readonly property var _actionIcons: ({
-      "launcher": "apps",
-      "launcherSearch": "search",
-      "overlay": "dashboard",
-      "overlayPage": "web_stories",
-      "edgeMenu": "side_navigation",
-      "dock": "dock_to_bottom",
-      "bar": "toolbar",
-      "workspaceOverview": "grid_view",
-      "powerMenu": "power_settings_new",
-      "lock": "lock",
-      "toggleDnd": "do_not_disturb_on",
-      "clearNotifications": "clear_all",
-      "idleInhibit": "coffee",
-      "nightLight": "nightlight",
-      "nextWallpaper": "wallpaper",
-      "randomWallpaper": "shuffle",
-      "monitorsIdentify": "desktop_windows",
-      "darkMode": "contrast",
-      "wifi": "wifi",
-      "bluetooth": "bluetooth",
-      "vpn": "vpn_lock",
-      "audioOutputNext": "speaker",
-      "clipboard": "content_paste",
-      "emoji": "mood",
-      "calculator": "calculate",
-      "notes": "sticky_note_2",
-      "calendar": "calendar_month",
-      "calendarNewEvent": "event",
-      "chat": "chat",
-      "chatNew": "add_comment",
-      "pomodoro": "timer",
-      "pomodoroSkip": "skip_next",
-      "pomodoroStop": "stop_circle",
-      "stopwatch": "timer_play",
-      "stopwatchLap": "flag",
-      "stopwatchReset": "timer_off",
-      "timerStart": "hourglass_top",
-      "timerToggle": "hourglass",
-      "timerReset": "hourglass_empty",
-      "workspaceStep": "swap_horiz",
-      "moveWindowStep": "move_item",
-      "moveWindowStepSilent": "send",
-      "workspaceNth": "counter_1",
-      "moveWindowNth": "move_item",
-      "moveWindowNthSilent": "send",
-      "scrollStep": "mouse",
-      "focusDir": "center_focus_strong",
-      "moveWindowDir": "open_with",
-      "resizeWindow": "open_in_full",
-      "closeWindow": "close",
-      "fullscreen": "fullscreen",
-      "toggleFloat": "picture_in_picture",
-      "pin": "push_pin",
-      "centerWindow": "center_focus_weak",
-      "toggleGroup": "tab_group",
-      "pseudo": "picture_in_picture_alt",
-      "toggleSplit": "splitscreen_right",
-      "stripSwapColumn": "swap_horiz",
-      "stripWider": "width_wide",
-      "stripNarrower": "width_normal",
-      "stripFit": "fit_screen",
-      "stripConsume": "move_group",
-      "stripCenter": "vertical_align_center",
-      "windowSwitcher": "tab",
-      "windowSwitcherReverse": "tab",
-      "mouseDrag": "drag_pan",
-      "mouseResize": "drag_handle",
-      "toggleSpecial": "star",
-      "moveToSpecial": "star_half",
-      "restartShell": "restart_alt",
-      "volumeUp": "volume_up",
-      "volumeDown": "volume_down",
-      "toggleMute": "volume_mute",
-      "toggleMicMute": "mic",
-      "brightnessUp": "brightness_high",
-      "brightnessDown": "brightness_low",
-      "mediaPlayPause": "play_pause",
-      "mediaNext": "skip_next",
-      "mediaPrevious": "skip_previous",
-      "mediaStop": "stop",
-      "inputSourceNext": "keyboard",
-      "inputSourcePrev": "keyboard",
-      "terminal": "terminal",
-      "fileManager": "folder",
-      "browser": "language",
-      "screenshot": "screenshot_region",
-      "screenRecord": "videocam",
-      "exitSession": "logout",
-      "exec": "code",
-      "raw": "data_object"
-    })
-
   // [{ action, label, section, icon }], one per action, in schema order
   // The actions the running compositor can do (the table's needs); a saved
   // bind with another keeps it, flagged in `issues`
@@ -198,11 +104,13 @@ QtObject {
         "action": action,
         "label": root.actionLabels[action] ?? action,
         "section": action === "exec" ? "Apps" : BindActions.sectionFor(root.actionTable, action),
-        "icon": root._actionIcons[action] ?? "keyboard"
+        "icon": root.actionIcon(action)
       }))
 
+  // An action's Material Symbol (the table's icons; the picker, its
+  // button, a tile)
   function actionIcon(action) {
-    return root._actionIcons[action] ?? "keyboard";
+    return BindActions.iconOf(root.actionTable, action);
   }
 
   // What an action's free-text argument is, for its placeholder
@@ -237,8 +145,25 @@ QtObject {
       return ["focused"].concat(BarsConfig.savedBars.filter(bar => bar.autoHide !== "never").map(bar => bar.id));
     case "view":
       return OverlayConfig.views.filter(view => view.visible !== false).map(view => view.name || view.type).concat(["Layouts"]).filter((name, i, all) => all.indexOf(name) === i);
+    case "theme":
+      // A family by its first variant (theme set applies the one for the
+      // light/dark mode)
+      return ["random"].concat(ThemeManager.themeFamilies.map(family => family.dark || family.light));
     }
     return null;
+  }
+
+  // The labels of argumentOptions' choices, by value, where they aren't
+  // the value itself (null for none)
+  function argumentLabels(action) {
+    if (BindActions.argumentKind(root.actionTable, action) !== "theme")
+      return null;
+    return ThemeManager.themeFamilies.reduce((labels, family) => {
+      labels[family.dark || family.light] = family.label;
+      return labels;
+    }, {
+      "random": I18n.tr("Random")
+    });
   }
 
   // The choices for an action's call, or null when it has none

@@ -80,6 +80,7 @@ How they're built: `docs/dev/core/services-pattern.md`.
 - **Anything polled goes through `acquire(owner, request)` / `release(owner)`**: fetched once at the shortest interval asked, not at all with no consumer. Acquire in `Component.onCompleted`, release in `onDestruction`.
 - **Config writes** only through `ConfigManager.setTheme` / `setWallpaper(s)` / `commit(object)`, or `SettingsManager.setValue` / `commitValue(s)` from UI; mutating `ConfigManager.config` never persists. **Editors** edit a `ConfigDraft` and show unsaved edits through `ConfigManager.setPreview` (`docs/dev/core/editors-pattern.md`).
 - Secrets never go in config.json or argv (`SecretsManager`, through stdin). Clipboard history never touches disk.
+- **One-tap actions are one catalogue** (the keybind table plus `ActionsManager`): the UI runs a toggle, a session action or a surface through `ActionsManager.run`, never its service's toggle (`check_structure`; `docs/dev/core/actions.md`).
 - **The compositor is reached only through `CompositorManager`**, in neutral shapes; every workspace switch and window focus through its `goToWorkspace` / `stepWorkspace` / `nthWorkspace` / `focusWindow` (`check_structure`; `docs/dev/compositor/README.md`).
 - **Gate on a capability, never a compositor**: `CompositorManager.supports.<key>`, `"/$supports.<key>": true` in an `x-showIf`, `x-needs` on a page type. Nothing writes a compositor's config unless `supports.configModes`.
 - **Nothing is written under the tree** (`Paths.treePath`; installed read-only).

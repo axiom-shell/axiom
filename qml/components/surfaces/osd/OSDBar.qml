@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 
 // One OSD level bar, by its item's type (see an OSD's bars.items in the
@@ -77,7 +78,7 @@ Loader {
       iconClickable: true
       iconTip: AudioManager.sourceMuted ? I18n.tr("Unmute") : I18n.tr("Mute")
       onVolumeChanged: newVolume => AudioManager.setSourceVolume(newVolume)
-      onIconClicked: AudioManager.toggleSourceMute()
+      onIconClicked: ActionsManager.run("toggleMicMute")
       onVolumeLevelChanged: _levelChanged()
       onIsMutedChanged: _levelChanged()
     }

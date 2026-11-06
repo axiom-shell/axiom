@@ -98,8 +98,9 @@ def schema_strings(node, out):
             out.update(g for g in node["x-libraryGroups"] if isinstance(g, str))
         if isinstance(node.get("x-hookup"), list):
             out.update(t["where"] for t in node["x-hookup"] if isinstance(t, dict) and isinstance(t.get("where"), str))
-        if isinstance(node.get("x-enumLabels"), dict):
-            out.update(v for v in node["x-enumLabels"].values() if isinstance(v, str))
+        for key in ("x-enumLabels", "x-enumGroups"):
+            if isinstance(node.get(key), dict):
+                out.update(v for v in node[key].values() if isinstance(v, str))
         if node.get("type") == "string" and isinstance(node.get("enum"), list):
             labels = node.get("x-enumLabels") if isinstance(node.get("x-enumLabels"), dict) else {}
             out.update(enum_label(v) for v in node["enum"] if isinstance(v, str) and v not in labels)

@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.services.apps
+import qs.services.ui
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
@@ -33,11 +34,11 @@ ValueStyleWidget {
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
   onClicked: button => {
     if (button === Qt.RightButton)
-      PomodoroManager.skip();
+      ActionsManager.run("pomodoroSkip");
     else if (button === Qt.MiddleButton)
-      PomodoroManager.stop();
+      ActionsManager.run("pomodoroStop");
     else
-      PomodoroManager.toggle();
+      ActionsManager.run("pomodoro");
   }
 
   PopoutAnchor {
