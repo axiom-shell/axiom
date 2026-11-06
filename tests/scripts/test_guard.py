@@ -121,74 +121,22 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_git_push_and_clean(self):
-        self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
-                    "git push origin +x", "git push origin :x", "git push --delete origin x", "git push origin main",
-                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x",
+        self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:roadmap/1-x", "git push origin @",
+                    "git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
+                    "git push --force-if-includes origin x", "git push origin +x", "git push origin :x", "git push --delete origin x",
+                    "git push -d origin x", "git push --mirror origin", "git push --all origin", "git push --prune origin x",
+                    "git push --tags origin x", "git push upstream x", "git push -v origin x", "git push origin x y",
+                    "git push origin main", "git push origin master", "git push origin x:main", "git push origin x:refs/heads/main",
+                    "git -C . push --force origin x", "git -C /tmp push", "env -C /tmp git push",
+                    "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
+                    # a switch, rebase or rename onto main, then a bare push
+                    "git switch main && git push", "git rebase roadmap/1-x main && git push", "git branch -M main && git push",
                     "git clean -fdx", "git clean -X", "git -C . clean -x -f")
-        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only",
-                    "git clean -fd", "git clean -n")
-        with mock.patch.object(guard, "current_branch", return_value="main"):
-            self.blocks("git push", "git push -u origin HEAD")
-        with mock.patch.object(guard, "current_branch", return_value="roadmap/1-x"):
-            self.allows("git push", "git push -u origin HEAD")
-        # A leading `cd` is followed: the branch is read in the folder it enters
-        with tempfile.TemporaryDirectory() as tree:
-            # git reads no branch in a folder that doesn't exist
-            branch = lambda cwd, *_: "roadmap/1-x" if Path(cwd) == Path(tree).resolve() else "main" if Path(cwd).is_dir() else ""
-            with mock.patch.object(guard, "current_branch", side_effect=branch):
-                self.allows(f"cd {tree} && git push -u origin HEAD")
-                self.blocks("git push -u origin HEAD", f"cd {tree} && cd {REPO} && git push")
-                # cd's `..` leaves a link to the folder (here into one on main), not the folder it points to
-                with tempfile.TemporaryDirectory() as other:
-                    (Path(tree) / "sub").mkdir()
-                    (Path(other) / "link").symlink_to(Path(tree) / "sub")
-                    self.blocks(f"cd {other}/link/.. && git push")
-                # `~` is expanded before its `..`
-                with mock.patch.dict(os.environ, {"HOME": str(Path(tree) / "sub")}):
-                    self.allows("cd ~/.. && git push -u origin HEAD")
-                # The push may run where the session started
-                self.blocks(f"cd {tree}; git push origin HEAD", f"cd {tree} || git push origin HEAD",
-                            f"(cd {tree}) && git push origin HEAD",
-                            # a cd that fails, or another cd later in the line
-                            f"cd {tree}/none && true; git push", f"cd '{tree}/none&&'; git push",
-                            f"cd {tree} && cd {REPO}; git push", f"cd {tree} && pushd {REPO}; git push",
-                            f"cd {tree} && bash -c 'cd {REPO}; git push'",
-                            # a command that moves after the cd, or a `\&` or lone `&` that backgrounds it
-                            f"cd {tree} && eval 'cd {REPO}' && git push", f"cd {tree} && builtin cd {REPO} && git push",
-                            f"cd {tree} && chdir {REPO} && git push", f"cd {tree} && noglob cd {REPO} && git push",
-                            f"cd {tree} && repeat 1 cd {REPO} && git push", f"cd {tree} && __zoxide_cd {REPO} && git push",
-                            f"cd {tree} && env -C {REPO} git push", f"cd {tree} && git status \\&& git push",
-                            f"cd {tree} && true | cd {REPO} && git push", f"cd {tree} && true & git push",
-                            f"cd {tree} && true || git push")
-
-    def test_git_push_where_git_runs(self):
-        """The branch is read where git runs: after a switch, rebase or rename onto main, in a wrapper's folder, by --git-dir or GIT_DIR"""
-        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ):
-            for k in [k for k in os.environ if k.startswith("GIT_")]:
-                del os.environ[k]  # a pre-commit hook's GIT_DIR would point every git here at this repo
-            os.environ["HOME"] = tmp  # `GIT_DIR=~/main/.git`: the shell expands the ~
-            main, feature = f"{tmp}/main", f"{tmp}/feature"
-            for folder, branch in ((main, "main"), (feature, "roadmap/1-x")):
-                guard.subprocess.run(["git", "init", "-q", "-b", branch, folder], check=True)
-            for command in ("git switch main && git push", "git checkout main && git push origin HEAD",
-                            f"git -C {main} switch main && git push -u origin HEAD", f"env -C {main} git push",
-                            f"env --chdir={main} git push", f"env -C{main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
-                            f"systemd-run --user --working-directory={main} git push", f"git --git-dir={main}/.git push",
-                            f"GIT_DIR={main}/.git git push", "GIT_DIR=~/main/.git git push", "GIT_DIR=$HOME/main/.git git push", f"git -C {main} push origin @", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
-                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null",
-                            # a rebase onto main checks it out; a rename to main renames the branch checked out
-                            "git rebase roadmap/1-x main && git push", "git rebase --onto origin/main HEAD~1 main && git push origin HEAD",
-                            f"git -C {feature} rebase -X ours roadmap/1-x main && git push", f"cd {feature} && git rebase roadmap/1-x main && git push", "git rebase --root main && git push",
-                            "git branch -M main && git push", "git branch -fM main && git push", "git branch -m roadmap/1-x main && git push origin @",
-                            f"cd {feature} && git branch --move --force main && git push", f"git -C {feature} branch -M main && git -C {feature} push"):
-                self.assertTrue(denied(command, feature), command)
-            # git reads the branch from the repository, not the work tree
-            for command in ("git push", "git switch main && git push origin roadmap/1-x", f"git --work-tree={main} push",
-                            f"env -C {feature} git push -u origin HEAD", "git rebase main && git push", "git rebase --onto main HEAD~1 && git push",
-                            "git rebase main roadmap/1-x && git push", "git rebase --root roadmap/1-x && git push", "git branch -M roadmap/2-y && git push", "git branch -c main && git push"):
-                self.assertFalse(denied(command, feature), command)
-            # A leading cd into a folder on a branch, from one on main, with a pipe, redirections and other commands
-            self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null", main))
+        self.allows("git push -u origin roadmap/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
+                    "git push --dry-run origin x", "git push origin x:roadmap/1-x", "git push origin main:x",
+                    "git -C /tmp/w push -u origin roadmap/1-x", "cd /tmp && git push -u origin roadmap/1-x 2>&1 | tail -2",
+                    "git switch main && git push origin roadmap/1-x", "env -C /tmp git push origin x",
+                    "git status", "git pull --ff-only", "git clean -fd", "git clean -n")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
