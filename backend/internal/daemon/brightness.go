@@ -15,7 +15,8 @@ func (d *Daemon) brightnessPart() part {
 		SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
 			return dbus.Dial(ctx, dbus.SystemAddress(d.opts.Getenv), dbus.Options{Log: log})
 		},
-		Getenv: d.opts.Getenv,
+		Getenv:   d.opts.Getenv,
+		Children: &d.children,
 	})
 	type setParams struct {
 		brightness.Target

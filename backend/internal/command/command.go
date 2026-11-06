@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -42,12 +43,31 @@ type Result struct {
 	Stderr   string `json:"stderr"`
 }
 
+// Err is nil for a run that exited 0, else an *ExitError.
+func (r Result) Err() error {
+	if r.ExitCode == 0 {
+		return nil
+	}
+	return &ExitError{Code: r.ExitCode}
+}
+
+// ExitError is a run that didn't exit 0, its code read as exec.ExitError's.
+type ExitError struct{ Code int }
+
+func (e *ExitError) Error() string { return fmt.Sprintf("exit status %d", e.Code) }
+
+// ExitCode is the run's exit code (-1: killed by a signal).
+func (e *ExitError) ExitCode() int { return e.Code }
+
 // Options are what every command runs with.
 type Options struct {
 	// Env is the environment (nil: the daemon's own)
 	Env []string
 	// Children, when not nil, holds what runs, for a re-exec to hand on
 	Children *Children
+	// Stop kills the command's group once ctx ends (the daemon's own
+	// commands, each with a time limit) rather than letting it run on
+	Stop bool
 }
 
 // Run runs argv and waits for it. Input, when not nil, is written to its
@@ -56,7 +76,7 @@ type Options struct {
 // wait on the user (a terminal, a polkit prompt). When ctx ends first
 // (the shell's connection closed, a re-exec) Run returns unavailable and
 // the command runs on, reaped when it exits (by the next image, after a
-// re-exec: Children).
+// re-exec: Children), unless o.Stop kills it.
 func Run(ctx context.Context, o Options, argv []string, input *string) (Result, error) {
 	if len(argv) == 0 {
 		return Result{}, axerr.New(axerr.BadRequest, "an empty command")
@@ -82,6 +102,10 @@ func Run(ctx context.Context, o Options, argv []string, input *string) (Result, 
 	}()
 	select {
 	case <-ctx.Done():
+		if o.Stop {
+			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			<-done
+		}
 		return Result{}, axerr.Wrap(axerr.Unavailable, ctx.Err(), "%s was still running", argv[0])
 	case <-done:
 	}

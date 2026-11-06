@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -16,8 +17,11 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
+	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 	"github.com/axiom-shell/axiom/backend/internal/xdg"
@@ -257,6 +261,49 @@ func TestPushesFollowTopics(t *testing.T) {
 			t.Errorf("a config push to a saved-only subscriber: %s", m)
 		}
 	case <-time.After(200 * time.Millisecond):
+	}
+}
+
+// An outside edit of config.json (an editor, a sync tool) is read and
+// pushed: the config part runs the store's watch.
+func TestOutsideEditIsPushed(t *testing.T) {
+	t.Parallel()
+	td := startDaemon(t, nil)
+	pushes := make(chan string, 64)
+	c, err := td.connect(t, "cli", []string{"config"}, pushes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(td.dirs.Config, store.FileName)
+	edit := fmt.Sprintf(`{"format": 2, "version": %d, "Battery": {"lowThreshold": 17}}`, steps.Current())
+	// The watch starts with the daemon, a moment after its socket: the
+	// edit is written again until it's seen
+	pushed := testkit.Eventually(func() bool {
+		if err := fsx.WriteFile(path, []byte(edit), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		for {
+			select {
+			case m := <-pushes:
+				if m == "config.changed" {
+					return true
+				}
+			case <-time.After(300 * time.Millisecond):
+				return false
+			}
+		}
+	})
+	if !pushed {
+		t.Fatal("an outside edit wasn't pushed")
+	}
+	var got struct {
+		Config json.RawMessage `json:"config"`
+	}
+	if err := c.Call(context.Background(), "config.get", nil, &got); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(strings.ReplaceAll(string(got.Config), " ", ""), `"lowThreshold":17`) {
+		t.Errorf("config.get after the edit: %s", got.Config)
 	}
 }
 

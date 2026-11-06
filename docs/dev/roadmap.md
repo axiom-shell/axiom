@@ -184,6 +184,8 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #362, a start or a reload logs no `Property 'fromEntries'` TypeError from MediaManager, and a player already playing at the start is picked.
 - Screen sharing ([screen sharing](features/screen-sharing.md)), once axiom runs a build with it: under Hyprland, niri and sway turn on Settings › Screen sharing › Use axiom's picker, Apply the card's line and Restart the portal; share a screen, a window and (Hyprland) a region in Discord and in a browser's screen-share test, and check the picker shows once per share (Discord's repeats answered without it); turn it off and check the portal's own picker is back; with the shell stopped, check sharing still works through the portal's own. Under niri also check the cast ends when the shared window closes, and an app that asked to remember shares again without asking.
 - On sway, niri and Hyprland with `Overlay.closeOnOutsideClick` on, open the overlay, click another monitor, the screen border and a floating bar's gap (it stays open), then its own background (it closes) (#378).
+- With an edge menu that closes on leave, run `axiom edge-menu open <id>` from a bind and check it stays up until the pointer enters and leaves it (#379).
+- Open the Calendar popout and start a new event: the popout doesn't grow or flash as the editor opens (#379).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -317,10 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
-- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
-- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
-- [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
@@ -381,6 +379,12 @@ Found while reviewing the guard's gh and push allowlists (row 20):
 
 Found while reviewing the Monitors batch (row 20):
 - [A hotplug can shift an unnamed output's block, and nothing remaps it](issues.md#a-hotplug-can-shift-an-unnamed-outputs-block-and-nothing-remaps-it)
+
+Found while moving the daemon's own commands to command.Run (row 20):
+- [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren)
+
+Found while fixing the daemon's config watch (row 20):
+- [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode)
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)

@@ -84,9 +84,14 @@ func (s *Service) followFcitx(ctx context.Context, conn *dbus.Conn, owners *dbus
 		return known
 	}
 	// Whether the watcher lists an item of fcitx5's (an entry is the
-	// item's bus name, with its path or not)
+	// item's bus name, with its path or not). Asked of its owner's unique
+	// name, which never starts one by D-Bus activation
 	tray := func() bool {
-		v, err := conn.GetProperty(ctx, watcherName, watcherPath, watcherIface, "RegisteredStatusNotifierItems")
+		owner, err := conn.NameOwner(ctx, watcherName)
+		if err != nil {
+			return false
+		}
+		v, err := conn.GetProperty(ctx, owner, watcherPath, watcherIface, "RegisteredStatusNotifierItems")
 		if err != nil {
 			return false
 		}

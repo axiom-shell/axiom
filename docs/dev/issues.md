@@ -20,6 +20,18 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The daemon's other own commands still start outside command.Children
+- **Where:** `backend/internal/sysmon/nvidia.go`, `backend/internal/theme/integrate.go`, `backend/internal/compositor/manager/niri.go`, `backend/internal/daemon/cursor.go`
+- **What:** Row 20 moved `checkupdates`, `ddcutil` and `tailscale` to `command.Run` with the daemon's `Children`, but other commands the daemon runs for itself still start through their own `exec.Command` (`grep -rln 'exec.Command' backend/internal` lists them), so one in flight at a re-exec isn't handed on and stays a zombie until the daemon quits, as the three did. Not yet sorted into which run often enough to matter (a polled or streamed one) and which run once (a build, an install), which a re-exec doesn't meet.
+- **Size:** small
+- **Found:** 2026-11-06, while moving the daemon's own commands to command.Run (row 20)
+
+### axiom config validate checks the install's config with the binary's schema under dev mode
+- **Where:** `backend/internal/cli/config.go` (`configValidateCommand`, `offlinePipeline`)
+- **What:** With no FILE and no `--tree`, `axiom config validate` reads `configDir(e)`'s config.json and checks it against the schema embedded in the binary it runs as. While dev mode runs the dev tree, the daemon runs the dev config through the dev tree's schema, so validate checks another file with another schema: a config using the dev tree's new types is called invalid though the daemon accepts it. Split out of the config watch's entry (row 20), where it was noted as related.
+- **Size:** small
+- **Found:** 2026-10-29, while testing custom widgets on the live config
+
 ### A push of a named branch can land on main through git's push config
 - **Where:** `.claude/hooks/guard.py` (`push_allowed`)
 - **What:** The guard judges `git push origin <branch>` by the name alone, but git maps a branch named without `:<dst>` through its config: with `remote.origin.push` set to `refs/heads/x:refs/heads/main`, or `push.default=upstream` on a branch made from `origin/main` (which sets its upstream to main, as the autopilot's step 4 branches do), `git push origin x` updates main (shown on scratch repos 2026-11-06: `feature -> trunk`). That config can come from `git -c …`, `GIT_CONFIG_*` or an earlier `git config`; the global config sets neither today. Fix: refuse a push whose `-c`/`GIT_CONFIG_*` sets `push.*` or `remote.*.push`, or allow only the `<src>:<dst>` form.
@@ -66,12 +78,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while fixing bar-popouts-07 (row 20)
 
-### The tray watcher check could start a watcher by D-Bus activation
-- **Where:** `backend/internal/inputmethod/fcitx5.go` (`followFcitx`)
-- **What:** `tray()` reads `org.kde.StatusNotifierWatcher`'s `RegisteredStatusNotifierItems` without the NoAutoStart flag, so on a system shipping an activatable watcher (none here: `org.x.StatusNotifierWatcher` is the only activatable one) the read would start it. Asking `NameHasOwner` first, or sending NoAutoStart, avoids it.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing input sources (Go, round 7)
-
 ### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
 - **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
 - **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).
@@ -84,13 +90,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `dev.config.diff` takes its paths from `config.Diff`, which sets a list whole, so a list differing anywhere (one bar widget's setting in `Bars`, one page in `Overlay.items`) is one row holding the whole list, and copying it copies every item, dev's other edits and live's alike. Lists of objects with ids (bars, pages, edge menus, OSDs, widgets) should compare per id: a row per item added, removed or changed, each copied on its own (`{id}` selectors, as `config.set` takes). Decided for v1 (the restructure's plan, Decided 8): "Lists are compared whole in v1 (per-id rows are an issues.md follow-up)".
 - **Size:** small
 - **Found:** 2026-11-03, while documenting the dev config
-
-### Copying a setting to live uses dev's paths, which an older live may not have
-- **Where:** `backend/internal/daemon/devsync.go` (`configCopy`), `backend/internal/devconfig/devconfig.go` (`WriteLive`)
-- **What:** A copy to live applies dev's ops (paths in the dev tree's shape) to live's raw JSON and checks the result against the install's schema. When the install is older (a setting the dev tree moved or reshaped, a section live hasn't migrated to), the op lands where the install doesn't look, or the check refuses it with the install schema's issue, which names a path the user didn't pick; the diff only marks settings the install's schema lacks entirely (`devOnly`), not ones it has at another path or shape. Nothing says the two configs are of different versions, or that updating the install would let the copy through.
-  **Decided** (maintainer, 2026-11-06, on a) a version notice on the card, and rows whose shape differs in the install marked as not copyable as `devOnly` rows are, b) the notice only, c) leave it; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-03, while building the dev config's copy to live
 
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `qml/services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
@@ -195,23 +194,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building custom widgets (reported by the maintainer)
 
-### The daemon never watches config.json, so outside edits aren't read
-- **Where:** `backend/internal/store/store.go` (`Watch`), `backend/internal/daemon/methods.go` (`configPart`)
-- **What:** Nothing starts `Store.Watch`: a5ca837 (2026-10-24) removed `serve("the config watch", d.store.Watch)` from the daemon and no part runs it since (`git grep 'store.Watch' -- backend/internal/daemon` is empty). An outside edit (an editor, `axiom config set --offline`, a sync tool) is read only at the next load (a re-exec or a dev-mode `Reschema`) or, since config-02, at the next save, which it makes refuse as a Conflict (`Store.write` reads it then). Seen 2026-11-01: a hand fix of a config the daemon had started on the defaults over stayed unread (`axiom config status` kept the old problems, nothing in the daemon log) until a dev rebuild re-exec'd the daemon; an earlier hand edit was overwritten by a save from the shell's copy, never having been read. That explains the 2026-10-29 sighting (a rename not read for 15 s and more; an in-place rewrite that seemed read was likely a re-exec's load). Fix: `run: d.store.Watch` on `configPart`, with a daemon test that an outside edit is pushed. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
-- **Size:** trivial
-- **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
-
 ### With no takeovers kept, a broken config.json can still release the compositor's config
 - **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
 - **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
-
-### The daemon's own commands are left zombies across a re-exec
-- **Where:** `backend/internal/updates/updates.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
-- **What:** The commands the daemon runs for itself (`checkupdates`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, gone since, and the startup checks). The `qs` ones were those `qs ipc` ran, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
-- **Size:** small
-- **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)

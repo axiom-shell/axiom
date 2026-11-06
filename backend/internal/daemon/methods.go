@@ -462,7 +462,7 @@ func (d *Daemon) pushState() {
 
 // configPart: config.json, through the store.
 func (d *Daemon) configPart() part {
-	return part{name: "config", methods: d.configMethods, onConfig: d.onConfigEvent}
+	return part{name: "config", methods: d.configMethods, run: d.store.Watch, onConfig: d.onConfigEvent}
 }
 
 // onConfigEvent pushes a config change to the subscribed connections and

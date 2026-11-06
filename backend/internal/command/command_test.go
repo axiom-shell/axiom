@@ -89,6 +89,39 @@ func TestRunReturnsWhenTheCallerLeaves(t *testing.T) {
 	waitFor(t, filepath.Join(dir, "done"))
 }
 
+// Stop kills the command and its group once the caller's time is up,
+// listed in Children only while it runs.
+func TestRunStopKillsWhenTheCallerLeaves(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	ctx, cancel := context.WithTimeout(testCtx(t), 100*time.Millisecond)
+	defer cancel()
+	var children Children
+	_, err := Run(ctx, Options{Children: &children, Stop: true}, []string{"sh", "-c", "sleep 0.5; touch " + filepath.Join(dir, "done")}, nil)
+	if axerr.KindOf(err) != axerr.Unavailable {
+		t.Fatalf("err %v, want unavailable", err)
+	}
+	if ch := children.Handoff(); len(ch) != 0 {
+		t.Errorf("still listed after the kill: %v", ch)
+	}
+	children.Resume()
+	time.Sleep(time.Second)
+	if _, err := os.Stat(filepath.Join(dir, "done")); err == nil {
+		t.Error("the command ran on")
+	}
+}
+
+func TestResultErr(t *testing.T) {
+	t.Parallel()
+	if err := (Result{}).Err(); err != nil {
+		t.Errorf("exit 0: %v", err)
+	}
+	var exit interface{ ExitCode() int }
+	if err := (Result{ExitCode: 126}).Err(); !errors.As(err, &exit) || exit.ExitCode() != 126 || err.Error() != "exit status 126" {
+		t.Errorf("exit 126: %v", err)
+	}
+}
+
 func TestSpawn(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
