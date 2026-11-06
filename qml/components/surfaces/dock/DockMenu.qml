@@ -12,7 +12,8 @@ import qs.components.methods
 
 // A dock app's menu, opening towards the screen from its icon: its name and
 // windows (click one to focus it), and, opened by a right click (`full`),
-// Keep in dock / Remove from dock, New window and Close. The small one
+// Keep in dock / Remove from dock, New window and Close: MenuList's rows
+// and keys. The small one
 // (resting on the icon) closes once the pointer leaves both; the full one
 // on a click elsewhere.
 PopupWindow {
@@ -47,8 +48,67 @@ PopupWindow {
   anchor.margins.left: root._towards === Edges.Right ? Widget.spacing : 0
   anchor.margins.right: root._towards === Edges.Left ? Widget.spacing : 0
 
+  // Its windows (up to 10), then, full, what it can do
+  readonly property var menuItems: {
+    const items = root.windows.slice(0, 10).map((win, i) => ({
+          "id": "window:" + i,
+          "text": win?.title || win?.appId || "",
+          "icon": win?.id === DockManager.focusedId ? "radio_button_checked" : "select_window"
+        }));
+    if (!root.full)
+      return items;
+    items.push({
+      "separator": true
+    }, {
+      "id": "pin",
+      "text": root.item?.pinned ? I18n.tr("Remove from dock") : I18n.tr("Keep in dock"),
+      "icon": root.item?.pinned ? "keep_off" : "keep"
+    });
+    if (DockManager.entryFor(root.key) !== null)
+      items.push({
+        "id": "launch",
+        "text": I18n.tr("New window"),
+        "icon": "add"
+      });
+    if (root.windows.length > 0)
+      items.push({
+        "id": "close",
+        "text": root.windows.length > 1 ? I18n.tr("Close {0} windows", root.windows.length) : I18n.tr("Close window"),
+        "icon": "close"
+      });
+    return items;
+  }
+  // The dock's window takes the keyboard for the full menu (as a grabbed
+  // popout's does)
+  readonly property bool wantsKeyboard: root.visible && root.full
+  readonly property bool exclusiveKeyboard: grab.exclusive
+  readonly property Item menuList: list
+
   function close() {
     root.dockWindow.closeMenu();
+  }
+
+  function _pick(id) {
+    const win = id.startsWith("window:") ? root.windows[Number(id.slice(7))] : null;
+    if (win)
+      CompositorManager.focusWindow(win.id);
+    else if (id === "pin" && root.item.pinned)
+      DockManager.unpin(root.dockWindow.dock.id, root.key);
+    else if (id === "pin")
+      DockManager.pin(root.dockWindow.dock.id, root.key, -1);
+    else if (id === "launch")
+      DockManager.launch(root.key);
+    else if (id === "close")
+      DockManager.closeWindows(root.item);
+    root.close();
+  }
+
+  // Each opening starts at the top, the full one with the keyboard
+  onKeyChanged: list.reset()
+  onFullChanged: {
+    list.reset();
+    if (root.full)
+      list.forceActiveFocus();
   }
 
   // The small menu closes a moment after the pointer leaves the icon and it
@@ -59,6 +119,7 @@ PopupWindow {
   }
 
   FocusGrab {
+    id: grab
     windows: [root, root.grabWindow].concat(SurfaceManager.modalWindows)
     active: root.visible && root.full
     onCleared: root.close()
@@ -104,63 +165,13 @@ PopupWindow {
         elide: Text.ElideRight
       }
 
-      Repeater {
-        model: Math.min(root.windows.length, 10)
-
-        delegate: DockMenuRow {
-          required property int index
-          readonly property var win: root.windows[index]
-          Layout.fillWidth: true
-          icon: win?.id === DockManager.focusedId ? "radio_button_checked" : "select_window"
-          text: win?.title || win?.appId || ""
-          onClicked: {
-            CompositorManager.focusWindow(win.id);
-            root.close();
-          }
-        }
-      }
-
-      StyledSeparator {
-        separatorColor: Theme.accent
-        visible: root.full
+      MenuList {
+        id: list
+        visible: root.menuItems.length > 0
         Layout.fillWidth: true
-      }
-
-      DockMenuRow {
-        visible: root.full
-        Layout.fillWidth: true
-        icon: root.item?.pinned ? "keep_off" : "keep"
-        text: root.item?.pinned ? I18n.tr("Remove from dock") : I18n.tr("Keep in dock")
-        onClicked: {
-          if (root.item.pinned)
-            DockManager.unpin(root.dockWindow.dock.id, root.key);
-          else
-            DockManager.pin(root.dockWindow.dock.id, root.key, -1);
-          root.close();
-        }
-      }
-
-      DockMenuRow {
-        visible: root.full && DockManager.entryFor(root.key) !== null
-        Layout.fillWidth: true
-        icon: "add"
-        text: I18n.tr("New window")
-        onClicked: {
-          DockManager.launch(root.key);
-          root.close();
-        }
-      }
-
-      DockMenuRow {
-        visible: root.full && root.windows.length > 0
-        Layout.fillWidth: true
-        icon: "close"
-        text: root.windows.length > 1 ? I18n.tr("Close {0} windows", root.windows.length) : I18n.tr("Close window")
-        danger: true
-        onClicked: {
-          DockManager.closeWindows(root.item);
-          root.close();
-        }
+        items: root.menuItems
+        onTriggered: id => root._pick(id)
+        onDismissed: root.close()
       }
     }
   }

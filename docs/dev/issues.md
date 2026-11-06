@@ -569,12 +569,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
 
-### DockMenu draws its own menu rows and keys rather than StyledContextMenu's
-- **Where:** `qml/components/surfaces/dock/DockMenu.qml`, `qml/components/reusable/StyledContextMenu.qml`
-- **What:** The dock's right-click menu (Keep in dock / Remove from dock, New window, Close) builds its own rows, hover and click handling, the same items the shared right-click menu takes (`{ id, text, icon, enabled }`), with no keyboard. It's a `PopupWindow` beside the dock, where StyledContextMenu is a Popup in the page's window, so sharing them means pulling StyledContextMenu's rows and keys out into a part both draw in.
-- **Size:** small
-- **Found:** 2026-11-04, while building the bar editor's right-click menu (bar rewrite C17)
-
 ### Six x-auto settings still store Automatic as -1
 - **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml:129`, `qml/config/schema/definitions/layout/EdgeMenu.yaml:150`, `qml/config/schema/definitions/common/DockEntry.yaml:51`, `qml/config/schema/definitions/common/OSDEntry.yaml:52`, `qml/config/schema/sections/Notifications.yaml:56`, `qml/config/schema/sections/Notifications.yaml:215`
 - **What:** `x-auto` now takes a `null` automatic value (validation lets it through, and the form's number keeps its whole range), which the bar's `floatingGap` uses. These six still store Automatic as `-1`, so their readers test `>= 0` / `< 0` and their minimum can't be 0 and Automatic at once without the sentinel. Moving them to `null` is a format-2 step per setting (`-1` → `null`) and a reader change each; nothing is broken meanwhile.

@@ -30,7 +30,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
   - **`covered`.**
 - Delegates are keyed by the joined item keys.
 - **Pinning from the dock** saves at once through `SettingsManager.commitValues`, to the list the dock shows (`DockManager._editPinned`):
-  - right-click `DockMenu`;
+  - right-click `DockMenu` (`MenuList`'s rows and keys; the dock's window takes the keyboard while it's open and passes the keys on);
   - dragging icons;
   - dragging an icon off the dock unpins it.
 

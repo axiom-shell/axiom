@@ -407,7 +407,8 @@ Scope {
     readonly property string layerNamespace: root.preview ? "axiom-dock-preview" : "axiom-dock"
     WlrLayershell.layer: panelWindow.windowLayer
     WlrLayershell.namespace: panelWindow.layerNamespace
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // The full menu's keys come through it (as a grabbed popout's)
+    WlrLayershell.keyboardFocus: menu.wantsKeyboard ? (menu.exclusiveKeyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand) : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Normal
     // Hyprland counts the edge margin into it and adds gaps_out past it, so
     // windows start gaps_out past the box, held off the edge or not, as
@@ -459,6 +460,13 @@ Scope {
     }
     implicitWidth: root.vertical ? root.depth : 0
     implicitHeight: root.vertical ? 0 : root.depth
+
+    // Where the compositor gives this window the keys rather than the
+    // menu's popup: they go on to the menu
+    Item {
+      focus: true
+      Keys.forwardTo: menu.wantsKeyboard ? [menu.menuList] : []
+    }
 
     // Along the edge it reaches onto the perpendicular strokes (startStrokeInset, endStrokeInset)
     margins {
