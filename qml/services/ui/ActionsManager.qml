@@ -14,8 +14,8 @@ import qs.services.apps
  * labels, icons, their IPC calls) with each one's state now. Every place
  * that offers an action reads it here and runs it through run(): the
  * QuickActions tiles, the OSD's status icons, the launcher's commands, the
- * bar widgets' clicks and the Button widget, as keybinds and hot corners
- * do (ShellManager.runAction), so each runs the same IPC function.
+ * bar widgets' clicks, the Button widget and hot corners, as keybinds do
+ * (`axiom ipc`), so each runs the same IPC function.
  * docs/dev/core/actions.md says how to add one.
  */
 QtObject {

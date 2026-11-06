@@ -47,7 +47,10 @@ running anything:
     monitor)
   - no UI switches one of the shell's actions through its service's own
     toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
-    light, dark mode, the mutes, the VPN, a recording, a session action):
+    light, dark mode, the mutes, the VPN, a recording, a session action,
+    a screenshot, clearing notifications, the pomodoro, the stopwatch and
+    timer, the media transport, the input source, identifying monitors) or
+    ShellManager.runAction:
     it runs it through ActionsManager.run, as every other place that
     offers it
 and warns about files in the loaded directories that nothing registers or
@@ -613,7 +616,7 @@ def main():
     # One way to run an action: the UI runs a catalogue action through
     # ActionsManager.run (docs/dev/core/actions.md), never its service's
     # toggle, so a tile, a command, an OSD icon and a key run the same code
-    action_toggles = r"\b(?:NetworkingManager\.(?:toggleWifi|setWifiEnabled|setAirplane)|BluetoothManager\.(?:toggleEnabled|setEnabled)|IdleManager\.(?:toggle|setCaffeine)|NotificationManager\.(?:toggleDnd|setDnd)|NightLightManager\.(?:toggle|setActive)|ThemeManager\.(?:toggleDarkMode|setLightMode)|AudioManager\.(?:toggleMute|toggleSourceMute)|VpnManager\.toggleLast|ScreenshotManager\.(?:toggleRecording|stopRecording)|BatteryManager\.setPowerSaver|SessionManager\.sessionAction)\("
+    action_toggles = r"\b(?:NetworkingManager\.(?:toggleWifi|setWifiEnabled|setAirplane)|BluetoothManager\.(?:toggleEnabled|setEnabled)|IdleManager\.(?:toggle|setCaffeine)|NotificationManager\.(?:toggleDnd|setDnd)|NightLightManager\.(?:toggle|setActive)|ThemeManager\.(?:toggleDarkMode|setLightMode)|AudioManager\.(?:toggleMute|toggleSourceMute)|VpnManager\.toggleLast|ScreenshotManager\.(?:toggleRecording|stopRecording)|BatteryManager\.setPowerSaver|SessionManager\.sessionAction|NotificationManager\.clearAll|MonitorManager\.identify|ScreenshotManager\.take|PomodoroManager\.(?:toggle|skip|stop)|StopwatchManager\.(?:toggleStopwatch|lap|resetStopwatch|toggleTimer|resetTimer)|MediaManager\.(?:togglePlayPause|next|previous|stop)|InputSourceManager\.(?:next|prev)|ShellManager\.runAction)\("
     for path, text in sources.items():
         if not path.startswith(("qml/components/", "qml/shell/")):
             continue

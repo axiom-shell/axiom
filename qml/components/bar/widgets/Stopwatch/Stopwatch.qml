@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.services.apps
+import qs.services.ui
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
@@ -39,11 +40,11 @@ ValueStyleWidget {
   acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
   onClicked: button => {
     if (button === Qt.MiddleButton)
-      StopwatchManager.lap();
+      ActionsManager.run("stopwatchLap");
     else if (button === Qt.RightButton)
-      root.showsTimer ? StopwatchManager.resetTimer() : StopwatchManager.resetStopwatch();
+      ActionsManager.run(root.showsTimer ? "timerReset" : "stopwatchReset");
     else
-      root.showsTimer ? StopwatchManager.toggleTimer() : StopwatchManager.toggleStopwatch();
+      ActionsManager.run(root.showsTimer ? "timerToggle" : "stopwatch");
   }
 
   PopoutAnchor {

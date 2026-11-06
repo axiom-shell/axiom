@@ -424,6 +424,8 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens"), "qml/shell/Screens.qml:6: Quickshell.screens"),
         ("qml/shell/Toggle.qml", qml("function f() { NotificationManager.toggleDnd() }"),
          "qml/shell/Toggle.qml:6: NotificationManager.toggleDnd: run the action through ActionsManager.run"),
+        ("qml/shell/Corner.qml", qml('function f() { ShellManager.runAction("lock", "", "toggle") }'),
+         "qml/shell/Corner.qml:6: ShellManager.runAction: run the action through ActionsManager.run"),
         ("qml/components/content/ColorSwatch/ColorSwatch.qml", qml('Component.onCompleted: CommandManager.run(["true"])'),
          "qml/components/content/ColorSwatch/ColorSwatch.qml:6: CommandManager.run on the lock screen"),
         ("qml/components/dupa/Dup.qml", qml(), None),

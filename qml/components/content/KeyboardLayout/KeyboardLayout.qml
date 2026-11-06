@@ -30,10 +30,12 @@ Card {
   Component.onDestruction: InputSourceManager.release(root)
 
   function _step(direction) {
-    if (direction < 0)
-      InputSourceManager.prev(root.xkbOnly);
-    else
-      InputSourceManager.next(root.xkbOnly);
+    // On the lock screen too, where x-lockActions cover InputSourceManager.next and prev, not ActionsManager
+    if (direction < 0) {
+      InputSourceManager.prev(root.xkbOnly); // allowed: on the lock screen too
+    } else {
+      InputSourceManager.next(root.xkbOnly); // allowed: on the lock screen too
+    }
   }
 
   MouseArea {

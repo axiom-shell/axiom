@@ -24,7 +24,9 @@ Card {
     if (mode === "record")
       ActionsManager.run("screenRecord");
     else
-      ScreenshotManager.take(mode);
+      ActionsManager.run("screenshot", {
+        "argument": mode
+      });
   }
 
   TileGrid {

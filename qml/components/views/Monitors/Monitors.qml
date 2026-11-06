@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.compositor
+import qs.services.ui
 import qs.components.reusable
 import qs.components.forms
 import qs.components.content.base
@@ -117,7 +118,7 @@ BaseView {
           implicitHeight: Widget.height
           iconText: "badge"
           text: I18n.tr("Identify")
-          onClicked: MonitorManager.identify()
+          onClicked: ActionsManager.run("monitorsIdentify")
         }
       }
 

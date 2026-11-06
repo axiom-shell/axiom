@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.services.apps
+import qs.services.ui
 import qs.components.reusable
 
 // The pomodoro timer (PomodoroManager), for the Pomodoro popout and module
@@ -42,9 +43,9 @@ ColumnLayout {
     mainTip: PomodoroManager.running ? I18n.tr("Pause") : I18n.tr("Start")
     rightIcon: "skip_next"
     rightTip: I18n.tr("Skip to the next phase")
-    onLeftClicked: PomodoroManager.stop()
-    onMainClicked: PomodoroManager.toggle()
-    onRightClicked: PomodoroManager.skip()
+    onLeftClicked: ActionsManager.run("pomodoroStop")
+    onMainClicked: ActionsManager.run("pomodoro")
+    onRightClicked: ActionsManager.run("pomodoroSkip")
   }
 
   Row {
