@@ -37,6 +37,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 ### Display
 - `qml/components/methods/ChatMarkdown` splits a reply into prose and code blocks.
 - `content/Chat/Chat.qml` is a `Panel`, so it can also be used as a popout.
+- The messages, and the conversation list's rows, are ListViews: only those in view are built (the messages a screen either side too, so scrolling back a little doesn't lay their Markdown out again). The conversation list (docked or over the chat), the model picker and a row's rename field are built only while they show.
 
 ### Entry points
 - IPC `chat`: `open`, `newChat`, `ask <text>`, `settings`.

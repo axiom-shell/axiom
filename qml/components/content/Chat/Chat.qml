@@ -47,6 +47,7 @@ Panel {
   }
 
   Item {
+    id: body
     Layout.fillWidth: true
     Layout.fillHeight: true
     Layout.preferredHeight: root.embedded ? -1 : Widget.px(560)
@@ -55,13 +56,17 @@ Panel {
       anchors.fill: parent
       spacing: Widget.padding
 
-      ConversationList {
-        visible: root.listDocked
+      // The list and the picker are built only while they show
+      Loader {
+        active: root.listDocked
+        visible: active
         Layout.fillHeight: true
-        Layout.preferredWidth: Math.max(Widget.px(180), parent.width * 0.32)
-        color: Theme.backgroundAlt
-        border.width: 0
-        floating: false
+        Layout.preferredWidth: Math.max(Widget.px(180), body.width * 0.32)
+        sourceComponent: ConversationList {
+          color: Theme.backgroundAlt
+          border.width: 0
+          floating: false
+        }
       }
 
       ColumnLayout {
@@ -113,24 +118,28 @@ Panel {
       }
     }
 
-    ConversationList {
-      visible: !root.listDocked && root.listOpen
+    Loader {
+      active: !root.listDocked && root.listOpen
       anchors.top: parent.top
       anchors.topMargin: root.popupTop
       anchors.left: parent.left
       width: Math.min(parent.width - Widget.padding * 2, Widget.px(300))
-      maxHeight: parent.height - root.popupTop - Widget.spacing
-      onPicked: root.listOpen = false
+      sourceComponent: ConversationList {
+        maxHeight: body.height - root.popupTop - Widget.spacing
+        onPicked: root.listOpen = false
+      }
     }
 
-    ModelPicker {
-      visible: root.pickerOpen
+    Loader {
+      active: root.pickerOpen
       anchors.top: parent.top
       anchors.topMargin: root.popupTop
       anchors.right: parent.right
       width: Math.min(parent.width - Widget.padding * 2, Widget.px(280))
-      maxHeight: Math.min(Widget.px(420), parent.height - root.popupTop - Widget.spacing)
-      onPicked: root.pickerOpen = false
+      sourceComponent: ModelPicker {
+        maxHeight: Math.min(Widget.px(420), body.height - root.popupTop - Widget.spacing)
+        onPicked: root.pickerOpen = false
+      }
     }
 
     DropArea {

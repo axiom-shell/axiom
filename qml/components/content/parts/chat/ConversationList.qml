@@ -44,7 +44,7 @@ DropdownSurface {
     return out;
   }
 
-  implicitHeight: Math.min(Widget.height + listColumn.implicitHeight + Widget.spacing * 3, root.maxHeight)
+  implicitHeight: Math.min(Widget.height + (root.rows.length === 0 ? empty.implicitHeight + Widget.padding : list.contentHeight) + Widget.spacing * 3, root.maxHeight)
 
   ColumnLayout {
     anchors.fill: parent
@@ -61,134 +61,140 @@ DropdownSurface {
 
     StyledScrollView {
       id: scroll
+      visible: root.rows.length > 0
       Layout.fillWidth: true
       Layout.fillHeight: true
       contentPadding: 0
       // A lane of its own for the scroll bar, so it never covers a row
-      showScrollBar: listColumn.implicitHeight > scroll.height
+      showScrollBar: list.contentHeight > scroll.height
 
-      ColumnLayout {
-        id: listColumn
-        width: scroll.availableWidth
+      // A ListView, so only the rows in view are built
+      ListView {
+        id: list
         spacing: 2
+        boundsBehavior: Flickable.StopAtBounds
+        model: CountModel {
+          count: root.rows.length
+        }
+        delegate: Loader {
+          id: row
+          required property int index
+          readonly property var rowData: root.rows[index] ?? ({})
+          width: ListView.view.width
+          sourceComponent: rowData.header !== undefined ? headerRow : itemRow
 
-        Repeater {
-          model: root.rows.length
-          delegate: Loader {
-            id: row
-            required property int index
-            readonly property var rowData: root.rows[index] ?? ({})
-            Layout.fillWidth: true
-            sourceComponent: rowData.header !== undefined ? headerRow : itemRow
-
-            Component {
-              id: headerRow
-              StyledText {
-                elide: Text.ElideRight
-                width: row.width
-                topPadding: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
-                bottomPadding: Widget.spacing / 2
-                leftPadding: Widget.spacing
-                text: row.rowData.header
-                textColor: Theme.foregroundAlt
-                textSize: Appearance.fontSizeBy(-3)
-                font.bold: true
-              }
+          Component {
+            id: headerRow
+            StyledText {
+              elide: Text.ElideRight
+              width: row.width
+              topPadding: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
+              bottomPadding: Widget.spacing / 2
+              leftPadding: Widget.spacing
+              text: row.rowData.header
+              textColor: Theme.foregroundAlt
+              textSize: Appearance.fontSizeBy(-3)
+              font.bold: true
             }
+          }
 
-            Component {
-              id: itemRow
-              Rectangle {
-                id: item
-                readonly property var conversation: row.rowData.conversation
-                readonly property bool current: conversation.id === ChatManager.conversation.id
-                readonly property bool editing: root.renaming === conversation.id
-                width: row.width
-                implicitHeight: Math.max(Widget.height, itemRowLayout.implicitHeight + Widget.spacing)
-                radius: Widget.radius / 2
-                color: current ? Qt.alpha(Theme.accent, 0.16) : itemHover.hovered ? Theme.backgroundHighlight : "transparent"
+          Component {
+            id: itemRow
+            Rectangle {
+              id: item
+              readonly property var conversation: row.rowData.conversation
+              readonly property bool current: conversation.id === ChatManager.conversation.id
+              readonly property bool editing: root.renaming === conversation.id
+              width: row.width
+              implicitHeight: Math.max(Widget.height, itemRowLayout.implicitHeight + Widget.spacing)
+              radius: Widget.radius / 2
+              color: current ? Qt.alpha(Theme.accent, 0.16) : itemHover.hovered ? Theme.backgroundHighlight : "transparent"
 
-                HoverHandler {
-                  id: itemHover
+              HoverHandler {
+                id: itemHover
+              }
+              TapHandler {
+                enabled: !item.editing
+                onTapped: {
+                  ChatManager.open(item.conversation.id);
+                  root.picked();
                 }
-                TapHandler {
-                  enabled: !item.editing
-                  onTapped: {
-                    ChatManager.open(item.conversation.id);
-                    root.picked();
-                  }
+              }
+
+              RowLayout {
+                id: itemRowLayout
+                anchors.fill: parent
+                anchors.leftMargin: Widget.spacing
+                anchors.rightMargin: Widget.spacing
+                spacing: 0
+
+                StyledText {
+                  visible: !item.editing
+                  Layout.fillWidth: true
+                  text: item.conversation.title || I18n.tr("Untitled")
+                  textColor: item.current ? Theme.accent : Theme.foreground
+                  textSize: Appearance.fontSizeBy(-1)
+                  elide: Text.ElideRight
                 }
 
-                RowLayout {
-                  id: itemRowLayout
-                  anchors.fill: parent
-                  anchors.leftMargin: Widget.spacing
-                  anchors.rightMargin: Widget.spacing
-                  spacing: 0
-
-                  StyledText {
-                    visible: !item.editing
-                    Layout.fillWidth: true
-                    text: item.conversation.title || I18n.tr("Untitled")
-                    textColor: item.current ? Theme.accent : Theme.foreground
-                    textSize: Appearance.fontSizeBy(-1)
-                    elide: Text.ElideRight
-                  }
-
-                  StyledTextEntry {
+                // Built only while this row renames
+                Loader {
+                  active: item.editing
+                  visible: active
+                  Layout.fillWidth: true
+                  Layout.preferredHeight: Widget.height - Widget.px(6)
+                  sourceComponent: StyledTextEntry {
                     id: renameField
-                    visible: item.editing
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Widget.height - Widget.px(6)
-                    // Pushed in as it opens: typing drops a binding, and
-                    // a cancelled rename's text would come back
-                    onVisibleChanged: {
-                      if (visible) {
-                        text = item.conversation.title ?? "";
-                        input.forceActiveFocus();
-                        input.selectAll();
-                      }
+                    // Pushed in as it opens: a binding would bring a
+                    // cancelled rename's text back
+                    Component.onCompleted: {
+                      renameField.text = item.conversation.title ?? "";
+                      renameField.input.forceActiveFocus();
+                      renameField.input.selectAll();
                     }
                     onAccepted: {
-                      ChatManager.rename(item.conversation.id, text);
+                      ChatManager.rename(item.conversation.id, renameField.text);
                       root.renaming = "";
                     }
                     input.Keys.onEscapePressed: root.renaming = ""
                   }
+                }
 
-                  FlatIconButton {
-                    visible: itemHover.hovered && !item.editing
-                    size: Widget.iconButton
-                    iconText: "edit"
-                    iconSize: Appearance.fontSizeBy(-2)
-                    tooltipText: I18n.tr("Rename")
-                    onClicked: root.renaming = item.conversation.id
-                  }
-                  FlatIconButton {
-                    visible: itemHover.hovered && !item.editing
-                    size: Widget.iconButton
-                    iconText: "delete"
-                    iconSize: Appearance.fontSizeBy(-2)
-                    tooltipText: I18n.tr("Delete")
-                    onClicked: ChatManager.remove(item.conversation.id)
-                  }
+                FlatIconButton {
+                  visible: itemHover.hovered && !item.editing
+                  size: Widget.iconButton
+                  iconText: "edit"
+                  iconSize: Appearance.fontSizeBy(-2)
+                  tooltipText: I18n.tr("Rename")
+                  onClicked: root.renaming = item.conversation.id
+                }
+                FlatIconButton {
+                  visible: itemHover.hovered && !item.editing
+                  size: Widget.iconButton
+                  iconText: "delete"
+                  iconSize: Appearance.fontSizeBy(-2)
+                  tooltipText: I18n.tr("Delete")
+                  onClicked: ChatManager.remove(item.conversation.id)
                 }
               }
             }
           }
         }
-
-        StyledText {
-          visible: root.rows.length === 0
-          Layout.fillWidth: true
-          Layout.topMargin: Widget.padding
-          horizontalAlignment: Text.AlignHCenter
-          wrapMode: Text.WordWrap
-          text: ChatConfig.keepConversations === 0 ? I18n.tr("Conversations aren't saved (Settings → Chat).") : root.query !== "" ? I18n.tr("No matches") : I18n.tr("No conversations yet")
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
-        }
       }
+    }
+
+    StyledText {
+      id: empty
+      visible: root.rows.length === 0
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      Layout.topMargin: Widget.padding
+      horizontalAlignment: Text.AlignHCenter
+      verticalAlignment: Text.AlignTop
+      wrapMode: Text.WordWrap
+      text: ChatConfig.keepConversations === 0 ? I18n.tr("Conversations aren't saved (Settings → Chat).") : root.query !== "" ? I18n.tr("No matches") : I18n.tr("No conversations yet")
+      textColor: Theme.foregroundAlt
+      textSize: Appearance.fontSizeBy(-2)
     }
   }
 }

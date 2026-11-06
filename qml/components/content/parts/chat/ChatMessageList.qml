@@ -9,9 +9,10 @@ import qs.components.reusable
 import qs.components.content.parts
 
 // The conversation, scrolled to the bottom while it streams, unless the
-// user scrolled up (then a "Jump to latest" pill brings it back). Every
-// message stays alive: a conversation is short, and a recreated delegate
-// would lay its Markdown out again.
+// user scrolled up (then a "Jump to latest" pill brings it back). A
+// ListView, so only the messages in view are built (and a screen's worth
+// either side, so scrolling back a little doesn't lay their Markdown out
+// again): a long conversation would otherwise build every message at once.
 Item {
   id: root
 
@@ -20,11 +21,14 @@ Item {
   property bool _autoScrolling: false
   // A lane on the right for the scroll bar, only while there's anything to scroll
   readonly property int _lane: flick.contentHeight > flick.height ? 10 : 0
+  // The furthest it scrolls (a ListView's content starts at originY, which
+  // moves as rows above are built)
+  readonly property real _end: flick.originY + Math.max(0, flick.contentHeight - flick.height)
 
   function scrollToEnd() {
     root._follow = true;
     root._autoScrolling = true;
-    flick.contentY = Math.max(0, flick.contentHeight - flick.height);
+    flick.contentY = root._end;
     root._autoScrolling = false;
   }
 
@@ -36,12 +40,12 @@ Item {
     }
   }
 
-  Flickable {
+  ListView {
     id: flick
     anchors.fill: parent
-    contentWidth: width
-    contentHeight: column.implicitHeight
     clip: true
+    spacing: Widget.spacing * 2
+    cacheBuffer: Math.max(0, flick.height)
     // Mouse drags select text instead of flicking; the wheel scrolls
     interactive: false
     boundsBehavior: Flickable.StopAtBounds
@@ -56,7 +60,7 @@ Item {
     }
     onContentYChanged: {
       if (!root._autoScrolling)
-        root._follow = contentY >= contentHeight - height - 8;
+        root._follow = contentY >= root._end - 8;
     }
 
     ScrollBar.vertical: ScrollBar {
@@ -71,19 +75,13 @@ Item {
       }
     }
 
-    ColumnLayout {
-      id: column
+    model: CountModel {
+      count: ChatManager.messages.length
+    }
+    delegate: ChatMessage {
       width: flick.width - root._lane
-      spacing: Widget.spacing * 2
-
-      Repeater {
-        model: ChatManager.messages.length
-        delegate: ChatMessage {
-          Layout.fillWidth: true
-          message: ChatManager.messages[index]
-          isLast: index === ChatManager.messages.length - 1
-        }
-      }
+      message: ChatManager.messages[index]
+      isLast: index === ChatManager.messages.length - 1
     }
   }
 
@@ -92,7 +90,7 @@ Item {
     acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
     onWheel: event => {
       const step = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y / 120 * Appearance.fontSize * 4;
-      flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height, flick.contentY - step));
+      flick.contentY = Math.max(flick.originY, Math.min(root._end, flick.contentY - step));
     }
   }
 

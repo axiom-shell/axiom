@@ -51,6 +51,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - The label and heading come from the caller's `labelOf` / `headingOf` hooks (the editors translate the schema's).
   - The caller keeps `grouped`.
   - A search box beside the switch, at the right, narrows the tiles to the types whose label, type or group heading holds the text (`LibraryOrder.filtered`); the query lasts as long as the library is built (the layouts editor keeps it under a module's options).
+- `CountModel`: a ListView's model of `count` rows read by index (a `ScriptModel` of `0…count-1`), so a new count adds or removes rows at the end and the view keeps its place; a plain number as a ListView's model rebuilds every row and scrolls back to the top.
 - `KeyedLoader`: rebuilds a form when `key` changes, so rows never write old values onto a new selection.
 - `StreamedLoader`: a Loader built a moment later from `BuildQueueManager`'s queue, then faded in: a page's panels, cards, sections and long lists, so a page shows at once. `wanted` gates it like `active`; `always` streams after the page's first build too, and so do the loaders inside it while it fills in. See [streamed-building](streamed-building.md).
 - `LayoutOrder`: shows a layout's items in reverse order while `reversed` (`Panel.flips`: a popout growing up keeps its controls last, by the bar). Only for a layout of plain items, no Repeater directly in it.

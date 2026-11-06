@@ -540,7 +540,6 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-13** (4, done): The Edit notification's entry was done in platform-03. Notifications keep no capture's path (their picture is a cached copy), so the handler opens the newest path of the clicked one's key, which holds only that notification.
 - **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
   - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)
-  - [The chat builds its conversation lists and model picker while hidden](../issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
 - **features-15** (1):
   - [A custom clock format without spaces spills past a vertical bar](../issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 
