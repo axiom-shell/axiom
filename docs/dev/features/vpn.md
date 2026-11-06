@@ -2,7 +2,7 @@
 
 > **Files:** `backend/internal/nmvpn/`, `backend/internal/daemon/vpn.go`, `qml/services/system/VpnManager.qml`, `qml/components/content/parts/VpnRow.qml`, `qml/components/content/VpnConnections/VpnConnections.qml`, `qml/components/bar/widgets/Vpn/Vpn.qml`, `qml/components/bar/widgets/Network/Network.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `scripts/dev/vpn-fixtures.sh`, `qml/config/VpnConfig.qml`
 > **Config:** `Vpn` (`VpnConfig`), `Apps.networkEditor`; the Network widget's `showVpn` / `vpnColor`
-> **Related:** [Networking and Bluetooth](networking-bluetooth.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
+> **Related:** [Networking and Bluetooth](networking-bluetooth.md), [Prompts](prompts.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
 NetworkManager's VPNs (WireGuard, OpenVPN and every other plugin), with Tailscale beside them, as one list to switch from the bar, the Wi-Fi menu, an overlay card or the launcher.
 
@@ -25,7 +25,7 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
 - Anything else, no interaction, or no shell connected gets `NoSecrets` at once, so NetworkManager goes on to another agent (nm-applet) if there is one.
 - `CancelGetSecrets` or NetworkManager leaving ends the request and pushes `vpn.secretDone`.
 - Secrets aren't stored: `SaveSecrets` and `DeleteSecrets` do nothing.
-- The request shows only in a VPN row that's on screen. A VPN started from elsewhere (nmcli, autoconnect) with nothing open waits until NetworkManager times out.
+- The shell asks in the shared prompt ([Prompts](prompts.md)), wherever the VPN was started from (a row, `/vpn`, the keybind, nmcli, autoconnect): the VPN's name, NetworkManager's message (else "Signing in as {user}"), a field per secret (`fieldLabel`), Connect / Cancel. Connect answers `vpn.secret {id, secrets}`; Cancel, Escape or a click outside `vpn.secret {id, cancel}`, so NetworkManager goes on to nm-applet if it runs. `vpn.secretDone` withdraws it, as does taking the VPN down or a hello (a new daemon). A wrong password is NetworkManager's `login-failed` on the row; it asks again with a new request if it retries.
 
 ### Shell
 - **VpnManager:**
@@ -34,13 +34,14 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
   - `toggle`, `toggleLast` (the VPN used last, kept in `StateManager` as `vpn` with `folded`; also IPC `vpn toggle`, the `vpn` keybind action and `axiom vpn toggle`, with VpnManager in `_services`; with nothing polling Tailscale it acquires itself until Tailscale's state comes, at most 3 s, acts, and releases, so a bind sees Tailscale too; with no VPN at all it says so on the OSD), `statusText` and `kindIcon`.
   - `pickImport()` owns the file picker itself (the popout asking may close while it's open), then `importFile`; `importError` is the last refusal.
   - `checkPublicIp()` asks `VpnConfig.publicIpUrl` for the address the internet sees, only on a click (nothing is sent otherwise; empty hides it). `publicIp` clears when the VPN up changes, and an answer for an earlier VPN is dropped.
+  - `vpn.secretRequest` becomes a `PromptManager.request` (`_askSecrets`, by request id in `_secrets`), as above.
   - An on → off change with an error sends a "VPN disconnected" notification (`VpnConfig.notifyOnDrop`).
-- **VpnRow:** a `DeviceRow`. Clicking toggles it; while it's asked for secrets, a password field (`SecretField`) per field appears under it.
+- **VpnRow:** a `DeviceRow`. Clicking toggles it.
 - **Where VPNs show:**
   - The `VpnConnections` popout and card (`DeviceList` of `VpnRow`s; Import, and Edit connections running `Apps.networkEditor`).
   - The `Vpn` bar widget: click toggles the last VPN, hover opens the popout, `hideWhenOff`.
   - The Network widget: a lock on its icon, and the VPN's name in ticker and stacked styles; its Wi-Fi menu's VPN section unless `popoutVpn` is off (the `WifiNetworks` card's `showVpn`).
-  - The Wi-Fi menu: a VPN section folded to one row (`VpnManager.folded`, remembered): what's up, or "Off · N saved", and a connect / disconnect button for the VPN up or the last used. Unfolded (a click on the row, or by itself while a VPN asks for its password), every VPN and the public IP check. Hidden with no VPNs; its header's Import VPN button calls `pickImport`.
+  - The Wi-Fi menu: a VPN section folded to one row (`VpnManager.folded`, remembered): what's up, or "Off · N saved", and a connect / disconnect button for the VPN up or the last used. Unfolded (a click on the row), every VPN and the public IP check. Hidden with no VPNs; its header's Import VPN button calls `pickImport`.
   - The Network card's "VPN ·" line.
   - `/vpn [name]` in the launcher.
 

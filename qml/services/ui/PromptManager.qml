@@ -74,6 +74,21 @@ QtObject {
     return id;
   }
 
+  // The usual buttons: Cancel (id "cancel"), then the primary action
+  function cancelOr(id, label) {
+    return [
+      {
+        "id": "cancel",
+        "label": I18n.tr("Cancel")
+      },
+      {
+        "id": id,
+        "label": label,
+        "primary": true
+      }
+    ];
+  }
+
   // Changes a queued request's spec keys; an error set clears busy and
   // counts an attempt (the card clears its fields and shakes)
   function update(id, changes) {

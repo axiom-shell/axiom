@@ -407,13 +407,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing removable drive support
 
-### A VPN's password request can go unseen
-- **Where:** `qml/services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
-- **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, the `vpn` keybind action, or a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
-  **Decided** (maintainer, 2026-11-06, on a) a notification that opens a VPN row, b) open the VPN popout, c) answer `NoSecrets` while no row is shown; recommended a) with c) as its fallback): "defer"
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the VPN branch
-
 ### No keyboard backlight control
 - **Where:** `qml/services/system/BrightnessManager.qml`
 - **What:** Laptops' keyboard backlights (`kbd_backlight` LEDs) have no slider, OSD bar or keys: nothing in services reads them. Also open: whether `BrightnessManager` takes them as another device, the OSD bar kind, and writing the LED through the daemon.

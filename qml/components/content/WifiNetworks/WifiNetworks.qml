@@ -42,7 +42,6 @@ Panel {
     if (root.detailsOpen)
       NetworkingManager.refreshDetails();
   }
-  // Every VPN shown: unfolded, or one is asking for its password
   // A popout's (the bar widget's popoutVpn); a card reads properties
   property bool vpnShown: true
   readonly property bool showsVpn: root.embedded ? root.properties.showVpn : root.vpnShown
@@ -53,20 +52,17 @@ Panel {
     else
       VpnManager.release(root);
   }
-  readonly property bool vpnOpen: !VpnManager.folded || VpnManager.secretRequest !== null
+  readonly property bool vpnOpen: !VpnManager.folded
   property bool hiddenOpen: false
 
   // A field is up: keep the keyboard, and the popout open
-  wantsKeyboardFocus: NetworkingManager.passwordFor !== null || hiddenLoader.active || (root.showsVpn && VpnManager.secretRequest !== null)
+  wantsKeyboardFocus: NetworkingManager.passwordFor !== null || hiddenLoader.active
   hovered: pointerInside || wantsKeyboardFocus
   onFocusLost: {
     // The file picker (a CA certificate) took it: the form waits for it
     if (FilePickerManager.running)
       return;
     NetworkingManager.cancelPassword();
-    // Only a request this menu shows (the VPN popout or a card may show it)
-    if (root.showsVpn)
-      VpnManager.cancelSecret();
     root.hiddenOpen = false;
   }
 
@@ -322,7 +318,6 @@ Panel {
         id: vpnSummary
         Layout.preferredHeight: Widget.iconButton
         open: root.vpnOpen
-        foldable: VpnManager.secretRequest === null
         onToggled: VpnManager.setFolded(root.vpnOpen)
 
         StyledText {
