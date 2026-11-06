@@ -85,12 +85,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the wallpaper chunk of the tweaks-minor-complaints branch
 
-### The dev config's diff compares lists whole
-- **Where:** `backend/internal/devconfig/diff.go` (`Rows`), `qml/components/views/Settings/DevConfigDiffCard.qml`
-- **What:** `dev.config.diff` takes its paths from `config.Diff`, which sets a list whole, so a list differing anywhere (one bar widget's setting in `Bars`, one page in `Overlay.items`) is one row holding the whole list, and copying it copies every item, dev's other edits and live's alike. Lists of objects with ids (bars, pages, edge menus, OSDs, widgets) should compare per id: a row per item added, removed or changed, each copied on its own (`{id}` selectors, as `config.set` takes). Decided for v1 (the restructure's plan, Decided 8): "Lists are compared whole in v1 (per-id rows are an issues.md follow-up)".
-- **Size:** small
-- **Found:** 2026-11-03, while documenting the dev config
-
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `qml/services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
@@ -110,12 +104,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing removable drive support
 
-### The axiom CLI can't send a notification
-- **Where:** `backend/internal/cli/named.go`, `backend/internal/daemon/tools.go`, `backend/internal/notification/notify.go`
-- **What:** A feature request from the maintainer (2026-11-02, "yes file the cli notification support where it goes"): with notify-send gone as a dependency, the daemon's `notify.send` and `notify.action` are reached only by the shell, and the CLI's `axiom notifications` only clears them and switches do-not-disturb. A command such as `axiom notify "title" "body" [--icon --urgency --action id=Label --wait]` would wrap them for scripts: it sends through the daemon, and with `--wait` blocks until a button is picked or the notification closes, printing the button's id as `notify-send --action` does. It should share its flags with `axiom message` (the OSD message command) where they overlap, and take the levels' `--key` (one entry per key: `x-axiom-key`) and `--transient`; `--silent` would need a daemon push to the shell's `_file`, since a silent one never goes over D-Bus.
-- **Size:** small
-- **Found:** 2026-11-02, while removing the notify-send dependency (roadmap row 20, platform-03)
-
 ### A bind can't be limited to some compositors
 - **Where:** `qml/config/schema/sections/Keybinds.yaml`, `qml/services/compositor/KeybindManager.qml`, `qml/components/views/Keybinds/BindEditor.qml`, `qml/components/views/Keybinds/FilterChips.qml`
 - **What:** A feature request from the maintainer (2026-11-02): "add another config option for binds that is only on (default nothing selected), and can pick any if the three compositors (multiple allowed) (i.e. this bind is only niri, or this bind is only sway/hyprland)". With the improvements proposed alongside it ("just add the issue and roadmap entries"): (1) one multi-select, "Only on": Hyprland, sway, niri, plus "Scrolling strips" and "Tiling" (no strips), empty meaning everywhere, so a later compositor with strips gets those binds by capability, not by name. "Scrolling strips" means strips in use, not `supports.strips` alone (maintainer, 2026-11-02: "hyprland supports strips but should only be active if strips are on right?"): `supports.strips` only says a compositor can do strips (Hyprland has it); strips are in use where every workspace is one (`supports.stripsAlways`: niri) or where an output's strip direction is set (`CompositorManager.stripDirection`, from `WorkspacesConfig`). Open for the plan: Hyprland turns strips on per output while its binds are global, so either a strips-only bind is written while any output is a strip (the simpler default: `WorkspacesConfig.hasStrips`) or it acts only when the focused output is one; (2) two binds on the same keys whose "Only on" sets don't overlap aren't a conflict (one key, a niri and a sway meaning); (3) set by itself where a bind can only work on one: a raw-command bind defaults to its compositor, a bind moved in from a compositor's own config gets that compositor, and an action that needs strips counts as strips-only without the user setting it; (4) the Keybinds page lists binds that don't apply here dimmed, with an "only on" chip and a filter, still editable, while the cheatsheet and the keyboard reference show only the binds that apply; (5) the default is an empty list, so no migration, and saved configs and presets carry it (it describes the bind, not the machine). Each compositor's config writer leaves out the binds that don't apply to it.
@@ -127,12 +115,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while making the OSD's status icons clickable
-
-### In dev mode a reshaped schema can prune the dev config before its migration runs
-- **Where:** `backend/internal/daemon/dev.go` (`watchSchema`, `rebuildSchema`), `docs/dev/backend/README.md`
-- **What:** In the dev image the shell loads a schema rebuilt from the dev tree's YAML within 100 ms of an edit, while the running dev build still has the old migrations until its own build (after 1 s of quiet, then `go build`) re-execs, or for good when that build fails. A settings save in between validates and prunes the dev config against the new shape, so keys a new step would have moved are dropped instead of migrated. Seen 2026-11-01 (before the dev config, on the live one): v87 split each OSD's `items` into `bars` / `statuses` / `media`; a save from the settings page before the daemon ran v87 wrote the new shape with default `bars`, losing every OSD's own bars (`version` still 86, so v87 later skips the already reshaped entries). Since dev mode runs on its own config (`$XDG_CONFIG_HOME/axiom/dev/config.json`), only the dev config can lose them; live is written only by a copy or the takeover mirror, checked against the install's schema. Saving should hold off, or the daemon refuse a write, while the tree's schema version is ahead of the binary's steps.
-- **Size:** small
-- **Found:** 2026-11-01, while splitting the OSD's items (config v87)
 
 ### The lock screen has no settings for allowing or viewing notifications
 - **Where:** `qml/config/schema/sections/Lockscreen.yaml`, `docs/dev/features/lockscreen.md`
@@ -371,6 +353,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `qml/components/content/Session/schema.yaml` (`hosts`), `qml/components/content/Login/schema.yaml`, `qml/components/content/Password/schema.yaml`
 - **What:** `hosts: {only: [greeter]}` keeps Session out of the layouts editor's library elsewhere, but the built schema still lists it in every host's `oneOf`: a config with Session in an edge menu and on an overlay page passed `axiom config validate`, and it drew as a bare "Session" field on an empty card. So an import, a community setup or a hand edit can put a greeter- or lock-only module (Session, Login, Password) where it can't work.
 - **Size:** small
+- **Needs a decision:** a review of the fix (roadmap/20-daemon-cli, 2026-11-06) found that once the built schema rejects these modules outside their hosts, a config already holding one there (Session, Login, Password or Power, only by a hand edit or an import) fails validation and won't load. Should a format-2 migration step remove such modules first? The fix (per-host `OverlayModule@<host>` kinds from `x-hosts` in `schema/yamlsrc/kinds.go`) is ready to rebuild once that is decided.
 - **Found:** 2026-10-29, while building the revamped example setups
 
 ### TestDiscoverCalDAV failed once under verify.sh --all

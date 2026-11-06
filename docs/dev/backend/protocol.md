@@ -11,7 +11,7 @@ The shell (`qs -p <tree>/qml`) is a child of the daemon (`axiom run`). Six chann
   - `AXIOM_SOCKET`: the socket (`BackendManager.socketPath`; unset means a shell started by hand, `BackendManager.active` false).
   - `AXIOM_SCHEMA` and `AXIOM_CONFIG`: the runtime files below.
   - `AXIOM_TREE` (the tree the shell runs: the dev tree in the dev image; `Paths.treePath`), `AXIOM_INSTALL_TREE` (the installed tree, whatever the shell runs: `Paths.packaged` reads its `.packaged`), `AXIOM_BIN` (the installed binary, never a dev build; `Paths.axiomBin`) and `AXIOM_DAEMON_PID` (`Paths.toolBin` runs `/proc/<pid>/exe`, the binary running now).
-  - `AXIOM_INCOMPATIBLE`: set only while the tree's schema isn't the binary's and dev mode is off (`BackendManager.incompatible`).
+  - `AXIOM_INCOMPATIBLE`: set only while the tree's schema isn't the binary's and dev mode is off, or in dev mode is a config version past the binary's migration steps (`BackendManager.incompatible`).
   - `AXIOM_LOCK_ON_START=1`: a relaunch after a crash while locked (`qml/shell/Lockscreen.qml`).
 - **B. Runtime files** in `$XDG_RUNTIME_DIR/axiom/<display>/` (0700, written atomically):
   - `config.json`: the config, loaded, migrated and filled, read once at start (`ConfigManager`'s snapshot); pushes keep it current after that.
@@ -72,7 +72,7 @@ Data the daemon polls for the shell (`backend/internal/topics`) is not a hello t
 ### Guards and errors
 - Every connection's peer must be the same user (`SO_PEERCRED`, `rpc.SamePeerUser`).
 - **Shell only**: `ipc.register`, `lock.state` and every compositor method that changes something answer only the connection whose hello was the shell's.
-- **Writable**: config writes (`config.set`, the `share.*` applies, `saved.restore`) are refused with `incompatible` while the tree's schema isn't the binary's and dev mode is off. `daemon.state` pushes the change.
+- **Writable**: config writes (`config.set`, the `share.*` applies, `saved.restore`) are refused with `incompatible` while the tree's schema isn't the binary's and dev mode is off, or (in dev mode) while it's a config version past the binary's migration steps, until the dev build that has them re-execs. `daemon.state` pushes the change.
 - **Dev config**: `dev.config.diff`, `dev.config.copy` and `dev.config.pull` work in either image, dev mode on or off, while a dev tree is set (else `unavailable`); a dev config held open by another axiom answers `running`. `dev.rebuild` works with dev mode off too (it only builds). `dev.set` is refused while a switch is scheduled, and `dev.set {enabled: true}` without a dev tree ([The axiom binary](README.md) › Dev mode).
 - The lock screen takes only `lock`: no method unlocks it (`ipc.call` to `lockscreen` is anything but `lock` → `refused`).
 - Errors are `{ kind, message, issues }`. `kind` comes from `axerr.Kind` (`invalid_config`, `bad_request`, `conflict`, `takeover_refused`, `incompatible`, `unavailable`, `running`, `not_found`, `refused`, `unauthorized`, `no_password`, `bad_reply`, `internal`, and UDisks2's `busy`, `not_authorized`, `wrong_passphrase`, `failed`); messages stay English, and the shell translates by kind.

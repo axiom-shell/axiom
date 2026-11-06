@@ -8,6 +8,7 @@ package daemon
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -35,6 +36,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
 	"github.com/axiom-shell/axiom/backend/internal/markets"
+	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/nmnet"
 	"github.com/axiom-shell/axiom/backend/internal/nmvpn"
@@ -106,6 +108,12 @@ const (
 // read-only outside dev mode.
 const incompatibleReason = "this axiom binary was built for another version of the shell's files: update the binary"
 
+// aheadReason is why a dev tree whose schema is a config version past this
+// binary's migration steps runs read-only: a save would prune the config
+// against the new shape before the step that moves its keys runs. The dev
+// build re-execs once its rebuild is done, which lifts it.
+const aheadReason = "the dev tree's schema is ahead of this build's migrations: saving waits for the dev build"
+
 // Daemon is a running daemon.
 type Daemon struct {
 	opts    Options
@@ -115,11 +123,12 @@ type Daemon struct {
 
 	// The built schema (dev mode rebuilds it on the watch goroutine while
 	// handlers read the hash), and whether it is the one this binary was
-	// built with
+	// built with, or a config version past its migration steps
 	schemaMu    sync.Mutex
 	schemaBytes []byte
 	schemaHash  string
 	treeMatches bool
+	treeAhead   bool
 
 	// executable is the image running; installed the binary it came from
 	// (they differ while dev mode runs its own build)
@@ -633,12 +642,21 @@ func (d *Daemon) loadSchema() error {
 
 // compatible: the config may be written. Outside dev mode only when the
 // tree's schema is the one this binary was built with: otherwise the
-// shell's edits would be validated against the wrong shape.
+// shell's edits would be validated against the wrong shape. In dev mode
+// unless the schema is ahead of this binary's migration steps.
 func (d *Daemon) compatible() (bool, string) {
-	if d.matches() || d.dev.Enabled() {
+	d.schemaMu.Lock()
+	matches, ahead := d.treeMatches, d.treeAhead
+	d.schemaMu.Unlock()
+	switch {
+	case matches:
 		return true, ""
+	case !d.dev.Enabled():
+		return false, incompatibleReason
+	case ahead:
+		return false, aheadReason
 	}
-	return false, incompatibleReason
+	return true, ""
 }
 
 // embeddedMatches: hash is the schema this binary embeds (embedded, its
@@ -747,7 +765,21 @@ func (d *Daemon) currentSchema() ([]byte, string) {
 // setSchema records a built schema, and whether it is this binary's.
 func (d *Daemon) setSchema(data []byte, hash string) {
 	matches := embeddedMatches(buildinfo.Get().SchemaHash, hash)
+	ahead := schemaAhead(data, steps.Current())
 	d.schemaMu.Lock()
-	d.schemaBytes, d.schemaHash, d.treeMatches = data, hash, matches
+	d.schemaBytes, d.schemaHash, d.treeMatches, d.treeAhead = data, hash, matches, ahead
 	d.schemaMu.Unlock()
+}
+
+// schemaAhead: the built schema's config version (its version default) is
+// past current, the last version this binary's steps migrate to.
+func schemaAhead(data []byte, current int) bool {
+	var s struct {
+		Properties struct {
+			Version struct {
+				Default int `json:"default"`
+			} `json:"version"`
+		} `json:"properties"`
+	}
+	return json.Unmarshal(data, &s) == nil && s.Properties.Version.Default > current
 }

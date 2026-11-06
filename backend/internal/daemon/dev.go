@@ -45,7 +45,9 @@ import (
 //   - the dev image rebuilds the schema within 100 ms of a YAML edit
 //     (schema.changed); the installed image re-execs into the installed
 //     binary when it's rebuilt;
-//   - a tree whose schema isn't the binary's may write the config;
+//   - a tree whose schema isn't the binary's may write the config, unless
+//     its config version is past this build's migration steps (until the
+//     dev build with them re-execs: aheadReason);
 //   - the daemon logs at debug level.
 // Turning it off goes back to the installed binary, tree and config. Every
 // build goes through one kicker (an edit, dev.rebuild, a stale build at the
@@ -940,6 +942,8 @@ func (d *Daemon) rebuildSchema() {
 	}
 	d.setSchema(data, hash)
 	d.opts.Log.Info("rebuilt the schema", "hash", hash)
+	// Saving holds off while the schema is ahead of this build's steps
+	d.pushState()
 	pushSchemaChanged.Send(d.server, schemaChanged{Hash: hash, Path: d.runtime.File(SchemaFile)}, subscribedTo(topicConfig))
 	d.store.Reschema(config.Pipeline{S: schema.New(parsed)})
 }

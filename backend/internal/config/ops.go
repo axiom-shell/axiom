@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -297,13 +298,23 @@ func indexOf(list *jsonx.Array, id string) int {
 // objects followed down to what changed. Applied to before, they give
 // after (its key order apart).
 func Diff(before, after *jsonx.Object) []Op {
-	return diff(nil, before, after, nil)
+	return diff(nil, before, after, nil, false)
 }
 
-func diff(path Path, before, after *jsonx.Object, ops []Op) []Op {
+// DiffByID is Diff with a list whose items are all objects with distinct
+// ids, on both sides, compared by id: a delete for each item gone, a set
+// for each new one (applied, it goes last), and an item on both sides
+// followed down like an object (set whole when its type changed). A list
+// whose shared items changed order is set whole, as Diff does: an op
+// places no item.
+func DiffByID(before, after *jsonx.Object) []Op {
+	return diff(nil, before, after, nil, true)
+}
+
+func diff(path Path, before, after *jsonx.Object, ops []Op, byID bool) []Op {
 	for _, key := range before.Keys() {
 		if !after.Has(key) {
-			ops = append(ops, Op{Op: "delete", Path: appendKey(path, key)})
+			ops = append(ops, Op{Op: "delete", Path: appendSeg(path, Segment{Key: key})})
 		}
 	}
 	for _, key := range after.Keys() {
@@ -311,17 +322,88 @@ func diff(path Path, before, after *jsonx.Object, ops []Op) []Op {
 		prev, has := before.Get(key)
 		prevObj, wasObj := prev.(*jsonx.Object)
 		nextObj, isObj := next.(*jsonx.Object)
+		prevList, wasList := prev.(*jsonx.Array)
+		nextList, isList := next.(*jsonx.Array)
 		switch {
 		case has && wasObj && isObj:
-			ops = diff(appendKey(path, key), prevObj, nextObj, ops)
+			ops = diff(appendSeg(path, Segment{Key: key}), prevObj, nextObj, ops, byID)
+		case byID && has && wasList && isList && listByID(prevList, nextList):
+			ops = diffList(appendSeg(path, Segment{Key: key}), prevList, nextList, ops)
 		case !has || !jsonx.Equal(prev, next):
-			ops = append(ops, SetValue(appendKey(path, key), jsonx.Clone(next)))
+			ops = append(ops, SetValue(appendSeg(path, Segment{Key: key}), jsonx.Clone(next)))
 		}
 	}
 	return ops
 }
 
-// appendKey is path and key, in a new slice (ops keep their paths).
-func appendKey(path Path, key string) Path {
-	return append(append(make(Path, 0, len(path)+1), path...), Segment{Key: key})
+// diffList is DiffByID's ops for a list compared by id (listByID).
+func diffList(path Path, before, after *jsonx.Array, ops []Op) []Op {
+	prev, next := itemsByID(before), itemsByID(after)
+	for _, item := range before.Items {
+		if id := idOf(item); next[id] == nil {
+			ops = append(ops, Op{Op: "delete", Path: appendSeg(path, Segment{ID: id})})
+		}
+	}
+	for _, item := range after.Items {
+		id, obj := idOf(item), item.(*jsonx.Object)
+		old := prev[id]
+		switch {
+		case old != nil && jsonx.Equal(old.Value("type"), obj.Value("type")):
+			ops = diff(appendSeg(path, Segment{ID: id}), old, obj, ops, true)
+		case old == nil || !jsonx.Equal(old, obj):
+			ops = append(ops, SetValue(appendSeg(path, Segment{ID: id}), jsonx.Clone(obj)))
+		}
+	}
+	return ops
+}
+
+// listByID says both lists' items are objects with distinct ids, and the
+// items they share are in the same order.
+func listByID(before, after *jsonx.Array) bool {
+	prev, next := itemsByID(before), itemsByID(after)
+	if prev == nil || next == nil {
+		return false
+	}
+	var a, b []string
+	for _, item := range before.Items {
+		if next[idOf(item)] != nil {
+			a = append(a, idOf(item))
+		}
+	}
+	for _, item := range after.Items {
+		if prev[idOf(item)] != nil {
+			b = append(b, idOf(item))
+		}
+	}
+	return slices.Equal(a, b)
+}
+
+// itemsByID is a list's items by id, nil unless each is an object with
+// an id no other has.
+func itemsByID(list *jsonx.Array) map[string]*jsonx.Object {
+	out := make(map[string]*jsonx.Object, len(list.Items))
+	for _, item := range list.Items {
+		obj, ok := item.(*jsonx.Object)
+		id := idOf(item)
+		if !ok || id == "" || out[id] != nil {
+			return nil
+		}
+		out[id] = obj
+	}
+	return out
+}
+
+// idOf is an item's id, "" when it has none.
+func idOf(item any) string {
+	obj, _ := item.(*jsonx.Object)
+	if obj == nil {
+		return ""
+	}
+	id, _ := obj.Value("id").(string)
+	return id
+}
+
+// appendSeg is path and seg, in a new slice (ops keep their paths).
+func appendSeg(path Path, seg Segment) Path {
+	return append(append(make(Path, 0, len(path)+1), path...), seg)
 }

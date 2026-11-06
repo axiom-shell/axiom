@@ -67,16 +67,21 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	// axiom's own notifications. It answers once the server took one; a
 	// button's pick comes later as notify.action, so a notification kept
 	// open holds no call (only a bus connection, as notify-send's process
-	// did)
+	// did). With wait (the CLI's) it answers the pick itself, once a
+	// button is picked or the notification closes
 	rpc.Handle(reg, "notify.send", func(ctx context.Context, c *rpc.Conn, p notification.Notification) (notifyResult, error) {
 		conn, err := d.sessionBus(ctx)
 		if err != nil {
 			return notifyResult{}, err
 		}
 		sent, err := notification.Send(ctx, conn, p)
-		if err != nil || len(p.Actions) == 0 {
+		if err != nil || len(p.Actions) == 0 && !p.Wait {
 			conn.Close()
 			return notifyResult{ID: sent.ID}, err
+		}
+		if p.Wait {
+			defer conn.Close()
+			return notifyResult{ID: sent.ID, Action: sent.Wait(ctx, c.Done())}, nil
 		}
 		d.tasks.Go(func(ctx context.Context) {
 			defer conn.Close()
@@ -112,9 +117,11 @@ func (d *Daemon) filePickerOptions() filepicker.Options {
 	}
 }
 
-// notifyResult is notify.send's answer: the server's id for it.
+// notifyResult is notify.send's answer: the server's id for it, and with
+// wait the button picked ("" when it closed without one).
 type notifyResult struct {
-	ID uint32 `json:"id"`
+	ID     uint32 `json:"id"`
+	Action string `json:"action,omitempty"`
 }
 
 // notifyAction is notify.action: which notification, and the button

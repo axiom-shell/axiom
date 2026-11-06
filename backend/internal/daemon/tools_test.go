@@ -32,8 +32,11 @@ func TestNotifySend(t *testing.T) {
 	const path = dbus.ObjectPath("/org/freedesktop/Notifications")
 	_, err = server.Export(path, dbus.Interface{Name: "org.freedesktop.Notifications", Methods: map[string]dbus.Method{
 		"Notify": {In: "susssasa{sv}i", Out: "u", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
+			// A button picked at once, or one without closed (dismissed)
 			if actions, _ := m.Body[5].([]string); len(actions) > 0 {
 				go server.Emit(path, "org.freedesktop.Notifications", "ActionInvoked", "us", uint32(1), actions[0])
+			} else {
+				go server.Emit(path, "org.freedesktop.Notifications", "NotificationClosed", "uu", uint32(1), uint32(2))
 			}
 			return []any{uint32(1)}, nil
 		}},
@@ -75,6 +78,17 @@ func TestNotifySend(t *testing.T) {
 		}
 	case <-ctx.Done():
 		t.Fatal("no notify.action")
+	}
+
+	// With wait (axiom notify --wait) the answer holds the pick, or none
+	// once it closed
+	params["wait"] = true
+	if err := c.Call(ctx, "notify.send", params, &result); err != nil || result != (notifyResult{ID: 1, Action: "edit"}) {
+		t.Fatalf("waiting on a button: %+v %v", result, err)
+	}
+	result = notifyResult{}
+	if err := c.Call(ctx, "notify.send", map[string]any{"appName": "axiom", "summary": "s", "body": "b", "wait": true}, &result); err != nil || result != (notifyResult{ID: 1}) {
+		t.Fatalf("waiting without buttons: %+v %v", result, err)
 	}
 
 	// No notification server on the bus: unavailable (once the bus has

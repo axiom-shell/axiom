@@ -319,10 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
-- [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
-- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
-- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification)
 
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
 - [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
@@ -424,6 +420,7 @@ Steps:
 
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page) (back from Ready for the autopilot, 2026-11-06: rejecting it can stop an existing config from loading; whether a migration removes misplaced modules first is a decision)
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
 
 Needs a plan:
