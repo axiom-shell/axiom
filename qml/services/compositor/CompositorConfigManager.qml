@@ -98,6 +98,7 @@ Singleton {
   // I18n.tr("Load axiom's module")
   // I18n.tr("Start axiom")
   // I18n.tr("Adds the lines at the top, so your own settings after them win over axiom's.")
+  // I18n.tr("Adds the lines at the top, so your own settings after them win over axiom's. This file is in i3's folder: if i3 still runs it, i3 reports axiom's sway-only lines as errors.")
   // I18n.tr("Adds the line at the end: Hyprland starts axiom with every session.")
   // I18n.tr("Adds the line at the end: sway starts axiom with every session.")
   // I18n.tr("Adds the line at the end, so axiom's look wins; binds on keys your config binds stay yours.")

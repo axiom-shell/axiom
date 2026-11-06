@@ -74,12 +74,17 @@ func (w *swayWriter) files(in Inputs) files {
 	if main != filepath.Clean(managed) {
 		elsewhere = main
 	}
+	includeNote := "Adds the lines at the top, so your own settings after them win over axiom's."
+	// An i3 migrant's sway may run i3's config, which i3 may still run too
+	if strings.Contains(main, "/i3/") {
+		includeNote = "Adds the lines at the top, so your own settings after them win over axiom's. This file is in i3's folder: if i3 still runs it, i3 reports axiom's sway-only lines as errors."
+	}
 	return files{
 		ConfigDir: w.dir(), IncludePath: w.includePath(), ManagedPath: managed, UserDir: w.dir() + "user", UserFiles: w.dir() + "user/*",
 		IncludeLines: w.includeLines(), AutostartLines: autostart, RunsElsewhere: elsewhere,
 		IncludeTarget: jsonx.Obj("title", "Load axiom's module", "file", main, "text", w.includeLines(), "place", "start",
 			"comment", "#", "accept", `^\s*include\s+.*axiom/sway\.conf`,
-			"note", "Adds the lines at the top, so your own settings after them win over axiom's."),
+			"note", includeNote),
 		AutostartTarget: jsonx.Obj("title", "Start axiom", "file", main, "text", autostart, "place", "end",
 			"comment", "#", "accept", in.str("startPattern"),
 			"note", "Adds the line at the end: sway starts axiom with every session."),
