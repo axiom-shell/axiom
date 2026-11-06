@@ -35,7 +35,7 @@ App docks on screen edges: pinned and running apps, magnification, hover and int
   - dragging an icon off the dock unpins it.
 
 ### The window
-- `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box and the icons grown out of it. One that hides takes the gap to its edge too, so the pointer doesn't leave it on its way from the edge; a held one takes it only while latched (the trigger latches it on the way in, and the pointer leaving closes it), never always shown, as `distance` can stretch that gap to half the screen, over windows and desktop modules: shown without a latch (intellihide over no window, or sliding out, as when a window comes over it under the pointer) it would catch the pointer there and hold.
+- `DockWindow` is a Top-layer `axiom-dock` strip, as deep as the magnified icons, masked to the box and the icons grown out of it. One that hides takes the gap to its edge too, so the pointer doesn't leave it on its way from the edge; a held one takes it only while latched by the pointer (the trigger latches it on the way in; a reveal by a bind or IPC never takes it) and until the pointer first reaches the box (`_reachedBox`, cleared again when it unlatches or the pointer comes back in from the trigger), never always shown, as `distance` can stretch that gap to half the screen, over windows and desktop modules: kept, the pointer anywhere in it would hold the dock open and its clicks would go to the dock instead of what's under it. Other popouts have no such gap: their input mask is their surface, or their box alone while held or sliding in.
 - **Layer order:** its layer rule arranges it after the border and every bar ([layer stacking](../generated/layers.md)).
   - It sits inside them, and never shortens the bars on other edges.
   - It is blurred.
@@ -64,7 +64,7 @@ Along the edge:
 - the icons sit where they want (`place.contentStart`), and the surface grows around them.
 
 ### Visibility
-- **`always`:** `reserveSpace` sets its zone.
+- **`always`:** `reserveSpace` sets its zone, only on its edge: held at a `distance` past 0 it reserves nothing and the switch is hidden, since a layer surface reserves from its edge and would take the screen up to the box.
 - **`hover`:** an `EdgeTrigger`.
 - **`intellihide`:**
   - Hover, plus shown while no window covers it (`obscured`, `CompositorManager.windowsCover`).

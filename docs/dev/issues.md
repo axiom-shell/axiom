@@ -51,19 +51,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
 
-### A latched held dock's gap to its edge swallows clicks while the pointer is in it
-- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`inputArea.fromEdge`, `hover`, `pointerIn`)
-- **What:** A held hover or intellihide dock takes the gap from the screen edge to its box into its input mask while latched, so the pointer coming in from the trigger doesn't leave it on the way. The `HoverHandler` covers the whole window (`dockContent` fills it), so once latched, the pointer anywhere in that gap counts as on the dock: moving from the box toward the edge keeps it open (`closeTimer` stopped) and clicks on the windows there go to the dock. With `distance` (up to 50% of the free screen, where the old px `gap` was at most 200) that strip can be half the screen. Options: the gap only until the pointer first reaches the box, hover only on the box (the gap kept for the trigger's path alone), or keep it.
-  **Decided** (maintainer, 2026-11-06, on a) the gap counts only until the pointer first reaches the box, b) hover only on the box with the gap still taking clicks, c) keep it; recommended a)): "rec - this should likely apply to all popouts"
+### A hover-opened held edge menu closes before the pointer crosses from its edge to its box
+- **Where:** `qml/components/hosts/popout/EdgePopout.qml` (`keepAlive`, `surfaceWindow.mask`, `attachAt`), `qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml` (`dismissDelay`)
+- **What:** A floating edge menu held off its edge (`detached`, with `distance` up to 50% of the free screen) opens from its hover strip at the screen edge, but its window starts a connector gap short of its box (`attachAt`) and its input mask is the box alone (`boxArea` while sliding or fading in, else `surface`), so nothing of it lies between the strip and the box. Leaving the strip drops `keepAlive` (`surface.hovered || trigger.containsMouse || …`), and `PopoutWrapperBase` starts its dismiss timer at the menu's `close.delay` (default 250 ms); `_grace` from `engage()` only feeds `engaged` (the claim's rank), not `keepAlive`. So unless the pointer crosses the gap, which can be half the screen, within that delay, the menu closes on the way to it. The dock solves the same path by taking the gap into its mask until the pointer first reaches the box (`DockWindow._reachedBox`), which the maintainer's answer on the dock suggested for all popouts.
 - **Size:** small
-- **Found:** 2026-11-05, while reviewing the floating popouts branch
-
-### A reserving held dock reserves the screen up to its distance
-- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`panelWindow.exclusiveZone`)
-- **What:** An always-shown held dock with Reserve space (both defaults) reserves `boxOffset + thickness`, from its edge to the box's far side. With `distance` (0–50% across the free screen, new in place of a px `gap` of at most 200) a dock at 50% reserves half the screen, and the windows tile into the other half. A layer surface can only reserve from its edge, so the choice is the maintainer's: hide Reserve space past a distance of 0, reserve only at 0, or keep it.
-  **Decided** (maintainer, 2026-11-06, on a) hide Reserve space past a distance of 0, b) reserve only at 0 with the switch kept, c) keep it; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-05, while reviewing the floating popouts branch (round 2)
+- **Found:** 2026-11-06, while reviewing the dock gaps batch (row 20)
 
 ### A detached dock and toasts don't slide in from under the bars
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)

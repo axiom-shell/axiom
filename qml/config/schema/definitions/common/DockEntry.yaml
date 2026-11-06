@@ -71,7 +71,9 @@ properties:
     type: boolean
     title: Reserve space
     default: true
-    x-showIf: {visibility: always}
+    # A layer surface reserves from its edge only: held further off, it
+    # would reserve the screen up to its distance
+    x-showIf: {visibility: always, anyOf: [{detached: false}, {distance: 0}]}
     description: Keep windows out of the dock's strip.
   timing:
     $ref: '#/definitions/Timing'

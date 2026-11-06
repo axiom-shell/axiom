@@ -321,8 +321,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **The daemon, the config store and the CLI:**
 
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
-- [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
-- [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
 
 **Wallpaper:**
 - [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
@@ -381,6 +379,9 @@ Found while moving the daemon's own commands to command.Run (row 20):
 
 Found while fixing the daemon's config watch (row 20):
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode)
+
+Found while reviewing the dock gaps batch (row 20):
+- [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box)
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
