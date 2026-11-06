@@ -654,8 +654,8 @@ Singleton {
   // First workspace id an output (its name) shows: 1 in the standard
   // layout, else its block's (grid/perMonitor: one block per monitor the
   // saved profiles name, connected or not, then per connected one they
-  // don't, so a hotplug never moves a named one's block;
-  // WorkspaceGeometry.blockBases)
+  // don't, so a hotplug never moves a named one's block (an unnamed one's
+  // can shift, and isn't remapped); WorkspaceGeometry.blockBases)
   function workspaceBase(output) {
     return root.perMonitorBlocks ? (root._bases[output] ?? 1) : 1;
   }

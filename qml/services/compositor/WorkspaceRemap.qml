@@ -70,9 +70,9 @@ QtObject {
       root._timer.restart();
     }
 
-    // A block order change (a profile naming a new monitor, a new primary,
-    // an unnamed monitor coming or going before another) moves a block a
-    // connected output had: remap. An output that only comes or goes:
+    // A block order change with the same outputs connected (a profile
+    // naming a new monitor, a new primary): remap. A hotplug never remaps
+    // (an unnamed output's block can shift then, as it always has): just
     // record the bases
     function on_BasesChanged() {
       const applied = root._applied;
@@ -80,9 +80,10 @@ QtObject {
         return;
       const bases = root.manager._bases;
       const names = Object.keys(bases);
-      if (applied.blocks && names.some(name => name in applied.bases && applied.bases[name] !== bases[name]))
+      const sameOutputs = names.length === Object.keys(applied.bases).length && names.every(name => name in applied.bases);
+      if (applied.blocks && sameOutputs && names.some(name => applied.bases[name] !== bases[name]))
         root._timer.restart();
-      else if (names.some(name => applied.bases[name] !== bases[name]))
+      else
         root._applied = Object.assign({}, applied, {
           "bases": bases
         });
