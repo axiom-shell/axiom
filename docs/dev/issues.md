@@ -128,12 +128,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while making the OSD's status icons clickable
 
-### In dev mode a reshaped schema can prune the dev config before its migration runs
-- **Where:** `backend/internal/daemon/dev.go` (`watchSchema`, `rebuildSchema`), `docs/dev/backend/README.md`
-- **What:** In the dev image the shell loads a schema rebuilt from the dev tree's YAML within 100 ms of an edit, while the running dev build still has the old migrations until its own build (after 1 s of quiet, then `go build`) re-execs, or for good when that build fails. A settings save in between validates and prunes the dev config against the new shape, so keys a new step would have moved are dropped instead of migrated. Seen 2026-11-01 (before the dev config, on the live one): v87 split each OSD's `items` into `bars` / `statuses` / `media`; a save from the settings page before the daemon ran v87 wrote the new shape with default `bars`, losing every OSD's own bars (`version` still 86, so v87 later skips the already reshaped entries). Since dev mode runs on its own config (`$XDG_CONFIG_HOME/axiom/dev/config.json`), only the dev config can lose them; live is written only by a copy or the takeover mirror, checked against the install's schema. Saving should hold off, or the daemon refuse a write, while the tree's schema version is ahead of the binary's steps.
-- **Size:** small
-- **Found:** 2026-11-01, while splitting the OSD's items (config v87)
-
 ### The lock screen has no settings for allowing or viewing notifications
 - **Where:** `qml/config/schema/sections/Lockscreen.yaml`, `docs/dev/features/lockscreen.md`
 - **What:** Asked by the maintainer (2026-10-31) beside the x-lockActions decision: "there should be settings for allowing/viewing notifications as well" on the lock screen. Not designed yet.

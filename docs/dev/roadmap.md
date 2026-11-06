@@ -319,7 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
 - [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification)

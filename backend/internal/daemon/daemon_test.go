@@ -430,6 +430,16 @@ func TestWritableFollowsDevMode(t *testing.T) {
 	if err := d.writable(); err != nil {
 		t.Errorf("another schema, dev on: %v", err)
 	}
+	// A dev tree's schema past this build's migration steps: a save would
+	// prune the config before the step moving its keys runs
+	d.setSchema([]byte(fmt.Sprintf(`{"properties":{"version":{"default":%d}}}`, steps.Current()+1)), "dev")
+	if err := d.writable(); axerr.KindOf(err) != axerr.Incompatible {
+		t.Errorf("a schema ahead of the steps, dev on: %v", err)
+	}
+	d.setSchema([]byte(fmt.Sprintf(`{"properties":{"version":{"default":%d}}}`, steps.Current())), "dev")
+	if err := d.writable(); err != nil {
+		t.Errorf("a schema at the steps' version, dev on: %v", err)
+	}
 	d.dev.enabled = false
 	d.treeMatches = true
 	if err := d.writable(); err != nil || d.shellEnvNow() != nil {
