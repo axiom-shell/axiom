@@ -23,6 +23,14 @@ QtObject {
     return dock.pinnedOwn ? dock.pinned : Apps.pinned;
   }
 
+  // Whether an always-shown dock reserves its strip: only on its edge
+  // (Reserve space hides past a distance of 0), as a layer surface
+  // reserves from its edge, so held further off it would take the screen
+  // up to its distance
+  function reservesSpace(dock) {
+    return dock.visibility === "always" && dock.reserveSpace && !(dock.detached && dock.distance > 0);
+  }
+
   function dockById(id) {
     return root.docks.find(dock => dock.id === id) ?? null;
   }

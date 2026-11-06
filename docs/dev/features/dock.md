@@ -64,7 +64,7 @@ Along the edge:
 - the icons sit where they want (`place.contentStart`), and the surface grows around them.
 
 ### Visibility
-- **`always`:** `reserveSpace` sets its zone.
+- **`always`:** `reserveSpace` sets its zone, only on its edge: held at a `distance` past 0 it reserves nothing and the switch is hidden, since a layer surface reserves from its edge and would take the screen up to the box.
 - **`hover`:** an `EdgeTrigger`.
 - **`intellihide`:**
   - Hover, plus shown while no window covers it (`obscured`, `CompositorManager.windowsCover`).

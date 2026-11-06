@@ -321,7 +321,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **The daemon, the config store and the CLI:**
 
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
-- [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
 - [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
 
 **Wallpaper:**

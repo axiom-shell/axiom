@@ -280,7 +280,7 @@ Scope {
       return !root.hiddenByHand;
     return root.latched || root.engaged || (root.mode === "intellihide" && !root.obscured);
   }
-  readonly property bool reserving: !root.preview && root.mode === "always" && root.dock.reserveSpace && !root.hiddenByHand && root.count > 0
+  readonly property bool reserving: !root.preview && DockConfig.reservesSpace(root.dock) && !root.hiddenByHand && root.count > 0
 
   // The shown box on the monitor (its work area's origin being the
   // reserved zones' corner), for intellihide

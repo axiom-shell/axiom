@@ -270,7 +270,7 @@ QtObject {
   // An always-shown dock reserving its strip shows beside the overlay, so
   // the preview lands on it and is dropped at once, the dock showing again
   function _landsInPlace(dock) {
-    return dock.visibility === "always" && dock.reserveSpace && !root.hidden[dock.id] && DockConfig.shownIds.includes(dock.id);
+    return DockConfig.reservesSpace(dock) && !root.hidden[dock.id] && DockConfig.shownIds.includes(dock.id);
   }
 
   property Timer _previewHold: Timer {
