@@ -4,6 +4,7 @@ import Quickshell.Networking
 
 import qs.config
 import qs.services.core
+import qs.services.ui
 
 // Wi-Fi state and actions over NetworkManager (Quickshell.Networking, D-Bus,
 // so nothing polls), and through axiom (nmnet) what it doesn't show: the
@@ -11,7 +12,10 @@ import qs.services.core
 // the saved networks' autoconnect. Airplane mode turns Wi-Fi and
 // Bluetooth off together. Named NetworkingManager so it doesn't shadow
 // Quickshell's `Networking` singleton. Scanning runs only while something
-// has acquireScan()ed it (the Wi-Fi popout or card).
+// has acquireScan()ed it (the Wi-Fi popout or card). A password a failed
+// join needs is asked in that Wi-Fi menu; with none open (an autoconnect,
+// a join from elsewhere) in the shared prompt (PromptManager), or for an
+// enterprise network in the Wi-Fi menu opened for it.
 QtObject {
   id: root
 
@@ -95,7 +99,7 @@ QtObject {
   // The last join (net.join) refused, for the form that asked; "" none
   property string joinError: ""
 
-  // The network whose password was just asked for (a secured network
+  // The network whose password a Wi-Fi menu asks for (a secured network
   // clicked, or a failed attempt), and the last failure per network name
   property var passwordFor: null
   property var failures: ({})
@@ -221,7 +225,9 @@ QtObject {
       if (network) {
         root.joinError = error.message;
         root._setFailure(network, "join");
-        root.passwordFor = network;
+        // The prompt's join hears it through done too
+        if (!done)
+          root.passwordFor = network;
       }
     });
   }
@@ -449,15 +455,97 @@ QtObject {
 
       function onConnectionFailed(reason) {
         root._setFailure(modelData, reason);
-        if (reason === ConnectionFailReason.NoSecrets && root.securityKind(modelData) !== "unsupported" && root.securityKind(modelData) !== "open")
-          root.passwordFor = modelData;
+        if (root._wifiPrompt?.network === modelData)
+          PromptManager.update(root._wifiPrompt.id, {
+            "error": root.networkStatus(modelData)
+          });
+        else if (reason === ConnectionFailReason.NoSecrets && root.securityKind(modelData) !== "unsupported" && root.securityKind(modelData) !== "open")
+          root._askPassword(modelData);
       }
 
       function onConnectedChanged() {
-        if (modelData.connected)
-          root._clearFailure(modelData);
+        if (!modelData.connected)
+          return;
+        root._clearFailure(modelData);
+        if (root._wifiPrompt?.network === modelData)
+          root._withdrawWifiPrompt();
       }
     }
+  }
+
+  // The prompt asking for a network's password: { id (PromptManager's),
+  // network }, else null
+  property var _wifiPrompt: null
+
+  // A failed join needs a password: the Wi-Fi menu shown asks inline.
+  // With none (nothing holds the scan), the prompt asks: WPA's password
+  // (through Quickshell, as the menu), a WEP key or a LEAP login (through
+  // net.join). An enterprise network's form (its method, inner method and
+  // CA file) is the menu's alone: the Wi-Fi module is opened for it where
+  // a page or edge menu holds one, else its field waits for the menu
+  function _askPassword(network) {
+    const kind = root.securityKind(network);
+    root.joinError = "";
+    if (root._scanRegistry.active || kind === "eap" || kind === "dynamic-wep") {
+      root.passwordFor = network;
+      if (!root._scanRegistry.active)
+        ShellManager.openModule(["WifiNetworks"]);
+      return;
+    }
+    root._withdrawWifiPrompt();
+    const fields = kind === "leap" ? [
+      {
+        "key": "identity",
+        "label": I18n.tr("User name"),
+        "secret": false
+      }
+    ] : [];
+    fields.push({
+      "key": "password",
+      "label": kind === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
+    });
+    const id = PromptManager.request({
+      "source": "wifi",
+      "icon": "wifi_password",
+      "title": I18n.tr("Join {0}", network.name),
+      "fields": fields,
+      "actions": PromptManager.cancelOr("connect", I18n.tr("Connect")),
+      "waits": true
+    }, (action, values) => {
+      if (action !== "connect")
+        root._withdrawWifiPrompt(id);
+      else if (kind === "psk")
+        root.connectWithPsk(network, values.password ?? "");
+      else
+        root.join(network, {
+          "security": kind,
+          "identity": values.identity ?? "",
+          "password": values.password ?? ""
+        }, error => {
+          if (error && root._wifiPrompt?.id === id)
+            PromptManager.update(id, {
+              "error": error.message
+            });
+        });
+    }, () => root._withdrawWifiPrompt(id));
+    root._wifiPrompt = {
+      "id": id,
+      "network": network
+    };
+  }
+
+  // The prompt asking goes (only `id`'s, when given)
+  function _withdrawWifiPrompt(id) {
+    if (!root._wifiPrompt || (id !== undefined && root._wifiPrompt.id !== id))
+      return;
+    PromptManager.withdraw(root._wifiPrompt.id);
+    root._wifiPrompt = null;
+  }
+
+  // The network asked for gone (out of range, Wi-Fi off): so is its prompt
+  onNetworksChanged: {
+    if (root._wifiPrompt && !root.networks.includes(root._wifiPrompt.network))
+      root._withdrawWifiPrompt();
   }
 
   // Keybind action wifi: axiom ipc wifi toggle|enable|disable

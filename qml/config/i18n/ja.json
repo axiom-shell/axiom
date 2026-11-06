@@ -4084,6 +4084,7 @@
     "Type this code on {0}, then press Enter.": "",
     "Allow {0}?": "",
     "{0} wants to use a service of this computer.": "",
-    "{0} wants to pair with this computer.": ""
+    "{0} wants to pair with this computer.": "",
+    "Join {0}": ""
   }
 }
