@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/bluez"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/camera"
 	"github.com/axiom-shell/axiom/backend/internal/chat"
@@ -42,6 +43,7 @@ const (
 	topicClipboard  = "clipboard" // clipboard.state
 	topicVPN        = "vpn"       // vpn.state, vpn.secretRequest, vpn.secretDone
 	topicDrives     = "drives"    // drives.state, drives.event
+	topicBluetooth  = "bluetooth" // bluetooth.state
 	topicCamera     = "camera"    // camera.state
 	// screenshare.request, screenshare.done
 	topicScreenShare = "screenshare"
@@ -83,6 +85,8 @@ var (
 
 	pushDrivesState = rpc.Push[udisks.State]{Method: "drives.state", Latest: true}
 	pushDrivesEvent = rpc.Push[udisks.Event]{Method: "drives.event"}
+
+	pushBluetoothState = rpc.Push[bluez.State]{Method: "bluetooth.state", Latest: true}
 
 	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
 
@@ -217,10 +221,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicInputMethod, topicCamera, topicScreenShare:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, inputMethod, camera, screenshare)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare)", t)
 		}
 	}
 	return false, topics, nil
