@@ -73,6 +73,11 @@ QtObject {
   // Why the last one failed, for the user ("" after a success)
   property string lastError: ""
 
+  // Something has acquire()d it, so the state above is current
+  readonly property bool watched: _registry.active
+  // A state came from axiom (the first follows an acquire())
+  signal updated
+
   // Every consumer shares TailscaleConfig.interval: no request
   function acquire(owner) {
     _registry.acquire(owner, {});
@@ -214,6 +219,7 @@ QtObject {
       root.account = state.account;
       root.keyExpiry = state.keyExpiry ?? "";
       root.peers = state.peers ?? [];
+      root.updated();
     });
     BackendManager.listen("tailscaledetails.state", state => {
       root.prefs = state.prefs;

@@ -72,24 +72,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-05, while reviewing input sources (Go, round 7)
 
-### A bar Grid warns as its bar turns between horizontal and vertical
-- **Where:** `qml/components/bar/widgets/Workspaces/WorkspaceCellRow.qml` (`cells`), `qml/components/bar/widgets/Workspaces/WorkspaceStrip.qml` (`layout`), `qml/components/bar/widgets/SystemTray/SystemTray.qml` (`items`)
-- **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.
-- **Size:** small
-- **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
-
 ### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
 - **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
 - **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).
   **Decided** (maintainer, 2026-11-06, on a) grow each side by what it covered, b) count a side within a screen pixel of covering as covering; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the wallpaper chunk of the tweaks-minor-complaints branch
-
-### A VPN bind ignores Tailscale unless a VPN widget is showing
-- **Where:** `qml/services/system/VpnManager.qml` (`_tailscaleShown`, `toggleLast`)
-- **What:** Tailscale joins `rows` only while something acquires the VPN state (`_registry.active`), so `axiom ipc vpn toggle` from a keybind, hot corner or `axiom vpn toggle` sees only NetworkManager VPNs: with Tailscale the only VPN it says "No VPN set up", and with Tailscale up it brings the last NetworkManager VPN up instead of taking Tailscale down. The IPC toggle should read Tailscale's state once (acquire, act, release) before choosing.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the bindable commands
 
 ### The dev config's diff compares lists whole
 - **Where:** `backend/internal/devconfig/diff.go` (`Rows`), `qml/components/views/Settings/DevConfigDiffCard.qml`
@@ -234,7 +222,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ### Compact cards still build their full layout
 - **Where:** `qml/components/content/base/Card.qml` (`full`), `qml/components/content/base/Panel.qml` (`column`, `background`)
-- **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md). The modules review (2026-10-31) found the same in Tailscale, VpnConnections, BluetoothDevices, AudioMixer, Palette, Pomodoro, Focus, Todo, Battery and TopProcesses; Notes always builds both its `tiny` figure and its editor; Disks, SystemGraphs and VolumeDials already skip part of their layout while compact. Parts hidden by mode rather than by compactness are [their own entry](#daypane-builds-its-eventeditor-before-it-opens).
+- **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md). The modules review (2026-10-31) found the same in Tailscale, VpnConnections, BluetoothDevices, AudioMixer, Palette, Pomodoro, Focus, Todo, Battery and TopProcesses; Notes always builds both its `tiny` figure and its editor; Disks, SystemGraphs and VolumeDials already skip part of their layout while compact. Parts hidden by mode rather than by compactness are Loaders on their mode (row 20).
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
@@ -410,12 +398,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the settings chunk of the tweaks-minor-complaints branch
 
-### Opening a hover-closing edge menu by IPC closes it at once
-- **Where:** `qml/services/ui/EdgeMenuManager.qml` (the `edgeMenu` `IpcTarget`'s `open`), `qml/components/surfaces/edgemenu/EdgeMenuSync.qml` (`autoDismiss`)
-- **What:** `axiom edge-menu open <id>` on a menu with `close.onLeave` (the default) shows it for one close delay and closes it, since the pointer isn't in it: the IPC `open` calls `open`, not `reveal`, so it's never `revealing`. `pin` on a closed menu doesn't open it either; only `pin` then `open` keeps it up. A bind or script can't open such a menu.
-- **Size:** small
-- **Found:** 2026-10-29, while building the revamped example setups
-
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`
 - **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
@@ -454,12 +436,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
   - **NowPlaying**: only the side-by-side layout sheds parts (`short` requires `sideBySide`). Stacked needs about 152 px but is used from `mini`'s 7f (98 px). Side by side and short needs about 86 px, so the schema's own `defaultSize: [4, 2]` at a 50 px unit (64 px inside) is about 22 px short. The strip at `fullMinHeight` 3.5f has 13 px for a 17 px title. Fix: let `short` apply when stacked too, raise `mini` to about 9f, and set the strip's minimum to its title line.
 
   These are arithmetic from the code, not screenshots. PLAUSIBLE in the exact px (font metrics vary), but each is more than 20 px over; re-measure in a nested shell at the sizes named.
-- **Size:** small
-- **Found:** 2026-10-31, while reviewing the modules system
-
-### DayPane builds its EventEditor before it opens
-- **Where:** `qml/components/content/parts/calendar/DayPane.qml:70` (`EventEditor`)
-- **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". DayPane (the Calendar popout and module, the Clock & calendar module, the Calendar page) builds an `EventEditor` that shows only after a click. Agenda's is built on demand (row 20), and the other nine modules and parts first listed with it were fixed in row 20 (overlay-modules-04). DayPane's is left because the Calendar popout's `maxImplicitHeight` reads `DayPane.growth`, the editor's height before it opens, to make room up front (a shown popout that grows flashes); its height can't be stated without building it, since the repeat buttons' `Flow` wraps by width and translation. Fix: a Loader active while editing or while a host reads `growth` (only the Calendar popout, `!root.embedded`), with `open()` going through `session` as Agenda's does.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
 

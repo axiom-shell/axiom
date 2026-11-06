@@ -114,9 +114,10 @@ Item {
   Grid {
     id: cells
     // -1: as many as there are cells, so a cell added before a count
-    // would follow can't overflow the grid
-    rows: root.isVertical ? -1 : 1
-    columns: root.isVertical ? 1 : -1
+    // would follow can't overflow the grid. Each 1 waits for the other to
+    // leave it, so a bar turning never makes it 1 by 1
+    rows: !root.isVertical && columns === -1 ? 1 : -1
+    columns: root.isVertical && rows === -1 ? 1 : -1
     spacing: root.spacing
 
     Repeater {

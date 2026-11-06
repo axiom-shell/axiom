@@ -118,6 +118,7 @@ Panel {
       Layout.fillHeight: root.embedded
       Layout.preferredHeight: root.embedded ? -1 : implicitHeight
       Layout.minimumHeight: root.embedded ? 0 : Appearance.fontSize * 6
+      reservesRoom: !root.embedded
       dayKey: root.selectedKey
       closable: root.embedded && !root.sideBySide && !root.stacked
       maxListHeight: root.embedded ? Number.POSITIVE_INFINITY : Appearance.fontSize * 14

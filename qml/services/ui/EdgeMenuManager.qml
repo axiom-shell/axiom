@@ -212,10 +212,16 @@ Singleton {
   }
 
   property IpcTarget _ipc: IpcTarget {
+    id: ipc
     target: "edgeMenu"
 
+    // Opened from outside it (a bind, a script), a closed menu is revealed,
+    // so one that closes when the pointer leaves stays open
     function open(id: string): void {
-      root.open(id, null);
+      if (root.isOpen(id))
+        root.open(id, null);
+      else
+        root.reveal(id);
     }
 
     function close(id: string): void {
@@ -223,7 +229,10 @@ Singleton {
     }
 
     function toggle(id: string): void {
-      root.toggle(id, null);
+      if (root.isOpen(id) && !root.covered(id))
+        root.close(id);
+      else
+        ipc.open(id);
     }
 
     function pin(id: string): void {

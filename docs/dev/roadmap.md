@@ -183,6 +183,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once axiom runs a binary built with row 20's features-09, ask a fast provider (Groq, Cerebras, or a local model) for a long reply in the chat: it streams as before, and `axiom daemon logs` shows no `dropping a peer that stopped reading` (the reply's pieces are gathered while the queue to the shell is backlogged; a Go test shows it, not a real shell that stalls).
 - Once the shell runs #362, a start or a reload logs no `Property 'fromEntries'` TypeError from MediaManager, and a player already playing at the start is picked.
 - Screen sharing ([screen sharing](features/screen-sharing.md)), once axiom runs a build with it: under Hyprland, niri and sway turn on Settings › Screen sharing › Use axiom's picker, Apply the card's line and Restart the portal; share a screen, a window and (Hyprland) a region in Discord and in a browser's screen-share test, and check the picker shows once per share (Discord's repeats answered without it); turn it off and check the portal's own picker is back; with the shell stopped, check sharing still works through the portal's own. Under niri also check the cast ends when the shared window closes, and an app that asked to remember shares again without asking.
+- On sway, niri and Hyprland with `Overlay.closeOnOutsideClick` on, open the overlay, click another monitor, the screen border and a floating bar's gap (it stays open), then its own background (it closes) (#378).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -314,10 +315,6 @@ Steps:
 The maintainer (2026-11-06): "right now, everything deferred or hold that it small and has a traced fix move to ready and waiting for the autopilot. After all of that is done the autopilot will stop. (i.e. unconfirmed, weird vaguely described ui problems from developer notes, and plans done stay)". So the loop takes only the entries below (moved here from Phase 8, Phase 13 and [Deferred](#deferred), with row 20's own traced ones), grouped by area so a batch stays in one; when this list is empty it stops the loop and reports, whatever row 20 still holds. The maintainer's answers of 2026-11-06 (quoted under each entry's **Decided**) added the dock, wallpaper, notes, config, dev-config copy, dropdown, hot corner and close-on-outside-click entries. It opens no plan PR and no `needs-decision` PR: an entry that turns out to need a choice or isn't as traced is skipped and its link moved back where it came from.
 
 **Shell surfaces and services:**
-- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
-- [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
-- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
-- [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
 
 **The daemon, the config store and the CLI:**
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
