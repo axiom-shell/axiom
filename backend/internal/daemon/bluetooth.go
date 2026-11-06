@@ -113,6 +113,43 @@ func (d *Daemon) bluetoothMethods(reg *rpc.Registry) {
 	device("bluetooth.pair", d.bluetooth.Pair)
 	device("bluetooth.cancelPair", d.bluetooth.CancelPair)
 	device("bluetooth.forget", d.bluetooth.Forget)
+	type aliasParams struct {
+		Address string `json:"address"`
+		Name    string `json:"name"`
+	}
+	rpc.Handle(reg, "bluetooth.setAlias", func(ctx context.Context, c *rpc.Conn, p aliasParams) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, refused()
+		}
+		return struct{}{}, d.bluetooth.SetAlias(ctx, p.Address, p.Name)
+	})
+	type deviceOnParams struct {
+		Address string `json:"address"`
+		On      bool   `json:"on"`
+	}
+	deviceOn := func(name string, fn func(context.Context, string, bool) error) {
+		rpc.Handle(reg, name, func(ctx context.Context, c *rpc.Conn, p deviceOnParams) (struct{}, error) {
+			if !fromShell(c) {
+				return struct{}{}, refused()
+			}
+			return struct{}{}, fn(ctx, p.Address, p.On)
+		})
+	}
+	deviceOn("bluetooth.setTrusted", d.bluetooth.SetTrusted)
+	deviceOn("bluetooth.setBlocked", d.bluetooth.SetBlocked)
+	rpc.Handle(reg, "bluetooth.setDiscoverable", func(ctx context.Context, c *rpc.Conn, p onParams) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, refused()
+		}
+		return struct{}{}, d.bluetooth.SetDiscoverable(ctx, p.On)
+	})
+	// The rfkill soft block of every Bluetooth radio, not BlueZ's
+	rpc.Handle(reg, "bluetooth.unblock", func(ctx context.Context, c *rpc.Conn, _ struct{}) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, refused()
+		}
+		return struct{}{}, d.bluetooth.Unblock()
+	})
 	type agentReplyParams struct {
 		ID     string `json:"id"`
 		Accept bool   `json:"accept"`

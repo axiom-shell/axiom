@@ -13,6 +13,7 @@ package bluez
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"maps"
 	"reflect"
@@ -42,8 +43,14 @@ type Options struct {
 	// OnEvent is told of devices connecting or disconnecting (events.go)
 	OnEvent func(Event)
 	// Rfkill is the rfkill class folder read for an adapter's block when
-	// BlueZ's PowerState doesn't say (default /sys/class/rfkill)
+	// it's off (default /sys/class/rfkill)
 	Rfkill string
+	// RfkillDev opens the rfkill control device for writing, where Unblock
+	// writes (default /dev/rfkill)
+	RfkillDev func() (io.WriteCloser, error)
+	// Now is the clock the discoverable countdown starts from (default
+	// time.Now)
+	Now func() time.Time
 	// Retry is how long to wait before connecting to the bus again
 	// (default 10 s); Settle how long signals are gathered into one
 	// state (default 50 ms); Join how long apart connects (or
@@ -103,6 +110,12 @@ func New(o Options) *Service {
 	}
 	if o.Join == 0 {
 		o.Join = time.Second
+	}
+	if o.RfkillDev == nil {
+		o.RfkillDev = openRfkill
+	}
+	if o.Now == nil {
+		o.Now = time.Now
 	}
 	s := &Service{
 		o: o, state: State{Devices: []Device{}},
@@ -345,6 +358,7 @@ func (s *Service) rebuild(live bool) {
 	s.mu.Lock()
 	prev := s.state
 	next := build(s.objects, s.order, s.ops, s.o.Rfkill)
+	discoverableUntil(prev, next, live, s.o.Now())
 	same := reflect.DeepEqual(prev, next)
 	s.state = next
 	s.mu.Unlock()
@@ -355,6 +369,24 @@ func (s *Service) rebuild(live bool) {
 	}
 	if !same && s.o.OnChange != nil {
 		s.o.OnChange(next)
+	}
+}
+
+// discoverableUntil sets when the adapter stops being discoverable: kept
+// from the last state while it stays so, started when a live change
+// turned it on (or changed its timeout), unknown (0) when it was already
+// on at a sync, as BlueZ doesn't say when its timer started.
+func discoverableUntil(prev, next State, live bool, now time.Time) {
+	a := next.Adapter
+	if a == nil || !a.Discoverable || a.DiscoverableTimeout == 0 {
+		return
+	}
+	if p := prev.Adapter; p != nil && p.Address == a.Address && p.Discoverable && p.DiscoverableTimeout == a.DiscoverableTimeout {
+		a.DiscoverableUntil = p.DiscoverableUntil
+		return
+	}
+	if live {
+		a.DiscoverableUntil = now.Add(time.Duration(a.DiscoverableTimeout) * time.Second).UnixMilli()
 	}
 }
 
@@ -571,6 +603,58 @@ func (s *Service) Forget(ctx context.Context, address string) error {
 	}
 	_, err = conn.Call(ctx, busName, ap, ifaceAdapter, "RemoveDevice", "o", p)
 	return mapError(err)
+}
+
+// discoverableFor is the timeout set before making the adapter
+// discoverable when BlueZ's is 0 (forever): BlueZ's own default
+const discoverableFor = uint32(180)
+
+// SetDiscoverable makes the default adapter visible to devices scanning
+// (or hides it). BlueZ hides it again after its DiscoverableTimeout; one
+// of 0 means never, so it's set to 3 minutes first (BlueZ keeps it for
+// the adapter): a phone found it by then, and the computer isn't left
+// visible to everyone nearby.
+func (s *Service) SetDiscoverable(ctx context.Context, on bool) error {
+	conn, ap, err := s.adapter()
+	if err != nil {
+		return err
+	}
+	if on {
+		s.mu.Lock()
+		timeout := props(s.objects[ap][ifaceAdapter]).uint32("DiscoverableTimeout")
+		s.mu.Unlock()
+		if timeout == 0 {
+			if err := conn.SetProperty(ctx, busName, ap, ifaceAdapter, "DiscoverableTimeout", dbus.MakeVariant(discoverableFor)); err != nil {
+				return mapError(err)
+			}
+		}
+	}
+	return mapError(conn.SetProperty(ctx, busName, ap, ifaceAdapter, "Discoverable", dbus.MakeVariant(on)))
+}
+
+// SetAlias renames a device (its Alias, what the shell shows); "" goes
+// back to the name the device gives itself.
+func (s *Service) SetAlias(ctx context.Context, address, name string) error {
+	return s.setDevice(ctx, address, "Alias", strings.TrimSpace(name))
+}
+
+// SetTrusted trusts a device (it may connect by itself, unasked) or not.
+func (s *Service) SetTrusted(ctx context.Context, address string, on bool) error {
+	return s.setDevice(ctx, address, "Trusted", on)
+}
+
+// SetBlocked blocks a device (BlueZ disconnects it and refuses its
+// connections) or lets it in again.
+func (s *Service) SetBlocked(ctx context.Context, address string, on bool) error {
+	return s.setDevice(ctx, address, "Blocked", on)
+}
+
+func (s *Service) setDevice(ctx context.Context, address, key string, value any) error {
+	conn, p, _, err := s.device(address)
+	if err != nil {
+		return err
+	}
+	return mapError(conn.SetProperty(ctx, busName, p, ifaceDevice, key, dbus.MakeVariant(value)))
 }
 
 // mapError gives a BlueZ error the kind the shell tells apart, with

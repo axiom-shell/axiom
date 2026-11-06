@@ -30,11 +30,18 @@ type Adapter struct {
 	Name    string `json:"name"`
 	Powered bool   `json:"powered"`
 	// Blocked: rfkill blocks it (PowerState "off-blocked", else
-	// /sys/class/rfkill)
+	// /sys/class/rfkill); HardBlocked: a hardware switch does, which
+	// bluetooth.unblock can't clear (read from /sys/class/rfkill)
 	Blocked      bool `json:"blocked"`
+	HardBlocked  bool `json:"hardBlocked"`
 	Discovering  bool `json:"discovering"`
 	Discoverable bool `json:"discoverable"`
-	Pairable     bool `json:"pairable"`
+	// DiscoverableTimeout is BlueZ's, in seconds (0: discoverable until
+	// turned off); DiscoverableUntil when it ends, in Unix ms, while
+	// discoverable with a timeout the daemon saw start (else 0)
+	DiscoverableTimeout uint32 `json:"discoverableTimeout"`
+	DiscoverableUntil   int64  `json:"discoverableUntil"`
+	Pairable            bool   `json:"pairable"`
 }
 
 // Device is one device the adapter knows: paired, or seen by a scan.
@@ -95,6 +102,11 @@ func (p props) bool(k string) bool {
 	return b
 }
 
+func (p props) uint32(k string) uint32 {
+	n, _ := p[k].Value.(uint32)
+	return n
+}
+
 // percentage reads Battery1.Percentage (y), -1 when missing.
 func (p props) percentage() int {
 	switch n := p["Percentage"].Value.(type) {
@@ -134,13 +146,16 @@ func build(objs dbus.ManagedObjects, order map[dbus.ObjectPath]uint64, ops map[s
 		name = a.str("Name")
 	}
 	blocked := a.str("PowerState") == "off-blocked"
-	if !blocked && rfkill != "" && !a.bool("Powered") {
-		blocked = rfkillBlocked(rfkill, path.Base(string(ap)))
+	var hard bool
+	if rfkill != "" && !a.bool("Powered") {
+		soft, h := rfkillBlocked(rfkill, path.Base(string(ap)))
+		blocked, hard = blocked || soft || h, h
 	}
 	st.Available = true
 	st.Adapter = &Adapter{
-		Address: a.str("Address"), Name: name, Powered: a.bool("Powered"), Blocked: blocked,
-		Discovering: a.bool("Discovering"), Discoverable: a.bool("Discoverable"), Pairable: a.bool("Pairable"),
+		Address: a.str("Address"), Name: name, Powered: a.bool("Powered"), Blocked: blocked, HardBlocked: hard,
+		Discovering: a.bool("Discovering"), Discoverable: a.bool("Discoverable"),
+		DiscoverableTimeout: a.uint32("DiscoverableTimeout"), Pairable: a.bool("Pairable"),
 	}
 	var paths []dbus.ObjectPath
 	for p, i := range objs {
@@ -183,11 +198,11 @@ func build(objs dbus.ManagedObjects, order map[dbus.ObjectPath]uint64, ops map[s
 }
 
 // rfkillBlocked: an rfkill switch of the adapter (its name hci0) is on,
-// soft or hard.
-func rfkillBlocked(dir, adapter string) bool {
+// soft (software: bluetooth.unblock clears it) or hard (a switch).
+func rfkillBlocked(dir, adapter string) (soft, hard bool) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return false
+		return false, false
 	}
 	read := func(sw, file string) string {
 		b, _ := os.ReadFile(filepath.Join(dir, sw, file))
@@ -197,9 +212,8 @@ func rfkillBlocked(dir, adapter string) bool {
 		if read(e.Name(), "type") != "bluetooth" || read(e.Name(), "name") != adapter {
 			continue
 		}
-		if read(e.Name(), "soft") == "1" || read(e.Name(), "hard") == "1" {
-			return true
-		}
+		soft = soft || read(e.Name(), "soft") == "1"
+		hard = hard || read(e.Name(), "hard") == "1"
 	}
-	return false
+	return soft, hard
 }

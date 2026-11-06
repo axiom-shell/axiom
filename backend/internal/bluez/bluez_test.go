@@ -1,7 +1,11 @@
 package bluez
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
+	"io/fs"
 	"maps"
 	"os"
 	"path"
@@ -135,8 +139,12 @@ func TestBlocked(t *testing.T) {
 		t.Error("blocked with no switch on (Wi-Fi's is someone else's)")
 	}
 	sw("rfkill1", "bluetooth", "hci0", "0", "1")
-	if !blocked(off) {
-		t.Error("not blocked by a hard switch")
+	if !blocked(off) || !build(off, nil, nil, dir).Adapter.HardBlocked {
+		t.Error("not hard blocked by a hard switch")
+	}
+	sw("rfkill1", "bluetooth", "hci0", "1", "0")
+	if a := build(off, nil, nil, dir).Adapter; !a.Blocked || a.HardBlocked {
+		t.Errorf("soft switch: %+v", a)
 	}
 	// PowerState says it alone, without rfkill
 	if !build(dbus.ManagedObjects{hci0: adapter("C0", false, map[string]dbus.Variant{"PowerState": v("off-blocked")})}, nil, nil, "").Adapter.Blocked {
@@ -318,6 +326,12 @@ func (f *fakeBlueZ) set(p dbus.ObjectPath) func(context.Context, *dbus.Message) 
 		}
 		if e := f.record("Set " + key + " " + path.Base(string(p))); e != nil {
 			return nil, e
+		}
+		// BlueZ: an empty alias is the device's own name again
+		if key == "Alias" && value.Value == "" {
+			f.mu.Lock()
+			value = f.objs[p][iface]["Name"]
+			f.mu.Unlock()
 		}
 		f.changed(p, iface, key, value.Value)
 		if key == "Powered" {
@@ -747,5 +761,168 @@ func TestDiscovery(t *testing.T) {
 	h.wait(t, "scanning again", func(st State) bool { return st.Available && st.Adapter.Discovering })
 	if got := f2.takeCalls(); !slices.Equal(got, []string{"StartDiscovery"}) {
 		t.Errorf("calls after the restart %v", got)
+	}
+}
+
+// Rename (and back to its own name), trust and block, each a property
+// of the device
+func TestDeviceSetters(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := newFakeBlueZ(t, bus, fixture())
+	h := start(t, bus)
+	h.wait(t, "sync", func(st State) bool { return len(st.Devices) == 3 })
+	ctx := t.Context()
+	base := path.Base(string(devPath(hci0, mouse)))
+
+	if err := h.s.SetAlias(ctx, mouse, "  Desk mouse "); err != nil {
+		t.Error(err)
+	}
+	h.wait(t, "renamed", func(st State) bool { return dev(st, mouse).Name == "Desk mouse" })
+	if err := h.s.SetAlias(ctx, mouse, ""); err != nil {
+		t.Error(err)
+	}
+	h.wait(t, "own name", func(st State) bool { return dev(st, mouse).Name == "Mouse" })
+	if err := h.s.SetTrusted(ctx, mouse, false); err != nil {
+		t.Error(err)
+	}
+	h.wait(t, "untrusted", func(st State) bool { return !dev(st, mouse).Trusted })
+	if err := h.s.SetBlocked(ctx, mouse, true); err != nil {
+		t.Error(err)
+	}
+	h.wait(t, "blocked", func(st State) bool { return dev(st, mouse).Blocked })
+	want := []string{"Set Alias " + base, "Set Alias " + base, "Set Trusted " + base, "Set Blocked " + base}
+	if got := f.takeCalls(); !slices.Equal(got, want) {
+		t.Errorf("calls %v", got)
+	}
+	// Not the default adapter's
+	if err := h.s.SetBlocked(ctx, other, true); axerr.KindOf(err) != axerr.NotFound {
+		t.Errorf("other adapter's: %v", err)
+	}
+	// BlueZ's refusal keeps its kind
+	f.mu.Lock()
+	f.fail["Set Trusted "+base] = dbus.NewError(errPrefix+"NotReady", "Resource Not Ready")
+	f.mu.Unlock()
+	if err := h.s.SetTrusted(ctx, mouse, true); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("not ready: %v", err)
+	}
+}
+
+// Discoverable: a timeout of 0 (forever) is set to 3 minutes first; the
+// countdown starts as it turns on, is kept while it stays, and is unknown
+// when it was on already at a sync
+func TestDiscoverable(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := newFakeBlueZ(t, bus, fixture())
+	now := time.UnixMilli(1_000_000)
+	h := startWith(t, bus, func(o *Options) { o.Now = func() time.Time { return now } })
+	h.wait(t, "sync", func(st State) bool { return st.Available })
+	ctx := t.Context()
+
+	if err := h.s.SetDiscoverable(ctx, true); err != nil {
+		t.Fatal(err)
+	}
+	h.wait(t, "discoverable", func(st State) bool {
+		a := st.Adapter
+		return a.Discoverable && a.DiscoverableTimeout == 180 && a.DiscoverableUntil == 1_000_000+180_000
+	})
+	if got := f.takeCalls(); !slices.Equal(got, []string{"Set DiscoverableTimeout hci0", "Set Discoverable hci0"}) {
+		t.Errorf("calls %v", got)
+	}
+	// Another property changing keeps the end
+	f.changed(hci0, ifaceAdapter, "Alias", "renamed")
+	h.wait(t, "alias", func(st State) bool { return st.Adapter.Name == "renamed" })
+	if got := h.s.State().Adapter.DiscoverableUntil; got != 1_000_000+180_000 {
+		t.Errorf("end moved to %d", got)
+	}
+	if err := h.s.SetDiscoverable(ctx, false); err != nil {
+		t.Fatal(err)
+	}
+	h.wait(t, "hidden", func(st State) bool { return !st.Adapter.Discoverable && st.Adapter.DiscoverableUntil == 0 })
+	// A timeout of its own is kept
+	f.changed(hci0, ifaceAdapter, "DiscoverableTimeout", uint32(60))
+	if err := h.s.SetDiscoverable(ctx, true); err != nil {
+		t.Fatal(err)
+	}
+	h.wait(t, "for a minute", func(st State) bool { return st.Adapter.DiscoverableUntil == 1_000_000+60_000 })
+	if got := f.takeCalls(); !slices.Equal(got, []string{"Set Discoverable hci0", "Set Discoverable hci0"}) {
+		t.Errorf("calls %v", got)
+	}
+	// BlueZ restarting while it's on: when it ends is unknown
+	f.conn.Close()
+	h.wait(t, "gone", func(st State) bool { return !st.Available })
+	newFakeBlueZ(t, bus, dbus.ManagedObjects{hci0: adapter("C0:00:00:00:00:00", true, map[string]dbus.Variant{
+		"Discoverable": v(true), "DiscoverableTimeout": v(uint32(180)),
+	})})
+	h.wait(t, "back", func(st State) bool { return st.Available && st.Adapter.Discoverable })
+	if got := h.s.State().Adapter.DiscoverableUntil; got != 0 {
+		t.Errorf("until %d after a sync", got)
+	}
+}
+
+type rfkillWriter struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (w *rfkillWriter) Write(b []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.buf.Write(b)
+}
+
+func (w *rfkillWriter) Close() error { return nil }
+
+// Unblock writes one change-all event for Bluetooth, soft 0; a hard
+// block is refused without writing; a device it can't open says why
+func TestUnblock(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	newFakeBlueZ(t, bus, dbus.ManagedObjects{hci0: adapter("C0:00:00:00:00:00", false, map[string]dbus.Variant{"PowerState": v("off-blocked")})})
+	w := &rfkillWriter{}
+	var openErr error
+	var rfkill string
+	h := startWith(t, bus, func(o *Options) {
+		rfkill = o.Rfkill
+		o.RfkillDev = func() (io.WriteCloser, error) {
+			if openErr != nil {
+				return nil, openErr
+			}
+			return w, nil
+		}
+	})
+	h.wait(t, "blocked", func(st State) bool { return st.Available && st.Adapter.Blocked && !st.Adapter.HardBlocked })
+	if err := h.s.Unblock(); err != nil {
+		t.Fatal(err)
+	}
+	if got := w.buf.Bytes(); !bytes.Equal(got[4:], []byte{2, 3, 0, 0}) || len(got) != 8 || !bytes.Equal(got[:4], []byte{0, 0, 0, 0}) {
+		t.Errorf("event % x", got)
+	}
+
+	// A hardware switch: nothing written
+	w.buf.Reset()
+	sw := filepath.Join(rfkill, "rfkill1")
+	os.MkdirAll(sw, 0o755)
+	for f, s := range map[string]string{"type": "bluetooth", "name": "hci0", "soft": "0", "hard": "1"} {
+		os.WriteFile(filepath.Join(sw, f), []byte(s+"\n"), 0o644)
+	}
+	h.s.rebuild(true)
+	h.wait(t, "hard", func(st State) bool { return st.Adapter.HardBlocked })
+	if err := h.s.Unblock(); axerr.KindOf(err) != axerr.Refused || w.buf.Len() > 0 {
+		t.Errorf("hard block: %v, wrote % x", err, w.buf.Bytes())
+	}
+	os.WriteFile(filepath.Join(sw, "hard"), []byte("0\n"), 0o644)
+	h.s.rebuild(true)
+	h.wait(t, "soft", func(st State) bool { return !st.Adapter.HardBlocked })
+
+	// No permission on /dev/rfkill
+	openErr = &fs.PathError{Op: "open", Path: "/dev/rfkill", Err: fs.ErrPermission}
+	if err := h.s.Unblock(); axerr.KindOf(err) != axerr.NotAuthorized {
+		t.Errorf("no permission: %v", err)
+	}
+	openErr = errors.New("odd")
+	if err := h.s.Unblock(); axerr.KindOf(err) != axerr.Failed {
+		t.Errorf("odd: %v", err)
 	}
 }
