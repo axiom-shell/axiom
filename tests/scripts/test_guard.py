@@ -107,18 +107,28 @@ class Bash(LiveSession, unittest.TestCase):
         self.blocks("gh api repos/o/r", "gh api -X GET repos/o/r/issues", "gh api graphql -f query='{ viewer { login } }'",
                     "gh repo edit --default-branch dev", "gh release create v1", "gh workflow run ci.yml",
                     "gh secret set X",
-                    "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12",
+                    "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12", "gh pr merge 3 --admin",
                     "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
                     "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -")
         self.allows("gh pr create --fill --label roadmap", "gh pr view 3 --json comments", "gh pr list --label roadmap",
                     "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
-                    "gh pr comment 3 -b ok", "gh pr close 3", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
+                    "gh pr comment 3 -b ok", "gh pr close 3", "gh pr ready 3", "gh pr checkout 3", "gh version", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
                     "gh run cancel 9", "gh issue list", "gh issue view 16", "gh issue comment 16 -b x", "gh issue close 16",
                     "gh issue edit 16 --add-label x", "gh repo view", "gh release list", "gh label list", "gh rs check main",
                     "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
                     "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
                     "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list",
                     "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
+
+    def test_leading_cd(self):
+        """A leading `cd` moves the relative paths after it"""
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as other:
+            cfg = Path(tmp) / "axiom"
+            (cfg / "sub").mkdir(parents=True)
+            with mock.patch.object(guard, "LIVE_CONFIG", cfg / "config.json"):
+                self.blocks(f"cd {cfg} && cp /tmp/x config.json", f"cd {cfg} && rm config.json",
+                            f"cd {cfg}/sub/.. && cat x > config.json 2>&1 | tail -1", f"cd {tmp} && rm -r axiom")
+                self.allows(f"cd {other} && cp /tmp/x config.json")
 
     def test_git_push_and_clean(self):
         self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:roadmap/1-x", "git push origin @",
@@ -127,6 +137,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "git push -d origin x", "git push --mirror origin", "git push --all origin", "git push --prune origin x",
                     "git push --tags origin x", "git push upstream x", "git push -v origin x", "git push origin x y",
                     "git push origin main", "git push origin master", "git push origin x:main", "git push origin x:refs/heads/main",
+                    "git push origin x:heads/main", "git push origin refs/heads/main",
                     "git -C . push --force origin x", "git -C /tmp push", "env -C /tmp git push",
                     "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
                     # a switch, rebase or rename onto main, then a bare push

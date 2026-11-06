@@ -21,6 +21,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import sys
 from pathlib import Path
 
@@ -385,13 +386,13 @@ GH_ALLOWED = {
     "gist list", "gist view", "project list", "project view", "project field-list", "project item-list", "org list",
     "discussion list", "discussion view", "agent-task list", "agent-task view", "codespace list", "codespace view",
     "attestation verify", "attestation trusted-root", "extension list", "extension search", "alias list",
-    "config get", "config list", "gpg-key list", "ssh-key list", "skill list", "skill search", "skill preview",
+    "config get", "config list", "gpg-key list", "ssh-key list", "skill list", "skill search", "skill preview", "version",
     # Issue management (`issue create` only when the maintainer asks for an issue: AGENTS.md › Never)
     "issue create", "issue edit", "issue comment", "issue close", "issue reopen", "issue lock", "issue unlock",
     # Re-running actions
     "run rerun", "run cancel",
-    # PRs: merging, and what the roadmap autopilot opens and labels
-    "pr merge", "pr create", "pr comment", "pr edit", "pr close",
+    # PRs: merging (not `--admin`, past main's protection), and what the roadmap autopilot opens and labels
+    "pr merge", "pr create", "pr comment", "pr edit", "pr close", "pr ready", "pr checkout",
 }
 
 
@@ -400,8 +401,11 @@ def gh_allowed(args):
     args = args[:args.index("--")] if "--" in args else args
     words = [a for k, a in enumerate(args) if not a.startswith("-") and (k == 0 or args[k - 1] not in {"-R", "--repo"})]
     words[:1] = [{"rs": "ruleset"}.get(w, w) for w in words[:1]]
-    return (not words or words[0] == "help" or {"-h", "--help"} & set(args)
-            or words[0] in GH_ALLOWED or " ".join(words[:2]) in GH_ALLOWED)
+    if {"-h", "--help"} & set(args) or not words or words[0] == "help":
+        return True
+    if words[:2] == ["pr", "merge"] and "--admin" in args:
+        return False
+    return words[0] in GH_ALLOWED or " ".join(words[:2]) in GH_ALLOWED
 
 
 # ----------------------------------------------------------------- rules
@@ -416,7 +420,8 @@ def push_allowed(args):
     words = [a for a in args if a not in PUSH_OPTS]
     if len(words) != 2 or words[0] != "origin" or words[1].startswith(("-", "+", ":", "@")) or "HEAD" in words[1]:
         return False
-    return words[1].split(":")[-1].removeprefix("refs/heads/") not in {"main", "master"}
+    # git completes `heads/main` to refs/heads/main
+    return words[1].split(":")[-1].removeprefix("refs/").removeprefix("heads/") not in {"main", "master"}
 
 
 def check_git(args):
@@ -774,12 +779,29 @@ def check_generated_edit(tool_input):
 
 # ------------------------------------------------------------------ main
 
+# `cd /dir && …`: `&&`-joined pipelines with redirections, and no `;`, `||`,
+# lone `&`, `\&`, newline, subshell, substitution, variable or relative folder
+# (CDPATH) that could run a command somewhere else than the folder; every later
+# command a program on PATH (a function, alias or builtin like `noglob cd`,
+# `repeat 1 cd`, `__zoxide_cd` may move the shell) that doesn't move (MOVES)
+LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*[ \t]*&&(?:[^\n\\;&|()<>`$]|&&|\|(?![|&])|\d*>&\d+|[<>]{1,2}(?![&|(]))+")
+MOVES = {"cd", "chdir", "pushd", "popd", "eval", "builtin", "source", "."}
+
+
 def check(call):
     tool, tool_input = call.get("tool_name", ""), call.get("tool_input") or {}
     if tool == "Bash":
         command = tool_input.get("command", "")
         commands = split_commands(command)
         cwd = call.get("cwd") or str(REPO)
+        # A leading cd into a folder moves the relative paths after it (an
+        # agent's cwd resets every call): config.json, portal and default-apps
+        # writes; any other shape is judged here. cd takes `..` after `~` and
+        # before symlinks (normpath), as the shell does
+        if (commands[:1] and commands[0][1][:1] == ["cd"] and LEADING_CD.fullmatch(command)
+                and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[1:])
+                and (target := resolve(os.path.normpath(os.path.expanduser(commands[0][1][1])), cwd)).is_dir()):
+            cwd, commands = str(target), commands[1:]
         for env, argv in commands:
             check_argv(env, argv, cwd)
     elif tool in {"Edit", "Write"}:
