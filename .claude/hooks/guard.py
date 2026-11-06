@@ -383,18 +383,35 @@ def check_axiom(env, args, cwd):
             deny("Never, while testing", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.")
 
 
-def gh_api_opens_issue(args):
-    """`gh api` creating an issue: GraphQL's createIssue, or a POST to a repo's
-    issues (gh posts when given a field, -f/-F/--input, unless told GET)."""
-    if any("createIssue" in a for a in args):
-        return True
-    if not any(re.fullmatch(r"/?repos/[^/]+/[^/]+/issues/?", a) for a in args):
-        return False
+def gh_api_method(args):
+    """The method `gh api` sends: -X/--method, else POST when given a field
+    (-f/-F/--input), else GET"""
     method = next((m.group(1) for m in (re.fullmatch(r"(?:-X|--method)=?(\w+)", a) for a in args) if m), None)
     method = method or next((b for a, b in zip(args, args[1:]) if a in {"-X", "--method"}), None)
     if method:
-        return method.upper() == "POST"
-    return any(re.match(r"(-[fF]|--field|--raw-field|--input)", a) for a in args)
+        return method.upper()
+    return "POST" if any(re.match(r"(-[fF]|--field|--raw-field|--input)", a) for a in args) else "GET"
+
+
+# What guards main: branch protection, rulesets, the repository's own
+# settings (default branch, merges), a branch rename, who may write
+GH_PROTECTION = re.compile(r"/?(repos/[^/]+/[^/]+(/branches/[^/]+/(protection|rename)(/.*)?|/rulesets(/.*)?|/collaborators(/.*)?)?"
+                           r"|orgs/[^/]+/(rulesets(/.*)?|teams/[^/]+/repos(/.*)?))/?(\?.*)?")
+GH_PROTECTION_MUTATIONS = re.compile(r"\b(updateRepository|(create|update|delete)(BranchProtectionRule|RepositoryRuleset))\b")
+
+
+def gh_api_opens_issue(args):
+    """`gh api` creating an issue: GraphQL's createIssue, or a POST to a repo's issues"""
+    if any("createIssue" in a for a in args):
+        return True
+    return gh_api_method(args) == "POST" and any(re.fullmatch(r"/?repos/[^/]+/[^/]+/issues/?", a) for a in args)
+
+
+def gh_api_weakens_main(args):
+    """`gh api` writing what guards main (GH_PROTECTION) or a GraphQL mutation of it"""
+    if any(GH_PROTECTION_MUTATIONS.search(a) for a in args):
+        return True
+    return gh_api_method(args) not in {"GET", "HEAD"} and any(GH_PROTECTION.fullmatch(a) for a in args)
 
 
 # ----------------------------------------------------------------- rules
@@ -495,6 +512,11 @@ def check_argv(env, argv, cwd, switched):
     opens = any(args[i:i + 2] == ["issue", "create"] for i in range(len(args)))
     if name == "gh" and (opens or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
         deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
+
+    # Weakening main's protection: its rules, rulesets, the repository's settings, who may write
+    edits = any(args[i:i + 2] == ["repo", "edit"] for i in range(len(args)))
+    if name == "gh" and (edits or args[:1] == ["api"] and gh_api_weakens_main(args[1:])):
+        deny("Never, while testing", "don't change main's protection, rulesets, the repository's settings or permissions through gh; ask the user.")
 
     # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":

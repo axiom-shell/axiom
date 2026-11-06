@@ -47,7 +47,8 @@
       "Bash(timedatectl set-*)",
       "Bash(hostnamectl set-*)",
       "Bash(xdg-mime default *)",
-      "Bash(xdg-settings set *)"
+      "Bash(xdg-settings set *)",
+      "Bash(gh repo edit*)"
     ]
   },
   "hooks": {
