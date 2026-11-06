@@ -448,8 +448,9 @@ QtObject {
       readonly property string _file: root.absolute(doc.path)
       property var _watch: null
 
+      // Refused while a linked folder is missing: a save would create it
       function edit(text) {
-        if (text === doc.text)
+        if (text === doc.text || root.directoryMissing)
           return;
         doc.text = text;
         doc.dirty = true;

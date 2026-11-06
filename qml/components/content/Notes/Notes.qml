@@ -83,6 +83,9 @@ Card {
   property bool _ready: false
   Component.onCompleted: {
     root._ready = true;
+    // A missing linked folder may be back (a drive mounted since)
+    if (NotesManager.directoryMissing)
+      NotesManager.refreshList();
     // Opened for a note from the launcher
     const pending = root.locked ? null : NotesManager.takeReveal(root.placeKey);
     if (pending)
@@ -201,6 +204,7 @@ Card {
 
       FlatIconButton {
         visible: root.showToolbar
+        enabled: !NotesManager.directoryMissing
         iconText: "checklist"
         iconColor: Theme.foreground
         tooltipText: I18n.tr("Checklist")
@@ -209,6 +213,7 @@ Card {
       }
       FlatIconButton {
         visible: root.showToolbar
+        enabled: !NotesManager.directoryMissing
         iconText: "format_list_bulleted"
         iconColor: Theme.foreground
         tooltipText: I18n.tr("Bulleted list")
@@ -307,12 +312,26 @@ Card {
       Layout.fillWidth: true
       Layout.fillHeight: true
 
+      // Read-only while a linked notes folder is missing: a save would
+      // create it (NotesManager's edit refuses too)
       NoteEditor {
         id: editor
+        visible: !NotesManager.directoryMissing
         anchors.fill: parent
         note: root.note
         showCompleted: root.showCompleted
         onFindRequested: text => root.openFind(text)
+      }
+
+      StyledText {
+        visible: NotesManager.directoryMissing
+        anchors.fill: parent
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        wrapMode: Text.WordWrap
+        text: I18n.tr("The notes folder doesn't exist: {0}", NotesManager.directory)
+        textColor: Theme.foregroundAlt
+        textSize: Appearance.fontSizeBy(-2)
       }
 
       // The note list closes on a click beside it

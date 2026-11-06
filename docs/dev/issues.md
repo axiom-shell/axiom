@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Making a note or folder creates a linked notes folder that doesn't exist
+- **Where:** `qml/services/apps/NotesManager.qml` (`_create`)
+- **What:** notes.md: "A linked folder is never created". With `Notes.directory` linked and missing (`directoryMissing`), the editor is now read-only, but the note list's and the header's New note and New folder buttons still call `createNote` / `createFolder`, whose `_create` runs `mkdir -p` on the folder first, so the whole path is made on the root disk (a drive not mounted yet, a typo). Found by reading. Fix: `_create` refuses while `directoryMissing` (`_fail` with "The notes folder doesn't exist"), or the buttons are disabled then.
+- **Size:** trivial
+- **Found:** 2026-11-06, while making the notes editor read-only while its folder is missing (row 20)
+
 ### The daemon's other own commands still start outside command.Children
 - **Where:** `backend/internal/sysmon/nvidia.go`, `backend/internal/theme/integrate.go`, `backend/internal/compositor/manager/niri.go`, `backend/internal/daemon/cursor.go`
 - **What:** Row 20 moved `checkupdates`, `ddcutil` and `tailscale` to `command.Run` with the daemon's `Children`, but other commands the daemon runs for itself still start through their own `exec.Command` (`grep -rln 'exec.Command' backend/internal` lists them), so one in flight at a re-exec isn't handed on and stays a zombie until the daemon quits, as the three did. Not yet sorted into which run often enough to matter (a polled or streamed one) and which run once (a build, an install), which a re-exec doesn't meet.
@@ -448,13 +454,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `Send` looks the key up (`keyFor`: the environment, then `secret-tool lookup`, then secrets.json) before it registers its cancel in `s.running` (line 94), and `Stop` does nothing for an id not there. A Stop pressed during the lookup (a locked keyring's unlock prompt, a slow Secret Service) is lost: the request goes out afterwards and streams to the end while the shell shows it as stopping; the same for `newConversation`'s stop. PLAUSIBLE that users meet it: it needs a lookup slow enough to press Stop in. Fix: register the cancel first and do the lookup under the cancellable ctx (move `ctx, cancel := context.WithCancelCause(ctx)` and the registration above `keyFor`, and answer `Stopped` when `stopped()` after it), plus a TestStop case stopping before the lookup returns.
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
-
-### Typing in a note creates a linked notes folder that doesn't exist
-- **Where:** `qml/services/apps/NotesManager.qml:409` (`flush`), `qml/services/apps/NotesManager.qml:302` (`refreshList`)
-- **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: waits on the decision below. A fix that keeps the edit dirty (tried in the features-10 branch) writes it over the real note once the folder returns: a document opened while the folder was missing read its note as empty, `_fromDisk` doesn't reload a dirty document, and the `find` that sees the folder again flushes the edits, so typing "x" in a scratchpad and then mounting the drive writes "x" over the vault's real scratchpad.md (changing `Notes.directory` away from a missing folder does the same to the new folder's note of that name). Found by reading; not run. So the fix waits on a maintainer decision: "Which should the kept edits become: dropped, saved as a conflict copy, or prevented by making the editor read-only while the folder is missing?"
-  **Decided** (maintainer, 2026-11-06, on a) the editor read-only while the folder is missing, with the existing "The notes folder doesn't exist" message, b) the kept edits saved as a conflict copy, c) dropped; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### The panel's relative times go stale while Tailscale's state stays the same
 - **Where:** `qml/components/content/Tailscale/Tailscale.qml:46` (`now`, `keyDays`), `qml/components/content/ClaudeUsage/ClaudeUsage.qml:22` (`now`)

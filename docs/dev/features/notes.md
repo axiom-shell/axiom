@@ -9,7 +9,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 ### Storage
 - Notes are Markdown files in `NotesConfig.directory` (the `Notes.directory` setting).
   - Empty means `Paths.defaultNotesPath` (`~/.local/share/axiom/notes/`).
-  - A linked folder is never created.
+  - A linked folder is never created. While it's missing (`directoryMissing`, from `refreshList`'s `find`, run again as a Notes module loads), a module shows "The notes folder doesn't exist" in place of its editor and a document's `edit` is refused, since a save would make the folder.
 - Paths are relative to that folder. `clean()` refuses any path that leaves it.
 - `allNotes` (from a `find`) feeds the `notes` `x-options`.
 
