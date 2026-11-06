@@ -319,7 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
 - [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
 - [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
@@ -382,6 +381,9 @@ Found while reviewing the guard's gh and push allowlists (row 20):
 
 Found while reviewing the Monitors batch (row 20):
 - [A hotplug can shift an unnamed output's block, and nothing remaps it](issues.md#a-hotplug-can-shift-an-unnamed-outputs-block-and-nothing-remaps-it)
+
+Found while fixing the daemon's config watch (row 20):
+- [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode)
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)

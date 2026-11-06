@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### axiom config validate checks the install's config with the binary's schema under dev mode
+- **Where:** `backend/internal/cli/config.go` (`configValidateCommand`, `offlinePipeline`)
+- **What:** With no FILE and no `--tree`, `axiom config validate` reads `configDir(e)`'s config.json and checks it against the schema embedded in the binary it runs as. While dev mode runs the dev tree, the daemon runs the dev config through the dev tree's schema, so validate checks another file with another schema: a config using the dev tree's new types is called invalid though the daemon accepts it. Split out of the config watch's entry (row 20), where it was noted as related.
+- **Size:** small
+- **Found:** 2026-10-29, while testing custom widgets on the live config
+
 ### A push of a named branch can land on main through git's push config
 - **Where:** `.claude/hooks/guard.py` (`push_allowed`)
 - **What:** The guard judges `git push origin <branch>` by the name alone, but git maps a branch named without `:<dst>` through its config: with `remote.origin.push` set to `refs/heads/x:refs/heads/main`, or `push.default=upstream` on a branch made from `origin/main` (which sets its upstream to main, as the autopilot's step 4 branches do), `git push origin x` updates main (shown on scratch repos 2026-11-06: `feature -> trunk`). That config can come from `git -c …`, `GIT_CONFIG_*` or an earlier `git config`; the global config sets neither today. Fix: refuse a push whose `-c`/`GIT_CONFIG_*` sets `push.*` or `remote.*.push`, or allow only the `<src>:<dst>` form.
@@ -187,12 +193,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The maintainer sees submenus (a popout's or an edge menu's) open without the blur behind them some of the time; not reproduced yet. A lead: `backed` also needs `parentOrigin` (`slot.popupScreenOrigin`, where the parent's window is on screen), so a submenu opened before that's known stays unbacked until something re-evaluates it; `onOverlayLayer` follows its host too.
 - **Size:** small
 - **Found:** 2026-10-29, while building custom widgets (reported by the maintainer)
-
-### The daemon never watches config.json, so outside edits aren't read
-- **Where:** `backend/internal/store/store.go` (`Watch`), `backend/internal/daemon/methods.go` (`configPart`)
-- **What:** Nothing starts `Store.Watch`: a5ca837 (2026-10-24) removed `serve("the config watch", d.store.Watch)` from the daemon and no part runs it since (`git grep 'store.Watch' -- backend/internal/daemon` is empty). An outside edit (an editor, `axiom config set --offline`, a sync tool) is read only at the next load (a re-exec or a dev-mode `Reschema`) or, since config-02, at the next save, which it makes refuse as a Conflict (`Store.write` reads it then). Seen 2026-11-01: a hand fix of a config the daemon had started on the defaults over stayed unread (`axiom config status` kept the old problems, nothing in the daemon log) until a dev rebuild re-exec'd the daemon; an earlier hand edit was overwritten by a save from the shell's copy, never having been read. That explains the 2026-10-29 sighting (a rename not read for 15 s and more; an in-place rewrite that seemed read was likely a re-exec's load). Fix: `run: d.store.Watch` on `configPart`, with a daemon test that an outside edit is pushed. Related: `axiom config validate` checks against the installed binary's schema, not the running daemon's, so under dev mode it calls a config with new types invalid that the daemon accepts.
-- **Size:** trivial
-- **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
 
 ### With no takeovers kept, a broken config.json can still release the compositor's config
 - **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
