@@ -73,8 +73,8 @@ Item {
   // expireTimeout: 0 is the freedesktop-spec signal for "never expire", a
   // positive one is the app's own duration (ms), -1 leaves it to us; its
   // app's rule's duration (NotificationsConfig.apps) comes before either
-  readonly property int _ruleTimeout: root.notification ? NotificationManager.timeoutOf(root.notification) : -1
-  readonly property bool neverExpires: (root._ruleTimeout <= 0 && NotificationsConfig.followApps && root.notification?.expireTimeout === 0) || (NotificationsConfig.criticalStays && root.critical)
+  readonly property var _ruleTimeout: root.notification ? NotificationManager.timeoutOf(root.notification) : null
+  readonly property bool neverExpires: (!(root._ruleTimeout > 0) && NotificationsConfig.followApps && root.notification?.expireTimeout === 0) || (NotificationsConfig.criticalStays && root.critical)
   readonly property int duration: root._ruleTimeout > 0 ? root._ruleTimeout : NotificationsConfig.followApps && root.notification?.expireTimeout > 0 ? root.notification.expireTimeout : NotificationsConfig.timeout
 
   // The card's box, for its blur shape (ToastStack)
