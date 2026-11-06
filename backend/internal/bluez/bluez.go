@@ -1,7 +1,9 @@
 // Package bluez is Bluetooth for the shell, over BlueZ on the system bus:
 // the default adapter and its devices, kept current from BlueZ's object
 // manager signals (nothing polls), and what the shell does with them:
-// power, discovery, connect, disconnect, pair and forget.
+// power, discovery, connect, disconnect, pair and forget; and the
+// pairing agent BlueZ asks for PINs, passkeys and confirmations
+// (agent.go).
 //
 // Every call runs on the service's own bus connection, so BlueZ's
 // per-client state is the daemon's: a discovery session started here is
@@ -31,6 +33,12 @@ type Options struct {
 	SystemBus func(ctx context.Context) (*dbus.Conn, error)
 	// OnChange is told of every new state
 	OnChange func(State)
+	// OnAgentRequest shows a pairing agent's request (a display again as
+	// it changes); it returns false when nobody can answer (no shell),
+	// which BlueZ hears as rejected. OnAgentDone hides one BlueZ, the
+	// user or the pairing's end ended.
+	OnAgentRequest func(AgentRequest) bool
+	OnAgentDone    func(id string)
 	// Rfkill is the rfkill class folder read for an adapter's block when
 	// BlueZ's PowerState doesn't say (default /sys/class/rfkill)
 	Rfkill string
@@ -63,6 +71,16 @@ type Service struct {
 	// comes back); discovering: this connection's session runs
 	wantDiscovery, discovering bool
 	kick                       chan struct{}
+
+	// agentWant: the pairing agent should be registered (SetAgent);
+	// agentOn: it is, on conn
+	agentWant, agentOn bool
+	agentKick          chan struct{}
+	// agentMu guards the agent's requests, by id (never held while
+	// taking mu)
+	agentMu  sync.Mutex
+	agents   map[string]*pendingAgent
+	agentSeq int
 }
 
 // New returns a service; Run runs it.
@@ -82,7 +100,8 @@ func New(o Options) *Service {
 	return &Service{
 		o: o, state: State{Devices: []Device{}},
 		order: map[dbus.ObjectPath]uint64{}, ops: map[string]string{},
-		kick: make(chan struct{}, 1),
+		kick: make(chan struct{}, 1), agentKick: make(chan struct{}, 1),
+		agents: map[string]*pendingAgent{},
 	}
 }
 
@@ -116,6 +135,12 @@ func (s *Service) runOnce(ctx context.Context) error {
 		return err
 	}
 	defer conn.Close()
+	// Exported before it's registered (sync), so BlueZ finds it there
+	unexport, err := conn.Export(agentPath, dbus.Interface{Name: ifaceAgent, Methods: s.agentMethods()})
+	if err != nil {
+		return err
+	}
+	defer unexport()
 	// Every signal of BlueZ's in one subscription, so they're read in the
 	// order sent: a property change of a device just added comes after
 	// its InterfacesAdded
@@ -166,7 +191,10 @@ func (s *Service) runOnce(ctx context.Context) error {
 		case <-settle:
 			settle = nil
 			s.rebuild()
+		case <-s.agentKick:
+			s.applyAgent(ctx, conn)
 		case m := <-signals:
+			s.pairedSignal(m)
 			if s.signal(ctx, conn, m) && settle == nil {
 				settle = time.After(s.o.Settle)
 			}
@@ -175,8 +203,8 @@ func (s *Service) runOnce(ctx context.Context) error {
 }
 
 // sync reads every object again (a start, BlueZ restarting, the bus
-// coming back), and starts the scan the shell wants, which BlueZ ended
-// with the old connection or its own restart.
+// coming back), and starts the scan the shell wants and registers the
+// agent, which BlueZ forgot with the old connection or its own restart.
 func (s *Service) sync(ctx context.Context, conn *dbus.Conn) {
 	objs, err := conn.GetManagedObjects(ctx, busName, rootPath)
 	if err != nil {
@@ -195,9 +223,13 @@ func (s *Service) sync(ctx context.Context, conn *dbus.Conn) {
 		s.seen(p)
 	}
 	s.discovering = false
+	s.agentOn = false
 	want := s.wantDiscovery
 	s.mu.Unlock()
+	// Asked of the BlueZ that went away
+	s.endAgents(dbus.NewError(errCanceled, "BlueZ restarted"))
 	s.rebuild()
+	s.applyAgent(ctx, conn)
 	if want {
 		if err := s.Discovery(ctx, true); err != nil && axerr.KindOf(err) != axerr.Unavailable {
 			s.o.Log.Debug("bluetooth: starting the scan again", "err", err)
@@ -219,7 +251,9 @@ func (s *Service) disconnected() {
 	s.conn, s.objects, s.owner = nil, nil, ""
 	s.order = map[dbus.ObjectPath]uint64{}
 	s.discovering = false
+	s.agentOn = false
 	s.mu.Unlock()
+	s.endAgents(dbus.NewError(errCanceled, "BlueZ went away"))
 	s.rebuild()
 }
 
@@ -482,6 +516,8 @@ func (s *Service) Pair(ctx context.Context, address string) error {
 	}
 	if !d.bool("Paired") {
 		_, err := conn.Call(ctx, busName, p, ifaceDevice, "Pair", "")
+		// A code shown for it is done with, paired or not
+		s.endDisplays(p)
 		if err != nil && dbus.ErrorName(err) != errPrefix+"AlreadyExists" {
 			return mapError(err)
 		}
@@ -497,6 +533,7 @@ func (s *Service) CancelPair(ctx context.Context, address string) error {
 		return err
 	}
 	_, err = conn.Call(ctx, busName, p, ifaceDevice, "CancelPairing", "")
+	s.endDisplays(p)
 	if dbus.ErrorName(err) == errPrefix+"DoesNotExist" {
 		// Nothing was pairing
 		return nil

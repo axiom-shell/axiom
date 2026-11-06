@@ -51,7 +51,7 @@ A hello's `subscribe` is `true`, `false` or a list of topics:
 - `clipboard`: `clipboard.state` (latest-wins)
 - `vpn`: `vpn.state` (latest-wins), `vpn.secretRequest`, `vpn.secretDone`
 - `drives`: `drives.state` (latest-wins), `drives.event` (a drive plugged in or pulled out, one message each)
-- `bluetooth`: `bluetooth.state` (latest-wins; [Bluetooth](../features/networking-bluetooth.md) › bluez)
+- `bluetooth`: `bluetooth.state` (latest-wins), `bluetooth.agentRequest` and `bluetooth.agentDone` (the pairing agent's requests, to the shell's connection only, answered by its `bluetooth.agentReply`; [Bluetooth](../features/networking-bluetooth.md) › The pairing agent)
 - `inputMethod`: `inputMethod.state` (latest-wins; [input methods](inputmethod.md))
 - `camera`: `camera.state` (latest-wins): the apps holding a camera's V4L2 device open themselves (`backend/internal/camera`, inotify on `/dev/video*`; `camera.get` reads it), which `PrivacyManager.cameraCaptures` adds to PipeWire's camera streams
 - `screenshare`: `screenshare.request` (what a portal offers to share, for the picker; answered by the shell's `screenshare.answer`), `screenshare.done` (its asker gave up) ([screen sharing](../features/screen-sharing.md))

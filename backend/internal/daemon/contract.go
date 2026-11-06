@@ -40,7 +40,7 @@ func pushShapes() []rpc.PushShape {
 		pushClipboardState.Shape(),
 		pushVPNState.Shape(), pushVPNSecretRequest.Shape(), pushVPNSecretDone.Shape(),
 		pushDrivesState.Shape(), pushDrivesEvent.Shape(),
-		pushBluetoothState.Shape(),
+		pushBluetoothState.Shape(), pushBluetoothAgentRequest.Shape(), pushBluetoothAgentDone.Shape(),
 		pushInputMethodState.Shape(),
 		pushCameraState.Shape(),
 		pushScreenShareRequest.Shape(), pushScreenShareDone.Shape(),

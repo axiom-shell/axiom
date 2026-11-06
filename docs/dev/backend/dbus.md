@@ -28,7 +28,7 @@ The daemon's own D-Bus client: pure Go, no library, written for what axiom asks 
   - Object managers (UDisks2): `GetManagedObjects(ctx, dest, path)` reads the whole tree (`ManagedObjects`: path → interface → properties), and `InterfacesAdded(msg)` / `InterfacesRemoved(msg)` read its signals. Subscribing to one `Match{Sender: name}` gets all of a service's signals in the order sent (separate subscriptions are forwarded apart, so a property change could be read before the `InterfacesAdded` of its object).
 - **Exporting:** `Export(path, Interface{Name, Methods, Signals})` answers calls until the returned func unexports.
   - Each `Method` declares `In` and `Out` signatures. A call with another signature gets `InvalidArgs`; an unknown object, interface or method gets its own error.
-  - `Fn` answers at once, on the connection's one dispatch goroutine. A method whose answer waits on a person (NetworkManager's `GetSecrets`, `nmvpn`) sets `Defer` instead: it returns at once and calls `reply` later, from any goroutine; only the first reply goes out.
+  - `Fn` answers at once, on the connection's one dispatch goroutine. A method whose answer waits on a person (NetworkManager's `GetSecrets`, `nmvpn`; BlueZ's `Agent1` requests, `bluez`) sets `Defer` instead: it returns at once and calls `reply` later, from any goroutine; only the first reply goes out.
   - `Introspectable.Introspect` (children included) and `Peer.Ping` / `GetMachineId` are answered for you.
   - At most 64 calls wait for the handler goroutine; past that, callers get `LimitsExceeded`.
   - Exported properties aren't there yet: the first service needing them adds `Properties` to `Interface`.
@@ -48,7 +48,7 @@ Every value is encoded from a signature, never guessed. `MakeVariant` and `Signa
 | `a{sv}` | `map[string]Variant`; other dicts `map[any]any` (encoding takes any map) |
 | other arrays | `[]any` (encoding takes any slice) |
 
-- `msg.Store(&a, &b, …)` copies a body into typed variables.
+- `msg.Store(&a, &b, …)` copies a body into typed variables (each basic type its own Go type: `q` into a `uint16`).
 - Messages are sent little-endian; both byte orders are read.
 - The spec's limits are enforced:
   - signatures up to 255 characters

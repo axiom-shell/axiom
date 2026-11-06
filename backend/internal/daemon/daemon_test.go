@@ -68,6 +68,9 @@ func newTestDaemon(t *testing.T) *testDaemon {
 		"XDG_STATE_HOME":  filepath.Join(home, "state"),
 		"XDG_DATA_HOME":   filepath.Join(home, "data"),
 		"XDG_CACHE_HOME":  filepath.Join(home, "cache"),
+		// Never the live system bus: the Bluetooth part would register a
+		// pairing agent with the machine's BlueZ
+		"DBUS_SYSTEM_BUS_ADDRESS": "unix:path=" + filepath.Join(home, "no-system-bus"),
 	}}
 	td.dirs = xdg.Resolve(td.getenv)
 	rt, err := xdg.ForDisplay(td.getenv, true)

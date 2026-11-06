@@ -138,6 +138,11 @@ func store(v any, p any) error {
 			*p = x
 			return nil
 		}
+	case *uint16:
+		if x, ok := v.(uint16); ok {
+			*p = x
+			return nil
+		}
 	case *uint32:
 		if x, ok := v.(uint32); ok {
 			*p = x

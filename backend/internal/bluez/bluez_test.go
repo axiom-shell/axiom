@@ -185,6 +185,8 @@ type fakeBlueZ struct {
 	fail map[string]*dbus.Error
 	// discovery are the clients with a scan running
 	discovery map[string]bool
+	// agent is the registered agent's connection ("" none)
+	agent string
 }
 
 func newFakeBlueZ(t *testing.T, bus *dbustest.Bus, objs dbus.ManagedObjects) *fakeBlueZ {
@@ -209,6 +211,37 @@ func newFakeBlueZ(t *testing.T, bus *dbustest.Bus, objs dbus.ManagedObjects) *fa
 			}
 			return []any{out}, nil
 		}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	// AgentManager1, recording each call with its arguments
+	agentCall := func(member string) func(context.Context, *dbus.Message) ([]any, error) {
+		return func(_ context.Context, m *dbus.Message) ([]any, error) {
+			var p dbus.ObjectPath
+			var capability string
+			if member == "RegisterAgent" {
+				m.Store(&p, &capability)
+			} else {
+				m.Store(&p)
+			}
+			if e := f.record(strings.TrimSpace(member + " " + string(p) + " " + capability)); e != nil {
+				return nil, e
+			}
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			switch member {
+			case "RegisterAgent":
+				f.agent = m.Sender
+			case "UnregisterAgent":
+				f.agent = ""
+			}
+			return nil, nil
+		}
+	}
+	if _, err := conn.Export(agentMgrPath, dbus.Interface{Name: ifaceAgentMgr, Methods: map[string]dbus.Method{
+		"RegisterAgent":       {In: "os", Fn: agentCall("RegisterAgent")},
+		"UnregisterAgent":     {In: "o", Fn: agentCall("UnregisterAgent")},
+		"RequestDefaultAgent": {In: "o", Fn: agentCall("RequestDefaultAgent")},
 	}}); err != nil {
 		t.Fatal(err)
 	}
@@ -394,8 +427,14 @@ type harness struct {
 
 func start(t *testing.T, bus *dbustest.Bus) *harness {
 	t.Helper()
+	return startWith(t, bus, nil)
+}
+
+// startWith runs a service with its options changed by opts.
+func startWith(t *testing.T, bus *dbustest.Bus, opts func(*Options)) *harness {
+	t.Helper()
 	h := &harness{}
-	h.s = New(Options{
+	o := Options{
 		SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
 			return dbus.Dial(ctx, bus.Address, dbus.Options{})
 		},
@@ -407,7 +446,11 @@ func start(t *testing.T, bus *dbustest.Bus) *harness {
 		Rfkill: t.TempDir(),
 		Settle: 10 * time.Millisecond,
 		Retry:  20 * time.Millisecond,
-	})
+	}
+	if opts != nil {
+		opts(&o)
+	}
+	h.s = New(o)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {

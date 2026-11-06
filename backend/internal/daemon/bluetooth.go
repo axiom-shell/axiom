@@ -2,15 +2,26 @@ package daemon
 
 import (
 	"context"
+	"slices"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/bluez"
+	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
+	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/store"
 )
 
+// bluetoothAgentDone is bluetooth.agentDone: a pairing agent's request
+// BlueZ, the user or the pairing's end ended, to hide.
+type bluetoothAgentDone struct {
+	ID string `json:"id"`
+}
+
 // newBluetooth is BlueZ on the system bus (BluetoothManager): the default
-// adapter and its devices, and what the shell does with them.
+// adapter and its devices, what the shell does with them, and the
+// pairing agent asking the shell for PINs, passkeys and confirmations.
 func (d *Daemon) newBluetooth() {
 	log := d.opts.Log.With("part", "bluetooth")
 	d.bluetooth = bluez.New(bluez.Options{
@@ -22,16 +33,38 @@ func (d *Daemon) newBluetooth() {
 				pushBluetoothState.Send(d.server, st, subscribedTo(topicBluetooth))
 			}
 		},
+		// Only the shell answers: it's the one showing the prompt
+		OnAgentRequest: func(req bluez.AgentRequest) bool {
+			if d.server == nil || !slices.ContainsFunc(d.server.Conns(), shellIn(subscribedTo(topicBluetooth))) {
+				return false
+			}
+			pushBluetoothAgentRequest.Send(d.server, req, shellIn(subscribedTo(topicBluetooth)))
+			return true
+		},
+		OnAgentDone: func(id string) {
+			if d.server != nil {
+				pushBluetoothAgentDone.Send(d.server, bluetoothAgentDone{ID: id}, subscribedTo(topicBluetooth))
+			}
+		},
 		Log: log,
 	})
 }
 
-// bluetoothPart: Bluetooth, followed while the daemon runs.
+// bluetoothPart: Bluetooth, followed while the daemon runs; the pairing
+// agent registered while Bluetooth.pairingAgent is on.
 func (d *Daemon) bluetoothPart() part {
+	configure := func() {
+		cfg, _ := d.store.Config()
+		// reads: Bluetooth.pairingAgent
+		v, _ := config.Lookup(cfg, config.Keys("Bluetooth", "pairingAgent"))
+		d.bluetooth.SetAgent(jsonx.Truthy(v))
+	}
+	configure()
 	return part{
-		name:    "bluetooth",
-		methods: d.bluetoothMethods,
-		run:     d.bluetooth.Run,
+		name:     "bluetooth",
+		methods:  d.bluetoothMethods,
+		run:      d.bluetooth.Run,
+		onConfig: func(store.Event) { configure() },
 	}
 }
 
@@ -74,4 +107,15 @@ func (d *Daemon) bluetoothMethods(reg *rpc.Registry) {
 	device("bluetooth.pair", d.bluetooth.Pair)
 	device("bluetooth.cancelPair", d.bluetooth.CancelPair)
 	device("bluetooth.forget", d.bluetooth.Forget)
+	type agentReplyParams struct {
+		ID     string `json:"id"`
+		Accept bool   `json:"accept"`
+		Value  string `json:"value"`
+	}
+	rpc.Handle(reg, "bluetooth.agentReply", func(ctx context.Context, c *rpc.Conn, p agentReplyParams) (struct{}, error) {
+		if !fromShell(c) {
+			return struct{}{}, axerr.New(axerr.Refused, "only the shell answers the pairing agent")
+		}
+		return struct{}{}, d.bluetooth.AgentReply(p.ID, p.Accept, p.Value)
+	})
 }

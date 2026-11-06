@@ -43,7 +43,7 @@ const (
 	topicClipboard  = "clipboard" // clipboard.state
 	topicVPN        = "vpn"       // vpn.state, vpn.secretRequest, vpn.secretDone
 	topicDrives     = "drives"    // drives.state, drives.event
-	topicBluetooth  = "bluetooth" // bluetooth.state
+	topicBluetooth  = "bluetooth" // bluetooth.state, bluetooth.agentRequest, bluetooth.agentDone
 	topicCamera     = "camera"    // camera.state
 	// screenshare.request, screenshare.done
 	topicScreenShare = "screenshare"
@@ -86,7 +86,9 @@ var (
 	pushDrivesState = rpc.Push[udisks.State]{Method: "drives.state", Latest: true}
 	pushDrivesEvent = rpc.Push[udisks.Event]{Method: "drives.event"}
 
-	pushBluetoothState = rpc.Push[bluez.State]{Method: "bluetooth.state", Latest: true}
+	pushBluetoothState        = rpc.Push[bluez.State]{Method: "bluetooth.state", Latest: true}
+	pushBluetoothAgentRequest = rpc.Push[bluez.AgentRequest]{Method: "bluetooth.agentRequest"}
+	pushBluetoothAgentDone    = rpc.Push[bluetoothAgentDone]{Method: "bluetooth.agentDone"}
 
 	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
 

@@ -1,0 +1,13 @@
+# The Bluetooth section of the config (config.json's "Bluetooth").
+
+type: object
+x-category: Modules
+title: Bluetooth
+description: How axiom pairs Bluetooth devices.
+additionalProperties: false
+properties:
+  pairingAgent:
+    type: boolean
+    title: Answer pairing requests
+    default: true
+    description: Ask for a device's PIN or passkey, or to confirm its code, in axiom's prompt. Turn off to leave pairing to another agent, such as blueman.
