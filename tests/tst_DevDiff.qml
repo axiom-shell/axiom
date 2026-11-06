@@ -49,6 +49,36 @@ TestCase {
             "height": {
               "type": "integer",
               "title": "Height"
+            },
+            "widgets": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/ClockW"
+                  },
+                  {
+                    "$ref": "#/definitions/DateW"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "ClockW": {
+          "properties": {
+            "seconds": {
+              "title": "Seconds"
+            },
+            "format": {
+              "title": "Time format"
+            }
+          }
+        },
+        "DateW": {
+          "properties": {
+            "format": {
+              "title": "Date format"
             }
           }
         }
@@ -78,6 +108,17 @@ TestCase {
         "id": "top"
       },
       "height"]).map(part => part.text), ["Bars", "items", "top", "Height"]);
+    // An item of a oneOf: a key titled when its options agree
+    const widget = key => DevDiff.titleParts(schema, ["Bars", "items",
+        {
+          "id": "top"
+        },
+        "widgets",
+        {
+          "id": "w"
+        },
+        key]).map(part => part.text).pop();
+    compare([widget("seconds"), widget("format")], ["Seconds", "format"]);
     compare(DevDiff.titleParts(schema, ["Gone", "old"]).map(part => [part.text, part.schema]), [["Gone", false], ["old", false]]);
   }
 

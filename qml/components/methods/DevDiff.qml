@@ -32,21 +32,25 @@ QtObject {
 
   // A row's path as titled parts, [{ text, schema }]: a key's schema
   // title (`schema` true: a schema string to translate), else the key
-  // itself; a list item's id (`{ id }`)
+  // itself; a list item's id (`{ id }`). A path has no item's type, so
+  // under a `oneOf` (a bar widget, a module) every option is followed:
+  // a key is titled when the options that have it agree on its title
   function titleParts(schema, path) {
     const parts = [];
-    let node = schema;
+    let nodes = [schema];
     for (const segment of path ?? []) {
+      nodes = [].concat(...nodes.map(node => node?.oneOf ? node.oneOf.map(option => root._resolved(option, schema)) : [node]));
       if (segment !== null && typeof segment === "object") {
-        node = root._resolved(node?.items, schema);
+        nodes = nodes.map(node => root._resolved(node?.items, schema));
         parts.push({
           "text": String(segment.id),
           "schema": false
         });
         continue;
       }
-      node = root._resolved(node?.properties?.[segment], schema);
-      const title = node?.title;
+      nodes = nodes.map(node => root._resolved(node?.properties?.[segment], schema)).filter(node => node);
+      const titles = new Set(nodes.map(node => node.title));
+      const title = titles.size === 1 ? nodes[0].title : undefined;
       parts.push({
         "text": title ? title : String(segment),
         "schema": !!title
