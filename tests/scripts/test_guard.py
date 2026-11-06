@@ -152,7 +152,7 @@ class Bash(LiveSession, unittest.TestCase):
                             f"cd {tree} && true || git push")
 
     def test_git_push_where_git_runs(self):
-        """The branch is read where git runs: after a switch, in a wrapper's folder, by --git-dir or GIT_DIR"""
+        """The branch is read where git runs: after a switch, rebase or rename onto main, in a wrapper's folder, by --git-dir or GIT_DIR"""
         with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ):
             for k in [k for k in os.environ if k.startswith("GIT_")]:
                 del os.environ[k]  # a pre-commit hook's GIT_DIR would point every git here at this repo
@@ -165,11 +165,17 @@ class Bash(LiveSession, unittest.TestCase):
                             f"env --chdir={main} git push", f"env -C{main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
                             f"systemd-run --user --working-directory={main} git push", f"git --git-dir={main}/.git push",
                             f"GIT_DIR={main}/.git git push", "GIT_DIR=~/main/.git git push", "GIT_DIR=$HOME/main/.git git push", f"git -C {main} push origin @", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
-                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null"):
+                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null",
+                            # a rebase onto main checks it out; a rename to main renames the branch checked out
+                            "git rebase roadmap/1-x main && git push", "git rebase --onto origin/main HEAD~1 main && git push origin HEAD",
+                            f"git -C {feature} rebase -X ours roadmap/1-x main && git push", f"cd {feature} && git rebase roadmap/1-x main && git push",
+                            "git branch -M main && git push", "git branch -m roadmap/1-x main && git push origin @",
+                            f"cd {feature} && git branch --move --force main && git push", f"git -C {feature} branch -M main && git -C {feature} push"):
                 self.assertTrue(denied(command, feature), command)
             # git reads the branch from the repository, not the work tree
             for command in ("git push", "git switch main && git push origin roadmap/1-x", f"git --work-tree={main} push",
-                            f"env -C {feature} git push -u origin HEAD"):
+                            f"env -C {feature} git push -u origin HEAD", "git rebase main && git push", "git rebase --onto main HEAD~1 && git push",
+                            "git rebase main roadmap/1-x && git push", "git branch -M roadmap/2-y && git push", "git branch -c main && git push"):
                 self.assertFalse(denied(command, feature), command)
             # A leading cd into a folder on a branch, from one on main, with a pipe, redirections and other commands
             self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null", main))
