@@ -202,6 +202,7 @@
     "Adds the line at the end: niri starts axiom with every session.": "",
     "Adds the line at the end: sway starts axiom with every session.": "",
     "Adds the lines at the top, so your own settings after them win over axiom's.": "",
+    "Adds the lines at the top, so your own settings after them win over axiom's. This file is in i3's folder: if i3 still runs it, i3 reports axiom's sway-only lines as errors.": "",
     "Adds the text at the end of the [{0}] section.": "",
     "Adds the text at the end, so it's read last and wins over earlier settings.": "",
     "Adds the text at the end: new shells pick it up.": "",

@@ -45,7 +45,8 @@ func TestSwayUnreadableIncludeIsUnread(t *testing.T) {
 }
 
 // sway's include and autostart go into the config sway runs; one that
-// isn't the managed path blocks managed (its file would never load)
+// isn't the managed path blocks managed (its file would never load), and
+// one in i3's folder gets a note that i3 would read axiom's lines too
 func TestSwayTargetsTheConfigSwayRuns(t *testing.T) {
 	t.Parallel()
 	tables, schema := repo(t)
@@ -65,6 +66,9 @@ func TestSwayTargetsTheConfigSwayRuns(t *testing.T) {
 		}
 		if f.RunsElsewhere != elsewhere {
 			t.Fatalf("runs elsewhere %q, want %q", f.RunsElsewhere, elsewhere)
+		}
+		if got := strings.Contains(f.IncludeTarget.Value("note").(string), "i3's folder"); got != (target == i3) {
+			t.Fatalf("include note names i3: %v, want %v", got, target == i3)
 		}
 	}
 	// None of the user's yet: the managed path

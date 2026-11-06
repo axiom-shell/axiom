@@ -4029,6 +4029,7 @@
     "Chart range": "",
     "Notifies once when the price falls past this. 0 sets none.": "",
     "Cycle through symbols": "",
-    "One large chart": ""
+    "One large chart": "",
+    "Adds the lines at the top, so your own settings after them win over axiom's. This file is in i3's folder: if i3 still runs it, i3 reports axiom's sway-only lines as errors.": ""
   }
 }

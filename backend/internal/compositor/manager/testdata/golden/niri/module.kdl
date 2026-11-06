@@ -5,6 +5,9 @@
 //   include "/nonexistent/home/.local/state/axiom/niri.kdl"
 // Binds on keys your config binds aren't in it: yours win.
 
+window-rule {
+    open-maximized-to-edges false
+}
 binds {
     Super+Ctrl+S hotkey-overlay-title="Apps: Screenshot: region" repeat=false {
         spawn "/home/user/.local/bin/axiom" "ipc" "screenshot" "take" "region"

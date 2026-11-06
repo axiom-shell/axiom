@@ -154,7 +154,7 @@ if ok then axiom.setup() end
 ### Required settings and switches
 
 The Compositor section also holds switches for:
-- **required settings:** what axiom's surfaces need from the compositor (on Hyprland: `misc.allow_session_lock_restore`, a rule ignoring apps' `maximize` requests, and a `workspaces` animation for the grid's slides)
+- **required settings:** what axiom's surfaces need from the compositor (on Hyprland: `misc.allow_session_lock_restore`, a rule ignoring apps' `maximize` requests, and a `workspaces` animation for the grid's slides). On niri axiom always adds a window rule turning down apps' requests to open maximized to the screen's edges; a window rule of yours after it wins
 - **theme-colored window borders**, the window shape, gaps, shadows and opacity (**Window look**)
 - **blur behind axiom's surfaces** (Hyprland, niri, SwayFX)
 
