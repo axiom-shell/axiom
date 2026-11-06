@@ -338,6 +338,9 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
 
+Take next, ahead of everything else open in row 20 (the maintainer, 2026-11-06: "add the issue to the roadmap in the correct worktree/branch so that the roadmap autopilot (working right now), will see and implement it next"):
+- [On niri, apps saved as maximized open maximized to the screen's edges](issues.md#on-niri-apps-saved-as-maximized-open-maximized-to-the-screens-edges)
+
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
