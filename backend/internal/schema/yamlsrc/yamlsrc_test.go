@@ -342,7 +342,7 @@ func TestAxiomActions(t *testing.T) {
 			t.Errorf("%s's label = %v, want the Keybinds page's %v", name, got, want)
 		}
 	}
-	left := []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop"}
+	left := []string{"clearNotifications", "moveWindowStep", "moveWindowStepSilent", "moveWindowNth", "moveWindowNthSilent", "stopwatchReset", "timerReset", "pomodoroStop", "reboot", "poweroff"}
 	if got, want := len(enum), ipc.Len()-len(left)+1; got != want || enum[len(enum)-1] != "exec" || slices.ContainsFunc(left, func(s string) bool { return slices.Contains(enum, s) }) {
 		t.Errorf("enum = %v: want the %d ipcActions but %v, then exec", enum, want-1, left)
 	}

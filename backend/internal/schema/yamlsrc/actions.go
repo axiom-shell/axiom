@@ -7,12 +7,19 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// fillAxiomActions fills every `action` marked `x-axiomActions: {except:
-// [...]}` from the bind actions table (actions.JSON): its enum is the
-// table's ipcActions less those named, then exec, labelled as the Keybind
-// definition labels them; a sibling `argument` shows for the actions whose
-// IPC call takes {0} (and exec), a sibling `call` for those with calls.
-// The mark goes.
+// fillAxiomActions fills every string enum marked `x-axiomActions` from
+// the bind actions table (actions.JSON). The mark is an object of
+//   - except: [...] the ipcActions left out
+//   - noArgument: true for only the actions that take no argument (no {0}
+//     in their IPC call), and no exec
+//   - extra: [...] values of the field's own, after the table's, labelled
+//     by its own x-enumLabels
+//
+// Its enum is the table's ipcActions less those left out, then exec (but
+// with noArgument), then the extras; labelled as the Keybind definition
+// labels them. On an `action` property, a sibling `argument` shows for the
+// actions whose IPC call takes {0} (and exec), a sibling `call` for those
+// with calls. The mark goes.
 func (a *assembler) fillAxiomActions(root *jsonx.Object) {
 	var labels *jsonx.Object
 	if defs, ok := root.Value("definitions").(*jsonx.Object); ok {
@@ -29,6 +36,9 @@ func (a *assembler) fillAxiomActions(root *jsonx.Object) {
 					a.fillActions(props, action, labels, where)
 				}
 			}
+			if t.Has("x-axiomActions") {
+				a.fillActions(nil, t, labels, where)
+			}
 			for _, k := range t.Keys() {
 				walk(t.Value(k), where+"/"+k)
 			}
@@ -40,6 +50,9 @@ func (a *assembler) fillAxiomActions(root *jsonx.Object) {
 	}
 	walk(root, "")
 }
+
+// The keys an x-axiomActions mark may have
+var actionsMarkKeys = map[string]bool{"except": true, "noArgument": true, "extra": true}
 
 func (a *assembler) fillActions(props, action, labels *jsonx.Object, where string) {
 	fail := func(msg string) { a.errs = append(a.errs, &Error{File: where, Msg: "x-axiomActions: " + msg}) }
@@ -56,25 +69,50 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		fail("needs the table's ipcActions and calls and the Keybind definition's action labels")
 		return
 	}
-	var list *jsonx.Array
-	if spec != nil && spec.Len() == 1 {
-		list, _ = spec.Value("except").(*jsonx.Array)
-	}
-	except := map[string]bool{}
-	if list == nil {
-		fail("is {except: [<ipcActions left out>]}")
+	if spec == nil {
+		fail("is {except: [...], noArgument: true, extra: [...]}, each optional")
 		return
 	}
-	for _, v := range list.Items {
-		name, _ := v.(string)
+	for _, k := range spec.Keys() {
+		if !actionsMarkKeys[k] {
+			fail("has an unknown key " + k)
+		}
+	}
+	list := func(key string) []string {
+		var names []string
+		if !spec.Has(key) {
+			return nil
+		}
+		arr, ok := spec.Value(key).(*jsonx.Array)
+		if !ok {
+			fail(key + " isn't a list")
+			return nil
+		}
+		for _, v := range arr.Items {
+			name, _ := v.(string)
+			names = append(names, name)
+		}
+		return names
+	}
+	except := map[string]bool{}
+	for _, name := range list("except") {
 		if !ipc.Has(name) {
-			fail("except names " + jsonx.ToString(v) + ", which isn't one of the table's ipcActions")
+			fail("except names " + name + ", which isn't one of the table's ipcActions")
 		}
 		except[name] = true
 	}
+	noArgument := false
+	if spec.Has("noArgument") {
+		noArgument, _ = spec.Value("noArgument").(bool)
+	}
+	takesArgument := func(name string) bool {
+		row, ok := ipc.Value(name).(*jsonx.Array)
+		return name == "exec" || ok && strings.Contains(jsonx.ToString(row.Items[0]), "{0}")
+	}
+	ownLabels, _ := action.Value("x-enumLabels").(*jsonx.Object)
 	enum, names, argument, call := jsonx.Arr(), jsonx.NewObject(), jsonx.Arr(), jsonx.Arr()
 	for _, name := range append(ipc.Keys(), "exec") {
-		if except[name] {
+		if except[name] || noArgument && takesArgument(name) {
 			continue
 		}
 		label, ok := labels.Value(name).(string)
@@ -83,15 +121,30 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		}
 		enum.Append(name)
 		names.Set(name, label)
-		if row, ok := ipc.Value(name).(*jsonx.Array); name == "exec" || ok && strings.Contains(jsonx.ToString(row.Items[0]), "{0}") {
+		if takesArgument(name) {
 			argument.Append(name)
 		}
 		if calls.Has(name) {
 			call.Append(name)
 		}
 	}
+	for _, name := range list("extra") {
+		if names.Has(name) {
+			fail("extra names " + name + ", which the table already gives")
+			continue
+		}
+		label, ok := ownLabels.Value(name).(string)
+		if ownLabels == nil || !ok {
+			fail("the extra " + name + " has no label in the field's own x-enumLabels")
+		}
+		enum.Append(name)
+		names.Set(name, label)
+	}
 	action.Set("enum", enum)
 	action.Set("x-enumLabels", names)
+	if props == nil {
+		return
+	}
 	for key, shown := range map[string]*jsonx.Array{"argument": argument, "call": call} {
 		if field, ok := props.Value(key).(*jsonx.Object); ok {
 			field.Set("x-showIf", jsonx.Obj("action", shown))

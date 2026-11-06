@@ -30,15 +30,15 @@ properties:
         action:
           type: string
           title: Action
-          # A stray pointer fires a corner: none of the actions that lose state
-          # or move a window with no sign
-          x-axiomActions: {except: [clearNotifications, moveWindowStep, moveWindowStepSilent, moveWindowNth, moveWindowNthSilent, stopwatchReset, timerReset, pomodoroStop]}
+          # A stray pointer fires a corner: none of the actions that lose state,
+          # move a window with no sign or end the session
+          x-axiomActions: {except: [clearNotifications, moveWindowStep, moveWindowStepSilent, moveWindowNth, moveWindowNthSilent, stopwatchReset, timerReset, pomodoroStop, reboot, poweroff]}
           default: workspaceOverview
         argument:
           type: string
           title: Argument
           default: ''
-          description: 'Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a timer length (10m, 1:30), or a command.'
+          description: 'Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a theme (or random), a timer length (10m, 1:30), or a command.'
         call:
           type: string
           title: Call

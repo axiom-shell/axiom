@@ -174,7 +174,6 @@
     "Partly cloudy": "晴れ時々曇り",
     "Popout": "ポップアウト",
     "Popouts": "ポップアウト",
-    "Power off": "電源を切る",
     "Power saver": "省電力",
     "Primary monitor": "メインモニター",
     "Priority": "優先度",
@@ -3402,7 +3401,6 @@
     "Number each monitor's workspaces from 1.": "",
     "Auto shows names only when every tile fits its name.": "",
     "Open an edge menu while the button is hovered, as other widgets' popouts do.": "",
-    "Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
     "Held on the keyboard view.": "",
     "Workspace numbers.": "",
     "Replaced by the label command's output when set.": "",
@@ -3524,7 +3522,6 @@
     "A line between pinned and other running apps.": "",
     "A pinned menu stays open.": "",
     "Drawn between neighbouring widgets.": "",
-    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a command, or a compositor command in its own syntax.": "",
     "What monitors without the password field show.": "",
     "A line along the bar's inner or outer edge.": "",
     "Comma-separated; matched against a stream's binary or name.": "",
@@ -3933,7 +3930,6 @@
     "Empty follows the theme.": "",
     "No toasts on a monitor showing a fullscreen window. Critical ones still show.": "",
     "Desktop entry ids, in order: the apps every dock shows first.": "",
-    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a timer length (10m, 1:30), or a command.": "",
     "Portfolio": "",
     "Couldn't load market prices: {0}": "",
     "{0} · {1} today": "",
@@ -4063,6 +4059,10 @@
     "Pick what to share": "",
     "An app that asks to may share the same screen or window again later without the picker (restore tokens). Under sway, the wlroots portal decides this itself.": "",
     "The installed axiom has no such setting, or one of another shape": "",
-    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.": ""
+    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.": "",
+    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.": "",
+    "Any action a key can run that needs no argument, and a few tiles of their own. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
+    "Any action a key can run that needs no argument, or one of the button's own.": "",
+    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a theme (or random), a timer length (10m, 1:30), or a command.": ""
   }
 }

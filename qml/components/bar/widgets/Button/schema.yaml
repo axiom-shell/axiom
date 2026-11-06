@@ -29,24 +29,11 @@ settings:
     type: string
     title: Click action
     default: powerMenu
-    enum:
-      - powerMenu
-      - appLauncher
-      - overlay
-      - overlayPage
-      - workspaceOverlay
-      - edgeMenu
-      - lock
-      - command
-      - none
+    description: Any action a key can run that needs no argument, or one of the button's own.
+    x-axiomActions: {noArgument: true, extra: [overlayPage, edgeMenu, command, none]}
     x-enumLabels:
-      powerMenu: Power menu
-      appLauncher: App launcher
-      overlay: Overlay
       overlayPage: Overlay page
-      workspaceOverlay: Workspace overview
       edgeMenu: Edge menu
-      lock: Lock
       command: Run a command
       none: Nothing
   page:
@@ -86,7 +73,7 @@ settings:
     default: false
     description: Run the click action after hovering for the popout delay.
     x-showIf:
-      action: [powerMenu, appLauncher, overlay, overlayPage, workspaceOverlay, command]
+      action: [powerMenu, launcher, overlay, overlayPage, workspaceOverview, command]
   labelCommand:
     x-scope: commands
     type: string
