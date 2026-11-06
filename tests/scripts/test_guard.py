@@ -165,14 +165,14 @@ class Bash(LiveSession, unittest.TestCase):
                             f"env --chdir={main} git push", f"env -C{main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
                             f"systemd-run --user --working-directory={main} git push", f"git --git-dir={main}/.git push",
                             f"GIT_DIR={main}/.git git push", "GIT_DIR=~/main/.git git push", "GIT_DIR=$HOME/main/.git git push", f"git -C {main} push origin @", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
-                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && gh pr create --fill"):
+                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null"):
                 self.assertTrue(denied(command, feature), command)
             # git reads the branch from the repository, not the work tree
             for command in ("git push", "git switch main && git push origin roadmap/1-x", f"git --work-tree={main} push",
                             f"env -C {feature} git push -u origin HEAD"):
                 self.assertFalse(denied(command, feature), command)
             # A leading cd into a folder on a branch, from one on main, with a pipe, redirections and other commands
-            self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && gh pr create --fill", main))
+            self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null", main))
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
