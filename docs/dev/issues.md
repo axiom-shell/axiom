@@ -280,12 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
-### Unbounded lists still built in full
-- **Where:** `qml/components/content/parts/chat/ChatMessageList.qml`, `qml/components/content/parts/chat/ConversationList.qml`, `qml/components/content/Agenda/Agenda.qml`, `qml/components/content/Calculator/Calculator.qml` (history), `qml/components/content/Stopwatch/Stopwatch.qml` (laps), `qml/components/content/parts/TodoList.qml`
-- **What:** Each builds one delegate per item in a Repeater, with no limit, as `DeviceList` did before it became a ListView (52 Wi-Fi networks took 1.8 s). None showed as slow on the test machine, but they grow with use: a long chat or note becomes a slow module and popout. ListViews (or streamed sections) would build only what's in view.
-- **Size:** small
-- **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
-
 ### Nineteen windows stay mapped on one monitor
 - **Where:** `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/backdrop/ScreenBackdrop.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`
 - **What:** Each window has its own render thread and GL context (19 `QSGRenderThread`s on one niri monitor). 9 are the border (4 strips, 4 corners, the shadow); the backdrop, blur backing and border shadow are `held` only for niri's map-order stacking. About 25 more (overlay, launcher, a submenu per popout host, edge-popout bodies, power menu, overview, switcher, prompts) keep their context for the session once shown. Options: strips drawing their own corners, windows unloaded a while after they hide, one stacking anchor instead of three held windows ([layer arrangement](compositor/layer-arrangement.md)).
