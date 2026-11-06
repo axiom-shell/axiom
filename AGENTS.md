@@ -38,7 +38,8 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 - Install, update or remove the greeter for real, or restart greetd (it ends the session): `axiom greeter-install` only with a scratch `AXIOM_GREETER_ROOT`, the greeter only windowed on scratch folders (`docs/dev/features/greeter-runtime.md` › Testing).
 - Run, quit, restart or re-exec the live `axiom` daemon (`axiom run|quit|restart`, `axiom daemon stop|restart|reexec`), switch its dev mode, dev tree or options or copy into its config (`axiom dev on|off|rebuild|set|options`, `axiom dev config copy|pull`; a nested daemon by its `--socket` is fine), lock through it (`axiom lock`, `axiom ipc lockscreen …`), or pass `--takeover` against the live config: use a scratch instance (`XDG_RUNTIME_DIR=<scratch>`, `--socket`, `--config-dir`). A test lock screen's fallback is never `loginctl lock-session`.
 - Open a GitHub issue (`gh issue create`, or `gh api` posting one).
-- Force-push, delete a remote branch, push to `main`, or change its protection, rulesets, the repo's settings or permissions (`gh repo edit`, `gh api` writes): everything reaches main through a PR.
+- Run `gh` beyond guard.py's `GH_ALLOWED` (never `gh api`; releases are the maintainer's).
+- Force-push, delete a remote branch, or push to `main`: everything reaches main through a PR.
 - `git clean -x` / `-X`: it deletes the generated files and local state the ignore list keeps (`git clean -fd` is fine).
 
 ## Checks

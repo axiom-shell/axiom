@@ -77,7 +77,7 @@ class Bash(LiveSession, unittest.TestCase):
                  f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'inputMethod.push'}",
                  "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 Restart", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
-                 "axiom ipc lockscreen lock", "qs kill", "gh issue create -t x", "git push --force", "git push origin main",
+                 "axiom ipc lockscreen lock", "qs kill", "gh api repos/o/r", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
         forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
                  "nice -n 5 {}", "FOO=1 {}"]
@@ -103,42 +103,22 @@ class Bash(LiveSession, unittest.TestCase):
         self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/qml/greeter.qml"',
                     'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list")
 
-    def test_github_issues(self):
-        self.blocks("gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh api repos/a/b/issues -f title=x",
-                    "gh api -X POST /repos/a/b/issues --input body.json", "gh api --method=post repos/a/b/issues",
-                    "gh api graphql -f query='mutation { createIssue(input: {}) { issue { id } } }'")
-        self.allows("gh issue list", "gh issue view 16", "gh api repos/a/b/issues", "gh api repos/a/b/issues -X GET -f state=open",
-                    "gh label list", "gh pr create --fill")
-
-    def test_main_protection(self):
-        self.blocks("gh api -X DELETE repos/a/b/branches/main/protection",
-                    "gh api --method PUT /repos/{owner}/{repo}/branches/main/protection --input p.json",
-                    "gh api repos/a/b/branches/main/protection/required_status_checks -X PATCH -F strict=false",
-                    "gh api repos/a/b/branches/main/protection/enforce_admins -X DELETE",
-                    "gh api repos/a/b/branches/main/rename -f new_name=old",
-                    "gh api repos/a/b/rulesets -f name=x", "gh api -X DELETE repos/a/b/rulesets/42",
-                    "gh api --method=put orgs/a/rulesets/7 --input r.json",
-                    "gh api -X PATCH repos/a/b -f default_branch=dev", "gh api repos/a/b -F allow_merge_commit=true",
-                    "gh api -X PUT repos/a/b/collaborators/someone -f permission=admin",
-                    "gh api -X PUT orgs/a/teams/t/repos/a/b -f permission=admin",
-                    "gh api graphql -f query='mutation { deleteBranchProtectionRule(input: {}) { clientMutationId } }'",
-                    "gh api graphql -f query='mutation { updateRepositoryRuleset(input: {}) { ruleset { id } } }'",
-                    "gh api -X DELETE https://api.github.com/repos/a/b/branches/main/protection",
-                    "gh api -X PUT https://ghe.example/api/v3/orgs/a/teams/t/repos/a/b -f permission=admin",
-                    "gh api graphql -f query='mutation { updateTeamsRepository(input: {}) { clientMutationId } }'",
-                    "echo '{\"query\":\"mutation { updateRepository(input: {}) { clientMutationId } }\"}' | gh api https://api.github.com/graphql --input -",
-                    "gh repo edit --default-branch dev", "gh repo edit a/b --enable-merge-commit",
-                    "cd /tmp && gh api -X DELETE repos/a/b/branches/main/protection",
-                    "true; env GH_TOKEN=x gh repo edit --default-branch dev",
-                    "git status && gh api repos/a/b/rulesets/1 -X DELETE",
-                    "echo '{\"query\":\"mutation { updateRepository(input: {}) { clientMutationId } }\"}' | gh api graphql --input -",
-                    "gh api graphql -F query=@- <<'EOF'\nmutation { deleteBranchProtectionRule(input: {}) { clientMutationId } }\nEOF")
-        self.allows("gh api repos/a/b/branches/main/protection", "gh api -X GET repos/a/b/branches/main/protection",
-                    "gh api repos/a/b/rulesets", "gh api repos/a/b", "gh api https://api.github.com/repos/a/b/branches/main/protection", "gh api --method HEAD repos/a/b/collaborators/x",
-                    "gh api repos/a/b/branches/main/protection -X GET -f per_page=100",
-                    "gh api graphql -f query='{ repository(owner: \"a\", name: \"b\") { branchProtectionRules(first: 5) { nodes { pattern } } } }'",
-                    "gh ruleset list", "gh ruleset view 42", "gh rs check main", "gh repo view", "gh pr create --fill",
-                    "gh repo edit --help", "gh help repo edit")
+    def test_gh_allowlist(self):
+        self.blocks("gh api repos/o/r", "gh api -X GET repos/o/r/issues", "gh api graphql -f query='{ viewer { login } }'",
+                    "gh repo edit --default-branch dev", "gh release create v1", "gh workflow run ci.yml",
+                    "gh secret set X",
+                    "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12",
+                    "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
+                    "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -")
+        self.allows("gh pr create --fill --label roadmap", "gh pr view 3 --json comments", "gh pr list --label roadmap",
+                    "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
+                    "gh pr comment 3 -b ok", "gh pr close 3", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
+                    "gh run cancel 9", "gh issue list", "gh issue view 16", "gh issue comment 16 -b x", "gh issue close 16",
+                    "gh issue edit 16 --add-label x", "gh repo view", "gh release list", "gh label list", "gh rs check main",
+                    "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
+                    "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
+                    "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list",
+                    "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_git_push_and_clean(self):
         self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",

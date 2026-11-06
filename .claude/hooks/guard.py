@@ -383,36 +383,37 @@ def check_axiom(env, args, cwd):
             deny("Never, while testing", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.")
 
 
-def gh_api_method(args):
-    """The method `gh api` sends: -X/--method, else POST when given a field
-    (-f/-F/--input), else GET"""
-    method = next((m.group(1) for m in (re.fullmatch(r"(?:-X|--method)=?(\w+)", a) for a in args) if m), None)
-    method = method or next((b for a, b in zip(args, args[1:]) if a in {"-X", "--method"}), None)
-    if method:
-        return method.upper()
-    return "POST" if any(re.match(r"(-[fF]|--field|--raw-field|--input)", a) for a in args) else "GET"
+# The gh commands an agent may run (maintainer, 2026-11-06: "allow only
+# issue management, re running actions, and merging prs ... Full read scope",
+# "and gh api"): every read, and these writes. Anything else is refused,
+# `gh api` in every form. A group named alone allows all its subcommands.
+GH_ALLOWED = {
+    # Reads (not `browse`, which opens a browser)
+    "pr list", "pr view", "pr diff", "pr checks", "pr status", "run list", "run view", "run watch", "run download",
+    "issue list", "issue view", "issue status", "repo list", "repo view", "repo read-dir", "repo read-file",
+    "repo gitignore", "repo license", "release list", "release view", "release download", "release verify",
+    "release verify-asset", "workflow list", "workflow view", "label list", "ruleset list", "ruleset view",
+    "ruleset check", "search", "status", "auth status", "cache list", "variable list", "variable get", "secret list",
+    "gist list", "gist view", "project list", "project view", "project field-list", "project item-list", "org list",
+    "discussion list", "discussion view", "agent-task list", "agent-task view", "codespace list", "codespace view",
+    "attestation verify", "attestation trusted-root", "extension list", "extension search", "alias list",
+    "config get", "config list", "gpg-key list", "ssh-key list", "skill list", "skill search", "skill preview",
+    # Issue management (`issue create` only when the maintainer asks for an issue: AGENTS.md › Never)
+    "issue create", "issue edit", "issue comment", "issue close", "issue reopen", "issue lock", "issue unlock",
+    # Re-running actions
+    "run rerun", "run cancel",
+    # PRs: merging, and what the roadmap autopilot opens and labels
+    "pr merge", "pr create", "pr comment", "pr edit", "pr close",
+}
 
 
-# What guards main: branch protection, rulesets, the repository's own
-# settings (default branch, merges), a branch rename, who may write; as a
-# path or a full URL (gh sends one containing :// as is)
-GH_PROTECTION = re.compile(r"(https?://[^/]+(/api/v3)?)?/?(repos/[^/]+/[^/]+(/branches/[^/]+/(protection|rename)(/.*)?|/rulesets(/.*)?|/collaborators(/.*)?)?"
-                           r"|orgs/[^/]+/(rulesets(/.*)?|teams/[^/]+/repos(/.*)?))/?(\?.*)?")
-GH_PROTECTION_MUTATIONS = re.compile(r"\b(updateRepository|updateTeamsRepository|(create|update|delete)(BranchProtectionRule|RepositoryRuleset))\b")
-
-
-def gh_api_opens_issue(args):
-    """`gh api` creating an issue: GraphQL's createIssue, or a POST to a repo's issues"""
-    if any("createIssue" in a for a in args):
-        return True
-    return gh_api_method(args) == "POST" and any(re.fullmatch(r"/?repos/[^/]+/[^/]+/issues/?", a) for a in args)
-
-
-def gh_api_weakens_main(args):
-    """`gh api` writing what guards main (GH_PROTECTION) or a GraphQL mutation of it"""
-    if any(GH_PROTECTION_MUTATIONS.search(a) for a in args):
-        return True
-    return gh_api_method(args) not in {"GET", "HEAD"} and any(GH_PROTECTION.fullmatch(a) for a in args)
+def gh_allowed(args):
+    """Help, or a command on GH_ALLOWED; -R/--repo (anywhere) doesn't hide it"""
+    args = args[:args.index("--")] if "--" in args else args
+    words = [a for k, a in enumerate(args) if not a.startswith("-") and (k == 0 or args[k - 1] not in {"-R", "--repo"})]
+    words[:1] = [{"rs": "ruleset"}.get(w, w) for w in words[:1]]
+    return (not words or words[0] == "help" or {"-h", "--help"} & set(args)
+            or words[0] in GH_ALLOWED or " ".join(words[:2]) in GH_ALLOWED)
 
 
 # ----------------------------------------------------------------- rules
@@ -509,15 +510,9 @@ def check_argv(env, argv, cwd, switched):
     if name == "axiom":
         check_axiom(env, args, cwd)
 
-    # Opening a GitHub issue: problems go in docs/dev/issues.md
-    opens = any(args[i:i + 2] == ["issue", "create"] for i in range(len(args)))
-    if name == "gh" and (opens or args[:1] == ["api"] and gh_api_opens_issue(args[1:])):
-        deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
-
-    # Weakening main's protection: its rules, rulesets, the repository's settings, who may write
-    edits = args[:2] == ["repo", "edit"] and not {"-h", "--help"} & set(args)
-    if name == "gh" and (edits or args[:1] == ["api"] and gh_api_weakens_main(args[1:])):
-        deny("Never, while testing", "don't change main's protection, rulesets, the repository's settings or permissions through gh; ask the user.")
+    # gh beyond its allowlist
+    if name == "gh" and not gh_allowed(args):
+        deny("Never, while testing", f"`gh {' '.join(args[:2])}` isn't on guard.py's GH_ALLOWED (no `gh api`); ask the user.")
 
     # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":
@@ -858,9 +853,6 @@ def check(call):
             cwd, commands = str(target), commands[1:]
         switched = False
         for env, argv in commands:
-            # A GraphQL query piped in (`--input -`, a heredoc) is in the command's text, not its words
-            if Path(argv[0]).name == "gh" and any(a == "graphql" or a.endswith("/graphql") for a in argv):
-                argv = argv + [command]
             check_argv(env, argv, cwd, switched)
             if Path(argv[0]).name == "git":
                 i, _, _ = git_globals(argv[1:], cwd, env)
