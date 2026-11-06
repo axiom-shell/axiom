@@ -246,8 +246,8 @@ QtObject {
   // monitor profiles name (by their rules' `output`; the primary first,
   // matched by connector or by the rule's `label` while unplugged or its
   // description is unknown), then the connected ones none names (keyed by
-  // MonitorLayout.outputId), each part in orderMonitors' order, so a block
-  // never moves with what's connected.
+  // MonitorLayout.outputId), each part in orderMonitors' order, so a named
+  // monitor's block never moves with what's connected.
   // outputs: [{ name, description }]; profiles: [{ outputs: [{ output,
   // label }] }] (MonitorsConfig.profiles)
   function blockBases(outputs, primaryName, size, profiles) {

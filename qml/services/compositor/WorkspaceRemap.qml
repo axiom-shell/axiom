@@ -70,8 +70,10 @@ QtObject {
       root._timer.restart();
     }
 
-    // A block order change (a profile naming a new monitor, a new primary)
-    // moves a block an output had; an output coming or going moves none
+    // A block order change (a profile naming a new monitor, a new primary,
+    // an unnamed monitor coming or going before another) moves a block a
+    // connected output had: remap. An output that only comes or goes:
+    // record the bases
     function on_BasesChanged() {
       const applied = root._applied;
       if (!applied || root._timer.running)
