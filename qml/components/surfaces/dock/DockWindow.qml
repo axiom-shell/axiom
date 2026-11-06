@@ -234,7 +234,8 @@ Scope {
   }
   // Whether the pointer has reached the box since it latched or last came
   // in from the trigger: until it has, a held dock's gap to its edge takes
-  // input (inputArea)
+  // input (inputArea). A reveal not by the pointer (a bind, IPC) has no way
+  // in from the edge to keep, so it starts as reached
   property bool _reachedBox: false
   onLatchedChanged: {
     if (!root.latched)
@@ -321,6 +322,8 @@ Scope {
     if (root.away)
       return;
     root._touched = !!byPointer || root.engaged;
+    if (!byPointer && !root.latched)
+      root._reachedBox = true;
     root.latched = true;
     // Only restart a countdown that's due: restart() starts the timer even
     // while its binding says not to (the pointer on the dock or trigger)
