@@ -59,8 +59,11 @@ axiom ipc <target> <function> [args]
 | `idleInhibit` | `enable`, `disable`, `toggle`, `timer <duration>`, `status` |
 | `nightLight` | `enable`, `disable`, `toggle`, `status` |
 | `darkMode` | `enable`, `disable`, `toggle` (the theme's dark or light variant) |
+| `theme` | `set <theme\|random>` (a theme by name, either variant of it, or another one by chance) |
 | `wifi` | `enable`, `disable`, `toggle` |
 | `bluetooth` | `enable`, `disable`, `toggle` |
+| `airplane` | `enable`, `disable`, `toggle` (Wi-Fi and Bluetooth off, then back as they were) |
+| `powerSaver` | `enable`, `disable`, `toggle` (power-profiles-daemon's power saver, else balanced) |
 | `vpn` | `toggle` (the VPN last used, as the Vpn widget's click) |
 | `inputSources` | `next`, `prev` (the next or previous input source: the **Next / Previous input source** keybind actions), `set <id>` (an `Input.keyboard.sources` id), `list` (the sources as JSON, the current one marked) |
 | `drives` | `list` (the removable drives as JSON), `mount <id>` (a drive's volumes, or one volume), `eject <id>`, `ejectAll` |
@@ -72,6 +75,7 @@ axiom ipc <target> <function> [args]
 | `monitors` | `open`, `keep`, `revert`, `identify` |
 | `onboarding` | `open`, `close`, `goTo <step>`, `reset` |
 | `lockscreen` | `lock` |
+| `session` | `suspend`, `hibernate`, `logout`, `reboot`, `poweroff` (at once, with no second click) |
 | `greeter` | `open` (its settings), `preview` (the login screen's layout, on screen) |
 | `notifications` | `clear` (every notification, no undo), `clearQuiet` (the Quiet section's), `toggleQuiet` (fold the Quiet section open or shut), `toggleDnd` |
 | `dnd` | `enable`, `disable`, `toggle`, `status` (do not disturb) |
@@ -155,13 +159,13 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | --- | --- |
 | **Session** | `/lock` `/suspend` `/hibernate` `/logout` `/reboot` `/poweroff` `/power` |
 | **Pages** | `/overlay [page]` `/settings` `/themes` `/bar` `/keybinds` `/layouts` `/menus` `/monitors` `/widgets` `/workspaces` `/calendar` |
-| **Look** | `/theme <name>` `/dark` `/light` `/mode` `/wallpaper <file\|Random>` `/nextwallpaper` `/transition <name>` `/generate` `/nightlight` |
+| **Look** | `/theme <name>` `/dark` `/light` `/mode` `/wallpaper <file\|Random>` `/nextwallpaper` `/transition <name>` `/generate` `/nightlight [on\|off]` |
 | **Audio and media** | `/volume <n\|+n\|-n>` `/mute` `/mic` `/output <device>` `/input <device>` `/play` `/next` `/prev` |
-| **Connectivity** | `/wifi [on\|off]` `/bluetooth [on\|off]` `/connect <device>` `/vpn [name]` `/eject [drive]` |
+| **Connectivity** | `/wifi [on\|off]` `/bluetooth [on\|off]` `/airplane [on\|off]` `/connect <device>` `/vpn [name]` `/eject [drive]` |
 | **Calendar and notes** | `/event <when> <title>` `/notes [text]` `/todo [text]` `/pomodoro [start\|pause\|skip\|stop]` `/timer <duration> [label]` `/stopwatch [start\|pause\|lap\|reset]` |
 | **Searches** | `/calc` `/run` `/web` `/clipboard` `/emoji` `/chat [conversation]` |
 | **Shell** | `/config <setting> <value>` `/config save <name>` `/config restore <name>` `/config example <name>` `/update` `/welcome` `/reload` `/help` |
-| **Other** | `/dnd [on\|off]` `/clear` `/caffeine [on\|off\|30m]` `/dev [on\|off\|rebuild\|set <path>]` `/ws <n>` `/screenshot <region\|window\|screen>` `/record` |
+| **Other** | `/dnd [on\|off]` `/clear` `/caffeine [on\|off\|30m]` `/powersaver [on\|off]` `/dev [on\|off\|rebuild\|set <path>]` `/ws <n>` `/screenshot <region\|window\|screen>` `/record` |
 
 Every provider can be switched off under **Settings → Launcher**. The same page sets:
 - the launcher's size, hidden apps, terminal and search engine

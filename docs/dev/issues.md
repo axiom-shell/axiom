@@ -102,12 +102,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-02, while running the roadmap autopilot (the maintainer's request)
 
-### Toggles are switched in several places, and most have no IPC
-- **Where:** `qml/components/content/QuickActions/QuickActions.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml` (toggle), `qml/services/ui/LauncherCommands.qml`
-- **What:** Wi-Fi, Bluetooth, caffeine, do not disturb, night light, power saver and dark mode are each flipped by their own switch in QuickActions, the OSD's status icons and the launcher commands, all calling the same service functions. Wi-Fi, Bluetooth, airplane mode, dark mode, the power profile and the keyboard layout have no `IpcTarget`, so no keybind or hot corner can reach them (the bindable actions cover about 32 of some 140 IPC functions). One catalogue of actions (id, label, icon, run, state) could serve all of them and the keybinds; the maintainer plans it as its own change.
-- **Size:** needs a plan
-- **Found:** 2026-11-01, while making the OSD's status icons clickable
-
 ### The lock screen has no settings for allowing or viewing notifications
 - **Where:** `qml/config/schema/sections/Lockscreen.yaml`, `docs/dev/features/lockscreen.md`
 - **What:** Asked by the maintainer (2026-10-31) beside the x-lockActions decision: "there should be settings for allowing/viewing notifications as well" on the lock screen. Not designed yet.
