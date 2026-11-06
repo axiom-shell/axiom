@@ -140,6 +140,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "git push origin main", "git push origin master", "git push origin x:main", "git push origin x:refs/heads/main",
                     "git push origin x:heads/main", "git push origin refs/heads/main", "git push origin v1.0", "git push origin x:refs/tags/y",
                     "git -C . push --force origin x", "git -C /tmp push", "env -C /tmp git push",
+                    'git push -u origin "$(git branch --show-current)"', 'b=main; git push origin "$b"', "git push origin x@{u}",
                     "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
                     # a switch, rebase or rename onto main, then a bare push
                     "git switch main && git push", "git rebase roadmap/1-x main && git push", "git branch -M main && git push",

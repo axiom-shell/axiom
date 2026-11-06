@@ -424,7 +424,8 @@ PUSH_OPTS = {"-u", "--set-upstream", "-q", "--quiet", "-n", "--dry-run"}
 
 def push_allowed(args):
     words = [a for a in args if a not in PUSH_OPTS]
-    if len(words) != 2 or words[0] != "origin" or words[1].startswith(("-", "+", ":", "@")) or "HEAD" in words[1]:
+    # Spelled out: no `$br` / `$(git branch --show-current)`, which may be main
+    if len(words) != 2 or words[0] != "origin" or not re.fullmatch(r"\w[\w./-]*(:\w[\w./-]*)?", words[1]) or "HEAD" in words[1]:
         return False
     # git completes `heads/main` to refs/heads/main; a `v*` tag is a release (.github/workflows/release.yml)
     dest = words[1].split(":")[-1].removeprefix("refs/").removeprefix("heads/")
