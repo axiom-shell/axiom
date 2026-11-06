@@ -76,7 +76,7 @@ func (w *swayWriter) files(in Inputs) files {
 	}
 	includeNote := "Adds the lines at the top, so your own settings after them win over axiom's."
 	// An i3 migrant's sway may run i3's config, which i3 may still run too
-	if strings.Contains(main, "/i3/") {
+	if strings.Contains(main, "/i3/") || strings.Contains(main, "/.i3/") {
 		includeNote = "Adds the lines at the top, so your own settings after them win over axiom's. This file is in i3's folder: if i3 still runs it, i3 reports axiom's sway-only lines as errors."
 	}
 	return files{
