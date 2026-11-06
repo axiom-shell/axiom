@@ -168,14 +168,14 @@ class Bash(LiveSession, unittest.TestCase):
                             f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null",
                             # a rebase onto main checks it out; a rename to main renames the branch checked out
                             "git rebase roadmap/1-x main && git push", "git rebase --onto origin/main HEAD~1 main && git push origin HEAD",
-                            f"git -C {feature} rebase -X ours roadmap/1-x main && git push", f"cd {feature} && git rebase roadmap/1-x main && git push",
-                            "git branch -M main && git push", "git branch -m roadmap/1-x main && git push origin @",
+                            f"git -C {feature} rebase -X ours roadmap/1-x main && git push", f"cd {feature} && git rebase roadmap/1-x main && git push", "git rebase --root main && git push",
+                            "git branch -M main && git push", "git branch -fM main && git push", "git branch -m roadmap/1-x main && git push origin @",
                             f"cd {feature} && git branch --move --force main && git push", f"git -C {feature} branch -M main && git -C {feature} push"):
                 self.assertTrue(denied(command, feature), command)
             # git reads the branch from the repository, not the work tree
             for command in ("git push", "git switch main && git push origin roadmap/1-x", f"git --work-tree={main} push",
                             f"env -C {feature} git push -u origin HEAD", "git rebase main && git push", "git rebase --onto main HEAD~1 && git push",
-                            "git rebase main roadmap/1-x && git push", "git branch -M roadmap/2-y && git push", "git branch -c main && git push"):
+                            "git rebase main roadmap/1-x && git push", "git rebase --root roadmap/1-x && git push", "git branch -M roadmap/2-y && git push", "git branch -c main && git push"):
                 self.assertFalse(denied(command, feature), command)
             # A leading cd into a folder on a branch, from one on main, with a pipe, redirections and other commands
             self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null", main))

@@ -460,12 +460,13 @@ REBASE_VALUE_OPTS = {"--onto", "-s", "--strategy", "-X", "--strategy-option", "-
 
 
 def ends_on_main(args):
-    """git's `rebase <upstream> main` checks main out; `branch -m/-M [<old>] main`
-    renames the branch checked out (or another: judged as if it were)"""
+    """git's `rebase <upstream> main` (`--root main`) checks main out; `branch -m/-M
+    [<old>] main` renames the branch checked out (or another: judged as if it were)"""
     words = [a for k, a in enumerate(args) if not a.startswith("-") and args[k - 1] not in REBASE_VALUE_OPTS]
     if words[:1] == ["rebase"]:
-        return len(words) == 3 and words[2] in PROTECTED_BRANCHES
-    return words[:1] == ["branch"] and bool({"-m", "-M", "--move"} & set(args)) and words[-1] in PROTECTED_BRANCHES
+        return len(words) == (2 if "--root" in args else 3) and words[-1] in PROTECTED_BRANCHES
+    moves = any(a == "--move" or re.fullmatch(r"-[a-zA-Z]*[mM][a-zA-Z]*", a) for a in args)
+    return words[:1] == ["branch"] and moves and words[-1] in PROTECTED_BRANCHES
 
 
 def check_argv(env, argv, cwd, switched):

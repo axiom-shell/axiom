@@ -248,7 +248,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
 
@@ -383,20 +382,14 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
-
 Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh)
-
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [A detached dock and toasts don't slide in from under the bars](issues.md#a-detached-dock-and-toasts-dont-slide-in-from-under-the-bars)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
-
-
-
-
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
