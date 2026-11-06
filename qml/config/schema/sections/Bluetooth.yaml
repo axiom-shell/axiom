@@ -3,7 +3,7 @@
 type: object
 x-category: Modules
 title: Bluetooth
-description: How axiom pairs Bluetooth devices.
+description: How axiom pairs Bluetooth devices, and when it warns of a device's low battery.
 additionalProperties: false
 properties:
   pairingAgent:
@@ -11,3 +11,20 @@ properties:
     title: Answer pairing requests
     default: true
     description: Ask for a device's PIN or passkey, or to confirm its code, in axiom's prompt. Turn off to leave pairing to another agent, such as blueman.
+  lowBattery:
+    type: integer
+    title: Device battery low at
+    x-unit: '%'
+    default: 20
+    minimum: 0
+    maximum: 100
+    description: Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification.
+    x-link: {setting: OSD}
+  criticalBattery:
+    type: integer
+    title: Device battery critical at
+    x-unit: '%'
+    default: 5
+    minimum: 0
+    maximum: 100
+    description: Say it again when the battery drops to this level.

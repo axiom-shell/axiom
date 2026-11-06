@@ -4068,7 +4068,6 @@
     "None chosen. Add some from below.": "",
     "In the order shown.": "",
     "Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
-    "How axiom pairs Bluetooth devices.": "",
     "Ask for a device's PIN or passkey, or to confirm its code, in axiom's prompt. Turn off to leave pairing to another agent, such as blueman.": "",
     "Answer pairing requests": "",
     "Pair": "",
@@ -4085,6 +4084,11 @@
     "Allow {0}?": "",
     "{0} wants to use a service of this computer.": "",
     "{0} wants to pair with this computer.": "",
-    "Join {0}": ""
+    "Join {0}": "",
+    "How axiom pairs Bluetooth devices, and when it warns of a device's low battery.": "",
+    "Device battery low at": "",
+    "Say it again when the battery drops to this level.": "",
+    "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification.": "",
+    "Device battery critical at": ""
   }
 }

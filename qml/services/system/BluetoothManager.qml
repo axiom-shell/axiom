@@ -3,12 +3,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 import qs.services.core
 import qs.services.ui
 
 // Bluetooth state and actions over the default adapter, from axiom's
 // `bluetooth` part (BlueZ on the system bus, internal/bluez:
-// `bluetooth.state` on every change). Devices are plain objects
+// `bluetooth.state` on every change, `bluetooth.event` as devices connect
+// or disconnect), and a device's battery dropping to low or critical
+// (BluetoothConfig's levels), said on the OSD or as a notification. Devices are plain objects
 // ({ address, name, deviceName, icon, paired, bonded, trusted, blocked,
 // connected, state, pairing, battery, batteryAvailable }), made anew on
 // every push: compare them by address. The daemon is BlueZ's pairing
@@ -142,6 +145,58 @@ QtObject {
     if (icon.includes("computer"))
       return "laptop";
     return "bluetooth";
+  }
+
+  // The last thing said of devices, for the OSD's `bluetooth` card:
+  // { kind: "connected" | "disconnected" (bluetooth.event, devices joined)
+  // | "low" | "critical" (a battery drop, one device, set only when the
+  // OSD says it: _sayLevel), devices: [{ address, name, icon (BlueZ's),
+  // glyph (deviceIcon's), battery (0-100, -1 none) }], serial }, else null
+  property var lastEvent: null
+  property int _eventSerial: 0
+
+  function _setEvent(kind, devices) {
+    root._eventSerial += 1;
+    root.lastEvent = {
+      "kind": kind,
+      "devices": devices.map(d => ({
+            "address": d.address,
+            "name": root.deviceLabel(d),
+            "icon": d.icon ?? "",
+            "glyph": root.deviceIcon(d),
+            "battery": d.battery
+          })),
+      "serial": root._eventSerial
+    };
+  }
+
+  // Each connected device's battery level as last judged
+  // (DeviceBatteries.step's), null until a state is taken as it stands:
+  // at the start, after a hello, while BlueZ is gone
+  property var _levels: null
+
+  function _checkLevels(devices) {
+    const step = DeviceBatteries.step(root._levels, devices, BluetoothConfig.lowBattery, BluetoothConfig.criticalBattery);
+    root._levels = step.last;
+    for (const drop of step.drops) {
+      const d = devices.find(x => x.address === drop.address);
+      if (d)
+        root._sayLevel(d, drop.level);
+    }
+  }
+
+  // A device's battery dropping to `level` (`device` the daemon's), where
+  // the OSD's `bluetooth` status puts it (NotificationManager.announce):
+  // its card (lastEvent), else a notification. One entry per device:
+  // critical replaces low
+  function _sayLevel(device, level) {
+    const body = level === "critical" ? I18n.tr("Battery critically low: {0}%", device.battery) : I18n.tr("Battery low: {0}%", device.battery);
+    const route = NotificationManager.announce("bluetooth", true, root.deviceLabel(device), body, {
+      "icon": device.icon || "bluetooth",
+      "key": "bluetooth-battery:" + device.address
+    });
+    if (route === "osd")
+      root._setEvent(level, [device]);
   }
 
   // The daemon's devices, in its order (the order they turned up),
@@ -281,6 +336,10 @@ QtObject {
   }
 
   function _show(state) {
+    if (state?.available)
+      root._checkLevels(state.devices ?? []);
+    else
+      root._levels = null;
     root.adapter = state?.adapter ?? null;
     root._devices = (state?.devices ?? []).map(d => Object.assign({}, d, {
         "battery": d.battery >= 0 ? d.battery / 100 : 0,
@@ -317,6 +376,8 @@ QtObject {
     enabled: !root._inert
     function onGreeted() {
       root._dropAgentPrompts();
+      // A new daemon's state is taken as it stands
+      root._levels = null;
       root._fetch();
       // A daemon started again has no scan running
       if (root._wantsDiscovery)
@@ -330,6 +391,7 @@ QtObject {
     BackendManager.listen("bluetooth.state", state => root._show(state));
     BackendManager.listen("bluetooth.agentRequest", request => root._agentRequest(request));
     BackendManager.listen("bluetooth.agentDone", done => root._agentDone(done.id));
+    BackendManager.listen("bluetooth.event", event => root._setEvent(event.kind, event.devices));
     // Made after the hello (a QML reload): no greeted to wait for
     if (BackendManager.ready)
       root._fetch();
