@@ -509,12 +509,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
 
-### A custom clock format without spaces spills past a vertical bar
-- **Where:** `qml/components/bar/widgets/Time/Time.qml:108` (`_split`)
-- **What:** On a vertical bar the clock is `thickness` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
 ### SystemStats copies ValueStyleWidget's pill colour and text-by-state rule
 - **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:149` (`backgroundLevelColor`, `_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:43` (`backgroundLevelColor`, `_textByState`)
 - **What:** What's left of the style-fallbacks entry once `ValueGraphic.resolvedStyle` took the style rules: `Qt.alpha(colors.icon, 0.35)` and `appearance.colorText && colors.fill.a < 1` are still written in both widgets, so a change to the pill's colour or to when the text takes the state's colour would miss SystemStats. A ValueGraphic member doesn't reach them: SystemStats' root draws the pill and colours the text, and its graphics are one per segment, inside the Repeater. Fix: one shared place both roots can call (a `BarsConfig` or `BarWidgetStyle` function taking the widget's `colors` and `appearance`).

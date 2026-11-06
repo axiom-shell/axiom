@@ -103,9 +103,10 @@ BarWidget {
     };
   }
 
-  // A custom format's output, one word (or colon-separated field) per line
+  // A custom format's output, one field per line (split on spaces and the
+  // separators : . - / ,)
   function _split(text) {
-    return text.split(/[\s:]+/).filter(part => part !== "").map(part => _line(part));
+    return text.split(/[\s:.\-\/,]+/).filter(part => part !== "").map(part => _line(part));
   }
 
   component ClockText: Text {
