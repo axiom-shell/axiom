@@ -30,7 +30,9 @@ Item {
   property string minimumText: ""
   // What they're measured by: the longer of the value and its minimum,
   // digits as zeros
-  readonly property string _measuredText: (root.minimumText.length > root.text.length ? root.minimumText : root.text).replace(/[0-9]/g, "0")
+  // The text as it reads (styled text's tags left out), to measure
+  readonly property string _plainText: root.textFormat === Text.PlainText ? root.text : root.text.replace(/<[^>]*>/g, "")
+  readonly property string _measuredText: (root.minimumText.length > root._plainText.length ? root.minimumText : root._plainText).replace(/[0-9]/g, "0")
   property int segmentCount: 5
   // The graphic's length along the bar; 0 picks one
   property real preferredLength: 0

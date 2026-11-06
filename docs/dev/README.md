@@ -211,6 +211,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [input-sources](features/input-sources.md): keyboard layouts and input method engines as one list (fcitx5, ibus): the widget and popout, the module, the OSD, switching, what the framework is given.
 - [drives](features/drives.md): removable drives through udisks2: the plug-in notification or mount, open, unlock, eject.
 - [tailscale](features/tailscale.md): the `tailscale` topic, Connect / Disconnect, the widget, popout and module.
+- [markets](features/markets.md): stock and crypto prices (the `markets` topic: Yahoo Finance and CoinGecko), the watchlist, holdings and alerts, the widget, popout and module.
 - [idle](features/idle.md): hypridle and idle inhibit.
 - [lock-keys](features/lock-keys.md): Caps Lock / Num Lock / Scroll Lock from the keyboard LEDs (the `lockKeys` topic), the password fields' warning, the LockKeys widget.
 - [polkit](features/polkit.md): the polkit agent.

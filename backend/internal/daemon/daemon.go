@@ -34,6 +34,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/lockscreen"
+	"github.com/axiom-shell/axiom/backend/internal/markets"
 	"github.com/axiom-shell/axiom/backend/internal/nightlight"
 	"github.com/axiom-shell/axiom/backend/internal/nmnet"
 	"github.com/axiom-shell/axiom/backend/internal/nmvpn"
@@ -185,6 +186,9 @@ type Daemon struct {
 	topics *topics.Hub
 	// sysmon is the `system` topic and the graphs' history
 	sysmon *sysmon.Monitor
+	// markets is the `markets` topic and its search and history
+	// (marketsService)
+	markets *markets.Markets
 	// The commands the shell watches (exec.watch)
 	watches *command.Watches
 	// The files the shell watches (file.watch)

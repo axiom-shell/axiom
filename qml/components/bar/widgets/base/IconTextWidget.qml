@@ -170,11 +170,12 @@ BaseWidget {
     text: "0"
   }
 
-  // The label, and its minimum, with their digits as zeros
+  // The label as it reads (styled text's tags left out), and its minimum,
+  // with their digits as zeros
   TextMetrics {
     id: steadyMetrics
     font: textLabel.font
-    text: root.displayText.replace(/[0-9]/g, "0")
+    text: (root.textFormat === Text.PlainText ? root.displayText : root.displayText.replace(/<[^>]*>/g, "")).replace(/[0-9]/g, "0")
   }
   TextMetrics {
     id: minimumMetrics
