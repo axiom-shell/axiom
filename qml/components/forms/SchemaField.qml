@@ -254,6 +254,8 @@ Loader {
       return switchField;
     case "integer":
       return fieldSchema["x-auto"] ? autoSpinField : spinField;
+    case "number":
+      return decimalField;
     default:
       // A long list (`x-control: "search"`) is typed into to filter it
       if (root.options && fieldSchema["x-control"] === "search")
@@ -504,6 +506,26 @@ Loader {
       currentConfigValue: root.current ?? ""
       onValueTyped: value => root.type(value)
       onValueEdited: value => root.commitTyped(value)
+    }
+  }
+
+  // A decimal (`type: number`, a holding of 0.5 coins): typed, committed as
+  // a number within the schema's bounds (empty: the minimum)
+  function _decimal(text) {
+    const value = parseFloat(text);
+    const lowest = fieldSchema.minimum ?? -Infinity;
+    return isNaN(value) ? (fieldSchema.minimum ?? 0) : Math.min(fieldSchema.maximum ?? Infinity, Math.max(lowest, value));
+  }
+  Component {
+    id: decimalField
+    SchemaTextField {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      pattern: "^-?[0-9]*[.]?[0-9]*$"
+      currentConfigValue: root.current === undefined || root.current === null ? "" : String(root.current)
+      onValueTyped: value => root.type(root._decimal(value))
+      onValueEdited: value => root.commitTyped(root._decimal(value))
     }
   }
 
