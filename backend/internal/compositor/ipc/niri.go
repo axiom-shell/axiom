@@ -91,6 +91,26 @@ func (n *Niri) Outputs(ctx context.Context) ([]render.Output, error) {
 	return out, nil
 }
 
+// NiriWindow is one of niri's windows (the Windows request).
+type NiriWindow struct {
+	ID    uint64 `json:"id"`
+	Title string `json:"title"`
+	AppID string `json:"app_id"`
+}
+
+// Windows lists niri's windows.
+func (n *Niri) Windows(ctx context.Context) ([]NiriWindow, error) {
+	ok, err := n.Request(ctx, "Windows")
+	if err != nil {
+		return nil, err
+	}
+	var reply struct{ Windows []NiriWindow }
+	if err := json.Unmarshal(ok, &reply); err != nil {
+		return nil, err
+	}
+	return reply.Windows, nil
+}
+
 // Version is niri's version as people read it ("niri 26.04 (abc1234)").
 func (n *Niri) Version(ctx context.Context) (string, error) {
 	ok, err := n.Request(ctx, "Version")

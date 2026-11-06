@@ -22,6 +22,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/nmvpn"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
+	"github.com/axiom-shell/axiom/backend/internal/screenshare"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
 	"github.com/axiom-shell/axiom/backend/internal/timedate"
@@ -42,6 +43,8 @@ const (
 	topicVPN        = "vpn"       // vpn.state, vpn.secretRequest, vpn.secretDone
 	topicDrives     = "drives"    // drives.state, drives.event
 	topicCamera     = "camera"    // camera.state
+	// screenshare.request, screenshare.done
+	topicScreenShare = "screenshare"
 	// inputMethod.state
 	topicInputMethod = "inputMethod"
 )
@@ -84,6 +87,9 @@ var (
 	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
 
 	pushCameraState = rpc.Push[camera.State]{Method: "camera.state", Latest: true}
+
+	pushScreenShareRequest = rpc.Push[screenshare.Request]{Method: "screenshare.request"}
+	pushScreenShareDone    = rpc.Push[screenShareDone]{Method: "screenshare.done"}
 
 	// Not a hello topic: sent only to a connection watching commands
 	// (exec.watch), every watched command's output in one
@@ -211,7 +217,7 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicInputMethod, topicCamera:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicInputMethod, topicCamera, topicScreenShare:
 			topics[t] = true
 		default:
 			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, inputMethod, camera)", t)

@@ -41,6 +41,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
 	"github.com/axiom-shell/axiom/backend/internal/saved"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
+	"github.com/axiom-shell/axiom/backend/internal/screenshare"
 	"github.com/axiom-shell/axiom/backend/internal/store"
 	"github.com/axiom-shell/axiom/backend/internal/supervise"
 	"github.com/axiom-shell/axiom/backend/internal/sysmon"
@@ -178,6 +179,8 @@ type Daemon struct {
 	inputMethod *inputmethod.Service
 	// camera is who holds a camera's device open
 	camera *camera.Service
+	// The screen-share picker's requests (screenshare.go)
+	screenShare *screenshare.Broker
 	// net is the rest the Wi-Fi menu asks NetworkManager
 	net *nmnet.Service
 	// idle is the Idle section's service
@@ -400,13 +403,14 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.newDrives()
 	d.newInputMethod()
 	d.newCamera()
+	d.newScreenShare()
 	d.idle = d.newIdle()
 	d.topics = topics.New(topics.Options{Log: opts.Log.With("part", "topics"), Context: ctx, Go: d.tasks.Go})
 	d.sysmon = d.newSysmon()
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.inputMethodPart(), d.cameraPart(), d.netPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.inputMethodPart(), d.cameraPart(), d.screenSharePart(), d.netPart(), d.dev.part()}
 	parts = append(parts, d.machineParts()...)
 	reg := d.registry(parts)
 	if opts.registered != nil {
@@ -422,6 +426,11 @@ func Run(ctx context.Context, opts Options) (err error) {
 			d.watches.Forget(c)
 			d.files.Forget(c)
 			d.releaseSwitcher(c)
+			if fromShell(c) {
+				// Its picker is gone: the asker falls back to the
+				// backend's own
+				d.screenShare.Forget()
+			}
 			if d.niriStreams != nil {
 				d.niriStreams.Forget(c)
 			}
