@@ -232,6 +232,21 @@ Scope {
       root._touched = true;
     }
   }
+  // Whether the pointer has reached the box since it latched or last came
+  // in from the trigger: until it has, a held dock's gap to its edge takes
+  // input (inputArea)
+  property bool _reachedBox: false
+  onLatchedChanged: {
+    if (!root.latched)
+      root._reachedBox = false;
+  }
+  Connections {
+    target: trigger
+    function onContainsMouseChanged() {
+      if (trigger.containsMouse)
+        root._reachedBox = false;
+    }
+  }
   // Keeps a latched dock open; the trigger counts, so a pointer resting on
   // the edge never lets it close
   readonly property bool pointerIn: root.engaged || trigger.containsMouse
@@ -480,10 +495,10 @@ Scope {
     // the pointer doesn't leave the dock on its way from the edge); nothing
     // while it's hidden, or for a preview (the overlay under it keeps the
     // pointer). A held dock keeps the gap only while latched (the trigger
-    // latches it on the way in, and the pointer leaving closes it), never
-    // always shown: `distance` can stretch that gap to half the screen,
-    // over what's there, which a dock shown without a latch (intellihide
-    // over no window, or sliding out) would otherwise catch the pointer in
+    // latches it on the way in) and until the pointer first reaches the
+    // box (`_reachedBox`), never always shown: `distance` can stretch that
+    // gap to half the screen, over what's there, which would otherwise
+    // keep the dock open and take the clicks there
     mask: Region {
       item: inputArea
     }
@@ -493,7 +508,7 @@ Scope {
       readonly property real alongStart: root.surfaceBoxStart
       readonly property bool open: root.shown > 0 && !root.preview
       readonly property real alongLength: open ? root.surfaceBoxLength : 0
-      readonly property real fromEdge: open && root.held && (root.mode === "always" || !root.latched) ? root.boxOffset : 0
+      readonly property real fromEdge: open && root.held && (root.mode === "always" || !root.latched || root._reachedBox) ? root.boxOffset : 0
       readonly property real crossDepth: open ? root.boxOffset + root.thickness + root.grown - fromEdge : 0
 
       x: root.vertical ? root.crossAt(fromEdge, crossDepth) : alongStart
@@ -530,6 +545,22 @@ Scope {
 
       HoverHandler {
         id: hover
+      }
+
+      // The box and the icons grown out of it: reaching it gives up the
+      // gap to the edge (`_reachedBox`)
+      Item {
+        x: root.vertical ? root.crossAt(root.boxOffset, width) : root.surfaceBoxStart
+        y: root.vertical ? root.surfaceBoxStart : root.crossAt(root.boxOffset, height)
+        width: root.vertical ? root.thickness + root.grown : root.surfaceBoxLength
+        height: root.vertical ? root.surfaceBoxLength : root.thickness + root.grown
+
+        HoverHandler {
+          onHoveredChanged: {
+            if (hovered)
+              root._reachedBox = true;
+          }
+        }
       }
 
       // The box, joined to the edge or held off it (detached), as every

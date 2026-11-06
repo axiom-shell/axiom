@@ -51,13 +51,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
 
-### A latched held dock's gap to its edge swallows clicks while the pointer is in it
-- **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`inputArea.fromEdge`, `hover`, `pointerIn`)
-- **What:** A held hover or intellihide dock takes the gap from the screen edge to its box into its input mask while latched, so the pointer coming in from the trigger doesn't leave it on the way. The `HoverHandler` covers the whole window (`dockContent` fills it), so once latched, the pointer anywhere in that gap counts as on the dock: moving from the box toward the edge keeps it open (`closeTimer` stopped) and clicks on the windows there go to the dock. With `distance` (up to 50% of the free screen, where the old px `gap` was at most 200) that strip can be half the screen. Options: the gap only until the pointer first reaches the box, hover only on the box (the gap kept for the trigger's path alone), or keep it.
-  **Decided** (maintainer, 2026-11-06, on a) the gap counts only until the pointer first reaches the box, b) hover only on the box with the gap still taking clicks, c) keep it; recommended a)): "rec - this should likely apply to all popouts"
-- **Size:** small
-- **Found:** 2026-11-05, while reviewing the floating popouts branch
-
 ### A detached dock and toasts don't slide in from under the bars
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
 - **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.

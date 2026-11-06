@@ -321,7 +321,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **The daemon, the config store and the CLI:**
 
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
-- [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
 
 **Wallpaper:**
 - [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
