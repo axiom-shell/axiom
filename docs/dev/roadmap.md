@@ -194,6 +194,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - On an NVIDIA machine without an AMD card, once axiom runs the graphs'-history change: show a GPU stat or graph and check it fills from the streamed `nvidia-smi` (`pgrep -c nvidia-smi` is 1 while shown, 0 a few seconds after closing, with no GPU graph configured), and on a laptop with a runtime-PM dGPU that the card stays `suspended` (`power/runtime_status`) with nothing open. If the GPU reads stay missing, nvidia-smi isn't printing each line as it comes when piped: fall back to one-shot queries off the sample path.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
 - Once the shell and binary run Full Bluetooth's first part (the daemon owns Bluetooth), with a real device: connect and disconnect a paired one from the Bluetooth menu (Connecting… and Disconnecting… show, then its state; a headset's battery in its status and the bar), pair a new one from Discover (Pairing…, then Connecting…, then connected), and forget one; the Discover tab scans while open (the header's spinner) and stops after, without ending another app's scan (`bluetoothctl scan on` in a terminal keeps going); the radio switch and `axiom ipc bluetooth toggle` turn it off and on; `scripts/log.sh` stays clean.
+- Once the shell and binary run Full Bluetooth's second part (the shared prompt and the pairing agent), with `Bluetooth.pairingAgent` on and no other agent running: pair a keyboard from Discover (the prompt shows the passkey to type, its digits lighting as they're typed, and closes once it pairs; Cancel stops the pairing), and a phone ("Does … show 123456?": Pair pairs, Cancel or Escape declines); `pkexec true` from a terminal still shows the polkit prompt as before (identity choice, a wrong password shakes, Escape cancels, a click outside does nothing), and a pairing prompt asked while it's open waits behind it; `scripts/log.sh` stays clean.
 - With a DDC/CI monitor, press brightness up with the OSD shut: `scripts/log.sh` shows no failed `brightness.get`, the bar doesn't jump back, and the next press steps from the new level (an own set now marks its write before the OSD's refresh runs).
 
 **Apps and services:**
@@ -267,6 +268,7 @@ Found along the way:
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
 - [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)
 - [TestNotifySend failed once under verify.sh](issues.md#testnotifysend-failed-once-under-verifysh) (the same)
+- [The screen-share picker repeats the shared prompt's modal frame](issues.md#the-screen-share-picker-repeats-the-shared-prompts-modal-frame) (lifting polkit's window into the shared prompt)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 
 #### The launch gate
@@ -317,7 +319,7 @@ Found meanwhile:
 
 Full Bluetooth (maintainer, 2026-11-06: move Bluetooth fully into the daemon, with one shared prompt for every password, PIN or confirmation request), one PR on the `bluetooth-daemon` branch, in four parts:
 1. The daemon owns Bluetooth (`backend/internal/bluez`, the `bluetooth` topic), BluetoothManager's API unchanged.
-2. One shared prompt (`PromptManager`), the BlueZ pairing agent, and polkit, VPN secrets, Wi-Fi passwords and drive unlocks moved onto it; closes [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey) and [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen).
+2. One shared prompt (`PromptManager`), the BlueZ pairing agent, and polkit, VPN secrets, Wi-Fi passwords and drive unlocks moved onto it (the prompt, the agent and polkit's move done on the branch); closes [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen).
 3. The OSD's Bluetooth card (devices connecting together as one card) and low battery warnings.
 4. Device actions (rename, trust, block), discoverable, rfkill unblock, and peripheral batteries in Battery.
 
@@ -366,7 +368,6 @@ Deferred by the maintainer (2026-10-29: "move what is necessary to deferred"; Qu
 - [Quickshell's I3 socket warns on every reload](issues.md#quickshells-i3-socket-warns-on-every-reload)
 
 Deferred by the maintainer (2026-10-30, small gaps users notice at once: "log everything except notif sound … Build them into roadmap in the correct spot but deferred and issues (all should need a plan)"; Phase 13 features, each through [Items that need a plan](#items-that-need-a-plan) once taken up; notification sounds are the maintainer's own system sounds plan):
-- [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey)
 - [No keyboard backlight control](issues.md#no-keyboard-backlight-control)
 
 Deferred by the maintainer (2026-10-31, the integrated menu's growing zone: "put this on hold - note that growing modules kinda needs a re-work or removal"):

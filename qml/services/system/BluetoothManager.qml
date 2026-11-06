@@ -4,14 +4,19 @@ import QtQuick
 
 import qs.config
 import qs.services.core
+import qs.services.ui
 
 // Bluetooth state and actions over the default adapter, from axiom's
 // `bluetooth` part (BlueZ on the system bus, internal/bluez:
 // `bluetooth.state` on every change). Devices are plain objects
 // ({ address, name, deviceName, icon, paired, bonded, trusted, blocked,
 // connected, state, pairing, battery, batteryAvailable }), made anew on
-// every push: compare them by address. Not named Bluetooth: the bar
-// widget's file has that name. Inert on the login screen.
+// every push: compare them by address. The daemon is BlueZ's pairing
+// agent (Bluetooth.pairingAgent): each of its requests (a PIN, a passkey,
+// a code to confirm or type, an authorization) is shown through the
+// shared prompt (PromptManager) and answered with bluetooth.agentReply.
+// Not named Bluetooth: the bar widget's file has that name. Inert on the
+// login screen.
 QtObject {
   id: root
 
@@ -144,6 +149,137 @@ QtObject {
   property var _devices: []
   readonly property bool _inert: Paths.greeter
 
+  // --- The pairing agent ---
+
+  // The agent's requests shown: the daemon's id -> PromptManager's id
+  property var _agentPrompts: ({})
+
+  // bluetooth.agentRequest: a new request, or a code shown changing as
+  // the keyboard types
+  function _agentRequest(req) {
+    const shown = root._agentPrompts[req.id];
+    if (shown !== undefined) {
+      PromptManager.update(shown, {
+        "code": req.code,
+        "entered": req.entered
+      });
+      return;
+    }
+    const name = req.device.name || req.device.address;
+    const cancel = {
+      "id": "cancel",
+      "label": I18n.tr("Cancel")
+    };
+    const pair = {
+      "id": "accept",
+      "label": I18n.tr("Pair"),
+      "primary": true
+    };
+    const deny = {
+      "id": "cancel",
+      "label": I18n.tr("Deny")
+    };
+    const allow = {
+      "id": "accept",
+      "label": I18n.tr("Allow"),
+      "primary": true
+    };
+    const spec = {
+      "source": "bluetooth",
+      "icon": root.deviceIcon(req.device)
+    };
+    switch (req.kind) {
+    case "confirm":
+      Object.assign(spec, {
+        "title": I18n.tr("Pair with {0}?", name),
+        "message": I18n.tr("Does {0} show {1}?", name, req.code),
+        "actions": [cancel, pair]
+      });
+      break;
+    case "pin":
+    case "passkey":
+      Object.assign(spec, {
+        "title": I18n.tr("Pair with {0}", name),
+        "message": req.kind === "pin" ? I18n.tr("Type the PIN {0} asks for.", name) : I18n.tr("Type the passkey {0} asks for.", name),
+        "fields": [
+          {
+            "key": "value",
+            "label": req.kind === "pin" ? I18n.tr("PIN") : I18n.tr("Passkey"),
+            "secret": false,
+            "digits": req.kind === "passkey",
+            "maxLength": req.kind === "pin" ? 16 : 6
+          }
+        ],
+        "actions": [cancel, pair]
+      });
+      break;
+    case "display":
+      Object.assign(spec, {
+        "title": I18n.tr("Pair with {0}", name),
+        "message": I18n.tr("Type this code on {0}, then press Enter.", name),
+        "code": req.code,
+        "entered": req.entered,
+        "actions": [cancel]
+      });
+      break;
+    case "authorizeService":
+      Object.assign(spec, {
+        "title": I18n.tr("Allow {0}?", name),
+        "message": I18n.tr("{0} wants to use a service of this computer.", name),
+        "actions": [deny, allow]
+      });
+      break;
+    default:
+      // authorize
+      Object.assign(spec, {
+        "title": I18n.tr("Pair with {0}?", name),
+        "message": I18n.tr("{0} wants to pair with this computer.", name),
+        "actions": [deny, allow]
+      });
+    }
+    const answer = (accept, value) => root._agentAnswer(req, accept, value);
+    const prompts = Object.assign({}, root._agentPrompts);
+    prompts[req.id] = PromptManager.request(spec, (action, values) => answer(action === "accept", values.value ?? ""), () => answer(false, ""));
+    root._agentPrompts = prompts;
+  }
+
+  // rpc: bluetooth.agentReply, bluetooth.cancelPair
+  // A code shown has nothing to answer: declining it cancels the pairing
+  function _agentAnswer(req, accept, value) {
+    root._forgetPrompt(req.id);
+    if (req.kind === "display")
+      BackendManager.call("bluetooth.cancelPair", {
+        "address": req.device.address
+      }, () => {});
+    BackendManager.call("bluetooth.agentReply", {
+      "id": req.id,
+      "accept": accept,
+      "value": value
+    }, () => {});
+  }
+
+  // bluetooth.agentDone: BlueZ, the pairing's end or an answer ended it
+  function _agentDone(id) {
+    const shown = root._agentPrompts[id];
+    if (shown === undefined)
+      return;
+    PromptManager.withdraw(shown);
+    root._forgetPrompt(id);
+  }
+
+  function _forgetPrompt(id) {
+    const prompts = Object.assign({}, root._agentPrompts);
+    delete prompts[id];
+    root._agentPrompts = prompts;
+  }
+
+  // A daemon started again asks nothing of what the last one asked
+  function _dropAgentPrompts() {
+    for (const id of Object.keys(root._agentPrompts))
+      PromptManager.withdraw(root._agentPrompts[id]);
+    root._agentPrompts = {};
+  }
+
   function _show(state) {
     root.adapter = state?.adapter ?? null;
     root._devices = (state?.devices ?? []).map(d => Object.assign({}, d, {
@@ -180,6 +316,7 @@ QtObject {
     target: BackendManager
     enabled: !root._inert
     function onGreeted() {
+      root._dropAgentPrompts();
       root._fetch();
       // A daemon started again has no scan running
       if (root._wantsDiscovery)
@@ -191,6 +328,8 @@ QtObject {
     if (root._inert)
       return;
     BackendManager.listen("bluetooth.state", state => root._show(state));
+    BackendManager.listen("bluetooth.agentRequest", request => root._agentRequest(request));
+    BackendManager.listen("bluetooth.agentDone", done => root._agentDone(done.id));
     // Made after the hello (a QML reload): no greeted to wait for
     if (BackendManager.ready)
       root._fetch();

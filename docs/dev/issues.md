@@ -238,6 +238,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Shell-wide: windows, screens, reloads and actions
 
+### The screen-share picker repeats the shared prompt's modal frame
+- **Where:** `qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml`, `qml/components/surfaces/prompt/PromptWindow.qml`
+- **What:** The picker draws its own copy of the frame `PromptWindow` now holds for the shared prompt: a `PanelWindow` per screen dimmed (`dim`, its `BoxBlurRegion` through `BlurManager.backdropRegionsOn`), the card only on the picked screen (`hasCard`), `WlrLayer.Overlay` with exclusive keyboard focus only there, and `SurfaceManager.registerModal`. Two copies of one pattern (AGENTS.md › UI conventions): the frame could be one shared piece both load their card into, or the picker could become a `PromptManager` request with content of its own (it would then queue behind a polkit or pairing prompt instead of stacking under it by layer order).
+- **Size:** small
+- **Found:** 2026-11-06, while lifting polkit's window into the shared prompt (Full Bluetooth's second part)
+
 ### Quick actions can't hold custom toggles or commands
 - **Where:** `qml/components/content/QuickActions/QuickActions.qml`, `qml/services/ui/ActionsManager.qml`
 - **What:** A tile can be any action of the catalogue, and the Button widget can run a command, but there's no tile of the user's own: a toggle with an on and an off command and a status command (exit 0 = on), or an action with a module as its detail. A plan was drafted on the unified-actions branch (a `CustomActions` section of items, `custom:<id>` tile ids run and judged by ActionsManager, a card to add them) and set aside by the maintainer (2026-11-06) as more than that branch needed. Its open questions: a toggle's state lags its command (hold the expected state until the status command agrees?); status commands poll while a tile shows (cost, a slow script makes the tile slow); the lock screen and greeter must never run them; a detail opens only in overlay pages and edge menus; a detail module's own settings nested in the item's form; a deleted item leaves `custom:x` in modules and Buttons; whether keybinds, hot corners and the launcher reach them too (`customActions run <id>`).
@@ -407,12 +413,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
   **Decided** (maintainer, 2026-11-06, on a) a notification that opens a VPN row, b) open the VPN popout, c) answer `NoSecrets` while no row is shown; recommended a) with c) as its fallback): "defer"
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the VPN branch
-
-### Bluetooth pairing that asks for a PIN or a passkey
-- **Where:** `backend/internal/bluez/bluez.go` (`Pair`), `qml/components/content/BluetoothDevices/`
-- **What:** Pairing trusts, pairs and connects (in the daemon), but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Planned: the daemon registers the agent and asks through one shared prompt (Full Bluetooth's second part, roadmap.md › Phase 13).
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
 
 ### No keyboard backlight control
 - **Where:** `qml/services/system/BrightnessManager.qml`

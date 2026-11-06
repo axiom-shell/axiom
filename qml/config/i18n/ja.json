@@ -4070,6 +4070,20 @@
     "Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
     "How axiom pairs Bluetooth devices.": "",
     "Ask for a device's PIN or passkey, or to confirm its code, in axiom's prompt. Turn off to leave pairing to another agent, such as blueman.": "",
-    "Answer pairing requests": ""
+    "Answer pairing requests": "",
+    "Pair": "",
+    "Deny": "",
+    "Allow": "",
+    "Pair with {0}?": "",
+    "Does {0} show {1}?": "",
+    "Pair with {0}": "",
+    "Type the PIN {0} asks for.": "",
+    "Type the passkey {0} asks for.": "",
+    "PIN": "",
+    "Passkey": "",
+    "Type this code on {0}, then press Enter.": "",
+    "Allow {0}?": "",
+    "{0} wants to use a service of this computer.": "",
+    "{0} wants to pair with this computer.": ""
   }
 }
