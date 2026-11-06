@@ -355,12 +355,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### The Monitors page's off and mirroring buttons throw when one leaves the list
-- **Where:** `qml/components/views/Monitors/MonitorCanvas.qml` (the `others` Repeater)
-- **What:** The Repeater's model is `root.others.length`, and each delegate reads `root.others[index]`: when the list shrinks (Reset, or a hotplug re-detect, after a monitor was turned off in the draft) the delegates about to go re-evaluate first with `rule` undefined, logging `TypeError: Cannot read property 'output' of undefined` and `Cannot read property 'disabled' of undefined` from `MonitorCanvas.qml` (seen in a nested Hyprland, 2026-11-04). Harmless beyond the log; the model could be the list itself, or the reads guarded.
-- **Size:** trivial
-- **Found:** 2026-11-04, while testing the trial Apply (compositor-10)
-
 ### The monitor editor shows changes nobody made
 - **Where:** `qml/services/compositor/MonitorManager.qml` (`draft`, `ensureLoaded`), `qml/components/views/Monitors/Monitors.qml`
 - **What:** From the maintainer's notes: the monitors page shows unsaved changes when nothing was changed (likely a value the draft normalises on load differing from the saved one).
