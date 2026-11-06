@@ -394,10 +394,11 @@ def gh_api_method(args):
 
 
 # What guards main: branch protection, rulesets, the repository's own
-# settings (default branch, merges), a branch rename, who may write
-GH_PROTECTION = re.compile(r"/?(repos/[^/]+/[^/]+(/branches/[^/]+/(protection|rename)(/.*)?|/rulesets(/.*)?|/collaborators(/.*)?)?"
+# settings (default branch, merges), a branch rename, who may write; as a
+# path or a full URL (gh sends one containing :// as is)
+GH_PROTECTION = re.compile(r"(https?://[^/]+(/api/v3)?)?/?(repos/[^/]+/[^/]+(/branches/[^/]+/(protection|rename)(/.*)?|/rulesets(/.*)?|/collaborators(/.*)?)?"
                            r"|orgs/[^/]+/(rulesets(/.*)?|teams/[^/]+/repos(/.*)?))/?(\?.*)?")
-GH_PROTECTION_MUTATIONS = re.compile(r"\b(updateRepository|(create|update|delete)(BranchProtectionRule|RepositoryRuleset))\b")
+GH_PROTECTION_MUTATIONS = re.compile(r"\b(updateRepository|updateTeamsRepository|(create|update|delete)(BranchProtectionRule|RepositoryRuleset))\b")
 
 
 def gh_api_opens_issue(args):
@@ -858,7 +859,7 @@ def check(call):
         switched = False
         for env, argv in commands:
             # A GraphQL query piped in (`--input -`, a heredoc) is in the command's text, not its words
-            if Path(argv[0]).name == "gh" and "graphql" in argv:
+            if Path(argv[0]).name == "gh" and any(a == "graphql" or a.endswith("/graphql") for a in argv):
                 argv = argv + [command]
             check_argv(env, argv, cwd, switched)
             if Path(argv[0]).name == "git":
