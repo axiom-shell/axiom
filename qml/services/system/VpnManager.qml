@@ -386,17 +386,52 @@ QtObject {
   }
 
   // Keybind action vpn: the last VPN used, up or down (as the Vpn
-  // widget's click)
+  // widget's click). Tailscale's row is read first: with nothing watching
+  // it, it's acquired until its state comes (or the wait ends)
   property IpcTarget _ipc: IpcTarget {
+    id: ipc
     target: "vpn"
 
-    // Says so on the OSD when there's none to toggle (a bind has no
-    // widget to show it)
     function toggle(): void {
-      if (!root.anyActive && !root.lastRow)
-        ShellManager.refuse("vpn_key", I18n.tr("VPN"), I18n.tr("None set up"));
-      else
-        root.toggleLast();
+      if (root._bindWaiting)
+        return;
+      const current = !VpnConfig.showTailscale || TailscaleManager.watched;
+      root.acquire(ipc);
+      if (current) {
+        root._bindToggle();
+      } else {
+        root._bindWaiting = true;
+        tailscaleWait.restart();
+      }
+    }
+  }
+
+  property bool _bindWaiting: false
+
+  // Says so on the OSD when there's none to toggle (a bind has no widget
+  // to show it)
+  function _bindToggle() {
+    root._bindWaiting = false;
+    tailscaleWait.stop();
+    if (!root.anyActive && !root.lastRow)
+      ShellManager.refuse("vpn_key", I18n.tr("VPN"), I18n.tr("None set up"));
+    else
+      root.toggleLast();
+    root.release(ipc);
+  }
+
+  property Timer _tailscaleWait: Timer {
+    id: tailscaleWait
+    // Tailscale missing or axiom down: the NetworkManager VPNs alone
+    interval: 3000
+    onTriggered: root._bindToggle()
+  }
+
+  property Connections _tailscaleState: Connections {
+    target: TailscaleManager
+    enabled: root._bindWaiting
+    function onUpdated() {
+      root._bindToggle();
     }
   }
 }

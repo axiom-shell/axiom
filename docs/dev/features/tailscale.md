@@ -8,6 +8,7 @@ Tailscale's state for the bar widget, its popout and the overlay module, shaped 
 
 ### State
 - axiom polls `tailscale status --json` (the `tailscale` topic) every `TailscaleConfig.interval`, only while something acquires `TailscaleManager` (schema minimum 1 s, the only floor: `topics.MinInterval` is 1 ms). Consumers `acquire(owner)` with no request: they all share the interval.
+- `watched` says something holds `acquire()`, so its state is current; `updated` fires on each state axiom pushes (the first follows an acquire), which the VPN bind waits for (`VpnManager`).
 - `tailscale.Parse` keeps what the shell shows: this machine (host and MagicDNS name, every address, version, the account it's logged in as, when its key expires), the tailnet, a pending login's `authURL`, the health warnings, the exit node in use, and the peers (name from the MagicDNS name, OS, addresses, online, active, direct or relayed, last seen, traffic), online first, then by name. Lists are never null.
 
 - The `tailscaledetails` topic (`DetailsSource`) adds what only the popout and module show, so the bar's poll stays one process: `tailscale debug prefs` (the switches; `debug` isn't a stable interface, so prefs it can't read are `known: false` and the switches hide) and `tailscale switch --list --json` (the accounts; refused without operator rights: `profilesDenied`). The panel `acquireDetails(owner)`s it at the same `Tailscale.interval`.
