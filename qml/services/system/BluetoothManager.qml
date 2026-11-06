@@ -23,13 +23,22 @@ import qs.services.ui
 QtObject {
   id: root
 
-  // The default adapter ({ address, name, powered, blocked, discovering,
-  // discoverable, pairable }), else null
+  // The default adapter ({ address, name, powered, blocked, hardBlocked,
+  // discovering, discoverable, discoverableTimeout (s, 0 forever),
+  // discoverableUntil (Unix ms, 0 unknown), pairable }), else null
   property var adapter: null
   readonly property bool available: adapter !== null
   readonly property bool enabled: adapter?.powered ?? false
   readonly property bool blocked: adapter?.blocked ?? false
+  // A hardware switch blocks it: unblock() can't clear that
+  readonly property bool hardBlocked: adapter?.hardBlocked ?? false
   readonly property bool discovering: adapter?.discovering ?? false
+  readonly property bool discoverable: adapter?.discoverable ?? false
+  // When it stops being discoverable (ms), 0 when not known
+  readonly property real discoverableUntil: root.discoverable ? (adapter?.discoverableUntil ?? 0) : 0
+  // Seconds left discoverable, ticking while something holds
+  // acquireCountdown(owner) (a BluetoothDevices menu); -1 when not known
+  property int discoverableLeft: -1
 
   // Every device, by name. Lists stay in a fixed order (not connected
   // first), so a row never jumps away from the pointer that just clicked it
@@ -61,6 +70,67 @@ QtObject {
 
   function releaseDiscovery(owner) {
     _discoveryRegistry.release(owner);
+  }
+
+  // rpc: bluetooth.setDiscoverable
+  // Visible to devices scanning (a phone pairing from its side), for
+  // BlueZ's timeout (3 minutes when it had none)
+  function setDiscoverable(on) {
+    if (!root.available || root._inert)
+      return;
+    BackendManager.call("bluetooth.setDiscoverable", {
+      "on": on
+    }, () => {});
+  }
+
+  // rpc: bluetooth.unblock
+  // Clears rfkill's soft block (not a hardware switch's)
+  function unblock() {
+    if (root._inert)
+      return;
+    BackendManager.call("bluetooth.unblock", {}, () => {});
+  }
+
+  function acquireCountdown(owner) {
+    _countdownRegistry.acquire(owner, {});
+    root._tickCountdown();
+  }
+
+  function releaseCountdown(owner) {
+    _countdownRegistry.release(owner);
+  }
+
+  // rpc: bluetooth.setAlias
+  // A new name for a device; "" is its own name again
+  function setAlias(device, name) {
+    if (!device || root._inert)
+      return;
+    BackendManager.call("bluetooth.setAlias", {
+      "address": device.address,
+      "name": name.trim()
+    }, () => {});
+  }
+
+  // rpc: bluetooth.setTrusted
+  // Trusted: it connects by itself (auto-connect)
+  function setTrusted(device, on) {
+    if (!device || root._inert)
+      return;
+    BackendManager.call("bluetooth.setTrusted", {
+      "address": device.address,
+      "on": on
+    }, () => {});
+  }
+
+  // rpc: bluetooth.setBlocked
+  // Blocked: disconnected, and its connections refused
+  function setBlocked(device, on) {
+    if (!device || root._inert)
+      return;
+    BackendManager.call("bluetooth.setBlocked", {
+      "address": device.address,
+      "on": on
+    }, () => {});
   }
 
   // A call on the device is running: connecting, disconnecting or pairing
@@ -114,6 +184,8 @@ QtObject {
       return "";
     if (device.pairing)
       return I18n.tr("Pairing…");
+    if (device.blocked)
+      return I18n.tr("Blocked");
     switch (device.state) {
     case "connecting":
       return I18n.tr("Connecting…");
@@ -359,6 +431,20 @@ QtObject {
       if (!error)
         root._show(state);
     });
+  }
+
+  property ConsumerRegistry _countdownRegistry: ConsumerRegistry {}
+
+  function _tickCountdown() {
+    root.discoverableLeft = root.discoverableUntil > 0 ? Math.max(0, Math.ceil((root.discoverableUntil - Date.now()) / 1000)) : -1;
+  }
+  onDiscoverableUntilChanged: root._tickCountdown()
+
+  property Timer _countdown: Timer {
+    interval: 1000
+    repeat: true
+    running: root._countdownRegistry.active && root.discoverableUntil > 0
+    onTriggered: root._tickCountdown()
   }
 
   property ConsumerRegistry _discoveryRegistry: ConsumerRegistry {}
