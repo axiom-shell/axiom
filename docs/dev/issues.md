@@ -68,12 +68,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
 
-### A bar widget's elasticity is stated twice
-- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
-- **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the bar rewrite
-
 ### BarContainer's two join openings repeat their stretch
 - **Where:** `qml/components/bar/BarContainer.qml` (`joinOpening`, `_solidJoinOf`)
 - **What:** Both work out the same `from` and `span` and make the same `EdgeAttach.joinOpening` call (the border's opening also passes the fillet). One private helper returning the stretch would leave each with only what differs.

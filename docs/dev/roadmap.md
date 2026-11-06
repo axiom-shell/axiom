@@ -179,6 +179,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again. In General, change your picture (the Account card, the login screen once AccountsService has it, a Greeting module with Picture on the lock screen), and change your password with a wrong current one, a weak new one, then a real one. Pick another browser and terminal under Default apps and check `~/.config/mimeapps.list` / `xdg-terminals.list` changed and the Browser and Terminal keybinds open them (after a managed or included config is written again with `axiom open`), and a notification link and a screenshot open in their defaults.
 - Once the shell runs #339 (bar-popouts-07), under niri, sway and Hyprland: with a dock and a bar popout open beside it, check the dock's reserved footprint matches its drawn shape (fillets only where it has them) and the popout doesn't overlap it.
 - Once axiom runs a binary built with row 20's features-09, ask a fast provider (Groq, Cerebras, or a local model) for a long reply in the chat: it streams as before, and `axiom daemon logs` shows no `dropping a peer that stopped reading` (the reply's pieces are gathered while the queue to the shell is backlogged; a Go test shows it, not a real shell that stalls).
+- Once the shell runs #362, a start or a reload logs no `Property 'fromEntries'` TypeError from MediaManager, and a player already playing at the start is picked.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -384,7 +385,6 @@ Found while building dev trees and the dev config:
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
 
 Found while reviewing the bar rewrite:
-- [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
 - [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
 - [A bar widget that loses its background while shown keeps drawing the old one](issues.md#a-bar-widget-that-loses-its-background-while-shown-keeps-drawing-the-old-one)
 

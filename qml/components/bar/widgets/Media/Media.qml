@@ -16,8 +16,6 @@ import qs.components.bar.widgets.base
 ValueStyleWidget {
   id: root
 
-  readonly property string sizePolicy: "elastic"
-
   // The artist shown before the title, or "" when there's none to show
   readonly property string artist: MediaManager.activePlayer && root.properties.showArtist ? Utils.truncate(MediaManager.trackArtist, root.properties.artistLength, "") : ""
 

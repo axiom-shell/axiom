@@ -104,7 +104,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
 
 ### Types (bar widgets, overlay modules, views, custom widget elements)
 - `x-icon`: a Material Symbols name on bar widget, overlay module and view definitions.
-- `x-elastic: true` (on a bar widget definition, `elastic` in its `schema.yaml`): the widget shrinks when its bar is crowded (Window title, Media), so only it takes a `layout.minSize` and `layout.maxSize` (`BarsConfig.availableWidgetTypes`' `elastic`).
+- `x-elastic: true` (on a bar widget definition, `elastic` in its `schema.yaml`): the widget shrinks when its bar is crowded (Window title, Media), so `BarWidgetHost` sizes it elastic and only it takes a `layout.minSize` and `layout.maxSize` (`BarsConfig.isElastic`, the only place it's stated: its QML sets no `sizePolicy`).
 - `x-priority: N` (on a bar widget definition, `priority` in its `schema.yaml`): the widget's own priority when the bar is crowded (default 0: Clock 5, Workspaces 10), which its `layout.priority` overrides (`BarsConfig.defaultPriority`, read by `BarWidgetHost` and the editor's drop order).
 - `x-keywords` (on a bar widget definition, `keywords` in its `schema.yaml`): more words the bar editor's library finds it by (`LibraryOrder.filtered`), such as the label it had before.
 - On overlay modules:
