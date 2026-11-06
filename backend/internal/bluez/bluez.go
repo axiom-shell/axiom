@@ -39,14 +39,17 @@ type Options struct {
 	// user or the pairing's end ended.
 	OnAgentRequest func(AgentRequest) bool
 	OnAgentDone    func(id string)
+	// OnEvent is told of devices connecting or disconnecting (events.go)
+	OnEvent func(Event)
 	// Rfkill is the rfkill class folder read for an adapter's block when
 	// BlueZ's PowerState doesn't say (default /sys/class/rfkill)
 	Rfkill string
 	// Retry is how long to wait before connecting to the bus again
 	// (default 10 s); Settle how long signals are gathered into one
-	// state (default 50 ms)
-	Retry, Settle time.Duration
-	Log           *slog.Logger
+	// state (default 50 ms); Join how long apart connects (or
+	// disconnects) may be and still be one Event (default 1 s)
+	Retry, Settle, Join time.Duration
+	Log                 *slog.Logger
 }
 
 // Service follows BlueZ; Run runs it.
@@ -55,6 +58,7 @@ type Service struct {
 
 	// pushMu keeps states handed to OnChange in the order built
 	pushMu sync.Mutex
+	events *events
 
 	mu      sync.Mutex
 	conn    *dbus.Conn // while connected and BlueZ runs
@@ -97,12 +101,17 @@ func New(o Options) *Service {
 	if o.Rfkill == "" {
 		o.Rfkill = "/sys/class/rfkill"
 	}
-	return &Service{
+	if o.Join == 0 {
+		o.Join = time.Second
+	}
+	s := &Service{
 		o: o, state: State{Devices: []Device{}},
 		order: map[dbus.ObjectPath]uint64{}, ops: map[string]string{},
 		kick: make(chan struct{}, 1), agentKick: make(chan struct{}, 1),
 		agents: map[string]*pendingAgent{},
 	}
+	s.events = newEvents(o.Join, s.State, o.OnEvent)
+	return s
 }
 
 // State is the current state.
@@ -190,7 +199,7 @@ func (s *Service) runOnce(ctx context.Context) error {
 			}
 		case <-settle:
 			settle = nil
-			s.rebuild()
+			s.rebuild(true)
 		case <-s.agentKick:
 			s.applyAgent(ctx, conn)
 		case m := <-signals:
@@ -228,7 +237,7 @@ func (s *Service) sync(ctx context.Context, conn *dbus.Conn) {
 	s.mu.Unlock()
 	// Asked of the BlueZ that went away
 	s.endAgents(dbus.NewError(errCanceled, "BlueZ restarted"))
-	s.rebuild()
+	s.rebuild(false)
 	s.applyAgent(ctx, conn)
 	if want {
 		if err := s.Discovery(ctx, true); err != nil && axerr.KindOf(err) != axerr.Unavailable {
@@ -254,7 +263,7 @@ func (s *Service) disconnected() {
 	s.agentOn = false
 	s.mu.Unlock()
 	s.endAgents(dbus.NewError(errCanceled, "BlueZ went away"))
-	s.rebuild()
+	s.rebuild(false)
 }
 
 // signal applies one of BlueZ's signals and reports whether the state
@@ -327,15 +336,23 @@ func (s *Service) signal(ctx context.Context, conn *dbus.Conn, m *dbus.Message) 
 }
 
 // rebuild builds the state from the objects and the calls in flight,
-// and hands it on when it changed.
-func (s *Service) rebuild() {
+// and hands it on when it changed. live: BlueZ's signals (or a call)
+// moved it, so its connects and disconnects are events; else BlueZ was
+// read afresh (a sync, BlueZ gone), which is none.
+func (s *Service) rebuild(live bool) {
 	s.pushMu.Lock()
 	defer s.pushMu.Unlock()
 	s.mu.Lock()
+	prev := s.state
 	next := build(s.objects, s.order, s.ops, s.o.Rfkill)
-	same := reflect.DeepEqual(s.state, next)
+	same := reflect.DeepEqual(prev, next)
 	s.state = next
 	s.mu.Unlock()
+	if live {
+		s.events.changed(prev, next)
+	} else {
+		s.events.reset()
+	}
 	if !same && s.o.OnChange != nil {
 		s.o.OnChange(next)
 	}
@@ -382,7 +399,7 @@ func (s *Service) begin(address, op string) bool {
 	}
 	s.ops[address] = op
 	s.mu.Unlock()
-	s.rebuild()
+	s.rebuild(true)
 	return true
 }
 
@@ -392,7 +409,7 @@ func (s *Service) step(address, op string) {
 	s.mu.Lock()
 	s.ops[address] = op
 	s.mu.Unlock()
-	s.rebuild()
+	s.rebuild(true)
 }
 
 // end ends a call in flight. The state is rebuilt in the run loop once

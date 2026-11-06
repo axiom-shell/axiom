@@ -89,6 +89,7 @@ var (
 	pushBluetoothState        = rpc.Push[bluez.State]{Method: "bluetooth.state", Latest: true}
 	pushBluetoothAgentRequest = rpc.Push[bluez.AgentRequest]{Method: "bluetooth.agentRequest"}
 	pushBluetoothAgentDone    = rpc.Push[bluetoothAgentDone]{Method: "bluetooth.agentDone"}
+	pushBluetoothEvent        = rpc.Push[bluez.Event]{Method: "bluetooth.event"}
 
 	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
 

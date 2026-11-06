@@ -46,6 +46,12 @@ func (d *Daemon) newBluetooth() {
 				pushBluetoothAgentDone.Send(d.server, bluetoothAgentDone{ID: id}, subscribedTo(topicBluetooth))
 			}
 		},
+		// Devices connecting or disconnecting, for the OSD's card
+		OnEvent: func(e bluez.Event) {
+			if d.server != nil {
+				pushBluetoothEvent.Send(d.server, e, subscribedTo(topicBluetooth))
+			}
+		},
 		Log: log,
 	})
 }
