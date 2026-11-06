@@ -21,7 +21,7 @@ ValueStyleWidget {
   // What it shows, from config only: { item } per symbol, a { portfolio }
   // first when asked
   readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.properties.symbols)
-  readonly property var entries: (root.properties.showPortfolio && MarketMath.portfolio(MarketsConfig.symbols, {}, {}, "") !== null ? [
+  readonly property var entries: (root.properties.showPortfolio && MarketsConfig.symbols.some(item => item.quantity > 0) ? [
       {
         "portfolio": true
       }

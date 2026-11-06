@@ -11,7 +11,7 @@ Everything below is one shell and one config, and everything is set from inside 
 <p align="center"><img src="screenshots/desktop.webp" alt="A floating pill bar down the left, a transparent bar down the right and the dock at the top, inside the screen border"></p>
 
 - Bars are defined in config. Have any number, on any monitor (or a copy on every one) and any edge.
-- **28 widget types:**
+- **29 widget types:**
   - Workspaces, Window, Time, NextEvent (the next event from your calendars), Media
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
   - Updates, Weather, Markets (stock and crypto prices: one at a time, a ticker or a sparkline, a popout with charts), Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, Drives (removable drives: hidden with none, a popout to open, eject or unlock one, middle click ejects them all), KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy

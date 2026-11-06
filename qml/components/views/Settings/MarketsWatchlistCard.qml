@@ -207,7 +207,7 @@ FoldingCard {
             visible: !!entry.quote
             textSize: Appearance.fontSizeBy(-1)
             textColor: entry.quote?.error ? Theme.error : MarketsManager.trendColor(MarketMath.trend(entry.quote?.change ?? 0))
-            text: entry.quote?.error ? I18n.tr("Not found") : entry.quote ? I18n.tr("{0} {1}", MarketMath.formatPrice(entry.quote.price, entry.quote.currency), MarketMath.formatPercent(entry.quote.changePercent)) : ""
+            text: entry.quote?.error ? entry.quote.error : entry.quote ? I18n.tr("{0} {1}", MarketMath.formatPrice(entry.quote.price, entry.quote.currency), MarketMath.formatPercent(entry.quote.changePercent)) : ""
           }
           StyledIcon {
             visible: entry.item.alertAbove > 0 || entry.item.alertBelow > 0

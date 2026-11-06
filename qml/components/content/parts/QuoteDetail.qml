@@ -16,7 +16,12 @@ ColumnLayout {
   id: root
 
   required property var item
+  // The range it opens at (a setting); a pick on the range row overrides
+  // it until the setting changes
   property string range: "1d"
+  property string _picked: ""
+  onRangeChanged: root._picked = ""
+  readonly property string shownRange: root._picked !== "" ? root._picked : root.range
   property bool pickRange: true
   property bool showStats: true
 
@@ -28,7 +33,7 @@ ColumnLayout {
   property bool _alive: true
   Component.onDestruction: root._alive = false
 
-  readonly property bool isDay: root.range === "1d"
+  readonly property bool isDay: root.shownRange === "1d"
   readonly property var points: root.isDay ? (root.quote?.points ?? []) : (root._history?.points ?? [])
   readonly property real reference: root.isDay ? (root.quote?.prevClose ?? 0) : (root._history?.reference ?? 0)
   readonly property real price: root.quote?.price ?? NaN
@@ -38,7 +43,7 @@ ColumnLayout {
   readonly property color trendColor: MarketsManager.trendColor(root.trend)
   readonly property string currency: root.quote?.currency ?? ""
 
-  readonly property string _wantedKey: root.isDay || !root.item ? "" : root.item.source + ":" + root.item.symbol + ":" + root.range
+  readonly property string _wantedKey: root.isDay || !root.item ? "" : root.item.source + ":" + root.item.symbol + ":" + root.shownRange
   on_WantedKeyChanged: root._fetch()
   Component.onCompleted: root._fetch()
 
@@ -49,7 +54,7 @@ ColumnLayout {
     root._history = null;
     root._error = "";
     root._historyKey = key;
-    MarketsManager.history(root.item, root.range, (error, history) => {
+    MarketsManager.history(root.item, root.shownRange, (error, history) => {
       if (!root || !root._alive || root._historyKey !== key)
         return;
       if (error)
@@ -134,8 +139,8 @@ ColumnLayout {
         required property var modelData
         Layout.fillWidth: false
         text: I18n.tr(modelData[1])
-        active: root.range === modelData[0]
-        onClicked: root.range = modelData[0]
+        active: root.shownRange === modelData[0]
+        onClicked: root._picked = modelData[0]
       }
     }
   }

@@ -54,16 +54,14 @@ func readWatchlist(ctx context.Context, e *Env) (watchlist, error) {
 	if err != nil {
 		return watchlist{}, err
 	}
-	w := watchlist{list: &jsonx.Array{}, baseCurrency: "USD", pauseWhenClosed: true}
+	w := watchlist{list: &jsonx.Array{}}
 	if v, ok := config.Lookup(cfg, symbolsPath); ok {
 		if list, ok := v.(*jsonx.Array); ok {
 			w.list = list
 		}
 	}
 	if v, ok := config.Lookup(cfg, config.Path{{Key: "Markets"}, {Key: "baseCurrency"}}); ok {
-		if s, ok := v.(string); ok && s != "" {
-			w.baseCurrency = s
-		}
+		w.baseCurrency, _ = v.(string)
 	}
 	if v, ok := config.Lookup(cfg, config.Path{{Key: "Markets"}, {Key: "pauseWhenClosed"}}); ok {
 		w.pauseWhenClosed = v == true
