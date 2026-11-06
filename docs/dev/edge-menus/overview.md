@@ -33,7 +33,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 
 ### State (`EdgeMenuManager`)
 - Holds which menus are open and pinned, in a `PersistentProperties`, so a reload doesn't reflow windows.
-- Owns the `edgeMenu` IPC target.
+- Owns the `edgeMenu` IPC target. Its `open` and `toggle` reveal a closed menu (`reveal`: the cursor moves into it), so one that closes on leave stays up when a bind or script opens it.
 - The layouts editor's draft of the menus is not here: `OverlayManager.menus` (`EdgeMenuEditor`, [Editing and submenus](editing-submenus.md)).
 - The menus follow it and report back when they close by themselves.
 - They work over the overlay:
