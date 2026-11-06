@@ -233,10 +233,10 @@ Card {
         StyledSwitch {
           enabled: !root.missing
           checked: root.active
-          onToggled: {
-            ShellManager.onScreen("nightLight");
-            NightLightManager.setActive(checked);
-          }
+          onToggled: ActionsManager.run("nightLight", {
+            "call": checked ? "open" : "close",
+            "fromScreen": true
+          })
         }
       }
 

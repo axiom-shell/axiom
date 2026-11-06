@@ -46,9 +46,10 @@ running anything:
     `// allowed: <reason>` (a file name, a window that must exist with no
     monitor)
   - no UI switches one of the shell's actions through its service's own
-    toggle (Wi-Fi, Bluetooth, caffeine, do not disturb, night light, dark
-    mode, the mutes, the VPN, a recording, a session action): it runs it
-    through ActionsManager.run, as every other place that offers it
+    toggle or setter (Wi-Fi, Bluetooth, caffeine, do not disturb, night
+    light, dark mode, the mutes, the VPN, a recording, a session action):
+    it runs it through ActionsManager.run, as every other place that
+    offers it
 and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
@@ -612,7 +613,7 @@ def main():
     # One way to run an action: the UI runs a catalogue action through
     # ActionsManager.run (docs/dev/core/actions.md), never its service's
     # toggle, so a tile, a command, an OSD icon and a key run the same code
-    action_toggles = r"\b(?:NetworkingManager\.(?:toggleWifi|setAirplane)|BluetoothManager\.toggleEnabled|IdleManager\.toggle|NotificationManager\.toggleDnd|NightLightManager\.toggle|ThemeManager\.toggleDarkMode|AudioManager\.(?:toggleMute|toggleSourceMute)|VpnManager\.toggleLast|ScreenshotManager\.toggleRecording|BatteryManager\.setPowerSaver|SessionManager\.sessionAction)\("
+    action_toggles = r"\b(?:NetworkingManager\.(?:toggleWifi|setWifiEnabled|setAirplane)|BluetoothManager\.(?:toggleEnabled|setEnabled)|IdleManager\.(?:toggle|setCaffeine)|NotificationManager\.(?:toggleDnd|setDnd)|NightLightManager\.(?:toggle|setActive)|ThemeManager\.(?:toggleDarkMode|setLightMode)|AudioManager\.(?:toggleMute|toggleSourceMute)|VpnManager\.toggleLast|ScreenshotManager\.(?:toggleRecording|stopRecording)|BatteryManager\.setPowerSaver|SessionManager\.sessionAction)\("
     for path, text in sources.items():
         if not path.startswith(("qml/components/", "qml/shell/")):
             continue

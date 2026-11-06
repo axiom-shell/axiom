@@ -27,7 +27,7 @@ BarIconWidget {
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton
   onClicked: button => {
     if (button === Qt.MiddleButton)
-      NotificationManager.clearAll();
+      ActionsManager.run("clearNotifications");
     else {
       ActionsManager.run("toggleDnd", {
         "fromScreen": true
