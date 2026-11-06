@@ -429,39 +429,40 @@ Panel {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.fillHeight: root.embedded
-        Layout.preferredHeight: root.embedded ? -1 : Math.min(historyList.implicitHeight, Appearance.fontSize * 16)
+        Layout.preferredHeight: root.embedded ? -1 : Math.min(historyList.contentHeight, Appearance.fontSize * 16)
         contentPadding: 0
-        showScrollBar: historyList.implicitHeight > height
+        showScrollBar: historyList.contentHeight > height
 
-        ColumnLayout {
+        // A ListView, so only the rows in view are built
+        ListView {
           id: historyList
-          width: historyScroll.availableWidth
           spacing: 2
+          boundsBehavior: Flickable.StopAtBounds
+          model: CountModel {
+            count: root.history.length
+          }
 
-          Repeater {
-            model: root.history.length
+          delegate: ItemRow {
+            id: row
+            required property int index
+            width: ListView.view.width
+            readonly property var entry: root.history[index] ?? ({
+                "expr": "",
+                "result": ""
+              })
+            icon: root.copied === entry.result ? "check" : "calculate"
+            marked: root.copied === entry.result
+            title: entry.result
+            subtitle: entry.expr
+            onActivated: root.copyAnswer(row.entry)
 
-            ItemRow {
-              id: row
-              required property int index
-              readonly property var entry: root.history[index] ?? ({
-                  "expr": "",
-                  "result": ""
-                })
-              icon: root.copied === entry.result ? "check" : "calculate"
-              marked: root.copied === entry.result
-              title: entry.result
-              subtitle: entry.expr
-              onActivated: root.copyAnswer(row.entry)
-
-              FlatIconButton {
-                size: Widget.iconButton
-                iconText: "north_west"
-                tooltipText: I18n.tr("Edit")
-                onClicked: {
-                  field.text = row.entry.expr;
-                  field.input.forceActiveFocus();
-                }
+            FlatIconButton {
+              size: Widget.iconButton
+              iconText: "north_west"
+              tooltipText: I18n.tr("Edit")
+              onClicked: {
+                field.text = row.entry.expr;
+                field.input.forceActiveFocus();
               }
             }
           }
