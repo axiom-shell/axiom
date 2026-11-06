@@ -1,0 +1,100 @@
+# The Markets section of the config (config.json's "Markets").
+
+type: object
+x-category: Modules
+x-card: {file: MarketsWatchlist, title: Watchlist, folds: true}
+title: Markets
+description: Stock, index, currency and crypto prices from Yahoo Finance and CoinGecko (no account needed).
+additionalProperties: false
+x-order: [interval, pauseWhenClosed, baseCurrency, alerts, redForGains, holdingsOnLockscreen, symbols]
+properties:
+  symbols:
+    type: array
+    title: Watchlist
+    x-settings: false
+    description: In the order every widget and module shows them.
+    default:
+      - {id: sp500, symbol: '^GSPC', label: S&P 500}
+      - {id: aapl, symbol: AAPL}
+      - {id: btc, symbol: BTC-USD, label: Bitcoin}
+      - {id: eth, symbol: ETH-USD, label: Ethereum}
+    items:
+      type: object
+      additionalProperties: false
+      required: [id]
+      properties:
+        id: {$ref: '#/definitions/ItemId'}
+        symbol:
+          type: string
+          title: Symbol
+          default: ''
+          description: Yahoo Finance's symbol (AAPL, ^GSPC, BTC-USD, EURUSD=X), or CoinGecko's coin id.
+        source:
+          type: string
+          title: Source
+          default: yahoo
+          enum: [yahoo, coingecko]
+        label:
+          type: string
+          title: Label
+          default: ''
+          description: Shown instead of the symbol. Empty shows the symbol.
+        quantity:
+          type: number
+          title: Holding
+          default: 0
+          minimum: 0
+          description: How many you own. 0 holds none.
+        averageCost:
+          type: number
+          title: Average cost
+          default: 0
+          minimum: 0
+          description: What you paid for each, in its own currency, for the total gain. 0 leaves it out.
+        alertAbove:
+          type: number
+          title: Alert above
+          default: 0
+          minimum: 0
+          description: Notifies once when the price rises past this. 0 sets none.
+        alertBelow:
+          type: number
+          title: Alert below
+          default: 0
+          minimum: 0
+          description: Notifies once when the price falls past this. 0 sets none.
+  interval:
+    type: integer
+    title: Refresh interval
+    x-unit: min
+    default: 120000
+    minimum: 60000
+    maximum: 3600000
+  pauseWhenClosed:
+    type: boolean
+    title: Pause when markets close
+    default: true
+    description: A closed market's prices are checked only hourly. Crypto never closes.
+  baseCurrency:
+    type: string
+    title: Portfolio currency
+    default: USD
+    description: Holdings are totalled in it (a three-letter code). CoinGecko coins are priced in it too.
+  alerts:
+    x-scope: personal
+    type: boolean
+    title: Price alerts
+    default: true
+    description: Notifies when a price crosses one of the watchlist's alerts.
+  redForGains:
+    x-scope: personal
+    type: boolean
+    title: Red for gains
+    default: false
+    description: Rises in red and falls in green, as East Asian markets show them.
+  holdingsOnLockscreen:
+    x-scope: personal
+    type: boolean
+    title: Holdings on the lock screen
+    default: false
+    description: Markets modules on the lock screen show what you own and the portfolio's worth too. Anyone at the locked screen can read them.

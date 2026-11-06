@@ -77,6 +77,11 @@ Loader {
         labels[item.id] = item.name || item.id;
         return labels;
       }, {});
+    if (fieldSchema.items?.["x-options"] === "marketSymbols")
+      return MarketsConfig.symbols.reduce((labels, item) => {
+        labels[item.id] = item.label || item.symbol || item.id;
+        return labels;
+      }, {});
     if (fieldSchema["x-options"] === "overlayPages")
       return OverlayConfig.views.reduce((labels, view, index) => {
         const key = OverlayConfig.pageKey(view);
@@ -243,7 +248,7 @@ Loader {
     switch (fieldSchema.type) {
     case "array":
       // Strings only: from a fixed set (chips), or free text
-      return fieldSchema.items?.enum ? chipsField : stringListField;
+      return fieldSchema.items?.enum || fieldSchema.items?.["x-options"] ? chipsField : stringListField;
     case "boolean":
       return switchField;
     case "integer":
@@ -501,9 +506,11 @@ Loader {
     }
   }
 
-  // An array of strings from `items.enum`: one toggle chip per option (with
-  // its `x-enumIcons` icon), committed in the enum's order. `x-enumFrom`
-  // offers only the options a sibling array holds
+  // An array of strings from `items.enum` (or an `items.x-options` list):
+  // one toggle chip per option (with its `x-enumIcons` icon), committed in
+  // the options' order. `x-enumFrom` offers only the options a sibling
+  // array holds
+  readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : fieldSchema.items?.enum ?? SettingsManager.optionsFor(fieldSchema.items) ?? []
   Component {
     id: chipsField
     ColumnLayout {
@@ -518,7 +525,7 @@ Loader {
         spacing: Widget.spacing / 2
         Repeater {
           model: {
-            const all = root.fieldSchema.items.enum;
+            const all = root._chipOptions;
             const from = root.fieldSchema["x-enumFrom"];
             if (!from)
               return all;
@@ -535,7 +542,7 @@ Loader {
             onClicked: {
               const current = root.current ?? [];
               const next = chip.selected ? current.filter(v => v !== chip.modelData) : current.concat([chip.modelData]);
-              root.commit(root.fieldSchema.items.enum.filter(v => next.includes(v)));
+              root.commit(root._chipOptions.filter(v => next.includes(v)));
             }
           }
         }

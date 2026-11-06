@@ -39,6 +39,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
 - **`OverlayConfig`**: views and card-grid constants.
 - **`EdgeMenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
+- **`MarketsConfig`**: the watchlist (`symbols`, each with its holding and alerts) every markets widget and module shows, the poll `interval`, `pauseWhenClosed`, `baseCurrency`, `alerts`, `redForGains`, `holdingsOnLockscreen`.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.
 - **`DrivesConfig`**: whether drive events notify, what plugging in a removable drive does and the drives left alone: `notify`, `onInsert`, `warnUnplugged`, `ignore`.
 - **`VpnConfig`**: what every VPN widget and module shares: `notifyOnDrop`, `showTailscale` (Tailscale as a VPN row), `publicIpUrl`.

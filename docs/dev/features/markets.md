@@ -1,0 +1,40 @@
+# Markets
+
+> **Files:** `qml/services/apps/MarketsManager.qml`, `qml/config/MarketsConfig.qml`, `qml/components/methods/MarketMath.qml`, `qml/components/bar/widgets/Markets/Markets.qml`, `qml/components/content/MarketsPopout/MarketsPopout.qml`, `qml/components/content/Markets/Markets.qml`, `qml/components/content/parts/PriceChart.qml`, `qml/components/content/parts/QuoteRow.qml`, `qml/components/content/parts/QuoteTile.qml`, `qml/components/content/parts/QuoteDetail.qml`, `qml/components/views/Settings/MarketsWatchlistCard.qml`, `backend/internal/markets/markets.go`, `backend/internal/markets/yahoo.go`, `backend/internal/markets/coingecko.go`, `backend/internal/markets/lookup.go`, `backend/internal/markets/watchlist.go`, `backend/internal/daemon/topics.go`, `backend/internal/cli/markets.go`
+> **Config:** `Markets.*` (reader `MarketsConfig`); the bar widget's and the module's own settings are only which symbols and how they look
+> **Related:** [Services pattern](../core/services-pattern.md) (polled topics), [Protocol](../backend/protocol.md), [Display styles](../bar/display-styles.md), [Notifications](notifications.md)
+
+Stock, ETF, index, currency and crypto prices for the bar widget, its popout and the module, shaped like Weather: the `Markets` section (Modules category) holds the watchlist and everything every widget shares, a widget or module only which of its symbols it shows and how.
+
+### Data
+- axiom fetches the prices (the `markets` topic, `backend/internal/markets`), every `Markets.interval` (1 minute at least), while something acquires `MarketsManager` or a price alert waits (`Markets.alerts` and a threshold set). The request is the watchlist's symbols and sources, `baseCurrency`, `pauseWhenClosed` and whether any holding needs rates (`MarketMath.request`, from config only).
+- **Yahoo Finance** (no key): the chart API, `/v8/finance/chart/<symbol>?range=1d&interval=5m`, one request per symbol, four at a time. It covers stocks, ETFs, indices (`^GSPC`), currencies (`EURUSD=X`) and crypto (`BTC-USD`), with the day's 5-minute closes, the previous close, the day's range and the trading periods (pre, regular, post). The browser-like User-Agent matters: Yahoo answers a bare one 429.
+- **CoinGecko** (no key), for coins Yahoo doesn't list (`source: coingecko`, the symbol a coin id, `bitcoin`): one `/coins/markets` call for all of them, priced in `baseCurrency`, with the last 25 hourly points of its 7-day sparkline as the day.
+- A quote is keyed by `MarketMath.key` (Yahoo's symbol, or `coingecko:<id>`) and carries `marketState` (pre, regular, post, closed; crypto always regular), worked out at each fetch from the cached trading periods, so a closed market's state stays right without fetching it.
+- **Market hours:** with `pauseWhenClosed`, a symbol outside its regular session is fetched once after the close (the final prices) and then hourly; crypto every time.
+- **Rate limits:** a host answering 429 or 5xx is left alone for 1 minute, doubling to 30. Its symbols keep their last prices marked `stale` (the rows show a history mark). A symbol with no price at all carries its `error`; the state's `error` is set only when no symbol has a price.
+- **Holdings:** with any `quantity` set, the daemon adds each quote currency's rate to the base currency (Yahoo's `<CUR><BASE>=X`, cached for 15 minutes; pence-quoted `GBp`/`GBX`, `ZAc` and `ILA` are their unit's rate over 100). `MarketMath.portfolio` totals value, today's change and, when every holding has an `averageCost`, the total gain.
+- The last prices are kept in `<state dir>/markets.json` (0600), so the bar has them at once after a restart.
+
+### Search and history
+- `markets.search {query}`: Yahoo's search (8 matches) and CoinGecko's (4 coins) at once, `{matches, error}`; one failing still answers the other's. The watchlist card's search box asks it 350 ms after typing stops.
+- `markets.quotes` (a `Request`): the state for it at once, from the topic's cache (`axiom markets list`).
+- `markets.history {symbol, source, range, baseCurrency}` (range 1d, 5d, 1mo, 6mo, 1y): the chart over a range, `{points, reference, high, low, currency, start, end}`, the reference the previous close for a day, else the range's first price. Cached per request (2 minutes for a day up to 6 hours for a year). `QuoteDetail` asks for each range once while it's shown; the day is the live quote.
+- Both share the topic's per-host backoff (one `Markets`), not its lock.
+
+### Alerts
+- Each watchlist item may set `alertAbove` and `alertBelow` (0: none). After each state, `MarketsManager` compares each fresh price with the one it saw before (`MarketMath.crossed`) and sends one notification per crossing (`axiom-markets`). A price first seen crosses nothing, so a reload or restart never repeats one; crossing back re-arms it. Stale prices are skipped.
+
+### Surfaces
+- **Bar widget** (`Markets`, group Tools, `ValueStyleWidget`): its `symbols` (ids from the watchlist through `x-options: marketSymbols` chips; none is all), `value` (price and change, price, change in %, change), `colorize` (the change in the trend's colour as StyledText, and the text colour for `colorText`), `showPortfolio` (the holdings' total first).
+  - Styles: label and stacked show one symbol at a time, cycling every `rotateInterval` (a looping animation, so it stays on the first with animations off), or, label with `rotate` off, all side by side; `minimumText` is the widest entry so cycling never resizes the bar. Ticker scrolls them all. Sparkline draws the shown symbol's day (`MarketMath.closes`, 48 points).
+  - Its popout (`MarketsPopout`, a `Panel`, `flips`) shows the portfolio (with `showPortfolio`), the widget's symbols as `QuoteRow`s in a ListView, and a click swaps the list for that symbol's `QuoteDetail` in the same room (the popout never grows while open). Refresh and the watchlist's settings in its header.
+- **Module** (`Markets`, overlay, edge menus, desktop and the lock screen): `layout` list (QuoteRows, a click opening the detail in place), tiles (`QuoteTile`s, the day's line full-bleed behind the price) or focus (the first symbol's `QuoteDetail` over `range`); `showChart`, `showHoldings`. **Holdings show on the lock screen only with `Markets.holdingsOnLockscreen` (off by default), never on the greeter** (`host.kind`). Compact, the first symbol's price and change.
+- **Colours:** a rise is `Theme.success` and a fall `Theme.error`, swapped by `Markets.redForGains` (East Asian markets' convention) (`MarketsManager.trendColor`).
+- **Settings:** the section's `x-card` (`MarketsWatchlistCard`) is the watchlist: the search with Add, each symbol's live price, Move up/down, Remove, and a click opening its options (symbol, source, label, holding, average cost, alerts) through the settings draft. The array itself is `x-settings: false`.
+- IPC: `markets refresh`, `markets status` (a line per symbol, the portfolio last).
+- **CLI** (`axiom markets`, `backend/internal/cli/markets.go`): `list` (the watchlist with prices from `markets.quotes`, which runs the topic's fetch for the watchlist's request: only what's due is fetched), `add`, `remove`, `hold` (absolute, or `+n`/`-n` relative with the old value as the op's base, so a concurrent edit is a conflict, not lost), `alert`, `move` (an `order` op), `search`, `refresh`. Edits are config ops on `Markets.symbols` by item id, through the daemon or the file (`--offline`). Items are found by id, then symbol, then label (`markets.Find`); the helpers (`Find`, `FreeID`, `Amount`, `RequestFor`) are in `backend/internal/markets/watchlist.go`. A negative number on any command line is a positional, not a flag (`parseInterleaved`).
+
+### Testing
+- `go test ./internal/markets` serves both APIs from `httptest` (quotes, closed-market skipping, the final close, backoff, partial errors, CoinGecko, rates, the state file, search, history). `scripts/run_tests.sh MarketMath` covers the request, picking, formatting, holdings, alerts and the chart spans.
+- The real APIs are unofficial or rate limited: don't poll them in a tight loop while testing.
