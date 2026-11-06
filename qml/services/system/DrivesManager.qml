@@ -34,8 +34,9 @@ QtObject {
   property var pending: ({})
   // driveId -> the last action's error, said for the user ("" none)
   property var errors: ({})
-  // The volume whose passphrase field shows (its id), else ""; set by the
-  // row's Unlock and the notification's
+  // The volume whose passphrase field shows in its row (its id), else
+  // ""; set by the row's Unlock (a card's or notification's asks in the
+  // prompt: promptUnlock)
   property string unlockRequest: ""
   // The last unlock's error, under the field
   property string unlockError: ""
@@ -166,9 +167,8 @@ QtObject {
     }
   }
 
-  // Shows the passphrase field of a locked volume (in a Drives module or
-  // popout shown; activate() opens one); opens it once unlocked with
-  // `andOpen`
+  // Shows the passphrase field of a locked volume in its row (a Drives
+  // module or popout shown); opens it once unlocked with `andOpen`
   function askUnlock(volumeId, andOpen) {
     root.unlockError = "";
     root._openAfterUnlock = andOpen === true;
@@ -181,38 +181,62 @@ QtObject {
     root._openAfterUnlock = false;
   }
 
-  // rpc: drives.unlock
-  // Unlocks the asked volume with a passphrase (sent only in the call's
-  // body, never logged), then mounts its cleartext volume
+  // Unlocks the volume asked in its row with a passphrase, then mounts
+  // its cleartext volume
   function unlock(passphrase) {
     const id = root.unlockRequest;
-    const drive = root.driveOfVolume(id);
-    if (!drive || passphrase === "")
+    if (id === "" || passphrase === "")
       return;
     root.unlockError = "";
-    root._pend(drive, "unlocking");
-    BackendManager.call("drives.unlock", {
-      "id": id,
-      "passphrase": passphrase
-    }, (error, result) => {
-      if (error?.kind === "wrong_passphrase") {
-        root._settle(drive, "drives.unlock", null);
+    root._unlock(id, passphrase, root._openAfterUnlock, error => {
+      if (error?.kind === "wrong_passphrase")
         root.unlockError = root.errorText(error.kind);
+      else if (root.unlockRequest === id)
+        root.cancelUnlock();
+    });
+  }
+
+  // Asks for a locked volume's passphrase in the shared prompt (a Locked
+  // card's click, a notification's Unlock): a wrong one asks again, a
+  // right one mounts it (and opens it with `andOpen`)
+  function promptUnlock(volumeId, andOpen) {
+    const drive = root.driveOfVolume(volumeId);
+    if (!drive || root._inert)
+      return;
+    if (root.unlockRequest === volumeId)
+      root.cancelUnlock();
+    root._withdrawUnlockPrompt();
+    const prompt = PromptManager.request({
+      "source": "drives",
+      "icon": "lock_open",
+      "title": I18n.tr("{0} is encrypted", root.nameOf(drive)),
+      "fields": [
+        {
+          "key": "passphrase",
+          "label": I18n.tr("Passphrase")
+        }
+      ],
+      "actions": PromptManager.cancelOr("unlock", I18n.tr("Unlock")),
+      "waits": true
+    }, (action, values) => {
+      if (action !== "unlock") {
+        root._withdrawUnlockPrompt(prompt);
         return;
       }
-      root._settle(drive, "drives.unlock", error);
-      const andOpen = root._openAfterUnlock;
-      if (root.unlockRequest === id)
-        root.cancelUnlock();
-      // Nothing to mount inside (LVM, or no filesystem yet)
-      if (error || !result?.cleartextId || !result.mountable)
-        return;
-      root.mount(drive, {
-        "id": result.cleartextId,
-        "mountable": true,
-        "mountPoints": []
-      }, andOpen);
-    });
+      root._unlock(volumeId, values.passphrase ?? "", andOpen === true, error => {
+        // Unlocked, or the drive gone: it goes; else it asks again
+        if (!error || error.kind === "not_found")
+          root._withdrawUnlockPrompt(prompt);
+        else
+          PromptManager.update(prompt, {
+            "error": root.errorText(error.kind)
+          });
+      });
+    }, () => root._withdrawUnlockPrompt(prompt));
+    root._unlockPrompt = {
+      "id": prompt,
+      "volumeId": volumeId
+    };
   }
 
   // rpc: drives.lock
@@ -234,6 +258,8 @@ QtObject {
       return;
     if (root.unlockRequest !== "" && root.driveOfVolume(root.unlockRequest)?.id === drive.id)
       root.cancelUnlock();
+    if (root._unlockPrompt && root.driveOfVolume(root._unlockPrompt.volumeId)?.id === drive.id)
+      root._withdrawUnlockPrompt();
     const name = root.nameOf(drive);
     root._pend(drive, "ejecting");
     BackendManager.call("drives.eject", {
@@ -268,7 +294,8 @@ QtObject {
 
   // A click on a drive event (the OSD's card, a notification; lastEvent's
   // shape, { kind, driveId }): what DriveInfo.clickAction says. Opens
-  // the drive's folder, or asks for its passphrase, else shows the drives
+  // the drive's folder, or asks for its passphrase in the prompt, else
+  // shows the drives
   function activate(event) {
     if (!event || root._inert)
       return;
@@ -283,8 +310,10 @@ QtObject {
     case "unlock":
       {
         const pick = DriveInfo.pick(drive);
-        if (pick?.action === "unlock")
-          root.askUnlock(pick.volume.id);
+        if (pick?.action === "unlock") {
+          root.promptUnlock(pick.volume.id);
+          return;
+        }
         break;
       }
     }
@@ -297,6 +326,9 @@ QtObject {
   // unlock (onInsert "mount")
   property var _queued: []
   property bool _openAfterUnlock: false
+  // The prompt asking for a passphrase (promptUnlock): { id (PromptManager's),
+  // volumeId }, else null
+  property var _unlockPrompt: null
   property int _serial: 0
   readonly property bool _inert: Paths.greeter
   readonly property string _desktopEntry: "axiom-drives"
@@ -305,6 +337,42 @@ QtObject {
   // the shell, a file manager) is said, and an unplug knows its name and
   // whether it was pulled while mounted
   property var _seen: ({})
+
+  // rpc: drives.unlock
+  // Unlocks a volume with a passphrase (sent only in the call's body,
+  // never logged), then mounts its cleartext volume. answered(error)
+  // tells the asker how it went (null: unlocked); a failure but a wrong
+  // passphrase is the row's error too
+  function _unlock(id, passphrase, andOpen, answered) {
+    const drive = root.driveOfVolume(id);
+    // Gone: the row's field or the prompt went with it (_show)
+    if (!drive)
+      return;
+    root._pend(drive, "unlocking");
+    BackendManager.call("drives.unlock", {
+      "id": id,
+      "passphrase": passphrase
+    }, (error, result) => {
+      root._settle(drive, "drives.unlock", error?.kind === "wrong_passphrase" ? null : error);
+      answered(error ?? null);
+      // Nothing to mount inside (LVM, or no filesystem yet)
+      if (error || !result?.cleartextId || !result.mountable)
+        return;
+      root.mount(drive, {
+        "id": result.cleartextId,
+        "mountable": true,
+        "mountPoints": []
+      }, andOpen);
+    });
+  }
+
+  // The prompt asking goes (only `id`'s, when given)
+  function _withdrawUnlockPrompt(id) {
+    if (!root._unlockPrompt || (id !== undefined && root._unlockPrompt.id !== id))
+      return;
+    PromptManager.withdraw(root._unlockPrompt.id);
+    root._unlockPrompt = null;
+  }
 
   function _pend(drive, what) {
     const next = Object.assign({}, root.pending);
@@ -644,6 +712,8 @@ QtObject {
     // A request for a volume gone with its drive
     if (root.unlockRequest !== "" && !root.driveOfVolume(root.unlockRequest))
       root.cancelUnlock();
+    if (root._unlockPrompt && !root.driveOfVolume(root._unlockPrompt.volumeId))
+      root._withdrawUnlockPrompt();
   }
 
   function _onEvent(e) {

@@ -2,9 +2,18 @@
 
 > **Files:** `qml/services/ui/PromptManager.qml`, `qml/shell/Prompt.qml`, `qml/components/surfaces/prompt/PromptWindow.qml`, `qml/components/surfaces/prompt/PromptCard.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`
 > **Config:** none (its sources' own: `Polkit.enabled`, `Bluetooth.pairingAgent`)
-> **Related:** [Polkit](polkit.md), [Networking and Bluetooth](networking-bluetooth.md) › The pairing agent, [VPN](vpn.md), [Shared UI pieces](../core/shared-ui-pieces.md)
+> **Related:** [Polkit](polkit.md), [Networking and Bluetooth](networking-bluetooth.md) › The pairing agent, [VPN](vpn.md), [Removable drives](drives.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
-One prompt for every password, PIN or confirmation the system asks for: a request the system starts goes here; a form the user opens by clicking in a menu stays in its row. Its sources: polkit (`PolkitManager`) and BlueZ's pairing agent (`BluetoothManager`).
+One prompt for every password, PIN or confirmation the system asks for. **The rule:** a request the system starts goes here; a form the user opens by clicking in a menu stays in its row.
+
+### Its sources
+| Source | Service | Asks here | Stays in its row |
+|---|---|---|---|
+| polkit | `PolkitManager` | every authentication (`content: "polkit"`) | — |
+| Bluetooth pairing | `BluetoothManager` | the pairing agent's requests (confirm, PIN, passkey, a code to type, authorize) | — |
+| VPN secrets | `VpnManager` | every `vpn.secretRequest` (NetworkManager asking at connect time, whoever started it) | — |
+| Wi-Fi passwords | `NetworkingManager` | a `NoSecrets` failure with no Wi-Fi menu holding the scan (an autoconnect, a join from elsewhere): WPA, WEP, LEAP; `waits` | a secured network clicked in the menu, or a failure while one is open; an enterprise network always (its form is the menu's) |
+| Drive unlocks | `DrivesManager` | a Locked card's click or a notification's Unlock (`promptUnlock`); `waits` | a row's Unlock, opening a locked drive from its row or the Drives widget |
 
 ### The queue (`PromptManager`)
 - **One request at a time.** Requests queue in the order they came; the first is `current`, the rest `waiting`. So two requests never fight over the screen: a pairing prompt asked while polkit's is open shows once polkit's ends.
@@ -12,7 +21,7 @@ One prompt for every password, PIN or confirmation the system asks for: a reques
   - `source` (who asks, for logs and the doc), `icon` (a Material glyph), `title`, `message`;
   - `code` (shown large: a PIN or passkey) and `entered` (how many of its digits are typed, lit; -1 none);
   - `fields`: `[{key, label, secret (default true), digits, maxLength}]`, each a `PasswordEntry` (a digits field takes only digits);
-  - `actions`: `[{id, label, primary, icon}]`, the buttons, in order; the primary one is accented, runs on Enter, and only once every field is filled;
+  - `actions`: `[{id, label, primary, icon}]`, the buttons, in order; the primary one is accented, runs on Enter, and only once every field is filled. `cancelOr(id, label)` gives the usual pair: Cancel (id `cancel`), then the primary one;
   - `error`: shown under the last field (or alone with none);
   - `waits` (default false): answered, the request stays, busy, until its source `update`s it with an error (asked again) or `withdraw`s it; else it goes at once;
   - `outsideCancels` (default true): a click outside the card cancels it;
@@ -21,7 +30,7 @@ One prompt for every password, PIN or confirmation the system asks for: a reques
 - **`update(id, changes)`** changes a queued request's keys: the code as a keyboard types it, or an `error` after a wrong answer (which clears busy and counts an `attempt`: the card clears its fields and shakes the last).
 - **`withdraw(id)`** removes one its source ended (BlueZ cancelled, polkit's flow ended), calling neither callback.
 - **`screenName`**: the monitor the shown request is on, `CompositorManager.focusedOutput || General.primaryMonitor` when it came to the front (polkit's own pick before).
-- Nothing survives a reload: the sources queue again (PolkitManager its open flow; the daemon's pairing requests end with their pairing).
+- Nothing survives a reload: the sources queue again (PolkitManager its open flow; the daemon's pairing requests end with their pairing, and a VPN's with NetworkManager's timeout; a Wi-Fi password or a drive unlock is asked again by trying again).
 
 ### The window (`PromptWindow`)
 - One per screen (`qml/shell/Prompt`, `Variants` over `General.outputs`), lifted from polkit's: each dims its screen, the card on `screenName`'s only (`General.screensNamed`, the primary when that screen is gone).
