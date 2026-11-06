@@ -522,6 +522,7 @@ Loader {
       label: root.label
       description: root.description
       headerExtra: root.headerExtra
+      beside: true
       pattern: "^-?[0-9]*[.]?[0-9]*$"
       currentConfigValue: root.current === undefined || root.current === null ? "" : String(root.current)
       onValueTyped: value => root.type(root._decimal(value))
