@@ -29,18 +29,21 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### "Colour the text by state" does nothing on a bar whose widgets have no fill
 - **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`); the same test in `qml/components/bar/widgets/Markets/Markets.qml` (`rich`: the change coloured inline, so on an unfilled bar it isn't, and on a tinted one it is)
 - **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
+  **Decided** (maintainer, 2026-11-06, on a) a merged run's fill counts as a fill (its text not coloured), b) colour the text in merged runs too; recommended a)): "defer"
 - **Size:** trivial
 - **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
 
 ### A latched held dock's gap to its edge swallows clicks while the pointer is in it
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`inputArea.fromEdge`, `hover`, `pointerIn`)
 - **What:** A held hover or intellihide dock takes the gap from the screen edge to its box into its input mask while latched, so the pointer coming in from the trigger doesn't leave it on the way. The `HoverHandler` covers the whole window (`dockContent` fills it), so once latched, the pointer anywhere in that gap counts as on the dock: moving from the box toward the edge keeps it open (`closeTimer` stopped) and clicks on the windows there go to the dock. With `distance` (up to 50% of the free screen, where the old px `gap` was at most 200) that strip can be half the screen. Options: the gap only until the pointer first reaches the box, hover only on the box (the gap kept for the trigger's path alone), or keep it.
+  **Decided** (maintainer, 2026-11-06, on a) the gap counts only until the pointer first reaches the box, b) hover only on the box with the gap still taking clicks, c) keep it; recommended a)): "rec - this should likely apply to all popouts"
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the floating popouts branch
 
 ### A reserving held dock reserves the screen up to its distance
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`panelWindow.exclusiveZone`)
 - **What:** An always-shown held dock with Reserve space (both defaults) reserves `boxOffset + thickness`, from its edge to the box's far side. With `distance` (0–50% across the free screen, new in place of a px `gap` of at most 200) a dock at 50% reserves half the screen, and the windows tile into the other half. A layer surface can only reserve from its edge, so the choice is the maintainer's: hide Reserve space past a distance of 0, reserve only at 0, or keep it.
+  **Decided** (maintainer, 2026-11-06, on a) hide Reserve space past a distance of 0, b) reserve only at 0 with the switch kept, c) keep it; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the floating popouts branch (round 2)
 
@@ -53,6 +56,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A menu at the screen-size cap can still lose a bar's depth
 - **Where:** `qml/config/EdgeMenusConfig.qml` (`scaleOf`)
 - **What:** `scaleOf` shrinks a menu's Module size so its depth across its edge fits the screen less its padding (`GridPlacement.fitModuleScale`). Worked out from config alone, it doesn't take off what the bars and border reserve across that edge (EdgeMenuManager's frame, `frame.across`), so a menu at the cap sits past them and loses about their depth at the far screen edge (a nested niri run, 2026-11-05: a top menu at Module size 200 reached the screen's bottom edge). Fix: take the frame's `across` off the room too, from the hosts (which know the frame), or leave it (rare: it takes a card size and Module size high enough to reach the cap). Kept as built by the coordinator (2026-11-05): rare path, no product stake.
+  **Decided** (maintainer, 2026-11-06, on a) fix it from the hosts, b) defer; recommended b)): "defer"
 - **Size:** small
 - **Found:** 2026-11-05, while fixing bar-popouts-07 (row 20)
 
@@ -71,6 +75,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
 - **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
 - **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).
+  **Decided** (maintainer, 2026-11-06, on a) grow each side by what it covered, b) count a side within a screen pixel of covering as covering; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the wallpaper chunk of the tweaks-minor-complaints branch
 
@@ -89,12 +94,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Copying a setting to live uses dev's paths, which an older live may not have
 - **Where:** `backend/internal/daemon/devsync.go` (`configCopy`), `backend/internal/devconfig/devconfig.go` (`WriteLive`)
 - **What:** A copy to live applies dev's ops (paths in the dev tree's shape) to live's raw JSON and checks the result against the install's schema. When the install is older (a setting the dev tree moved or reshaped, a section live hasn't migrated to), the op lands where the install doesn't look, or the check refuses it with the install schema's issue, which names a path the user didn't pick; the diff only marks settings the install's schema lacks entirely (`devOnly`), not ones it has at another path or shape. Nothing says the two configs are of different versions, or that updating the install would let the copy through.
+  **Decided** (maintainer, 2026-11-06, on a) a version notice on the card, and rows whose shape differs in the install marked as not copyable as `devOnly` rows are, b) the notice only, c) leave it; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-03, while building the dev config's copy to live
 
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `qml/services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.
+  **Decided** (maintainer, 2026-11-06, on a) add webp, plus avif and jxl where their Qt image plugin is installed (the plugins as optional packages), b) webp only, c) leave it; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-01, while adding wallpaper transitions
 
@@ -157,6 +164,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A VPN's password request can go unseen
 - **Where:** `qml/services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
 - **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, the `vpn` keybind action, or a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
+  **Decided** (maintainer, 2026-11-06, on a) a notification that opens a VPN row, b) open the VPN popout, c) answer `NoSecrets` while no row is shown; recommended a) with c) as its fallback): "defer"
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the VPN branch
 
@@ -175,18 +183,21 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A hot corner can't close what covers it
 - **Where:** `qml/shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
 - **What:** Hot corners sit on the Top layer, so a surface on the `Overlay` layer (axiom's workspace overview, a full-screen overlay page) covers the corner pixel: a toggling action opens it from a corner but can't close it there. niri's own corner toggles its overview; the migrated corner (v82) does that only while `WorkspaceOverlay.compositorOverview` is on. Whether a corner should stay live over Overlay-layer surfaces is the maintainer's call.
+  **Decided** (maintainer, 2026-11-06, on a) corners stay live over Overlay-layer surfaces (never over a fullscreen window), b) keep it; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
 
 ### Close on outside click differs on Hyprland since the overlay ignores its grab ending
 - **Where:** `qml/components/hosts/overlay/OverlayPanel.qml` (`grab`, `onClickedOutside`), `qml/services/compositor/FocusGrab.qml` (`clickedOutside`)
 - **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland closing on `FocusGrab.dismissed` (a native grab cleared with no newer grab started, as edge and floating popouts do since bar-popouts-02) or a backdrop that takes the click.
+  **Decided** (maintainer, 2026-11-06, on a) every compositor closes only on the overlay's own background, b) close on any outside click everywhere; recommended a)): "rec. click to close requires a click on its own monitor"
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
 
 ### The overlay's gaps can't be adjusted
 - **Where:** `qml/components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `qml/config/OverlayConfig.qml` (`boxPadding`)
 - **What:** The maintainer's note: "the overlay's gaps become adjustable". The gaps are one design value, `GridPlacement.cardSpacing` = 20: the gap between modules, the margin around the grid, the overlay box's padding and the tool pages' spacing; through `baseCard` and `gapOf` edge menus, the desktop, the lock screen and the greeter are drawn as the overlay's grid scaled. Answered so far (2026-10-29): "one setting, gaps between modules and edges of the overlay page look the same". Open: the overlay's alone, or one Look & Feel setting for the overlay, lock screen, greeter and desktop with edge menus kept at today's value (the maintainer: "Menus already seem smaller"); a bigger gap shrinks the cards on a page fitted to its screen. Deferred: "defer for now, still unsure".
+  **Decided** (maintainer, 2026-11-06, on a) one Look & Feel setting for the overlay, lock screen, greeter and desktop with edge menus kept, b) the overlay alone, c) keep it deferred; recommended a)): "defer"
 - **Size:** small
 - **Found:** 2026-10-29, while splitting Phase 13 step 2 (row 16)
 
@@ -217,6 +228,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)
 - **What:** The shell's first inputs arm both `debounce` and `liveDebounce` (300 ms each). When the live one fires first, `liveChanged` sees `AppliedMode != mode` and calls `apply`, which releases the managed config and asks for a reload; the layer debounce's `apply` then runs `runtimeApply` before that reload lands, so the runtime layer reads the managed config's binds (every axiom key looks taken, each logged once) and goes on over it. It's corrected after the reload (`configReloaded` applies again). Holding `runtimeApply` until `configReloaded` after a release that reloads would close it, but a missed reload event would then leave no runtime layer.
+  **Decided** (maintainer, 2026-11-06, on keep it deferred (it corrects itself; the fix could leave no runtime layer); recommended keeping it deferred): "defer"
 - **Size:** small
 - **Found:** 2026-10-24, while reviewing the Go backend branch
 
@@ -247,6 +259,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A dropdown in an edge menu card with nothing scrolling gets two rows
 - **Where:** `qml/components/reusable/StyledComboEntry.qml` (`_roomBelow`), `qml/components/content/parts/PomodoroDial.qml`
 - **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum (`_roomBelow` is 0 with no Flickable and `popoutRoom` null), and the card's rows below it are pushed out of view while it's open. Since PomodoroDial became a DialControls (row 20, features-05) the picker is the card's last row and the ring fills what's left, so there the open list shrinks the ring instead; it still gets two rows. Open question: how much room should such a list take (shrink the parts above it, or more rows over them)?
+  **Decided** (maintainer, 2026-11-06, on a) open the list over the card's content (up to the card's height), b) more rows inline, shrinking the parts above, c) keep two rows; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
@@ -326,6 +339,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Readers read files through a service
 - **Where:** `qml/config/Paths.qml` (`packagedVersion`), `qml/config/I18n.qml`
 - **What:** Readers read only the data owners and each other (AGENTS.md › Layering), but `Paths.packagedVersion` calls `FileManager.read`, and `I18n` reads with both `FileManager.read` and a FileView of its own. Either the rule names `FileManager` as allowed in readers, or the reads move to a data owner.
+  **Decided** (maintainer, 2026-11-06, on a) the rule allows `FileManager.read` in readers, b) the reads move to a data owner; recommended a)): "defer"
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
 
@@ -401,12 +415,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the settings chunk of the tweaks-minor-complaints branch
 
-### The guard misses a push after a rebase or branch rename onto main
-- **Where:** `.claude/hooks/guard.py` (`check`, `check_git`)
-- **What:** only `git switch`/`checkout` earlier in the line make a bare/HEAD push refused; `git rebase <upstream> main` (which ends on main) and `git branch -M main` (which renames the branch checked out) also leave main checked out, so `git rebase <feature> main && git push` or `git branch -M main && git push` from a feature branch's folder lands on main past a PR. Both pass `guard.check` from a folder on a feature branch, on origin/main's guard too (2026-11-06). Fix: count `rebase` with two positionals and `branch -m`/`-M` as switches.
-- **Size:** trivial
-- **Found:** 2026-11-06, while reviewing the guard's push-folder judging (row 20)
-
 ### Opening a hover-closing edge menu by IPC closes it at once
 - **Where:** `qml/services/ui/EdgeMenuManager.qml` (the `edgeMenu` `IpcTarget`'s `open`), `qml/components/surfaces/edgemenu/EdgeMenuSync.qml` (`autoDismiss`)
 - **What:** `axiom edge-menu open <id>` on a menu with `close.onLeave` (the default) shows it for one close delay and closes it, since the pointer isn't in it: the IPC `open` calls `open`, not `reveal`, so it's never `revealing`. `pin` on a closed menu doesn't open it either; only `pin` then `open` keeps it up. A bind or script can't open such a menu.
@@ -440,6 +448,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### On Hyprland a click back in an older popout closes it with the newer one
 - **Where:** `qml/services/compositor/FocusGrab.qml` (`dismissed`, `_outside`), `qml/services/ui/BackdropManager.qml` (`clickedOutside`)
 - **What:** Hyprland has one native grab at a time, and its `cleared` doesn't say where the click landed. So while a newer keyboard popout (Todo, Calculator) holds the native grab over an older edge or floating popout (the launcher, a floating edge menu), a click back inside the older one clears the newer grab, which sends `BackdropManager.clickedOutside(null, null)`, and the older one is dismissed and closes too. Rare: hover popouts close once the pointer leaves them, so the pointer reaches the older popout only after the newer grab ended with no click, except where the two overlap or the newer one is held open. Accepted as is by the leader (bar-popouts-02, round 4); fixing it needs the click's position (a backdrop that takes clicks on Hyprland too).
+  **Decided** (maintainer, 2026-11-06, on a) a backdrop that takes clicks on Hyprland, b) defer; recommended b)): "defer"
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
 
@@ -524,12 +533,14 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A folder name holding `#` or `?` opens the wrong folder in the note list
 - **Where:** `qml/components/content/parts/notes/NoteBrowser.qml:87` (`folderModel`)
 - **What:** The browser's `FolderListModel` is given `"file://" + NotesManager.absolute(…)` unencoded, so a `#` starts the URL's fragment and a `?` its query. Folder names come from the user (`createFolder` keeps both characters). Checked with qmltestrunner: a model given `file:///…/d/C#/` listed the contents of `d/C` (`names= ["x"]`), not `d/C#`. So opening a folder "C#" (or "Q&A?") shows another folder's notes, or nothing, under a breadcrumb saying "C#", and a notes folder set to such a path lists nothing at all; a `%20` in a name is read as a space. CONFIRMED. The wallpaper list isn't affected any more (WallpaperManager lists through `file.list` and escapes `%`, `#` and `?` in its image URLs). Encoding the URL doesn't fix it (checked with qmltestrunner on Qt 6.12, 2026-11-05): FolderListModel turns its folder into a local path and parses that as a URL again, so `file:///…/d/C%23/` still lists `d/C`; `C%2523` lists `C#`, but a `?` (`Q%253F`) or a literal `%xx` in a name can't be reached either way. Fix (a maintainer's call): escape twice for FolderListModel, which covers `#` and leans on Qt's double parse, or list the folder through the daemon (`file.list` with folders, plus a watch) instead of FolderListModel.
+  **Decided** (maintainer, 2026-11-06, on a) list folders through the daemon (`file.list` plus a watch), b) escape twice, c) refuse `#`, `?` and `%` in new folder names; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### Typing in a note creates a linked notes folder that doesn't exist
 - **Where:** `qml/services/apps/NotesManager.qml:409` (`flush`), `qml/services/apps/NotesManager.qml:302` (`refreshList`)
 - **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: waits on the decision below. A fix that keeps the edit dirty (tried in the features-10 branch) writes it over the real note once the folder returns: a document opened while the folder was missing read its note as empty, `_fromDisk` doesn't reload a dirty document, and the `find` that sees the folder again flushes the edits, so typing "x" in a scratchpad and then mounting the drive writes "x" over the vault's real scratchpad.md (changing `Notes.directory` away from a missing folder does the same to the new folder's note of that name). Found by reading; not run. So the fix waits on a maintainer decision: "Which should the kept edits become: dropped, saved as a conflict copy, or prevented by making the editor read-only while the folder is missing?"
+  **Decided** (maintainer, 2026-11-06, on a) the editor read-only while the folder is missing, with the existing "The notes folder doesn't exist" message, b) the kept edits saved as a conflict copy, c) dropped; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
@@ -548,5 +559,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### Six x-auto settings still store Automatic as -1
 - **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml:129`, `qml/config/schema/definitions/layout/EdgeMenu.yaml:150`, `qml/config/schema/definitions/common/DockEntry.yaml:51`, `qml/config/schema/definitions/common/OSDEntry.yaml:52`, `qml/config/schema/sections/Notifications.yaml:56`, `qml/config/schema/sections/Notifications.yaml:215`
 - **What:** `x-auto` now takes a `null` automatic value (validation lets it through, and the form's number keeps its whole range), which the bar's `floatingGap` uses. These six still store Automatic as `-1`, so their readers test `>= 0` / `< 0` and their minimum can't be 0 and Automatic at once without the sentinel. Moving them to `null` is a format-2 step per setting (`-1` → `null`) and a reader change each; nothing is broken meanwhile.
+  **Decided** (maintainer, 2026-11-06, on a) all six to `null` in one format-2 step, b) leave them; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-11-04, while building the bar rewrite (x-auto with a null value, A1)

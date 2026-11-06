@@ -431,7 +431,8 @@ def check_git(args, cwd, env, switched):
     """`git push` that force-pushes, deletes or mirrors, or lands on main: every
     change reaches main through a reviewed PR (docs/dev/roadmap.md ›
     Running it unattended). `git clean -x`, which deletes the ignored files.
-    After a `git switch`/`checkout` earlier in the line the branch is unknown."""
+    After a `git switch`/`checkout`, or a rebase or rename onto main
+    (`ends_on_main`), earlier in the line the branch is unknown."""
     i, cwd, repo = git_globals(args, cwd, env)
     rule = "Never, while testing"
     if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
@@ -450,9 +451,22 @@ def check_git(args, cwd, env, switched):
             deny(rule, "don't push to main; open a PR from a branch.")
     if not refspecs or {"HEAD", "@"} & {spec.split(":", 1)[-1] for spec in refspecs}:
         if switched:
-            deny(rule, "a `git switch`/`checkout` earlier in the line may leave main checked out: name the branch you push.")
+            deny(rule, "a `git switch`/`checkout`, rebase or rename earlier in the line may leave main checked out: name the branch you push.")
         if current_branch(cwd, repo, env) in PROTECTED_BRANCHES:
             deny(rule, "don't push to main; open a PR from a branch.")
+
+
+REBASE_VALUE_OPTS = {"--onto", "-s", "--strategy", "-X", "--strategy-option", "-x", "--exec"}
+
+
+def ends_on_main(args):
+    """git's `rebase <upstream> main` (`--root main`) checks main out; `branch -m/-M
+    [<old>] main` renames the branch checked out (or another: judged as if it were)"""
+    words = [a for k, a in enumerate(args) if not a.startswith("-") and args[k - 1] not in REBASE_VALUE_OPTS]
+    if words[:1] == ["rebase"]:
+        return len(words) == (2 if "--root" in args else 3) and words[-1] in PROTECTED_BRANCHES
+    moves = any(a == "--move" or re.fullmatch(r"-[a-zA-Z]*[mM][a-zA-Z]*", a) for a in args)
+    return words[:1] == ["branch"] and moves and words[-1] in PROTECTED_BRANCHES
 
 
 def check_argv(env, argv, cwd, switched):
@@ -824,7 +838,7 @@ def check(call):
             check_argv(env, argv, cwd, switched)
             if Path(argv[0]).name == "git":
                 i, _, _ = git_globals(argv[1:], cwd, env)
-                switched = switched or argv[1 + i:2 + i] in (["switch"], ["checkout"])
+                switched = switched or argv[1 + i:2 + i] in (["switch"], ["checkout"]) or ends_on_main(argv[1 + i:])
     elif tool in {"Edit", "Write"}:
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)

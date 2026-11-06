@@ -119,7 +119,7 @@ The cycle the `roadmap-autopilot` skill runs, one batch (one PR) per iteration, 
 7. **PR** (leader): `scripts/dev/verify.sh --all > <scratch>/verify.log; tail -3` ends in `all checks passed` (every CI check, so CI only confirms; a plain `verify.sh` checks only uncommitted changes, so on the committed branch it prints `nothing changed since HEAD`), then `git push -u origin HEAD` once and `gh pr create --label roadmap`; the body lists the row, each item with its commit and the issues.md entries it closed, and the reports' Verified and Not verifiable live.
 8. **CI** (leader): `gh pr checks <n> --watch`. A failure goes to a fresh agent with the failing job's log tail (`gh run view --log-failed | tail -60`) to fix, run `verify.sh --all` and push once, at most twice; then stop with the PR open.
 9. **Merge** (leader): first `git switch --detach` in the worktree (`--delete-branch` deletes the local branch, and with it a worktree holding it), then `gh pr merge <n> --squash --delete-branch` as a command of its own (a compound command doesn't match its allow rule), then `git fetch` and `git switch --detach origin/main` there (the live checkout is left alone). The squash message keeps each item's commit message as a bullet. A merged item whose report has a **Not verifiable live** that matters gets a line under [Live checks](#live-checks) in the next batch.
-10. **After** (leader): rebuild and republish the maintainer's roadmap page, which lives outside the repo; the leader's memory names its builder and URL. Its statuses come from this file and backend/roadmap.md, so it's a build and a publish, never hand edits. Do this after every merge and at every stop. Stop the loop and report if this merge set a Full order row to `done` (the pause between rows, so the maintainer looks before the next one starts) or this was the session's third batch; otherwise schedule the next iteration. A report says what merged (PR links), where it stopped and why, and what the next batch is.
+10. **After** (leader): rebuild and republish the maintainer's roadmap page, which lives outside the repo; the leader's memory names its builder and URL. Its statuses come from this file and backend/roadmap.md, so it's a build and a publish, never hand edits. Do this after every merge and at every stop. Stop the loop and report if [Ready for the autopilot](#ready-for-the-autopilot) is empty (maintainer, 2026-11-06: "have the autopilot stop itself when everything is done"), if this merge set a Full order row to `done` (the pause between rows, so the maintainer looks before the next one starts) or this was the session's third batch; otherwise schedule the next iteration. A report says what merged (PR links), where it stopped and why, and what the next batch is.
 
 Never, besides `AGENTS.md` › Never: open a PR of roadmap.md or issues.md edits alone (a plan PR aside: an answer or a moved entry goes in the next batch's first commit), merge a PR without the `roadmap` label, put two rows or more than four items in one PR (row 20: more than one cluster), push before the review, skip the review or CI, or retry a stop condition. A wallpaper-only screenshot means the session locked while idle: stop and ask the user to unlock.
 
@@ -236,7 +236,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 
 - [Text clips on 1080p screens](issues.md#text-clips-on-1080p-screens)
 - [A popout taller than the screen runs off it](issues.md#a-popout-taller-than-the-screen-runs-off-it)
-- [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
 - Once axiom runs a binary built with platform-04, in dev mode: `git switch` to an older branch and `git pull` (or touch a Go file) within the build's time; `axiom daemon logs` shows `dev build done, but the source changed meanwhile: building again` and one more build, the image re-exec'd last is the tree's (`axiom config status` loads, no `running on the defaults`). Then switch to a branch whose config version is older than config.json's: the shell keeps showing the config it had, not the defaults.
@@ -248,9 +247,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
-
-- [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
-- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
@@ -313,6 +309,48 @@ Steps:
    Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
 3. **Harden, frozen** (row 21; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
 
+#### Ready for the autopilot
+The maintainer (2026-11-06): "right now, everything deferred or hold that it small and has a traced fix move to ready and waiting for the autopilot. After all of that is done the autopilot will stop. (i.e. unconfirmed, weird vaguely described ui problems from developer notes, and plans done stay)". So the loop takes only the entries below (moved here from Phase 8, Phase 13 and [Deferred](#deferred), with row 20's own traced ones), grouped by area so a batch stays in one; when this list is empty it stops the loop and reports, whatever row 20 still holds. The maintainer's answers of 2026-11-06 (quoted under each entry's **Decided**) added the dock, wallpaper, notes, config, dev-config copy, dropdown, hot corner and close-on-outside-click entries. It opens no plan PR and no `needs-decision` PR: an entry that turns out to need a choice or isn't as traced is skipped and its link moved back where it came from.
+
+**Monitors and workspace blocks:**
+- [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
+- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks)
+
+**Shell surfaces and services:**
+- [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
+- [A hot corner can't close what covers it](issues.md#a-hot-corner-cant-close-what-covers-it)
+- [Close on outside click differs on Hyprland since the overlay ignores its grab ending](issues.md#close-on-outside-click-differs-on-hyprland-since-the-overlay-ignores-its-grab-ending)
+- [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
+- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
+- [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
+- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
+- [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
+
+**The daemon, the config store and the CLI:**
+- [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
+- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
+- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
+- [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
+- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
+- [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
+- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification)
+
+**Docks (and, per the maintainer's answer, other popouts with the same gap):**
+- [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
+- [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
+
+**Wallpaper:**
+- [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
+- [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp)
+
+**Notes:**
+- [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
+- [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
+
+**Config (a format-2 migration):**
+- [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
+
 #### The launch gate
 Posting for testers waits for all of these:
 - issues.md has nothing open a tester can reach in normal use under sway or niri; what's deferred is on GitHub and listed in the post as known issues;
@@ -344,41 +382,14 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
-Found while testing the trial Apply (row 20, compositor-10):
-- [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
-
 Found while reviewing the guard's leading `cd` (row 20, config-05):
-- [The guard misses a push after a rebase or branch rename onto main](issues.md#the-guard-misses-a-push-after-a-rebase-or-branch-rename-onto-main)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh)
 
-Moved here from Phase 1, still open:
-- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
-
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
-- [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 - [A detached dock and toasts don't slide in from under the bars](issues.md#a-detached-dock-and-toasts-dont-slide-in-from-under-the-bars)
-- [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
-- [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
-- [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
-- [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
-- [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
-- [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
-
-Found while fixing bar-popouts-07 (row 20):
-- [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
-
-Found while building dev trees and the dev config:
-- [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
-- [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
-
-Found while reviewing the wallpaper parallax's travel:
-- [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
-
-Found while fixing row 20's bar cluster:
-- ["Colour the text by state" does nothing on a bar whose widgets have no fill](issues.md#colour-the-text-by-state-does-nothing-on-a-bar-whose-widgets-have-no-fill)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
@@ -412,15 +423,8 @@ Steps:
 - **Done:** **Input sources** (the maintainer's request: "Axiom owns it (Recommended)", "Same model, fewer extras (Recommended)", "Yes, one switch (Recommended)", fcitx5 the default: "keep as planned but default for fcixt (allowing ibus for support of switching since it is cheap", and "the pr gate is lifted. Everything goes through a single PR for 1 pr with full support"): one `Input.keyboard.sources` list of xkb layouts and fcitx5/ibus engines, pushed to the compositor's xkb and, while `Input.keyboard.method.enabled` is on (off by default, shown only with `supports.inputMethod`), to the framework over D-Bus with its options and, in managed mode, its environment and autostart. `InputSourceManager` owns the switch for the bar widget and its popout, the module, the OSD, IPC and keybinds ([input sources](features/input-sources.md)).
 
 Found meanwhile:
-- [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
-- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
-- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
-- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
-- [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
-- [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp) (an idea from the wallpaper transitions branch)
-- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification) (the maintainer's request, 2026-11-02)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
@@ -433,20 +437,15 @@ Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; t
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
 - [The monitor editor shows changes nobody made](issues.md#the-monitor-editor-shows-changes-nobody-made). *Needs testing:* in nested niri a saved profile for what's connected opens the page with nothing unsaved (the draft only changes through an edit or `_detect` adding a profile or a monitor the daemon's match doesn't list); on which compositor, and after what (opening the page, an Apply, a hotplug, a reload), does it show?
 - [Typing in modules on the overlay and the desktop](issues.md#typing-in-modules-on-the-overlay-and-the-desktop). *Needs testing:* nothing in the code keeps the keyboard from an overlay module (the overlay asks for it on demand like the edge menus, exclusively under a grab with no native one, the newest grab since #193, and no handler above the modules takes keys), and only a real click into a field shows it, which the agents may not simulate. On which compositor does it happen, in which module, and does the field show a cursor with the keys going nowhere, or not take the click? On the desktop: is the click that ends the typing on a window (where it gives the keyboard back by design, [desktop](features/desktop.md) › Input), on the bare desktop beside the module, or inside the module itself? (Under niri's focus following the mouse, it's the deferred [A window takes the keyboard from a desktop module on niri](issues.md#a-window-takes-the-keyboard-from-a-desktop-module-on-niri).)
-- [A hot corner can't close what covers it](issues.md#a-hot-corner-cant-close-what-covers-it). *Needs the maintainer:* should a corner stay live over Overlay-layer surfaces (the workspace overview, a full-screen page), so it can close what it opened, as niri's own corner does?
-- [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen). *Needs the maintainer:* which surface shows a request no open row shows (open the VPN popout, a notification, or decline so nm-applet asks).
-- [Close on outside click differs on Hyprland since the overlay ignores its grab ending](issues.md#close-on-outside-click-differs-on-hyprland-since-the-overlay-ignores-its-grab-ending). *Needs the maintainer:* should a click outside the overlay's window (another monitor, the screen border, a floating bar's gap) close it, as it still does on sway and niri, or not, as now on Hyprland?
 
 ### Deferred
 Entries decided against doing now: a plan the maintainer deferred ([Items that need a plan](#items-that-need-a-plan) step 5), or an entry they put off by hand. They block no row; the maintainer moves them to GitHub, and an entry leaves this list and issues.md together.
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
-- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks) (found in row 13's review)
 
 Deferred by the maintainer (2026-10-27):
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
-- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
 
 Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeovers kept
 - [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
@@ -482,6 +481,12 @@ Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge sub
 - [A pill bar's end reach trails a sliding popout's wall](issues.md#a-pill-bars-end-reach-trails-a-sliding-popouts-wall)
 - [The lock screen has no settings for allowing or viewing notifications](issues.md#the-lock-screen-has-no-settings-for-allowing-or-viewing-notifications) (needs a plan once taken up)
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
+
+Deferred by the maintainer (2026-11-06, answering the short decisions: "defer"):
+- ["Colour the text by state" does nothing on a bar whose widgets have no fill](issues.md#colour-the-text-by-state-does-nothing-on-a-bar-whose-widgets-have-no-fill)
+- [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
+- [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
+- [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen)
 
 ### Unconfirmed
 Bugs an agent's review or audit found and marked PLAUSIBLE: no code is written for one until it's confirmed (shown on screen or in a log, or traced in the code), and then its link moves back to its phase. They block no row; they're to get to eventually. PLAUSIBLE entries a human submitted (the maintainer's notes) stay in their phase, still not built until confirmed. The maintainer (2026-11-05): "just leave plausible code reviewed only found bugs in a new list to get to eventually (i.e not human submitted".
