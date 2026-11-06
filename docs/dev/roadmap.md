@@ -360,11 +360,8 @@ Found by the audits:
 - [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
 - [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
 - [A fading toast keeps its full blur on niri](issues.md#a-fading-toast-keeps-its-full-blur-on-niri)
-- [A hide while a popout closes leaves its queued show to open it](issues.md#a-hide-while-a-popout-closes-leaves-its-queued-show-to-open-it)
-- [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
-- [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
@@ -382,6 +379,9 @@ Found while reviewing the wallpaper parallax's travel:
 
 Found while fixing row 20's bar cluster:
 - ["Colour the text by state" does nothing on a bar whose widgets have no fill](issues.md#colour-the-text-by-state-does-nothing-on-a-bar-whose-widgets-have-no-fill)
+
+Found while reviewing row 20's popout trivials:
+- [Closes other than hide() leave an open queued while closing to fire](issues.md#closes-other-than-hide-leave-an-open-queued-while-closing-to-fire)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

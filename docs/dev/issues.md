@@ -50,12 +50,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the floating popouts branch (round 2)
 
-### A hide while a popout closes leaves its queued show to open it
-- **Where:** `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`, `safeOpenPopout`), `qml/shell/WindowSwitcher.qml` (`sync`)
-- **What:** `show()` during the close animation queues the open (`hasPendingOpen`), but `hide()` acts only `if (isOpen)`, false while closing, so a hide before the close finishes leaves the queued open to fire (`closeDelayTimer` → `_openPending`): the popout opens with nothing wanting it. The window switcher reaches it: `showDelay` (default 120 ms) is under `animNormal` (150 ms), so released, pressed again and released within the close (held past `showDelay`) leaves the strip up with `autoDismiss: false` until the switcher opens again. Fix: `hide()` also drops a pending open (`hasPendingOpen = false`).
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the floating popouts branch (round 3)
-
 ### A detached dock and toasts don't slide in from under the bars
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
 - **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.
@@ -250,9 +244,15 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while checking the sizing revamp on 1080p (overlaySettingsRevamp)
 
+### Closes other than hide() leave an open queued while closing to fire
+- **Where:** `qml/components/surfaces/edgemenu/EdgeMenuSync.qml:59` (`_sync`), `qml/components/content/SystemTray/SystemTray.qml:50` (`onPlainItemHovered`), `qml/components/hosts/popout/SubPopout.qml:432` (`on_ParentOpenChanged`, `on_ParentDataChanged`)
+- **What:** `PopoutWrapperBase.hide()` now drops an open queued during the close animation (`hasPendingOpen`), but these closes don't reach it. EdgeMenuSync hides only `if (!root.wanted && root.host.isOpen)`: an edge menu toggled closed, open and closed again within the close (`animNormal`, 150 ms) queues the open on the second toggle and skips the hide on the third, so the menu opens once closed and `onIsOpenChanged` (`isOpen && !wanted`) calls `EdgeMenuManager.open` again. The tray's menu closes its submenu with `closePopout()`, which returns early while closing: a submenu item hovered past its 100 ms timer within the close queues that submenu, and a plain item hovered next leaves it to open over the plain one. SubPopout's parent-closed and parent-switched handlers use `closePopout()` the same way. Fix: EdgeMenuSync's else branch `else if (!root.wanted) root.host.hide();` (hide is a no-op on a closed host with nothing queued); SystemTray's handler and SubPopout's two handlers call `hide()` (its `requestDismiss` is `parkTimer.stop()` plus `closePopout()`).
+- **Size:** trivial
+- **Found:** 2026-11-06, while reviewing row 20's popout trivials (a hide drops an open queued while closing)
+
 ### A popout taller than the screen runs off it
 - **Where:** `qml/components/hosts/popout/BarPopouts.qml` (`popoutRoom`), `qml/components/content/Calendar/Calendar.qml`
-- **What:** Nothing keeps a bar popout's content within the screen: content taller than the room past the bar (the Calendar popout with its event editor open on a short screen, 1080 px or less with a top bar) draws its box past the screen's far side, and what's there is cut off. `popoutRoom` measures the room left, and only `StyledComboEntry`'s inline list keeps to it. A general guard would hand the content a most height (as `SubPopout.maxContentHeight` does for submenus) for it to scroll within. The tray's own menu (`content/SystemTray`, a `TrayMenuList` with no height cap or Flickable) is another case (popouts audit, 2026-10-30); [A tray submenu longer than the screen runs off it](#a-tray-submenu-longer-than-the-screen-runs-off-it) gives `TrayMenuList` the `maxHeight` this guard could set.
+- **What:** Nothing keeps a bar popout's content within the screen: content taller than the room past the bar (the Calendar popout with its event editor open on a short screen, 1080 px or less with a top bar) draws its box past the screen's far side, and what's there is cut off. `popoutRoom` measures the room left, and only `StyledComboEntry`'s inline list keeps to it. A general guard would hand the content a most height (as `SubPopout.maxContentHeight` does for submenus) for it to scroll within. The tray's own menu (`content/SystemTray`, a `TrayMenuList` given no `maxHeight`) is another case (popouts audit, 2026-10-30); `TrayMenuList` has a `maxHeight` (its submenus pass `SubPopout.maxContentHeight`) this guard could set.
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
 
@@ -455,12 +455,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing bar-popouts-02 (edge and floating popouts closing on an outside click)
 
-### A tray submenu longer than the screen runs off it
-- **Where:** `qml/components/content/parts/TraySubmenu.qml:14` (`implicitHeight`), `qml/components/content/parts/TrayMenuList.qml:29` (`implicitHeight`), `qml/components/hosts/popout/SubPopout.qml:133` (`maxContentHeight`)
-- **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the popouts system
-
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
 - **What:** Contract (writing-modules.md): a module sets `fullMinWidth` / `fullMinHeight`, "the px its full layout needs inside its padding". These don't cover it. All figures are inner px at font 14, normal density.
@@ -482,12 +476,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". DayPane (the Calendar popout and module, the Clock & calendar module, the Calendar page) builds an `EventEditor` that shows only after a click. Agenda's is built on demand (row 20), and the other nine modules and parts first listed with it were fixed in row 20 (overlay-modules-04). DayPane's is left because the Calendar popout's `maxImplicitHeight` reads `DayPane.growth`, the editor's height before it opens, to make room up front (a shown popout that grows flashes); its height can't be stated without building it, since the repeat buttons' `Flow` wraps by width and translation. Fix: a Loader active while editing or while a host reads `growth` (only the Calendar popout, `!root.embedded`), with `open()` going through `session` as Agenda's does.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the modules system
-
-### The popout docs give AudioMixer's list two rows at least
-- **Where:** `docs/dev/popouts/hosts-and-switching.md` (Which do), `qml/components/content/AudioMixer/AudioMixer.qml:49` (`rowsHeight`)
-- **What:** hosts-and-switching lists "AudioMixer (2 to 4 rows)", but the popout's list is `Math.max(root.rowsHeight(1), Math.min(list.implicitHeight, root.listHeight))`: one row (also when empty) to four, as the file's own comment says. Fix: "1 to 4 rows" in the doc.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing row 20's overlay-modules-04 (AudioMixer and WorldClocks build only what their mode shows)
 
 ### A stale exec-if check can block a widget after its exec-if changed
 - **Where:** `qml/services/apps/CustomWidgetsManager.qml:163` (`_checkIf`)
