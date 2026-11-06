@@ -184,6 +184,8 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs #362, a start or a reload logs no `Property 'fromEntries'` TypeError from MediaManager, and a player already playing at the start is picked.
 - Screen sharing ([screen sharing](features/screen-sharing.md)), once axiom runs a build with it: under Hyprland, niri and sway turn on Settings › Screen sharing › Use axiom's picker, Apply the card's line and Restart the portal; share a screen, a window and (Hyprland) a region in Discord and in a browser's screen-share test, and check the picker shows once per share (Discord's repeats answered without it); turn it off and check the portal's own picker is back; with the shell stopped, check sharing still works through the portal's own. Under niri also check the cast ends when the shared window closes, and an app that asked to remember shares again without asking.
 - On sway, niri and Hyprland with `Overlay.closeOnOutsideClick` on, open the overlay, click another monitor, the screen border and a floating bar's gap (it stays open), then its own background (it closes) (#378).
+- With an edge menu that closes on leave, run `axiom edge-menu open <id>` from a bind and check it stays up until the pointer enters and leaves it (#379).
+- Open the Calendar popout and start a new event: the popout doesn't grow or flash as the editor opens (#379).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
