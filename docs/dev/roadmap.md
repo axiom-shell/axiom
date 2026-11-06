@@ -249,8 +249,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 ### Phase 8: a clean log
 A reload, and a session's normal use, log nothing but the two reload lines.
 
-- [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
-- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 
 ### Phase 9: docs, tooling and process
 Last, so the docs describe the final shape (after [Phase 11](#phase-11-audits-clear-out-and-hardening); the post for testers follows it).
@@ -313,6 +311,31 @@ Steps:
    Then an incremental `review-system` pass of every system (it rereads only what changed since its last review), and again, until a pass finds nothing above minor.
 3. **Harden, frozen** (row 21; the maintainer's, so the autopilot stops before it): 1–2 weeks of daily use under sway and niri. Only fixes land: each new finding is fixed at once or becomes a known issue. Also: a first run from nothing (`install.sh` and the AUR packages for a fresh user, onboarding without a config.json, importing saved configs), and the Waybar scripts from Phase 10 again.
 
+#### Ready for the autopilot
+The maintainer (2026-11-06): "right now, everything deferred or hold that it small and has a traced fix move to ready and waiting for the autopilot. After all of that is done the autopilot will stop. (i.e. unconfirmed, weird vaguely described ui problems from developer notes, and plans done stay)". So the loop takes only the entries below (moved here from Phase 8, Phase 13 and [Deferred](#deferred), with row 20's own traced ones), grouped by area so a batch stays in one; when this list is empty it stops and reports. It opens no plan PR and no `needs-decision` PR: an entry that turns out to need a choice or isn't as traced is skipped and its link moved back where it came from.
+
+**The guard:**
+- [The guard misses a push after a rebase or branch rename onto main](issues.md#the-guard-misses-a-push-after-a-rebase-or-branch-rename-onto-main)
+
+**Monitors and workspace blocks:**
+- [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
+- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks)
+
+**Shell surfaces and services:**
+- [The window switcher reads a removed screen's name](issues.md#the-window-switcher-reads-a-removed-screens-name)
+- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
+- [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
+- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
+- [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
+
+**The daemon, the config store and the CLI:**
+- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
+- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
+- [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
+- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
+- [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
+- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
+- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification)
 #### The launch gate
 Posting for testers waits for all of these:
 - issues.md has nothing open a tester can reach in normal use under sway or niri; what's deferred is on GitHub and listed in the post as known issues;
@@ -344,16 +367,11 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
-Found while testing the trial Apply (row 20, compositor-10):
-- [The Monitors page's off and mirroring buttons throw when one leaves the list](issues.md#the-monitors-pages-off-and-mirroring-buttons-throw-when-one-leaves-the-list)
 
 Found while reviewing the guard's leading `cd` (row 20, config-05):
-- [The guard misses a push after a rebase or branch rename onto main](issues.md#the-guard-misses-a-push-after-a-rebase-or-branch-rename-onto-main)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh)
 
-Moved here from Phase 1, still open:
-- [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
@@ -362,7 +380,6 @@ Found by the audits:
 - [A latched held dock's gap to its edge swallows clicks while the pointer is in it](issues.md#a-latched-held-docks-gap-to-its-edge-swallows-clicks-while-the-pointer-is-in-it)
 - [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
-- [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
@@ -371,7 +388,6 @@ Found while fixing bar-popouts-07 (row 20):
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
 
 Found while building dev trees and the dev config:
-- [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
 
 Found while reviewing the wallpaper parallax's travel:
@@ -412,15 +428,9 @@ Steps:
 - **Done:** **Input sources** (the maintainer's request: "Axiom owns it (Recommended)", "Same model, fewer extras (Recommended)", "Yes, one switch (Recommended)", fcitx5 the default: "keep as planned but default for fcixt (allowing ibus for support of switching since it is cheap", and "the pr gate is lifted. Everything goes through a single PR for 1 pr with full support"): one `Input.keyboard.sources` list of xkb layouts and fcitx5/ibus engines, pushed to the compositor's xkb and, while `Input.keyboard.method.enabled` is on (off by default, shown only with `supports.inputMethod`), to the framework over D-Bus with its options and, in managed mode, its environment and autostart. `InputSourceManager` owns the switch for the bar widget and its popout, the module, the OSD, IPC and keybinds ([input sources](features/input-sources.md)).
 
 Found meanwhile:
-- [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
-- [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page)
-- [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
-- [The daemon never watches config.json, so outside edits aren't read](issues.md#the-daemon-never-watches-configjson-so-outside-edits-arent-read)
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
-- [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)
 - [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp) (an idea from the wallpaper transitions branch)
-- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification) (the maintainer's request, 2026-11-02)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
@@ -442,11 +452,9 @@ Entries decided against doing now: a plan the maintainer deferred ([Items that n
 
 Extremely rare paths, put after real gaps (2026-10-26):
 - [Leaving managed, the runtime layer can go on before the given-back config reloads](issues.md#leaving-managed-the-runtime-layer-can-go-on-before-the-given-back-config-reloads) (transient: corrected after the reload)
-- [Saving a profile that names a new monitor can move other monitors' blocks](issues.md#saving-a-profile-that-names-a-new-monitor-can-move-other-monitors-blocks) (found in row 13's review)
 
 Deferred by the maintainer (2026-10-27):
 - [Readers read files through a service](issues.md#readers-read-files-through-a-service)
-- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
 
 Accepted by the maintainer (2026-10-28, #163): the hand-fix gap with no takeovers kept
 - [With no takeovers kept, a broken config.json can still release the compositor's config](issues.md#with-no-takeovers-kept-a-broken-configjson-can-still-release-the-compositors-config)
