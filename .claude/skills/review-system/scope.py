@@ -241,7 +241,7 @@ def apply(dirs):
                     else:
                         slugs.add(slug)
                         new.append(entry)
-    old = re.split(r"(?m)^(?=### )", issues.split("\n## Open", 1)[-1])[1:]
+    old = re.split(r"(?m)^(?=### )", check_docs.issue_entries(issues))[1:]
     for i, entry in enumerate(new):
         for other in old + new[:i]:
             shared = symbols(entry) & symbols(other)

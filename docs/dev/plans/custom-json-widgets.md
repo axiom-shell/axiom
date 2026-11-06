@@ -1,6 +1,6 @@
 # Custom JSON widgets
 
-> **Issue:** [Phase 10: custom JSON widgets](../roadmap.md#phase-10-custom-json-widgets)
+> **Issue:** [Phase 10: custom JSON widgets](../roadmap.md#finished-phases)
 > **Status:** decided: B, a fine grid of elements (2026-10-29)
 
 ### Problem

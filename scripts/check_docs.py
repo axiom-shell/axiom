@@ -129,15 +129,22 @@ ISSUE_FIELDS = ["Where", "What", "Size", "Found"]
 SIZES = {"trivial", "small", "needs a plan"}
 
 
+def issue_entries(text):
+    """issues.md's entries: everything after its first ## (area) heading,
+    past the format's example at the top."""
+    return text.split("\n## ", 1)[1] if "\n## " in text else ""
+
+
 def check_issues():
-    """docs/dev/issues.md: every entry under "## Open" is a ### heading with
-    the four fields, in order, a known size and a dated Found."""
+    """docs/dev/issues.md: every entry (everything after the first ## area
+    heading) is a ### heading with the four fields, in order, a known size
+    and a dated Found."""
     path = ROOT / "docs/dev/issues.md"
     if not path.exists():
         return [f"{path.relative_to(ROOT)}: missing"]
     text = path.read_text()
     errors = []
-    body = text.split("\n## Open", 1)[-1] if "\n## Open" in text else ""
+    body = issue_entries(text)
     for entry in re.split(r"(?m)^### ", body)[1:]:
         title = entry.splitlines()[0]
         fields = re.findall(r"(?m)^- \*\*(\w+):\*\* (.+)$", entry)
@@ -181,7 +188,7 @@ def check_issue_links(paths):
                     errors.append(f"{doc.relative_to(ROOT)}:{n}: link to a missing issues.md entry #{anchor}")
                 elif doc.relative_to(ROOT).as_posix() == ROADMAP:
                     linked.add(anchor)
-    body = issues.read_text().split("\n## Open", 1)[-1]
+    body = issue_entries(issues.read_text())
     warnings = [f"{ISSUES}: '{line[4:]}' isn't linked from {ROADMAP} (add it to the phase that fixes it)"
                 for line in body.splitlines() if line.startswith("### ") and heading_slug(line[4:]) not in linked]
     return errors, warnings
