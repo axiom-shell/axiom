@@ -315,6 +315,13 @@ func TestRows(t *testing.T) {
 			t.Errorf("%s: values %v / %v, want %v / %v", r.Path, r.Dev, r.Live, w.devVal, w.liveVal)
 		}
 	}
+	// A setting the install has in another shape can't go to live either
+	reshaped := mustParse(t, cfgText(0, `"General": {"a": 2, "b": 5, "c": false, "list": []}, "Extra": {"k": 1}, "Idle": {"enabled": false}`))
+	for _, r := range Rows(base, live, reshaped, installSchema(t), takeover) {
+		if r.Path.String() == "General.b" && !r.DevOnly {
+			t.Errorf("General.b as a number isn't the install's shape: %+v", r)
+		}
+	}
 	// Without a base, every row changed on both sides
 	for _, r := range Rows(nil, live, dev, installSchema(t), takeover) {
 		if r.Side != SideBoth {

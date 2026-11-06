@@ -53,6 +53,11 @@ const (
 type DevConfigDiff struct {
 	Rows        []devconfig.Row `json:"rows"`
 	LiveChanged bool            `json:"liveChanged"`
+	// The config versions the dev tree's and the install's schemas are at:
+	// when they differ, a setting moved or reshaped between them is a
+	// devOnly row until the install is updated
+	DevVersion     float64 `json:"devVersion"`
+	InstallVersion float64 `json:"installVersion"`
 }
 
 // DevConfigCopyParams are dev.config.copy's: the settings (a path copies
@@ -340,7 +345,9 @@ func (m *devMode) configDiff(e devEnds) (DevConfigDiff, error) {
 	if rows == nil {
 		rows = []devconfig.Row{}
 	}
-	return DevConfigDiff{Rows: rows, LiveChanged: m.liveChangedNow(e)}, nil
+	devVersion, _ := schemaVersion(e.devPipe.Schema())
+	installVersion, _ := schemaVersion(e.install)
+	return DevConfigDiff{Rows: rows, LiveChanged: m.liveChangedNow(e), DevVersion: devVersion, InstallVersion: installVersion}, nil
 }
 
 // takeoverCopy is a copy's refusal of a takeover setting at path.
@@ -398,7 +405,7 @@ func (m *devMode) configCopy(p DevConfigCopyParams) (DevConfigCopied, error) {
 		copied = append(copied, r.Path)
 		if p.To == copyToLive {
 			if r.DevOnly {
-				return DevConfigCopied{}, axerr.New(axerr.Refused, "%s is dev only: the installed axiom has no such setting", r.Path)
+				return DevConfigCopied{}, axerr.New(axerr.Refused, "%s is dev only: the installed axiom has no such setting, or one of another shape", r.Path)
 			}
 			if r.HasDev {
 				ops = append(ops, config.SetValue(r.Path, jsonx.Clone(r.Dev)))

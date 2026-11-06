@@ -27,8 +27,9 @@ type Row struct {
 	// The values in each (Has false: the key isn't there)
 	Dev, Live       any
 	HasDev, HasLive bool
-	// DevOnly: the install's schema has no such setting, so it can't go
-	// to live
+	// DevOnly: the install's schema has no such setting, or dev's value
+	// doesn't fit the one it has (the dev tree reshaped it), so it can't
+	// go to live
 	DevOnly bool
 }
 
@@ -48,7 +49,7 @@ func (r Row) MarshalJSON() ([]byte, error) {
 // dev's shape (InShape through the dev pipeline): config.Diff's paths (a
 // list whole, objects followed down to what changed), each with the side
 // that changed it since the base (a nil base: both) and whether install
-// (the install tree's schema) lacks it. The version and format are never
+// (the install tree's schema) lacks it or has it in another shape. The version and format are never
 // rows: each config keeps its own. Nor are the takeover settings
 // (takeover, share.TakeoverPaths of dev's schema; skipped): they're per
 // machine, mirrored dev to live as they change (the daemon's onConfig),
@@ -76,8 +77,8 @@ func Rows(base, live, dev *jsonx.Object, install *schema.Schema, takeover [][]st
 		}
 		// dev's values tell the schema's oneOf options apart: it's dev's
 		// value that would go to live
-		_, known := config.NodeAt(install, dev, op.Path)
-		row.DevOnly = !known
+		node, known := config.NodeAt(install, dev, op.Path)
+		row.DevOnly = !known || (hasD && len(config.ValidationErrors(install, d, node)) > 0)
 		rows = append(rows, row)
 	}
 	return rows

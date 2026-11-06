@@ -157,6 +157,12 @@ func TestDevConfigDiff(t *testing.T) {
 	if diff, _ := m.diffNow(); !diff.LiveChanged || !m.State().Config.LiveChanged {
 		t.Error("live's change isn't told")
 	}
+	// The card's version notice: the install's schema is older
+	older := syncSchemaAt(t, false, steps.Current()-1)
+	m.installSchemaFn = func() (*schema.Schema, error) { return older, nil }
+	if diff, _ := m.diffNow(); diff.DevVersion != float64(steps.Current()) || diff.InstallVersion != float64(steps.Current()-1) {
+		t.Errorf("versions dev %v, install %v", diff.DevVersion, diff.InstallVersion)
+	}
 	writeLiveFile(t, m, liveText(7, "y", false))
 	if got := sidesOf(t, m); got["General.a"] != "both" {
 		t.Errorf("a changed on both sides: %v", got)
