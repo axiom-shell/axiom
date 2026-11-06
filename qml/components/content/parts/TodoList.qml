@@ -44,92 +44,85 @@ ColumnLayout {
     }
   }
 
-  Flickable {
+  // A ListView, so only the items in view are built
+  ListView {
     id: flick
     visible: root.items.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.fill
-    Layout.preferredHeight: root.fill ? -1 : Math.min(rows.implicitHeight, root.maxListHeight)
-    contentHeight: rows.implicitHeight
+    Layout.preferredHeight: root.fill ? -1 : Math.min(flick.contentHeight, root.maxListHeight)
     boundsBehavior: Flickable.StopAtBounds
     clip: true
+    model: CountModel {
+      count: root.items.length
+    }
 
-    ColumnLayout {
-      id: rows
-      width: flick.width
+    delegate: ColumnLayout {
+      id: entry
+      required property int index
+      readonly property var item: root.items[entry.index] ?? {
+        "uid": "",
+        "summary": "",
+        "done": false
+      }
+      readonly property bool renaming: root.editing !== "" && root.editing === entry.item.uid
+
+      width: ListView.view.width
       spacing: 0
 
-      Repeater {
-        model: root.items.length
+      ItemRow {
+        visible: !entry.renaming
+        icon: entry.item.done ? "check_box" : "check_box_outline_blank"
+        marked: entry.item.done || PomodoroManager.todoUid === entry.item.uid
+        title: entry.item.summary
+        titleLines: 2
+        subtitle: PomodoroManager.todoUid === entry.item.uid && !entry.item.done ? I18n.tr("Working on it") : ""
+        opacity: entry.item.done ? 0.55 : 1
+        onActivated: TodoManager.toggle(entry.item.uid)
 
-        delegate: ColumnLayout {
-          id: entry
-          required property int index
-          readonly property var item: root.items[entry.index] ?? {
-            "uid": "",
-            "summary": "",
-            "done": false
+        FlatIconButton {
+          size: Math.round(Appearance.fontSize * 1.8)
+          iconText: "edit"
+          tooltipText: I18n.tr("Rename")
+          onClicked: root.editing = entry.item.uid
+        }
+        FlatIconButton {
+          visible: !entry.item.done
+          size: Math.round(Appearance.fontSize * 1.8)
+          iconText: "timer"
+          tooltipText: I18n.tr("Work on this")
+          onClicked: {
+            PomodoroManager.setTodo(entry.item.uid);
+            if (!PomodoroManager.running)
+              PomodoroManager.start();
           }
-          readonly property bool renaming: root.editing !== "" && root.editing === entry.item.uid
+        }
+        FlatIconButton {
+          size: Math.round(Appearance.fontSize * 1.8)
+          iconText: "delete"
+          tooltipText: I18n.tr("Delete")
+          onClicked: TodoManager.remove(entry.item.uid)
+        }
+      }
 
-          Layout.fillWidth: true
-          spacing: 0
+      // Built only while this row renames
+      Loader {
+        active: entry.renaming
+        visible: active
+        Layout.fillWidth: true
+        Layout.preferredHeight: Widget.height
 
-          ItemRow {
-            visible: !entry.renaming
-            icon: entry.item.done ? "check_box" : "check_box_outline_blank"
-            marked: entry.item.done || PomodoroManager.todoUid === entry.item.uid
-            title: entry.item.summary
-            titleLines: 2
-            subtitle: PomodoroManager.todoUid === entry.item.uid && !entry.item.done ? I18n.tr("Working on it") : ""
-            opacity: entry.item.done ? 0.55 : 1
-            onActivated: TodoManager.toggle(entry.item.uid)
-
-            FlatIconButton {
-              size: Math.round(Appearance.fontSize * 1.8)
-              iconText: "edit"
-              tooltipText: I18n.tr("Rename")
-              onClicked: root.editing = entry.item.uid
-            }
-            FlatIconButton {
-              visible: !entry.item.done
-              size: Math.round(Appearance.fontSize * 1.8)
-              iconText: "timer"
-              tooltipText: I18n.tr("Work on this")
-              onClicked: {
-                PomodoroManager.setTodo(entry.item.uid);
-                if (!PomodoroManager.running)
-                  PomodoroManager.start();
-              }
-            }
-            FlatIconButton {
-              size: Math.round(Appearance.fontSize * 1.8)
-              iconText: "delete"
-              tooltipText: I18n.tr("Delete")
-              onClicked: TodoManager.remove(entry.item.uid)
-            }
+        sourceComponent: StyledTextEntry {
+          id: renameField
+          onAccepted: root.rename(entry.item.uid, renameField.text)
+          input.onActiveFocusChanged: {
+            if (!renameField.input.activeFocus && entry.renaming)
+              root.rename(entry.item.uid, renameField.text);
           }
-
-          // Built only while this row renames
-          Loader {
-            active: entry.renaming
-            visible: active
-            Layout.fillWidth: true
-            Layout.preferredHeight: Widget.height
-
-            sourceComponent: StyledTextEntry {
-              id: renameField
-              onAccepted: root.rename(entry.item.uid, renameField.text)
-              input.onActiveFocusChanged: {
-                if (!renameField.input.activeFocus && entry.renaming)
-                  root.rename(entry.item.uid, renameField.text);
-              }
-              Component.onCompleted: {
-                renameField.text = entry.item.summary;
-                renameField.input.forceActiveFocus();
-                renameField.input.selectAll();
-              }
-            }
+          Component.onCompleted: {
+            renameField.text = entry.item.summary;
+            renameField.input.forceActiveFocus();
+            renameField.input.selectAll();
           }
         }
       }

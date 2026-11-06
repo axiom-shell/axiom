@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import QtQuick
 import Quickshell.Wayland
 import qs.components.bar.widgets.base
 
@@ -10,9 +11,9 @@ import qs.components.bar.widgets.base
 ValueStyleWidget {
   id: root
 
-  readonly property string sizePolicy: "elastic"
-
   icon: properties.icon
   text: ToplevelManager.activeToplevel?.title || properties.emptyText
   subtext: ToplevelManager.activeToplevel?.appId ?? ""
+  // A title is any app's: never styled text or a remote image
+  textFormat: Text.PlainText
 }

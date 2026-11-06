@@ -29,7 +29,7 @@ Quickshell's `Networking` has no VPN or active-connection types (`DeviceType` is
 
 ### Shell
 - **VpnManager:**
-  - `rows` merges the profiles with a Tailscale row (id `tailscale`, through `TailscaleManager`) while something holds `acquire()` and `VpnConfig.showTailscale` is on. Tailscale is polled; NetworkManager's state isn't.
+  - `rows` merges the profiles with a Tailscale row (id `tailscale`, through `TailscaleManager`) while something holds `acquire()` and `VpnConfig.showTailscale` is on. Tailscale is polled; NetworkManager's state isn't. Its row is connecting or disconnecting only while `tailscale up` / `down` runs (`TailscaleManager.pending`), not for its other actions; its error counts only while off, and says `TailscaleManager.lastError` itself (`message`), else needs-login; clicking it while logged out runs `TailscaleManager.logIn()`.
   - Rows stay in name order, so nothing moves under the pointer.
   - `toggle`, `toggleLast` (the VPN used last, kept in `StateManager` as `vpn` with `folded`; also IPC `vpn toggle`, the `vpn` keybind action and `axiom vpn toggle`, with VpnManager in `_services`; with no VPN at all it says so on the OSD), `statusText` and `kindIcon`.
   - `pickImport()` owns the file picker itself (the popout asking may close while it's open), then `importFile`; `importError` is the last refusal.

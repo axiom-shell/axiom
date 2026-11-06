@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10, features-06, features-07 and features-08 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10, features-06, features-07, features-08, features-09, features-12, features-13, features-14 and features-15 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -118,13 +118,13 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 70 | features-06 | major | Done: Calendar saves (the editor and the daemon) | 3 | ~250 | features-01 |  |
 | 71 | features-07 | major | Done: Calendar surfaces and accounts | 3 | ~80 | features-02 |  |
 | 72 | features-08 | major | Done: Brightness | 1 | ~20 | features-01, core-ui-theming-02 |  |
-| 73 | features-09 | major | The chat | 4 | ~180 | features-01 |  |
+| 73 | features-09 | major | Done: The chat | 4 | ~180 | features-01 |  |
 | 74 | features-10 | major | Notes | 6 | ~180 | features-01, core-ui-theming-05 |  |
-| 75 | features-11 | major | Networking and Bluetooth, the VPN list and Tailscale | 4 | ~150 | features-01, overlay-modules-10 |  |
-| 76 | features-12 | major | Community setups | 5 | ~30 | features-01 |  |
-| 77 | features-13 | major | Screenshots and recording | 4 | ~80 | features-03 |  |
-| 78 | features-14 | major | Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
-| 79 | features-15 | minor-sweep | The clock format | 1 | ~5 | features-02, -06 |  |
+| 75 | features-11 | major | Done: Networking and Bluetooth, the VPN list and Tailscale | 4 | ~150 | features-01, overlay-modules-10 |  |
+| 76 | features-12 | major | Done: Community setups | 5 | ~30 | features-01 |  |
+| 77 | features-13 | major | Done: Screenshots and recording | 4 | ~80 | features-03 |  |
+| 78 | features-14 | major | Done: Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
+| 79 | features-15 | minor-sweep | Done: The clock format | 1 | ~5 | features-02, -06 |  |
 
 #### Entries by cluster
 
@@ -445,7 +445,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - MenuSubmenu repeats EdgeMenuBody's module grid
 - **bar-popouts-09** (5, done):
   - WindowLookConfig rebuilds BarStyle.look
-  - SystemStats works out ValueStyleWidget's style fallbacks again (the style rules; its pill colour and text-by-state rule are filed again as [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](../issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule))
+  - SystemStats works out ValueStyleWidget's style fallbacks again (the style rules; its pill colour and text-by-state rule were shared later, in `BarWidgetStyle`, by row 20's bar cluster)
   - The workspace switchers find a workspace by id with hand-written loops
   - The two workspace popouts share 28 lines of payload and colour properties
   - Small improvements to WorkspaceGrid
@@ -531,39 +531,15 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Event titles from a feed render as styled text and load remote images
 - **features-08** (1, done): Its two OSD entries (the own set's refresh, the icon thresholds) were fixed with the OSD's statuses; the levels before idle dimming are kept in a `PersistentProperties`, a default child of BrightnessManager's Singleton root.
   - Idle dimming is forgotten across a shell reload
-- **features-09** (4): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.
-  - [A fast chat reply can drop the shell's connection](../issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
-  - [Replacing the chat's conversation leaves its reply and attachments behind](../issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
-  - [Images dropped together on the chat overwrite each other](../issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
-  - [An attachment's thumbnail pokes past its rounded corners](../issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
-- **features-10** (6):
-  - [Renaming a note whose new name holds a dot drops its extension and hides it](../issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
+- **features-09** (4, done): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.
+- **features-10** (6, 4 done): the folder-name entry stopped: encoding the URL doesn't fix it (see the entry), and a fix needs a choice. The missing-folder entry's fix came back out: its review found it writes the kept edits over the real note, and what they should become needs a choice too.
   - [A folder name holding `#` or `?` opens the wrong folder in the note list](../issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
-  - [A changed notes folder keeps showing the old folder's note and saves it into the new one](../issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)
   - [Typing in a note creates a linked notes folder that doesn't exist](../issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
-  - [Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives](../issues.md#two-toolbar-edits-skip-the-re-parse-so-the-editors-blocks-arent-what-parse-gives)
-  - [NotesConfig expands ~ by hand where Paths.expandHome does it](../issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
-- **features-11** (4): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
-  - [Two Bluetooth menus share one discovery scan, and one closing stops the other's](../issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
-  - [The join form stays incomplete when CA file is picked without a file and the security changed](../issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
-  - [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](../issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
-  - [The Network card shows Tailscale's raw state, untranslated](../issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
-- **features-12** (5):
-  - [Re-applying a community setup over its edited copy never shows Applied](../issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
-  - [IPC community apply does nothing until the catalog was read](../issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
-  - [Turning the gallery on while its card is shown leaves it empty](../issues.md#turning-the-gallery-on-while-its-card-is-shown-leaves-it-empty)
-  - [community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail](../issues.md#communityfetch-isnt-sent-again-after-a-daemon-re-exec-and-blanks-every-thumbnail)
-  - [The apply's wallpaper rides in a property instead of the callback](../issues.md#the-applys-wallpaper-rides-in-a-property-instead-of-the-callback)
-- **features-13** (4):
-  - [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](../issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
-  - [Clicking an older capture's notification opens the newest capture](../issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
-  - The screenshot's Edit notification rebuilds sendNotification's actions (done in platform-03, with notify-send's move into Go)
-  - [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](../issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
-- **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
-  - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)
-  - [The chat builds its conversation lists and model picker while hidden](../issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
-- **features-15** (1):
-  - [A custom clock format without spaces spills past a vertical bar](../issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
+- **features-11** (4, done): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
+- **features-12** (5, done): The IPC `apply` reads the cached catalog first; with no cache yet it warns and the catalog arrives for the next call.
+- **features-13** (4, done): The Edit notification's entry was done in platform-03. Notifications keep no capture's path (their picture is a cached copy), so the handler opens the newest path of the clicked one's key, which holds only that notification.
+- **features-14** (2, done): The lists are ListViews modelled by a shared `CountModel`, so a new count keeps the view's place (a plain number as the model scrolled back to the top). Agenda's unit is a day, its events built with it (`maxEvents` caps them).
+- **features-15** (1, done): A custom format splits on `/` and `,` as well as spaces and `:`, and on `.` and `-` between digits (so a zone's `-03` and `p.m.` stay whole).
 
 ### Counts
 - Entries: 348 in the list (354 at the answers, less 6 fixed with the OSD's statuses: overlay-modules-01 one, overlay-modules-08 three, features-08 two; 359 at triage, from 360 open outside Deferred and Phase 13 less the one merged duplicate; the answers deferred 4 and removed 1). By the area whose clusters hold them: config 21, platform 27, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 45, features 68. By the area that filed them: config 18, platform 29, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 44, features 70.

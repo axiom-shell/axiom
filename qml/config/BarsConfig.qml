@@ -492,6 +492,11 @@ QtObject {
   function defaultPriority(type) {
     return BarsConfig.availableWidgetTypes.find(t => t.type === type)?.priority ?? 0;
   }
+  // Whether a widget type shrinks when its bar is crowded (`x-elastic`):
+  // its host sizes it elastic, and the editor offers its minSize and maxSize
+  function isElastic(type) {
+    return BarsConfig.availableWidgetTypes.find(t => t.type === type)?.elastic ?? false;
+  }
   // What the bar editor's library offers: the widget types, the custom
   // widgets one by one (keyed "CustomWidget:<id>",
   // CustomWidgetsConfig.splitKey) rather than the CustomWidget type

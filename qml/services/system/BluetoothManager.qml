@@ -39,9 +39,14 @@ QtObject {
     setEnabled(!enabled);
   }
 
-  function setDiscovering(on) {
-    if (adapter && enabled && adapter.discovering !== on)
-      adapter.discovering = on;
+  // Discovery runs while anything has acquireDiscovery()ed it (a
+  // BluetoothDevices menu on its Discover tab) and the radio is on
+  function acquireDiscovery(owner) {
+    _discoveryRegistry.acquire(owner, {});
+  }
+
+  function releaseDiscovery(owner) {
+    _discoveryRegistry.release(owner);
   }
 
   // Connected: disconnect. Paired: connect. New: trust, pair, then connect.
@@ -103,6 +108,22 @@ QtObject {
     if (icon.includes("computer"))
       return "laptop";
     return "bluetooth";
+  }
+
+  property ConsumerRegistry _discoveryRegistry: ConsumerRegistry {}
+  readonly property bool _wantsDiscovery: _discoveryRegistry.active && enabled
+  // Only stop a scan started here: another app's isn't ours to end
+  property bool _startedDiscovery: false
+
+  on_WantsDiscoveryChanged: {
+    if (_wantsDiscovery && !discovering) {
+      adapter.discovering = true;
+      _startedDiscovery = true;
+    } else if (!_wantsDiscovery && _startedDiscovery) {
+      if (adapter)
+        adapter.discovering = false;
+      _startedDiscovery = false;
+    }
   }
 
   // Finish "pair then connect" for devices paired from here

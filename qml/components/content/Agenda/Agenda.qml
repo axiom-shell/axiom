@@ -84,51 +84,46 @@ Panel {
 
   // Grows to list every day (from compact, to the full layout); empty,
   // back to its place; editing, as it is
-  wantedHeight: root.session.active ? root.height : root.groups.length === 0 ? 0 : days.height > 0 ? root.height + list.implicitHeight - days.height : 1
+  wantedHeight: root.session.active ? root.height : root.groups.length === 0 ? 0 : days.height > 0 ? root.height + days.contentHeight - days.height : 1
 
-  Flickable {
+  // A ListView, so only the days in view are built
+  ListView {
     id: days
     visible: !root.session.active && root.groups.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: true
-    contentHeight: list.implicitHeight
+    spacing: Widget.spacing
     boundsBehavior: Flickable.StopAtBounds
     clip: true
+    model: CountModel {
+      count: root.groups.length
+    }
 
-    ColumnLayout {
-      id: list
-      width: parent.width
-      spacing: Widget.spacing
+    delegate: ColumnLayout {
+      id: group
+      required property int index
+      readonly property var day: root.groups[index] ?? {
+        "key": "",
+        "events": []
+      }
+      width: ListView.view.width
+      spacing: 2
 
+      StyledText {
+        Layout.leftMargin: Widget.spacing / 2
+        text: root.dayTitle(group.day.key)
+        textColor: group.day.key === root.todayKey ? Theme.accent : Theme.foregroundAlt
+        textSize: Appearance.fontSizeBy(-2)
+        font.bold: true
+      }
       Repeater {
-        model: root.groups.length
-        ColumnLayout {
-          id: group
+        model: group.day.events.length
+        EventRow {
           required property int index
-          readonly property var day: root.groups[index] ?? {
-            "key": "",
-            "events": []
-          }
-          Layout.fillWidth: true
-          spacing: 2
-
-          StyledText {
-            Layout.leftMargin: Widget.spacing / 2
-            text: root.dayTitle(group.day.key)
-            textColor: group.day.key === root.todayKey ? Theme.accent : Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-2)
-            font.bold: true
-          }
-          Repeater {
-            model: group.day.events.length
-            EventRow {
-              required property int index
-              event: group.day.events[index] ?? null
-              dayKey: group.day.key
-              twoLines: root.innerWidth < Appearance.fontSize * 22
-              onClicked: root.session.open(CalendarEvents.draftOf(event))
-            }
-          }
+          event: group.day.events[index] ?? null
+          dayKey: group.day.key
+          twoLines: root.innerWidth < Appearance.fontSize * 22
+          onClicked: root.session.open(CalendarEvents.draftOf(event))
         }
       }
     }

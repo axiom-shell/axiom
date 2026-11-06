@@ -339,6 +339,11 @@ func (c *Conn) NotifyLatest(method string, params any) error {
 	return nil
 }
 
+// Backlogged reports whether a quarter of the write queue is waiting: a
+// sender that can gather its pushes (chat.send's deltas) holds them while
+// it is, rather than fill the queue and get the peer dropped.
+func (c *Conn) Backlogged() bool { return len(c.out) >= cap(c.out)/4 }
+
 // queued is one place in the write queue: a message, or the place a
 // NotifyLatest method holds (its data is taken when it's written).
 type queued struct {

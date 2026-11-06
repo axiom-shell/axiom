@@ -247,6 +247,14 @@ def main():
             if optional_call.search(code):
                 errors.append(f"{path}:{n}: an optional call on a computed member (x[k]?.()) crashes Qt's QML compiler: take it into a const first (docs/dev/core/qml-pitfalls.md)")
 
+    # JS the QML engine lacks (qml-pitfalls.md › The JS engine) throws only
+    # when the line runs, so no load or test catches it
+    missing_js = re.compile(r"\bObject\.fromEntries\b|\.flatMap\s*\(")
+    for path, text in sources.items():
+        for n, line in enumerate(text.split("\n"), 1):
+            if missing_js.search(line.split("//", 1)[0]):
+                errors.append(f"{path}:{n}: Object.fromEntries or flatMap, which Qt's JS engine lacks: use reduce or [].concat(...arr.map(...)) (docs/dev/core/qml-pitfalls.md)")
+
     # Every library type joins one of the root's `x-libraryGroups` (the
     # editors' libraries group by them); required modules aren't offered
     library_groups = schema.get("x-libraryGroups", [])

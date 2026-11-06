@@ -32,16 +32,6 @@ Panel {
     return TailscaleManager.keyExpiry ? (Date.parse(TailscaleManager.keyExpiry) - Date.now()) / 86400000 : NaN;
   }
   readonly property var shownPeers: TailscaleConfig.showOffline ? TailscaleManager.peers : TailscaleManager.peers.filter(p => p.online)
-  // I18n.tr("Connected") I18n.tr("Stopped") I18n.tr("Needs login") I18n.tr("Starting…") I18n.tr("Not running")
-  readonly property var stateLabels: ({
-      "Running": "Connected",
-      "Stopped": "Stopped",
-      "NeedsLogin": "Needs login",
-      "NeedsMachineAuth": "Needs login",
-      "Starting": "Starting…",
-      "": "Not running"
-    })
-  readonly property string stateText: I18n.tr(root.stateLabels[TailscaleManager.backendState] ?? TailscaleManager.backendState)
   // Re-read on every state, so "seen … ago" stays current
   readonly property real now: {
     void TailscaleManager.peers;
@@ -70,7 +60,7 @@ Panel {
     icon: TailscaleManager.connected ? "vpn_lock" : "signal_disconnected"
     iconColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
     value: TailscaleManager.connected ? String(TailscaleManager.onlineCount) : ""
-    label: TailscaleManager.connected ? I18n.tr("online") : TailscaleManager.available ? root.stateText : I18n.tr("not installed")
+    label: TailscaleManager.connected ? I18n.tr("online") : TailscaleManager.available ? TailscaleManager.stateText : I18n.tr("not installed")
   }
 
   function ago(iso) {
@@ -369,7 +359,7 @@ Panel {
 
     StyledText {
       visible: TailscaleManager.available
-      text: root.stateText
+      text: TailscaleManager.stateText
       textSize: Appearance.fontSizeBy(-2)
       textColor: TailscaleManager.connected ? Theme.accent : Theme.foregroundAlt
     }
@@ -401,7 +391,7 @@ Panel {
     action: I18n.tr("Log in")
     // Opening a link doesn't wait for `tailscale up` to give up
     ready: TailscaleManager.authURL !== "" || !TailscaleManager.busy
-    onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()
+    onTriggered: TailscaleManager.logIn()
   }
 
   // This machine

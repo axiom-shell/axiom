@@ -184,6 +184,8 @@ QtObject {
       ratio = Math.max(0, Math.min(1, ratio));
       const seekPosition = ratio * length;
       activePlayer.position = seekPosition;
+      // Shown at once, not at the next tick (none while paused)
+      root.position = seekPosition;
     }
   }
 
@@ -225,7 +227,10 @@ QtObject {
   // onPlayersChanged), seen with no known start, so a later list change
   // doesn't take a playing one for new and drop the pin
   Component.onCompleted: {
-    root._startedAt = Object.fromEntries(root.players.map(p => [p.dbusName, 0]));
+    root._startedAt = root.players.reduce((started, p) => {
+      started[p.dbusName] = 0;
+      return started;
+    }, {});
     root._pick();
   }
 

@@ -178,6 +178,8 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again.
 - Settings › System (the settings overhaul): the System info card's facts on this machine (its distro logo, GPUs named from pci.ids); Rename… asks through axiom's polkit prompt and the new name shows; Copy system info pastes lines with no hostname. In Date & time, pick another time zone (polkit asks), check the bar clock and the card follow it without a restart, then put it back; turn Set the time automatically off and on again. In General, change your picture (the Account card, the login screen once AccountsService has it, a Greeting module with Picture on the lock screen), and change your password with a wrong current one, a weak new one, then a real one. Pick another browser and terminal under Default apps and check `~/.config/mimeapps.list` / `xdg-terminals.list` changed and the Browser and Terminal keybinds open them (after a managed or included config is written again with `axiom open`), and a notification link and a screenshot open in their defaults.
 - Once the shell runs #339 (bar-popouts-07), under niri, sway and Hyprland: with a dock and a bar popout open beside it, check the dock's reserved footprint matches its drawn shape (fillets only where it has them) and the popout doesn't overlap it.
+- Once axiom runs a binary built with row 20's features-09, ask a fast provider (Groq, Cerebras, or a local model) for a long reply in the chat: it streams as before, and `axiom daemon logs` shows no `dropping a peer that stopped reading` (the reply's pieces are gathered while the queue to the shell is backlogged; a Go test shows it, not a real shell that stalls).
+- Once the shell runs #362, a start or a reload logs no `Property 'fromEntries'` TypeError from MediaManager, and a player already playing at the start is picked.
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -214,7 +216,6 @@ The binary's rules are enforced by its tests, and the shell–daemon contract is
 Done: extend `archtest` (dependency direction, no `init()` or package state, every package classified); one floor (`topics.MinInterval`, 1 ms since 2026-10-26: each setting's schema minimum is the limit) for every topic fed by an interval setting; the contract check (the daemon's registry dumps its method, push and topic shapes, `rpc.md` shows them, and `gen_docs.py` checks literal params, helper calls under `// rpc:` and first-level result and push reads in inline callbacks against them; installs skip it with `generate.sh --no-docs`); fold `saved.everything` into `share`; settle `tree` against `schema/yamlsrc` (`tree` is its disk side, both package docs say so); clearer package names (`system` is `sysmon`, `lock` is `lockscreen`, apart from `fsx.Lock`); strict param decoding (`rpc.DecodeStrict`, topic requests too); the call rule in protocol.md, with `gen_docs.py` failing on a call it can't read unless marked `// rpc: unchecked (<reason>)`.
 
 Resolves:
-- [A fast chat reply can drop the shell's connection](issues.md#a-fast-chat-reply-can-drop-the-shells-connection)
 
 ### Phase 5: the allowlist
 [Backend stages 3–7](backend/roadmap.md) are this phase (the `CommandManager` funnel is stage 3b, ahead of stage 6); nothing here restates them.
@@ -235,7 +236,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
-- [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - Once axiom runs a binary built with platform-04, in dev mode: `git switch` to an older branch and `git pull` (or touch a Go file) within the build's time; `axiom daemon logs` shows `dev build done, but the source changed meanwhile: building again` and one more build, the image re-exec'd last is the tree's (`axiom config status` loads, no `running on the defaults`). Then switch to a branch whose config version is older than config.json's: the shell keeps showing the config it had, not the defaults.
 - Once axiom runs platform-04 in dev mode, bump `protocol` in `qml/config/json/backend.json` and save a Go file: after the re-exec, `axiom ipc …` from a bind and a terminal (the installed `~/.local/bin/axiom`, still on the old protocol) works through the dev build, and the shell's calls work with no QML reload (`scripts/log.sh` shows no `refused the hello`). Put the protocol back after.
 - Once axiom runs platform-04 in dev mode, save a QML file and a Go file together a few times (as a rebase does): every re-exec's shell hello is accepted (`scripts/log.sh` shows no `only the shell axiom runs may connect as the shell`, `axiom daemon status` lists the shell).
@@ -362,51 +362,18 @@ Found by the audits:
 - [A fading toast keeps its full blur on niri](issues.md#a-fading-toast-keeps-its-full-blur-on-niri)
 - [A hide while a popout closes leaves its queued show to open it](issues.md#a-hide-while-a-popout-closes-leaves-its-queued-show-to-open-it)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
-- [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
-- [A custom clock format without spaces spills past a vertical bar](issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
-- [SystemStats copies ValueStyleWidget's pill colour and text-by-state rule](issues.md#systemstats-copies-valuestylewidgets-pill-colour-and-text-by-state-rule)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [Replacing the chat's conversation leaves its reply and attachments behind](issues.md#replacing-the-chats-conversation-leaves-its-reply-and-attachments-behind)
-- [Images dropped together on the chat overwrite each other](issues.md#images-dropped-together-on-the-chat-overwrite-each-other)
-- [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
-- [An attachment's thumbnail pokes past its rounded corners](issues.md#an-attachments-thumbnail-pokes-past-its-rounded-corners)
-- [Renaming a note whose new name holds a dot drops its extension and hides it](issues.md#renaming-a-note-whose-new-name-holds-a-dot-drops-its-extension-and-hides-it)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
-- [A changed notes folder keeps showing the old folder's note and saves it into the new one](issues.md#a-changed-notes-folder-keeps-showing-the-old-folders-note-and-saves-it-into-the-new-one)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
-- [Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives](issues.md#two-toolbar-edits-skip-the-re-parse-so-the-editors-blocks-arent-what-parse-gives)
-- [NotesConfig expands ~ by hand where Paths.expandHome does it](issues.md#notesconfig-expands--by-hand-where-pathsexpandhome-does-it)
-- [Two Bluetooth menus share one discovery scan, and one closing stops the other's](issues.md#two-bluetooth-menus-share-one-discovery-scan-and-one-closing-stops-the-others)
-- [The join form stays incomplete when CA file is picked without a file and the security changed](issues.md#the-join-form-stays-incomplete-when-ca-file-is-picked-without-a-file-and-the-security-changed)
-- [The VPN list's Tailscale row misreads Tailscale's errors, actions and login](issues.md#the-vpn-lists-tailscale-row-misreads-tailscales-errors-actions-and-login)
-- [The Network card shows Tailscale's raw state, untranslated](issues.md#the-network-card-shows-tailscales-raw-state-untranslated)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 - [An app reading the camera through V4L2 never shows as using it](issues.md#an-app-reading-the-camera-through-v4l2-never-shows-as-using-it)
-- [Re-applying a community setup over its edited copy never shows Applied](issues.md#re-applying-a-community-setup-over-its-edited-copy-never-shows-applied)
-- [IPC community apply does nothing until the catalog was read](issues.md#ipc-community-apply-does-nothing-until-the-catalog-was-read)
-- [Turning the gallery on while its card is shown leaves it empty](issues.md#turning-the-gallery-on-while-its-card-is-shown-leaves-it-empty)
-- [community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail](issues.md#communityfetch-isnt-sent-again-after-a-daemon-re-exec-and-blanks-every-thumbnail)
-- [The apply's wallpaper rides in a property instead of the callback](issues.md#the-applys-wallpaper-rides-in-a-property-instead-of-the-callback)
-- [Switching an open picker between screenshot and recording keeps the first kind's folder and sound](issues.md#switching-an-open-picker-between-screenshot-and-recording-keeps-the-first-kinds-folder-and-sound)
-- [Clicking an older capture's notification opens the newest capture](issues.md#clicking-an-older-captures-notification-opens-the-newest-capture)
-- [ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour](issues.md#screenrecords-recording-time-repeats-stopwatchclockformat-and-the-bars-differs-past-an-hour)
-
-Found while fixing core-ui-theming-04 (row 20):
-- [MediaManager's start-up pass throws: the engine has no Object.fromEntries](issues.md#mediamanagers-start-up-pass-throws-the-engine-has-no-objectfromentries)
-
-Found while reviewing core-ui-theming-06 (row 20):
-- [A NowPlaying seek shows the old place until the next tick, and keeps it while paused](issues.md#a-nowplaying-seek-shows-the-old-place-until-the-next-tick-and-keeps-it-while-paused)
-- [The text cursor keeps blinking with animations off](issues.md#the-text-cursor-keeps-blinking-with-animations-off)
 
 Found while fixing bar-popouts-07 (row 20):
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
-
-Found while fixing features-07 (row 20):
-- [The Window and Media bar widgets render titles as styled text and load remote images](issues.md#the-window-and-media-bar-widgets-render-titles-as-styled-text-and-load-remote-images)
 
 Found while moving the backend to the qml/ layout:
 - [The compositor facts' axiomPath is read by nothing](issues.md#the-compositor-facts-axiompath-is-read-by-nothing)
@@ -415,13 +382,11 @@ Found while building dev trees and the dev config:
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
 
-Found while reviewing the bar rewrite:
-- [A bar widget's elasticity is stated twice](issues.md#a-bar-widgets-elasticity-is-stated-twice)
-- [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
-- [A bar widget that loses its background while shown keeps drawing the old one](issues.md#a-bar-widget-that-loses-its-background-while-shown-keeps-drawing-the-old-one)
-
 Found while reviewing the wallpaper parallax's travel:
 - [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
+
+Found while fixing row 20's bar cluster:
+- ["Colour the text by state" does nothing on a bar whose widgets have no fill](issues.md#colour-the-text-by-state-does-nothing-on-a-bar-whose-widgets-have-no-fill)
 
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.

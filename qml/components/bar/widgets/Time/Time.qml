@@ -103,9 +103,11 @@ BarWidget {
     };
   }
 
-  // A custom format's output, one word (or colon-separated field) per line
+  // A custom format's output, one field per line: split on spaces and
+  // : / , and on . and - between digits, so 2026-10-30 and 30.10.2026 split
+  // but a zone's sign (-03, GMT-3) and a.m. / p.m. stay whole
   function _split(text) {
-    return text.split(/[\s:]+/).filter(part => part !== "").map(part => _line(part));
+    return text.replace(/(\d)[.\-](?=\d)/g, "$1 ").split(/[\s:\/,]+/).filter(part => part !== "").map(part => _line(part));
   }
 
   component ClockText: Text {

@@ -39,7 +39,7 @@ ColumnLayout {
   property string caCert: ""
   property bool more: false
 
-  readonly property bool complete: (!root.hidden || ssidField.text !== "") && (!root.needsIdentity || identityField.text !== "") && (!root.needsPassword || root.enterprise || passwordField.text !== "") && (root.caMode !== "file" || root.caCert !== "")
+  readonly property bool complete: (!root.hidden || ssidField.text !== "") && (!root.needsIdentity || identityField.text !== "") && (!root.needsPassword || root.enterprise || passwordField.text !== "") && (!root.enterprise || root.caMode !== "file" || root.caCert !== "")
 
   function submit() {
     if (!root.complete)

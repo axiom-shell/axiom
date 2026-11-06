@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.methods
 
 // Base for a bar widget with a display style (docs/dev/bar/display-styles.md):
 // label, icon, ring, fill, pill, segments, sparkline, ticker or stacked, from
@@ -40,11 +41,10 @@ BarIconWidget {
   // The pill: its background's shape filled to the value (WidgetGroup
   // draws it, so it takes the bar's caps and radius)
   backgroundLevel: root.style === "pill" && !root.hidden ? Math.min(1, root.ratio) : -1
-  backgroundLevelColor: Qt.alpha(root.colors.icon, 0.35)
+  backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
 
-  // Colour the text by state only where it isn't the background already
-  // (a filled widget's text must read on it)
-  readonly property bool _textByState: root.appearance.colorText && root.hasState && root.colors.fill.a < 1
+  // Colour the text by state, while it has one
+  readonly property bool _textByState: root.hasState && BarWidgetStyle.textByState(root.colors, root.appearance)
   foregroundColor: root._textByState ? root.stateColor : root.colors.text
   iconColor: root._textByState ? root.stateColor : root.colors.icon
 

@@ -11,6 +11,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 - `conversations`: the index, newest first.
 - Actions: `send` / `stop` / `regenerate`, plus presets and models.
 - Attachments come from the clipboard, a region from `ScreenshotManager.pick`, or dropped files. axiom reads them by path on each send.
+- Opening another conversation or starting a new one (`newConversation`, `open`; `ask` too) lets go of the current one first (`_letGo`): a reply streaming in is stopped and forgotten at once, so a new message can go straight away, and unsent attachments' files are deleted.
 - **Storage:** chats are saved to `$XDG_STATE_HOME/axiom/chats/` (atomically, through axiom: `FileManager.write`):
   - `<id>.json` for each chat
   - `index.json` for the list
@@ -20,7 +21,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 ### Requests (axiom's package chat)
 - Each reply is one `chat.send` call (`ChatManager._reply`): the provider (no key), the model, the messages (only what goes to the provider: role, text, state, who wrote a reply and its `blocks`, attachments' `path` and `mime`) and the preset's options, under an `id`.
 - axiom (`backend/internal/chat`) reads the key itself (`keys.go`: `keyEnv` in the shell's environment, then `secret-tool`, then secrets.json; see [Secrets](../core/secrets.md)), reads each attachment by path (one it can't read goes without its image), builds the request and streams the reply:
-  - each piece is a `chat.delta` push (`{ id, kind: "text" | "thinking", text }`) to the connection that asked;
+  - each piece is a `chat.delta` push (`{ id, kind: "text" | "thinking", text }`) to the connection that asked; while a quarter of that connection's write queue waits (`Conn.Backlogged`), pieces are gathered into one push per kind (`gatherDeltas`), so a fast reply to a shell that stopped reading never fills the queue and gets it dropped;
   - the call answers when the reply ends: `{ model, blocks, notice: "refusal" | "length" | "", stopped }`;
   - a failure is an error by kind, which `ChatManager` maps to the message's `errorKind`: `unauthorized` (401, 403) → `auth`, `not_found` (no key) → `nokey`, `unavailable` (no answer, or the reply cut off midway) → `network`, else `bad_reply` (another status, an error event in the stream).
 - `chat.stop { id }` ends a reply early; `chat.send` then answers `stopped`, with what streamed kept.
@@ -36,6 +37,7 @@ The LLM chat: conversations, streaming replies from Anthropic, OpenAI-style and 
 ### Display
 - `qml/components/methods/ChatMarkdown` splits a reply into prose and code blocks.
 - `content/Chat/Chat.qml` is a `Panel`, so it can also be used as a popout.
+- The messages, and the conversation list's rows, are ListViews: only those in view are built (the messages a screen either side too, so scrolling back a little doesn't lay their Markdown out again). The conversation list (docked or over the chat), the model picker and a row's rename field are built only while they show.
 
 ### Entry points
 - IPC `chat`: `open`, `newChat`, `ask <text>`, `settings`.

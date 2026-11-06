@@ -20,11 +20,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### The Window and Media bar widgets render titles as styled text and load remote images
-- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`text`), `qml/components/bar/widgets/Media/Media.qml` (`text`, `styleText`)
-- **What:** Both show text from outside (the focused window's title, an MPRIS track title: a web page sets either) through `IconTextWidget` / `ValueGraphic`, whose `textFormat` stays Text.AutoText, so a title like `<img src="https://tracker.example/p.png"> Song` renders as styled text and makes the shell fetch the URL (the same Qt behaviour the calendar fix was tested on). Next event sets `textFormat: Text.PlainText` (features-07); these two don't. Fix: `textFormat: Text.PlainText` on both widgets.
+### "Colour the text by state" does nothing on a bar whose widgets have no fill
+- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`)
+- **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
 - **Size:** trivial
-- **Found:** 2026-11-05, while fixing features-07 (row 20)
+- **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
 
 ### A fading toast keeps its full blur on niri
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
@@ -74,24 +74,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
 
-### A bar widget's elasticity is stated twice
-- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
-- **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the bar rewrite
-
-### BarContainer's two join openings repeat their stretch
-- **Where:** `qml/components/bar/BarContainer.qml` (`joinOpening`, `_solidJoinOf`)
-- **What:** Both work out the same `from` and `span` and make the same `EdgeAttach.joinOpening` call (the border's opening also passes the fillet). One private helper returning the stretch would leave each with only what differs.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the bar rewrite
-
-### A bar widget that loses its background while shown keeps drawing the old one
-- **Where:** `qml/components/bar/WidgetGroup.qml` (the per-widget `WidgetBackground`'s `_last`)
-- **What:** A widget going away keeps its last place and colors while its host is still drawn (`_shown` falls back to `_last` while `_drawn`), so it fades with its host. A host that stays drawn but has no background any more never lets go: seen in a nested niri run, swapping a section's widgets in place (same count; the delegates are reused, so the slot that held Window now holds a Spacer) left the Spacer drawing Window's background across the whole room it took, until a change of count rebuilt the delegates. A widget turning its own `hasBackground` off would do the same. Fix: keep `_last` only while the host is fading out (its opacity or `_drawnMain` falling), or clear it when `host.background` turns null on a host still fully shown.
-- **Size:** small
-- **Found:** 2026-11-05, while joining bar runs across sections by spacers
-
 ### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
 - **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
 - **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).
@@ -109,24 +91,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.
 - **Size:** small
 - **Found:** 2026-11-02, while reviewing roadmap row 20's compositor-06
-
-### MediaManager's start-up pass throws: the engine has no Object.fromEntries
-- **Where:** `qml/services/system/MediaManager.qml:228` (`_startedAt`)
-- **What:** `Component.onCompleted` sets `root._startedAt = Object.fromEntries(…)`, but Qt's JS engine has no `Object.fromEntries` (qml-pitfalls.md › The JS engine). Every start and reload logs `TypeError: Property 'fromEntries' of object function Object() { [native code] } is not a function` (a nested niri run's log, 2026-11-02), and the `_pick()` after it never runs: the players already running at start get no start time, and nothing is picked until the player list changes. Fix: `reduce`, as the pitfall says; `check_structure` could refuse `fromEntries` and `flatMap` as it refuses an optional call on a computed member.
-- **Size:** trivial
-- **Found:** 2026-11-02, while fixing roadmap row 20's core-ui-theming-04
-
-### A NowPlaying seek shows the old place until the next tick, and keeps it while paused
-- **Where:** `qml/services/system/MediaManager.qml` (`setPositionByRatio`), `qml/components/content/NowPlaying/NowPlaying.qml` (`seek`)
-- **What:** `setPositionByRatio` writes `activePlayer.position` but not `MediaManager.position`, which only `_positionTimer` copies over (every 500 ms, and only while playing). Released, the seek slider shows its `value` (`MediaManager.progress`, still the old place) and glides back to it, then jumps to the seek at the next tick; paused, it stays on the old place (and the time beside it) until playback resumes. The same before core-ui-theming-06 (the old slider put `targetValue` back on release). Found by reading; a seek while paused settles it. Fix: `root.position = seekPosition` in `setPositionByRatio`.
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
-
-### The text cursor keeps blinking with animations off
-- **Where:** `qml/components/reusable/TextCursor.qml`
-- **What:** its `SequentialAnimation on opacity` loops whenever the input has focus, whatever `Appearance.animations` says, against AGENTS.md › Config: "looping animations gate `running` on `Appearance.animations`" (`check_structure` doesn't check it). Carried over from StyledTextEntry's and StyledTextArea's copies. Fix: `running: root._focused && Appearance.animations`, and opacity back to 1 when it stops (a stop leaves it wherever the blink was, maybe 0).
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
 
 ### The compositor facts' axiomPath is read by nothing
 - **Where:** `backend/internal/compositor/manager/inputs.go` (`BindCtx`), `qml/services/compositor/CompositorConfigManager.qml` (`axiomPath`)
@@ -256,12 +220,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-10-29, while testing custom widgets on the live config; cause found 2026-11-01, while renaming the OSD's audio statuses
 
-### A fast chat reply can drop the shell's connection
-- **Where:** `backend/internal/rpc/rpc.go` (`Conn.enqueue`, `Limits.QueueSize`), `backend/internal/daemon/chat.go` (`chat.send`'s `c.Notify`), `backend/internal/chat/send.go` (`Send`)
-- **What:** Each piece of a reply is its own `chat.delta` notification (`Notify`, not latest-wins), and `enqueue` never waits: when the connection's 4096-message queue is full it logs `dropping a peer that stopped reading` and closes the connection, every topic and call in flight with it. So if the shell stops reading (its event loop busy) while a fast provider streams, once the socket buffer and 4096 deltas fill (seconds at the fastest servers' token rates, a delta per token or two), the shell's whole connection goes. Before stage 5 curl's pipe simply blocked. A fix would coalesce the deltas `Send` emits (text gathered while a push waits) or let `chat.send` wait for room instead of dropping the peer.
-- **Size:** small
-- **Found:** 2026-10-27, while reviewing the chat move to axiom (backend stage 5)
-
 ### With no takeovers kept, a broken config.json can still release the compositor's config
 - **Where:** `backend/internal/store/store.go` (`loadInitial`, `write`, `holdTakeovers`), `backend/internal/compositor/manager/manager.go` (`ConfigChanged`)
 - **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
@@ -284,12 +242,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `qml/components/content/base/Card.qml` (`full`), `qml/components/content/base/Panel.qml` (`column`, `background`)
 - **What:** A module's children go into `Card.full` / `Panel.column` (a default property alias), which is only hidden while `compactContent` shows, so a compact card builds its whole layout as well as its figure. On the Tiny page (34 modules in quarter-card slots) this is most of what's left of its build: WifiNetworks about 65 ms, each ClockCalendar about 45 ms (`Built overlay module <Type> in X ms` with `--debug`). It also slows the bar popouts using those panels. A fix is an optional `fullContent: Component` on both roots, loaded only while not compact, then moving the heavy modules to it one by one (their ids are referenced from the module root, so each needs its own pass): see [streamed-building](core/streamed-building.md). The modules review (2026-10-31) found the same in Tailscale, VpnConnections, BluetoothDevices, AudioMixer, Palette, Pomodoro, Focus, Todo, Battery and TopProcesses; Notes always builds both its `tiny` figure and its editor; Disks, SystemGraphs and VolumeDials already skip part of their layout while compact. Parts hidden by mode rather than by compactness are [their own entry](#daypane-builds-its-eventeditor-before-it-opens).
 - **Size:** needs a plan
-- **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
-
-### Unbounded lists still built in full
-- **Where:** `qml/components/content/parts/chat/ChatMessageList.qml`, `qml/components/content/parts/chat/ConversationList.qml`, `qml/components/content/Agenda/Agenda.qml`, `qml/components/content/Calculator/Calculator.qml` (history), `qml/components/content/Stopwatch/Stopwatch.qml` (laps), `qml/components/content/parts/TodoList.qml`
-- **What:** Each builds one delegate per item in a Repeater, with no limit, as `DeviceList` did before it became a ListView (52 Wi-Fi networks took 1.8 s). None showed as slow on the test machine, but they grow with use: a long chat or note becomes a slow module and popout. ListViews (or streamed sections) would build only what's in view.
-- **Size:** small
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
 ### Nineteen windows stay mapped on one monitor
@@ -515,24 +467,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### A pill's shadow run-on rectangles log stackAfter warnings
-- **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
-- **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
-- **Size:** small
-- **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
-
-### A custom clock format without spaces spills past a vertical bar
-- **Where:** `qml/components/bar/widgets/Time/Time.qml:108` (`_split`)
-- **What:** On a vertical bar the clock is `thickness` wide, and a custom format is stacked one part per line, split only on whitespace and `:` (`text.split(/[\s:]+/)`). With `dateFormat: "yyyy-MM-dd"` (or `dd.MM.yyyy`, `HH.mm`) the whole value is one line ("2026-10-30" is about 70 px at font 14), centred in a ~26 px column. BarWidget doesn't clip, and the host clips only while resizing, so the text draws across the bar's edge onto the windows beside it. The file's header promises "On a vertical bar each is stacked into short lines". Fix: split on `/[\s:.\-\/,]+/`.
-- **Size:** trivial
-- **Found:** 2026-10-30, while reviewing the bar-widgets system
-
-### SystemStats copies ValueStyleWidget's pill colour and text-by-state rule
-- **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:149` (`backgroundLevelColor`, `_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:43` (`backgroundLevelColor`, `_textByState`)
-- **What:** What's left of the style-fallbacks entry once `ValueGraphic.resolvedStyle` took the style rules: `Qt.alpha(colors.icon, 0.35)` and `appearance.colorText && colors.fill.a < 1` are still written in both widgets, so a change to the pill's colour or to when the text takes the state's colour would miss SystemStats. A ValueGraphic member doesn't reach them: SystemStats' root draws the pill and colours the text, and its graphics are one per segment, inside the Repeater. Fix: one shared place both roots can call (a `BarsConfig` or `BarWidgetStyle` function taking the widget's `colors` and `appearance`).
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing bar-popouts-09
-
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
 - **What:** Contract (writing-modules.md): a module sets `fullMinWidth` / `fullMinHeight`, "the px its full layout needs inside its padding". These don't cover it. All figures are inner px at font 14, normal density.
@@ -612,21 +546,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
-### Replacing the chat's conversation leaves its reply and attachments behind
-- **Where:** `qml/services/apps/ChatManager.qml:70` (`newConversation`), `qml/services/apps/ChatManager.qml:77` (`open`), `qml/services/apps/ChatManager.qml:166` (`ask`), `qml/services/apps/ChatManager.qml:499` (`_finish`)
-- **What:** `newConversation` and `open` replace the conversation but only half let go of what belonged to the old one:
-  - **The reply in flight.** They call `stop()`, which sends `chat.stop` and returns; `busy` is `_replyId !== ""` and `_replyId` clears only when `chat.send` answers, later. So `ask` (`newConversation` then `send`) finds `root.busy` and `send` returns false: with a reply streaming, the launcher's `@question` (`LauncherManager.qml:451`) or `axiom ipc chat ask "…"` opens an empty new conversation and the question is gone, with no notice. When the old answer arrives, `_finish` returns at line 500 (no streaming placeholder in the new conversation) before clearing `streamingText` / `streamingThinking`, which keep the abandoned text until the next reply.
-  - **Pending attachments.** A pasted image, screenshot or dropped file is copied at once into `chats/<current id>/` (with `Chat.keepConversations` > 0); both functions just set `root.attachments = []` (only `detach` runs `rm`). A conversation never sent is never in `index.json`, so neither `remove` nor the pruning in `_writeConversation` reaches its folder: paste a screenshot, click New conversation, and the screenshot stays in `~/.local/state/axiom/chats/<id>/` for good, a privacy leak as much as a disk one (the same for attachments pending at a reload, left as rare).
-  Fix: one helper both call before replacing the conversation, `_letGo()`: `if (busy) { stop(); _replyId = ""; streamingText = ""; streamingThinking = ""; }` (the late answer and deltas then fail their id check) and `attachments.forEach(a => CommandManager.runDetached(["rm", "-f", "--", a.path]))`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### Images dropped together on the chat overwrite each other
-- **Where:** `qml/services/apps/ChatManager.qml:367` (`_attachmentPath`), `qml/components/content/Chat/Chat.qml:141` (`onDropped`)
-- **What:** An attachment's file is named `${Date.now().toString(36)}.${ext}` in the conversation's folder. The DropArea calls `attachFile` for each URL in one synchronous loop, and each `attachFile` computes its copy's path before its `cp` runs, so two images of one type dropped together get the same millisecond and the same path: both `cp`s write one file, the composer shows two chips of the last image, the first image is never sent, and removing either chip (`detach` → `rm -f`) deletes the file the other still points to. Fix: make the name unique as `_blank` does for ids: `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}.${ext}` (or a counter property).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
 ### An image sent without text to Anthropic carries a whitespace-only text block
 - **Where:** `backend/internal/chat/send.go:284` (`anthropicRequest`)
 - **What:** `send` allows a message with attachments and no text, and `anthropicRequest` always appends `{"type": "text", "text": orSpace(t.text())}`, so an image-only message sends the text `" "`. The Messages API rejects whitespace-only text blocks ("text content blocks must contain non-whitespace text"), so the reply fails as `bad_reply` where OpenAI-style and Gemini requests (which skip the text when there are images) succeed. PLAUSIBLE: one Anthropic request with an image and empty text settles it (not made: paid API). The shape came over unchanged from the old ChatProtocol. Fix: append the text block only when the text is non-empty or there's no image (`if text := t.text(); text != "" || len(content) == 0 { … orSpace(text) … }`), plus a TestBuild row with an image-only user turn.
@@ -639,82 +558,22 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
-### The chat builds its conversation lists and model picker while hidden
-- **Where:** `qml/components/content/Chat/Chat.qml:58` (docked `ConversationList`), `qml/components/content/Chat/Chat.qml:116` (floating `ConversationList`), `qml/components/content/Chat/Chat.qml:126` (`ModelPicker`), `qml/components/content/parts/chat/ConversationList.qml:140` (`renameField`)
-- **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Chat.qml always builds two `ConversationList`s, the docked one (`visible: root.listDocked`) and the floating one (`visible: !root.listDocked && root.listOpen`), so one is always hidden and usually both; each builds a row per saved conversation (`Chat.keepConversations` defaults to 50), each row with a hidden rename `StyledTextEntry` (`visible: item.editing`). The `ModelPicker` (`visible: root.pickerOpen`) builds every preset and model row while closed. Fix: wrap the three in Loaders with `active` on their conditions (`listDocked`, `!listDocked && listOpen`, `pickerOpen`), and the rename field in a Loader on `item.editing`.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### An attachment's thumbnail pokes past its rounded corners
-- **Where:** `qml/components/content/parts/chat/AttachmentChip.qml:23` (`clip`)
-- **What:** The chip is a Rectangle with `radius: Widget.radius / 2` and `clip: true`, which clips to the bounding box, so the `PreserveAspectCrop` image (inset 1 px) draws its square corners over the rounded border, in the composer and in every sent message. qml-pitfalls.md: "Rounded clipping is Quickshell.Widgets' `ClippingRectangle`". Fix: make the root a `ClippingRectangle` (with its `color` set) in place of the Rectangle and drop `clip: true`.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### Renaming a note whose new name holds a dot drops its extension and hides it
-- **Where:** `qml/services/apps/NotesManager.qml:253` (`rename`), `qml/services/apps/NotesManager.qml:236` (`createNote`)
-- **What:** `rename` keeps the old extension only when the new name has no dot at all (`if (ext && !isFolder && !/\.[^.]+$/.test(base)) base += ext[0];`), while `createNote` asks whether the name ends in one of `NotesConfig.extensions`. The rename field shows the title without its extension (`NotesManager.titleOf`), so renaming "Meeting 31.10.md" to "Meeting 1.11" (or opening its rename field and pressing Enter unchanged, "Meeting 31.10") moves the file to "Meeting 1.11" with no `.md` (checked by running those two lines in node: `Meeting 1.11`). The file then matches no name filter: it leaves the note list, `allNotes`, the settings' note picker and the search, and once the module shows another note it can't be opened again from axiom. CONFIRMED. Fix: decide "has an extension" one way for both, `NotesConfig.extensions.some(ext => base.toLowerCase().endsWith("." + ext))`, in a small helper `createNote` and `rename` share.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
 ### A folder name holding `#` or `?` opens the wrong folder in the note list
-- **Where:** `qml/components/content/parts/notes/NoteBrowser.qml:87` (`folderModel`), `qml/services/core/ThemeManager.qml:34` (the wallpaper folder's FolderListModel)
-- **What:** The browser's `FolderListModel` is given `"file://" + NotesManager.absolute(…)` unencoded, so a `#` starts the URL's fragment and a `?` its query. Folder names come from the user (`createFolder` keeps both characters). Checked with qmltestrunner: a model given `file:///…/d/C#/` listed the contents of `d/C` (`names= ["x"]`), not `d/C#`. So opening a folder "C#" (or "Q&A?") shows another folder's notes, or nothing, under a breadcrumb saying "C#", and a notes folder set to such a path lists nothing at all; a `%20` in a name is read as a space. The wallpaper folder (`Appearance.wallpaperPath`, a user path too) is built the same way. CONFIRMED. Fix: build the URL from encoded segments, a new Paths helper, `fileUrl(path)`, returning `"file://" + path.split("/").map(encodeURIComponent).join("/")`, used by both models.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### A changed notes folder keeps showing the old folder's note and saves it into the new one
-- **Where:** `qml/services/apps/NotesManager.qml:440` (`_read`), `qml/services/apps/NotesManager.qml:398` (`_file`), `qml/services/apps/NotesManager.qml:366` (`onDirectoryChanged`)
-- **What:** An open document's `_file` is bound to `root.absolute(doc.path)`, so when `Notes.directory` changes every open document follows to the same relative path in the new folder (`on_FileChanged: doc._follow()`). Where the new folder has no such file, `_read` keeps the old text (`if (text === null) doc.loaded = true;`, meant for a new note). A Notes module in an edge menu or on the desktop showing "notes.md" thus keeps showing the old folder's notes.md after the folder is switched to a synced vault, and the first keystroke writes all of it into the vault as notes.md. The order against `onDirectoryChanged`'s `flushAll()` is not stated either: if the binding updates first, edits less than 600 ms old are flushed into the new folder (PLAUSIBLE: QML's notify order). CONFIRMED for the kept text. Fix: on a directory change, flush every document to its old file, then reload each from the new one with a missing file reading as empty (`_file` a plain property set by `_follow()`, called from `onDirectoryChanged` after `flushAll()`; `_read` empties the text when it follows to a missing file); or have the modules release their documents and show their place's note again.
+- **Where:** `qml/components/content/parts/notes/NoteBrowser.qml:87` (`folderModel`)
+- **What:** The browser's `FolderListModel` is given `"file://" + NotesManager.absolute(…)` unencoded, so a `#` starts the URL's fragment and a `?` its query. Folder names come from the user (`createFolder` keeps both characters). Checked with qmltestrunner: a model given `file:///…/d/C#/` listed the contents of `d/C` (`names= ["x"]`), not `d/C#`. So opening a folder "C#" (or "Q&A?") shows another folder's notes, or nothing, under a breadcrumb saying "C#", and a notes folder set to such a path lists nothing at all; a `%20` in a name is read as a space. CONFIRMED. The wallpaper list isn't affected any more (WallpaperManager lists through `file.list` and escapes `%`, `#` and `?` in its image URLs). Encoding the URL doesn't fix it (checked with qmltestrunner on Qt 6.12, 2026-11-05): FolderListModel turns its folder into a local path and parses that as a URL again, so `file:///…/d/C%23/` still lists `d/C`; `C%2523` lists `C#`, but a `?` (`Q%253F`) or a literal `%xx` in a name can't be reached either way. Fix (a maintainer's call): escape twice for FolderListModel, which covers `#` and leans on Qt's double parse, or list the folder through the daemon (`file.list` with folders, plus a watch) instead of FolderListModel.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notes system
 
 ### Typing in a note creates a linked notes folder that doesn't exist
 - **Where:** `qml/services/apps/NotesManager.qml:409` (`flush`), `qml/services/apps/NotesManager.qml:302` (`refreshList`)
-- **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: when `NotesConfig.linked`, `flush()` checks the folder first (`[ -d "$1" ]` through `_run`) and keeps the edit dirty with `_fail(I18n.tr("The notes folder doesn't exist: {0}", …))` when it's gone, refreshing `directoryMissing` on the way.
+- **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: waits on the decision below. A fix that keeps the edit dirty (tried in the features-10 branch) writes it over the real note once the folder returns: a document opened while the folder was missing read its note as empty, `_fromDisk` doesn't reload a dirty document, and the `find` that sees the folder again flushes the edits, so typing "x" in a scratchpad and then mounting the drive writes "x" over the vault's real scratchpad.md (changing `Notes.directory` away from a missing folder does the same to the new folder's note of that name). Found by reading; not run. So the fix waits on a maintainer decision: "Which should the kept edits become: dropped, saved as a conflict copy, or prevented by making the editor read-only while the folder is missing?"
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### Two toolbar edits skip the re-parse, so the editor's blocks aren't what parse() gives
-- **Where:** `qml/components/methods/NoteMarkdown.qml:507` (`toggleBullet`), `qml/components/methods/NoteMarkdown.qml:447` (`toggleTask`)
-- **What:** notes.md: "Every structural edit re-parses (`reparse`), so the blocks are always what `parse()` would give." `toggleBullet`'s text branch and `toggleTask`'s "add a task at the end" branch return the edited copy without `reparse`. Checked with qmltestrunner: the bullet button on a line "[ ] foo" gives a text block "- [ ] foo" that parses as a task (no checkbox, `progress` uncounted until the next structural edit); the checklist button with nothing focused in a note ending in an unclosed code fence shows a checkbox row that is plain "- [ ] " inside the fence once the note reloads. CONFIRMED. Fix: return `root.reparse(copy, focus)` from both branches, and a `tst_NoteMarkdown` row asserting, for each edit, `parse(serialize(result.doc))` equals `result.doc` (it would have caught both).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### NotesConfig expands ~ by hand where Paths.expandHome does it
-- **Where:** `qml/config/NotesConfig.qml:15` (`directory`), `qml/config/NotesConfig.qml:12` (`defaultDirectory`)
-- **What:** AGENTS.md: "A path setting may hold `~`: expand it (`Paths.expandHome`) before use." `directory` trims, expands `~` and `~/` itself and keeps a `defaultDirectory` member read only there. Fix: `readonly property string directory: root.linked ? Paths.expandHome(_c.directory).replace(/\/*$/, "/") : Paths.defaultNotesPath` (expandHome trims and strips trailing slashes; `defaultNotesPath` ends in "/" already): lines 10–11 and 14–21 (10) become 1, 9 lines removed.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### Two Bluetooth menus share one discovery scan, and one closing stops the other's
-- **Where:** `qml/components/content/BluetoothDevices/BluetoothDevices.qml:44` (`updateScan`), `qml/services/system/BluetoothManager.qml:41` (`setDiscovering`)
-- **What:** Each BluetoothDevices instance starts discovery when its Discover tab opens, and only if none runs (`if (want && !BluetoothManager.discovering) { BluetoothManager.setDiscovering(true); _startedScan = true; }`), and stops it when it leaves the tab or is destroyed (`Component.onDestruction: if (_startedScan) BluetoothManager.setDiscovering(false)`). With two instances (the Bluetooth widget's popout and a BluetoothDevices card on the overlay or an edge menu, or cards on two monitors): A opens Discover and starts the scan; B opens Discover, sees `discovering` and doesn't mark it as its own; A closes or goes back to Devices and stops the adapter's discovery. B stays on Discover with no scan and no scanning indicator, and nothing restarts it (`updateScan` runs only on a tab or power change), so new devices never appear. Wi-Fi solved the same problem with a consumer registry (`NetworkingManager.acquireScan` / `releaseScan`, a `ConsumerRegistry` driving a `Binding` on `scannerEnabled`). Fix: the same in BluetoothManager: `acquireDiscovery(owner)` / `releaseDiscovery(owner)` over a `ConsumerRegistry`, and a `Binding` on `adapter.discovering` with `value: _discoveryRegistry.active && enabled`; BluetoothDevices acquires while `currentTab === 1` and releases otherwise and on destruction, dropping `_startedScan`, `updateScan`'s bookkeeping and the `onEnabledChanged` Connections (about 20 lines there, about 14 added in the service). CONFIRMED by reading; not run with two menus open.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the networking-bluetooth system
-
-### The join form stays incomplete when CA file is picked without a file and the security changed
-- **Where:** `qml/components/content/parts/WifiJoinForm.qml:42` (`complete`)
-- **What:** `complete` ends with `&& (root.caMode !== "file" || root.caCert !== "")`, whatever the security. In the Hidden network form: pick Enterprise, open More, pick CA file (no file chosen yet), then pick WPA (or WEP, or None). The CA row is gone (`visible: root.enterprise && root.more`), but `caMode` is still "file" with no certificate, so Connect stays disabled and Enter does nothing, with nothing on screen saying why; only switching back to Enterprise and choosing another CA mode frees it. Fix: `&& (!root.enterprise || root.caMode !== "file" || root.caCert !== "")`. CONFIRMED by reading.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the networking-bluetooth system
-
-### The VPN list's Tailscale row misreads Tailscale's errors, actions and login
-- **Where:** `qml/services/system/VpnManager.qml:42` (`rows`), `qml/services/system/VpnManager.qml:44` (`rows`), `qml/services/system/VpnManager.qml:105` (`up`), `qml/services/system/VpnManager.qml:234` (`statusText`), `qml/services/apps/TailscaleManager.qml:133` (`openLogin`), `qml/services/apps/TailscaleManager.qml:163` (`_run`, `lastError`)
-- **What:** VpnManager builds the Tailscale row from TailscaleManager by its own rules, and gets three of them wrong. (1) Errors: the row's error is `TailscaleManager.lastError !== "" ? "failed" : ""`, which `statusText` reads as "Couldn't connect". `lastError` is set by any Tailscale call (`tailscale.up`, `down`, `switch`, `set`, …) and kept until the next one, and it already holds the reason in the user's words ("Your user can't change Tailscale: allow it with Grant access.", "Access wasn't granted.", "Tailscale isn't available."). So on a machine where the user isn't Tailscale's operator (Tailscale's default), clicking the row in the VPN popout, the Wi-Fi menu or `/vpn` reads "Couldn't connect" with no hint that Grant access (only in the Tailscale module) fixes it; and a refused exit-node change in the Tailscale module while connected shows the row "Connected" in the error colour (`VpnRow.failed` is `error !== ""`, unlike the NetworkManager rows, whose error counts only while off) until the next Tailscale call. (2) Actions: the row's state is `TailscaleManager.busy ? (connected ? "disconnecting" : "connecting") : …`, and `busy` is true for every action (`pending !== ""`): switching account, Add account (`tailscale login`, up to 15 s), an exit node, a pref, Grant access (until the polkit dialog closes). During any of these the row reads "disconnecting" while nothing disconnects, and `toggle` ignores clicks on it (`row.state === "disconnecting"`, line 92). (3) Login: `up` calls `TailscaleManager.openLogin()` whenever `needsLogin`, and `openLogin` opens only a non-empty `authURL`. After a logout tailscaled is `NeedsLogin` with no `AuthURL` until a login starts, so clicking the row in the VPN popout, the Wi-Fi menu or the Vpn widget does nothing; the Tailscale panel handles that very case (`onTriggered: TailscaleManager.authURL ? TailscaleManager.openLogin() : TailscaleManager.connect()`, `qml/components/content/Tailscale/Tailscale.qml:440`). CONFIRMED by the code. Fix, in the row and TailscaleManager together: (1) set the row's error only while it's off (`!TailscaleManager.connected && TailscaleManager.lastError !== ""`), carry the text (`"message": TailscaleManager.lastError`) and let `statusText` end with `return row.message || I18n.tr("Couldn't connect")`; (2) read the action itself (`TailscaleManager.pending === "tailscale.down" ? "disconnecting" : TailscaleManager.pending === "tailscale.up" ? "connecting" : …`), or have TailscaleManager expose `connecting` / `disconnecting`; (3) move the panel's choice into TailscaleManager (`function logIn() { authURL ? openLogin() : connect() }`) and call it from both places.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:vpn and tailscale systems
 
 ### The panel's relative times go stale while Tailscale's state stays the same
 - **Where:** `qml/components/content/Tailscale/Tailscale.qml:46` (`now`, `keyDays`), `qml/components/content/ClaudeUsage/ClaudeUsage.qml:22` (`now`)
 - **What:** `now` and `keyDays` are re-read only when `TailscaleManager.peers` is reassigned (`void TailscaleManager.peers; return Date.now();`). The daemon's topic hub pushes a state only when its JSON changed (`backend/internal/topics/topics.go:344`, `if bytes.Equal(data, t.last)`), and `Parse` keeps only the peers' online/active/relay/last seen/traffic fields. On a quiet tailnet (all peers offline or idle), nothing changes between polls. A module left on the desktop or in an edge menu then keeps saying "Offline · seen 3m ago" for hours, and the key-expiry warning appears only at the next unrelated change after the 7-day mark. ClaudeUsage's `now` is built the same way, though its accounts' `fetchedAt` changes at every fetch, so it lags by one fetch interval at most. PLAUSIBLE: what's unproven is whether an idle tailnet's parsed state really repeats byte for byte; to settle it, compare two `tailscale status --json` runs parsed a minute apart on a connected, idle tailnet. Fix: drive the times from a minute clock, as Notifications does (`SystemClock { id: clock; precision: SystemClock.Minutes }`, `readonly property real now: clock.date.getTime()`), and compute `keyDays` from `root.now`.
 - **Size:** small
-- **Found:** 2026-11-01, while reviewing the tailscale system
-
-### The Network card shows Tailscale's raw state, untranslated
-- **Where:** `qml/components/content/Network/Network.qml:24` (`tailscale`), `qml/components/content/Tailscale/Tailscale.qml:36` (`stateLabels`)
-- **What:** With `VpnConfig.showTailscale` off, the Network card writes "Tailscale · Running 100.x.y.z" from `TailscaleManager.backendState` as is: "NeedsLogin", "NoState" and the like appear in English camel case. Only the Tailscale panel maps the states to `I18n.tr` labels (`stateLabels`), and only the panel can use that map. Fix: move `stateLabels` and `stateText` into `TailscaleManager` and read the manager's `stateText` in both.
-- **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the tailscale system
 
 ### An app reading the camera through V4L2 never shows as using it
@@ -728,54 +587,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Tailscale's state comes from `tailscale status --json` every `Tailscale.interval` (10 s default) while anything holds `TailscaleManager`: the Tailscale and Vpn widgets, the Network, WifiNetworks and VpnConnections cards, and now an OSD with the VPN status, which holds it for the whole session. A connect or drop shows up to 10 s late, while NetworkManager's VPNs are pushed (`vpn.state`). tailscaled's LocalAPI streams its changes (`/localapi/v0/watch-ipn-bus`, what `tailscale status --watch`-style clients use), so the daemon could watch that instead of running the CLI, with the interval left only for the peers' details if needed.
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
-
-### Re-applying a community setup over its edited copy never shows Applied
-- **Where:** `qml/services/apps/CommunitySetupsManager.qml:37` (`applied`), `backend/internal/saved/saved.go:651` (`apply`)
-- **What:** Apply setup `foo` (saved as the copy `community-foo`), change the look, then apply `foo` again to get it back: `keep` saves the edits into `community-foo` as the user's (`s.save(into, "", "")`, no longer `kindCopy`), so `freeName(Sanitize(snapshot), true)` skips it and saves the result as `community-foo 2`, active with `activeSource` `foo`. `applied` requires `SavedConfigsManager.active === _snapshotPrefix + source`, so it stays "" and the tile never shows **Applied**, though the doc says the chip shows while the setup's saved config is active and unchanged. CONFIRMED by reading both sides. Fix: accept the numbered copy, `const name = SavedConfigsManager.active; return source !== "" && (name === _snapshotPrefix + source || name.startsWith(_snapshotPrefix + source + " ")) && !SavedConfigsManager.modified ? source : "";` (an example or import never has a `community-` name, so the prefix still keeps them apart).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
-### IPC community apply does nothing until the catalog was read
-- **Where:** `qml/services/apps/CommunitySetupsManager.qml:331` (`apply`), `qml/services/apps/CommunitySetupsManager.qml:125` (`apply`)
-- **What:** The doc says the `community` target "exists before the gallery is opened", with `apply <id>`. But only `list` calls `root.open()`; `apply` goes straight to `root.apply(id, false)`, where `root.setup(id)` searches `_setups`, which is `[]` until `open()` or `refresh()` read an index. So `qs ipc call community apply foo` in a fresh session (gallery and launcher not used yet) returns silently, sets no status and logs nothing, even with the catalog cached; an unknown id is equally silent. CONFIRMED. Fix: in the IPC `apply`, call `root.open()` first (it reads the cached index synchronously through `FileManager.read`), and `console.warn` an id `setup()` doesn't find.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
-### Turning the gallery on while its card is shown leaves it empty
-- **Where:** `qml/components/views/Settings/CommunitySetupsCard.qml:37` (`Component.onCompleted`), `qml/services/apps/CommunitySetupsManager.qml:46` (`open`)
-- **What:** The card calls `CommunitySetupsManager.open()` once, when built; with `CommunitySetups.enabled` off, `open()` returns at once. The card's description then says "Turn on Browse community setups below to see the gallery." Doing so shows the search field and the empty grid, but nothing calls `open()` again (the card is a `StreamedLoader` built once per page, `always: true`, and nothing watches `enabled`), so no catalog is read, `loading` and `loaded` stay false and the status line is empty: a blank gallery until **Refresh** or reopening the page. CONFIRMED from the code (the card isn't rebuilt by a setting change); a screenshot would show it. Fix: in the card, `Connections { target: CommunitySetupsManager; function onEnabledChanged() { CommunitySetupsManager.open(); } }` (open() is a no-op while off).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
-### community.fetch isn't sent again after a daemon re-exec, and blanks every thumbnail
-- **Where:** `qml/services/apps/CommunitySetupsManager.qml:258` (`_fetch`), `qml/services/apps/CommunitySetupsManager.qml:237` (`_fetchThumbs`)
-- **What:** `BackendManager.call` documents `{ repeatable: true }` for "a call the caller knows is safe to send twice: a whole-file write, a fetch"; `community.fetch` is exactly that (hash-checked atomic writes, the cache skips what landed) but `_fetch` doesn't pass it. A daemon re-exec (self-update, dev rebuild) during a download fails the call `unavailable`: an apply ends "could not be downloaded", and a thumbnails run sets `root._thumbs = thumbs` with none ok, so every thumbnail already shown disappears until the next Refresh. CONFIRMED (BackendManager.qml:402-423 fails non-repeatable calls on a lost connection). Fix: pass `{ "repeatable": true }` as `_fetch`'s fourth argument.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
-### The apply's wallpaper rides in a property instead of the callback
-- **Where:** `qml/services/apps/CommunitySetupsManager.qml:172` (`_applyWallpaper`), `qml/services/apps/CommunitySetupsManager.qml:140` (`apply`)
-- **What:** `apply` stores the wallpaper file in `_applyWallpaper` only for `_finishApply` to read it from the callback it starts; its comment ("set once SavedConfigsManager has applied it") is also wrong (it's set before the download). Fix: `root._fetch(downloads, fetched => root._finishApply(fetched.failures, wallpaper))` and `_finishApply(failures, wallpaper)`: removes the property with its comment (3 lines) and the assignment (1). 4 lines.
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the community-setups system
-
-### Switching an open picker between screenshot and recording keeps the first kind's folder and sound
-- **Where:** `qml/services/apps/ScreenshotManager.qml:227` (`setRecordMode`), `qml/services/apps/ScreenshotManager.qml:135` (`_start`), `qml/services/apps/ScreenshotManager.qml:295` (`record`), `qml/services/apps/ScreenshotManager.qml:306` (`record`)
-- **What:** `_start` picks the save folder once, from the kind it starts with: `root._directory = kind.startsWith("record") ? root.recordingFolder : root.folder;` (line 135). `setRecordMode` (R or the picker's Screenshot / Record switch) only rewrites `request.kind` (lines 231-233), and both `finish` (line 189) and `record` (line 295) save into `_directory`. With `Screenshots.recordingFolder` set: take a region screenshot, press R, pick: the recording is saved in the screenshot folder, so the ScreenRecord card's recent list (which lists `recordingFolder`) never shows it, against the doc's "Recordings go to `recordingFolder`". The other way, `/record` then R then a pick saves the PNG into the recordings folder. The sound leaks the same way: `_recordAudio` is reset only inside `record` (line 306), so a ScreenRecord card's region recording with System sound that is switched to a screenshot leaves `"system"` set, and the next screenshot picker switched to Record records the system's sound though nobody asked for it this time; a recording picker cancelled with Escape leaves it the same way (`cancel` doesn't reset it either). CONFIRMED by reading (no shell needed). Fix: drop `_directory`: `finish` saves into `root.folder` and `record` into `root.recordingFolder` (`_start` mkdirs both), and `_start` sets `_recordAudio` (`startRecording` passes its choice, every other start `"none"`), so no picker inherits an earlier one's sound, a cancelled one's included. Removes line 80 (`property string _directory`).
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the screenshots-recording system
-
-### Clicking an older capture's notification opens the newest capture
-- **Where:** `qml/services/apps/ScreenshotManager.qml:500` (`Component.onCompleted`, the handler), `qml/services/apps/ScreenshotManager.qml:194` (`finish`), `qml/services/apps/ScreenshotManager.qml:426` (`_recorded`)
-- **What:** Every screenshot and recording notification carries the same desktop entry (`axiom-screenshot`), and its one handler opens `root._lastPath`, which each new capture overwrites (lines 194 and 426): `CommandManager.runDetached(["xdg-open", root._lastPath])`. Take screenshot A, then screenshot B (or finish a recording), then click A's notification in the notification centre: B opens. The doc promises "(click opens it)" for each. CONFIRMED by reading. Fix: open what the clicked notification names: the handler gets the entry (`NotificationManager.openApp` passes it to `root._handlers[id]`), whose `appIcon` already is a screenshot's path (`"icon": path`); a recording passes its path the same way (or as a body/hint the handler reads); `_lastPath` and its two assignments go (3 lines).
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the screenshots-recording system
-
-### ScreenRecord's recording time repeats StopwatchClock.format, and the bar's differs past an hour
-- **Where:** `qml/components/content/ScreenRecord/ScreenRecord.qml:49` (`durationText`), `qml/components/bar/widgets/ScreenRecord/ScreenRecord.qml:17`, `qml/components/methods/StopwatchClock.qml:283` (`format`)
-- **What:** The card formats `recordingElapsed` with its own `durationText` ("1:05", "1:02:03"; lines 48-54, 7 lines), the bar widget with a third inline copy that has no hours: `${Math.floor(root.elapsed / 60)}:…` shows "65:00" where the card shows "1:05:00" for the same recording. `StopwatchClock.format(ms)` already makes "mm:ss" / "h:mm:ss" and is tested. Fix: both use `StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)`; `durationText` goes (7 lines) and the bar matches the card (both then pad the minutes, "01:05", as the timer and stopwatch do).
-- **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the screenshots-recording system
 
 ### DockMenu draws its own menu rows and keys rather than StyledContextMenu's
 - **Where:** `qml/components/surfaces/dock/DockMenu.qml`, `qml/components/reusable/StyledContextMenu.qml`
