@@ -28,7 +28,7 @@ axiom's picker for what an app shares (a call, a stream), on every compositor, i
 
 ### The picker
 - `ScreenShareManager` shows a request on the screen focused when it came; `ScreenSharePickerWindow` dims every screen (layer `axiom-screenshare`, between the screenshot picker and the polkit prompt, a backdrop blur like polkit's) and draws the card on that one. Modal: a click on the dimmed screen or Escape cancels.
-- Tabs: Screens (a frame of each where `supports.outputCapture`, else a monitor glyph), Windows (`WindowPreview`: live on Hyprland, the app icon elsewhere; the request's windows matched to `CompositorManager.windows` by id, else title: `ScreenShareSources.windowTiles`), Region where the portal can (xdph). It opens on the focused screen.
+- Tabs: Screens (side by side at one height, each in its own aspect ratio, as tall as the card's width allows: a frame of each where `supports.outputCapture`, else a monitor glyph; its size and model under it), Windows (`WindowPreview`: live on Hyprland, the app icon elsewhere; the request's windows matched to `CompositorManager.windows` by id, else title: `ScreenShareSources.windowTiles`), Region where the portal can (xdph). It opens on the focused screen.
 - Region hides the picker and drags in the screenshot picker (`ScreenshotManager.pickArea`, which hands back the screen and the rect instead of a picture); Escape there returns to the picker.
 - IPC `screenshare`: `test` opens the picker on what the compositor shows, its answer only logged; `share` shares what the picker opened on; `cancel`.
 

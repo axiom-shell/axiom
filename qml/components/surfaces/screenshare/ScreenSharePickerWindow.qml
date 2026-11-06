@@ -26,7 +26,7 @@ PanelWindow {
   readonly property bool shown: request !== null && !ScreenShareManager.pickingRegion
   // The card shows here: the picked screen, else (it's gone) the primary
   readonly property bool hasCard: !!screen && General.screensNamed(ScreenShareManager.screenName)[0] === screen
-  readonly property int pad: Widget.px(18)
+  readonly property int pad: Widget.px(24)
 
   // "screen" | "window" | "region": the tab shown
   property string tab: "screen"
@@ -77,7 +77,8 @@ PanelWindow {
     const current = root.tokens.findIndex(t => root.isSelected(root.tab, t));
     const next = current < 0 ? 0 : ((current + by) % root.tokens.length + root.tokens.length) % root.tokens.length;
     root.select(root.tab, root.tokens[next]);
-    grid.positionViewAtIndex(next, GridView.Contain);
+    if (root.tab === "window")
+      grid.positionViewAtIndex(next, GridView.Contain);
   }
 
   function showTab(tab) {
@@ -167,12 +168,206 @@ PanelWindow {
     }
   }
 
+  // The gap a tile's selection ring leaves around its picture
+  readonly property int ring: Widget.px(4)
+  readonly property int tileGap: Widget.px(14)
+  // A tile's two label lines and the gap above them
+  readonly property real labelsHeight: titleMetrics.implicitHeight + subtitleMetrics.implicitHeight + Widget.spacing
+
+  // A screen's width over its height (logical, so rotated screens are tall)
+  function aspectOf(output) {
+    const s = General.outputs.find(o => o.name === output.name);
+    return s && s.width > 0 && s.height > 0 ? s.width / s.height : 16 / 9;
+  }
+  readonly property var aspects: root.outputs.map(o => root.aspectOf(o))
+  // The screens in one row at one height, like the screens stand: as tall
+  // as fits the card's width, at most screenMaxHeight
+  readonly property int screenMaxHeight: Widget.px(340)
+  readonly property real screensWidth: content.width
+  readonly property real screenHeightForWidth: {
+    const n = root.aspects.length;
+    if (n === 0)
+      return root.screenMaxHeight;
+    const sum = root.aspects.reduce((a, b) => a + b, 0);
+    return Math.min(root.screenMaxHeight, (root.screensWidth - root.tileGap * (n - 1) - root.ring * 2 * n) / sum);
+  }
+  // The body's height for the screens: every tab keeps it, so the card
+  // doesn't jump between tabs
+  readonly property real bodyHeight: Math.max(Widget.px(300), root.screenHeightForWidth + root.ring * 2 + root.labelsHeight)
+
+  StyledText {
+    id: titleMetrics
+    visible: false
+    text: "Ag"
+    textSize: Appearance.fontSizeBy(-1)
+    font.weight: Font.DemiBold
+  }
+  StyledText {
+    id: subtitleMetrics
+    visible: false
+    text: "Ag"
+    textSize: Appearance.fontSizeBy(-2)
+  }
+
+  // A screen or window tile: its picture in a ring that shows it's picked,
+  // its name and a detail under it
+  Component {
+    id: tileDelegate
+
+    Item {
+      id: tile
+
+      required property var modelData
+      required property int index
+      readonly property bool isScreen: root.tab === "screen"
+      readonly property string token: isScreen ? modelData.name : modelData.token
+      readonly property bool selected: root.isSelected(root.tab, token)
+      readonly property bool hovered: tileMouse.containsMouse
+      readonly property var shellScreen: isScreen ? General.outputs.find(s => s.name === tile.modelData.name) ?? null : null
+      readonly property real pictureHeight: isScreen ? body.screenHeight : (grid.cellWidth - root.tileGap - root.ring * 2) * 10 / 16
+
+      width: isScreen ? body.screenHeight * root.aspectOf(modelData) + root.ring * 2 : grid.cellWidth
+      height: isScreen ? body.height : grid.cellHeight
+
+      Item {
+        id: picture
+        x: tile.isScreen ? root.ring : root.ring + root.tileGap / 2
+        y: root.ring
+        width: tile.width - x * 2
+        height: tile.pictureHeight
+
+        Rectangle {
+          anchors.fill: parent
+          anchors.margins: -root.ring
+          radius: Widget.radius + root.ring
+          color: "transparent"
+          border.width: Widget.px(2)
+          border.color: tile.selected ? Theme.accent : tile.hovered ? Theme.border : "transparent"
+
+          ColorGlide on border.color {}
+        }
+
+        // A screen: one frame of it, where outputs can be captured
+        ClippingRectangle {
+          visible: tile.isScreen
+          anchors.fill: parent
+          radius: Widget.radius
+          color: Theme.backgroundAlt
+
+          ScreencopyView {
+            anchors.fill: parent
+            captureSource: tile.isScreen && root.canCaptureOutputs && root.shown ? tile.shellScreen : null
+            constraintSize: Qt.size(Math.round(width), Math.round(height))
+            live: false
+            paintCursor: false
+          }
+
+          StyledIcon {
+            anchors.centerIn: parent
+            visible: !root.canCaptureOutputs || !tile.shellScreen
+            text: "monitor"
+            textSize: Appearance.fontSizeBy(14)
+            textColor: Theme.foregroundInactive
+          }
+        }
+
+        // A window: its live capture where there is one, else its icon
+        // (its own frame: the ring alone shows hover and the pick)
+        WindowPreview {
+          visible: !tile.isScreen
+          anchors.fill: parent
+          radius: Widget.radius
+          windowData: tile.isScreen ? null : (tile.modelData.match ?? {
+              "id": "",
+              "appId": tile.modelData.appId,
+              "title": tile.modelData.title
+            })
+          capturing: !tile.isScreen && root.shown
+          live: tile.selected || tile.hovered
+          showTitle: false
+        }
+
+        // The picked one's check
+        Rectangle {
+          z: 1
+          anchors.right: parent.right
+          anchors.top: parent.top
+          anchors.margins: Widget.spacing
+          width: Widget.px(24)
+          height: width
+          radius: width / 2
+          color: Theme.accent
+          opacity: tile.selected ? 1 : 0
+          scale: tile.selected ? 1 : 0.6
+
+          Glide on opacity {}
+          Glide on scale {}
+
+          StyledIcon {
+            anchors.centerIn: parent
+            text: "check"
+            textSize: Appearance.fontSizeBy(-1)
+            textColor: Theme.background
+          }
+        }
+      }
+
+      ColumnLayout {
+        anchors.top: picture.bottom
+        anchors.topMargin: root.ring + Widget.spacing / 2
+        x: picture.x
+        width: picture.width
+        spacing: 0
+
+        StyledText {
+          Layout.fillWidth: true
+          horizontalAlignment: Text.AlignHCenter
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-1)
+          font.weight: Font.DemiBold
+          textColor: tile.selected ? Theme.accent : Theme.foreground
+          text: tile.isScreen ? tile.modelData.name : (tile.modelData.title || tile.modelData.appId || tile.modelData.token)
+
+          ColorGlide on textColor {}
+        }
+
+        StyledText {
+          Layout.fillWidth: true
+          horizontalAlignment: Text.AlignHCenter
+          elide: Text.ElideRight
+          textSize: Appearance.fontSizeBy(-2)
+          textColor: Theme.foregroundInactive
+          text: {
+            if (!tile.isScreen)
+              return tile.modelData.title ? tile.modelData.appId : "";
+            const s = tile.shellScreen;
+            const size = s ? Math.round(s.width * s.devicePixelRatio) + " × " + Math.round(s.height * s.devicePixelRatio) : "";
+            const name = tile.modelData.label || (s?.model ?? "");
+            return [size, name].filter(t => t !== "").join("  ·  ");
+          }
+        }
+      }
+
+      MouseArea {
+        id: tileMouse
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.select(root.tab, tile.token)
+        onDoubleClicked: {
+          root.select(root.tab, tile.token);
+          root.share();
+        }
+      }
+    }
+  }
+
   Rectangle {
     id: card
 
     visible: root.hasCard
     anchors.centerIn: parent
-    width: Math.min(Widget.px(860), root.width - Widget.px(32))
+    width: Math.min(Widget.px(1040), root.width - Widget.px(48))
     height: Math.min(content.implicitHeight + root.pad * 2, root.height - Widget.px(64))
     color: Appearance.fill(Theme.background)
     border.color: Theme.border
@@ -204,11 +399,20 @@ PanelWindow {
 
       RowLayout {
         Layout.fillWidth: true
-        spacing: Widget.spacing
+        spacing: Widget.padding
 
-        StyledIcon {
-          text: "screen_share"
-          textSize: Appearance.fontSizeLarge
+        Rectangle {
+          Layout.preferredWidth: Widget.px(40)
+          Layout.preferredHeight: Widget.px(40)
+          radius: Widget.radius
+          color: Qt.alpha(Theme.accent, 0.16)
+
+          StyledIcon {
+            anchors.centerIn: parent
+            text: "screen_share"
+            textSize: Appearance.fontSizeLarge
+            textColor: Theme.accent
+          }
         }
 
         ColumnLayout {
@@ -225,165 +429,110 @@ PanelWindow {
 
           StyledText {
             Layout.fillWidth: true
-            visible: text !== ""
-            text: root.request?.appId ? I18n.tr("{0} asks what to share", root.request.appId) : ""
+            text: root.request?.appId ? I18n.tr("{0} asks what to share", root.request.appId) : I18n.tr("Pick what to share")
             textColor: Theme.foregroundInactive
             textSize: Appearance.fontSizeBy(-1)
             elide: Text.ElideRight
           }
         }
-      }
 
-      SegmentRow {
-        Layout.alignment: Qt.AlignLeft
+        SegmentRow {
+          Layout.alignment: Qt.AlignVCenter
 
-        Repeater {
-          model: root.tabs
+          Repeater {
+            model: root.tabs
 
-          SegmentButton {
-            required property var modelData
-            Layout.fillWidth: false
-            iconText: modelData[2]
-            text: I18n.tr(modelData[1])
-            active: root.tab === modelData[0]
-            onClicked: root.showTab(modelData[0])
+            SegmentButton {
+              required property var modelData
+              Layout.fillWidth: false
+              iconText: modelData[2]
+              text: I18n.tr(modelData[1])
+              active: root.tab === modelData[0]
+              onClicked: root.showTab(modelData[0])
+            }
           }
         }
       }
 
-      GridView {
-        id: grid
+      Item {
+        id: body
 
-        // At least three to a row, so one screen isn't the card's width
-        readonly property int columns: Math.max(3, Math.floor(width / Widget.px(250)))
-        readonly property real tileHeight: cellWidth * 0.62 + label.implicitHeight + Widget.spacing * 2
+        // The screens' height in what the card leaves the body
+        readonly property real screenHeight: Math.max(Widget.px(40), Math.min(root.screenHeightForWidth, height - root.ring * 2 - root.labelsHeight))
 
-        visible: root.tab !== "region"
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredHeight: Math.min(Math.ceil(count / columns), 2.5) * cellHeight
-        Layout.minimumHeight: cellHeight
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        cellWidth: width / columns
-        cellHeight: tileHeight
-        model: root.tab === "screen" ? root.outputs : root.tab === "window" ? root.windows : []
+        Layout.preferredHeight: root.bodyHeight
+        Layout.minimumHeight: Widget.px(120)
 
-        // Sizes the tiles' label row
-        StyledText {
-          id: label
-          visible: false
-          text: "Ag"
-          textSize: Appearance.fontSizeBy(-1)
+        // Screens: side by side, each its own shape
+        Row {
+          visible: root.tab === "screen"
+          anchors.horizontalCenter: parent.horizontalCenter
+          height: parent.height
+          spacing: root.tileGap
+
+          Repeater {
+            model: root.tab === "screen" ? root.outputs : []
+            delegate: tileDelegate
+          }
         }
 
-        delegate: Item {
-          id: tile
+        // Windows: a grid that scrolls
+        GridView {
+          id: grid
 
-          required property var modelData
-          required property int index
-          readonly property bool isScreen: root.tab === "screen"
-          readonly property string token: isScreen ? modelData.name : modelData.token
-          readonly property bool selected: root.isSelected(root.tab, token)
-          readonly property var shellScreen: isScreen ? General.outputs.find(s => s.name === tile.modelData.name) ?? null : null
+          readonly property int columns: Math.max(2, Math.floor(width / Widget.px(230)))
 
-          width: grid.cellWidth
-          height: grid.cellHeight
-
-          Rectangle {
-            anchors.fill: parent
-            anchors.margins: Widget.spacing / 2
-            radius: Widget.radius
-            color: tileMouse.containsMouse ? Theme.backgroundHighlight : "transparent"
-            border.width: tile.selected ? Appearance.borderWidth * 2 : 0
-            border.color: Theme.accent
-
-            ColumnLayout {
-              anchors.fill: parent
-              anchors.margins: Widget.spacing / 2
-              spacing: Widget.spacing / 2
-
-              Item {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                // A screen: one frame of it, where outputs can be captured
-                ClippingRectangle {
-                  visible: tile.isScreen
-                  anchors.fill: parent
-                  radius: Widget.radius
-                  color: Theme.backgroundAlt
-
-                  ScreencopyView {
-                    anchors.fill: parent
-                    captureSource: tile.isScreen && root.canCaptureOutputs && root.shown ? tile.shellScreen : null
-                    constraintSize: Qt.size(Math.round(width), Math.round(height))
-                    live: false
-                    paintCursor: false
-                  }
-
-                  StyledIcon {
-                    anchors.centerIn: parent
-                    visible: !root.canCaptureOutputs || !tile.shellScreen
-                    text: "monitor"
-                    textSize: Appearance.fontSizeBy(14)
-                    textColor: Theme.foregroundInactive
-                  }
-                }
-
-                // A window: its live capture where there is one, else its
-                // icon
-                WindowPreview {
-                  visible: !tile.isScreen
-                  anchors.fill: parent
-                  windowData: tile.isScreen ? null : (tile.modelData.match ?? {
-                      "id": "",
-                      "appId": tile.modelData.appId,
-                      "title": tile.modelData.title
-                    })
-                  capturing: !tile.isScreen && root.shown
-                  live: tile.selected
-                  hovered: tileMouse.containsMouse
-                  showTitle: false
-                }
-              }
-
-              StyledText {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                textSize: Appearance.fontSizeBy(-1)
-                text: tile.isScreen ? (tile.modelData.label ? I18n.tr("{0} ({1})", tile.modelData.name, tile.modelData.label) : tile.modelData.name) : (tile.modelData.title || tile.modelData.appId || tile.modelData.token)
-              }
-            }
-
-            MouseArea {
-              id: tileMouse
-              anchors.fill: parent
-              hoverEnabled: true
-              onClicked: root.select(root.tab, tile.token)
-              onDoubleClicked: {
-                root.select(root.tab, tile.token);
-                root.share();
-              }
-            }
-          }
+          visible: root.tab === "window"
+          anchors.fill: parent
+          clip: true
+          boundsBehavior: Flickable.StopAtBounds
+          cellWidth: width / columns
+          cellHeight: (cellWidth - root.tileGap - root.ring * 2) * 10 / 16 + root.ring * 2 + root.labelsHeight + root.tileGap
+          model: root.tab === "window" ? root.windows : []
+          delegate: tileDelegate
         }
 
         StyledText {
           anchors.centerIn: parent
-          visible: grid.count === 0
+          visible: (root.tab === "screen" && root.outputs.length === 0) || (root.tab === "window" && grid.count === 0)
           text: root.tab === "screen" ? I18n.tr("No screen to share") : I18n.tr("No window to share")
           textColor: Theme.foregroundInactive
         }
-      }
 
-      StyledText {
-        visible: root.tab === "region"
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        text: I18n.tr("Share a part of a screen: drag a rectangle over it. Escape there comes back here.")
-        textColor: Theme.foregroundInactive
+        // Region: what happens next
+        ColumnLayout {
+          visible: root.tab === "region"
+          anchors.centerIn: parent
+          width: Math.min(parent.width, Widget.px(420))
+          spacing: Widget.padding
+
+          Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: Widget.px(72)
+            Layout.preferredHeight: Widget.px(72)
+            radius: Widget.radius
+            color: Qt.alpha(Theme.accent, 0.12)
+            border.width: Widget.px(2)
+            border.color: Qt.alpha(Theme.accent, 0.5)
+
+            StyledIcon {
+              anchors.centerIn: parent
+              text: "screenshot_region"
+              textSize: Appearance.fontSizeBy(14)
+              textColor: Theme.accent
+            }
+          }
+
+          StyledText {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            text: I18n.tr("Share a part of a screen: drag a rectangle over it. Escape there comes back here.")
+            textColor: Theme.foregroundInactive
+          }
+        }
       }
 
       RowLayout {
@@ -392,6 +541,7 @@ PanelWindow {
 
         Flow {
           Layout.fillWidth: true
+          Layout.alignment: Qt.AlignVCenter
           spacing: Widget.padding
 
           // I18n.tr("pick") I18n.tr("tab") I18n.tr("share") I18n.tr("cancel")
