@@ -30,7 +30,7 @@ settings:
     title: Click action
     default: powerMenu
     description: Any action a key can run that needs no argument, or one of the button's own.
-    x-axiomActions: {noArgument: true, extra: [overlayPage, edgeMenu, command, none]}
+    x-axiomActions: {noArgument: true, except: [clipboard, emoji, calculator], extra: [overlayPage, edgeMenu, command, none]}
     x-enumLabels:
       overlayPage: Overlay page
       edgeMenu: Edge menu
