@@ -82,7 +82,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `MenuList`: a menu's rows and keys, for the box holding them. `items` `[{ id, text, icon, shortcut, enabled, checked, submenu, danger }]` (`danger` highlights it in the error colour) or `{ separator: true, accent }`; a `submenu` opens in place under a row leading back; `triggered(id)`. Up/Down, Enter or Right, Left, Escape (at the top level `dismissed()`); `reset()` back to the top. In `StyledContextMenu` and the dock's `DockMenu`.
 - `StyledContextMenu`: a right-click menu on a `DropdownSurface`, opened at a point (`openAt(item, x, y)`): a `MenuList` (`items`, `triggered(id)`), closing once an item is picked or on Escape; a press outside closes it (Popup's `closePolicy`, as `TypePickerPopup`). The bar editor's chips.
 - `ActionTile`: an icon well over a label. With `opens`, a right click or long press is `opened`.
-- `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens.
+- `ActionPill`: the wide one, a well beside a name and status. With `opens`, the well toggles and the rest opens. Where the pill already has the height (it never grows for them), the name wraps to two lines and the status takes the lines left, three in all.
   - Both drain a `CountdownBar` (a bar along the bottom emptying over `duration` while `running`) over their `countdown` while active.
 
 ### Editor lists and drags (`reusable/`)
