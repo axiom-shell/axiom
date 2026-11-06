@@ -45,6 +45,10 @@ running anything:
     while no monitor is connected), but a line marked
     `// allowed: <reason>` (a file name, a window that must exist with no
     monitor)
+  - no UI switches one of the shell's actions through its service's own
+    toggle (Wi-Fi, Bluetooth, caffeine, do not disturb, night light, dark
+    mode, the mutes, the VPN, a recording, a session action): it runs it
+    through ActionsManager.run, as every other place that offers it
 and warns about files in the loaded directories that nothing registers or
 uses. A new rule gets its breaking file in tests/scripts/test_scripts.py's
 CheckStructure.
@@ -604,6 +608,18 @@ def main():
                 errors.append(f"{path}:{n}: Qt.formatDateTime: format dates through I18n.formatDate(date, I18n.dateFormat(name)) (or mark a use that must stay `// allowed: <reason>`)")
             if path != "qml/config/General.qml" and re.search(r"\bQuickshell\.screens\b", code):
                 errors.append(f"{path}:{n}: Quickshell.screens: build on General.outputs or General.screensFor(target) (or mark a window that must exist with no monitor `// allowed: <reason>`)")
+
+    # One way to run an action: the UI runs a catalogue action through
+    # ActionsManager.run (docs/dev/core/actions.md), never its service's
+    # toggle, so a tile, a command, an OSD icon and a key run the same code
+    action_toggles = r"\b(?:NetworkingManager\.(?:toggleWifi|setAirplane)|BluetoothManager\.toggleEnabled|IdleManager\.toggle|NotificationManager\.toggleDnd|NightLightManager\.toggle|ThemeManager\.toggleDarkMode|AudioManager\.(?:toggleMute|toggleSourceMute)|VpnManager\.toggleLast|ScreenshotManager\.toggleRecording|BatteryManager\.setPowerSaver|SessionManager\.sessionAction)\("
+    for path, text in sources.items():
+        if not path.startswith(("qml/components/", "qml/shell/")):
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            m = re.search(action_toggles, line.split("//")[0])
+            if m and "// allowed:" not in line:
+                errors.append(f"{path}:{n}: {m.group(0)[:-1]}: run the action through ActionsManager.run(id, {{fromScreen: true}}) (or mark a use that must stay `// allowed: <reason>`)")
 
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():

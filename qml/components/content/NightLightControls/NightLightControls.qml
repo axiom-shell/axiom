@@ -80,10 +80,9 @@ Card {
     }
     TapHandler {
       enabled: !root.missing
-      onTapped: {
-        ShellManager.onScreen("nightLight");
-        NightLightManager.toggle();
-      }
+      onTapped: ActionsManager.run("nightLight", {
+        "fromScreen": true
+      })
     }
     HoverHandler {
       cursorShape: root.missing ? Qt.ArrowCursor : Qt.PointingHandCursor
@@ -178,10 +177,9 @@ Card {
       }
       TapHandler {
         id: heroTap
-        onTapped: {
-          ShellManager.onScreen("nightLight");
-          NightLightManager.toggle();
-        }
+        onTapped: ActionsManager.run("nightLight", {
+          "fromScreen": true
+        })
       }
     }
 

@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.apps
 import qs.config
 import qs.components.methods
+import qs.services.ui
 import qs.components.bar.widgets.base
 
 // A screen recording in progress (ScreenshotManager): a red dot and the
@@ -19,5 +20,8 @@ BarIconWidget {
 
   accentColor: Theme.resolveColor(properties.activeColor)
   clickable: true
-  onClicked: ScreenshotManager.stopRecording()
+  onClicked: ActionsManager.run("screenRecord", {
+    "call": "close",
+    "fromScreen": true
+  })
 }

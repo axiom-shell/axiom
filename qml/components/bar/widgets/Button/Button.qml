@@ -4,7 +4,6 @@ import QtQuick
 
 import qs.config
 import qs.services.core
-import qs.services.session
 import qs.services.ui
 import qs.components.bar.widgets.base
 
@@ -26,42 +25,41 @@ BarIconWidget {
   Component.onDestruction: CommandManager.release(root)
 
   icon: properties.icon
-  text: properties.labelCommand ? commandLabel : properties.label
+  text: gate.armed !== "" ? I18n.tr("Confirm?") : properties.labelCommand ? commandLabel : properties.label
   showText: text !== ""
 
+  // Log out, restart and shut down ask for a second click, as on a tile
+  ConfirmGate {
+    id: gate
+  }
+
+  // Its click: a page, an edge menu (at the button) or a command of its
+  // own, else the shell's action (ActionsManager)
   function runAction() {
     switch (properties.action) {
-    case "powerMenu":
-      ShellManager.togglePowerMenu();
-      break;
-    case "appLauncher":
-      ShellManager.toggleAppLauncher();
-      break;
-    case "overlay":
-      ShellManager.toggleOverlay();
-      break;
     case "overlayPage":
       ShellManager.openOverlayPage(properties.page);
-      break;
-    case "workspaceOverlay":
-      ShellManager.toggleWorkspaceOverlay();
       break;
     case "edgeMenu":
       EdgeMenuManager.toggle(properties.menu, root);
       break;
-    case "lock":
-      SessionManager.sessionAction("lock");
-      break;
     case "command":
       runCommand(properties.command);
       break;
+    case "none":
+      break;
+    default:
+      if (gate.pass(properties.action, ActionsManager.destructive(properties.action)))
+        ActionsManager.run(properties.action, {
+          "fromScreen": true
+        });
     }
   }
 
   // The surface an action toggles, which hovering never closes
   readonly property var _surfaceFor: ({
       "powerMenu": "powermenu",
-      "appLauncher": "launcher",
+      "launcher": "launcher",
       "overlay": "overlay",
       "overlayPage": "overlay"
     })
@@ -104,10 +102,11 @@ BarIconWidget {
   // "Activate on hover": the click action once per hover, after the
   // popout open delay. Not an edge menu's (as the schema shows it): that's
   // the hover popout (popout.enabled), which closes on leave and ranks as one.
-  // Never a lock's: resting the pointer on the button mustn't lock the screen
+  // Never a session action's: resting the pointer on the button mustn't
+  // lock the screen or end the session
   Timer {
     interval: PopoutsConfig.openDelay
-    running: root.hovered && root.properties.hoverActivate && !["none", "edgeMenu", "lock"].includes(root.properties.action)
+    running: root.hovered && root.properties.hoverActivate && !["none", "edgeMenu"].concat(ActionsManager.sessionActions).includes(root.properties.action)
     onTriggered: root.hoverAction()
   }
 

@@ -29,8 +29,9 @@ BarIconWidget {
     if (button === Qt.MiddleButton)
       NotificationManager.clearAll();
     else {
-      ShellManager.onScreen("dnd");
-      NotificationManager.toggleDnd();
+      ActionsManager.run("toggleDnd", {
+        "fromScreen": true
+      });
     }
   }
 

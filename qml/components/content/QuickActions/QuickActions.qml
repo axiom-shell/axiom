@@ -9,20 +9,23 @@ import qs.components.content.parts
 import qs.components.reusable
 import qs.components.content.base
 
-// A grid of action tiles: toggles, session actions and pin, in any mix.
-// Tiles that can't work here are hidden: night light (no color transform,
-// gamma control or wlsunset) and power saver (power-profiles-daemon)
-// without their tool, pin outside an edge menu. Log out, restart and shut
-// down ask for a second click.
+// A grid of action tiles: any action of the shell's catalogue that takes
+// no argument (ActionsManager: toggles, session actions, opening
+// something), and a few tiles of its own that open a module (Brightness's
+// sliders, Volume's mixer, the Theme and Wallpaper pickers) or pin its
+// edge menu, in any mix. Tiles that can't work here are hidden
+// (ActionsManager.available: night light without a way to tint the
+// screen, power saver without power-profiles-daemon, …; pin outside an
+// edge menu). Log out, restart and shut down ask for a second click.
 // Names show on every tile or none ("auto": only when all fit whole),
 // always ("show", elided) or never ("hide").
 // "pills" draws wide tiles with a status line, as Android's quick settings
-// do. Wi-Fi, Bluetooth and Do not disturb have a detail (their networks,
-// devices, notifications) that grows over the grid, as does Brightness
-// (every monitor's sliders), which has nothing to switch: a tap opens it: a pill opens it from
-// beside its icon, a tile on a right click or long press.
-// properties: { actions: ["wifi", "bluetooth", "caffeine", "dnd", "darkMode", "nightLight", "powerSaver",
-//                         "brightness", "lock", "suspend", "hibernate", "logout", "reboot", "poweroff", "pin"],
+// do. Some tiles have a detail that grows over the grid (Wi-Fi's networks,
+// Bluetooth's devices, Do not disturb's notifications, the VPNs, the audio
+// mixer for the mutes, the recorder's options): a pill opens it from
+// beside its icon, a tile on a right click or long press. The tiles of
+// its own have nothing to switch: a tap opens theirs.
+// properties: { actions: [ActionsManager ids, or "brightness", "volume", "themePicker", "wallpaperPicker", "pin"],
 //               labels: "auto" | "show" | "hide", style: "tiles" | "pills" }
 Card {
   id: root
@@ -30,55 +33,47 @@ Card {
   readonly property bool inMenu: EdgeMenuManager.canPin(root.host)
   readonly property bool pinned: root.inMenu && EdgeMenuManager.isPinned(root.host.id)
 
-  readonly property var sessionActions: ["lock", "suspend", "hibernate", "logout", "reboot", "poweroff"]
+  // The tiles of its own (not catalogue actions)
+  readonly property var ownTiles: ["brightness", "volume", "themePicker", "wallpaperPicker", "pin"]
 
-  readonly property var defs: ({
+  // The module a catalogue action's tile opens as its detail
+  readonly property var details: ({
       "wifi": {
-        "icon": NetworkingManager.wifiEnabled ? "wifi" : "wifi_off",
-        "label": I18n.tr("Wi-Fi"),
-        "active": NetworkingManager.wifiEnabled,
-        "status": !NetworkingManager.wifiEnabled ? I18n.tr("Off") : NetworkingManager.netInfo.kind === "wifi" ? NetworkingManager.netInfo.name : I18n.tr("Not connected"),
-        "detail": "WifiNetworks"
+        "type": "WifiNetworks"
       },
       "bluetooth": {
-        "icon": BluetoothManager.enabled ? "bluetooth" : "bluetooth_disabled",
-        "label": I18n.tr("Bluetooth"),
-        "active": BluetoothManager.enabled,
-        "status": root.bluetoothStatus,
-        "detail": "BluetoothDevices"
+        "type": "BluetoothDevices"
       },
-      "caffeine": {
-        "icon": "coffee",
-        "label": I18n.tr("Caffeine"),
-        "active": IdleManager.caffeine,
-        "status": IdleManager.caffeineTimed ? IdleManager.caffeineText : root.onOff(IdleManager.caffeine)
+      "toggleDnd": {
+        "type": "Notifications"
       },
-      "dnd": {
-        "icon": NotificationManager.dnd ? "notifications_off" : "notifications",
-        "label": I18n.tr("Do not disturb"),
-        "active": NotificationManager.dnd,
-        "status": root.onOff(NotificationManager.dnd),
-        "detail": "Notifications"
+      "vpn": {
+        "type": "VpnConnections"
       },
-      "darkMode": {
-        "icon": "clear_night",
-        "label": I18n.tr("Dark mode"),
-        "active": Appearance.darkMode,
-        "status": root.onOff(Appearance.darkMode)
+      "toggleMute": {
+        "type": "AudioMixer",
+        "properties": {
+          "mode": "output"
+        }
       },
-      "nightLight": {
-        "icon": "nightlight",
-        "label": I18n.tr("Night light"),
-        "active": NightLightManager.active,
-        "status": root.onOff(NightLightManager.active)
+      "toggleMicMute": {
+        "type": "AudioMixer",
+        "properties": {
+          "mode": "input"
+        }
       },
-      "powerSaver": {
-        "icon": "eco",
-        "label": I18n.tr("Power saver"),
-        "active": BatteryManager.powerSaver,
-        "status": root.onOff(BatteryManager.powerSaver)
-      },
-      "brightness": {
+      "screenRecord": {
+        "type": "ScreenRecord"
+      }
+    })
+
+  // A tile of its own: { icon, label, active, status, detail,
+  // detailProperties, opensOnly } (opensOnly: nothing to switch, a tap
+  // opens its detail)
+  function ownDef(name) {
+    switch (name) {
+    case "brightness":
+      return {
         "icon": BrightnessManager.icon(root.brightnessLevel),
         "label": I18n.tr("Brightness"),
         "active": false,
@@ -87,33 +82,74 @@ Card {
         "detailProperties": {
           "monitor": "*"
         },
-        // Nothing to switch: a tap opens the sliders
         "opensOnly": true
-      },
-      "pin": {
+      };
+    case "volume":
+      return {
+        "icon": AudioManager.outputIcon(AudioManager.deviceKind(AudioManager.defaultSink), AudioManager.muted, AudioManager.volume),
+        "label": I18n.tr("Volume"),
+        "active": false,
+        "status": AudioManager.muted ? I18n.tr("Muted") : I18n.tr("{0}%", Math.round(AudioManager.volume * 100)),
+        "detail": "AudioMixer",
+        "detailProperties": {
+          "mode": "output"
+        },
+        "opensOnly": true
+      };
+    case "themePicker":
+      return {
+        "icon": "palette",
+        "label": I18n.tr("Theme"),
+        "active": false,
+        "status": ThemeManager.currentFamily?.label ?? ThemeManager.activeTheme,
+        "detail": "ThemePicker",
+        "opensOnly": true
+      };
+    case "wallpaperPicker":
+      return {
+        "icon": "wallpaper",
+        "label": I18n.tr("Wallpaper"),
+        "active": false,
+        "status": String(ThemeManager.wallpaper ?? "").split("/").pop(),
+        "detail": "WallpaperPicker",
+        "opensOnly": true
+      };
+    case "pin":
+      return {
         "icon": "push_pin",
         "label": root.pinned ? I18n.tr("Pinned") : I18n.tr("Pin open"),
         "active": root.pinned
-      }
-    })
+      };
+    }
+    return null;
+  }
+
+  // A tile's look: its own, or its action's (ActionsManager.info), armed
+  // for a second click when it asks for one
+  function def(name) {
+    const own = root.ownDef(name);
+    if (own)
+      return own;
+    const info = ActionsManager.info(name);
+    const destructive = ActionsManager.destructive(name);
+    const armed = gate.armed === name;
+    return {
+      "icon": info.icon,
+      "label": armed ? I18n.tr("Confirm?") : ActionsManager.label(name),
+      "active": info.active || armed,
+      "status": info.status,
+      "detail": root.details[name]?.type,
+      "detailProperties": root.details[name]?.properties,
+      "destructive": destructive,
+      "tone": destructive ? Theme.error : Theme.accent
+    };
+  }
 
   readonly property bool pills: root.properties.style === "pills"
 
-  function onOff(on) {
-    return on ? I18n.tr("On") : I18n.tr("Off");
-  }
-  readonly property string bluetoothStatus: {
-    if (!BluetoothManager.enabled)
-      return I18n.tr("Off");
-    const connected = BluetoothManager.connectedDevices;
-    if (connected.length === 1)
-      return BluetoothManager.deviceLabel(connected[0]);
-    return connected.length > 1 ? I18n.tr("{0} connected", connected.length) : I18n.tr("On");
-  }
-  // The detail an action opens here ("" for none)
   // Every monitor's, for the brightness tile
   readonly property real brightnessLevel: BrightnessManager.average(BrightnessManager.names)
-  // Opens the action's detail from `from`, or runs it (a toggle)
+  // Opens the action's detail from `from`, or runs it
   function tap(name, from) {
     const d = root.def(name);
     if (d.opensOnly && root.detailOf(d) !== "")
@@ -121,47 +157,33 @@ Card {
     else
       root.run(name);
   }
+  // The detail an action opens here ("" for none)
   function detailOf(def) {
     return def.detail && root.canExpand(def.detail) ? def.detail : "";
   }
 
-  function def(name) {
-    if (!root.sessionActions.includes(name))
-      return root.defs[name];
-    const info = SessionManager.sessionActionInfo(name);
-    const destructive = SessionManager.destructiveActions.includes(name);
-    return {
-      "icon": info.icon,
-      "label": gate.armed === name ? I18n.tr("Confirm?") : info.label,
-      "active": gate.armed === name,
-      "destructive": destructive,
-      "tone": destructive ? Theme.error : Theme.accent
-    };
-  }
-
-  // Config, tool availability and host only (never toggle state), so the
-  // tiles aren't rebuilt whenever something is switched: a literal list,
-  // not defs' keys (defs follows the toggles)
-  readonly property var known: ["wifi", "bluetooth", "caffeine", "dnd", "darkMode", "nightLight", "powerSaver", "brightness", "pin"].concat(root.sessionActions)
-  readonly property var actions: root.properties.actions.filter(a => root.known.includes(a))
+  // Config, tool availability and host only (never toggle state:
+  // ActionsManager.available reads none), so the tiles aren't rebuilt
+  // whenever something is switched
+  readonly property var actions: root.properties.actions
   readonly property var shown: root.actions.filter(a => {
     switch (a) {
-    case "wifi":
-      return NetworkingManager.available;
-    case "bluetooth":
-      return BluetoothManager.available;
-    case "nightLight":
-      return NightLightManager.available;
-    case "powerSaver":
-      return BatteryManager.hasPowerProfiles;
     case "brightness":
       return BrightnessManager.names.length > 0;
+    case "volume":
+      return AudioManager.defaultSink !== null;
+    case "themePicker":
+    case "wallpaperPicker":
+      return true;
     case "pin":
       return root.inMenu;
-    default:
-      return !root.sessionActions.includes(a) || SessionManager.sessionActionInfo(a) !== null;
     }
+    return ActionsManager.available(a);
   })
+
+  // The VPNs' rows (Tailscale's among them) are listed while a VPN tile is
+  readonly property bool showsVpn: root.actions.includes("vpn")
+  onShowsVpnChanged: root.showsVpn ? VpnManager.acquire(root) : VpnManager.release(root)
 
   // Every tile is the same size, so the names all fit when the widest does
   // (ActionTile.labelFits, measured in its label font)
@@ -178,49 +200,29 @@ Card {
     font.pixelSize: Appearance.fontSizeBy(-1)
   }
 
+  // Runs a tile's action: pin's own, else the catalogue's (ActionsManager.
+  // run), behind a second click where it asks for one
   function run(name) {
-    if (root.sessionActions.includes(name)) {
-      if (gate.pass(name, SessionManager.destructiveActions.includes(name)))
-        SessionManager.sessionAction(name);
+    if (name === "pin") {
+      EdgeMenuManager.togglePinned(root.host.id);
       return;
     }
-    switch (name) {
-    case "wifi":
-      ShellManager.onScreen("wifi");
-      NetworkingManager.toggleWifi();
-      break;
-    case "bluetooth":
-      ShellManager.onScreen("bluetooth");
-      BluetoothManager.toggleEnabled();
-      break;
-    case "caffeine":
-      ShellManager.onScreen("caffeine");
-      IdleManager.toggle();
-      break;
-    case "dnd":
-      ShellManager.onScreen("dnd");
-      NotificationManager.toggleDnd();
-      break;
-    case "darkMode":
-      ThemeManager.toggleDarkMode();
-      break;
-    case "nightLight":
-      ShellManager.onScreen("nightLight");
-      NightLightManager.toggle();
-      break;
-    case "powerSaver":
-      ShellManager.onScreen("powerProfile");
-      BatteryManager.setPowerSaver(!BatteryManager.powerSaver);
-      break;
-    case "pin":
-      EdgeMenuManager.togglePinned(root.host.id);
-      break;
-    }
+    if (gate.pass(name, ActionsManager.destructive(name)))
+      ActionsManager.run(name, {
+        "fromScreen": true
+      });
   }
 
   // Caffeine's time left, while it's on for a set time
-  Component.onCompleted: IdleManager.acquire(root, 1000)
-  Component.onDestruction: IdleManager.release(root)
+  Component.onCompleted: {
+    IdleManager.acquire(root, 1000);
+    if (root.showsVpn)
+      VpnManager.acquire(root);
+  }
+  Component.onDestruction: {
+    IdleManager.release(root);
+    VpnManager.release(root);
+  }
 
   ConfirmGate {
     id: gate

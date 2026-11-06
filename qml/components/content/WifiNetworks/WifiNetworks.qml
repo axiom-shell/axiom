@@ -196,10 +196,10 @@ Panel {
     switchShown: NetworkingManager.available
     switchEnabled: NetworkingManager.available && !NetworkingManager.hardwareBlocked
 
-    onToggled: checked => {
-      ShellManager.onScreen("wifi");
-      NetworkingManager.setWifiEnabled(checked);
-    }
+    onToggled: checked => ActionsManager.run("wifi", {
+        "call": checked ? "open" : "close",
+        "fromScreen": true
+      })
 
     FlatIconButton {
       visible: Apps.networkEditor !== ""
@@ -222,10 +222,9 @@ Panel {
       iconText: "flight"
       iconColor: NetworkingManager.airplane ? Theme.accent : Theme.foregroundAlt
       tooltipText: NetworkingManager.airplane ? I18n.tr("Airplane mode: on") : I18n.tr("Airplane mode: off")
-      onClicked: {
-        ShellManager.onScreen("airplane");
-        NetworkingManager.setAirplane(!NetworkingManager.airplane);
-      }
+      onClicked: ActionsManager.run("airplane", {
+        "fromScreen": true
+      })
     }
   }
 

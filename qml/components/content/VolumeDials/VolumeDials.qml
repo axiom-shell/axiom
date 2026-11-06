@@ -79,7 +79,7 @@ Card {
       label: I18n.tr("Output")
       onToggled: {
         ShellManager.onScreen("audio");
-        AudioManager.toggleMute();
+        AudioManager.toggleMute(); // allowed: on the lock screen too, where x-lockActions cover AudioManager's mutes
       }
       onStepped: delta => {
         ShellManager.onScreen("audio");
@@ -96,7 +96,7 @@ Card {
       label: I18n.tr("Input")
       onToggled: {
         ShellManager.onScreen("microphone");
-        AudioManager.toggleSourceMute();
+        AudioManager.toggleSourceMute(); // allowed: on the lock screen too, where x-lockActions cover AudioManager's mutes
       }
       onStepped: delta => {
         ShellManager.onScreen("microphone");

@@ -29,7 +29,7 @@ Card {
     if (root.kind === "greeter") // lock-inert: the greeter's alone
       GreetdManager.power(action);
     else
-      SessionManager.sessionAction(action);
+      SessionManager.sessionAction(action); // allowed: the lock screen's, whose x-lockActions cover SessionManager.sessionAction
   }
 
   ConfirmGate {
