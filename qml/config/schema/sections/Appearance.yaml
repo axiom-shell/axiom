@@ -77,7 +77,7 @@ properties:
         x-control: folder
         default: '~/Pictures/wallpapers'
         pattern: '\S'
-        description: Images (jpg, png, bmp) the pickers list.
+        description: Images the pickers list (jpg, png and bmp, and webp, avif and jxl where their Qt image plugin is installed).
       collection:
         type: string
         x-snapshot: true

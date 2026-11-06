@@ -171,18 +171,27 @@ Singleton {
   readonly property string compositorWallpapers: _compositorWallpapers
   property string _compositorWallpapers: ""
 
-  // Prints the image count (-2 without the folder), then the first data
-  // dir's folder holding the compositor's wallpapers, if any. Only the
-  // latest check's answer counts
+  // Counts the folder's images (the daemon's listing, without subfolders)
+  // and finds the first data dir's folder holding the compositor's
+  // wallpapers, if any. Only the latest check's answers count
   function checkFolder() {
     const check = ++root._folderChecks;
+    BackendManager.call("file.list", {
+      "path": Appearance.wallpaperPath,
+      "extensions": root.extensions,
+      "recursive": false
+    }, (error, result) => {
+      if (check === root._folderChecks)
+        root.folderImages = error ? (error.kind === "not_found" ? -2 : 0) : result.files.length;
+    });
     const stock = CompositorManager.stockWallpapers;
-    CommandManager.run(["sh", "-c", 'if [ -d "$1" ]; then find "$1" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" \\) | wc -l; else echo -2; fi; p=$2; shift 2; for d in "$@"; do ls "$d"/$p >/dev/null 2>&1 && { echo "$d/${p%/*}"; break; }; done', "sh", Appearance.wallpaperPath, stock].concat(stock !== "" ? Paths.dataSearchDirs : []), (code, stdout) => {
-      if (check !== root._folderChecks)
-        return;
-      const lines = stdout.split("\n").filter(line => line !== "");
-      root.folderImages = parseInt(lines[0] ?? "-1");
-      root._compositorWallpapers = lines[1] ?? "";
+    if (stock === "") {
+      root._compositorWallpapers = "";
+      return;
+    }
+    CommandManager.run(["sh", "-c", 'p=$1; shift; for d in "$@"; do ls "$d"/$p >/dev/null 2>&1 && { echo "$d/${p%/*}"; break; }; done', "sh", stock].concat(Paths.dataSearchDirs), (code, stdout) => {
+      if (check === root._folderChecks)
+        root._compositorWallpapers = stdout.trim();
     }, null, true);
   }
   property int _folderChecks: 0
@@ -215,7 +224,27 @@ Singleton {
   // it ("trips", "trips/2024"): the collections to choose from
   readonly property var collections: root._collections
   readonly property string _listedPath: Appearance.wallpaperPath + (Appearance.wallpaperCollection ? "/" + Appearance.wallpaperCollection : "")
-  readonly property var _extensions: ["jpg", "jpeg", "png", "bmp"]
+  // The image extensions listed: what Qt reads itself, plus each format it
+  // reads only through an image plugin (webp: qt6-imageformats; avif, jxl:
+  // kimageformats, with libavif, libjxl) once a one-pixel sample of it
+  // decodes. Canvas.loadImage tries them quietly, where an Image would log
+  // the error of a missing plugin.
+  readonly property var extensions: ["jpg", "jpeg", "png", "bmp"].concat(root._pluginExtensions)
+  readonly property var _pluginSamples: ({
+      "webp": "data:image/webp;base64,UklGRjwAAABXRUJQVlA4IDAAAADQAQCdASoCAAIAAUAmJaACdLoB+AADsAD+8ut//NgVzXPv9//S4P0uD9Lg/9KQAAA=",
+      "avif": "data:image/avif;base64,AAAAHGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZgAAAOltZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAAHmlsb2MAAAAARAAAAQABAAAAAQAAAQ0AAAAVAAAAKGlpbmYAAAAAAAEAAAAaaW5mZQIAAAAAAQAAYXYwMUNvbG9yAAAAAGhpcHJwAAAASWlwY28AAAAUaXNwZQAAAAAAAAABAAAAAQAAAA5waXhpAAAAAAEIAAAADGF2MUOBABwAAAAAE2NvbHJuY2x4AAEAAgAGgAAAABdpcG1hAAAAAAAAAAEAAQQBAoMEAAAAHW1kYXQSAAoHGAAGGAgQNTIIEABGapKLQIo=",
+      "jxl": "data:image/jxl;base64,/woAEAwExY0IAAEAGABLGIsVggE="
+    })
+  property var _pluginExtensions: []
+  property Canvas _formatProbe: Canvas {
+    onImageLoaded: {
+      const found = Object.keys(root._pluginSamples).filter(extension => isImageLoaded(root._pluginSamples[extension]));
+      if (found.join() !== root._pluginExtensions.join())
+        root._pluginExtensions = found;
+    }
+    Component.onCompleted: Object.values(root._pluginSamples).forEach(sample => loadImage(sample))
+  }
+  onExtensionsChanged: root.refresh()
   property var _images: []
   property var _collections: []
   property int _listings: 0
@@ -234,7 +263,7 @@ Singleton {
     const listing = ++root._listings;
     BackendManager.call("file.list", {
       "path": root._listedPath,
-      "extensions": root._extensions,
+      "extensions": root.extensions,
       "recursive": Appearance.wallpaperSubfolders
     }, (error, result) => {
       if (listing !== root._listings)
@@ -251,7 +280,7 @@ Singleton {
     // The collections, from the whole folder
     BackendManager.call("file.list", {
       "path": Appearance.wallpaperPath,
-      "extensions": root._extensions,
+      "extensions": root.extensions,
       "recursive": true
     }, (error, result) => {
       if (listing !== root._listings)

@@ -77,6 +77,10 @@ PACKAGES=(
   "agreety|greetd-agreety|greetd"
   "fcitx5|fcitx5|fcitx5"
   "ibus-daemon|ibus|ibus"
+  "qt6-imageformats|qt6-imageformats|qt6-qtimageformats"
+  "kimageformats|kimageformats|kf6-kimageformats"
+  "libavif|libavif|-"
+  "libjxl|libjxl|-"
 )
 # go isn't here: the axiom binary is downloaded (a package brings its own),
 # and go is installed only to build it when there's no official build
@@ -108,6 +112,8 @@ FEATURES=(
   # fcitx5 is Input.keyboard.method's default; ibus (in PACKAGES for the install
   # hints) is supported but not offered, so "all" doesn't take both
   "Typing Japanese, Chinese, Korean and more (the fcitx5 input method)|fcitx5|"
+  "WebP wallpapers|qt6-imageformats|"
+  "AVIF and JPEG XL wallpapers|kimageformats libavif libjxl|"
   # The login screen runs in a sway of its own, or in Hyprland where sway
   # isn't installed: with Hyprland, sway is offered on its own (recommended,
   # so "all" takes it) and declining it keeps the login screen. The first
