@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### Quick actions can't hold custom toggles or commands
+- **Where:** `qml/components/content/QuickActions/QuickActions.qml`, `qml/services/ui/ActionsManager.qml`
+- **What:** A tile can be any action of the catalogue, and the Button widget can run a command, but there's no tile of the user's own: a toggle with an on and an off command and a status command (exit 0 = on), or an action with a module as its detail. A plan was drafted on the unified-actions branch (a `CustomActions` section of items, `custom:<id>` tile ids run and judged by ActionsManager, a card to add them) and set aside by the maintainer (2026-11-06) as more than that branch needed. Its open questions: a toggle's state lags its command (hold the expected state until the status command agrees?); status commands poll while a tile shows (cost, a slow script makes the tile slow); the lock screen and greeter must never run them; a detail opens only in overlay pages and edge menus; a detail module's own settings nested in the item's form; a deleted item leaves `custom:x` in modules and Buttons; whether keybinds, hot corners and the launcher reach them too (`customActions run <id>`).
+- **Size:** needs a plan
+- **Found:** 2026-11-06, while finishing the unified-actions branch
+
 ### The daemon's other own commands still start outside command.Children
 - **Where:** `backend/internal/sysmon/nvidia.go`, `backend/internal/theme/integrate.go`, `backend/internal/compositor/manager/niri.go`, `backend/internal/daemon/cursor.go`
 - **What:** Row 20 moved `checkupdates`, `ddcutil` and `tailscale` to `command.Run` with the daemon's `Children`, but other commands the daemon runs for itself still start through their own `exec.Command` (`grep -rln 'exec.Command' backend/internal` lists them), so one in flight at a re-exec isn't handed on and stays a zombie until the daemon quits, as the three did. Not yet sorted into which run often enough to matter (a polled or streamed one) and which run once (a build, an install), which a re-exec doesn't meet.
