@@ -85,12 +85,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the wallpaper chunk of the tweaks-minor-complaints branch
 
-### The dev config's diff compares lists whole
-- **Where:** `backend/internal/devconfig/diff.go` (`Rows`), `qml/components/views/Settings/DevConfigDiffCard.qml`
-- **What:** `dev.config.diff` takes its paths from `config.Diff`, which sets a list whole, so a list differing anywhere (one bar widget's setting in `Bars`, one page in `Overlay.items`) is one row holding the whole list, and copying it copies every item, dev's other edits and live's alike. Lists of objects with ids (bars, pages, edge menus, OSDs, widgets) should compare per id: a row per item added, removed or changed, each copied on its own (`{id}` selectors, as `config.set` takes). Decided for v1 (the restructure's plan, Decided 8): "Lists are compared whole in v1 (per-id rows are an issues.md follow-up)".
-- **Size:** small
-- **Found:** 2026-11-03, while documenting the dev config
-
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `qml/services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.

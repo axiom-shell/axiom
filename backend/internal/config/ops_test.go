@@ -107,6 +107,37 @@ func TestDiff(t *testing.T) {
 	}
 }
 
+func TestDiffByID(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, before, after, want string
+	}{
+		{"an item's leaf", `{"L":[{"id":"x","v":1},{"id":"y","v":1}]}`, `{"L":[{"id":"x","v":2},{"id":"y","v":1}]}`, `[{"op":"set","path":["L",{"id":"x"},"v"],"value":2}]`},
+		{"an item gone and one new", `{"L":[{"id":"x"},{"id":"y"}]}`, `{"L":[{"id":"y"},{"id":"z"}]}`, `[{"op":"delete","path":["L",{"id":"x"}]},{"op":"set","path":["L",{"id":"z"}],"value":{"id":"z"}}]`},
+		{"lists in an item", `{"L":[{"id":"b","W":[{"id":"w","on":true}]}]}`, `{"L":[{"id":"b","W":[{"id":"w","on":false}]}]}`, `[{"op":"set","path":["L",{"id":"b"},"W",{"id":"w"},"on"],"value":false}]`},
+		{"an item's type", `{"L":[{"id":"x","type":"A","a":1}]}`, `{"L":[{"id":"x","type":"B","b":1}]}`, `[{"op":"set","path":["L",{"id":"x"}],"value":{"id":"x","type":"B","b":1}}]`},
+		{"an order change, whole", `{"L":[{"id":"x"},{"id":"y"}]}`, `{"L":[{"id":"y"},{"id":"x"}]}`, `[{"op":"set","path":["L"],"value":[{"id":"y"},{"id":"x"}]}]`},
+		{"items without ids, whole", `{"L":[1,2]}`, `{"L":[1,3]}`, `[{"op":"set","path":["L"],"value":[1,3]}]`},
+		{"an id twice, whole", `{"L":[{"id":"x"},{"id":"x"}]}`, `{"L":[{"id":"x"}]}`, `[{"op":"set","path":["L"],"value":[{"id":"x"}]}]`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			before, after := cfg(t, c.before), cfg(t, c.after)
+			got, _ := json.Marshal(DiffByID(before, after))
+			if string(got) != c.want {
+				t.Errorf("got %s want %s", got, c.want)
+			}
+			if err := ApplyOps(before, parseOps(t, string(got))); err != nil {
+				t.Fatal(err)
+			}
+			if !jsonx.Equal(before, after) {
+				t.Errorf("applied: %s, want %s", jsonx.MarshalCompact(before), c.after)
+			}
+		})
+	}
+}
+
 func TestWithBase(t *testing.T) {
 	t.Parallel()
 	op := SetValue(Keys("a"), 2.0).WithBase(1.0)

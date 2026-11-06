@@ -46,8 +46,9 @@ func (r Row) MarshalJSON() ([]byte, error) {
 }
 
 // Rows is every setting dev and live differ on, base, live and dev all in
-// dev's shape (InShape through the dev pipeline): config.Diff's paths (a
-// list whole, objects followed down to what changed), each with the side
+// dev's shape (InShape through the dev pipeline): config.DiffByID's paths
+// (a list of items with ids by item, added, removed or followed down; any
+// other list whole; objects followed down to what changed), each with the side
 // that changed it since the base (a nil base: both) and whether install
 // (the install tree's schema) lacks it or has it in another shape. The version and format are never
 // rows: each config keeps its own. Nor are the takeover settings
@@ -56,7 +57,7 @@ func (r Row) MarshalJSON() ([]byte, error) {
 // so they can never be copied.
 func Rows(base, live, dev *jsonx.Object, install *schema.Schema, takeover [][]string) []Row {
 	var rows []Row
-	for _, op := range config.Diff(live, dev) {
+	for _, op := range config.DiffByID(live, dev) {
 		if skipped(op.Path, takeover) {
 			continue
 		}
@@ -95,7 +96,7 @@ func Merge(base, live, dev *jsonx.Object, takeover [][]string) []config.Op {
 		return nil
 	}
 	var ops []config.Op
-	for _, d := range config.Diff(live, dev) {
+	for _, d := range config.DiffByID(live, dev) {
 		if skipped(d.Path, takeover) || !differs(base, live, d.Path) || differs(base, dev, d.Path) {
 			continue
 		}

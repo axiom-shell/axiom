@@ -292,11 +292,12 @@ func TestRows(t *testing.T) {
 		devVal, liveVal any
 	}
 	wants := map[string]want{
-		"General.a":    {SideLive, false, true, true, 1.0, 2.0},
-		"General.b":    {SideBoth, false, true, true, "z", "y"},
-		"General.c":    {SideDev, true, true, true, true, false},
-		"General.list": {SideDev, false, true, true, nil, nil},
-		"Extra":        {SideDev, true, false, true, nil, nil},
+		"General.a": {SideLive, false, true, true, 1.0, 2.0},
+		"General.b": {SideBoth, false, true, true, "z", "y"},
+		"General.c": {SideDev, true, true, true, true, false},
+		// A list with ids by item: q added in dev
+		"General.list.{id:q}": {SideDev, false, true, false, nil, nil},
+		"Extra":               {SideDev, true, false, true, nil, nil},
 	}
 	rows := Rows(base, live, dev, installSchema(t), takeover)
 	if len(rows) != len(wants) {
@@ -359,8 +360,8 @@ func TestMerge(t *testing.T) {
 			cfgText(0, `"General": {"a": 2, "b": "y", "list": []}, "Extra": {"k": 1}`),
 			cfgText(0, `"General": {"a": 3, "b": "x", "list": []}, "Extra": {"k": 1}`),
 			`[{"base":"x","op":"set","path":["General","b"],"value":"y"}]`},
-		{"a list whole", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": [{"id": "p"}]}, "Extra": {"k": 1}`), base,
-			`[{"base":[],"op":"set","path":["General","list"],"value":[{"id":"p"}]}]`},
+		{"a list's item by id", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": [{"id": "p"}]}, "Extra": {"k": 1}`), base,
+			`[{"op":"set","path":["General","list",{"id":"p"}],"value":{"id":"p"}}]`},
 		{"a key live dropped", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": []}`), base,
 			`[{"base":{"k":1},"op":"delete","path":["Extra"]}]`},
 		{"a key live added", base, cfgText(0, `"General": {"a": 1, "b": "x", "list": []}, "Extra": {"k": 1}, "New": {"n": 1}`), base,
