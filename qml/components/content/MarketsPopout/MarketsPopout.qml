@@ -13,9 +13,11 @@ import qs.components.content.parts
 // The Markets widget's popout, from MarketsManager (the widget keeps it
 // acquired): the portfolio, then the widget's symbols as QuoteRows; a
 // click on one swaps the list for its detail (a large chart over 1D to 1Y,
-// the day's range and the previous close) in the same room, so the popout
-// never grows while open. Refresh and a link to the watchlist's settings
-// in the header.
+// the day's range and the previous close). The body is as tall as what it
+// shows (the rows, up to 8 before the list scrolls; the empty state; the
+// detail's chart), and the window keeps room for the tallest of them
+// (maxImplicitHeight), as the Wi-Fi popout does. Refresh and a link to
+// the watchlist's settings in the header.
 Panel {
   id: root
 
@@ -31,15 +33,18 @@ Panel {
   property string selectedId: ""
   readonly property var selected: root.items.find(item => item.id === root.selectedId) ?? null
 
-  // A row's height, with a holdings line or not
-  readonly property real rowHeight: Appearance.fontSize * (root.showPortfolio ? 4 : 3.2)
-  // Rows shown before the list scrolls
-  readonly property int shownRows: Math.min(root.items.length, 8)
-  // The list's room, which the detail view takes too
-  readonly property real bodyHeight: Math.max(Appearance.fontSize * 17, root.shownRows * root.rowHeight)
+  readonly property bool showsEmpty: root.items.length === 0 || (MarketsManager.error !== "" && root.selected === null)
+  // The body's height in each view: the rows (rows are alike, so 8 of them
+  // is the list's height over its count), the empty state, the detail
+  readonly property real listHeight: list.count === 0 ? 0 : list.contentHeight / list.count * Math.min(list.count, 8)
+  readonly property real emptyHeight: empty.implicitHeight + Widget.padding * 2
+  readonly property real detailHeight: Appearance.fontSize * 17
+  readonly property real bodyHeight: root.selected !== null ? root.detailHeight : root.showsEmpty ? root.emptyHeight : root.listHeight
 
   spacing: Widget.padding
   implicitWidth: Widget.px(400)
+  // Room for the tallest view, and for the portfolio the detail hides
+  maxImplicitHeight: root.implicitHeight - root.bodyHeight + Math.max(root.detailHeight, root.listHeight, root.emptyHeight) + (root.selected !== null && root.showPortfolio && root.portfolio !== null ? portfolioBox.implicitHeight + root.spacing : 0)
   flips: true
 
   ModuleHeader {
@@ -67,6 +72,7 @@ Panel {
 
   // The holdings' total, today's change and the total gain
   Rectangle {
+    id: portfolioBox
     visible: root.selected === null && root.showPortfolio && root.portfolio !== null
     Layout.fillWidth: true
     implicitHeight: portfolioRow.implicitHeight + Widget.padding * 2
@@ -118,8 +124,9 @@ Panel {
     Layout.preferredHeight: root.bodyHeight
 
     EmptyState {
+      id: empty
       anchors.centerIn: parent
-      visible: root.items.length === 0 || (MarketsManager.error !== "" && root.selected === null)
+      visible: root.showsEmpty
       maxWidth: parent.width
       icon: root.items.length === 0 ? "playlist_add" : "cloud_off"
       text: root.items.length === 0 ? I18n.tr("No symbols on the watchlist yet") : I18n.tr("Couldn't load market prices: {0}", MarketsManager.error)
@@ -128,7 +135,7 @@ Panel {
     ListView {
       id: list
       anchors.fill: parent
-      visible: root.selected === null && root.items.length > 0 && MarketsManager.error === ""
+      visible: root.selected === null && !root.showsEmpty
       clip: true
       spacing: 0
       boundsBehavior: Flickable.StopAtBounds
