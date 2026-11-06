@@ -278,8 +278,8 @@ func (b *Broker) Answer(id string, choice *Choice, cancel bool) error {
 	return nil
 }
 
-// Forget fails every request the shell shows: it went away. Their askers
-// fall back to the backends' own pickers.
+// Forget fails every request the shell shows: it went away. The CLI's
+// askers fall back to the backends' own pickers; the niri portal's fail.
 func (b *Broker) Forget() {
 	b.mu.Lock()
 	pending := b.pending

@@ -105,6 +105,9 @@ func NewPortal(o PortalOptions) *Portal {
 // Run serves the portal on conn until ctx ends or the connection does.
 // When another program holds the name, it waits for it to come free.
 func (p *Portal) Run(ctx context.Context, conn *dbus.Conn) error {
+	// The calls still answering (a pick waiting for a person) end with it
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	unexport, err := conn.Export(portalPath, dbus.Interface{Name: ifaceScreenCast, Methods: p.methods(ctx, conn)})
 	if err != nil {
 		return err
@@ -374,7 +377,7 @@ func (p *Portal) selectSources(ctx context.Context, conn *dbus.Conn, c call) (ui
 				return responseOther, nil
 			case choice == nil:
 				return responseCancelled, nil
-			case !choice.valid(r) || choice.Kind == KindRegion:
+			case !choice.valid(r): // a region too: r offers none
 				return responseOther, nil
 			}
 		}

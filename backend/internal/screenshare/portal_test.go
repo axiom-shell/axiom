@@ -105,12 +105,16 @@ type portalSetup struct {
 	niri     *fakeNiri
 	asked    chan Request
 	answer   chan *Choice
+	// gaveUp: a pick's context ended
+	gaveUp   chan struct{}
 	settings Settings
+	// portal is the portal's own connection
+	portal *dbus.Conn
 }
 
 func startPortal(t *testing.T, settings Settings) *portalSetup {
 	t.Helper()
-	s := &portalSetup{bus: dbustest.New(t), niri: &fakeNiri{}, asked: make(chan Request, 4), answer: make(chan *Choice, 4), settings: settings}
+	s := &portalSetup{bus: dbustest.New(t), niri: &fakeNiri{}, asked: make(chan Request, 4), answer: make(chan *Choice, 4), gaveUp: make(chan struct{}, 4), settings: settings}
 	s.niri.serve(t, s.bus)
 	p := NewPortal(PortalOptions{
 		Ask: func(ctx context.Context, r Request) (*Choice, error) {
@@ -119,6 +123,7 @@ func startPortal(t *testing.T, settings Settings) *portalSetup {
 			case c := <-s.answer:
 				return c, nil
 			case <-ctx.Done():
+				s.gaveUp <- struct{}{}
 				return nil, ctx.Err()
 			}
 		},
@@ -128,6 +133,7 @@ func startPortal(t *testing.T, settings Settings) *portalSetup {
 		},
 	})
 	conn := dial(t, s.bus)
+	s.portal = conn
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { p.Run(ctx, conn); close(done) }()
@@ -339,6 +345,25 @@ func TestPortalRequestClosed(t *testing.T) {
 		}
 	case <-time.After(testkit.Bound(5 * time.Second)):
 		t.Fatal("the pick didn't end")
+	}
+}
+
+// The portal's bus connection ending ends the picks it runs
+func TestPortalConnectionEnded(t *testing.T) {
+	t.Parallel()
+	s := startPortal(t, Settings{Enabled: true})
+	s.call(t, "CreateSession", map[string]dbus.Variant{})
+	go s.frontend.Call(context.Background(), PortalBusName, portalPath, ifaceScreenCast, "SelectSources", "oosa{sv}", testHandle, testSession, "com.discordapp.Discord", map[string]dbus.Variant{})
+	select {
+	case <-s.asked:
+	case <-time.After(testkit.Bound(5 * time.Second)):
+		t.Fatal("not asked")
+	}
+	s.portal.Close()
+	select {
+	case <-s.gaveUp:
+	case <-time.After(testkit.Bound(5 * time.Second)):
+		t.Fatal("the pick outlived the portal's connection")
 	}
 }
 
