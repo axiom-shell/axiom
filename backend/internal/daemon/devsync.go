@@ -55,7 +55,7 @@ type DevConfigDiff struct {
 	LiveChanged bool            `json:"liveChanged"`
 	// The config versions the dev tree's and the install's schemas are at:
 	// when they differ, a setting moved or reshaped between them is a
-	// devOnly row until the install is updated
+	// devOnly row until they agree
 	DevVersion     float64 `json:"devVersion"`
 	InstallVersion float64 `json:"installVersion"`
 }

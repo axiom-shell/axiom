@@ -161,7 +161,7 @@ FieldGroup {
   // The install is of another config version: what moved since can't go
   StyledText {
     visible: root.comparable && root.loaded && root.versions.dev !== root.versions.install
-    text: I18n.tr("The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live until the install is updated.", root.versions.install, root.versions.dev)
+    text: I18n.tr("The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.", root.versions.install, root.versions.dev)
     textColor: Theme.warning
     wrapMode: Text.WordWrap
     Layout.fillWidth: true

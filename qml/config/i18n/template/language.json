@@ -3101,7 +3101,7 @@
     "The hardware clock keeps local time (as Windows does), so a dual boot shows the same time in both.": "",
     "The input method's engine (e.g. pinyin, hangul).": "",
     "The installed axiom has no such setting, or one of another shape": "",
-    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live until the install is updated.": "",
+    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.": "",
     "The item's stable id, unique in its list.": "",
     "The language's": "",
     "The last thing the script printed, as it came.": "",

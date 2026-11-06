@@ -4062,7 +4062,7 @@
     "screen sharing": "",
     "Pick what to share": "",
     "An app that asks to may share the same screen or window again later without the picker (restore tokens). Under sway, the wlroots portal decides this itself.": "",
-    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live until the install is updated.": "",
-    "The installed axiom has no such setting, or one of another shape": ""
+    "The installed axiom has no such setting, or one of another shape": "",
+    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.": ""
   }
 }
