@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-06, while reviewing the guard's gh and push allowlists
 
+### A path rule judges a relative path where the session started after a cd it doesn't follow
+- **Where:** `.claude/hooks/guard.py` (`check`, `LEADING_CD`)
+- **What:** Only a leading `cd /dir && …` moves the folder the path rules judge relative paths in; any other cd is ignored, so `cd ~/.config/axiom; rm config.json` and `cd /tmp && cd ~/.config/axiom && rm config.json` are allowed (judged as `<repo>/config.json`) while `cd ~/.config/axiom && rm config.json` is refused (checked with `guard.check` 2026-11-06). The same holds for the portal and default-apps writes. Fix: when a cd the guard doesn't follow precedes a relative write, judge it in every folder a cd in the line names too, or refuse it.
+- **Size:** small
+- **Found:** 2026-11-06, while reviewing the guard's gh and push allowlists
+
 ### EdgePlacement logs a binding loop on _layout
 - **Where:** `qml/components/hosts/popout/EdgePlacement.qml` (`_layout`), `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`
 - **What:** The live shell logged `Binding loop detected for property "_layout"` (`@components/hosts/popout/BarPopouts.qml[215:3]` and `@components/hosts/popout/EdgePopout.qml[314:3]`) several times after a reload on 2026-11-06, running the markets branch, which changes none of these files. The cycle isn't traced: PLAUSIBLE, settled by finding which of `_layout`'s inputs (`frame`, `_params`) reads a value derived from `_layout` itself.
