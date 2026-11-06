@@ -161,12 +161,12 @@ QtObject {
     {
       "namespace": "screenshare",
       "order": -28,
-      "why": "The screen-share picker: over the overlay and the screenshot picker (it steps aside while a region is dragged there), under the polkit prompt."
+      "why": "The screen-share picker: over the overlay and the screenshot picker (it steps aside while a region is dragged there), under the shared prompt."
     },
     {
       "namespace": "polkit",
       "order": -30,
-      "why": "The polkit prompt: after everything, so nothing of axiom's draws over a password prompt."
+      "why": "The shared prompt (polkit, Bluetooth pairing; named for the polkit prompt it began as): after everything, so nothing of axiom's draws over a password prompt."
     },
     {
       "namespace": "desktop",
@@ -184,7 +184,7 @@ QtObject {
   // window (drawing the chrome's fills: the chrome doesn't blur itself)
   // and the big surfaces that blur themselves
   readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "powermenu", "workspaces", "monitor-prompt"]
-  // Backdrops (and the polkit prompt and screen-share picker, whose
+  // Backdrops (and the shared prompt and screen-share picker, whose
   // windows hold their own dim),
   // only when asked: the whole screen, at every alpha
   readonly property var blurBackdrops: ["backdrop", "polkit", "screenshare"]

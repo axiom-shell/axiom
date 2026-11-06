@@ -217,6 +217,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [idle](features/idle.md): hypridle and idle inhibit.
 - [lock-keys](features/lock-keys.md): Caps Lock / Num Lock / Scroll Lock from the keyboard LEDs (the `lockKeys` topic), the password fields' warning, the LockKeys widget.
 - [polkit](features/polkit.md): the polkit agent.
+- [prompts](features/prompts.md): the one shared prompt (`PromptManager`, `PromptWindow`) for requests the system starts: polkit, Bluetooth pairing.
 - [screen-sharing](features/screen-sharing.md): axiom's screen-share picker for every compositor's portal (xdph's custom picker, xdpw's chooser, axiom's own ScreenCast portal under niri), repeats answered without it, the hookup.
 - [onboarding](features/onboarding.md): the first-run onboarder.
 - [self-update](features/self-update.md): axiom updating its own clone.

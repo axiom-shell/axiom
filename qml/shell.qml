@@ -128,8 +128,8 @@ ShellRoot {
         id: idleInhibit
       }
 
-      PolkitPrompt {
-        id: polkitPrompt
+      Prompt {
+        id: prompt
       }
 
       ScreenSharePicker {

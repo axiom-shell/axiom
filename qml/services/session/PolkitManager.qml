@@ -8,13 +8,13 @@ import Quickshell.Services.Polkit
 import qs.config
 import qs.components.methods
 import qs.services.core
-import qs.services.compositor
+import qs.services.ui
 
 /*
  * axiom as the session's polkit agent (the Polkit section): while
  * PolkitConfig.enabled, a PolkitAgent answers apps' requests for
- * administrator rights, and PolkitWindow (shell/PolkitPrompt) shows each
- * one. A session has one agent, so registering fails while another holds
+ * administrator rights, and each one goes through the shared prompt's
+ * queue (PromptManager), which draws its card (prompt/PolkitCard). A session has one agent, so registering fails while another holds
  * it: axiom then stops the known ones (methods/PolkitAgents), their
  * systemd user units included, and registers again. 15 s after it starts
  * it looks once more, for an agent a user's own autostart launched after
@@ -37,8 +37,6 @@ Singleton {
   readonly property string status: !PolkitConfig.enabled ? "off" : registered ? "running" : _blocked ? "blocked" : "starting"
   // Process names of the agents axiom stopped since it started
   readonly property var replaced: JSON.parse(_state.replaced)
-  // The monitor the open request shows on: the focused one when it came in
-  readonly property string screenName: _screenName
   // From pkaction, for the open request: { description, vendor, vendorUrl }
   readonly property var actionInfo: _actionInfo
 
@@ -58,7 +56,6 @@ Singleton {
       root.flow.cancelAuthenticationRequest();
   }
 
-  property string _screenName: ""
   property var _actionInfo: ({})
   property bool _blocked: false
   // Took the agent down to register again (Quickshell deletes the old one
@@ -87,8 +84,28 @@ Singleton {
     }
   }
 
+  // The open request's place in the shared prompt's queue, and the flow it
+  // was queued for: a new flow queues again, so it's shown on the monitor
+  // focused when it comes to the front
+  property string _promptId: ""
+  property var _promptFlow: null
+
+  onFlowChanged: _syncPrompt()
+
+  function _syncPrompt() {
+    if (root.flow === root._promptFlow)
+      return;
+    if (root._promptId !== "")
+      PromptManager.withdraw(root._promptId);
+    root._promptFlow = root.flow;
+    root._promptId = root.flow ? PromptManager.request({
+      "source": "polkit",
+      "content": "polkit",
+      "outsideCancels": false
+    }, null, () => root.cancel()) : "";
+  }
+
   function _requestStarted() {
-    root._screenName = CompositorManager.focusedOutput || General.primaryMonitor;
     root._actionInfo = {};
     const flow = root.flow;
     if (!flow)
@@ -250,6 +267,8 @@ Singleton {
   }
 
   Component.onCompleted: {
+    // A reload keeps the open flow
+    root._syncPrompt();
     if (PolkitConfig.enabled)
       _lateCheck.start();
   }
