@@ -73,10 +73,10 @@ QtObject {
     // A block order change with the same outputs connected (a profile
     // naming a new monitor, a new primary): remap. A hotplug never remaps
     // (an unnamed output's block can shift then, as it always has): just
-    // record the bases
+    // record the bases (a pending remap's too, so it doesn't move them)
     function on_BasesChanged() {
       const applied = root._applied;
-      if (!applied || root._timer.running)
+      if (!applied)
         return;
       const bases = root.manager._bases;
       const names = Object.keys(bases);
