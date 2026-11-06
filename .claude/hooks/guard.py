@@ -21,6 +21,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -36,7 +37,7 @@ KEYWORDS = {"if", "then", "else", "elif", "while", "until", "do", "!", "{", "}"}
 # Wrappers and their options that take a value (`sudo -u me`); timeout and
 # flock take one positional (the duration, the lock file) before the command
 WRAPPERS = {
-    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U", "-T"}, "pkexec": {"--user"},
+    "sudo": {"-u", "-g", "-C", "-D", "--chdir", "-h", "-p", "-r", "-t", "-U", "-T"}, "pkexec": {"--user"},
     "env": {"-u", "-C", "--unset", "--chdir"}, "nohup": set(), "exec": {"-a"}, "command": set(), "time": set(),
     "setsid": set(), "timeout": {"-s", "-k", "--signal", "--kill-after"}, "nice": {"-n", "--adjustment"},
     "ionice": {"-c", "-n", "-p", "--class", "--classdata"}, "flock": {"-w", "-E", "--timeout", "--conflict-exit-code"},
@@ -44,6 +45,8 @@ WRAPPERS = {
                     "--description", "--working-directory"},
 }
 WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
+# Wrapper options that run the command in another folder (`env -C d`, `--chdir=d`)
+CHDIR = {"env": ("-C", "--chdir"), "sudo": ("-D", "--chdir"), "systemd-run": ("--working-directory",)}
 # A substitution a double-quoted word still runs: "$(…)", "`…`"; single-quoted
 # text (a commit message, a grep pattern) runs nothing, so it's blanked first
 SUBSTITUTION = re.compile(r"\$\((.*)\)|`([^`]*)`", re.S)
@@ -181,7 +184,8 @@ def simple(tokens, exported):
                 name, value = ASSIGN.match(token).groups()
                 exported[name] = value
         return []
-    # Wrappers: judge the command they run
+    # Wrappers: judge the command they run, git in the folder they move it to
+    folders = []
     while argv and Path(argv[0]).name in WRAPPERS:
         wrapper = Path(argv[0]).name
         argv = argv[1:]
@@ -189,12 +193,19 @@ def simple(tokens, exported):
             if ASSIGN.match(argv[0]):
                 name, value = ASSIGN.match(argv[0]).groups()
                 env[name] = value
+            opt, _, value = argv[0].partition("=")
+            if opt[:2] in CHDIR.get(wrapper, ()) and len(opt) > 2:
+                opt, value = opt[:2], opt[2:]  # `env -C/dir`
+            if opt in CHDIR.get(wrapper, ()):
+                folders.append(value or (argv[1:] or [""])[0])
             argv = argv[2:] if argv[0] in WRAPPERS[wrapper] else argv[1:]
         argv = argv[WRAPPER_POSITIONALS.get(wrapper, 0):]
         if wrapper == "flock" and argv[:1] in (["-c"], ["--command"]):
             argv = ["sh", "-c", *argv[1:]]  # flock <file> -c <command>
     if not argv:
         return []
+    if folders and Path(argv[0]).name == "git":
+        argv = [argv[0], *(a for f in folders for a in ("-C", f)), *argv[1:]]
     command_flag = next((i for i, a in enumerate(argv[1:-1], 1) if re.fullmatch(r"-[a-z]*c[a-z]*", a)), None)
     if Path(argv[0]).name in SHELLS and command_flag is not None:
         inner = argv[command_flag + 1]
@@ -392,20 +403,36 @@ GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 PROTECTED_BRANCHES = {"main", "master"}
 
 
-def current_branch(cwd):
-    out = subprocess.run(["git", "-C", cwd, "symbolic-ref", "--quiet", "--short", "HEAD"], capture_output=True, text=True)
+def current_branch(cwd, repo, env):
+    """The branch git finds checked out from cwd, with the `--git-dir=…`/`--work-tree=…`
+    options and GIT_* variables of the command"""
+    git_env = {k: os.path.expanduser(expand_vars(v, env)) for k, v in env.items() if k.startswith("GIT_")}
+    out = subprocess.run(["git", "-C", cwd, *repo, "symbolic-ref", "--quiet", "--short", "HEAD"],
+                         capture_output=True, text=True, env={**os.environ, **git_env})
     return out.stdout.strip()
 
 
-def check_git(args, cwd):
+def git_globals(args, cwd, env):
+    """(the subcommand's index, the folder git runs in, its repository options)"""
+    i, repo = 0, []
+    while i < len(args) and args[i].startswith("-"):
+        opt, eq, value = args[i].partition("=")
+        if not eq and args[i] in GIT_VALUE_OPTS and i + 1 < len(args):
+            value = args[i + 1]
+        if args[i] == "-C" and i + 1 < len(args):
+            cwd = str(resolve(value, cwd, env))
+        elif opt in {"--git-dir", "--work-tree"}:
+            repo.append(f"{opt}={resolve(value, cwd, env)}")
+        i += 2 if args[i] in GIT_VALUE_OPTS else 1
+    return i, cwd, repo
+
+
+def check_git(args, cwd, env, switched):
     """`git push` that force-pushes, deletes or mirrors, or lands on main: every
     change reaches main through a reviewed PR (docs/dev/roadmap.md ›
-    Running it unattended). `git clean -x`, which deletes the ignored files."""
-    i = 0
-    while i < len(args) and args[i].startswith("-"):
-        if args[i] == "-C" and i + 1 < len(args):
-            cwd = str(resolve(args[i + 1], cwd))
-        i += 2 if args[i] in GIT_VALUE_OPTS else 1
+    Running it unattended). `git clean -x`, which deletes the ignored files.
+    After a `git switch`/`checkout` earlier in the line the branch is unknown."""
+    i, cwd, repo = git_globals(args, cwd, env)
     rule = "Never, while testing"
     if args[i:i + 1] == ["clean"] and any(re.fullmatch(r"-[a-zA-Z]*[xX][a-zA-Z]*", a) for a in args[i + 1:]):
         deny(rule, "`git clean -x`/`-X` deletes the generated files and local state; remove the files you mean by name (`git clean -fd` is fine).")
@@ -417,16 +444,18 @@ def check_git(args, cwd):
         deny(rule, "don't force-push, delete or mirror remote branches; push a new commit instead.")
     refspecs = [a for a in push if not a.startswith("-")][1:]
     for spec in refspecs:
-        dest = spec.split(":", 1)[-1]
         if spec.startswith("+") or spec.startswith(":"):
             deny(rule, "don't force-push or delete a remote branch.")
-        if dest.removeprefix("refs/heads/") in PROTECTED_BRANCHES or dest == "HEAD" and current_branch(cwd) in PROTECTED_BRANCHES:
+        if spec.split(":", 1)[-1].removeprefix("refs/heads/") in PROTECTED_BRANCHES:
             deny(rule, "don't push to main; open a PR from a branch.")
-    if not refspecs and current_branch(cwd) in PROTECTED_BRANCHES:
-        deny(rule, "don't push to main; open a PR from a branch.")
+    if not refspecs or {"HEAD", "@"} & {spec.split(":", 1)[-1] for spec in refspecs}:
+        if switched:
+            deny(rule, "a `git switch`/`checkout` earlier in the line may leave main checked out: name the branch you push.")
+        if current_branch(cwd, repo, env) in PROTECTED_BRANCHES:
+            deny(rule, "don't push to main; open a PR from a branch.")
 
 
-def check_argv(env, argv, cwd):
+def check_argv(env, argv, cwd, switched):
     name = Path(argv[0]).name
     args = argv[1:]
 
@@ -455,7 +484,7 @@ def check_argv(env, argv, cwd):
 
     # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":
-        check_git(args, cwd)
+        check_git(args, cwd, env, switched)
 
     # The screen-share portal and its configs
     check_portal(env, name, args, cwd)
@@ -768,11 +797,13 @@ def check_generated_edit(tool_input):
 
 # ------------------------------------------------------------------ main
 
-# `cd /dir && git … && git …` and nothing else: no `;`, `||`, `|`, `\&`,
-# newline, redirection, substitution, wrapper (`env -C`), other command
-# (`eval`, `builtin cd`) or relative folder (CDPATH) that could leave a push
-# somewhere else than the folder
-LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*(?:[ \t]*&&[ \t]*git[ \t][^\n\\;&|()<>`$]*)+")
+# `cd /dir && …`: `&&`-joined pipelines with redirections, and no `;`, `||`,
+# lone `&`, `\&`, newline, subshell, substitution, variable or relative folder
+# (CDPATH) that could run a push somewhere else than the folder; every later
+# command a program on PATH (a function, alias or builtin like `noglob cd`,
+# `repeat 1 cd`, `__zoxide_cd` may move the shell) that doesn't move (MOVES)
+LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*[ \t]*&&(?:[^\n\\;&|()<>`$]|&&|\|(?![|&])|\d*>&\d+|[<>]{1,2}(?![&|(]))+")
+MOVES = {"cd", "chdir", "pushd", "popd", "eval", "builtin", "source", "."}
 
 
 def check(call):
@@ -785,10 +816,15 @@ def check(call):
         # agent's cwd resets every call); any other shape is judged here. cd
         # takes `..` after `~` and before symlinks (normpath), as the shell does
         if (commands[:1] and commands[0][1][:1] == ["cd"] and LEADING_CD.fullmatch(command)
+                and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[1:])
                 and (target := resolve(os.path.normpath(os.path.expanduser(commands[0][1][1])), cwd)).is_dir()):
             cwd, commands = str(target), commands[1:]
+        switched = False
         for env, argv in commands:
-            check_argv(env, argv, cwd)
+            check_argv(env, argv, cwd, switched)
+            if Path(argv[0]).name == "git":
+                i, _, _ = git_globals(argv[1:], cwd, env)
+                switched = switched or argv[1 + i:2 + i] in (["switch"], ["checkout"])
     elif tool in {"Edit", "Write"}:
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)

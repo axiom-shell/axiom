@@ -401,11 +401,11 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the settings chunk of the tweaks-minor-complaints branch
 
-### The guard judges a push where the line starts, not where git runs
-- **Where:** `.claude/hooks/guard.py` (`check_git`, `simple`), `tests/scripts/test_guard.py`
-- **What:** `check_git` reads the branch once, in the folder the line starts in (or `git -C`'s), before anything in the line runs, so a push to main gets past it when git runs on another branch or folder than that: `git switch main && git push` (or `git checkout main`) from a feature branch's folder; a wrapper that changes folder (`env -C <main checkout> git push`, `sudo -D`, `systemd-run --working-directory`, whose options `simple` drops); `git --git-dir=…`/`--work-tree=…` or `GIT_DIR=… git push`. Each was allowed by `guard.check` from a folder on a feature branch (2026-11-02). Fix: refuse a bare push (no refspec, or `HEAD`) after a `switch`/`checkout` in the same line, and judge the folder those options and variables name.
-- **Size:** small
-- **Found:** 2026-11-02, while reviewing the guard's leading `cd` (row 20, config-05)
+### The guard misses a push after a rebase or branch rename onto main
+- **Where:** `.claude/hooks/guard.py` (`check`, `check_git`)
+- **What:** only `git switch`/`checkout` earlier in the line make a bare/HEAD push refused; `git rebase <upstream> main` (which ends on main) and `git branch -M main` (which renames the branch checked out) also leave main checked out, so `git rebase <feature> main && git push` or `git branch -M main && git push` from a feature branch's folder lands on main past a PR. Both pass `guard.check` from a folder on a feature branch, on origin/main's guard too (2026-11-06). Fix: count `rebase` with two positionals and `branch -m`/`-M` as switches.
+- **Size:** trivial
+- **Found:** 2026-11-06, while reviewing the guard's push-folder judging (row 20)
 
 ### Opening a hover-closing edge menu by IPC closes it at once
 - **Where:** `qml/services/ui/EdgeMenuManager.qml` (the `edgeMenu` `IpcTarget`'s `open`), `qml/components/surfaces/edgemenu/EdgeMenuSync.qml` (`autoDismiss`)
