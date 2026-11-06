@@ -76,6 +76,7 @@ class Bash(LiveSession, unittest.TestCase):
                  f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
                  f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'inputMethod.push'}",
                  "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 Restart", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 "bluetoothctl remove AA:BB:CC:DD:EE:FF", f"python3 -c {call % 'bluetooth.forget'}",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
                  "axiom ipc lockscreen lock", "qs kill", "gh api repos/o/r", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
@@ -331,6 +332,34 @@ class Bash(LiveSession, unittest.TestCase):
                     "busctl get-property org.freedesktop.timedate1 /org/freedesktop/timedate1 org.freedesktop.timedate1 Timezone",
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.freedesktop.timedate1 / x SetNTP bb false false",
                     "go test ./internal/timedate", "grep -rn passwd backend")
+
+    def test_bluetooth(self):
+        """Real devices and the live adapter change, and agents register
+        with the live BlueZ, only on a scratch bus or a scratch daemon."""
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        for method in guard.BLUETOOTH_RPC_WRITES:
+            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
+            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
+        dev = "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF"
+        self.blocks("bluetoothctl power off", "bluetoothctl remove AA:BB:CC:DD:EE:FF", "bluetoothctl block AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl disconnect AA:BB:CC:DD:EE:FF", "bluetoothctl pair AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl agent on", "bluetoothctl -- default-agent", "rfkill block bluetooth", "rfkill block all",
+                    "busctl call org.bluez /org/bluez/hci0 org.bluez.Adapter1 RemoveDevice o " + dev,
+                    f"busctl call org.bluez {dev} org.bluez.Device1 Disconnect", f"busctl call org.bluez {dev} org.bluez.Device1 Pair",
+                    "busctl set-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered b false",
+                    "busctl call org.bluez /org/bluez org.bluez.AgentManager1 RegisterAgent os /a KeyboardDisplay",
+                    f"dbus-send --system --dest=org.bluez --type=method_call {dev} org.bluez.Device1.Disconnect",
+                    "gdbus call --system -d org.bluez -o /org/bluez/hci0 -m org.freedesktop.DBus.Properties.Set org.bluez.Adapter1 Powered '<false>'",
+                    "axiom ipc bluetooth disable", "axiom ipc bluetooth toggle")
+        self.allows("bluetoothctl", "bluetoothctl show", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl power on", "rfkill list", "rfkill unblock bluetooth",
+                    "busctl tree org.bluez", "busctl introspect org.bluez /org/bluez/hci0",
+                    "busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered",
+                    "busctl call org.bluez / org.freedesktop.DBus.ObjectManager GetManagedObjects",
+                    f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.bluez {dev} org.bluez.Device1 Pair",
+                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus bluetoothctl remove AA:BB:CC:DD:EE:FF",
+                    "axiom ipc bluetooth enable", "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable",
+                    f"python3 -c {call % 'bluetooth.get'}", "go test ./internal/bluez")
 
     def test_default_apps_files(self):
         self.blocks("xdg-mime default firefox.desktop x-scheme-handler/http", "xdg-settings set default-web-browser firefox.desktop",

@@ -551,6 +551,7 @@ def check_argv(env, argv, cwd, guarded):
     # against a scratch system bus (dbus-run-session) or a scratch daemon
     written, removed = touched_paths(name, args, cwd, env)
     check_system_settings(env, name, args, cwd, sends, written + removed)
+    check_bluetooth(env, name, args, sends)
     check_portal(name, args, written + removed, cwd, env)
     # find deletes what matches under its folders, not the folders: refused only inside
     check_guard_paths(*((written + removed, []) if name == "find" else (written, removed)), cwd, env, guarded)
@@ -619,6 +620,36 @@ def check_system_settings(env, name, args, cwd, sends, touched):
         deny("Never, while testing", f"`{name} {args[0]}` changes the user's default apps; only with a scratch XDG_CONFIG_HOME=<dir>.")
     if any(live_default_apps_file(a, cwd, env) for a in touched):
         deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
+
+
+# bluetoothctl's commands that drop or pair a real device, turn the adapter
+# off, or register an agent beside the daemon's
+BLUETOOTHCTL_WRITES = {"remove", "block", "disconnect", "pair", "cancel-pairing", "agent", "default-agent"}
+# BlueZ's methods that do the same over D-Bus
+BLUEZ_WRITES = ("RemoveDevice", "Disconnect", "Pair", "CancelPairing", "RegisterAgent", "RequestDefaultAgent", "UnregisterAgent")
+# The daemon's Bluetooth methods that do the same
+BLUETOOTH_RPC_WRITES = ("bluetooth.forget", "bluetooth.setPowered", "bluetooth.disconnect", "bluetooth.pair", "bluetooth.agentReply")
+
+
+def check_bluetooth(env, name, args, sends):
+    """A real Bluetooth device forgotten, unpaired, blocked or disconnected,
+    the live adapter turned off, or a second agent registered with the live
+    BlueZ: a mouse or keyboard could drop out. Only against a scratch system
+    bus, or a scratch daemon with Bluetooth.pairingAgent off."""
+    if scratch_system_bus(env):
+        return
+    words = [a for a in args if not a.startswith("-")]
+    if name == "bluetoothctl" and (words[:1] and words[0] in BLUETOOTHCTL_WRITES or words[:2] == ["power", "off"]):
+        deny("Never, while testing", f"`bluetoothctl {' '.join(words[:2])}` changes a real Bluetooth device or the live adapter; test with the fake BlueZ (go test ./internal/bluez).")
+    if name == "rfkill" and words[:1] == ["block"]:
+        deny("Never, while testing", "don't rfkill-block the live radios: a Bluetooth mouse or keyboard could drop out.")
+    if name in BUS_CALLERS and any("org.bluez" in a for a in args):
+        powered = any("Powered" in a for a in args) and ("set-property" in args or any(a.endswith("Properties.Set") or a == "Set" for a in args))
+        if powered or any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in BLUEZ_WRITES):
+            deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
+    by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "toggle"]) for i in range(len(words)))
+    if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)) and axiom_live_display(env, args):
+        deny("Never, while testing", "bluetooth.forget / setPowered / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`) only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket) with Bluetooth.pairingAgent off, never the live one.")
 
 
 REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}
