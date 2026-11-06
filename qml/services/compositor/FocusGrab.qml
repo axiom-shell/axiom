@@ -20,14 +20,12 @@ Scope {
   property var windows: []
   property bool active: false
   signal cleared
-  // A click on a screen's backdrop ended it (no native grab): a real
-  // click, never just focus leaving. Sent before `cleared`
-  signal clickedOutside
-  // A real click outside ended it, on any compositor: `clickedOutside`, or
-  // the native grab cleared while this is the newest grab (one native grab
-  // at a time: a newer one starting clears this one, no click, and this
-  // takes it back once it's the newest again), which ends the older grabs
-  // too. Never focus leaving. Sent before `cleared`
+  // A real click outside ended it, on any compositor: a click on a
+  // screen's backdrop or a bar (no native grab), or the native grab
+  // cleared while this is the newest grab (one native grab at a time: a
+  // newer one starting clears this one, no click, and this takes it back
+  // once it's the newest again), which ends the older grabs too. Never
+  // focus leaving. Sent before `cleared`
   signal dismissed
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
@@ -64,8 +62,6 @@ Scope {
         return;
       if (root._native)
         BackdropManager.grabbing(root._uid, false);
-      else
-        root.clickedOutside();
       root.dismissed();
       root.cleared();
     }

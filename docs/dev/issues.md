@@ -189,16 +189,10 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A hot corner can't close what covers it
 - **Where:** `qml/shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
 - **What:** Hot corners sit on the Top layer, so a surface on the `Overlay` layer (axiom's workspace overview, a full-screen overlay page) covers the corner pixel: a toggling action opens it from a corner but can't close it there. niri's own corner toggles its overview; the migrated corner (v82) does that only while `WorkspaceOverlay.compositorOverview` is on. Whether a corner should stay live over Overlay-layer surfaces is the maintainer's call.
+  Not as traced (row 20's autopilot, 2026-11-06): moving the corner to the Overlay layer orders it over those surfaces only on Hyprland (layer rules). On niri and sway the stack follows map order, and the overlay page and workspace overview are outside `LayerSlot` ordering, so they'd still cover a corner mapped before them.
   **Decided** (maintainer, 2026-11-06, on a) corners stay live over Overlay-layer surfaces (never over a fullscreen window), b) keep it; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
-
-### Close on outside click differs on Hyprland since the overlay ignores its grab ending
-- **Where:** `qml/components/hosts/overlay/OverlayPanel.qml` (`grab`, `onClickedOutside`), `qml/services/compositor/FocusGrab.qml` (`clickedOutside`)
-- **What:** With `Overlay.closeOnOutsideClick` on, the overlay now closes on its empty background (`backgroundClicks`) everywhere, and, without a native grab (sway, niri), on a press on any screen's backdrop: another monitor, the screen border (its mask is empty), a floating bar's gap. On Hyprland those clicks only end its native grab, which it no longer closes on (that also fires when a popout's or the dock menu's own grab starts over it, one native grab at a time), so they leave it open, where before this change they closed it on every compositor. The maintainer decided on #211 "only where the blur backing would be": whether those places count (another monitor has no backing; the border covers it; a bar's gap shows it) decides the fix: none on sway and niri dropping `clickedOutside`, or on Hyprland closing on `FocusGrab.dismissed` (a native grab cleared with no newer grab started, as edge and floating popouts do since bar-popouts-02) or a backdrop that takes the click.
-  **Decided** (maintainer, 2026-11-06, on a) every compositor closes only on the overlay's own background, b) close on any outside click everywhere; recommended a)): "rec. click to close requires a click on its own monitor"
-- **Size:** small
-- **Found:** 2026-10-29, while reviewing the overlay and popouts plan's build (row 16)
 
 ### The overlay's gaps can't be adjusted
 - **Where:** `qml/components/methods/GridPlacement.qml` (`cardSpacing`, `baseCard`, `gapOf`), `qml/config/OverlayConfig.qml` (`boxPadding`)
@@ -265,6 +259,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A dropdown in an edge menu card with nothing scrolling gets two rows
 - **Where:** `qml/components/reusable/StyledComboEntry.qml` (`_roomBelow`), `qml/components/content/parts/PomodoroDial.qml`
 - **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum (`_roomBelow` is 0 with no Flickable and `popoutRoom` null), and the card's rows below it are pushed out of view while it's open. Since PomodoroDial became a DialControls (row 20, features-05) the picker is the card's last row and the ring fills what's left, so there the open list shrinks the ring instead; it still gets two rows. Open question: how much room should such a list take (shrink the parts above it, or more rows over them)?
+  Not as traced (row 20's autopilot, 2026-11-06): every edge menu card sits in `EdgeMenuBody`'s Flickable, so `_roomBelow` isn't 0 there; in nested niri the Pomodoro card's list opened inline with a 553 px cap. Which card gets the two-row minimum is still to find.
   **Decided** (maintainer, 2026-11-06, on a) open the list over the card's content (up to the card's height), b) more rows inline, shrinking the parts above, c) keep two rows; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
@@ -420,12 +415,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `axiom edge-menu open <id>` on a menu with `close.onLeave` (the default) shows it for one close delay and closes it, since the pointer isn't in it: the IPC `open` calls `open`, not `reveal`, so it's never `revealing`. `pin` on a closed menu doesn't open it either; only `pin` then `open` keeps it up. A bind or script can't open such a menu.
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
-
-### The window switcher reads a removed screen's name
-- **Where:** `qml/shell/WindowSwitcher.qml` (`claimKey`)
-- **What:** Unplugging a monitor logs `TypeError: Cannot read property 'name' of null` from `@shell/WindowSwitcher.qml[79:-1]` (`claimKey: "switcher:" + screenScope.modelData.name`): the Variants delegate's screen is gone before the delegate is (seen in a nested Hyprland, removing a headless output). Fix: `screenScope.modelData?.name ?? ""`, or read the name once.
-- **Size:** trivial
-- **Found:** 2026-11-05, while keeping the bar across a hotplug (bar-popouts-04)
 
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`

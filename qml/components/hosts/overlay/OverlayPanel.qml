@@ -136,15 +136,9 @@ ReservedAreaWindow {
     // This screen's bars and their popouts stay usable while it's open
     // (every screen's, and the other instances, when it's on all of them)
     windows: group.windows.concat(SurfaceManager.grabPartnersFor(group.everywhere ? null : root.screen), SurfaceManager.modalWindows)
-    // Only a real click closes it (here, on a screen's backdrop, and on
-    // its empty background, backgroundClicks), never the grab ending:
-    // that's also focus leaving, as a polkit prompt closes, or another
-    // surface's grab starting over it (one native grab at a time). Sent
-    // only while it's active: open, and not stepped aside
-    onClickedOutside: {
-      if (OverlayConfig.closeOnOutsideClick)
-        root.close();
-    }
+    // Nothing closes it as its grab ends (that's also focus leaving, as a
+    // polkit prompt closes, or another surface's grab starting over it):
+    // only a click on its own empty background (backgroundClicks)
   }
 
   // Where the compositor blurs only what a window asks: the page's box and
