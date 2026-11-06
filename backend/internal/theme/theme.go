@@ -1,9 +1,9 @@
 // Package theme generates the themes made from a wallpaper
 // (ThemeManager's generateThemesFromWallpaper): it decodes the image
-// (PNG, JPEG or BMP, the wallpapers axiom lists, or a WebP or GIF set by
-// path), has package palette build every style's pair, and writes them to
-// the generated themes' folder, each file atomically, so the shell's watch
-// never reads half a theme.
+// (PNG, JPEG, BMP or WebP of the wallpapers axiom lists, not its AVIF or
+// JPEG XL, or a GIF set by path), has package palette build every style's
+// pair, and writes them to the generated themes' folder, each file
+// atomically, so the shell's watch never reads half a theme.
 package theme
 
 import (
