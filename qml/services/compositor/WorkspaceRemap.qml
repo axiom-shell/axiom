@@ -73,7 +73,8 @@ QtObject {
     // A block order change with the same outputs connected (a profile
     // naming a new monitor, a new primary): remap. A hotplug never remaps
     // (an unnamed output's block can shift then, as it always has): just
-    // record the bases (a pending remap's too, so it doesn't move them)
+    // record the bases (a pending remap's too, so it doesn't move them),
+    // at the size last applied, which a pending size change remaps from
     function on_BasesChanged() {
       const applied = root._applied;
       if (!applied)
@@ -85,7 +86,10 @@ QtObject {
         root._timer.restart();
       else
         root._applied = Object.assign({}, applied, {
-          "bases": bases
+          "bases": names.reduce((all, name) => {
+            all[name] = (bases[name] - 1) / root.manager.blockSize * applied.size + 1;
+            return all;
+          }, {})
         });
     }
   }
