@@ -193,6 +193,8 @@ def simple(tokens, exported):
                 name, value = ASSIGN.match(argv[0]).groups()
                 env[name] = value
             opt, _, value = argv[0].partition("=")
+            if opt[:2] in CHDIR.get(wrapper, ()) and len(opt) > 2:
+                opt, value = opt[:2], opt[2:]  # `env -C/dir`
             if opt in CHDIR.get(wrapper, ()):
                 folders.append(value or (argv[1:] or [""])[0])
             argv = argv[2:] if argv[0] in WRAPPERS[wrapper] else argv[1:]
@@ -403,7 +405,7 @@ PROTECTED_BRANCHES = {"main", "master"}
 def current_branch(cwd, repo=(), env=None):
     """The branch git finds checked out from cwd, with the `--git-dir=…`/`--work-tree=…`
     options and GIT_* variables of the command"""
-    env = {**os.environ, **{k: v for k, v in (env or {}).items() if k.startswith("GIT_")}}
+    env = {**os.environ, **{k: os.path.expanduser(v) for k, v in (env or {}).items() if k.startswith("GIT_")}}
     out = subprocess.run(["git", "-C", cwd, *repo, "symbolic-ref", "--quiet", "--short", "HEAD"],
                          capture_output=True, text=True, env=env)
     return out.stdout.strip()
@@ -445,7 +447,7 @@ def check_git(args, cwd, env, switched):
             deny(rule, "don't force-push or delete a remote branch.")
         if spec.split(":", 1)[-1].removeprefix("refs/heads/") in PROTECTED_BRANCHES:
             deny(rule, "don't push to main; open a PR from a branch.")
-    if not refspecs or "HEAD" in (spec.split(":", 1)[-1] for spec in refspecs):
+    if not refspecs or {"HEAD", "@"} & {spec.split(":", 1)[-1] for spec in refspecs}:
         if switched:
             deny(rule, "a `git switch`/`checkout` earlier in the line may leave main checked out: name the branch you push.")
         if current_branch(cwd, repo, env) in PROTECTED_BRANCHES:
@@ -799,7 +801,7 @@ def check_generated_edit(tool_input):
 # (CDPATH) that could run a push somewhere else than the folder; nor a later
 # command that moves (MOVES)
 LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*[ \t]*&&(?:[^\n\\;&|()<>`$]|&&|\|(?![|&])|\d*>&\d+|[<>]{1,2}(?![&|(]))+")
-MOVES = {"cd", "pushd", "popd", "eval", "builtin", "source", "."}
+MOVES = {"cd", "chdir", "pushd", "popd", "eval", "builtin", "source", "."}
 
 
 def check(call):

@@ -145,6 +145,7 @@ class Bash(LiveSession, unittest.TestCase):
                             f"cd {tree} && bash -c 'cd {REPO}; git push'",
                             # a command that moves after the cd, or a `\&` or lone `&` that backgrounds it
                             f"cd {tree} && eval 'cd {REPO}' && git push", f"cd {tree} && builtin cd {REPO} && git push",
+                            f"cd {tree} && chdir {REPO} && git push",
                             f"cd {tree} && env -C {REPO} git push", f"cd {tree} && git status \\&& git push",
                             f"cd {tree} && true | cd {REPO} && git push", f"cd {tree} && true & git push",
                             f"cd {tree} && true || git push")
@@ -154,14 +155,15 @@ class Bash(LiveSession, unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ):
             for k in [k for k in os.environ if k.startswith("GIT_")]:
                 del os.environ[k]  # a pre-commit hook's GIT_DIR would point every git here at this repo
+            os.environ["HOME"] = tmp  # `GIT_DIR=~/main/.git`: the shell expands the ~
             main, feature = f"{tmp}/main", f"{tmp}/feature"
             for folder, branch in ((main, "main"), (feature, "roadmap/1-x")):
                 guard.subprocess.run(["git", "init", "-q", "-b", branch, folder], check=True)
             for command in ("git switch main && git push", "git checkout main && git push origin HEAD",
                             f"git -C {main} switch main && git push -u origin HEAD", f"env -C {main} git push",
-                            f"env --chdir={main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
+                            f"env --chdir={main} git push", f"env -C{main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
                             f"systemd-run --user --working-directory={main} git push", f"git --git-dir={main}/.git push",
-                            f"GIT_DIR={main}/.git git push", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
+                            f"GIT_DIR={main}/.git git push", "GIT_DIR=~/main/.git git push", f"git -C {main} push origin @", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
                             f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && gh pr create --fill"):
                 self.assertTrue(denied(command, feature), command)
             # git reads the branch from the repository, not the work tree
