@@ -137,12 +137,12 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
 - **`DayAgenda`:** a day's rows under its date, a + to add, and empty / no-calendar states.
 - **`EventEditor`:**
   - Its fields, save and delete are its `session`'s (an `EventDraft`, `qml/services/apps/EventDraft.qml`: its own, or the page's).
-  - `open(draft)` takes a `CalendarEvents.newDraft` / `draftOf`. An owner can instead open its session and build the editor only while it's `active` (Agenda's Loader); one built for a new event takes the keyboard.
+  - Its owner opens its session (`open(draft)` takes a `CalendarEvents.newDraft` / `draftOf`) and builds it only while that's `active` (Agenda's and DayPane's Loaders). Each opening, or a build for one already open, starts it at the top, and a new event takes the keyboard.
   - Deleting asks in place of its buttons: This event / All events for a recurring event, a confirm otherwise. Saving a recurring event asks the same.
   - `actionsWidth` is how wide its buttons need it. The Calendar popout widens to it (through `DayPane.actionsWidth`), so a long translation isn't clipped.
   - It is read-only for a calendar axiom can't change.
 - **`DateTimeField`:** a date button that folds a `MonthGrid` open, plus a typed time.
-- **`DayPane`:** the agenda turning into the editor (`editing`, its `session`'s `active`). Its editor stays built, so the Calendar popout's `growth` can make room before it opens. ClockCalendar builds its `DayPane` only with `showEvents` (never on the greeter), and each of its two inline agendas only where it shows.
+- **`DayPane`:** the agenda turning into the editor (`editing`, its `session`'s `active`). Its editor is built only while editing, or while `reservesRoom` (the Calendar popout, whose `maxImplicitHeight` reads `growth` to make room before it opens). ClockCalendar builds its `DayPane` only with `showEvents` (never on the greeter), and each of its two inline agendas only where it shows.
 
 Drafts, and everything about days, spans, dots, what's next, reminders due and quick add, are pure, in `methods/CalendarEvents` (tested in `tst_CalendarEvents`).
 

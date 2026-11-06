@@ -10,7 +10,8 @@ import qs.components.methods
 // `editing` is true while the editor is up (a popout then takes the
 // keyboard). `readOnly` (the lock screen) never opens the editor. The
 // event being edited is `session`'s: its own, or one a page keeps past
-// it (CalendarManager.page.draft).
+// it (CalendarManager.page.draft). The editor is built only while editing,
+// or while a host reads `growth` (`reservesRoom`).
 Item {
   id: root
 
@@ -19,6 +20,9 @@ Item {
   property real maxListHeight: Number.POSITIVE_INFINITY
   property bool readOnly: false
   property EventDraft session: EventDraft {}
+  // A host reads `growth` (the Calendar popout), so the editor stays built
+  // to be measured
+  property bool reservesRoom: false
   readonly property bool editing: root.session.active
 
   signal closed
@@ -30,18 +34,18 @@ Item {
   // (Panel.maxImplicitHeight)
   readonly property real growth: root.visible ? Math.max(0, editor.implicitHeight - root.height, agenda.implicitHeight - root.height) : 0
   // How wide the editor's buttons need it (EventEditor.actionsWidth)
-  readonly property real actionsWidth: root.editing ? editor.actionsWidth : 0
+  readonly property real actionsWidth: root.editing ? (editor.item as EventEditor)?.actionsWidth ?? 0 : 0
 
   function newEvent() {
     if (root.readOnly || !CalendarManager.newEventCalendar)
       return;
-    editor.open(CalendarEvents.newDraft(root.dayKey, Date.now(), CalendarManager.newEventCalendar, CalendarConfig.defaultDuration, CalendarConfig.defaultReminder));
+    root.session.open(CalendarEvents.newDraft(root.dayKey, Date.now(), CalendarManager.newEventCalendar, CalendarConfig.defaultDuration, CalendarConfig.defaultReminder));
   }
 
   function edit(event) {
     if (root.readOnly)
       return;
-    editor.open(CalendarEvents.draftOf(event));
+    root.session.open(CalendarEvents.draftOf(event));
   }
 
   // Back to the day (a new day shown drops an edit)
@@ -67,10 +71,13 @@ Item {
     onClosed: root.closed()
   }
 
-  EventEditor {
+  Loader {
     id: editor
     anchors.fill: parent
+    active: root.editing || root.reservesRoom
     visible: root.editing
-    session: root.session
+    sourceComponent: EventEditor {
+      session: root.session
+    }
   }
 }

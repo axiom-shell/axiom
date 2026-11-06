@@ -6,7 +6,7 @@ import qs.services.apps
 import qs.components.reusable
 
 // Editing an event, held by an EventDraft (`session`: its own, or one a
-// page keeps past it): open(draft) loads a CalendarEvents draft (newDraft
+// page keeps past it): its open(draft) loads a CalendarEvents draft (newDraft
 // or draftOf), Save and Delete go through CalendarManager, and `finished`
 // fires once it's done or cancelled. A recurring event asks whether a
 // change is for this one or all of them. An event in a calendar axiom
@@ -23,22 +23,24 @@ ColumnLayout {
 
   spacing: Widget.spacing
 
-  function open(draft) {
-    root.session.open(draft);
+  // An event opening (or already open when built, by a Loader) starts at
+  // the top, and a new one takes the keyboard
+  function _opened() {
     fields.contentY = 0;
     if (root.session.isNew)
       Qt.callLater(() => titleEntry.input.forceActiveFocus());
   }
-
-  // Built for an event already open (a Loader's): a new one takes the
-  // keyboard as open() gives it
   Component.onCompleted: {
-    if (root.session.active && root.session.isNew)
-      Qt.callLater(() => titleEntry.input.forceActiveFocus());
+    if (root.session.active)
+      root._opened();
   }
 
   Connections {
     target: root.session
+    function onActiveChanged() {
+      if (root.session.active)
+        root._opened();
+    }
     function onFinished() {
       root.finished();
     }

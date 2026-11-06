@@ -471,7 +471,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - The Cheatsheet's keyboard view is cut off below about 530 px, with no scroll and no small layout
   - NowPlaying builds its strip layout and a second transport hidden in every mode
 - **overlay-modules-04** (2, done): Split by file group at the gate: the images entry and seven of the ten parts landed with overlay-modules-03, AudioMixer and WorldClocks after. DayPane's editor is left as its own entry: the Calendar popout's `growth` reads its height before it opens, and that height can't be stated without building it.
-  - [DayPane builds its EventEditor before it opens](../issues.md#daypane-builds-its-eventeditor-before-it-opens)
+  - DayPane builds its EventEditor before it opens
   - Images decoded at full size or more than once
 - **overlay-modules-05** (4, done): The drafts list went in before the Save gate, which made the gate one filter.
   - Reopening the overlay while it closes leaves it open but hidden
