@@ -7,7 +7,10 @@ import qs.services.apps
 import qs.components.reusable
 
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
-ColumnLayout {
+// A typed value: the box under its label, or with `beside` (a short
+// value, a number) beside it on a wide form (Widget.fieldInlineFrom), as
+// a dropdown is
+GridLayout {
   id: root
   required property string label
   required property string currentConfigValue
@@ -26,6 +29,9 @@ ColumnLayout {
   // "folder": a Browse button beside the field opens the desktop's folder
   // picker (`x-control: "folder"`); the folder picked commits at once
   property string browse: ""
+  // Beside the label on a wide form (a short value: a number)
+  property bool beside: false
+  readonly property bool inline: root.beside && root.label !== "" && root.width >= Widget.fieldInlineFrom
 
   // What was typed, once it matches `pattern`: on Enter (Ctrl+Enter in a
   // multiline field), as the field loses focus or is torn down. A picked
@@ -111,16 +117,23 @@ ColumnLayout {
   }
 
   Layout.fillWidth: true
-  spacing: Widget.spacing
+  columns: root.inline ? 2 : 1
+  rowSpacing: Widget.spacing
+  columnSpacing: Widget.spacing * 2
 
   FieldHeader {
     label: root.label
     description: root.description
     trailing: root.headerExtra
+    Layout.fillWidth: true
+    // Centred on the box beside it
+    Layout.alignment: Qt.AlignVCenter
   }
 
   RowLayout {
-    Layout.fillWidth: true
+    Layout.fillWidth: !root.inline
+    Layout.preferredWidth: root.inline ? Widget.fieldControlWidth(root.width) : -1
+    Layout.alignment: Qt.AlignVCenter
     spacing: Widget.spacing / 2
 
     StyledTextArea {
@@ -171,6 +184,7 @@ ColumnLayout {
   Flow {
     visible: !root.multiline && root.suggestions.length > 0
     Layout.fillWidth: true
+    Layout.columnSpan: root.columns
     spacing: Widget.spacing / 2
 
     Repeater {
@@ -206,5 +220,6 @@ ColumnLayout {
     textSize: Appearance.fontSizeBy(-2)
     wrapMode: Text.WordWrap
     Layout.fillWidth: true
+    Layout.columnSpan: root.columns
   }
 }

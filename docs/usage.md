@@ -82,6 +82,7 @@ axiom ipc <target> <function> [args]
 | `todo` | `add <text>`, `toggle <text>`, `list`, `count`, `clearCompleted` |
 | `customWidgets` | `refresh <name>` (a custom widget's refresh name, id or name: its script runs again now), `list` |
 | `pomodoro` | `start`, `pause`, `toggle`, `skip`, `stop`, `reset`, `status` |
+| `markets` | `refresh` (fetches every watched price now), `status` (a line per symbol: name, price, currency, today's change; the portfolio last). Editing the watchlist and holdings: `axiom markets` (below) |
 | `stopwatch` | `timer <duration [label]>`, `toggleTimer`, `resetTimer`, `toggle`, `lap`, `reset`, `status` |
 | `audio` | `volumeUp`, `volumeDown`, `toggleMute`, `toggleMicMute`, `nextOutput` (the next audio output) |
 | `microphone` | `enable` (unmuted), `disable` (muted), `toggle`, `status` (whether it's on) |
@@ -107,6 +108,26 @@ Mod+Space hotkey-overlay-title="Axiom: App launcher" { spawn-sh "axiom ipc appLa
 ```
 # sway config
 bindsym $mod+space exec axiom ipc appLauncher toggle
+```
+
+## Markets from the command line
+
+`axiom markets` reads and edits the Markets watchlist, so a script can keep a holding up to date (after a buy, a recurring purchase, a sale) without opening the settings. A symbol is named by its id, symbol or label; edits go through the running axiom (or the file with `--offline`), and `--json` prints any of them as JSON.
+
+| Command | What it does |
+| --- | --- |
+| `axiom markets list` | The watchlist with prices, holdings, their value and alerts (`--no-prices` without asking for prices) |
+| `axiom markets hold <symbol> <amount> [--cost <price>]` | Sets the holding (`12`), or adds to it (`+2`) or takes from it (`-0.5`); `--cost` the average price paid |
+| `axiom markets add <symbol> [--coingecko] [--label <text>] [--hold <amount>]` | Watches a Yahoo Finance symbol (`AAPL`, `^GSPC`, `BTC-USD`, `EURUSD=X`) or a CoinGecko coin id |
+| `axiom markets remove <symbol>` | Stops watching it |
+| `axiom markets alert <symbol> [--above <price>] [--below <price>] [--clear]` | Sets or clears its price alerts |
+| `axiom markets move <symbol> <position>` | Moves it in the watchlist (1 is first) |
+| `axiom markets search <text>` | Finds symbols, with the command adding each |
+| `axiom markets refresh` | Fetches every watched price now |
+
+```bash
+# a weekly buy of 0.01 BTC, kept in the portfolio
+axiom markets hold BTC-USD +0.01
 ```
 
 ## Launcher

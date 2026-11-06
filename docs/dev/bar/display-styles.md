@@ -52,6 +52,7 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 | NextEvent | how far through an event under way | the title under when |
 | Network | the Wi-Fi signal; sparkline the download speed (SystemManager's `net` history, acquired only then) | the address under the name |
 | Bluetooth | a lone device's battery | its battery under its name |
+| Markets | none; sparkline the shown symbol's day (its own `graphMin`/`graphMax`), ticker scrolls every symbol | the price and change under the name |
 | Weather, Updates, Tailscale | none (label, icon, stacked) | the condition / the AUR's share / this machine's address |
 
 Widgets with no value, time or long text (Workspaces, tray, Separator, Notifications, Todo, KeyboardLayout, Privacy, ScreenRecord, DevMode, Time, Button) have no `appearance`.

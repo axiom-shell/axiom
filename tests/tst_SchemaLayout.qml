@@ -61,10 +61,13 @@ TestCase {
           "items": {
             "type": "string"
           }
+        },
+        "amount": {
+          "type": "number"
         }
       }
     }, ["S"]);
-    compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags"]);
+    compare(rows.map(r => r.kind + ":" + r.path.join(".")), ["field:S.a", "group:S.group", "field:S.group.b", "array:S.list", "field:S.tags", "field:S.amount"]);
   }
 
   // A nested object's rows go in its `x-order`; one marked `x-fold` folds

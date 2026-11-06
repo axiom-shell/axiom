@@ -421,6 +421,8 @@ QtObject {
       return ["", ...EdgeMenusConfig.menus.map(menu => menu.id)];
     case "customWidgets":
       return CustomWidgetsConfig.items.map(item => item.id);
+    case "marketSymbols":
+      return MarketsConfig.symbols.map(item => item.id);
     case "overlayPages":
       return ["", ...OverlayConfig.views.map(view => OverlayConfig.pageKey(view)).filter(key => key !== "")];
     case "notes":

@@ -131,3 +131,28 @@ func TestVersion(t *testing.T) {
 		t.Errorf("exit %d out %q", code, out)
 	}
 }
+
+// A negative number is a positional, unless it's the value of the flag
+// before it; a bool flag takes no value.
+func TestParseInterleavedNegativeNumbers(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		args []string
+		want string
+		by   string
+	}{
+		{[]string{"TSLA", "-2"}, "TSLA -2", ""},
+		{[]string{"TSLA", "-0.5", "--by", "x"}, "TSLA -0.5", "x"},
+		{[]string{"--by", "-3", "TSLA"}, "TSLA", "-3"},
+		{[]string{"--quiet", "-3"}, "-3", ""},
+		{[]string{"--", "-x"}, "-x", ""},
+	} {
+		fs := flag.NewFlagSet("t", flag.ContinueOnError)
+		by := fs.String("by", "", "")
+		fs.Bool("quiet", false, "")
+		got, err := parseInterleaved(fs, tc.args)
+		if err != nil || strings.Join(got, " ") != tc.want || *by != tc.by {
+			t.Errorf("%v: %v %v by %q, want %q by %q", tc.args, got, err, *by, tc.want, tc.by)
+		}
+	}
+}

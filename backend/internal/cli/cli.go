@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -170,7 +171,9 @@ func parseGlobalsOnly(args []string, e *Env) ([]string, error) {
 
 // parseInterleaved parses flags wherever they appear among the positional
 // arguments (`config get Bars --json`). Everything after the first "--" is
-// positional, so a value starting with "-" can still be passed.
+// positional, so a value starting with "-" can still be passed; so is a
+// negative number (`markets hold TSLA -2`), unless it's the value of the
+// flag before it.
 func parseInterleaved(fs *flag.FlagSet, args []string) ([]string, error) {
 	var tail []string
 	for i, a := range args {
@@ -181,16 +184,49 @@ func parseInterleaved(fs *flag.FlagSet, args []string) ([]string, error) {
 	}
 	var positional []string
 	for {
-		if err := fs.Parse(args); err != nil {
+		cut := negativeNumberAt(fs, args)
+		if err := fs.Parse(args[:cut]); err != nil {
 			return nil, err
 		}
-		args = fs.Args()
+		args = append(fs.Args(), args[cut:]...)
 		if len(args) == 0 {
 			return append(positional, tail...), nil
 		}
 		positional = append(positional, args[0])
 		args = args[1:]
 	}
+}
+
+// negativeNumberAt is where the first negative number in args that isn't
+// a flag's value is (len(args) for none).
+func negativeNumberAt(fs *flag.FlagSet, args []string) int {
+	for i, a := range args {
+		if len(a) < 2 || a[0] != '-' {
+			continue
+		}
+		if _, err := strconv.ParseFloat(a, 64); err != nil {
+			continue
+		}
+		if i > 0 && takesValue(fs, args[i-1]) {
+			continue
+		}
+		return i
+	}
+	return len(args)
+}
+
+// takesValue: whether arg is a flag whose value is the next argument.
+func takesValue(fs *flag.FlagSet, arg string) bool {
+	name := strings.TrimLeft(arg, "-")
+	if !strings.HasPrefix(arg, "-") || name == "" || strings.Contains(name, "=") {
+		return false
+	}
+	f := fs.Lookup(name)
+	if f == nil {
+		return false
+	}
+	b, ok := f.Value.(interface{ IsBoolFlag() bool })
+	return !ok || !b.IsBoolFlag()
 }
 
 // usageError is a bad-request error naming the command to get help on.
