@@ -195,6 +195,9 @@ var all = []Step{
 	// menu (one fixed hover strip, its surface's length), and an edge
 	// menu's `padding` (v98.go)
 	{Version: 98, Run: v98},
+	// v99: the toasts' `gap` and a per-app rule's `timeout` store
+	// Automatic as null, no longer -1 (v99.go)
+	{Version: 99, Run: v99},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

@@ -328,7 +328,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Notes:**
 
 **Config (a format-2 migration):**
-- [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 
 #### The launch gate
 Posting for testers waits for all of these:
