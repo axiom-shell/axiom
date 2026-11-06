@@ -124,7 +124,7 @@ class Bash(LiveSession, unittest.TestCase):
         # A leading `cd` is followed: the branch is read in the folder it enters
         with tempfile.TemporaryDirectory() as tree:
             # git reads no branch in a folder that doesn't exist
-            branch = lambda cwd: "roadmap/1-x" if Path(cwd) == Path(tree).resolve() else "main" if Path(cwd).is_dir() else ""
+            branch = lambda cwd, *_: "roadmap/1-x" if Path(cwd) == Path(tree).resolve() else "main" if Path(cwd).is_dir() else ""
             with mock.patch.object(guard, "current_branch", side_effect=branch):
                 self.allows(f"cd {tree} && git push -u origin HEAD")
                 self.blocks("git push -u origin HEAD", f"cd {tree} && cd {REPO} && git push")
@@ -143,9 +143,33 @@ class Bash(LiveSession, unittest.TestCase):
                             f"cd {tree}/none && true; git push", f"cd '{tree}/none&&'; git push",
                             f"cd {tree} && cd {REPO}; git push", f"cd {tree} && pushd {REPO}; git push",
                             f"cd {tree} && bash -c 'cd {REPO}; git push'",
-                            # anything but git after the cd, or a `\&` that backgrounds the cd
+                            # a command that moves after the cd, or a `\&` or lone `&` that backgrounds it
                             f"cd {tree} && eval 'cd {REPO}' && git push", f"cd {tree} && builtin cd {REPO} && git push",
-                            f"cd {tree} && env -C {REPO} git push", f"cd {tree} && git status \\&& git push")
+                            f"cd {tree} && env -C {REPO} git push", f"cd {tree} && git status \\&& git push",
+                            f"cd {tree} && true | cd {REPO} && git push", f"cd {tree} && true & git push",
+                            f"cd {tree} && true || git push")
+
+    def test_git_push_where_git_runs(self):
+        """The branch is read where git runs: after a switch, in a wrapper's folder, by --git-dir or GIT_DIR"""
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ):
+            for k in [k for k in os.environ if k.startswith("GIT_")]:
+                del os.environ[k]  # a pre-commit hook's GIT_DIR would point every git here at this repo
+            main, feature = f"{tmp}/main", f"{tmp}/feature"
+            for folder, branch in ((main, "main"), (feature, "roadmap/1-x")):
+                guard.subprocess.run(["git", "init", "-q", "-b", branch, folder], check=True)
+            for command in ("git switch main && git push", "git checkout main && git push origin HEAD",
+                            f"git -C {main} switch main && git push -u origin HEAD", f"env -C {main} git push",
+                            f"env --chdir={main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
+                            f"systemd-run --user --working-directory={main} git push", f"git --git-dir={main}/.git push",
+                            f"GIT_DIR={main}/.git git push", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
+                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && gh pr create --fill"):
+                self.assertTrue(denied(command, feature), command)
+            # git reads the branch from the repository, not the work tree
+            for command in ("git push", "git switch main && git push origin roadmap/1-x", f"git --work-tree={main} push",
+                            f"env -C {feature} git push -u origin HEAD"):
+                self.assertFalse(denied(command, feature), command)
+            # A leading cd into a folder on a branch, from one on main, with a pipe, redirections and other commands
+            self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && gh pr create --fill", main))
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
