@@ -10,7 +10,8 @@ import qs.components.reusable
 // focus layout): the price and the change over `range` in its trend's
 // colour, a large chart with a crosshair, the range picker (1D to 1Y, when
 // `pickRange`) and the day's figures. The day is the live quote; longer
-// ranges are fetched once each through MarketsManager.history.
+// ranges through MarketsManager.history each time one is picked (axiom's
+// cache answers a repeat).
 ColumnLayout {
   id: root
 

@@ -19,11 +19,11 @@ Stock, ETF, index, currency and crypto prices for the bar widget, its popout and
 ### Search and history
 - `markets.search {query}`: Yahoo's search (8 matches) and CoinGecko's (4 coins) at once, `{matches, error}`; one failing still answers the other's. The watchlist card's search box asks it 350 ms after typing stops.
 - `markets.quotes` (a `Request`): the state for it at once, from the topic's cache (`axiom markets list`).
-- `markets.history {symbol, source, range, baseCurrency}` (range 1d, 5d, 1mo, 6mo, 1y): the chart over a range, `{points, reference, high, low, currency, start, end}`, the reference the previous close for a day, else the range's first price. Cached per request (2 minutes for a day up to 6 hours for a year). `QuoteDetail` asks for each range once while it's shown; the day is the live quote.
+- `markets.history {symbol, source, range, baseCurrency}` (range 1d, 5d, 1mo, 6mo, 1y): the chart over a range, `{points, reference, high, low, currency, start, end}`, the reference the previous close for a day, else the range's first price. Cached per request (2 minutes for a day up to 6 hours for a year). `QuoteDetail` asks for a range each time it's picked (the cache answers a repeat); the day is the live quote.
 - Both share the topic's per-host backoff (one `Markets`), not its lock.
 
 ### Alerts
-- Each watchlist item may set `alertAbove` and `alertBelow` (0: none). After each state, `MarketsManager` compares each fresh price with the one it saw before (`MarketMath.crossed`) and sends one notification per crossing (`axiom-markets`). A price first seen crosses nothing, so a reload or restart never repeats one; crossing back re-arms it. Stale prices are skipped.
+- Each watchlist item may set `alertAbove` and `alertBelow` (0: none). After each state, `MarketsManager` compares each fresh price with the one it saw before (`MarketMath.crossed`) and sends one notification per crossing (`axiom-markets`). A price first seen crosses nothing (also after alerts were off, or in another currency: a coin after `baseCurrency` changed), so a reload or restart never repeats one; crossing back re-arms it. Stale prices are skipped.
 
 ### Surfaces
 - **Bar widget** (`Markets`, group Tools, `ValueStyleWidget`): its `symbols` (ids from the watchlist through `x-options: marketSymbols` chips; none is all), `value` (price and change, price, change in %, change), `colorize` (the change in the trend's colour as StyledText, and the text colour for `colorText`), `showPortfolio` (the holdings' total first).

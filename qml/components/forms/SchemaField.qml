@@ -247,8 +247,9 @@ Loader {
       return readonlyField;
     switch (fieldSchema.type) {
     case "array":
-      // Strings only: from a fixed set (chips), or free text
-      return fieldSchema.items?.enum || fieldSchema.items?.["x-options"] ? chipsField : stringListField;
+      // Strings only: from a fixed set (chips), or free text (a monitor
+      // list too: its names may be of monitors not plugged in)
+      return fieldSchema.items?.enum || fieldSchema.items?.["x-options"] === "marketSymbols" ? chipsField : stringListField;
     case "boolean":
       return switchField;
     case "integer":
@@ -506,7 +507,7 @@ Loader {
     }
   }
 
-  // An array of strings from `items.enum` (or an `items.x-options` list):
+  // An array of strings from `items.enum` (or the `marketSymbols` list):
   // one toggle chip per option (with its `x-enumIcons` icon), committed in
   // the options' order. `x-enumFrom` offers only the options a sibling
   // array holds

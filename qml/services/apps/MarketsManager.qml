@@ -120,21 +120,24 @@ QtObject {
       BackendManager.release("markets");
   }
 
-  // The last price seen per key, for alerts: a price first seen crosses
-  // nothing, so a reload never repeats one
+  // The last price seen per key and currency, for alerts: a price first
+  // seen crosses nothing, so a reload, alerts turned back on or a coin
+  // priced in another base currency never fires one
   property var _lastPrices: ({})
 
   function _onState(state) {
     root._state = state;
-    if (!root._alertsWanted)
+    if (!root._alertsWanted) {
+      root._lastPrices = {};
       return;
+    }
     const last = root._lastPrices;
     const next = {};
     for (const item of MarketsConfig.symbols) {
-      const key = MarketMath.key(item);
-      const quote = state?.quotes?.[key];
+      const quote = state?.quotes?.[MarketMath.key(item)];
       if (!quote || quote.error || quote.stale)
         continue;
+      const key = MarketMath.key(item) + " " + quote.currency;
       next[key] = quote.price;
       const crossed = MarketMath.crossed(last[key], quote.price, item.alertAbove, item.alertBelow);
       if (crossed)

@@ -27,7 +27,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Found:** 2026-11-06, while reviewing the Markets branch
 
 ### "Colour the text by state" does nothing on a bar whose widgets have no fill
-- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`)
+- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`); the same test in `qml/components/bar/widgets/Markets/Markets.qml` (`rich`: the change coloured inline, so on an unfilled bar it isn't, and on a tinted one it is)
 - **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
 - **Size:** trivial
 - **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
