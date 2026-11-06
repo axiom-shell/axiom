@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -165,7 +164,6 @@ func runFallback(ctx context.Context, e *Env, name string, args []string, out *s
 		cmd.Stdout = out
 	}
 	cmd.Stderr = e.Stderr
-	cmd.Env = os.Environ()
 	err := cmd.Run()
 	var exit *exec.ExitError
 	if errors.As(err, &exit) {
