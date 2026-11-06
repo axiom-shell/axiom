@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Bluetooth
 
 import qs.services.system
 import qs.services.ui
@@ -53,6 +52,9 @@ Panel {
     id: row
     required property int index
     readonly property var device: root.shownDevices[index] ?? null
+    // Each state push makes the device anew: the row is another device
+    // only when its address changes
+    readonly property string address: device?.address ?? ""
 
     rowHeight: list.rowHeight
     icon: BluetoothManager.deviceIcon(row.device)
@@ -60,9 +62,9 @@ Panel {
     status: BluetoothManager.deviceStatus(row.device)
     connected: row.device?.connected ?? false
     known: (row.device?.paired || row.device?.bonded) ?? false
-    busy: row.device !== null && (row.device.pairing || row.device.state === BluetoothDeviceState.Connecting || row.device.state === BluetoothDeviceState.Disconnecting)
+    busy: BluetoothManager.busy(row.device)
     connectTip: I18n.tr(row.known ? "Connect" : "Pair and connect")
-    onDeviceChanged: row.reset()
+    onAddressChanged: row.reset()
     onActivated: BluetoothManager.toggleDevice(row.device)
     onConnectClicked: BluetoothManager.toggleDevice(row.device)
     onForgetConfirmed: BluetoothManager.forget(row.device)

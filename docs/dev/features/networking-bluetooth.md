@@ -1,10 +1,10 @@
 # Networking and Bluetooth
 
-> **Files:** `qml/services/system/NetworkingManager.qml`, `qml/services/system/BluetoothManager.qml`, `backend/internal/nmnet/`, `backend/internal/daemon/net.go`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `qml/components/content/parts/WifiJoinForm.qml`, `qml/components/content/parts/ConnectionDetails.qml`
+> **Files:** `qml/services/system/NetworkingManager.qml`, `qml/services/system/BluetoothManager.qml`, `backend/internal/nmnet/`, `backend/internal/daemon/net.go`, `backend/internal/bluez/`, `backend/internal/daemon/bluetooth.go`, `qml/components/content/BluetoothDevices/BluetoothDevices.qml`, `qml/components/content/WifiNetworks/WifiNetworks.qml`, `qml/components/content/parts/WifiJoinForm.qml`, `qml/components/content/parts/ConnectionDetails.qml`
 > **Config:** `Apps.networkEditor` (the Wi-Fi menu's Settings button)
 > **Related:** [Services pattern](../core/services-pattern.md), [VPN](vpn.md)
 
-Wi-Fi, wired and Bluetooth state, built on Quickshell's D-Bus modules. Throughput is not here: it stays in SystemManager. VPNs are VpnManager's ([VPN](vpn.md)).
+Wi-Fi and wired state, built on Quickshell's Networking module, and Bluetooth, which axiom's daemon follows (`bluez`). Throughput is not here: it stays in SystemManager. VPNs are VpnManager's ([VPN](vpn.md)).
 
 ### NetworkingManager
 - Wi-Fi over `Quickshell.Networking`: NetworkManager over D-Bus, event-driven. Nothing runs `nmcli`. What Quickshell doesn't show goes through axiom's `nmnet` (below).
@@ -42,7 +42,19 @@ What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the s
 - **Room:** the window never grows while shown: `maxImplicitHeight` keeps, beside the list's growth, each folding part's most less what it shows now (details, the VPN rows, the hidden form). Focus lost to the file picker (a CA certificate) doesn't cancel the form.
 
 ### BluetoothManager
-- Over `Quickshell.Bluetooth`: adapter power, scanning, sorted device lists, and connect / pair / forget.
-- **Discovery:** runs while something holds `acquireDiscovery(owner)` (a BluetoothDevices menu on its Discover tab) and the adapter is on, so two menus share one scan. Only a scan started here is stopped, never another app's.
-- IPC `bluetooth enable|disable|toggle` (the `bluetooth` keybind action), the adapter's power. In `_services` too.
-- Not named `Bluetooth`: that would shadow Quickshell's singleton, and the name is also taken by the `Bluetooth` bar widget file.
+- Reads axiom's `bluetooth` topic (below), as DrivesManager reads `drives`: `bluetooth.get` after each hello, then every `bluetooth.state`. Nothing imports `Quickshell.Bluetooth` (`check_structure`): a pair, a connect and (later) the pairing agent must all be the daemon's BlueZ client.
+- **State:** `adapter` (the default one, else null), `available`, `enabled`, `blocked`, `discovering`; `devices` sorted by name, `pairedDevices`, `discoveredDevices` (unpaired and named, in the order they turned up), `connectedDevices`. Lists keep their order (not connected first), so a row never jumps away from the pointer that just clicked it.
+- **Devices** are plain objects, made anew on every push: `address`, `name` (the alias), `deviceName`, `icon`, `paired`, `bonded`, `trusted`, `blocked`, `connected`, `state` (`connecting`, `connected`, `disconnecting`, `disconnected`), `pairing`, `battery` (a 0–1 ratio) and `batteryAvailable`. Compare them by `address`; `deviceByAddress(address)` gives the current one, `busy(device)` says a call on it is running.
+- **Actions:** `setEnabled` / `toggleEnabled` (`bluetooth.setPowered`); `toggleDevice`: connected disconnects, paired connects, new pairs (`bluetooth.pair`: trust, pair, connect, in the daemon); `forget` (`bluetooth.forget`). A failure only puts the row back as it was.
+- **Discovery:** runs while something holds `acquireDiscovery(owner)` (a BluetoothDevices menu on its Discover tab) and the adapter is on, so two menus share one scan (`bluetooth.discovery {on}`, sent again after a hello). The scan is the daemon's own BlueZ session, so stopping it never ends another app's.
+- **Connection notes:** the connected devices' labels feed a `ConnectionNotes` child, replaced only when they change (every push makes new objects).
+- IPC `bluetooth enable|disable|toggle` (the `bluetooth` keybind action), the adapter's power. In `_services` too. Inert on the login screen (`Paths.greeter`), whose axiom serves no `bluetooth.*`.
+- Not named `Bluetooth`: the name is the `Bluetooth` bar widget file's.
+
+### bluez (axiom)
+BlueZ on the system bus (`backend/internal/bluez`, wired in `daemon/bluetooth.go`), shaped like `udisks`:
+- **Following:** `GetManagedObjects` once, then every `org.bluez` signal through one `Match{Sender}` subscription, so a device's property change is read after its `InterfacesAdded`; read again when BlueZ's owner changes and when the bus comes back. Signals are gathered for 50 ms into one state (as `nmvpn` does), pushed as `bluetooth.state` (latest-wins) only when it changed.
+- **The default adapter** is the first by its path (hci0 before hci1), as Quickshell's `defaultAdapter` was the first adapter it knew. Only its devices are shown.
+- **State:** `{available, adapter, devices}`. `adapter` is `{address, name (alias), powered, blocked, discovering, discoverable, pairable}` or null; `blocked` is `PowerState` `off-blocked`, else (powered off) an rfkill switch named after the adapter, soft or hard, in `/sys/class/rfkill`. Each device is `{address, name (alias), deviceName (its own Name, "" none), icon, paired, bonded, trusted, blocked, connected, state, pairing, battery (Battery1's 0–100, -1 none)}`, in the order they turned up. BlueZ has no connecting state: `state`'s `connecting` / `disconnecting` and `pairing` come from the daemon's own calls in flight, and the call's end is shown once its signals settled, so a connect never flashes disconnected.
+- **Methods** (the shell only; BlueZ's errors become `axerr` kinds: `busy`, `unavailable` (powered off), `not_authorized`, `refused` (pairing cancelled or rejected, rfkill), `not_found`, else `failed` with BlueZ's message): `bluetooth.setPowered {on}`, `bluetooth.discovery {on}` (wanted again after BlueZ restarts), `bluetooth.connect` / `disconnect` / `pair` / `cancelPair` / `forget {address}` (`forget` is `Adapter1.RemoveDevice`). A device with a call running refuses another (`busy`). A pair or connect can take many seconds: each waits in its own RPC goroutine, nothing else does.
+- **Tests:** a fake BlueZ on `dbustest` (`bluez_test.go`): the sync, each signal kind, BlueZ restarting, each method, the transitional states, discovery as a per-client session.

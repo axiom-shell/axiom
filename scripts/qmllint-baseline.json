@@ -103,9 +103,6 @@
     "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
     "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
   },
-  "services/system/BluetoothManager.qml": {
-    "unresolved-type: Type \"BluetoothAdapter\" of property \"defaultAdapter\" not found. This is likely due to a missing dependency entry or a type not being exposed declaratively.": 1
-  },
   "services/system/MediaManager.qml": {
     "unqualified: Unqualified access": 1
   },

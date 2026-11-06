@@ -193,6 +193,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Removable drives (a USB drive confirmed live, every path): plug in a real LUKS stick (the Locked card's click shows the passphrase field, a right and a wrong passphrase) and a memory card in a card reader (inserting and taking out the card is Connected / Disconnected, and its eject leaves the reader).
 - On an NVIDIA machine without an AMD card, once axiom runs the graphs'-history change: show a GPU stat or graph and check it fills from the streamed `nvidia-smi` (`pgrep -c nvidia-smi` is 1 while shown, 0 a few seconds after closing, with no GPU graph configured), and on a laptop with a runtime-PM dGPU that the card stays `suspended` (`power/runtime_status`) with nothing open. If the GPU reads stay missing, nvidia-smi isn't printing each line as it comes when piped: fall back to one-shot queries off the sample path.
 - Once axiom runs a binary with the VPN controls, connect a real OpenVPN with `networkmanager-openvpn` installed that asks for a password: the field shows in its row, a wrong password reads "Wrong user name or password", and the right one connects. Also check `nm-applet` running beside it still gets its turn after Cancel.
+- Once the shell and binary run Full Bluetooth's first part (the daemon owns Bluetooth), with a real device: connect and disconnect a paired one from the Bluetooth menu (Connecting… and Disconnecting… show, then its state; a headset's battery in its status and the bar), pair a new one from Discover (Pairing…, then Connecting…, then connected), and forget one; the Discover tab scans while open (the header's spinner) and stops after, without ending another app's scan (`bluetoothctl scan on` in a terminal keeps going); the radio switch and `axiom ipc bluetooth toggle` turn it off and on; `scripts/log.sh` stays clean.
 - With a DDC/CI monitor, press brightness up with the OSD shut: `scripts/log.sh` shows no failed `brightness.get`, the bar doesn't jump back, and the next press steps from the new level (an own set now marks its write before the OSD's refresh runs).
 
 **Apps and services:**
@@ -264,6 +265,8 @@ Found along the way:
 - [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren) (moving the daemon's own commands to command.Run)
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode) (fixing the daemon's config watch)
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
+- [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)
+- [TestNotifySend failed once under verify.sh](issues.md#testnotifysend-failed-once-under-verifysh) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 
 #### The launch gate
@@ -311,6 +314,12 @@ Found meanwhile:
 - [A greeter-only module validates on any page](issues.md#a-greeter-only-module-validates-on-any-page) (back from Ready for the autopilot, 2026-11-06: rejecting it can stop an existing config from loading; whether a migration removes misplaced modules first is a decision)
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
 - [A theme can't be generated from an avif or jxl wallpaper](issues.md#a-theme-cant-be-generated-from-an-avif-or-jxl-wallpaper) (a choice: a Go decoder dependency, or the shell handing over the image Qt decoded)
+
+Full Bluetooth (maintainer, 2026-11-06: move Bluetooth fully into the daemon, with one shared prompt for every password, PIN or confirmation request), one PR on the `bluetooth-daemon` branch, in four parts:
+1. The daemon owns Bluetooth (`backend/internal/bluez`, the `bluetooth` topic), BluetoothManager's API unchanged.
+2. One shared prompt (`PromptManager`), the BlueZ pairing agent, and polkit, VPN secrets, Wi-Fi passwords and drive unlocks moved onto it; closes [Bluetooth pairing that asks for a PIN or a passkey](issues.md#bluetooth-pairing-that-asks-for-a-pin-or-a-passkey) and [A VPN's password request can go unseen](issues.md#a-vpns-password-request-can-go-unseen).
+3. The OSD's Bluetooth card (devices connecting together as one card) and low battery warnings.
+4. Device actions (rename, trust, block), discoverable, rfkill unblock, and peripheral batteries in Battery.
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)

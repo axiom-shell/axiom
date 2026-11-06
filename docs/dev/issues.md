@@ -409,8 +409,8 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-10-30, while reviewing the VPN branch
 
 ### Bluetooth pairing that asks for a PIN or a passkey
-- **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`
-- **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
+- **Where:** `backend/internal/bluez/bluez.go` (`Pair`), `qml/components/content/BluetoothDevices/`
+- **What:** Pairing trusts, pairs and connects (in the daemon), but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Planned: the daemon registers the agent and asks through one shared prompt (Full Bluetooth's second part, roadmap.md › Phase 13).
 - **Size:** needs a plan
 - **Found:** 2026-10-30, while listing small gaps users notice at once
 
@@ -476,11 +476,23 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Tooling, tests and CI
 
+### rpc.md doesn't mark the drives methods shell only
+- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `backend/internal/daemon/drives.go` (`drivesMethods`)
+- **What:** `rpc_scan` marks a method "shell only" when its handler's text holds `fromShell(c)`, but `drivesMethods` checks through a `refuse(c)` closure defined above its first `rpc.Handle`, so the generated rpc.md lists `drives.mount`, `drives.unlock`, `drives.eject` and the rest with no guard, though each refuses any connection but the shell's. Fix: check inline as `bluetoothMethods` does (`if !fromShell(c)`), or have `rpc_scan` follow a closure that calls `fromShell`.
+- **Size:** trivial
+- **Found:** 2026-11-06, while moving Bluetooth to the daemon
+
 ### A push of a named branch can land on main through git's push config
 - **Where:** `.claude/hooks/guard.py` (`push_allowed`)
 - **What:** The guard judges `git push origin <branch>` by the name alone, but git maps a branch named without `:<dst>` through its config: with `remote.origin.push` set to `refs/heads/x:refs/heads/main`, or `push.default=upstream` on a branch made from `origin/main` (which sets its upstream to main, as the autopilot's step 4 branches do), `git push origin x` updates main (shown on scratch repos 2026-11-06: `feature -> trunk`). That config can come from `git -c …`, `GIT_CONFIG_*` or an earlier `git config`; the global config sets neither today. Fix: refuse a push whose `-c`/`GIT_CONFIG_*` sets `push.*` or `remote.*.push`, or allow only the `<src>:<dst>` form.
 - **Size:** small
 - **Found:** 2026-11-06, while reviewing the guard's gh and push allowlists
+
+### TestNotifySend failed once under verify.sh
+- **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
+- **What:** One `scripts/dev/verify.sh` run failed it with `pushed {ID:1 Action:}`; 20 runs of it alone right after passed. Traced: the fake server answers every `Notify` with id 1 and emits its signal from a goroutine (`go server.Emit`), so the first send's `NotificationClosed` for id 1 can arrive after the second send (the one with a button) is waiting on id 1, which then reads as closed with no button. Fix: a new id per `Notify` in the fake.
+- **Size:** trivial
+- **Found:** 2026-11-06, while moving Bluetooth to the daemon
 
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)

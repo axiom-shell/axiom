@@ -1,38 +1,44 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Bluetooth
 
 import qs.config
 import qs.services.core
 
-// Bluetooth state and actions over the default adapter (BlueZ via
-// Quickshell.Bluetooth). Named BluetoothManager so it doesn't shadow
-// Quickshell's `Bluetooth` singleton.
+// Bluetooth state and actions over the default adapter, from axiom's
+// `bluetooth` part (BlueZ on the system bus, internal/bluez:
+// `bluetooth.state` on every change). Devices are plain objects
+// ({ address, name, deviceName, icon, paired, bonded, trusted, blocked,
+// connected, state, pairing, battery, batteryAvailable }), made anew on
+// every push: compare them by address. Not named Bluetooth: the bar
+// widget's file has that name. Inert on the login screen.
 QtObject {
   id: root
 
-  readonly property var adapter: Bluetooth.defaultAdapter
+  // The default adapter ({ address, name, powered, blocked, discovering,
+  // discoverable, pairable }), else null
+  property var adapter: null
   readonly property bool available: adapter !== null
-  readonly property bool enabled: adapter?.enabled ?? false
-  readonly property bool blocked: adapter?.state === BluetoothAdapterState.Blocked
+  readonly property bool enabled: adapter?.powered ?? false
+  readonly property bool blocked: adapter?.blocked ?? false
   readonly property bool discovering: adapter?.discovering ?? false
 
   // Every device, by name. Lists stay in a fixed order (not connected
   // first), so a row never jumps away from the pointer that just clicked it
-  readonly property var devices: [...(adapter?.devices?.values ?? [])].sort((a, b) => deviceLabel(a).localeCompare(deviceLabel(b)))
+  readonly property var devices: [...root._devices].sort((a, b) => deviceLabel(a).localeCompare(deviceLabel(b)))
   readonly property var pairedDevices: devices.filter(d => d.paired || d.bonded)
   // Nearby devices found by a scan, in the order they turned up (so new
   // ones join the end); unnamed ones (bare addresses) are noise
-  readonly property var discoveredDevices: (adapter?.devices?.values ?? []).filter(d => !d.paired && !d.bonded && d.deviceName)
+  readonly property var discoveredDevices: root._devices.filter(d => !d.paired && !d.bonded && d.deviceName)
   readonly property var connectedDevices: devices.filter(d => d.connected)
 
-  // Devices whose connect should follow a pair started from here
-  property var _connectAfterPair: []
-
+  // rpc: bluetooth.setPowered
   function setEnabled(on) {
-    if (adapter)
-      adapter.enabled = on;
+    if (!root.available || root._inert)
+      return;
+    BackendManager.call("bluetooth.setPowered", {
+      "on": on
+    }, () => {});
   }
 
   function toggleEnabled() {
@@ -49,23 +55,46 @@ QtObject {
     _discoveryRegistry.release(owner);
   }
 
-  // Connected: disconnect. Paired: connect. New: trust, pair, then connect.
-  function toggleDevice(device) {
-    if (!device || device.pairing || device.state === BluetoothDeviceState.Connecting || device.state === BluetoothDeviceState.Disconnecting)
-      return;
-    if (device.connected) {
-      device.disconnect();
-    } else if (device.paired || device.bonded) {
-      device.connect();
-    } else {
-      device.trusted = true;
-      _connectAfterPair = _connectAfterPair.concat([device]);
-      device.pair();
-    }
+  // A call on the device is running: connecting, disconnecting or pairing
+  function busy(device) {
+    return !!device && (device.pairing || device.state === "connecting" || device.state === "disconnecting");
   }
 
+  // The device as the last state shows it, by its address (a list handed
+  // out earlier holds an older copy)
+  function deviceByAddress(address) {
+    return root._devices.find(d => d.address === address) ?? null;
+  }
+
+  // rpc: bluetooth.connect, bluetooth.disconnect, bluetooth.pair
+  // Connected: disconnect. Paired: connect. New: trust, pair, then
+  // connect (the daemon does all three). A failure shows only as the row
+  // going back to what it was, as it did over Quickshell.
+  function toggleDevice(device) {
+    const d = root.deviceByAddress(device?.address ?? "");
+    if (!d || root.busy(d) || root._inert)
+      return;
+    if (d.connected)
+      BackendManager.call("bluetooth.disconnect", {
+        "address": d.address
+      }, () => {});
+    else if (d.paired || d.bonded)
+      BackendManager.call("bluetooth.connect", {
+        "address": d.address
+      }, () => {});
+    else
+      BackendManager.call("bluetooth.pair", {
+        "address": d.address
+      }, () => {});
+  }
+
+  // rpc: bluetooth.forget
   function forget(device) {
-    device?.forget();
+    if (!device || root._inert)
+      return;
+    BackendManager.call("bluetooth.forget", {
+      "address": device.address
+    }, () => {});
   }
 
   function deviceLabel(device) {
@@ -78,11 +107,11 @@ QtObject {
     if (device.pairing)
       return I18n.tr("Pairing…");
     switch (device.state) {
-    case BluetoothDeviceState.Connecting:
+    case "connecting":
       return I18n.tr("Connecting…");
-    case BluetoothDeviceState.Disconnecting:
+    case "disconnecting":
       return I18n.tr("Disconnecting…");
-    case BluetoothDeviceState.Connected:
+    case "connected":
       return device.batteryAvailable ? I18n.tr("Connected · {0}%", Math.round(device.battery * 100)) : I18n.tr("Connected");
     }
     return I18n.tr(device.paired || device.bonded ? "Paired" : "Not paired");
@@ -110,52 +139,81 @@ QtObject {
     return "bluetooth";
   }
 
+  // The daemon's devices, in its order (the order they turned up),
+  // battery as a 0–1 ratio
+  property var _devices: []
+  readonly property bool _inert: Paths.greeter
+
+  function _show(state) {
+    root.adapter = state?.adapter ?? null;
+    root._devices = (state?.devices ?? []).map(d => Object.assign({}, d, {
+        "battery": d.battery >= 0 ? d.battery / 100 : 0,
+        "batteryAvailable": d.battery >= 0
+      }));
+  }
+
+  // rpc: bluetooth.discovery
+  function _discover(on) {
+    BackendManager.call("bluetooth.discovery", {
+      "on": on
+    }, () => {});
+  }
+
+  function _fetch() {
+    BackendManager.call("bluetooth.get", {}, (error, state) => {
+      if (!error)
+        root._show(state);
+    });
+  }
+
   property ConsumerRegistry _discoveryRegistry: ConsumerRegistry {}
   readonly property bool _wantsDiscovery: _discoveryRegistry.active && enabled
-  // Only stop a scan started here: another app's isn't ours to end
-  property bool _startedDiscovery: false
 
+  // The daemon's scan is a session of its own (BlueZ keeps one per
+  // client): stopping it never ends another app's
   on_WantsDiscoveryChanged: {
-    if (_wantsDiscovery && !discovering) {
-      adapter.discovering = true;
-      _startedDiscovery = true;
-    } else if (!_wantsDiscovery && _startedDiscovery) {
-      if (adapter)
-        adapter.discovering = false;
-      _startedDiscovery = false;
+    if (!root._inert)
+      root._discover(root._wantsDiscovery);
+  }
+
+  property Connections _backend: Connections {
+    target: BackendManager
+    enabled: !root._inert
+    function onGreeted() {
+      root._fetch();
+      // A daemon started again has no scan running
+      if (root._wantsDiscovery)
+        root._discover(true);
     }
   }
 
-  // Finish "pair then connect" for devices paired from here
-  property Instantiator _pairWatcher: Instantiator {
-    model: root._connectAfterPair
+  Component.onCompleted: {
+    if (root._inert)
+      return;
+    BackendManager.listen("bluetooth.state", state => root._show(state));
+    // Made after the hello (a QML reload): no greeted to wait for
+    if (BackendManager.ready)
+      root._fetch();
+  }
 
-    delegate: Connections {
-      required property var modelData
-      target: modelData
-
-      function onPairedChanged() {
-        root._connectAfterPair = root._connectAfterPair.filter(d => d !== modelData);
-        if (modelData.paired)
-          modelData.connect();
-      }
-
-      function onPairingChanged() {
-        // Pairing ended without success (rejected, timed out)
-        if (!modelData.pairing && !modelData.paired)
-          root._connectAfterPair = root._connectAfterPair.filter(d => d !== modelData);
-      }
-    }
+  // address -> label of the connected devices, replaced only when that
+  // changes: every push makes new device objects, and each change would
+  // start the notes' settle again
+  property var _connectedLabels: ({})
+  onConnectedDevicesChanged: {
+    const next = root.connectedDevices.reduce((all, device) => {
+      all[device.address] = root.deviceLabel(device);
+      return all;
+    }, {});
+    if (JSON.stringify(next) !== JSON.stringify(root._connectedLabels))
+      root._connectedLabels = next;
   }
 
   // Devices connecting and disconnecting, as silent notes
   property ConnectionNotes _notes: ConnectionNotes {
     prefix: "bluetooth"
     icon: "bluetooth"
-    connected: root.connectedDevices.reduce((all, device) => {
-      all[device.address] = root.deviceLabel(device);
-      return all;
-    }, {})
+    connected: root._connectedLabels
   }
 
   // Keybind action bluetooth: axiom ipc bluetooth toggle|enable|disable
