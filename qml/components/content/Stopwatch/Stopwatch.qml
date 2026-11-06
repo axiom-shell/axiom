@@ -156,57 +156,52 @@ Panel {
     }
   }
 
-  Flickable {
+  // A ListView, so only the laps in view are built
+  ListView {
     id: lapList
     visible: !root.timerMode && StopwatchManager.laps.length > 0
     Layout.fillWidth: true
     Layout.fillHeight: root.embedded
-    Layout.preferredHeight: root.embedded ? 0 : Math.min(laps.implicitHeight, Appearance.fontSize * 12)
-    Layout.maximumHeight: laps.implicitHeight
-    contentHeight: laps.implicitHeight
+    Layout.preferredHeight: root.embedded ? 0 : Math.min(lapList.contentHeight, Appearance.fontSize * 12)
+    Layout.maximumHeight: lapList.contentHeight
+    spacing: 2
     boundsBehavior: Flickable.StopAtBounds
     clip: true
+    model: CountModel {
+      count: root.timerMode ? 0 : StopwatchManager.laps.length
+    }
 
-    ColumnLayout {
-      id: laps
-      width: lapList.width
-      spacing: 2
+    delegate: RowLayout {
+      id: lapRow
+      required property int index
+      readonly property var lap: StopwatchManager.laps[index] ?? {
+        "number": 0,
+        "split": 0,
+        "total": 0,
+        "fastest": false,
+        "slowest": false
+      }
+      readonly property color tint: lapRow.lap.fastest ? Theme.success : lapRow.lap.slowest ? Theme.error : Theme.foreground
+      width: ListView.view.width
+      spacing: Widget.spacing
 
-      Repeater {
-        model: root.timerMode ? 0 : StopwatchManager.laps.length
-        RowLayout {
-          id: lapRow
-          required property int index
-          readonly property var lap: StopwatchManager.laps[index] ?? {
-            "number": 0,
-            "split": 0,
-            "total": 0,
-            "fastest": false,
-            "slowest": false
-          }
-          readonly property color tint: lapRow.lap.fastest ? Theme.success : lapRow.lap.slowest ? Theme.error : Theme.foreground
-          Layout.fillWidth: true
-          spacing: Widget.spacing
-
-          StyledText {
-            Layout.fillWidth: true
-            text: I18n.tr("Lap {0}", lapRow.lap.number)
-            textColor: lapRow.lap.fastest || lapRow.lap.slowest ? lapRow.tint : Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-1)
-          }
-          StyledText {
-            text: StopwatchClock.format(lapRow.lap.split, true, false)
-            textColor: lapRow.tint
-            textSize: Appearance.fontSizeBy(-1)
-          }
-          StyledText {
-            Layout.preferredWidth: Appearance.fontSize * 5
-            horizontalAlignment: Text.AlignRight
-            text: StopwatchClock.format(lapRow.lap.total, true, false)
-            textColor: Theme.foregroundAlt
-            textSize: Appearance.fontSizeBy(-1)
-          }
-        }
+      StyledText {
+        Layout.fillWidth: true
+        text: I18n.tr("Lap {0}", lapRow.lap.number)
+        textColor: lapRow.lap.fastest || lapRow.lap.slowest ? lapRow.tint : Theme.foregroundAlt
+        textSize: Appearance.fontSizeBy(-1)
+      }
+      StyledText {
+        text: StopwatchClock.format(lapRow.lap.split, true, false)
+        textColor: lapRow.tint
+        textSize: Appearance.fontSizeBy(-1)
+      }
+      StyledText {
+        Layout.preferredWidth: Appearance.fontSize * 5
+        horizontalAlignment: Text.AlignRight
+        text: StopwatchClock.format(lapRow.lap.total, true, false)
+        textColor: Theme.foregroundAlt
+        textSize: Appearance.fontSizeBy(-1)
       }
     }
   }

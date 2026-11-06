@@ -84,7 +84,10 @@ Item {
       implicitHeight: list.contentHeight
       spacing: 2
       boundsBehavior: Flickable.StopAtBounds
-      model: root.count
+      // Rows come and go as a scan runs: the view keeps its place
+      model: CountModel {
+        count: root.count
+      }
       delegate: root.delegate
 
       NumberAnimation on opacity {

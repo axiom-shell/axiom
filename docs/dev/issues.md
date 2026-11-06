@@ -280,12 +280,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
 
-### Unbounded lists still built in full
-- **Where:** `qml/components/content/parts/chat/ChatMessageList.qml`, `qml/components/content/parts/chat/ConversationList.qml`, `qml/components/content/Agenda/Agenda.qml`, `qml/components/content/Calculator/Calculator.qml` (history), `qml/components/content/Stopwatch/Stopwatch.qml` (laps), `qml/components/content/parts/TodoList.qml`
-- **What:** Each builds one delegate per item in a Repeater, with no limit, as `DeviceList` did before it became a ListView (52 Wi-Fi networks took 1.8 s). None showed as slow on the test machine, but they grow with use: a long chat or note becomes a slow module and popout. ListViews (or streamed sections) would build only what's in view.
-- **Size:** small
-- **Found:** 2026-10-21, while benchmarking the overlay's opening (overlay performance overhaul)
-
 ### Nineteen windows stay mapped on one monitor
 - **Where:** `qml/components/surfaces/border/RoundedBorders.qml`, `qml/components/surfaces/border/BorderPanel.qml`, `qml/components/surfaces/backdrop/ScreenBackdrop.qml`, `qml/shell/BlurBackingWindow.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`
 - **What:** Each window has its own render thread and GL context (19 `QSGRenderThread`s on one niri monitor). 9 are the border (4 strips, 4 corners, the shadow); the backdrop, blur backing and border shadow are `held` only for niri's map-order stacking. About 25 more (overlay, launcher, a submenu per popout host, edge-popout bodies, power menu, overview, switcher, prompts) keep their context for the session once shown. Options: strips drawing their own corners, windows unloaded a while after they hide, one stacking anchor instead of three held windows ([layer arrangement](compositor/layer-arrangement.md)).
@@ -616,12 +610,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Where:** `backend/internal/chat/send.go:87` (`Send`), `backend/internal/chat/send.go:160` (`Stop`)
 - **What:** `Send` looks the key up (`keyFor`: the environment, then `secret-tool lookup`, then secrets.json) before it registers its cancel in `s.running` (line 94), and `Stop` does nothing for an id not there. A Stop pressed during the lookup (a locked keyring's unlock prompt, a slow Secret Service) is lost: the request goes out afterwards and streams to the end while the shell shows it as stopping; the same for `newConversation`'s stop. PLAUSIBLE that users meet it: it needs a lookup slow enough to press Stop in. Fix: register the cancel first and do the lookup under the cancellable ctx (move `ctx, cancel := context.WithCancelCause(ctx)` and the registration above `keyFor`, and answer `Stopped` when `stopped()` after it), plus a TestStop case stopping before the lookup returns.
 - **Size:** trivial
-- **Found:** 2026-11-01, while reviewing the chat system
-
-### The chat builds its conversation lists and model picker while hidden
-- **Where:** `qml/components/content/Chat/Chat.qml:58` (docked `ConversationList`), `qml/components/content/Chat/Chat.qml:116` (floating `ConversationList`), `qml/components/content/Chat/Chat.qml:126` (`ModelPicker`), `qml/components/content/parts/chat/ConversationList.qml:140` (`renameField`)
-- **What:** qml/components/content/AGENTS.md: "a part shown in one mode only is a Loader gated on it, not `visible: false`". Chat.qml always builds two `ConversationList`s, the docked one (`visible: root.listDocked`) and the floating one (`visible: !root.listDocked && root.listOpen`), so one is always hidden and usually both; each builds a row per saved conversation (`Chat.keepConversations` defaults to 50), each row with a hidden rename `StyledTextEntry` (`visible: item.editing`). The `ModelPicker` (`visible: root.pickerOpen`) builds every preset and model row while closed. Fix: wrap the three in Loaders with `active` on their conditions (`listDocked`, `!listDocked && listOpen`, `pickerOpen`), and the rename field in a Loader on `item.editing`.
-- **Size:** small
 - **Found:** 2026-11-01, while reviewing the chat system
 
 ### A folder name holding `#` or `?` opens the wrong folder in the note list

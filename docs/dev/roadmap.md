@@ -235,7 +235,6 @@ Nothing runs off a screen or clips at 1080p, and pages stay fast as their data g
 - [A dropdown in an edge menu card with nothing scrolling gets two rows](issues.md#a-dropdown-in-an-edge-menu-card-with-nothing-scrolling-gets-two-rows)
 - [A model of size -1 when the overlay grid resizes](issues.md#a-model-of-size--1-when-the-overlay-grid-resizes)
 - [Compact cards still build their full layout](issues.md#compact-cards-still-build-their-full-layout)
-- [Unbounded lists still built in full](issues.md#unbounded-lists-still-built-in-full) (the chat lists wait for stage 5)
 - Once axiom runs a binary built with platform-04, in dev mode: `git switch` to an older branch and `git pull` (or touch a Go file) within the build's time; `axiom daemon logs` shows `dev build done, but the source changed meanwhile: building again` and one more build, the image re-exec'd last is the tree's (`axiom config status` loads, no `running on the defaults`). Then switch to a branch whose config version is older than config.json's: the shell keeps showing the config it had, not the defaults.
 - Once axiom runs platform-04 in dev mode, bump `protocol` in `qml/config/json/backend.json` and save a Go file: after the re-exec, `axiom ipc …` from a bind and a terminal (the installed `~/.local/bin/axiom`, still on the old protocol) works through the dev build, and the shell's calls work with no QML reload (`scripts/log.sh` shows no `refused the hello`). Put the protocol back after.
 - Once axiom runs platform-04 in dev mode, save a QML file and a Go file together a few times (as a rebase does): every re-exec's shell hello is accepted (`scripts/log.sh` shows no `only the shell axiom runs may connect as the shell`, `axiom daemon status` lists the shell).
@@ -370,7 +369,6 @@ Found by the audits:
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [The popout docs give AudioMixer's list two rows at least](issues.md#the-popout-docs-give-audiomixers-list-two-rows-at-least)
 - [DockWindow logs a binding loop on _wouldShow](issues.md#dockwindow-logs-a-binding-loop-on-_wouldshow)
-- [The chat builds its conversation lists and model picker while hidden](issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
 - [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)

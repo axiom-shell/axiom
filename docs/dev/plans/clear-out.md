@@ -1,7 +1,7 @@
 # The clear-out's PR list
 
 > **Roadmap:** [Phase 11](../roadmap.md#phase-11-audits-clear-out-and-hardening) step 2 (row 20), step 2.1 "Triage first"
-> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10, features-06, features-07, features-08, features-09, features-12 and features-13 done
+> **Status:** triage done 2026-11-01; questions answered 2026-11-01; the order stands (maintainer, 2026-11-01: "Start as written (Recommended)"); config-01, platform-01, core-ui-theming-01, compositor-01, compositor-02, compositor-03, compositor-04, bar-popouts-01, overlay-modules-01, features-01, bar-popouts-02, features-02, config-02, config-03, config-04, config-05, platform-02, platform-03, platform-04, platform-05, platform-06, platform-07, platform-08, core-ui-theming-02, core-ui-theming-03, core-ui-theming-04, core-ui-theming-05, core-ui-theming-06, core-ui-theming-07, compositor-05, compositor-06, compositor-07, compositor-08, compositor-21, compositor-09, compositor-10, compositor-11, compositor-12, compositor-13, compositor-20, compositor-14, compositor-18, bar-popouts-03, bar-popouts-04, overlay-modules-03, overlay-modules-05, overlay-modules-06, overlay-modules-07, overlay-modules-09, overlay-modules-10, features-06, features-07, features-08, features-09, features-12, features-13 and features-14 done
 
 Not an options plan: this is row 20's PR list, combined from the seven area triage passes (compositor, features, bar-popouts, overlay-modules, core-ui-theming, platform, config). The loop takes the next cluster in the order below; each cluster is one item, committed one commit per file group (step 2.6). A cluster's entries leave issues.md as it lands, and this file is deleted with the row's last cluster. Deferred and Phase 13 (on hold) entries aren't in it.
 
@@ -123,7 +123,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 | 75 | features-11 | major | Done: Networking and Bluetooth, the VPN list and Tailscale | 4 | ~150 | features-01, overlay-modules-10 |  |
 | 76 | features-12 | major | Done: Community setups | 5 | ~30 | features-01 |  |
 | 77 | features-13 | major | Done: Screenshots and recording | 4 | ~80 | features-03 |  |
-| 78 | features-14 | major | Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
+| 78 | features-14 | major | Done: Unbounded lists, and the chat's hidden parts | 2 | ~300 | features-05, -07, -09, overlay-modules-04 |  |
 | 79 | features-15 | minor-sweep | The clock format | 1 | ~5 | features-02, -06 |  |
 
 #### Entries by cluster
@@ -538,9 +538,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-11** (4, done): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
 - **features-12** (5, done): The IPC `apply` reads the cached catalog first; with no cache yet it warns and the catalog arrives for the next call.
 - **features-13** (4, done): The Edit notification's entry was done in platform-03. Notifications keep no capture's path (their picture is a cached copy), so the handler opens the newest path of the clicked one's key, which holds only that notification.
-- **features-14** (2): After overlay-modules-04 (same Calculator, Stopwatch, TodoList and Agenda files). Splits by file group if it passes the gate.
-  - [Unbounded lists still built in full](../issues.md#unbounded-lists-still-built-in-full)
-  - [The chat builds its conversation lists and model picker while hidden](../issues.md#the-chat-builds-its-conversation-lists-and-model-picker-while-hidden)
+- **features-14** (2, done): The lists are ListViews modelled by a shared `CountModel`, so a new count keeps the view's place (a plain number as the model scrolled back to the top). Agenda's unit is a day, its events built with it (`maxEvents` caps them).
 - **features-15** (1):
   - [A custom clock format without spaces spills past a vertical bar](../issues.md#a-custom-clock-format-without-spaces-spills-past-a-vertical-bar)
 
