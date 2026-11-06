@@ -315,7 +315,6 @@ Steps:
 The maintainer (2026-11-06): "right now, everything deferred or hold that it small and has a traced fix move to ready and waiting for the autopilot. After all of that is done the autopilot will stop. (i.e. unconfirmed, weird vaguely described ui problems from developer notes, and plans done stay)". So the loop takes only the entries below (moved here from Phase 8, Phase 13 and [Deferred](#deferred), with row 20's own traced ones), grouped by area so a batch stays in one; when this list is empty it stops the loop and reports, whatever row 20 still holds. The maintainer's answers of 2026-11-06 (quoted under each entry's **Decided**) added the dock, wallpaper, notes, config, dev-config copy, dropdown, hot corner and close-on-outside-click entries. It opens no plan PR and no `needs-decision` PR: an entry that turns out to need a choice or isn't as traced is skipped and its link moved back where it came from.
 
 **Shell surfaces and services:**
-- [A bar Grid warns as its bar turns between horizontal and vertical](issues.md#a-bar-grid-warns-as-its-bar-turns-between-horizontal-and-vertical)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)
 - [Opening a hover-closing edge menu by IPC closes it at once](issues.md#opening-a-hover-closing-edge-menu-by-ipc-closes-it-at-once)
 - [A VPN bind ignores Tailscale unless a VPN widget is showing](issues.md#a-vpn-bind-ignores-tailscale-unless-a-vpn-widget-is-showing)

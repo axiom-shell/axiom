@@ -29,9 +29,10 @@ BarWidget {
   Grid {
     id: items
     anchors.centerIn: parent
-    flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
-    rows: root.isVertical ? Math.max(1, trayItems.count) : 1
-    columns: root.isVertical ? 1 : Math.max(1, trayItems.count)
+    // One line of the shown icons (-1: counted by the Grid); each 1 waits
+    // for the other to leave it, so a bar turning never makes it 1 by 1
+    rows: !root.isVertical && columns === -1 ? 1 : -1
+    columns: root.isVertical && rows === -1 ? 1 : -1
     spacing: root.spacing
 
     // An app's icon arriving (or a passive one showing) grows in; the
@@ -61,7 +62,6 @@ BarWidget {
     }
 
     Repeater {
-      id: trayItems
       model: SystemTray.items
 
       Item {

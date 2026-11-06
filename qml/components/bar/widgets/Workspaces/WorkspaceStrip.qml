@@ -101,9 +101,11 @@ Item {
     id: layout
     anchors.centerIn: parent
     // -1: as many as are shown (a Grid keeps spacing for an empty column
-    // or row), counted by the Grid itself, so it can't lag a part showing
-    rows: root.isVertical ? -1 : 1
-    columns: root.isVertical ? 1 : -1
+    // or row), counted by the Grid itself, so it can't lag a part showing.
+    // Each 1 waits for the other to leave it, so a bar turning never makes
+    // it 1 by 1
+    rows: !root.isVertical && columns === -1 ? 1 : -1
+    columns: root.isVertical && rows === -1 ? 1 : -1
     spacing: root.barConfig.innerGap
 
     WorkspaceCellRow {
