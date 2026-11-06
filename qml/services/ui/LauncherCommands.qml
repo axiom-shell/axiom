@@ -543,7 +543,7 @@ QtObject {
     return {
       name: name,
       aliases: aliases,
-      glyph: ActionsManager.sessionActions.includes(id) ? SessionManager.sessionActionInfo(id).icon : KeybindManager.actionIcon(id),
+      glyph: SessionManager.sessionActionInfo(id)?.icon ?? KeybindManager.actionIcon(id),
       confirm: ActionsManager.destructive(id),
       // I18n.tr("Lock the screen") I18n.tr("Suspend to RAM") I18n.tr("Hibernate to disk")
       // I18n.tr("End the session") I18n.tr("Restart the computer") I18n.tr("Turn the computer off")

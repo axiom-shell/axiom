@@ -9,8 +9,8 @@ settings:
   actions:
     type: array
     title: Buttons
-    items: {type: string, enum: [suspend, reboot, poweroff]}
+    items: {type: string, enum: [suspend, hibernate, reboot, poweroff]}
     x-ordered: true
-    x-enumLabels: {suspend: Suspend, reboot: Restart, poweroff: Shut down}
-    x-enumIcons: {suspend: bedtime, reboot: restart_alt, poweroff: power_settings_new}
+    x-enumLabels: {suspend: Suspend, hibernate: Hibernate, reboot: Restart, poweroff: Shut down}
+    x-enumIcons: {suspend: bedtime, hibernate: ac_unit, reboot: restart_alt, poweroff: power_settings_new}
     default: [suspend, reboot, poweroff]

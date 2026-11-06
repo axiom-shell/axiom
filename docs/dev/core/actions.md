@@ -9,7 +9,7 @@ Every one-tap thing the shell does (Wi-Fi, Bluetooth, airplane mode, the VPN, do
 ### What an action is
 - **Its definition** is a row of the keybind table, `table.json`'s `ipcActions`: `[IPC call, label, section]`, with its icon in `icons`, its open/close functions in `calls`, its argument kind in `argumentKinds`. The daemon sends the table to the shell (`compositor.bindActions`, `KeybindManager.actionTable`), so the Go writers, the Keybinds page and every UI read one list.
 - **Its state** is `ActionsManager`'s:
-  - `available(id)`: whatever it needs is here (a device, a tool, a compositor capability). It reads no on/off state, so a list of the actions shown can be a Repeater's model.
+  - `available(id)`: whatever it needs is here (a device, a tool, a compositor capability; hibernate, logind's `CanHibernate`: `SessionManager.canHibernate`, asked once at start). It reads no on/off state, so a list of the actions shown can be a Repeater's model.
   - `info(id)`: `{ active, status, icon }`, from its service.
   - `label(id)`: the table's (as the Keybinds page shows it), or a tile's shorter one (Mute, Mute mic, VPN, Record).
   - `destructive(id)`: log out, restart and shut down (SessionManager's list).
