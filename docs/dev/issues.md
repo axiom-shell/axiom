@@ -574,9 +574,3 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** `x-auto` now takes a `null` automatic value (validation lets it through, and the form's number keeps its whole range), which the bar's `floatingGap` uses. These six still store Automatic as `-1`, so their readers test `>= 0` / `< 0` and their minimum can't be 0 and Automatic at once without the sentinel. Moving them to `null` is a format-2 step per setting (`-1` → `null`) and a reader change each; nothing is broken meanwhile.
 - **Size:** small
 - **Found:** 2026-11-04, while building the bar rewrite (x-auto with a null value, A1)
-
-### A camera plugged in after login may never be watched
-- **Where:** `backend/internal/camera/camera.go:114` (`Run`'s watch on the devices' folder), `backend/internal/camera/camera.go:222` (`sync`)
-- **What:** The folder's watch asks only for `IN_CREATE|IN_DELETE|IN_MOVED_TO|IN_MOVED_FROM`, and `sync` adds a device's watch once, 150 ms after its creation. `inotify_add_watch` needs read access to the file, and devtmpfs makes a new `/dev/videoN` root-only until udev sets its group and the seat's ACL, which is an attribute change (`IN_ATTRIB`) the folder's watch doesn't ask for. A webcam plugged in while axiom runs whose udev rules finish after the 150 ms gets `EACCES` (logged at debug), and its device is never watched until another video device comes or goes, so an app opening it never shows. PLAUSIBLE: plug a USB webcam in with debug logs on and see whether `camera: can't watch a device` is logged. Fix: add `unix.IN_ATTRIB` to the folder's mask (a video device's attribute change then resyncs, as a creation does).
-- **Size:** trivial
-- **Found:** 2026-11-06, while reviewing proper camera reporting and fixes to multi icon bar rendering

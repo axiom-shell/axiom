@@ -168,3 +168,40 @@ func (s *Service) watching(name string) bool {
 	s.mu.Unlock()
 	return w != nil && w.watching(name)
 }
+
+// A device plugged in is root-only until udev grants the seat access:
+// its watch fails then, and is made once its access changes.
+func TestRunWatchesOnceReadable(t *testing.T) {
+	t.Parallel()
+	if os.Geteuid() == 0 {
+		t.Skip("root reads every file: a device is never unreadable")
+	}
+	dev := t.TempDir()
+	s := New(Options{Dev: dev, Proc: newFakeProc(t).root, Settle: 10 * time.Millisecond})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+	t.Cleanup(func() {
+		cancel()
+		select {
+		case <-done:
+		case <-time.After(testkit.Bound(5 * time.Second)):
+			t.Error("Run didn't end with its context")
+		}
+	})
+	if !testkit.Eventually(func() bool { s.mu.Lock(); defer s.mu.Unlock(); return s.w != nil }) {
+		t.Fatal("Run never started watching")
+	}
+
+	video := filepath.Join(dev, "video0")
+	must(t, os.WriteFile(video, nil, 0o000))
+	// Its creation is read, and its watch refused
+	time.Sleep(testkit.Bound(50 * time.Millisecond))
+	if s.watching("video0") {
+		t.Fatal("an unreadable device was watched")
+	}
+	must(t, os.Chmod(video, 0o644))
+	if !testkit.Eventually(func() bool { return s.watching("video0") }) {
+		t.Fatal("the device was never watched once readable")
+	}
+}

@@ -3,8 +3,8 @@
 // Discord) open the device themselves rather than through PipeWire, so
 // the shell's PipeWire links never show them using it. The devices are
 // watched with inotify (an open or a close by any process, and /dev for
-// devices coming and going; no polling), and after each burst of events
-// /proc is read for who holds one open. PipeWire and WirePlumber are left
+// devices coming and going or their access changing; no polling), and
+// after each burst of events /proc is read for who holds one open. PipeWire and WirePlumber are left
 // out: an app reading the camera through them shows as a link already.
 package camera
 
@@ -69,6 +69,12 @@ var skipped = map[string]bool{"pipewire": true, "wireplumber": true}
 
 var deviceName = regexp.MustCompile(`^video[0-9]+$`)
 
+// The devices' folder's events: a device coming or going, or its access
+// changing. devtmpfs makes a device plugged in root-only until udev sets
+// its group and the seat's ACL, and a watch needs read access: until
+// then it can't be watched, so its access arriving is a resync too.
+const devFolderEvents = unix.IN_CREATE | unix.IN_DELETE | unix.IN_MOVED_TO | unix.IN_MOVED_FROM | unix.IN_ATTRIB
+
 // A flatpak app's processes run in its scope: app-flatpak-<id>-<n>.scope
 var flatpakScope = regexp.MustCompile(`app-flatpak-([A-Za-z0-9_.-]+?)-[0-9]+\.scope`)
 
@@ -111,7 +117,7 @@ func (s *Service) Run(ctx context.Context) error {
 	s.mu.Lock()
 	s.w = w
 	s.mu.Unlock()
-	if _, err := unix.InotifyAddWatch(fd, s.o.Dev, unix.IN_CREATE|unix.IN_DELETE|unix.IN_MOVED_TO|unix.IN_MOVED_FROM); err != nil {
+	if _, err := unix.InotifyAddWatch(fd, s.o.Dev, devFolderEvents); err != nil {
 		s.o.Log.Warn("camera: can't watch the devices' folder: an app opening a camera itself isn't seen", "dev", s.o.Dev, "err", err)
 		f.Close()
 		<-ctx.Done()
@@ -178,7 +184,7 @@ func (s *Service) read(ctx context.Context, f *os.File, w *watches, events chan<
 				name = strings.TrimRight(string(buf[off+unix.SizeofInotifyEvent:min(end, n)]), "\x00")
 			}
 			off += unix.SizeofInotifyEvent + int(ev.Len)
-			if ev.Mask&(unix.IN_CREATE|unix.IN_DELETE|unix.IN_MOVED_TO|unix.IN_MOVED_FROM) != 0 {
+			if ev.Mask&(devFolderEvents) != 0 {
 				if !deviceName.MatchString(name) {
 					continue
 				}
