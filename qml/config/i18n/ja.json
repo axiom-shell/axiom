@@ -4063,6 +4063,9 @@
     "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.": "",
     "Any action a key can run that needs no argument, and a few tiles of their own. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
     "Any action a key can run that needs no argument, or one of the button's own.": "",
-    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a theme (or random), a timer length (10m, 1:30), or a command.": ""
+    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a theme (or random), a timer length (10m, 1:30), or a command.": "",
+    "Turn airplane mode on or off": "",
+    "Turn the power saver profile on or off": "",
+    "Mute mic": ""
   }
 }

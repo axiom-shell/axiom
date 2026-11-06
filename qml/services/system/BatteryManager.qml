@@ -106,6 +106,25 @@ QtObject {
     PowerProfiles.profile = on ? PowerProfile.PowerSaver : PowerProfile.Balanced;
   }
 
+  // Keybind action powerSaver: axiom ipc powerSaver toggle|enable|disable
+  // (power-profiles-daemon's power saver, else balanced)
+  property IpcTarget _powerSaverIpc: IpcTarget {
+    target: "powerSaver"
+    enabled: root.hasPowerProfiles
+
+    function toggle(): void {
+      root.setPowerSaver(!root.powerSaver);
+    }
+
+    function enable(): void {
+      root.setPowerSaver(true);
+    }
+
+    function disable(): void {
+      root.setPowerSaver(false);
+    }
+  }
+
   Component.onCompleted: {
     DependencyManager.check(["powerprofilesctl"]);
     if (root.isAvailable)

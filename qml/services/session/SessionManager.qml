@@ -9,7 +9,10 @@ import qs.services.core
    down), shared by the power menu, the QuickActions and Power modules and
    the launcher */
 QtObject {
-  // The destructive ones ask for a second click first.
+  id: root
+
+  // The destructive ones ask for a second click first (on a tile, the
+  // power menu, the launcher; a keybind runs them at once)
   readonly property var destructiveActions: ["logout", "reboot", "poweroff"]
 
   // A session action's icon and label, the same everywhere it's offered
@@ -71,6 +74,35 @@ QtObject {
       break;
     default:
       console.warn("[SessionManager] Unknown session action:", action);
+    }
+  }
+
+  // Keybind actions suspend, hibernate, reboot and poweroff: axiom ipc
+  // session <action>, at once (a key is picked on purpose; hot corners
+  // can't run the destructive ones). Log out is the compositor's own
+  // exitSession bind; lock is lockscreen's
+  property IpcTarget _ipc: IpcTarget {
+    target: "session"
+    enabled: !Paths.greeter
+
+    function suspend(): void {
+      root.sessionAction("suspend");
+    }
+
+    function hibernate(): void {
+      root.sessionAction("hibernate");
+    }
+
+    function logout(): void {
+      root.sessionAction("logout");
+    }
+
+    function reboot(): void {
+      root.sessionAction("reboot");
+    }
+
+    function poweroff(): void {
+      root.sessionAction("poweroff");
     }
   }
 }

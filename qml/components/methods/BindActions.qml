@@ -76,6 +76,11 @@ QtObject {
     };
   }
 
+  // An action's Material Symbol (icons), "keyboard" for one without
+  function iconOf(table, action) {
+    return table?.icons?.[action] ?? "keyboard";
+  }
+
   // What `action`'s argument is (argumentKinds), or ""
   function argumentKind(table, action) {
     return table?.argumentKinds?.[action] ?? "";

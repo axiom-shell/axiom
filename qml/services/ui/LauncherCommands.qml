@@ -36,22 +36,9 @@ QtObject {
 
   readonly property var list: [
     // --- Session ---
-    root._session("lock", ["lock-screen"], "Lock the screen"), root._session("suspend", ["sleep"], "Suspend to RAM"), root._session("hibernate", [], "Hibernate to disk"), root._session("logout", ["exit"], "End the session"), root._session("reboot", ["restart"], "Restart the computer"), root._session("poweroff", ["shutdown"], "Turn the computer off"),
+    root._action("lock", "lock", ["lock-screen"], "Lock the screen"), root._action("suspend", "suspend", ["sleep"], "Suspend to RAM"), root._action("hibernate", "hibernate", [], "Hibernate to disk"), root._action("logout", "logout", ["exit"], "End the session"), root._action("reboot", "reboot", ["restart"], "Restart the computer"), root._action("poweroff", "poweroff", ["shutdown"], "Turn the computer off"),
     // --- Surfaces ---
-    {
-      name: "power",
-      aliases: ["powermenu"],
-      glyph: "power_settings_new",
-      description: () => I18n.tr("Open the power menu"),
-      run: () => ShellManager.togglePowerMenu()
-    },
-    {
-      name: "workspaces",
-      aliases: ["overview"],
-      glyph: "grid_view",
-      description: () => I18n.tr("Open or close the workspace overview"),
-      run: () => ShellManager.toggleWorkspaceOverlay()
-    },
+    root._action("power", "powerMenu", ["powermenu"], "Open the power menu"), root._action("workspaces", "workspaceOverview", ["overview"], "Open or close the workspace overview"),
     {
       name: "overlay",
       aliases: ["page"],
@@ -88,37 +75,15 @@ QtObject {
         return false;
       }
     },
-    {
-      name: "dark",
-      aliases: [],
+    Object.assign(root._action("dark", "darkMode", [], "Use the theme's dark variant", "open"), {
       glyph: "clear_night",
-      description: () => I18n.tr("Use the theme's dark variant"),
-      run: () => {
-        ThemeManager.setLightMode(false);
-        return false;
-      }
-    },
-    {
-      name: "light",
-      aliases: [],
+      status: undefined
+    }), Object.assign(root._action("light", "darkMode", [], "Use the theme's light variant", "close"), {
       glyph: "sunny",
-      description: () => I18n.tr("Use the theme's light variant"),
-      run: () => {
-        ThemeManager.setLightMode(true);
-        return false;
-      }
-    },
-    {
-      name: "mode",
-      aliases: ["darkmode"],
-      glyph: "contrast",
-      description: () => I18n.tr("Toggle light and dark"),
-      status: () => Appearance.darkMode ? I18n.tr("Dark") : I18n.tr("Light"),
-      run: () => {
-        ThemeManager.toggleDarkMode();
-        return false;
-      }
-    },
+      status: undefined
+    }), Object.assign(root._action("mode", "darkMode", ["darkmode"], "Toggle light and dark"), {
+      status: () => Appearance.darkMode ? I18n.tr("Dark") : I18n.tr("Light")
+    }),
     {
       name: "wallpaper",
       aliases: ["wall", "bg"],
@@ -149,16 +114,9 @@ QtObject {
         return false;
       }
     },
-    {
-      name: "nextwallpaper",
-      aliases: ["nextwall", "rotate"],
-      glyph: "shuffle",
-      description: () => I18n.tr("Next wallpaper of the rotation"),
-      run: () => {
-        WallpaperManager.next();
-        return false;
-      }
-    },
+    Object.assign(root._action("nextwallpaper", "nextWallpaper", ["nextwall", "rotate"], "Next wallpaper of the rotation"), {
+      glyph: "shuffle"
+    }),
     {
       name: "generate",
       aliases: ["pywal"],
@@ -195,60 +153,13 @@ QtObject {
         return false;
       }
     },
-    {
-      name: "mute",
-      aliases: [],
-      glyph: "volume_off",
-      description: () => I18n.tr("Mute or unmute the output"),
-      status: () => AudioManager.muted ? I18n.tr("Muted") : "",
-      run: () => {
-        AudioManager.toggleMute();
-        return false;
-      }
-    },
-    {
-      name: "mic",
-      aliases: ["microphone"],
-      glyph: "mic",
-      description: () => I18n.tr("Mute or unmute the microphone"),
-      status: () => AudioManager.sourceMuted ? I18n.tr("Muted") : "",
-      run: () => {
-        AudioManager.toggleSourceMute();
-        return false;
-      }
-    },
-    root._device("output", ["sink", "speakers"], "speaker", "Choose the audio output", () => AudioManager.sinks, () => AudioManager.defaultSink), root._device("input", ["source"], "mic", "Choose the audio input", () => AudioManager.sources, () => AudioManager.defaultSource), root._media("play", ["pause"], "play_pause", "Play or pause", () => MediaManager.togglePlayPause()), root._media("next", ["skip"], "skip_next", "Next track", () => MediaManager.next()), root._media("prev", ["previous", "back"], "skip_previous", "Previous track", () => MediaManager.previous()),
+    Object.assign(root._action("mute", "toggleMute", [], "Mute or unmute the output"), {
+      glyph: "volume_off"
+    }), Object.assign(root._action("mic", "toggleMicMute", ["microphone"], "Mute or unmute the microphone"), {
+      glyph: "mic"
+    }), root._device("output", ["sink", "speakers"], "speaker", "Choose the audio output", () => AudioManager.sinks, () => AudioManager.defaultSink), root._device("input", ["source"], "mic", "Choose the audio input", () => AudioManager.sources, () => AudioManager.defaultSource), root._media("play", ["pause"], "Play or pause", "mediaPlayPause"), root._media("next", ["skip"], "Next track", "mediaNext"), root._media("prev", ["previous", "back"], "Previous track", "mediaPrevious"),
     // --- Connectivity ---
-    {
-      name: "wifi",
-      aliases: ["wlan"],
-      glyph: "wifi",
-      usage: "[on | off]",
-      description: () => I18n.tr("Turn wifi on or off"),
-      available: () => NetworkingManager.available,
-      status: () => NetworkingManager.wifiEnabled ? I18n.tr("On") : I18n.tr("Off"),
-      options: () => root._onOffOptions(),
-      run: (arg, value) => {
-        const on = root._onOff(value ?? arg);
-        NetworkingManager.setWifiEnabled(on === null ? !NetworkingManager.wifiEnabled : on);
-        return false;
-      }
-    },
-    {
-      name: "bluetooth",
-      aliases: ["bt"],
-      glyph: "bluetooth",
-      usage: "[on | off]",
-      description: () => I18n.tr("Turn bluetooth on or off"),
-      available: () => BluetoothManager.available,
-      status: () => BluetoothManager.enabled ? I18n.tr("On") : I18n.tr("Off"),
-      options: () => root._onOffOptions(),
-      run: (arg, value) => {
-        const on = root._onOff(value ?? arg);
-        BluetoothManager.setEnabled(on === null ? !BluetoothManager.enabled : on);
-        return false;
-      }
-    },
+    root._switch("wifi", "wifi", ["wlan"], "Turn wifi on or off"), root._switch("bluetooth", "bluetooth", ["bt"], "Turn bluetooth on or off"), root._switch("airplane", "airplane", ["flight", "airplane-mode"], "Turn airplane mode on or off"),
     {
       name: "vpn",
       aliases: ["wireguard", "openvpn"],
@@ -315,32 +226,12 @@ QtObject {
       }
     },
     // --- Notifications & idle ---
-    {
-      name: "dnd",
-      aliases: ["quiet"],
-      glyph: "notifications_off",
-      usage: "[on | off]",
-      description: () => I18n.tr("Turn do not disturb on or off"),
-      status: () => NotificationManager.dnd ? I18n.tr("On") : I18n.tr("Off"),
-      options: () => root._onOffOptions(),
-      run: (arg, value) => {
-        const on = root._onOff(value ?? arg);
-        NotificationManager.setDnd(on === null ? !NotificationManager.dnd : on);
-        return false;
-      }
-    },
-    {
-      name: "clear",
-      aliases: ["clear-notifications"],
-      glyph: "clear_all",
+    Object.assign(root._switch("dnd", "toggleDnd", ["quiet"], "Turn do not disturb on or off"), {
+      glyph: "notifications_off"
+    }), Object.assign(root._action("clear", "clearNotifications", ["clear-notifications"], "Clear all notifications"), {
       confirm: true,
-      description: () => I18n.tr("Clear all notifications"),
-      status: () => NotificationManager.count > 0 ? I18n.tr("{0} notifications", NotificationManager.count) : "",
-      run: () => {
-        NotificationManager.clearAll();
-        return false;
-      }
-    },
+      status: () => NotificationManager.count > 0 ? I18n.tr("{0} notifications", NotificationManager.count) : ""
+    }),
     {
       name: "caffeine",
       aliases: ["awake", "inhibit"],
@@ -353,26 +244,13 @@ QtObject {
         // A duration: on for that long
         if (IdleManager.startCaffeineText(value ?? arg))
           return false;
-        const on = root._onOff(value ?? arg);
-        IdleManager.setCaffeine(on === null ? !IdleManager.caffeine : on);
+        ActionsManager.run("idleInhibit", {
+          "call": root._call(value ?? arg)
+        });
         return false;
       }
     },
-    {
-      name: "nightlight",
-      aliases: ["night", "sunset"],
-      glyph: "nightlight",
-      usage: "[on | off]",
-      description: () => I18n.tr("Warmer screen colors"),
-      available: () => NightLightManager.available,
-      status: () => NightLightManager.active ? I18n.tr("On") : I18n.tr("Off"),
-      options: () => root._onOffOptions(),
-      run: (arg, value) => {
-        const on = root._onOff(value ?? arg);
-        NightLightManager.setActive(on === null ? !NightLightManager.active : on);
-        return false;
-      }
-    },
+    root._switch("nightlight", "nightLight", ["night", "sunset"], "Warmer screen colors"), root._switch("powersaver", "powerSaver", ["eco", "power-saver"], "Turn the power saver profile on or off"),
     {
       name: "dev",
       aliases: ["devmode"],
@@ -635,16 +513,15 @@ QtObject {
         ScreenshotManager.take(value ?? (arg || "region"));
       }
     },
-    {
-      name: "record",
-      aliases: ["recording", "screencast"],
+    Object.assign(root._action("record", "screenRecord", ["recording", "screencast"], ""), {
       glyph: "videocam",
       description: () => ScreenshotManager.recording ? I18n.tr("Stop recording the screen") : I18n.tr("Record the screen"),
       available: () => ScreenshotManager.hasRecorder || ScreenshotManager.recording,
+      status: undefined,
       run: () => {
-        ScreenshotManager.toggleRecording();
+        ActionsManager.run("screenRecord");
       }
-    },
+    }),
     {
       name: "reload",
       aliases: [],
@@ -657,17 +534,52 @@ QtObject {
 
   // --- Builders for families of alike commands ---
 
-  function _session(action, aliases, description) {
+  // Runs one of the shell's actions (ActionsManager: the keybind table's,
+  // as its key would) with `call` ("toggle" when missing); its glyph is the
+  // action's, its status the action's state, and it asks for a second
+  // Enter where a tile asks for a second click (log out, restart, shut
+  // down)
+  function _action(name, id, aliases, description, call) {
     return {
-      name: action,
+      name: name,
       aliases: aliases,
-      glyph: SessionManager.sessionActionInfo(action).icon,
-      confirm: SessionManager.destructiveActions.includes(action),
+      glyph: ActionsManager.sessionActions.includes(id) ? SessionManager.sessionActionInfo(id).icon : KeybindManager.actionIcon(id),
+      confirm: ActionsManager.destructive(id),
       // I18n.tr("Lock the screen") I18n.tr("Suspend to RAM") I18n.tr("Hibernate to disk")
       // I18n.tr("End the session") I18n.tr("Restart the computer") I18n.tr("Turn the computer off")
+      // I18n.tr("Open the power menu") I18n.tr("Open or close the workspace overview")
+      // I18n.tr("Use the theme's dark variant") I18n.tr("Use the theme's light variant")
+      // I18n.tr("Toggle light and dark") I18n.tr("Next wallpaper of the rotation")
+      // I18n.tr("Mute or unmute the output") I18n.tr("Mute or unmute the microphone")
+      // I18n.tr("Clear all notifications")
       description: () => I18n.tr(description),
-      run: () => SessionManager.sessionAction(action)
+      available: () => ActionsManager.available(id),
+      status: () => ActionsManager.info(id).status,
+      run: () => {
+        ActionsManager.run(id, {
+          "call": call ?? "toggle"
+        });
+        return false;
+      }
     };
+  }
+
+  // An action switched on or off ("/wifi on", "/wifi off"), else toggled
+  function _switch(name, id, aliases, description) {
+    return Object.assign(root._action(name, id, aliases, description), {
+      usage: "[on | off]",
+      // I18n.tr("Turn wifi on or off") I18n.tr("Turn bluetooth on or off")
+      // I18n.tr("Turn airplane mode on or off") I18n.tr("Turn do not disturb on or off")
+      // I18n.tr("Warmer screen colors") I18n.tr("Turn the power saver profile on or off")
+      description: () => I18n.tr(description),
+      options: () => root._onOffOptions(),
+      run: (arg, value) => {
+        ActionsManager.run(id, {
+          "call": root._call(value ?? arg)
+        });
+        return false;
+      }
+    });
   }
 
   // Opens the overlay on a page by view type
@@ -719,20 +631,13 @@ QtObject {
     };
   }
 
-  function _media(name, aliases, glyph, description, action) {
-    return {
-      name: name,
-      aliases: aliases,
-      glyph: glyph,
+  function _media(name, aliases, description, id) {
+    return Object.assign(root._action(name, id, aliases, description), {
       // I18n.tr("Play or pause") I18n.tr("Next track") I18n.tr("Previous track")
       description: () => I18n.tr(description),
       available: () => MediaManager.hasActivePlayer,
-      status: () => [MediaManager.trackTitle, MediaManager.trackArtist].filter(s => s).join(" · "),
-      run: () => {
-        action();
-        return false;
-      }
-    };
+      status: () => [MediaManager.trackTitle, MediaManager.trackArtist].filter(s => s).join(" · ")
+    });
   }
 
   // Switches the search to one of the prefixes
@@ -763,6 +668,12 @@ QtObject {
         value: "off"
       }
     ];
+  }
+
+  // An action's call for "on" / "off" (open / close), else "toggle"
+  function _call(arg) {
+    const on = root._onOff(arg);
+    return on === null ? "toggle" : on ? "open" : "close";
   }
 
   // "on" → true, "off" → false, anything else (a toggle) → null
