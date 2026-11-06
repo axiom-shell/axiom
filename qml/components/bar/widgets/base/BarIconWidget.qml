@@ -48,6 +48,7 @@ IconTextWidget {
   fontSize: barConfig.fontSize
   // The icon's gap to its label (6 px at the default inner spacing of 4)
   spacing: barConfig.innerGap * 1.5
+  iconSpacing: barConfig.innerGap
   // Its color for its state, and what it draws in on this bar
   property color accentColor: Theme.resolveColor(properties.backgroundColor)
   readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)

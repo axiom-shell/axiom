@@ -13,6 +13,9 @@ import qs.components.reusable
 BaseWidget {
   id: root
 
+  // Its glyphs one per line, laid along the bar: stacked on a vertical
+  // one, side by side on a horizontal one (not joined by spaces: the icon
+  // font's space is a whole icon wide)
   property string icon: ""
   property string text: ""
   // Text.PlainText for text from outside (an event's title), which
@@ -23,6 +26,8 @@ BaseWidget {
   property bool showText: true
   property bool showIcon: true
   property real spacing: 0
+  // Between the icon's glyphs side by side (its lines on a horizontal bar)
+  property real iconSpacing: 0
   property color foregroundColor: Theme.background
   property color iconColor: foregroundColor
   property int fontSize: 0
@@ -97,10 +102,15 @@ BaseWidget {
       height: root.isVertical ? root.leadLength : run.height
     }
 
-    // One Text per line, so stacked glyphs (a multi-line icon on a vertical
-    // bar) each centre on their own width rather than the widest line's
-    Column {
+    // One Text per line, a column on a vertical bar and a row on a
+    // horizontal one, each glyph centred in its cell rather than on the
+    // widest line's width
+    Grid {
       id: iconLabel
+      columns: root.isVertical ? 1 : root._iconLines.length
+      columnSpacing: root.iconSpacing
+      horizontalItemAlignment: Grid.AlignHCenter
+      verticalItemAlignment: Grid.AlignVCenter
       visible: root._hasIcon
       x: root.isVertical ? Math.round((run.width - width) / 2) : root._iconStart
       y: root.isVertical ? root._iconStart : Math.round((run.height - height) / 2)
@@ -112,7 +122,6 @@ BaseWidget {
 
         StyledIcon {
           required property int index
-          x: Math.round((iconLabel.width - width) / 2)
           textColor: root.iconColor
           text: root._iconLines[index] ?? ""
           textSize: root.fontSize * root.iconScale

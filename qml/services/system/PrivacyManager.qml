@@ -1,10 +1,16 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Services.Pipewire
 
+import qs.config
+import qs.services.core
+
 // Which app streams use the camera or share the screen, from active
-// PipeWire links (no polling): the Privacy widget's indicators and the
-// OSD's camera and screen sharing statuses. Video comes from a
+// PipeWire links (no polling), and the apps holding a camera's device open
+// themselves (axiom's `camera.state`, internal/camera: Chromium and
+// Electron apps such as Vesktop read V4L2, not PipeWire): the Privacy
+// widget's indicators and the OSD's camera and screen sharing statuses. Video comes from a
 // `Video/Source` node (a camera, xdg-desktop-portal's screencast) or a
 // program's `Stream/Output/Video` (niri's own screencast stream) into an
 // app's `Stream/Input/Video`. A camera is a source backed by a device
@@ -15,11 +21,64 @@ QtObject {
   id: root
 
   // App input streams (PwNodes) sharing the screen / using a camera, once
-  // each
+  // each. A camera's also lists the apps holding its device open, as
+  // objects shaped like a stream's node (id, name, properties: what
+  // AudioManager.appName and the Privacy widget's ignore list read)
   readonly property var screenCaptures: root._targets(false)
-  readonly property var cameraCaptures: root._targets(true)
+  readonly property var cameraCaptures: root._targets(true).concat(root._deviceUsers)
 
   // -- Private --
+
+  // The apps holding a camera's device open (camera.state's users), as
+  // nodes: an id by the app ("device:" + its key, never a PipeWire id,
+  // and the same while it holds it), its desktop entry's name (its
+  // flatpak id's entry, else one found by its process name; read again
+  // as the desktop entries load or change)
+  readonly property var _deviceUsers: {
+    void DesktopEntries.applications.values;
+    return root._devices.map(u => {
+      const entry = (u.app ? DesktopEntries.byId(u.app) : null) ?? DesktopEntries.heuristicLookup(u.app || u.comm);
+      return {
+        "id": "device:" + u.key,
+        "name": u.comm,
+        "properties": {
+          "application.name": entry?.name || u.app || u.comm,
+          "application.process.binary": u.comm
+        }
+      };
+    });
+  }
+  // camera.state's users: [{ key, app, comm, pid }]
+  property var _devices: []
+
+  function _showDevices(state) {
+    root._devices = state.users ?? [];
+  }
+
+  function _fetchDevices() {
+    BackendManager.call("camera.get", {}, (error, state) => {
+      if (!error)
+        root._showDevices(state);
+    });
+  }
+
+  property Connections _backend: Connections {
+    target: BackendManager
+    enabled: !Paths.greeter
+    function onGreeted() {
+      root._fetchDevices();
+    }
+  }
+
+  Component.onCompleted: {
+    // The login screen's axiom doesn't watch the devices
+    if (Paths.greeter)
+      return;
+    BackendManager.listen("camera.state", state => root._showDevices(state));
+    // Made after the hello (a QML reload): no greeted to wait for
+    if (BackendManager.ready)
+      root._fetchDevices();
+  }
 
   // Links that may carry video: out of a video source, or between two
   // nodes Quickshell gives no type (it types no video stream, so niri's

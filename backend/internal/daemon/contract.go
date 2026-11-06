@@ -41,6 +41,7 @@ func pushShapes() []rpc.PushShape {
 		pushVPNState.Shape(), pushVPNSecretRequest.Shape(), pushVPNSecretDone.Shape(),
 		pushDrivesState.Shape(), pushDrivesEvent.Shape(),
 		pushInputMethodState.Shape(),
+		pushCameraState.Shape(),
 		pushExecOutputs.Shape(),
 		pushChatDelta.Shape(),
 		pushFileChanged.Shape(),
@@ -58,7 +59,7 @@ func (d *Daemon) methodSets() []func(*rpc.Registry) {
 	return append([]func(*rpc.Registry){
 		d.coreMethods, d.configMethods, d.ipcMethods, d.sharingMethods,
 		func(reg *rpc.Registry) { d.compositorMethods(reg, d.compositor) },
-		d.compositorSocketMethods, d.topicsPart().methods, d.toolsMethods, d.execMethods, d.filesMethods, d.calendarMethods, d.chatMethods, d.secretsMethods, d.themeMethods, d.hookupMethods, d.selfUpdateMethods, d.greeterInstallMethods, d.cursorMethods, d.inputMethods, d.brightnessPart().methods, d.idleMethods, d.waylandMethods, d.switcherMethods, d.clipboardMethods, d.vpnMethods, d.drivesMethods, d.inputMethodMethods, d.netMethods, d.dev.methods,
+		d.compositorSocketMethods, d.topicsPart().methods, d.toolsMethods, d.execMethods, d.filesMethods, d.calendarMethods, d.chatMethods, d.secretsMethods, d.themeMethods, d.hookupMethods, d.selfUpdateMethods, d.greeterInstallMethods, d.cursorMethods, d.inputMethods, d.brightnessPart().methods, d.idleMethods, d.waylandMethods, d.switcherMethods, d.clipboardMethods, d.vpnMethods, d.drivesMethods, d.inputMethodMethods, d.cameraMethods, d.netMethods, d.dev.methods,
 	}, d.machineMethods()...)
 }
 

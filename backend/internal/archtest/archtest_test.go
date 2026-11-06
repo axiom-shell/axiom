@@ -60,6 +60,7 @@ var tiers = map[string]int{
 	"internal/buginfo":              tierEdge,
 	"internal/buildinfo":            tierEdge,
 	"internal/calendar":             tierEdge,
+	"internal/camera":               tierEdge,
 	"internal/chat":                 tierEdge,
 	"internal/claudeusage":          tierEdge,
 	"internal/clipboard":            tierEdge,
