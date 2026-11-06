@@ -119,3 +119,33 @@ func TestNiriManagedSwitcherBindsAreAxioms(t *testing.T) {
 	in.Set("binds", kept)
 	check("no binds")
 }
+
+// The rule turning down apps' maximize-to-edges requests comes ahead of the
+// user's config in every mode axiom can put it there (managed: before their
+// files; detached: the wrapper, before their config, the module without
+// it), so a later rule of theirs wins
+func TestNiriMaximizeRuleBeforeTheUsers(t *testing.T) {
+	t.Parallel()
+	w := goldenWriter(t, "niri").(*niriWriter)
+	dir := t.TempDir()
+	w.stateDir = dir + "/"
+	w.state.NiriWrapper = true // loaded already: no niri to ask
+	w.niri = filepath.Join(dir, "niri")
+	if err := os.WriteFile(w.niri, []byte("#!/bin/sh\ncat >/dev/null\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	in := goldenInputs(t, "niri")
+	const rule = "open-maximized-to-edges false"
+	managed := w.managedText(in, in.get("specFile"))
+	if at := strings.Index(managed, rule); at < 0 || at > strings.Index(managed, "// Your files") {
+		t.Fatalf("managed: the rule isn't before the user's files:\n%s", managed)
+	}
+	w.runtimeApply(context.Background(), in, nil)
+	wrapper, module := readFile(w.wrapperPath()), readFile(w.detachedPath())
+	if at := strings.Index(wrapper, rule); at < 0 || at > strings.Index(wrapper, "include") {
+		t.Fatalf("wrapper: the rule isn't before the user's config:\n%s", wrapper)
+	}
+	if module == "" || strings.Contains(module, rule) {
+		t.Fatalf("detached module: missing, or has the rule after the user's config")
+	}
+}
