@@ -354,6 +354,7 @@ Every prefix and command is listed in [Keybinds, IPC and launcher](usage.md#laun
 
   `/welcome` runs it again.
 - **Screenshots:** a region, a window or a whole screen, picked on a frozen frame. Saved and copied, or opened in satty or swappy to annotate. Also screen recording with `wf-recorder`, with the microphone or (with `pactl`) the system's sound.
+- **Screen sharing:** axiom's own picker when an app shares the screen (a call, a stream), in place of the portal's: a screen, a window or (on Hyprland) a region, on Hyprland, niri and sway. Set up once in **Settings → Screen & Power → Screen sharing**.
 - **Brightness:** keys and an OSD bar for a laptop screen and for external monitors over DDC/CI.
 - **Night light:** warmer colors on a schedule, set by axiom through the compositor (`wlsunset` on niri).
 - **Idle:** axiom handles idle itself, on any compositor: dim, lock, screen off and suspend timeouts, and locking before the computer sleeps.

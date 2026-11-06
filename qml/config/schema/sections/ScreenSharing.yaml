@@ -27,5 +27,5 @@ properties:
     type: boolean
     title: Let apps reuse a choice
     default: true
-    description: An app may share the same screen or window again later without asking, until you share something else (restore tokens).
+    description: An app that asks to may share the same screen or window again later without the picker (restore tokens). Under sway, the wlroots portal decides this itself.
     x-enabledIf: {/ScreenSharing.enabled: true}

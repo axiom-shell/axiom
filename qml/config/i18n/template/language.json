@@ -271,7 +271,7 @@
     "An absolute path (~/ works). Empty uses ~/.local/share/axiom/notes.": "",
     "An app": "",
     "An app is keeping the screen on: the steps below wait until it lets go.": "",
-    "An app may share the same screen or window again later without asking, until you share something else (restore tokens).": "",
+    "An app that asks to may share the same screen or window again later without the picker (restore tokens). Under sway, the wlroots portal decides this itself.": "",
     "An arrow on the active workspace pointing to the shown grid row.": "",
     "An edge menu to open in place of the popout.": "",
     "An environment variable holding the key. It wins over a stored key.": "",

@@ -47,11 +47,10 @@ Singleton {
   property bool _portalInstalled: false
   property bool _axiomPortalInstalled: false
 
-  // Where xdg-desktop-portal finds .portal files
+  // Where xdg-desktop-portal finds .portal files: the XDG data dirs, then
+  // its own datadir
   function _portalDirs() {
-    const dataHome = Quickshell.env("XDG_DATA_HOME") || Paths.homeDirectory + ".local/share";
-    const dataDirs = (Quickshell.env("XDG_DATA_DIRS") || "/usr/local/share:/usr/share").split(":");
-    return [dataHome].concat(dataDirs, ["/usr/share"]).map(d => d.replace(/\/?$/, "/") + "xdg-desktop-portal/portals/");
+    return Paths.dataSearchDirs.concat(["/usr/share"]).map(d => d + "/xdg-desktop-portal/portals/");
   }
 
   function _hasPortalFile(name) {

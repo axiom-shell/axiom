@@ -4056,12 +4056,12 @@
     "Under niri, screen sharing goes to axiom's own portal; everything else stays with GNOME's.": "",
     "The picker apps show to share a screen or window (a call, a stream).": "",
     "Apps sharing a screen ask axiom's picker instead of the compositor portal's own. The card above sets the portal up once.": "",
-    "An app may share the same screen or window again later without asking, until you share something else (restore tokens).": "",
     "Some apps (Discord) ask several times for one share. A request this soon after the last answer gets it again without the picker; 0 always asks.": "",
     "Use axiom's picker": "",
     "Let apps reuse a choice": "",
     "Reuse the last choice for": "",
     "screen sharing": "",
-    "Pick what to share": ""
+    "Pick what to share": "",
+    "An app that asks to may share the same screen or window again later without the picker (restore tokens). Under sway, the wlroots portal decides this itself.": ""
   }
 }
