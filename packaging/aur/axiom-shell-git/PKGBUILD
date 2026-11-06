@@ -45,6 +45,10 @@ optdepends=(
   'xdg-desktop-portal-wlr: screen sharing under sway (calls, streams)'
   'xdg-desktop-portal-gnome: screen sharing under niri (calls, streams)'
   'fcitx5: typing Japanese, Chinese, Korean and more (the input method)'
+  'qt6-imageformats: WebP wallpapers'
+  'kimageformats: AVIF and JPEG XL wallpapers (with libavif, libjxl)'
+  'libavif: AVIF wallpapers (with kimageformats)'
+  'libjxl: JPEG XL wallpapers (with kimageformats)'
   'greetd: axiom as the login screen (set up from Settings → Login screen)'
   'greetd-agreety: axiom as the login screen (its text fallback)'
 )
