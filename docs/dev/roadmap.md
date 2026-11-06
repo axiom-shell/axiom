@@ -362,7 +362,6 @@ Found by the audits:
 - [A fading toast keeps its full blur on niri](issues.md#a-fading-toast-keeps-its-full-blur-on-niri)
 - [A hide while a popout closes leaves its queued show to open it](issues.md#a-hide-while-a-popout-closes-leaves-its-queued-show-to-open-it)
 - [A tray submenu longer than the screen runs off it](issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
-- [A pill's shadow run-on rectangles log stackAfter warnings](issues.md#a-pills-shadow-run-on-rectangles-log-stackafter-warnings)
 - [DockMenu draws its own menu rows and keys rather than StyledContextMenu's](issues.md#dockmenu-draws-its-own-menu-rows-and-keys-rather-than-styledcontextmenus)
 - [Six x-auto settings still store Automatic as -1](issues.md#six-x-auto-settings-still-store-automatic-as--1)
 - [DayPane builds its EventEditor before it opens](issues.md#daypane-builds-its-eventeditor-before-it-opens)

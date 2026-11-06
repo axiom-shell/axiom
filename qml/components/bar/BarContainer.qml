@@ -899,20 +899,28 @@ Rectangle {
           mirrorStroke: "black"
         }
         // ...and where it runs on past its outline: off a bare screen
-        // edge, into what it joins straight (AttachedSurface.shadowRunOn)
+        // edge, into what it joins straight (AttachedSurface.shadowRunOn).
+        // Built in an item of its own moved under the shadow, so the
+        // Repeater's rectangles stay its siblings (a delegate moved there
+        // itself can't be stacked after by the next one)
         readonly property var _runOnShadow: pill.shadowRunOn(Math.ceil(root.barConfig.shadowSize * 1.25))
-        Repeater {
-          model: pill._runOnShadow.length
+        Item {
+          parent: shadowShape
+          x: pill.x
+          y: pill.y
 
-          Rectangle {
-            required property int index
-            readonly property rect area: pill._runOnShadow[index] ?? Qt.rect(0, 0, 0, 0)
-            parent: shadowShape
-            x: pill.x + area.x
-            y: pill.y + area.y
-            width: area.width
-            height: area.height
-            color: "black"
+          Repeater {
+            model: pill._runOnShadow.length
+
+            Rectangle {
+              required property int index
+              readonly property rect area: pill._runOnShadow[index] ?? Qt.rect(0, 0, 0, 0)
+              x: area.x
+              y: area.y
+              width: area.width
+              height: area.height
+              color: "black"
+            }
           }
         }
 

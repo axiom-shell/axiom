@@ -473,12 +473,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
 
-### A pill's shadow run-on rectangles log stackAfter warnings
-- **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
-- **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
-- **Size:** small
-- **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
-
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
 - **What:** Contract (writing-modules.md): a module sets `fullMinWidth` / `fullMinHeight`, "the px its full layout needs inside its padding". These don't cover it. All figures are inner px at font 14, normal density.
