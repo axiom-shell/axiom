@@ -213,20 +213,20 @@ Panel {
         size: Widget.height * (root.large ? 1.4 : 1)
         icon: "skip_previous"
         enabled: MediaManager.canGoPrevious
-        onClicked: MediaManager.previous()
+        onClicked: MediaManager.previous() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         primary: true
         size: Widget.height * (root.short ? 1.2 : root.large ? 2 : 1.4)
         icon: MediaManager.isPlaying ? "pause" : "play_arrow"
         enabled: MediaManager.canTogglePlaying
-        onClicked: MediaManager.togglePlayPause()
+        onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         size: Widget.height * (root.large ? 1.4 : 1)
         icon: "skip_next"
         enabled: MediaManager.canGoNext
-        onClicked: MediaManager.next()
+        onClicked: MediaManager.next() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
     }
   }
@@ -282,7 +282,7 @@ Panel {
       size: Math.min(parent.width, parent.height) * 0.4
       icon: MediaManager.isPlaying ? "pause" : "play_arrow"
       enabled: MediaManager.canTogglePlaying
-      onClicked: MediaManager.togglePlayPause()
+      onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
     }
   }
 
@@ -361,21 +361,21 @@ Panel {
         size: Math.min(Widget.height, root.innerHeight)
         icon: "skip_previous"
         enabled: MediaManager.canGoPrevious
-        onClicked: MediaManager.previous()
+        onClicked: MediaManager.previous() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         primary: true
         size: Math.min(Widget.height * 1.2, root.innerHeight)
         icon: MediaManager.isPlaying ? "pause" : "play_arrow"
         enabled: MediaManager.canTogglePlaying
-        onClicked: MediaManager.togglePlayPause()
+        onClicked: MediaManager.togglePlayPause() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
       MediaButton {
         visible: parent.wide
         size: Math.min(Widget.height, root.innerHeight)
         icon: "skip_next"
         enabled: MediaManager.canGoNext
-        onClicked: MediaManager.next()
+        onClicked: MediaManager.next() // allowed: on the lock screen too, where x-lockActions cover MediaManager's transport
       }
     }
   }

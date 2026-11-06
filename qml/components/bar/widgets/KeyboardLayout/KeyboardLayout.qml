@@ -39,11 +39,9 @@ BarIconWidget {
   }
 
   function _step(direction) {
-    ShellManager.onScreen("keyboardLayout");
-    if (direction < 0)
-      InputSourceManager.prev(false);
-    else
-      InputSourceManager.next(false);
+    ActionsManager.run(direction < 0 ? "inputSourcePrev" : "inputSourceNext", {
+      "fromScreen": true
+    });
   }
 
   // Switches made in fcitx5 itself are heard without a tray too

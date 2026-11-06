@@ -164,10 +164,11 @@ QtObject {
 
   // --- Power ---
 
-  // "suspend" | "reboot" | "poweroff": logind lets the greeter's own
-  // session do these
+  // "suspend" | "hibernate" | "reboot" | "poweroff": logind lets the
+  // greeter's own session do these (hibernate only where
+  // SessionManager.canHibernate)
   function power(action) {
-    if (["suspend", "reboot", "poweroff"].includes(action))
+    if (["suspend", "hibernate", "reboot", "poweroff"].includes(action))
       CommandManager.runDetached(["systemctl", action]);
   }
 

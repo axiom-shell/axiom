@@ -61,10 +61,10 @@ Panel {
 
     StyledSwitch {
       checked: IdleManager.caffeine
-      onToggled: {
-        ShellManager.onScreen("caffeine");
-        IdleManager.setCaffeine(checked);
-      }
+      onToggled: ActionsManager.run("idleInhibit", {
+        "call": checked ? "open" : "close",
+        "fromScreen": true
+      })
     }
   }
 
@@ -120,10 +120,10 @@ Panel {
             implicitHeight: Widget.height - Widget.px(4)
             iconText: "power_settings_new"
             text: I18n.tr("Turn off")
-            onClicked: {
-              ShellManager.onScreen("caffeine");
-              IdleManager.setCaffeine(false);
-            }
+            onClicked: ActionsManager.run("idleInhibit", {
+              "call": "close",
+              "fromScreen": true
+            })
           }
           StyledTextButton {
             implicitHeight: Widget.height - Widget.px(4)
@@ -162,10 +162,10 @@ Panel {
       ShellManager.onScreen("caffeine");
       IdleManager.toggleCaffeineTimer();
     }
-    onReset: {
-      ShellManager.onScreen("caffeine");
-      IdleManager.setCaffeine(false);
-    }
+    onReset: ActionsManager.run("idleInhibit", {
+      "call": "close",
+      "fromScreen": true
+    })
     onExtended: ms => IdleManager.addCaffeineTime(ms)
   }
 

@@ -31,6 +31,37 @@ TestCase {
       verify(action === "exec" || test.table.ipcActions[action] !== undefined || test.table.compositorActions[action] !== undefined, action + " has no entry");
   }
 
+  // Every action has its icon in the table (the picker, a tile, a
+  // launcher command show it)
+  function test_everyActionHasAnIcon() {
+    for (const action of _schemaActions())
+      verify(test.table.icons[action] !== undefined, action + " has no icon");
+    compare(BindActions.iconOf(test.table, "wifi"), "wifi");
+    compare(BindActions.iconOf(test.table, "nope"), "keyboard", "an unknown action's icon");
+    compare(BindActions.iconOf(null, "wifi"), "keyboard", "no table yet");
+  }
+
+  // The theme action takes a theme (or random), random by default
+  function test_theme() {
+    compare(BindActions.argumentKind(test.table, "theme"), "theme");
+    compare(BindActions.ipcCall(test.table, "theme", "", "toggle"), {
+      "target": "theme",
+      "function": "set",
+      "args": ["random"]
+    });
+    compare(BindActions.ipcCall(test.table, "theme", "tokyo-night", "toggle").args, ["tokyo-night"]);
+    compare(BindActions.ipcCall(test.table, "airplane", "", "open"), {
+      "target": "airplane",
+      "function": "enable",
+      "args": []
+    });
+    compare(BindActions.ipcCall(test.table, "reboot", "", "toggle"), {
+      "target": "session",
+      "function": "reboot",
+      "args": []
+    });
+  }
+
   function test_noActionIsBoth() {
     for (const action of Object.keys(test.table.ipcActions))
       verify(test.table.compositorActions[action] === undefined, action + " is both an IPC and a compositor action");

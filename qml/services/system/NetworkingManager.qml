@@ -476,4 +476,21 @@ QtObject {
       root.setWifiEnabled(false);
     }
   }
+
+  // Keybind action airplane: axiom ipc airplane toggle|enable|disable
+  property IpcTarget _airplaneIpc: IpcTarget {
+    target: "airplane"
+
+    function toggle(): void {
+      root.setAirplane(!root.airplane);
+    }
+
+    function enable(): void {
+      root.setAirplane(true);
+    }
+
+    function disable(): void {
+      root.setAirplane(false);
+    }
+  }
 }

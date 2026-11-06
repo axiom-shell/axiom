@@ -26,6 +26,10 @@ properties:
       - workspaceOverview
       - powerMenu
       - lock
+      - suspend
+      - hibernate
+      - reboot
+      - poweroff
       - toggleDnd
       - clearNotifications
       - idleInhibit
@@ -34,9 +38,12 @@ properties:
       - randomWallpaper
       - monitorsIdentify
       - darkMode
+      - theme
       - wifi
       - bluetooth
+      - airplane
       - vpn
+      - powerSaver
       - workspaceStep
       - moveWindowStep
       - moveWindowStepSilent
@@ -117,6 +124,10 @@ properties:
       workspaceOverview: Workspace overview
       powerMenu: Power menu
       lock: Lock
+      suspend: Suspend
+      hibernate: Hibernate
+      reboot: Restart
+      poweroff: Shut down
       toggleDnd: Do not disturb
       clearNotifications: Clear all notifications
       idleInhibit: Caffeine
@@ -125,9 +136,12 @@ properties:
       randomWallpaper: Random wallpaper
       monitorsIdentify: Identify monitors
       darkMode: Dark mode
+      theme: Theme
       wifi: Wi-Fi
       bluetooth: Bluetooth
+      airplane: Airplane mode
       vpn: VPN on or off
+      powerSaver: Power saver
       workspaceStep: Workspace in a direction
       moveWindowStep: Move window in a direction
       workspaceNth: Workspace by number
@@ -202,7 +216,7 @@ properties:
     type: string
     title: Argument
     default: ''
-    description: 'Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a command, or a compositor command in its own syntax.'
+    description: 'Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.'
     x-showIf:
       action:
         - launcherSearch
@@ -223,6 +237,7 @@ properties:
         - toggleSpecial
         - moveToSpecial
         - screenshot
+        - theme
         - timerStart
         - exec
         - raw
@@ -248,6 +263,8 @@ properties:
         - darkMode
         - wifi
         - bluetooth
+        - airplane
+        - powerSaver
         - screenRecord
         - toggleMicMute
         - toggleDnd

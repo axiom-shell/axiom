@@ -173,7 +173,8 @@ QtObject {
 
   // Runs an axiom action (the keybind table's ipcActions: "overlayPage"
   // with its page, "lock", …) with its call (toggle, open or close) as its
-  // bind would, or `exec`'s command
+  // bind would, through the same IPC function in place, or `exec`'s
+  // command. ActionsManager.run is the UI's way in (it marks a click first)
   function runAction(action, argument, call) {
     if (action === "exec") {
       CommandManager.runDetached(argument);
@@ -184,14 +185,7 @@ QtObject {
       console.warn("[ShellManager] can't run action", action);
       return;
     }
-    BackendManager.call("ipc.call", {
-      "target": ipc.target,
-      "function": ipc.function,
-      "args": ipc.args
-    }, error => {
-      if (error)
-        console.warn("[ShellManager]", action, "failed:", error.message);
-    });
+    BackendManager.callLocal(ipc.target, ipc.function, ipc.args);
   }
 
   // A surface's ScreenTarget mode with "inherit" resolved: "primary" |

@@ -16,6 +16,7 @@ Dependencies point one way, methods → data owners → readers → services →
 |---|---|
 | **Writing any QML** (JS engine gaps, binding traps) | `docs/dev/core/qml-pitfalls.md` |
 | Services, polling, `acquire`/`release` | `docs/dev/core/services-pattern.md` |
+| A toggle or one-tap action (tile, OSD icon, command, keybind, hot corner) | `docs/dev/core/actions.md` |
 | Config loading, writes, drafts, previews, XDG paths | `docs/dev/core/config-manager.md`, `config-readers.md` |
 | Schema `x-*` annotations (complete list) | `docs/dev/core/schema-annotations.md` |
 | Settings page, saved configs, import/export | `docs/dev/core/settings-page.md`, `saved-configs-sharing.md` |
@@ -113,6 +114,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [settings-page](core/settings-page.md): how the schema becomes the settings page (layout, cards, folding, sidebar, search).
 - [saved-configs-sharing](core/saved-configs-sharing.md): snapshots, shipped examples, import/export, `x-scope`, `x-takeover`.
 - [editors-pattern](core/editors-pattern.md): the shape every editor follows (draft, selection, page, unsaved reminders, drag, inspector).
+- [actions](core/actions.md): the one catalogue of the shell's actions (the keybind table plus `ActionsManager`): tiles, OSD icons, launcher commands, buttons, keys and hot corners all run them the same way.
 - [shell-manager-targeting](core/shell-manager-targeting.md): cross-cutting UI signals, monitor modes, which screen answers a shortcut, the surface registry (`SurfaceManager`).
 - [secrets](core/secrets.md): API keys and passwords (`SecretsManager`).
 - [icons](core/icons.md): the bundled Material Symbols font, its catalog and update script, the icon field (`x-control: icon`, `IconManager`) and `check_icons.py`.

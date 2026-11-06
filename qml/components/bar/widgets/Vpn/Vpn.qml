@@ -34,8 +34,9 @@ ValueStyleWidget {
     if (button === Qt.MiddleButton)
       CommandManager.runDetached(root.properties.middleCommand);
     else {
-      ShellManager.onScreen("vpn");
-      VpnManager.toggleLast();
+      ActionsManager.run("vpn", {
+        "fromScreen": true
+      });
     }
   }
 

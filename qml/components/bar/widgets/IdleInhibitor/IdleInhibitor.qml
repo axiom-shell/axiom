@@ -27,10 +27,9 @@ ValueStyleWidget {
 
   accentColor: Theme.resolveColor(IdleManager.caffeine ? properties.activeColor : properties.inactiveColor)
   clickable: true
-  onClicked: {
-    ShellManager.onScreen("caffeine");
-    IdleManager.toggle();
-  }
+  onClicked: ActionsManager.run("idleInhibit", {
+    "fromScreen": true
+  })
 
   PopoutAnchor {
     hitArea: root.hitArea

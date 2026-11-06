@@ -66,7 +66,7 @@ TitledCard {
       anchors.fill: parent
       enabled: root.hasDark && root.hasLight
       cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-      onClicked: ThemeManager.setLightMode(Appearance.darkMode)
+      onClicked: ActionsManager.run("darkMode")
     }
   }
 
@@ -85,14 +85,18 @@ TitledCard {
           text: I18n.tr("Dark")
           active: Appearance.darkMode
           available: root.hasDark
-          onClicked: ThemeManager.setLightMode(false)
+          onClicked: ActionsManager.run("darkMode", {
+            "call": "open"
+          })
         }
 
         SegmentButton {
           text: I18n.tr("Light")
           active: !Appearance.darkMode
           available: root.hasLight
-          onClicked: ThemeManager.setLightMode(true)
+          onClicked: ActionsManager.run("darkMode", {
+            "call": "close"
+          })
         }
       }
 

@@ -44,8 +44,9 @@ ValueStyleWidget {
     if (button === Qt.MiddleButton)
       CommandManager.runDetached(root.properties.middleCommand);
     else {
-      ShellManager.onScreen("bluetooth");
-      BluetoothManager.toggleEnabled();
+      ActionsManager.run("bluetooth", {
+        "fromScreen": true
+      });
     }
   }
 

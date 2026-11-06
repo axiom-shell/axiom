@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.services.system
+import qs.services.ui
 import qs.components.reusable
 
 // A StyledVolumeBar bound to a Pipewire stream (by app name) or the system
@@ -60,7 +61,7 @@ Item {
 
   function toggleMute() {
     if (useSystemVolume)
-      AudioManager.toggleMute();
+      ActionsManager.run("toggleMute");
     else
       AudioManager.setNodesMuted(_targetNodes, !root.isMuted);
   }

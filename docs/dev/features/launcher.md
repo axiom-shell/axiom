@@ -56,7 +56,7 @@ The first character picks the provider:
 ### Commands
 - Commands live in `qml/services/ui/LauncherCommands.qml`, a plain list of entries:
   `{ name, aliases, glyph, description(), usage, needsArg, confirm, available(), status(), options(arg), run(arg, value) }`
-- A new shell feature gets a command by adding an entry that calls its service.
+- A new shell feature gets a command by adding an entry that calls its service. A command that runs one of the shell's actions (a toggle, a session action, opening a surface) is built by `_action(name, id, aliases, description, call)` or, with `[on | off]` (the action's open / close call), `_switch`: its glyph, status, availability and confirm are the action's, and it runs through `ActionsManager.run` ([Actions](../core/actions.md)).
 - `options` supplies argument completions.
 - `confirm` asks for a second Enter (`LauncherManager._gate`, a `ConfirmGate`): the destructive session actions, `/clear` and `/update` installing (a getter, true only while an update is available).
 

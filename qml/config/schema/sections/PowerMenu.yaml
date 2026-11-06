@@ -32,7 +32,10 @@ properties:
     items:
       type: string
       enum: [lock, suspend, hibernate, logout, reboot, poweroff]
-    description: In order.
+    x-ordered: true
+    x-enumLabels: {lock: Lock, suspend: Suspend, hibernate: Hibernate, logout: Log out, reboot: Restart, poweroff: Shut down}
+    x-enumIcons: {lock: lock, suspend: bedtime, hibernate: ac_unit, logout: logout, reboot: restart_alt, poweroff: power_settings_new}
+    description: In the order shown.
   confirm:
     x-scope: look
     type: boolean

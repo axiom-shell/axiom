@@ -1,6 +1,6 @@
 # Hot corners
 
-> **Files:** `qml/config/HotCornersConfig.qml`, `backend/internal/compositor/manager/niri.go` (`managedText`), `backend/internal/migrate/steps/v82.go`, `backend/internal/migrate/steps/v89.go`, `qml/shell/HotCorners.qml`, `qml/services/ui/ShellManager.qml` (`runAction`), `qml/components/methods/BindActions.qml` (`ipcCall`)
+> **Files:** `qml/config/HotCornersConfig.qml`, `backend/internal/compositor/manager/niri.go` (`managedText`), `backend/internal/migrate/steps/v82.go`, `backend/internal/migrate/steps/v89.go`, `qml/shell/HotCorners.qml`, `qml/services/ui/ActionsManager.qml` (`run`), `qml/services/ui/ShellManager.qml` (`runAction`), `qml/components/methods/BindActions.qml` (`ipcCall`)
 > **Config:** `HotCorners.items` (reader `HotCornersConfig`)
 > **Related:** [ShellManager and screen targeting](../core/shell-manager-targeting.md), [Keybinds](../hyprland/keybinds.md), [Layer arrangement](../compositor/layer-arrangement.md), [niri backend](../compositor/niri-backend.md)
 
@@ -8,13 +8,13 @@ axiom's own hot corners, drawn by the shell, so they work the same on every comp
 
 ### Config (`HotCorners` section, Overlay & Popouts)
 - `items[]`: `id`, `corner` (`topLeft` | `topRight` | `bottomLeft` | `bottomRight`), `action` with its `argument` and `call` (toggle, open or close, for the actions with `calls` in the table, as a bind's), `screen` (a `ScreenTarget`: every monitor, the primary one or named ones), `delay` (ms, 0 by default, as niri's corner fires at once).
-- `action` is an axiom action: the keybind table's `ipcActions` (`backend/internal/compositor/actions/table.json`), or `exec` with a command (`x-scopeIf` makes that item `commands`). A corner fires on a stray pointer, so it leaves out the actions that lose state or move a window with no sign: clearing notifications, moving the window to a workspace (all four), resetting the stopwatch or timer and stopping the pomodoro (config v89 removed corners set to one). The schema marks it `x-axiomActions` with those left out, and the schema build fills the enum, the labels (the Keybinds page's) and the argument's and the call's `x-showIf` from the table ([schema annotations](../core/schema-annotations.md)), so a new axiom action reaches the corners with no edit here.
+- `action` is an axiom action: the keybind table's `ipcActions` (`backend/internal/compositor/actions/table.json`), or `exec` with a command (`x-scopeIf` makes that item `commands`). A corner fires on a stray pointer, so it leaves out the actions that lose state, move a window with no sign or end the session: clearing notifications, moving the window to a workspace (all four), resetting the stopwatch or timer, stopping the pomodoro (config v89 removed corners set to one), restarting and shutting down (maintainer, 2026-11-06: "Keys run, corners can't"). The schema marks it `x-axiomActions` with those left out, and the schema build fills the enum, the labels (the Keybinds page's) and the argument's and the call's `x-showIf` from the table ([schema annotations](../core/schema-annotations.md)), so a new axiom action reaches the corners with no edit here.
 - The generated form shows the list as one card (`x-wide`).
 
 ### Windows (`qml/shell/HotCorners`)
 - One transparent 1 px `PanelWindow` per item per screen (`General.screensFor`), anchored to its corner, `ExclusionMode.Ignore`, keyed by item id, built once `CompositorManager.surfacesReady` (the layer rules are in), as the bars and docks are.
 - On `Top`, so a fullscreen window covers it and the corner is quiet in games and videos, as the bars are. Its `LayerSlot` (`axiom-hot-corner`, `LayerStack.layers`) maps it after the bars, border and docks, so a corner they sit in is still the corner's.
-- Entering starts the delay; leaving stops it. The action runs once per visit, through `ShellManager.runAction`, which sends the action's IPC call (`BindActions.ipcCall`) through the daemon's `ipc.call`, landing on the target instance as a bind's would.
+- Entering starts the delay; leaving stops it. The action runs once per visit, through `ActionsManager.run` ([actions](../core/actions.md)): a session action through `SessionManager` (so lock works with a locker of the user's own), any other through `ShellManager.runAction`, which runs the action's IPC call (`BindActions.ipcCall`) in place (`BackendManager.callLocal`), as a bind's would.
 - A surface on the `Overlay` layer covering the corner (axiom's workspace overview, a full-screen overlay page) covers the corner too, so a toggling action opens it from a corner but doesn't close it there.
 - The corner pixel takes the click too: a Wayland input region can't take hover and pass clicks through.
 

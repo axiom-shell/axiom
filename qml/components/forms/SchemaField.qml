@@ -115,7 +115,7 @@ Loader {
     const labels = Object.assign(Array.prototype.reduce.call(values, (out, value) => {
       out[value] = Utils.enumLabel(value);
       return out;
-    }, {}), fieldSchema["x-enumLabels"] ?? {});
+    }, {}), fieldSchema.items?.["x-enumLabels"] ?? {}, fieldSchema["x-enumLabels"] ?? {});
     if (fieldSchema["x-emptyLabel"])
       labels[""] = fieldSchema["x-emptyLabel"];
     const out = Object.keys(labels).reduce((out, value) => {
@@ -249,6 +249,8 @@ Loader {
     case "array":
       // Strings only: from a fixed set (chips), or free text (a monitor
       // list too: its names may be of monitors not plugged in)
+      if (fieldSchema.items?.enum && fieldSchema["x-ordered"])
+        return orderedChipsField;
       return fieldSchema.items?.enum || fieldSchema.items?.["x-options"] === "marketSymbols" ? chipsField : stringListField;
     case "boolean":
       return switchField;
@@ -535,6 +537,8 @@ Loader {
   // the options' order. `x-enumFrom` offers only the options a sibling
   // array holds
   readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : SettingsManager.optionsFor(fieldSchema.items) ?? []
+  // An option's chip icon (`x-enumIcons`, on the array or its items)
+  readonly property var _chipIcons: Object.assign({}, fieldSchema.items?.["x-enumIcons"] ?? {}, fieldSchema["x-enumIcons"] ?? {})
   Component {
     id: chipsField
     ColumnLayout {
@@ -560,7 +564,7 @@ Loader {
             id: chip
             required property string modelData
             readonly property bool selected: (root.current ?? []).includes(chip.modelData)
-            iconText: root.fieldSchema["x-enumIcons"]?.[chip.modelData] ?? ""
+            iconText: root._chipIcons[chip.modelData] ?? ""
             text: root.optionLabels[chip.modelData] ?? I18n.tr(chip.modelData)
             active: chip.selected
             onClicked: {
@@ -571,6 +575,29 @@ Loader {
           }
         }
       }
+    }
+  }
+
+  // Chips whose order counts (`x-ordered`): dragged into place
+  Component {
+    id: orderedChipsField
+    SchemaOrderedChips {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      value: root.current ?? []
+      options: {
+        const all = root._chipOptions;
+        const from = root.fieldSchema["x-enumFrom"];
+        if (!from)
+          return all;
+        const held = root._valueOf(from) ?? [];
+        return all.filter(v => held.includes(v));
+      }
+      labels: root.optionLabels
+      icons: root._chipIcons
+      groups: Object.assign({}, root.fieldSchema.items?.["x-enumGroups"] ?? {}, root.fieldSchema["x-enumGroups"] ?? {})
+      onEdited: value => root.commit(value)
     }
   }
 

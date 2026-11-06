@@ -6,42 +6,35 @@ settings:
   actions:
     type: array
     title: Actions
-    default: [wifi, bluetooth, caffeine, dnd, darkMode]
-    description: Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.
+    default: [wifi, bluetooth, idleInhibit, toggleDnd, darkMode]
+    description: Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.
+    x-ordered: true
     items:
       type: string
-      enum:
-        - wifi
-        - bluetooth
-        - caffeine
-        - dnd
-        - darkMode
-        - nightLight
-        - powerSaver
-        - brightness
-        - lock
-        - suspend
-        - hibernate
-        - logout
-        - reboot
-        - poweroff
-        - pin
+      # The tiles of its own open a module (Brightness's sliders, Volume's
+      # mixer, the Theme and Wallpaper pickers) or pin its edge menu
+      x-axiomActions: {noArgument: true, except: [clipboard, emoji, calculator], extra: [logout, brightness, volume, themePicker, wallpaperPicker, pin]}
       x-enumLabels:
-        wifi: Wi-Fi
-        bluetooth: Bluetooth
-        caffeine: Caffeine
-        dnd: Do not disturb
-        darkMode: Dark mode
-        nightLight: Night light
-        powerSaver: Power saver
-        brightness: Brightness
-        lock: Lock
-        suspend: Suspend
-        hibernate: Hibernate
         logout: Log out
-        reboot: Reboot
-        poweroff: Power off
+        brightness: Brightness
+        volume: Volume
+        themePicker: Theme
+        wallpaperPicker: Wallpaper
         pin: Pin open
+      x-enumIcons:
+        logout: logout
+        brightness: brightness_medium
+        volume: volume_up
+        themePicker: palette
+        wallpaperPicker: wallpaper
+        pin: push_pin
+      x-enumGroups:
+        logout: System
+        brightness: Tiles
+        volume: Tiles
+        themePicker: Tiles
+        wallpaperPicker: Tiles
+        pin: Tiles
   labels:
     type: string
     title: Names

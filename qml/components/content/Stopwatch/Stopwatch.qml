@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.services.apps
 import qs.services.system
+import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 import qs.components.content.base
@@ -93,8 +94,8 @@ Panel {
       label: StopwatchManager.timer.label
       fill: root.embedded
       onStarted: timer => StopwatchManager.startTimer(timer.ms, timer.label, timer.clock === true)
-      onToggled: StopwatchManager.toggleTimer()
-      onReset: StopwatchManager.resetTimer()
+      onToggled: ActionsManager.run("timerToggle")
+      onReset: ActionsManager.run("timerReset")
       onExtended: ms => StopwatchManager.addTimer(ms)
     }
   }
@@ -128,9 +129,9 @@ Panel {
       rightTip: I18n.tr("Lap")
       rightEnabled: StopwatchManager.stopwatchRunning
       rightKey: Qt.Key_L
-      onLeftClicked: StopwatchManager.resetStopwatch()
-      onMainClicked: StopwatchManager.toggleStopwatch()
-      onRightClicked: StopwatchManager.lap()
+      onLeftClicked: ActionsManager.run("stopwatchReset")
+      onMainClicked: ActionsManager.run("stopwatch")
+      onRightClicked: ActionsManager.run("stopwatchLap")
     }
   }
 

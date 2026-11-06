@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.services.apps
+import qs.services.ui
 import qs.components.content.parts
 import qs.components.reusable
 import qs.components.content.base
@@ -21,9 +22,11 @@ Card {
 
   function capture(mode) {
     if (mode === "record")
-      ScreenshotManager.toggleRecording();
+      ActionsManager.run("screenRecord");
     else
-      ScreenshotManager.take(mode);
+      ActionsManager.run("screenshot", {
+        "argument": mode
+      });
   }
 
   TileGrid {

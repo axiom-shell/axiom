@@ -32,6 +32,13 @@ Rectangle {
   readonly property real _wellSize: Math.max(0, Math.min(root.height - Widget.spacing * 2, Appearance.fontSize * 2.6))
   // Room for the name beside the well
   readonly property bool _textShown: root.width - root._wellSize - Widget.spacing * 3 >= Appearance.fontSize * 3
+  // Lines wrap where the pill already has the height (it never grows for
+  // them): the name takes up to two, leaving the status one, and the
+  // status what's left after the name's, three lines in all
+  readonly property real _room: root.height - Widget.spacing * 2
+  readonly property bool _statusShown: root.status !== "" && root.height >= Appearance.fontSize * 3
+  readonly property int _nameLines: Math.max(1, Math.min(2, Math.floor((root._room - (root._statusShown ? statusMetrics.height : 0)) / nameMetrics.height)))
+  readonly property int _statusLines: Math.max(1, Math.min(3 - nameText.lineCount, Math.floor((root._room - nameText.lineCount * nameMetrics.height) / statusMetrics.height)))
 
   radius: Widget.radius
   color: Appearance.fill(root.active ? root.activeColor : root.hot ? Theme.backgroundHighlight : Theme.backgroundAlt)
@@ -92,22 +99,37 @@ Rectangle {
       spacing: 0
 
       StyledText {
+        id: nameText
         Layout.fillWidth: true
         text: root.label
+        wrapMode: root._nameLines > 1 ? Text.Wrap : Text.NoWrap
+        maximumLineCount: root._nameLines
         elide: Text.ElideRight
         font.bold: true
         textColor: root.contentColor
         textSize: Appearance.fontSizeBy(-1)
       }
       StyledText {
+        id: statusText
         Layout.fillWidth: true
-        visible: root.status !== "" && root.height >= Appearance.fontSize * 3
+        visible: root._statusShown
         text: root.status
+        wrapMode: root._statusLines > 1 ? Text.Wrap : Text.NoWrap
+        maximumLineCount: root._statusLines
         elide: Text.ElideRight
         textColor: root.contentColor
         opacity: 0.75
         textSize: Appearance.fontSizeBy(-2)
       }
+    }
+
+    FontMetrics {
+      id: nameMetrics
+      font: nameText.font
+    }
+    FontMetrics {
+      id: statusMetrics
+      font: statusText.font
     }
 
     StyledIcon {

@@ -198,6 +198,10 @@ var all = []Step{
 	// v99: the toasts' `gap` and a per-app rule's `timeout` store
 	// Automatic as null, no longer -1 (v99.go)
 	{Version: 99, Run: v99},
+	// v100: one catalogue of actions: QuickActions' caffeine and dnd tiles
+	// became idleInhibit and toggleDnd, a Button's appLauncher and
+	// workspaceOverlay actions launcher and workspaceOverview (v100.go)
+	{Version: 100, Run: v100},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

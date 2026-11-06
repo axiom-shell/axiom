@@ -701,4 +701,30 @@ QtObject {
       root.setLightMode(true);
     }
   }
+
+  // The theme named (either variant of a family: the one for the current
+  // light/dark mode applies), or "random": another family, by chance
+  function applyThemeNamed(name) {
+    if (name === "random") {
+      const others = root.themeFamilies.filter(family => family !== root.currentFamily);
+      if (others.length > 0)
+        root.applyFamily(others[Math.floor(Math.random() * others.length)]);
+      return;
+    }
+    const family = root.themeFamilies.find(f => f.dark === name || f.light === name);
+    if (family)
+      root.applyFamily(family);
+    else
+      console.warn("[ThemeManager] no theme", name);
+  }
+
+  // Keybind action theme: axiom ipc theme set <theme | random>
+  property IpcTarget _themeIpc: IpcTarget {
+    target: "theme"
+    enabled: !Paths.greeter
+
+    function set(name: string): void {
+      root.applyThemeNamed(name);
+    }
+  }
 }

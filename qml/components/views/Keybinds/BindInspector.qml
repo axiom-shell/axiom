@@ -108,6 +108,7 @@ ColumnLayout {
       visible: root.needed && root.argumentOptions !== null
       label: ""
       options: root.argumentOptions ?? []
+      optionLabels: KeybindManager.argumentLabels(root.bind.action) ?? ({})
       currentValue: root.bind.argument ?? ""
       // I18n.tr("left") I18n.tr("right") I18n.tr("up") I18n.tr("down")
       // I18n.tr("region") I18n.tr("window") I18n.tr("screen")
