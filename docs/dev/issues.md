@@ -414,12 +414,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-10-29, while building the revamped example setups
 
-### The window switcher reads a removed screen's name
-- **Where:** `qml/shell/WindowSwitcher.qml` (`claimKey`)
-- **What:** Unplugging a monitor logs `TypeError: Cannot read property 'name' of null` from `@shell/WindowSwitcher.qml[79:-1]` (`claimKey: "switcher:" + screenScope.modelData.name`): the Variants delegate's screen is gone before the delegate is (seen in a nested Hyprland, removing a headless output). Fix: `screenScope.modelData?.name ?? ""`, or read the name once.
-- **Size:** trivial
-- **Found:** 2026-11-05, while keeping the bar across a hotplug (bar-popouts-04)
-
 ### Bluetooth pairing that asks for a PIN or a passkey
 - **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`
 - **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.

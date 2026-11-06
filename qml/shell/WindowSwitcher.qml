@@ -25,7 +25,9 @@ Scope {
       id: screenScope
       required property ShellScreen modelData
 
-      readonly property bool wanted: WindowSwitcherManager.shown && screenScope.modelData.name === WindowSwitcherManager.screenName
+      // Its screen's name ("" once the screen is gone, before the delegate)
+      readonly property string screenName: screenScope.modelData?.name ?? ""
+      readonly property bool wanted: WindowSwitcherManager.shown && screenScope.screenName === WindowSwitcherManager.screenName
 
       onWantedChanged: screenScope.sync()
       // A screen added while it's open on it
@@ -59,7 +61,7 @@ Scope {
         // Closes when the switcher does, not on hover loss
         autoDismiss: false
         // Closes whatever it covers (PopoutManager), ranked as the launcher
-        claimKey: "switcher:" + screenScope.modelData.name
+        claimKey: "switcher:" + screenScope.screenName
         claimKind: "launcher"
         content: strip
       }
