@@ -11,9 +11,11 @@ import QtQuick
 QtObject {
   id: root
 
-  // A watchlist item's key in the topic's quotes
+  // A watchlist item's key in the topic's quotes (its symbol trimmed, as
+  // `request` sends it)
   function key(item) {
-    return item.source === "coingecko" ? "coingecko:" + item.symbol : item.symbol;
+    const symbol = (item.symbol ?? "").trim();
+    return item.source === "coingecko" ? "coingecko:" + symbol : symbol;
   }
 
   // The `markets` topic's request, from the settings only

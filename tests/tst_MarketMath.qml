@@ -41,6 +41,11 @@ TestCase {
   function test_key_and_name() {
     compare(MarketMath.key(items[0]), "AAPL");
     compare(MarketMath.key(items[1]), "coingecko:bitcoin");
+    // Trimmed, as the request sends it
+    compare(MarketMath.key({
+      "symbol": " AAPL ",
+      "source": "yahoo"
+    }), "AAPL");
     compare(MarketMath.displayName(items[0], null), "AAPL");
     compare(MarketMath.displayName(items[1], {
       "name": "Bitcoin"

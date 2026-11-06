@@ -14,8 +14,9 @@ QtObject {
   // How often prices are fetched (ms)
   readonly property int interval: _c.interval
   readonly property bool pauseWhenClosed: _c.pauseWhenClosed
-  // The holdings' currency (a three-letter code)
-  readonly property string baseCurrency: _c.baseCurrency
+  // The holdings' currency (a three-letter code, upper case as the quotes'
+  // currencies are)
+  readonly property string baseCurrency: _c.baseCurrency.trim().toUpperCase()
   readonly property bool alerts: _c.alerts
   // Rises drawn in the error colour and falls in the success one
   readonly property bool redForGains: _c.redForGains

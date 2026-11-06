@@ -220,7 +220,7 @@ func (m *Markets) fetchYahoo(ctx context.Context, syms []Symbol) []error {
 // convert fills st.FX: each quote currency's rate to base, from Yahoo's
 // "<CUR><BASE>=X" pair (cached like any quote). Subunit currencies
 // (GBp, ZAc, ILA) are their unit's rate over 100.
-func (m *Markets) convert(ctx context.Context, st *State, base string, pauseWhenClosed bool, now time.Time) []error {
+func (m *Markets) convert(ctx context.Context, st *State, base string, now time.Time) []error {
 	var errs []error
 	for _, q := range st.Quotes {
 		cur := q.Currency

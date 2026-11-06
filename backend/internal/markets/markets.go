@@ -226,7 +226,7 @@ func (m *Markets) State(ctx context.Context, r Request) (*State, error) {
 	if base == "" {
 		base = "USD"
 	}
-	var yahoo, gecko []Symbol
+	var yahoo, gecko, wanted []Symbol
 	seen := map[string]bool{}
 	for _, s := range r.Symbols {
 		s.Symbol = strings.TrimSpace(s.Symbol)
@@ -237,6 +237,7 @@ func (m *Markets) State(ctx context.Context, r Request) (*State, error) {
 			continue
 		}
 		seen[Key(s)] = true
+		wanted = append(wanted, s)
 		if !m.due(Key(s), r.PauseWhenClosed, now) {
 			continue
 		}
@@ -258,10 +259,7 @@ func (m *Markets) State(ctx context.Context, r Request) (*State, error) {
 	}
 
 	st := &State{Quotes: map[string]*Quote{}, FX: map[string]float64{}, BaseCurrency: base}
-	for _, s := range r.Symbols {
-		if s.Source != SourceCoinGecko {
-			s.Source = SourceYahoo
-		}
+	for _, s := range wanted {
 		q := m.cache[Key(s)]
 		if q == nil {
 			continue
@@ -272,7 +270,7 @@ func (m *Markets) State(ctx context.Context, r Request) (*State, error) {
 		st.UpdatedAt = max(st.UpdatedAt, c.UpdatedAt)
 	}
 	if r.Convert {
-		errs = append(errs, m.convert(ctx, st, base, r.PauseWhenClosed, now)...)
+		errs = append(errs, m.convert(ctx, st, base, now)...)
 	}
 	m.report(errs)
 	good := 0

@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### EdgePlacement logs a binding loop on _layout
+- **Where:** `qml/components/hosts/popout/EdgePlacement.qml` (`_layout`), `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`
+- **What:** The live shell logged `Binding loop detected for property "_layout"` (`@components/hosts/popout/BarPopouts.qml[215:3]` and `@components/hosts/popout/EdgePopout.qml[314:3]`) several times after a reload on 2026-11-06, running the markets branch, which changes none of these files. The cycle isn't traced: PLAUSIBLE, settled by finding which of `_layout`'s inputs (`frame`, `_params`) reads a value derived from `_layout` itself.
+- **Size:** small
+- **Found:** 2026-11-06, while reviewing the Markets branch
+
 ### "Colour the text by state" does nothing on a bar whose widgets have no fill
 - **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`)
 - **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.

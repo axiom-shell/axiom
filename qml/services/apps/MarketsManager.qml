@@ -109,7 +109,11 @@ QtObject {
   // really changes
   readonly property string _requestKey: _wanted ? JSON.stringify(MarketMath.request(MarketsConfig.symbols, MarketsConfig.interval, MarketsConfig.pauseWhenClosed, MarketsConfig.baseCurrency)) : ""
 
-  on_RequestKeyChanged: {
+  // (also at completion: a request already wanted then, by a price alert,
+  // changes nothing until the watchlist does)
+  on_RequestKeyChanged: root._subscribe()
+
+  function _subscribe() {
     if (root._requestKey !== "")
       BackendManager.acquire("markets", JSON.parse(root._requestKey));
     else
@@ -176,5 +180,8 @@ QtObject {
     }
   }
 
-  Component.onCompleted: BackendManager.listen("markets.state", state => root._onState(state))
+  Component.onCompleted: {
+    BackendManager.listen("markets.state", state => root._onState(state));
+    root._subscribe();
+  }
 }
