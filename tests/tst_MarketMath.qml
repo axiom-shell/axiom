@@ -79,7 +79,8 @@ TestCase {
   function test_pick() {
     compare(MarketMath.pick(items, []).map(i => i.id), ["aapl", "btc"], "all but the blank");
     compare(MarketMath.pick(items, ["btc", "aapl"]).map(i => i.id), ["aapl", "btc"], "in the watchlist's order");
-    compare(MarketMath.pick(items, ["gone"]).length, 0);
+    compare(MarketMath.pick(items, ["gone", "btc"]).map(i => i.id), ["btc"], "a removed symbol is dropped");
+    compare(MarketMath.pick(items, ["gone"]).map(i => i.id), ["aapl", "btc"], "none left: all");
   }
 
   function test_formatting_data() {

@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### A markets widget whose picked symbols were all removed shows nothing
-- **Where:** `qml/components/methods/MarketMath.qml` (`pick`), `qml/components/forms/SchemaField.qml` (`_chipOptions`)
-- **What:** A Markets bar widget or module with `symbols: ["aapl"]` keeps that id after AAPL is removed from the watchlist (`axiom markets remove`, or the watchlist card). `MarketMath.pick` then returns no items (`tst_MarketMath` asserts `pick(items, ["gone"])` is empty), so the widget shows nothing, while its settings show no chip picked (an id gone isn't an option), whose description reads "None picked shows them all". A behaviour choice for the maintainer: ids no longer on the watchlist ignored by `pick` (all shown, as the settings read), or removed from every widget's and module's `symbols` when the item goes.
-- **Size:** trivial
-- **Found:** 2026-11-06, while reviewing the Markets branch
-
 ### EdgePlacement logs a binding loop on _layout
 - **Where:** `qml/components/hosts/popout/EdgePlacement.qml` (`_layout`), `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`
 - **What:** The live shell logged `Binding loop detected for property "_layout"` (`@components/hosts/popout/BarPopouts.qml[215:3]` and `@components/hosts/popout/EdgePopout.qml[314:3]`) several times after a reload on 2026-11-06, running the markets branch, which changes none of these files. The cycle isn't traced: PLAUSIBLE, settled by finding which of `_layout`'s inputs (`frame`, `_params`) reads a value derived from `_layout` itself.

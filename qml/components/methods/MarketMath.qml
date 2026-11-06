@@ -34,10 +34,11 @@ QtObject {
   }
 
   // The watchlist items `ids` names, in the watchlist's order; no ids is
-  // all of them
+  // all of them. An id no longer on the watchlist (its symbol removed) is
+  // dropped, so a widget stops tracking it: with none left, it shows all
   function pick(items, ids) {
-    const wanted = ids ?? [];
     const valid = items.filter(item => (item.symbol ?? "").trim() !== "");
+    const wanted = (ids ?? []).filter(id => valid.some(item => item.id === id));
     return wanted.length === 0 ? valid : valid.filter(item => wanted.includes(item.id));
   }
 
