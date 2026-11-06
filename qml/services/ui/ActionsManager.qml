@@ -21,8 +21,7 @@ import qs.services.apps
 QtObject {
   id: root
 
-  // The session actions, run through SessionManager (log out isn't a
-  // table action: the compositor's exitSession bind is)
+  // The session actions, run through SessionManager (run())
   readonly property var sessionActions: ["lock", "suspend", "hibernate", "logout", "reboot", "poweroff"]
 
   // An action's name: the table's, as the Keybinds page shows it, or a
@@ -179,8 +178,11 @@ QtObject {
     const kind = root.osdKind(id);
     if (opts.fromScreen && kind !== "")
       ShellManager.onScreen(kind);
-    if (id === "logout")
-      SessionManager.sessionAction("logout");
+    // The session's through SessionManager, as its own buttons ran them:
+    // lock with a locker of the user's own (Lockscreen.mode "none"), whose
+    // lockscreen IPC target is off, and log out, which isn't a table action
+    if (root.sessionActions.includes(id))
+      SessionManager.sessionAction(id);
     else
       ShellManager.runAction(id, opts.argument ?? "", opts.call ?? "toggle");
   }

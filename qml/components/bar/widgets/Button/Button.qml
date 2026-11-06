@@ -102,11 +102,12 @@ BarIconWidget {
   // "Activate on hover": the click action once per hover, after the
   // popout open delay. Not an edge menu's (as the schema shows it): that's
   // the hover popout (popout.enabled), which closes on leave and ranks as one.
-  // Never a session action's: resting the pointer on the button mustn't
-  // lock the screen or end the session
+  // Only the actions that open something (the schema shows the setting for
+  // those alone; one saved before the action changed stays): resting the
+  // pointer mustn't switch Wi-Fi, clear notifications or lock the screen
   Timer {
     interval: PopoutsConfig.openDelay
-    running: root.hovered && root.properties.hoverActivate && !["none", "edgeMenu"].concat(ActionsManager.sessionActions).includes(root.properties.action)
+    running: root.hovered && root.properties.hoverActivate && ["powerMenu", "launcher", "overlay", "overlayPage", "workspaceOverview", "command"].includes(root.properties.action)
     onTriggered: root.hoverAction()
   }
 
