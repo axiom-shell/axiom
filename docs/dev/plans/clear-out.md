@@ -454,8 +454,8 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - [The keybinds page on a small monitor with large binds](../issues.md#the-keybinds-page-on-a-small-monitor-with-large-binds)
 - **bar-popouts-12** (1): Phase 12.
   - [Nineteen windows stay mapped on one monitor](../issues.md#nineteen-windows-stay-mapped-on-one-monitor)
-- **bar-popouts-13** (2): Takes features' popout entry; the tray fix (a most-height on TrayMenuList) can be the plan's first item.
-  - [A tray submenu longer than the screen runs off it](../issues.md#a-tray-submenu-longer-than-the-screen-runs-off-it)
+- **bar-popouts-13** (2): Takes features' popout entry; the tray's submenus already scroll past `TrayMenuList.maxHeight`, which the guard can set for the tray's own menu.
+  - A tray submenu longer than the screen runs off it
   - [A popout taller than the screen runs off it](../issues.md#a-popout-taller-than-the-screen-runs-off-it)
 
 **overlay-modules**

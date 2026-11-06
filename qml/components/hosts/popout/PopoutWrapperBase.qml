@@ -54,7 +54,9 @@ Item {
     safeOpenPopout(null, data ?? ({}));
   }
 
+  // Also drops an open queued while it closes, which would fire once closed
   function hide() {
+    hasPendingOpen = false;
     if (isOpen)
       requestDismiss();
   }

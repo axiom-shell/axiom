@@ -44,7 +44,7 @@ Every popout host can open one submenu beside its box. This doc covers how the s
 ### Position
 - **Opening level with its anchor:** the anchor is measured inside the parent's box (the slot's `anchorOffsetOf(item)`, through `AttachedSurface.contentBox`). So one opened while the parent still slides out lands where the parent comes to rest.
 - **Vertical limits:** it stays within the screen's room up and down, inside what's reserved at its top and bottom (`SubPopout.screenFrom`/`screenTo`).
-- **Taller content:** content that may be taller (`parts/MenuSubmenu`) scrolls past `maxContentHeight`.
+- **Taller content:** content that may be taller (`Submenu/MenuSubmenu`, a tray submenu: `parts/TraySubmenu` through `TrayMenuList.maxHeight`) scrolls past `maxContentHeight`.
 - **Where the stretch goes:**
   - **On a top or bottom edge** the stretch is across the box, so the window keeps that room from the start. A window growing while it shows is drawn for a frame with its old contents squeezed into the new size.
     - A horizontal bar's popout window takes the screen's whole depth (`BarPopouts.wholeDepth`).

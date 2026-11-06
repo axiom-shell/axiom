@@ -28,6 +28,8 @@ Item {
     anchors.fill: parent
     menu: root.menuItem
     emptyText: I18n.tr("No submenu items")
+    // Kept on the screen: past its room, it scrolls
+    maxHeight: root.wrapper.maxContentHeight
 
     onItemClicked: root.wrapper.requestDismiss()
 

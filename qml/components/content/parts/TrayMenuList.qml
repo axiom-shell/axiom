@@ -7,7 +7,8 @@ import qs.components.reusable
 
 // A tray menu's entries, shared by the tray popout and its submenus. Sized
 // to its widest entry, between `minWidth` and `maxWidth` (longer labels
-// elide); the host surface pads it.
+// elide), and as tall as its entries up to `maxHeight`, scrolling past it;
+// the host surface pads it.
 Item {
   id: root
 
@@ -20,6 +21,8 @@ Item {
   readonly property int itemPadding: Widget.padding
   property real minWidth: Widget.height * 4
   property real maxWidth: (_window?.screen?.width ?? 2000) * 0.3 // fixed px: a stand-in screen width
+  // 0: unbounded (a submenu passes SubPopout.maxContentHeight)
+  property real maxHeight: 0
 
   // Read through a var: QsWindow.window is typed QObject
   readonly property var _window: root.QsWindow.window
@@ -29,7 +32,7 @@ Item {
   signal plainItemHovered
 
   implicitWidth: Math.round(Math.max(minWidth, Math.min(maxWidth, menuLayout.implicitWidth)))
-  implicitHeight: menuLayout.implicitHeight
+  implicitHeight: root.maxHeight > 0 ? Math.min(menuLayout.implicitHeight, root.maxHeight) : menuLayout.implicitHeight
 
   // Entries arrive over DBus after the opener is created. Hosts keep the
   // popout hidden until they have (or the wait runs out), so it maps at its
@@ -50,39 +53,49 @@ Item {
     menu: root.menu ?? null
   }
 
-  ColumnLayout {
-    id: menuLayout
-    width: parent.width
-    spacing: Widget.spacing
+  Flickable {
+    id: flick
+    anchors.fill: parent
+    contentWidth: width
+    contentHeight: menuLayout.implicitHeight
+    boundsBehavior: Flickable.StopAtBounds
+    interactive: contentHeight > height
+    clip: interactive
 
-    Repeater {
-      id: menuRepeater
-      model: menuOpener.children
+    ColumnLayout {
+      id: menuLayout
+      width: flick.width
+      spacing: Widget.spacing
 
-      delegate: TrayMenuItem {
-        required property var modelData
-        menuItem: modelData
-        openToLeft: root.openToLeft
-        itemHeight: root.itemHeight
-        itemPadding: root.itemPadding
+      Repeater {
+        id: menuRepeater
+        model: menuOpener.children
 
-        onItemClicked: root.itemClicked()
-        onSubmenuRequested: itemDelegate => root.submenuRequested(itemDelegate)
-        onPlainItemHovered: root.plainItemHovered()
+        delegate: TrayMenuItem {
+          required property var modelData
+          menuItem: modelData
+          openToLeft: root.openToLeft
+          itemHeight: root.itemHeight
+          itemPadding: root.itemPadding
+
+          onItemClicked: root.itemClicked()
+          onSubmenuRequested: itemDelegate => root.submenuRequested(itemDelegate)
+          onPlainItemHovered: root.plainItemHovered()
+        }
       }
-    }
 
-    // Empty state
-    StyledText {
-      wrapMode: Text.WordWrap
-      visible: root.contentReady && menuRepeater.count === 0
-      text: root.emptyText
-      textColor: Theme.accent
-      opacity: 0.5
-      Layout.fillWidth: true
-      Layout.preferredHeight: root.itemHeight
-      horizontalAlignment: Text.AlignHCenter
-      verticalAlignment: Text.AlignVCenter
+      // Empty state
+      StyledText {
+        wrapMode: Text.WordWrap
+        visible: root.contentReady && menuRepeater.count === 0
+        text: root.emptyText
+        textColor: Theme.accent
+        opacity: 0.5
+        Layout.fillWidth: true
+        Layout.preferredHeight: root.itemHeight
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+      }
     }
   }
 }
