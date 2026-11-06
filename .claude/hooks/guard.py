@@ -43,6 +43,8 @@ WRAPPERS = {
     "ionice": {"-c", "-n", "-p", "--class", "--classdata"}, "flock": {"-w", "-E", "--timeout", "--conflict-exit-code"},
     "systemd-run": {"-u", "--unit", "-p", "--property", "-E", "--setenv", "--uid", "--gid", "--slice", "-M", "--machine",
                     "--description", "--working-directory"},
+    "xargs": {"-a", "--arg-file", "-d", "--delimiter", "-E", "-I", "-L", "-n", "--max-args", "-P", "--max-procs", "-s",
+              "--max-chars", "--process-slot-var"},
 }
 WRAPPER_POSITIONALS = {"timeout": 1, "flock": 1}
 # A substitution a double-quoted word still runs: "$(…)", "`…`"; single-quoted

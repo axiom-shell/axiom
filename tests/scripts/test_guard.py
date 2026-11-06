@@ -110,6 +110,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12", "gh pr merge 3 --admin",
                     "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
                     "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -", "gh pr merge 3 --admin=true",
+                    "echo 1 | xargs gh api", "echo 1 | xargs -I {} -n 1 gh api repos/o/r/issues/{}",
                     "gh api repos/o/r -X DELETE -H --help", "gh repo --description view edit", "gh --method DELETE api repos/o/r")
         self.allows("gh pr create --fill --label roadmap", "gh pr view 3 --json comments", "gh pr list --label roadmap",
                     "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
@@ -118,7 +119,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh issue edit 16 --add-label x", "gh repo view", "gh release list", "gh label list", "gh rs check main",
                     "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
                     "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
-                    "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list",
+                    "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list", "echo 1 | xargs -I {} gh pr view {}",
                     "gh repo clone o/r", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_leading_cd(self):
