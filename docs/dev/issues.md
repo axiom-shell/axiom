@@ -189,6 +189,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A hot corner can't close what covers it
 - **Where:** `qml/shell/HotCorners.qml` (its layer, `LayerStack`), `docs/dev/features/hot-corners.md`
 - **What:** Hot corners sit on the Top layer, so a surface on the `Overlay` layer (axiom's workspace overview, a full-screen overlay page) covers the corner pixel: a toggling action opens it from a corner but can't close it there. niri's own corner toggles its overview; the migrated corner (v82) does that only while `WorkspaceOverlay.compositorOverview` is on. Whether a corner should stay live over Overlay-layer surfaces is the maintainer's call.
+  Not as traced (row 20's autopilot, 2026-11-06): moving the corner to the Overlay layer orders it over those surfaces only on Hyprland (layer rules). On niri and sway the stack follows map order, and the overlay page and workspace overview are outside `LayerSlot` ordering, so they'd still cover a corner mapped before them.
   **Decided** (maintainer, 2026-11-06, on a) corners stay live over Overlay-layer surfaces (never over a fullscreen window), b) keep it; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-10-29, while reviewing the hot corners branch (row 16)
@@ -258,6 +259,7 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 ### A dropdown in an edge menu card with nothing scrolling gets two rows
 - **Where:** `qml/components/reusable/StyledComboEntry.qml` (`_roomBelow`), `qml/components/content/parts/PomodoroDial.qml`
 - **What:** In a floating edge menu a `StyledComboEntry` opens inline, capped by the Flickable around it. A card with no Flickable (Pomodoro as a card, its task picker) gets the two-row minimum (`_roomBelow` is 0 with no Flickable and `popoutRoom` null), and the card's rows below it are pushed out of view while it's open. Since PomodoroDial became a DialControls (row 20, features-05) the picker is the card's last row and the ring fills what's left, so there the open list shrinks the ring instead; it still gets two rows. Open question: how much room should such a list take (shrink the parts above it, or more rows over them)?
+  Not as traced (row 20's autopilot, 2026-11-06): every edge menu card sits in `EdgeMenuBody`'s Flickable, so `_roomBelow` isn't 0 there; in nested niri the Pomodoro card's list opened inline with a 553 px cap. Which card gets the two-row minimum is still to find.
   **Decided** (maintainer, 2026-11-06, on a) open the list over the card's content (up to the card's height), b) more rows inline, shrinking the parts above, c) keep two rows; recommended a)): "rec"
 - **Size:** small
 - **Found:** 2026-10-20, while making dropdowns in popouts open inline
