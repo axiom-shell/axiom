@@ -430,14 +430,11 @@ Item {
     // switches to other content
     readonly property bool _parentOpen: (outer.host?.isOpen ?? false) && (outer.host?.claimed ?? true)
     on_ParentOpenChanged: {
-      if (!root._parentOpen && root.occupied)
-        root.closePopout();
+      if (!root._parentOpen)
+        root.hide();
     }
     readonly property var _parentData: outer.host?.currentData ?? null
-    on_ParentDataChanged: {
-      if (root.occupied)
-        root.closePopout();
-    }
+    on_ParentDataChanged: root.hide()
     // Gone with the pointer off the parent and what opened it, it takes the
     // parent with it at once, a cascade rather than the parent's own
     // dismiss delay after it
@@ -483,7 +480,8 @@ Item {
     }
     root.safeOpenPopout(anchor, data);
   }
-  function closePopout() {
-    root.closePopout();
+  // Also drops an open queued while it closes
+  function hide() {
+    root.hide();
   }
 }

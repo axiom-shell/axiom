@@ -56,7 +56,7 @@ QtObject {
         "anchorItem": EdgeMenuManager.anchors[root.menuId] ?? null,
         "claimKind": EdgeMenuManager.claimKinds[root.menuId] ?? "menu"
       });
-    else if (!root.wanted && root.host.isOpen)
+    else if (!root.wanted)
       root.host.hide();
   }
   onWantedChanged: root._sync()

@@ -38,7 +38,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - The editor uses it, and also draws the other menus from it (`OverlayManager.menus.screenRectsOf`).
 
 ### Shared behaviour (`EdgeMenuSync`)
-- Follows `EdgeMenuManager`, and tells it when the menu closes by itself.
+- Follows `EdgeMenuManager`, and tells it when the menu closes by itself. Unwanted, it calls `hide()` even while closing, so an open queued by a quick toggle is dropped.
 - Held/revealing state, `autoDismiss`, the trigger length, grab-partner registration.
 - The reveal's cursor warp (`warpRequested`), each host warping into its own box.
 - Both hosts centre their hover strip on the modules from config (`EdgeTrigger.centre`; the floating one through `EdgePopout.triggerCentre`), since the body only loads while open.

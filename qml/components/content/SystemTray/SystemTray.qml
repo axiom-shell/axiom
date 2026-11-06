@@ -47,6 +47,6 @@ Item {
     onItemClicked: root.wrapper.requestDismiss()
 
     // Close any open submenu when hovering an item without one
-    onPlainItemHovered: root.submenu.closePopout()
+    onPlainItemHovered: root.submenu.hide()
   }
 }
