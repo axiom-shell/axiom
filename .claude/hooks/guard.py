@@ -382,7 +382,7 @@ def check_axiom(env, args, cwd):
 
 # The gh commands an agent may run (maintainer, 2026-11-06: "allow only
 # issue management, re running actions, and merging prs ... Full read scope",
-# "and gh api"): every read, and these writes. Anything else is refused,
+# "and gh api", "allow starting workflows"): every read, and these writes. Anything else is refused,
 # `gh api` in every form. A group named alone allows all its subcommands.
 GH_ALLOWED = {
     # Reads (not `browse`, which opens a browser)
@@ -397,8 +397,8 @@ GH_ALLOWED = {
     "config get", "config list", "gpg-key list", "ssh-key list", "skill list", "skill search", "skill preview", "version",
     # Issue management (`issue create` only when the maintainer asks for an issue: AGENTS.md › Never)
     "issue create", "issue edit", "issue comment", "issue close", "issue reopen", "issue lock", "issue unlock",
-    # Re-running actions
-    "run rerun", "run cancel",
+    # Re-running and starting actions
+    "run rerun", "run cancel", "workflow run",
     # PRs: merging (not `--admin`, past main's protection), and what the roadmap autopilot opens and labels
     "pr merge", "pr create", "pr comment", "pr edit", "pr close", "pr ready", "pr checkout",
 }

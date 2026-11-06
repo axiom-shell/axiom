@@ -105,7 +105,7 @@ class Bash(LiveSession, unittest.TestCase):
 
     def test_gh_allowlist(self):
         self.blocks("gh api repos/o/r", "gh api -X GET repos/o/r/issues", "gh api graphql -f query='{ viewer { login } }'",
-                    "gh repo edit --default-branch dev", "gh release create v1", "gh workflow run ci.yml",
+                    "gh repo edit --default-branch dev", "gh release create v1", "gh workflow disable ci.yml",
                     "gh secret set X", "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12", "gh pr merge 3 --admin",
                     "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
                     "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -", "gh pr merge 3 --admin=true",
@@ -119,7 +119,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
                     "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
                     "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list", "echo 1 | xargs -I {} gh pr view {}",
-                    "gh repo clone o/r", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
+                    "gh repo clone o/r", "gh workflow run checks.yml --ref roadmap/x", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_leading_cd(self):
         """A leading `cd` moves the relative paths after it"""
