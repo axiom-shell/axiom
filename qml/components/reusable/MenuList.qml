@@ -5,8 +5,10 @@ import qs.config
 
 // A menu's rows and keys, for the box that holds them (StyledContextMenu's
 // Popup, the dock's PopupWindow). `items` is a list of
-// { id, text, icon?, shortcut?, enabled?, checked?, submenu? }, or
-// { separator: true } for a line between groups. An item with a `submenu`
+// { id, text, icon?, shortcut?, enabled?, checked?, submenu?, danger? }
+// (`danger`: highlighted in the error colour, as a Close), or
+// { separator: true, accent? } for a line between groups (`accent`: in the
+// accent colour). An item with a `submenu`
 // (a list of the same) opens it in place, under a row leading back;
 // another item emits triggered(id). Up/Down move, Enter or Right picks or
 // opens, Left goes back, Escape goes back or emits dismissed().
@@ -160,6 +162,8 @@ FocusScope {
         readonly property bool separator: modelData?.separator === true
         readonly property bool usable: root._selectable(modelData)
         readonly property bool hasSubmenu: Array.isArray(modelData?.submenu)
+        readonly property bool lit: row.index === root.highlighted && row.usable
+        readonly property bool danger: modelData?.danger === true
 
         Layout.fillWidth: true
         implicitWidth: separator ? 0 : rowContent.implicitWidth + Widget.smallPadding * 2
@@ -169,13 +173,14 @@ FocusScope {
           visible: row.separator
           anchors.verticalCenter: parent.verticalCenter
           width: parent.width
+          separatorColor: row.modelData?.accent === true ? Theme.accent : Theme.border
         }
 
         Rectangle {
           visible: !row.separator
           anchors.fill: parent
           radius: Widget.radius
-          color: row.index === root.highlighted && row.usable ? Theme.backgroundHighlight : "transparent"
+          color: row.lit ? (row.danger ? Theme.error : Theme.backgroundHighlight) : "transparent"
           opacity: row.usable ? 1 : 0.4
 
           RowLayout {
@@ -188,12 +193,13 @@ FocusScope {
             StyledIcon {
               // A checked item's mark takes the icon's place
               text: row.modelData?.checked === true ? "check" : (row.modelData?.icon ?? "")
-              textColor: Theme.accent
+              textColor: row.lit && row.danger ? Theme.background : Theme.accent
               Layout.preferredWidth: Appearance.fontSizeBy(4)
             }
             StyledText {
               Layout.fillWidth: true
               text: row.modelData?.text ?? ""
+              textColor: row.lit && row.danger ? Theme.background : Theme.foreground
               elide: Text.ElideRight
             }
             StyledText {

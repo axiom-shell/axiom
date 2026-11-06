@@ -13,9 +13,8 @@ import qs.components.methods
 // A dock app's menu, opening towards the screen from its icon: its name and
 // windows (click one to focus it), and, opened by a right click (`full`),
 // Keep in dock / Remove from dock, New window and Close: MenuList's rows
-// and keys. The small one
-// (resting on the icon) closes once the pointer leaves both; the full one
-// on a click elsewhere.
+// and keys. The small one (resting on the icon) closes once the pointer
+// leaves both; the full one on a click elsewhere.
 PopupWindow {
   id: root
 
@@ -58,7 +57,8 @@ PopupWindow {
     if (!root.full)
       return items;
     items.push({
-      "separator": true
+      "separator": true,
+      "accent": true
     }, {
       "id": "pin",
       "text": root.item?.pinned ? I18n.tr("Remove from dock") : I18n.tr("Keep in dock"),
@@ -74,7 +74,8 @@ PopupWindow {
       items.push({
         "id": "close",
         "text": root.windows.length > 1 ? I18n.tr("Close {0} windows", root.windows.length) : I18n.tr("Close window"),
-        "icon": "close"
+        "icon": "close",
+        "danger": true
       });
     return items;
   }
