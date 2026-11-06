@@ -146,9 +146,8 @@ BarWidget {
   hasBackground: segments.length > 0
   accentColor: Theme.resolveColor(warning ? properties.warnColor : properties.backgroundColor)
   backgroundLevel: root.pill ? Math.min(1, root.segmentData(root.segments[0]).level / 100) : -1
-  backgroundLevelColor: Qt.alpha(root.colors.icon, 0.35)
-  // Colour the text by state only where it isn't the background already
-  readonly property bool _textByState: root.appearance.colorText && root.colors.fill.a < 1
+  backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
+  readonly property bool _textByState: BarWidgetStyle.textByState(root.colors, root.appearance)
   readonly property color textColor: root._textByState ? root.accentColor : root.colors.text
 
   implicitWidth: box.implicitWidth

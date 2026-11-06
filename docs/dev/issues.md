@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### "Colour the text by state" does nothing on a bar whose widgets have no fill
+- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`)
+- **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
+- **Size:** trivial
+- **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
+
 ### A fading toast keeps its full blur on niri
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
 - **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
@@ -472,12 +478,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
 - **Size:** small
 - **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
-
-### SystemStats copies ValueStyleWidget's pill colour and text-by-state rule
-- **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:149` (`backgroundLevelColor`, `_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:43` (`backgroundLevelColor`, `_textByState`)
-- **What:** What's left of the style-fallbacks entry once `ValueGraphic.resolvedStyle` took the style rules: `Qt.alpha(colors.icon, 0.35)` and `appearance.colorText && colors.fill.a < 1` are still written in both widgets, so a change to the pill's colour or to when the text takes the state's colour would miss SystemStats. A ValueGraphic member doesn't reach them: SystemStats' root draws the pill and colours the text, and its graphics are one per segment, inside the Repeater. Fix: one shared place both roots can call (a `BarsConfig` or `BarWidgetStyle` function taking the widget's `colors` and `appearance`).
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing bar-popouts-09
 
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
