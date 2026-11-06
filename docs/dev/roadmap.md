@@ -385,7 +385,6 @@ Found while building dev trees and the dev config:
 - [Copying a setting to live uses dev's paths, which an older live may not have](issues.md#copying-a-setting-to-live-uses-devs-paths-which-an-older-live-may-not-have)
 
 Found while reviewing the bar rewrite:
-- [BarContainer's two join openings repeat their stretch](issues.md#barcontainers-two-join-openings-repeat-their-stretch)
 - [A bar widget that loses its background while shown keeps drawing the old one](issues.md#a-bar-widget-that-loses-its-background-while-shown-keeps-drawing-the-old-one)
 
 Found while reviewing the wallpaper parallax's travel:

@@ -68,12 +68,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
 
-### BarContainer's two join openings repeat their stretch
-- **Where:** `qml/components/bar/BarContainer.qml` (`joinOpening`, `_solidJoinOf`)
-- **What:** Both work out the same `from` and `span` and make the same `EdgeAttach.joinOpening` call (the border's opening also passes the fillet). One private helper returning the stretch would leave each with only what differs.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the bar rewrite
-
 ### A bar widget that loses its background while shown keeps drawing the old one
 - **Where:** `qml/components/bar/WidgetGroup.qml` (the per-widget `WidgetBackground`'s `_last`)
 - **What:** A widget going away keeps its last place and colors while its host is still drawn (`_shown` falls back to `_last` while `_drawn`), so it fades with its host. A host that stays drawn but has no background any more never lets go: seen in a nested niri run, swapping a section's widgets in place (same count; the delegates are reused, so the slot that held Window now holds a Spacer) left the Spacer drawing Window's background across the whole room it took, until a change of count rebuilt the delegates. A widget turning its own `hasBackground` off would do the same. Fix: keep `_last` only while the host is fading out (its opacity or `_drawnMain` falling), or clear it when `host.background` turns null on a host still fully shown.
