@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### A push of a named branch can land on main through git's push config
+- **Where:** `.claude/hooks/guard.py` (`push_allowed`)
+- **What:** The guard judges `git push origin <branch>` by the name alone, but git maps a branch named without `:<dst>` through its config: with `remote.origin.push` set to `refs/heads/x:refs/heads/main`, or `push.default=upstream` on a branch made from `origin/main` (which sets its upstream to main, as the autopilot's step 4 branches do), `git push origin x` updates main (shown on scratch repos 2026-11-06: `feature -> trunk`). That config can come from `git -c …`, `GIT_CONFIG_*` or an earlier `git config`; the global config sets neither today. Fix: refuse a push whose `-c`/`GIT_CONFIG_*` sets `push.*` or `remote.*.push`, or allow only the `<src>:<dst>` form.
+- **Size:** small
+- **Found:** 2026-11-06, while reviewing the guard's gh and push allowlists
+
 ### EdgePlacement logs a binding loop on _layout
 - **Where:** `qml/components/hosts/popout/EdgePlacement.qml` (`_layout`), `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`
 - **What:** The live shell logged `Binding loop detected for property "_layout"` (`@components/hosts/popout/BarPopouts.qml[215:3]` and `@components/hosts/popout/EdgePopout.qml[314:3]`) several times after a reload on 2026-11-06, running the markets branch, which changes none of these files. The cycle isn't traced: PLAUSIBLE, settled by finding which of `_layout`'s inputs (`frame`, `_params`) reads a value derived from `_layout` itself.

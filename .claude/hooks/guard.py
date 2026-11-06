@@ -17,6 +17,7 @@ environment; a wrapper (sudo, nice, flock, …) is judged by the command it
 runs, and a `>`/`>>` redirection as a write to its target. Best effort: it
 stops mistakes, not an adversary.
 """
+import itertools
 import json
 import os
 import re
@@ -379,7 +380,7 @@ def check_axiom(env, args, cwd):
 GH_ALLOWED = {
     # Reads (not `browse`, which opens a browser)
     "pr list", "pr view", "pr diff", "pr checks", "pr status", "run list", "run view", "run watch", "run download",
-    "issue list", "issue view", "issue status", "repo list", "repo view", "repo read-dir", "repo read-file",
+    "issue list", "issue view", "issue status", "repo list", "repo view", "repo clone", "repo read-dir", "repo read-file",
     "repo gitignore", "repo license", "release list", "release view", "release download", "release verify",
     "release verify-asset", "workflow list", "workflow view", "label list", "ruleset list", "ruleset view",
     "ruleset check", "search", "status", "auth status", "cache list", "variable list", "variable get", "secret list",
@@ -397,22 +398,27 @@ GH_ALLOWED = {
 
 
 def gh_allowed(args):
-    """Help, or a command on GH_ALLOWED; -R/--repo (anywhere) doesn't hide it"""
+    """Help, or a command on GH_ALLOWED; -R/--repo (anywhere) doesn't hide it.
+    The command is the leading words only (`gh repo --description view edit` runs
+    edit), and a flag's value (`-H --help`) isn't help"""
     args = args[:args.index("--")] if "--" in args else args
-    words = [a for k, a in enumerate(args) if not a.startswith("-") and (k == 0 or args[k - 1] not in {"-R", "--repo"})]
-    words[:1] = [{"rs": "ruleset"}.get(w, w) for w in words[:1]]
-    if {"-h", "--help"} & set(args) or not words or words[0] == "help":
+    args = [a for k, a in enumerate(args) if not a.startswith(("-R", "--repo")) and args[k - 1:k] not in (["-R"], ["--repo"])]
+    if any(a in {"-h", "--help"} and not re.fullmatch(r"--?[\w-]+", args[k - 1] if k else "") for k, a in enumerate(args)):
         return True
-    if words[:2] == ["pr", "merge"] and "--admin" in args:
+    words = list(itertools.takewhile(lambda a: not a.startswith("-"), args))
+    words[:1] = [{"rs": "ruleset"}.get(w, w) for w in words[:1]]
+    if all(a.startswith("-") for a in args) or words[:1] == ["help"]:
+        return True
+    if words[:2] == ["pr", "merge"] and any(a == "--admin" or a.startswith("--admin=") for a in args):
         return False
-    return words[0] in GH_ALLOWED or " ".join(words[:2]) in GH_ALLOWED
+    return bool(words) and (words[0] in GH_ALLOWED or " ".join(words[:2]) in GH_ALLOWED)
 
 
 # ----------------------------------------------------------------- rules
 
 GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 # The pushes an agent may run: `git push [these] origin <branch>` (or
-# `<src>:<branch>`), named, never main, HEAD, a force (+) or a delete (:)
+# `<src>:<branch>`), named, never main, a `v*` tag, HEAD, a force (+) or a delete (:)
 PUSH_OPTS = {"-u", "--set-upstream", "-q", "--quiet", "-n", "--dry-run"}
 
 
@@ -420,8 +426,9 @@ def push_allowed(args):
     words = [a for a in args if a not in PUSH_OPTS]
     if len(words) != 2 or words[0] != "origin" or words[1].startswith(("-", "+", ":", "@")) or "HEAD" in words[1]:
         return False
-    # git completes `heads/main` to refs/heads/main
-    return words[1].split(":")[-1].removeprefix("refs/").removeprefix("heads/") not in {"main", "master"}
+    # git completes `heads/main` to refs/heads/main; a `v*` tag is a release (.github/workflows/release.yml)
+    dest = words[1].split(":")[-1].removeprefix("refs/").removeprefix("heads/")
+    return dest not in {"main", "master"} and not re.match(r"tags/|v\d", dest)
 
 
 def check_git(args):

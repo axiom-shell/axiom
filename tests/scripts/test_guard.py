@@ -109,7 +109,8 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh secret set X",
                     "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12", "gh pr merge 3 --admin",
                     "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
-                    "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -")
+                    "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -", "gh pr merge 3 --admin=true",
+                    "gh api repos/o/r -X DELETE -H --help", "gh repo --description view edit", "gh --method DELETE api repos/o/r")
         self.allows("gh pr create --fill --label roadmap", "gh pr view 3 --json comments", "gh pr list --label roadmap",
                     "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
                     "gh pr comment 3 -b ok", "gh pr close 3", "gh pr ready 3", "gh pr checkout 3", "gh version", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
@@ -118,7 +119,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
                     "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
                     "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list",
-                    "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
+                    "gh repo clone o/r", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_leading_cd(self):
         """A leading `cd` moves the relative paths after it"""
@@ -137,7 +138,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "git push -d origin x", "git push --mirror origin", "git push --all origin", "git push --prune origin x",
                     "git push --tags origin x", "git push upstream x", "git push -v origin x", "git push origin x y",
                     "git push origin main", "git push origin master", "git push origin x:main", "git push origin x:refs/heads/main",
-                    "git push origin x:heads/main", "git push origin refs/heads/main",
+                    "git push origin x:heads/main", "git push origin refs/heads/main", "git push origin v1.0", "git push origin x:refs/tags/y",
                     "git -C . push --force origin x", "git -C /tmp push", "env -C /tmp git push",
                     "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
                     # a switch, rebase or rename onto main, then a bare push

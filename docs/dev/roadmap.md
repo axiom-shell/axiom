@@ -386,6 +386,9 @@ Found while reviewing the guard's leading `cd` (row 20, config-05):
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh)
 
+Found while reviewing the guard's gh and push allowlists (row 20):
+- [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config)
+
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [A detached dock and toasts don't slide in from under the bars](issues.md#a-detached-dock-and-toasts-dont-slide-in-from-under-the-bars)
