@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### The Window and Media bar widgets render titles as styled text and load remote images
-- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`text`), `qml/components/bar/widgets/Media/Media.qml` (`text`, `styleText`)
-- **What:** Both show text from outside (the focused window's title, an MPRIS track title: a web page sets either) through `IconTextWidget` / `ValueGraphic`, whose `textFormat` stays Text.AutoText, so a title like `<img src="https://tracker.example/p.png"> Song` renders as styled text and makes the shell fetch the URL (the same Qt behaviour the calendar fix was tested on). Next event sets `textFormat: Text.PlainText` (features-07); these two don't. Fix: `textFormat: Text.PlainText` on both widgets.
-- **Size:** trivial
-- **Found:** 2026-11-05, while fixing features-07 (row 20)
-
 ### A fading toast keeps its full blur on niri
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
 - **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
@@ -109,24 +103,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Since compositor-06, sway's include and autostart targets are the config sway runs (`userconf.SwayMain`), so an i3 migrant whose sway runs `~/.config/i3/config` gets **Add it for me**'s include line written there. If they still run i3 from that same file, i3 follows the include into axiom's sway module and reports its sway-only lines as errors. Rare (one file shared by both, included mode); found by the branch review, left logged rather than widening the batch. Fix when it comes up: the hookup notes, or refuses with a reason, when its target is under an `i3/` folder.
 - **Size:** small
 - **Found:** 2026-11-02, while reviewing roadmap row 20's compositor-06
-
-### MediaManager's start-up pass throws: the engine has no Object.fromEntries
-- **Where:** `qml/services/system/MediaManager.qml:228` (`_startedAt`)
-- **What:** `Component.onCompleted` sets `root._startedAt = Object.fromEntries(…)`, but Qt's JS engine has no `Object.fromEntries` (qml-pitfalls.md › The JS engine). Every start and reload logs `TypeError: Property 'fromEntries' of object function Object() { [native code] } is not a function` (a nested niri run's log, 2026-11-02), and the `_pick()` after it never runs: the players already running at start get no start time, and nothing is picked until the player list changes. Fix: `reduce`, as the pitfall says; `check_structure` could refuse `fromEntries` and `flatMap` as it refuses an optional call on a computed member.
-- **Size:** trivial
-- **Found:** 2026-11-02, while fixing roadmap row 20's core-ui-theming-04
-
-### A NowPlaying seek shows the old place until the next tick, and keeps it while paused
-- **Where:** `qml/services/system/MediaManager.qml` (`setPositionByRatio`), `qml/components/content/NowPlaying/NowPlaying.qml` (`seek`)
-- **What:** `setPositionByRatio` writes `activePlayer.position` but not `MediaManager.position`, which only `_positionTimer` copies over (every 500 ms, and only while playing). Released, the seek slider shows its `value` (`MediaManager.progress`, still the old place) and glides back to it, then jumps to the seek at the next tick; paused, it stays on the old place (and the time beside it) until playback resumes. The same before core-ui-theming-06 (the old slider put `targetValue` back on release). Found by reading; a seek while paused settles it. Fix: `root.position = seekPosition` in `setPositionByRatio`.
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
-
-### The text cursor keeps blinking with animations off
-- **Where:** `qml/components/reusable/TextCursor.qml`
-- **What:** its `SequentialAnimation on opacity` loops whenever the input has focus, whatever `Appearance.animations` says, against AGENTS.md › Config: "looping animations gate `running` on `Appearance.animations`" (`check_structure` doesn't check it). Carried over from StyledTextEntry's and StyledTextArea's copies. Fix: `running: root._focused && Appearance.animations`, and opacity back to 1 when it stops (a stop leaves it wherever the blink was, maybe 0).
-- **Size:** trivial
-- **Found:** 2026-11-02, while reviewing roadmap row 20's core-ui-theming-06
 
 ### The compositor facts' axiomPath is read by nothing
 - **Where:** `backend/internal/compositor/manager/inputs.go` (`BindCtx`), `qml/services/compositor/CompositorConfigManager.qml` (`axiomPath`)

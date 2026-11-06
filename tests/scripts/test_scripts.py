@@ -391,6 +391,8 @@ class CheckStructure(unittest.TestCase):
         ("qml/services/Direct.qml", qml(), "qml/services/Direct.qml: directly in services/"),
         ("qml/shell/Handler.qml", qml("IpcHandler {}"), "qml/shell/Handler.qml: an IpcHandler"),
         ("qml/shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
+        ("qml/shell/FromEntries.qml", qml("function f(x) { return Object.fromEntries(x) }"), "Object.fromEntries or flatMap"),
+        ("qml/shell/FlatMap.qml", qml("function f(x) { return x.flatMap(y => y) }"), "Object.fromEntries or flatMap"),
         ("qml/shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
         ("qml/shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
          "qml/shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
