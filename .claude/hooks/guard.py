@@ -21,6 +21,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -405,7 +406,7 @@ PROTECTED_BRANCHES = {"main", "master"}
 def current_branch(cwd, repo=(), env=None):
     """The branch git finds checked out from cwd, with the `--git-dir=…`/`--work-tree=…`
     options and GIT_* variables of the command"""
-    env = {**os.environ, **{k: os.path.expanduser(v) for k, v in (env or {}).items() if k.startswith("GIT_")}}
+    env = {**os.environ, **{k: os.path.expanduser(expand_vars(v, env or {})) for k, v in (env or {}).items() if k.startswith("GIT_")}}
     out = subprocess.run(["git", "-C", cwd, *repo, "symbolic-ref", "--quiet", "--short", "HEAD"],
                          capture_output=True, text=True, env=env)
     return out.stdout.strip()
@@ -798,8 +799,9 @@ def check_generated_edit(tool_input):
 
 # `cd /dir && …`: `&&`-joined pipelines with redirections, and no `;`, `||`,
 # lone `&`, `\&`, newline, subshell, substitution, variable or relative folder
-# (CDPATH) that could run a push somewhere else than the folder; nor a later
-# command that moves (MOVES)
+# (CDPATH) that could run a push somewhere else than the folder; every later
+# command a program on PATH (a function, alias or builtin like `noglob cd`,
+# `repeat 1 cd`, `__zoxide_cd` may move the shell) that doesn't move (MOVES)
 LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*[ \t]*&&(?:[^\n\\;&|()<>`$]|&&|\|(?![|&])|\d*>&\d+|[<>]{1,2}(?![&|(]))+")
 MOVES = {"cd", "chdir", "pushd", "popd", "eval", "builtin", "source", "."}
 
@@ -814,7 +816,7 @@ def check(call):
         # agent's cwd resets every call); any other shape is judged here. cd
         # takes `..` after `~` and before symlinks (normpath), as the shell does
         if (commands[:1] and commands[0][1][:1] == ["cd"] and LEADING_CD.fullmatch(command)
-                and not any(argv[0] in MOVES for _, argv in commands[1:])
+                and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[1:])
                 and (target := resolve(os.path.normpath(os.path.expanduser(commands[0][1][1])), cwd)).is_dir()):
             cwd, commands = str(target), commands[1:]
         switched = False
