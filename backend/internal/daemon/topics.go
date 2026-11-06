@@ -26,7 +26,7 @@ func (d *Daemon) topicsPart() part {
 			for _, src := range d.sources() {
 				topics.Register(reg, d.topics, src)
 			}
-			d.tailscaleMethods(reg, tailscale.Options{})
+			d.tailscaleMethods(reg, tailscale.Options{Children: &d.children})
 			d.marketsMethods(reg)
 			// The graphed metrics whose history is kept from launch
 			// (SystemManager, from config): sampled in the daemon, pushed
@@ -50,9 +50,9 @@ func (d *Daemon) newSysmon() *sysmon.Monitor {
 // sources are the daemon's polled topics.
 func (d *Daemon) sources() []topics.Source {
 	return append([]topics.Source{
-		tailscale.Source(tailscale.Options{}),
-		tailscale.DetailsSource(tailscale.Options{}),
-		updates.Source(updates.Options{Log: d.opts.Log}),
+		tailscale.Source(tailscale.Options{Children: &d.children}),
+		tailscale.DetailsSource(tailscale.Options{Children: &d.children}),
+		updates.Source(updates.Options{Log: d.opts.Log, Children: &d.children}),
 		d.sysmon.Source(),
 		claudeusage.Source(claudeusage.Options{Log: d.opts.Log, StateFile: d.dirs.State + "claude-usage.json"}),
 		weather.Source(weather.Options{Log: d.opts.Log}),

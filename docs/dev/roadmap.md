@@ -319,7 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [The daemon's own commands are left zombies across a re-exec](issues.md#the-daemons-own-commands-are-left-zombies-across-a-re-exec)
 - [The tray watcher check could start a watcher by D-Bus activation](issues.md#the-tray-watcher-check-could-start-a-watcher-by-d-bus-activation)
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)
@@ -381,6 +380,9 @@ Found while reviewing the guard's gh and push allowlists (row 20):
 
 Found while reviewing the Monitors batch (row 20):
 - [A hotplug can shift an unnamed output's block, and nothing remaps it](issues.md#a-hotplug-can-shift-an-unnamed-outputs-block-and-nothing-remaps-it)
+
+Found while moving the daemon's own commands to command.Run (row 20):
+- [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren)
 
 Found while fixing the daemon's config watch (row 20):
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode)

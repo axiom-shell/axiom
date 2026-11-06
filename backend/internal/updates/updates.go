@@ -7,10 +7,8 @@
 package updates
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os/exec"
@@ -21,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
@@ -93,6 +92,8 @@ type Options struct {
 	// Run runs bin with args and returns its stdout, exit code (-1 when it
 	// couldn't run or was killed) and stderr
 	Run func(ctx context.Context, bin string, args ...string) ([]byte, int, string)
+	// Children holds the default Run's commands, for a re-exec to hand on
+	Children *command.Children
 }
 
 // Source is the `updates` topic.
@@ -104,7 +105,7 @@ func Source(o Options) topics.Source {
 		o.LookPath = exec.LookPath
 	}
 	if o.Run == nil {
-		o.Run = run
+		o.Run = runner(o.Children)
 	}
 	if o.Now == nil {
 		o.Now = time.Now
@@ -197,20 +198,16 @@ func runCheck(ctx context.Context, o Options, c *Check) ([]Package, error) {
 	return Parse(c.Format, out), nil
 }
 
-func run(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
-	// A check that hangs (a stuck mirror) gives way to the next interval
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	defer cancel()
-	var out, errOut bytes.Buffer
-	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Stdout, cmd.Stderr = &out, &errOut
-	cmd.WaitDelay = time.Second
-	err := cmd.Run()
-	code := 0
-	if exit, ok := errors.AsType[*exec.ExitError](err); ok {
-		code = exit.ExitCode()
-	} else if err != nil {
-		code = -1
+// runner is the default Run, its commands in children.
+func runner(children *command.Children) func(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
+	return func(ctx context.Context, bin string, args ...string) ([]byte, int, string) {
+		// A check that hangs (a stuck mirror) gives way to the next interval
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+		res, err := command.Run(ctx, command.Options{Children: children, Stop: true}, append([]string{bin}, args...), nil)
+		if err != nil {
+			return nil, -1, err.Error()
+		}
+		return []byte(res.Stdout), res.ExitCode, strings.TrimSpace(res.Stderr)
 	}
-	return out.Bytes(), code, strings.TrimSpace(errOut.String())
 }

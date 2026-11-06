@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### The daemon's other own commands still start outside command.Children
+- **Where:** `backend/internal/sysmon/nvidia.go`, `backend/internal/theme/integrate.go`, `backend/internal/compositor/manager/niri.go`, `backend/internal/daemon/cursor.go`
+- **What:** Row 20 moved `checkupdates`, `ddcutil` and `tailscale` to `command.Run` with the daemon's `Children`, but other commands the daemon runs for itself still start through their own `exec.Command` (`grep -rln 'exec.Command' backend/internal` lists them), so one in flight at a re-exec isn't handed on and stays a zombie until the daemon quits, as the three did. Not yet sorted into which run often enough to matter (a polled or streamed one) and which run once (a build, an install), which a re-exec doesn't meet.
+- **Size:** small
+- **Found:** 2026-11-06, while moving the daemon's own commands to command.Run (row 20)
+
 ### axiom config validate checks the install's config with the binary's schema under dev mode
 - **Where:** `backend/internal/cli/config.go` (`configValidateCommand`, `offlinePipeline`)
 - **What:** With no FILE and no `--tree`, `axiom config validate` reads `configDir(e)`'s config.json and checks it against the schema embedded in the binary it runs as. While dev mode runs the dev tree, the daemon runs the dev config through the dev tree's schema, so validate checks another file with another schema: a config using the dev tree's new types is called invalid though the daemon accepts it. Split out of the config watch's entry (row 20), where it was noted as related.
@@ -199,12 +205,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** The store reads the takeover values from `$XDG_STATE_HOME/axiom/takeovers.json` when config.json isn't JSON at the start. With none kept (the first start of this version on a file already broken, the state folder wiped) they're unknown: a restore, import or reset is refused (`write`; decided 2026-10-28: "Refuse, clearer message", which the Saved configs page shows), and the first hand fix that loads sets them as it reads, so a fix saying detached gives back a managed config applied before. The compositor manager's own hold, deleted in row 12, kept the mode applied in that case (`AppliedMode`, or `configIsOurs` / `moduleLoaded` after a reboot) and saved it back. Accepted by the maintainer (2026-10-28, #163): with no takeovers kept, a restore is refused and a hand fix sets the takeovers as it reads.
 - **Size:** needs a plan
 - **Found:** 2026-10-28, while reviewing row 12's third batch
-
-### The daemon's own commands are left zombies across a re-exec
-- **Where:** `backend/internal/updates/updates.go`, `backend/internal/brightness/brightness.go`, `backend/internal/tailscale/tailscale.go`
-- **What:** The commands the daemon runs for itself (`checkupdates`, `ddcutil`, `tailscale`, …) start through their own `exec.Command`, not `command.start`, so a re-exec doesn't hand them on (`command.Children`, which covers `exec.run` and the watches): one in flight when the image is replaced stays a zombie until the daemon quits. `ps --ppid <axiom run>` on 2026-10-27 showed 58, from about a dozen dev-mode re-execs (36 `qs`, 9 `checkupdates`, 2 `ddcutil`, `tailscale`, and 8 `bash`, likely `exec.run`'s from before the handoff). Later the same day the same daemon (about 9 h of dev-mode re-execs) had 104: 61 `qs`, 18 `checkupdates`, 8 `bash`, 7 `bat`, 5 `ddcutil`, 3 `tailscale`, mostly in groups started in the same second, the commands a fresh image runs at once (`ipcroute`'s `qs ipc --pid … show` and `call`, gone since, and the startup checks). The `qs` ones were those `qs ipc` ran, not shells: the shell a re-exec adopts is waited on and reaped (`supervise.Supervisor.adopt`), and only ever one runs. Running them through `command.Run` with the daemon's `Children` would cover them.
-- **Size:** small
-- **Found:** 2026-10-27, while handing exec's commands across a re-exec
 
 ### Leaving managed, the runtime layer can go on before the given-back config reloads
 - **Where:** `backend/internal/compositor/manager/manager.go` (`SetInputs`, `liveChanged`, `apply`)

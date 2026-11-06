@@ -7,11 +7,9 @@
 package brightness
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -20,6 +18,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/dbus"
 	"github.com/axiom-shell/axiom/backend/internal/logind"
 )
@@ -89,6 +88,8 @@ type Options struct {
 	// SystemBus connects to the system bus, for logind
 	SystemBus func(ctx context.Context) (*dbus.Conn, error)
 	Getenv    func(string) string
+	// Children holds the default Run's commands, for a re-exec to hand on
+	Children *command.Children
 }
 
 // Service answers the shell's brightness calls.
@@ -102,23 +103,26 @@ func New(o Options) *Service {
 		o.Dir = "/sys/class/backlight"
 	}
 	if o.Run == nil {
-		o.Run = ddcutil
+		o.Run = ddcutil(o.Children)
 	}
 	return &Service{o: o}
 }
 
-func ddcutil(ctx context.Context, args ...string) ([]byte, error) {
-	if _, err := exec.LookPath("ddcutil"); err != nil {
-		return nil, axerr.Wrap(axerr.Unavailable, err, "ddcutil isn't installed")
+// ddcutil is the default Run, its commands in children.
+func ddcutil(children *command.Children) func(ctx context.Context, args ...string) ([]byte, error) {
+	return func(ctx context.Context, args ...string) ([]byte, error) {
+		res, err := command.Run(ctx, command.Options{Children: children, Stop: true}, append([]string{"ddcutil"}, args...), nil)
+		if axerr.KindOf(err) == axerr.NotFound {
+			return nil, axerr.Wrap(axerr.Unavailable, err, "ddcutil isn't installed")
+		}
+		if err == nil {
+			err = res.Err()
+		}
+		if err != nil {
+			return []byte(res.Stdout), axerr.Wrap(axerr.Unavailable, err, "ddcutil %s: %s", strings.Join(args, " "), strings.TrimSpace(res.Stderr))
+		}
+		return []byte(res.Stdout), nil
 	}
-	var stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "ddcutil", args...)
-	cmd.Stderr = &stderr
-	out, err := cmd.Output()
-	if err != nil {
-		return out, axerr.Wrap(axerr.Unavailable, err, "ddcutil %s: %s", strings.Join(args, " "), strings.TrimSpace(stderr.String()))
-	}
-	return out, nil
 }
 
 // Detect finds the panel's backlight and the monitors answering DDC/CI

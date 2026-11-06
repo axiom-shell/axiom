@@ -7,7 +7,6 @@
 package tailscale
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -20,6 +19,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/topics"
 )
 
@@ -252,6 +252,9 @@ type Options struct {
 	// while one is needed (15 s); the login link then shows in the state
 	// (AuthURL)
 	UpTimeout time.Duration
+	// Children holds the default Query's and Run's commands, for a re-exec
+	// to hand on
+	Children *command.Children
 }
 
 func (o Options) withDefaults() Options {
@@ -259,10 +262,10 @@ func (o Options) withDefaults() Options {
 		o.LookPath = exec.LookPath
 	}
 	if o.Query == nil {
-		o.Query = query
+		o.Query = query(o.Children)
 	}
 	if o.Run == nil {
-		o.Run = run
+		o.Run = run(o.Children)
 	}
 	if o.UpTimeout == 0 {
 		o.UpTimeout = 15 * time.Second
@@ -419,7 +422,7 @@ func GrantOperator(ctx context.Context, o Options, user string) error {
 	}
 	// pkexec exits 126 when the dialog was dismissed, 127 when not
 	// authorized (authentication failed, or polkit refused)
-	if exit := (*exec.ExitError)(nil); errors.As(err, &exit) && (exit.ExitCode() == 126 || exit.ExitCode() == 127) {
+	if exit := (interface{ ExitCode() int })(nil); errors.As(err, &exit) && (exit.ExitCode() == 126 || exit.ExitCode() == 127) {
 		return axerr.Wrap(axerr.Unauthorized, err, "tailscale operator: not authorized")
 	}
 	if msg := strings.TrimSpace(string(out)); msg != "" {
@@ -468,20 +471,23 @@ func deniedText(msg string) bool {
 	return strings.Contains(lower, "access denied") || strings.Contains(lower, "permission denied")
 }
 
-func query(ctx context.Context, bin string, args ...string) (stdout, stderr []byte) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	var out, errOut bytes.Buffer
-	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Stdout = &out
-	cmd.Stderr = &errOut
-	cmd.WaitDelay = time.Second
-	cmd.Run()
-	return out.Bytes(), errOut.Bytes()
+// query is the default Query, its commands in children.
+func query(children *command.Children) func(ctx context.Context, bin string, args ...string) (stdout, stderr []byte) {
+	return func(ctx context.Context, bin string, args ...string) (stdout, stderr []byte) {
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		res, _ := command.Run(ctx, command.Options{Children: children, Stop: true}, append([]string{bin}, args...), nil)
+		return []byte(res.Stdout), []byte(res.Stderr)
+	}
 }
 
-func run(ctx context.Context, bin string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.WaitDelay = time.Second
-	return cmd.CombinedOutput()
+// run is the default Run, its commands in children: stdout, then stderr.
+func run(children *command.Children) func(ctx context.Context, bin string, args ...string) ([]byte, error) {
+	return func(ctx context.Context, bin string, args ...string) ([]byte, error) {
+		res, err := command.Run(ctx, command.Options{Children: children, Stop: true}, append([]string{bin}, args...), nil)
+		if err == nil {
+			err = res.Err()
+		}
+		return []byte(res.Stdout + res.Stderr), err
+	}
 }
