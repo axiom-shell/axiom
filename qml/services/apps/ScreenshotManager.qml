@@ -122,9 +122,36 @@ QtObject {
     return true;
   }
 
-  // { path, callback } while pick() runs
+  // A region to share (the screen-share picker): callback(screenName,
+  // rect), rect in that screen's logical pixels from its top left; a
+  // cancel calls back with no screen. Returns false (and never calls back)
+  // when a capture is already running.
+  function pickArea(callback) {
+    if (root.busy)
+      return false;
+    root._target = {
+      "area": true,
+      "callback": (ok, screenName, rect) => callback(ok ? screenName : "", ok ? rect : null)
+    };
+    root._start("region");
+    return true;
+  }
+
+  // Called by the picker with pickArea's region
+  function finishArea(screenName, rect) {
+    root.picking = false;
+    root.request = null;
+    root._watchdog.stop();
+    const target = root._target;
+    root._target = null;
+    target?.callback(true, screenName, rect);
+  }
+
+  // { path, callback } while pick() runs, { area, callback } while
+  // pickArea() does
   property var _target: null
   readonly property bool forCaller: root._target !== null
+  readonly property bool forArea: root._target?.area === true
 
   // audio: the sound a recording started here takes (_audioFor; none by
   // default), so no picker keeps an earlier one's

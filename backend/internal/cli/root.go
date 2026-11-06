@@ -34,6 +34,8 @@ func Root() *Command {
 			marketsCommand(),
 			debugCommand(),
 			bugInfoCommand(),
+			screenSharePickCommand(),
+			portalWaitCommand(),
 			versionCommand(),
 		},
 	}

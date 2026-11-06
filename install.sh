@@ -70,6 +70,9 @@ PACKAGES=(
   "udisksctl|udisks2|udisks2"
   "accountsservice|accountsservice|accountsservice"
   "xdg-desktop-portal-gtk|xdg-desktop-portal-gtk|xdg-desktop-portal-gtk"
+  "xdg-desktop-portal-hyprland|xdg-desktop-portal-hyprland|nett00n/hyprland:xdg-desktop-portal-hyprland"
+  "xdg-desktop-portal-wlr|xdg-desktop-portal-wlr|xdg-desktop-portal-wlr"
+  "xdg-desktop-portal-gnome|xdg-desktop-portal-gnome|xdg-desktop-portal-gnome"
   "greetd|greetd|greetd"
   "agreety|greetd-agreety|greetd"
   "fcitx5|fcitx5|fcitx5"
@@ -99,6 +102,9 @@ FEATURES=(
   "Removable drives (mount, open and eject USB sticks and memory cards)|udisksctl|"
   "Your picture on the login screen, and your real name in Settings|accountsservice|"
   "Browse buttons for folders and importing configs (the desktop's file picker)|xdg-desktop-portal-gtk|"
+  "Screen sharing under Hyprland (calls, streams)|xdg-desktop-portal-hyprland|hyprland"
+  "Screen sharing under sway (calls, streams)|xdg-desktop-portal-wlr|sway"
+  "Screen sharing under niri (calls, streams)|xdg-desktop-portal-gnome|niri"
   # fcitx5 is Input.keyboard.method's default; ibus (in PACKAGES for the install
   # hints) is supported but not offered, so "all" doesn't take both
   "Typing Japanese, Chinese, Korean and more (the fcitx5 input method)|fcitx5|"
@@ -961,6 +967,37 @@ if ((!packaged)); then
       fi
     done
     ((dry_run)) || ok "Installed $(compgen -G "$entries_dir/axiom-*.desktop" | wc -l) desktop entries"
+  fi
+fi
+
+# ─── The screen-share portal ─────────────────────────────────────────────────
+
+# axiom's own ScreenCast portal, which niri's screen sharing uses once the
+# Screen sharing settings point xdg-desktop-portal at it: its .portal file,
+# and a D-Bus activation that waits for the daemon serving it; a package
+# installs its own
+if ((!packaged)); then
+  portal_src=""
+  for dir in "$AXIOM_DIR/data/portal" ${clone_dir:+"$clone_dir/data/portal"}; do
+    if [[ -f "$dir/axiom.portal" ]]; then
+      portal_src=$dir
+      break
+    fi
+  done
+  data_home=${XDG_DATA_HOME:-$HOME/.local/share}
+  if ((dry_run)) && [[ -z "$portal_src" ]]; then
+    run cp "$AXIOM_DIR/data/portal/axiom.portal" "$data_home/xdg-desktop-portal/portals/"
+  elif [[ -n "$portal_src" ]]; then
+    run mkdir -p "$data_home/xdg-desktop-portal/portals" "$data_home/dbus-1/services"
+    run cp "$portal_src/axiom.portal" "$data_home/xdg-desktop-portal/portals/"
+    service=org.freedesktop.impl.portal.desktop.axiom.service
+    if ((dry_run)); then
+      run cp "$portal_src/$service" "$data_home/dbus-1/services/"
+    else
+      sed "s|^Exec=/usr/bin/axiom |Exec=$AXIOM_BIN |" "$portal_src/$service" >"$data_home/dbus-1/services/$service.new" \
+        && mv -f "$data_home/dbus-1/services/$service.new" "$data_home/dbus-1/services/$service"
+      ok "Installed axiom's screen-share portal"
+    fi
   fi
 fi
 

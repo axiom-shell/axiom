@@ -29,6 +29,7 @@ The whole shell runs on what's listed under Required. Everything else is optiona
 | Login screen | `greetd` and its text login `agreety` (`greetd-agreety` on Arch), the fallback; `sway` for it to run in (recommended), or Hyprland without one; `pkexec` (polkit) to install it |
 | Calendar | `secret-tool` (libsecret) to keep account passwords in your keyring |
 | Browse buttons for folders, importing a shared config | xdg-desktop-portal with a file chooser backend (`xdg-desktop-portal-gtk` or KDE's), or `zenity` or `kdialog`. Without them, type the path |
+| Screen sharing (calls, streams) | The compositor's portal backend: `xdg-desktop-portal-hyprland` under Hyprland, `xdg-desktop-portal-wlr` under sway, `xdg-desktop-portal-gnome` under niri (axiom's own portal shares there; GNOME's answers with axiom's picker off) |
 | Polkit prompt | Nothing: axiom is the agent itself, and stops another one (hyprpolkitagent, KDE's, GNOME's) while it's on |
 | Night light | nothing on Hyprland and sway; `wlsunset` on niri |
 | X11 apps (Steam, games, older apps) | On niri, `xwayland-satellite` (niri runs X11 apps only through it); on sway, Xwayland (`xorg-xwayland` on Arch, `xorg-x11-server-Xwayland` on Fedora). Hyprland's package brings Xwayland itself |

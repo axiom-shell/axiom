@@ -57,6 +57,7 @@ sections:
   - Greeter
   - Idle
   - Polkit
+  - ScreenSharing
   - NightLight
   - General
   - Launcher

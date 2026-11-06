@@ -22,6 +22,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
   - `screensFor(mode, name)`: see [Shell manager and screen targeting](shell-manager-targeting.md).
 - **`Idle`**: hypridle ([Idle](../features/idle.md)).
 - **`PolkitConfig`**: [Polkit](../features/polkit.md).
+- **`ScreenSharingConfig`**: [Screen sharing](../features/screen-sharing.md) (`enabled`; the daemon reads the rest).
 - **`DateTimeConfig`**: the clock, date order, first day of the week and region, which `I18n` applies (`use24Hour`, `dateFormat`, `firstDayOfWeek`): [Date and time](../features/datetime.md).
 - **`GreeterConfig`**: [Greeter install](../features/greeter-install.md).
 - **`Appearance`**: theme, font, shape, motion tokens.

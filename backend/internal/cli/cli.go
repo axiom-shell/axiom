@@ -76,6 +76,11 @@ func Main(args []string, e *Env) int {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), shutdownSignals(signal.Ignored)...)
 	defer stop()
+	// xdg-desktop-portal-hyprland runs its picker binary with no command
+	// of ours: its environment says it's the picker
+	if picker := xdphPickerArgs(args, e.Getenv); picker != nil {
+		args = picker
+	}
 	return Run(ctx, Root(), args, e)
 }
 
