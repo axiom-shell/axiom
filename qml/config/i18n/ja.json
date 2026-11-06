@@ -1114,7 +1114,6 @@
     "Your config already binds {0}, so axiom's binds on those keys are skipped. Free them in your config, or pick other keys on the Keybinds page.": "設定ですでに {0} がバインドされているため、これらのキーへの axiom のバインドはスキップされます。設定でキーを空けるか、キーバインドページで別のキーを選んでください。",
     "Look": "外観",
     "Pick a wallpaper and a theme. Themes can also be generated from a wallpaper: pick one, and a matching light and dark theme appear in the list.": "壁紙とテーマを選んでください。テーマは壁紙から生成することもできます。壁紙を選ぶと、それに合ったライトとダークのテーマが一覧に追加されます。",
-    "That folder has no images (jpg, png or bmp) yet.": "そのフォルダーにはまだ画像（jpg、png、bmp）がありません。",
     "Create it": "作成する",
     "Open it": "開く",
     "Bar": "バー",
@@ -3721,7 +3720,6 @@
     "With longitude, overrides the location.": "",
     "Monitors whose windows sit side by side on a scrolling strip instead of tiling.": "",
     "List your most used apps before you type.": "",
-    "Images (jpg, png, bmp) the pickers list.": "",
     "Match windows by title and class; picking one focuses it.": "",
     "The input method's engine (e.g. pinyin, hangul).": "",
     "Show a summary of a reasoning model's thinking above the reply.": "",
@@ -4063,6 +4061,8 @@
     "Pick what to share": "",
     "An app that asks to may share the same screen or window again later without the picker (restore tokens). Under sway, the wlroots portal decides this itself.": "",
     "The installed axiom has no such setting, or one of another shape": "",
-    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.": ""
+    "The installed axiom's config is version {0}, the dev tree's {1}: a setting moved or reshaped between them can't be copied to live while they differ.": "",
+    "That folder has no images ({0}) yet.": "",
+    "Images the pickers list (jpg, png and bmp, and webp, avif and jxl where their Qt image plugin is installed).": ""
   }
 }

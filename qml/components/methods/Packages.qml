@@ -56,7 +56,9 @@ QtObject {
   // keeps a table of the same keys (scripts/check_packages.py compares them).
   // A package is a name, { name, repo } (from a repository enabled first),
   // or null: nothing to install there (the
-  // feature doesn't apply). Every key names every distribution.
+  // feature doesn't apply). Every key names every distribution. Qt's
+  // image plugins are keys too (WallpaperManager.extensions): Fedora's
+  // kimageformats brings libavif and libjxl itself.
   readonly property var packages: ({
       "git": {
         "arch": "git",
@@ -197,6 +199,22 @@ QtObject {
       "ibus-daemon": {
         "arch": "ibus",
         "fedora": "ibus"
+      },
+      "qt6-imageformats": {
+        "arch": "qt6-imageformats",
+        "fedora": "qt6-qtimageformats"
+      },
+      "kimageformats": {
+        "arch": "kimageformats",
+        "fedora": "kf6-kimageformats"
+      },
+      "libavif": {
+        "arch": "libavif",
+        "fedora": null
+      },
+      "libjxl": {
+        "arch": "libjxl",
+        "fedora": null
       }
     })
 
