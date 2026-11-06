@@ -539,7 +539,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
 - **features-12** (5, done): The IPC `apply` reads the cached catalog first; with no cache yet it warns and the catalog arrives for the next call.
 - **features-13** (4, done): The Edit notification's entry was done in platform-03. Notifications keep no capture's path (their picture is a cached copy), so the handler opens the newest path of the clicked one's key, which holds only that notification.
 - **features-14** (2, done): The lists are ListViews modelled by a shared `CountModel`, so a new count keeps the view's place (a plain number as the model scrolled back to the top). Agenda's unit is a day, its events built with it (`maxEvents` caps them).
-- **features-15** (1, done): A custom format splits on `.`, `-`, `/` and `,` as well as spaces and `:`.
+- **features-15** (1, done): A custom format splits on `/` and `,` as well as spaces and `:`, and on `.` and `-` between digits (so a zone's `-03` and `p.m.` stay whole).
 
 ### Counts
 - Entries: 348 in the list (354 at the answers, less 6 fixed with the OSD's statuses: overlay-modules-01 one, overlay-modules-08 three, features-08 two; 359 at triage, from 360 open outside Deferred and Phase 13 less the one merged duplicate; the answers deferred 4 and removed 1). By the area whose clusters hold them: config 21, platform 27, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 45, features 68. By the area that filed them: config 18, platform 29, core-ui-theming 32, compositor 113, bar-popouts 48, overlay-modules 44, features 70.
