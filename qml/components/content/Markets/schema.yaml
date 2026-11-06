@@ -8,6 +8,8 @@ canvasDetail: layout
 hosts: [lockscreen]
 settings:
   symbols:
+    # Ids from the user's watchlist: personal, as the watchlist is
+    x-scope: personal
     type: array
     title: Symbols
     default: []

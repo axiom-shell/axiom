@@ -1,5 +1,8 @@
 # The Markets section of the config (config.json's "Markets").
 
+# Personal: the watchlist (with its holdings and alerts) and how it's
+# fetched are the user's own, shared only with an export's personal switch
+x-scope: personal
 type: object
 x-category: Modules
 x-card: {file: MarketsWatchlist, title: Watchlist, folds: true}
@@ -81,19 +84,16 @@ properties:
     default: USD
     description: Holdings are totalled in it (a three-letter code). CoinGecko coins are priced in it too.
   alerts:
-    x-scope: personal
     type: boolean
     title: Price alerts
     default: true
     description: Notifies when a price crosses one of the watchlist's alerts.
   redForGains:
-    x-scope: personal
     type: boolean
     title: Red for gains
     default: false
     description: Rises in red and falls in green, as East Asian markets show them.
   holdingsOnLockscreen:
-    x-scope: personal
     type: boolean
     title: Holdings on the lock screen
     default: false
