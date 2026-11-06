@@ -48,7 +48,9 @@
       "Bash(hostnamectl set-*)",
       "Bash(xdg-mime default *)",
       "Bash(xdg-settings set *)",
-      "Bash(gh api*)"
+      "Bash(gh api*)",
+      "Bash(claude)",
+      "Bash(claude *)"
     ]
   },
   "hooks": {

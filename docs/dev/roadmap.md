@@ -388,7 +388,6 @@ Found while reviewing the guard's leading `cd` (row 20, config-05):
 
 Found while reviewing the guard's gh and push allowlists (row 20):
 - [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config)
-- [A path rule judges a relative path where the session started after a cd it doesn't follow](issues.md#a-path-rule-judges-a-relative-path-where-the-session-started-after-a-cd-it-doesnt-follow)
 
 Found by the audits:
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)

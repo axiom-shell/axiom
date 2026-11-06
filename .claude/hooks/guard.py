@@ -14,8 +14,9 @@ command such as `then`, into `bash -c`/`sh -c` strings; heredoc bodies only when
 something could run them: drop_heredoc_bodies) and each is judged on its argv, with leading
 VAR=value assignments (and `export VAR=…` earlier in the same command) as its
 environment; a wrapper (sudo, nice, flock, …) is judged by the command it
-runs, and a `>`/`>>` redirection as a write to its target. Best effort: it
-stops mistakes, not an adversary.
+runs, and a `>`/`>>` redirection as a write to its target. It guards itself:
+writes to .claude/ where the session runs or Claude's settings, and another
+`claude`, are refused too. Best effort: it stops mistakes, not an adversary.
 """
 import itertools
 import json
@@ -226,12 +227,16 @@ def expand_vars(value, env):
 CONFIG_HOMES = {HOME / ".config", LIVE_CONFIG.parent.parent}
 
 
+def path_forms(path, cwd, env):
+    """A path as written (`..` folded) and with its links followed."""
+    expanded = os.path.expanduser(expand_vars(path, env))
+    return {Path(os.path.normpath(os.path.join(cwd, expanded))), resolve(path, cwd, env)}
+
+
 def live_config_path(path, cwd, env):
     """Whether `path` is a live config folder or inside one (or HOME itself),
     as written and with its links followed; a scratch dir inside the repo isn't."""
-    expanded = os.path.expanduser(expand_vars(path, env))
-    written = Path(os.path.normpath(expanded if os.path.isabs(expanded) else os.path.join(cwd, expanded)))
-    for target in {written, resolve(path, cwd, env)}:
+    for target in path_forms(path, cwd, env):
         if target == REPO or REPO in target.parents:
             continue
         if target == HOME or any(target == home or home in target.parents for home in CONFIG_HOMES):
@@ -448,7 +453,7 @@ def check_git(args):
         deny(rule, "push only `git push [-u] origin <branch>`, a named branch that isn't main: no force, delete, HEAD or bare push.")
 
 
-def check_argv(env, argv, cwd):
+def check_argv(env, argv, cwd, guarded):
     name = Path(argv[0]).name
     args = argv[1:]
 
@@ -477,9 +482,6 @@ def check_argv(env, argv, cwd):
     # Rewriting history on the remote, pushing to main past a PR, or git clean -x
     if name == "git":
         check_git(args)
-
-    # The screen-share portal and its configs
-    check_portal(env, name, args, cwd)
 
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):
@@ -547,31 +549,22 @@ def check_argv(env, argv, cwd):
     # The machine's own settings: its clock and time zone, hostname, the
     # user's account (password, picture, name) and default apps. Only
     # against a scratch system bus (dbus-run-session) or a scratch daemon
-    check_system_settings(env, name, args, cwd, sends)
+    written, removed = touched_paths(name, args, cwd, env)
+    check_system_settings(env, name, args, cwd, sends, written + removed)
+    check_portal(name, args, written + removed, cwd, env)
+    # find deletes what matches under its folders, not the folders: refused only inside
+    check_guard_paths(*((written + removed, []) if name == "find" else (written, removed)), cwd, env, guarded)
+
+    # Another claude loads the settings of the folder it starts in: without this guard
+    if name == "claude" or name in {"npx", "bunx"} and any(a.startswith("@anthropic-ai/claude-code") for a in args):
+        deny("Never, while testing", "don't start another `claude` from Bash: it runs without this guard; ask the user (or use a subagent, which runs this session's).")
 
     # The real config.json: deleted or moved (the file or a folder above it)
-    paths = [a for a in args if not a.startswith("-")]
-    holding = {LIVE_CONFIG, *LIVE_CONFIG.parents}
-    deletes = name in {"rm", "unlink", "trash", "trash-put", "shred", "mv"}
-    if name == "find" and any(a == "-delete" or a in {"-exec", "-execdir"} and Path(b).name in {"rm", "shred", "unlink"}
-                              for a, b in zip(args, args[1:] + [""])):
-        deletes, paths = True, args[:next((i for i, a in enumerate(args) if a[:1] in {"-", "(", "!"}), len(args))]
-    for a in (paths[:-1] if name == "mv" else paths) if deletes else []:
-        if resolve(a, cwd, env) in holding:
-            deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}) or a folder holding it; use `axiom ipc onboarding goTo <n>`.")
+    if any(resolve(a, cwd, env) in {LIVE_CONFIG, *LIVE_CONFIG.parents} for a in removed):
+        deny("Never, while testing", f"don't delete or move the real config.json ({LIVE_CONFIG}) or a folder holding it; use `axiom ipc onboarding goTo <n>`.")
     # ... or written by Bash, which skips the x-takeover check Edit and Write get
-    if name in {"cp", "mv", "install"} and len(paths) > 1:
-        written = [paths[-1]]
-    elif name == ">" or name == "tee":
-        written = paths
-    elif name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
-        written = paths
-    else:
-        written = []
-    for a in written:
-        target = resolve(a, cwd, env)
-        if target == LIVE_CONFIG or target == LIVE_CONFIG.parent and any(Path(p).name == LIVE_CONFIG.name for p in paths[:-1]):
-            deny("Never, while testing", f"don't write the real config.json ({LIVE_CONFIG}) from Bash, which skips the x-takeover check; use Edit/Write or `axiom config set`.")
+    if any(resolve(a, cwd, env) == LIVE_CONFIG for a in written):
+        deny("Never, while testing", f"don't write the real config.json ({LIVE_CONFIG}) from Bash, which skips the x-takeover check; use Edit/Write or `axiom config set`.")
 
     # qmlformat -i replaces the inode
     if name == "qmlformat" and any(a in {"-i", "--inplace"} for a in args):
@@ -609,7 +602,7 @@ def live_default_apps_file(path, cwd, env):
     return default_apps_name(p.name) and live_config_path(str(p.parent), cwd, env)
 
 
-def check_system_settings(env, name, args, cwd, sends):
+def check_system_settings(env, name, args, cwd, sends, touched):
     if name == "timedatectl" and any(a.startswith("set-") for a in args):
         deny("Never, while testing", "don't change the machine's clock or time zone; test datetime against a scratch system bus (tests in backend/internal/timedate).")
     if name == "hostnamectl" and len([a for a in args if not a.startswith("-")]) > 1:
@@ -624,21 +617,53 @@ def check_system_settings(env, name, args, cwd, sends):
         deny("Never, while testing", "datetime.set* / system.setHostname / account.* / apps.setDefault only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: they change the machine's settings.")
     if (name == "xdg-mime" and args[:1] == ["default"] or name == "xdg-settings" and args[:1] == ["set"]) and not scratch(env.get("XDG_CONFIG_HOME", "")):
         deny("Never, while testing", f"`{name} {args[0]}` changes the user's default apps; only with a scratch XDG_CONFIG_HOME=<dir>.")
-    written, into_dir = written_paths(name, args, cwd, env, default_apps_name)
-    for a in written:
-        if live_default_apps_file(a, cwd, env) or into_dir and live_config_path(a, cwd, env):
-            deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
+    if any(live_default_apps_file(a, cwd, env) for a in touched):
+        deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
 
 
-def written_paths(name, args, cwd, env, named):
-    """The paths a cp / mv / install / > / tee / rm / sed -i writes, and
-    whether a cp-like one copies a file `named` matches into a folder."""
+REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}
+MODE = re.compile(r"[0-7]+|([ugoa]*[-+=][rwxXst]*,?)+")
+
+
+def touched_paths(name, args, cwd, env):
+    """(written, removed): the paths a command writes (cp / mv / install / ln's
+    destination, a file copied into a folder as its own path there, the files
+    of > / tee / truncate / sed -i / chmod / chown) and the ones it deletes or
+    moves away (rm and the like, mv's sources, find -delete)."""
     paths = [a for a in args if not a.startswith("-")]
-    if name in {"cp", "mv", "install"} and len(paths) > 1:
-        return [paths[-1]], resolve(paths[-1], cwd, env).is_dir() and any(named(Path(p).name) for p in paths[:-1])
-    if name in {">", "tee", "rm", "unlink"} or name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
-        return paths, False
-    return [], False
+    if name == "find" and any(a == "-delete" or a in {"-exec", "-execdir"} and Path(b).name in REMOVES
+                              for a, b in zip(args, args[1:] + [""])):
+        return [], args[:next((i for i, a in enumerate(args) if a[:1] in {"-", "(", "!"}), len(args))]
+    if name in {"cp", "mv", "install", "ln"} and len(paths) > 1:
+        *sources, dest = paths
+        into = dest.endswith("/") or resolve(dest, cwd, env).is_dir()
+        return [os.path.join(dest, Path(p).name) for p in sources] if into else [dest], sources if name == "mv" else []
+    if name in REMOVES:
+        return [], paths
+    if name in {">", "tee", "truncate"} or name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
+        return paths, []
+    if name == "chmod":  # its mode may look like an option (-x), so files are what isn't one
+        return [p for p in paths if not MODE.fullmatch(p)], []
+    if name == "chown":
+        return paths[1:], []
+    return [], []
+
+
+def claude_guarded(cwd):
+    """What switches this guard off: the .claude/ folder where the session runs
+    ($CLAUDE_PROJECT_DIR, else its cwd: this hook, settings.json, skills, agents)
+    and the user's Claude settings ($CLAUDE_CONFIG_DIR's and ~/.claude's)."""
+    homes = {Path(os.path.expanduser(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude")), HOME / ".claude"}
+    guarded = [Path(os.environ.get("CLAUDE_PROJECT_DIR") or cwd) / ".claude",
+               *(home / name for home in homes for name in ("settings.json", "settings.local.json"))]
+    return {form for path in guarded for form in path_forms(str(path), "/", {})}
+
+
+def check_guard_paths(written, removed, cwd, env, guarded):
+    """A write into what claude_guarded names, or a removal of it or a folder holding it."""
+    for path, removes in [(a, False) for a in written] + [(a, True) for a in removed]:
+        if any(t == g or g in t.parents or removes and t in g.parents for t in path_forms(path, cwd, env) for g in guarded):
+            deny("Never, while testing", "don't edit the running guard or Claude's settings (.claude/ where the session runs, the user's settings.json): ask the user; the guard changes through a PR.")
 
 
 def portal_config_name(path):
@@ -654,16 +679,12 @@ def live_portal_config(path, cwd, env):
     return portal_config_name(path) and live_config_path(str(Path(path).parent), cwd, env)
 
 
-def check_portal(env, name, args, cwd):
+def check_portal(name, args, touched, cwd, env):
     # Restarting or stopping the portal ends every share running
     if name in {"systemctl", "service", "pkill", "killall", "kill"} and any("xdg-desktop-portal" in a for a in args):
         if name in {"pkill", "killall", "kill"} or any(a in {"restart", "stop", "kill", "reload", "try-restart", "reload-or-restart", "mask", "disable"} for a in args):
             deny("Never, while testing", "don't restart or stop the live xdg-desktop-portal (or its backends): it ends the shares running; ask the user (the Screen sharing card's Restart does it on a click).")
-    written, _ = written_paths(name, args, cwd, env, lambda n: False)
-    if name in {"cp", "mv", "install"} and written and (written[0].endswith("/") or resolve(written[0], cwd, env).is_dir()):
-        # cp xdph.conf ~/.config/hypr/: the copy's own path
-        written = [str(Path(written[0]) / Path(p).name) for p in args[:-1] if not p.startswith("-")]
-    for a in written:
+    for a in touched:
         if live_portal_config(a, cwd, env):
             deny("Never, while testing", "don't write the real screen-share portal configs (hypr/xdph.conf, xdg-desktop-portal-wlr/, xdg-desktop-portal/*portals.conf): only the Screen sharing card's Apply does; test with a scratch XDG_CONFIG_HOME=<dir>.")
 
@@ -789,32 +810,40 @@ def check_generated_edit(tool_input):
 
 # ------------------------------------------------------------------ main
 
-# `cd /dir && …`: `&&`-joined pipelines with redirections, and no `;`, `||`,
-# lone `&`, `\&`, newline, subshell, substitution, variable or relative folder
-# (CDPATH) that could run a command somewhere else than the folder; every later
-# command a program on PATH (a function, alias or builtin like `noglob cd`,
-# `repeat 1 cd`, `__zoxide_cd` may move the shell) that doesn't move (MOVES)
-LEADING_CD = re.compile(r"[ \t]*cd[ \t]+[/~][^\s\\;&|()<>`$]*[ \t]*&&(?:[^\n\\;&|()<>`$]|&&|\|(?![|&])|\d*>&\d+|[<>]{1,2}(?![&|(]))+")
+# `cd /dir && …` (or `;`, a newline; several such cds): `&&`-joined pipelines
+# with redirections after them, and no `;`, `||`, lone `&`, `\&`, newline,
+# subshell, substitution, variable or relative folder (CDPATH) that could run a
+# command somewhere else than the folder; every later command a program on PATH
+# (a function, alias or builtin like `noglob cd`, `repeat 1 cd`, `__zoxide_cd`
+# may move the shell) that doesn't move (MOVES)
+LEADING_CD = re.compile(r"(?:\s*cd[ \t]+[/~][^\s\\;&|()<>`$]*[ \t]*(?:&&|;|\n))+(?:[^\n\\;&|()<>`$]|&&|\|(?![|&])|\d*>&\d+|[<>]{1,2}(?![&|(]))+")
 MOVES = {"cd", "chdir", "pushd", "popd", "eval", "builtin", "source", "."}
 
 
 def check(call):
     tool, tool_input = call.get("tool_name", ""), call.get("tool_input") or {}
+    guarded = claude_guarded(call.get("cwd") or str(REPO))
     if tool == "Bash":
         command = tool_input.get("command", "")
         commands = split_commands(command)
         cwd = call.get("cwd") or str(REPO)
-        # A leading cd into a folder moves the relative paths after it (an
-        # agent's cwd resets every call): config.json, portal and default-apps
-        # writes; any other shape is judged here. cd takes `..` after `~` and
-        # before symlinks (normpath), as the shell does
-        if (commands[:1] and commands[0][1][:1] == ["cd"] and LEADING_CD.fullmatch(command)
-                and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[1:])
-                and (target := resolve(os.path.normpath(os.path.expanduser(commands[0][1][1])), cwd)).is_dir()):
-            cwd, commands = str(target), commands[1:]
+        # Leading cds into folders move the relative paths after them (an
+        # agent's cwd resets every call): the path rules' writes; any other
+        # shape is judged here. cd takes `..` after `~` and before symlinks
+        # (normpath), as the shell does; a cd into no folder fails, and after
+        # `;` the shell stays where it was
+        cds = list(itertools.takewhile(lambda c: len(c[1]) == 2 and c[1][0] == "cd" and c[1][1].startswith(("/", "~")), commands))
+        if (cds and LEADING_CD.fullmatch(command)
+                and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[len(cds):])):
+            for _, argv in cds:
+                if (target := resolve(os.path.normpath(os.path.expanduser(argv[1])), cwd)).is_dir():
+                    cwd = str(target)
+            commands = commands[len(cds):]
         for env, argv in commands:
-            check_argv(env, argv, cwd)
+            check_argv(env, argv, cwd, guarded)
     elif tool in {"Edit", "Write"}:
+        if tool_input.get("file_path"):
+            check_guard_paths([tool_input["file_path"]], [], "/", {}, guarded)
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)
         check_default_apps_edit(tool_input)

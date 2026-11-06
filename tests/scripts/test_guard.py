@@ -131,6 +131,16 @@ class Bash(LiveSession, unittest.TestCase):
                             f"cd {cfg}/sub/.. && cat x > config.json 2>&1 | tail -1", f"cd {tmp} && rm -r axiom")
                 self.allows(f"cd {other} && cp /tmp/x config.json")
 
+    def test_leading_cd_then_semicolon_or_more_cds(self):
+        """`cd /dir;`, a newline or several leading cds move them the same as `&&`"""
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = Path(tmp) / "axiom"
+            cfg.mkdir()
+            with mock.patch.object(guard, "LIVE_CONFIG", cfg / "config.json"):
+                self.blocks(f"cd {cfg}; rm config.json", f"cd {cfg}\nrm config.json", f"cd /tmp && cd {cfg} && rm config.json",
+                            f"cd {cfg}; cd {tmp}/none; rm config.json")
+                self.allows(f"cd {cfg}; cd /tmp; rm config.json", f"cd {cfg} && cd /tmp && rm config.json")
+
     def test_git_push_and_clean(self):
         self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:roadmap/1-x", "git push origin @",
                     "git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
@@ -351,6 +361,79 @@ class Bash(LiveSession, unittest.TestCase):
     def test_qmlformat_inplace(self):
         self.blocks("qmlformat -i shell.qml", "/usr/lib/qt6/bin/qmlformat --inplace shell.qml")
         self.allows("/usr/lib/qt6/bin/qmlformat shell.qml")
+
+
+class GuardItself(unittest.TestCase):
+    """The guard's folder where the session runs and Claude's settings stay as
+    they are; everything else (a worktree's .claude/, memory, reads) doesn't."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        root = Path(self.tmp.name)
+        self.project, self.config, self.worktree = root / "project", root / "claude-config", root / "worktree"
+        for folder in (self.project / ".claude/hooks", self.config / "projects", self.worktree / ".claude/hooks"):
+            folder.mkdir(parents=True)
+        self.patch = mock.patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(self.project), "CLAUDE_CONFIG_DIR": str(self.config)})
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop()
+        self.tmp.cleanup()
+
+    def denied(self, tool, value, cwd=None):
+        tool_input = {"command": value} if tool == "Bash" else {"file_path": value, "content": "x"}
+        try:
+            guard.check({"tool_name": tool, "tool_input": tool_input, "cwd": cwd or str(self.project)})
+        except guard.Denied:
+            return True
+        return False
+
+    def test_project_claude_folder_and_settings_refused(self):
+        p, c = self.project, self.config
+        for path in (p / ".claude/hooks/guard.py", p / ".claude/settings.json", p / ".claude/settings.local.json",
+                     p / ".claude/skills/x/SKILL.md", p / ".claude/agents/a.md", c / "settings.json",
+                     c / "settings.local.json", f"{HOME}/.claude/settings.json", p / "sub/../.claude/settings.json"):
+            self.assertTrue(self.denied("Write", str(path)), path)
+        for command in ("echo x > .claude/settings.json", "echo x >> .claude/hooks/guard.py", "cp /tmp/x .claude/settings.json",
+                        "cp /tmp/settings.json .claude/", "mv /tmp/x .claude/hooks/guard.py", "rm .claude/hooks/guard.py",
+                        "rm -rf .claude", f"rm -rf {p}", "mv .claude /tmp/old", "sed -i s/a/b/ .claude/hooks/guard.py",
+                        "tee .claude/settings.local.json", "ln -sf /tmp/x .claude/settings.json", "chmod -x .claude/hooks/guard.py",
+                        "truncate -s 0 .claude/hooks/guard.py", "install -m 644 /tmp/x .claude/settings.json",
+                        f"cp /tmp/x {c}/settings.json", f"echo '{{}}' > {c}/settings.local.json", "rm ~/.claude/settings.json",
+                        f"rm -rf {c}", "find .claude -name '*.py' -delete", f"cd {p}/.claude && rm settings.json",
+                        "sudo cp /tmp/x .claude/settings.json", "bash -c 'echo x > .claude/settings.json'",
+                        f"cd /tmp; cd {p}; rm .claude/settings.json"):
+            self.assertTrue(self.denied("Bash", command), command)
+
+    def test_project_dir_falls_back_to_cwd(self):
+        os.environ.pop("CLAUDE_PROJECT_DIR")
+        self.assertTrue(self.denied("Write", str(self.worktree / ".claude/settings.json"), cwd=str(self.worktree)))
+        self.assertFalse(self.denied("Write", str(self.worktree / ".claude/settings.json")))
+
+    def test_elsewhere_and_reads_pass(self):
+        w, c = self.worktree, self.config
+        for path in (w / ".claude/hooks/guard.py", w / ".claude/skills/x/SKILL.md", w / ".claude/settings.json",
+                     c / "projects/-x/memory/MEMORY.md", f"{HOME}/.claude/projects/x/memory.md", "/tmp/claude-1000/x/y",
+                     self.project / "AGENTS.md", self.project / "CLAUDE.md", self.project / "qml/shell.qml"):
+            self.assertFalse(self.denied("Write", str(path)), path)
+        for command in (f"cd {w} && sed -i s/a/b/ .claude/hooks/guard.py", f"cp /tmp/x {w}/.claude/hooks/guard.py",
+                        f"echo x > {c}/projects/-x/memory/note.md", f"rm -rf {c}/projects/-x/old", "rm -rf /tmp/claude-1000/x",
+                        "cat .claude/settings.json", "grep -rn deny .claude", f"ls {c}", "find . -name '*.pyc' -delete",
+                        "cp .claude/settings.json /tmp/backup.json", "echo x > AGENTS.md", "git switch main", "git checkout x -- .claude",
+                        "git merge origin/main", "git pull --ff-only", "git push -u origin roadmap/x",
+                        f"git -C {w} push -u origin roadmap/x 2>&1 | tail -2", "gh pr create --fill", "gh pr checks 3",
+                        "gh pr merge 3 --squash", "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py"):
+            self.assertFalse(self.denied("Bash", command), command)
+
+    def test_no_second_claude(self):
+        for command in ("claude", "claude -p hi", "/usr/bin/claude --dangerously-skip-permissions", "env -C /tmp claude",
+                        "timeout 60 claude -p x", "nohup claude &", "setsid claude", "echo x | xargs claude -p",
+                        "cd /tmp && claude", "npx @anthropic-ai/claude-code", "npx -y @anthropic-ai/claude-code@latest -p x",
+                        "bash -c 'claude -p x'", "x=$(claude -p hi)"):
+            self.assertTrue(self.denied("Bash", command), command)
+        for command in ("grep claude docs", "cat .claude/settings.json", "ls ~/.claude-personal", "git log --grep claude",
+                        "echo claude", "npx prettier x", "which claude"):
+            self.assertFalse(self.denied("Bash", command), command)
 
 
 class Axiom(LiveSession, unittest.TestCase):

@@ -40,6 +40,7 @@ Enforced by `.claude/hooks/guard.py` (PreToolUse hook plus `permissions.deny` in
 - Open a GitHub issue (`gh issue create`, or `gh api` posting one).
 - Run `gh` beyond guard.py's `GH_ALLOWED` (never `gh api`; releases are the maintainer's).
 - Force-push, delete a remote branch, or push to `main`: everything reaches main through a PR.
+- Edit the running guard or Claude's settings (`.claude/` where the session runs, the user's `settings.json`), or start another `claude` from Bash (it runs unguarded).
 - `git clean -x` / `-X`: it deletes the generated files and local state the ignore list keeps (`git clean -fd` is fine).
 
 ## Checks
