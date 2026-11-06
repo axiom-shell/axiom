@@ -1,7 +1,7 @@
 # Screen sharing
 
 > **Files:** `backend/internal/screenshare/` (`screenshare.go` the broker, `xdph.go`, `xdpw.go`, `portal.go`), `backend/internal/daemon/screenshare.go`, `backend/internal/cli/screensharepick.go`, `backend/internal/cli/portalwait.go`, `data/portal/`, `qml/services/apps/ScreenShareManager.qml`, `qml/components/methods/ScreenShareSources.qml`, `qml/shell/ScreenSharePicker.qml`, `qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml`, `qml/components/views/Settings/ScreenSharingStatusCard.qml`
-> **Config:** `ScreenSharing.*` (reader `ScreenSharingConfig`; the daemon reads `reuseSeconds` and `remember` itself)
+> **Config:** `ScreenSharing.*` (reader `ScreenSharingConfig`; the daemon reads `reuseFor` and `remember` itself)
 > **Related:** [Screenshots and recording](screenshots-recording.md) (the region drag), [Theme integrations](../theming/theme-integrations.md) (the hookup), [Polkit](polkit.md) (the modal it's drawn like), [Privacy](../../usage.md) (the OSD's screen-sharing status, from PipeWire)
 
 axiom's picker for what an app shares (a call, a stream), on every compositor, in place of the portal backend's own: hyprland-share-picker, xdg-desktop-portal-wlr's menu, xdg-desktop-portal-gnome's dialog.
@@ -13,7 +13,7 @@ axiom's picker for what an app shares (a call, a stream), on every compositor, i
 - All three ask the daemon's broker (`screenshare.Broker`): `screenshare.pick` from the CLI, `Broker.Ask` from the portal. It pushes `screenshare.request` to the shell (topic `screenshare`), which answers with `screenshare.answer` (the shell's connection only). One picker at a time: a request waits for the one shown.
 
 ### Repeats and remembering
-- **Repeats** (`reuseSeconds`, default 10): Discord (Electron's `desktopCapturer`) asks up to three times for one share. A request within that long of the last answer, from the same backend and app (or one that didn't say: xdph never passes it), gets that answer again, without the picker, if it still offers it. A cancel is never reused. 0 always asks.
+- **Repeats** (`reuseFor`, in ms, default 10 s): Discord (Electron's `desktopCapturer`) asks up to three times for one share. A request within that long of the last answer, from the same backend and app (or one that didn't say: xdph never passes it), gets that answer again, without the picker, if it still offers it. A cancel is never reused. 0 always asks.
 - **Restore tokens** (`remember`, default on): on Hyprland the selection carries `r`, so xdph gives the app a token and skips the picker when the app comes back with it (WebRTC's second capture does). Under niri the portal returns `restore_data ("axiom", 1, {output} | {appId, title})` when the app asked to persist; a window comes back by app and title, or the app's only window. sway's portal keeps monitors only, and only with `XDPW_PERSIST_MODE`.
 
 ### Off, and fallbacks

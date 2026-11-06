@@ -100,7 +100,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
 - Integers render through `forms/SchemaNumberField`:
   - a slider with a value box for 7–200 steps, else a stepper, with ±10 buttons past 20 steps
   - steppers commit debounced, sliders on release
-  - `x-unit` (`px`, `%`, `ms`, …) is shown after the value.
+  - `x-unit` (`px`, `%`, `ms`, …) is shown after the value. The duration units `s`, `min`, `h`, `d` mean the value is stored in ms and shown in that unit (`SchemaLayout.unitScale`): its default, bounds and `multipleOf` are in ms.
 - `x-auto: { value, start }`: a switch in front of an integer whose `value` means automatic. Turning it on stores `start`, then the number shows (the toasts' `gap`). `value` may be `null` (a bar's `floatingGap`): validation lets the `null` through, as an inheriting setting's, and the number keeps the field's whole range.
 
 ### Types (bar widgets, overlay modules, views, custom widget elements)

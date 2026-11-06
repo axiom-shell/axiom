@@ -6,7 +6,7 @@
 // answers.
 //
 // Apps such as Discord ask several times for one share. A request that
-// comes within ReuseSeconds of the last answer, from the same app (or one
+// comes within Reuse of the last answer, from the same app (or one
 // that didn't say), gets that answer again without the picker; requests
 // wait their turn, so repeats sent at once are answered by the first.
 package screenshare
@@ -86,9 +86,9 @@ type Choice struct {
 type Settings struct {
 	// Enabled: axiom's picker answers; off, the backends' own pickers do
 	Enabled bool
-	// ReuseSeconds: a request within this long of the last answer gets
-	// it again (0: never)
-	ReuseSeconds int
+	// Reuse: a request within this long of the last answer gets it again
+	// (0: never)
+	Reuse time.Duration
 	// Remember: apps may keep a choice to share it again later without
 	// asking (restore tokens)
 	Remember bool
@@ -229,13 +229,13 @@ func (b *Broker) Ask(ctx context.Context, r Request) (*Choice, error) {
 // repeat is the last answer when r repeats it; b.mu is held.
 func (b *Broker) repeat(r Request) *Choice {
 	l := b.last
-	if l == nil || b.settings.ReuseSeconds <= 0 || l.backend != r.Backend {
+	if l == nil || b.settings.Reuse <= 0 || l.backend != r.Backend {
 		return nil
 	}
 	if l.appID != "" && r.AppID != "" && l.appID != r.AppID {
 		return nil
 	}
-	if b.o.Now().Sub(l.at) >= time.Duration(b.settings.ReuseSeconds)*time.Second || !l.choice.valid(r) {
+	if b.o.Now().Sub(l.at) >= b.settings.Reuse || !l.choice.valid(r) {
 		return nil
 	}
 	c := l.choice

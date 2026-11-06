@@ -199,7 +199,7 @@ func TestRepeats(t *testing.T) {
 			clock := func() time.Time { mu.Lock(); defer mu.Unlock(); return now }
 			shell := &fakeShell{}
 			b := New(shell.options(clock))
-			b.Configure(Settings{Enabled: true, ReuseSeconds: tc.reuse})
+			b.Configure(Settings{Enabled: true, Reuse: time.Duration(tc.reuse) * time.Second})
 			ch := ask(b, context.Background(), tc.first)
 			req := shell.waitShown(t, 1)
 			choice := tc.choice
@@ -235,7 +235,7 @@ func TestRepeatsAtOnce(t *testing.T) {
 	t.Parallel()
 	shell := &fakeShell{}
 	b := New(shell.options(nil))
-	b.Configure(Settings{Enabled: true, ReuseSeconds: 10})
+	b.Configure(Settings{Enabled: true, Reuse: 10 * time.Second})
 	first := ask(b, context.Background(), screens("DP-1"))
 	req := shell.waitShown(t, 1)
 	second := ask(b, context.Background(), screens("DP-1"))
@@ -259,7 +259,7 @@ func TestCancelNotReused(t *testing.T) {
 	t.Parallel()
 	shell := &fakeShell{}
 	b := New(shell.options(nil))
-	b.Configure(Settings{Enabled: true, ReuseSeconds: 10})
+	b.Configure(Settings{Enabled: true, Reuse: 10 * time.Second})
 	ch := ask(b, context.Background(), screens("DP-1"))
 	b.Answer(shell.waitShown(t, 1).ID, nil, true)
 	await(t, ch)

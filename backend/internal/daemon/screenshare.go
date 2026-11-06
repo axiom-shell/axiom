@@ -54,11 +54,11 @@ func (d *Daemon) screenSharePart() part {
 			d.screenShare.Configure(screenshare.Settings{})
 			return
 		}
-		// reads: ScreenSharing.enabled, ScreenSharing.reuseSeconds, ScreenSharing.remember
+		// reads: ScreenSharing.enabled, ScreenSharing.reuseFor, ScreenSharing.remember
 		d.screenShare.Configure(screenshare.Settings{
-			Enabled:      jsonx.Truthy(o.Value("enabled")),
-			ReuseSeconds: int(jsonx.ToNumber(o.Value("reuseSeconds"))),
-			Remember:     jsonx.Truthy(o.Value("remember")),
+			Enabled:  jsonx.Truthy(o.Value("enabled")),
+			Reuse:    time.Duration(jsonx.ToNumber(o.Value("reuseFor"))) * time.Millisecond,
+			Remember: jsonx.Truthy(o.Value("remember")),
 		})
 	}
 	configure()
