@@ -18,7 +18,8 @@ QtObject {
   // covered at rest at either end (a side covering the screen keeps
   // covering it; a letterboxed one keeps its share, its bars moving with
   // it), so an image a pixel off the screen's shape doesn't leave a band;
-  // an aspect's crop overflow stays centred, never travel.
+  // "center" grows only by a side covering the screen. An aspect's crop
+  // overflow stays centred, never travel.
   function rect(fill, imageWidth, imageHeight, screenWidth, screenHeight, travel, shiftX, shiftY) {
     if (!(imageWidth > 0 && imageHeight > 0 && screenWidth > 0 && screenHeight > 0))
       return {
@@ -35,8 +36,10 @@ QtObject {
       const scale = fill === "fit" ? Math.min(screenWidth / imageWidth, screenHeight / imageHeight) : fill === "center" ? 1 : Math.max(screenWidth / imageWidth, screenHeight / imageHeight);
       const w = imageWidth * scale / screenWidth;
       const h = imageHeight * scale / screenHeight;
-      // Each side grows by what it covered plus its travel
-      const grow = Math.max(1, (Math.min(w, 1) + width - 1) / w, (Math.min(h, 1) + height - 1) / h);
+      // Each side grows by what it covered plus its travel; "center" only
+      // by a side covering the screen, keeping its own size otherwise
+      const grows = (side, travelShare) => fill === "fit" || side >= 1 - 1e-9 ? (Math.min(side, 1) + travelShare) / side : 1;
+      const grow = Math.max(1, grows(w, width - 1), grows(h, height - 1));
       width = w * grow;
       height = h * grow;
     }

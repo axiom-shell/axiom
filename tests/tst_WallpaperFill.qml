@@ -117,6 +117,11 @@ TestCase {
       "width": 1 + 60 / 1080 / (1920 / 2520),
       "height": 1920 / 2520 + 60 / 1080
     }, "21:9 on 16:9");
+    // "center" keeps a small image at its own size
+    near(WallpaperFill.rect("center", 200, 100, 1920, 1080, 0.04, 0, 0), {
+      "width": 200 / 1920,
+      "height": 100 / 1080
+    }, "small centred");
   }
 
   function test_notLoaded() {
