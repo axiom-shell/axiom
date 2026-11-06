@@ -263,9 +263,11 @@ Scope {
     if (root.preview)
       Qt.callLater(() => root._entered = true);
   }
+  // A turn later: a claim refused at once turns `away` inside the latch's
+  // own update, where dropping the latch again loops
   onAwayChanged: {
     if (root.away)
-      root.conceal();
+      Qt.callLater(root.conceal);
   }
   readonly property bool wantShown: {
     if (root.preview)
