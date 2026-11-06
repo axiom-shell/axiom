@@ -8,7 +8,7 @@ This doc covers the shared host pieces in `qml/components/hosts/popout/`, how a 
 
 ### Shared pieces (`qml/components/hosts/popout/`)
 - **`PopoutWrapperBase`:**
-  - Open/close/queue state: `isOpen`, `show(data)`, `hide()`, and a timer that dismisses on hover loss.
+  - Open/close/queue state: `isOpen`, `show(data)`, `hide()`, and a timer that dismisses on hover loss. A `show()` while it closes queues the open for once it has closed; a `hide()` drops that queued open.
 - **`AttachedSurface.hovered`:** the pointer on the whole surface (its `HoverHandler` is reparented to the surface: one declared inside it lands in the content box). `EdgePopout`'s `keepAlive`, `engaged` and `_pointerIn` read it.
   - A wrapper may switch an open popout to another payload in place instead of closing it first, via its `canSwitchTo(anchor, data)` and `prepareSwitch(done)` hooks.
 - **Closing on an outside click** (`closeOnClickOutside`: the launcher, a floating edge menu with `close.onOutsideClick`): `EdgePopout` closes on its `FocusGrab`'s `dismissed`, a real click only, never its `cleared`. So a popout opened by hover that takes the keyboard (Todo, Calculator, Stopwatch), another surface's grab starting or a polkit prompt closing leaves it open. A click on a bar closes it too; on sway and niri the bar reports it once released (`BarPanel`), after the click's own action, so the bar's launcher button closes the launcher rather than closing and reopening it.

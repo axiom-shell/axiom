@@ -50,12 +50,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the floating popouts branch (round 2)
 
-### A hide while a popout closes leaves its queued show to open it
-- **Where:** `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`, `safeOpenPopout`), `qml/shell/WindowSwitcher.qml` (`sync`)
-- **What:** `show()` during the close animation queues the open (`hasPendingOpen`), but `hide()` acts only `if (isOpen)`, false while closing, so a hide before the close finishes leaves the queued open to fire (`closeDelayTimer` → `_openPending`): the popout opens with nothing wanting it. The window switcher reaches it: `showDelay` (default 120 ms) is under `animNormal` (150 ms), so released, pressed again and released within the close (held past `showDelay`) leaves the strip up with `autoDismiss: false` until the switcher opens again. Fix: `hide()` also drops a pending open (`hasPendingOpen = false`).
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the floating popouts branch (round 3)
-
 ### A detached dock and toasts don't slide in from under the bars
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml` (`_detachedBox`, `slide`), `qml/components/surfaces/notifications/ToastStack.qml` (`area`)
 - **What:** Every other detached box slides in from off the screen under the bars on Hyprland ([Held off an edge › Sliding in from off the screen](popouts/held-off-edge.md#sliding-in-from-off-the-screen)), but these two don't. A detached dock slides out from its window's edge at the reserved line: its window is always mapped (`axiom-dock`, ordered over the bars), and when held and reserving, its exclusive zone ends at its box, so a window reaching back to the screen edge needs its own design. The toasts' area window is always mapped on the Overlay layer, so a detached toast slides from that window's edge, over the bars, or from the screen edge over a fullscreen window. Going under the bars needs a Top window under them that moves to Overlay over a fullscreen window, and Hyprland reads a layer rule's `order` only as a surface maps: measure that in a nested Hyprland first.
