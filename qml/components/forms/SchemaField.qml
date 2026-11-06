@@ -77,6 +77,11 @@ Loader {
         labels[item.id] = item.name || item.id;
         return labels;
       }, {});
+    if (fieldSchema.items?.["x-options"] === "marketSymbols")
+      return MarketsConfig.symbols.reduce((labels, item) => {
+        labels[item.id] = item.label || item.symbol || item.id;
+        return labels;
+      }, {});
     if (fieldSchema["x-options"] === "overlayPages")
       return OverlayConfig.views.reduce((labels, view, index) => {
         const key = OverlayConfig.pageKey(view);
@@ -242,12 +247,15 @@ Loader {
       return readonlyField;
     switch (fieldSchema.type) {
     case "array":
-      // Strings only: from a fixed set (chips), or free text
-      return fieldSchema.items?.enum ? chipsField : stringListField;
+      // Strings only: from a fixed set (chips), or free text (a monitor
+      // list too: its names may be of monitors not plugged in)
+      return fieldSchema.items?.enum || fieldSchema.items?.["x-options"] === "marketSymbols" ? chipsField : stringListField;
     case "boolean":
       return switchField;
     case "integer":
       return fieldSchema["x-auto"] ? autoSpinField : spinField;
+    case "number":
+      return decimalField;
     default:
       // A long list (`x-control: "search"`) is typed into to filter it
       if (root.options && fieldSchema["x-control"] === "search")
@@ -501,9 +509,32 @@ Loader {
     }
   }
 
-  // An array of strings from `items.enum`: one toggle chip per option (with
-  // its `x-enumIcons` icon), committed in the enum's order. `x-enumFrom`
-  // offers only the options a sibling array holds
+  // A decimal (`type: number`, a holding of 0.5 coins): typed, committed as
+  // a number within the schema's bounds (empty: the minimum)
+  function _decimal(text) {
+    const value = parseFloat(text);
+    const lowest = fieldSchema.minimum ?? -Infinity;
+    return isNaN(value) ? (fieldSchema.minimum ?? 0) : Math.min(fieldSchema.maximum ?? Infinity, Math.max(lowest, value));
+  }
+  Component {
+    id: decimalField
+    SchemaTextField {
+      label: root.label
+      description: root.description
+      headerExtra: root.headerExtra
+      beside: true
+      pattern: "^-?[0-9]*[.]?[0-9]*$"
+      currentConfigValue: root.current === undefined || root.current === null ? "" : String(root.current)
+      onValueTyped: value => root.type(root._decimal(value))
+      onValueEdited: value => root.commitTyped(root._decimal(value))
+    }
+  }
+
+  // An array of strings from `items.enum` (or the `marketSymbols` list):
+  // one toggle chip per option (with its `x-enumIcons` icon), committed in
+  // the options' order. `x-enumFrom` offers only the options a sibling
+  // array holds
+  readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : SettingsManager.optionsFor(fieldSchema.items) ?? []
   Component {
     id: chipsField
     ColumnLayout {
@@ -518,7 +549,7 @@ Loader {
         spacing: Widget.spacing / 2
         Repeater {
           model: {
-            const all = root.fieldSchema.items.enum;
+            const all = root._chipOptions;
             const from = root.fieldSchema["x-enumFrom"];
             if (!from)
               return all;
@@ -535,7 +566,7 @@ Loader {
             onClicked: {
               const current = root.current ?? [];
               const next = chip.selected ? current.filter(v => v !== chip.modelData) : current.concat([chip.modelData]);
-              root.commit(root.fieldSchema.items.enum.filter(v => next.includes(v)));
+              root.commit(root._chipOptions.filter(v => next.includes(v)));
             }
           }
         }

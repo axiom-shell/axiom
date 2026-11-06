@@ -31,6 +31,7 @@ func Root() *Command {
 			execCommand(),
 			openCommand(),
 			compositorCommand(),
+			marketsCommand(),
 			debugCommand(),
 			bugInfoCommand(),
 			versionCommand(),

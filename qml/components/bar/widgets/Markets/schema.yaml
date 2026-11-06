@@ -1,0 +1,50 @@
+label: Markets
+keywords: [Stocks, Crypto, Ticker, Finance, Watchlist, Portfolio]
+icon: show_chart
+group: Tools
+popout: {variant: own, enabled: {description: Show the watchlist when hovered.}}
+appearance:
+  variant: value
+  style:
+    enum: [label, icon, ticker, stacked, sparkline]
+    description: Ticker scrolls every symbol past; stacked puts the price under the name; sparkline draws the day's line.
+colors: standard
+settings:
+  symbols:
+    # Ids from the user's watchlist: personal, as the watchlist is
+    x-scope: personal
+    type: array
+    title: Symbols
+    default: []
+    description: The watchlist's symbols this widget shows. None picked shows them all.
+    items: {type: string, x-options: marketSymbols}
+  value:
+    type: string
+    title: Shows
+    default: pricePercent
+    enum: [pricePercent, price, percent, change]
+    x-enumLabels: {pricePercent: Price and change, price: Price, percent: Change (%), change: Change}
+  colorize:
+    type: boolean
+    title: Colour by trend
+    default: true
+    description: Rises in the success colour and falls in the error one.
+  rotate:
+    type: boolean
+    title: Cycle through symbols
+    default: true
+    description: Shows one symbol at a time (not the ticker, which scrolls them all). Off, the label shows them all side by side.
+  rotateInterval:
+    type: integer
+    x-control: stepper
+    title: Each symbol for
+    x-unit: s
+    default: 6000
+    minimum: 2000
+    maximum: 60000
+    x-showIf: {rotate: true}
+  showPortfolio:
+    type: boolean
+    title: Show the portfolio
+    default: false
+    description: Adds the holdings' total and today's change first (set holdings in Markets' watchlist).

@@ -69,7 +69,7 @@ QtObject {
           "path": propPath,
           "schema": prop
         });
-      } else if (["boolean", "integer", "string"].includes(prop.type) || (prop.type === "array" && prop.items?.type === "string")) {
+      } else if (["boolean", "integer", "number", "string"].includes(prop.type) || (prop.type === "array" && prop.items?.type === "string")) {
         result.push({
           "kind": "field",
           "title": prop.title ?? key,

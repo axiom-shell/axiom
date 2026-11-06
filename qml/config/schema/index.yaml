@@ -80,6 +80,7 @@ sections:
   - Calendar
   - Weather
   - ClaudeUsage
+  - Markets
   - Tailscale
   - Vpn
   - Drives
