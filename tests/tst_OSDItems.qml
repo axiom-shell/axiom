@@ -619,6 +619,111 @@ TestCase {
     compare(OSDItems.rowTypes([], tiles, "all", []), []);
   }
 
+  // Bluetooth's tile and card: devices connecting (one, several),
+  // disconnecting, a battery low or critical
+  function test_bluetooth() {
+    const dev = (address, name, glyph, battery) => ({
+          "address": address,
+          "name": name,
+          "glyph": glyph,
+          "battery": battery
+        });
+    const tiles = (kind, devices, on) => ({
+          "bluetooth": OSDItems.tile("bluetooth", {
+            "available": true,
+            "on": on !== false,
+            "connected": ["Headset", "Mouse"],
+            "event": kind ? {
+              "kind": kind,
+              "devices": devices
+            } : null
+          })
+        });
+    const t = tiles("", [], true).bluetooth;
+    compare([t.icon, t.on, t.notable, t.hidden, t.name, t.event], ["bluetooth", true, false, false, "Headset, Mouse", ""], "the connected devices name it; never unusual");
+    compare(tiles("", [], false).bluetooth.name, "", "off: none named");
+    verify(OSDItems.tile("bluetooth", {
+      "available": false
+    }).hidden, "no adapter");
+    verify(OSDItems.cardTypes.includes("bluetooth"));
+
+    let card = OSDItems.card("bluetooth", tiles("connected", [dev("AA", "Headset", "headset", 80)]), ["bluetooth"]);
+    compare([card.icon, card.title, card.role, card.detail, card.tone, card.clickable], ["headset", "Headset", "Connected", "80%", "", false], "one device: its icon, name and battery");
+    card = OSDItems.card("bluetooth", tiles("connected", [dev("BB", "Mouse", "mouse", -1)]), ["bluetooth"]);
+    compare([card.icon, card.title, card.detail], ["mouse", "Mouse", ""], "no battery: no detail");
+    card = OSDItems.card("bluetooth", tiles("connected", [dev("AA", "Headset", "headset", 80), dev("BB", "Mouse", "mouse", 50)]), ["bluetooth"]);
+    compare([card.icon, card.title, card.role, card.detail], ["bluetooth", "Headset, Mouse", "Connected", ""], "several: their names, Bluetooth's icon");
+    card = OSDItems.card("bluetooth", tiles("disconnected", [dev("AA", "Headset", "headset", 80)]), ["bluetooth"]);
+    compare([card.icon, card.title, card.role, card.detail], ["bluetooth_disabled", "Headset", "Disconnected", ""], "a disconnect");
+    card = OSDItems.card("bluetooth", tiles("low", [dev("BB", "Mouse", "mouse", 18)]), ["bluetooth"]);
+    compare([card.icon, card.title, card.role, card.detail, card.tone], ["battery_low", "Mouse", "Battery low", "18%", ""], "a battery low");
+    card = OSDItems.card("bluetooth", tiles("critical", [dev("BB", "Mouse", "mouse", 4)]), ["bluetooth"]);
+    compare([card.icon, card.role, card.detail, card.tone], ["battery_alert", "Battery critically low", "4%", "warning"], "critical: on the warning colour");
+  }
+
+  // A Bluetooth headset's card holds against its output or input
+  // switching to it; the radio turning off draws a card back
+  function test_bluetooth_knockOn() {
+    const headset = {
+      "bluetooth": OSDItems.tile("bluetooth", {
+        "available": true,
+        "on": true,
+        "event": {
+          "kind": "connected",
+          "devices": [
+            {
+              "address": "AA:BB:CC:00:00:01",
+              "name": "Headset"
+            }
+          ]
+        }
+      }),
+      "audio": OSDItems.tile("audio", {
+        "device": "84",
+        "address": "aa:bb:cc:00:00:01"
+      }),
+      "microphone": OSDItems.tile("microphone", {
+        "device": "84",
+        "address": "AA:BB:CC:00:00:01"
+      })
+    };
+    verify(!OSDItems.replaces("bluetooth", "audio", 800, headset, true, true), "the output switching to the headset just connected: its card says it");
+    verify(!OSDItems.replaces("bluetooth", "microphone", 800, headset, true, true), "the input too");
+    verify(OSDItems.replaces("bluetooth", "audio", OSDItems.quietWindow, headset, true, true), "later: the user's own switch");
+    const other = Object.assign({}, headset, {
+      "audio": OSDItems.tile("audio", {
+        "device": "52",
+        "address": ""
+      })
+    });
+    verify(OSDItems.replaces("bluetooth", "audio", 800, other, true, true), "another device (not Bluetooth)");
+    const gone = Object.assign({}, headset, {
+      "bluetooth": OSDItems.tile("bluetooth", {
+        "available": true,
+        "on": true,
+        "event": {
+          "kind": "disconnected",
+          "devices": headset.bluetooth.devices
+        }
+      })
+    });
+    verify(OSDItems.replaces("bluetooth", "audio", 800, gone, true, true), "the output leaving a headset just disconnected shows");
+    verify(OSDItems.replaces("audio", "bluetooth", 800, headset, true, true), "a headset's card after its output's: it says more");
+
+    const off = {
+      "bluetooth": OSDItems.tile("bluetooth", {
+        "available": true,
+        "on": false
+      })
+    };
+    verify(OSDItems.retracting.includes("bluetooth"));
+    verify(OSDItems.replaces("bluetooth", "bluetooth", 300, off, true, false), "the radio off just after a connect: the card would say Connected");
+    compare(OSDItems.besideCard("bluetooth", "bluetooth", 300, off), "retract", "the radio off draws the card back");
+    compare(OSDItems.besideCard("bluetooth", "bluetooth", 300, headset), "suppress", "the radio on with its devices' card out");
+    compare(OSDItems.besideCard("bluetooth", "capsLock", 300, headset), "show", "unrelated: the card stays");
+    verify(!OSDItems.replaces("airplane", "bluetooth", 300, headset, false, true), "airplane mode's own doing, card or not");
+  }
+
   function test_replaces() {
     verify(OSDItems.replaces("", "wifi", 0));
     verify(OSDItems.replaces("capsLock", "wifi", 0));

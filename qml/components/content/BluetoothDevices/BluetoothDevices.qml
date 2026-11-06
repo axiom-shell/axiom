@@ -48,6 +48,14 @@ Panel {
   }
   Component.onDestruction: BluetoothManager.releaseDiscovery(root)
 
+  // A device connected, disconnected or paired from here: marked as the
+  // pointer's (ShellManager.onScreen), so its OSD card updates an open
+  // OSD but opens none
+  function _toggle(device) {
+    ShellManager.onScreen("bluetooth");
+    BluetoothManager.toggleDevice(device);
+  }
+
   component BluetoothRow: DeviceRow {
     id: row
     required property int index
@@ -65,9 +73,12 @@ Panel {
     busy: BluetoothManager.busy(row.device)
     connectTip: I18n.tr(row.known ? "Connect" : "Pair and connect")
     onAddressChanged: row.reset()
-    onActivated: BluetoothManager.toggleDevice(row.device)
-    onConnectClicked: BluetoothManager.toggleDevice(row.device)
-    onForgetConfirmed: BluetoothManager.forget(row.device)
+    onActivated: root._toggle(row.device)
+    onConnectClicked: root._toggle(row.device)
+    onForgetConfirmed: {
+      ShellManager.onScreen("bluetooth");
+      BluetoothManager.forget(row.device);
+    }
   }
 
   RadioHeader {
