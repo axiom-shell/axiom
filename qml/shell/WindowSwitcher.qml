@@ -25,7 +25,7 @@ Scope {
       id: screenScope
       required property ShellScreen modelData
 
-      // Its screen's name ("" once the screen is gone, before the delegate)
+      // Its screen's name ("" once the screen is gone, before the delegate goes)
       readonly property string screenName: screenScope.modelData?.name ?? ""
       readonly property bool wanted: WindowSwitcherManager.shown && screenScope.screenName === WindowSwitcherManager.screenName
 

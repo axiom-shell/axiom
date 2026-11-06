@@ -21,10 +21,11 @@ Scope {
   property bool active: false
   signal cleared
   // A real click outside ended it, on any compositor: a click on a
-  // screen's backdrop (no native grab), or the native grab cleared while this is the newest grab (one native grab
-  // at a time: a newer one starting clears this one, no click, and this
-  // takes it back once it's the newest again), which ends the older grabs
-  // too. Never focus leaving. Sent before `cleared`
+  // screen's backdrop or a bar (no native grab), or the native grab
+  // cleared while this is the newest grab (one native grab at a time: a
+  // newer one starting clears this one, no click, and this takes it back
+  // once it's the newest again), which ends the older grabs too. Never
+  // focus leaving. Sent before `cleared`
   signal dismissed
 
   readonly property bool _native: CompositorManager.supports.focusGrab === true
