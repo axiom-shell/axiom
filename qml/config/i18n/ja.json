@@ -3790,7 +3790,6 @@
     "On SwayFX, open windows keep their rounding until sway reloads.": "",
     "Lock, suspend, hibernate, log out, restart and shut down.": "",
     "City name. Empty uses your IP's location.": "",
-    "In order.": "",
     "One layout per set of connected monitors.": "",
     "Re-theme other apps when the shell theme changes. Each writes its own axiom file; turned on, it shows the line that loads it.": "",
     "Qt apps need QT_QPA_PLATFORMTHEME=qt5ct, which a managed compositor config sets. KDE apps read kdeglobals, which axiom keeps in step. Restart apps after a theme change.": "",
@@ -4065,7 +4064,9 @@
     "Mute mic": "",
     "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a theme (or random), a timer length (10m, 1:30), or a command.": "",
     "Any action a key can run that needs no argument, or one of the button's own.": "",
-    "Any action a key can run that needs no argument, and a few tiles of their own. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
-    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.": ""
+    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.": "",
+    "None chosen. Add some from below.": "",
+    "In the order shown.": "",
+    "Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": ""
   }
 }

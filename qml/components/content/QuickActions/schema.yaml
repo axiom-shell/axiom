@@ -7,7 +7,8 @@ settings:
     type: array
     title: Actions
     default: [wifi, bluetooth, idleInhibit, toggleDnd, darkMode]
-    description: Any action a key can run that needs no argument, and a few tiles of their own. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.
+    description: Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.
+    x-ordered: true
     items:
       type: string
       # The tiles of its own open a module (Brightness's sliders, Volume's
@@ -20,6 +21,20 @@ settings:
         themePicker: Theme
         wallpaperPicker: Wallpaper
         pin: Pin open
+      x-enumIcons:
+        logout: logout
+        brightness: brightness_medium
+        volume: volume_up
+        themePicker: palette
+        wallpaperPicker: wallpaper
+        pin: push_pin
+      x-enumGroups:
+        logout: System
+        brightness: Tiles
+        volume: Tiles
+        themePicker: Tiles
+        wallpaperPicker: Tiles
+        pin: Tiles
   labels:
     type: string
     title: Names

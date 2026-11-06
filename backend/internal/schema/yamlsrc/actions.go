@@ -17,7 +17,8 @@ import (
 //
 // Its enum is the table's ipcActions less those left out, then exec (but
 // with noArgument), then the extras; labelled as the Keybind definition
-// labels them. On an `action` property, a sibling `argument` shows for the
+// labels them, with the table's icons (x-enumIcons) and sections
+// (x-enumGroups), an extra's from the field's own. On an `action` property, a sibling `argument` shows for the
 // actions whose IPC call takes {0} (and exec), a sibling `call` for those
 // with calls. The mark goes.
 func (a *assembler) fillAxiomActions(root *jsonx.Object) {
@@ -65,8 +66,9 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 	}
 	ipc, _ := tables.Value("ipcActions").(*jsonx.Object)
 	calls, _ := tables.Value("calls").(*jsonx.Object)
-	if ipc == nil || calls == nil || labels == nil {
-		fail("needs the table's ipcActions and calls and the Keybind definition's action labels")
+	tableIcons, _ := tables.Value("icons").(*jsonx.Object)
+	if ipc == nil || calls == nil || tableIcons == nil || labels == nil {
+		fail("needs the table's ipcActions, calls and icons and the Keybind definition's action labels")
 		return
 	}
 	if spec == nil {
@@ -110,7 +112,23 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		return name == "exec" || ok && strings.Contains(jsonx.ToString(row.Items[0]), "{0}")
 	}
 	ownLabels, _ := action.Value("x-enumLabels").(*jsonx.Object)
+	ownIcons, _ := action.Value("x-enumIcons").(*jsonx.Object)
+	ownGroups, _ := action.Value("x-enumGroups").(*jsonx.Object)
 	enum, names, argument, call := jsonx.Arr(), jsonx.NewObject(), jsonx.Arr(), jsonx.Arr()
+	icons, groups := jsonx.NewObject(), jsonx.NewObject()
+	// An extra's icon and group, from the field's own (each optional)
+	own := func(name string) {
+		if ownIcons != nil {
+			if icon, ok := ownIcons.Value(name).(string); ok {
+				icons.Set(name, icon)
+			}
+		}
+		if ownGroups != nil {
+			if group, ok := ownGroups.Value(name).(string); ok {
+				groups.Set(name, group)
+			}
+		}
+	}
 	for _, name := range append(ipc.Keys(), "exec") {
 		if except[name] || noArgument && takesArgument(name) {
 			continue
@@ -121,6 +139,14 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		}
 		enum.Append(name)
 		names.Set(name, label)
+		if row, ok := ipc.Value(name).(*jsonx.Array); ok && len(row.Items) > 2 {
+			groups.Set(name, jsonx.ToString(row.Items[2]))
+		}
+		if icon, ok := tableIcons.Value(name).(string); ok {
+			icons.Set(name, icon)
+		} else {
+			own(name)
+		}
 		if takesArgument(name) {
 			argument.Append(name)
 		}
@@ -139,9 +165,12 @@ func (a *assembler) fillActions(props, action, labels *jsonx.Object, where strin
 		}
 		enum.Append(name)
 		names.Set(name, label)
+		own(name)
 	}
 	action.Set("enum", enum)
 	action.Set("x-enumLabels", names)
+	action.Set("x-enumIcons", icons)
+	action.Set("x-enumGroups", groups)
 	if props == nil {
 		return
 	}
