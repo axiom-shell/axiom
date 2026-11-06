@@ -338,9 +338,6 @@ Tests are `tests/`, `*_test.go`, `testdata/` and the Go test helper packages (`t
 |---|---|---|---|---|
 | Before step 1 | `64038c2` | 103,991 (684 files) | 51,927 (215 files) | 7,512 (37 files) |
 
-Take next, ahead of everything else open in row 20 (the maintainer, 2026-11-06: "add the issue to the roadmap in the correct worktree/branch so that the roadmap autopilot (working right now), will see and implement it next"):
-- [On niri, apps saved as maximized open maximized to the screen's edges](issues.md#on-niri-apps-saved-as-maximized-open-maximized-to-the-screens-edges)
-
 Found while investigating Hyprland starting on workspace 10:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded)
 
@@ -356,7 +353,6 @@ Moved here from Phase 1, still open:
 - [In dev mode a reshaped schema can prune the dev config before its migration runs](issues.md#in-dev-mode-a-reshaped-schema-can-prune-the-dev-config-before-its-migration-runs)
 
 Found by the audits:
-- [Included's hookup can put sway-only lines into a config i3 still runs](issues.md#includeds-hookup-can-put-sway-only-lines-into-a-config-i3-still-runs)
 - [The border's stroke row is left unfilled where two pill bars meet at its corner, unbacked](issues.md#the-borders-stroke-row-is-left-unfilled-where-two-pill-bars-meet-at-its-corner-unbacked)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 - [A detached dock and toasts don't slide in from under the bars](issues.md#a-detached-dock-and-toasts-dont-slide-in-from-under-the-bars)
@@ -377,9 +373,6 @@ Found by the audits:
 
 Found while fixing bar-popouts-07 (row 20):
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
-
-Found while moving the backend to the qml/ layout:
-- [The compositor facts' axiomPath is read by nothing](issues.md#the-compositor-facts-axiompath-is-read-by-nothing)
 
 Found while building dev trees and the dev config:
 - [The dev config's diff compares lists whole](issues.md#the-dev-configs-diff-compares-lists-whole)

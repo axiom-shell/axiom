@@ -3934,6 +3934,7 @@
     "Empty follows the theme.": "",
     "No toasts on a monitor showing a fullscreen window. Critical ones still show.": "",
     "Desktop entry ids, in order: the apps every dock shows first.": "",
-    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a timer length (10m, 1:30), or a command.": ""
+    "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a screenshot kind (region, window or screen), a timer length (10m, 1:30), or a command.": "",
+    "Adds the lines at the top, so your own settings after them win over axiom's. This file is in i3's folder: if i3 still runs it, i3 reports axiom's sway-only lines as errors.": ""
   }
 }

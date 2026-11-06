@@ -134,7 +134,12 @@ func (w *niriWriter) parts(in Inputs, spec any, path string, mode string) *jsonx
 	if recent != nil {
 		options.Append(recent)
 	}
-	return jsonx.Obj("header", niriHeader, "includeLines", w.includeLines(),
+	var rules any
+	if mode != "detached" {
+		// the detached wrapper has them, ahead of the user's config
+		rules = jsonx.Arr(render.NiriMaximizeRule())
+	}
+	return jsonx.Obj("header", niriHeader, "includeLines", w.includeLines(), "rules", rules,
 		"binds", nilObj(w.tables.NiriBindsNode(binds, in.get("ctx"))),
 		"outputs", w.outputs(in, path),
 		"options", options,
@@ -219,7 +224,7 @@ func (w *niriWriter) validate(ctx context.Context, text string) string {
 
 func (w *niriWriter) runtimeApply(ctx context.Context, in Inputs, _ func() []string) {
 	module := render.NiriModuleText(w.parts(in, in.get("specFile"), w.detachedPath(), "detached"))
-	wrapper := render.NiriWrapperText(niriHeader, w.mainConfig, w.detachedPath())
+	wrapper := render.NiriWrapperText(niriHeader, w.mainConfig, w.detachedPath(), render.NiriMaximizeRule())
 	if w.refused = w.validate(ctx, module); w.refused != "" {
 		return
 	}

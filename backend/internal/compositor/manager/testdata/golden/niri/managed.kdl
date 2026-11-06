@@ -244,6 +244,10 @@ binds {
     }
 }
 
+window-rule {
+    open-maximized-to-edges false
+}
+
 // Your files
 // (none yet)
 

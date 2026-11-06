@@ -542,6 +542,16 @@ func NiriWallpaperNodes() *jsonx.Array {
 		block("layout", node("background-color", "transparent")))
 }
 
+// NiriMaximizeRule turns down every app's request to open maximized to the
+// screen's edges, as Hyprland's axiom-suppress-maximize does: an app that
+// saved itself maximized asks again at every start (checked in niri 26.04:
+// it overrides the app's own request, and it opens as an ordinary column,
+// not a maximized one). No setting: a later rule of the user's matching an
+// app wins, so each file puts it ahead of the user's config where it can.
+func NiriMaximizeRule() *jsonx.Object {
+	return block("window-rule", node("open-maximized-to-edges", false))
+}
+
 // --- Input and options ---
 
 // niriNode is a field's node path and argument as niri takes them, or
@@ -718,9 +728,10 @@ func NiriFileOutputNodes(text any) *jsonx.Array {
 func nodeList(v any) []any { return items(v) }
 
 // NiriModuleText is NiriConf.moduleText: the module axiom loads into niri.
-// parts: { header, includeLines, binds, outputs, look, input, options }.
+// parts: { header, includeLines, rules, binds, outputs, look, input,
+// options }.
 func NiriModuleText(parts any) string {
-	var all []any
+	all := append([]any{}, nodeList(get(parts, "rules"))...)
 	if b := get(parts, "binds"); truthy(b) {
 		all = append(all, b)
 	}
@@ -765,6 +776,10 @@ func NiriManagedText(parts any) string {
 	if b := get(parts, "binds"); truthy(b) {
 		binds = KdlSerialize(jsonx.Arr(b), 0) + "\n\n"
 	}
+	// before the user's files, so a rule of theirs wins
+	if r := nodeList(get(parts, "rules")); len(r) > 0 {
+		binds += KdlSerialize(jsonx.Arr(r...), 0) + "\n\n"
+	}
 	files := "// (none yet)"
 	if len(includes.Items) > 0 {
 		files = KdlSerialize(includes, 0)
@@ -791,12 +806,13 @@ func niriIncludes(userDir string, files any) *jsonx.Array {
 }
 
 // NiriWrapperText is NiriConf.wrapperText: the detached mode's wrapper.
-func NiriWrapperText(header, main, module any) string {
+// rules come before the user's config, so a rule of theirs wins.
+func NiriWrapperText(header, main, module any, rules ...any) string {
 	return jsCat(header) + ` for its detached mode: niri runs this in place of your
 // config while axiom does (load-config-file), and your own again after it.
 // Your config is untouched.
 
-` + KdlSerialize(jsonx.Arr(node("include", main), node("include", module)), 0) + `
+` + KdlSerialize(jsonx.Arr(append(rules, node("include", main), node("include", module))...), 0) + `
 `
 }
 
