@@ -220,7 +220,7 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicInputMethod, topicCamera, topicScreenShare:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, inputMethod, camera)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, inputMethod, camera, screenshare)", t)
 		}
 	}
 	return false, topics, nil

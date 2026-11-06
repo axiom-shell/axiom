@@ -362,7 +362,10 @@ func (p *Portal) selectSources(ctx context.Context, conn *dbus.Conn, c call) (ui
 			windows = []Window{}
 		}
 		r := Request{Backend: BackendNiri, AppID: c.appID, Outputs: outputs, Windows: windows}
-		choice := restored(c.options["restore_data"], r)
+		var choice *Choice
+		if p.o.Settings().Remember {
+			choice = restored(c.options["restore_data"], r)
+		}
 		if choice == nil {
 			choice, err = p.o.Ask(ctx, r)
 			switch {
@@ -502,9 +505,19 @@ func (p *Portal) cast(ctx context.Context, conn *dbus.Conn, s *castSession, c Ch
 	if err != nil {
 		return 0, nil, err
 	}
+	// A session closed meanwhile never learns of niri's: stop it here
 	p.mu.Lock()
-	s.mutter = session
+	open := p.sessions[s.handle] == s
+	if open {
+		s.mutter = session
+	}
 	p.mu.Unlock()
+	if !open {
+		stop, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		conn.Call(stop, mutterBusName, session, ifaceMSession, "Stop", "")
+		cancel()
+		return 0, nil, errors.New("the session closed")
+	}
 	props := map[string]dbus.Variant{"cursor-mode": dbus.MakeVariant(cursor), "is-recording": dbus.MakeVariant(false)}
 	if c.Kind == KindWindow {
 		var id uint64
@@ -574,13 +587,17 @@ func (p *Portal) close(conn *dbus.Conn, s *castSession, emit bool) {
 	if !p.forget(s) {
 		return
 	}
+	// Forgotten, it gets no niri session after this (cast)
+	p.mu.Lock()
+	mutter := s.mutter
+	p.mu.Unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	switch {
 	case s.forward:
 		conn.Call(ctx, gnomeBusName, s.handle, ifaceSession, "Close", "")
-	case s.mutter != "":
-		conn.Call(ctx, mutterBusName, s.mutter, ifaceMSession, "Stop", "")
+	case mutter != "":
+		conn.Call(ctx, mutterBusName, mutter, ifaceMSession, "Stop", "")
 	}
 	if emit {
 		conn.Emit(s.handle, ifaceSession, "Closed", "")

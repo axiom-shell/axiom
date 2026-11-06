@@ -292,6 +292,11 @@ func TestPortalWindowNotKept(t *testing.T) {
 	if _, ok := results["restore_data"]; ok {
 		t.Error("kept with Remember off")
 	}
+	// Restore data given earlier isn't honoured with Remember off: it asks
+	restore := dbus.Variant{Sig: "(suv)", Value: []any{restoreVendor, restoreVersion, dbus.MakeVariant(map[string]dbus.Variant{"appId": dbus.MakeVariant("kitty"), "title": dbus.MakeVariant("Terminal")})}}
+	done = s.callAsync(t, "SelectSources", map[string]dbus.Variant{"types": dbus.MakeVariant(sourceWindow), "restore_data": restore})
+	s.pick(t, &Choice{Kind: KindWindow, Window: "7"})
+	<-done
 	s.niri.mu.Lock()
 	defer s.niri.mu.Unlock()
 	if len(s.niri.recorded) != 1 || s.niri.recorded[0] != "window 7" {
