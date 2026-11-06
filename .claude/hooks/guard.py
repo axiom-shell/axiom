@@ -514,7 +514,7 @@ def check_argv(env, argv, cwd, switched):
         deny("Never, while testing", "don't open GitHub issues; record the problem in docs/dev/issues.md and tell the user.")
 
     # Weakening main's protection: its rules, rulesets, the repository's settings, who may write
-    edits = any(args[i:i + 2] == ["repo", "edit"] for i in range(len(args)))
+    edits = args[:2] == ["repo", "edit"] and not {"-h", "--help"} & set(args)
     if name == "gh" and (edits or args[:1] == ["api"] and gh_api_weakens_main(args[1:])):
         deny("Never, while testing", "don't change main's protection, rulesets, the repository's settings or permissions through gh; ask the user.")
 
@@ -857,6 +857,9 @@ def check(call):
             cwd, commands = str(target), commands[1:]
         switched = False
         for env, argv in commands:
+            # A GraphQL query piped in (`--input -`, a heredoc) is in the command's text, not its words
+            if Path(argv[0]).name == "gh" and "graphql" in argv:
+                argv = argv + [command]
             check_argv(env, argv, cwd, switched)
             if Path(argv[0]).name == "git":
                 i, _, _ = git_globals(argv[1:], cwd, env)

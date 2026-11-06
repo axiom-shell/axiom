@@ -126,12 +126,15 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh repo edit --default-branch dev", "gh repo edit a/b --enable-merge-commit",
                     "cd /tmp && gh api -X DELETE repos/a/b/branches/main/protection",
                     "true; env GH_TOKEN=x gh repo edit --default-branch dev",
-                    "git status && gh api repos/a/b/rulesets/1 -X DELETE")
+                    "git status && gh api repos/a/b/rulesets/1 -X DELETE",
+                    "echo '{\"query\":\"mutation { updateRepository(input: {}) { clientMutationId } }\"}' | gh api graphql --input -",
+                    "gh api graphql -F query=@- <<'EOF'\nmutation { deleteBranchProtectionRule(input: {}) { clientMutationId } }\nEOF")
         self.allows("gh api repos/a/b/branches/main/protection", "gh api -X GET repos/a/b/branches/main/protection",
                     "gh api repos/a/b/rulesets", "gh api repos/a/b", "gh api --method HEAD repos/a/b/collaborators/x",
                     "gh api repos/a/b/branches/main/protection -X GET -f per_page=100",
                     "gh api graphql -f query='{ repository(owner: \"a\", name: \"b\") { branchProtectionRules(first: 5) { nodes { pattern } } } }'",
-                    "gh ruleset list", "gh ruleset view 42", "gh rs check main", "gh repo view", "gh pr create --fill")
+                    "gh ruleset list", "gh ruleset view 42", "gh rs check main", "gh repo view", "gh pr create --fill",
+                    "gh repo edit --help", "gh help repo edit")
 
     def test_git_push_and_clean(self):
         self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
