@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Qt.labs.folderlistmodel
 import qs.config
 import qs.services.apps
+import qs.services.core
 import qs.components.reusable
 
 // The notes folder, one level at a time: folders first, then notes. A
@@ -82,16 +82,35 @@ DropdownSurface {
 
   implicitHeight: Math.min(root.maxHeight, content.implicitHeight + Widget.spacing * 2)
 
-  FolderListModel {
-    id: folderModel
-    folder: "file://" + NotesManager.absolute(root.folder === "" ? "" : root.folder + "/")
-    nameFilters: NotesConfig.extensions.map(ext => "*." + ext)
-    caseSensitive: false
-    showDirsFirst: true
-    showDotAndDotDot: false
-    showHidden: NotesConfig.showHidden
-    sortField: FolderListModel.Name
+  // The folder's entries ([{ name, isDir }], NotesManager.listFolder),
+  // listed again when it, the listing's settings or an entry change
+  property var entries: []
+  property int _listings: 0
+  property var _watch: null
+  readonly property string _listed: [NotesManager.directory, root.folder, NotesConfig.extensions.join(), NotesConfig.showHidden].join("\n")
+
+  function relist() {
+    const listing = ++root._listings;
+    NotesManager.listFolder(root.folder, entries => {
+      if (listing === root._listings && JSON.stringify(entries) !== JSON.stringify(root.entries))
+        root.entries = entries;
+    });
   }
+
+  function _rewatch() {
+    FileManager.unwatch(root._watch);
+    root._watch = NotesManager.watchFolder(root.folder, () => root.relist());
+  }
+
+  on_ListedChanged: {
+    root._rewatch();
+    root.relist();
+  }
+  Component.onCompleted: {
+    root._rewatch();
+    root.relist();
+  }
+  Component.onDestruction: FileManager.unwatch(root._watch)
 
   ColumnLayout {
     id: content
@@ -322,13 +341,14 @@ DropdownSurface {
       clip: true
       spacing: 2
       boundsBehavior: Flickable.StopAtBounds
-      model: folderModel
+      model: root.entries.length
 
       delegate: Rectangle {
         id: row
 
-        required property string fileName
-        required property bool fileIsDir
+        required property int index
+        readonly property string fileName: root.entries[index]?.name ?? ""
+        readonly property bool fileIsDir: root.entries[index]?.isDir ?? false
         readonly property string path: root.childPath(fileName)
         readonly property bool isCurrent: !fileIsDir && path === root.current
         readonly property bool editing: root.renaming === path

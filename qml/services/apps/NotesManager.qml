@@ -325,6 +325,32 @@ QtObject {
     }, true);
   }
 
+  // One folder's entries for the browser, calling back with [{ name,
+  // isDir }]: folders first, then notes, each by name; [] when it's
+  // missing. Listed by axiom: a FolderListModel reads a "#" or "?" in a
+  // folder's name as a URL's fragment or query
+  function listFolder(folder, callback) {
+    BackendManager.call("file.list", {
+      "path": root.absolute(folder === "" ? "" : folder + "/"),
+      "extensions": NotesConfig.extensions,
+      "recursive": false,
+      "folders": true,
+      "hidden": NotesConfig.showHidden
+    }, (error, result) => callback(error ? [] : result.folders.map(name => ({
+            "name": name,
+            "isDir": true
+          })).concat(result.files.map(path => ({
+            "name": root.nameOf(path),
+            "isDir": false
+          })))));
+  }
+
+  // Calls fn() when an entry of the folder changes; returns the watch,
+  // for FileManager.unwatch
+  function watchFolder(folder, fn) {
+    return FileManager.watch(root.absolute(folder === "" ? "" : folder + "/"), fn);
+  }
+
   function _fileName(name) {
     // One path segment: no slashes, no leading dots or spaces
     return String(name ?? "").replace(/[\/\x00]/g, "-").replace(/^[\s.]+/, "").trim();

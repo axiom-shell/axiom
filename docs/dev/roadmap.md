@@ -326,7 +326,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Wallpaper:**
 
 **Notes:**
-- [A folder name holding `#` or `?` opens the wrong folder in the note list](issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
 - [Typing in a note creates a linked notes folder that doesn't exist](issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 
 **Config (a format-2 migration):**

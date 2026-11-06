@@ -533,7 +533,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Idle dimming is forgotten across a shell reload
 - **features-09** (4, done): The fast-reply entry is a rare path (smallest fix); it and the Anthropic one get Live checks lines. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): An image sent without text to Anthropic carries a whitespace-only text block; Stop is ignored while chat.send still looks up the key.
 - **features-10** (6, 4 done): the folder-name entry stopped: encoding the URL doesn't fix it (see the entry), and a fix needs a choice. The missing-folder entry's fix came back out: its review found it writes the kept edits over the real note, and what they should become needs a choice too.
-  - [A folder name holding `#` or `?` opens the wrong folder in the note list](../issues.md#a-folder-name-holding--or--opens-the-wrong-folder-in-the-note-list)
+  - A folder name holding `#` or `?` opens the wrong folder in the note list (done in row 20: the browser lists through axiom's `file.list`)
   - [Typing in a note creates a linked notes folder that doesn't exist](../issues.md#typing-in-a-note-creates-a-linked-notes-folder-that-doesnt-exist)
 - **features-11** (4, done): The relative-times entry gets a Live checks line. Moved to the roadmap's [Unconfirmed](../roadmap.md#unconfirmed) (PLAUSIBLE, review-found): The panel's relative times go stale while Tailscale's state stays the same.
 - **features-12** (5, done): The IPC `apply` reads the cached catalog first; with no cache yet it warns and the catalog arrives for the next call.
