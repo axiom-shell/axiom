@@ -9,7 +9,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 ### Storage
 - Notes are Markdown files in `NotesConfig.directory` (the `Notes.directory` setting).
   - Empty means `Paths.defaultNotesPath` (`~/.local/share/axiom/notes/`).
-  - A linked folder is never created.
+  - A linked folder is never created. While it's missing (`directoryMissing`, from `refreshList`'s `find`, run again as a Notes module loads), a module shows "The notes folder doesn't exist" in place of its editor and a document's `edit` is refused, since a save would make the folder.
 - Paths are relative to that folder. `clean()` refuses any path that leaves it.
 - `allNotes` (from a `find`) feeds the `notes` `x-options`.
 
@@ -59,7 +59,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 **Find:** Ctrl+F finds within the note (`NoteEditor.find` / `endFind`).
 
 ### Browser and search
-- `NoteBrowser` walks the folder with a `FolderListModel`.
+- `NoteBrowser` walks the folder one level at a time: `NotesManager.listFolder` asks axiom (`file.list` with `folders` and `hidden`: every folder, empty and linked ones too, then the notes), and `watchFolder` watches it (`file.watch` on the folder's path with a trailing `/`: pushed when an entry in it changes), listing again on a push. Not a `FolderListModel`: it reads a `#` or `?` in a folder's name as a URL's fragment or query, and no escaping reaches every name.
 - Its search field lists `NotesManager.search(query, cb)` results:
   - name matches first;
   - then `grep -F` line matches (0-based).
