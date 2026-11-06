@@ -19,8 +19,6 @@ Item {
   property var quote: MarketsManager.quoteFor(root.item)
   property bool showChart: true
   property bool showHoldings: false
-  property bool selected: false
-  property bool clickable: true
   signal clicked
 
   readonly property string trend: MarketMath.trend(root.quote?.change ?? 0)
@@ -35,7 +33,7 @@ Item {
   Rectangle {
     anchors.fill: parent
     radius: Widget.radius
-    color: root.selected ? Qt.alpha(Theme.accent, 0.14) : mouse.containsMouse && root.clickable ? Qt.alpha(Theme.foreground, 0.06) : "transparent"
+    color: mouse.containsMouse ? Qt.alpha(Theme.foreground, 0.06) : "transparent"
     Behavior on color {
       ColorAnimation {
         duration: Appearance.animFast
@@ -47,8 +45,7 @@ Item {
   MouseArea {
     id: mouse
     anchors.fill: parent
-    hoverEnabled: root.clickable
-    enabled: root.clickable
+    hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     onClicked: root.clicked()
   }

@@ -189,6 +189,8 @@ Decided (2026-10-26):
 - Done: **Topics fed by a setting have no real floor** (decided again 2026-10-26: "1 ms (no real floor)", replacing the 250 ms floor, itself replacing the floor read from the schema): every `topics.Source` whose interval comes from a setting has `topics.MinInterval` (1 ms) as its floor, so each setting's schema `minimum` is the real limit (Tailscale's stays at 1 s), and a test keeps every interval setting's `minimum` at or above it. No migration.
 - Done: **`TailscaleManager` moves to `qml/services/apps/`** (moved with the Tailscale revamp; the rest of Phase 3 step 1 stays).
 
+Waiting for a decision: [A markets widget whose picked symbols were all removed shows nothing](issues.md#a-markets-widget-whose-picked-symbols-were-all-removed-shows-nothing).
+
 Quick wins: run `git gc` locally (most of a clone's `.git` is loose objects; packed history is about 18 MB).
 
 ### Phase 1: integrity

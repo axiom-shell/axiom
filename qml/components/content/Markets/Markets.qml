@@ -125,7 +125,6 @@ Card {
         id: grid
         readonly property int count: root.items.length
         columns: Math.max(1, Math.min(grid.count, Math.floor((width + columnSpacing) / (Appearance.fontSize * 9 + columnSpacing))))
-        readonly property int rowsUsed: Math.ceil(grid.count / grid.columns)
         columnSpacing: Widget.spacing
         rowSpacing: Widget.spacing
 

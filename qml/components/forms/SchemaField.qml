@@ -511,7 +511,7 @@ Loader {
   // one toggle chip per option (with its `x-enumIcons` icon), committed in
   // the options' order. `x-enumFrom` offers only the options a sibling
   // array holds
-  readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : fieldSchema.items?.enum ?? SettingsManager.optionsFor(fieldSchema.items) ?? []
+  readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : SettingsManager.optionsFor(fieldSchema.items) ?? []
   Component {
     id: chipsField
     ColumnLayout {
