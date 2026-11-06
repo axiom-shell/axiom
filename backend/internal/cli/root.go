@@ -35,6 +35,7 @@ func Root() *Command {
 			debugCommand(),
 			bugInfoCommand(),
 			screenSharePickCommand(),
+			portalWaitCommand(),
 			versionCommand(),
 		},
 	}

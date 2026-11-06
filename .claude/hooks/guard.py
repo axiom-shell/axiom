@@ -457,6 +457,9 @@ def check_argv(env, argv, cwd):
     if name == "git":
         check_git(args, cwd)
 
+    # The screen-share portal and its configs
+    check_portal(env, name, args, cwd)
+
     # Greetd
     if name in {"systemctl", "service", "pkill", "killall"} and any("greetd" in a for a in args):
         if name in {"pkill", "killall"} or any(a in {"restart", "stop", "start", "reload", "kill", "disable", "enable", "mask", "try-restart", "reload-or-restart"} for a in args):
@@ -600,17 +603,51 @@ def check_system_settings(env, name, args, cwd, sends):
         deny("Never, while testing", "datetime.set* / system.setHostname / account.* / apps.setDefault only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>), never the live one: they change the machine's settings.")
     if (name == "xdg-mime" and args[:1] == ["default"] or name == "xdg-settings" and args[:1] == ["set"]) and not scratch(env.get("XDG_CONFIG_HOME", "")):
         deny("Never, while testing", f"`{name} {args[0]}` changes the user's default apps; only with a scratch XDG_CONFIG_HOME=<dir>.")
-    paths = [a for a in args if not a.startswith("-")]
-    if name in {"cp", "mv", "install"} and len(paths) > 1:
-        written = [paths[-1]]
-        into_dir = resolve(paths[-1], cwd, env).is_dir() and any(default_apps_name(Path(p).name) for p in paths[:-1])
-    elif name in {">", "tee", "rm", "unlink"} or name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
-        written, into_dir = paths, False
-    else:
-        written, into_dir = [], False
+    written, into_dir = written_paths(name, args, cwd, env, default_apps_name)
     for a in written:
         if live_default_apps_file(a, cwd, env) or into_dir and live_config_path(a, cwd, env):
             deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
+
+
+def written_paths(name, args, cwd, env, named):
+    """The paths a cp / mv / install / > / tee / rm / sed -i writes, and
+    whether a cp-like one copies a file `named` matches into a folder."""
+    paths = [a for a in args if not a.startswith("-")]
+    if name in {"cp", "mv", "install"} and len(paths) > 1:
+        return [paths[-1]], resolve(paths[-1], cwd, env).is_dir() and any(named(Path(p).name) for p in paths[:-1])
+    if name in {">", "tee", "rm", "unlink"} or name == "sed" and any(a.startswith("--in-place") or re.fullmatch(r"-[a-zA-Z]*i\S*", a) for a in args):
+        return paths, False
+    return [], False
+
+
+def portal_config_name(path):
+    """Whether path names a screen-share portal's config: xdph.conf under
+    hypr/, xdg-desktop-portal-wlr's, or a portals.conf of xdg-desktop-portal."""
+    p = Path(path)
+    return (p.name == "xdph.conf" and p.parent.name == "hypr"
+            or p.parent.name == "xdg-desktop-portal-wlr"
+            or p.parent.name == "xdg-desktop-portal" and p.name.endswith("portals.conf"))
+
+
+def live_portal_config(path, cwd, env):
+    return portal_config_name(path) and live_config_path(str(Path(path).parent), cwd, env)
+
+
+def check_portal(env, name, args, cwd):
+    # Restarting or stopping the portal ends every share running
+    if name in {"systemctl", "service", "pkill", "killall", "kill"} and any("xdg-desktop-portal" in a for a in args):
+        if name in {"pkill", "killall", "kill"} or any(a in {"restart", "stop", "kill", "reload", "try-restart", "reload-or-restart", "mask", "disable"} for a in args):
+            deny("Never, while testing", "don't restart or stop the live xdg-desktop-portal (or its backends): it ends the shares running; ask the user (the Screen sharing card's Restart does it on a click).")
+    written, _ = written_paths(name, args, cwd, env, lambda n: False)
+    for a in written:
+        if live_portal_config(a, cwd, env):
+            deny("Never, while testing", "don't write the real screen-share portal configs (hypr/xdph.conf, xdg-desktop-portal-wlr/, xdg-desktop-portal/*portals.conf): only the Screen sharing card's Apply does; test with a scratch XDG_CONFIG_HOME=<dir>.")
+
+
+def check_portal_config_edit(tool_input):
+    path = tool_input.get("file_path", "")
+    if path and live_portal_config(path, "/", {}):
+        deny("Never, while testing", "don't edit the real screen-share portal configs; only the Screen sharing card's Apply does (test with a scratch XDG_CONFIG_HOME=<dir>).")
 
 
 def check_default_apps_edit(tool_input):
@@ -753,6 +790,7 @@ def check(call):
         check_generated_edit(tool_input)
         check_config_edit(tool, tool_input)
         check_default_apps_edit(tool_input)
+        check_portal_config_edit(tool_input)
 
 
 def main():

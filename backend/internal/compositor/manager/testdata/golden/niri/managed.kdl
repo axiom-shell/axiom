@@ -388,7 +388,7 @@ layer-rule {
     }
 }
 layer-rule {
-    match namespace="^axiom-(backdrop|polkit)$"
+    match namespace="^axiom-(backdrop|polkit|screenshare)$"
     background-effect {
         xray false
     }

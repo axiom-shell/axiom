@@ -109,6 +109,10 @@ PanelWindow {
       ScreenshotManager.cancel();
       return;
     }
+    if (ScreenshotManager.forArea) {
+      ScreenshotManager.finishArea(root.screen.name, rect);
+      return;
+    }
     if (root.recording) {
       const whole = rect.x === 0 && rect.y === 0 && rect.width === Math.round(root.width) && rect.height === Math.round(root.height);
       ScreenshotManager.record(Qt.rect(rect.x + root.screen.x, rect.y + root.screen.y, rect.width, rect.height), whole ? root.screen.name : "");

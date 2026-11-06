@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.services.core
 import qs.services.compositor
+import qs.services.apps
 
 /*
  * Hooks theme integrations into their apps' configs: each ThemeIntegrations
@@ -22,7 +23,9 @@ import qs.services.compositor
  * former), for CompositorConfigManager's notification that the module isn't
  * loaded.
  * Their targets come from CompositorConfigManager (the daemon's writer),
- * passed with the call.
+ * passed with the call. "screenSharing" is the line pointing the
+ * compositor's screen-share portal at axiom's picker
+ * (ScreenShareManager.hookupTargets), for the Screen sharing card.
  */
 Singleton {
   id: root
@@ -37,7 +40,8 @@ Singleton {
   readonly property var _given: ({
       "compositorInclude": [CompositorConfigManager.includeTarget, CompositorConfigManager.autostartTarget].filter(target => target !== null),
       "compositorAutostart": [CompositorConfigManager.autostartTarget].filter(target => target !== null),
-      "compositorModule": [CompositorConfigManager.includeTarget].filter(target => target !== null)
+      "compositorModule": [CompositorConfigManager.includeTarget].filter(target => target !== null),
+      "screenSharing": ScreenShareManager.hookupTargets
     })
 
   // The x-hookup targets of an integration, as the schema has them

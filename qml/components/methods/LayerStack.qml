@@ -159,6 +159,11 @@ QtObject {
       "why": "The monitor layout prompt (Keep / Revert): after the picker, over the overlay the Monitors page opened it from."
     },
     {
+      "namespace": "screenshare",
+      "order": -28,
+      "why": "The screen-share picker: over the overlay and the screenshot picker (it steps aside while a region is dragged there), under the polkit prompt."
+    },
+    {
       "namespace": "polkit",
       "order": -30,
       "why": "The polkit prompt: after everything, so nothing of axiom's draws over a password prompt."
@@ -179,9 +184,10 @@ QtObject {
   // window (drawing the chrome's fills: the chrome doesn't blur itself)
   // and the big surfaces that blur themselves
   readonly property var blurSurfaces: ["blur-backing", "dock-preview", "overlay", "powermenu", "workspaces", "monitor-prompt"]
-  // Backdrops (and the polkit prompt, whose window holds its own dim),
+  // Backdrops (and the polkit prompt and screen-share picker, whose
+  // windows hold their own dim),
   // only when asked: the whole screen, at every alpha
-  readonly property var blurBackdrops: ["backdrop", "polkit"]
+  readonly property var blurBackdrops: ["backdrop", "polkit", "screenshare"]
   // The blur window over the overlay: what it blurs is the overlay, so
   // never see-through (xray would blur the wallpaper in its place)
   readonly property var blurOverOverlay: ["blur-backing-overlay"]

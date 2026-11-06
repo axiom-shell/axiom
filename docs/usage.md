@@ -66,6 +66,7 @@ axiom ipc <target> <function> [args]
 | `drives` | `list` (the removable drives as JSON), `mount <id>` (a drive's volumes, or one volume), `eject <id>`, `ejectAll` |
 | `brightness` | `up`, `down`, `set <percent>`, `dim <percent>`, `dimBy <percent>`, `undim` |
 | `screenshot` | `take <region\|window\|screen>`, `cancel` |
+| `screenshare` | `test` (the screen-share picker, its answer only logged), `share` (what it opened on: the focused screen), `cancel` |
 | `screenRecord` | `toggle`, `enable`, `disable`, `status` |
 | `wallpaper` | `next`, `random`, `preview <transition>` (the next wallpaper, played with that transition: `fade`, `wipe`, `slide`, `grow`, `shrink`, `wave`, `dissolve`, `pixelate`, `blinds`, `tiles`, `zoom`, `ripple`, `swirl`, `blur`, `clock`) |
 | `monitors` | `open`, `keep`, `revert`, `identify` |

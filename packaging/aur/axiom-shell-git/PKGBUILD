@@ -41,6 +41,9 @@ optdepends=(
   'udisks2: removable drives (mount, open and eject USB sticks and memory cards)'
   'accountsservice: your picture on the login screen, and your real name in Settings'
   'xdg-desktop-portal-gtk: browse buttons for folders and importing configs'
+  'xdg-desktop-portal-hyprland: screen sharing under Hyprland (calls, streams)'
+  'xdg-desktop-portal-wlr: screen sharing under sway (calls, streams)'
+  'xdg-desktop-portal-gnome: screen sharing under niri (calls, streams)'
   'fcitx5: typing Japanese, Chinese, Korean and more (the input method)'
   'greetd: axiom as the login screen (set up from Settings → Login screen)'
   'greetd-agreety: axiom as the login screen (its text fallback)'
@@ -88,4 +91,8 @@ package() {
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   # The tool pages that open as windows, for any app launcher
   install -Dm644 -t "$pkgdir/usr/share/applications" data/applications/axiom-*.desktop
+  # axiom's screen-share portal under niri (the daemon serves it; D-Bus
+  # activation only waits for it)
+  install -Dm644 -t "$pkgdir/usr/share/xdg-desktop-portal/portals" data/portal/axiom.portal
+  install -Dm644 -t "$pkgdir/usr/share/dbus-1/services" data/portal/org.freedesktop.impl.portal.desktop.axiom.service
 }

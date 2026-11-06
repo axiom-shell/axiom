@@ -100,6 +100,21 @@ QtObject {
         "arch": "xdg-desktop-portal-gtk",
         "fedora": "xdg-desktop-portal-gtk"
       },
+      "xdg-desktop-portal-hyprland": {
+        "arch": "xdg-desktop-portal-hyprland",
+        "fedora": {
+          "name": "xdg-desktop-portal-hyprland",
+          "repo": root._hyprCopr
+        }
+      },
+      "xdg-desktop-portal-wlr": {
+        "arch": "xdg-desktop-portal-wlr",
+        "fedora": "xdg-desktop-portal-wlr"
+      },
+      "xdg-desktop-portal-gnome": {
+        "arch": "xdg-desktop-portal-gnome",
+        "fedora": "xdg-desktop-portal-gnome"
+      },
       "qalc": {
         "arch": "libqalculate",
         "fedora": "qalculate"

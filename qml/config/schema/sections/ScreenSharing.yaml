@@ -1,0 +1,30 @@
+# The ScreenSharing section of the config (config.json's "ScreenSharing").
+
+type: object
+x-category: Screen & Power
+x-card: {file: ScreenSharingStatus, title: screen sharing}
+title: Screen sharing
+description: The picker apps show to share a screen or window (a call, a stream).
+additionalProperties: false
+x-order: [enabled, reuseSeconds, remember]
+properties:
+  enabled:
+    type: boolean
+    title: Use axiom's picker
+    default: false
+    description: Apps sharing a screen ask axiom's picker instead of the compositor portal's own. The card above sets the portal up once.
+  reuseSeconds:
+    type: integer
+    title: Reuse the last choice for
+    x-unit: s
+    default: 10
+    minimum: 0
+    maximum: 60
+    description: Some apps (Discord) ask several times for one share. A request this soon after the last answer gets it again without the picker; 0 always asks.
+    x-enabledIf: {/ScreenSharing.enabled: true}
+  remember:
+    type: boolean
+    title: Let apps reuse a choice
+    default: true
+    description: An app may share the same screen or window again later without asking, until you share something else (restore tokens).
+    x-enabledIf: {/ScreenSharing.enabled: true}

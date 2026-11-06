@@ -14,6 +14,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - Launcher `/screenshot`.
 - The Screenshot card.
 - The chat's region attachments use `pick(path, callback)`. It saves to `path` and calls back instead of copying (see [Chat](chat.md)).
+- The screen-share picker's Region uses `pickArea(callback)`: the same region drag, handing back the screen and the rect (its logical pixels from the screen's top left; `finishArea`) instead of a picture, and a cancel as no screen ([Screen sharing](screen-sharing.md)).
 
 ### The picker
 - While `picking`, `qml/shell/Screenshot` shows `surfaces/screenshot/ScreenshotPickerWindow`:
