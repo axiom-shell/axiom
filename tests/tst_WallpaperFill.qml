@@ -104,6 +104,21 @@ TestCase {
     }, "fit");
   }
 
+  function test_parallaxFitKeepsWhatItCovered() {
+    // An image a pixel off the screen's shape: no more than its half pixel
+    // of letterbox at either end of a vertical slide (it was 13.6 px)
+    const first = WallpaperFill.rect("fit", 1920, 1079, 1920, 1080, 0.04, 0, -1);
+    const last = WallpaperFill.rect("fit", 1920, 1079, 1920, 1080, 0.04, 0, 1);
+    verify(first.y * 1080 <= 0.5 + 1e-6, "first: no band at the top past the rest's");
+    verify((1 - last.y - last.height) * 1080 <= 0.5 + 1e-6, "last: no band at the bottom past the rest's");
+    // A clearly letterboxed side keeps its share: 21:9 on 16:9 grows by
+    // its height's travel over the share it covers
+    near(WallpaperFill.rect("fit", 2520, 1080, 1920, 1080, 0.04, 0, 0), {
+      "width": 1 + 60 / 1080 / (1920 / 2520),
+      "height": 1920 / 2520 + 60 / 1080
+    }, "21:9 on 16:9");
+  }
+
   function test_notLoaded() {
     compare(WallpaperFill.rect("crop", 0, 0, 2000, 1000, 0, 0, 0), {
       "x": 0,

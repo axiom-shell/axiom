@@ -186,6 +186,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - On sway, niri and Hyprland with `Overlay.closeOnOutsideClick` on, open the overlay, click another monitor, the screen border and a floating bar's gap (it stays open), then its own background (it closes) (#378).
 - With an edge menu that closes on leave, run `axiom edge-menu open <id>` from a bind and check it stays up until the pointer enters and leaves it (#379).
 - Open the Calendar popout and start a new event: the popout doesn't grow or flash as the editor opens (#379).
+- With a held hover or intellihide dock at a distance above 0, check that once the pointer has reached the dock the strip between it and its edge no longer keeps it open or takes clicks, that the strip comes back when the pointer comes in from the trigger again, and that a dock shown by a bind starts without it (#382).
 
 ### Phase 0: decisions and quick wins
 Decided (2026-10-26):
@@ -323,7 +324,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
 
 **Wallpaper:**
-- [A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends](issues.md#a-fitted-wallpaper-a-pixel-off-the-screens-shape-shows-a-band-at-the-parallaxs-ends)
 - [Wallpapers list only jpg, png and bmp](issues.md#wallpapers-list-only-jpg-png-and-bmp)
 
 **Notes:**

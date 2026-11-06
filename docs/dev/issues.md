@@ -70,13 +70,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while fixing bar-popouts-07 (row 20)
 
-### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
-- **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
-- **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).
-  **Decided** (maintainer, 2026-11-06, on a) grow each side by what it covered, b) count a side within a screen pixel of covering as covering; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-05, while reviewing the wallpaper chunk of the tweaks-minor-complaints branch
-
 ### Wallpapers list only jpg, png and bmp
 - **Where:** `qml/services/ui/WallpaperManager.qml` (`_extensions`), `backend/internal/files/list.go`
 - **What:** An idea from the wallpaper transitions branch, not a bug: the wallpaper list takes jpg, jpeg, png and bmp only, though Qt reads webp (and avif and jxl with their image format plugins) and the theme generator already decodes webp (`golang.org/x/image`). Adding them is a longer `_extensions` (and the folder count in `checkFolder`), the theme generator's formats checked for each, and the Qt plugins as optional packages where they aren't in qt6-base.

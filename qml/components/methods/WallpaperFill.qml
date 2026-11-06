@@ -14,9 +14,11 @@ QtObject {
   // how far the parallax slides it end to end, as a share of the screen's
   // mean side, the same px both ways; `shiftX` / `shiftY` (-1 to 1) place
   // it along that: -1 shows its left or top end, 1 its right or bottom.
-  // The image is enlarged just enough that a side covering the screen at
-  // rest still covers it at either end (a letterboxed side's bars move
-  // with it); an aspect's crop overflow stays centred, never travel.
+  // The image is enlarged just enough that each side still covers what it
+  // covered at rest at either end (a side covering the screen keeps
+  // covering it; a letterboxed one keeps its share, its bars moving with
+  // it), so an image a pixel off the screen's shape doesn't leave a band;
+  // an aspect's crop overflow stays centred, never travel.
   function rect(fill, imageWidth, imageHeight, screenWidth, screenHeight, travel, shiftX, shiftY) {
     if (!(imageWidth > 0 && imageHeight > 0 && screenWidth > 0 && screenHeight > 0))
       return {
@@ -33,8 +35,8 @@ QtObject {
       const scale = fill === "fit" ? Math.min(screenWidth / imageWidth, screenHeight / imageHeight) : fill === "center" ? 1 : Math.max(screenWidth / imageWidth, screenHeight / imageHeight);
       const w = imageWidth * scale / screenWidth;
       const h = imageHeight * scale / screenHeight;
-      // Only the sides it covers need to keep covering (1e-9: rounding)
-      const grow = Math.max(1, w >= 1 - 1e-9 ? width / w : 1, h >= 1 - 1e-9 ? height / h : 1);
+      // Each side grows by what it covered plus its travel
+      const grow = Math.max(1, (Math.min(w, 1) + width - 1) / w, (Math.min(h, 1) + height - 1) / h);
       width = w * grow;
       height = h * grow;
     }
@@ -55,9 +57,10 @@ QtObject {
   // The size to decode an image at for a screen ({ width, height }), or
   // null for its own size ("center", or no screen yet). Crop and fit
   // decode just big enough to cover or fit it, grown by the parallax's
-  // travel (rect): fit by the travel's share of the side it fills, at
-  // most the shorter one's, so an image near the screen's shape isn't
-  // decoded smaller than it's drawn.
+  // travel (rect): fit by the travel's share of the shorter side, so an
+  // image near the screen's shape isn't decoded smaller than it's drawn
+  // (a clearly letterboxed one, grown more by rect, is drawn a little
+  // larger than decoded).
   function decodeSize(fill, screenWidth, screenHeight, travel) {
     if (fill === "center" || !(screenWidth > 0 && screenHeight > 0))
       return null;
