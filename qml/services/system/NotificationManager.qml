@@ -279,10 +279,10 @@ Singleton {
     return forced >= 0 ? [NotificationUrgency.Low, NotificationUrgency.Normal, NotificationUrgency.Critical][forced] : notif.urgency;
   }
 
-  // How long a notification's toast stays (ms) by its app's rule, or -1
+  // How long a notification's toast stays (ms) by its app's rule, or null
   // for the default
   function timeoutOf(notif) {
-    return root.ruleFor(notif)?.timeout ?? -1;
+    return root.ruleFor(notif)?.timeout ?? null;
   }
 
   // Opens a link from a notification's body in its app

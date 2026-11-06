@@ -53,11 +53,11 @@ properties:
     x-scope: look
     type: integer
     x-control: stepper
-    x-auto: {value: -1, start: 12}
+    x-auto: {value: null, start: 12}
     x-beside: true
     title: Gap
-    default: -1
-    minimum: -1
+    default: null
+    minimum: 0
     maximum: 200
     x-unit: px
     description: Space from the border or bar on their edge. Auto lines them up with your windows.
@@ -213,11 +213,11 @@ properties:
         timeout:
           type: integer
           x-control: stepper
-          x-auto: {value: -1, start: 5000}
+          x-auto: {value: null, start: 5000}
           title: Toast duration
           x-unit: s
-          default: -1
-          minimum: -1
+          default: null
+          minimum: 0
           maximum: 60000
           description: Auto follows the duration above.
       required: [id]

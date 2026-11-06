@@ -30,7 +30,8 @@ func fileHandlers(reg *rpc.Registry, f func() *files.Files) {
 	rpc.Handle(reg, "file.write", func(ctx context.Context, c *rpc.Conn, p writeParams) (struct{}, error) {
 		return struct{}{}, f().Write(p.Path, p.Text)
 	})
-	// Changes come as file.changed pushes, to this connection only
+	// Changes come as file.changed pushes, to this connection only; a path
+	// ending in "/" is a folder, changed when an entry in it is
 	rpc.Handle(reg, "file.watch", func(ctx context.Context, c *rpc.Conn, p pathParams) (struct{}, error) {
 		return struct{}{}, f().Watch(c, p.Path)
 	})
@@ -38,10 +39,12 @@ func fileHandlers(reg *rpc.Registry, f func() *files.Files) {
 		Path       string   `json:"path"` // absolute
 		Extensions []string `json:"extensions"`
 		Recursive  bool     `json:"recursive"`
+		Folders    bool     `json:"folders"` // every folder, empty ones too
+		Hidden     bool     `json:"hidden"`
 	}
-	// A folder's files of those kinds (the wallpaper list)
+	// A folder's files of those kinds (the wallpaper list, the notes browser)
 	rpc.Handle(reg, "file.list", func(ctx context.Context, c *rpc.Conn, p listParams) (files.Listing, error) {
-		return files.List(p.Path, p.Extensions, p.Recursive)
+		return files.List(p.Path, p.Extensions, files.ListOptions{Recursive: p.Recursive, Folders: p.Folders, Hidden: p.Hidden})
 	})
 	rpc.Handle(reg, "file.unwatch", func(ctx context.Context, c *rpc.Conn, p pathParams) (struct{}, error) {
 		f().Unwatch(c, p.Path)

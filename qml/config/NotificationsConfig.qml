@@ -13,11 +13,11 @@ QtObject {
   readonly property var screen: _c.screen
 
   // Where the stack sits: a ScreenEdge, 0-1 along it, held off it, and the
-  // gap when held (-1: Auto, ScreenEdgeManager.detachedGaps)
+  // gap when held (null: Auto, ScreenEdgeManager.detachedGaps)
   readonly property int edge: ScreenEdge.fromConfig(_c.edge)
   readonly property real position: _c.position / 100
   readonly property bool detached: _c.detached
-  readonly property int gap: _c.gap
+  readonly property var gap: _c.gap
 
   // "slide" | "fade" | "none", and the slide's edge ("auto" or an edge
   // name, see ToastMotion.slideEdge)
@@ -47,7 +47,7 @@ QtObject {
 
   // Per-app rules: [{ id, app, level ("alert" | "silent" | "toast" |
   // "off"), urgency ("app" | "low" | "normal" | "critical"), timeout (ms,
-  // -1 for the default) }]
+  // null for the default) }]
   readonly property var apps: _c.apps
   // The level of an app's low-urgency notifications no rule names
   // ("silent" | "alert")

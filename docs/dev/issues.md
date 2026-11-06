@@ -26,6 +26,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** needs a plan
 - **Found:** 2026-11-06, while finishing the unified-actions branch
 
+### Making a note or folder creates a linked notes folder that doesn't exist
+- **Where:** `qml/services/apps/NotesManager.qml` (`_create`)
+- **What:** notes.md: "A linked folder is never created". With `Notes.directory` linked and missing (`directoryMissing`), the editor is now read-only, but the note list's and the header's New note and New folder buttons still call `createNote` / `createFolder`, whose `_create` runs `mkdir -p` on the folder first, so the whole path is made on the root disk (a drive not mounted yet, a typo). Found by reading. Fix: `_create` refuses while `directoryMissing` (`_fail` with "The notes folder doesn't exist"), or the buttons are disabled then.
+- **Size:** trivial
+- **Found:** 2026-11-06, while making the notes editor read-only while its folder is missing (row 20)
+
 ### The daemon's other own commands still start outside command.Children
 - **Where:** `backend/internal/sysmon/nvidia.go`, `backend/internal/theme/integrate.go`, `backend/internal/compositor/manager/niri.go`, `backend/internal/daemon/cursor.go`
 - **What:** Row 20 moved `checkupdates`, `ddcutil` and `tailscale` to `command.Run` with the daemon's `Children`, but other commands the daemon runs for itself still start through their own `exec.Command` (`grep -rln 'exec.Command' backend/internal` lists them), so one in flight at a re-exec isn't handed on and stays a zombie until the daemon quits, as the three did. Not yet sorted into which run often enough to matter (a polled or streamed one) and which run once (a build, an install), which a re-exec doesn't meet.
@@ -449,20 +455,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** trivial
 - **Found:** 2026-11-01, while reviewing the chat system
 
-### A folder name holding `#` or `?` opens the wrong folder in the note list
-- **Where:** `qml/components/content/parts/notes/NoteBrowser.qml:87` (`folderModel`)
-- **What:** The browser's `FolderListModel` is given `"file://" + NotesManager.absolute(…)` unencoded, so a `#` starts the URL's fragment and a `?` its query. Folder names come from the user (`createFolder` keeps both characters). Checked with qmltestrunner: a model given `file:///…/d/C#/` listed the contents of `d/C` (`names= ["x"]`), not `d/C#`. So opening a folder "C#" (or "Q&A?") shows another folder's notes, or nothing, under a breadcrumb saying "C#", and a notes folder set to such a path lists nothing at all; a `%20` in a name is read as a space. CONFIRMED. The wallpaper list isn't affected any more (WallpaperManager lists through `file.list` and escapes `%`, `#` and `?` in its image URLs). Encoding the URL doesn't fix it (checked with qmltestrunner on Qt 6.12, 2026-11-05): FolderListModel turns its folder into a local path and parses that as a URL again, so `file:///…/d/C%23/` still lists `d/C`; `C%2523` lists `C#`, but a `?` (`Q%253F`) or a literal `%xx` in a name can't be reached either way. Fix (a maintainer's call): escape twice for FolderListModel, which covers `#` and leans on Qt's double parse, or list the folder through the daemon (`file.list` with folders, plus a watch) instead of FolderListModel.
-  **Decided** (maintainer, 2026-11-06, on a) list folders through the daemon (`file.list` plus a watch), b) escape twice, c) refuse `#`, `?` and `%` in new folder names; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
-### Typing in a note creates a linked notes folder that doesn't exist
-- **Where:** `qml/services/apps/NotesManager.qml:409` (`flush`), `qml/services/apps/NotesManager.qml:302` (`refreshList`)
-- **What:** notes.md: "A linked folder is never created", and the note list says "The notes folder doesn't exist" (`directoryMissing`). But a module still opens its last note (a missing file reads as an empty note) and `flush()` saves through `FileManager.write`, which writes the file "making its folders" (FileManager.qml's comment). With `Notes.directory` on a drive that isn't mounted yet (or mistyped), the first keystroke in an edge-menu scratchpad creates the whole path on the root disk; mounting the drive later hides that note under the mount. CONFIRMED by reading. Fix: waits on the decision below. A fix that keeps the edit dirty (tried in the features-10 branch) writes it over the real note once the folder returns: a document opened while the folder was missing read its note as empty, `_fromDisk` doesn't reload a dirty document, and the `find` that sees the folder again flushes the edits, so typing "x" in a scratchpad and then mounting the drive writes "x" over the vault's real scratchpad.md (changing `Notes.directory` away from a missing folder does the same to the new folder's note of that name). Found by reading; not run. So the fix waits on a maintainer decision: "Which should the kept edits become: dropped, saved as a conflict copy, or prevented by making the editor read-only while the folder is missing?"
-  **Decided** (maintainer, 2026-11-06, on a) the editor read-only while the folder is missing, with the existing "The notes folder doesn't exist" message, b) the kept edits saved as a conflict copy, c) dropped; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the feature:notes system
-
 ### The panel's relative times go stale while Tailscale's state stays the same
 - **Where:** `qml/components/content/Tailscale/Tailscale.qml:46` (`now`, `keyDays`), `qml/components/content/ClaudeUsage/ClaudeUsage.qml:22` (`now`)
 - **What:** `now` and `keyDays` are re-read only when `TailscaleManager.peers` is reassigned (`void TailscaleManager.peers; return Date.now();`). The daemon's topic hub pushes a state only when its JSON changed (`backend/internal/topics/topics.go:344`, `if bytes.Equal(data, t.last)`), and `Parse` keeps only the peers' online/active/relay/last seen/traffic fields. On a quiet tailnet (all peers offline or idle), nothing changes between polls. A module left on the desktop or in an edge menu then keeps saying "Offline · seen 3m ago" for hours, and the key-expiry warning appears only at the next unrelated change after the 7-day mark. ClaudeUsage's `now` is built the same way, though its accounts' `fetchedAt` changes at every fetch, so it lags by one fetch interval at most. PLAUSIBLE: what's unproven is whether an idle tailnet's parsed state really repeats byte for byte; to settle it, compare two `tailscale status --json` runs parsed a minute apart on a connected, idle tailnet. Fix: drive the times from a minute clock, as Notifications does (`SystemClock { id: clock; precision: SystemClock.Minutes }`, `readonly property real now: clock.date.getTime()`), and compute `keyDays` from `root.now`.
@@ -474,10 +466,3 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** Tailscale's state comes from `tailscale status --json` every `Tailscale.interval` (10 s default) while anything holds `TailscaleManager`: the Tailscale and Vpn widgets, the Network, WifiNetworks and VpnConnections cards, and now an OSD with the VPN status, which holds it for the whole session. A connect or drop shows up to 10 s late, while NetworkManager's VPNs are pushed (`vpn.state`). tailscaled's LocalAPI streams its changes (`/localapi/v0/watch-ipn-bus`, what `tailscale status --watch`-style clients use), so the daemon could watch that instead of running the CLI, with the interval left only for the peers' details if needed.
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
-
-### Six x-auto settings still store Automatic as -1
-- **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml:129`, `qml/config/schema/definitions/layout/EdgeMenu.yaml:150`, `qml/config/schema/definitions/common/DockEntry.yaml:51`, `qml/config/schema/definitions/common/OSDEntry.yaml:52`, `qml/config/schema/sections/Notifications.yaml:56`, `qml/config/schema/sections/Notifications.yaml:215`
-- **What:** `x-auto` now takes a `null` automatic value (validation lets it through, and the form's number keeps its whole range), which the bar's `floatingGap` uses. These six still store Automatic as `-1`, so their readers test `>= 0` / `< 0` and their minimum can't be 0 and Automatic at once without the sentinel. Moving them to `null` is a format-2 step per setting (`-1` → `null`) and a reader change each; nothing is broken meanwhile.
-  **Decided** (maintainer, 2026-11-06, on a) all six to `null` in one format-2 step, b) leave them; recommended a)): "rec"
-- **Size:** small
-- **Found:** 2026-11-04, while building the bar rewrite (x-auto with a null value, A1)

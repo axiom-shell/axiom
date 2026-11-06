@@ -131,7 +131,7 @@ func TestFormatsItCantReadBlock(t *testing.T) {
 	for name, content := range map[string]string{
 		"no format, format 2's version": `{"version": 76}`,
 		"another format":                `{"format": 3, "version": 80}`,
-		"newer version":                 `{"format": 2, "version": 1000}`,
+		"newer version":                 `{"format": 2, "version": 9999}`,
 		"no version":                    `{"format": 2}`,
 	} {
 		dir := t.TempDir()

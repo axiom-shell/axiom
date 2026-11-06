@@ -6,71 +6,38 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// v99: one catalogue of actions (the keybind table's ids) behind the
-// QuickActions tiles and the Button widget, so their own names for an
-// action become the table's: a QuickActions module's `caffeine` and `dnd`
-// tiles became `idleInhibit` and `toggleDnd`; a Button's `appLauncher` and
-// `workspaceOverlay` actions became `launcher` and `workspaceOverview`.
+// v99: the toasts' `gap` and a per-app rule's `timeout` store Automatic as
+// null (x-auto's null value), no longer -1, so their minimum is 0.
 func v99(cfg *jsonx.Object) []string {
-	tiles, buttons := 0, 0
-	var walk func(v any)
-	walk = func(v any) {
-		switch t := v.(type) {
-		case *jsonx.Object:
-			if props, _ := t.Value("properties").(*jsonx.Object); props != nil {
-				switch jsonx.ToString(t.Value("type")) {
-				case "QuickActions":
-					if renameTiles(props) {
-						tiles++
-					}
-				case "Button":
-					if renamed, ok := buttonActions[jsonx.ToString(props.Value("action"))]; ok {
-						props.Set("action", renamed)
-						buttons++
-					}
-				}
-			}
-			for _, k := range t.Keys() {
-				walk(t.Value(k))
-			}
-		case *jsonx.Array:
-			for _, item := range t.Items {
-				walk(item)
-			}
+	notifications := object(cfg, "Notifications")
+	if notifications == nil {
+		return nil
+	}
+	var changes []string
+	if negative(notifications.Value("gap")) {
+		notifications.Set("gap", nil)
+		changes = append(changes, "Notifications.gap: Automatic is null, no longer -1")
+	}
+	apps, _ := notifications.Value("apps").(*jsonx.Array)
+	if apps == nil {
+		return changes
+	}
+	rules := 0
+	for _, item := range apps.Items {
+		rule, _ := item.(*jsonx.Object)
+		if rule != nil && negative(rule.Value("timeout")) {
+			rule.Set("timeout", nil)
+			rules++
 		}
 	}
-	walk(cfg)
-	var changes []string
-	if tiles > 0 {
-		changes = append(changes, fmt.Sprintf("%d quick actions module(s): caffeine and dnd tiles became idleInhibit and toggleDnd", tiles))
-	}
-	if buttons > 0 {
-		changes = append(changes, fmt.Sprintf("%d button widget(s): appLauncher and workspaceOverlay actions became launcher and workspaceOverview", buttons))
+	if rules > 0 {
+		changes = append(changes, fmt.Sprintf("%d notification app rule(s): Automatic timeout is null, no longer -1", rules))
 	}
 	return changes
 }
 
-// The tiles and button actions renamed, old to new: frozen here, as a
-// step's view of the schema
-var (
-	tileActions   = map[string]string{"caffeine": "idleInhibit", "dnd": "toggleDnd"}
-	buttonActions = map[string]string{"appLauncher": "launcher", "workspaceOverlay": "workspaceOverview"}
-)
-
-// renameTiles renames a QuickActions module's old tiles in its `actions`;
-// whether it renamed any.
-func renameTiles(props *jsonx.Object) bool {
-	list, _ := props.Value("actions").(*jsonx.Array)
-	if list == nil {
-		return false
-	}
-	renamed := false
-	for i, item := range list.Items {
-		old, _ := item.(string)
-		if name, ok := tileActions[old]; ok {
-			list.Items[i] = name
-			renamed = true
-		}
-	}
-	return renamed
+// negative says v is a number below 0 (the old Automatic sentinel).
+func negative(v any) bool {
+	n, ok := v.(float64)
+	return ok && n < 0
 }

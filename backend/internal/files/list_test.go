@@ -35,17 +35,19 @@ func TestList(t *testing.T) {
 		return out
 	}
 	cases := []struct {
-		name      string
-		recursive bool
-		want      Listing
+		name string
+		o    ListOptions
+		want Listing
 	}{
-		{"the folder alone", false, Listing{Files: abs("a.jpg", "b.PNG", "link.jpg"), Folders: []string{}}},
-		{"and every folder under it", true, Listing{Files: abs("a.jpg", "b.PNG", "link.jpg", "sub/c.png", "sub/deep/d.jpeg"), Folders: []string{"sub", "sub/deep"}}},
+		{"the folder alone", ListOptions{}, Listing{Files: abs("a.jpg", "b.PNG", "link.jpg"), Folders: []string{}}},
+		{"and every folder under it", ListOptions{Recursive: true}, Listing{Files: abs("a.jpg", "b.PNG", "link.jpg", "sub/c.png", "sub/deep/d.jpeg"), Folders: []string{"sub", "sub/deep"}}},
+		{"with its folders, empty and linked ones too", ListOptions{Folders: true}, Listing{Files: abs("a.jpg", "b.PNG", "link.jpg"), Folders: []string{"empty", "loop", "sub"}}},
+		{"hidden ones too", ListOptions{Folders: true, Hidden: true}, Listing{Files: abs(".hidden.png", "a.jpg", "b.PNG", "link.jpg"), Folders: []string{".cache", "empty", "loop", "sub"}}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := List(dir, []string{"jpg", "jpeg", ".png"}, c.recursive)
+			got, err := List(dir, []string{"jpg", "jpeg", ".png"}, c.o)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,13 +61,13 @@ func TestList(t *testing.T) {
 	if err := os.Symlink(dir, link); err != nil {
 		t.Fatal(err)
 	}
-	if got, err := List(link, []string{"jpg"}, false); err != nil || !reflect.DeepEqual(got.Files, []string{filepath.Join(link, "a.jpg"), filepath.Join(link, "link.jpg")}) {
+	if got, err := List(link, []string{"jpg"}, ListOptions{}); err != nil || !reflect.DeepEqual(got.Files, []string{filepath.Join(link, "a.jpg"), filepath.Join(link, "link.jpg")}) {
 		t.Errorf("a linked folder: %+v, %v", got, err)
 	}
-	if _, err := List(filepath.Join(dir, "missing"), nil, false); axerr.KindOf(err) != axerr.NotFound {
+	if _, err := List(filepath.Join(dir, "missing"), nil, ListOptions{}); axerr.KindOf(err) != axerr.NotFound {
 		t.Errorf("a missing folder: %v", err)
 	}
-	if _, err := List("relative", nil, false); axerr.KindOf(err) != axerr.BadRequest {
+	if _, err := List("relative", nil, ListOptions{}); axerr.KindOf(err) != axerr.BadRequest {
 		t.Errorf("a relative path: %v", err)
 	}
 }

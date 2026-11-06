@@ -23,12 +23,23 @@ type Listing struct {
 // MaxListed bounds a listing (a home folder picked by mistake).
 const MaxListed = 20000
 
+// ListOptions widen a listing.
+type ListOptions struct {
+	// Every folder under dir too
+	Recursive bool
+	// Every folder listed in Folders, empty ones and links to folders too
+	// (the notes browser), not only those holding files
+	Folders bool
+	// Hidden files and folders too
+	Hidden bool
+}
+
 // List is dir's regular files (links to them too) whose extension is one
-// of exts (without the dot, any case), and with recursive those of every
-// folder under it, hidden ones and links to folders left out (dir itself
-// may be a link: its files are listed under dir). A missing dir is
-// NotFound.
-func List(dir string, exts []string, recursive bool) (Listing, error) {
+// of exts (without the dot, any case), and with o.Recursive those of every
+// folder under it, hidden ones and links to folders left out unless o
+// says (dir itself may be a link: its files are listed under dir). A
+// missing dir is NotFound.
+func List(dir string, exts []string, o ListOptions) (Listing, error) {
 	root, err := clean(dir)
 	if err != nil {
 		return Listing{}, err
@@ -57,24 +68,35 @@ func List(dir string, exts []string, recursive bool) (Listing, error) {
 			return fs.SkipDir
 		}
 		name := d.Name()
-		if d.IsDir() {
-			if path == walked {
-				return nil
-			}
-			if !recursive || strings.HasPrefix(name, ".") {
+		if path == walked || (!o.Hidden && strings.HasPrefix(name, ".")) {
+			if d.IsDir() && path != walked {
 				return fs.SkipDir
 			}
 			return nil
 		}
-		if strings.HasPrefix(name, ".") || !want[strings.ToLower(filepath.Ext(name))] {
+		if d.IsDir() {
+			if o.Folders {
+				folders[strings.TrimPrefix(path, walked+"/")] = true
+			}
+			if !o.Recursive {
+				return fs.SkipDir
+			}
 			return nil
 		}
-		// A link counts when it leads to a regular file
+		// A link counts when it leads to a regular file (or a folder, with
+		// o.Folders)
 		if d.Type()&fs.ModeSymlink != 0 {
-			if target, err := os.Stat(path); err != nil || !target.Mode().IsRegular() {
+			target, err := os.Stat(path)
+			if err == nil && target.IsDir() && o.Folders {
+				folders[strings.TrimPrefix(path, walked+"/")] = true
+			}
+			if err != nil || !target.Mode().IsRegular() {
 				return nil
 			}
 		} else if !d.Type().IsRegular() {
+			return nil
+		}
+		if !want[strings.ToLower(filepath.Ext(name))] {
 			return nil
 		}
 		if len(out.Files) >= MaxListed {

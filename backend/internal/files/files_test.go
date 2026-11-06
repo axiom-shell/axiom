@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -170,4 +172,66 @@ func TestWatchFolderMadeByWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitFor(t, c, 1)
+}
+
+// A folder asked for with a trailing "/" is pushed when an entry in it is
+// made, changed or removed, not for a deeper one's change.
+func TestWatchFolder(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "sub"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f := newFiles(t)
+	c := &fakeConn{}
+	if err := f.Watch(c, dir+"/"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "sub", "deep.md"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(50 * time.Millisecond)
+	if got := c.got(); len(got) != 0 {
+		t.Fatalf("pushed %v for a deeper entry", got)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "new.md"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := waitFor(t, c, 1); got[0] != dir+"/" {
+		t.Errorf("pushed %q, want %q", got[0], dir+"/")
+	}
+	f.Unwatch(c, dir+"/")
+	if err := os.Remove(filepath.Join(dir, "new.md")); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(50 * time.Millisecond)
+	if got := c.got(); len(got) != 1 {
+		t.Errorf("pushed after unwatch: %v", got)
+	}
+}
+
+// An entry watched as a file too pushes both: its folder's watcher still
+// hears it (the browser listing a folder whose open note is deleted).
+func TestWatchFolderAndEntry(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	note := filepath.Join(dir, "note.md")
+	if err := os.WriteFile(note, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f := newFiles(t)
+	c := &fakeConn{}
+	for _, path := range []string{dir + "/", note} {
+		if err := f.Watch(c, path); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Remove(note); err != nil {
+		t.Fatal(err)
+	}
+	got := waitFor(t, c, 2)
+	sort.Strings(got)
+	if want := []string{dir + "/", note}; !reflect.DeepEqual(got, want) {
+		t.Errorf("pushed %v, want %v", got, want)
+	}
 }

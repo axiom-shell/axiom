@@ -2,10 +2,11 @@
 // (FileManager's write and watch: file.write, file.watch, file.unwatch):
 // StateManager's state, notes, the todo list, notification history and
 // chats; and lists a folder's files of some kinds (file.list: the
-// wallpapers). A write is atomic (fsx) and makes the folders it needs; a
-// watch pushes a path's change to every connection watching it, a moment
-// after a burst of events settles, but not one this package's own write
-// made.
+// wallpapers, the notes browser). A write is atomic (fsx) and makes the
+// folders it needs; a watch pushes a path's change (a folder's: an
+// entry's) to every connection watching it, a moment after a burst of
+// events settles, but not one this package's own write made (a watched
+// folder still hears its entry's: the browser lists a new note).
 package files
 
 import (
@@ -13,6 +14,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -118,7 +120,8 @@ func (f *Files) Write(path, text string) error {
 	return nil
 }
 
-// Watch adds path to s's watched paths.
+// Watch adds path to s's watched paths. A path asked for with a trailing
+// "/" is a folder, changed when an entry in it is (the notes browser).
 func (f *Files) Watch(s Subscriber, asked string) error {
 	path, err := clean(asked)
 	if err != nil {
@@ -141,7 +144,7 @@ func (f *Files) Watch(s Subscriber, asked string) error {
 		f.subs[s] = map[string]string{}
 	}
 	f.subs[s][path] = asked
-	dir := filepath.Dir(path)
+	dir := watchedDir(path, asked)
 	f.dirs[dir]++
 	if f.dirs[dir] == 1 {
 		f.addDir(dir)
@@ -166,7 +169,8 @@ func (f *Files) Forget(s Subscriber) {
 }
 
 func (f *Files) drop(s Subscriber, path string) {
-	if _, ok := f.subs[s][path]; !ok {
+	asked, ok := f.subs[s][path]
+	if !ok {
 		return
 	}
 	delete(f.subs[s], path)
@@ -176,11 +180,31 @@ func (f *Files) drop(s Subscriber, path string) {
 	if !f.watched(path) {
 		delete(f.written, path)
 	}
-	dir := filepath.Dir(path)
+	dir := watchedDir(path, asked)
 	if f.dirs[dir]--; f.dirs[dir] == 0 {
 		delete(f.dirs, dir)
 		_ = f.watcher.Remove(dir)
 	}
+}
+
+// watchedDir is the folder watched for path: path itself for a folder
+// (asked with a trailing "/"), else the one holding it.
+func watchedDir(path, asked string) string {
+	if strings.HasSuffix(asked, "/") {
+		return path
+	}
+	return filepath.Dir(path)
+}
+
+// folderOf is the watched folder an entry's change belongs to, or "".
+func (f *Files) folderOf(entry string) string {
+	dir := filepath.Dir(entry)
+	for _, paths := range f.subs {
+		if asked, ok := paths[dir]; ok && strings.HasSuffix(asked, "/") {
+			return dir
+		}
+	}
+	return ""
 }
 
 func (f *Files) watched(path string) bool {
@@ -229,13 +253,21 @@ func (f *Files) loop(ctx context.Context) {
 	}
 }
 
-// event (re)starts a watched path's settle timer.
+// event (re)starts the settle timer of a watched path, and of the
+// watched folder holding it (an open note's folder in the browser).
 func (f *Files) event(path string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if !f.watched(path) {
-		return
+	if f.watched(path) {
+		f.settle(path)
 	}
+	if dir := f.folderOf(path); dir != "" {
+		f.settle(dir)
+	}
+}
+
+// settle (re)starts path's settle timer; f.mu is held.
+func (f *Files) settle(path string) {
 	if t := f.timers[path]; t != nil {
 		t.Reset(f.o.Debounce)
 		return
