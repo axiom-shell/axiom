@@ -5,9 +5,11 @@ import Quickshell.Services.UPower
 import qs.config
 import qs.services.core
 
-// The laptop battery (UPower's display device, when it is one) and the
-// power-saver profile, for the Battery widget and module, and the low
-// battery's notification or OSD card (at BatteryConfig's levels).
+// The laptop battery (UPower's display device, when it is one), the
+// peripherals' batteries (connected Bluetooth devices reporting one, from
+// BluetoothManager) and the power-saver profile, for the Battery widget
+// and module, and the low battery's notification or OSD card (at
+// BatteryConfig's levels).
 QtObject {
   id: root
 
@@ -27,6 +29,23 @@ QtObject {
   // "2h 5m", "" when unknown
   readonly property string timeRemaining: formatTime(battery?.timeToEmpty ?? 0)
   readonly property string timeToFull: formatTime(battery?.timeToFull ?? 0)
+
+  // The connected Bluetooth devices reporting a battery, by name:
+  // [{ address, name, glyph (BluetoothManager.deviceIcon's), percentage
+  // (0–100), level ("none" | "low" | "critical", at Bluetooth's levels) }]
+  readonly property var peripherals: BluetoothManager.connectedDevices.filter(d => d.batteryAvailable).map(d => {
+    const percentage = Math.round(d.battery * 100);
+    return {
+      "address": d.address,
+      "name": BluetoothManager.deviceLabel(d),
+      "glyph": BluetoothManager.deviceIcon(d),
+      "percentage": percentage,
+      "level": percentage <= BluetoothConfig.criticalBattery ? "critical" : percentage <= BluetoothConfig.lowBattery ? "low" : "none"
+    };
+  })
+  // The one lowest, else null: what the Battery widget shows with no
+  // laptop battery
+  readonly property var lowestPeripheral: root.peripherals.reduce((low, p) => low === null || p.percentage < low.percentage ? p : low, null)
 
   // power-profiles-daemon, over D-Bus. Quickshell can't tell whether the
   // daemon is there, so its CLI being installed stands in for it

@@ -425,6 +425,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
 
+### Peripherals only UPower sees aren't in the Battery widget or module
+- **Where:** `qml/services/system/BatteryManager.qml` (`peripherals`)
+- **What:** `peripherals` lists only the connected Bluetooth devices whose battery BlueZ reports (`Battery1`, through `BluetoothManager`). A mouse or keyboard on a Logitech Unifying or Bolt receiver, a wired gamepad or a UPS reports its charge only to UPower (its devices besides the display device, `UPower.devices`), so it isn't listed, and a Bluetooth device both report is BlueZ's alone. Reading UPower's devices too (by kind, without listing a Bluetooth device twice) would add them.
+- **Size:** small
+- **Found:** 2026-11-06, while adding peripheral batteries to Battery (Full Bluetooth, part 4)
+
 ## Chat
 
 ### The chat has no slash commands to control it

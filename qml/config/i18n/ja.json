@@ -4100,6 +4100,9 @@
     "Not discoverable: click to let devices find this computer": "",
     "Discoverable for {0}: click to hide": "",
     "Discoverable: click to hide": "",
-    "Unblock": ""
+    "Unblock": "",
+    "Connected Bluetooth devices' batteries, in the tooltip and status. With no laptop battery, the widget shows the lowest of them.": "",
+    "Show peripherals": "",
+    "Connected Bluetooth devices' batteries, under the laptop's. With no laptop battery, only them.": ""
   }
 }
