@@ -404,6 +404,10 @@ class GuardItself(unittest.TestCase):
                         "sudo cp /tmp/x .claude/settings.json", "bash -c 'echo x > .claude/settings.json'",
                         f"cd /tmp; cd {p}; rm .claude/settings.json"):
             self.assertTrue(self.denied("Bash", command), command)
+        # A cd the guard doesn't follow, from a session elsewhere: judged in the folder it names too
+        for command in (f"cd {p} && sed -i s/a/b/ .claude/settings.json || true", f"cd {p} && cp /tmp/x .claude/hooks/guard.py; echo ok",
+                        f"true; cd {p}; rm -rf .claude"):
+            self.assertTrue(self.denied("Bash", command, cwd=str(self.worktree)), command)
 
     def test_project_dir_falls_back_to_cwd(self):
         os.environ.pop("CLAUDE_PROJECT_DIR")
@@ -411,10 +415,13 @@ class GuardItself(unittest.TestCase):
         self.assertFalse(self.denied("Write", str(self.worktree / ".claude/settings.json")))
 
     def test_elsewhere_and_reads_pass(self):
-        w, c = self.worktree, self.config
+        w, c, p = self.worktree, self.config, self.project
         for path in (w / ".claude/hooks/guard.py", w / ".claude/skills/x/SKILL.md", w / ".claude/settings.json",
                      c / "projects/-x/memory/MEMORY.md", f"{HOME}/.claude/projects/x/memory.md", "/tmp/claude-1000/x/y",
-                     self.project / "AGENTS.md", self.project / "CLAUDE.md", self.project / "qml/shell.qml"):
+                     self.project / "AGENTS.md", self.project / "CLAUDE.md", self.project / "qml/shell.qml",
+                     # an isolated agent's worktree, review-system's notes
+                     self.project / ".claude/worktrees/agent-a/qml/shell.qml",
+                     self.project / ".claude/worktrees/agent-a/.claude/settings.json", self.project / ".claude/reviews/bar.md"):
             self.assertFalse(self.denied("Write", str(path)), path)
         for command in (f"cd {w} && sed -i s/a/b/ .claude/hooks/guard.py", f"cp /tmp/x {w}/.claude/hooks/guard.py",
                         f"echo x > {c}/projects/-x/memory/note.md", f"rm -rf {c}/projects/-x/old", "rm -rf /tmp/claude-1000/x",
@@ -422,7 +429,8 @@ class GuardItself(unittest.TestCase):
                         "cp .claude/settings.json /tmp/backup.json", "echo x > AGENTS.md", "git switch main", "git checkout x -- .claude",
                         "git merge origin/main", "git pull --ff-only", "git push -u origin roadmap/x",
                         f"git -C {w} push -u origin roadmap/x 2>&1 | tail -2", "gh pr create --fill", "gh pr checks 3",
-                        "gh pr merge 3 --squash", "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py"):
+                        "gh pr merge 3 --squash", "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py",
+                        "rm -rf .claude/worktrees/agent-a", f"echo x > {p}/.claude/worktrees/agent-a/qml/a.qml"):
             self.assertFalse(self.denied("Bash", command), command)
 
     def test_no_second_claude(self):

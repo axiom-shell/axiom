@@ -649,20 +649,29 @@ def touched_paths(name, args, cwd, env):
     return [], []
 
 
+# Under .claude/ but not the guard's: the worktrees Claude Code makes for
+# isolated agents, and review-system's notes
+UNGUARDED = ("worktrees", "reviews")
+
+
 def claude_guarded(cwd):
     """What switches this guard off: the .claude/ folder where the session runs
     ($CLAUDE_PROJECT_DIR, else its cwd: this hook, settings.json, skills, agents)
-    and the user's Claude settings ($CLAUDE_CONFIG_DIR's and ~/.claude's)."""
+    and the user's Claude settings ($CLAUDE_CONFIG_DIR's and ~/.claude's); and
+    the folders in it UNGUARDED frees."""
     homes = {Path(os.path.expanduser(os.environ.get("CLAUDE_CONFIG_DIR") or "~/.claude")), HOME / ".claude"}
-    guarded = [Path(os.environ.get("CLAUDE_PROJECT_DIR") or cwd) / ".claude",
-               *(home / name for home in homes for name in ("settings.json", "settings.local.json"))]
-    return {form for path in guarded for form in path_forms(str(path), "/", {})}
+    project = Path(os.environ.get("CLAUDE_PROJECT_DIR") or cwd) / ".claude"
+    guarded = [project, *(home / name for home in homes for name in ("settings.json", "settings.local.json"))]
+    forms = lambda paths: {form for path in paths for form in path_forms(str(path), "/", {})}
+    return forms(guarded), forms(project / name for name in UNGUARDED)
 
 
 def check_guard_paths(written, removed, cwd, env, guarded):
     """A write into what claude_guarded names, or a removal of it or a folder holding it."""
+    guarded, free = guarded
     for path, removes in [(a, False) for a in written] + [(a, True) for a in removed]:
-        if any(t == g or g in t.parents or removes and t in g.parents for t in path_forms(path, cwd, env) for g in guarded):
+        forms = [t for t in path_forms(path, cwd, env) if not any(t == f or f in t.parents for f in free)]
+        if any(t == g or g in t.parents or removes and t in g.parents for t in forms for g in guarded):
             deny("Never, while testing", "don't edit the running guard or Claude's settings (.claude/ where the session runs, the user's settings.json): ask the user; the guard changes through a PR.")
 
 
@@ -829,18 +838,21 @@ def check(call):
         cwd = call.get("cwd") or str(REPO)
         # Leading cds into folders move the relative paths after them (an
         # agent's cwd resets every call): the path rules' writes; any other
-        # shape is judged here. cd takes `..` after `~` and before symlinks
-        # (normpath), as the shell does; a cd into no folder fails, and after
-        # `;` the shell stays where it was
-        cds = list(itertools.takewhile(lambda c: len(c[1]) == 2 and c[1][0] == "cd" and c[1][1].startswith(("/", "~")), commands))
+        # shape is judged both where the session is and in every folder a cd
+        # names. cd takes `..` after `~` and before symlinks (normpath), as the
+        # shell does; a cd into no folder fails, and the shell stays where it was
+        is_cd = lambda c: len(c[1]) == 2 and c[1][0] == "cd" and c[1][1].startswith(("/", "~"))
+        cds = list(itertools.takewhile(is_cd, commands))
+        targets = [str(t) for _, argv in filter(is_cd, commands)
+                   if (t := resolve(os.path.normpath(os.path.expanduser(argv[1])), cwd)).is_dir()]
+        cwds = [cwd, *targets]
         if (cds and LEADING_CD.fullmatch(command)
                 and all(argv[0] == ">" or argv[0] not in MOVES and shutil.which(argv[0]) for _, argv in commands[len(cds):])):
-            for _, argv in cds:
-                if (target := resolve(os.path.normpath(os.path.expanduser(argv[1])), cwd)).is_dir():
-                    cwd = str(target)
+            cwds = [targets[-1]] if targets else [cwd]
             commands = commands[len(cds):]
         for env, argv in commands:
-            check_argv(env, argv, cwd, guarded)
+            for where in cwds:
+                check_argv(env, argv, where, guarded)
     elif tool in {"Edit", "Write"}:
         if tool_input.get("file_path"):
             check_guard_paths([tool_input["file_path"]], [], "/", {}, guarded)
