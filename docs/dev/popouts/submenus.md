@@ -33,7 +33,7 @@ Every popout host can open one submenu beside its box. This doc covers how the s
 
 ### Lifetime
 - **In PopoutManager:** the submenu is registered as its parent's.
-- **Closing with the parent:** it closes with the parent. It also closes when the parent switches content, or gives way to a popout over it.
+- **Closing with the parent:** it closes with the parent. It also closes when the parent switches content, or gives way to a popout over it. These closes, and the tray menu's on hovering an item with no submenu, go through `hide()` (`SubPopout.hide`), so a submenu queued while it was closing doesn't open after.
 - **Keeping the parent up:** it keeps the parent open while it's open (`PopoutWrapperBase.childOpen`, from its `submenuHost`).
 - **Closing with the pointer off the parent:** this takes the parent with it (`ownHovered`).
 - **Inside its parent's focus grab:** an edge popout's grab (a floating edge menu closing on an outside click) takes the submenu's window too (`SubPopout.popupWindow`), so a click in the submenu isn't outside. The overlay's grab lets it through as a grab partner (`SurfaceManager.registerGrabPartner`).

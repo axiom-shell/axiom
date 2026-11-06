@@ -87,7 +87,7 @@ Card {
       if (!root.opens)
         return;
       if (root.isOpen)
-        anchor.popouts.closePopout();
+        anchor.popouts.hide();
       else
         anchor.open();
     }

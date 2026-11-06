@@ -381,9 +381,6 @@ Found while reviewing the wallpaper parallax's travel:
 Found while fixing row 20's bar cluster:
 - ["Colour the text by state" does nothing on a bar whose widgets have no fill](issues.md#colour-the-text-by-state-does-nothing-on-a-bar-whose-widgets-have-no-fill)
 
-Found while reviewing row 20's popout trivials:
-- [Closes other than hide() leave an open queued while closing to fire](issues.md#closes-other-than-hide-leave-an-open-queued-while-closing-to-fire)
-
 ### Phase 12: memory footprint
 The shell's RSS at rest and after use, measured rather than guessed: about 840 MB at rest and over 1 GB after use on one monitor (2026-10-27), almost all of it C++ heap and per-window renderer state, not JS.
 
