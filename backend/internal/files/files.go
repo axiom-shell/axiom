@@ -5,7 +5,8 @@
 // wallpapers, the notes browser). A write is atomic (fsx) and makes the
 // folders it needs; a watch pushes a path's change (a folder's: an
 // entry's) to every connection watching it, a moment after a burst of
-// events settles, but not one this package's own write made.
+// events settles, but not one this package's own write made (a watched
+// folder still hears its entry's: the browser lists a new note).
 package files
 
 import (

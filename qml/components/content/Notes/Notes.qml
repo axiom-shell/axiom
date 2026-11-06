@@ -222,6 +222,7 @@ Card {
       }
       FlatIconButton {
         visible: root.showToolbar
+        enabled: !NotesManager.directoryMissing
         iconText: "search"
         iconColor: root.findOpen ? Theme.accent : Theme.foreground
         tooltipText: I18n.tr("Find in note")
