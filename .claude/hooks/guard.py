@@ -639,6 +639,9 @@ def check_portal(env, name, args, cwd):
         if name in {"pkill", "killall", "kill"} or any(a in {"restart", "stop", "kill", "reload", "try-restart", "reload-or-restart", "mask", "disable"} for a in args):
             deny("Never, while testing", "don't restart or stop the live xdg-desktop-portal (or its backends): it ends the shares running; ask the user (the Screen sharing card's Restart does it on a click).")
     written, _ = written_paths(name, args, cwd, env, lambda n: False)
+    if name in {"cp", "mv", "install"} and written and (written[0].endswith("/") or resolve(written[0], cwd, env).is_dir()):
+        # cp xdph.conf ~/.config/hypr/: the copy's own path
+        written = [str(Path(written[0]) / Path(p).name) for p in args[:-1] if not p.startswith("-")]
     for a in written:
         if live_portal_config(a, cwd, env):
             deny("Never, while testing", "don't write the real screen-share portal configs (hypr/xdph.conf, xdg-desktop-portal-wlr/, xdg-desktop-portal/*portals.conf): only the Screen sharing card's Apply does; test with a scratch XDG_CONFIG_HOME=<dir>.")

@@ -334,7 +334,8 @@ class Bash(LiveSession, unittest.TestCase):
         self.blocks("systemctl --user restart xdg-desktop-portal", "systemctl --user stop xdg-desktop-portal-hyprland.service",
                     "pkill xdg-desktop-portal", "killall xdg-desktop-portal-wlr",
                     "echo x >> ~/.config/hypr/xdph.conf", "cp /tmp/c ~/.config/xdg-desktop-portal-wlr/config",
-                    "sed -i s/a/b/ ~/.config/xdg-desktop-portal/niri-portals.conf", "tee ~/.config/xdg-desktop-portal/portals.conf")
+                    "sed -i s/a/b/ ~/.config/xdg-desktop-portal/niri-portals.conf", "tee ~/.config/xdg-desktop-portal/portals.conf",
+                    "cp /tmp/xdph.conf ~/.config/hypr/", "cp /tmp/niri-portals.conf ~/.config/xdg-desktop-portal/")
         self.allows("systemctl --user status xdg-desktop-portal", "cat ~/.config/hypr/xdph.conf",
                     "cp /tmp/c /tmp/cfg/hypr/xdph.conf", "cp ~/.config/hypr/xdph.conf /tmp/backup.conf",
                     "echo x > /tmp/cfg/xdg-desktop-portal/niri-portals.conf")

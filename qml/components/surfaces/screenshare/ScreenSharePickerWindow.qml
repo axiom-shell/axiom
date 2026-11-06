@@ -34,12 +34,15 @@ PanelWindow {
   property var selection: null
 
   readonly property var outputs: root.request?.outputs ?? []
-  readonly property var windows: ScreenShareSources.windowTiles(root.request, CompositorManager.windows)
+  // The request's windows, matched as it comes in: a binding would rebuild
+  // the grid (its scroll and captures) at each title change
+  property var windows: []
   readonly property bool canCaptureOutputs: CompositorManager.supports.outputCapture === true
 
   onRequestChanged: {
     if (!root.request)
       return;
+    root.windows = ScreenShareSources.windowTiles(root.request, CompositorManager.windows);
     root.selection = ScreenShareSources.initialChoice(root.request, CompositorManager.focusedOutput);
     root.tab = root.selection?.kind ?? "screen";
     Qt.callLater(() => keys.forceActiveFocus());
@@ -102,7 +105,9 @@ PanelWindow {
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"
   focusable: root.hasCard
-  visible: shown || dim.opacity > 0
+  // Gone at once for a region drag, so the screenshot picker's frozen
+  // frame doesn't take it in
+  visible: shown || (dim.opacity > 0 && !ScreenShareManager.pickingRegion)
 
   WlrLayershell.layer: WlrLayer.Overlay
   WlrLayershell.namespace: "axiom-screenshare"

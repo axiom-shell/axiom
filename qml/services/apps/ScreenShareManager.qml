@@ -96,8 +96,7 @@ Singleton {
     const request = root._request;
     if (!request)
       return;
-    root._request = null;
-    root._pickingRegion = false;
+    root._close();
     if (root._test) {
       root._test = false;
       console.info("[ScreenShareManager] test answer:", JSON.stringify(answer));
@@ -111,6 +110,16 @@ Singleton {
       if (error)
         console.warn("[ScreenShareManager] answering:", error.message);
     });
+  }
+
+  // Closes the picker, and the region drag it handed to the screenshot
+  // picker (its callback then finds the request gone)
+  function _close() {
+    root._request = null;
+    if (root._pickingRegion) {
+      root._pickingRegion = false;
+      ScreenshotManager.cancel();
+    }
   }
 
   // Hides the picker to drag a region in the screenshot picker; a cancel
@@ -152,6 +161,9 @@ Singleton {
   // Opens the picker with what the compositor shows now, its answer only
   // logged: to see the picker without a portal
   function openTest() {
+    // Never over a real request, which would go unanswered
+    if (root._request)
+      return;
     const windows = CompositorManager.windows.map(w => ({
           "token": String(w.id),
           "id": String(w.id),
@@ -177,10 +189,8 @@ Singleton {
       root._show(request);
     });
     BackendManager.listen("screenshare.done", done => {
-      if (root._request?.id === done.id) {
-        root._request = null;
-        root._pickingRegion = false;
-      }
+      if (root._request?.id === done.id)
+        root._close();
     });
   }
 

@@ -19,7 +19,7 @@ axiom's picker for what an app shares (a call, a stream), on every compositor, i
 ### Off, and fallbacks
 - `ScreenSharing.enabled` off: `screenshare.pick` answers `off` and the command runs the portal's own picker in its place (`hyprland-share-picker` with the same arguments; for xdpw slurp, monitors only, else the menus xdpw tries: wmenu, wofi, rofi, bemenu, mew, fuzzel); the niri portal relays every call, `Request.Close` and `Session.Close` to xdg-desktop-portal-gnome with the same handles (its `Closed` is re-emitted). Turning it on or off needs no restart: it's read at each request (the niri portal: at `CreateSession`).
 - No daemon, no shell connected, or the shell going away while it shows (`Broker.Forget`): the CLI falls back the same way. The niri portal answers 2 (failed).
-- The asker going away (the portal kills the command, the frontend closes the request) closes the picker (`screenshare.done`).
+- The asker going away (the portal kills the command, the frontend closes the request) closes the picker (`screenshare.done`), and a region drag it started.
 
 ### Setting it up (the card)
 - The settings card shows the compositor's portal package and whether it's installed (its `.portal` file, `ScreenShareManager.checkPortal`), and the hookup (`IntegrationHookupManager` key `screenSharing`, targets from `ScreenShareSources.hookupTargets`): `screencopy:custom_picker_binary = <axiom>` at the end of `hypr/xdph.conf`; `chooser_type = dmenu` + `chooser_cmd = '<axiom>' screenshare-pick --for xdpw` in xdpw's `[screencast]`; `org.freedesktop.impl.portal.ScreenCast=axiom` in `xdg-desktop-portal/niri-portals.conf`'s `[preferred]` (the other interfaces fall through to the system file). The binary is the one the daemon runs (in dev mode the dev build), by its path: the portals' PATH may not have it.
@@ -30,7 +30,7 @@ axiom's picker for what an app shares (a call, a stream), on every compositor, i
 - `ScreenShareManager` shows a request on the screen focused when it came; `ScreenSharePickerWindow` dims every screen (layer `axiom-screenshare`, between the screenshot picker and the polkit prompt, a backdrop blur like polkit's) and draws the card on that one. Modal: a click on the dimmed screen or Escape cancels.
 - Tabs: Screens (side by side at one height, each in its own aspect ratio, as tall as the card's width allows: a frame of each where `supports.outputCapture`, else a monitor glyph; its size and model under it), Windows (`WindowPreview`: live on Hyprland, the app icon elsewhere; the request's windows matched to `CompositorManager.windows` by id, else title: `ScreenShareSources.windowTiles`), Region where the portal can (xdph). It opens on the focused screen.
 - Region hides the picker and drags in the screenshot picker (`ScreenshotManager.pickArea`, which hands back the screen and the rect instead of a picture); Escape there returns to the picker.
-- IPC `screenshare`: `test` opens the picker on what the compositor shows, its answer only logged; `share` shares what the picker opened on; `cancel`.
+- IPC `screenshare`: `test` opens the picker on what the compositor shows, its answer only logged (never over a real request); `share` shares what the picker opened on; `cancel`.
 
 ### Testing
 - Go: the broker (`screenshare_test.go`), the xdph and xdpw formats (`backends_test.go`), the niri portal on `dbustest` with a fake niri and a fake xdg-desktop-portal-gnome (`portal_test.go`), the command and its fallback (`cli/screensharepick_test.go`), `portal-wait`.
