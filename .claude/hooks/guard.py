@@ -403,12 +403,12 @@ GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace"}
 PROTECTED_BRANCHES = {"main", "master"}
 
 
-def current_branch(cwd, repo=(), env=None):
+def current_branch(cwd, repo, env):
     """The branch git finds checked out from cwd, with the `--git-dir=…`/`--work-tree=…`
     options and GIT_* variables of the command"""
-    env = {**os.environ, **{k: os.path.expanduser(expand_vars(v, env or {})) for k, v in (env or {}).items() if k.startswith("GIT_")}}
+    git_env = {k: os.path.expanduser(expand_vars(v, env)) for k, v in env.items() if k.startswith("GIT_")}
     out = subprocess.run(["git", "-C", cwd, *repo, "symbolic-ref", "--quiet", "--short", "HEAD"],
-                         capture_output=True, text=True, env=env)
+                         capture_output=True, text=True, env={**os.environ, **git_env})
     return out.stdout.strip()
 
 
@@ -455,7 +455,7 @@ def check_git(args, cwd, env, switched):
             deny(rule, "don't push to main; open a PR from a branch.")
 
 
-def check_argv(env, argv, cwd, switched=False):
+def check_argv(env, argv, cwd, switched):
     name = Path(argv[0]).name
     args = argv[1:]
 

@@ -401,6 +401,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while reviewing the settings chunk of the tweaks-minor-complaints branch
 
+### The guard misses a push after a rebase or branch rename onto main
+- **Where:** `.claude/hooks/guard.py` (`check`, `check_git`)
+- **What:** only `git switch`/`checkout` earlier in the line make a bare/HEAD push refused; `git rebase <upstream> main` (which ends on main) and `git branch -M main` (which renames the branch checked out) also leave main checked out, so `git rebase <feature> main && git push` or `git branch -M main && git push` from a feature branch's folder lands on main past a PR. Both pass `guard.check` from a folder on a feature branch, on origin/main's guard too (2026-11-06). Fix: count `rebase` with two positionals and `branch -m`/`-M` as switches.
+- **Size:** trivial
+- **Found:** 2026-11-06, while reviewing the guard's push-folder judging (row 20)
+
 ### Opening a hover-closing edge menu by IPC closes it at once
 - **Where:** `qml/services/ui/EdgeMenuManager.qml` (the `edgeMenu` `IpcTarget`'s `open`), `qml/components/surfaces/edgemenu/EdgeMenuSync.qml` (`autoDismiss`)
 - **What:** `axiom edge-menu open <id>` on a menu with `close.onLeave` (the default) shows it for one close delay and closes it, since the pointer isn't in it: the IPC `open` calls `open`, not `reveal`, so it's never `revealing`. `pin` on a closed menu doesn't open it either; only `pin` then `open` keeps it up. A bind or script can't open such a menu.
