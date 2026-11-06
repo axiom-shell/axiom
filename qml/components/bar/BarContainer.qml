@@ -259,11 +259,17 @@ Rectangle {
   function joinOpening(surface, atStart) {
     if (!Appearance.translucent || !Appearance.screenBorder || !root.blurOrigin || !root._onScreen)
       return null;
-    const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
-    const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
     return Object.assign({
       "screen": root.blurScreen
-    }, EdgeAttach.joinOpening(ScreenEdge.name(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, (atStart ? surface.joinShown : surface.joinShownEnd), span, atStart ? surface.joinFillet : surface.joinFilletEnd));
+    }, root._joinStretch(surface, atStart));
+  }
+  // The stretch of the perpendicular edge a surface's joined end covers,
+  // on screen (EdgeAttach.joinOpening, with its fillet), for the border's
+  // opening and a solid bar's; needs `blurOrigin`
+  function _joinStretch(surface, atStart) {
+    const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
+    const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
+    return EdgeAttach.joinOpening(ScreenEdge.name(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, atStart ? surface.joinShown : surface.joinShownEnd, span, atStart ? surface.joinFillet : surface.joinFilletEnd);
   }
 
   // The bar an end makes way for, as its container, when it's of `kind`
@@ -294,9 +300,7 @@ Rectangle {
     const origin = other?.blurOrigin ?? null;
     if (!origin || !root.blurOrigin || !root._onScreen)
       return null;
-    const from = root.isVertical ? root.blurOrigin.x + surface.x : root.blurOrigin.y + surface.y;
-    const span = (root.isVertical ? root.panel?.screen?.width : root.panel?.screen?.height) ?? 0;
-    const opening = EdgeAttach.joinOpening(ScreenEdge.name(root.barConfig.location), atStart, from, root.isVertical ? surface.width : surface.height, atStart ? surface.joinShown : surface.joinShownEnd, span);
+    const opening = root._joinStretch(surface, atStart);
     const at = root.isVertical ? origin.x : origin.y;
     // (its fillet at the far end of its cover: the stretch's end from the
     // near side, its start from the far one)
@@ -895,20 +899,28 @@ Rectangle {
           mirrorStroke: "black"
         }
         // ...and where it runs on past its outline: off a bare screen
-        // edge, into what it joins straight (AttachedSurface.shadowRunOn)
+        // edge, into what it joins straight (AttachedSurface.shadowRunOn).
+        // Built in an item of its own moved under the shadow, so the
+        // Repeater's rectangles stay its siblings (a delegate moved there
+        // itself can't be stacked after by the next one)
         readonly property var _runOnShadow: pill.shadowRunOn(Math.ceil(root.barConfig.shadowSize * 1.25))
-        Repeater {
-          model: pill._runOnShadow.length
+        Item {
+          parent: shadowShape
+          x: pill.x
+          y: pill.y
 
-          Rectangle {
-            required property int index
-            readonly property rect area: pill._runOnShadow[index] ?? Qt.rect(0, 0, 0, 0)
-            parent: shadowShape
-            x: pill.x + area.x
-            y: pill.y + area.y
-            width: area.width
-            height: area.height
-            color: "black"
+          Repeater {
+            model: pill._runOnShadow.length
+
+            Rectangle {
+              required property int index
+              readonly property rect area: pill._runOnShadow[index] ?? Qt.rect(0, 0, 0, 0)
+              x: area.x
+              y: area.y
+              width: area.width
+              height: area.height
+              color: "black"
+            }
           }
         }
 

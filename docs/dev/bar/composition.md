@@ -83,6 +83,6 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
     - It is clipped while the two sizes differ, so labels never re-elide mid-animation.
   - Each `Section`'s `drawnPos`/`drawnLength` glide too. `groupSpans` (each section's groups of widgets as drawn, `WidgetGroup.drawnGroups`), and through it the pills, read these.
 - Backgrounds and separator marks follow the hosts as drawn.
-- A widget that is going keeps its last place and colors while its host still draws, fading with its opacity.
+- A widget that is going keeps its last place and colors while its host still fades or shrinks out, going with it. A host that stays drawn (a delegate reused for another widget, a widget dropping its background) lets go once its size settles.
 - Colors (`WidgetBackground`, `IconTextWidget`) fade with ColorAnimations. The tray's icons grow in (Grid `add`/`move`).
 - (Rule: AGENTS.md › Config, Animation.)

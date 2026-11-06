@@ -15,8 +15,9 @@ import qs.components.hosts.popout
 //
 //   sizePolicy:    "content" (default) - exactly its implicit size
 //                  "fixed"             - exactly preferredSize, whatever it shows
-//                  "elastic"           - its implicit size capped at preferredSize,
-//                                        shrinks towards minimumSize when crowded
+// A type marked `x-elastic` in its schema is "elastic" instead: its
+// implicit size capped at preferredSize, shrinking towards minimumSize
+// when crowded (BarsConfig.isElastic, the one place it's stated).
 //   preferredSize: main-axis size (fixed: the size; elastic: the cap)
 //   minimumSize:   smallest main-axis size an elastic module accepts
 // Its priority (when a section can't fit even the minimum sizes, the
@@ -93,7 +94,7 @@ Item {
   // elide its label
   readonly property real _insets: naturalSize > 0 ? Math.ceil(leadInset + trailInset) : 0
   readonly property real naturalSize: _item ? Math.ceil(isVertical ? _item.implicitHeight : _item.implicitWidth) : 0
-  readonly property string sizePolicy: _item?.sizePolicy ?? "content"
+  readonly property string sizePolicy: BarsConfig.isElastic(root.widget.type ?? "") ? "elastic" : _item?.sizePolicy ?? "content"
 
   // The module's own sizes, then with the insets
   readonly property real _preferred: {

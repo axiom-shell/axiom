@@ -65,6 +65,20 @@ QtObject {
     }
   }
 
+  // A value widget's pill (its background filled to its value) in its
+  // `colors` (colors())
+  function levelColor(colors) {
+    return Qt.alpha(colors.icon, 0.35);
+  }
+
+  // Whether a value widget with "Colour the text by state" on (its
+  // display `appearance`) takes its state's colour for its text: only
+  // where that isn't its background already (a filled widget's text must
+  // read on it)
+  function textByState(colors, appearance) {
+    return appearance.colorText && colors.fill.a < 1;
+  }
+
   // `preferred` if it contrasts with `background`, else black or white
   function readableOn(background, preferred) {
     return Utils.isColorDark(background) !== Utils.isColorDark(preferred) ? preferred : Utils.getContrastColor(background);

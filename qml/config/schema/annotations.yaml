@@ -19,7 +19,7 @@ x-compositor: 'how a compositor config writer writes it, per compositor: `hyprla
 x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`, `toggle`; see schema-annotations.md › Fields).
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
-x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): only it takes a layout `minSize` and `maxSize`.'
+x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): its host sizes it elastic (its QML sets no sizePolicy) and only it takes a layout `minSize` and `maxSize`.'
 x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
 x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).

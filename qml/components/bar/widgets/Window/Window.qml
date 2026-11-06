@@ -11,8 +11,6 @@ import qs.components.bar.widgets.base
 ValueStyleWidget {
   id: root
 
-  readonly property string sizePolicy: "elastic"
-
   icon: properties.icon
   text: ToplevelManager.activeToplevel?.title || properties.emptyText
   subtext: ToplevelManager.activeToplevel?.appId ?? ""

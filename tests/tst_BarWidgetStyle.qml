@@ -137,6 +137,22 @@ TestCase {
     same(cell("plain", "active", custom).content, custom, "override");
   }
 
+  function test_level_color_is_the_icon_faded() {
+    const c = styled("filled");
+    same(BarWidgetStyle.levelColor(c), Qt.alpha(c.icon, 0.35), "level");
+  }
+
+  function test_text_by_state_only_off_a_fill() {
+    const on = {
+      "colorText": true
+    };
+    verify(BarWidgetStyle.textByState(styled("tinted"), on), "tinted");
+    verify(!BarWidgetStyle.textByState(styled("filled"), on), "filled");
+    verify(!BarWidgetStyle.textByState(styled("tinted"), {
+      "colorText": false
+    }), "off");
+  }
+
   function test_readable_on() {
     same(BarWidgetStyle.readableOn("#000000", "#ffffff"), "#ffffff", "contrasting");
     same(BarWidgetStyle.readableOn("#ffffff", "#eeeeee"), "#000000", "too close");

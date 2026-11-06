@@ -13,7 +13,7 @@ How a bar widget with a value, a time or a long text draws it: one set of styles
 - `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its WidgetGroup in the background's own shape).
 - `ticker`: the text, up to `width` long, scrolling past that and centred in its room while it fits; `stacked`: the text over a caption. Both sit after the icon, where the label goes (`leadAfterIcon`); a vertical bar turns the ticker along it and draws stacked as a label.
 - The ring is drawn on whole pixels, centred exactly on the icon's middle beside it (`IconTextWidget.iconMiddle`, passed as `ValueGraphic.middle`), its side's parity following whether that's on a whole or a half pixel. IconTextWidget centres the label's figures on the same middle, so ring, icon and label line up.
-- `colorText` colours the text in the widget's state colour (its `accentColor`) where that isn't already the background's fill. The graphics draw in `colors.icon`, which reads on a filled background.
+- `colorText` colours the text in the widget's state colour (its `accentColor`) where that isn't already the background's fill (`BarWidgetStyle.textByState`; the pill's colour is `BarWidgetStyle.levelColor`, both shared with SystemStats). The graphics draw in `colors.icon`, which reads on a filled background.
 
 ### The schema
 `BarDisplay` holds the four settings (an `x-inline` definition). A custom widget's `bar` extends it (`x-properties`: its icon and popout). A built-in widget picks WidgetBase's `appearance` part and names the styles it can draw (the default stays `label` unless it overrides `default` too):

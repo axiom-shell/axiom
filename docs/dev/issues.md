@@ -20,6 +20,12 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
+### "Colour the text by state" does nothing on a bar whose widgets have no fill
+- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`)
+- **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
+- **Size:** trivial
+- **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
+
 ### A fading toast keeps its full blur on niri
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
 - **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
@@ -67,24 +73,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** These Grids bind `rows` and `columns` to `isVertical` apart (`rows: isVertical ? -1 : 1`, `columns: isVertical ? 1 : -1`; the tray's to its count), so as a bar turns, one is updated before the other and for a moment both are 1: the live log (a bar editing session, 2026-11-05) has `Grid contains more visible items (3) than rows*columns (1)` from WorkspaceCellRow.qml and `(6)` from SystemTray.qml. Reproduced in a qmltestrunner Grid flipping a bound orientation. Harmless (the next layout pass fits). Fix: one positioner per orientation, or a check that leaves the flip quiet.
 - **Size:** small
 - **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
-
-### A bar widget's elasticity is stated twice
-- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`sizePolicy`), `qml/components/bar/widgets/Media/Media.qml` (`sizePolicy`), `qml/config/BarsConfig.qml` (`availableWidgetTypes`)
-- **What:** A widget that shrinks when crowded says so twice: `sizePolicy: "elastic"` in its QML (read by `BarWidgetHost`) and `elastic: true` in its `schema.yaml` (`x-elastic`, read by the editor to show the minimum and maximum). Nothing keeps them in step, so a new elastic widget that sets only one either shrinks with no min/max fields in the inspector, or shows fields that do nothing. Fix: a check that a type has `x-elastic` exactly when its QML's `sizePolicy` is `"elastic"`, or `BarWidgetHost` taking `elastic` from the type info.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the bar rewrite
-
-### BarContainer's two join openings repeat their stretch
-- **Where:** `qml/components/bar/BarContainer.qml` (`joinOpening`, `_solidJoinOf`)
-- **What:** Both work out the same `from` and `span` and make the same `EdgeAttach.joinOpening` call (the border's opening also passes the fillet). One private helper returning the stretch would leave each with only what differs.
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing the bar rewrite
-
-### A bar widget that loses its background while shown keeps drawing the old one
-- **Where:** `qml/components/bar/WidgetGroup.qml` (the per-widget `WidgetBackground`'s `_last`)
-- **What:** A widget going away keeps its last place and colors while its host is still drawn (`_shown` falls back to `_last` while `_drawn`), so it fades with its host. A host that stays drawn but has no background any more never lets go: seen in a nested niri run, swapping a section's widgets in place (same count; the delegates are reused, so the slot that held Window now holds a Spacer) left the Spacer drawing Window's background across the whole room it took, until a change of count rebuilt the delegates. A widget turning its own `hasBackground` off would do the same. Fix: keep `_last` only while the host is fading out (its opacity or `_drawnMain` falling), or clear it when `host.background` turns null on a host still fully shown.
-- **Size:** small
-- **Found:** 2026-11-05, while joining bar runs across sections by spacers
 
 ### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
 - **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
@@ -478,18 +466,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **What:** SubPopout gives submenu content the room it has (`maxContentHeight`, from `screenFrom`/`screenTo`), and submenus.md says "content that may be taller … scrolls past `maxContentHeight`". Only `Submenu/MenuSubmenu.qml:46` reads it. `TraySubmenu`'s height is `menuList.implicitHeight`, and `TrayMenuList` is a bare ColumnLayout with no Flickable. So a tray submenu with more entries than fit (about 25 or more on a 1080 px screen) is as tall as all its entries. `SurfaceContext.submenuPlace` clamps only its start, so the box runs past the screen's bottom and the last entries can't be reached. Fix: `TrayMenuList` takes a `maxHeight` (unbounded by default) and wraps `menuLayout` in a Flickable as MenuSubmenu does; TraySubmenu passes `root.wrapper.maxContentHeight`.
 - **Size:** small
 - **Found:** 2026-10-30, while reviewing the popouts system
-
-### A pill's shadow run-on rectangles log stackAfter warnings
-- **Where:** `qml/components/bar/BarContainer.qml` (the pill's `_runOnShadow` Repeater)
-- **What:** With a bar shadow on and pills joined at an end, the log shows `QQuickItem::stackAfter: Cannot stack QQuickRectangle_QML_… after QQuickRectangle_QML_…, which must be a sibling` (seen in a nested Hyprland with the shadow on). The Repeater's delegates set `parent: shadowShape`, so a new delegate is stacked after one that has already left the Repeater's parent. Fix: build them in a Repeater inside `shadowShape` (as `_flushEnds` does), keyed by pill.
-- **Size:** small
-- **Found:** 2026-11-04, while making pill bars lie as solid ones (bar rewrite)
-
-### SystemStats copies ValueStyleWidget's pill colour and text-by-state rule
-- **Where:** `qml/components/bar/widgets/SystemStats/SystemStats.qml:149` (`backgroundLevelColor`, `_textByState`), `qml/components/bar/widgets/base/ValueStyleWidget.qml:43` (`backgroundLevelColor`, `_textByState`)
-- **What:** What's left of the style-fallbacks entry once `ValueGraphic.resolvedStyle` took the style rules: `Qt.alpha(colors.icon, 0.35)` and `appearance.colorText && colors.fill.a < 1` are still written in both widgets, so a change to the pill's colour or to when the text takes the state's colour would miss SystemStats. A ValueGraphic member doesn't reach them: SystemStats' root draws the pill and colours the text, and its graphics are one per segment, inside the Repeater. Fix: one shared place both roots can call (a `BarsConfig` or `BarWidgetStyle` function taking the widget's `colors` and `appearance`).
-- **Size:** trivial
-- **Found:** 2026-11-05, while reviewing bar-popouts-09
 
 ### Eight modules' full layouts need more room than their fullMin sizes, even inside the padding
 - **Where:** `qml/components/content/Palette/Palette.qml:17` (`columns`), `qml/components/content/Pomodoro/Pomodoro.qml:20` (`fullMinHeight`), `qml/components/content/Focus/Focus.qml:30` (`fullMinHeight`), `qml/components/content/Disks/Disks.qml:25` (`columns`), `qml/components/content/Tailscale/Tailscale.qml:54` (`fullMinHeight`), `qml/components/content/WifiNetworks/WifiNetworks.qml:75` (`fullMinHeight`), `qml/components/content/Updates/Updates.qml:44` (`fullMinHeight`), `qml/components/content/NowPlaying/NowPlaying.qml:32` (`short`, `mini`)
