@@ -74,12 +74,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-05, while fixing WorkspaceStrip's Grid lag (compositor-17)
 
-### A bar widget that loses its background while shown keeps drawing the old one
-- **Where:** `qml/components/bar/WidgetGroup.qml` (the per-widget `WidgetBackground`'s `_last`)
-- **What:** A widget going away keeps its last place and colors while its host is still drawn (`_shown` falls back to `_last` while `_drawn`), so it fades with its host. A host that stays drawn but has no background any more never lets go: seen in a nested niri run, swapping a section's widgets in place (same count; the delegates are reused, so the slot that held Window now holds a Spacer) left the Spacer drawing Window's background across the whole room it took, until a change of count rebuilt the delegates. A widget turning its own `hasBackground` off would do the same. Fix: keep `_last` only while the host is fading out (its opacity or `_drawnMain` falling), or clear it when `host.background` turns null on a host still fully shown.
-- **Size:** small
-- **Found:** 2026-11-05, while joining bar runs across sections by spacers
-
 ### A fitted wallpaper a pixel off the screen's shape shows a band at the parallax's ends
 - **Where:** `qml/components/methods/WallpaperFill.qml` (`rect`'s `grow`)
 - **What:** With `fill: fit` and the parallax on, `rect` grows the image only by the sides that cover the screen at rest (`w >= 1 - 1e-9`). An image a hair off the screen's shape (1920x1079 on 1920x1080, travel 4%) leaves half a pixel of letterbox at rest, so its height counts as not covering: grown by the width alone, at the first and last workspace of a vertical slide (niri, a grid) it leaves a 13.6 px band of background at the top or bottom, where a 1920x1080 image (and the same image before the parallax measured travel) covers. The gap jumps from 0 to about `px/screenHeight - px/screenWidth` of the screen at that threshold. Fix (a look choice, for the maintainer): grow each side by what it covered (`(Math.min(s, 1) + travel) / s`, as the comment once said: this also grows a clearly letterboxed fit image more, 7% instead of 3% for 21:9 on 16:9), or count a side within a screen pixel of covering as covering (narrows the jump to images 1 px off, not gone).

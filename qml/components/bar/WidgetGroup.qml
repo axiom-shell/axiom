@@ -263,12 +263,13 @@ Item {
       required property int index
       readonly property var host: root._modules[index] ?? null
       // A widget going (hidden, or out of room) keeps its last place and
-      // colors while its host is still drawn, so it shrinks and fades
-      // with it rather than vanishing
+      // colors while its host is still fading or shrinking out, so it goes
+      // with it rather than vanishing; a host that stays (a reused
+      // delegate, a widget dropping its background) lets go once settled
       readonly property var _place: root._drawPlaces[index] ?? null
       readonly property var _colors: host?.background ?? null
       property var _last: null
-      readonly property bool _drawn: (host?._drawnMain ?? 0) > 0.5 && (host?.opacity ?? 0) > 0
+      readonly property bool _drawn: (host?._drawnMain ?? 0) > 0.5 && (host?.opacity ?? 0) > 0 && (host.opacity < 1 || host._resizing)
       readonly property var _shown: _place !== null && _colors !== null ? {
         "place": _place,
         "colors": _colors
