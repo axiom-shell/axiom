@@ -7,12 +7,14 @@ import qs.config
 import qs.components.bar.widgets.base
 
 // Mic / screen share / camera indicators, derived from active Pipewire
-// links (no polling). Hidden entirely while nothing is capturing.
+// links and the apps holding a camera's device open (no polling). Hidden
+// entirely while nothing is capturing.
 //   mic:    AudioManager.micCaptures (an app recording from a microphone)
 //   screen: PrivacyManager.screenCaptures (a screencast's video linked
 //           to a stream), or axiom's own recording (wf-recorder uses
 //           screencopy, not the portal, so Pipewire never sees it)
-//   camera: PrivacyManager.cameraCaptures (a camera device's video)
+//   camera: PrivacyManager.cameraCaptures (a camera device's video, or an
+//           app holding the device open itself, as Vesktop does)
 BarIconWidget {
   id: root
 

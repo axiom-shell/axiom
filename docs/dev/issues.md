@@ -564,12 +564,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the tailscale system
 
-### An app reading the camera through V4L2 never shows as using it
-- **Where:** `qml/services/system/PrivacyManager.qml` (cameraCaptures), `qml/components/bar/widgets/Privacy/Privacy.qml`
-- **What:** Camera use is read only from PipeWire links into a `Stream/Input/Video` node. Chromium and Electron (Discord, Vesktop) open the camera through V4L2 (`/dev/video0`) by default; their PipeWire camera path is the opt-in `WebRtcPipeWireCamera` feature. The Discord and Vesktop flatpaks have `devices=all`, and logind's seat ACL (`crw-rw----+`) lets the user's processes open the device, so a call with the camera on shows nothing in the Privacy widget or the OSD's camera status. Checked 2026-11-01: inotify on `/dev/video0` reports `IN_OPEN` / `IN_CLOSE_*` from any process (event-driven, no polling), and `/proc/<pid>/fd` of a flatpak's processes is readable, with the app id in `/proc/<pid>/cgroup` (`app-flatpak-dev.vencord.Vesktop-….scope`). Fix: the daemon watches `/dev/video*` (and `/dev` for cameras plugged in) with inotify, and on each event lists the processes holding one open (skipping pipewire and wireplumber, whose use the links already show), pushed as `camera.state` `[{ pid, app }]` (flatpak id, else the desktop entry by `comm`); `PrivacyManager.cameraCaptures` merges it. Opening the device without streaming (a camera picker listing devices) also counts, briefly.
-- **Size:** small
-- **Found:** 2026-11-01, while asked why Vesktop's camera never showed in the OSD
-
 ### Tailscale's state is polled where it could be pushed
 - **Where:** `backend/internal/tailscale/tailscale.go`, `qml/services/apps/TailscaleManager.qml` (acquire), `qml/services/system/VpnManager.qml` (acquire)
 - **What:** Tailscale's state comes from `tailscale status --json` every `Tailscale.interval` (10 s default) while anything holds `TailscaleManager`: the Tailscale and Vpn widgets, the Network, WifiNetworks and VpnConnections cards, and now an OSD with the VPN status, which holds it for the whole session. A connect or drop shows up to 10 s late, while NetworkManager's VPNs are pushed (`vpn.state`). tailscaled's LocalAPI streams its changes (`/localapi/v0/watch-ipn-bus`, what `tailscale status --watch`-style clients use), so the daemon could watch that instead of running the CLI, with the interval left only for the peers' details if needed.
