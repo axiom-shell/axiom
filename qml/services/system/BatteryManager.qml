@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell.Services.UPower
 
 import qs.config
+import qs.components.methods
 import qs.services.core
 
 // The laptop battery (UPower's display device, when it is one), the
@@ -40,7 +41,7 @@ QtObject {
       "name": BluetoothManager.deviceLabel(d),
       "glyph": BluetoothManager.deviceIcon(d),
       "percentage": percentage,
-      "level": percentage <= BluetoothConfig.criticalBattery ? "critical" : percentage <= BluetoothConfig.lowBattery ? "low" : "none"
+      "level": DeviceBatteries.level(percentage, BluetoothConfig.lowBattery, BluetoothConfig.criticalBattery)
     };
   })
   // The one lowest, else null: what the Battery widget shows with no
