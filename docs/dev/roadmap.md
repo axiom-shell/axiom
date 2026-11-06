@@ -319,7 +319,6 @@ The maintainer (2026-11-06): "right now, everything deferred or hold that it sma
 **Shell surfaces and services:**
 
 **The daemon, the config store and the CLI:**
-- [The axiom CLI can't send a notification](issues.md#the-axiom-cli-cant-send-a-notification)
 
 **Docks (and, per the maintainer's answer, other popouts with the same gap):**
 - [A reserving held dock reserves the screen up to its distance](issues.md#a-reserving-held-dock-reserves-the-screen-up-to-its-distance)

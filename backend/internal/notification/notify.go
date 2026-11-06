@@ -2,7 +2,7 @@
 // (`notify.send`, the shell's NotificationManager.sendNotification) over
 // the session bus to whatever serves org.freedesktop.Notifications (the
 // shell's own server, so it comes back like any other), the way
-// notify-send did; with buttons it waits for the one picked.
+// notify-send did; with buttons (or Wait) it waits for the one picked.
 package notification
 
 import (
@@ -42,6 +42,10 @@ type Notification struct {
 	// The transient hint: shown, never filed in a history (an answer to
 	// what was just done)
 	Transient bool `json:"transient,omitempty"`
+	// Wait: notify.send answers only once a button is picked or the
+	// notification closes (the CLI's axiom notify --wait), with or
+	// without buttons
+	Wait bool `json:"wait,omitempty"`
 }
 
 // Action is a button: the id Send answers when it's picked, and its text.
@@ -62,8 +66,8 @@ func Send(ctx context.Context, conn *dbus.Conn, n Notification) (Sent, error) {
 	setup, cancel := context.WithTimeout(ctx, sendTimeout)
 	defer cancel()
 	var sent Sent
-	if len(n.Actions) > 0 {
-		// Subscribed before the call, so a quick pick isn't missed
+	if len(n.Actions) > 0 || n.Wait {
+		// Subscribed before the call, so a quick pick or close isn't missed
 		var err error
 		if sent.sub, err = conn.Subscribe(setup, dbus.Match{Sender: busName, Path: path, Interface: iface}); err != nil {
 			return Sent{}, axerr.Wrap(axerr.Unavailable, err, "listening for the notification's buttons")
@@ -87,7 +91,8 @@ func Send(ctx context.Context, conn *dbus.Conn, n Notification) (Sent, error) {
 }
 
 // Wait answers the id of the button picked, or "" once the notification
-// closes, the bus does, ctx ends or gone closes (at once without buttons).
+// closes, the bus does, ctx ends or gone closes (at once without buttons,
+// unless sent with Wait).
 func (s Sent) Wait(ctx context.Context, gone <-chan struct{}) string {
 	if s.sub == nil {
 		return ""
