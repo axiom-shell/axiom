@@ -44,7 +44,7 @@ One workspace layout serves everything that shows workspaces or moves between th
 
 ### Layout changes (remap)
 - The compositor's workspaces stay where they are when the layout or size changes, so `CompositorManager` remaps them, through its `_remap` (`compositor/WorkspaceRemap`, a part it holds).
-  - `WorkspaceRemap.remap` runs 200 ms after `perMonitorBlocks`/`size`/`workspaceGrid` change, starting from the layout it last applied.
+  - `WorkspaceRemap.remap` runs 200 ms after `perMonitorBlocks`/`size`/`workspaceGrid` change, or the block order moves a connected output's block (`_bases`: a saved profile naming a new monitor, a new primary), starting from the layout it last applied (its `bases` too; an output coming or going only updates them, as it moves no other block).
 - `WorkspaceGeometry.remapWorkspaces` (pure, tested) sends each workspace's windows to the same place in its own monitor's new ids.
   - The first monitor in monitor order keeps a contested id; the rest take free ones, merging only when none is free.
   - It picks each monitor's new active workspace. When the change turns the grid on (`workspaceGrid` true where the state file below keeps it false, so the config settling at the shell's start never counts), every monitor goes to its block's centre instead (`WorkspaceGeometry.centreFocus`).

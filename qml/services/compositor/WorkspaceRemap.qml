@@ -21,14 +21,15 @@ QtObject {
   // --- Layout changes ---
 
   // The layout the workspaces were last laid out for ({ blocks, size,
-  // grid })
+  // grid, bases })
   property var _applied: null
 
   function _layout() {
     return {
       "blocks": WorkspacesConfig.perMonitorBlocks,
       "size": root.manager.blockSize,
-      "grid": root.manager.workspaceGrid
+      "grid": root.manager.workspaceGrid,
+      "bases": root.manager._bases
     };
   }
 
@@ -67,6 +68,22 @@ QtObject {
     // perMonitor to a grid of as many keeps blocks and size
     function onWorkspaceGridChanged() {
       root._timer.restart();
+    }
+
+    // A block order change (a profile naming a new monitor, a new primary)
+    // moves a block an output had; an output coming or going moves none
+    function on_BasesChanged() {
+      const applied = root._applied;
+      if (!applied || root._timer.running)
+        return;
+      const bases = root.manager._bases;
+      const names = Object.keys(bases);
+      if (applied.blocks && names.some(name => name in applied.bases && applied.bases[name] !== bases[name]))
+        root._timer.restart();
+      else if (names.some(name => applied.bases[name] !== bases[name]))
+        root._applied = Object.assign({}, applied, {
+          "bases": bases
+        });
     }
   }
 
