@@ -42,7 +42,7 @@ ValueStyleWidget {
   appearance: failed ? Object.assign({}, properties.appearance, {
     "style": "icon"
   }) : properties.appearance
-  icon: !failed ? "download" : isVertical ? "download\nerror" : "download error"
+  icon: !failed ? "download" : "download\nerror"
   text: String(count)
   minimumText: "00"
 

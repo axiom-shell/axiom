@@ -21,7 +21,7 @@ ValueStyleWidget {
 
   // The artist icon goes with the state icon, before the label (stacked
   // shows the artist under the title instead)
-  icon: (MediaManager.isPlaying ? "music_note" : "pause") + (root.artist && root.style !== "stacked" ? (root.isVertical ? "\n" : " ") + "artist" : "")
+  icon: (MediaManager.isPlaying ? "music_note" : "pause") + (root.artist && root.style !== "stacked" ? "\nartist" : "")
   text: !MediaManager.activePlayer ? root.properties.idleText : root.artist ? root.artist + " - " + MediaManager.trackTitle : MediaManager.trackTitle
   ratio: MediaManager.activePlayer && MediaManager.length > 0 ? MediaManager.progress : -1
   styleText: !MediaManager.activePlayer ? root.properties.idleText : root.style === "stacked" ? MediaManager.trackTitle : root.text

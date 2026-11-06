@@ -36,7 +36,7 @@ BarIconWidget {
   readonly property var glyphs: [...(micUsers.length ? ["mic"] : []), ...(screenUsers.length ? ["monitor"] : []), ...(cameraUsers.length ? ["camera"] : [])]
   hidden: glyphs.length === 0
 
-  icon: glyphs.join(isVertical ? "\n" : " ")
+  icon: glyphs.join("\n")
   showText: false
 
   accentColor: Theme.resolveColor(properties.activeColor)
