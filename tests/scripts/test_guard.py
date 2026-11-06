@@ -77,7 +77,7 @@ class Bash(LiveSession, unittest.TestCase):
                  f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'inputMethod.push'}",
                  "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 Restart", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
-                 "axiom ipc lockscreen lock", "qs kill", "gh issue create -t x", "git push --force", "git push origin main",
+                 "axiom ipc lockscreen lock", "qs kill", "gh api repos/o/r", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
         forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
                  "nice -n 5 {}", "FOO=1 {}"]
@@ -103,82 +103,63 @@ class Bash(LiveSession, unittest.TestCase):
         self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/qml/greeter.qml"',
                     'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list")
 
-    def test_github_issues(self):
-        self.blocks("gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh api repos/a/b/issues -f title=x",
-                    "gh api -X POST /repos/a/b/issues --input body.json", "gh api --method=post repos/a/b/issues",
-                    "gh api graphql -f query='mutation { createIssue(input: {}) { issue { id } } }'")
-        self.allows("gh issue list", "gh issue view 16", "gh api repos/a/b/issues", "gh api repos/a/b/issues -X GET -f state=open",
-                    "gh label list", "gh pr create --fill")
+    def test_gh_allowlist(self):
+        self.blocks("gh api repos/o/r", "gh api -X GET repos/o/r/issues", "gh api graphql -f query='{ viewer { login } }'",
+                    "gh repo edit --default-branch dev", "gh release create v1", "gh workflow disable ci.yml",
+                    "gh secret set X", "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12", "gh pr merge 3 --admin",
+                    "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
+                    "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -", "gh pr merge 3 --admin=true",
+                    "echo 1 | xargs gh api", "echo 1 | xargs -I {} -n 1 gh api repos/o/r/issues/{}",
+                    "gh api repos/o/r -X DELETE -H --help", "gh repo --description view edit", "gh --method DELETE api repos/o/r")
+        self.allows("gh pr create --fill --label roadmap", "gh pr view 3 --json comments", "gh pr list --label roadmap",
+                    "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
+                    "gh pr comment 3 -b ok", "gh pr close 3", "gh pr ready 3", "gh pr checkout 3", "gh version", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
+                    "gh run cancel 9", "gh issue list", "gh issue view 16", "gh issue comment 16 -b x", "gh issue close 16",
+                    "gh issue edit 16 --add-label x", "gh repo view", "gh release list", "gh label list", "gh rs check main",
+                    "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
+                    "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
+                    "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list", "echo 1 | xargs -I {} gh pr view {}",
+                    "gh repo clone o/r", "gh workflow run checks.yml --ref roadmap/x", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
+
+    def test_leading_cd(self):
+        """A leading `cd` moves the relative paths after it"""
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as other:
+            cfg = Path(tmp) / "axiom"
+            (cfg / "sub").mkdir(parents=True)
+            with mock.patch.object(guard, "LIVE_CONFIG", cfg / "config.json"):
+                self.blocks(f"cd {cfg} && cp /tmp/x config.json", f"cd {cfg} && rm config.json",
+                            f"cd {cfg}/sub/.. && cat x > config.json 2>&1 | tail -1", f"cd {tmp} && rm -r axiom")
+                self.allows(f"cd {other} && cp /tmp/x config.json")
+
+    def test_leading_cd_then_semicolon_or_more_cds(self):
+        """`cd /dir;`, a newline or several leading cds move them the same as `&&`"""
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = Path(tmp) / "axiom"
+            cfg.mkdir()
+            with mock.patch.object(guard, "LIVE_CONFIG", cfg / "config.json"):
+                self.blocks(f"cd {cfg}; rm config.json", f"cd {cfg}\nrm config.json", f"cd /tmp && cd {cfg} && rm config.json",
+                            f"cd {cfg}; cd {tmp}/none; rm config.json")
+                self.allows(f"cd {cfg}; cd /tmp; rm config.json", f"cd {cfg} && cd /tmp && rm config.json")
 
     def test_git_push_and_clean(self):
-        self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
-                    "git push origin +x", "git push origin :x", "git push --delete origin x", "git push origin main",
-                    "git push origin HEAD:main", "git push origin x:refs/heads/main", "git -C . push --force origin x",
+        self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:roadmap/1-x", "git push origin @",
+                    "git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
+                    "git push --force-if-includes origin x", "git push origin +x", "git push origin :x", "git push --delete origin x",
+                    "git push -d origin x", "git push --mirror origin", "git push --all origin", "git push --prune origin x",
+                    "git push --tags origin x", "git push upstream x", "git push -v origin x", "git push origin x y",
+                    "git push origin main", "git push origin master", "git push origin x:main", "git push origin x:refs/heads/main",
+                    "git push origin x:heads/main", "git push origin refs/heads/main", "git push origin v1.0", "git push origin x:refs/tags/y",
+                    "git -C . push --force origin x", "git -C /tmp push", "env -C /tmp git push",
+                    'git push -u origin "$(git branch --show-current)"', 'b=main; git push origin "$b"', "git push origin x@{u}",
+                    "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
+                    # a switch, rebase or rename onto main, then a bare push
+                    "git switch main && git push", "git rebase roadmap/1-x main && git push", "git branch -M main && git push",
                     "git clean -fdx", "git clean -X", "git -C . clean -x -f")
-        self.allows("git push -u origin roadmap/1-x", "git push origin HEAD:roadmap/1-x", "git status", "git pull --ff-only",
-                    "git clean -fd", "git clean -n")
-        with mock.patch.object(guard, "current_branch", return_value="main"):
-            self.blocks("git push", "git push -u origin HEAD")
-        with mock.patch.object(guard, "current_branch", return_value="roadmap/1-x"):
-            self.allows("git push", "git push -u origin HEAD")
-        # A leading `cd` is followed: the branch is read in the folder it enters
-        with tempfile.TemporaryDirectory() as tree:
-            # git reads no branch in a folder that doesn't exist
-            branch = lambda cwd, *_: "roadmap/1-x" if Path(cwd) == Path(tree).resolve() else "main" if Path(cwd).is_dir() else ""
-            with mock.patch.object(guard, "current_branch", side_effect=branch):
-                self.allows(f"cd {tree} && git push -u origin HEAD")
-                self.blocks("git push -u origin HEAD", f"cd {tree} && cd {REPO} && git push")
-                # cd's `..` leaves a link to the folder (here into one on main), not the folder it points to
-                with tempfile.TemporaryDirectory() as other:
-                    (Path(tree) / "sub").mkdir()
-                    (Path(other) / "link").symlink_to(Path(tree) / "sub")
-                    self.blocks(f"cd {other}/link/.. && git push")
-                # `~` is expanded before its `..`
-                with mock.patch.dict(os.environ, {"HOME": str(Path(tree) / "sub")}):
-                    self.allows("cd ~/.. && git push -u origin HEAD")
-                # The push may run where the session started
-                self.blocks(f"cd {tree}; git push origin HEAD", f"cd {tree} || git push origin HEAD",
-                            f"(cd {tree}) && git push origin HEAD",
-                            # a cd that fails, or another cd later in the line
-                            f"cd {tree}/none && true; git push", f"cd '{tree}/none&&'; git push",
-                            f"cd {tree} && cd {REPO}; git push", f"cd {tree} && pushd {REPO}; git push",
-                            f"cd {tree} && bash -c 'cd {REPO}; git push'",
-                            # a command that moves after the cd, or a `\&` or lone `&` that backgrounds it
-                            f"cd {tree} && eval 'cd {REPO}' && git push", f"cd {tree} && builtin cd {REPO} && git push",
-                            f"cd {tree} && chdir {REPO} && git push", f"cd {tree} && noglob cd {REPO} && git push",
-                            f"cd {tree} && repeat 1 cd {REPO} && git push", f"cd {tree} && __zoxide_cd {REPO} && git push",
-                            f"cd {tree} && env -C {REPO} git push", f"cd {tree} && git status \\&& git push",
-                            f"cd {tree} && true | cd {REPO} && git push", f"cd {tree} && true & git push",
-                            f"cd {tree} && true || git push")
-
-    def test_git_push_where_git_runs(self):
-        """The branch is read where git runs: after a switch, rebase or rename onto main, in a wrapper's folder, by --git-dir or GIT_DIR"""
-        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ):
-            for k in [k for k in os.environ if k.startswith("GIT_")]:
-                del os.environ[k]  # a pre-commit hook's GIT_DIR would point every git here at this repo
-            os.environ["HOME"] = tmp  # `GIT_DIR=~/main/.git`: the shell expands the ~
-            main, feature = f"{tmp}/main", f"{tmp}/feature"
-            for folder, branch in ((main, "main"), (feature, "roadmap/1-x")):
-                guard.subprocess.run(["git", "init", "-q", "-b", branch, folder], check=True)
-            for command in ("git switch main && git push", "git checkout main && git push origin HEAD",
-                            f"git -C {main} switch main && git push -u origin HEAD", f"env -C {main} git push",
-                            f"env --chdir={main} git push", f"env -C{main} git push", f"sudo -D {main} git push", f"sudo --chdir={main} git push",
-                            f"systemd-run --user --working-directory={main} git push", f"git --git-dir={main}/.git push",
-                            f"GIT_DIR={main}/.git git push", "GIT_DIR=~/main/.git git push", "GIT_DIR=$HOME/main/.git git push", f"git -C {main} push origin @", f"cd {feature} && GIT_DIR={main}/.git git push origin HEAD",
-                            f"cd {main} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null",
-                            # a rebase onto main checks it out; a rename to main renames the branch checked out
-                            "git rebase roadmap/1-x main && git push", "git rebase --onto origin/main HEAD~1 main && git push origin HEAD",
-                            f"git -C {feature} rebase -X ours roadmap/1-x main && git push", f"cd {feature} && git rebase roadmap/1-x main && git push", "git rebase --root main && git push",
-                            "git branch -M main && git push", "git branch -fM main && git push", "git branch -m roadmap/1-x main && git push origin @",
-                            f"cd {feature} && git branch --move --force main && git push", f"git -C {feature} branch -M main && git -C {feature} push"):
-                self.assertTrue(denied(command, feature), command)
-            # git reads the branch from the repository, not the work tree
-            for command in ("git push", "git switch main && git push origin roadmap/1-x", f"git --work-tree={main} push",
-                            f"env -C {feature} git push -u origin HEAD", "git rebase main && git push", "git rebase --onto main HEAD~1 && git push",
-                            "git rebase main roadmap/1-x && git push", "git rebase --root roadmap/1-x && git push", "git branch -M roadmap/2-y && git push", "git branch -c main && git push"):
-                self.assertFalse(denied(command, feature), command)
-            # A leading cd into a folder on a branch, from one on main, with a pipe, redirections and other commands
-            self.assertFalse(denied(f"cd {feature} && git push -u origin HEAD 2>&1 | tail -2 && wc -l </dev/null", main))
+        self.allows("git push -u origin roadmap/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
+                    "git push --dry-run origin x", "git push origin x:roadmap/1-x", "git push origin main:x",
+                    "git -C /tmp/w push -u origin roadmap/1-x", "cd /tmp && git push -u origin roadmap/1-x 2>&1 | tail -2",
+                    "git switch main && git push origin roadmap/1-x", "env -C /tmp git push origin x",
+                    "git status", "git pull --ff-only", "git clean -fd", "git clean -n")
 
     def test_greetd_and_greeter(self):
         self.blocks("sudo systemctl restart greetd", "systemctl stop greetd.service", "pkill greetd",
@@ -380,6 +361,87 @@ class Bash(LiveSession, unittest.TestCase):
     def test_qmlformat_inplace(self):
         self.blocks("qmlformat -i shell.qml", "/usr/lib/qt6/bin/qmlformat --inplace shell.qml")
         self.allows("/usr/lib/qt6/bin/qmlformat shell.qml")
+
+
+class GuardItself(unittest.TestCase):
+    """The guard's folder where the session runs and Claude's settings stay as
+    they are; everything else (a worktree's .claude/, memory, reads) doesn't."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        root = Path(self.tmp.name)
+        self.project, self.config, self.worktree = root / "project", root / "claude-config", root / "worktree"
+        for folder in (self.project / ".claude/hooks", self.config / "projects", self.worktree / ".claude/hooks"):
+            folder.mkdir(parents=True)
+        self.patch = mock.patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(self.project), "CLAUDE_CONFIG_DIR": str(self.config)})
+        self.patch.start()
+
+    def tearDown(self):
+        self.patch.stop()
+        self.tmp.cleanup()
+
+    def denied(self, tool, value, cwd=None):
+        tool_input = {"command": value} if tool == "Bash" else {"file_path": value, "content": "x"}
+        try:
+            guard.check({"tool_name": tool, "tool_input": tool_input, "cwd": cwd or str(self.project)})
+        except guard.Denied:
+            return True
+        return False
+
+    def test_project_claude_folder_and_settings_refused(self):
+        p, c = self.project, self.config
+        for path in (p / ".claude/hooks/guard.py", p / ".claude/settings.json", p / ".claude/settings.local.json",
+                     p / ".claude/skills/x/SKILL.md", p / ".claude/agents/a.md", c / "settings.json",
+                     c / "settings.local.json", f"{HOME}/.claude/settings.json", p / "sub/../.claude/settings.json"):
+            self.assertTrue(self.denied("Write", str(path)), path)
+        for command in ("echo x > .claude/settings.json", "echo x >> .claude/hooks/guard.py", "cp /tmp/x .claude/settings.json",
+                        "cp /tmp/settings.json .claude/", "mv /tmp/x .claude/hooks/guard.py", "rm .claude/hooks/guard.py",
+                        "rm -rf .claude", f"rm -rf {p}", "mv .claude /tmp/old", "sed -i s/a/b/ .claude/hooks/guard.py",
+                        "tee .claude/settings.local.json", "ln -sf /tmp/x .claude/settings.json", "chmod -x .claude/hooks/guard.py",
+                        "truncate -s 0 .claude/hooks/guard.py", "install -m 644 /tmp/x .claude/settings.json",
+                        f"cp /tmp/x {c}/settings.json", f"echo '{{}}' > {c}/settings.local.json", "rm ~/.claude/settings.json",
+                        f"rm -rf {c}", "find .claude -name '*.py' -delete", f"cd {p}/.claude && rm settings.json",
+                        "sudo cp /tmp/x .claude/settings.json", "bash -c 'echo x > .claude/settings.json'",
+                        f"cd /tmp; cd {p}; rm .claude/settings.json"):
+            self.assertTrue(self.denied("Bash", command), command)
+        # A cd the guard doesn't follow, from a session elsewhere: judged in the folder it names too
+        for command in (f"cd {p} && sed -i s/a/b/ .claude/settings.json || true", f"cd {p} && cp /tmp/x .claude/hooks/guard.py; echo ok",
+                        f"true; cd {p}; rm -rf .claude"):
+            self.assertTrue(self.denied("Bash", command, cwd=str(self.worktree)), command)
+
+    def test_project_dir_falls_back_to_cwd(self):
+        os.environ.pop("CLAUDE_PROJECT_DIR")
+        self.assertTrue(self.denied("Write", str(self.worktree / ".claude/settings.json"), cwd=str(self.worktree)))
+        self.assertFalse(self.denied("Write", str(self.worktree / ".claude/settings.json")))
+
+    def test_elsewhere_and_reads_pass(self):
+        w, c, p = self.worktree, self.config, self.project
+        for path in (w / ".claude/hooks/guard.py", w / ".claude/skills/x/SKILL.md", w / ".claude/settings.json",
+                     c / "projects/-x/memory/MEMORY.md", f"{HOME}/.claude/projects/x/memory.md", "/tmp/claude-1000/x/y",
+                     self.project / "AGENTS.md", self.project / "CLAUDE.md", self.project / "qml/shell.qml",
+                     # an isolated agent's worktree, review-system's notes
+                     self.project / ".claude/worktrees/agent-a/qml/shell.qml",
+                     self.project / ".claude/worktrees/agent-a/.claude/settings.json", self.project / ".claude/reviews/bar.md"):
+            self.assertFalse(self.denied("Write", str(path)), path)
+        for command in (f"cd {w} && sed -i s/a/b/ .claude/hooks/guard.py", f"cp /tmp/x {w}/.claude/hooks/guard.py",
+                        f"echo x > {c}/projects/-x/memory/note.md", f"rm -rf {c}/projects/-x/old", "rm -rf /tmp/claude-1000/x",
+                        "cat .claude/settings.json", "grep -rn deny .claude", f"ls {c}", "find . -name '*.pyc' -delete",
+                        "cp .claude/settings.json /tmp/backup.json", "echo x > AGENTS.md", "git switch main", "git checkout x -- .claude",
+                        "git merge origin/main", "git pull --ff-only", "git push -u origin roadmap/x",
+                        f"git -C {w} push -u origin roadmap/x 2>&1 | tail -2", "gh pr create --fill", "gh pr checks 3",
+                        "gh pr merge 3 --squash", "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py",
+                        "rm -rf .claude/worktrees/agent-a", f"echo x > {p}/.claude/worktrees/agent-a/qml/a.qml"):
+            self.assertFalse(self.denied("Bash", command), command)
+
+    def test_no_second_claude(self):
+        for command in ("claude", "claude -p hi", "/usr/bin/claude --dangerously-skip-permissions", "env -C /tmp claude",
+                        "timeout 60 claude -p x", "nohup claude &", "setsid claude", "echo x | xargs claude -p",
+                        "cd /tmp && claude", "npx @anthropic-ai/claude-code", "npx -y @anthropic-ai/claude-code@latest -p x",
+                        "bash -c 'claude -p x'", "x=$(claude -p hi)"):
+            self.assertTrue(self.denied("Bash", command), command)
+        for command in ("grep claude docs", "cat .claude/settings.json", "ls ~/.claude-personal", "git log --grep claude",
+                        "echo claude", "npx prettier x", "which claude"):
+            self.assertFalse(self.denied("Bash", command), command)
 
 
 class Axiom(LiveSession, unittest.TestCase):
