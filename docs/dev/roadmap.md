@@ -376,9 +376,6 @@ Found by the audits:
 Found while fixing bar-popouts-07 (row 20):
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
 
-Found while fixing features-07 (row 20):
-- [The Window and Media bar widgets render titles as styled text and load remote images](issues.md#the-window-and-media-bar-widgets-render-titles-as-styled-text-and-load-remote-images)
-
 Found while moving the backend to the qml/ layout:
 - [The compositor facts' axiomPath is read by nothing](issues.md#the-compositor-facts-axiompath-is-read-by-nothing)
 

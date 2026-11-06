@@ -28,6 +28,8 @@ ValueStyleWidget {
   ratio: MediaManager.activePlayer && MediaManager.length > 0 ? MediaManager.progress : -1
   styleText: !MediaManager.activePlayer ? root.properties.idleText : root.style === "stacked" ? MediaManager.trackTitle : root.text
   subtext: root.style === "stacked" ? root.artist : ""
+  // A track title is any player's: never styled text or a remote image
+  textFormat: Text.PlainText
   accentColor: Theme.resolveColor(MediaManager.isPlaying ? root.properties.playingColor : root.properties.pausedColor)
 
   // News: the track changed while playing (a player appearing, its first

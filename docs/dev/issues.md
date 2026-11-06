@@ -20,12 +20,6 @@ Each entry is a `###` heading plus these four bullets, in this order (`scripts/c
 
 ## Open
 
-### The Window and Media bar widgets render titles as styled text and load remote images
-- **Where:** `qml/components/bar/widgets/Window/Window.qml` (`text`), `qml/components/bar/widgets/Media/Media.qml` (`text`, `styleText`)
-- **What:** Both show text from outside (the focused window's title, an MPRIS track title: a web page sets either) through `IconTextWidget` / `ValueGraphic`, whose `textFormat` stays Text.AutoText, so a title like `<img src="https://tracker.example/p.png"> Song` renders as styled text and makes the shell fetch the URL (the same Qt behaviour the calendar fix was tested on). Next event sets `textFormat: Text.PlainText` (features-07); these two don't. Fix: `textFormat: Text.PlainText` on both widgets.
-- **Size:** trivial
-- **Found:** 2026-11-05, while fixing features-07 (row 20)
-
 ### A fading toast keeps its full blur on niri
 - **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (its `BlurShape`), `qml/shell/BlurBackingWindow.qml` (`_piecesOf`)
 - **What:** On niri (`supports.blurRegion`) a toast's blur-window rect fades through its colour's alpha (`color: Qt.alpha(Theme.background, toastCard.opacity)`), but `_piecesOf` cuts a shape's region off only by its source's `shownOpacity` / `hostOpacity`, which a toast's box doesn't have, so the full region is blurred while the toast fades in and out. Hyprland's `ignore_alpha` and SwayFX drop it at the threshold. Fix: give the cut-off the shape's colour alpha too (or the toast box a `shownOpacity`).
