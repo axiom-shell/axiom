@@ -252,15 +252,21 @@ func (f *Files) loop(ctx context.Context) {
 	}
 }
 
-// event (re)starts a watched path's settle timer.
+// event (re)starts the settle timer of a watched path, and of the
+// watched folder holding it (an open note's folder in the browser).
 func (f *Files) event(path string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if !f.watched(path) {
-		if path = f.folderOf(path); path == "" {
-			return
-		}
+	if f.watched(path) {
+		f.settle(path)
 	}
+	if dir := f.folderOf(path); dir != "" {
+		f.settle(dir)
+	}
+}
+
+// settle (re)starts path's settle timer; f.mu is held.
+func (f *Files) settle(path string) {
 	if t := f.timers[path]; t != nil {
 		t.Reset(f.o.Debounce)
 		return

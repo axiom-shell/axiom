@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -205,5 +207,31 @@ func TestWatchFolder(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	if got := c.got(); len(got) != 1 {
 		t.Errorf("pushed after unwatch: %v", got)
+	}
+}
+
+// An entry watched as a file too pushes both: its folder's watcher still
+// hears it (the browser listing a folder whose open note is deleted).
+func TestWatchFolderAndEntry(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	note := filepath.Join(dir, "note.md")
+	if err := os.WriteFile(note, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f := newFiles(t)
+	c := &fakeConn{}
+	for _, path := range []string{dir + "/", note} {
+		if err := f.Watch(c, path); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Remove(note); err != nil {
+		t.Fatal(err)
+	}
+	got := waitFor(t, c, 2)
+	sort.Strings(got)
+	if want := []string{dir + "/", note}; !reflect.DeepEqual(got, want) {
+		t.Errorf("pushed %v, want %v", got, want)
 	}
 }
