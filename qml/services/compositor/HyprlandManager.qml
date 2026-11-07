@@ -563,6 +563,22 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     _runPlan([].concat(plan.moves.map(m => _moveLua(m.id, `"name:axiom-remap-${m.to}"`)), [].concat(...outputs.map((name, i) => _focusLua(name, `"name:axiom-remap-mon-${i}"`))), plan.moves.map(m => _moveLua(m.id, m.to)), [].concat(...plan.focus.map(f => _focusLua(f.monitor, f.id)))));
   }
 
+  // Puts re-homed windows back on their monitor (WorkspaceRemap._return;
+  // plan: WorkspaceGeometry.returnWindows'), moving no focus: each window
+  // to its workspace, staying put (one that doesn't exist is made on the
+  // window's monitor, not shown), each workspace onto its monitor
+  // (hl.dsp.workspace.move: one not shown moves without focus), then a
+  // returning monitor to the workspace it shows (Monitor:set_workspace,
+  // which focuses nothing). A monitor gone again is skipped
+  function returnWorkspaces(plan) {
+    const place = w => {
+      const name = JSON.stringify(w.monitor);
+      return [`do local ws = hl.get_workspace(${w.id}); if ws and hl.get_monitor(${name}) and not (ws.monitor and ws.monitor.name == ${name}) then`, `run(function() return hl.dsp.workspace.move({ workspace = ${w.id}, monitor = ${name} }) end)`, "end end"];
+    };
+    const show = s => [`do local m = hl.get_monitor(${JSON.stringify(s.monitor)}); if m then`, `local ok, e = pcall(function() m:set_workspace(${s.id}) end)`, "if not ok then errs[#errs + 1] = tostring(e) end", "end end"];
+    _runPlan([].concat(plan.moves.map(m => _moveLua(m.id, m.to)), ...plan.workspaces.map(place), ...plan.show.map(show)));
+  }
+
   // Runs a remap's or a compaction's Lua lines (in run()) with the
   // workspaces animation off, so nothing slides meanwhile
   function _runPlan(lines) {
@@ -689,6 +705,17 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
     BackendManager.call("compositor.layerRules", {}, () => _layerRules.ready = true);
     if (!_layerRules.ready)
       _layerRulesTimeout.start();
+  }
+
+  // A monitor made a mirror, or no longer one, sends no monitor event, yet
+  // its wl_output goes or comes: read the monitors again then, so outputs
+  // follows (Hyprland's monitor list leaves a mirror out), as on an unplug
+  Connections {
+    target: Quickshell
+
+    function onScreensChanged() {
+      Hyprland.refreshMonitors();
+    }
   }
 
   Connections {

@@ -161,6 +161,7 @@ What waits for the maintainer's own session (see [Running it unattended](#runnin
 - Once the shell runs the input sources, with `ThemeIntegrations.fcitx5` on and its hookup applied, check the candidate window follows the axiom theme and changes live on a theme switch, and `candidateFont` empty keeps fcitx5's own font.
 
 **Workspaces and monitors:**
+- Once the shell runs the hotplug return (mm-ws2), under Hyprland and sway with perMonitor workspaces and two real monitors: with windows on a few of the external monitor's workspaces, unplug it and check they land, a workspace each, on the laptop's first empty workspaces after about 3 s; replug it and check every one goes back to its own workspace on it (one moved by hand meanwhile too) without the focus or the laptop's workspace changing. Then plug a different monitor into the same port: nothing comes back until the first one returns. Close the lid with a profile turning the panel off and open it again, and start and stop a mirror from the Monitors page: the same. A dock or resume that drops the outputs for a moment moves nothing. (Nested Hyprland and sway can't show a monitor's description: headless outputs have none.)
 - Once the shell runs the workspace grid's centre start, with `Workspaces.layout` `grid` (3 × 3): log in under sway and Hyprland with two monitors and check each starts on its block's centre (5, 14); restart axiom after moving away and check nothing moves; on sway, switch the layout to `perMonitor` and back to `grid` and check every monitor goes to its centre, windows kept on their workspaces. Nested Hyprland (one output) showed the start, a reload leaving workspace 1 alone, and perMonitor → grid going to 5.
 - On sway, with a laptop panel that has no serial (or a profile saved under niri for a PNP(…) monitor), Monitors page → Apply changes that monitor, and after a sway reload the panel is set as the profile says (compositor-09).
 - Once the shell runs #318, start a trial monitor Apply that turns a monitor off (Hyprland): the Keep/Revert prompt stays, the countdown reverts it and the monitor comes back on; a profile mirror saved under Hyprland can be turned off on the Monitors page under sway and niri; the monitor prompt grabs real clicks.
@@ -256,7 +257,6 @@ Found by the audits:
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 
 Found along the way:
-- [A mirror or a monitor a profile turns off keeps its windows re-homed after](issues.md#a-mirror-or-a-monitor-a-profile-turns-off-keeps-its-windows-re-homed-after) (reviewing the hotplug hardening branch; needs the maintainer's call)
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded) (investigating Hyprland starting on workspace 10)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all) (reviewing the guard's leading `cd`, config-05)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh) (the same)

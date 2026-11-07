@@ -131,6 +131,11 @@ Singleton {
   readonly property var workspaces: root.backend?.workspaces ?? []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
+  // The focused monitor's name while it's connected (a screen surfaces are
+  // built on: focusedOutput can name one just gone, for a moment), else the
+  // primary monitor's (General.screensNamed): where something opens on
+  // the focused monitor
+  readonly property string focusedOrPrimary: General.screensNamed(root.focusedOutput)[0]?.name ?? ""
   // The focused window's id, or ""
   readonly property string activeWindowId: root.backend?.activeWindowId ?? ""
   // The gaps the compositor leaves at the screen edges, after reserved
@@ -365,7 +370,7 @@ Singleton {
   // Calls back with the name of the screen under the cursor (the focused
   // one if the compositor can't say)
   function withHoveredScreen(callback) {
-    root.withCursorPos(pos => callback((pos ? root._screenAt(pos.x, pos.y) : "") || root.focusedOutput || General.primaryMonitor));
+    root.withCursorPos(pos => callback((pos ? root._screenAt(pos.x, pos.y) : "") || root.focusedOrPrimary));
   }
 
   function _screenAt(x, y) {

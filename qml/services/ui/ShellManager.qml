@@ -201,10 +201,8 @@ QtObject {
   // built on
   function targetFor(target) {
     const resolved = modeFor(target);
-    if (resolved === "focused" || resolved === "all") {
-      const focused = CompositorManager.focusedOutput;
-      return General.outputs.some(s => s.name === focused) ? focused : General.primaryMonitor;
-    }
+    if (resolved === "focused" || resolved === "all")
+      return CompositorManager.focusedOrPrimary;
     return General.screensFor(target)[0]?.name ?? "";
   }
 

@@ -88,7 +88,7 @@ Singleton {
   }
 
   function _requestStarted() {
-    root._screenName = CompositorManager.focusedOutput || General.primaryMonitor;
+    root._screenName = CompositorManager.focusedOrPrimary;
     root._actionInfo = {};
     const flow = root.flow;
     if (!flow)

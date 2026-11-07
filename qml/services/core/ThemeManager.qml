@@ -156,7 +156,7 @@ QtObject {
 
   // `monitor`, or the focused monitor without one
   function monitorFor(monitor) {
-    return monitor || (CompositorManager.focusedOutput || General.primaryMonitor);
+    return monitor || CompositorManager.focusedOrPrimary;
   }
 
   // Sets `monitor`'s fixed wallpaper in the config (the focused monitor's

@@ -72,7 +72,7 @@ Singleton {
   function _show(request) {
     if (Paths.greeter)
       return;
-    root._screenName = CompositorManager.focusedOutput || General.primaryMonitor;
+    root._screenName = CompositorManager.focusedOrPrimary;
     root._pickingRegion = false;
     root._request = request;
   }
