@@ -23,6 +23,17 @@ func solid(w, h int, c color.NRGBA) *image.NRGBA {
 	return img
 }
 
+// stripes is a w×h picture of one-pixel columns, red then blue
+func stripes(w, h int) *image.NRGBA {
+	img := image.NewNRGBA(image.Rect(0, 0, w, h))
+	for y := range h {
+		for x := range w {
+			img.SetNRGBA(x, y, []color.NRGBA{red, blue}[x%2])
+		}
+	}
+	return img
+}
+
 var (
 	red  = color.NRGBA{255, 0, 0, 255}
 	blue = color.NRGBA{0, 0, 255, 255}
@@ -210,5 +221,26 @@ func TestStitchRefuses(t *testing.T) {
 				t.Fatalf("err %v, want %s", err, tt.kind)
 			}
 		})
+	}
+}
+
+// A piece a pixel off its place at the same scale is never resampled: no
+// pixel mixes red and blue
+func TestComposeSameScaleSharp(t *testing.T) {
+	t.Parallel()
+	img, err := Compose([]Placed{
+		{solid(752, 3, red), Rect{0, 0, 501, 2}},
+		{stripes(753, 3), Rect{501, 0, 502, 2}},
+	}, Rect{0, 0, 1003, 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := img.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			if c := img.NRGBAAt(x, y); c != red && c != blue {
+				t.Fatalf("at (%d, %d): %v, a blend", x, y, c)
+			}
+		}
 	}
 }

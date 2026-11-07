@@ -80,8 +80,15 @@ func Compose(pieces []Placed, area Rect) (*image.NRGBA, error) {
 			draw.Draw(out, dr, p.Image, src.Min, draw.Src)
 			continue
 		}
-		// Scale clips to out's bounds itself
-		draw.CatmullRom.Scale(out, dr, p.Image, src, draw.Src, nil)
+		// A piece at this scale but a pixel off its place's size (each
+		// picker rounds its own crop): stretched by repeating a row or
+		// column, not resampled, so it stays sharp. Scale clips to out's
+		// bounds itself
+		var interp draw.Interpolator = draw.CatmullRom
+		if abs(dr.Dx()-src.Dx()) <= 1 && abs(dr.Dy()-src.Dy()) <= 1 {
+			interp = draw.NearestNeighbor
+		}
+		interp.Scale(out, dr, p.Image, src, draw.Src, nil)
 	}
 	return out, nil
 }
@@ -113,6 +120,13 @@ func Stitch(pieces []Piece, area Rect, out string) (image.Point, error) {
 		return image.Point{}, err
 	}
 	return img.Bounds().Size(), nil
+}
+
+func abs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
 
 func decode(path string) (image.Image, error) {
