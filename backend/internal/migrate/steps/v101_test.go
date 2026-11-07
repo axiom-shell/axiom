@@ -28,7 +28,7 @@ func TestV101MakesTheOSDsPartsOneListOfSystems(t *testing.T) {
 				`"statuses":{"row":"all","items":["micUse","scrollLock","camera","battery","capsLock","vpn","old"],"quiet":["scrollLock","capsLock","camera"]},"cards":{"enabled":false,"timeout":6000,"items":["media","monitor"],"onTrackChange":false,"onPlayPause":true}}]}}`,
 			`{"OSD":{"items":[{"id":"b","edge":"left","barLayout":{"orientation":"horizontal","alongEdge":true},"row":"all","cardsEnabled":false,"cardTimeout":6000,"systems":[` +
 				`{"type":"Audio","bars":[{"type":"master","icon":"","showOsd":true},{"type":"app","apps":["spotify"],"icon":"","showOsd":true}],"tiles":[]},` +
-				`{"type":"Brightness","allMonitors":true,"icon":"sun","showOsd":false,"quiet":true},{"type":"Privacy","kinds":["camera","micUse"]},{"type":"LockKeys","keys":["capsLock","scrollLock"],"quiet":true},` +
+				`{"type":"Brightness","allMonitors":true,"icon":"sun","quiet":true},{"type":"Privacy","kinds":["camera","micUse"]},{"type":"LockKeys","keys":["capsLock","scrollLock"],"quiet":true},` +
 				`{"type":"Battery","tiles":["battery"]},{"type":"Vpn"},{"type":"Media","onTrackChange":false,"onPlayPause":true},{"type":"Monitors"}]}]}}`, true},
 		{"missing parts were their old defaults",
 			`{"OSD":{"items":[{"id":"c","statuses":{"items":["dnd"]}}]}}`,

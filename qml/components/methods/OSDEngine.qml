@@ -540,7 +540,7 @@ QtObject {
 
   // Whether a change opens a shut OSD: not when its system's item is
   // `quiet` or its key's `exposes` entry says `opens: false` (an Audio
-  // bar's or Brightness's showOsd off); else unless made on screen
+  // bar's showOsd off); else unless made on screen
   // (`byUser`), which `onScreenChanges` (OSD.onScreenChanges) or the
   // change's own `alert` (a headset's battery low) overrides. A change
   // that doesn't open it still shows on an open one. `item`: the

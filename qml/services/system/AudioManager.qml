@@ -205,8 +205,9 @@ QtObject {
     return node?.ready === true && (node.audio?.volumes?.length ?? 0) > 0;
   }
 
-  // Playback streams (bound, their volume in: volumeKnown) for an OSD app bar: those whose binary,
-  // application name or nickname contains one of `apps` (case-insensitive),
+  // Playback streams for an OSD app bar, each bound with its volume in
+  // (volumeKnown): those whose binary, application name or nickname
+  // contains one of `apps` (case-insensitive),
   // by app in the listed order, so the first listed app's stream comes
   // first. With `other`, the first stream no `excluded` entry matches
   // instead (by binary or application name).

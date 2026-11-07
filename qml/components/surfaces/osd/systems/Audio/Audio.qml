@@ -24,10 +24,10 @@ OSDSystem {
   keepThroughGap: true
   updateFields: ["label"]
   // A bar's level changes only on the node it read before, its volume in:
-  // a stream bar's set of streams changing (one appearing, going, its
-  // volume arriving) or the System volume or Microphone bar's node (the
-  // default device switching, binding, its volume arriving: Discord
-  // joining, a device switch) isn't its level changing
+  // a stream bar's set of streams changing (one appearing with its
+  // volume, going: Discord joining) or the System volume or Microphone
+  // bar's node (the default device switching, binding, its volume
+  // arriving) isn't its level changing
   resetBy: ["streams", "node"]
   // Its card takes in any of its own changes without one (a new device's
   // mute, its level arriving late)
@@ -79,6 +79,8 @@ OSDSystem {
         "action": "toggleMicMute"
       }
     })
+  // A second bar of one kind (two System volume bars) is left out: keys
+  // are unique
   exposes: (options.bars ?? []).map((bar, i) => ({
         "key": bar.type === "app" ? "app:" + i : bar.type === "microphone" ? "micLevel" : bar.type,
         "part": "bar",
@@ -88,7 +90,7 @@ OSDSystem {
         "opens": bar.showOsd !== false,
         "design": "VolumeBar",
         "bar": bar
-      })).concat((options.tiles ?? ["audio", "microphone"]).map(key => Object.assign({
+      })).filter((e, i, all) => all.findIndex(o => o.key === e.key) === i).concat((options.tiles ?? ["audio", "microphone"]).map(key => Object.assign({
       "key": key,
       "part": "tile"
     }, _tiles[key])))

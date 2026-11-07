@@ -51,7 +51,8 @@ var (
 //   - the items come in order, each system once, where its first type
 //     was: the bars' first (Audio's master / other / app / microphone
 //     bars, keeping their apps, icon and showOsd; Brightness's
-//     allMonitors, icon and showOsd, the first brightness bar's), then
+//     allMonitors and icon, the first brightness bar's: its showOsd off
+//     is its item's quiet, the one key it has), then
 //     the status icons' (lock keys one LockKeys with its `keys`; audio
 //     and microphone Audio's `tiles`; camera, micUse and screenShare
 //     Privacy's `kinds`; charger and battery Battery's `tiles`; the rest
@@ -176,7 +177,7 @@ func osdToSystems(entry *jsonx.Object) (dropped, opened []string) {
 				continue
 			}
 			s = system("Brightness")
-			for _, k := range []string{"allMonitors", "icon", "showOsd"} {
+			for _, k := range []string{"allMonitors", "icon"} {
 				if v, ok := bar.Get(k); ok {
 					s.item.Set(k, v)
 				}

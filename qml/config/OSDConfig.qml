@@ -102,8 +102,8 @@ QtObject {
     if (spec === "label")
       return [root.nameOf(item.type)];
     const labels = def.properties[spec.from]?.items?.properties?.[spec.by]?.["x-enumLabels"] ?? {};
-    return (item[spec.from] ?? []).map(entry => {
-      const named = spec.named ? (entry[spec.named] ?? []) : [];
+    return item[spec.from].map(entry => {
+      const named = spec.named ? entry[spec.named] : [];
       return named.length > 0 ? named.join(" / ") : I18n.tr(labels[entry[spec.by]] ?? "");
     }).filter(name => name !== "");
   }

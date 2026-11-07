@@ -30,11 +30,12 @@ Item {
   readonly property bool isStreams: root.type === "other" || root.type === "app"
 
   // A stream bar's streams: the first one shown, a change setting every
-  // one (a binding: matchStreams reads every stream's ready, audio and
-  // properties, so it follows streams coming, going and binding)
+  // one (a binding: matchStreams reads every stream's ready, volumes and
+  // properties, so it follows streams coming, going and binding; each one
+  // it returns is bound, its volume in)
   readonly property var _nodes: root.isStreams ? AudioManager.matchStreams(root.type === "app" ? (root.entry.bar.apps ?? []) : [], root.type === "other", root.type === "other" ? OSDConfig.excludedApps : []) : []
   readonly property var _node: root._nodes.length > 0 ? root._nodes[0] : null
-  readonly property bool _found: root._node !== null && root._node.ready && root._node.audio !== null
+  readonly property bool _found: root._node !== null
 
   readonly property real level: root.isMaster ? AudioManager.volume : root.isMic ? AudioManager.sourceVolume : (root._found ? root._node.audio.volume : 0)
   readonly property bool muted: root.isMaster ? AudioManager.muted : root.isMic ? AudioManager.sourceMuted : (!root._found || root._node.audio.muted)

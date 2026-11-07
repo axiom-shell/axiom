@@ -19,13 +19,5 @@ OSDSystem {
       "action": "airplane"
     }
   ]
-
-  // state: { value (on) }
-  function tile(key, state) {
-    const on = state?.value === true;
-    return {
-      "on": on,
-      "notable": on
-    };
-  }
+  // state: { value (on) }: the default tile, lit and unusual while on
 }

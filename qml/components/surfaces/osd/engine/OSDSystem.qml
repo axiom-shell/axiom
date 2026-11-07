@@ -133,9 +133,14 @@ QtObject {
 
   // Its tile for `key` from that key's state: any of { icon, label,
   // tone, on, slash, notable, hidden, … } (OSDEngine.tileOf fills the
-  // rest, the icon from `exposes`)
+  // rest, the icon from `exposes`). By default a toggle's: lit and
+  // unusual while its `value` is true
   function tile(key, state) {
-    return {};
+    const on = state?.value === true;
+    return {
+      "on": on,
+      "notable": on
+    };
   }
 
   // Its card for a change (OSDEngine.judge's), from the whole state (by

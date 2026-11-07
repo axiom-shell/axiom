@@ -32,14 +32,8 @@ OSDSystem {
       "action": "foo"
     }
   ]
-
-  function tile(key, state) {
-    const on = state?.value === true;
-    return {
-      "on": on,
-      "notable": on
-    };
-  }
+  // No tile(): the default lights a toggle (`value` true) and marks it
+  // unusual
 }
 ```
 ```qml
@@ -105,4 +99,4 @@ var rows = [
 ## Docs to update
 - [OSD](../dev/features/osd.md) › Systems: a short section for it (its key, what each change shows, its declarations and anything custom).
 - Its feature's own doc, a line linking the OSD.
-- `docs/dev/roadmap.md` › Live checks, for what only the real machine shows.
+- `docs/dev/live-checks.md`, for what only the real machine shows.

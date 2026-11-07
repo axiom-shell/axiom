@@ -139,7 +139,11 @@ QtObject {
       service.acquire(root);
     root._check();
   }
+  // The definition goes first on a reload: dropped before releasing, so
+  // a service's state changing as it's released (VpnManager's Tailscale
+  // row) doesn't re-run `tiles` against a destroyed definition
   Component.onDestruction: {
+    root.definition = null;
     for (const service of root.holds)
       service.release(root);
   }

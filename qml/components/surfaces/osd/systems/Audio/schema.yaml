@@ -60,4 +60,5 @@ settings:
     x-enumIcons: {audio: volume_up, microphone: mic}
     default: [audio, microphone]
     description: The output and input devices, muted or switched.
-    x-showIf: {tile: true}
+    # Its cards are the devices switching: shown while either part is on
+    x-showIf: {anyOf: [{tile: true}, {card: true}]}

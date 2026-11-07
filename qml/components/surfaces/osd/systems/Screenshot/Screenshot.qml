@@ -22,6 +22,7 @@ OSDSystem {
   ]
 
   // state: { event (lastShot: { path, title, folder }), seq }
+  // I18n.tr("Copied to the clipboard")
   function card(change, state) {
     const e = state.screenshot?.event ?? null;
     if (!e)

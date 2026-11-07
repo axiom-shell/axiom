@@ -8,9 +8,9 @@ import qs.components.surfaces.osd.engine
 // the bar's icon (`icon`, else the level's), and when axiom last set one
 // of them (`setAt`: BrightnessManager.brightnessChanged, which a refresh
 // or idle dimming's silent set never sends, and which a set at the limit
-// still sends): the definition counts a level only just after it. As its OSD opens it picks up
-// brightness changed outside axiom on the monitors its bar shows (none
-// with its bar off)
+// still sends): the definition counts a level only just after it. As
+// its OSD opens it picks up brightness changed outside axiom on the
+// monitors its bar shows (none with its bar off)
 OSDWatch {
   id: watch
 

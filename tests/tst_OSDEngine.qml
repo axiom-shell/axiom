@@ -240,7 +240,22 @@ TestCase {
     }
   }
 
+  // The lowest card (Now playing's)
+  OSDSystem {
+    id: media
+    type: "Media"
+    yieldsCard: true
+    exposes: [
+      {
+        "key": "media",
+        "part": "card",
+        "icon": "music_note"
+      }
+    ]
+  }
+
   readonly property var defs: ({
+      "Media": media,
       "Audio": audio,
       "Privacy": privacy,
       "Vpn": vpn,
@@ -902,6 +917,28 @@ TestCase {
         "incoming": at("Audio", "audio", false, headset),
         "elapsed": 300,
         "out": "suppress"
+      },
+      // yieldsCard: the lowest card never covers another's, at any age
+      {
+        "tag": "a yielding card against another system's card",
+        "shown": at("Audio", "audio", true, other),
+        "incoming": at("Media", "media", true),
+        "elapsed": w + 5000,
+        "out": "keep"
+      },
+      {
+        "tag": "a yielding card against its own",
+        "shown": at("Media", "media", true),
+        "incoming": at("Media", "media", true),
+        "elapsed": w + 1000,
+        "out": "replace"
+      },
+      {
+        "tag": "another card against a yielding card",
+        "shown": at("Media", "media", true),
+        "incoming": at("Audio", "audio", true, other),
+        "elapsed": 300,
+        "out": "replace"
       },
       {
         "tag": "another device's switch",

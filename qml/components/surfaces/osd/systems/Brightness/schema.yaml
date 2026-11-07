@@ -20,9 +20,3 @@ settings:
     default: ''
     description: A Material Symbols name, or text. Empty follows what it shows.
     x-showIf: {tile: true}
-  showOsd:
-    type: boolean
-    title: Opens the OSD
-    default: true
-    description: Off, it still shows while the OSD is open.
-    x-showIf: {tile: true}

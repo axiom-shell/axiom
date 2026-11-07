@@ -9,8 +9,9 @@ import qs.components.surfaces.osd.engine
 // matches) and each device tile's device (AudioManager.deviceKey: "" while
 // none is bound, a gap its definition bridges), name, Bluetooth address
 // and mute. A bar counts a level only on the node it read before, its
-// volume in (`node`, `streams`: resetBy). A change while the default device switches or binds isn't the
-// user's (AudioManager.sinkSettled / sourceSettled)
+// volume in (`node`, `streams`: resetBy). A change while the default
+// device switches or binds isn't the user's (AudioManager.sinkSettled /
+// sourceSettled)
 OSDWatch {
   id: root
 
@@ -24,12 +25,11 @@ OSDWatch {
   function _streams(bar) {
     const nodes = AudioManager.matchStreams(bar.type === "app" ? bar.apps : [], bar.type === "other", bar.type === "other" ? OSDConfig.excludedApps : []);
     const first = nodes[0] ?? null;
-    const found = first !== null && first.ready && first.audio;
     return {
-      "level": found ? first.audio.volume : 0,
-      "muted": !found || first.audio.muted,
+      "level": first ? first.audio.volume : 0,
+      "muted": !first || first.audio.muted,
       "streams": nodes.map(n => n.id).join(","),
-      "levels": nodes.map(n => n.audio ? `${n.audio.volume}:${n.audio.muted}` : "").join(",")
+      "levels": nodes.map(n => `${n.audio.volume}:${n.audio.muted}`).join(",")
     };
   }
 

@@ -15,12 +15,4 @@ OSDSystem {
       "action": "nightLight"
     }
   ]
-
-  function tile(key, state) {
-    const on = state?.value === true;
-    return {
-      "on": on,
-      "notable": on
-    };
-  }
 }

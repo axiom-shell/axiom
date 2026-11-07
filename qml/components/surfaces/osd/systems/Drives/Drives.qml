@@ -79,6 +79,7 @@ OSDSystem {
   }
 
   // The drive's name, what happened, and where it was mounted
+  // I18n.tr("Connected") I18n.tr("Disconnected") I18n.tr("Mounted") I18n.tr("Safe to remove") I18n.tr("Unmounted") I18n.tr("Unplugged without ejecting") I18n.tr("In use: close what's using it") I18n.tr("Couldn't eject") I18n.tr("Encrypted: click to unlock")
   function card(change, state) {
     const e = state.drive?.event ?? null;
     const look = _cards[e?.kind] ?? _cards.added;

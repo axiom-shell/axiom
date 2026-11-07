@@ -137,6 +137,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:dock system
 
+### The OSD's hover strip opens an empty bars slot when every bar is left out
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_expose`, `_levelEntries`)
+- **What:** `_expose` opens the "level" part whenever `_levelEntries` is non-empty, even when every bar in it is left out (Brightness alone on a monitor with no controller, `available` false), so hovering the strip or the Show button opens an empty slot instead of the icons or the preview card. The old `levelItems.length > 0` check did the same. PLAUSIBLE: settled by an OSD with only Brightness on a monitor without DDC. Fix: count only the bars shown (their system's state not hidden) in the check.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the OSD engine branch
+
 ## Overlay, modules and custom widgets
 
 ### A custom element sees another kind's element as its slot changes kind
@@ -229,6 +235,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **What:** From the maintainer's notes: the keybinds page needs checking on a small monitor with long binds (combos and commands): rows that don't fit. Take it with the 1080p pass of [Text clips on 1080p screens](#text-clips-on-1080p-screens).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### A type library's search matches the "Other" heading of every ungrouped type
+- **Where:** `qml/components/methods/LibraryOrder.qml` (`filtered`), `qml/components/reusable/TypeLibrary.qml` (`headingOf`), `qml/components/reusable/TypePickerPopup.qml` (`headingOf`)
+- **What:** `filtered` matches a type by its group's heading, and an ungrouped type's heading is "Other" (`TypeLibrary` leaves it untranslated, `TypePickerPopup` translates it), so a query such as "th" lists every ungrouped type. The bar library already did it; the OSD Add picker and the bar editor's + picker now share it. Fix: match `headingOf(type.group)` only for a type with a group.
+- **Size:** trivial
+- **Found:** 2026-11-07, while reviewing the OSD engine branch
 
 ## Shell-wide: windows, screens, reloads and actions
 

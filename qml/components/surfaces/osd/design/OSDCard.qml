@@ -26,8 +26,8 @@ Item {
   // A click on a card that takes one (card.clickable)
   signal clicked
 
-  // Its role as the systems give it, English, translated here
-  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in") I18n.tr("Mounted") I18n.tr("Safe to remove") I18n.tr("Unmounted") I18n.tr("Disconnected") I18n.tr("Unplugged without ejecting") I18n.tr("In use: close what's using it") I18n.tr("Couldn't eject") I18n.tr("Encrypted: click to unlock") I18n.tr("Battery low") I18n.tr("Battery critically low") I18n.tr("Copied to the clipboard")
+  // Its role as its system gives it, English (declared there),
+  // translated here
   readonly property string _role: (root.card?.role ?? "") !== "" ? I18n.tr(root.card.role) : ""
 
   // The square on the left (a cover, a device's icon)

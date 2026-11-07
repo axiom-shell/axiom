@@ -78,8 +78,9 @@ TestCase {
     const judged = {};
     systems.forEach(type => judged[type] = {});
     const tileNow = (system, key) => defs[system] ? OSDEngine.contextTile(defs[system], key, states[system]) : {};
-    // What's out: the whole judged change (with its system) of the card
-    // and of the ringed tile; a row's own start gives { system, key, at }
+    // What's out: the whole judged change (with its system and its tile
+    // as it came, as OSDHost keeps it) of the card and of the ringed
+    // tile; a row's own start gives { system, key, at }
     const host = {
       "card": row.host?.card ? Object.assign({
         "card": true
@@ -91,21 +92,31 @@ TestCase {
     const against = (shown, what) => OSDEngine.arbitrate(Object.assign({}, shown, {
         "part": OSDEngine.partOf(defs[shown.system], shown.key),
         "card": shown === host.card,
-        "tile": tileNow(shown.system, shown.key)
+        "tile": shown.tile ?? tileNow(shown.system, shown.key)
       }), Object.assign({}, what, {
         "tile": tileNow(what.system, what.key)
       }), what.at - shown.at, defs);
-    // What a host does with a change: OSDHost's order
+    // What a host does with a change: OSDHost's order. A card shown
+    // rings its tile while the icons are out (a ring is: `_showCard`)
     const decide = what => {
-      const placed = Object.assign({}, what);
+      const placed = Object.assign({}, what, {
+        "tile": tileNow(what.system, what.key)
+      });
+      const showCard = () => {
+        host.card = placed;
+        if (host.ring && OSDEngine.partOf(defs[what.system], what.key) === "tile")
+          host.ring = Object.assign({}, placed, {
+            "card": false
+          });
+      };
       if (what.show === "card") {
         if (!host.card) {
-          host.card = placed;
+          showCard();
           return "open";
         }
         const d = against(host.card, what);
         if (d === "replace")
-          host.card = placed;
+          showCard();
         return d;
       }
       let out = "";

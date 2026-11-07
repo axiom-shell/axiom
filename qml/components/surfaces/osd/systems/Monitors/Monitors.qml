@@ -24,6 +24,7 @@ OSDSystem {
   // state: { available (supports.monitors), event (MonitorManager's
   // lastEvent: { kind: "added" | "removed", name (the connector),
   // description, width, height }), seq }
+  // I18n.tr("Connected") I18n.tr("Disconnected")
   function card(change, state) {
     const e = state.monitor?.event ?? null;
     if (!e)
