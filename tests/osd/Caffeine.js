@@ -2,9 +2,10 @@
 // Caffeine's timelines: a plain toggle, its icon either way
 var rows = [
   {
-    "name": "the first reading shows nothing",
+    "name": "the first reading shows nothing, its tile lit",
     "steps": [
-      { "at": 0, "state": { "caffeine": { "value": true } } }
+      { "at": 0, "state": { "caffeine": { "value": true } },
+        "tiles": { "caffeine": { "icon": "coffee", "on": true, "notable": true, "hidden": false } } }
     ]
   },
   {
@@ -12,7 +13,8 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "caffeine": { "value": false } } },
       { "at": 3000, "state": { "caffeine": { "value": true } },
-        "expect": { "key": "caffeine", "show": "tile", "kind": "add", "tile": { "icon": "coffee", "on": true, "notable": true }, "host": "ring" } }
+        "expect": { "key": "caffeine", "show": "tile", "kind": "add", "tile": { "icon": "coffee", "on": true, "notable": true }, "host": "ring",
+                    "opens": true, "action": { "id": "idleInhibit", "call": "toggle" } } }
     ]
   },
   {
@@ -28,7 +30,25 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "caffeine": { "value": false } } },
       { "at": 3000, "byUser": true, "state": { "caffeine": { "value": true } },
-        "expect": { "show": "tile", "byUser": true } }
+        "expect": { "show": "tile", "byUser": true, "opens": false } }
+    ]
+  },
+  {
+    "name": "turned on from the panel with OSD.onScreenChanges: it opens",
+    "onScreenChanges": true,
+    "steps": [
+      { "at": 0, "state": { "caffeine": { "value": false } } },
+      { "at": 3000, "byUser": true, "state": { "caffeine": { "value": true } },
+        "expect": { "show": "tile", "opens": true } }
+    ]
+  },
+  {
+    "name": "quiet: judged the same, never opening the OSD",
+    "options": { "type": "Caffeine", "tile": true, "quiet": true },
+    "steps": [
+      { "at": 0, "state": { "caffeine": { "value": false } } },
+      { "at": 3000, "state": { "caffeine": { "value": true } },
+        "expect": { "show": "tile", "opens": false } }
     ]
   },
   {

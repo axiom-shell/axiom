@@ -78,9 +78,15 @@ TestCase {
     const states = {};
     systems.forEach(type => states[type] = {});
     const tileNow = (system, key) => defs[system] ? OSDEngine.tileOf(defs[system], key, states[system]?.[key]) : {};
+    // What's out: the whole judged change (with its system) of the card
+    // and of the ringed tile; a row's own start gives { system, key, at }
     const host = {
-      "card": row.host?.card ?? null,
-      "ring": row.host?.ring ?? null
+      "card": row.host?.card ? Object.assign({
+        "card": true
+      }, row.host.card) : null,
+      "ring": row.host?.ring ? Object.assign({
+        "card": false
+      }, row.host.ring) : null
     };
     const against = (shown, what) => OSDEngine.arbitrate(Object.assign({}, shown, {
         "part": OSDEngine.partOf(defs[shown.system], shown.key),
@@ -91,11 +97,7 @@ TestCase {
       }), what.at - shown.at, defs);
     // What a host does with a change: OSDHost's order
     const decide = what => {
-      const placed = {
-        "system": what.system,
-        "key": what.key,
-        "at": what.at
-      };
+      const placed = Object.assign({}, what);
       if (what.show === "card") {
         if (!host.card) {
           host.card = placed;
@@ -162,12 +164,19 @@ TestCase {
         for (const field of Object.keys(x)) {
           if (field === "tile")
             root._holds(OSDEngine.tileOf(def, what.key, after[what.key]), x.tile, where + " tile");
+          else if (field === "opens")
+            compare(OSDEngine.opens(def.options, def, what, row.onScreenChanges === true), x.opens, where + " opens");
+          else if (field === "action")
+            root._holds(def.actionOf(what.key, after[what.key]), x.action, where + " action");
           else if (field === "card")
             root._holds(OSDEngine.cardOf(def, what, after), x.card, where + " card");
           else
             root._holds(what[field], x[field], where + " " + field);
         }
       });
+      // Tiles as they are, changed or not
+      for (const key of Object.keys(step.tiles ?? {}))
+        root._holds(OSDEngine.tileOf(def, key, after[key]), step.tiles[key], where + " tiles." + key);
     });
   }
 }

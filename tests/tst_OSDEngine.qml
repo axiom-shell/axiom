@@ -430,11 +430,15 @@ TestCase {
       import qs.components.surfaces.osd.engine
       OSDSystem {
         type: "Odd"
+        property var seen: []
         exposes: [{ "key": "odd", "part": "tile" }]
         function judge(before, after, ctx) {
-          if (ctx.key !== "odd")
+          seen = seen.concat([ctx.settled]);
+          if (after.value === "default")
             return undefined;
-          return after.value === "skip" ? null : { "kind": "change", "show": "card", "why": ctx.before.other };
+          if (after.value === "skip")
+            return null;
+          return { "kind": "change", "show": "card", "why": ctx.before?.other, "alert": after.value === "alert" };
         }
       }`, this);
     verify(OSDEngine.judge(own, "odd", {
@@ -442,14 +446,143 @@ TestCase {
     }, {
       "value": "skip"
     }, {}) === null, "its own nothing");
-    const card = OSDEngine.judge(own, "odd", undefined, {
+    const card = OSDEngine.judge(own, "odd", {
+      "value": 1
+    }, {
       "value": 2
     }, {
+      "settled": false,
       "before": {
         "other": "x"
       }
     });
-    compare([card.show, card.card, card.why], ["card", true, "x"], "even a first reading, as it says");
+    compare([card.show, card.card, card.why, card.alert], ["card", true, "x", false], "its own, unsettled too");
+    compare(own.seen[own.seen.length - 1], false, "it reads ctx.settled");
+    verify(OSDEngine.judge(own, "odd", {
+      "value": 1
+    }, {
+      "value": "default"
+    }, {
+      "settled": false
+    }) === null, "left to the engine: nothing while unsettled");
+    const calls = own.seen.length;
+    verify(OSDEngine.judge(own, "odd", undefined, {
+      "value": 2
+    }, {}) === null, "never the first reading");
+    verify(OSDEngine.judge(own, "odd", {
+      "value": 1,
+      "available": false
+    }, {
+      "value": 2
+    }, {}) === null, "nor across an unavailable state");
+    compare(own.seen.length, calls, "its judge() isn't asked for either");
+    compare(OSDEngine.judge(own, "odd", {
+      "value": 1
+    }, {
+      "value": "alert"
+    }, {}).alert, true, "an alert it sets");
+    own.destroy();
+  }
+
+  function test_updateFields() {
+    const own = Qt.createQmlObject(`
+      import QtQuick
+      import qs.components.surfaces.osd.engine
+      OSDSystem {
+        type: "Device"
+        updateFields: ["label"]
+        exposes: [{ "key": "a", "part": "tile" }, { "key": "b", "part": "tile", "updateFields": ["icon"] }]
+        function tile(key, state) {
+          return { "icon": state.icon ?? "", "label": state.label ?? "", "slash": state.muted === true };
+        }
+      }`, this);
+    const at = (icon, label, muted) => ({
+          "value": "60",
+          "icon": icon,
+          "label": label,
+          "muted": muted === true
+        });
+    verify(OSDEngine.judge(own, "a", at("headphones", ""), at("headset_mic", "")) === null, "a profile switch's icon: not a look change");
+    compare(OSDEngine.judge(own, "a", at("headphones", ""), at("headphones", "", true)).kind, "update", "a mute always is");
+    compare(OSDEngine.judge(own, "a", at("headphones", "x"), at("headphones", "y")).kind, "update", "a listed field");
+    compare(OSDEngine.judge(own, "b", at("headphones", ""), at("headset_mic", "")).kind, "update", "the entry's own list");
+    compare(OSDEngine.judge(toggle, "toggle", {
+      "value": true,
+      "label": "x"
+    }, {
+      "value": true,
+      "label": "x",
+      "name": "y"
+    }), null, "a field the tile doesn't show");
+    own.destroy();
+  }
+
+  function test_opens() {
+    const bars = Qt.createQmlObject(`
+      import QtQuick
+      import qs.components.surfaces.osd.engine
+      OSDSystem {
+        type: "Bars"
+        exposes: [{ "key": "master", "part": "bar" }, { "key": "app:0", "part": "bar", "opens": false }]
+      }`, this);
+    const change = (key, extra) => Object.assign({
+        "key": key,
+        "byUser": false,
+        "alert": false
+      }, extra ?? {});
+    verify(OSDEngine.opens({}, bars, change("master"), false), "anyone's change");
+    verify(!OSDEngine.opens({}, bars, change("master", {
+      "byUser": true
+    }), false), "made on screen");
+    verify(OSDEngine.opens({}, bars, change("master", {
+      "byUser": true
+    }), true), "made on screen, with onScreenChanges");
+    verify(OSDEngine.opens({}, bars, change("master", {
+      "byUser": true,
+      "alert": true
+    }), false), "an alert opens it anyway");
+    verify(!OSDEngine.opens({
+      "quiet": true
+    }, bars, change("master", {
+      "alert": true
+    }), false), "quiet, even an alert");
+    verify(!OSDEngine.opens({}, bars, change("app:0"), false), "its key's opens: false (showOsd off)");
+    bars.destroy();
+  }
+
+  function test_arbitrate_whole_changes() {
+    // A still card reads the incoming change's own fields (Privacy's)
+    const own = Qt.createQmlObject(`
+      import QtQuick
+      import qs.components.surfaces.osd.engine
+      OSDSystem {
+        type: "Still"
+        exposes: [{ "key": "micUse", "part": "tile" }]
+        function sameChange(shown, incoming) {
+          return shown.key === incoming.key && (incoming.card !== true || (shown.still === true && incoming.still === true));
+        }
+      }`, this);
+    const defs = {
+      "Still": own
+    };
+    const still = (left, at) => ({
+          "system": "Still",
+          "key": "micUse",
+          "part": "tile",
+          "kind": "remove",
+          "card": true,
+          "still": true,
+          "left": left,
+          "at": at,
+          "tile": {
+            "on": true
+          }
+        });
+    compare(OSDEngine.arbitrate(still(["OBS", "Zoom"], 0), still(["OBS"], 300), 300, defs), "keep", "several stopping: one card");
+    compare(OSDEngine.arbitrate(Object.assign(still(["OBS"], 0), {
+      "still": false,
+      "kind": "add"
+    }), still(["OBS"], 300), 300, defs), "replace", "a start's card, then one stopping");
     own.destroy();
   }
 

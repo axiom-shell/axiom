@@ -102,11 +102,15 @@ QtObject {
   }
 
   // The tile's look changing with its value the same (a mute, Wi-Fi
-  // turned off): what tells it from a name or a signal changing
+  // turned off): what tells it from a name or a signal changing. `on`
+  // and `slash` always count, and the fields `updateFields` lists (by
+  // default its icon and label; Audio's leaves the icon out, which a
+  // Bluetooth profile switch changes)
   function _looks(def, key, before, after) {
     const a = root.tileOf(def, key, before);
     const b = root.tileOf(def, key, after);
-    return a.on !== b.on || a.slash !== b.slash || a.label !== b.label || a.icon !== b.icon;
+    const fields = ["on", "slash"].concat(root.policy(def, key, "updateFields") ?? []);
+    return fields.some(field => JSON.stringify(a[field]) !== JSON.stringify(b[field]));
   }
 
   // The generic judgement of `key` (OSDEngine.judge without the
@@ -180,13 +184,15 @@ QtObject {
   }
 
   // What `key` changing from `before` to `after` (its states) shows, by
-  // the definition's model and policies (its judge() first, for an odd
-  // case): null for nothing, else { key, part, model, kind ("add" |
-  // "remove" | "change" | "update" | "event" | "level"), show ("card" |
-  // "tile" | "level"), card (show is "card"), still, unexpected, added,
-  // removed, left (a set's ids), at, byUser }. Never the first reading
-  // (`before` missing), across a state that isn't `available` (false),
-  // or, unless the system counts `anyone`'s, while the watcher calls it
+  // the definition's model and policies: null for nothing, else { key,
+  // part, model, kind ("add" | "remove" | "change" | "update" | "event" |
+  // "level"), show ("card" | "tile" | "level"), card (show is "card"),
+  // still, unexpected, alert (opens the OSD even after an on-screen mark:
+  // only a definition's judge() sets it), added, removed, left (a set's
+  // ids), at, byUser }. Never the first reading (`before` missing) nor
+  // across a state that isn't `available` (false); then the definition's
+  // judge() for an odd case (it reads ctx.settled itself); else, unless
+  // the system counts `anyone`'s, nothing while the watcher calls it
   // unsettled. `ctx`: { at, byUser, settled, before, after (the whole
   // states) }
   function judge(def, key, before, after, ctx) {
@@ -201,6 +207,10 @@ QtObject {
     });
     if (root.same(c.model, before, after))
       return null;
+    if (before === undefined || before === null)
+      return null;
+    if (before.available === false || after?.available === false)
+      return null;
     const custom = def ? def.judge(before, after, c) : undefined;
     let out;
     if (custom !== undefined) {
@@ -208,11 +218,7 @@ QtObject {
         return null;
       out = [custom.kind ?? "change", custom.show ?? "", custom];
     } else {
-      if (before === undefined || before === null)
-        return null;
       if (c.settled === false && root.policy(def, key, "anyone") !== true)
-        return null;
-      if (before.available === false || after?.available === false)
         return null;
       out = root._generic(def, key, before, after, c);
     }
@@ -221,6 +227,7 @@ QtObject {
     return Object.assign({
       "still": false,
       "unexpected": false,
+      "alert": false,
       "added": [],
       "removed": [],
       "left": []
@@ -251,9 +258,12 @@ QtObject {
     return shown.card === true && own ? own.sameChange(shown, incoming) === true : false;
   }
 
-  // What a change does to what's shown, `elapsed` ms after `shown` came
-  // (both { system, key, part, card (bool), tile (its tile now) }; `defs`
-  // the definitions by system). Against a card out (`shown.card`): a card
+  // What a change does to what's shown, `elapsed` ms after `shown` came.
+  // Both are whole judged changes (judge()'s: key, part, kind, card
+  // (bool), still, unexpected, alert, added, removed, left, …) with their
+  // `system` and `tile` (that key's tile now); `defs` the definitions by
+  // system. Their sameChange() and absorbs() read any of it (Privacy's
+  // `still`). Against a card out (`shown.card`): a card
   // "replace"s it or "keep"s it (the same change: the first card says
   // it); a change without one "retract"s it (its own tile turned off,
   // with retractsCardWhenOff: the card would say what no longer holds; at
@@ -270,6 +280,19 @@ QtObject {
     if (incoming.card === true)
       return knockOn ? "keep" : "replace";
     return knockOn ? "suppress" : "beside";
+  }
+
+  // Whether a change opens a shut OSD: not when its system's item is
+  // `quiet` or its key's `exposes` entry says `opens: false` (an Audio
+  // bar's or Brightness's showOsd off); else unless made on screen
+  // (`byUser`), which `onScreenChanges` (OSD.onScreenChanges) or the
+  // change's own `alert` (a headset's battery low) overrides. A change
+  // that doesn't open it still shows on an open one. `item`: the
+  // system's item ({ quiet, … }; its definition's `options`)
+  function opens(item, def, change, onScreenChanges) {
+    if (item?.quiet === true || root.entryOf(def, change.key).opens === false)
+      return false;
+    return change.alert === true || change.byUser !== true || onScreenChanges === true;
   }
 
   // `osd`'s item of a system (its `systems` entry), or null

@@ -12,8 +12,9 @@ OSDSystem {
     {
       "key": "brightness",
       "part": "bar",
-      "icon": "brightness_6",
-      "label": "Brightness"
+      "icon": options.icon || "brightness_6",
+      "label": "Brightness",
+      "opens": options.showOsd !== false
     }
   ]
 }

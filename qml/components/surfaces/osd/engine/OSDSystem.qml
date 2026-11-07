@@ -16,8 +16,10 @@ QtObject {
   property var options: ({})
 
   // What it shows, each { key, part: "bar" | "tile" | "card", icon,
-  // label, group } and, overriding the system's own for this key, any of
-  // `model`, the policies, `mark`, `userWindow`, `action`, `call`
+  // label, group }, `opens: false` for one whose change never opens a shut
+  // OSD (an Audio bar's showOsd off), and, overriding the system's own for
+  // this key, any of `model`, the policies, `updateFields`, `mark`,
+  // `userWindow`, `action`, `call`
   property var exposes: []
 
   // How its state is told apart: "scalar" ({ value, … }: added as it
@@ -41,6 +43,10 @@ QtObject {
   // How long after an on-screen mark (ShellManager.onScreen) a change is
   // the pointer's, in ms
   property int userWindow: 2000
+  // Besides `on` and `slash`, the tile fields whose change with the value
+  // the same is an update (onUpdate): Audio's leaves the icon out, which
+  // a Bluetooth profile switch changes
+  property var updateFields: ["icon", "label"]
   // Its card folds back when its own tile turns off without a card (it
   // would say what no longer holds: a VPN, Wi-Fi, the charger)
   property bool retractsCardWhenOff: false

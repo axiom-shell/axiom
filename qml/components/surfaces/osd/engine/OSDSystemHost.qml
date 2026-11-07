@@ -18,6 +18,9 @@ Item {
   // Its item in the OSD's `systems` list ({ type, tile, card, quiet, …its
   // own settings })
   property var options: ({})
+  // The screen its OSD is on and the OSD's id, for the watcher
+  property var screen: null
+  property string osdId: ""
 
   // Its definition (an OSDSystem) and watcher (an OSDWatch), once loaded
   readonly property var definition: definitionLoader.item
@@ -30,7 +33,16 @@ Item {
   // What shows for a change (OSDEngine.judge's, with { system })
   signal change(var what)
 
-  // The card for a change (OSDEngine.cardOf), or null
+  // Whether a change opens the OSD shut (OSDEngine.opens: its item's
+  // `quiet`, its key's `opens`, on-screen unless OSD.onScreenChanges or
+  // the change's `alert`)
+  function opens(what) {
+    return OSDEngine.opens(root.options, root.definition, what, OSDConfig.onScreenChanges);
+  }
+
+  // The card for a change (OSDEngine.cardOf), or null. A host re-reads
+  // the card out through this as the state changes (bound to `snapshot`),
+  // so it says what holds now: the apps left, a name filling in
   function card(what) {
     return OSDEngine.cardOf(root.definition, what, root.snapshot);
   }
@@ -65,13 +77,23 @@ Item {
     if (root.watch)
       root.watch.options = root.options;
   }
+  onScreenChanged: {
+    if (root.watch)
+      root.watch.screen = root.screen;
+  }
+  onOsdIdChanged: {
+    if (root.watch)
+      root.watch.osdId = root.osdId;
+  }
   Component.onCompleted: root._load()
 
   Loader {
     id: definitionLoader
     onLoaded: watchLoader.setSource(Paths.osdWatchUrl(root.type), {
       "definition": definitionLoader.item,
-      "options": root.options
+      "options": root.options,
+      "screen": root.screen,
+      "osdId": root.osdId
     })
     onSourceChanged: {
       if (String(definitionLoader.source) === "")

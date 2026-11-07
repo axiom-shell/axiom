@@ -21,6 +21,10 @@ QtObject {
   property var definition: null
   // Its item in the OSD's `systems` list (the definition's `options`)
   property var options: ({})
+  // The screen its OSD is on (a ShellScreen; Brightness reads its
+  // monitor) and the OSD's id (Message takes only its own OSD's)
+  property var screen: null
+  property string osdId: ""
 
   // The services it holds while it exists (acquire(owner) /
   // release(owner)): polled ones it reads
