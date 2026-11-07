@@ -110,3 +110,4 @@ kinds:
   OverlayModule: {root: components/content, suffix: OverlayModule, base: ModuleBase}
   OverlayView: {root: components/views, suffix: OverlayView, base: ViewBase}
   CustomElement: {root: components/content/parts/custom/elements, suffix: CustomElement, base: CustomElementBase}
+  OSDSystem: {root: components/surfaces/osd/systems, suffix: OSDSystem, base: OSDSystemBase}

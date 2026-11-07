@@ -123,6 +123,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `x-slots`: its bindings, in order (keys of its `bind`), each a row of the inspector's Shows.
   - `x-actions`: the commands it runs, in order (keys of its `actions`), each a row of the inspector's Runs.
   - Its `options` are its look, a form of its own; `color: state` or `color: text` adds the colour (`CustomElementBase.yaml`'s parts: Auto takes the state's colour on graphics, a switch asks for it on text).
+- On OSD systems (`OSDSystem`, `qml/components/surfaces/osd/systems/<Type>/schema.yaml`; [OSD](../features/osd.md) › Engine): an item of an OSD's `systems` list, its own settings beside `type` and `quiet`; `tile: standard` and `card: standard` add the switches `tile` and `card` for the parts it has (`OSDSystemBase.yaml`'s parts); `group` its group in the add-picker (one of `x-libraryGroups`, as a bar widget's).
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
 - `x-window: true` on a tool page that can also open as a window of its own (`OverlayConfig.isWindowable`, `windowTypes`; [page windows](../overlay/page-windows.md)).
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).

@@ -1,6 +1,6 @@
 # OSD (on-screen displays)
 
-> **Files:** `qml/config/OSDConfig.qml`, `qml/shell/OSD.qml`, `qml/components/surfaces/osd/OSDContent.qml`, `qml/components/surfaces/osd/OSDBar.qml`, `qml/components/surfaces/osd/PipewireVolumeBar.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml`, `qml/components/surfaces/osd/OSDStatusRow.qml`, `qml/components/surfaces/osd/OSDCard.qml`, `qml/components/surfaces/osd/OSDMediaCard.qml`, `qml/components/surfaces/osd/OSDStatusCard.qml`, `qml/components/surfaces/osd/OSDTriggers.qml`, `qml/components/methods/OSDItems.qml`, `qml/components/views/Settings/OSDListCard.qml`
+> **Files:** `qml/config/OSDConfig.qml`, `qml/shell/OSD.qml`, `qml/components/surfaces/osd/OSDContent.qml`, `qml/components/surfaces/osd/OSDBar.qml`, `qml/components/surfaces/osd/PipewireVolumeBar.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml`, `qml/components/surfaces/osd/OSDStatusRow.qml`, `qml/components/surfaces/osd/OSDCard.qml`, `qml/components/surfaces/osd/OSDMediaCard.qml`, `qml/components/surfaces/osd/OSDStatusCard.qml`, `qml/components/surfaces/osd/OSDTriggers.qml`, `qml/components/methods/OSDItems.qml`, `qml/components/views/Settings/OSDListCard.qml`, `qml/components/methods/OSDEngine.qml`, `qml/components/methods/OSDParts.qml`, `qml/components/surfaces/osd/engine/OSDSystem.qml`, `qml/components/surfaces/osd/engine/OSDWatch.qml`, `qml/components/surfaces/osd/engine/OSDSystemHost.qml`, `qml/components/surfaces/osd/systems/`, `qml/config/schema/definitions/kinds/OSDSystemBase.yaml`, `tests/tst_OSDSystems.qml`, `tests/osd/`
 > **Config:** `OSD.*` (reader `OSDConfig`); entries are `definitions/OSDEntry`
 > **Related:** [Brightness](brightness.md), [Screenshots and recording](screenshots-recording.md), [Lock keys](lock-keys.md), [Held off an edge](../popouts/held-off-edge.md), [Edge attach](../popouts/edge-attach.md), [Popout registry](../popouts/registry.md), [Dock](dock.md)
 
@@ -118,3 +118,164 @@ The card (`OSDMediaCard`: the cover, title, artist, playing or paused), on a new
   - a Show button;
   - its `sections`, each folding (`EntryListCard`): Status icons (the row's mode, then the status types as a grid of icon chips, then which of them stay quiet), Now playing, then the other settings ("Place and timing"), and Bars last (`lastSections`): their layout and list.
 - The App field's chips come from `x-suggestions: "audioApps"` (`SettingsManager.suggestionsFor`).
+
+## Engine
+The OSD is being rebuilt around **systems** (one folder per feature) and one engine that judges every change alike. Until the host is rewritten (the old `OSDContent`, `OSDStatusSource` and `OSDItems` above still run the shell) this section is the contract the new pieces follow; the sections above describe the behaviour they keep.
+
+### A system's folder
+`qml/components/surfaces/osd/systems/<Type>/` (`check_structure` holds each to it):
+- `<Type>.qml`, the **definition**: an `OSDSystem` (`engine/OSDSystem.qml`), pure. It imports only `QtQuick`, `qs.components.methods` and `qs.components.surfaces.osd.engine`, so `tst_OSDSystems` loads it.
+- `<Type>Watch.qml`, the **watcher**: an `OSDWatch` (`engine/OSDWatch.qml`), the only file of the system that reads services (with `design/`).
+- `schema.yaml`: its item in an OSD's `systems` list, a type of the schema kind `OSDSystem` (`index.yaml` › `kinds`, base `definitions/kinds/OSDSystemBase.yaml`, `x-settingsAt: /properties`): `label`, `icon`, `group` (an `x-libraryGroups` name, checked as a bar widget's), its own `settings`, and the parts it has: `tile: standard` adds the switch `tile` (its icons in the row, default on), `card: standard` the switch `card` (its cards, default on). Every item has `type` and `quiet` (its changes don't open the OSD). The OSD entry doesn't take the list yet (stage 4: `systems`, migration v101).
+- `design/` (optional): visuals only it uses, loaded by URL (`Paths.osdSystemUrl("<Type>/design/<File>")`).
+- **No file of the folder names another** (`check_structure`): each is loaded by its URL (`Paths.osdSystemUrl(type)`, `Paths.osdWatchUrl(type)`; a name with a slash names another file of the folder), and `OSDSystemHost` hands the watcher its definition as a property. So qs never has to scan the folder as a module (qml-pitfalls › URL-loaded files): what the files import is what must be reached from `qml/shell.qml`, `qs.components.surfaces.osd.engine` (the host that builds `OSDSystemHost` imports it) and the services and helpers, which are. Until a reached file imports the engine, `check_structure` warns instead of checking that reach. A system's view of its own (a design file) is loaded by URL the same way; anything two systems share goes in `surfaces/osd/design/`, imported by the host.
+
+### The definition (`OSDSystem`)
+Properties (each policy and `model`, `mark`, `userWindow`, `action`, `call` may also be set on one `exposes` entry, overriding the system's for that key: `OSDEngine.policy(def, key, name)`):
+- `type` (its folder's name; set by its loader), `options` (its item: `{ type, tile, card, quiet, …own settings }`).
+- `exposes`: `[{ key, part: "bar" | "tile" | "card", icon, label, group, mark?, action?, call?, …overrides }]`. Keys keep the old type names (`audio`, `microphone`, `capsLock`, `camera`, `master`, …). `mark` is the on-screen mark a change of it is judged by (`ShellManager.onScreen`'s kind; default the key: Audio's bars say `"audio"`). `action` / `call`: what a click on the tile runs (`ActionsManager.run(id, { call })`, call `"toggle"` by default), replacing `ActionsManager._statusActions`.
+- `model`: `"scalar"` (state `{ value, … }`), `"set"` (`{ members: [{ id, … }], … }`) or `"event"` (`{ event, seq }`). A bar's state is `{ level, muted }` whatever the model.
+- Policies, each `"card"`, `"icon"` or `"none"`: `onAdd` (default `"icon"`), `onChange` (`"icon"`), `onUpdate` (`"icon"`), `onRemove` (`"icon"`; also `"still"`), `onUnexpectedRemove` (`""`: onRemove's).
+- `anyone` (false): count changes the watcher calls unsettled (`settled()` false) too.
+- `userWindow` (2000): ms after its mark a change is the pointer's (8000 Wi-Fi, Bluetooth, airplane mode; 15000 a VPN).
+- `retractsCardWhenOff` (false), `knockOnOf` (`[]`, system names): see Arbitration.
+- Functions, each overridden by a definition declaring its own (the base calls them through `root`, so its own `actionOf` sees an override):
+  - `tile(key, state)` → any of `{ icon, label, tone, on, slash, notable, hidden, … }` (`state` is that key's; `OSDEngine.tileOf` fills the rest, the icon from `exposes`).
+  - `card(change, state)` → `{ icon, image, title, role, detail, tone, clickable }` or null (`state` is the system's, by key; English, translated by the view, its strings declared in a comment as `I18n.tr("…")` calls; `OSDEngine.cardOf` fills the rest, the icon from the tile).
+  - `judge(before, after, ctx)` → `undefined` (leave it to the engine), `null` (nothing), or `{ kind, show, … }` (its extra fields kept). `ctx`: `{ key, part, model, at, byUser, settled, before, after }` (`before` / `after` the whole states). For the odd cases: focus-follow (KeyboardLayout), lock-key availability, VPN transitional states. It runs before the engine's own guards, the first reading included.
+  - `sameChange(shown, incoming)` → bool; default `incoming.card !== true && shown.key === incoming.key`.
+  - `absorbs(own, other)` → bool; default false.
+  - `actionOf(key, state)` → `{ id, call }` or null; default from `exposes`.
+  - `activate(change)` → an `ActionsManager` id, or `""` to hand the click to the watcher's `activate(change)`.
+
+### The judgement (`OSDEngine.judge(def, key, before, after, ctx)`)
+- Returns null (nothing shows) or `{ key, part, model, kind, show, card, still, unexpected, added, removed, left, at, byUser }`. `kind`: `"add"`, `"remove"`, `"change"`, `"update"`, `"event"`, `"level"`. `show`: `"card"`, `"tile"`, `"level"` (`card` is `show === "card"`).
+- `ctx`: `{ at, byUser, settled, before, after }`.
+- In order:
+  1. **The same state** (`OSDEngine.same(model, before, after)`: an event's by the event object and its `seq`, any other by value): null.
+  2. **The definition's own** `judge()`, when it doesn't return `undefined`.
+  3. **The first reading** (`before` missing): null.
+  4. **Unsettled** (`ctx.settled` false), unless `anyone`: null.
+  5. **Not available**: `before.available` or `after.available` is `false`: null (the LEDs appearing, Wi-Fi or Bluetooth with no service).
+  6. **The model:**
+     - A bar: `level`.
+     - `event`: a non-null `after.event` is `event`, shown by `onAdd`.
+     - `set`, by member id: any added is `add` (`onAdd`; `added`); else any removed is `remove` (`removed`, `left` the ids still there).
+     - `scalar`: `value` empty → not is `add` (`onAdd`), not → empty is `remove`, one → another is `change` (`onChange`). Empty is `undefined`, `null`, `""`, `false` or `[]`. The tile's look changing (its `on`, `slash`, `label` or `icon`; not its name or a signal) is `update` (`onUpdate`). When both happen, the stronger show wins (card, then tile): Wi-Fi turned off loses its network (`remove`, none) and its look (`update`, the icon).
+  7. **A removal:** `unexpected` is `!ctx.byUser`. Its policy is `onUnexpectedRemove` when unexpected and set, else `onRemove`. `"still"` shows a card while some are left (`still: true`), the icon for the last.
+  8. **A policy of `"none"`**: null.
+- **Who made it** (`byUser`): the watcher asks `ShellManager.fromScreen(mark, userWindow)`. Today `ShellManager.fromScreen(type)` maps the kind and the window through `OSDItems.onScreenKind` / `onScreenWindow` and ignores the second argument; the windows it gives are the ones the definitions declare. Stage 2 makes it `fromScreen(kind, window)`, `ShellManager.onScreen(kind)` unchanged for its callers, and `ActionsManager._osdKinds` keyed by the systems' marks. `OSD.onScreenChanges` stays the host's (an on-screen change still opens it with the switch on). A click on the OSD's own tile should mark its kind (the OSD is open, so it still shows), so a VPN taken down there is expected.
+
+### The watcher (`OSDWatch`)
+A `QtObject` (an Item's `state` is taken); what it declares inside (Connections, Timers) goes in its default `data`.
+- `definition` (set by `OSDSystemHost`), `options`.
+- `holds`: services acquired (`acquire(watch)`) on completion and released on destruction.
+- `state`: by exposed key, bound to its services; the definition's model's shape. `available: false` holds judgement.
+- `settled(key, before, after)`: false while its service is still settling (Audio: `AudioManager.sinkSettled()` / `sourceSettled()`); a change then only moves the state on.
+- `events` and `pulse(key, event)`: an event model's state (`"drive": watch.events.drive ?? ({ event: null })`), `seq` counting each one, so one like the last still counts.
+- `activate(change)`: a card's click the definition hands back.
+- `tiles` (readonly): `OSDEngine.tileOf` of each tile key.
+- `change(what)` (signal): each judged change, `OSDEngine.judge`'s with `{ system }`, in `exposes` order.
+- How it runs:
+  - A state change is judged once it's all in (`Qt.callLater`), every key against the state last judged.
+  - For its first 1.5 s nothing is reported: the changes only move the state on, while services settle.
+  - A watcher for a toggle is a few lines: `state: ({ "caffeine": { "value": IdleManager.caffeine } })`.
+
+### The host of one system (`OSDSystemHost`)
+- **Inputs:** `type`, `options`. It loads the definition (`Paths.osdSystemUrl(type)`, given `type` and `options`), then the watcher (`Paths.osdWatchUrl(type)`, given `definition` and `options`). Both load anew only as `type` changes; `options` reaches both in place.
+- **Exposes:**
+  - `definition`, `watch`;
+  - `snapshot` (the watcher's `state`), `tiles`;
+  - `change(what)` (relayed);
+  - `card(what)` (`OSDEngine.cardOf`), `actionOf(key)`;
+  - `activate(what)` (returns the id for the caller to run, else hands the click to the watcher).
+
+### Arbitration (`OSDEngine.arbitrate(shown, incoming, elapsed, defs)`)
+`shown` / `incoming`: `{ system, key, part, card (bool), tile (that key's tile now) }`; `elapsed` ms since `shown` came; `defs` the definitions by system. Returns:
+- **Against a card out** (`shown.card`):
+  - a card: `"replace"` (it swaps in) or `"keep"` (the same change: the first card says it);
+  - a change without one (a tile or a bar): `"retract"` (the card folds back, the change shows), `"suppress"` (nothing shows) or `"beside"` (it shows beside the card).
+- **Against the ringed tile** (`shown.card` false; only a tile change without a card asks): `"replace"` (it takes the ring) or `"keep"` (nothing shows).
+
+The rules, in order:
+1. **Retract:** against a card, a change of the same system and key without a card, with the system's `retractsCardWhenOff` and its tile not `on`, is `"retract"`, at any age.
+2. **Past the quiet window** (`elapsed >= OSDEngine.quietWindow`, 2000): no knock-on.
+3. **A knock-on**, within the window: `incoming`'s system lists `shown`'s in `knockOnOf`; or another system that `shown`'s `absorbs(shown, incoming)`; or (against a card only) the same system, whose `sameChange(shown, incoming)` says so. It makes a card `"keep"`, a change without one `"suppress"`, and the ring `"keep"`.
+4. **Else** a card `"replace"`s, a change without one shows `"beside"`, and a tile takes the ring.
+
+A host asks in this order (`tst_OSDSystems` simulates it):
+- **A card:** with no card out it opens; else arbitrate against the card.
+- **A bar:** against a card out (`"suppress"` or `"beside"`), else it opens.
+- **A tile:**
+  - against a card out first (`"suppress"` ends it, `"retract"` folds it back);
+  - then against the ring (`"keep"` ends it);
+  - else it takes the ring.
+- **No ring** for a key without a tile part (a message).
+
+**How each old branch maps** (`OSDItems.replaces` / `besideCard`, `OSDContent.showStatus`):
+
+| Old branch | Declaration |
+|---|---|
+| `elapsed >= quietWindow` → replaces | rule 2 |
+| `shown === "message"` card: gives way only to a card | default: the Message system's `sameChange` is the default (same key, no card), and a message never comes without its card, so a card replaces it and anything else shows beside; no tile, so no ring |
+| airplane ringed, `wifi` / `bluetooth` within the window → keep the ring | Wifi and Bluetooth `knockOnOf: ["Airplane"]` |
+| `shownCard` false → replaces (the ring) | rule 4 |
+| same type, no card, `vpn` / `wifi` / `charger` off → retract (`besideCard`, any age) | `retractsCardWhenOff: true` on Vpn, Wifi and Battery (Battery's `battery` key never comes without its card) |
+| same type, no card, still on → suppress (the other half of a VPN switch, a capture stopping as it starts, Wi-Fi still on) | default `sameChange` (same key, no card) |
+| camera ↔ micUse cards from one app → keep (one card says both) | Privacy's `sameChange`: with a card, the other of `camera` / `micUse` sharing an app |
+| a capture stopping beside another capture's card → beside | Privacy's `sameChange` without a card: the same key only |
+| audio ↔ microphone cards, same device → keep (a headset) | Audio's `sameChange`: with a card, the other key holding the same device (`tile.device`) |
+| audio ↔ microphone card, another device, or the same key again → replace | Audio's `sameChange` false |
+| audio / microphone no card (a mute) after a device card → suppress | Audio's `sameChange` without a card: any of its keys |
+| (new) a device's level arriving late after its card → no bars beside it | the same: a bar is one of Audio's keys, and bars now arbitrate too (issues.md: "A device's own level arriving late brings the OSD's bars out beside its card") |
+| (new) a Bluetooth headset's card takes in Audio's switch to it | Bluetooth's `absorbs(own, other)`: Audio's change to its address |
+| a card replaces any ring (`showStatus`' card branch never asks the ring) | a host asks a card only against a card out |
+
+### Routing (`OSDEngine.opensCard` / `cardRoute` / `shownAs`)
+Over the new OSD entry shape `{ enabled, cardsEnabled, systems: [{ type, tile, card, quiet, … }] }` (`OSDEngine.itemOf(osd, type)` finds an item):
+- `opensCard(osd, type)`: an enabled OSD with its cards on, listing the system with its `card` not false and not `quiet`. This replaces `OSDItems.opensCard`, whose card-only types are now systems with only a card part.
+- `cardRoute(osds, type, notify)`: `"osd"` when one opens it, else `"notification"` with `notify`, else `""`.
+- `shownAs(osd, change, hasTile)`: what a change shows on that OSD.
+  - A card stays a card while the OSD's and the item's cards are on.
+  - Else it shows as its tile, when the key has one and the item's `tile` isn't false; else nothing.
+  - A tile shows only under the same tile condition.
+  - A level shows as a level.
+
+### The parts (`OSDParts`)
+`parts`, `rowTypes(keys, tiles, mode, kept)`, `partOrder`, `sharedDeadlines`, `partsDue`: moved from `OSDItems` unchanged (What shows above), tested in `tst_OSDParts`.
+
+### Timelines (`tests/tst_OSDSystems.qml`, `tests/osd/`)
+The spec of every system's behaviour.
+- **Files:** `tests/osd/index.js` lists the row files by name (`files: { "<System>": <its rows> }`, each `.import`ed), one `.pragma library` file per system (`tests/osd/<System>.js`, `var rows = [...]`) and `Cross.js` for rows across systems.
+- **What it runs:** the pure definition (loaded from its path by `Qt.createComponent`) and `OSDEngine`, with no watcher and no settle window. A row of a system with no folder yet is skipped, as `SKIP` (that allowance goes once every system exists).
+- **A row:**
+  - `name`;
+  - `systems` (default: the file's name);
+  - `options` (the item's settings, by system or for the only one);
+  - `host` (what's out at the start: `{ card: { system, key, at }, ring: { system, key, at } }`);
+  - `steps`.
+- **A step:**
+  - `system` (default: the row's first);
+  - `at` (ms; default 3000 after the last, past the quiet window);
+  - `state`: by key, laid over that system's state (a key given replaces it; `null` deletes it; one not given keeps the very same object, so an event isn't seen anew);
+  - `byUser` (default false);
+  - `settled` (default true; or by key);
+  - `expect`.
+- **The first step** of a system is its first reading: nothing shows.
+- **`expect`:**
+  - Omitted or `"none"`: nothing shows.
+  - An object: exactly one change. An array: those, in `exposes` order.
+  - Each may hold:
+    - `key`, `show` (both checked first, as a list);
+    - any field of the change (`kind`, `still`, `unexpected`, `added`, `removed`, `left`, `byUser`);
+    - `tile` (a subset of `OSDEngine.tileOf` for the key after the step) and `card` (a subset of `OSDEngine.cardOf`; `null`: none);
+    - `host`: the simulated host's decision. For a card it's `"open"`, `"replace"` or `"keep"`. For a tile it's `"ring"`, `"keep"`, `"beside"`, `"suppress"` or `"retract"`. For a bar it's `"open"`, `"beside"` or `"suppress"`.
+- A subset compares objects field by field, anything else exactly.
+- **Example:**
+  ```js
+  { "name": "turned on: its icon, lit and unusual",
+    "steps": [
+      { "at": 0, "state": { "caffeine": { "value": false } } },
+      { "at": 3000, "state": { "caffeine": { "value": true } },
+        "expect": { "key": "caffeine", "show": "tile", "kind": "add", "tile": { "on": true, "notable": true }, "host": "ring" } } ] }
+  ```
