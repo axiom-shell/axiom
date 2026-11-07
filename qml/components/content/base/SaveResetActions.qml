@@ -6,8 +6,9 @@ import qs.components.reusable
 import qs.config
 import qs.services.ui
 
-// Save and Discard (both shown while `dirty`, or while a box in this window
-// holds typed text: EditsManager.typingField) for whichever service owns a
+// Save and Discard (both shown while `dirty`, Discard only with `canReset`,
+// or while a box in this window holds typed text:
+// EditsManager.typingField) for whichever service owns a
 // page's pending edits. Save commits that text first, Discard drops it;
 // `reset` drops the edits back to what's saved. `compact` drops the labels
 // to icons with tooltips, for headers too narrow for both.
