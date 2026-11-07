@@ -283,7 +283,7 @@ A `QtObject` (an Item's `state` is taken); what it declares inside (Connections,
 - **Opening:** `open` (the host's `isOpen`) calls each watcher's `opened()`; `OSDTriggers` only pokes the host and answers the Show button.
 
 ### Arbitration (`OSDEngine.arbitrate(shown, incoming, elapsed, defs)`)
-`shown` / `incoming`: whole judged changes (`judge()`'s: `key`, `part`, `kind`, `card` (bool), `still`, `unexpected`, `alert`, `added`, `removed`, `left`, `at`, `byUser`), each with its `system` and `tile` (that key's tile now); `sameChange` and `absorbs` read any of it. A host keeps the whole change of its card and of its ring for this; `elapsed` ms since `shown` came; `defs` the definitions by system. Returns:
+`shown` / `incoming`: whole judged changes (`judge()`'s: `key`, `part`, `kind`, `card` (bool), `still`, `unexpected`, `alert`, `added`, `removed`, `left`, `at`, `byUser`), each with its `system` and `tile` (that key's tile as the change came); `sameChange` and `absorbs` read any of it. A host keeps the whole change of its card and of its ring for this; `elapsed` ms since `shown` came; `defs` the definitions by system. Returns:
 - **Against a card out** (`shown.card`):
   - a card: `"replace"` (it swaps in) or `"keep"` (the same change: the first card says it);
   - a change without one (a tile or a bar): `"retract"` (the card folds back, the change shows), `"suppress"` (nothing shows) or `"beside"` (it shows beside the card).

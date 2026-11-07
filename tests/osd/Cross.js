@@ -208,7 +208,7 @@ var rows = [
   {
     "name": "another system's bar beside a device card: beside it",
     "systems": ["Audio", "Brightness"],
-    "options": { "Audio": audioOpts, "Brightness": { "allMonitors": false, "icon": "", "showOsd": true } },
+    "options": { "Audio": audioOpts, "Brightness": { "allMonitors": false, "icon": "" } },
     "steps": [
       { "system": "Audio", "at": 0, "state": audioStart() },
       { "system": "Brightness", "at": 0, "state": { "brightness": { "available": true, "level": 0.5, "setAt": 0 } } },

@@ -8,7 +8,7 @@
 //               screen has no controller (the bar is left out); a level
 //               counts only within 500 ms of `setAt` (`countsWithin`)
 
-var opts = { "allMonitors": false, "icon": "", "showOsd": true };
+var opts = { "allMonitors": false, "icon": "" };
 
 var rows = [
   {
