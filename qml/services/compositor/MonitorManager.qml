@@ -119,7 +119,7 @@ Singleton {
     let index = _named(local.items, CompositorConfigManager.monitorProfile);
     let edited = false;
     if (index < 0) {
-      local.items.push(_newProfile(local.items.length));
+      local.items.push(_newProfile(local.items));
       index = local.items.length - 1;
       edited = true;
     } else {
@@ -168,9 +168,9 @@ Singleton {
     }
   }
 
-  function _uniqueName(name) {
+  function _uniqueName(name, items) {
     let result = name;
-    for (let n = 2; profiles.some(profile => profile.name === result); n++)
+    for (let n = 2; items.some(profile => profile.name === result); n++)
       result = `${name} (${n})`;
     return result;
   }
@@ -182,10 +182,14 @@ Singleton {
     return draft.local?.items?.[selectedProfile]?.outputs?.find(r => r.output === output);
   }
 
-  // A profile from how the monitors are now, named after its place
-  function _newProfile(count) {
+  // A profile to add to `items` (the draft's list) from how the monitors
+  // are now, named after its place, with an id unique in the list (the
+  // schema requires one)
+  function _newProfile(items) {
+    const name = _uniqueName(I18n.tr("Layout {0}", items.length + 1), items);
     return {
-      "name": _uniqueName(I18n.tr("Layout {0}", count + 1)),
+      "id": Utils.newId(Utils.slug(name) || "layout", items),
+      "name": name,
       "outputs": outputs.map(monitor => MonitorLayout.ruleFromMonitor(monitor, outputs))
     };
   }
@@ -218,7 +222,7 @@ Singleton {
   }
 
   function newProfile() {
-    draft.local.items.push(_newProfile(profiles.length));
+    draft.local.items.push(_newProfile(draft.local.items));
     draft.changed();
     selectProfile(draft.local.items.length - 1);
   }
