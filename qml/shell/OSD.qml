@@ -26,7 +26,9 @@ Scope {
       property LastFound _held: LastFound {
         source: entry._found
       }
-      readonly property var osd: entry._held.value
+      // (in the shape the old parts read until the host's rewrite:
+      // OSDItems.legacyEntry)
+      readonly property var osd: OSDItems.legacyEntry(entry._held.value)
       readonly property var screens: entry._found ? General.screensFor(entry._found.screen) : []
 
       Variants {

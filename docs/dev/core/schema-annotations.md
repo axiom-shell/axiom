@@ -36,8 +36,8 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - A new setting inside a look section that names a monitor, path or account needs `machine`; one that runs something (a command, a terminal) `commands`; a preference that means something on any PC `personal`.
 - `x-scopeIf: { when, scope }` (on an array's item schema): an item that matches `when` (`x-showIf`'s form, over the item's keys) has `scope` as its own: an exec bind is `commands`, an app's OSD bar `personal`.
 - `x-monitorRef` (`"off"` | `"drop"`, on a per-monitor part's `monitor`): a shared file names the monitor by its place, and a part for a place the user has no monitor for is turned off or left out (`share.Apply`).
-- `x-libraryGroups` (root) lists in order the groups the bar editor's and layouts editor's libraries sort their types into (by category).
-  - Each bar widget and overlay module definition joins one with `x-libraryGroup` (`methods/LibraryOrder`, `reusable/TypeLibrary`).
+- `x-libraryGroups` (root) lists in order the groups the bar editor's, layouts editor's and OSD editor's libraries sort their types into (by category; the last seven are the OSD systems': Keys & input, Audio, Connections, Power, Privacy, Capture, Events).
+  - Each bar widget, overlay module and OSD system definition joins one with `x-libraryGroup` (`methods/LibraryOrder`, `reusable/TypeLibrary`).
   - `check_structure.py` errors on an unknown group.
 
 ### Hand-built parts

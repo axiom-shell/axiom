@@ -1,0 +1,23 @@
+label: Brightness
+icon: brightness_6
+group: Power
+tile:
+  variant: standard
+  tile: {title: Bar, description: Its bar in the OSD.}
+settings:
+  allMonitors:
+    type: boolean
+    title: All monitors
+    default: false
+    description: Set every monitor at once, instead of only the OSD's.
+  icon:
+    type: string
+    x-control: icon
+    title: Icon
+    default: ''
+    description: A Material Symbols name, or text. Empty follows what it shows.
+  showOsd:
+    type: boolean
+    title: Opens the OSD
+    default: true
+    description: Off, it still shows while the OSD is open.

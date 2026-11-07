@@ -7,7 +7,7 @@ import "osd/index.js" as Timelines
 // system's definition (systems/<Name>/<Name>.qml, loaded by its path) and
 // OSDEngine, step by step, and checks what each step shows and what a host
 // does with it. The row format: docs/dev/features/osd.md › Engine ›
-// Timelines. Rows of a system with no folder yet are skipped
+// Timelines. Rows of a system with no folder yet, or a stub, are skipped
 TestCase {
   id: root
   name: "OSDSystems"
@@ -68,6 +68,9 @@ TestCase {
       const def = root.definition(type);
       if (!def)
         skip(type + " has no system folder yet");
+      // A stub (its folder made for its schema, its port to come)
+      if (def.stub === true)
+        skip(type + " isn't ported yet (a stub)");
       def.options = (row.options ?? {})[type] ?? row.options ?? {};
       defs[type] = def;
     }

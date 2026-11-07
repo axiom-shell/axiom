@@ -17,30 +17,45 @@ QtObject {
   // (ShellManager.fromScreen) opens an OSD too
   readonly property bool onScreenChanges: _c.onScreenChanges
   // [OSDEntry] (see the schema): each with its id, screen (a ScreenTarget),
-  // place, `bars` (their layout and items, { type, icon, showOsd, … }),
-  // `statuses` ({ row, items, quiet }: the status types shown as icons)
-  // and `media` (the now playing card). Goes through a string so a reload
-  // that leaves the list unchanged doesn't rebuild the OSDs.
+  // place, `barLayout`, `row`, `cardsEnabled` / `cardTimeout` and
+  // `systems` (what it shows, in order: [{ type, tile, card, quiet, …its
+  // own settings }], an OSDSystem each). Goes through a string so a
+  // reload that leaves the list unchanged doesn't rebuild the OSDs.
   readonly property string _osdsJson: JSON.stringify(_c.items)
   readonly property var osds: JSON.parse(_osdsJson)
   // The enabled ones, by id: what the shell builds
   readonly property var shownIds: osds.filter(osd => osd.enabled).map(osd => osd.id)
-  // The streams the App bars of every OSD match, which the Other apps bars
-  // skip
-  readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.bars.items.filter(item => item.type === "app").map(item => item.apps))))
+  // The streams the App bars of every OSD's Audio match, which the Other
+  // apps bars skip
+  readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.systems.filter(item => item.type === "Audio").map(item => [].concat(...item.bars.filter(bar => bar.type === "app").map(bar => bar.apps))))))
 
   // An event card shown on an OSD (a drive, the battery, a monitor, a
   // screenshot, a message) is also filed in the notification history,
   // without a popup (NotificationManager.announce)
   readonly property bool cardsToHistory: _c.cardsToHistory
 
-  // Where an event goes (OSDItems.cardRoute): "osd" (an OSD opens its
-  // card: OSDItems.opensCard),
-  // else "notification" with `notify` (its section's switch:
-  // Battery.notify, Drives.notify, Monitors.notify, Screenshots.notify),
-  // else "" (nowhere)
+  // The system an event type (NotificationManager.announce's) belongs to
+  readonly property var _eventSystems: ({
+      "drive": "Drives",
+      "battery": "Battery",
+      "monitor": "Monitors",
+      "screenshot": "Screenshot",
+      "bluetooth": "Bluetooth"
+    })
+
+  // Where an event of `type` (drive, battery, monitor, screenshot,
+  // bluetooth) goes (OSDEngine.cardRoute, by its system): "osd" (an OSD
+  // opens its card: OSDEngine.opensCard; the low battery's only where
+  // Battery shows its battery icon), else "notification" with `notify`
+  // (its section's switch: Battery.notify, Drives.notify,
+  // Monitors.notify, Screenshots.notify), else "" (nowhere)
   function routeOf(type, notify) {
-    return OSDItems.cardRoute(root.osds, type, notify);
+    const system = root._eventSystems[type];
+    const osds = type !== "battery" ? root.osds : root.osds.filter(osd => {
+      const item = OSDEngine.itemOf(osd, system);
+      return item !== null && item.tiles.includes("battery");
+    });
+    return OSDEngine.cardRoute(osds, system, notify);
   }
 
   function osdById(id) {
@@ -48,34 +63,46 @@ QtObject {
   }
 
   // The OSD a message goes to (`axiom message`) as its card: the one of
-  // that id, else (`id` "") the first, of those that pick Messages under
-  // their cards (OSDItems.opensCard); "" with none: it's a notification
+  // that id, else (`id` "") the first, of those that show Messages
+  // (OSDEngine.opensCard); "" with none: it's a notification
   function messageOsd(id) {
-    const showing = osds.filter(osd => OSDItems.opensCard(osd, "message"));
+    const showing = osds.filter(osd => OSDEngine.opensCard(osd, "Message"));
     const pick = id !== "" ? showing.find(osd => osd.id === id) : showing[0];
     return pick ? pick.id : "";
   }
 
-  // A bar's or status type's name, translated: its label in the schema
-  // (x-enumLabels of a bar's type and of the statuses)
-  readonly property var _typeLabels: {
-    const entry = ConfigManager.configSchema?.definitions?.OSDEntry?.properties;
-    return Object.assign({}, entry?.bars?.properties?.items?.items?.properties?.type?.["x-enumLabels"], entry?.statuses?.properties?.items?.["x-enumLabels"]);
+  // The OSD systems' definitions in the schema (the OSDSystem kind's
+  // oneOf), by type
+  readonly property var _systemDefs: {
+    const schema = ConfigManager.configSchema;
+    const out = {};
+    for (const option of schema.definitions.OSDSystem.oneOf) {
+      const def = schema.definitions[option.$ref.replace("#/definitions/", "")];
+      out[def.properties.type.const] = def;
+    }
+    return out;
   }
+  // An Audio bar's kind's English name (its schema's x-enumLabels)
+  readonly property var _audioBarLabels: root._systemDefs.Audio.properties.bars.items.properties.type["x-enumLabels"]
+
+  // A system's name, translated: its label in the schema (its type's
+  // description); "" for one there isn't
   function nameOf(type) {
-    const english = root._typeLabels[type];
+    const english = root._systemDefs[type]?.properties.type.description;
     return english ? I18n.tr(english) : "";
   }
 
-  // The name on its tab: its own, else its bars', else its status icons'
-  // (so the default isn't named by all of them), else Now playing
+  // The name on its tab: its own, else its bars', else what it shows as
+  // icons (so the default isn't named by all of them), else Now playing
   function labelOf(osd) {
     if (osd.name)
       return osd.name;
-    const bars = osd.bars.items.map(item => item.type === "app" ? (item.apps.join(" / ") || I18n.tr("An app")) : root.nameOf(item.type));
-    const parts = bars.length > 0 ? bars : osd.statuses.items.map(type => root.nameOf(type)).filter(name => name !== "");
+    const shown = osd.systems.filter(item => item.tile !== false);
+    const bars = [].concat(...shown.map(item => item.type === "Brightness" ? [root.nameOf("Brightness")] : item.type === "Audio" ? item.bars.map(bar => bar.type === "app" ? (bar.apps.join(" / ") || I18n.tr("An app")) : I18n.tr(root._audioBarLabels[bar.type])) : []));
+    // (a system with no tile switch is only ever a card)
+    const parts = bars.length > 0 ? bars : shown.filter(item => root._systemDefs[item.type]?.properties.tile !== undefined).map(item => root.nameOf(item.type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");
-    return osd.cards.enabled && osd.cards.items.includes("media") ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
+    return osd.cardsEnabled && OSDEngine.itemOf(osd, "Media") !== null ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
   }
 }

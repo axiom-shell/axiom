@@ -1,0 +1,12 @@
+label: Now playing
+icon: music_note
+group: Audio
+settings:
+  onTrackChange:
+    type: boolean
+    title: On a new track
+    default: true
+  onPlayPause:
+    type: boolean
+    title: On play and pause
+    default: false

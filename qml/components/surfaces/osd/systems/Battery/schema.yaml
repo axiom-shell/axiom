@@ -1,0 +1,13 @@
+label: Battery and charger
+icon: battery_alert
+group: Power
+tile: standard
+card: standard
+settings:
+  tiles:
+    type: array
+    title: Shows
+    items: {type: string, enum: [charger, battery]}
+    x-enumLabels: {charger: Charger, battery: Low battery}
+    x-enumIcons: {charger: power, battery: battery_alert}
+    default: [charger, battery]

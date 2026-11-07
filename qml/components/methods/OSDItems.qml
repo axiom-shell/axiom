@@ -389,6 +389,85 @@ QtObject {
     return notify ? "notification" : "";
   }
 
+  // Stop-gap until the OSD's host is rewritten (stage 2 of the OSD
+  // engine): an OSD entry of the systems shape (config v101) as the old
+  // parts read it, `bars` ({ orientation, alongEdge, showPercent, items
+  // }), `statuses` ({ row, items, quiet }) and `cards` ({ enabled,
+  // timeout, items, onTrackChange, onPlayPause }). A system with its
+  // `tile` off shows no icons or bars; a quiet one's bars don't open the
+  // OSD; a card-only one counts only with its card on and not quiet
+  function legacyEntry(osd) {
+    if (!osd)
+      return osd;
+    const lists = {
+      "LockKeys": "keys",
+      "Audio": "tiles",
+      "Privacy": "kinds",
+      "Battery": "tiles"
+    };
+    const single = {
+      "KeyboardLayout": "keyboardLayout",
+      "PowerProfile": "powerProfile",
+      "Caffeine": "caffeine",
+      "Dnd": "dnd",
+      "NightLight": "nightLight",
+      "Airplane": "airplane",
+      "Wifi": "wifi",
+      "Bluetooth": "bluetooth",
+      "Vpn": "vpn",
+      "Drives": "drive",
+      "Recording": "recording"
+    };
+    const cardOnly = {
+      "Monitors": "monitor",
+      "Screenshot": "screenshot",
+      "Message": "message",
+      "Media": "media"
+    };
+    const bars = [], items = [], quiet = [], cards = [];
+    let media = null;
+    for (const item of osd.systems) {
+      const shows = item.tile !== false;
+      if (item.type === "Audio" && shows)
+        bars.push(...item.bars.map(bar => Object.assign({}, bar, {
+            "showOsd": bar.showOsd && item.quiet !== true
+          })));
+      else if (item.type === "Brightness" && shows)
+        bars.push({
+          "type": "brightness",
+          "allMonitors": item.allMonitors,
+          "icon": item.icon,
+          "showOsd": item.showOsd && item.quiet !== true
+        });
+      const keys = lists[item.type] ? item[lists[item.type]] : single[item.type] ? [single[item.type]] : [];
+      if (shows)
+        items.push(...keys);
+      if (item.quiet === true)
+        quiet.push(...keys);
+      if (cardOnly[item.type] && item.card !== false && item.quiet !== true)
+        cards.push(cardOnly[item.type]);
+      if (item.type === "Media")
+        media = item;
+    }
+    return Object.assign({}, osd, {
+      "bars": Object.assign({}, osd.barLayout, {
+        "items": bars
+      }),
+      "statuses": {
+        "row": osd.row,
+        "items": items,
+        "quiet": quiet
+      },
+      "cards": {
+        "enabled": osd.cardsEnabled,
+        "timeout": osd.cardTimeout,
+        "items": cards,
+        "onTrackChange": media ? media.onTrackChange : true,
+        "onPlayPause": media ? media.onPlayPause : false
+      }
+    });
+  }
+
   // A drive event's card (DrivesManager.lastEvent's kinds): its icon and
   // what happened (English)
   readonly property var _driveCards: ({

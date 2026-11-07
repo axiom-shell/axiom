@@ -258,6 +258,73 @@ TestCase {
     compare(OSDItems.cardRoute(row.osds, "drive", row.notify), row.want);
   }
 
+  function test_legacyEntry() {
+    const old = OSDItems.legacyEntry({
+      "id": "a",
+      "enabled": true,
+      "barLayout": {
+        "orientation": "horizontal",
+        "alongEdge": false,
+        "showPercent": true
+      },
+      "row": "all",
+      "cardsEnabled": true,
+      "cardTimeout": 4000,
+      "systems": [
+        {
+          "type": "Audio",
+          "tile": true,
+          "quiet": false,
+          "bars": [
+            {
+              "type": "master",
+              "showOsd": true
+            }
+          ],
+          "tiles": ["audio"]
+        },
+        {
+          "type": "Brightness",
+          "tile": true,
+          "quiet": true,
+          "allMonitors": false,
+          "icon": "",
+          "showOsd": true
+        },
+        {
+          "type": "LockKeys",
+          "tile": false,
+          "quiet": true,
+          "keys": ["capsLock", "numLock"]
+        },
+        {
+          "type": "Drives",
+          "tile": true,
+          "quiet": false
+        },
+        {
+          "type": "Message",
+          "quiet": false
+        },
+        {
+          "type": "Media",
+          "quiet": false,
+          "onTrackChange": false,
+          "onPlayPause": true
+        }
+      ]
+    });
+    compare(old.id, "a");
+    compare(old.bars.orientation, "horizontal");
+    compare(old.bars.items.map(bar => [bar.type, bar.showOsd]), [["master", true], ["brightness", false]], "a quiet system's bar doesn't open it");
+    compare(old.statuses.items, ["audio", "drive"], "a system with its tile off shows no icons");
+    compare(old.statuses.quiet, ["capsLock", "numLock"]);
+    compare(old.statuses.row, "all");
+    compare(old.cards.items, ["message", "media"]);
+    compare(old.cards.onPlayPause, true);
+    verify(OSDItems.opensCard(old, "message"));
+  }
+
   function test_opensCard_cardOnly() {
     const osd = (cards, only) => ({
           "enabled": true,

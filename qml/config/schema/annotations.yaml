@@ -39,8 +39,8 @@ x-inherit: 'a setting that may be null, and is by default, meaning the value at 
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
 x-keyboard: the module takes typing.
 x-keywords: more words a bar widget type is found by in the bar editor's library (`LibraryOrder.filtered`), such as its old label.
-x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget or overlay module type is sorted into.
-x-libraryGroups: "(root) the groups, in order, the bar editor's and layouts editor's libraries sort their types into."
+x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget, overlay module or OSD system type is sorted into.
+x-libraryGroups: "(root) the groups, in order, the bar editor's, layouts editor's and OSD editor's libraries sort their types into."
 x-link: where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition.
 x-links: 'pages its category''s header links to: a view type (`Themes`, `BarEditor`), `Layouts`, or the layouts editor on a screen (`Layouts:lockscreen`, `Layouts:greeter`, `Layouts:desktop`).'
 x-lockActions: 'what an overlay module does on the lock screen: `session`, `media`, `volume`, `layout`, `unlock` (`check_structure` fails any other service call there but a read).'

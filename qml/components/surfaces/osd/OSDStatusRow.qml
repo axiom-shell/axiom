@@ -37,6 +37,33 @@ Item {
   // Its largest size across the edge, whatever it shows (OSDContent.maxDepth)
   readonly property real maxDepth: root.tileSize
 
+  // Each type's English name (stop-gap until the host's rewrite: the names
+  // moved from the schema to the systems' `exposes`)
+  // I18n.tr("Caps Lock") I18n.tr("Num Lock") I18n.tr("Scroll Lock") I18n.tr("Keyboard layout") I18n.tr("Audio") I18n.tr("Microphone") I18n.tr("Power profile") I18n.tr("Caffeine") I18n.tr("Do not disturb") I18n.tr("Night light") I18n.tr("Wi-Fi") I18n.tr("Bluetooth") I18n.tr("Airplane mode") I18n.tr("VPN") I18n.tr("Removable drives") I18n.tr("Charger") I18n.tr("Low battery") I18n.tr("Screen recording") I18n.tr("Camera") I18n.tr("Microphone in use") I18n.tr("Screen sharing")
+  readonly property var _names: ({
+      "capsLock": "Caps Lock",
+      "numLock": "Num Lock",
+      "scrollLock": "Scroll Lock",
+      "keyboardLayout": "Keyboard layout",
+      "audio": "Audio",
+      "microphone": "Microphone",
+      "powerProfile": "Power profile",
+      "caffeine": "Caffeine",
+      "dnd": "Do not disturb",
+      "nightLight": "Night light",
+      "wifi": "Wi-Fi",
+      "bluetooth": "Bluetooth",
+      "airplane": "Airplane mode",
+      "vpn": "VPN",
+      "drive": "Removable drives",
+      "charger": "Charger",
+      "battery": "Low battery",
+      "recording": "Screen recording",
+      "camera": "Camera",
+      "micUse": "Microphone in use",
+      "screenShare": "Screen sharing"
+    })
+
   // As a string, so an edit elsewhere in the OSD doesn't rebuild the tiles
   readonly property string _allKey: root.allTypes.join(",")
 
@@ -66,7 +93,7 @@ Item {
         readonly property bool canToggle: root.toggleable.includes(tile.modelData)
         // I18n.tr("{0}: on") I18n.tr("{0}: off") I18n.tr("{0}: {1}") I18n.tr("{0}: {1}, muted")
         readonly property string tip: {
-          const name = OSDConfig.nameOf(tile.modelData);
+          const name = I18n.tr(root._names[tile.modelData] ?? "");
           const value = tile.t.name || tile.t.label;
           if (tile.t.name && tile.t.slash)
             return I18n.tr("{0}: {1}, muted", name, value);
