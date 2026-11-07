@@ -481,6 +481,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Tooling, tests and CI
 
+### guard.py judges daemon calls and the radio only by argv
+- **Where:** `.claude/hooks/guard.py` (`check_bluetooth`, `scratch_system_bus`, `axiom_live_display`)
+- **What:** every daemon-RPC rule matches the method name in the command's arguments, so a request fed from stdin or a file (`socat - UNIX-CONNECT:… < req.json`, `nc -U`) or sent by another program (`node`) passes; a write straight to `/dev/rfkill` isn't judged; and `scratch_system_bus` takes `unix:path=/run/dbus/../dbus/system_bus_socket` for a scratch bus (it compares the string, not the resolved path). Fix: resolve the bus path before comparing; refuse writes to `/dev/rfkill`; judge a redirect or pipe into a socket client by its input file where it's one.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
 ### guard.py doesn't judge qs ipc call
 - **Where:** `.claude/hooks/guard.py` (`check_axiom`, `check_argv`)
 - **What:** the rules on IPC targets read `axiom ipc …` only: `axiom ipc lockscreen lock` is refused, `qs ipc call lockscreen lock` passes `guard.check` (tried), and so does every other target a rule names (`bluetooth disable`, `onboarding`, …). Fix: judge `qs ipc call <target> <fn>` (and `qs ipc --pid … call`, `--newest`) as `axiom ipc <target> <fn>`, a test case each.
