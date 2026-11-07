@@ -396,31 +396,36 @@ func StripsRuntimeLua(lines []string, key string) []string {
 		`  hl.dispatch(hl.dsp.exec_cmd("hyprctl reload"))`, "end")
 }
 
-// MonitorSpec is HyprLua.monitorSpec: a monitor rule as hl.monitor()'s spec.
+// MonitorSpec is HyprLua.monitorSpec: a monitor rule as hl.monitor()'s
+// spec, every key given but vrr off. An hl.monitor() call changes only
+// the keys it names (Hyprland 0.57 keeps a mirror, a rotation, the bit
+// depth, the colour and "disabled" from the output's last rule), so a
+// rule leaving one out wouldn't undo it: Apply's revert would leave a
+// mirror on. vrr 0 is left out: a rule's vrr, once given, overrides
+// misc:vrr (Compositor's Variable refresh rate) for that output. A
+// disabled rule needs no more: turning the output on again sends every
+// key.
 func MonitorSpec(rule any) *jsonx.Object {
 	if truthy(get(rule, "disabled")) {
 		return jsonx.Obj("output", get(rule, "output"), "disabled", true)
 	}
 	spec := jsonx.Obj("output", get(rule, "output"), "mode", jsOr(get(rule, "mode"), "preferred"),
 		"position", fmtNum(round(num(or(get(rule, "x"), 0.0))))+"x"+fmtNum(round(num(or(get(rule, "y"), 0.0)))),
-		"scale", or(get(rule, "scale"), 1.0))
-	for _, k := range []string{"transform", "mirror", "vrr"} {
-		if v := get(rule, k); truthy(v) {
-			spec.Set(k, v)
-		}
+		"scale", or(get(rule, "scale"), 1.0), "disabled", false)
+	spec.Set("transform", or(get(rule, "transform"), 0.0))
+	// "none" (as hyprctl says it) names no output: the mirror ends
+	spec.Set("mirror", jsOr(get(rule, "mirror"), "none"))
+	if v := get(rule, "vrr"); truthy(v) {
+		spec.Set("vrr", v)
 	}
 	if get(rule, "bitdepth") == 10.0 {
 		spec.Set("bitdepth", 10.0)
+	} else {
+		spec.Set("bitdepth", 8.0)
 	}
-	if cm := get(rule, "cm"); truthy(cm) && cm != "auto" {
-		spec.Set("cm", cm)
-	}
-	if v, ok := prop(rule, "sdrBrightness"); ok && v != 1.0 {
-		spec.Set("sdrbrightness", v)
-	}
-	if v, ok := prop(rule, "sdrSaturation"); ok && v != 1.0 {
-		spec.Set("sdrsaturation", v)
-	}
+	spec.Set("cm", jsOr(get(rule, "cm"), "auto"))
+	spec.Set("sdrbrightness", or(get(rule, "sdrBrightness"), 1.0))
+	spec.Set("sdrsaturation", or(get(rule, "sdrSaturation"), 1.0))
 	return spec
 }
 
@@ -452,14 +457,32 @@ func InlineSpec(spec *jsonx.Object) string {
 // (outputs.apply); mirrorName gives the connector a mirror target is on
 // (MirrorNames), or "".
 func MonitorCalls(rules any, mirrorName any) []string {
+	return monitorCalls(rules, mirrorName, nil)
+}
+
+// RevertMonitorCalls is MonitorCalls for rules that picture the outputs
+// as they were (the Monitors page's revert): vrr is always said, so a
+// trial that turned VRR on doesn't leave it on. A rule's vrr 0 is sent as
+// globalVrr (misc:vrr as Hyprland has it): Hyprland reads vrr 2 back as
+// off outside fullscreen, so 0 there may mean the global setting. The
+// rule overrides misc:vrr for the output only until the config next loads.
+func RevertMonitorCalls(rules any, mirrorName any, globalVrr float64) []string {
+	return monitorCalls(rules, mirrorName, &globalVrr)
+}
+
+func monitorCalls(rules any, mirrorName any, globalVrr *float64) []string {
 	var out []string
 	for _, rule := range items(rules) {
 		spec := MonitorSpec(rule)
-		if m, ok := spec.Get("mirror"); ok {
+		if _, ok := spec.Get("vrr"); globalVrr != nil && !ok && !truthy(get(rule, "disabled")) {
+			spec.Set("vrr", *globalVrr)
+		}
+		// A mirror of an output not connected is none
+		if m, ok := spec.Get("mirror"); ok && m != "none" {
 			if name := call(mirrorName, m); truthy(name) {
 				spec.Set("mirror", name)
 			} else {
-				spec.Delete("mirror")
+				spec.Set("mirror", "none")
 			}
 		}
 		out = append(out, "hl.monitor("+InlineSpec(spec)+")")

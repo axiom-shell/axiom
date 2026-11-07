@@ -348,6 +348,94 @@ QtObject {
     };
   }
 
+  // Whether rules would change the connected monitors (each rule for one
+  // that's connected, against how it is now): turned on or off, mirroring
+  // another, or its position, scale, rotation or mode (a "preferred" one
+  // is the monitor's own pick: left out). A mirror's position isn't
+  // compared (it shows the other's). Neither are vrr, the bit depth or
+  // the colour: what Hyprland reads back isn't what the rule asked (vrr 2
+  // reads off outside fullscreen, cm "auto" as the preset it picked).
+  // Apply shows while they differ, so a layout the compositor didn't take
+  // (or a revert that missed) can always be applied again. Where the
+  // compositor can't mirror (`canMirror` false: niri, sway), a rule's
+  // mirror is set aside, as applying it does: the output is placed by
+  // its position.
+  function differsFromLive(rules, monitors, canMirror) {
+    const name = output => canMirror === false ? "" : find(output, monitors)?.name ?? "";
+    return (rules ?? []).some(rule => {
+      const monitor = find(rule.output, monitors);
+      if (!monitor)
+        return false;
+      const now = ruleFromMonitor(monitor, monitors);
+      if (!!rule.disabled !== now.disabled)
+        return true;
+      if (now.disabled)
+        return false;
+      if (name(rule.mirror ?? "") !== name(now.mirror))
+        return true;
+      const mode = parseMode(rule.mode);
+      if (mode && (mode.width !== monitor.width || mode.height !== monitor.height || (mode.rate > 0 && Math.abs(mode.rate - (monitor.refreshRate ?? 0)) >= 0.5)))
+        return true;
+      if ((rule.transform ?? 0) !== now.transform || !_sameScale(rule.scale ?? 1, now.scale, monitor))
+        return true;
+      return (now.mirror === "" || canMirror === false) && (Math.round(rule.x ?? 0) !== now.x || Math.round(rule.y ?? 0) !== now.y);
+    });
+  }
+
+  // Whether a monitor shows a rule's scale: Hyprland rounds one that
+  // gives no whole logical size (validScales) to a near one that does,
+  // so either valid scale around it counts
+  function _sameScale(asked, scale, monitor) {
+    if (Math.abs(asked - scale) < 0.005)
+      return true;
+    const valid = validScales(monitor.width, monitor.height);
+    if (valid.some(other => Math.abs(other - asked) < 0.0001))
+      return false;
+    const below = valid.filter(other => other < asked).pop();
+    const above = valid.find(other => other > asked);
+    return [below, above].some(other => other !== undefined && Math.abs(other - scale) < 0.005);
+  }
+
+  // Rules putting back the monitors as they are (ruleFromMonitor each),
+  // for a revert. vrr is the `saved` profile's rule's (its rules in the
+  // config) where the monitors show that rule and it has one: what
+  // Hyprland reads back is whether VRR is active now, so vrr 2 reads off
+  // outside fullscreen and on in it. A vrr still 0 is the compositor's
+  // own setting (render.RevertMonitorCalls). `canMirror` as
+  // differsFromLive takes it.
+  function snapshot(monitors, saved, canMirror) {
+    return (monitors ?? []).map(monitor => {
+      const rule = ruleFromMonitor(monitor, monitors);
+      const kept = (saved ?? []).find(other => matches(other.output, monitor));
+      if (kept?.vrr && !differsFromLive([kept], monitors, canMirror))
+        rule.vrr = kept.vrr;
+      return rule;
+    });
+  }
+
+  // `rules` with each connected monitor's rule (in `monitors`) put back as
+  // it was in effect before a trial: the `saved` profile's rule (the
+  // profile's rules in the config) where the monitors (`monitors`, as
+  // they were) showed it, so what Hyprland reads back differently (a
+  // "preferred" mode, vrr 2, cm "auto") stays as it was saved; else as
+  // `before` had it (rules from ruleFromMonitor: how the monitors were),
+  // the rule's own `output` kept. Rules for monitors not connected stay
+  // as they are. `canMirror` as differsFromLive takes it.
+  function restored(rules, before, monitors, saved, canMirror) {
+    return (rules ?? []).map(rule => {
+      const monitor = find(rule.output, monitors);
+      if (!monitor)
+        return rule;
+      const kept = (saved ?? []).find(other => other.output === rule.output);
+      if (kept && !differsFromLive([kept], monitors, canMirror))
+        return Object.assign({}, kept);
+      const was = (before ?? []).find(other => matches(other.output, monitor));
+      return was ? Object.assign({}, was, {
+        "output": rule.output
+      }) : rule;
+    });
+  }
+
   // A rule's rect in the layout, from its mode (or the monitor's own when
   // "preferred" or unreadable)
   function ruleRect(rule, monitor) {

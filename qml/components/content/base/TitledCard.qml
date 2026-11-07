@@ -15,6 +15,7 @@ Card {
   property alias dirty: header.dirty
   property alias showActions: header.showActions
   property alias canSave: header.canSave
+  property alias canReset: header.canReset
   property alias saveLabel: header.saveLabel
   // Fixed content between the divider and the scrolling body
   property alias headerExtras: extras.data

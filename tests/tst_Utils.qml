@@ -57,6 +57,29 @@ TestCase {
     compare(Utils.freeId("bar-1", ["bar-1"], "-"), "bar-2");
   }
 
+  function test_newId() {
+    compare(Utils.newId("ClockCalendar", []), "clockCalendar");
+    compare(Utils.newId("", null), "item");
+    compare(Utils.newId("clock", [
+      {
+        "id": "clock"
+      }
+    ]), "clock-2");
+    // A new monitor layout, as MonitorManager names it: "Layout 3" beside
+    // two layouts, one without an id
+    compare(Utils.newId(Utils.slug("Layout 3"), [
+      {
+        "id": "layout-1"
+      },
+      {}
+    ]), "layout-3");
+    compare(Utils.newId(Utils.slug("Layout 2"), [
+      {
+        "id": "layout-2"
+      }
+    ]), "layout-3", "a taken id is numbered on from its stem");
+  }
+
   function test_deepEqual() {
     verify(Utils.deepEqual({
       "a": 1,

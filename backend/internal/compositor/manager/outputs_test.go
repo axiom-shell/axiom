@@ -240,7 +240,7 @@ func TestBuildInputsMonitorCalls(t *testing.T) {
 	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
 	on := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9"}})
 	off := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9", Disabled: true}})
-	want := `["hl.monitor({ output = \"desc:Main\", mode = \"preferred\", position = \"0x0\", scale = 1 })","hl.monitor({ output = \"HDMI-A-1\", mode = \"preferred\", position = \"2560x0\", scale = 1 })"]`
+	want := `["hl.monitor({ output = \"desc:Main\", mode = \"preferred\", position = \"0x0\", scale = 1, bitdepth = 8, cm = \"auto\", disabled = false, mirror = \"none\", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })","hl.monitor({ output = \"HDMI-A-1\", mode = \"preferred\", position = \"2560x0\", scale = 1, bitdepth = 8, cm = \"auto\", disabled = false, mirror = \"none\", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })"]`
 	if got := string(jsonx.MarshalCompact(on.get("monitorCalls"))); got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
