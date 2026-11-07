@@ -128,6 +128,7 @@
     "A regex of terminal window classes.": "",
     "A rounded box along the whole edge around the modules.": "",
     "A saved or exported config's title, description and source. A live config.json has none.": "",
+    "A screen's part of the screenshot never arrived.": "",
     "A script's path or a command line, run by sh. Its output is the widget.": "",
     "A second line under each result.": "",
     "A separate box held off the edge, instead of growing out of it.": "",

@@ -4067,6 +4067,7 @@
     "Depends on the action: search text, a page, menu or bar id, a direction, a workspace, a theme (or random), a command, or a compositor command in its own syntax.": "",
     "None chosen. Add some from below.": "",
     "In the order shown.": "",
-    "Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": ""
+    "Any action a key can run that needs no argument, and a few tiles of their own, in the order shown. Tiles that can't work here are hidden. Log out, restart and shut down ask for a second click.": "",
+    "A screen's part of the screenshot never arrived.": ""
   }
 }

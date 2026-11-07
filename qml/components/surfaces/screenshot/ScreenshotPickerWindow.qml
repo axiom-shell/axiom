@@ -216,7 +216,9 @@ PanelWindow {
   Item {
     id: chrome
     anchors.fill: parent
-    visible: root.interactive && root.frozen && !root.grabbing
+    // Not while a capture over several screens crops its pieces: no
+    // second capture or key starts meanwhile
+    visible: root.interactive && root.frozen && !root.grabbing && ScreenshotManager.pieceRequest === null
     focus: true
 
     Keys.onPressed: event => {

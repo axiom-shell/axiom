@@ -40,7 +40,7 @@ QtObject {
   // The picker is open (or an immediate capture is running)
   property bool picking: false
   // Picking, or waiting for the launcher to close first (or for grim)
-  readonly property bool busy: root.picking || root._delay.running || root._grabbing || root._stitching
+  readonly property bool busy: root.picking || root._delay.running || root._grabbing || root._stitch !== null
   // { kind, screen: the screen an immediate `screen` capture takes }
   property var request: null
   // Keep nothing on disk, only copy (saved in Paths.statePath screenshot.json)
@@ -166,7 +166,8 @@ QtObject {
   // { stamp, pieces: [{ screen, path, rect (global) }] } while asked
   property var pieceRequest: null
   property var _across: null
-  property bool _stitching: false
+  // The stitch running ({ ours }), until it answers or a cancel drops it
+  property var _stitch: null
 
   function captureAcross(area) {
     const rounded = Qt.rect(Math.round(area.x), Math.round(area.y), Math.round(area.width), Math.round(area.height));
@@ -217,8 +218,11 @@ QtObject {
       return;
     }
     const path = root._outPath();
-    const target = root._target;
-    root._stitching = true;
+    // pick()'s path is its caller's: never removed here
+    const stitch = {
+      "ours": root._target === null
+    };
+    root._stitch = stitch;
     BackendManager.call("screenshot.stitch", {
       "pieces": across.pieces.map(p => ({
             "path": p.path,
@@ -235,11 +239,14 @@ QtObject {
       },
       "out": path
     }, error => {
-      root._stitching = false;
       root._dropPieces(across);
-      // pick()'s caller was told of a cancel meanwhile
-      if (target && root._target !== target)
+      // Cancelled meanwhile (pick()'s caller was told): no picture
+      if (root._stitch !== stitch) {
+        if (!error && stitch.ours)
+          CommandManager.runDetached(["rm", "-f", path]);
         return;
+      }
+      root._stitch = null;
       if (error)
         console.warn("[ScreenshotManager] Couldn't stitch the screenshot:", error.message);
       root._saved(path, !error);
@@ -276,6 +283,7 @@ QtObject {
     root.request = null;
     root._delay.stop();
     root._watchdog.stop();
+    root._stitch = null;
     root._callBack(false);
   }
 
@@ -579,7 +587,9 @@ QtObject {
   property Timer _watchdog: Timer {
     interval: 3000
     onTriggered: {
-      if (root.picking)
+      if (root._across)
+        root.fail(I18n.tr("A screen's part of the screenshot never arrived."));
+      else if (root.picking)
         root.fail(I18n.tr("The compositor sent no picture of the screen."));
     }
   }
