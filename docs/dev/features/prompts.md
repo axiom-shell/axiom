@@ -38,7 +38,7 @@ One prompt for every password, PIN or confirmation the system asks for. **The ru
 - `WlrLayer.Overlay`, namespace `axiom-polkit` (named for the prompt it began as: the layer rules and their recorded test cases know it so; [layer stacking](../generated/layers.md)); exclusive keyboard only on the card's screen; registered with `SurfaceManager.registerModal`, so a prompt over the overlay closes no focus grab; the dim blurs where backdrops blur (`BlurManager.backdropRegionsOn`).
 - It keeps the request drawn while the card fades out after it ends.
 - The card is a `Loader`: `PolkitCard` for `content: "polkit"`, else `PromptCard`. The window asks the card for the keyboard (`focusWanted`) when a request comes to the front, the card loads or the screen becomes its.
-- **`PromptCard`:** the icon, title and message; the code (each digit a monospace glyph, the typed ones in the accent); the fields; the error; key hints and the buttons. For 400 ms after a request shows it takes no keys and runs no action, so typing or an Enter meant for another window doesn't answer it.
+- **`PromptCard`:** the icon, title and message; the code (each digit a monospace glyph, the typed ones in the accent); the fields; the error; key hints and the buttons. For 400 ms after a request shows it takes no keys and runs no action, and neither Escape nor a click on the dim cancels it, so typing, an Enter, an Escape or a click meant for another window doesn't answer it.
 
 ### Adding a source
 - Call `PromptManager.request` from the service that owns the request (never from UI), keep the id, and `withdraw` it when the request ends elsewhere. A source that checks the answer (a password that may be wrong) sets `waits` and `update`s an `error`.

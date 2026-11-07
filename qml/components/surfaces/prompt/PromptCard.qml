@@ -113,7 +113,11 @@ FocusScope {
     root._filled = filled;
   }
 
-  Keys.onEscapePressed: PromptManager.cancel(root.requestId)
+  Keys.onEscapePressed: {
+    // Not while settling: an Escape meant for another window
+    if (root.settled)
+      PromptManager.cancel(root.requestId);
+  }
   Keys.onReturnPressed: root.act(root.primary)
   Keys.onEnterPressed: root.act(root.primary)
 

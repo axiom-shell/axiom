@@ -52,7 +52,8 @@ Card {
   ColumnLayout {
     anchors.fill: parent
     anchors.margins: root.pad
-    spacing: Widget.spacing
+    // The gap is the peripherals' own, only with both parts shown
+    spacing: 0
 
     GridLayout {
       // Hidden by size, not `visible`: a Layout misses a child shown while
@@ -110,6 +111,7 @@ Card {
       Layout.fillHeight: root.onlyPeripherals
       Layout.alignment: Qt.AlignTop
       Layout.maximumHeight: root.peripheralsShown ? Infinity : 0
+      Layout.topMargin: BatteryManager.isAvailable && root.peripheralsShown ? Widget.spacing : 0
       spacing: Widget.spacing / 2
       clip: true
 

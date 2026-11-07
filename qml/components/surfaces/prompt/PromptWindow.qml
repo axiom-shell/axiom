@@ -96,11 +96,12 @@ PanelWindow {
   }
 
   // Modal: the dimmed screen takes clicks; one cancels the request unless
-  // it says it doesn't
+  // it says it doesn't, or its card is still settling (a click meant for
+  // something else as the prompt came up)
   MouseArea {
     anchors.fill: parent
     onClicked: {
-      if (root.request && root.request.outsideCancels)
+      if (root.request && root.request.outsideCancels && (loader.item as PromptCard)?.settled === true)
         PromptManager.cancel(root.request.id);
     }
   }
