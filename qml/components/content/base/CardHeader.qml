@@ -17,6 +17,8 @@ Rectangle {
   property bool showActions: true
   // Save stays visible while dirty but is disabled when false
   property bool canSave: true
+  // Discard shows while dirty only when true (SaveResetActions.canReset)
+  property bool canReset: true
   property string saveLabel: I18n.tr("Save")
   // What the panel is for, shown on hovering a "?" after the title
   property string help: ""
@@ -88,6 +90,7 @@ Rectangle {
       visible: root.showActions
       dirty: root.dirty
       canSave: root.canSave
+      canReset: root.canReset
       saveLabel: root.saveLabel
       compact: root.width < titleText.implicitWidth + (helpIcon.visible ? helpIcon.implicitWidth + headerRow.spacing : 0) + (extrasRow.visible ? extrasRow.implicitWidth + headerRow.spacing : 0) + headerRow.spacing + fullWidth
       onSave: root.save()

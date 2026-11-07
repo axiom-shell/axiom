@@ -17,6 +17,9 @@ RowLayout {
   property bool dirty: false
   // Save stays visible while dirty but is disabled when false
   property bool canSave: true
+  // Discard shows while dirty only when true: false when `dirty` can mean
+  // something other than unsaved edits (MonitorManager.differsFromLive)
+  property bool canReset: true
   property string saveLabel: I18n.tr("Save")
   property bool compact: false
   // Width with labels, whatever `compact` is (for callers deciding it)
@@ -45,7 +48,7 @@ RowLayout {
 
   ActionButton {
     id: resetButton
-    visible: root.dirty || root._typing
+    visible: (root.dirty && root.canReset) || root._typing
     icon: "undo"
     label: I18n.tr("Discard")
     fillColor: Theme.backgroundHighlight
