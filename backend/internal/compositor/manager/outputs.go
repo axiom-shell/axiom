@@ -114,7 +114,11 @@ type profileSwitch struct {
 	// outputs as last read, nil until then
 	outputs []render.Output
 	// applied: the outputs and rules applied last ("" after a reload,
-	// which sets the outputs as the compositor's config says)
+	// which sets the outputs as the compositor's config says). The
+	// Monitors page's outputs.apply leaves it: Hyprland mirroring an
+	// output takes its wl_output away and back, a hotplug of the same
+	// outputs, and applying the saved profile again then would end the
+	// page's trial at once (seen in a nested Hyprland)
 	applied string
 }
 

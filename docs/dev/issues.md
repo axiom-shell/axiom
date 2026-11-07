@@ -272,6 +272,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Workspaces and monitors
 
+### A layout the Monitors page makes has no id, so saving it is refused
+- **Where:** `qml/services/compositor/MonitorManager.qml` (`_newProfile`, used by `_detect` and `newProfile`); `qml/config/schema/definitions/common/MonitorProfile.yaml` (`required: [id]`)
+- **What:** `_newProfile` gives a profile only `name` and `outputs`, but `MonitorProfile` requires an `id` (`useWholeScale` writes `"id": "layout-1"`). In a nested Hyprland with no saved profile (`scripts/dev/nested.sh hyprland`), the page detected a new layout and Keep logged `[ConfigManager] axiom refused the config: the change makes the config invalid Monitors.items[0].id: required field missing`: the layout wasn't saved (the draft showed nothing unsaved until the refusal came back). So does Save on a "New layout". Fix: give `_newProfile` a unique id (as `BindKeys.withIds` does for binds), with a test row if a helper makes it.
+- **Size:** trivial
+- **Found:** 2026-11-07, while testing the monitor revert fix in a nested Hyprland
+
 ### A hotplug can shift an unnamed output's block, and nothing remaps it
 - **Where:** `qml/components/methods/WorkspaceGeometry.qml` (`blockBases`), `qml/services/compositor/WorkspaceRemap.qml` (`on_BasesChanged`)
 - **What:** `blockBases` numbers the outputs no monitor profile names after the named ones, in `orderMonitors`' order, so plugging in or unplugging an unnamed output that sorts before another unnamed one moves that one's block. A hotplug never remaps (it only records the new bases), so that output's workspaces sit outside its new block, missed by its list and steps, until `axiom ipc workspaces reconcile`. Same as on main. A hotplug doesn't remap so that a reconnected monitor's windows return as they did before (the leader's decision in row 20's Monitors batch); what Hyprland itself does with a returning monitor's workspaces is unverified. Fix: number an unnamed output by an identity that doesn't depend on the others connected, or remap only the outputs that stayed connected.

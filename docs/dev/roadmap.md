@@ -265,6 +265,7 @@ Found along the way:
 - [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren) (moving the daemon's own commands to command.Run)
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode) (fixing the daemon's config watch)
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
+- [A layout the Monitors page makes has no id, so saving it is refused](issues.md#a-layout-the-monitors-page-makes-has-no-id-so-saving-it-is-refused) (testing the monitor revert fix)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 
 #### The launch gate

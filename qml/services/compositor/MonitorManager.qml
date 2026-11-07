@@ -339,26 +339,34 @@ Singleton {
   }
 
   // Tries the selected profile now; keep() saves it. A profile for other
-  // monitors can only be saved.
+  // monitors can only be saved. The monitors are read again first, so
+  // the way back is how they are, not how the last read found them
   function apply() {
-    if (!canApply || pending || !CompositorManager.supports.monitors)
+    if (!canApply || pending || _applying || !CompositorManager.supports.monitors)
       return;
     if (!selectedIsLive) {
       save();
       return;
     }
-    const all = outputs;
-    _trial.state = JSON.stringify({
-      "rules": all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all)),
-      "details": all,
-      "draft": draft.local,
-      "profile": profile.name
+    _applying = true;
+    CompositorManager.withOutputDetails(read => {
+      root._applying = false;
+      const all = read ?? root.outputs;
+      _trial.state = JSON.stringify({
+        "rules": all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all)),
+        "details": all,
+        "draft": draft.local,
+        "profile": root.profile.name
+      });
+      CompositorManager.applyOutputs(root.rules.filter(rule => MonitorLayout.find(rule.output, all) !== null), all);
+      root.secondsLeft = root.confirmSeconds;
+      _countdown.restart();
+      _refreshSoon.restart();
     });
-    CompositorManager.applyOutputs(rules.filter(rule => monitorFor(rule) !== null), all);
-    secondsLeft = confirmSeconds;
-    _countdown.restart();
-    _refreshSoon.restart();
   }
+
+  // Apply is reading the monitors before it tries the profile
+  property bool _applying: false
 
   function keep() {
     if (!pending)

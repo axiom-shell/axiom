@@ -29,20 +29,15 @@ func (d *Daemon) compositorSocketPart() part {
 func (d *Daemon) compositorSocketMethods(reg *rpc.Registry) {
 	hyprHandlers(reg, ipc.HyprFromEnv(d.opts.Getenv))
 	niriHandlers(reg, ipc.NiriFromEnv(d.opts.Getenv), d.niriStreams)
-	outputHandlers(reg, d.opts.Getenv, func() {
-		if d.compositor != nil {
-			d.compositor.OutputsApplied()
-		}
-	})
+	outputHandlers(reg, d.opts.Getenv)
 }
 
 // outputHandlers is outputs.apply: monitor rules (MonitorRule) set now on
 // the compositor running (ipc.Detect), as the Monitors page's Apply and
 // the greeter's saved profile do. details are the outputs connected
 // (CompositorManager.withOutputDetails), which a rule naming its output or
-// mirror by description is resolved in. applied (nil for none) is told
-// after each, failed ones too (a refused rule may follow ones that took).
-func outputHandlers(reg *rpc.Registry, getenv func(string) string, applied func()) {
+// mirror by description is resolved in.
+func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 	type applyParams struct {
 		Rules   json.RawMessage `json:"rules"`
 		Details json.RawMessage `json:"details"`
@@ -60,11 +55,7 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string, applied func(
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "details")
 		}
-		err = outputs.Apply(ctx, rules, details)
-		if applied != nil {
-			applied()
-		}
-		return struct{}{}, err
+		return struct{}{}, outputs.Apply(ctx, rules, details)
 	})
 	// One at a time, in the order sent: a revert lands after the Apply it
 	// undoes

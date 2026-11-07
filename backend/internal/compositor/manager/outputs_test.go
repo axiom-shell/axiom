@@ -151,40 +151,6 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	profile("")
 }
 
-// Rules set from outside the switch (outputs.apply: the Monitors page's
-// trial, or its revert) leave the outputs other than what it applied
-// last: the next hotplug applies the saved profile again, for the same
-// outputs and rules too
-func TestOutputsAppliedElsewhereApplyTheProfileAgain(t *testing.T) {
-	t.Parallel()
-	h := newHarness(t, "detached")
-	items, _ := jsonx.Unmarshal([]byte(testProfiles))
-	h.modeMu.Lock()
-	h.config = jsonx.Obj("Monitors", jsonx.Obj("items", items))
-	h.modeMu.Unlock()
-	f := &fakeOutputs{}
-	f.connect(mainOut, tvOut)
-	h.m.profiles = &profileSwitch{io: f}
-	h.m.hotplugDelay = 10 * time.Millisecond
-	applied := func(n int) func() bool {
-		return func() bool { _, a := f.counts(); return len(a) == n }
-	}
-	h.m.OutputsChanged()
-	h.eventually("the profile", applied(1))
-
-	h.m.OutputsApplied()
-	h.m.OutputsChanged()
-	h.eventually("the profile again after outputs.apply", applied(2))
-
-	// Applied by the switch itself: once
-	h.m.OutputsChanged()
-	h.eventually("read again", func() bool { r, _ := f.counts(); return r == 3 })
-	h.m.do(context.Background(), func(context.Context) {})
-	if _, a := f.counts(); len(a) != 2 {
-		t.Fatalf("applied again for the same outputs: %v", a)
-	}
-}
-
 // A file mode whose file stops loading (included, its include line taken
 // out): the reload set the outputs from the user's config, so the saved
 // profile goes back on
