@@ -294,6 +294,20 @@ func TestAgentDisplayAndCancel(t *testing.T) {
 	sh.waitDone(t, asked.ID)
 }
 
+// The last shell gone: what it was asked is rejected, nobody to answer
+func TestAgentRejectAgents(t *testing.T) {
+	t.Parallel()
+	f, h, sh, _ := agentHarness(t)
+	ch := f.callAgent("RequestConfirmation", "ou", devPath(hci0, phone), uint32(123456))
+	asked := sh.last(t, 0)
+	pending(t, ch)
+	h.s.RejectAgents()
+	if a := answer(t, ch); dbus.ErrorName(a.err) != errRejected {
+		t.Errorf("rejected: %v", a.err)
+	}
+	sh.waitDone(t, asked.ID)
+}
+
 // With no shell BlueZ hears rejected at once; only BlueZ may ask
 func TestAgentNobody(t *testing.T) {
 	t.Parallel()

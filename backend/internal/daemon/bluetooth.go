@@ -57,13 +57,16 @@ func (d *Daemon) newBluetooth() {
 }
 
 // bluetoothPart: Bluetooth, followed while the daemon runs; the pairing
-// agent registered while Bluetooth.pairingAgent is on.
+// agent registered while Bluetooth.pairingAgent is on, never with
+// AXIOM_BLUETOOTH_AGENT=off (a scratch daemon on the machine's system bus,
+// which would be a second agent beside the live one's).
 func (d *Daemon) bluetoothPart() part {
+	off := d.opts.Getenv("AXIOM_BLUETOOTH_AGENT") == "off"
 	configure := func() {
 		cfg, _ := d.store.Config()
 		// reads: Bluetooth.pairingAgent
 		v, _ := config.Lookup(cfg, config.Keys("Bluetooth", "pairingAgent"))
-		d.bluetooth.SetAgent(jsonx.Truthy(v))
+		d.bluetooth.SetAgent(jsonx.Truthy(v) && !off)
 	}
 	configure()
 	return part{
@@ -77,11 +80,14 @@ func (d *Daemon) bluetoothPart() part {
 // lastShellGone stops the scan when c was the last shell: it's the
 // daemon's BlueZ session, which BlueZ doesn't end as a shell goes, and a
 // shell that exited cleanly isn't started again to turn it off. One that
-// comes back asks for it again after its hello.
+// comes back asks for it again after its hello. The pairing agent's
+// requests still held are rejected: nobody is left to answer them, and a
+// shell that comes back isn't asked them again.
 func (d *Daemon) lastShellGone(c *rpc.Conn) {
 	if slices.ContainsFunc(d.server.Conns(), func(o *rpc.Conn) bool { return o != c && fromShell(o) }) {
 		return
 	}
+	d.bluetooth.RejectAgents()
 	d.tasks.Go(func(ctx context.Context) {
 		if err := d.bluetooth.Discovery(ctx, false); err != nil {
 			d.opts.Log.Debug("bluetooth: stopping the scan of a shell gone", "err", err)

@@ -336,22 +336,6 @@ def axiom_words(args):
     return words
 
 
-def pairing_agent_off(env, args, cwd):
-    """A scratch daemon's config (--config-dir, else $XDG_CONFIG_HOME/axiom),
-    not the live one, turns Bluetooth's pairing agent off."""
-    folder = axiom_flag(args, "--config-dir")
-    if folder:
-        path = resolve(folder, cwd, env) / "config.json"
-    elif env.get("XDG_CONFIG_HOME"):
-        path = resolve(env["XDG_CONFIG_HOME"], cwd, env) / "axiom/config.json"
-    else:
-        return False
-    try:
-        return path != LIVE_CONFIG and json.loads(path.read_text()).get("Bluetooth", {}).get("pairingAgent") is False
-    except (OSError, ValueError, AttributeError):
-        return False
-
-
 def check_axiom(env, args, cwd):
     words = axiom_words(args)
     if not words:
@@ -363,8 +347,8 @@ def check_axiom(env, args, cwd):
     # A scratch daemon on the machine's system bus is BlueZ's pairing agent
     # beside the live one (Bluetooth.pairingAgent defaults on): it takes the
     # pairings a device starts and rejects them with no shell to ask
-    if not live and (sub == "run" or sub == "daemon" and words[1:2] == ["start"]) and not scratch_system_bus(env) and not pairing_agent_off(env, args, cwd):
-        deny("Never, while testing", f"a scratch `axiom {' '.join(words[:2])}` on the machine's system bus registers a second Bluetooth pairing agent with the live BlueZ; give it a scratch config with Bluetooth.pairingAgent false (--config-dir or XDG_CONFIG_HOME), or a scratch system bus (DBUS_SYSTEM_BUS_ADDRESS=<a dbus-run-session's>), or use nested.sh.")
+    if not live and sub == "run" and not scratch_system_bus(env) and env.get("AXIOM_BLUETOOTH_AGENT") != "off":
+        deny("Never, while testing", "a scratch `axiom run` on the machine's system bus registers a second Bluetooth pairing agent with the live BlueZ; run it with AXIOM_BLUETOOTH_AGENT=off, or on a scratch system bus (DBUS_SYSTEM_BUS_ADDRESS=<a dbus-run-session's>), or use nested.sh.")
     if live and sub == "daemon" and words[1:2] and words[1] in {"stop", "restart", "reexec"}:
         deny("Never, while testing", f"`axiom daemon {words[1]}` stops or replaces the live daemon; never from this session.")
     # Dev mode: switching it, its tree or options, or copying the dev config
@@ -682,9 +666,10 @@ def check_bluetooth(env, name, args, sends):
         powered = any("Powered" in a or "Blocked" in a for a in args) and ("set-property" in args or any(a.endswith("Properties.Set") or a == "Set" for a in args))
         if powered or any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in BLUEZ_WRITES):
             deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered / Blocked on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
-    by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "toggle"]) for i in range(len(words)))
+    # airplane mode powers the adapter off too
+    by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "toggle"], ["airplane", "enable"], ["airplane", "toggle"]) for i in range(len(words)))
     if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)) and (not scratch or axiom_live_display(env, args)):
-        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
+        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`, `airplane enable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
 
 
 REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}

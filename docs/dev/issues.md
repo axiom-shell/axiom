@@ -401,6 +401,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Network, Bluetooth and devices
 
+### A VPN secret request held when the shell leaves waits for NetworkManager's timeout
+- **Where:** `backend/internal/daemon/vpn.go` (`newVPN`, `OnSecret`), `backend/internal/daemon/daemon.go` (`OnClose`)
+- **What:** a `vpn.secretRequest` pushed to the shell holds NetworkManager's `GetSecrets` reply until the shell answers; when the last shell leaves nothing answers it, and a shell that comes back isn't sent it again (`vpn.secretRequest` isn't a latest-wins push), so the connect hangs until NetworkManager gives up. Bluetooth's agent rejects its held requests then (`lastShellGone` → `RejectAgents`). Fix: the same for the VPN agent: cancel what's held as the last shell leaves.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
 ### A drive card's "open" on a locked volume asks in a menu nobody opened
 - **Where:** `qml/services/system/DrivesManager.qml` (`activate`, `open`)
 - **What:** a card's or notification's click whose action is "open" (`DriveInfo.clickAction`) calls `open(drive)`; for a volume still locked that is `askUnlock(v.id, true)`, whose passphrase field shows only in a Drives menu row, so with no menu open nothing visible happens. The Locked card's "unlock" already asks in the shared prompt (`promptUnlock`). Fix: from `activate`, a locked volume goes to `promptUnlock` too (and opens once mounted).

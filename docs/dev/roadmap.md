@@ -274,6 +274,7 @@ Found along the way:
 - [A drive card's "open" on a locked volume asks in a menu nobody opened](issues.md#a-drive-cards-open-on-a-locked-volume-asks-in-a-menu-nobody-opened) (reviewing the Bluetooth daemon branch)
 - [guard.py doesn't judge qs ipc call](issues.md#guardpy-doesnt-judge-qs-ipc-call) (the same)
 - [guard.py judges daemon calls and the radio only by argv](issues.md#guardpy-judges-daemon-calls-and-the-radio-only-by-argv) (the same)
+- [A VPN secret request held when the shell leaves waits for NetworkManager's timeout](issues.md#a-vpn-secret-request-held-when-the-shell-leaves-waits-for-networkmanagers-timeout) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 
 #### The launch gate

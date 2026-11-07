@@ -359,7 +359,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "bluetoothctl --init-script /tmp/x show", "bluetoothctl power no", "bluetoothctl power",
                     "rfkill toggle bluetooth", "rfkill toggle all", "rfkill -o ID block bluetooth",
                     f"busctl call org.bluez {dev} org.bluez.Device1 DisconnectProfile s 0000110b-0000-1000-8000-00805f9b34fb",
-                    "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable",
+                    "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane enable", "axiom ipc airplane toggle",
                     # a scratch bus says nothing of the daemon a call reaches, and rfkill isn't D-Bus
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x axiom ipc bluetooth disable",
                     f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x python3 -c {call % 'bluetooth.setPowered'}",
@@ -371,7 +371,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "busctl call org.bluez / org.freedesktop.DBus.ObjectManager GetManagedObjects",
                     f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.bluez {dev} org.bluez.Device1 Pair",
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus bluetoothctl remove AA:BB:CC:DD:EE:FF",
-                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable",
+                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane disable",
                     "rfkill list bluetooth", "rfkill -o ID,TYPE,SOFT list",
                     "bluetoothctl --version", "bluetoothctl -v", "bluetoothctl --help", "bluetoothctl -h",
                     f"python3 -c {call % 'bluetooth.get'}", "go test ./internal/bluez")
@@ -508,21 +508,14 @@ class Axiom(LiveSession, unittest.TestCase):
                     "XDG_RUNTIME_DIR=/tmp/x axiom dev on"):
             self.assertFalse(self.denied(cmd), cmd)
 
-    def test_scratch_daemon_needs_a_scratch_system_bus(self):
+    def test_scratch_daemon_needs_its_agent_off(self):
         """On the machine's bus it would be a second Bluetooth pairing agent."""
         for cmd in ("XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/scr axiom run",
-                    "axiom --socket /tmp/x/axiom.sock daemon start"):
+                    "XDG_RUNTIME_DIR=/tmp/scr AXIOM_BLUETOOTH_AGENT=on axiom run"):
             self.assertTrue(self.denied(cmd), cmd)
-        self.assertFalse(self.denied("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus axiom --socket /tmp/x/axiom.sock daemon start"))
-        # Or its scratch config turns the agent off (a drives test needs the machine's bus)
-        with tempfile.TemporaryDirectory() as tmp:
-            os.makedirs(f"{tmp}/axiom")
-            run = f"XDG_CONFIG_HOME={tmp} XDG_RUNTIME_DIR=/tmp/r axiom run"
-            for on in (True, False):
-                with open(f"{tmp}/axiom/config.json", "w") as f:
-                    json.dump({"Bluetooth": {"pairingAgent": on}}, f)
-                self.assertEqual(self.denied(run), on, f"pairingAgent {on}")
-            self.assertFalse(self.denied(f"axiom --config-dir {tmp}/axiom --socket /tmp/x/axiom.sock daemon start"), "--config-dir")
+        for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/scr axiom run",
+                    "AXIOM_BLUETOOTH_AGENT=off XDG_RUNTIME_DIR=/tmp/scr axiom run --no-shell"):
+            self.assertFalse(self.denied(cmd), cmd)
 
     def test_live_lock_refused(self):
         for cmd in ("axiom lock", "axiom ipc lockscreen lock", "axiom --json ipc lockscreen lock",

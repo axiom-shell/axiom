@@ -305,6 +305,11 @@ func (s *Service) endAgents(err error) {
 	}
 }
 
+// RejectAgents rejects every request held: the shell asked is gone.
+func (s *Service) RejectAgents() {
+	s.endAgents(dbus.NewError(errRejected, "nobody to ask"))
+}
+
 // endDisplays hides the codes shown for a device: its pairing is over.
 func (s *Service) endDisplays(dev dbus.ObjectPath) {
 	s.agentMu.Lock()
