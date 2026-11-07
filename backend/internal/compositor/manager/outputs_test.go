@@ -21,6 +21,8 @@ type fakeOutputs struct {
 	connected []render.Output
 	reads     int
 	applied   []string
+	// relit: Relight's calls
+	relit int
 	// fail: Apply's error (nil: it succeeds); it's still counted
 	fail error
 }
@@ -37,6 +39,13 @@ func (f *fakeOutputs) Apply(_ context.Context, rules, details any) error {
 	defer f.mu.Unlock()
 	f.applied = append(f.applied, string(jsonx.MarshalCompact(rules)))
 	return f.fail
+}
+
+func (f *fakeOutputs) Relight(context.Context) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.relit++
+	return nil
 }
 
 func (f *fakeOutputs) connect(outputs ...render.Output) {
@@ -149,6 +158,24 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	h.eventually("read with none matching", func() bool { r, _ := f.counts(); return r == 4 })
 	h.m.do(context.Background(), func(context.Context) {})
 	profile("")
+
+	// Only an output the last profile turned off is left: it's lit
+	f.connect(render.Output{Name: "eDP-1", Disabled: true})
+	h.m.OutputsChanged()
+	h.eventually("the one left lit", applied(4))
+	if _, a := f.counts(); a[3] != `[{"output":"eDP-1"}]` {
+		t.Fatalf("all off: applied %s", a[3])
+	}
+	// and the compositor reloads, once: after its reload (which applies
+	// them again) it isn't asked again
+	relit := func() int { f.mu.Lock(); defer f.mu.Unlock(); return f.relit }
+	h.eventually("relit", func() bool { return relit() == 1 })
+	h.w.reloadCh <- ipc.Reload{}
+	h.eventually("again after the reload", applied(5))
+	h.m.do(context.Background(), func(context.Context) {})
+	if n := relit(); n != 1 {
+		t.Fatalf("relit %d times", n)
+	}
 }
 
 // A file mode whose file stops loading (included, its include line taken

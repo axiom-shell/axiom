@@ -259,7 +259,7 @@ Card {
       options: root.screenNames
       currentValue: root.targetMonitor
       optionLabels: root.screenNames.reduce((labels, name) => {
-        labels[name] = name === General.primaryMonitor ? I18n.tr("{0} (primary)", name) : name;
+        labels[name] = name === General.configuredPrimary ? I18n.tr("{0} (primary)", name) : name;
         return labels;
       }, {})
       onSelectionChanged: value => root.chosenMonitor = value

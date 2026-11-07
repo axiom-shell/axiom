@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -127,5 +128,34 @@ func TestFrameworks(t *testing.T) {
 	}}}
 	if got := m.frameworks(); len(got) != 1 || got[0] != "ibus" {
 		t.Errorf("frameworks %v, want [ibus]", got)
+	}
+}
+
+// A strip on the primary monitor follows it to a connected output when the
+// one named is unplugged or off (primaryOf)
+func TestPrimaryOf(t *testing.T) {
+	t.Parallel()
+	dp := render.Output{Name: "DP-1"}
+	edp := render.Output{Name: "eDP-1"}
+	off := render.Output{Name: "HDMI-A-1", Disabled: true}
+	tests := []struct {
+		name    string
+		primary string
+		outputs []render.Output
+		want    string
+	}{
+		{"connected", "DP-1", []render.Output{edp, dp}, "DP-1"},
+		{"unplugged: the first on", "DP-1", []render.Output{off, edp}, "eDP-1"},
+		{"off: the first on", "HDMI-A-1", []render.Output{off, edp}, "eDP-1"},
+		{"not read yet: as named", "DP-1", nil, "DP-1"},
+		{"none on: as named", "DP-1", []render.Output{off}, "DP-1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := primaryOf(tt.primary, tt.outputs); got != tt.want {
+				t.Errorf("primaryOf = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }

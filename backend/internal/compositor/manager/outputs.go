@@ -122,10 +122,30 @@ func (o Outputs) globalVrr(ctx context.Context) float64 {
 	return 0
 }
 
+// Relight makes rules just applied while no output was on take effect:
+// Hyprland sets its monitors again only as one draws a frame, which none
+// does while only its headless FALLBACK is left, so it reloads its config
+// (which sets them at once). Nothing elsewhere: niri and sway set them as
+// they're told.
+func (o Outputs) Relight(ctx context.Context) error {
+	if o.Hypr == nil {
+		return nil
+	}
+	reply, err := o.Hypr.Eval(ctx, "hl.dispatch(hl.dsp.reload_config())")
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
+	}
+	if reply != "" {
+		return axerr.New(axerr.Refused, "Hyprland refused to reload: %s", reply)
+	}
+	return nil
+}
+
 // outputsIO reads and sets the outputs (Outputs; a fake in tests).
 type outputsIO interface {
 	Read(ctx context.Context) ([]render.Output, error)
 	Apply(ctx context.Context, rules, details any) error
+	Relight(ctx context.Context) error
 }
 
 // profileRules are profiles' rules for outputs: render.HyprlandRules on
@@ -152,6 +172,10 @@ type profileSwitch struct {
 	// outputs, and applying the saved profile again then would end the
 	// page's trial at once (seen in a nested Hyprland)
 	applied string
+	// relit: the outputs (by name) last relit with none on (Relight), so
+	// the reload that is isn't repeated after it (when the compositor's
+	// config keeps them dark)
+	relit string
 }
 
 // read reads the outputs again.
@@ -203,7 +227,8 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 		names[i] = o.Name + " " + o.Description
 	}
 	slices.Sort(names)
-	key := strings.Join(names, "\n") + string(jsonx.MarshalCompact(rules))
+	connected := strings.Join(names, "\n")
+	key := connected + string(jsonx.MarshalCompact(rules))
 	if key == p.applied {
 		return nil
 	}
@@ -211,6 +236,14 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 		return err
 	}
 	p.applied = key
+	// None on (an unplug left only an output a profile turned off): the
+	// rules lighting one take effect once, after the compositor's reload
+	if slices.ContainsFunc(p.outputs, func(o render.Output) bool { return !o.Disabled }) {
+		p.relit = ""
+	} else if p.relit != connected {
+		p.relit = connected
+		return p.io.Relight(ctx)
+	}
 	return nil
 }
 

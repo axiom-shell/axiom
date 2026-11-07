@@ -18,6 +18,11 @@ func TestProfiles(t *testing.T) {
 	tv := Output{Name: "HDMI-A-1", Description: "LG TV"}
 	offTV := Output{Name: "HDMI-A-1", Description: "LG TV", Disabled: true}
 	other := Output{Name: "DP-3", Description: "Other"}
+	offPanel := Output{Name: "eDP-1", Disabled: true}
+	undock := parse(t, `[
+		{"name": "Dock", "outputs": [{"output": "eDP-1", "disabled": true}, {"output": "DP-1"}]},
+		{"name": "Laptop", "outputs": [{"output": "eDP-1"}]}
+	]`)
 	tests := []struct {
 		name     string
 		profiles any
@@ -35,6 +40,13 @@ func TestProfiles(t *testing.T) {
 		{"nothing known", profiles, []Output{other}, -1, nil},
 		{"no profiles", parse(t, `[]`), []Output{aoc}, -1, nil},
 		{"ties go to the earlier", parse(t, `[{"outputs": [{"output": "DP-1"}, {"output": "DP-9"}]}, {"outputs": [{"output": "DP-1"}, {"output": "DP-8"}]}]`), []Output{aoc}, 0, []string{"DP-1"}},
+		// undocked: the dock's profile turned the panel off, and its
+		// monitor is gone
+		{"none on: every connected output counts", undock, []Output{offPanel}, 1, []string{"eDP-1"}},
+		{"none on and no profile turns one on: the panel is lit", undock, []Output{offTV, offPanel}, 1, []string{"eDP-1"}},
+		{"none on and none matches: the panel is lit", parse(t, `[{"name": "Dock", "outputs": [{"output": "eDP-1", "disabled": true}, {"output": "DP-1"}]}]`), []Output{offTV, offPanel}, -1, []string{"eDP-1"}},
+		{"none on, no panel: the first is lit", parse(t, `[]`), []Output{offTV}, -1, []string{"HDMI-A-1"}},
+		{"one on and none matches: nothing", parse(t, `[]`), []Output{offTV, aoc}, -1, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

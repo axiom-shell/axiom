@@ -13,7 +13,15 @@ QtObject {
   // Monitor for the lockscreen input, launcher, power menu and overlay
   // Language for the shell's text, dates and clock (see I18n): "en" | "ja"
   readonly property string language: _c.language
-  readonly property string primaryMonitor: _c.primaryMonitor || (root.outputs[0]?.name ?? "")
+  // The primary monitor as configured (the first screen when unset), even
+  // while it's unplugged: what the Monitors page marks, and what keeps a
+  // monitor's workspace block and the fallback wallpaper where they are
+  readonly property string configuredPrimary: _c.primaryMonitor || (root.outputs[0]?.name ?? "")
+  // The primary monitor connected: the configured one, else (unset or
+  // unplugged) the first screen. Surfaces, targets and the lock screen's
+  // password field go here, so an unplugged primary never leaves them
+  // nowhere
+  readonly property string primaryMonitor: root.outputs.some(s => s.name === _c.primaryMonitor) ? _c.primaryMonitor : (root.outputs[0]?.name ?? "")
   // Where the power menu (and the overlay, launcher and OSD, unless their
   // own `screen` says otherwise) appear: a ScreenTarget whose mode is
   // "primary" | "focused" | "all", the primary monitor, the focused one, or
