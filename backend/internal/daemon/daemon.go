@@ -443,6 +443,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 				// Its picker is gone: the asker falls back to the
 				// backend's own
 				d.screenShare.Forget()
+				d.lastShellGone(c)
 			}
 			if d.niriStreams != nil {
 				d.niriStreams.Forget(c)

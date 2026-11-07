@@ -272,6 +272,7 @@ Found along the way:
 - [TestNotifySend failed once under verify.sh](issues.md#testnotifysend-failed-once-under-verifysh) (the same)
 - [The screen-share picker repeats the shared prompt's modal frame](issues.md#the-screen-share-picker-repeats-the-shared-prompts-modal-frame) (lifting polkit's window into the shared prompt)
 - [A drive card's "open" on a locked volume asks in a menu nobody opened](issues.md#a-drive-cards-open-on-a-locked-volume-asks-in-a-menu-nobody-opened) (reviewing the Bluetooth daemon branch)
+- [guard.py doesn't judge qs ipc call](issues.md#guardpy-doesnt-judge-qs-ipc-call) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 
 #### The launch gate

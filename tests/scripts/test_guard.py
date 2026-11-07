@@ -335,11 +335,12 @@ class Bash(LiveSession, unittest.TestCase):
 
     def test_bluetooth(self):
         """Real devices and the live adapter change, and agents register
-        with the live BlueZ, only on a scratch bus or a scratch daemon."""
+        with the live BlueZ, only on a scratch system bus: a scratch daemon
+        on the machine's bus reaches the real devices too."""
         call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
         for method in guard.BLUETOOTH_RPC_WRITES:
-            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
-            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
+            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}", f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}")
+            self.allows(f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
         dev = "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF"
         self.blocks("bluetoothctl power off", "bluetoothctl remove AA:BB:CC:DD:EE:FF", "bluetoothctl block AA:BB:CC:DD:EE:FF",
                     "bluetoothctl disconnect AA:BB:CC:DD:EE:FF", "bluetoothctl pair AA:BB:CC:DD:EE:FF",
@@ -355,7 +356,10 @@ class Bash(LiveSession, unittest.TestCase):
                     "bluetoothctl --timeout 5 remove AA:BB:CC:DD:EE:FF", "bluetoothctl -t 5 power off",
                     "echo 'remove AA:BB:CC:DD:EE:FF' | bluetoothctl", "bluetoothctl <<< 'power off'", "bluetoothctl",
                     "printf 'power off\\n' | bluetoothctl --timeout 5", "bluetoothctl --agent KeyboardDisplay show",
-                    "bluetoothctl --init-script /tmp/x show")
+                    "bluetoothctl --init-script /tmp/x show", "bluetoothctl power no", "bluetoothctl power",
+                    "rfkill toggle bluetooth", "rfkill toggle all", "rfkill -o ID block bluetooth",
+                    f"busctl call org.bluez {dev} org.bluez.Device1 DisconnectProfile s 0000110b-0000-1000-8000-00805f9b34fb",
+                    "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable")
         self.allows("bluetoothctl show", "bluetoothctl -t 5 show", "bluetoothctl --timeout=5 devices", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
                     "bluetoothctl power on", "rfkill list", "rfkill unblock bluetooth",
                     "busctl tree org.bluez", "busctl introspect org.bluez /org/bluez/hci0",
@@ -363,7 +367,8 @@ class Bash(LiveSession, unittest.TestCase):
                     "busctl call org.bluez / org.freedesktop.DBus.ObjectManager GetManagedObjects",
                     f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.bluez {dev} org.bluez.Device1 Pair",
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus bluetoothctl remove AA:BB:CC:DD:EE:FF",
-                    "axiom ipc bluetooth enable", "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable",
+                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable",
+                    "rfkill list bluetooth", "rfkill -o ID,TYPE,SOFT list",
                     f"python3 -c {call % 'bluetooth.get'}", "go test ./internal/bluez")
 
     def test_default_apps_files(self):

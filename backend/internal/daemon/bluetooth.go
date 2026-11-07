@@ -74,6 +74,21 @@ func (d *Daemon) bluetoothPart() part {
 	}
 }
 
+// lastShellGone stops the scan when c was the last shell: it's the
+// daemon's BlueZ session, which BlueZ doesn't end as a shell goes, and a
+// shell that exited cleanly isn't started again to turn it off. One that
+// comes back asks for it again after its hello.
+func (d *Daemon) lastShellGone(c *rpc.Conn) {
+	if slices.ContainsFunc(d.server.Conns(), func(o *rpc.Conn) bool { return o != c && fromShell(o) }) {
+		return
+	}
+	d.tasks.Go(func(ctx context.Context) {
+		if err := d.bluetooth.Discovery(ctx, false); err != nil {
+			d.opts.Log.Debug("bluetooth: stopping the scan of a shell gone", "err", err)
+		}
+	})
+}
+
 func (d *Daemon) bluetoothMethods(reg *rpc.Registry) {
 	type onParams struct {
 		On bool `json:"on"`
@@ -96,7 +111,9 @@ func (d *Daemon) bluetoothMethods(reg *rpc.Registry) {
 		if !fromShell(c) {
 			return struct{}{}, refused()
 		}
-		return struct{}{}, d.bluetooth.Discovery(ctx, p.On)
+		// Not cancelled with the call: a scan BlueZ started for a shell
+		// gone mid-call is still recorded, so the off that follows ends it
+		return struct{}{}, d.bluetooth.Discovery(context.WithoutCancel(ctx), p.On)
 	})
 	// Each runs until BlueZ answers (a pair or connect can take many
 	// seconds): the call's own goroutine waits, nothing else does

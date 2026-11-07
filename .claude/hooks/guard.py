@@ -630,7 +630,7 @@ BLUETOOTHCTL_VALUED = {"-t", "--timeout", "-a", "--agent", "-i", "--init-script"
 # ... and those that register an agent or run a file's commands
 BLUETOOTHCTL_REFUSED = ("-a", "--agent", "-i", "--init-script")
 # BlueZ's methods that do the same over D-Bus
-BLUEZ_WRITES = ("RemoveDevice", "Disconnect", "Pair", "CancelPairing", "RegisterAgent", "RequestDefaultAgent", "UnregisterAgent")
+BLUEZ_WRITES = ("RemoveDevice", "Disconnect", "DisconnectProfile", "Pair", "CancelPairing", "RegisterAgent", "RequestDefaultAgent", "UnregisterAgent")
 # The daemon's Bluetooth methods that do the same
 BLUETOOTH_RPC_WRITES = ("bluetooth.forget", "bluetooth.setPowered", "bluetooth.setBlocked", "bluetooth.disconnect", "bluetooth.pair", "bluetooth.agentReply")
 
@@ -639,7 +639,8 @@ def check_bluetooth(env, name, args, sends):
     """A real Bluetooth device forgotten, unpaired, blocked or disconnected,
     the live adapter turned off, or a second agent registered with the live
     BlueZ: a mouse or keyboard could drop out. Only against a scratch system
-    bus, or a scratch daemon with Bluetooth.pairingAgent off."""
+    bus (DBUS_SYSTEM_BUS_ADDRESS), the daemon's calls too: a scratch daemon
+    on the machine's system bus reaches the real devices all the same."""
     if scratch_system_bus(env):
         return
     words = [a for a in args if not a.startswith("-")]
@@ -649,9 +650,10 @@ def check_bluetooth(env, name, args, sends):
             deny("Never, while testing", "bluetoothctl's --agent registers a second agent and --init-script runs a file's commands against the live BlueZ; use the fake BlueZ (go test ./internal/bluez).")
         if not command:
             deny("Never, while testing", "bluetoothctl with no command reads its commands from stdin (a pipe, a here-string), which can't be checked; give it one command as arguments (`bluetoothctl show`).")
-        if command[0] in BLUETOOTHCTL_WRITES or command[:2] == ["power", "off"]:
+        # power takes on / off / yes / no …: only on passes
+        if command[0] in BLUETOOTHCTL_WRITES or command[0] == "power" and command[1:2] != ["on"]:
             deny("Never, while testing", f"`bluetoothctl {' '.join(command[:2])}` changes a real Bluetooth device or the live adapter; test with the fake BlueZ (go test ./internal/bluez).")
-    if name == "rfkill" and words[:1] == ["block"]:
+    if name == "rfkill" and ("block" in words or "toggle" in words):
         deny("Never, while testing", "don't rfkill-block the live radios: a Bluetooth mouse or keyboard could drop out.")
     if name in BUS_CALLERS and any("org.bluez" in a for a in args):
         # Powered off turns the adapter off, Blocked disconnects a device
@@ -659,8 +661,8 @@ def check_bluetooth(env, name, args, sends):
         if powered or any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in BLUEZ_WRITES):
             deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered / Blocked on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
     by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "toggle"]) for i in range(len(words)))
-    if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)) and axiom_live_display(env, args):
-        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`) only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket) with Bluetooth.pairingAgent off, never the live one.")
+    if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)):
+        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
 
 
 REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}

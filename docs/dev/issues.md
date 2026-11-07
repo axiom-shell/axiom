@@ -481,6 +481,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Tooling, tests and CI
 
+### guard.py doesn't judge qs ipc call
+- **Where:** `.claude/hooks/guard.py` (`check_axiom`, `check_argv`)
+- **What:** the rules on IPC targets read `axiom ipc …` only: `axiom ipc lockscreen lock` is refused, `qs ipc call lockscreen lock` passes `guard.check` (tried), and so does every other target a rule names (`bluetooth disable`, `onboarding`, …). Fix: judge `qs ipc call <target> <fn>` (and `qs ipc --pid … call`, `--newest`) as `axiom ipc <target> <fn>`, a test case each.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
 ### rpc.md doesn't mark the drives methods shell only
 - **Where:** `scripts/gen_docs.py` (`rpc_scan`), `backend/internal/daemon/drives.go` (`drivesMethods`)
 - **What:** `rpc_scan` marks a method "shell only" when its handler's text holds `fromShell(c)`, but `drivesMethods` checks through a `refuse(c)` closure defined above its first `rpc.Handle`, so the generated rpc.md lists `drives.mount`, `drives.unlock`, `drives.eject` and the rest with no guard, though each refuses any connection but the shell's. Fix: check inline as `bluetoothMethods` does (`if !fromShell(c)`), or have `rpc_scan` follow a closure that calls `fromShell`.
