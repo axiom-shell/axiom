@@ -77,7 +77,7 @@ TestCase {
     // (OSDEngine.remember: a gap's value kept)
     const judged = {};
     systems.forEach(type => judged[type] = {});
-    const tileNow = (system, key) => defs[system] ? OSDEngine.tileOf(defs[system], key, states[system]?.[key]) : {};
+    const tileNow = (system, key) => defs[system] ? OSDEngine.contextTile(defs[system], key, states[system]) : {};
     // What's out: the whole judged change (with its system) of the card
     // and of the ringed tile; a row's own start gives { system, key, at }
     const host = {

@@ -68,3 +68,30 @@ func TestV101SaysWhatItDropped(t *testing.T) {
 		}
 	}
 }
+
+func TestV101SaysWhichQuietTypesNowOpenIt(t *testing.T) {
+	t.Parallel()
+	v, err := jsonx.Unmarshal([]byte(`{"OSD":{"items":[{"id":"b","bars":{"items":[{"type":"master","showOsd":true}]},"statuses":{"items":["capsLock","numLock","scrollLock","audio","camera","micUse","dnd"],"quiet":["capsLock","scrollLock","audio","camera","micUse","dnd"]},"cards":{"items":[]}}]}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	changes := v101(v.(*jsonx.Object))
+	want := []string{
+		"OSD b: audio now opens the OSD (Audio is one item)",
+		"OSD b: capsLock, scrollLock now open the OSD (LockKeys is one item)",
+	}
+	if len(changes) != 1+len(want) {
+		t.Fatalf("changes %q", changes)
+	}
+	for i, w := range want {
+		if changes[1+i] != w {
+			t.Errorf("note %d: %q, want %q", i, changes[1+i], w)
+		}
+	}
+	// Privacy and Dnd took only quiet types: quiet items, nothing to say
+	for _, c := range changes {
+		if strings.Contains(c, "Privacy") || strings.Contains(c, "Dnd") {
+			t.Errorf("a wholly quiet item said: %q", c)
+		}
+	}
+}

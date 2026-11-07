@@ -62,7 +62,8 @@ var (
 //   - an item is `quiet` when every key it took was: a status type in
 //     `statuses.quiet`, a bar with showOsd off; one with a key that
 //     opened the OSD isn't (a quiet audio icon beside an opening volume
-//     bar opens it, as the bar did);
+//     bar opens it, as the bar did), and said: the status types that lost
+//     their quiet (a bar keeps its showOsd);
 //   - a part the entry didn't have was its old default (an entry with
 //     none of the three is left to the new default, the same list);
 //   - a type no system takes is dropped, and said.
@@ -84,8 +85,13 @@ func v101(cfg *jsonx.Object) []string {
 		if entry == nil || entry.Has("systems") || !(entry.Has("bars") || entry.Has("statuses") || entry.Has("cards")) {
 			continue
 		}
-		if dropped := osdToSystems(entry); len(dropped) > 0 {
-			notes = append(notes, fmt.Sprintf("OSD %s: dropped %s", jsonx.ToString(entry.Value("id")), strings.Join(dropped, ", ")))
+		id := jsonx.ToString(entry.Value("id"))
+		dropped, opened := osdToSystems(entry)
+		if len(dropped) > 0 {
+			notes = append(notes, fmt.Sprintf("OSD %s: dropped %s", id, strings.Join(dropped, ", ")))
+		}
+		for _, o := range opened {
+			notes = append(notes, fmt.Sprintf("OSD %s: %s", id, o))
 		}
 		count++
 	}
@@ -95,22 +101,24 @@ func v101(cfg *jsonx.Object) []string {
 	return append([]string{fmt.Sprintf("The bars, status icons and cards of %d OSD(s) became one list of what each shows (systems), the bars' layout under barLayout", count)}, notes...)
 }
 
-// osdSystem is an item being built: its object, and whether each key it
-// took was quiet
+// osdSystem is an item being built: its object, how many keys it took
+// and how many were quiet, and the quiet status types among them
 type osdSystem struct {
 	item        *jsonx.Object
 	keys, quiet int
+	quietTypes  []string
 }
 
-// osdToSystems reshapes one entry in place; the old types it dropped.
-func osdToSystems(entry *jsonx.Object) []string {
+// osdToSystems reshapes one entry in place; the old types it dropped,
+// and a line per item that isn't quiet though some of its status types
+// were ("capsLock now opens the OSD (LockKeys is one item)").
+func osdToSystems(entry *jsonx.Object) (dropped, opened []string) {
 	bars, _ := entry.Value("bars").(*jsonx.Object)
 	statuses, _ := entry.Value("statuses").(*jsonx.Object)
 	cards, _ := entry.Value("cards").(*jsonx.Object)
 
 	var order []*osdSystem
 	byType := map[string]*osdSystem{}
-	var dropped []string
 	system := func(name string) *osdSystem {
 		if s, ok := byType[name]; ok {
 			return s
@@ -216,6 +224,7 @@ func osdToSystems(entry *jsonx.Object) []string {
 		s.keys++
 		if slices.Contains(quiet, any(kind)) {
 			s.quiet++
+			s.quietTypes = append(s.quietTypes, kind)
 		}
 	}
 	for name, kinds := range picked {
@@ -266,6 +275,12 @@ func osdToSystems(entry *jsonx.Object) []string {
 	for _, s := range order {
 		if s.keys > 0 && s.quiet == s.keys {
 			s.item.Set("quiet", true)
+		} else if len(s.quietTypes) > 0 {
+			verb := "opens"
+			if len(s.quietTypes) > 1 {
+				verb = "open"
+			}
+			opened = append(opened, fmt.Sprintf("%s now %s the OSD (%s is one item)", strings.Join(s.quietTypes, ", "), verb, jsonx.ToString(s.item.Value("type"))))
 		}
 		systems.Append(s.item)
 	}
@@ -291,5 +306,5 @@ func osdToSystems(entry *jsonx.Object) []string {
 	entry.Delete("bars")
 	entry.Delete("statuses")
 	entry.Delete("cards")
-	return dropped
+	return dropped, opened
 }

@@ -45,6 +45,18 @@ QtObject {
     return Number.isFinite(ms) && ms >= 0 && ms < root.policy(def, key, "userWindow");
   }
 
+  // The tile a change of `key` is weighed with (arbitrate's `tile`):
+  // its own for a tile or a card key; a bar's its mark's (Audio's System
+  // volume the output device's, which carries its Bluetooth address), so
+  // another system's absorbs() can tell whose level it is; null for a
+  // bar marked by itself (Brightness). `state`: the system's, by key
+  function contextTile(def, key, state) {
+    if (root.partOf(def, key) !== "bar")
+      return root.tileOf(def, key, state?.[key]);
+    const mark = root.markOf(def, key);
+    return mark !== key && state?.[mark] !== undefined ? root.tileOf(def, mark, state[mark]) : null;
+  }
+
   // `key`'s tile from its state: { icon, label, tone, on, slash, notable,
   // hidden } and whatever else the definition's tile() adds; the icon
   // `exposes`' unless it gives one
@@ -251,6 +263,10 @@ QtObject {
     const fields = root.policy(def, key, "resetBy") ?? [];
     if (fields.some(f => JSON.stringify(before?.[f]) !== JSON.stringify(after?.[f])))
       return true;
+    // countsWithin: only just after the user's own set
+    const own = root.policy(def, key, "countsWithin");
+    if (own && !root._since(after?.[own.after], c.at, own.ms))
+      return true;
     const w = root.policy(def, key, "ignoreWithin");
     return !!w && root._since(after?.[w.after], c.at, w.ms) && !(w.unlessAfter && root._since(after?.[w.unlessAfter], c.at, w.ms));
   }
@@ -335,11 +351,12 @@ QtObject {
     if (root.policy(def, key, "keepThroughGap") === true && !root._empty(b) && root._empty(a))
       return null;
     let out = null;
+    const removed = !root._empty(b) && root._empty(a);
     if (root._empty(b) && !root._empty(a))
       out = counts("add") ? ["add", pick("onAdd"),
         {}
       ] : null;
-    else if (!root._empty(b) && root._empty(a))
+    else if (removed)
       out = counts("remove") ? root._removal(def, key, c, false, "", {}) : null;
     else if (JSON.stringify(a) !== JSON.stringify(b))
       out = counts("change") ? ["change", pick("onChange"),
@@ -349,7 +366,10 @@ QtObject {
       const update = ["update", pick("onUpdate"),
         {}
       ];
-      if (!out || root._rank(update[1]) > root._rank(out[1]))
+      // Its look's card never outranks its value going (a player
+      // quitting while it plays: the card would say nothing); its icon
+      // still does (Wi-Fi turned off loses its network too)
+      if ((!out || root._rank(update[1]) > root._rank(out[1])) && !(removed && update[1] === "card"))
         out = update;
     }
     return out;
@@ -504,9 +524,15 @@ QtObject {
   // as it happens and so is never a service's first reading (an `axiom
   // message` sent just after a start or a list edit). A `carriesEvents`
   // scalar's event is read from its service's state, which may answer
-  // with its last one as it starts, so it waits like any other change
+  // with its last one as it starts, so it waits like any other change.
+  // A key declaring `countsWithin` gates itself (only the user's own set
+  // counts: a brightness key just after a start or a list edit)
   function showsWhileSettling(def, change) {
-    return change?.kind === "event" && root.policy(def, change.key, "model") === "event";
+    if (!change)
+      return false;
+    if (root.policy(def, change.key, "countsWithin"))
+      return true;
+    return change.kind === "event" && root.policy(def, change.key, "model") === "event";
   }
 
   // Whether a change opens a shut OSD: not when its system's item is

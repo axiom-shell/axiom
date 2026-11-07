@@ -106,10 +106,9 @@ QtObject {
       const now = after[e.key];
       if (OSDEngine.same(OSDEngine.policy(def, e.key, "model"), was, now))
         continue;
-      const mark = OSDEngine.markOf(def, e.key);
       const what = OSDEngine.judge(def, e.key, was, now, {
         "at": at,
-        "byUser": ShellManager.fromScreen(mark, OSDEngine.policy(def, e.key, "userWindow")),
+        "byUser": OSDEngine.byUser(def, e.key, ShellManager.markAge(OSDEngine.markOf(def, e.key))),
         "settled": root.settled(e.key, was, now),
         "before": before,
         "after": after

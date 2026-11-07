@@ -467,7 +467,7 @@ Singleton {
     const summary = kind === "added" ? I18n.tr("{0} connected", label) : I18n.tr("{0} disconnected", label);
     const body = [monitor.description ? monitor.name : "", size].filter(part => part !== "").join(" · ");
     // Silent (the Quiet section): one entry per connector, its last change
-    if (NotificationManager.announce("monitor", MonitorsConfig.notify, summary, body, {
+    if (NotificationManager.announce("Monitors", "monitor", MonitorsConfig.notify, summary, body, {
       "icon": "video-display",
       "desktopEntry": root._desktopEntry,
       "key": "monitor:" + monitor.name,

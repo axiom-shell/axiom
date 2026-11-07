@@ -1423,6 +1423,103 @@ TestCase {
     verify(!OSDEngine.showsWhileSettling(message, null), "no change");
   }
 
+  // countsWithin: a level counts only just after the user's own set (a
+  // set at the limit too, its time moving on), and such a key isn't held
+  // by the settle window
+  function test_countsWithin() {
+    const def = _def(`
+      type: "Light"
+      countsWithin: ({ "after": "setAt", "ms": 500 })
+      exposes: [{ "key": "light", "part": "bar" }]`);
+    const s = (level, setAt) => ({
+          "available": true,
+          "level": level,
+          "setAt": setAt
+        });
+    const at = ms => ({
+          "at": ms
+        });
+    const limit = OSDEngine.judge(def, "light", s(1, 1000), s(1, 5000), at(5000));
+    compare(limit?.kind, "level", "a set at its limit: the level unchanged, still a level");
+    verify(OSDEngine.judge(def, "light", s(0.5, 0), s(0.8, 0), at(5000)) === null, "never set: a refresh's");
+    verify(OSDEngine.judge(def, "light", s(0.5, 4000), s(0.8, 4000), at(4600)) === null, "past its window: idle dimming");
+    compare(OSDEngine.judge(def, "light", s(0.5, 4000), s(0.8, 4000), at(4400))?.kind, "level", "within its window");
+    verify(OSDEngine.showsWhileSettling(def, limit), "a key gating itself isn't held by the start settle");
+    const plain = _def(`
+      type: "Plain"
+      exposes: [{ "key": "light", "part": "bar" }]`);
+    const level = OSDEngine.judge(plain, "light", s(0.5, 0), s(0.8, 0), at(5000));
+    verify(level !== null);
+    verify(!OSDEngine.showsWhileSettling(plain, level), "an ordinary level waits out the settle window");
+    def.destroy();
+    plain.destroy();
+  }
+
+  // contextTile: a tile's or a card's own; a bar's its mark's tile (whose
+  // device it is), none for a bar marked by itself
+  function test_contextTile() {
+    const def = _def(`
+      type: "Sound"
+      exposes: [{ "key": "master", "part": "bar", "mark": "audio" }, { "key": "solo", "part": "bar" }, { "key": "audio", "part": "tile" }]
+      function tile(key, state) { return { "address": state?.address ?? "" }; }`);
+    const state = {
+      "master": {
+        "level": 0.5
+      },
+      "solo": {
+        "level": 0.5
+      },
+      "audio": {
+        "value": "84",
+        "address": "AA"
+      }
+    };
+    compare(OSDEngine.contextTile(def, "audio", state).address, "AA", "a tile: its own");
+    compare(OSDEngine.contextTile(def, "master", state).address, "AA", "a bar: its mark's");
+    verify(OSDEngine.contextTile(def, "solo", state) === null, "a bar marked by itself: none");
+    def.destroy();
+  }
+
+  // A look update's card never outranks the value going (a player
+  // quitting while it plays); its icon still does (Wi-Fi off)
+  function test_update_vs_removal() {
+    const cardOnLook = _def(`
+      type: "Player"
+      onRemove: "none"
+      onUpdate: "card"
+      updateFields: []
+      exposes: [{ "key": "media", "part": "card" }]
+      function tile(key, state) { return { "on": !!state?.value && state?.playing === true }; }`);
+    verify(OSDEngine.judge(cardOnLook, "media", {
+      "value": "Song",
+      "playing": true
+    }, {
+      "value": "",
+      "playing": false
+    }, {}) === null, "quit while playing: no card");
+    compare(OSDEngine.judge(cardOnLook, "media", {
+      "value": "Song",
+      "playing": true
+    }, {
+      "value": "Song",
+      "playing": false
+    }, {})?.show, "card", "paused: its card");
+    const iconOnLook = _def(`
+      type: "Radio"
+      onRemove: "none"
+      exposes: [{ "key": "radio", "part": "tile" }]
+      function tile(key, state) { return { "on": state?.on === true }; }`);
+    compare(OSDEngine.judge(iconOnLook, "radio", {
+      "on": true,
+      "value": true
+    }, {
+      "on": false,
+      "value": false
+    }, {})?.show, "tile", "off and left: the icon outranks the removal's nothing");
+    cardOnLook.destroy();
+    iconOnLook.destroy();
+  }
+
   // memberState: a set judged by a member field across transit, and the
   // "last" removal policy
   function test_memberState_last() {

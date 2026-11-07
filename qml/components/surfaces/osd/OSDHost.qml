@@ -595,7 +595,8 @@ Item {
   // A system's change (OSDSystemHost.change: OSDEngine.judge's): what it
   // shows on this OSD (OSDEngine.shownAs: a card shown as its tile with
   // the cards off; a bar only with its item's `tile` on), whole for the
-  // arbitration (its `system` and its `tile` now), and whether it opens
+  // arbitration (its `system` and its tile now: a bar's its mark's,
+  // OSDEngine.contextTile), and whether it opens
   // the OSD shut (OSDSystemHost.opens)
   function _onChange(host, what) {
     const def = host.definition;
@@ -611,7 +612,7 @@ Item {
       "system": host.type,
       "show": shown,
       "card": shown === "card",
-      "tile": host.tiles[what.key] ?? null
+      "tile": OSDEngine.contextTile(def, what.key, host.snapshot)
     });
     const force = host.opens(what);
     if (shown === "card")

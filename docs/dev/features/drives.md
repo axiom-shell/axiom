@@ -32,7 +32,7 @@ Only a real `drives.event` `added` (never a drive there at login, or udisks2 res
 - An encrypted drive under `mount` or `nothing` is Locked (`locked`): a click on it asks for the passphrase.
 
 ### Who says what
-Every event but `ask`'s question is said once (`_say`), through `NotificationManager.announce("drive", Drives.notify, …)`, which routes it by `OSDConfig.routeOf` ([OSD](osd.md) › Where events go):
+Every event but `ask`'s question is said once (`_say`), through `NotificationManager.announce("Drives", "drive", Drives.notify, …)`, which routes it by `OSDConfig.routeOf` ([OSD](osd.md) › Where events go):
 - **An OSD opens `drive`'s card** (enabled, listing it, not `quiet`, detail cards on: `OSDEngine.cardRoute`): the OSD's card (`lastEvent`, set only then), whatever `Drives.notify` says; also filed in the notification history without a popup with `OSD.cardsToHistory`.
 - **Else, with `Drives.notify`** (the default): a notification (`_eventNotice`), with buttons where they help: Mounted has Open / Eject, Locked has Unlock. Each drive has one entry (key `drive:<id>`), its last event. Its comings and goings (plugged in, mounted, unmounted, disconnected: `_quietKinds`) are silent, in the notifications' Quiet section, their buttons run by the desktop entry's handler (`_pick`, from the entry's `data`); the rest alert ([Notifications](notifications.md) › Levels).
 - **Else** nothing; the widget and module show it. `ask` still notifies.

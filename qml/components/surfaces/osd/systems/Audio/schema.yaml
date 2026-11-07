@@ -5,6 +5,8 @@ tile:
   variant: standard
   tile: {title: Bars and icons, description: Its bars and its status icons in the OSD.}
 card: standard
+# Its bars on an OSD's tab name: each by its apps, else its kind
+barNames: {from: bars, by: type, named: apps}
 settings:
   bars:
     type: array

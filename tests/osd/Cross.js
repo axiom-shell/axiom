@@ -207,10 +207,10 @@ var rows = [
     "options": { "Audio": audioOpts, "Brightness": { "allMonitors": false, "icon": "", "showOsd": true } },
     "steps": [
       { "system": "Audio", "at": 0, "state": audioStart() },
-      { "system": "Brightness", "at": 0, "state": { "brightness": { "available": true, "level": 0.5 } } },
+      { "system": "Brightness", "at": 0, "state": { "brightness": { "available": true, "level": 0.5, "setAt": 0 } } },
       { "system": "Audio", "at": 3000, "settled": false, "state": { "audio": audioBox },
         "expect": { "key": "audio", "show": "card", "host": "open" } },
-      { "system": "Brightness", "at": 3300, "state": { "brightness": { "available": true, "level": 0.6 } },
+      { "system": "Brightness", "at": 3300, "state": { "brightness": { "available": true, "level": 0.6, "setAt": 3300 } },
         "expect": { "key": "brightness", "show": "level", "host": "beside" } }
     ]
   },
@@ -333,6 +333,34 @@ var rows = [
         "expect": { "key": "bluetooth", "show": "card", "host": "open" } },
       { "system": "Audio", "at": 3500, "state": { "audio": Object.assign({}, headphones, { "muted": true }) },
         "expect": { "key": "audio", "show": "tile", "host": "beside" } }
+    ]
+  },
+  {
+    "name": "a headset's late level after the Bluetooth card: suppressed",
+    "systems": ["Bluetooth", "Audio"],
+    "options": { "Audio": audioOpts, "Bluetooth": {} },
+    "steps": [
+      { "system": "Bluetooth", "at": 0, "state": { "bluetooth": bt(null) } },
+      { "system": "Audio", "at": 0, "state": audioStart() },
+      { "system": "Bluetooth", "at": 3000, "state": { "bluetooth": bt("connected", 1) },
+        "expect": { "key": "bluetooth", "show": "card", "host": "open" } },
+      { "system": "Audio", "at": 3800, "settled": false, "state": { "audio": headphones },
+        "expect": { "key": "audio", "show": "card", "host": "keep" } },
+      { "system": "Audio", "at": 4400, "state": { "master": { "level": 0.35, "muted": false } },
+        "expect": { "key": "master", "show": "level", "host": "suppress" } }
+    ]
+  },
+  {
+    "name": "another device's level after the Bluetooth card: beside it",
+    "systems": ["Bluetooth", "Audio"],
+    "options": { "Audio": audioOpts, "Bluetooth": {} },
+    "steps": [
+      { "system": "Bluetooth", "at": 0, "state": { "bluetooth": bt(null) } },
+      { "system": "Audio", "at": 0, "state": audioStart() },
+      { "system": "Bluetooth", "at": 3000, "state": { "bluetooth": bt("connected", 1) },
+        "expect": { "key": "bluetooth", "show": "card", "host": "open" } },
+      { "system": "Audio", "at": 3400, "state": { "master": { "level": 0.35, "muted": false } },
+        "expect": { "key": "master", "show": "level", "host": "beside" } }
     ]
   },
   // ---- A message's card ----

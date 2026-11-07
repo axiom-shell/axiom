@@ -94,6 +94,14 @@ QtObject {
   // "switchedAt" }), each field a time in ms (Date.now(); 0 for never),
   // compared with the change's `at`; null for none
   property var ignoreWithin: null
+  // A change counts only just after the user's own set the state
+  // timestamps: { after: field, ms }, the field a time in ms (Date.now();
+  // 0 for never) compared with the change's `at` (Brightness: { after:
+  // "setAt", ms: 500 }, so a refresh or idle dimming shows nothing, and a
+  // set at its limit, the level unchanged, still does as its time moves
+  // on). Such a key gates itself, so its watcher's start settle doesn't
+  // hold it (showsWhileSettling); null for none
+  property var countsWithin: null
   // A scalar's value going empty is a gap, not a removal, and the value
   // before it is the one the next is judged against (Audio: a Bluetooth
   // headset's profile switch replaces its node, often with none between;

@@ -14,7 +14,7 @@ QtObject {
   // Level change per wheel notch (0-1); 0 when scrolling is off
   readonly property real scrollStep: _c.scrollToChange ? _c.scrollStep / 100 : 0
   // A change the pointer made in axiom's own bar and panels
-  // (ShellManager.fromScreen) opens an OSD too
+  // (ShellManager.onScreen's mark, OSDEngine.byUser) opens an OSD too
   readonly property bool onScreenChanges: _c.onScreenChanges
   // [OSDEntry] (see the schema): each with its id, screen (a ScreenTarget),
   // place, `barLayout`, `row`, `cardsEnabled` / `cardTimeout` and
@@ -34,23 +34,15 @@ QtObject {
   // without a popup (NotificationManager.announce)
   readonly property bool cardsToHistory: _c.cardsToHistory
 
-  // The system an event type (NotificationManager.announce's) belongs to
-  readonly property var _eventSystems: ({
-      "drive": "Drives",
-      "battery": "Battery",
-      "monitor": "Monitors",
-      "screenshot": "Screenshot",
-      "bluetooth": "Bluetooth"
-    })
-
-  // Where an event of `type` (drive, battery, monitor, screenshot,
-  // bluetooth: its system's key) goes (OSDEngine.cardRoute, by its
-  // system and key): "osd" (an OSD opens its card: OSDEngine.opensCard;
-  // the low battery's only where Battery's `tiles` pick `battery`), else
-  // "notification" with `notify` (its section's switch: Battery.notify,
-  // Drives.notify, Monitors.notify, Screenshots.notify), else "" (nowhere)
-  function routeOf(type, notify) {
-    return OSDEngine.cardRoute(root.osds, root._eventSystems[type], notify, type);
+  // Where an event of the OSD system `system` and its key `key` (the
+  // caller's: Drives' drive, Battery's battery, …) goes
+  // (OSDEngine.cardRoute): "osd" (an OSD opens its card:
+  // OSDEngine.opensCard; the low battery's only where Battery's `tiles`
+  // pick `battery`), else "notification" with `notify` (its section's
+  // switch: Battery.notify, Drives.notify, Monitors.notify,
+  // Screenshots.notify), else "" (nowhere)
+  function routeOf(system, key, notify) {
+    return OSDEngine.cardRoute(root.osds, system, notify, key);
   }
 
   function osdById(id) {
@@ -90,9 +82,6 @@ QtObject {
       "schema": def
     };
   })
-  // An Audio bar's kind's English name (its schema's x-enumLabels)
-  readonly property var _audioBarLabels: root._systemDefs.Audio.properties.bars.items.properties.type["x-enumLabels"]
-
   // A system's name, translated: its label in the schema (its type's
   // description); "" for one there isn't
   function nameOf(type) {
@@ -100,17 +89,39 @@ QtObject {
     return english ? I18n.tr(english) : "";
   }
 
+  // The names of an item's bars, by its schema's `x-barNames`: "label",
+  // its own name (Brightness); { from, by, named }, each entry of its
+  // setting `from` by its `named` list joined, else its `by` field's
+  // x-enumLabels (Audio's bars: an App bar by its apps, the others by
+  // their kind); none without it
+  function _barNames(item) {
+    const def = root._systemDefs[item.type];
+    const spec = def?.["x-barNames"];
+    if (!spec)
+      return [];
+    if (spec === "label")
+      return [root.nameOf(item.type)];
+    const labels = def.properties[spec.from]?.items?.properties?.[spec.by]?.["x-enumLabels"] ?? {};
+    return (item[spec.from] ?? []).map(entry => {
+      const named = spec.named ? (entry[spec.named] ?? []) : [];
+      return named.length > 0 ? named.join(" / ") : I18n.tr(labels[entry[spec.by]] ?? "");
+    }).filter(name => name !== "");
+  }
+
   // The name on its tab: its own, else its bars', else what it shows as
-  // icons (so the default isn't named by all of them), else Now playing
+  // icons (so the default isn't named by all of them), else with its
+  // cards on its card-only systems (Now playing)
   function labelOf(osd) {
     if (osd.name)
       return osd.name;
     const shown = osd.systems.filter(item => item.tile !== false);
-    const bars = [].concat(...shown.map(item => item.type === "Brightness" ? [root.nameOf("Brightness")] : item.type === "Audio" ? item.bars.map(bar => bar.type === "app" ? (bar.apps.join(" / ") || I18n.tr("An app")) : I18n.tr(root._audioBarLabels[bar.type])) : []));
+    const bars = [].concat(...shown.map(item => root._barNames(item)));
     // (a system with no tile switch is only ever a card)
-    const parts = bars.length > 0 ? bars : shown.filter(item => root._systemDefs[item.type]?.properties.tile !== undefined).map(item => root.nameOf(item.type)).filter(name => name !== "");
+    const tiled = item => root._systemDefs[item.type]?.properties.tile !== undefined;
+    const parts = bars.length > 0 ? bars : shown.filter(tiled).map(item => root.nameOf(item.type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");
-    return osd.cardsEnabled && OSDEngine.itemOf(osd, "Media") !== null ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
+    const cards = osd.cardsEnabled ? osd.systems.filter(item => !tiled(item) && item.card !== false).map(item => root.nameOf(item.type)).filter(name => name !== "") : [];
+    return cards.length > 0 ? cards.join(", ") : I18n.tr("Empty OSD");
   }
 }

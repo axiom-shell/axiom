@@ -7,7 +7,8 @@ import qs.components.surfaces.osd.engine
 // device's battery low or critical (an alert: it opens the OSD even just
 // after a click). One key holds both, so the card folds back as the radio
 // turns off, and the radio coming on under it is its own knock-on. A
-// headset's card takes in Audio switching to it (absorbs). BluetoothWatch
+// headset's card takes in Audio switching to it and its level arriving
+// late (absorbs). BluetoothWatch
 // reads BluetoothManager; nothing is judged with no adapter
 OSDSystem {
   // The radio on or off: its icon; a new event of its devices: its card
@@ -87,11 +88,13 @@ OSDSystem {
   }
 
   // Its devices' "connected" card takes in Audio switching the output or
-  // input to one of them (its Bluetooth address, in any case): a headset
-  // connecting is one change. Only a switch (a card), never a mute
+  // input to one of them (its Bluetooth address, in any case), and that
+  // device's level arriving late (a bar's tile is its device's:
+  // OSDEngine.contextTile): a headset connecting is one change. A switch
+  // or a level, never a mute
   function absorbs(own, other) {
     const address = String(other.tile?.address ?? "").toUpperCase();
-    if (other.system !== "Audio" || other.card !== true || address === "" || own.tile?.event !== "connected")
+    if (other.system !== "Audio" || (other.card !== true && other.part !== "bar") || address === "" || own.tile?.event !== "connected")
       return false;
     return (own.tile.devices ?? []).some(d => String(d.address).toUpperCase() === address);
   }

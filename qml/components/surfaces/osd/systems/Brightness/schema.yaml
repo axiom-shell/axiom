@@ -1,6 +1,8 @@
 label: Brightness
 icon: brightness_6
 group: Power
+# Its bar on an OSD's tab name: its own label
+barNames: label
 tile:
   variant: standard
   tile: {title: Bar, description: Its bar in the OSD.}

@@ -85,15 +85,13 @@ QtObject {
     root._onScreen[kind] = Date.now();
   }
 
-  // Whether a change judged by the mark `kind` is the pointer's own:
-  // marked less than `window` ms ago (the OSD system's userWindow; a mark
-  // from the future, after a clock change, isn't)
-  function fromScreen(kind, window) {
+  // How long ago (ms) the mark `kind` was made, -1 for never; an OSD
+  // system's watcher hands it to OSDEngine.byUser, which judges it by the
+  // system's userWindow (a mark from the future, after a clock change,
+  // is negative: not the pointer's)
+  function markAge(kind) {
     const at = root._onScreen[kind];
-    if (at === undefined)
-      return false;
-    const elapsed = Date.now() - at;
-    return elapsed >= 0 && elapsed < window;
+    return at === undefined ? -1 : Date.now() - at;
   }
 
   // A message to the OSD `id` (OSDConfig.messageOsd's) as its card, also

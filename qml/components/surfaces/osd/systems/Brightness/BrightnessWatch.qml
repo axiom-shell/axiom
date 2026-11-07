@@ -5,9 +5,10 @@ import qs.components.surfaces.osd.engine
 
 // Brightness's state for the OSD: the level of this screen's monitor
 // (every one's mean with `allMonitors`), whether it has a controller, and
-// the bar's icon (`icon`, else the level's). A level counts only as axiom
-// sets it (BrightnessManager.brightnessChanged, which a refresh or idle
-// dimming's silent set never sends). As its OSD opens it picks up
+// the bar's icon (`icon`, else the level's), and when axiom last set one
+// of them (`setAt`: BrightnessManager.brightnessChanged, which a refresh
+// or idle dimming's silent set never sends, and which a set at the limit
+// still sends): the definition counts a level only just after it. As its OSD opens it picks up
 // brightness changed outside axiom on the monitors its bar shows (none
 // with its bar off)
 OSDWatch {
@@ -27,15 +28,10 @@ OSDWatch {
       "brightness": {
         "available": watch._available,
         "level": level,
+        "setAt": watch._setAt,
         "icon": watch.options.icon || BrightnessManager.icon(level)
       }
     };
-  }
-
-  // A level found by a refresh, or idle dimming, only moves the state on
-  function settled(key, before, after) {
-    // behaviour timing: a set's own reading comes in the same pass
-    return Date.now() - watch._setAt < 500;
   }
 
   function setLevel(key, level) {

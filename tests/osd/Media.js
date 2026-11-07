@@ -104,6 +104,14 @@ var rows = [
     ]
   },
   {
+    "name": "the only player quitting while it plays, onPlayPause on: nothing (no empty card)",
+    "options": both,
+    "steps": [
+      { "at": 0, "state": { "media": play("Song A", "Artist") } },
+      { "at": 3000, "state": { "media": play("", "", false, "") } }
+    ]
+  },
+  {
     "name": "a new track, onTrackChange off: nothing",
     "options": { "onTrackChange": false, "onPlayPause": true },
     "steps": [
