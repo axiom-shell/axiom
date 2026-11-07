@@ -251,7 +251,7 @@ func osdItemFields(cfg *jsonx.Object) {
 
 // Bar widget settings added since, the same way (a widget's display style,
 // the Network widget's VPN lock and its popout's VPN section)
-var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn"}
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn", "showPeripherals"}
 
 // moduleKeysAddedSinceV1 are a module type's settings added since format
 // 1, which a default layout's modules get from their defaults at load

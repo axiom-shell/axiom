@@ -8,8 +8,7 @@ import qs.components.reusable
 // A secret typed inline (a password, a key, a passphrase): a field
 // hiding its text and, after it, the button that submits it. Enter
 // submits too, Escape cancels (the field leaves it to its parents
-// otherwise). VpnRow's secrets, WifiJoinForm's password and DriveRow's
-// passphrase.
+// otherwise). WifiJoinForm's password and DriveRow's passphrase.
 RowLayout {
   id: root
 
@@ -18,8 +17,6 @@ RowLayout {
   property string placeholderText: ""
   // The field's height, -1 for its own
   property real entryHeight: -1
-  // The button after the field (hidden for all but a form's last field)
-  property bool buttonShown: true
   // Whether the button can submit (it's dimmed otherwise)
   property bool canSubmit: entry.text !== ""
   property string buttonIcon: "link"
@@ -51,7 +48,6 @@ RowLayout {
   }
 
   StyledRectButton {
-    visible: root.buttonShown
     size: Widget.iconButton
     enabled: root.canSubmit
     opacity: enabled ? 1 : 0.5

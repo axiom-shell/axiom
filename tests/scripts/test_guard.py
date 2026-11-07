@@ -76,6 +76,7 @@ class Bash(LiveSession, unittest.TestCase):
                  f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
                  f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'inputMethod.push'}",
                  "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 Restart", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 "bluetoothctl remove AA:BB:CC:DD:EE:FF", f"python3 -c {call % 'bluetooth.forget'}",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
                  "axiom ipc lockscreen lock", "qs kill", "gh api repos/o/r", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
@@ -332,6 +333,50 @@ class Bash(LiveSession, unittest.TestCase):
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.freedesktop.timedate1 / x SetNTP bb false false",
                     "go test ./internal/timedate", "grep -rn passwd backend")
 
+    def test_bluetooth(self):
+        """Real devices and the live adapter change, and agents register
+        with the live BlueZ, only on a scratch system bus: a scratch daemon
+        on the machine's bus reaches the real devices too."""
+        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
+        for method in guard.BLUETOOTH_RPC_WRITES:
+            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}", f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}")
+            self.allows(f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
+        dev = "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF"
+        self.blocks("bluetoothctl power off", "bluetoothctl remove AA:BB:CC:DD:EE:FF", "bluetoothctl block AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl disconnect AA:BB:CC:DD:EE:FF", "bluetoothctl pair AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl agent on", "bluetoothctl -- default-agent", "rfkill block bluetooth", "rfkill block all",
+                    "busctl call org.bluez /org/bluez/hci0 org.bluez.Adapter1 RemoveDevice o " + dev,
+                    f"busctl call org.bluez {dev} org.bluez.Device1 Disconnect", f"busctl call org.bluez {dev} org.bluez.Device1 Pair",
+                    "busctl set-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered b false",
+                    f"busctl set-property org.bluez {dev} org.bluez.Device1 Blocked b true",
+                    "busctl call org.bluez /org/bluez org.bluez.AgentManager1 RegisterAgent os /a KeyboardDisplay",
+                    f"dbus-send --system --dest=org.bluez --type=method_call {dev} org.bluez.Device1.Disconnect",
+                    "gdbus call --system -d org.bluez -o /org/bluez/hci0 -m org.freedesktop.DBus.Properties.Set org.bluez.Adapter1 Powered '<false>'",
+                    "axiom ipc bluetooth disable", "axiom ipc bluetooth toggle",
+                    "bluetoothctl --timeout 5 remove AA:BB:CC:DD:EE:FF", "bluetoothctl -t 5 power off",
+                    "echo 'remove AA:BB:CC:DD:EE:FF' | bluetoothctl", "bluetoothctl <<< 'power off'", "bluetoothctl",
+                    "printf 'power off\\n' | bluetoothctl --timeout 5", "bluetoothctl --agent KeyboardDisplay show",
+                    "bluetoothctl --init-script /tmp/x show", "bluetoothctl power no", "bluetoothctl power",
+                    "rfkill toggle bluetooth", "rfkill toggle all", "rfkill -o ID block bluetooth",
+                    f"busctl call org.bluez {dev} org.bluez.Device1 DisconnectProfile s 0000110b-0000-1000-8000-00805f9b34fb",
+                    "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane enable", "axiom ipc airplane toggle",
+                    "axiom bluetooth off", "axiom bluetooth toggle",
+                    # a scratch bus says nothing of the daemon a call reaches, and rfkill isn't D-Bus
+                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x axiom ipc bluetooth disable",
+                    f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x python3 -c {call % 'bluetooth.setPowered'}",
+                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x rfkill block bluetooth", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x rfkill toggle all")
+        self.allows("bluetoothctl show", "bluetoothctl -t 5 show", "bluetoothctl --timeout=5 devices", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl power on", "rfkill list", "rfkill unblock bluetooth",
+                    "busctl tree org.bluez", "busctl introspect org.bluez /org/bluez/hci0",
+                    "busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered",
+                    "busctl call org.bluez / org.freedesktop.DBus.ObjectManager GetManagedObjects",
+                    f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.bluez {dev} org.bluez.Device1 Pair",
+                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus bluetoothctl remove AA:BB:CC:DD:EE:FF",
+                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane disable", "axiom bluetooth on",
+                    "rfkill list bluetooth", "rfkill -o ID,TYPE,SOFT list",
+                    "bluetoothctl --version", "bluetoothctl -v", "bluetoothctl --help", "bluetoothctl -h",
+                    f"python3 -c {call % 'bluetooth.get'}", "go test ./internal/bluez")
+
     def test_default_apps_files(self):
         self.blocks("xdg-mime default firefox.desktop x-scheme-handler/http", "xdg-settings set default-web-browser firefox.desktop",
                     "cp /tmp/m ~/.config/mimeapps.list", "rm ~/.config/mimeapps.list", "sed -i s/a/b/ ~/.config/hyprland-mimeapps.list",
@@ -454,14 +499,26 @@ class Axiom(LiveSession, unittest.TestCase):
         return False
 
     def test_live_shell_lifecycle_refused(self):
-        for cmd in ("axiom run", "axiom run --dev --tree .", "axiom quit", "axiom restart", "./axiom daemon reexec",
+        for cmd in ("axiom -socket $XDG_RUNTIME_DIR/axiom/wayland-1/axiom.sock quit", "axiom -config-dir /tmp/c quit", "axiom run", "axiom run --dev --tree .", "axiom quit", "axiom restart", "./axiom daemon reexec",
                     "/usr/bin/axiom --json quit", "axiom dev on", "axiom dev off", "axiom --json dev rebuild"):
             self.assertTrue(self.denied(cmd), cmd)
 
     def test_scratch_instances_pass(self):
-        for cmd in ("XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/x axiom quit",
+        for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/x axiom quit",
                     "axiom --socket /tmp/x/axiom.sock restart", "XDG_RUNTIME_DIR=/tmp/x axiom lock",
                     "XDG_RUNTIME_DIR=/tmp/x axiom dev on"):
+            self.assertFalse(self.denied(cmd), cmd)
+
+    def test_scratch_daemon_needs_its_agent_off(self):
+        """On the machine's bus it would be a second Bluetooth pairing agent."""
+        for cmd in ("XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/scr axiom run",
+                    "XDG_RUNTIME_DIR=/tmp/scr AXIOM_BLUETOOTH_AGENT=on axiom run",
+                    # Go's flags take one dash too
+                    "XDG_RUNTIME_DIR=/tmp/s/run axiom -config-dir /tmp/s/c run --no-shell",
+                    "XDG_RUNTIME_DIR=/tmp/s/run axiom -socket /tmp/s/run/axiom.sock run"):
+            self.assertTrue(self.denied(cmd), cmd)
+        for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/scr axiom run",
+                    "AXIOM_BLUETOOTH_AGENT=off XDG_RUNTIME_DIR=/tmp/scr axiom run --no-shell"):
             self.assertFalse(self.denied(cmd), cmd)
 
     def test_live_lock_refused(self):

@@ -12,7 +12,7 @@ The plan that moved side effects out of QML and into the `axiom` daemon, stage b
 
 ### Scope
 - **Now:** Quickshell.Io's side effects: every direct `Process`, `FileView`, `Socket`, `IpcHandler` (gone since stage 6) and `Quickshell.execDetached`. `scripts/quickshell-io-allowlist.json` lists the files still using them, and `check_structure` keeps the list from growing: it is the live record of what's left.
-- **Planned, not scheduled:** services on Quickshell's D-Bus and native-library modules (notifications, tray, UPower, Mpris, Polkit, Bluetooth, networking; Pipewire and PAM, which would need cgo, against `CGO_ENABLED=0`). Don't start these without the maintainer. The daemon has its own D-Bus client since stage 2 (`internal/dbus`, [dbus.md](dbus.md)): the D-Bus ones build on it.
+- **Planned, not scheduled:** services on Quickshell's D-Bus and native-library modules (notifications, tray, UPower, Mpris, Polkit, networking; Pipewire and PAM, which would need cgo, against `CGO_ENABLED=0`). Don't start these without the maintainer. The daemon has its own D-Bus client since stage 2 (`internal/dbus`, [dbus.md](dbus.md)): the D-Bus ones build on it.
 - **Stays in QML:** the UI-state managers (bars, popouts, overlay, docks, editors).
 
 ### Rules for every move
@@ -37,3 +37,4 @@ One line each: `- **Stage <n>: <name>** (<status>): <outcome>`, the status **don
 - **Stage 6: the funnels** (done): every direct `Process` / `execDetached` through `CommandManager`, secrets (`secrets.*`), file writes and watches (`file.*`), the compositor sockets (`hypr.request`, `niri.*`) and IPC (`axiom ipc` only) in the daemon; `BackendManager`'s socket and `FileManager`'s blocking read stay on the allowlist for good.
 - **Stage 7: the config path** (done): saves as `config.set` path ops, `takeover` per save, previews through `ConfigManager.setPreview`, writes applied in order, the takeovers kept by the store, one validator, a thin `compositor.inputs` with the `KeybindManager` split, and the QML compositor renderers replaced by daemon methods.
 - **Stage 8: the last scripts** (done): `pick_path.py` → `filepicker.pick` and `bug_info.sh` → `axiom bug-info`; nothing at runtime runs python3. The wallpaper script isn't ported: axiom's own wallpaper drawing replaced it.
+- **Bluetooth** (done; the maintainer's go-ahead, 2026-11-06): `BluetoothManager` reads the daemon's `bluetooth` topic (`internal/bluez`, BlueZ on the daemon's own D-Bus client) instead of Quickshell.Bluetooth, which nothing imports now ([networking and Bluetooth](../features/networking-bluetooth.md)).

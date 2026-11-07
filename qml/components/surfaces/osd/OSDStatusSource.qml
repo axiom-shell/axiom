@@ -25,12 +25,14 @@ Loader {
   property var mediaOptions: ({})
 
   // It changed: the user's doing, or (a VPN, a capture, Wi-Fi joining a
-  // network, the charger, a drive, the battery, a monitor) anything's.
+  // network, the charger, a drive, the battery, Bluetooth devices, a
+  // monitor) anything's.
   // `card`: shown as its card (a type in OSDItems.cardTypes: an audio
   // device switched, not its mute; a VPN came up; an app started a
   // capture; the charger was plugged in; Wi-Fi joined a network;
-  // something done to a drive; the battery dropped to low or critical; a
-  // monitor came or went; a screenshot was taken)
+  // something done to a drive; the battery dropped to low or critical;
+  // Bluetooth devices connected or disconnected, or one's battery dropped;
+  // a monitor came or went; a screenshot was taken)
   signal fired(bool card)
 
   // What it shows now (OSDItems.tile; a message's is OSDContent's)
@@ -107,6 +109,7 @@ Loader {
           "name": label.title,
           "detail": label.detail,
           "device": AudioManager.deviceKey(node),
+          "address": AudioManager.bluetoothAddress(node),
           "muted": output ? AudioManager.muted : AudioManager.sourceMuted,
           "icon": output ? AudioManager.outputIcon(kind, false, 1) : AudioManager.inputIcon(kind, false)
         };
@@ -137,7 +140,9 @@ Loader {
     case "bluetooth":
       return {
         "available": BluetoothManager.available,
-        "on": BluetoothManager.enabled
+        "on": BluetoothManager.enabled,
+        "connected": BluetoothManager.connectedDevices.map(d => BluetoothManager.deviceLabel(d)),
+        "event": BluetoothManager.lastEvent
       };
     case "airplane":
       return {
@@ -505,6 +510,13 @@ Loader {
         function onEnabledChanged() {
           if (BluetoothManager.available)
             root._report();
+        }
+        // Devices connected or disconnected (the daemon's, joined; the
+        // radio's own disconnects aren't one), a battery dropping to low
+        // or critical (set only when an OSD shows `bluetooth`): its card
+        function onLastEventChanged() {
+          if (BluetoothManager.lastEvent)
+            root._report(true);
         }
       }
     }

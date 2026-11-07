@@ -405,6 +405,7 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
         ("qml/shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "qml/shell/Hypr.qml: imports Quickshell.Hyprland"),
         ("qml/shell/I3.qml", qml(imports="import Quickshell.I3"), "qml/shell/I3.qml: imports Quickshell.I3"),
+        ("qml/shell/Blue.qml", qml(imports="import Quickshell.Bluetooth"), "qml/shell/Blue.qml: imports Quickshell.Bluetooth"),
         ("qml/shell/Swaymsg.qml", qml('property var c: ["swaymsg"]'), "qml/shell/Swaymsg.qml: talks to sway directly"),
         ("qml/shell/NiriCli.qml", qml('property var c: ["niri", "msg"]'), "qml/shell/NiriCli.qml: talks to niri directly"),
         ("qml/shell/Hyprm.qml", qml("property var w: HyprlandManager.windows"), "qml/shell/Hyprm.qml: uses HyprlandManager"),

@@ -11,8 +11,8 @@ import qs.services.ui
 // `vpn.state` push (internal/nmvpn, on NetworkManager's signals, so
 // nothing polls), and Tailscale's from TailscaleManager while something
 // has acquire()d it and VpnConfig.showTailscale. A VPN asking for its
-// password at connect time comes as `secretRequest` (axiom is
-// NetworkManager's secret agent); its row shows the fields.
+// password at connect time (axiom is NetworkManager's secret agent:
+// `vpn.secretRequest`) asks in the shared prompt (PromptManager).
 QtObject {
   id: root
 
@@ -67,10 +67,6 @@ QtObject {
   // The last import's error ("" none)
   property string importError: ""
 
-  // NetworkManager asking for a VPN's secrets: { id, uuid, name, kind,
-  // user, message, fields }, else null
-  property var secretRequest: null
-
   // Tailscale is polled (`tailscale status`): it's listed only while
   // something showing the rows holds acquire()
   function acquire(owner) {
@@ -121,8 +117,7 @@ QtObject {
   }
 
   function down(row) {
-    if (root.secretRequest?.uuid === row.id)
-      root.cancelSecret();
+    root._cancelSecretsOf(row.id);
     if (row.kind === "tailscale")
       TailscaleManager.disconnect();
     else {
@@ -181,29 +176,6 @@ QtObject {
     };
     xhr.open("GET", url);
     xhr.send();
-  }
-
-  // values: { field: text } for the request's fields
-  function answerSecret(values) {
-    const req = root.secretRequest;
-    if (!req)
-      return;
-    root.secretRequest = null;
-    BackendManager.call("vpn.secret", {
-      "id": req.id,
-      "secrets": values
-    }, root._logFailure("vpn.secret"));
-  }
-
-  function cancelSecret() {
-    const req = root.secretRequest;
-    if (!req)
-      return;
-    root.secretRequest = null;
-    BackendManager.call("vpn.secret", {
-      "id": req.id,
-      "cancel": true
-    }, root._logFailure("vpn.secret"));
   }
 
   // What a row says under its name
@@ -326,6 +298,73 @@ QtObject {
     };
   }
 
+  // NetworkManager asking for a VPN's secrets (`vpn.secretRequest`:
+  // { id, uuid, name, kind, user, message, fields }): the prompt, a field
+  // per secret. Cancel, Escape or a click outside cancels it, so
+  // NetworkManager goes on to another agent (nm-applet)
+  // request id -> { uuid, prompt (PromptManager's id) }
+  property var _secrets: ({})
+
+  function _askSecrets(req) {
+    const prompt = PromptManager.request({
+      "icon": root.kindIcon(req.kind),
+      "title": req.name,
+      "message": req.message || (req.user ? I18n.tr("Signing in as {0}", req.user) : ""),
+      "fields": (req.fields ?? []).map(key => ({
+            "key": key,
+            "label": root.fieldLabel(key)
+          })),
+      "actions": PromptManager.cancelOr("connect", I18n.tr("Connect"))
+    }, (action, values) => root._answerSecret(req.id, action === "connect" ? values : null), () => root._answerSecret(req.id, null));
+    const next = Object.assign({}, root._secrets);
+    next[req.id] = {
+      "uuid": req.uuid,
+      "prompt": prompt
+    };
+    root._secrets = next;
+  }
+
+  // rpc: vpn.secret
+  // values: { field: text } for the request's fields; null cancels
+  function _answerSecret(id, values) {
+    root._forgetSecret(id);
+    if (values)
+      BackendManager.call("vpn.secret", {
+        "id": id,
+        "secrets": values
+      }, root._logFailure("vpn.secret"));
+    else
+      BackendManager.call("vpn.secret", {
+        "id": id,
+        "cancel": true
+      }, root._logFailure("vpn.secret"));
+  }
+
+  // vpn.secretDone, or a daemon started again: the prompt goes
+  function _secretDone(id) {
+    const shown = root._secrets[id];
+    if (!shown)
+      return;
+    PromptManager.withdraw(shown.prompt);
+    root._forgetSecret(id);
+  }
+
+  // A VPN taken down while it asks: its request is cancelled
+  function _cancelSecretsOf(uuid) {
+    for (const id of Object.keys(root._secrets)) {
+      if (root._secrets[id].uuid !== uuid)
+        continue;
+      PromptManager.withdraw(root._secrets[id].prompt);
+      root._answerSecret(id, null);
+    }
+  }
+
+  function _forgetSecret(id) {
+    const next = Object.assign({}, root._secrets);
+    delete next[id];
+    root._secrets = next;
+  }
+
   function _logFailure(method) {
     return error => {
       if (error)
@@ -366,6 +405,7 @@ QtObject {
   property Connections _backend: Connections {
     target: BackendManager
     function onGreeted() {
+      Object.keys(root._secrets).forEach(id => root._secretDone(id));
       root._fetch();
     }
   }
@@ -375,11 +415,8 @@ QtObject {
     root.lastUsed = saved.lastUsed ?? "";
     root.folded = saved.folded ?? true;
     BackendManager.listen("vpn.state", state => root._show(state));
-    BackendManager.listen("vpn.secretRequest", request => root.secretRequest = request);
-    BackendManager.listen("vpn.secretDone", done => {
-      if (root.secretRequest?.id === done.id)
-        root.secretRequest = null;
-    });
+    BackendManager.listen("vpn.secretRequest", request => root._askSecrets(request));
+    BackendManager.listen("vpn.secretDone", done => root._secretDone(done.id));
     // Made after the hello (a QML reload): no greeted to wait for
     if (BackendManager.ready)
       root._fetch();
