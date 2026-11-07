@@ -92,6 +92,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [backend/roadmap](backend/roadmap.md): the staged move of the services' side effects into the axiom binary, which the cleanup roadmap aligns with.
 
 ### Known issues
+- [live-checks.md](live-checks.md): every check waiting for the maintainer's own session, and code tested only against fakes by the hardware it needs (Bluetooth devices).
 - [issues.md](issues.md): coding agents' working list of problems found in the code but not fixed yet (add one when you find something out of scope; remove it with the fix). Not where people report or look up problems: that's GitHub issues, which agents never open.
 
 ### Installing
