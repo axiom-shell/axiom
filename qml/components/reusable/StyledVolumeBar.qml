@@ -9,7 +9,8 @@ import qs.config
 // percentage: drag, click or scroll to set it. Muted, the icon (the base
 // one, never its `_off` form) is struck through (SlashedIcon); with
 // `iconClickable` a click on it emits `iconClicked` (mute), with a hover
-// highlight and `iconTip`. PipewireVolumeBar binds it to audio.
+// highlight and `iconTip`. The OSD's bars are one (OSDLevelBar; Audio's
+// VolumeBar binds one to audio).
 Item {
   id: root
 

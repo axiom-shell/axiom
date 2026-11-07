@@ -56,5 +56,5 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 ### Module and view pickers
 - They read `OverlayConfig.availableModuleTypes` / `availableViewTypes` (`modulesFor(host)` for the `x-hosts` filter).
 - These come from the schema's `oneOf`s, including `x-defaultSize`, `x-icon` and `x-tool`, so new types show up there automatically.
-- `reusable/TypePickerPopup` is the shared "pick a type" popup, used by the bar editor (sorted by label) and the page list.
+- `reusable/TypePickerPopup` is the shared "pick a type" popup, used by the bar editor (sorted by label), the page list and an OSD's systems (grouped by `x-libraryGroup`).
 - Each bar widget and module joins one of the root's `x-libraryGroups` with `x-libraryGroup` (`group` on its type info; `check_structure.py` insists). The libraries' By category view groups by it (`OverlayConfig.libraryGroups`).

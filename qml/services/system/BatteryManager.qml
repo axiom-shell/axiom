@@ -103,7 +103,7 @@ QtObject {
     const summary = critical ? I18n.tr("Critical Battery") : I18n.tr("Low Battery");
     const body = critical ? I18n.tr("Battery critically low: {0}%", root.percentage) : I18n.tr("Battery low: {0}%", root.percentage);
     // One entry: critical replaces low
-    const route = NotificationManager.announce("battery", BatteryConfig.notify, summary, body, {
+    const route = NotificationManager.announce("Battery", "battery", BatteryConfig.notify, summary, body, {
       "urgency": critical ? "critical" : "normal",
       "key": "battery"
     });

@@ -433,6 +433,14 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/dupb/Dup.qml", qml(), None),
         ("qml/shell/Both.qml", qml("Dup {}", imports="import qs.components.dupa\nimport qs.components.dupb"),
          "qml/shell/Both.qml: Dup is defined in qs.components.dupa and qs.components.dupb"),
+        ("qml/components/surfaces/osd/systems/Ghost/Ghost.qml", qml(imports="import qs.services.ui"),
+         "qml/components/surfaces/osd/systems/Ghost/Ghost.qml: an OSD system's definition imports qs.services.ui"),
+        ("qml/components/surfaces/osd/systems/Spook/Spook.qml", qml(), None),
+        ("qml/components/surfaces/osd/systems/Spook/SpookWatch.qml", qml("Spook {}"),
+         "SpookWatch.qml: uses Spook of its own OSD system's folder"),
+        ("qml/components/surfaces/osd/systems/Spook/schema.yaml", "label: Spook\n", None),
+        ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
+         "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
     ]
     # What the check must say about the schema, docs/usage.md and the allowlist edits below (and Reach)
     EDITS = [
@@ -448,6 +456,8 @@ class CheckStructure(unittest.TestCase):
         "docs/usage.md: IPC target 'phantom' has no IpcTarget",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
+        "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
+        "qml/components/surfaces/osd/systems/Ghost/: an OSD system without schema.yaml",
     ]
 
     def test_each_rule_fails(self):

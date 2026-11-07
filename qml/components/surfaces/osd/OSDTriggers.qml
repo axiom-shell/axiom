@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.services.system
 import qs.services.ui
 
-// What opens one OSD host (an EdgePopout) on its screen: its items' own
-// changes (poke, system volume and mute included, a message from `axiom
-// ipc osd` too) and the settings page's Show button. Where it gives way
+// What opens one OSD host (an EdgePopout) on its screen: its systems' own
+// changes (OSDHost's poke: levels, tiles, cards, a message from `axiom
+// message` too) and the settings page's Show button. Where it gives way
 // to other popouts is its host's (EdgePopout.claimKey, PopoutManager).
 QtObject {
   id: root
@@ -23,17 +22,6 @@ QtObject {
       root.host.updateDismissTimer();
     else if (force && ShellManager.showsOn(root.host.screen, root.osd.screen))
       root.host.show();
-  }
-
-  // Picks up brightness changed outside axiom, on the monitors its
-  // brightness bars show
-  readonly property bool _open: root.host.isOpen
-  on_OpenChanged: {
-    if (!root._open)
-      return;
-    const bars = root.osd.bars.items.filter(item => item.type === "brightness");
-    const names = bars.some(bar => bar.allMonitors) ? BrightnessManager.names : bars.length > 0 ? [root.host.screen.name] : [];
-    names.forEach(name => BrightnessManager.refresh(name));
   }
 
   readonly property Connections _shell: Connections {

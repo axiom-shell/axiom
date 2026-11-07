@@ -187,8 +187,9 @@ QtObject {
       ShellManager.runAction(id, opts.argument ?? "", opts.call ?? "toggle");
   }
 
-  // The on-screen mark (ShellManager.onScreen's kind: OSDItems.
-  // onScreenKind's) an action's change is judged by, or "" for none
+  // The on-screen mark (ShellManager.onScreen's kind: an OSD system's
+  // `mark` for the key the action changes) an action's change is judged
+  // by, or "" for none
   function osdKind(id) {
     return root._osdKinds[id] ?? "";
   }
@@ -210,26 +211,6 @@ QtObject {
       "inputSourceNext": "keyboardLayout",
       "inputSourcePrev": "keyboardLayout",
       "screenRecord": "recording"
-    })
-
-  // The action a click on an OSD status icon runs (its status type's), or
-  // "" for a status nothing switches (a lock key, the battery, a drive)
-  function osdStatusAction(type) {
-    return root._statusActions[type] ?? "";
-  }
-  readonly property var _statusActions: ({
-      "keyboardLayout": "inputSourceNext",
-      "audio": "toggleMute",
-      "microphone": "toggleMicMute",
-      "powerProfile": "powerSaver",
-      "caffeine": "idleInhibit",
-      "dnd": "toggleDnd",
-      "nightLight": "nightLight",
-      "wifi": "wifi",
-      "bluetooth": "bluetooth",
-      "airplane": "airplane",
-      "vpn": "vpn",
-      "recording": "screenRecord"
     })
 
   function _onOff(on) {

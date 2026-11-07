@@ -188,6 +188,8 @@ Found along the way:
 - [guard.py judges daemon calls and the radio only by argv](issues.md#guardpy-judges-daemon-calls-and-the-radio-only-by-argv) (the same)
 - [A VPN secret request held when the shell leaves waits for NetworkManager's timeout](issues.md#a-vpn-secret-request-held-when-the-shell-leaves-waits-for-networkmanagers-timeout) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
+- [The OSD's hover strip opens an empty bars slot when every bar is left out](issues.md#the-osds-hover-strip-opens-an-empty-bars-slot-when-every-bar-is-left-out) (reviewing the OSD engine branch)
+- [A type library's search matches the "Other" heading of every ungrouped type](issues.md#a-type-librarys-search-matches-the-other-heading-of-every-ungrouped-type) (the same)
 
 #### The launch gate
 Posting for testers waits for all of these:
@@ -304,7 +306,6 @@ Bugs an agent's review or audit found and marked PLAUSIBLE: no code is written f
 - [EdgePlacement logs a binding loop on _layout](issues.md#edgeplacement-logs-a-binding-loop-on-_layout)
 - [Eight modules' full layouts need more room than their fullMin sizes, even inside the padding](issues.md#eight-modules-full-layouts-need-more-room-than-their-fullmin-sizes-even-inside-the-padding) (PLAUSIBLE in its exact px)
 - [A stale exec-if check can block a widget after its exec-if changed](issues.md#a-stale-exec-if-check-can-block-a-widget-after-its-exec-if-changed)
-- [A device's own level arriving late brings the OSD's bars out beside its card](issues.md#a-devices-own-level-arriving-late-brings-the-osds-bars-out-beside-its-card)
 - [The dock's menu and drag state outlive the icons they point at](issues.md#the-docks-menu-and-drag-state-outlive-the-icons-they-point-at)
 - [A dock beside another edge's reserving dock is laid out as if that dock weren't there](issues.md#a-dock-beside-another-edges-reserving-dock-is-laid-out-as-if-that-dock-werent-there)
 - [A pomodoro, timer or caffeine end due during a suspend fires up to an hour after waking](issues.md#a-pomodoro-timer-or-caffeine-end-due-during-a-suspend-fires-up-to-an-hour-after-waking)

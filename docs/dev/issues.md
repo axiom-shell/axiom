@@ -119,12 +119,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** needs a plan
 - **Found:** 2026-11-05, while making every floating popout slide in from off the screen
 
-### A device's own level arriving late brings the OSD's bars out beside its card
-- **Where:** `qml/components/surfaces/osd/PipewireVolumeBar.qml` (`_systemChanged`), `qml/components/surfaces/osd/OSDBar.qml` (`_levelChanged`), `qml/components/surfaces/osd/OSDContent.qml` (the bars' `onPoked`, `_openBox`), `qml/components/methods/OSDItems.qml` (`replaces`)
-- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` opens the bars part (`_openBox`) with no `replaces` check: the bars come out beside the device card, a change the user didn't make. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it ([live-checks.md](live-checks.md) already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the OSD's statuses
-
 ### The dock's menu and drag state outlive the icons they point at
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:216` (`dragIndex`), `qml/components/surfaces/dock/DockWindow.qml:357` (`menuIndex`), `qml/components/surfaces/dock/DockWindow.qml:574` (`anchorItem`), `qml/components/surfaces/dock/DockItem.qml:100` (the hover Timer)
 - **What:** The menu is held as `menuKey`/`menuFull` and anchored on `repeater.itemAt(root.menuIndex)`; a drag as `dragIndex`. Both are cleared only by the icon or the menu itself (`closeMenu()` from DockItem's press, click and drag start, DockMenu's FocusGrab `onCleared`, `conceal()`; `dragIndex = -1` only in DockItem's `_endDrag`). Two paths leave them set:
@@ -142,6 +136,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
   **Decided** (maintainer, 2026-11-01, on the recommendation "b) reach past it as edge popouts do"): "agree".
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing the feature:dock system
+
+### The OSD's hover strip opens an empty bars slot when every bar is left out
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_expose`, `_levelEntries`)
+- **What:** `_expose` opens the "level" part whenever `_levelEntries` is non-empty, even when every bar in it is left out (Brightness alone on a monitor with no controller, `available` false), so hovering the strip or the Show button opens an empty slot instead of the icons or the preview card. The old `levelItems.length > 0` check did the same. PLAUSIBLE: settled by an OSD with only Brightness on a monitor without DDC. Fix: count only the bars shown (their system's state not hidden) in the check.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the OSD engine branch
 
 ## Overlay, modules and custom widgets
 
@@ -235,6 +235,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **What:** From the maintainer's notes: the keybinds page needs checking on a small monitor with long binds (combos and commands): rows that don't fit. Take it with the 1080p pass of [Text clips on 1080p screens](#text-clips-on-1080p-screens).
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
+
+### A type library's search matches the "Other" heading of every ungrouped type
+- **Where:** `qml/components/methods/LibraryOrder.qml` (`filtered`), `qml/components/reusable/TypeLibrary.qml` (`headingOf`), `qml/components/reusable/TypePickerPopup.qml` (`headingOf`)
+- **What:** `filtered` matches a type by its group's heading, and an ungrouped type's heading is "Other" (`TypeLibrary` leaves it untranslated, `TypePickerPopup` translates it), so a query such as "th" lists every ungrouped type. The bar library already did it; the OSD Add picker and the bar editor's + picker now share it. Fix: match `headingOf(type.group)` only for a type with a group.
+- **Size:** trivial
+- **Found:** 2026-11-07, while reviewing the OSD engine branch
 
 ## Shell-wide: windows, screens, reloads and actions
 

@@ -450,7 +450,7 @@ QtObject {
         "driveId": drive.id
       }
     });
-    if (NotificationManager.announce("drive", DrivesConfig.notify, notice.summary, notice.body, sent) === "osd")
+    if (NotificationManager.announce("Drives", "drive", DrivesConfig.notify, notice.summary, notice.body, sent) === "osd")
       root._event(kind, drive, opts?.mountPoint ?? "", name);
   }
   readonly property var _quietKinds: ["added", "mounted", "unmounted", "removed"]
