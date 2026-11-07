@@ -53,6 +53,8 @@ One workspace layout serves everything that shows workspaces or moves between th
   2. every monitor goes to `name:axiom-remap-mon-<i>`, so its old (maybe empty) workspace is gone before its id is reused
   3. windows go to their ids
   4. monitors go to theirs, the focused one last.
+
+  A monitor step runs only while Hyprland has that monitor on (`hl.get_monitor`, nil for a disabled one): a plan made as a profile turns one off, or one is unplugged, skips it rather than fail (`hl.focus.monitor: monitor not found`) and send its workspace to whichever monitor has the focus.
 - IPC `workspaces reconcile` (`WorkspaceRemap.reconcile`) runs the remap for the current layout, re-homing workspaces left outside their monitor's ids.
 
 ### Hotplugs (an unplugged monitor's windows)

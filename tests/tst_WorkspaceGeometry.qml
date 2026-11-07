@@ -584,6 +584,34 @@ TestCase {
     compare(_focus(plan), "B:11 A:1");
   }
 
+  // B turned off (a profile): the compositor no longer has it, though a
+  // window still reads as on it. Neither plan names B: no focus, no move
+  // (it's re-homed once the compositor has moved it to A)
+  function test_plans_name_only_the_outputs_on() {
+    const monitors = [_monitors(1, 0)[0]];
+    const windows = _windows([["a1", 1, 0], ["b1", 13, 1]]);
+    const layout = {
+      "blocks": true,
+      "size": 10,
+      "bases": {
+        "A": 1
+      }
+    };
+    const rehome = WorkspaceGeometry.rehomeWorkspaces(monitors, windows, layout, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, ["B"]);
+    compare(_moves(rehome), "");
+    compare(_focus(rehome), "A:1");
+    verify(!rehome.changed);
+    const remap = WorkspaceGeometry.remapWorkspaces(monitors, windows, layout, layout);
+    compare(_moves(remap), "");
+    compare(_focus(remap), "A:1");
+  }
+
   function test_rehome_nothing_orphaned() {
     const windows = _windows([["a1", 1, 0], ["b1", 11, 1]]);
     const plan = WorkspaceGeometry.rehomeWorkspaces(_monitors(1, 11), windows, {

@@ -128,8 +128,13 @@ Item {
     // stays within it, and content (MenuSubmenu) scrolls past
     // maxContentHeight
     readonly property real _placedY: outer.slot?.popupScreenPlaced?.y ?? 0
-    readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(outer.screen, ScreenEdge.Top) - root._placedY
-    readonly property real screenTo: (outer.screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(outer.screen, ScreenEdge.Bottom) - root._placedY
+    // Its screen while connected. Unplugged, the host goes a tick later
+    // (Variants deletes it late), its ShellScreen dangling meanwhile: the
+    // layers rearranged in that tick (LayerManager, popupScreenPlaced)
+    // re-evaluated these on it, `attempted to use dangling screen object`
+    readonly property ShellScreen _screen: General.outputs.includes(outer.screen) ? outer.screen : null
+    readonly property real screenFrom: ScreenEdgeManager.reservedWithMenusOn(root._screen, ScreenEdge.Top) - root._placedY
+    readonly property real screenTo: (root._screen?.height ?? 0) - ScreenEdgeManager.reservedWithMenusOn(root._screen, ScreenEdge.Bottom) - root._placedY
     readonly property real maxContentHeight: Math.max(Widget.height, root.screenTo - root.screenFrom - surface.contentInset * 2)
     // Along the parent's side (y in its window), placed as a bar popout is
     // along a pill (SurfaceContext.submenuPlace)

@@ -582,10 +582,16 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   }
 
   // Monitor `monitor` focused, then its `workspace` unless `stay` (Lua
-  // lines, in run())
+  // lines, in run()). Only while Hyprland has the monitor on: a plan made
+  // as one is turned off or unplugged (`outputs` still listing it, a
+  // profile's switch under way) skips it, rather than failing on it
+  // (`hl.focus.monitor: monitor not found`) and sending its workspace to
+  // whichever monitor has the focus. hl.get_monitor is nil for a disabled
+  // one as for one gone.
   function _focusLua(monitor, workspace, stay) {
-    const lead = `run(function() return hl.dsp.focus({ monitor = ${JSON.stringify(monitor)} }) end)`;
-    return stay ? [lead] : [lead, `run(function() return hl.dsp.focus({ workspace = ${workspace} }) end)`];
+    const name = JSON.stringify(monitor);
+    const lead = `run(function() return hl.dsp.focus({ monitor = ${name} }) end)`;
+    return [`if hl.get_monitor(${name}) then`].concat(stay ? [lead] : [lead, `run(function() return hl.dsp.focus({ workspace = ${workspace} }) end)`], ["end"]);
   }
 
   // --- Dynamic workspaces (dynamicByLayout) ---

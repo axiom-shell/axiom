@@ -257,7 +257,6 @@ Found by the audits:
 
 Found along the way:
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded) (investigating Hyprland starting on workspace 10)
-- [A remap focuses a monitor Hyprland doesn't have](issues.md#a-remap-focuses-a-monitor-hyprland-doesnt-have) (testing hotplugs and monitor profiles)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all) (reviewing the guard's leading `cd`, config-05)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh) (the same)
 - [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config) (reviewing the guard's gh and push allowlists)
