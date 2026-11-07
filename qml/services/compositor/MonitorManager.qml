@@ -400,7 +400,7 @@ Singleton {
   // and a keep() that couldn't save): what the page shows is then what's
   // on the monitors, unsaved where the saved profile differs
   function _runRevert(trial) {
-    CompositorManager.applyOutputs(trial.rules, trial.details);
+    CompositorManager.applyOutputs(trial.rules, trial.details, true);
     const items = draft.local?.items ?? [];
     const tried = items[_named(items, trial.profile ?? _liveName)];
     if (tried) {

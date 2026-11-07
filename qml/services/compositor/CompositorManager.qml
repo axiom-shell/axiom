@@ -405,13 +405,15 @@ Singleton {
   // Sets the outputs as `rules` (MonitorRule) say, now; `details` are the
   // outputs as withOutputDetails gave them. axiom sends them to the
   // compositor (outputs.apply); the backend reads its state again after
-  // (outputsApplied). Needs monitors
-  function applyOutputs(rules, details) {
+  // (outputsApplied). `revert`: the rules picture the outputs before an
+  // Apply, every part said (Hyprland's vrr 0 too). Needs monitors
+  function applyOutputs(rules, details, revert) {
     if (!root.supports.monitors)
       return;
     BackendManager.call("outputs.apply", {
       "rules": rules,
-      "details": details
+      "details": details,
+      "revert": revert === true
     }, error => {
       if (error)
         console.warn("[CompositorManager] setting the outputs:", error.message);

@@ -290,12 +290,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-10-28, while filing the maintainer's notes into the roadmap
 
-### A reverted Monitors trial that turned VRR on leaves it on under Hyprland
-- **Where:** `backend/internal/compositor/render/hyprlua.go` (`MonitorSpec`), `qml/services/compositor/MonitorManager.qml` (`_runRevert`)
-- **What:** `hl.monitor()` keeps the keys a call leaves out, and `MonitorSpec` leaves out `vrr` when a rule's is 0, since a rule's vrr overrides `misc:vrr` (Compositor › Variable refresh rate) for its output. So an Apply that turned an output's VRR on, reverted (or timed out) to a rule with vrr 0, leaves VRR on until the next config reload. Sending vrr 0 instead would make the global setting dead for every monitor in a profile. A fix would send the revert's vrr as `misc:vrr`'s value (the daemon's config) where the rule's is 0.
-- **Size:** small
-- **Found:** 2026-11-07, while reviewing the monitor editor's revert (mm-ws1)
-
 ## Compositors: niri and sway
 
 ### A bar popout's stroke flashes off its fill switching content on niri

@@ -50,9 +50,24 @@ func (o Outputs) Read(ctx context.Context) ([]render.Output, error) {
 // profile saved under niri may name a make as PNP(XXX)), on niri and sway
 // as the connector.
 func (o Outputs) Apply(ctx context.Context, rules, details any) error {
+	return o.apply(ctx, rules, details, false)
+}
+
+// Revert is Apply for rules that picture the outputs as they were before
+// an Apply (the Monitors page's revert): on Hyprland every key is said,
+// vrr 0 too (render.RevertMonitorCalls). niri and sway say them anyway.
+func (o Outputs) Revert(ctx context.Context, rules, details any) error {
+	return o.apply(ctx, rules, details, true)
+}
+
+func (o Outputs) apply(ctx context.Context, rules, details any, revert bool) error {
 	switch {
 	case o.Hypr != nil:
-		reply, err := o.Hypr.Eval(ctx, strings.Join(render.MonitorCalls(render.Spelled(rules, details), render.MirrorNames(details)), "\n"))
+		calls := render.MonitorCalls
+		if revert {
+			calls = render.RevertMonitorCalls
+		}
+		reply, err := o.Hypr.Eval(ctx, strings.Join(calls(render.Spelled(rules, details), render.MirrorNames(details)), "\n"))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
