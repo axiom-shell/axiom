@@ -315,7 +315,6 @@ QtObject {
     // the card sets): the connect it leads to updates an open OSD but
     // opens none (the prompt may have waited past the click's window)
     const spec = {
-      "source": "bluetooth",
       "icon": root.deviceIcon(req.device),
       "marks": "bluetooth"
     };

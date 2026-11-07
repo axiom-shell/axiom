@@ -18,7 +18,7 @@ One prompt for every password, PIN or confirmation the system asks for. **The ru
 ### The queue (`PromptManager`)
 - **One request at a time.** Requests queue in the order they came; the first is `current`, the rest wait behind it. So two requests never fight over the screen: a pairing prompt asked while polkit's is open shows once polkit's ends.
 - **`request(spec, onAnswer, onCancel)`** queues one and returns its id (`"prompt-<n>"`). `spec`, every key optional:
-  - `source` (who asks, for logs and the doc), `icon` (a Material glyph), `title`, `message`;
+  - `icon` (a Material glyph), `title`, `message`;
   - `code` (shown large: a PIN or passkey) and `entered` (how many of its digits are typed, lit; -1 none);
   - `fields`: `[{key, label, secret (default true), digits, maxLength}]`, each a `PasswordEntry` (a digits field takes only digits);
   - `actions`: `[{id, label, primary, icon}]`, the buttons, in order; the primary one is accented, runs on Enter, and only once every field is filled. `cancelOr(id, label)` gives the usual pair: Cancel (id `cancel`), then the primary one;

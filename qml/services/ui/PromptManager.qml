@@ -14,7 +14,7 @@ import qs.services.compositor
  * drive passphrase asked from its menu stays in its row instead.
  *
  * A source calls request(spec, onAnswer, onCancel) and keeps the id:
- *   spec: { source, icon (a glyph), title, message, code (shown large: a
+ *   spec: { icon (a glyph), title, message, code (shown large: a
  *   PIN or passkey), entered (how many of code's digits are typed, -1
  *   none), fields [{ key, label, secret, digits, maxLength }], actions
  *   [{ id, label, primary }], error, waits, outsideCancels, content,
@@ -47,7 +47,6 @@ QtObject {
     const s = spec ?? {};
     const entry = {
       "id": id,
-      "source": s.source ?? "",
       "icon": s.icon ?? "",
       "title": s.title ?? "",
       "message": s.message ?? "",

@@ -99,7 +99,6 @@ Singleton {
       PromptManager.withdraw(root._promptId);
     root._promptFlow = root.flow;
     root._promptId = root.flow ? PromptManager.request({
-      "source": "polkit",
       "content": "polkit",
       "outsideCancels": false
     }, null, () => root.cancel()) : "";

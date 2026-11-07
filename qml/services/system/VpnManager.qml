@@ -307,7 +307,6 @@ QtObject {
 
   function _askSecrets(req) {
     const prompt = PromptManager.request({
-      "source": "vpn",
       "icon": root.kindIcon(req.kind),
       "title": req.name,
       "message": req.message || (req.user ? I18n.tr("Signing in as {0}", req.user) : ""),

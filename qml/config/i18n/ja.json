@@ -4088,7 +4088,6 @@
     "How axiom pairs Bluetooth devices, and when it warns of a device's low battery.": "",
     "Device battery low at": "",
     "Say it again when the battery drops to this level.": "",
-    "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification.": "",
     "Device battery critical at": "",
     "Bluetooth is blocked by a hardware switch": "",
     "Connects automatically: click to stop": "",
@@ -4105,6 +4104,7 @@
     "Show peripherals": "",
     "Connected Bluetooth devices' batteries, under the laptop's. With no laptop battery, only them.": "",
     "Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).": "",
-    "Device battery notifications": ""
+    "Device battery notifications": "",
+    "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).": ""
   }
 }

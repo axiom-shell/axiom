@@ -505,7 +505,6 @@ QtObject {
       "label": kind === "wep" ? I18n.tr("Key or passphrase") : I18n.tr("Password")
     });
     const id = PromptManager.request({
-      "source": "wifi",
       "icon": "wifi_password",
       "title": I18n.tr("Join {0}", network.name),
       "fields": fields,

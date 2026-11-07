@@ -207,7 +207,6 @@ QtObject {
       root.cancelUnlock();
     root._withdrawUnlockPrompt();
     const prompt = PromptManager.request({
-      "source": "drives",
       "icon": "lock_open",
       "title": I18n.tr("{0} is encrypted", root.nameOf(drive)),
       "fields": [
