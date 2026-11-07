@@ -360,6 +360,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "rfkill toggle bluetooth", "rfkill toggle all", "rfkill -o ID block bluetooth",
                     f"busctl call org.bluez {dev} org.bluez.Device1 DisconnectProfile s 0000110b-0000-1000-8000-00805f9b34fb",
                     "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane enable", "axiom ipc airplane toggle",
+                    "axiom bluetooth off", "axiom bluetooth toggle",
                     # a scratch bus says nothing of the daemon a call reaches, and rfkill isn't D-Bus
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x axiom ipc bluetooth disable",
                     f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x python3 -c {call % 'bluetooth.setPowered'}",
@@ -371,7 +372,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "busctl call org.bluez / org.freedesktop.DBus.ObjectManager GetManagedObjects",
                     f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.bluez {dev} org.bluez.Device1 Pair",
                     "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus bluetoothctl remove AA:BB:CC:DD:EE:FF",
-                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane disable",
+                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane disable", "axiom bluetooth on",
                     "rfkill list bluetooth", "rfkill -o ID,TYPE,SOFT list",
                     "bluetoothctl --version", "bluetoothctl -v", "bluetoothctl --help", "bluetoothctl -h",
                     f"python3 -c {call % 'bluetooth.get'}", "go test ./internal/bluez")

@@ -666,10 +666,11 @@ def check_bluetooth(env, name, args, sends):
         powered = any("Powered" in a or "Blocked" in a for a in args) and ("set-property" in args or any(a.endswith("Properties.Set") or a == "Set" for a in args))
         if powered or any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in BLUEZ_WRITES):
             deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered / Blocked on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
+    # `axiom bluetooth off` is the named form of `ipc bluetooth disable`;
     # airplane mode powers the adapter off too
-    by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "toggle"], ["airplane", "enable"], ["airplane", "toggle"]) for i in range(len(words)))
+    by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "off"], ["bluetooth", "toggle"], ["airplane", "enable"], ["airplane", "toggle"]) for i in range(len(words)))
     if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)) and (not scratch or axiom_live_display(env, args)):
-        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`, `airplane enable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
+        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`, `axiom bluetooth off|toggle`, `airplane enable|toggle`) reach the machine's BlueZ from any daemon on its system bus, a scratch one too: only to a daemon started on a scratch system bus, the call made with that DBUS_SYSTEM_BUS_ADDRESS.")
 
 
 REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}

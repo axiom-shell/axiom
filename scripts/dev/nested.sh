@@ -119,7 +119,9 @@ EOF
 launch="$scratch/launch.sh"
 cat >"$launch" <<EOF
 #!/usr/bin/env bash
-export XDG_CONFIG_HOME="$scratch/config" XDG_STATE_HOME="$scratch/state" XDG_DATA_HOME="$scratch/data" XDG_CACHE_HOME="$scratch/cache"
+# The system bus is the real one: never a second pairing agent, whatever
+# the config (the dev image reads its own dev/config.json, copied once)
+export XDG_CONFIG_HOME="$scratch/config" XDG_STATE_HOME="$scratch/state" XDG_DATA_HOME="$scratch/data" XDG_CACHE_HOME="$scratch/cache" AXIOM_BLUETOOTH_AGENT=off
 exec "$scratch/axiom" run --dev --tree "$repo"
 EOF
 chmod +x "$launch"

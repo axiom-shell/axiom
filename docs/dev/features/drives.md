@@ -57,4 +57,4 @@ Every drive notification has the desktop entry `axiom-drives`: a click on one wi
 - **Launcher:** `/eject [drive]` lists the drives and ejects the one picked. **IPC:** `axiom ipc drives list | mount <id> | eject <id> | ejectAll`.
 
 ### Testing
-With no daemon side, the panel shows its off message. Against fixtures: a scratch daemon (`XDG_RUNTIME_DIR=<scratch>`) with `AXIOM_DRIVES_INCLUDE_LOOP=1` and `drive-fixtures.sh up`, then a nested shell (`scripts/dev/nested.sh`) on it; mount, open, unmount and eject, a LUKS unlock with a right and a wrong passphrase, and a busy unmount (a shell `cd`'d into the mount). A real USB stick, SD card and LUKS stick are a live check.
+With no daemon side, the panel shows its off message. Against fixtures: a scratch daemon (`XDG_RUNTIME_DIR=<scratch>`) with `AXIOM_DRIVES_INCLUDE_LOOP=1 AXIOM_BLUETOOTH_AGENT=off` and `drive-fixtures.sh up`, then a nested shell (`scripts/dev/nested.sh`) on it; mount, open, unmount and eject, a LUKS unlock with a right and a wrong passphrase, and a busy unmount (a shell `cd`'d into the mount). A real USB stick, SD card and LUKS stick are a live check.
