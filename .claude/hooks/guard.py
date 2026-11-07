@@ -260,8 +260,14 @@ AXIOM_VALUE_OPTS = {"--socket", "--config-dir", "--tree", "--qs", "-o", "--kind"
 LIVE_RUNTIME = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
 
 
+def long_flag(a):
+    """Go's flag package takes a long option with one dash too
+    (`-config-dir`): its two-dash spelling."""
+    return "-" + a if a.startswith("-") and not a.startswith("--") and len(a.split("=", 1)[0]) > 2 else a
+
+
 def axiom_flag(args, flag):
-    for i, a in enumerate(args):
+    for i, a in enumerate(map(long_flag, args)):
         if a == flag and i + 1 < len(args):
             return args[i + 1]
         if a.startswith(flag + "="):
@@ -328,7 +334,7 @@ def axiom_words(args):
         if skip:
             skip = False
             continue
-        if a in AXIOM_VALUE_OPTS:
+        if long_flag(a) in AXIOM_VALUE_OPTS:
             skip = True
             continue
         if not a.startswith("-"):

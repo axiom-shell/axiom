@@ -499,7 +499,7 @@ class Axiom(LiveSession, unittest.TestCase):
         return False
 
     def test_live_shell_lifecycle_refused(self):
-        for cmd in ("axiom run", "axiom run --dev --tree .", "axiom quit", "axiom restart", "./axiom daemon reexec",
+        for cmd in ("axiom -socket $XDG_RUNTIME_DIR/axiom/wayland-1/axiom.sock quit", "axiom -config-dir /tmp/c quit", "axiom run", "axiom run --dev --tree .", "axiom quit", "axiom restart", "./axiom daemon reexec",
                     "/usr/bin/axiom --json quit", "axiom dev on", "axiom dev off", "axiom --json dev rebuild"):
             self.assertTrue(self.denied(cmd), cmd)
 
@@ -512,7 +512,10 @@ class Axiom(LiveSession, unittest.TestCase):
     def test_scratch_daemon_needs_its_agent_off(self):
         """On the machine's bus it would be a second Bluetooth pairing agent."""
         for cmd in ("XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/scr axiom run",
-                    "XDG_RUNTIME_DIR=/tmp/scr AXIOM_BLUETOOTH_AGENT=on axiom run"):
+                    "XDG_RUNTIME_DIR=/tmp/scr AXIOM_BLUETOOTH_AGENT=on axiom run",
+                    # Go's flags take one dash too
+                    "XDG_RUNTIME_DIR=/tmp/s/run axiom -config-dir /tmp/s/c run --no-shell",
+                    "XDG_RUNTIME_DIR=/tmp/s/run axiom -socket /tmp/s/run/axiom.sock run"):
             self.assertTrue(self.denied(cmd), cmd)
         for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/scr axiom run",
                     "AXIOM_BLUETOOTH_AGENT=off XDG_RUNTIME_DIR=/tmp/scr axiom run --no-shell"):
