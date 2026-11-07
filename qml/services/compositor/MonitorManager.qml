@@ -20,8 +20,10 @@ import qs.services.ui
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
- * countdown running out) puts back what was there before. A QML reload
- * keeps the trial (its countdown starts over).
+ * countdown running out) puts back what was there before, on the monitors
+ * and in the draft. A QML reload keeps the trial (its countdown starts
+ * over). Apply shows while the draft differs from the saved config or
+ * from the monitors as they are (differsFromLive).
  *
  * A monitor connected or removed (seen between two reads) is said where
  * the OSD's `monitor` status or Monitors.notify puts it (lastEvent).
@@ -296,6 +298,11 @@ Singleton {
     return result;
   }
   readonly property bool canApply: !issues.some(issue => issue.level === "error")
+  // The selected profile isn't what the connected monitors show (a
+  // layout the compositor didn't take, or set elsewhere): Apply shows
+  // though nothing is unsaved (MonitorLayout.differsFromLive). Not while
+  // a change settles: the outputs are read again once it has
+  readonly property bool differsFromLive: selectedIsLive && !_refreshSoon.running && !_reading && MonitorLayout.differsFromLive(rules, outputs)
 
   // A rule's name on the page: its connector, else its description
   function labelFor(rule) {
@@ -311,8 +318,9 @@ Singleton {
   readonly property int confirmSeconds: 15
 
   // The trial, kept across a QML reload so its way back is too: JSON of
-  // { rules, details } putting back what was there before Apply and the
-  // draft it tried (keep() saves it), "" when none
+  // { rules, details } putting back what was there before Apply, the
+  // draft it tried (keep() saves it) and the name of the profile tried,
+  // "" when none
   PersistentProperties {
     id: _trial
     reloadableId: "axiomMonitorTrial"
@@ -343,7 +351,8 @@ Singleton {
     _trial.state = JSON.stringify({
       "rules": all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all)),
       "details": all,
-      "draft": draft.local
+      "draft": draft.local,
+      "profile": profile.name
     });
     CompositorManager.applyOutputs(rules.filter(rule => monitorFor(rule) !== null), all);
     secondsLeft = confirmSeconds;
@@ -374,8 +383,18 @@ Singleton {
     return trial;
   }
 
+  // Puts back the monitors as they were before Apply, and the profile
+  // tried in the draft as they were (the same for revert(), the countdown
+  // and a keep() that couldn't save): what the page shows is then what's
+  // on the monitors, unsaved where the saved profile differs
   function _runRevert(trial) {
     CompositorManager.applyOutputs(trial.rules, trial.details);
+    const items = draft.local?.items ?? [];
+    const tried = items[_named(items, trial.profile ?? _liveName)];
+    if (tried) {
+      tried.outputs = MonitorLayout.restored(tried.outputs, trial.rules, trial.details);
+      draft.changed();
+    }
     _refreshSoon.restart();
   }
 

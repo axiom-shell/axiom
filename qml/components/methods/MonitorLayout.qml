@@ -286,6 +286,51 @@ QtObject {
     };
   }
 
+  // Whether rules would change the connected monitors (each rule for one
+  // that's connected, against how it is now): turned on or off, mirroring
+  // another, or its position, scale, rotation or mode (a "preferred" one
+  // is the monitor's own pick: left out). A mirror's position isn't
+  // compared (it shows the other's). Neither are vrr, the bit depth or
+  // the colour: what Hyprland reads back isn't what the rule asked (vrr 2
+  // reads off outside fullscreen, cm "auto" as the preset it picked).
+  // Apply shows while they differ, so a layout the compositor didn't take
+  // (or a revert that missed) can always be applied again.
+  function differsFromLive(rules, monitors) {
+    const name = output => find(output, monitors)?.name ?? "";
+    return (rules ?? []).some(rule => {
+      const monitor = find(rule.output, monitors);
+      if (!monitor)
+        return false;
+      const now = ruleFromMonitor(monitor, monitors);
+      if (!!rule.disabled !== now.disabled)
+        return true;
+      if (now.disabled)
+        return false;
+      if (name(rule.mirror ?? "") !== name(now.mirror))
+        return true;
+      const mode = parseMode(rule.mode);
+      if (mode && (mode.width !== monitor.width || mode.height !== monitor.height || (mode.rate > 0 && Math.abs(mode.rate - (monitor.refreshRate ?? 0)) >= 0.5)))
+        return true;
+      if ((rule.transform ?? 0) !== now.transform || Math.abs((rule.scale ?? 1) - now.scale) >= 0.005)
+        return true;
+      return now.mirror === "" && (Math.round(rule.x ?? 0) !== now.x || Math.round(rule.y ?? 0) !== now.y);
+    });
+  }
+
+  // `rules` with each connected monitor's rule (in `monitors`) put back as
+  // `before` had it (rules from ruleFromMonitor: how the monitors were),
+  // the rule's own `output` kept: the profile as it was in effect before
+  // a trial. Rules for monitors not connected stay as they are.
+  function restored(rules, before, monitors) {
+    return (rules ?? []).map(rule => {
+      const monitor = find(rule.output, monitors);
+      const was = monitor ? (before ?? []).find(other => matches(other.output, monitor)) : null;
+      return was ? Object.assign({}, was, {
+        "output": rule.output
+      }) : rule;
+    });
+  }
+
   // A rule's rect in the layout, from its mode (or the monitor's own when
   // "preferred" or unreadable)
   function ruleRect(rule, monitor) {

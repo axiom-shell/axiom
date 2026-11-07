@@ -294,4 +294,115 @@ TestCase {
     });
     compare(MonitorLayout.wholeScaleRules([fractional])[0].scale, 2);
   }
+
+  // Two monitors as Hyprland's `monitors all` has them, the TV mirroring
+  // the main one (mirrorOf is the mirrored one's id)
+  function _mirrored() {
+    const main = {
+      "id": 1,
+      "name": "DP-1",
+      "description": "Main",
+      "width": 2560,
+      "height": 1440,
+      "refreshRate": 144,
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "transform": 0,
+      "disabled": false,
+      "mirrorOf": "none"
+    };
+    const tv = {
+      "id": 2,
+      "name": "HDMI-A-1",
+      "description": "TV",
+      "width": 1920,
+      "height": 1080,
+      "refreshRate": 60,
+      "x": 598,
+      "y": 0,
+      "scale": 1,
+      "transform": 0,
+      "disabled": false,
+      "mirrorOf": "1"
+    };
+    return [main, tv];
+  }
+
+  function test_ruleFromMonitor_reads_a_mirror_by_id() {
+    const live = _mirrored();
+    compare(MonitorLayout.ruleFromMonitor(live[1], live).mirror, "desc:Main");
+    compare(MonitorLayout.ruleFromMonitor(live[0], live).mirror, "");
+  }
+
+  function test_differsFromLive() {
+    const live = _mirrored();
+    const now = live.map(monitor => MonitorLayout.ruleFromMonitor(monitor, live));
+    verify(!MonitorLayout.differsFromLive(now, live), "the monitors as they are");
+    // the saved layout says no mirror while the TV still mirrors: Apply
+    // must show
+    const apart = now.map(rule => Object.assign({}, rule));
+    apart[1].mirror = "";
+    apart[1].x = 2560;
+    verify(MonitorLayout.differsFromLive(apart, live), "a mirror the rules end");
+    const flat = live.map(monitor => Object.assign({}, monitor, {
+        "mirrorOf": "none"
+      }));
+    flat[1].x = 2560;
+    verify(!MonitorLayout.differsFromLive(apart, flat), "once it's ended");
+    verify(MonitorLayout.differsFromLive(now, flat), "and back");
+    const turned = apart.map(rule => Object.assign({}, rule));
+    turned[0].transform = 1;
+    verify(MonitorLayout.differsFromLive(turned, flat), "a rotation");
+    const off = apart.map(rule => Object.assign({}, rule));
+    off[1].disabled = true;
+    verify(MonitorLayout.differsFromLive(off, flat), "turned off");
+    const moved = apart.map(rule => Object.assign({}, rule));
+    moved[1].y = 10;
+    verify(MonitorLayout.differsFromLive(moved, flat), "moved");
+    const rate = apart.map(rule => Object.assign({}, rule));
+    rate[0].mode = "2560x1440@60";
+    verify(MonitorLayout.differsFromLive(rate, flat), "another rate");
+    // what isn't compared: a mirror's position, a preferred mode, a rule
+    // for a monitor not connected, vrr and the colour
+    const loose = now.map(rule => Object.assign({}, rule));
+    loose[1].x = 9999;
+    loose[0].mode = "preferred";
+    loose[0].vrr = 2;
+    loose[0].cm = "auto";
+    loose.push({
+      "output": "desc:Gone",
+      "x": 5000,
+      "y": 0
+    });
+    verify(!MonitorLayout.differsFromLive(loose, live));
+  }
+
+  function test_restored() {
+    const live = _mirrored();
+    const before = live.map(monitor => MonitorLayout.ruleFromMonitor(monitor, live));
+    const tried = [
+      {
+        "output": "DP-1",
+        "x": 0,
+        "y": 0,
+        "transform": 1
+      },
+      {
+        "output": "desc:TV",
+        "x": 2560,
+        "mirror": ""
+      },
+      {
+        "output": "desc:Gone",
+        "x": 5000
+      }
+    ];
+    const back = MonitorLayout.restored(tried, before, live);
+    compare(back.map(rule => rule.output), ["DP-1", "desc:TV", "desc:Gone"], "each rule keeps its own output");
+    compare(back[0].transform, 0);
+    compare(back[1].mirror, "desc:Main", "the mirror comes back");
+    compare(back[2].x, 5000, "a monitor not connected keeps its rule");
+    verify(!MonitorLayout.differsFromLive(back, live));
+  }
 }
