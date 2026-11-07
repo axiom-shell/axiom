@@ -4103,6 +4103,8 @@
     "Unblock": "",
     "Connected Bluetooth devices' batteries, in the tooltip and status. With no laptop battery, the widget shows the lowest of them.": "",
     "Show peripherals": "",
-    "Connected Bluetooth devices' batteries, under the laptop's. With no laptop battery, only them.": ""
+    "Connected Bluetooth devices' batteries, under the laptop's. With no laptop battery, only them.": "",
+    "Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).": "",
+    "Device battery notifications": ""
   }
 }

@@ -11,6 +11,12 @@ properties:
     title: Answer pairing requests
     default: true
     description: Ask for a device's PIN or passkey, or to confirm its code, in axiom's prompt. Turn off to leave pairing to another agent, such as blueman.
+  notify:
+    type: boolean
+    title: Device battery notifications
+    default: true
+    description: Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).
+    x-link: {setting: OSD}
   lowBattery:
     type: integer
     title: Device battery low at

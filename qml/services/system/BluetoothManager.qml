@@ -263,7 +263,7 @@ QtObject {
   // critical replaces low
   function _sayLevel(device, level) {
     const body = level === "critical" ? I18n.tr("Battery critically low: {0}%", device.battery) : I18n.tr("Battery low: {0}%", device.battery);
-    const route = NotificationManager.announce("bluetooth", true, root.deviceLabel(device), body, {
+    const route = NotificationManager.announce("bluetooth", BluetoothConfig.notify, root.deviceLabel(device), body, {
       "icon": device.icon || "bluetooth",
       "key": "bluetooth-battery:" + device.address
     });
