@@ -17,6 +17,9 @@ OSDSystem {
   onUpdate: options.onPlayPause === true ? "card" : "none"
   onRemove: "none"
   updateFields: []
+  // The lowest card: never over another system's (a device switch
+  // pausing the music leaves the device's card out)
+  yieldsCard: true
 
   // I18n.tr("Now playing")
   exposes: [

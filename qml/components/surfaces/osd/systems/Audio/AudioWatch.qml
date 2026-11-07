@@ -8,7 +8,8 @@ import qs.components.surfaces.osd.engine
 // output's, the default input's, the streams an Other apps or App bar
 // matches) and each device tile's device (AudioManager.deviceKey: "" while
 // none is bound, a gap its definition bridges), name, Bluetooth address
-// and mute. A change while the default device switches or binds isn't the
+// and mute. A bar counts a level only on the node it read before, its
+// volume in (`node`, `streams`: resetBy). A change while the default device switches or binds isn't the
 // user's (AudioManager.sinkSettled / sourceSettled)
 OSDWatch {
   id: root
@@ -30,6 +31,13 @@ OSDWatch {
       "streams": nodes.map(n => n.id).join(","),
       "levels": nodes.map(n => n.audio ? `${n.audio.volume}:${n.audio.muted}` : "").join(",")
     };
+  }
+
+  // The default device's node a bar reads, once its volume is in
+  // (AudioManager.volumeKnown), else "": its device switching, or its
+  // volume arriving, is resetBy, not a level
+  function _node(node) {
+    return AudioManager.volumeKnown(node) ? String(node.id) : "";
   }
 
   // A device tile's state from its node (null for none)
@@ -56,12 +64,14 @@ OSDWatch {
       if (bar.type === "master")
         out.master = {
           "level": AudioManager.volume,
-          "muted": AudioManager.muted
+          "muted": AudioManager.muted,
+          "node": root._node(root._sink)
         };
       else if (bar.type === "microphone")
         out.micLevel = {
           "level": AudioManager.sourceVolume,
-          "muted": AudioManager.sourceMuted
+          "muted": AudioManager.sourceMuted,
+          "node": root._node(root._source)
         };
       else
         out[bar.type === "app" ? "app:" + i : bar.type] = root._streams(bar);

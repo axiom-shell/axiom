@@ -27,6 +27,10 @@ function audioStart() {
   };
 }
 
+function track(title, playing) {
+  return { "value": title, "player": "Spotify", "title": title, "artist": "Artist", "playing": playing !== false, "art": "" };
+}
+
 var btHeadset = { "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "glyph": "headset", "battery": 80 };
 function bt(kind, seq) {
   return { "available": true, "value": true, "connected": kind === "connected" ? ["WH-1000XM4"] : [], "event": kind ? { "kind": kind, "devices": [btHeadset] } : null, "seq": seq || 0 };
@@ -411,6 +415,38 @@ var rows = [
         "expect": { "show": "tile", "host": "ring" } },
       { "system": "Wifi", "at": 3300, "state": { "wifi": w(true, true, "Home") },
         "expect": { "key": "wifi", "show": "card", "host": "open" } }
+    ]
+  },
+  // ---- Now playing's card yields ----
+  {
+    "name": "a device switch pausing the music: the device's card stays out",
+    "systems": ["Audio", "Media"],
+    "options": { "Audio": audioOpts, "Media": { "onTrackChange": true, "onPlayPause": true } },
+    "steps": [
+      { "system": "Audio", "at": 0, "state": audioStart() },
+      { "system": "Media", "at": 0, "state": { "media": track("Song A") } },
+      { "system": "Audio", "at": 3000, "settled": false, "state": { "audio": audioBox },
+        "expect": { "key": "audio", "show": "card", "host": "open" } },
+      { "system": "Media", "at": 3300, "state": { "media": track("Song A", false) },
+        "expect": { "key": "media", "show": "card", "host": "keep" } },
+      // Past the quiet window too: its card never covers another's
+      { "system": "Media", "at": 8000, "state": { "media": track("Song B") },
+        "expect": { "key": "media", "show": "card", "host": "keep" } }
+    ]
+  },
+  {
+    "name": "Now playing's card still replaces its own, and gives way to another's",
+    "systems": ["Media", "Wifi"],
+    "options": { "Media": { "onTrackChange": true, "onPlayPause": false }, "Wifi": {} },
+    "steps": [
+      { "system": "Media", "at": 0, "state": { "media": track("Song A") } },
+      { "system": "Wifi", "at": 0, "state": { "wifi": w(true, false) } },
+      { "system": "Media", "at": 3000, "state": { "media": track("Song B") },
+        "expect": { "key": "media", "show": "card", "host": "open" } },
+      { "system": "Media", "at": 6000, "state": { "media": track("Song C") },
+        "expect": { "key": "media", "show": "card", "host": "replace" } },
+      { "system": "Wifi", "at": 6300, "state": { "wifi": w(true, true, "Home") },
+        "expect": { "key": "wifi", "show": "card", "host": "replace" } }
     ]
   }
 ];

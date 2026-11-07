@@ -4,11 +4,15 @@
 // device-switch card ("Output", "Input", "Output and input").
 //
 // State by key (what AudioWatch reports):
-//   master, micLevel   { level (0-1), muted }: the default output's / input's
+//   master, micLevel   { level (0-1), muted, node }: the default output's /
+//                      input's; `node` its node's id once its volume is in
+//                      (AudioManager.volumeKnown), else "": resetBy, so a
+//                      switch or the volume arriving isn't a level
 //   other, app:<i>     { level, muted, streams }: the first stream no App bar
 //                      matches / the streams bar <i> of `bars` matches;
 //                      `streams` their node ids joined ("61,74"), so the set
-//                      changing tells itself from a level changing
+//                      changing tells itself from a level changing; a
+//                      stream joins it only once its volume is in
 //                      (`levels` too: every matched stream's level and
 //                      mute, so a change on any of them is a level change)
 //   audio, microphone  { value, address, name, detail, icon, muted }:
@@ -211,6 +215,28 @@ var rows = [
     "steps": [
       { "at": 0, "state": start() },
       { "at": 3000, "state": { "micLevel": { "level": 0.1, "muted": false }, "other": { "level": 0.2, "muted": false, "streams": "" } } }
+    ]
+  },
+  {
+    "name": "a stream appearing, its volume arriving after it: nothing (Discord joining)",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": start() },
+      { "at": 3000, "state": { "other": { "level": 0.8, "muted": false, "streams": "155" } } },
+      { "at": 3000, "state": { "micLevel": { "level": 0.8, "muted": false, "node": "" } } },
+      { "at": 3100, "state": { "micLevel": { "level": 0.8, "muted": false, "node": "53" } } }
+    ]
+  },
+  {
+    "name": "the default output's node changing, or its volume arriving: no bar; then its level does",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": start({ "master": { "level": 0.5, "muted": false, "node": "52" } }) },
+      { "at": 3000, "state": { "master": { "level": 0, "muted": false, "node": "" } } },
+      { "at": 3100, "state": { "master": { "level": 0.3, "muted": false, "node": "60" } } },
+      { "at": 3200, "state": { "master": { "level": 0.3, "muted": false, "node": "61" } } },
+      { "at": 6000, "state": { "master": { "level": 0.4, "muted": false, "node": "61" } },
+        "expect": { "key": "master", "show": "level" } }
     ]
   },
   // ---- Device switches ----

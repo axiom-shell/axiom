@@ -501,7 +501,8 @@ QtObject {
   // system. Their sameChange() and absorbs() read any of it (Privacy's
   // `still`). Against a card out (`shown.card`): a card
   // "replace"s it or "keep"s it (the same change: the first card says
-  // it); a change without one "retract"s it (its own tile turned off,
+  // it; a `yieldsCard` system's card against another system's, at any
+  // age); a change without one "retract"s it (its own tile turned off,
   // with retractsCardWhenOff: the card would say what no longer holds; at
   // any age), is "suppress"ed (its knock-on) or shows "beside" it.
   // Against the ringed tile (`shown.card` false; a tile change only):
@@ -510,6 +511,8 @@ QtObject {
     const def = defs?.[shown.system];
     if (shown.card === true && incoming.card !== true && incoming.system === shown.system && incoming.key === shown.key && def?.retractsCardWhenOff === true && incoming.tile?.on !== true)
       return "retract";
+    if (shown.card === true && incoming.card === true && incoming.system !== shown.system && defs?.[incoming.system]?.yieldsCard === true)
+      return "keep";
     const knockOn = elapsed < root.quietWindow && root._knockOn(shown, incoming, defs);
     if (shown.card !== true)
       return knockOn ? "keep" : "replace";

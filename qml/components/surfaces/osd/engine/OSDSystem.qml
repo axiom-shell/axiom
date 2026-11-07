@@ -74,6 +74,10 @@ QtObject {
   // Its card folds back when its own tile turns off without a card (it
   // would say what no longer holds: a VPN, Wi-Fi, the charger)
   property bool retractsCardWhenOff: false
+  // Its cards are the lowest: one never replaces another system's card
+  // out, at any age (Now playing's pause, as a device switch pauses the
+  // music, doesn't cover the device's card)
+  property bool yieldsCard: false
   // Systems whose change, within OSDEngine.quietWindow, makes this one's
   // its knock-on (Wi-Fi after airplane mode)
   property var knockOnOf: []

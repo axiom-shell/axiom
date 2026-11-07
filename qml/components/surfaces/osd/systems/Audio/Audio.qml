@@ -23,9 +23,12 @@ OSDSystem {
   // none between, and changes its icon, not its look
   keepThroughGap: true
   updateFields: ["label"]
-  // A stream bar's set of streams changing (one appearing, going) isn't
-  // its level changing
-  resetBy: ["streams"]
+  // A bar's level changes only on the node it read before, its volume in:
+  // a stream bar's set of streams changing (one appearing, going, its
+  // volume arriving) or the System volume or Microphone bar's node (the
+  // default device switching, binding, its volume arriving: Discord
+  // joining, a device switch) isn't its level changing
+  resetBy: ["streams", "node"]
   // Its card takes in any of its own changes without one (a new device's
   // mute, its level arriving late)
   takesIn: "system"

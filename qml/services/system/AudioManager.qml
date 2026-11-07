@@ -198,7 +198,14 @@ QtObject {
     });
   }
 
-  // Playback streams (bound, with audio) for an OSD app bar: those whose binary,
+  // Whether a node's volume has come in: a node binds before PipeWire
+  // sends it its volume (reading 0 until then), so the OSD's bars take
+  // the volume arriving for a node appearing, not a level changing
+  function volumeKnown(node) {
+    return node?.ready === true && (node.audio?.volumes?.length ?? 0) > 0;
+  }
+
+  // Playback streams (bound, their volume in: volumeKnown) for an OSD app bar: those whose binary,
   // application name or nickname contains one of `apps` (case-insensitive),
   // by app in the listed order, so the first listed app's stream comes
   // first. With `other`, the first stream no `excluded` entry matches
@@ -208,7 +215,7 @@ QtObject {
     const wanted = lower(apps);
     if (!other && wanted.length === 0)
       return [];
-    const streams = root._playbackStreams.filter(n => n.audio && n.ready).map(n => ({
+    const streams = root._playbackStreams.filter(n => root.volumeKnown(n)).map(n => ({
           "node": n,
           "binary": n.properties["application.process.binary"]?.toLowerCase() ?? "",
           "name": n.properties["application.name"]?.toLowerCase() ?? "",
