@@ -306,7 +306,7 @@ Singleton {
   // layout the compositor didn't take, or set elsewhere): Apply shows
   // though nothing is unsaved (MonitorLayout.differsFromLive). Not while
   // a change settles: the outputs are read again once it has
-  readonly property bool differsFromLive: selectedIsLive && !_refreshSoon.running && !_reading && MonitorLayout.differsFromLive(rules, outputs)
+  readonly property bool differsFromLive: selectedIsLive && !_refreshSoon.running && !_reading && MonitorLayout.differsFromLive(rules, outputs, CompositorManager.supports.monitorMirror === true)
 
   // A rule's name on the page: its connector, else its description
   function labelFor(rule) {
@@ -405,7 +405,7 @@ Singleton {
     const tried = items[_named(items, trial.profile ?? _liveName)];
     if (tried) {
       const saved = MonitorsConfig.profiles.find(profile => profile.id === tried.id)?.outputs;
-      tried.outputs = MonitorLayout.restored(tried.outputs, trial.rules, trial.details, saved);
+      tried.outputs = MonitorLayout.restored(tried.outputs, trial.rules, trial.details, saved, CompositorManager.supports.monitorMirror === true);
       draft.changed();
     }
     _refreshSoon.restart();

@@ -294,9 +294,12 @@ QtObject {
   // the colour: what Hyprland reads back isn't what the rule asked (vrr 2
   // reads off outside fullscreen, cm "auto" as the preset it picked).
   // Apply shows while they differ, so a layout the compositor didn't take
-  // (or a revert that missed) can always be applied again.
-  function differsFromLive(rules, monitors) {
-    const name = output => find(output, monitors)?.name ?? "";
+  // (or a revert that missed) can always be applied again. Where the
+  // compositor can't mirror (`canMirror` false: niri, sway), a rule's
+  // mirror is set aside, as applying it does: the output is placed by
+  // its position.
+  function differsFromLive(rules, monitors, canMirror) {
+    const name = output => canMirror === false ? "" : find(output, monitors)?.name ?? "";
     return (rules ?? []).some(rule => {
       const monitor = find(rule.output, monitors);
       if (!monitor)
@@ -313,7 +316,7 @@ QtObject {
         return true;
       if ((rule.transform ?? 0) !== now.transform || !_sameScale(rule.scale ?? 1, now.scale, monitor))
         return true;
-      return now.mirror === "" && (Math.round(rule.x ?? 0) !== now.x || Math.round(rule.y ?? 0) !== now.y);
+      return (now.mirror === "" || canMirror === false) && (Math.round(rule.x ?? 0) !== now.x || Math.round(rule.y ?? 0) !== now.y);
     });
   }
 
@@ -338,14 +341,14 @@ QtObject {
   // "preferred" mode, vrr 2, cm "auto") stays as it was saved; else as
   // `before` had it (rules from ruleFromMonitor: how the monitors were),
   // the rule's own `output` kept. Rules for monitors not connected stay
-  // as they are.
-  function restored(rules, before, monitors, saved) {
+  // as they are. `canMirror` as differsFromLive takes it.
+  function restored(rules, before, monitors, saved, canMirror) {
     return (rules ?? []).map(rule => {
       const monitor = find(rule.output, monitors);
       if (!monitor)
         return rule;
       const kept = (saved ?? []).find(other => other.output === rule.output);
-      if (kept && !differsFromLive([kept], monitors))
+      if (kept && !differsFromLive([kept], monitors, canMirror))
         return Object.assign({}, kept);
       const was = (before ?? []).find(other => matches(other.output, monitor));
       return was ? Object.assign({}, was, {

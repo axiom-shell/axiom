@@ -395,6 +395,14 @@ TestCase {
     const whole = apart.map(rule => Object.assign({}, rule));
     whole[0].scale = 2;
     verify(MonitorLayout.differsFromLive(whole, flat), "a valid scale not shown");
+    // where the compositor can't mirror (niri, sway), a saved mirror is
+    // placed by its position: only that is compared
+    const mirrorOnNiri = now.map(rule => Object.assign({}, rule));
+    mirrorOnNiri[1].x = 2560;
+    verify(!MonitorLayout.differsFromLive(mirrorOnNiri, flat, false), "a mirror niri can't do");
+    verify(MonitorLayout.differsFromLive(mirrorOnNiri, flat), "one Hyprland can");
+    mirrorOnNiri[1].x = 0;
+    verify(MonitorLayout.differsFromLive(mirrorOnNiri, flat, false), "placed elsewhere");
   }
 
   function test_restored() {
