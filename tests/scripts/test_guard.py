@@ -347,6 +347,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "busctl call org.bluez /org/bluez/hci0 org.bluez.Adapter1 RemoveDevice o " + dev,
                     f"busctl call org.bluez {dev} org.bluez.Device1 Disconnect", f"busctl call org.bluez {dev} org.bluez.Device1 Pair",
                     "busctl set-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered b false",
+                    f"busctl set-property org.bluez {dev} org.bluez.Device1 Blocked b true",
                     "busctl call org.bluez /org/bluez org.bluez.AgentManager1 RegisterAgent os /a KeyboardDisplay",
                     f"dbus-send --system --dest=org.bluez --type=method_call {dev} org.bluez.Device1.Disconnect",
                     "gdbus call --system -d org.bluez -o /org/bluez/hci0 -m org.freedesktop.DBus.Properties.Set org.bluez.Adapter1 Powered '<false>'",

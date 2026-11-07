@@ -622,13 +622,13 @@ def check_system_settings(env, name, args, cwd, sends, touched):
         deny("Never, while testing", "don't write the user's mimeapps.list / xdg-terminals.list; test default apps with a scratch XDG_CONFIG_HOME=<dir>.")
 
 
-# bluetoothctl's commands that drop or pair a real device, turn the adapter
-# off, or register an agent beside the daemon's
+# bluetoothctl's commands that drop, block or pair a real device, turn the
+# adapter off, or register an agent beside the daemon's
 BLUETOOTHCTL_WRITES = {"remove", "block", "disconnect", "pair", "cancel-pairing", "agent", "default-agent"}
 # BlueZ's methods that do the same over D-Bus
 BLUEZ_WRITES = ("RemoveDevice", "Disconnect", "Pair", "CancelPairing", "RegisterAgent", "RequestDefaultAgent", "UnregisterAgent")
 # The daemon's Bluetooth methods that do the same
-BLUETOOTH_RPC_WRITES = ("bluetooth.forget", "bluetooth.setPowered", "bluetooth.disconnect", "bluetooth.pair", "bluetooth.agentReply")
+BLUETOOTH_RPC_WRITES = ("bluetooth.forget", "bluetooth.setPowered", "bluetooth.setBlocked", "bluetooth.disconnect", "bluetooth.pair", "bluetooth.agentReply")
 
 
 def check_bluetooth(env, name, args, sends):
@@ -644,12 +644,13 @@ def check_bluetooth(env, name, args, sends):
     if name == "rfkill" and words[:1] == ["block"]:
         deny("Never, while testing", "don't rfkill-block the live radios: a Bluetooth mouse or keyboard could drop out.")
     if name in BUS_CALLERS and any("org.bluez" in a for a in args):
-        powered = any("Powered" in a for a in args) and ("set-property" in args or any(a.endswith("Properties.Set") or a == "Set" for a in args))
+        # Powered off turns the adapter off, Blocked disconnects a device
+        powered = any("Powered" in a or "Blocked" in a for a in args) and ("set-property" in args or any(a.endswith("Properties.Set") or a == "Set" for a in args))
         if powered or any(re.search(rf"(^|[.\s]){m}($|[\s(])", a) for a in args for m in BLUEZ_WRITES):
-            deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
+            deny("Never, while testing", "don't call BlueZ's RemoveDevice / Disconnect / Pair / RegisterAgent or set Powered / Blocked on the machine's bus; use the fake BlueZ (go test ./internal/bluez) or a scratch bus (DBUS_SYSTEM_BUS_ADDRESS=<it>).")
     by_ipc = name == "axiom" and any(words[i:i + 2] in (["bluetooth", "disable"], ["bluetooth", "toggle"]) for i in range(len(words)))
     if sends and (by_ipc or any(m in a for a in args for m in BLUETOOTH_RPC_WRITES)) and axiom_live_display(env, args):
-        deny("Never, while testing", "bluetooth.forget / setPowered / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`) only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket) with Bluetooth.pairingAgent off, never the live one.")
+        deny("Never, while testing", "bluetooth.forget / setPowered / setBlocked / disconnect / pair / agentReply (and `axiom ipc bluetooth disable|toggle`) only to a scratch daemon (XDG_RUNTIME_DIR=<scratch>, --socket) with Bluetooth.pairingAgent off, never the live one.")
 
 
 REMOVES = {"rm", "unlink", "trash", "trash-put", "shred"}

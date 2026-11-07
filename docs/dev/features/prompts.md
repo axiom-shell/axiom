@@ -16,7 +16,7 @@ One prompt for every password, PIN or confirmation the system asks for. **The ru
 | Drive unlocks | `DrivesManager` | a Locked card's click or a notification's Unlock (`promptUnlock`); `waits` | a row's Unlock, opening a locked drive from its row or the Drives widget |
 
 ### The queue (`PromptManager`)
-- **One request at a time.** Requests queue in the order they came; the first is `current`, the rest `waiting`. So two requests never fight over the screen: a pairing prompt asked while polkit's is open shows once polkit's ends.
+- **One request at a time.** Requests queue in the order they came; the first is `current`, the rest wait behind it. So two requests never fight over the screen: a pairing prompt asked while polkit's is open shows once polkit's ends.
 - **`request(spec, onAnswer, onCancel)`** queues one and returns its id (`"prompt-<n>"`). `spec`, every key optional:
   - `source` (who asks, for logs and the doc), `icon` (a Material glyph), `title`, `message`;
   - `code` (shown large: a PIN or passkey) and `entered` (how many of its digits are typed, lit; -1 none);

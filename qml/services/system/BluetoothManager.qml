@@ -470,9 +470,9 @@ QtObject {
       // A new daemon's state is taken as it stands
       root._levels = null;
       root._fetch();
-      // A daemon started again has no scan running
-      if (root._wantsDiscovery)
-        root._discover(true);
+      // The scan is the daemon's, not this shell's: one a shell gone
+      // mid-scan left running stops, one a daemon started again lost starts
+      root._discover(root._wantsDiscovery);
     }
   }
 

@@ -198,8 +198,8 @@ QtObject {
 
   // Asks for a locked volume's passphrase in the shared prompt (a Locked
   // card's click, a notification's Unlock): a wrong one asks again, a
-  // right one mounts it (and opens it with `andOpen`)
-  function promptUnlock(volumeId, andOpen) {
+  // right one mounts it
+  function promptUnlock(volumeId) {
     const drive = root.driveOfVolume(volumeId);
     if (!drive || root._inert)
       return;
@@ -223,7 +223,7 @@ QtObject {
         root._withdrawUnlockPrompt(prompt);
         return;
       }
-      root._unlock(volumeId, values.passphrase ?? "", andOpen === true, error => {
+      root._unlock(volumeId, values.passphrase ?? "", false, error => {
         // Unlocked, or the drive gone: it goes; else it asks again
         if (!error || error.kind === "not_found")
           root._withdrawUnlockPrompt(prompt);

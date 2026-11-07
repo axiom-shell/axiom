@@ -43,7 +43,7 @@ const (
 	topicClipboard  = "clipboard" // clipboard.state
 	topicVPN        = "vpn"       // vpn.state, vpn.secretRequest, vpn.secretDone
 	topicDrives     = "drives"    // drives.state, drives.event
-	topicBluetooth  = "bluetooth" // bluetooth.state, bluetooth.agentRequest, bluetooth.agentDone
+	topicBluetooth  = "bluetooth" // bluetooth.state, bluetooth.agentRequest, bluetooth.agentDone, bluetooth.event
 	topicCamera     = "camera"    // camera.state
 	// screenshare.request, screenshare.done
 	topicScreenShare = "screenshare"

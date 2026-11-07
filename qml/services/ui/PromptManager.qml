@@ -34,8 +34,6 @@ QtObject {
   // The request shown, else null (spec's keys filled in, plus id, busy
   // and attempt: how many times an error came back)
   readonly property var current: _queue.length > 0 ? _queue[0] : null
-  // Requests waiting behind it
-  readonly property int waiting: Math.max(0, _queue.length - 1)
   // The monitor the shown request is on: the focused one when it came to
   // the front
   readonly property string screenName: _screenName
