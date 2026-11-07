@@ -14,7 +14,7 @@
 //        row, as it is now), address (the first one up's IPv4) }
 //
 // decided: declared, no judge(): model "set" with `memberState: { field:
-//   "state", on: "on", off: "off" }` (today's OSDItems.vpnStep, in the
+//   "state", on: "on", off: "off" }` (was OSDItems.vpnStep, now in the
 //   engine): the set is the VPNs up; one up that was known before (settled
 //   "on" or "off") is "add" (its card), one down that is still known is
 //   "remove"; a row in transit is judged as it last settled (remember keeps

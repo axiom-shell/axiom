@@ -28,7 +28,7 @@
 //   scalar).
 // decided: a battery low / critical card carries `alert: true`
 //   (`alertKinds: ["low", "critical"]`): it opens the OSD even just after
-//   a click marked `bluetooth` (today's OSDItems.alert; OSDEngine.opens).
+//   a click marked `bluetooth` (was OSDItems.alert; OSDEngine.opens).
 // decided: the tile carries `event` and `devices` (the last event's), which
 //   absorbs() reads against Audio's tile `address`.
 

@@ -9,7 +9,8 @@ import qs.services.ui
 // change of it through OSDEngine by its definition and reports what shows
 // (`change`). Nothing counts for its first 1.5 s, while services settle
 // (the LEDs' first reading, PipeWire binding, UPower and D-Bus answering):
-// those only set the state the next change is judged from
+// those only set the state the next change is judged from, but for an
+// event model's events, which are never a first reading
 // (docs/dev/features/osd.md › Engine). A QtObject (an Item's `state` is
 // taken): what it declares inside (Connections, Timers) goes in `data`.
 QtObject {
@@ -120,8 +121,8 @@ QtObject {
     }
     // A keepThroughGap value keeps what it had through an empty reading
     root._last = OSDEngine.remember(def, before, after);
-    if (root._armed)
-      changes.forEach(what => root.change(what));
+    // Settling, only an event model's events (OSDEngine.showsWhileSettling)
+    changes.filter(what => root._armed || OSDEngine.showsWhileSettling(def, what)).forEach(what => root.change(what));
   }
 
   onStateChanged: Qt.callLater(root._check)

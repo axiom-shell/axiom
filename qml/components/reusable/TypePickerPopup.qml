@@ -14,12 +14,16 @@ import qs.components.methods
 // with `groups` (the schema's `x-libraryGroups`) under a heading per
 // group (LibraryOrder.grouped). The caller tracks what it opened this
 // for. `openAt(item)` opens it under `item` (or above it when there's no
-// room below), else set x/y and call open().
+// room below; with `matchWidth`, as wide as `item`, long labels elided),
+// else set x/y and call open().
 Popup {
   id: root
 
   required property var types
   property string placeholderText: I18n.tr("Search")
+  // openAt(item) makes it exactly as wide as `item` (a full-width Add
+  // button: the list lines up with it); off, its own width
+  property bool matchWidth: false
 
   // Group names in order; empty: one list, as given
   property var groups: []
@@ -67,6 +71,11 @@ Popup {
   }
 
   function openAt(item) {
+    // Its width as drawn: a Popup isn't scaled with the page it opens
+    // over (an overlay page fitted to its screen is), so `item.width`
+    // alone ran past the item there
+    if (root.matchWidth)
+      root.width = Math.round(item.mapToItem(null, item.width, 0).x - item.mapToItem(null, 0, 0).x);
     const p = parent;
     const below = item.mapToItem(p, 0, item.height + Widget.spacing / 2);
     const above = item.mapToItem(p, 0, -Widget.spacing / 2);
@@ -160,8 +169,10 @@ Popup {
         StyledText {
           visible: rowDelegate.heading
           anchors.left: parent.left
+          anchors.right: parent.right
           anchors.bottom: parent.bottom
           anchors.leftMargin: Widget.smallPadding
+          elide: Text.ElideRight
           text: rowDelegate.modelData.heading ?? ""
           textColor: Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(-1)

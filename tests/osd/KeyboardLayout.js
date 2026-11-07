@@ -17,7 +17,7 @@
 //   against the judgement's `ctx.at` rather than ages the watcher works out
 //   (the old focusAge / switchAge): the same clock (Date.now()), and the
 //   state then doesn't change on every check. The window stays
-//   OSDItems.focusFollowMs (1000 ms): within it is `at - focusedAt < 1000`.
+//   1000 ms (was OSDItems.focusFollowMs): within it is `at - focusedAt < 1000`.
 //   Declared, as the rest (no judge()): `ignoreWithin: { after:
 //   "focusedAt", ms: 1000, unlessAfter: "switchedAt" }`, `resetBy: ["ids"]`
 //   (a reload), onAdd / onRemove "none" (the list appearing, none

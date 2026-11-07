@@ -51,7 +51,7 @@ Every drive notification has the desktop entry `axiom-drives`: a click on one wi
 - **Drives module and popout** (`qml/components/content/Drives/`): a `Panel` with a `DeviceList` of `DriveRow`s, Eject all in its header; compact, the count and how many are mounted. Its keyboard is held while a passphrase field shows.
 - **`DriveRow`:** a `DeviceRow` whose end button ejects (`actionIcon`). Clicking opens; on hover, unmount and lock. A drive of several volumes lists them under it, each with its own action; the passphrase field is a `SecretField`.
 - **Drives bar widget:** an icon and the count, hidden with none (`hideWhenEmpty`); hovering opens the Drives popout, a left click opens the first drive, a middle click ejects them all.
-- **OSD:** the `drive` status (`DrivesManager.lastEvent`) with its card, which takes a click ([OSD](osd.md)). In the default statuses.
+- **OSD:** the `drive` status (`DrivesManager.lastEvent`) with its card, which takes a click ([OSD](osd.md) › Systems › Drives). In the default systems.
 - **Launcher:** `/eject [drive]` lists the drives and ejects the one picked. **IPC:** `axiom ipc drives list | mount <id> | eject <id> | ejectAll`.
 
 ### Testing

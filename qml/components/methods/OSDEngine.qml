@@ -498,6 +498,17 @@ QtObject {
     return knockOn ? "suppress" : "beside";
   }
 
+  // Whether a judged change shows during its watcher's settle window
+  // (its first 1.5 s, while services settle, when a change only moves the
+  // state on): an event of an `event`-model key, which its watcher pulses
+  // as it happens and so is never a service's first reading (an `axiom
+  // message` sent just after a start or a list edit). A `carriesEvents`
+  // scalar's event is read from its service's state, which may answer
+  // with its last one as it starts, so it waits like any other change
+  function showsWhileSettling(def, change) {
+    return change?.kind === "event" && root.policy(def, change.key, "model") === "event";
+  }
+
   // Whether a change opens a shut OSD: not when its system's item is
   // `quiet` or its key's `exposes` entry says `opens: false` (an Audio
   // bar's or Brightness's showOsd off); else unless made on screen

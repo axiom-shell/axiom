@@ -240,6 +240,8 @@ ColumnLayout {
     parent: root
     types: root.addable
     groups: OverlayConfig.libraryGroups
+    // As wide as the Add button it opens from
+    matchWidth: true
     placeholderText: I18n.tr("Search")
     onTypeSelected: type => root.add(type)
   }

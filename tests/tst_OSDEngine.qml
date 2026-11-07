@@ -1395,7 +1395,32 @@ TestCase {
     verify(OSDEngine.judge(def, "radio", s(true, "connected", 1), s(true, null, 1), {}) === null, "the event cleared: nothing");
     const both = OSDEngine.judge(def, "radio", s(false, null, 0), s(true, "connected", 1), {});
     compare(both.kind, "event", "an event and the value at once: the event");
+    verify(!OSDEngine.showsWhileSettling(def, first), "a carried event waits out the settle window (maybe the service's last one)");
     def.destroy();
+  }
+
+  // The settle window: only an event model's events show in it (an
+  // `axiom message` just after a start isn't lost)
+  function test_showsWhileSettling() {
+    const msg = OSDEngine.judge(message, "message", {
+      "event": null,
+      "seq": 0
+    }, {
+      "event": {
+        "text": "hi"
+      },
+      "seq": 1
+    }, {});
+    compare(msg.kind, "event");
+    verify(OSDEngine.showsWhileSettling(message, msg), "a pulsed event shows while settling");
+    const on = OSDEngine.judge(toggle, "toggle", {
+      "value": false
+    }, {
+      "value": true
+    }, {});
+    verify(on !== null);
+    verify(!OSDEngine.showsWhileSettling(toggle, on), "a toggle's change only moves the state on");
+    verify(!OSDEngine.showsWhileSettling(message, null), "no change");
   }
 
   // memberState: a set judged by a member field across transit, and the

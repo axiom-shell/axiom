@@ -119,12 +119,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** needs a plan
 - **Found:** 2026-11-05, while making every floating popout slide in from off the screen
 
-### A device's own level arriving late brings the OSD's bars out beside its card
-- **Where:** `qml/components/surfaces/osd/systems/Audio/` (its bars' levels), `qml/components/surfaces/osd/OSDHost.qml` (`_showLevel`), `qml/components/methods/OSDEngine.qml` (`arbitrate`)
-- **What:** The System volume and Microphone bars count a level or mute change only while `AudioManager.sinkSettled()` / `sourceSettled()` holds, which turns true a moment after the new default node is ready. `OSDItems.replaces` already allows that a new device's mute may come after that ("a mute just after a device switch is the new device's own state coming in"), and PipeWire sends a node's volumes and mute in the same params. So when a headset connects, its own volume landing after the settle pokes the bar, and the bars' `onPoked` opens the bars part (`_openBox`) with no `replaces` check: the bars come out beside the device card, a change the user didn't make. PLAUSIBLE: a log of `defaultSink.ready` against `AudioManager.volume` changes on a headset connect settles it (the roadmap's Live checks already asks whether plugging in a headset opens the bars). Fix, if it shows: run the System volume and Microphone bars' pokes through `replaces` as the `audio` / `microphone` statuses' mutes (an `OSDItems` rule mapping a bar type to its status, a test row), which also holds back the user's own volume key in the 2 s after a switch: a trade-off for the maintainer.
-- **Size:** small
-- **Found:** 2026-11-01, while reviewing the OSD's statuses
-
 ### The dock's menu and drag state outlive the icons they point at
 - **Where:** `qml/components/surfaces/dock/DockWindow.qml:216` (`dragIndex`), `qml/components/surfaces/dock/DockWindow.qml:357` (`menuIndex`), `qml/components/surfaces/dock/DockWindow.qml:574` (`anchorItem`), `qml/components/surfaces/dock/DockItem.qml:100` (the hover Timer)
 - **What:** The menu is held as `menuKey`/`menuFull` and anchored on `repeater.itemAt(root.menuIndex)`; a drag as `dragIndex`. Both are cleared only by the icon or the menu itself (`closeMenu()` from DockItem's press, click and drag start, DockMenu's FocusGrab `onCleared`, `conceal()`; `dragIndex = -1` only in DockItem's `_endDrag`). Two paths leave them set:

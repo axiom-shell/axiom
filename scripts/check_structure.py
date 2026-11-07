@@ -209,11 +209,6 @@ def main():
     unreached = {}
     for _, directory, _ in LOADERS:
         osd = directory == OSD_SYSTEMS
-        if osd and OSD_ENGINE not in scanned:
-            # Until a host reached from shell.qml loads them, nothing runs
-            # the OSD systems (the OSD engine's stage 2 wires it)
-            warnings.append(f"{directory}/: no file reached from shell.qml imports {OSD_ENGINE}, so nothing loads the OSD systems yet")
-            continue
         for f in sorted((ROOT / directory).rglob("*.qml")):
             own = module_of(rel(f.parent))
             needed = imports_of(sources[rel(f)])
