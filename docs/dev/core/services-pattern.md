@@ -57,7 +57,7 @@ They follow the same pattern:
 - **AudioManager**: also every write to a Pipewire node (`setNodesVolume` / `setNodesMuted`).
   - `matchStreams(apps, other, excluded)` is the OSD app bars' playback stream matching.
   - Recording streams are left out: an app's mic capture shares its name.
-- **BatteryManager**: also the power profile, and `level` against the `Battery` section's thresholds (`BatteryConfig`; the Battery widget and module colour from it).
+- **BatteryManager**: also the power profile, and `level` against the `Battery` section's thresholds (`BatteryConfig`; the Battery widget and module colour from it), and `peripherals`, the connected Bluetooth devices' batteries read from BluetoothManager ([Networking and Bluetooth](../features/networking-bluetooth.md) › Peripheral batteries).
   - Says each drop into low and then critical once, whatever bars exist: an OSD's `battery` card or a notification (`NotificationManager.announce`; a critical one notifies beside its card too).
   - Created from `qml/shell.qml`'s `_services` so it runs without a widget.
 - **InputSourceManager**, **MediaManager** (MPRIS), **CompositorManager** (the compositor, through its backend `HyprlandManager`: [compositor/](../compositor/README.md)), **StateManager**, **BarManager**, **LauncherManager**, **SettingsManager**, **SavedConfigsManager**, **AuthManager**, **LockManager**.

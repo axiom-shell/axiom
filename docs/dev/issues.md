@@ -232,6 +232,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Shell-wide: windows, screens, reloads and actions
 
+### The screen-share picker repeats the shared prompt's modal frame
+- **Where:** `qml/components/surfaces/screenshare/ScreenSharePickerWindow.qml`, `qml/components/surfaces/prompt/PromptWindow.qml`
+- **What:** The picker draws its own copy of the frame `PromptWindow` now holds for the shared prompt: a `PanelWindow` per screen dimmed (`dim`, its `BoxBlurRegion` through `BlurManager.backdropRegionsOn`), the card only on the picked screen (`hasCard`), `WlrLayer.Overlay` with exclusive keyboard focus only there, and `SurfaceManager.registerModal`. Two copies of one pattern (AGENTS.md › UI conventions): the frame could be one shared piece both load their card into, or the picker could become a `PromptManager` request with content of its own (it would then queue behind a polkit or pairing prompt instead of stacking under it by layer order).
+- **Size:** small
+- **Found:** 2026-11-06, while lifting polkit's window into the shared prompt (Full Bluetooth's second part)
+
 ### Quick actions can't hold custom toggles or commands
 - **Where:** `qml/components/content/QuickActions/QuickActions.qml`, `qml/services/ui/ActionsManager.qml`
 - **What:** A tile can be any action of the catalogue, and the Button widget can run a command, but there's no tile of the user's own: a toggle with an on and an off command and a status command (exit 0 = on), or an action with a module as its detail. A plan was drafted on the unified-actions branch (a `CustomActions` section of items, `custom:<id>` tile ids run and judged by ActionsManager, a card to add them) and set aside by the maintainer (2026-11-06) as more than that branch needed. Its open questions: a toggle's state lags its command (hold the expected state until the status command agrees?); status commands poll while a tile shows (cost, a slow script makes the tile slow); the lock screen and greeter must never run them; a detail opens only in overlay pages and edge menus; a detail module's own settings nested in the item's form; a deleted item leaves `custom:x` in modules and Buttons; whether keybinds, hot corners and the launcher reach them too (`customActions run <id>`).
@@ -389,24 +395,23 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Network, Bluetooth and devices
 
+### A VPN secret request held when the shell leaves waits for NetworkManager's timeout
+- **Where:** `backend/internal/daemon/vpn.go` (`newVPN`, `OnSecret`), `backend/internal/daemon/daemon.go` (`OnClose`)
+- **What:** a `vpn.secretRequest` pushed to the shell holds NetworkManager's `GetSecrets` reply until the shell answers; when the last shell leaves nothing answers it, and a shell that comes back isn't sent it again (`vpn.secretRequest` isn't a latest-wins push), so the connect hangs until NetworkManager gives up. Bluetooth's agent rejects its held requests then (`lastShellGone` → `RejectAgents`). Fix: the same for the VPN agent: cancel what's held as the last shell leaves.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
+### A drive card's "open" on a locked volume asks in a menu nobody opened
+- **Where:** `qml/services/system/DrivesManager.qml` (`activate`, `open`)
+- **What:** a card's or notification's click whose action is "open" (`DriveInfo.clickAction`) calls `open(drive)`; for a volume still locked that is `askUnlock(v.id, true)`, whose passphrase field shows only in a Drives menu row, so with no menu open nothing visible happens. The Locked card's "unlock" already asks in the shared prompt (`promptUnlock`). Fix: from `activate`, a locked volume goes to `promptUnlock` too (and opens once mounted).
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
 ### Eject may leave a USB stick powered on
 - **Where:** `backend/internal/udisks/udisks.go` (`eject`)
 - **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.
 - **Size:** small
 - **Found:** 2026-11-01, while reviewing removable drive support
-
-### A VPN's password request can go unseen
-- **Where:** `qml/services/system/VpnManager.qml` (`secretRequest`), `backend/internal/daemon/vpn.go` (`OnSecret`)
-- **What:** axiom takes NetworkManager's secret request whenever the shell is connected, but only a `VpnRow` shows it: the Wi-Fi menu (with its VPN section), the VPN popout or a VPN card. A VPN needing a password brought up from `/vpn` in the launcher, the `vpn` keybind action, or a click on a `Vpn` widget in an edge menu, shows its field nowhere: the row reads "Connecting…" until NetworkManager gives up, and nm-applet is never asked. Open: whether the request opens the VPN popout, sends a notification that opens it, or axiom answers `NoSecrets` while no row is shown (so another agent asks).
-  **Decided** (maintainer, 2026-11-06, on a) a notification that opens a VPN row, b) open the VPN popout, c) answer `NoSecrets` while no row is shown; recommended a) with c) as its fallback): "defer"
-- **Size:** small
-- **Found:** 2026-10-30, while reviewing the VPN branch
-
-### Bluetooth pairing that asks for a PIN or a passkey
-- **Where:** `qml/services/system/BluetoothManager.qml` (`_connectAfterPair`), `qml/components/content/BluetoothDevices/`
-- **What:** Pairing trusts, pairs and connects, but no pairing agent asks the user to confirm a passkey or type a PIN, so a keyboard or phone needing one may not pair unless another agent runs. Not tested on such a device. Also open: whether Quickshell's Bluetooth registers an agent, or the daemon does, and the prompt's surface.
-- **Size:** needs a plan
-- **Found:** 2026-10-30, while listing small gaps users notice at once
 
 ### No keyboard backlight control
 - **Where:** `qml/services/system/BrightnessManager.qml`
@@ -425,6 +430,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **What:** Tailscale's state comes from `tailscale status --json` every `Tailscale.interval` (10 s default) while anything holds `TailscaleManager`: the Tailscale and Vpn widgets, the Network, WifiNetworks and VpnConnections cards, and now an OSD with the VPN status, which holds it for the whole session. A connect or drop shows up to 10 s late, while NetworkManager's VPNs are pushed (`vpn.state`). tailscaled's LocalAPI streams its changes (`/localapi/v0/watch-ipn-bus`, what `tailscale status --watch`-style clients use), so the daemon could watch that instead of running the CLI, with the interval left only for the peers' details if needed.
 - **Size:** needs a plan
 - **Found:** 2026-11-01, while adding the OSD's VPN status
+
+### Peripherals only UPower sees aren't in the Battery widget or module
+- **Where:** `qml/services/system/BatteryManager.qml` (`peripherals`)
+- **What:** `peripherals` lists only the connected Bluetooth devices whose battery BlueZ reports (`Battery1`, through `BluetoothManager`). A mouse or keyboard on a Logitech Unifying or Bolt receiver, a wired gamepad or a UPS reports its charge only to UPower (its devices besides the display device, `UPower.devices`), so it isn't listed, and a Bluetooth device both report is BlueZ's alone. Reading UPower's devices too (by kind, without listing a Bluetooth device twice) would add them.
+- **Size:** small
+- **Found:** 2026-11-06, while adding peripheral batteries to Battery (Full Bluetooth, part 4)
 
 ## Chat
 
@@ -470,11 +481,35 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Tooling, tests and CI
 
+### guard.py judges daemon calls and the radio only by argv
+- **Where:** `.claude/hooks/guard.py` (`check_bluetooth`, `scratch_system_bus`, `axiom_live_display`)
+- **What:** every daemon-RPC rule matches the method name in the command's arguments, so a request fed from stdin or a file (`socat - UNIX-CONNECT:… < req.json`, `nc -U`) or sent by another program (`node`) passes; a write straight to `/dev/rfkill` isn't judged; and `scratch_system_bus` takes `unix:path=/run/dbus/../dbus/system_bus_socket` for a scratch bus (it compares the string, not the resolved path). Neither are an axiom binary run under another name (`go run ./cmd/axiom bluetooth off`, a copy named `axiom.new`), a raw `ipc.call` written as JSON in `printf`'s arguments (judged by method, not target: `lockscreen` too), nor a `python3 -c` calling BlueZ, timedate1 or hostname1 through python-dbus or Gio. Fix: resolve the bus path before comparing; refuse writes to `/dev/rfkill`; judge a redirect or pipe into a socket client by its input file where it's one.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
+### guard.py doesn't judge qs ipc call
+- **Where:** `.claude/hooks/guard.py` (`check_axiom`, `check_argv`)
+- **What:** the rules on IPC targets read `axiom ipc …` only: `axiom ipc lockscreen lock` is refused, `qs ipc call lockscreen lock` passes `guard.check` (tried), and so does every other target a rule names (`bluetooth disable`, `onboarding`, …). Fix: judge `qs ipc call <target> <fn>` (and `qs ipc --pid … call`, `--newest`) as `axiom ipc <target> <fn>`, a test case each.
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
+### rpc.md doesn't mark the drives methods shell only
+- **Where:** `scripts/gen_docs.py` (`rpc_scan`), `backend/internal/daemon/drives.go` (`drivesMethods`)
+- **What:** `rpc_scan` marks a method "shell only" when its handler's text holds `fromShell(c)`, but `drivesMethods` checks through a `refuse(c)` closure defined above its first `rpc.Handle`, so the generated rpc.md lists `drives.mount`, `drives.unlock`, `drives.eject` and the rest with no guard, though each refuses any connection but the shell's. Fix: check inline as `bluetoothMethods` does (`if !fromShell(c)`), or have `rpc_scan` follow a closure that calls `fromShell`.
+- **Size:** trivial
+- **Found:** 2026-11-06, while moving Bluetooth to the daemon
+
 ### A push of a named branch can land on main through git's push config
 - **Where:** `.claude/hooks/guard.py` (`push_allowed`)
 - **What:** The guard judges `git push origin <branch>` by the name alone, but git maps a branch named without `:<dst>` through its config: with `remote.origin.push` set to `refs/heads/x:refs/heads/main`, or `push.default=upstream` on a branch made from `origin/main` (which sets its upstream to main, as the autopilot's step 4 branches do), `git push origin x` updates main (shown on scratch repos 2026-11-06: `feature -> trunk`). That config can come from `git -c …`, `GIT_CONFIG_*` or an earlier `git config`; the global config sets neither today. Fix: refuse a push whose `-c`/`GIT_CONFIG_*` sets `push.*` or `remote.*.push`, or allow only the `<src>:<dst>` form.
 - **Size:** small
 - **Found:** 2026-11-06, while reviewing the guard's gh and push allowlists
+
+### TestNotifySend failed once under verify.sh
+- **Where:** `backend/internal/daemon/tools_test.go` (`TestNotifySend`)
+- **What:** One `scripts/dev/verify.sh` run failed it with `pushed {ID:1 Action:}`; 20 runs of it alone right after passed. Traced: the fake server answers every `Notify` with id 1 and emits its signal from a goroutine (`go server.Emit`), so the first send's `NotificationClosed` for id 1 can arrive after the second send (the one with a button) is waiting on id 1, which then reads as closed with no button. Fix: a new id per `Notify` in the fake.
+- **Size:** trivial
+- **Found:** 2026-11-06, while moving Bluetooth to the daemon
 
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)

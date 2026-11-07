@@ -39,7 +39,7 @@ OSDWatch {
     const kind = AudioManager.deviceKind(node);
     return {
       "value": value,
-      "address": value !== "" ? String((node.properties ?? {})["api.bluez5.address"] ?? "") : "",
+      "address": value !== "" ? AudioManager.bluetoothAddress(node) : "",
       "name": value !== "" ? label.title : "",
       "detail": value !== "" ? label.detail : "",
       "icon": value === "" ? "" : output ? AudioManager.outputIcon(kind, false, 1) : AudioManager.inputIcon(kind, false),

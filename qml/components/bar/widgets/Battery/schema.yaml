@@ -11,6 +11,11 @@ appearance:
 colors: standard
 settings:
   showPercentage: {type: boolean, title: Show percentage, default: true}
+  showPeripherals:
+    type: boolean
+    title: Show peripherals
+    default: true
+    description: Connected Bluetooth devices' batteries, in the tooltip and status. With no laptop battery, the widget shows the lowest of them.
   chargingColor: {$ref: '#/definitions/WidgetColor', title: Charging color, x-autoColor: alt}
   lowColor:
     $ref: '#/definitions/WidgetColor'

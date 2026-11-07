@@ -1,5 +1,4 @@
 label: VPN connections
-keyboard: true
 icon: vpn_lock
 group: Network & devices
 settings:

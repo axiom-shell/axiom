@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
+	"github.com/axiom-shell/axiom/backend/internal/bluez"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/camera"
 	"github.com/axiom-shell/axiom/backend/internal/clipboard"
@@ -184,6 +185,8 @@ type Daemon struct {
 	vpn *nmvpn.Service
 	// drives are UDisks2's removable drives
 	drives *udisks.Service
+	// bluetooth is BlueZ's default adapter and its devices
+	bluetooth *bluez.Service
 	// inputMethod is the input method framework (fcitx5 or ibus)
 	inputMethod *inputmethod.Service
 	// camera is who holds a camera's device open
@@ -410,6 +413,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.newClipboard()
 	d.newVPN()
 	d.newDrives()
+	d.newBluetooth()
 	d.newInputMethod()
 	d.newCamera()
 	d.newScreenShare()
@@ -419,7 +423,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 	d.watches = command.NewWatches(command.WatchOptions{Method: pushExecOutputs.Method, Options: d.commandOptions, Log: opts.Log.With("part", "exec"), Context: ctx, Go: d.tasks.Go})
 	d.files = files.New(files.Options{Method: pushFileChanged.Method, Log: opts.Log.With("part", "files"), Context: ctx, Go: d.tasks.Go})
 	d.niriStreams = niriStreams(opts.Getenv, opts.Log, ctx, d.tasks.Go)
-	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.inputMethodPart(), d.cameraPart(), d.screenSharePart(), d.netPart(), d.dev.part()}
+	parts := []part{d.corePart(), d.configPart(), d.ipcPart(), d.sharingPart(), d.compositorPart(), d.compositorSocketPart(), d.topicsPart(), d.toolsPart(), d.execPart(), d.filesPart(), d.calendarPart(), d.chatPart(), d.secretsPart(), d.themePart(), d.hookupPart(), d.selfUpdatePart(), d.greeterInstallPart(), d.cursorPart(), d.inputPart(), d.brightnessPart(), d.idlePart(), d.waylandPart(), d.switcherPart(), d.clipboardPart(), d.vpnPart(), d.drivesPart(), d.bluetoothPart(), d.inputMethodPart(), d.cameraPart(), d.screenSharePart(), d.netPart(), d.dev.part()}
 	parts = append(parts, d.machineParts()...)
 	reg := d.registry(parts)
 	if opts.registered != nil {
@@ -439,6 +443,7 @@ func Run(ctx context.Context, opts Options) (err error) {
 				// Its picker is gone: the asker falls back to the
 				// backend's own
 				d.screenShare.Forget()
+				d.lastShellGone(c)
 			}
 			if d.niriStreams != nil {
 				d.niriStreams.Forget(c)

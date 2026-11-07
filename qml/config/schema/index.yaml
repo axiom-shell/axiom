@@ -93,6 +93,7 @@ sections:
   - Tailscale
   - Vpn
   - Drives
+  - Bluetooth
   - CustomWidgets
   - Updates
   - Todo

@@ -92,6 +92,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [backend/roadmap](backend/roadmap.md): the staged move of the services' side effects into the axiom binary, which the cleanup roadmap aligns with.
 
 ### Known issues
+- [live-checks.md](live-checks.md): every check waiting for the maintainer's own session, and code tested only against fakes by the hardware it needs (Bluetooth devices).
 - [issues.md](issues.md): coding agents' working list of problems found in the code but not fixed yet (add one when you find something out of scope; remove it with the fix). Not where people report or look up problems: that's GitHub issues, which agents never open.
 
 ### Installing
@@ -217,6 +218,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [idle](features/idle.md): hypridle and idle inhibit.
 - [lock-keys](features/lock-keys.md): Caps Lock / Num Lock / Scroll Lock from the keyboard LEDs (the `lockKeys` topic), the password fields' warning, the LockKeys widget.
 - [polkit](features/polkit.md): the polkit agent.
+- [prompts](features/prompts.md): the one shared prompt (`PromptManager`, `PromptWindow`) for requests the system starts: polkit, Bluetooth pairing.
 - [screen-sharing](features/screen-sharing.md): axiom's screen-share picker for every compositor's portal (xdph's custom picker, xdpw's chooser, axiom's own ScreenCast portal under niri), repeats answered without it, the hookup.
 - [onboarding](features/onboarding.md): the first-run onboarder.
 - [self-update](features/self-update.md): axiom updating its own clone.
