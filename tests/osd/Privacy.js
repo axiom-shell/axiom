@@ -5,17 +5,22 @@
 // app dropping one of the camera and the microphone but keeping the other
 // is a "still" card too; the last one stopping is the unlit icon. One app on
 // the camera and the microphone at once is one card. A capture stopping
-// under its card (a picker's preview) keeps naming the apps (`last`).
+// under its card (a picker's preview) keeps naming the apps: the change
+// carries its `members` as it saw them (the card's memory, kept by the
+// host with the change while the card is out; was
+// OSDStatusSource._lastApps).
 //
 // State by key (PrivacyWatch; PrivacyManager.cameraCaptures /
 // screenCaptures, AudioManager.micCaptures):
-//   camera, micUse, screenShare  { members: [{ id, app }], last: [names] }:
-//   `members` the capturing streams by node id (an app's name read after
-//   its stream starts isn't another app: the id stays put), `app` its
-//   app's name (AudioManager.appName); `last` the apps' names last seen
-//   capturing, kept once the capture stops (was OSDStatusSource._lastApps)
-// The definition counts anyone's changes (`anyone`: true) and removes with
-// "still".
+//   camera, micUse, screenShare  { members: [{ id, app }] }: the capturing
+//   streams by node id (an app's name read after its stream starts isn't
+//   another app: the id stays put), `app` its app's name
+//   (AudioManager.appName)
+// All declared (no judge()): the definition counts anyone's changes
+// (`anyone`), removes with "still", names members by `ownerField: "app"`,
+// groups camera and micUse (one app on both: one card; one dropped while
+// the other's kept: a "still" card), and its cards come from each entry's
+// `roles` (OSDEngine.cardOf).
 //
 // decided: a "still" card's title is the apps left (one name each, joined
 //   ", "), its role "Still using the camera" / "Still using the microphone"
@@ -25,30 +30,30 @@
 //   keeping the other is a "still" card on the dropped key (kind "remove",
 //   still: true) naming that app, with the kept one's role ("Vesktop" /
 //   "Still using the microphone") and the kept one's icon; only while the
-//   OSD lists the kept kind (`kinds`). Privacy's judge() makes it, since
-//   the dropped key has none left.
+//   OSD lists the kept kind (`kinds`). The engine makes it from the group.
 // decided: a "still" card against a still card of the same key within the
 //   quiet window "keep"s it (several stopping one after another: one card);
 //   the card out is read anew from the state (as today's card is bound to
 //   the tiles), so it names those left now.
-// decided: Privacy's sameChange reads the incoming change's `still` (the
-//   whole judged change reaches arbitrate, as tst_OSDSystems passes it).
+// decided: the engine's arbitration reads the incoming change's `still`
+//   (the whole judged change reaches arbitrate, as tst_OSDSystems passes
+//   it).
 // decided: `card` for a removal with nobody left reads "Stopped …" with
-//   `last` (the card out re-read as its capture stops, today's preview
-//   case).
+//   the change's `members` (the card out re-read as its capture stops,
+//   today's preview case).
 //
 // Not expressible as rows: the tile is never hidden (no row can show a
 // tile without a change).
 
 var opts = { "kinds": ["camera", "micUse", "screenShare"] };
 
-function cap(members, last) {
-  return { "members": members, "last": last || members.map(m => m.app) };
+function cap(members) {
+  return { "members": members };
 }
 function m(id, app) {
   return { "id": id, "app": app };
 }
-var none = cap([], []);
+var none = cap([]);
 
 function start(extra) {
   return Object.assign({ "camera": none, "micUse": none, "screenShare": none }, extra || {});
@@ -107,7 +112,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start() },
-      { "at": 3000, "state": { "camera": cap([m(61, "")], []) },
+      { "at": 3000, "state": { "camera": cap([m(61, "")]) },
         "expect": { "key": "camera", "show": "card" } },
       { "at": 3200, "state": { "camera": cap([m(61, "Firefox")]) } }
     ]
@@ -117,7 +122,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start() },
-      { "at": 3000, "state": { "screenShare": cap([m(80, "Vesktop"), m(81, "Vesktop")], ["Vesktop"]) },
+      { "at": 3000, "state": { "screenShare": cap([m(80, "Vesktop"), m(81, "Vesktop")]) },
         "expect": { "key": "screenShare", "show": "card", "card": { "title": "Vesktop" } } }
     ]
   },
@@ -135,7 +140,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Firefox")]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["Firefox"]) },
+      { "at": 3000, "state": { "camera": cap([]) },
         "expect": { "key": "camera", "show": "tile", "kind": "remove", "still": false, "unexpected": true, "removed": [61], "left": [],
           "tile": { "icon": "videocam", "on": false, "notable": false, "hidden": false, "slash": false }, "host": "ring" } }
     ]
@@ -165,7 +170,7 @@ var rows = [
     "name": "still: one app's second stream stopping, the app still there",
     "options": opts,
     "steps": [
-      { "at": 0, "state": start({ "camera": cap([m(61, "OBS"), m(62, "OBS")], ["OBS"]) }) },
+      { "at": 0, "state": start({ "camera": cap([m(61, "OBS"), m(62, "OBS")]) }) },
       { "at": 3000, "state": { "camera": cap([m(61, "OBS")]) },
         "expect": { "key": "camera", "show": "card", "still": true, "card": { "title": "OBS", "role": "Still using the camera" } } }
     ]
@@ -175,7 +180,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "Vesktop")]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["Vesktop"]) },
+      { "at": 3000, "state": { "camera": cap([]) },
         "expect": { "key": "camera", "show": "card", "kind": "remove", "still": true, "left": [],
           "tile": { "on": false },
           "card": { "icon": "record_voice_over", "title": "Vesktop", "role": "Still using the microphone" },
@@ -187,7 +192,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "Vesktop")]) }) },
-      { "at": 3000, "state": { "micUse": cap([], ["Vesktop"]) },
+      { "at": 3000, "state": { "micUse": cap([]) },
         "expect": { "key": "micUse", "show": "card", "still": true,
           "card": { "icon": "videocam", "title": "Vesktop", "role": "Still using the camera" } } }
     ]
@@ -197,7 +202,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "OBS")]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["Vesktop"]) },
+      { "at": 3000, "state": { "camera": cap([]) },
         "expect": { "key": "camera", "show": "tile", "still": false } }
     ]
   },
@@ -206,7 +211,7 @@ var rows = [
     "options": { "kinds": ["camera"] },
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "Vesktop")]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["Vesktop"]) },
+      { "at": 3000, "state": { "camera": cap([]) },
         "expect": { "key": "camera", "show": "tile" } }
     ]
   },
@@ -215,7 +220,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "Vesktop")]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["Vesktop"]), "micUse": cap([], ["Vesktop"]) },
+      { "at": 3000, "state": { "camera": cap([]), "micUse": cap([]) },
         "expect": [
           { "key": "camera", "show": "tile", "still": false, "host": "ring" },
           { "key": "micUse", "show": "tile", "still": false, "host": "ring" }
@@ -260,7 +265,7 @@ var rows = [
       { "at": 0, "state": start({ "micUse": cap([m(70, "OBS"), m(71, "Vesktop")]) }) },
       { "at": 3000, "state": { "micUse": cap([m(70, "OBS")]) },
         "expect": { "key": "micUse", "show": "card", "still": true, "host": "open" } },
-      { "at": 3500, "state": { "micUse": cap([], ["OBS"]) },
+      { "at": 3500, "state": { "micUse": cap([]) },
         "expect": { "key": "micUse", "show": "tile", "still": false, "host": "suppress" } }
     ]
   },
@@ -272,7 +277,7 @@ var rows = [
       { "at": 0, "state": start() },
       { "at": 3000, "state": { "screenShare": cap([m(80, "Vesktop")]) },
         "expect": { "key": "screenShare", "show": "card", "card": { "title": "Vesktop", "role": "Sharing the screen" }, "host": "open" } },
-      { "at": 3300, "state": { "screenShare": cap([], ["Vesktop"]) },
+      { "at": 3300, "state": { "screenShare": cap([]) },
         "expect": { "key": "screenShare", "show": "tile", "kind": "remove",
           "card": { "title": "Vesktop", "role": "Stopped sharing the screen" }, "host": "suppress" } }
     ]
@@ -282,7 +287,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "camera": cap([m(61, "Vesktop")]), "micUse": cap([m(70, "OBS")]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["Vesktop"]), "micUse": cap([], ["OBS"]) },
+      { "at": 3000, "state": { "camera": cap([]), "micUse": cap([]) },
         "expect": [
           { "key": "camera", "show": "tile", "card": { "title": "Vesktop", "role": "Stopped using the camera" } },
           { "key": "micUse", "show": "tile", "card": { "title": "OBS", "role": "Stopped using the microphone" } }
@@ -293,8 +298,8 @@ var rows = [
     "name": "sharing again by another app: the apps sharing now, not the last ones",
     "options": opts,
     "steps": [
-      { "at": 0, "state": start({ "screenShare": cap([], ["Vesktop"]) }) },
-      { "at": 3000, "state": { "screenShare": cap([m(82, "Firefox")], ["Firefox"]) },
+      { "at": 0, "state": start({ "screenShare": cap([]) }) },
+      { "at": 3000, "state": { "screenShare": cap([m(82, "Firefox")]) },
         "expect": { "key": "screenShare", "show": "card", "card": { "title": "Firefox", "role": "Sharing the screen" } } }
     ]
   },
@@ -381,7 +386,7 @@ var rows = [
       { "at": 0, "state": start({ "screenShare": cap([m(80, "OBS")]) }) },
       { "at": 3000, "state": { "camera": cap([m(61, "Firefox")]) },
         "expect": { "key": "camera", "show": "card", "host": "open" } },
-      { "at": 3300, "state": { "screenShare": cap([], ["OBS"]) },
+      { "at": 3300, "state": { "screenShare": cap([]) },
         "expect": { "key": "screenShare", "show": "tile", "host": "beside" } }
     ]
   },
@@ -395,11 +400,11 @@ var rows = [
     ]
   },
   {
-    "name": "the last apps' names changing alone changes nothing",
+    "name": "an app's name changing alone changes nothing",
     "options": opts,
     "steps": [
-      { "at": 0, "state": start({ "camera": cap([], ["Firefox"]) }) },
-      { "at": 3000, "state": { "camera": cap([], ["OBS"]) } }
+      { "at": 0, "state": start({ "camera": cap([m(61, "Firefox")]) }) },
+      { "at": 3000, "state": { "camera": cap([m(61, "Firefox Nightly")]) } }
     ]
   }
 ];

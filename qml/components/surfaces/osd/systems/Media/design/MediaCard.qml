@@ -3,10 +3,11 @@ import QtQuick
 
 import qs.services.system
 import qs.components.reusable
+import qs.components.surfaces.osd.design
 
-// An OSD's now playing card (an OSDCard): the cover (CoverArt), the title
-// and artist, and whether it plays or is paused. Reads MediaManager as it
-// is; OSDStatusSource says when to show it.
+// Now playing's card on the OSD (an OSDCard, loaded by URL as its
+// `exposes` entry's `design`): the cover (CoverArt), the title and
+// artist, and whether it plays or is paused. Reads MediaManager as it is.
 OSDCard {
   title: MediaManager.trackTitle
   subtitle: MediaManager.trackArtist || MediaManager.identity

@@ -1048,6 +1048,304 @@ TestCase {
     }, "Message"), null);
   }
 
+  // An event's key against an item whose `tiles` pick what it shows (a
+  // low battery only where Battery shows its battery icon; was
+  // OSDConfig.routeOf's own filter)
+  function test_opensCard_key() {
+    const osd = tiles => ({
+          "enabled": true,
+          "cardsEnabled": true,
+          "systems": [
+            {
+              "type": "Battery",
+              "tiles": tiles
+            }
+          ]
+        });
+    verify(OSDEngine.opensCard(osd(["charger", "battery"]), "Battery", "battery"), "picked");
+    verify(!OSDEngine.opensCard(osd(["charger"]), "Battery", "battery"), "its tiles leave it out");
+    verify(OSDEngine.opensCard(osd(["charger"]), "Battery"), "no key: the system alone");
+    verify(OSDEngine.opensCard({
+      "enabled": true,
+      "cardsEnabled": true,
+      "systems": [
+        {
+          "type": "Drives"
+        }
+      ]
+    }, "Drives", "drive"), "an item with no tiles setting");
+    compare(OSDEngine.cardRoute([osd(["charger"])], "Battery", true, "battery"), "notification");
+    compare(OSDEngine.cardRoute([osd(["charger"]), osd(["battery"])], "Battery", false, "battery"), "osd");
+  }
+
+  // The declared behaviours (stage 3a): each a stand-in declaring only it
+  function _def(body) {
+    return Qt.createQmlObject(`
+      import QtQuick
+      import qs.components.surfaces.osd.engine
+      OSDSystem {
+        ${body}
+      }`, this);
+  }
+
+  // keepThroughGap: an empty value is a gap, the next judged against the
+  // one before it; settledKinds: a switch counts unsettled, a mute not
+  function test_keepThroughGap_settledKinds() {
+    const def = _def(`
+      type: "Device"
+      onAdd: "none"
+      onChange: "card"
+      onRemove: "none"
+      keepThroughGap: true
+      settledKinds: ["update", "level"]
+      exposes: [{ "key": "dev", "part": "tile" }, { "key": "level", "part": "bar" }]
+      function tile(key, state) { return { "on": state.muted !== true, "slash": state.muted === true }; }`);
+    const d = (value, muted) => ({
+          "value": value,
+          "muted": muted === true
+        });
+    compare(OSDEngine.remember(def, {
+      "dev": d("52")
+    }, {
+      "dev": d("")
+    }).dev.value, "52", "a gap keeps the value before it");
+    compare(OSDEngine.remember(def, {
+      "dev": d("52")
+    }, {
+      "dev": d("60")
+    }).dev.value, "60", "a value replaces it");
+    compare(OSDEngine.remember(toggle, {
+      "toggle": {
+        "value": true
+      }
+    }, {
+      "toggle": {
+        "value": false
+      }
+    }).toggle.value, false, "not declared: as it is");
+    verify(OSDEngine.judge(def, "dev", d("52"), d(""), {}) === null, "the gap: nothing");
+    verify(OSDEngine.judge(def, "dev", d(""), d("52"), {}) === null, "the first appearing: onAdd none");
+    const sw = OSDEngine.judge(def, "dev", d("52"), d("60"), {
+      "settled": false
+    });
+    compare([sw.kind, sw.show], ["change", "card"], "a switch, unsettled");
+    verify(OSDEngine.judge(def, "dev", d("52"), d("52", true), {
+      "settled": false
+    }) === null, "a mute unsettled: nothing");
+    compare(OSDEngine.judge(def, "dev", d("52"), d("52", true), {}).kind, "update", "a mute settled");
+    compare(OSDEngine.judge(def, "dev", d("52"), d("60", true), {
+      "settled": false
+    }).show, "card", "a switch and a mute unsettled: the switch");
+    verify(OSDEngine.judge(def, "level", {
+      "level": 0.5
+    }, {
+      "level": 0
+    }, {
+      "settled": false
+    }) === null, "a level unsettled");
+    verify(OSDEngine.judge(toggle, "toggle", {
+      "value": false
+    }, {
+      "value": true
+    }, {
+      "settled": false
+    }) === null, "undeclared: every kind needs it settled");
+    def.destroy();
+  }
+
+  // resetBy: a field changing with it makes it nobody's; ignoreWithin: a
+  // change just after an outside event, unless the user's own came too
+  function test_resetBy_ignoreWithin() {
+    const def = _def(`
+      type: "Layout"
+      onAdd: "none"
+      onRemove: "none"
+      updateFields: []
+      resetBy: ["ids"]
+      ignoreWithin: ({ "after": "focusedAt", "ms": 1000, "unlessAfter": "switchedAt" })
+      exposes: [{ "key": "layout", "part": "tile" }]`);
+    const s = (ids, value, focusedAt, switchedAt) => ({
+          "ids": ids,
+          "value": value,
+          "label": value.toUpperCase(),
+          "focusedAt": focusedAt ?? 0,
+          "switchedAt": switchedAt ?? 0
+        });
+    const two = ["us", "de"];
+    const at = {
+      "at": 5000
+    };
+    compare(OSDEngine.judge(def, "layout", s(two, "us"), s(two, "de"), at).kind, "change", "a switch");
+    verify(OSDEngine.judge(def, "layout", s(two, "us"), s(["us", "fr"], "fr"), at) === null, "a new list: a reload");
+    verify(OSDEngine.judge(def, "layout", s(two, "us"), s(two, "de", 4900), at) === null, "just after a focus change");
+    compare(OSDEngine.judge(def, "layout", s(two, "us"), s(two, "de", 4900, 4950), at).show, "tile", "the user switched then too");
+    verify(OSDEngine.judge(def, "layout", s(two, "us"), s(two, "de", 4900, 3000), at) === null, "an old switch doesn't count");
+    compare(OSDEngine.judge(def, "layout", s(two, "us"), s(two, "de", 4000), at).show, "tile", "a full window before");
+    compare(OSDEngine.judge(def, "layout", s(two, "us"), s(two, "de", 0), at).show, "tile", "never focused");
+    def.destroy();
+  }
+
+  // takesIn: what a card out takes in without a card
+  function test_takesIn() {
+    const key = _def(`type: "A"`);
+    const system = _def(`type: "B"; takesIn: "system"`);
+    const shown = at("A", "x", true);
+    verify(key.sameChange(shown, at("A", "x", false)), "its own key");
+    verify(!key.sameChange(shown, at("A", "y", false)), "another key: no");
+    verify(system.sameChange(shown, at("B", "y", false)), "\"system\": any key");
+    verify(!system.sameChange(shown, at("B", "y", true)), "never a card");
+    key.destroy();
+    system.destroy();
+  }
+
+  // groups: owners on the tile, one card for one owner on two keys, the
+  // group's role, a "still" card of the key kept; roles: the engine's
+  // set card, its memory the change's members
+  function test_groups_roles() {
+    const def = _def(`
+      type: "Caps"
+      model: "set"
+      onAdd: "card"
+      onRemove: "still"
+      anyone: true
+      ownerField: "app"
+      groups: [{ "keys": ["cam", "mic"], "role": "Both" }]
+      exposes: [
+        { "key": "cam", "part": "tile", "icon": "videocam", "roles": { "add": "Cam", "still": "Still cam", "stopped": "Stopped cam" } },
+        { "key": "mic", "part": "tile", "icon": "mic", "roles": { "add": "Mic", "still": "Still mic", "stopped": "Stopped mic" } },
+        { "key": "share", "part": "tile", "icon": "share", "roles": { "add": "Share", "still": "Still share", "stopped": "Stopped share" } }
+      ]`);
+    const set = apps => ({
+          "members": apps.map((app, i) => ({
+                "id": app + i,
+                "app": app
+              }))
+        });
+    compare(OSDEngine.tileOf(def, "cam", set(["V", "V"])).owners, ["V"], "a grouped key's owners, once each");
+    verify(OSDEngine.tileOf(def, "share", set(["V"])).owners === undefined, "none outside a group");
+
+    // A call app dropping the camera, keeping the microphone
+    const after = {
+      "cam": set([]),
+      "mic": set(["V"])
+    };
+    const drop = OSDEngine.judge(def, "cam", set(["V"]), after.cam, {
+      "after": after
+    });
+    compare([drop.kind, drop.show, drop.still, drop.kept], ["remove", "card", true, "mic"], "a still card of the key kept");
+    compare(OSDEngine.cardOf(def, drop, after), {
+      "icon": "mic",
+      "image": "",
+      "title": "V",
+      "role": "Still mic",
+      "detail": "",
+      "tone": "",
+      "clickable": false
+    }, "naming the app, with the kept key's icon and role");
+    const other = OSDEngine.judge(def, "cam", set(["V"]), set([]), {
+      "after": {
+        "cam": set([]),
+        "mic": set(["O"])
+      }
+    });
+    compare([other.show, other.still], ["tile", false], "another app on the other key: the icon");
+    const alone = _def(`
+      type: "Caps"
+      model: "set"
+      onRemove: "still"
+      ownerField: "app"
+      groups: [{ "keys": ["cam", "mic"], "role": "Both" }]
+      exposes: [{ "key": "cam", "part": "tile" }]`);
+    compare(OSDEngine.judge(alone, "cam", set(["V"]), set([]), {
+      "after": after
+    }).show, "tile", "the kept key not listed: the icon");
+    alone.destroy();
+
+    // The engine's set card, re-read from the state
+    const add = OSDEngine.judge(def, "cam", set([]), set(["V"]), {});
+    compare(add.members, set(["V"]).members, "an arrival remembers its members");
+    compare(OSDEngine.cardOf(def, add, {
+      "cam": set(["V"]),
+      "mic": set([])
+    }).role, "Cam", "alone: its own role");
+    compare(OSDEngine.cardOf(def, add, {
+      "cam": set(["V"]),
+      "mic": set(["V"])
+    }).role, "Both", "the other key held by its owner: the group's");
+    const stopped = OSDEngine.cardOf(def, add, {
+      "cam": set([]),
+      "mic": set([])
+    });
+    compare([stopped.title, stopped.role], ["V", "Stopped cam"], "stopped under it: the members it came with");
+    const still = OSDEngine.judge(def, "share", set(["A", "B"]), set(["A"]), {});
+    compare(OSDEngine.cardOf(def, still, {
+      "share": set(["A"])
+    }).title, "A", "a still card names those left");
+    compare(OSDEngine.cardOf(def, still, {
+      "share": set(["A"])
+    }).role, "Still share");
+
+    // Arbitration: one owner on both is kept, another replaces
+    const card = (key, apps) => Object.assign(at("Caps", key, true, {
+        "owners": apps
+      }), {
+        "kind": "add"
+      });
+    const defs = {
+      "Caps": def
+    };
+    compare(OSDEngine.arbitrate(card("cam", ["V"]), card("mic", ["V", "O"]), 300, defs), "keep", "an owner in common");
+    compare(OSDEngine.arbitrate(card("cam", ["V"]), card("mic", ["O"]), 300, defs), "replace", "none in common");
+    compare(OSDEngine.arbitrate(card("cam", ["V"]), card("mic", ["V"]), OSDEngine.quietWindow, defs), "replace", "past the window");
+    const stillCard = Object.assign(card("share", ["A"]), {
+      "kind": "remove",
+      "still": true
+    });
+    compare(OSDEngine.arbitrate(stillCard, stillCard, 300, defs), "keep", "a still card after its own key's still card");
+    def.destroy();
+  }
+
+  // A scalar group: matched by value (a headset's output and input)
+  function test_groups_scalar() {
+    const def = _def(`
+      type: "Dev"
+      onChange: "card"
+      groups: [{ "keys": ["out", "in"], "role": "Both" }]
+      exposes: [{ "key": "out", "part": "tile" }, { "key": "in", "part": "tile" }]
+      function card(change, state) { return { "role": change.key }; }`);
+    const change = {
+      "key": "out",
+      "kind": "change"
+    };
+    compare(OSDEngine.cardOf(def, change, {
+      "out": {
+        "value": "84"
+      },
+      "in": {
+        "value": "84"
+      }
+    }).role, "Both", "the same device on both");
+    compare(OSDEngine.cardOf(def, change, {
+      "out": {
+        "value": "84"
+      },
+      "in": {
+        "value": "53"
+      }
+    }).role, "out", "another device: its own");
+    compare(OSDEngine.cardOf(def, Object.assign({}, change, {
+      "kind": "update"
+    }), {
+      "out": {
+        "value": "84"
+      },
+      "in": {
+        "value": "84"
+      }
+    }).role, "out", "not an arrival (a mute): its own");
+    def.destroy();
+  }
+
   function test_actionOf() {
     compare(toggle.actionOf("toggle", {}), {
       "id": "idleInhibit",

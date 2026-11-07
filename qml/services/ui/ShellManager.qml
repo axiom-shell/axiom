@@ -73,9 +73,9 @@ QtObject {
   // `tone` "warning" for a refusal (refuse()), else ""
   signal osdMessage(string id, string icon, string text, string detail, string tone)
 
-  // Changes the pointer made in axiom's own bar and panels, by kind
-  // (OSDItems.onScreenKind's: "audio", "microphone", "brightness", or a
-  // status type), when (Date.now()): an OSD doesn't open for them unless
+  // Changes the pointer made in axiom's own bar and panels, by kind (an
+  // OSD system's mark: "audio", "microphone", "brightness", or a tile's
+  // key), when (Date.now()): an OSD doesn't open for them unless
   // OSD.onScreenChanges. Marked by the UI right before it calls a setter,
   // never by a service, so keys (IPC) and automation are never mistaken
   // for a click
@@ -85,10 +85,15 @@ QtObject {
     root._onScreen[kind] = Date.now();
   }
 
-  // Whether a change of a bar or status type is the pointer's own
-  function fromScreen(type) {
-    const at = root._onScreen[OSDItems.onScreenKind(type)];
-    return at !== undefined && OSDItems.fromScreen(type, Date.now() - at);
+  // Whether a change judged by the mark `kind` is the pointer's own:
+  // marked less than `window` ms ago (the OSD system's userWindow; a mark
+  // from the future, after a clock change, isn't)
+  function fromScreen(kind, window) {
+    const at = root._onScreen[kind];
+    if (at === undefined)
+      return false;
+    const elapsed = Date.now() - at;
+    return elapsed >= 0 && elapsed < window;
   }
 
   // A message to the OSD `id` (OSDConfig.messageOsd's) as its card, also

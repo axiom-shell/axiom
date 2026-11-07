@@ -77,6 +77,10 @@ TestCase {
     // Each system's state, by key
     const states = {};
     systems.forEach(type => states[type] = {});
+    // What each is judged against, as its watcher keeps it
+    // (OSDEngine.remember: a gap's value kept)
+    const judged = {};
+    systems.forEach(type => judged[type] = {});
     const tileNow = (system, key) => defs[system] ? OSDEngine.tileOf(defs[system], key, states[system]?.[key]) : {};
     // What's out: the whole judged change (with its system) of the card
     // and of the ringed tile; a row's own start gives { system, key, at }
@@ -142,11 +146,11 @@ TestCase {
       const changes = [];
       for (const e of def.exposes) {
         const settled = typeof step.settled === "object" ? step.settled[e.key] : step.settled;
-        const what = OSDEngine.judge(def, e.key, before[e.key], after[e.key], {
+        const what = OSDEngine.judge(def, e.key, judged[system][e.key], after[e.key], {
           "at": at,
           "byUser": step.byUser === true,
           "settled": settled !== false,
-          "before": before,
+          "before": judged[system],
           "after": after
         });
         if (what)
@@ -155,6 +159,7 @@ TestCase {
           }, what));
       }
       states[system] = after;
+      judged[system] = OSDEngine.remember(def, judged[system], after);
       changes.forEach(what => what.host = decide(what));
 
       const expected = step.expect === undefined || step.expect === "none" ? [] : Array.isArray(step.expect) ? step.expect : [step.expect];

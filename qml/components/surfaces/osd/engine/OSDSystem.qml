@@ -17,9 +17,11 @@ QtObject {
 
   // What it shows, each { key, part: "bar" | "tile" | "card", icon,
   // label, group }, `opens: false` for one whose change never opens a shut
-  // OSD (an Audio bar's showOsd off), and, overriding the system's own for
-  // this key, any of `model`, the policies, `updateFields`, `mark`,
-  // `userWindow`, `action`, `call`
+  // OSD (an Audio bar's showOsd off), `design` (its view of its own, a
+  // file of its design/ folder: Paths.osdDesignUrl), `roles` (a set's
+  // card made by the engine: { add, still, stopped }, OSDEngine.cardOf),
+  // and, overriding the system's own for this key, any of `model`, the
+  // policies, `updateFields`, `mark`, `userWindow`, `action`, `call`
   property var exposes: []
 
   // How its state is told apart: "scalar" ({ value, … }: added as it
@@ -54,6 +56,47 @@ QtObject {
   // its knock-on (Wi-Fi after airplane mode)
   property var knockOnOf: []
 
+  // The change kinds ("add", "remove", "change", "update", "event",
+  // "level") that count only while the watcher calls them settled; null
+  // for every kind. Audio's ["update", "level"]: a device switch counts
+  // as its new node binds, a mute or a level only once it has. `anyone`
+  // makes it none
+  property var settledKinds: null
+  // State fields whose change makes a change of the key nobody's (a
+  // reload, not a switch: KeyboardLayout's list of sources; Audio's
+  // stream bars' set of streams): nothing shows
+  property var resetBy: []
+  // A change just after an outside event the state timestamps isn't the
+  // user's: { after: field, ms, unlessAfter: field } (KeyboardLayout's
+  // focus-follow: { after: "focusedAt", ms: 1000, unlessAfter:
+  // "switchedAt" }), each field a time in ms (Date.now(); 0 for never),
+  // compared with the change's `at`; null for none
+  property var ignoreWithin: null
+  // A scalar's value going empty is a gap, not a removal, and the value
+  // before it is the one the next is judged against (Audio: a Bluetooth
+  // headset's profile switch replaces its node, often with none between;
+  // the device it comes back as isn't a switch)
+  property bool keepThroughGap: false
+  // What changes without a card its card out takes in within the quiet
+  // window (sameChange's default): "key", its own key's (a capture
+  // stopping as it starts); "system", any of its keys' (a new device's
+  // mute, its level arriving late)
+  property string takesIn: "key"
+  // A set's member field naming who it belongs to ("app"): what a set's
+  // card (an entry's `roles`) names, and what keys in one of `groups`
+  // match by. A scalar is matched by its value
+  property string ownerField: ""
+  // Keys whose changes of one owner make one card: [{ keys, role }]. A
+  // card of one of them coming within the quiet window of another's card
+  // out, an owner in common, is kept (the card out says both); a card of
+  // an arrival ("add", "change") with an owner in common with another
+  // listed key of the group says the group's `role` ("Output and input",
+  // "Using the camera and microphone"); a set's last member of one
+  // owner leaving while the owner stays on another listed key of the
+  // group is a "still" card under onRemove "still" ("Vesktop / Still
+  // using the microphone"; the change's `kept` names that key)
+  property var groups: []
+
   // Its tile for `key` from that key's state: any of { icon, label,
   // tone, on, slash, notable, hidden, … } (OSDEngine.tileOf fills the
   // rest, the icon from `exposes`)
@@ -78,10 +121,12 @@ QtObject {
   }
 
   // Whether `incoming` (a change of this system) is the same change as
-  // `shown` (this system's card out): kept beside it rather than taking
-  // its place (both { system, key, part, card, tile })
+  // `shown` (this system's card out): its knock-on, kept or suppressed
+  // rather than taking its place (both { system, key, part, card, tile }).
+  // By default a change without a card of what `takesIn` says; the engine
+  // adds `groups`' and a "still" card of the same key
   function sameChange(shown, incoming) {
-    return incoming.card !== true && shown.key === incoming.key;
+    return incoming.card !== true && (root.takesIn === "system" || shown.key === incoming.key);
   }
 
   // Whether `own` (this system's card or ring) takes in `other`, another

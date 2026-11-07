@@ -10,12 +10,12 @@ var audioOpts = {
   "bars": [{ "type": "other" }, { "type": "master" }, { "type": "microphone" }],
   "tiles": ["audio", "microphone"]
 };
-var speakers = { "value": "52", "device": "52", "address": "", "name": "Speakers", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
-var builtInMic = { "value": "53", "device": "53", "address": "", "name": "Microphone", "detail": "Analog Stereo", "icon": "mic", "muted": false };
-var audioBox = { "value": "60", "device": "60", "address": "", "name": "AudioBox Go", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
+var speakers = { "value": "52", "address": "", "name": "Speakers", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
+var builtInMic = { "value": "53", "address": "", "name": "Microphone", "detail": "Analog Stereo", "icon": "mic", "muted": false };
+var audioBox = { "value": "60", "address": "", "name": "AudioBox Go", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
 // Its Bluetooth address in lower case, as PipeWire may give it
-var headphones = { "value": "84", "device": "84", "address": "aa:bb:cc:00:00:01", "name": "WH-1000XM4", "detail": "High Fidelity Playback (A2DP Sink)", "icon": "headphones", "muted": false };
-var headsetMic = { "value": "84", "device": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "detail": "Headset Head Unit (HSP/HFP)", "icon": "headset_mic", "muted": false };
+var headphones = { "value": "84", "address": "aa:bb:cc:00:00:01", "name": "WH-1000XM4", "detail": "High Fidelity Playback (A2DP Sink)", "icon": "headphones", "muted": false };
+var headsetMic = { "value": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "detail": "Headset Head Unit (HSP/HFP)", "icon": "headset_mic", "muted": false };
 
 function audioStart() {
   return {
@@ -219,9 +219,9 @@ var rows = [
     "systems": ["Privacy", "Audio"],
     "options": { "Audio": audioOpts, "Privacy": { "kinds": ["camera", "micUse", "screenShare"] } },
     "steps": [
-      { "system": "Privacy", "at": 0, "state": { "camera": { "members": [], "last": [] }, "micUse": { "members": [], "last": [] }, "screenShare": { "members": [], "last": [] } } },
+      { "system": "Privacy", "at": 0, "state": { "camera": { "members": [] }, "micUse": { "members": [] }, "screenShare": { "members": [] } } },
       { "system": "Audio", "at": 0, "state": audioStart() },
-      { "system": "Privacy", "at": 3000, "state": { "camera": { "members": [{ "id": 61, "app": "Firefox" }], "last": ["Firefox"] } },
+      { "system": "Privacy", "at": 3000, "state": { "camera": { "members": [{ "id": 61, "app": "Firefox" }] } },
         "expect": { "key": "camera", "show": "card", "host": "open" } },
       { "system": "Audio", "at": 3300, "state": { "master": { "level": 0.6, "muted": false } },
         "expect": { "key": "master", "show": "level", "host": "beside" } }
@@ -233,9 +233,9 @@ var rows = [
     "systems": ["Privacy", "Audio"],
     "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Privacy": { "kinds": ["camera", "micUse", "screenShare"] } },
     "steps": [
-      { "system": "Privacy", "at": 0, "state": { "camera": { "members": [], "last": [] }, "micUse": { "members": [], "last": [] }, "screenShare": { "members": [], "last": [] } } },
+      { "system": "Privacy", "at": 0, "state": { "camera": { "members": [] }, "micUse": { "members": [] }, "screenShare": { "members": [] } } },
       { "system": "Audio", "at": 0, "state": audioStart() },
-      { "system": "Privacy", "at": 3000, "state": { "camera": { "members": [{ "id": 61, "app": "Vesktop" }], "last": ["Vesktop"] } },
+      { "system": "Privacy", "at": 3000, "state": { "camera": { "members": [{ "id": 61, "app": "Vesktop" }] } },
         "expect": { "key": "camera", "show": "card", "host": "open" } },
       { "system": "Audio", "at": 3300, "state": { "microphone": Object.assign({}, builtInMic, { "muted": true }) },
         "expect": { "key": "microphone", "show": "tile", "host": "beside" } }
@@ -246,9 +246,9 @@ var rows = [
     "systems": ["Privacy", "Audio"],
     "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Privacy": { "kinds": ["camera", "micUse", "screenShare"] } },
     "steps": [
-      { "system": "Privacy", "at": 0, "state": { "camera": { "members": [], "last": [] }, "micUse": { "members": [], "last": [] }, "screenShare": { "members": [], "last": [] } } },
+      { "system": "Privacy", "at": 0, "state": { "camera": { "members": [] }, "micUse": { "members": [] }, "screenShare": { "members": [] } } },
       { "system": "Audio", "at": 0, "state": audioStart() },
-      { "system": "Privacy", "at": 3000, "state": { "micUse": { "members": [{ "id": 70, "app": "OBS" }], "last": ["OBS"] } },
+      { "system": "Privacy", "at": 3000, "state": { "micUse": { "members": [{ "id": 70, "app": "OBS" }] } },
         "expect": { "key": "micUse", "show": "card", "host": "open" } },
       { "system": "Audio", "at": 3300, "settled": false, "state": { "microphone": headsetMic },
         "expect": { "key": "microphone", "show": "card", "host": "replace" } }

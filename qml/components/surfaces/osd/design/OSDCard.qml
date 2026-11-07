@@ -2,19 +2,38 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 
+import Quickshell.Widgets
+
 import qs.config
 import qs.components.reusable
 
-// The frame of an OSD's cards (OSDMediaCard, OSDStatusCard): a square
-// picture on the left (`picture`), a title and a faint line under it,
-// and optionally an icon at the end saying what it's doing.
+// An OSD's card: a square picture on the left, a title and a faint line
+// under it, and optionally an icon at the end saying what it's doing.
+// Shows a system's card (`card`, OSDEngine.cardOf's: its icon on the
+// accent, or on the warning colour with `tone` "warning", or its `image`
+// cropped in its place; the title; its role, translated, and its detail
+// as the faint line), and takes a click when it's `clickable`. A system's
+// own card design (systems/<Type>/design/, Now playing's) is one of these
+// setting its `title`, `subtitle`, `status` and `picture` itself.
 Item {
   id: root
 
+  // The card shown (OSDEngine.cardOf's), null for none; and the change
+  // that brought it (for a design of a system's own)
+  property var card: null
+  property var change: null
+
+  // A click on a card that takes one (card.clickable)
+  signal clicked
+
+  // Its role as the systems give it, English, translated here
+  // I18n.tr("Output") I18n.tr("Input") I18n.tr("Output and input") I18n.tr("Connected") I18n.tr("Using the camera") I18n.tr("Using the microphone") I18n.tr("Using the camera and microphone") I18n.tr("Sharing the screen") I18n.tr("Stopped using the camera") I18n.tr("Stopped using the microphone") I18n.tr("Stopped sharing the screen") I18n.tr("Charging") I18n.tr("Fully charged") I18n.tr("Plugged in") I18n.tr("Mounted") I18n.tr("Safe to remove") I18n.tr("Unmounted") I18n.tr("Disconnected") I18n.tr("Unplugged without ejecting") I18n.tr("In use: close what's using it") I18n.tr("Couldn't eject") I18n.tr("Encrypted: click to unlock") I18n.tr("Battery low") I18n.tr("Battery critically low") I18n.tr("Copied to the clipboard")
+  readonly property string _role: (root.card?.role ?? "") !== "" ? I18n.tr(root.card.role) : ""
+
   // The square on the left (a cover, a device's icon)
-  property Component picture
-  property string title: ""
-  property string subtitle: ""
+  property Component picture: cardPicture
+  property string title: root.card?.title ?? ""
+  property string subtitle: [root._role, root.card?.detail ?? ""].filter(part => part !== "").join(" · ")
   // An icon at the end, or "" for none
   property string status: ""
 
@@ -114,5 +133,50 @@ Item {
       text: root.status
       textSize: Appearance.fontSizeBy(8)
     }
+  }
+
+  // A card's own picture: its icon on the accent (the warning colour for
+  // a refusal or a critical battery), or its image cropped to the square
+  Component {
+    id: cardPicture
+
+    Rectangle {
+      radius: Widget.radius
+      color: root.card?.tone === "warning" ? Theme.warning : Theme.accent
+
+      StyledIcon {
+        anchors.centerIn: parent
+        visible: !shot.visible
+        text: root.card?.icon ?? ""
+        textSize: Appearance.fontSizeBy(8)
+        textColor: Theme.background
+      }
+
+      // A picture in its place (a screenshot's), cropped to the square
+      ClippingRectangle {
+        id: shot
+        anchors.fill: parent
+        radius: Widget.radius
+        color: Theme.backgroundAlt
+        visible: (root.card?.image ?? "") !== ""
+
+        Image {
+          anchors.fill: parent
+          source: root.card?.image ?? ""
+          fillMode: Image.PreserveAspectCrop
+          asynchronous: true
+          // Decoded at its size, not the screen's
+          sourceSize.width: root.pictureSize * 2
+          sourceSize.height: root.pictureSize * 2
+        }
+      }
+    }
+  }
+
+  MouseArea {
+    anchors.fill: parent
+    enabled: root.card?.clickable === true
+    cursorShape: Qt.PointingHandCursor
+    onClicked: root.clicked()
   }
 }

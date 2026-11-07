@@ -48,6 +48,19 @@ QtObject {
   function activate(change) {
   }
 
+  // Its OSD opened (on this screen): picks up what changed outside axiom
+  // that nothing pushes (Brightness rereads the monitors its bar shows)
+  function opened() {
+  }
+
+  // A bar without a design of its own (OSDLevelBar's StyledVolumeBar)
+  // dragged or scrolled to `level` (0-1), or its icon clicked (shown
+  // clickable while its state has `muted`): sets it in its service
+  function setLevel(key, level) {
+  }
+  function iconClicked(key) {
+  }
+
   // What shows for a change: OSDEngine.judge's, with { system }
   signal change(var what)
 
@@ -73,7 +86,8 @@ QtObject {
   }
   property var events: ({})
 
-  // The state last judged, by key
+  // The state last judged, by key (OSDEngine.remember's: a gap's value
+  // kept)
   property var _last: ({})
   property bool _armed: false
 
@@ -104,7 +118,8 @@ QtObject {
           "system": def.type
         }, what));
     }
-    root._last = after;
+    // A keepThroughGap value keeps what it had through an empty reading
+    root._last = OSDEngine.remember(def, before, after);
     if (root._armed)
       changes.forEach(what => root.change(what));
   }

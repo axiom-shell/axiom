@@ -1,6 +1,6 @@
 # Removable drives
 
-> **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/content/parts/SecretField.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/OSDStatusSource.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
+> **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/content/parts/SecretField.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/systems/Drives/`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
 > **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.commands.fileManager`; the OSD's `drive` status
 > **Related:** [OSD](osd.md), [Notifications](notifications.md), [VPN](vpn.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
@@ -33,11 +33,11 @@ Only a real `drives.event` `added` (never a drive there at login, or udisks2 res
 
 ### Who says what
 Every event but `ask`'s question is said once (`_say`), through `NotificationManager.announce("drive", Drives.notify, …)`, which routes it by `OSDConfig.routeOf` ([OSD](osd.md) › Where events go):
-- **An OSD opens `drive`'s card** (enabled, listing it, not `quiet`, detail cards on: `OSDItems.cardRoute`): the OSD's card (`lastEvent`, set only then), whatever `Drives.notify` says; also filed in the notification history without a popup with `OSD.cardsToHistory`.
+- **An OSD opens `drive`'s card** (enabled, listing it, not `quiet`, detail cards on: `OSDEngine.cardRoute`): the OSD's card (`lastEvent`, set only then), whatever `Drives.notify` says; also filed in the notification history without a popup with `OSD.cardsToHistory`.
 - **Else, with `Drives.notify`** (the default): a notification (`_eventNotice`), with buttons where they help: Mounted has Open / Eject, Locked has Unlock. Each drive has one entry (key `drive:<id>`), its last event. Its comings and goings (plugged in, mounted, unmounted, disconnected: `_quietKinds`) are silent, in the notifications' Quiet section, their buttons run by the desktop entry's handler (`_pick`, from the entry's `data`); the rest alert ([Notifications](notifications.md) › Levels).
 - **Else** nothing; the widget and module show it. `ask` still notifies.
 - Until config v90 this was `Drives.announce` (`osd` | `notification` | `off`); v90 made `osd` and `notification` `notify` true, `off` false.
-- **A click** on the card (`OSDStatusCard`'s `clicked`, only when `OSDItems.card`'s `clickable`) or on a notification runs `activate(event)`, which does what `DriveInfo.clickAction` says: Mounted opens the folder, Locked asks for the passphrase, anything else shows the Drives module.
+- **A click** on the card (`OSDCard`'s `clicked`, only when the card's `clickable`) or on a notification runs `activate(event)`, which does what `DriveInfo.clickAction` says: Mounted opens the folder, Locked asks for the passphrase, anything else shows the Drives module.
 
 The events: Connected (`added`), Locked, Mounted, Unmounted, Safe to remove (`ejected`), Disconnected (`removed`), Unplugged without ejecting (`pulled`, with `warnUnplugged`), and an eject's In use (`busy`) or Couldn't eject (`ejectFailed`).
 

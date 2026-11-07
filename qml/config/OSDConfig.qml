@@ -44,18 +44,13 @@ QtObject {
     })
 
   // Where an event of `type` (drive, battery, monitor, screenshot,
-  // bluetooth) goes (OSDEngine.cardRoute, by its system): "osd" (an OSD
-  // opens its card: OSDEngine.opensCard; the low battery's only where
-  // Battery shows its battery icon), else "notification" with `notify`
-  // (its section's switch: Battery.notify, Drives.notify,
-  // Monitors.notify, Screenshots.notify), else "" (nowhere)
+  // bluetooth: its system's key) goes (OSDEngine.cardRoute, by its
+  // system and key): "osd" (an OSD opens its card: OSDEngine.opensCard;
+  // the low battery's only where Battery's `tiles` pick `battery`), else
+  // "notification" with `notify` (its section's switch: Battery.notify,
+  // Drives.notify, Monitors.notify, Screenshots.notify), else "" (nowhere)
   function routeOf(type, notify) {
-    const system = root._eventSystems[type];
-    const osds = type !== "battery" ? root.osds : root.osds.filter(osd => {
-      const item = OSDEngine.itemOf(osd, system);
-      return item !== null && item.tiles.includes("battery");
-    });
-    return OSDEngine.cardRoute(osds, system, notify);
+    return OSDEngine.cardRoute(root.osds, root._eventSystems[type], notify, type);
   }
 
   function osdById(id) {

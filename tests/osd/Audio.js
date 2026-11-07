@@ -9,16 +9,21 @@
 //                      matches / the streams bar <i> of `bars` matches;
 //                      `streams` their node ids joined ("61,74"), so the set
 //                      changing tells itself from a level changing
-//   audio, microphone  { value, device, address, name, detail, icon, muted }:
-//                      `value` the physical device last in use
-//                      (AudioManager.deviceKey), kept through a gap with
-//                      none (a Bluetooth profile switch replaces the node);
-//                      `device` the one now ("" in a gap: the tile hides);
-//                      `address` its Bluetooth address, else "";
-//                      `name` / `detail` AudioManager.deviceLabel's title and
-//                      profile; `icon` the device kind's, unmuted
-// Settled (AudioWatch.settled): AudioManager.sinkSettled() for master,
-// other, app and audio, sourceSettled() for micLevel and microphone.
+//                      (`levels` too: every matched stream's level and
+//                      mute, so a change on any of them is a level change)
+//   audio, microphone  { value, address, name, detail, icon, muted }:
+//                      `value` the physical device now
+//                      (AudioManager.deviceKey; "" in a gap with none, as a
+//                      Bluetooth profile switch replaces the node: the tile
+//                      hides, and `keepThroughGap` judges the next against
+//                      the device before it); `address` its Bluetooth
+//                      address, else ""; `name` / `detail`
+//                      AudioManager.deviceLabel's title and profile; `icon`
+//                      the device kind's, unmuted
+// Settled (AudioWatch.settled): AudioManager.sinkSettled() for master and
+// audio, sourceSettled() for micLevel and microphone; a stream bar (other,
+// app) is always settled, as the old PipewireVolumeBar never asked (its
+// set of streams changing is `resetBy`).
 //
 // decided: the microphone's bar is the key `micLevel` (its mark
 //   "microphone"), since the input device's tile keeps `microphone`; an App
@@ -26,23 +31,23 @@
 //   their type. Keys must be unique in `exposes`.
 // decided: `exposes` lists the bars in `bars` order, then the tiles in
 //   `tiles` order (the order a step's changes come in).
-// decided: the tile carries `device` (the kept key, `value`) and `address`,
-//   which sameChange and Bluetooth's absorbs read.
-// decided: a device switch is judged by Audio's own judge(), unsettled or
-//   not (a switch is always unsettled: the new node binding), as the old
-//   watcher reported it whatever sinkSettled() said; a mute and a level
-//   count only while settled.
+// decided: the tile carries `device` (`value`) and `address`, which
+//   Bluetooth's absorbs reads; the group's match reads the tile's `owners`.
+// decided: a device switch counts unsettled or not (`settledKinds`: only
+//   "update" and "level" need it; a switch is always unsettled: the new
+//   node binding), as the old watcher reported it whatever sinkSettled()
+//   said; a mute and a level count only while settled.
 
 var opts = {
   "bars": [{ "type": "other" }, { "type": "master" }, { "type": "microphone" }],
   "tiles": ["audio", "microphone"]
 };
 
-var speakers = { "value": "52", "device": "52", "address": "", "name": "Speakers", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
-var audioBox = { "value": "60", "device": "60", "address": "", "name": "AudioBox Go", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
-var builtInMic = { "value": "53", "device": "53", "address": "", "name": "Microphone", "detail": "Analog Stereo", "icon": "mic", "muted": false };
-var headphones = { "value": "84", "device": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "detail": "High Fidelity Playback (A2DP Sink)", "icon": "headphones", "muted": false };
-var headsetMic = { "value": "84", "device": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "detail": "Headset Head Unit (HSP/HFP)", "icon": "headset_mic", "muted": false };
+var speakers = { "value": "52", "address": "", "name": "Speakers", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
+var audioBox = { "value": "60", "address": "", "name": "AudioBox Go", "detail": "Analog Stereo", "icon": "speaker", "muted": false };
+var builtInMic = { "value": "53", "address": "", "name": "Microphone", "detail": "Analog Stereo", "icon": "mic", "muted": false };
+var headphones = { "value": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "detail": "High Fidelity Playback (A2DP Sink)", "icon": "headphones", "muted": false };
+var headsetMic = { "value": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-1000XM4", "detail": "Headset Head Unit (HSP/HFP)", "icon": "headset_mic", "muted": false };
 
 function dev(base, extra) {
   return Object.assign({}, base, extra || {});
@@ -226,7 +231,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start() },
-      { "at": 3000, "settled": false, "state": { "microphone": dev(audioBox, { "icon": "mic", "value": "61", "device": "61" }) },
+      { "at": 3000, "settled": false, "state": { "microphone": dev(audioBox, { "icon": "mic", "value": "61" }) },
         "expect": { "key": "microphone", "show": "card", "card": { "title": "AudioBox Go", "role": "Input", "icon": "mic" } } }
     ]
   },
@@ -243,7 +248,7 @@ var rows = [
     "name": "the first device appearing isn't a switch",
     "options": opts,
     "steps": [
-      { "at": 0, "state": start({ "audio": { "value": "", "device": "", "address": "", "name": "", "detail": "", "icon": "", "muted": false } }) },
+      { "at": 0, "state": start({ "audio": { "value": "", "address": "", "name": "", "detail": "", "icon": "", "muted": false } }) },
       { "at": 3000, "settled": false, "state": { "audio": speakers } }
     ]
   },
@@ -252,7 +257,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start({ "audio": headphones }) },
-      { "at": 3000, "settled": false, "state": { "audio": dev(headphones, { "device": "", "name": "", "detail": "", "icon": "" }) } },
+      { "at": 3000, "settled": false, "state": { "audio": dev(headphones, { "value": "", "name": "", "detail": "", "icon": "" }) } },
       { "at": 3200, "settled": false, "state": { "audio": dev(headphones, { "detail": "Headset Head Unit (HSP/HFP)", "icon": "headset" }) } }
     ]
   },
@@ -261,7 +266,7 @@ var rows = [
     "options": opts,
     "steps": [
       { "at": 0, "state": start() },
-      { "at": 3000, "settled": false, "state": { "audio": dev(speakers, { "device": "", "name": "", "detail": "", "icon": "" }) } },
+      { "at": 3000, "settled": false, "state": { "audio": dev(speakers, { "value": "", "name": "", "detail": "", "icon": "" }) } },
       { "at": 3500, "settled": false, "state": { "audio": audioBox },
         "expect": { "key": "audio", "show": "card", "card": { "title": "AudioBox Go", "role": "Output" } } }
     ]

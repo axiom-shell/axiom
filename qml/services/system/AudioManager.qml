@@ -278,7 +278,7 @@ QtObject {
   }
 
   // A sink's or source's name to show ({ title, detail }:
-  // OSDItems.deviceName's, a kind's name translated)
+  // AudioDevices.deviceName's, a kind's name translated)
   function deviceLabel(node) {
     if (!node)
       return {
@@ -286,7 +286,7 @@ QtObject {
         "detail": ""
       };
     const props = node.properties || {};
-    const name = OSDItems.deviceName({
+    const name = AudioDevices.deviceName({
       "nick": props["node.nick"] ?? node.nickname ?? "",
       "description": node.description || node.name || "",
       "profile": props["device.profile.description"] ?? "",

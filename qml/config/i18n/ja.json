@@ -4068,6 +4068,9 @@
     "Battery and charger": "",
     "How the levels are laid out, for the systems that show bars.": "",
     "What the OSD shows, in order (its icons' and its bars' order). A change to one opens the OSD, unless it's quiet.": "",
-    "Camera, microphone and screen in use": ""
+    "Camera, microphone and screen in use": "",
+    "Still using the camera": "",
+    "Still using the microphone": "",
+    "Still sharing the screen": ""
   }
 }

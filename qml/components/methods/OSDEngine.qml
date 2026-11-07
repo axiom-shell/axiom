@@ -59,18 +59,50 @@ QtObject {
       "hidden": false
     };
     const own = def ? def.tile(key, state ?? {}) : null;
-    return Object.assign(t, own ?? {});
+    Object.assign(t, own ?? {});
+    // A key of one of `groups`: who holds it, what the group matches by
+    if (root.groupOf(def, key))
+      t.owners = root.ownersOf(def, key, state);
+    return t;
+  }
+
+  // The group (`groups`' { keys, role }) `key` is in, or null
+  function groupOf(def, key) {
+    return (def?.groups ?? []).find(g => (g.keys ?? []).includes(key)) ?? null;
+  }
+
+  // Who holds `key` in `state` (its state), once each: a set's members'
+  // `ownerField` (their ids without one), a scalar's value ([] empty)
+  function ownersOf(def, key, state) {
+    if (root.policy(def, key, "model") === "set")
+      return root._owners(def, state?.members);
+    const v = state?.value;
+    return root._empty(v) ? [] : [v];
+  }
+
+  function _owners(def, members) {
+    const field = def?.ownerField ?? "";
+    return [...new Set((members ?? []).map(m => field ? m[field] : m.id))];
+  }
+
+  // The other listed keys of `key`'s group holding an owner of `owners`
+  function _partners(def, key, owners, state) {
+    const group = root.groupOf(def, key);
+    if (!group)
+      return [];
+    return group.keys.filter(other => other !== key && root.entryOf(def, other).key === other && root.ownersOf(def, other, state?.[other]).some(o => owners.includes(o)));
   }
 
   // The card for a change: { icon (its tile's unless given), image,
   // title, role, detail, tone, clickable }, or null when the definition
   // has none for it. `state`: the system's, by key
   function cardOf(def, change, state) {
-    const own = def ? def.card(change, state ?? {}) : null;
+    const s = state ?? {};
+    const own = !def ? null : root.entryOf(def, change.key).roles ? root._setCard(def, change, s) : def.card(change, s);
     if (!own)
       return null;
-    return Object.assign({
-      "icon": root.tileOf(def, change.key, (state ?? {})[change.key]).icon,
+    const out = Object.assign({
+      "icon": root.tileOf(def, change.key, s[change.key]).icon,
       "image": "",
       "title": "",
       "role": "",
@@ -78,6 +110,46 @@ QtObject {
       "tone": "",
       "clickable": false
     }, own);
+    // An arrival held by an owner another key of its group holds too:
+    // one card says both
+    if ((change.kind === "add" || change.kind === "change") && change.still !== true) {
+      const owners = root.ownersOf(def, change.key, s[change.key]);
+      if (root._partners(def, change.key, owners, s).length > 0)
+        out.role = root.groupOf(def, change.key).role ?? out.role;
+    }
+    return out;
+  }
+
+  // A set's card from its entry's `roles` ({ add, still, stopped }),
+  // re-read from the state now: the owners there now (`still` for a
+  // departure with some left, `add` else); with none left, those the
+  // change saw (its `members`: the card's memory) with `stopped`; a
+  // group's "still" card (`kept`) names the owners gone from this key
+  // still on the kept one, with that key's icon and `still` role
+  function _setCard(def, change, state) {
+    const key = change.key;
+    const roles = root.entryOf(def, key).roles;
+    const now = root.ownersOf(def, key, state[key]);
+    const was = root._owners(def, change.members);
+    if (change.kept) {
+      const kept = root.ownersOf(def, change.kept, state[change.kept]);
+      const names = was.filter(o => kept.includes(o));
+      if (names.length > 0)
+        return {
+          "icon": root.tileOf(def, change.kept, state[change.kept]).icon,
+          "title": names.join(", "),
+          "role": root.entryOf(def, change.kept).roles?.still ?? ""
+        };
+    }
+    if (now.length > 0)
+      return {
+        "title": now.join(", "),
+        "role": change.still === true ? roles.still : roles.add
+      };
+    return {
+      "title": was.join(", "),
+      "role": roles.stopped
+    };
   }
 
   function _empty(v) {
@@ -113,16 +185,65 @@ QtObject {
     return fields.some(field => JSON.stringify(a[field]) !== JSON.stringify(b[field]));
   }
 
+  // Whether a change of `kind` counts only while settled: every kind
+  // unless `settledKinds` lists some, none with `anyone`
+  function _needsSettled(def, key, kind) {
+    if (root.policy(def, key, "anyone") === true)
+      return false;
+    const kinds = root.policy(def, key, "settledKinds");
+    return !Array.isArray(kinds) || kinds.includes(kind);
+  }
+
+  // Whether `ms` (a timestamp; 0 or less: never) is within `within` ms
+  // before `at`
+  function _since(ms, at, within) {
+    const t = Number(ms);
+    return Number.isFinite(t) && t > 0 && at - t >= 0 && at - t < within;
+  }
+
+  // Why the declarations say a change is nobody's: a field of `resetBy`
+  // changed with it (a reload), or it came within `ignoreWithin` of an
+  // outside event (and not of the user's own); else false
+  function _ignored(def, key, before, after, c) {
+    const fields = root.policy(def, key, "resetBy") ?? [];
+    if (fields.some(f => JSON.stringify(before?.[f]) !== JSON.stringify(after?.[f])))
+      return true;
+    const w = root.policy(def, key, "ignoreWithin");
+    return !!w && root._since(after?.[w.after], c.at, w.ms) && !(w.unlessAfter && root._since(after?.[w.unlessAfter], c.at, w.ms));
+  }
+
+  // The state a watcher judges the next one against, by key: `after`,
+  // but a `keepThroughGap` scalar going empty keeps the value it had
+  // (the device a headset comes back as after a profile switch isn't a
+  // switch)
+  function remember(def, before, after) {
+    const out = Object.assign({}, after ?? {});
+    for (const e of def?.exposes ?? []) {
+      const was = before?.[e.key];
+      const now = out[e.key];
+      if (now && root.policy(def, e.key, "keepThroughGap") === true && root.policy(def, e.key, "model") === "scalar" && root._empty(now.value) && was && !root._empty(was.value))
+        out[e.key] = Object.assign({}, now, {
+          "value": was.value
+        });
+    }
+    return out;
+  }
+
   // The generic judgement of `key` (OSDEngine.judge without the
   // definition's own): [kind, show, extra]
   function _generic(def, key, before, after, c) {
+    if (root._ignored(def, key, before, after, c))
+      return null;
+    // Each candidate a kind needing its watcher settled is dropped while
+    // it isn't
+    const counts = kind => c.settled !== false || !root._needsSettled(def, key, kind);
     if (c.part === "bar")
-      return ["level", "level",
+      return counts("level") ? ["level", "level",
         {}
-      ];
+      ] : null;
     const pick = name => root._show(root.policy(def, key, name));
     if (c.model === "event")
-      return after?.event ? ["event", pick("onAdd"),
+      return after?.event && counts("event") ? ["event", pick("onAdd"),
         {}
       ] : null;
     if (c.model === "set") {
@@ -130,33 +251,43 @@ QtObject {
       const now = root._ids(after);
       const added = now.filter(id => !was.includes(id));
       const removed = was.filter(id => !now.includes(id));
+      // The members as the change saw them (the card's memory once
+      // they're gone): those after an arrival, those before a departure
       const extra = {
         "added": added,
         "removed": removed,
-        "left": now
+        "left": now,
+        "members": added.length > 0 ? (after?.members ?? []) : (before?.members ?? [])
       };
       if (added.length > 0)
-        return ["add", pick("onAdd"), extra];
-      if (removed.length === 0)
+        return counts("add") ? ["add", pick("onAdd"), extra] : null;
+      if (removed.length === 0 || !counts("remove"))
         return null;
-      return root._removal(def, key, c, now.length > 0, extra);
+      // The last of an owner leaving while it stays on another key of
+      // its group
+      const gone = root._owners(def, (before?.members ?? []).filter(m => removed.includes(m.id)));
+      const kept = now.length === 0 ? (root._partners(def, key, gone, c.after)[0] ?? "") : "";
+      return root._removal(def, key, c, now.length > 0, kept, extra);
     }
     // scalar: the value's own change, or its tile's look (a mute); the
     // stronger of the two shows (Wi-Fi off loses its network too)
     const b = before?.value;
     const a = after?.value;
+    // A gap (keepThroughGap): nothing until a value comes back
+    if (root.policy(def, key, "keepThroughGap") === true && !root._empty(b) && root._empty(a))
+      return null;
     let out = null;
     if (root._empty(b) && !root._empty(a))
-      out = ["add", pick("onAdd"),
+      out = counts("add") ? ["add", pick("onAdd"),
         {}
-      ];
+      ] : null;
     else if (!root._empty(b) && root._empty(a))
-      out = root._removal(def, key, c, false, {});
+      out = counts("remove") ? root._removal(def, key, c, false, "", {}) : null;
     else if (JSON.stringify(a) !== JSON.stringify(b))
-      out = ["change", pick("onChange"),
+      out = counts("change") ? ["change", pick("onChange"),
         {}
-      ];
-    if (root._looks(def, key, before, after)) {
+      ] : null;
+    if (counts("update") && root._looks(def, key, before, after)) {
       const update = ["update", pick("onUpdate"),
         {}
       ];
@@ -170,17 +301,22 @@ QtObject {
     return show === "card" ? 2 : show === "tile" ? 1 : 0;
   }
 
-  // A departure: `left` some still there. onUnexpectedRemove for one not
-  // made on screen; "still" a card while some are left, else the icon
-  function _removal(def, key, c, left, extra) {
+  // A departure: `left` some still there, `kept` another key of its
+  // group the owner stays on. onUnexpectedRemove for one not made on
+  // screen; "still" a card while some are left (here or on `kept`), else
+  // the icon
+  function _removal(def, key, c, left, kept, extra) {
     const unexpected = c.byUser !== true;
     const own = root.policy(def, key, "onUnexpectedRemove");
     const name = unexpected && own ? own : root.policy(def, key, "onRemove");
-    const show = name === "still" ? (left ? "card" : "tile") : root._show(name);
+    const still = name === "still" && (left || kept !== "");
+    const show = name === "still" ? (still ? "card" : "tile") : root._show(name);
     return ["remove", show, Object.assign({
-        "still": name === "still" && left,
+        "still": still,
         "unexpected": unexpected
-      }, extra)];
+      }, still && kept ? {
+        "kept": kept
+      } : {}, extra)];
   }
 
   // What `key` changing from `before` to `after` (its states) shows, by
@@ -189,12 +325,16 @@ QtObject {
   // "level"), show ("card" | "tile" | "level"), card (show is "card"),
   // still, unexpected, alert (opens the OSD even after an on-screen mark:
   // only a definition's judge() sets it), added, removed, left (a set's
-  // ids), at, byUser }. Never the first reading (`before` missing) nor
-  // across a state that isn't `available` (false); then the definition's
-  // judge() for an odd case (it reads ctx.settled itself); else, unless
-  // the system counts `anyone`'s, nothing while the watcher calls it
-  // unsettled. `ctx`: { at, byUser, settled, before, after (the whole
-  // states) }
+  // ids), members (a set's, as the change saw them), kept (a group's
+  // "still" card: the key the owner stays on), at, byUser }. Never the
+  // first reading (`before` missing) nor across a state that isn't
+  // `available` (false); then the definition's judge() for an odd case
+  // (it reads ctx.settled itself); else the declarations: nothing for a
+  // `resetBy` field changing with it, within `ignoreWithin`, or a
+  // `keepThroughGap` gap, and a kind `settledKinds` names (every kind
+  // unless the system counts `anyone`'s) counts only while the watcher
+  // calls it settled. `ctx`: { at, byUser, settled, before, after (the
+  // whole states) }
   function judge(def, key, before, after, ctx) {
     const c = Object.assign({
       "at": 0,
@@ -218,8 +358,6 @@ QtObject {
         return null;
       out = [custom.kind ?? "change", custom.show ?? "", custom];
     } else {
-      if (c.settled === false && root.policy(def, key, "anyone") !== true)
-        return null;
       out = root._generic(def, key, before, after, c);
     }
     if (!out || !out[1])
@@ -230,7 +368,9 @@ QtObject {
       "alert": false,
       "added": [],
       "removed": [],
-      "left": []
+      "left": [],
+      "members": [],
+      "kept": ""
     }, out[2], {
       "key": key,
       "part": c.part,
@@ -255,7 +395,22 @@ QtObject {
       return true;
     if (shown.system !== incoming.system)
       return own ? own.absorbs(shown, incoming) === true : false;
-    return shown.card === true && own ? own.sameChange(shown, incoming) === true : false;
+    if (shown.card !== true || !own)
+      return false;
+    if (own.sameChange(shown, incoming) === true)
+      return true;
+    if (incoming.card !== true)
+      return false;
+    // A "still" card against its own key's "still" card (several leaving
+    // one after another: the card out, re-read, names those left)
+    if (incoming.still === true && shown.still === true && incoming.key === shown.key)
+      return true;
+    // A card of another key of its group, an owner in common (one app on
+    // the camera and the microphone, a headset taking the output and the
+    // input)
+    const group = root.groupOf(own, shown.key);
+    const owners = shown.tile?.owners ?? [];
+    return !!group && incoming.key !== shown.key && group.keys.includes(incoming.key) && (incoming.tile?.owners ?? []).some(o => owners.includes(o));
   }
 
   // What a change does to what's shown, `elapsed` ms after `shown` came.
@@ -316,21 +471,25 @@ QtObject {
 
   // Whether `osd` shows `type`'s change as its card the moment it comes:
   // enabled, its cards on, and the system listed with its cards on and
-  // not quiet (a quiet one never opens it). Where none does, an event is
-  // a notification instead (cardRoute)
-  function opensCard(osd, type) {
+  // not quiet (a quiet one never opens it). With `key` (the event's: a
+  // low battery's `battery`), an item whose `tiles` setting picks the
+  // keys it shows (Audio's, Battery's) must pick it. Where none does, an
+  // event is a notification instead (cardRoute)
+  function opensCard(osd, type, key) {
     if (!osd || !osd.enabled || !osd.cardsEnabled)
       return false;
     const item = root.itemOf(osd, type);
-    return item !== null && item.card !== false && item.quiet !== true;
+    if (item === null || item.card === false || item.quiet === true)
+      return false;
+    return !key || !Array.isArray(item.tiles) || item.tiles.includes(key);
   }
 
-  // Where an event of `type` goes (a drive, the battery, a monitor, a
-  // screenshot, a message): "osd" when an OSD of `osds` opens its card
-  // (opensCard), else "notification" with `notify` (its section's
-  // switch), else "" (nowhere)
-  function cardRoute(osds, type, notify) {
-    if ((osds ?? []).some(osd => root.opensCard(osd, type)))
+  // Where an event of `type` (a system: a drive's, the battery's, a
+  // monitor's, a screenshot's, a message's) and `key` goes: "osd" when
+  // an OSD of `osds` opens its card (opensCard), else "notification"
+  // with `notify` (its section's switch), else "" (nowhere)
+  function cardRoute(osds, type, notify, key) {
+    if ((osds ?? []).some(osd => root.opensCard(osd, type, key)))
       return "osd";
     return notify ? "notification" : "";
   }

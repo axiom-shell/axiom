@@ -18,6 +18,10 @@
 //   (the old focusAge / switchAge): the same clock (Date.now()), and the
 //   state then doesn't change on every check. The window stays
 //   OSDItems.focusFollowMs (1000 ms): within it is `at - focusedAt < 1000`.
+//   Declared, as the rest (no judge()): `ignoreWithin: { after:
+//   "focusedAt", ms: 1000, unlessAfter: "switchedAt" }`, `resetBy: ["ids"]`
+//   (a reload), onAdd / onRemove "none" (the list appearing, none
+//   current), `updateFields: []` (the label read again).
 // decided: the tile's `on` is true always (as today): the label tells it.
 
 var two = ["us", "mozc"];
