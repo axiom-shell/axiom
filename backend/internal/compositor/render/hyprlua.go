@@ -457,23 +457,25 @@ func InlineSpec(spec *jsonx.Object) string {
 // (outputs.apply); mirrorName gives the connector a mirror target is on
 // (MirrorNames), or "".
 func MonitorCalls(rules any, mirrorName any) []string {
-	return monitorCalls(rules, mirrorName, false)
+	return monitorCalls(rules, mirrorName, nil)
 }
 
 // RevertMonitorCalls is MonitorCalls for rules that picture the outputs
-// as they were (the Monitors page's revert): vrr 0 is said too, so a
-// trial that turned VRR on doesn't leave it on. That overrides misc:vrr
-// for the output only until the config next loads.
-func RevertMonitorCalls(rules any, mirrorName any) []string {
-	return monitorCalls(rules, mirrorName, true)
+// as they were (the Monitors page's revert): vrr is always said, so a
+// trial that turned VRR on doesn't leave it on. A rule's vrr 0 is sent as
+// globalVrr (misc:vrr as Hyprland has it): Hyprland reads vrr 2 back as
+// off outside fullscreen, so 0 there may mean the global setting. The
+// rule overrides misc:vrr for the output only until the config next loads.
+func RevertMonitorCalls(rules any, mirrorName any, globalVrr float64) []string {
+	return monitorCalls(rules, mirrorName, &globalVrr)
 }
 
-func monitorCalls(rules any, mirrorName any, revert bool) []string {
+func monitorCalls(rules any, mirrorName any, globalVrr *float64) []string {
 	var out []string
 	for _, rule := range items(rules) {
 		spec := MonitorSpec(rule)
-		if _, ok := spec.Get("vrr"); revert && !ok && !truthy(get(rule, "disabled")) {
-			spec.Set("vrr", or(get(rule, "vrr"), 0.0))
+		if _, ok := spec.Get("vrr"); globalVrr != nil && !ok && !truthy(get(rule, "disabled")) {
+			spec.Set("vrr", *globalVrr)
 		}
 		// A mirror of an output not connected is none
 		if m, ok := spec.Get("mirror"); ok && m != "none" {

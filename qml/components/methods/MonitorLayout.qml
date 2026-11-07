@@ -334,6 +334,22 @@ QtObject {
     return [below, above].some(other => other !== undefined && Math.abs(other - scale) < 0.005);
   }
 
+  // Rules putting back the monitors as they are (ruleFromMonitor each),
+  // for a revert: a vrr read as off is the `saved` profile's rule's
+  // (its rules in the config) where the monitors show that rule, as vrr 2
+  // reads off outside fullscreen. A vrr still 0 is the compositor's own
+  // setting (render.RevertMonitorCalls). `canMirror` as differsFromLive
+  // takes it.
+  function snapshot(monitors, saved, canMirror) {
+    return (monitors ?? []).map(monitor => {
+      const rule = ruleFromMonitor(monitor, monitors);
+      const kept = (saved ?? []).find(other => matches(other.output, monitor));
+      if (!rule.vrr && kept?.vrr && !differsFromLive([kept], monitors, canMirror))
+        rule.vrr = kept.vrr;
+      return rule;
+    });
+  }
+
   // `rules` with each connected monitor's rule (in `monitors`) put back as
   // it was in effect before a trial: the `saved` profile's rule (the
   // profile's rules in the config) where the monitors (`monitors`, as

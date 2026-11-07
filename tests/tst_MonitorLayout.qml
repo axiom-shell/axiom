@@ -405,6 +405,22 @@ TestCase {
     verify(MonitorLayout.differsFromLive(mirrorOnNiri, flat, false), "placed elsewhere");
   }
 
+  function test_snapshot() {
+    const live = _mirrored();
+    const before = live.map(monitor => MonitorLayout.ruleFromMonitor(monitor, live));
+    compare(MonitorLayout.snapshot(live), before, "how the monitors are");
+    // vrr 2 reads off outside fullscreen: the saved rule's, where the
+    // monitors show it
+    const shown = Object.assign({}, before[0], {
+      "vrr": 2
+    });
+    compare(MonitorLayout.snapshot(live, [shown])[0].vrr, 2);
+    const moved = Object.assign({}, shown, {
+      "x": before[0].x + 100
+    });
+    compare(MonitorLayout.snapshot(live, [moved])[0].vrr, 0, "not a rule the monitors show");
+  }
+
   function test_restored() {
     const live = _mirrored();
     const before = live.map(monitor => MonitorLayout.ruleFromMonitor(monitor, live));

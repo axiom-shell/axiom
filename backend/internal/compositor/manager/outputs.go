@@ -55,7 +55,8 @@ func (o Outputs) Apply(ctx context.Context, rules, details any) error {
 
 // Revert is Apply for rules that picture the outputs as they were before
 // an Apply (the Monitors page's revert): on Hyprland every key is said,
-// vrr 0 too (render.RevertMonitorCalls). niri and sway say them anyway.
+// vrr too, a rule's 0 as misc:vrr (render.RevertMonitorCalls). niri and
+// sway say them anyway.
 func (o Outputs) Revert(ctx context.Context, rules, details any) error {
 	return o.apply(ctx, rules, details, true)
 }
@@ -63,11 +64,12 @@ func (o Outputs) Revert(ctx context.Context, rules, details any) error {
 func (o Outputs) apply(ctx context.Context, rules, details any, revert bool) error {
 	switch {
 	case o.Hypr != nil:
-		calls := render.MonitorCalls
+		spelled, mirrorNames := render.Spelled(rules, details), render.MirrorNames(details)
+		calls := render.MonitorCalls(spelled, mirrorNames)
 		if revert {
-			calls = render.RevertMonitorCalls
+			calls = render.RevertMonitorCalls(spelled, mirrorNames, o.globalVrr(ctx))
 		}
-		reply, err := o.Hypr.Eval(ctx, strings.Join(calls(render.Spelled(rules, details), render.MirrorNames(details)), "\n"))
+		reply, err := o.Hypr.Eval(ctx, strings.Join(calls, "\n"))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
@@ -103,6 +105,21 @@ func (o Outputs) apply(ctx context.Context, rules, details any, revert bool) err
 		return axerr.New(axerr.Unavailable, "no compositor to set the outputs on")
 	}
 	return nil
+}
+
+// globalVrr is Hyprland's misc:vrr, 0 when it can't be read.
+func (o Outputs) globalVrr(ctx context.Context) float64 {
+	option, err := o.Hypr.JSON(ctx, "getoption misc:vrr")
+	if err != nil {
+		slog.Warn("outputs: reading misc:vrr", "err", err)
+		return 0
+	}
+	if o, ok := option.(*jsonx.Object); ok {
+		if v, ok := o.Value("int").(float64); ok {
+			return v
+		}
+	}
+	return 0
 }
 
 // outputsIO reads and sets the outputs (Outputs; a fake in tests).

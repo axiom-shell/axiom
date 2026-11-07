@@ -356,8 +356,9 @@ Singleton {
     CompositorManager.withOutputDetails(read => {
       root._applying = false;
       const all = read ?? root.outputs;
+      const saved = MonitorsConfig.profiles.find(profile => profile.id === root.profile.id)?.outputs;
       _trial.state = JSON.stringify({
-        "rules": all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all)),
+        "rules": MonitorLayout.snapshot(all, saved, CompositorManager.supports.monitorMirror === true),
         "details": all,
         "draft": draft.local,
         "profile": root.profile.name

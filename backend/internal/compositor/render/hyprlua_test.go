@@ -249,26 +249,32 @@ func TestMonitorCallsUndoEverything(t *testing.T) {
 	}
 }
 
-// A revert's rules picture the outputs before Apply: vrr 0 is said, so
-// a trial that turned VRR on doesn't leave it on; the rest is as
-// MonitorCalls says it
+// A revert's rules picture the outputs before Apply: vrr is always said,
+// so a trial that turned VRR on doesn't leave it on, and a rule's 0 is
+// misc:vrr's value (Hyprland reads vrr 2 back as off outside fullscreen)
 func TestRevertMonitorCallsSayVrr(t *testing.T) {
 	t.Parallel()
 	details := parse(t, `[{"name": "DP-1", "description": "Main"}]`)
-	tests := []struct{ name, rules, want string }{
-		{"vrr 0 said", `[{"output": "DP-1", "mode": "2560x1440@144", "x": 0, "y": 0, "scale": 1, "vrr": 0}]`,
+	tests := []struct {
+		name, rules string
+		global      float64
+		want        string
+	}{
+		{"vrr 0 said", `[{"output": "DP-1", "mode": "2560x1440@144", "x": 0, "y": 0, "scale": 1, "vrr": 0}]`, 0,
 			`hl.monitor({ output = "DP-1", mode = "2560x1440@144", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`},
-		{"no vrr is 0", `[{"output": "DP-1"}]`,
+		{"vrr 0 as misc:vrr", `[{"output": "DP-1", "vrr": 0}]`, 2,
+			`hl.monitor({ output = "DP-1", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 2 })`},
+		{"no vrr as misc:vrr", `[{"output": "DP-1"}]`, 0,
 			`hl.monitor({ output = "DP-1", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`},
-		{"vrr on kept", `[{"output": "DP-1", "vrr": 1}]`,
+		{"vrr on kept", `[{"output": "DP-1", "vrr": 1}]`, 2,
 			`hl.monitor({ output = "DP-1", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 1 })`},
-		{"turned off", `[{"output": "DP-1", "disabled": true, "vrr": 0}]`,
+		{"turned off", `[{"output": "DP-1", "disabled": true, "vrr": 0}]`, 1,
 			`hl.monitor({ output = "DP-1", disabled = true })`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := RevertMonitorCalls(parse(t, tt.rules), MirrorNames(details)); len(got) != 1 || got[0] != tt.want {
+			if got := RevertMonitorCalls(parse(t, tt.rules), MirrorNames(details), tt.global); len(got) != 1 || got[0] != tt.want {
 				t.Errorf("got  %q\nwant %q", got, tt.want)
 			}
 		})

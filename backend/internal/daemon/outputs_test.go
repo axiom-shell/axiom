@@ -63,7 +63,13 @@ func TestApplyOutputs(t *testing.T) {
 		buf := make([]byte, 1<<16)
 		n, _ := c.Read(buf)
 		return string(buf[:n])
-	}, func(c net.Conn, _ string) { io.WriteString(c, hyprReply) })
+	}, func(c net.Conn, got string) {
+		if got == "j/getoption misc:vrr" {
+			io.WriteString(c, `{"option": "misc:vrr", "int": 2, "set": true}`)
+			return
+		}
+		io.WriteString(c, hyprReply)
+	})
 	h := &ipc.Hypr{Dir: dir}
 	if err := (manager.Outputs{Hypr: h}).Apply(ctx, rules, details); err != nil {
 		t.Fatal(err)
@@ -71,11 +77,14 @@ func TestApplyOutputs(t *testing.T) {
 	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "DP-1", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })` {
 		t.Errorf("hyprland: %q", got)
 	}
-	// a revert says vrr 0 (Outputs.Revert)
+	// a revert says vrr, a rule's 0 as misc:vrr (Outputs.Revert)
 	if err := (manager.Outputs{Hypr: h}).Revert(ctx, rules, details); err != nil {
 		t.Fatal(err)
 	}
-	if got := <-hypr; !strings.HasSuffix(got, `transform = 0, vrr = 0 })`) || strings.Contains(got, `disabled = true, vrr`) {
+	if got := <-hypr; got != "j/getoption misc:vrr" {
+		t.Errorf("hyprland revert asked %q", got)
+	}
+	if got := <-hypr; !strings.HasSuffix(got, `transform = 0, vrr = 2 })`) || strings.Contains(got, `disabled = true, vrr`) {
 		t.Errorf("hyprland revert: %q", got)
 	}
 
