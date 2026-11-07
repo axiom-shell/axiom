@@ -64,6 +64,7 @@ QtObject {
       "waits": s.waits ?? false,
       "outsideCancels": s.outsideCancels ?? true,
       "content": s.content ?? "",
+      "marks": s.marks ?? "",
       "busy": false,
       "attempt": 0
     };
