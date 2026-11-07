@@ -71,10 +71,12 @@ QtObject {
     }
 
     // A block order change with the same outputs connected (a profile
-    // naming a new monitor, a new primary): remap. A hotplug never remaps
-    // (an unnamed output's block can shift then, as it always has): just
-    // record the bases (a pending remap's too, so it doesn't move them),
-    // at the size last applied, which a pending size change remaps from
+    // naming a new monitor, a new primary): remap. A hotplug doesn't remap
+    // the layout (a monitor plugged back in gets its workspaces back from
+    // the compositor): it records the bases (a pending remap's too, so it
+    // doesn't move them), at the size last applied, which a pending size
+    // change remaps from, and re-homes the workspaces it left outside
+    // their output's block (_rehome)
     function on_BasesChanged() {
       const applied = root._applied;
       if (!applied)
@@ -84,14 +86,75 @@ QtObject {
       const sameOutputs = names.length === Object.keys(applied.bases).length && names.every(name => name in applied.bases);
       if (applied.blocks && sameOutputs && names.some(name => applied.bases[name] !== bases[name]))
         root._timer.restart();
-      else
+      else {
+        if (applied.blocks && !sameOutputs)
+          root._hotplugged(applied);
         root._applied = Object.assign({}, applied, {
           "bases": names.reduce((all, name) => {
             all[name] = (bases[name] - 1) / root.manager.blockSize * applied.size + 1;
             return all;
           }, {})
         });
+      }
     }
+  }
+
+  // --- Hotplugs ---
+
+  // The layout before the hotplugs a re-home waits on ({ size, bases }),
+  // and the outputs they took away
+  property var _before: null
+  property var _removed: []
+
+  // Outputs came or went: once the compositor has moved their workspaces,
+  // re-home them (the first hotplug's layout is the one to re-home from)
+  function _hotplugged(applied) {
+    if (!root._before)
+      root._before = {
+        "size": applied.size,
+        "bases": applied.bases
+      };
+    const now = root.manager._bases;
+    root._removed = root._removed.concat(Object.keys(applied.bases).filter(name => !(name in now) && !root._removed.includes(name)));
+    root._rehomeTimer.restart();
+  }
+
+  // Waits for the compositor to have moved an unplugged output's
+  // workspaces and the windows to have been read again
+  property Timer _rehomeTimer: Timer {
+    interval: 1000
+    onTriggered: root._rehome()
+  }
+
+  // An unplugged output's workspaces sit on another output at ids outside
+  // its block, which no list, step or overview shows: their windows move
+  // into that output's block, as do those of an output whose block the
+  // hotplug moved (WorkspaceGeometry.rehomeWorkspaces). Not where the
+  // compositor's workspaces belong to an output or are dynamic (each
+  // output lists the ones it has)
+  function _rehome() {
+    const before = root._before;
+    const removed = root._removed;
+    root._before = null;
+    root._removed = [];
+    const manager = root.manager;
+    if (!before || !manager.backend || manager.supports.outputWorkspaces === true || manager.dynamicWorkspaces || !WorkspacesConfig.perMonitorBlocks)
+      return;
+    const windows = manager.windows.map(w => ({
+          "id": w.id,
+          "workspace": w.workspaceId,
+          "output": w.output
+        }));
+    const outputs = manager.orderedOutputs();
+    const plan = WorkspaceGeometry.rehomeWorkspaces(outputs, windows, {
+      "size": manager.blockSize,
+      "bases": manager._bases
+    }, before, removed);
+    if (!plan.changed)
+      return;
+    manager.noteSwitch(plan.focus[plan.focus.length - 1]?.id ?? -1);
+    console.log(`[CompositorManager] re-homing workspaces after a hotplug (${removed.join(", ") || "none"} gone): ${plan.moves.length} windows, outputs to ${plan.focus.map(f => f.monitor + ":" + f.id).join(", ")}`);
+    manager.backend.applyRemap(plan, outputs.map(o => o.name));
   }
 
   // Moves every window from its workspace under the `from` layout to the

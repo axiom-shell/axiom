@@ -519,6 +519,90 @@ TestCase {
     return plan.focus.map(f => f.monitor + ":" + f.id).join(" ");
   }
 
+  // B (11..20) unplugged: the compositor left its workspaces on A
+  function test_rehome_unplugged_output() {
+    const monitors = [_monitors(1, 0)[0]];
+    const windows = _windows([["a1", 1, 0], ["b1", 13, 0], ["b2", 13, 0], ["b3", 15, 0], ["x", 25, 0], ["s", -98, 0]]);
+    const plan = WorkspaceGeometry.rehomeWorkspaces(monitors, windows, {
+      "size": 10,
+      "bases": {
+        "A": 1
+      }
+    }, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, ["B"]);
+    // 25 was no block's, and a special workspace isn't one: they stay
+    compare(_moves(plan), "b1>2 b2>2 b3>3");
+    compare(_focus(plan), "A:1");
+    verify(plan.changed);
+  }
+
+  function test_rehome_shown_orphan_follows() {
+    const monitors = [_monitors(13, 0)[0]];
+    const windows = _windows([["a1", 1, 0], ["b1", 13, 0]]);
+    const plan = WorkspaceGeometry.rehomeWorkspaces(monitors, windows, {
+      "size": 10,
+      "bases": {
+        "A": 1
+      }
+    }, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, ["B"]);
+    compare(_moves(plan), "b1>2");
+    compare(_focus(plan), "A:2");
+  }
+
+  // An unnamed output's block moved (B, 21..30 to 11..20, as another
+  // before it went): its own windows follow into it; a window put on
+  // another output's ids stays
+  function test_rehome_shifted_block() {
+    const monitors = _monitors(1, 21);
+    const windows = _windows([["a1", 1, 0], ["b1", 21, 1], ["b2", 22, 1], ["y", 5, 1]]);
+    const plan = WorkspaceGeometry.rehomeWorkspaces(monitors, windows, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "C": 11,
+        "B": 21
+      }
+    }, ["C"]);
+    compare(_moves(plan), "b1>11 b2>12");
+    compare(_focus(plan), "B:11 A:1");
+  }
+
+  function test_rehome_nothing_orphaned() {
+    const windows = _windows([["a1", 1, 0], ["b1", 11, 1]]);
+    const plan = WorkspaceGeometry.rehomeWorkspaces(_monitors(1, 11), windows, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, {
+      "size": 10,
+      "bases": {
+        "A": 1,
+        "B": 11
+      }
+    }, []);
+    compare(plan.moves.length, 0);
+    verify(!plan.changed);
+  }
+
   function test_remap_standard_to_perMonitor() {
     const windows = _windows([["a1", 1, 0], ["a2", 2, 0], ["b1", 3, 1], ["b2", 4, 1], ["b3", 4, 1]]);
     const plan = WorkspaceGeometry.remapWorkspaces(_monitors(1, 3), windows, {

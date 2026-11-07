@@ -265,18 +265,18 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-10-27, while measuring the shell's memory
 
 ### Surfaces touch a dead screen after the outputs go away
-- **Where:** `qml/config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
-- **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `qml/shell.qml`.
+- **Where:** `qml/components/surfaces/notifications/ToastStack.qml` (half of it), and some combination of the other surfaces in `qml/shell.qml`
+- **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Reproduced 2026-11-07 on a nested Hyprland (`scripts/dev/nested.sh hyprland`, `hyprctl output create headless <name>` / `output remove <name>`): unplugging the primary monitor (the first screen) logs it 10 times, also with another monitor still connected; unplugging any other monitor logs nothing. Bisected by commenting out the surfaces in `qml/shell.qml` (in place, the nested shell reloading): `Notifications` alone logs 5 (its `ToastStack`s are built on the primary monitor by default, so the old stack goes and a new one comes); none of the other surfaces alone logs any, but they log the other 5 together (not narrowed further). Likely: a binding on the stack being torn down (`ScreenEdgeManager.detachedGaps` / `heldInset`, `ShellManager.showsOn`, `BlurManager.backsOn`, all reading `screen.name` and re-evaluated as the outputs change) reads its dead screen before the delegate goes. Next: in `ToastStack`, bisect those bindings the same way; a delegate keeping its screen's name (`screenName`) and passing that instead would avoid the read. Harmless so far (a warning).
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while reviewing the popouts system
 
 ## Workspaces and monitors
 
-### A hotplug can shift an unnamed output's block, and nothing remaps it
-- **Where:** `qml/components/methods/WorkspaceGeometry.qml` (`blockBases`), `qml/services/compositor/WorkspaceRemap.qml` (`on_BasesChanged`)
-- **What:** `blockBases` numbers the outputs no monitor profile names after the named ones, in `orderMonitors`' order, so plugging in or unplugging an unnamed output that sorts before another unnamed one moves that one's block. A hotplug never remaps (it only records the new bases), so that output's workspaces sit outside its new block, missed by its list and steps, until `axiom ipc workspaces reconcile`. Same as on main. A hotplug doesn't remap so that a reconnected monitor's windows return as they did before (the leader's decision in row 20's Monitors batch); what Hyprland itself does with a returning monitor's workspaces is unverified. Fix: number an unnamed output by an identity that doesn't depend on the others connected, or remap only the outputs that stayed connected.
+### A remap focuses a monitor Hyprland doesn't have
+- **Where:** `qml/services/compositor/WorkspaceRemap.qml` (`remap`, `_rehome`: `manager.orderedOutputs()`), `qml/services/compositor/HyprlandManager.qml` (`applyRemap`, `_focusLua`; `outputs` from Quickshell's `Hyprland.monitors`)
+- **What:** Seen 2026-11-07 on a nested Hyprland: saving monitor profiles that turned one headless monitor off (`P-1`) while another was on ran a remap whose `from` and `to` layouts were the same (`remapping workspaces from {"blocks":true,…,"bases":{"E-1":1,"P-1":11}} to {…the same…}`), and Hyprland's eval warned `[HyprlandManager] Lua eval: warning: =[C]:-1: hl.focus.monitor: monitor not found`, twice. So the plan names a monitor Hyprland no longer has as one (turned off, or gone), which `CompositorManager.outputs` still listed; which of the two, and why a remap with equal layouts ran, isn't traced. Harmless so far (that monitor's focus step fails, the rest runs). The hotplug re-home (`_rehome`) builds its plan from the same outputs. Fix: leave disabled/gone monitors out of the plan's outputs, once it's known what `Hyprland.monitors` holds for a disabled one.
 - **Size:** small
-- **Found:** 2026-11-06, while reviewing the Monitors batch (row 20)
+- **Found:** 2026-11-07, while testing hotplugs and monitor profiles on a nested Hyprland
 
 ### A remap runs at startup, from the layout before the config loaded
 - **Where:** `qml/services/compositor/WorkspaceRemap.qml` (`_applied`, `_timer`, `onBlockSizeChanged`)

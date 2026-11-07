@@ -463,4 +463,49 @@ QtObject {
       "changed": changed
     };
   }
+
+  // Where windows go after a hotplug (WorkspaceRemap): the compositor
+  // keeps an unplugged output's workspaces on one still connected, at ids
+  // outside that output's block, so no list, step or overview shows them.
+  // A window on a workspace an unplugged output's block held, or its own
+  // output's block before the hotplug moved it (an unnamed output's,
+  // blockBases), and now outside its output's block, moves into it as
+  // remapWorkspaces places it; every other window stays, and each monitor
+  // keeps the workspace it shows unless that one moves.
+  // monitors, windows: as remapWorkspaces'; layout: { size, bases } now;
+  // before: { size, bases } before the hotplug; removed: the names gone.
+  // Returns remapWorkspaces' { moves, focus, changed }.
+  function rehomeWorkspaces(monitors, windows, layout, before, removed) {
+    const inBlock = (bases, size, name, id) => name in bases && id >= bases[name] && id < bases[name] + size;
+    const owned = w => inBlock(layout.bases, layout.size, w.output, w.workspace);
+    const orphaned = w => w.workspace > 0 && !owned(w) && (inBlock(before.bases, before.size, w.output, w.workspace) || removed.some(name => inBlock(before.bases, before.size, name, w.workspace)));
+    const orphans = windows.filter(orphaned);
+    if (orphans.length === 0)
+      return {
+        "moves": [],
+        "focus": [],
+        "changed": false
+      };
+    const blocks = {
+      "blocks": true,
+      "size": layout.size,
+      "bases": layout.bases
+    };
+    const plan = root.remapWorkspaces(monitors, windows.filter(w => owned(w) || orphaned(w)), blocks, blocks);
+    const moved = orphans.map(w => w.id);
+    const shown = monitors.reduce((all, m) => {
+      all[m.name] = orphans.some(w => w.output === m.name && w.workspace === m.active) || m.active < 1 ? -1 : m.active;
+      return all;
+    }, {});
+    const moves = plan.moves.filter(m => moved.includes(m.id));
+    const focus = plan.focus.map(f => ({
+          "monitor": f.monitor,
+          "id": shown[f.monitor] > 0 ? shown[f.monitor] : f.id
+        }));
+    return {
+      "moves": moves,
+      "focus": focus,
+      "changed": moves.length > 0 || monitors.some(m => focus.find(f => f.monitor === m.name).id !== m.active)
+    };
+  }
 }

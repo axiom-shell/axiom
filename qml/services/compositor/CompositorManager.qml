@@ -655,7 +655,8 @@ Singleton {
   // layout, else its block's (grid/perMonitor: one block per monitor the
   // saved profiles name, connected or not, then per connected one they
   // don't, so a hotplug never moves a named one's block (an unnamed one's
-  // can shift, and isn't remapped); WorkspaceGeometry.blockBases)
+  // can shift, its windows re-homed after it: WorkspaceRemap._rehome);
+  // WorkspaceGeometry.blockBases)
   function workspaceBase(output) {
     return root.perMonitorBlocks ? (root._bases[output] ?? 1) : 1;
   }
@@ -666,7 +667,7 @@ Singleton {
   // standard layout's shared ids can't
   readonly property bool perMonitorBlocks: WorkspacesConfig.perMonitorBlocks || root.supports.outputWorkspaces === true
   // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
-  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
+  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.configuredPrimary, root.blockSize, MonitorsConfig.profiles)
 
   // Whether the compositor makes and removes workspaces itself, one list
   // per output (supports.dynamicWorkspaces: niri's). The Workspaces
