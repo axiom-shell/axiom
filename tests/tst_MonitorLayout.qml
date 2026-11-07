@@ -415,6 +415,10 @@ TestCase {
       "vrr": 2
     });
     compare(MonitorLayout.snapshot(live, [shown])[0].vrr, 2);
+    const fullscreen = live.map(monitor => Object.assign({}, monitor, {
+        "vrr": true
+      }));
+    compare(MonitorLayout.snapshot(fullscreen, [shown])[0].vrr, 2, "active in fullscreen");
     const moved = Object.assign({}, shown, {
       "x": before[0].x + 100
     });
