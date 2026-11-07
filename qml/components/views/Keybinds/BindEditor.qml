@@ -65,34 +65,11 @@ ColumnLayout {
 
   Component.onDestruction: KeybindManager.editor.stopRecording()
 
-  // Carries rows within their section. Takes no room: it's only the
-  // coordinate space, and draws the carried row's label.
-  DragLayer {
+  // Carries rows within their section
+  InlineDragLayer {
     id: carrier
-    Layout.fillWidth: true
-    Layout.preferredHeight: 0
-    z: 10
     accepts: (target, drag) => target.targetKind === "bindSection" && target.takes(drag.index)
     onDropped: (drag, target, index) => target.dropAt(drag.index, index)
-    onMoved: point => ghost.at = point
-
-    StyledContainer {
-      id: ghost
-      property point at: Qt.point(0, 0)
-      visible: carrier.dragging !== null
-      x: ghost.at.x + Widget.spacing
-      y: ghost.at.y - height / 2
-      implicitWidth: ghostLabel.implicitWidth + Widget.padding * 2
-      implicitHeight: Widget.height
-      backgroundColor: Theme.accent
-
-      StyledText {
-        id: ghostLabel
-        anchors.centerIn: parent
-        text: carrier.dragging?.label ?? ""
-        textColor: Theme.background
-      }
-    }
   }
 
   // What the last merge did, and what it left behind

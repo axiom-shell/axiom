@@ -4071,6 +4071,8 @@
     "Camera, microphone and screen in use": "",
     "Still using the camera": "",
     "Still using the microphone": "",
-    "Still sharing the screen": ""
+    "Still sharing the screen": "",
+    "Quiet: its changes don't open the OSD": "",
+    "Nothing yet: add what this OSD shows.": ""
   }
 }

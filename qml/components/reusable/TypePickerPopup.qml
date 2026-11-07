@@ -3,27 +3,61 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.config
+import qs.components.methods
 
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
-// Shared "pick a type to add" popup (bar widgets, overlay views, ...), with a
-// search field: typing filters by label or type, Up/Down move, Enter picks,
-// Escape closes. `types` is a list of { type, label, icon? }; the caller
-// tracks what it opened this for. `openAt(item)` opens it under `item` (or
-// above it when there's no room below), else set x/y and call open().
+// Shared "pick a type to add" popup (bar widgets, an OSD's systems, ...),
+// with a search field: typing filters the types as the editors' libraries
+// do (LibraryOrder.filtered: by label, type, group heading or keyword),
+// Up/Down move, Enter picks, Escape closes. `types` is a list of
+// { type, label, icon?, group?, keywords? }, shown in the order given, or
+// with `groups` (the schema's `x-libraryGroups`) under a heading per
+// group (LibraryOrder.grouped). The caller tracks what it opened this
+// for. `openAt(item)` opens it under `item` (or above it when there's no
+// room below), else set x/y and call open().
 Popup {
   id: root
 
   required property var types
   property string placeholderText: I18n.tr("Search")
 
+  // Group names in order; empty: one list, as given
+  property var groups: []
+  // A type's label and a group's heading as shown (the caller's schema
+  // keys are translated here by default)
+  property var labelOf: type => I18n.tr(type.label)
+  property var headingOf: name => name ? I18n.tr(name) : I18n.tr("Other")
+
   property string query: ""
   property int highlighted: 0
 
-  readonly property var matches: {
-    const query = root.query.trim().toLowerCase();
-    if (query === "")
-      return root.types;
-    return root.types.filter(t => I18n.tr(t.label).toLowerCase().includes(query) || String(t.type).toLowerCase().includes(query));
+  // The types the search finds, in the order shown
+  readonly property var matches: root.groups.length > 0 ? [].concat(...root._sections.map(section => section.types)) : root._found
+  readonly property var _found: LibraryOrder.filtered(root.types, root.query, root.labelOf, root.headingOf)
+  readonly property var _sections: root.groups.length > 0 ? LibraryOrder.grouped(root._found, root.groups, root.labelOf) : []
+  // The list's rows: { heading } over each group, then { at } (an index
+  // into `matches`) per type
+  readonly property var rows: {
+    if (root.groups.length === 0)
+      return root.matches.map((type, at) => ({
+            "at": at
+          }));
+    const out = [];
+    let at = 0;
+    for (const section of root._sections) {
+      out.push({
+        "heading": root.headingOf(section.name)
+      });
+      for (const type of section.types)
+        out.push({
+          "at": at++
+        });
+    }
+    return out;
+  }
+
+  function _rowOf(at) {
+    return root.rows.findIndex(row => row.at === at);
   }
 
   signal typeSelected(string type)
@@ -59,7 +93,7 @@ Popup {
     if (root.matches.length === 0)
       return;
     root.highlighted = Math.max(0, Math.min(root.matches.length - 1, root.highlighted + step));
-    list.positionViewAtIndex(root.highlighted, ListView.Contain);
+    list.positionViewAtIndex(root._rowOf(root.highlighted), ListView.Contain);
   }
 
   width: Widget.px(260)
@@ -107,46 +141,65 @@ Popup {
       Layout.preferredHeight: Math.min(contentHeight, Widget.height * 9)
       clip: true
       boundsBehavior: Flickable.StopAtBounds
-      model: root.matches
+      model: root.rows
 
       ScrollIndicator.vertical: ScrollIndicator {}
 
-      delegate: Rectangle {
+      // A group's heading, or a type to pick
+      delegate: Item {
         id: rowDelegate
         required property var modelData
-        required property int index
-        readonly property string icon: root.iconOf(modelData)
+        readonly property bool heading: rowDelegate.modelData.heading !== undefined
+        readonly property int at: rowDelegate.modelData.at ?? -1
+        readonly property var entry: root.matches[rowDelegate.at] ?? null
+        readonly property string icon: root.iconOf(rowDelegate.entry)
 
         width: ListView.view.width
-        height: Widget.height
-        radius: Widget.radius
-        color: index === root.highlighted ? Theme.backgroundHighlight : "transparent"
+        height: rowDelegate.heading ? Widget.smallHeight + Widget.spacing : Widget.height
 
-        RowLayout {
-          anchors.fill: parent
-          anchors.leftMargin: Widget.padding
-          anchors.rightMargin: Widget.padding
-          spacing: Widget.spacing
-
-          StyledIcon {
-            visible: rowDelegate.icon !== ""
-            text: rowDelegate.icon
-            textColor: Theme.accent
-          }
-
-          StyledText {
-            Layout.fillWidth: true
-            elide: Text.ElideRight
-            text: I18n.tr(rowDelegate.modelData.label)
-          }
+        StyledText {
+          visible: rowDelegate.heading
+          anchors.left: parent.left
+          anchors.bottom: parent.bottom
+          anchors.leftMargin: Widget.smallPadding
+          text: rowDelegate.modelData.heading ?? ""
+          textColor: Theme.foregroundAlt
+          textSize: Appearance.fontSizeBy(-1)
+          font.weight: Font.Medium
         }
 
-        MouseArea {
+        Rectangle {
+          visible: !rowDelegate.heading
           anchors.fill: parent
-          hoverEnabled: true
-          cursorShape: Qt.PointingHandCursor
-          onEntered: root.highlighted = rowDelegate.index
-          onClicked: root.activate(rowDelegate.index)
+          radius: Widget.radius
+          color: rowDelegate.at === root.highlighted ? Theme.backgroundHighlight : "transparent"
+
+          RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Widget.padding
+            anchors.rightMargin: Widget.padding
+            spacing: Widget.spacing
+
+            StyledIcon {
+              visible: rowDelegate.icon !== ""
+              text: rowDelegate.icon
+              textColor: Theme.accent
+            }
+
+            StyledText {
+              Layout.fillWidth: true
+              elide: Text.ElideRight
+              text: rowDelegate.entry ? root.labelOf(rowDelegate.entry) : ""
+            }
+          }
+
+          MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onEntered: root.highlighted = rowDelegate.at
+            onClicked: root.activate(rowDelegate.at)
+          }
         }
       }
     }

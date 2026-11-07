@@ -46,6 +46,9 @@ FoldingCard {
   property var sections: []
   // Of `sections`, those shown after the other settings, at the bottom
   property var lastSections: []
+  // Keys `entryContent` edits itself, left out of the other settings (an
+  // OSD's systems)
+  property var ownKeys: []
   // Titles the entry's other settings when it has sections
   property string otherTitle
 
@@ -218,9 +221,10 @@ FoldingCard {
       Layout.fillWidth: true
       spacing: Widget.spacing * 1.5
 
-      // (The first sits under the accent line already)
+      // (The first, with no entryContent, sits under the accent line
+      // already)
       StyledSeparator {
-        visible: part.modelData !== root.sections[0]
+        visible: entrySlot.visible || part.modelData !== root.sections.filter(key => !root.lastSections.includes(key))[0]
         Layout.fillWidth: true
       }
 
@@ -257,7 +261,7 @@ FoldingCard {
     id: otherForm
 
     SchemaPropertiesForm {
-      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.sections.includes(key)).reduce((out, key) => {
+      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.sections.includes(key) && !root.ownKeys.includes(key)).reduce((out, key) => {
         out[key] = root.entrySchema.properties[key];
         return out;
       }, {})

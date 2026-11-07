@@ -10,14 +10,17 @@ settings:
     title: All monitors
     default: false
     description: Set every monitor at once, instead of only the OSD's.
+    x-showIf: {tile: true}
   icon:
     type: string
     x-control: icon
     title: Icon
     default: ''
     description: A Material Symbols name, or text. Empty follows what it shows.
+    x-showIf: {tile: true}
   showOsd:
     type: boolean
     title: Opens the OSD
     default: true
     description: Off, it still shows while the OSD is open.
+    x-showIf: {tile: true}

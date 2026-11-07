@@ -72,34 +72,11 @@ ColumnLayout {
     trailing: root.headerExtra
   }
 
-  // Carries the chosen chips. Takes no room: it's only the coordinate
-  // space, and draws the carried chip's label
-  DragLayer {
+  // Carries the chosen chips
+  InlineDragLayer {
     id: carrier
-    Layout.fillWidth: true
-    Layout.preferredHeight: 0
-    z: 10
     accepts: (target, drag) => target === chosenTarget
     onDropped: (drag, target, index) => root.move(drag.index, index)
-    onMoved: point => ghost.at = point
-
-    StyledContainer {
-      id: ghost
-      property point at: Qt.point(0, 0)
-      visible: carrier.dragging !== null
-      x: ghost.at.x + Widget.spacing
-      y: ghost.at.y - height / 2
-      implicitWidth: ghostLabel.implicitWidth + Widget.padding * 2
-      implicitHeight: Widget.height
-      backgroundColor: Theme.accent
-
-      StyledText {
-        id: ghostLabel
-        anchors.centerIn: parent
-        text: carrier.dragging?.label ?? ""
-        textColor: Theme.background
-      }
-    }
   }
 
   FlowDropTarget {

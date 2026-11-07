@@ -77,6 +77,19 @@ QtObject {
     }
     return out;
   }
+  // Every system an OSD can show, for the settings editor's list and its
+  // picker: { type, label (English), icon, group (`x-libraryGroup`),
+  // schema (its item's definition) }, in the kind's oneOf order
+  readonly property var systemTypes: Object.keys(root._systemDefs).map(type => {
+    const def = root._systemDefs[type];
+    return {
+      "type": type,
+      "label": def.properties.type.description || type,
+      "icon": def["x-icon"] ?? "extension",
+      "group": def["x-libraryGroup"] ?? "",
+      "schema": def
+    };
+  })
   // An Audio bar's kind's English name (its schema's x-enumLabels)
   readonly property var _audioBarLabels: root._systemDefs.Audio.properties.bars.items.properties.type["x-enumLabels"]
 
