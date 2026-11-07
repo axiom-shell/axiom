@@ -10,16 +10,18 @@
 // State by key (VpnWatch; VpnManager.rows, acquired, so Tailscale is
 // polled while held):
 //   vpn  { available (VpnManager.rows.length > 0), members: [{ id, name,
-//        on, state }], address (the first one up's IPv4) }: `members` the
-//        VPNs known with a settled state (each row once it has been "on" or
-//        "off"; a row going away is dropped), `on` its last settled state
-//        (kept through "connecting" / "disconnecting": today's
-//        OSDItems.vpnStep, run by the watcher), `state` the row's own now
+//        state ("on" | "off" | "connecting" | "disconnecting") }] (every
+//        row, as it is now), address (the first one up's IPv4) }
 //
-// decided: Vpn's judge() makes every judgement (model "set" by id, but
-//   over the VPNs up): one up that was known before is "add" (its card);
-//   one down that is still known is "remove"; a row appearing or going away
-//   is neither. With both in one reading (a switch) it's the add.
+// decided: declared, no judge(): model "set" with `memberState: { field:
+//   "state", on: "on", off: "off" }` (today's OSDItems.vpnStep, in the
+//   engine): the set is the VPNs up; one up that was known before (settled
+//   "on" or "off") is "add" (its card), one down that is still known is
+//   "remove"; a row in transit is judged as it last settled (remember keeps
+//   that reading), one appearing or going away is neither. With both in
+//   one reading (a switch) it's the add.
+// decided: the drop's card is `onUnexpectedRemove: "last"` (a card for the
+//   last one going, the icon while another is up).
 // decided: a VPN down that wasn't marked on screen (`unexpected`) is the
 //   "Disconnected" card (title its name, icon "vpn_key_off"), unless another
 //   VPN is still up (`left` not empty): that's the other half of a switch,
@@ -31,7 +33,7 @@
 // Not expressible as rows: the tile hidden with no VPN.
 
 function v(id, name, on, state) {
-  return { "id": id, "name": name, "on": on, "state": state || (on ? "on" : "off") };
+  return { "id": id, "name": name, "state": state || (on ? "on" : "off") };
 }
 function vpn(members, address) {
   return { "available": true, "members": members, "address": address || "" };
@@ -49,7 +51,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "vpn": vpn([v("home", "Home", false)]) } },
       { "at": 3000, "state": { "vpn": vpn([v("home", "Home", true)], "10.0.0.2") },
-        "expect": { "key": "vpn", "show": "card", "kind": "add", "added": ["home"],
+        "expect": { "key": "vpn", "show": "card", "kind": "add", "added": ["home"], "action": { "id": "vpn", "call": "toggle" },
           "tile": { "icon": "vpn_key", "on": true, "notable": true, "hidden": false, "slash": false, "name": "Home" },
           "card": { "icon": "vpn_key", "title": "Home", "role": "Connected", "detail": "10.0.0.2", "clickable": false },
           "host": "open" } }
@@ -198,6 +200,16 @@ var rows = [
       { "at": 0, "state": { "vpn": vpn([v("home", "Home", false), v("ts", "Tailnet", true)], "100.64.0.1") } },
       { "at": 3000, "state": { "vpn": vpn([v("home", "Home", false)]) } },
       { "at": 6000, "state": { "vpn": vpn([v("home", "Home", false), v("ts", "Tailnet", true)], "100.64.0.1") } }
+    ]
+  },
+  {
+    "name": "a row appearing connecting, then up: nothing (never known settled before)",
+    "steps": [
+      { "at": 0, "state": { "vpn": vpn([v("home", "Home", false)]) } },
+      { "at": 3000, "state": { "vpn": vpn([v("home", "Home", false), v("ts", "Tailnet", false, "connecting")]) } },
+      { "at": 4000, "state": { "vpn": vpn([v("home", "Home", false), v("ts", "Tailnet", true)], "100.64.0.1") } },
+      { "at": 9000, "state": { "vpn": vpn([v("home", "Home", false), v("ts", "Tailnet", false)]) },
+        "expect": { "key": "vpn", "show": "card", "kind": "remove", "card": { "title": "Tailnet", "role": "Disconnected" } } }
     ]
   },
   {

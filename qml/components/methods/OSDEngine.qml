@@ -160,6 +160,49 @@ QtObject {
     return (s?.members ?? []).map(m => m.id);
   }
 
+  // A memberState set's members as they last settled: one in transit
+  // (its field neither `on` nor `off`) read as `prior` had it, left out
+  // if it never settled there
+  function _settledMembers(ms, prior, members) {
+    const out = [];
+    for (const m of members ?? []) {
+      const v = m[ms.field];
+      if (v === ms.on || v === ms.off) {
+        out.push(m);
+        continue;
+      }
+      const p = (prior ?? []).find(x => x.id === m.id);
+      if (p)
+        out.push(p);
+    }
+    return out;
+  }
+
+  // The ids a set is judged by, before and after: every member's, or
+  // with `memberState` those `on` of the members known before and still
+  // there (`left`: every one `on` after)
+  function _memberSets(def, key, before, after) {
+    const ms = root.policy(def, key, "memberState");
+    if (!ms) {
+      const now = root._ids(after);
+      return {
+        "was": root._ids(before),
+        "now": now,
+        "left": now
+      };
+    }
+    const prior = before?.members ?? [];
+    const settled = root._settledMembers(ms, prior, after?.members);
+    const up = list => list.filter(m => m[ms.field] === ms.on).map(m => m.id);
+    const priorIds = prior.map(m => m.id);
+    const settledIds = settled.map(m => m.id);
+    return {
+      "was": up(prior).filter(id => settledIds.includes(id)),
+      "now": up(settled).filter(id => priorIds.includes(id)),
+      "left": up(settled)
+    };
+  }
+
   // Whether two states of a key are the same (nothing to judge): an
   // event's by the event itself and its `seq`, any other by value
   function same(model, before, after) {
@@ -221,6 +264,12 @@ QtObject {
     for (const e of def?.exposes ?? []) {
       const was = before?.[e.key];
       const now = out[e.key];
+      // A memberState set: a member in transit kept as it last settled
+      const ms = root.policy(def, e.key, "memberState");
+      if (now && ms && root.policy(def, e.key, "model") === "set")
+        out[e.key] = Object.assign({}, now, {
+          "members": root._settledMembers(ms, was?.members, now.members)
+        });
       if (now && root.policy(def, e.key, "keepThroughGap") === true && root.policy(def, e.key, "model") === "scalar" && root._empty(now.value) && was && !root._empty(was.value))
         out[e.key] = Object.assign({}, now, {
           "value": was.value
@@ -242,13 +291,17 @@ QtObject {
         {}
       ] : null;
     const pick = name => root._show(root.policy(def, key, name));
+    // An event is new by its `seq` where the state counts them (the same
+    // event read again with the rest of the state, a drive's count
+    // changing, isn't one)
     if (c.model === "event")
-      return after?.event && counts("event") ? ["event", pick("onAdd"),
+      return after?.event && (after.seq === undefined || after.seq !== before?.seq) && counts("event") ? ["event", pick("onAdd"),
         {}
       ] : null;
     if (c.model === "set") {
-      const was = root._ids(before);
-      const now = root._ids(after);
+      const sets = root._memberSets(def, key, before, after);
+      const was = sets.was;
+      const now = sets.now;
       const added = now.filter(id => !was.includes(id));
       const removed = was.filter(id => !now.includes(id));
       // The members as the change saw them (the card's memory once
@@ -256,7 +309,7 @@ QtObject {
       const extra = {
         "added": added,
         "removed": removed,
-        "left": now,
+        "left": sets.left,
         "members": added.length > 0 ? (after?.members ?? []) : (before?.members ?? [])
       };
       if (added.length > 0)
@@ -266,13 +319,18 @@ QtObject {
       // The last of an owner leaving while it stays on another key of
       // its group
       const gone = root._owners(def, (before?.members ?? []).filter(m => removed.includes(m.id)));
-      const kept = now.length === 0 ? (root._partners(def, key, gone, c.after)[0] ?? "") : "";
-      return root._removal(def, key, c, now.length > 0, kept, extra);
+      const kept = sets.left.length === 0 ? (root._partners(def, key, gone, c.after)[0] ?? "") : "";
+      return root._removal(def, key, c, sets.left.length > 0, kept, extra);
     }
     // scalar: the value's own change, or its tile's look (a mute); the
     // stronger of the two shows (Wi-Fi off loses its network too)
     const b = before?.value;
     const a = after?.value;
+    // A new event on a scalar that carries them: before its value
+    if (root.policy(def, key, "carriesEvents") === true && after?.event && after.seq !== before?.seq && counts("event"))
+      return ["event", pick("onEvent"),
+        {}
+      ];
     // A gap (keepThroughGap): nothing until a value comes back
     if (root.policy(def, key, "keepThroughGap") === true && !root._empty(b) && root._empty(a))
       return null;
@@ -310,7 +368,7 @@ QtObject {
     const own = root.policy(def, key, "onUnexpectedRemove");
     const name = unexpected && own ? own : root.policy(def, key, "onRemove");
     const still = name === "still" && (left || kept !== "");
-    const show = name === "still" ? (still ? "card" : "tile") : root._show(name);
+    const show = name === "still" ? (still ? "card" : "tile") : name === "last" ? (left || kept !== "" ? "tile" : "card") : root._show(name);
     return ["remove", show, Object.assign({
         "still": still,
         "unexpected": unexpected
@@ -362,10 +420,13 @@ QtObject {
     }
     if (!out || !out[1])
       return null;
+    // An event of a kind `alertKinds` lists opens the OSD even after an
+    // on-screen mark (a definition's judge() may set it itself)
+    const alert = out[0] === "event" && (root.policy(def, key, "alertKinds") ?? []).includes(after?.event?.kind);
     return Object.assign({
       "still": false,
       "unexpected": false,
-      "alert": false,
+      "alert": alert,
       "added": [],
       "removed": [],
       "left": [],

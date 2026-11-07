@@ -1,9 +1,14 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.services.system
 import qs.components.surfaces.osd.engine
 
-// Power profile's state for the OSD: a stub until its port, with no state,
-// so nothing it watches ever changes
+// The power profile's state for the OSD: the profile in use ("" with no
+// profiles daemon)
 OSDWatch {
-  state: ({})
+  state: ({
+      "powerProfile": {
+        "value": BatteryManager.profile
+      }
+    })
 }

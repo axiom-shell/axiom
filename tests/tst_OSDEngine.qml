@@ -417,6 +417,17 @@ TestCase {
       "event": first,
       "seq": 2
     }, {}) !== null, "the same again, pulsed anew");
+    verify(OSDEngine.judge(battery, "battery", {
+      "event": first,
+      "seq": 1,
+      "percent": 20
+    }, {
+      "event": {
+        "kind": "low"
+      },
+      "seq": 1,
+      "percent": 19
+    }, {}) === null, "the same seq read again with the rest of the state: no event");
     compare(OSDEngine.judge(battery, "charger", {
       "value": false
     }, {
@@ -1352,5 +1363,113 @@ TestCase {
       "call": "toggle"
     });
     verify(audio.actionOf("audio", {}) === null, "none declared");
+  }
+
+  // carriesEvents and alertKinds: a radio's value and its devices' events
+  // on one key
+  function test_carriesEvents_alertKinds() {
+    const def = Qt.createQmlObject(`
+      import qs.components.surfaces.osd.engine
+      OSDSystem {
+        carriesEvents: true
+        alertKinds: ["low"]
+        exposes: [{ "key": "radio", "part": "tile" }]
+        function tile(key, state) { return { "on": state.value === true }; }
+      }`, this);
+    const s = (value, kind, seq) => ({
+          "value": value,
+          "event": kind ? {
+            "kind": kind
+          } : null,
+          "seq": seq
+        });
+    const first = OSDEngine.judge(def, "radio", s(true, null, 0), s(true, "connected", 1), {});
+    compare([first.kind, first.show, first.alert], ["event", "card", false], "a new event: its card");
+    const low = OSDEngine.judge(def, "radio", s(true, "connected", 1), s(true, "low", 2), {
+      "byUser": true
+    });
+    compare([low.kind, low.alert], ["event", true], "an alert kind");
+    verify(OSDEngine.opens({}, def, low, false), "an alert opens even the user's");
+    const off = OSDEngine.judge(def, "radio", s(true, "connected", 1), s(false, "connected", 1), {});
+    compare([off.kind, off.show], ["remove", "tile"], "the same seq: the value's own change");
+    verify(OSDEngine.judge(def, "radio", s(true, "connected", 1), s(true, null, 1), {}) === null, "the event cleared: nothing");
+    const both = OSDEngine.judge(def, "radio", s(false, null, 0), s(true, "connected", 1), {});
+    compare(both.kind, "event", "an event and the value at once: the event");
+    def.destroy();
+  }
+
+  // memberState: a set judged by a member field across transit, and the
+  // "last" removal policy
+  function test_memberState_last() {
+    const def = Qt.createQmlObject(`
+      import qs.components.surfaces.osd.engine
+      OSDSystem {
+        model: "set"
+        memberState: ({ "field": "state", "on": "on", "off": "off" })
+        onAdd: "card"
+        onUnexpectedRemove: "last"
+        exposes: [{ "key": "vpn", "part": "tile" }]
+      }`, this);
+    // { id: state }
+    const set = states => ({
+          "members": Object.keys(states).map(id => ({
+                "id": id,
+                "state": states[id]
+              }))
+        });
+    // Each step judged against what the watcher remembers
+    let last = {};
+    const step = (state, ctx) => {
+      const what = OSDEngine.judge(def, "vpn", last.vpn, state, ctx ?? {});
+      last = OSDEngine.remember(def, last, {
+        "vpn": state
+      });
+      return what;
+    };
+    verify(step(set({
+      "a": "off"
+    })) === null, "the first reading");
+    verify(step(set({
+      "a": "connecting"
+    })) === null, "in transit: nothing");
+    compare(last.vpn.members[0].state, "off", "remembered as it settled");
+    const up = step(set({
+      "a": "on"
+    }));
+    compare([up.kind, up.show, up.added], ["add", "card", ["a"]], "up across connecting");
+    verify(step(set({
+      "a": "on",
+      "b": "on"
+    })) === null, "one appearing up: nothing");
+    verify(step(set({
+      "a": "on",
+      "c": "connecting"
+    })) === null, "one going, one appearing in transit: nothing");
+    verify(step(set({
+      "a": "on",
+      "c": "on"
+    })) === null, "never settled before: not known");
+    const half = step(set({
+      "a": "off",
+      "c": "on"
+    }));
+    compare([half.kind, half.show, half.left], ["remove", "tile", ["c"]], "unexpected with another up: the icon (last)");
+    const drop = step(set({
+      "a": "off",
+      "c": "off"
+    }));
+    compare([drop.kind, drop.show, drop.unexpected, drop.left], ["remove", "card", true, []], "the last one dropping: its card");
+    step(set({
+      "a": "on",
+      "c": "off"
+    }));
+    const mine = step(set({
+      "a": "off",
+      "c": "off"
+    }), {
+      "byUser": true
+    });
+    compare(mine.show, "tile", "taken down on screen: onRemove's icon");
+    def.destroy();
   }
 }

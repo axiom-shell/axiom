@@ -7,7 +7,9 @@
 //                 "balanced" | "performance", "" with no profiles daemon) }
 //
 // decided: policies onAdd "none" and onRemove "none" (the daemon answering
-//   or going: today's `_last !== "" && profile !== ""`), onChange "icon".
+//   or going: today's `_last !== "" && profile !== ""`), onChange "icon",
+//   onUpdate "none" (its look changes only with a profile: the daemon
+//   answering lights nothing).
 //
 // Not expressible as rows: the tile hidden with no daemon ("").
 
@@ -24,7 +26,7 @@ var rows = [
       { "at": 0, "state": { "powerProfile": { "value": "balanced" } } },
       { "at": 3000, "state": { "powerProfile": { "value": "powerSaver" } },
         "expect": { "key": "powerProfile", "show": "tile", "kind": "change",
-          "tile": { "icon": "energy_savings_leaf", "on": true, "notable": true, "hidden": false, "slash": false }, "card": null, "host": "ring" } }
+          "tile": { "icon": "energy_savings_leaf", "on": true, "notable": true, "hidden": false, "slash": false }, "card": null, "host": "ring", "action": { "id": "powerSaver", "call": "toggle" } } }
     ]
   },
   {

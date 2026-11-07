@@ -2,11 +2,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.surfaces.osd.engine
 
-// Screen recording on the OSD: the screen recording tile. A stub until its
-// port (`stub`: the timelines skip it); only what it exposes is declared
+// Screen recording on the OSD: axiom's own recording, one tile, lit and
+// unusual while on, hidden with no recorder; either way its icon. A click
+// on it only stops a recording running (RecordingWatch reads
+// ScreenshotManager)
 OSDSystem {
-  readonly property bool stub: true
-
   // I18n.tr("Screen recording")
   exposes: [
     {
@@ -16,4 +16,22 @@ OSDSystem {
       "label": "Screen recording"
     }
   ]
+
+  // state: { available (a recorder found), value (recording) }
+  function tile(key, state) {
+    const on = state?.value === true;
+    return {
+      "on": on,
+      "notable": on,
+      "hidden": state?.available === false
+    };
+  }
+
+  // Clickable only while it records, and a click stops it
+  function actionOf(key, state) {
+    return state?.value === true ? {
+      "id": "screenRecord",
+      "call": "close"
+    } : null;
+  }
 }

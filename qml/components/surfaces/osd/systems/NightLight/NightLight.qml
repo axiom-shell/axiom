@@ -2,18 +2,25 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.surfaces.osd.engine
 
-// Night light on the OSD: the night light tile. A stub until its port
-// (`stub`: the timelines skip it); only what it exposes is declared
+// Night light on the OSD: one tile, lit and unusual while on; either way
+// its icon (NightLightWatch reads NightLightManager)
 OSDSystem {
-  readonly property bool stub: true
-
   // I18n.tr("Night light")
   exposes: [
     {
       "key": "nightLight",
       "part": "tile",
       "icon": "nightlight",
-      "label": "Night light"
+      "label": "Night light",
+      "action": "nightLight"
     }
   ]
+
+  function tile(key, state) {
+    const on = state?.value === true;
+    return {
+      "on": on,
+      "notable": on
+    };
+  }
 }

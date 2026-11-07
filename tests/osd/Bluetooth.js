@@ -23,12 +23,12 @@
 //   scalar: its icon) and the devices' events (its card): the card must
 //   fold back as the radio turns off (retract is by system and key), and
 //   the radio coming on under the card is its own knock-on (sameChange by
-//   key). Bluetooth's judge() makes the event's card (a new `seq` with an
-//   event) and leaves the radio to the engine.
-// decided: a battery low / critical card carries `alert: true` (judge()'s
-//   extra field, kept by OSDEngine.judge): it opens the OSD even just after
-//   a click marked `bluetooth` (today's OSDItems.alert). The host must read
-//   it: byUser can't be overridden by a definition.
+//   key). Declared, no judge(): `carriesEvents` (a new `seq` with an event
+//   is an "event", its card by `onEvent`; the radio's `value` the engine's
+//   scalar).
+// decided: a battery low / critical card carries `alert: true`
+//   (`alertKinds: ["low", "critical"]`): it opens the OSD even just after
+//   a click marked `bluetooth` (today's OSDItems.alert; OSDEngine.opens).
 // decided: the tile carries `event` and `devices` (the last event's), which
 //   absorbs() reads against Audio's tile `address`.
 
@@ -58,7 +58,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(false) } },
       { "at": 3000, "state": { "bluetooth": radio(true) },
-        "expect": { "key": "bluetooth", "show": "tile", "tile": { "icon": "bluetooth", "on": true, "notable": false, "hidden": false, "slash": false }, "card": null, "host": "ring" } }
+        "expect": { "key": "bluetooth", "show": "tile", "tile": { "icon": "bluetooth", "on": true, "notable": false, "hidden": false, "slash": false }, "card": null, "host": "ring", "action": { "id": "bluetooth", "call": "toggle" } } }
     ]
   },
   {
@@ -150,7 +150,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true, ["MX Master"]) } },
       { "at": 3000, "byUser": true, "state": { "bluetooth": ev("low", [dev("AA:BB:CC:00:00:02", "MX Master", "mouse", 18)], 1) },
-        "expect": { "key": "bluetooth", "show": "card", "alert": true, "byUser": true } }
+        "expect": { "key": "bluetooth", "show": "card", "alert": true, "byUser": true, "opens": true } }
     ]
   },
   {
@@ -158,7 +158,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "byUser": true, "state": { "bluetooth": ev("connected", [headset], 1) },
-        "expect": { "key": "bluetooth", "show": "card", "byUser": true } },
+        "expect": { "key": "bluetooth", "show": "card", "byUser": true, "alert": false, "opens": false } },
       { "at": 6000, "byUser": true, "state": { "bluetooth": ev("disconnected", [headset], 2, []) },
         "expect": { "key": "bluetooth", "show": "card", "byUser": true } }
     ]

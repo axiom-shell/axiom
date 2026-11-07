@@ -2,30 +2,38 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.surfaces.osd.engine
 
-// Lock keys on the OSD: Caps, Num and Scroll Lock tiles. A stub until its
-// port (`stub`: the timelines skip it); only what it exposes is declared
+// Lock keys on the OSD: a tile per key `keys` lists (Caps, Num and Scroll
+// Lock), lit and unusual while on; either way its icon. Hidden without
+// LEDs, and nothing is judged across their appearing or going (each
+// key's `available`: LockKeysWatch reads LockKeysManager)
 OSDSystem {
-  readonly property bool stub: true
-
   // I18n.tr("Caps Lock") I18n.tr("Num Lock") I18n.tr("Scroll Lock")
-  exposes: [
-    {
-      "key": "capsLock",
-      "part": "tile",
-      "icon": "keyboard_capslock",
-      "label": "Caps Lock"
-    },
-    {
-      "key": "numLock",
-      "part": "tile",
-      "icon": "dialpad",
-      "label": "Num Lock"
-    },
-    {
-      "key": "scrollLock",
-      "part": "tile",
-      "icon": "swap_vert",
-      "label": "Scroll Lock"
-    }
-  ]
+  readonly property var _keys: ({
+      "capsLock": {
+        "icon": "keyboard_capslock",
+        "label": "Caps Lock"
+      },
+      "numLock": {
+        "icon": "dialpad",
+        "label": "Num Lock"
+      },
+      "scrollLock": {
+        "icon": "swap_vert",
+        "label": "Scroll Lock"
+      }
+    })
+  exposes: (options.keys ?? ["capsLock", "numLock"]).filter(key => _keys[key]).map(key => Object.assign({
+      "key": key,
+      "part": "tile"
+    }, _keys[key]))
+
+  // state: { available (LEDs read), value (the LED on) }
+  function tile(key, state) {
+    const on = state?.value === true;
+    return {
+      "on": on,
+      "notable": on,
+      "hidden": state?.available !== true
+    };
+  }
 }

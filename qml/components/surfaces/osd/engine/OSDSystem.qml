@@ -30,8 +30,10 @@ QtObject {
   // ({ event, seq }: each new one)
   property string model: "scalar"
 
-  // What a change shows: "card" | "icon" | "none" (onRemove also
-  // "still": a card while some are left, the icon for the last).
+  // What a change shows: "card" | "icon" | "none" (onRemove and
+  // onUnexpectedRemove also "still": a card while some are left, the
+  // icon for the last; and "last": the icon while some are left, a card
+  // for the last: a VPN dropping with none left up).
   // onUpdate: the value the same but its tile's look changed (a mute)
   property string onAdd: "icon"
   property string onChange: "icon"
@@ -39,6 +41,26 @@ QtObject {
   property string onRemove: "icon"
   // A removal nobody made on screen: "" for onRemove's
   property string onUnexpectedRemove: ""
+  // A scalar whose state also carries events ({ event, seq }, besides
+  // its `value`): a new `seq` with an event is an "event" change shown by
+  // `onEvent`, before the value's own (Bluetooth: the radio and its
+  // devices' events on one key, so its card folds back as the radio
+  // turns off and the radio coming on under it is its own knock-on)
+  property bool carriesEvents: false
+  property string onEvent: "card"
+  // The event kinds (an event's `kind`) that are alerts: they open the
+  // OSD even just after an on-screen mark (a Bluetooth device's battery
+  // "low", "critical"; OSDEngine.opens)
+  property var alertKinds: []
+  // A set judged by one member field: { field, on, off } (a VPN's
+  // { field: "state", on: "on", off: "off" }). The members whose field is
+  // `on` are the set; only one known before (settled at `on` or `off`)
+  // and still there counts, added as it turns `on`, removed as it turns
+  // `off`. Any other value is a member in transit (connecting), judged as
+  // it last settled (OSDEngine.remember keeps that reading); one
+  // appearing (a service's first answer) or going isn't a change. null:
+  // the set is every member, by id
+  property var memberState: null
   // Counts changes the watcher's `settled` calls unsettled (a VPN
   // dropping, an app starting a capture): every change after the start
   property bool anyone: false

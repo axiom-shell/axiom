@@ -2,10 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.surfaces.osd.engine
 
-// Airplane mode on the OSD: the airplane mode tile. A stub until its port
-// (`stub`: the timelines skip it); only what it exposes is declared
+// Airplane mode on the OSD: one tile, lit and unusual while on; either
+// way its icon (AirplaneWatch reads NetworkingManager). Wi-Fi and
+// Bluetooth switching just after are its knock-on (their `knockOnOf`)
 OSDSystem {
-  readonly property bool stub: true
+  // A connection's state settles seconds after the click
+  userWindow: 8000
 
   // I18n.tr("Airplane mode")
   exposes: [
@@ -13,7 +15,17 @@ OSDSystem {
       "key": "airplane",
       "part": "tile",
       "icon": "airplanemode_active",
-      "label": "Airplane mode"
+      "label": "Airplane mode",
+      "action": "airplane"
     }
   ]
+
+  // state: { value (on) }
+  function tile(key, state) {
+    const on = state?.value === true;
+    return {
+      "on": on,
+      "notable": on
+    };
+  }
 }

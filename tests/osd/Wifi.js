@@ -37,7 +37,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "wifi": w(true, false) } },
       { "at": 3000, "state": { "wifi": w(false, false) },
-        "expect": { "key": "wifi", "show": "tile", "kind": "update", "tile": { "icon": "wifi", "on": false, "notable": true, "hidden": false, "slash": false }, "card": null, "host": "ring" } }
+        "expect": { "key": "wifi", "show": "tile", "kind": "update", "tile": { "icon": "wifi", "on": false, "notable": true, "hidden": false, "slash": false }, "card": null, "host": "ring", "action": { "id": "wifi", "call": "toggle" } } }
     ]
   },
   {

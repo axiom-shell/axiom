@@ -7,14 +7,16 @@
 // title.
 //
 // State by key (MediaWatch, MediaManager):
-//   media  { player (MediaManager.identity, "" with no active player),
+//   media  { value (the track: trackTitle while a player is active, else
+//          ""), player (MediaManager.identity, "" with no active player),
 //          title (trackTitle), artist (trackArtist), playing (isPlaying),
 //          art (artSource) }
 //
-// decided: one key, `media`, part "card", judged by Media's own judge()
-//   over that state (the title changing is a track change, `playing`
-//   changing with the same title a play/pause), each by its option, rather
-//   than an event the watcher pulses: the options stay the definition's.
+// decided: one key, `media`, part "card", judged by declarations over that
+//   state (the track is the scalar's value: a new one an add or a change;
+//   playing is its tile's `on`: play/pause an update), each policy set by
+//   its option, rather than an event the watcher pulses: the options stay
+//   the definition's.
 // decided: the card is { title: the track's title, role: its artist, else
 //   the player's name, image: the cover, icon: "play_arrow" while playing,
 //   else "pause" }, the fields OSDMediaCard draws (it keeps its own design).
@@ -23,7 +25,8 @@ var opts = { "onTrackChange": true, "onPlayPause": false };
 var both = { "onTrackChange": true, "onPlayPause": true };
 
 function play(title, artist, playing, player, art) {
-  return { "player": player === undefined ? "Spotify" : player, "title": title, "artist": artist || "", "playing": playing !== false, "art": art || "" };
+  const p = player === undefined ? "Spotify" : player;
+  return { "value": p ? title : "", "player": p, "title": title, "artist": artist || "", "playing": playing !== false, "art": art || "" };
 }
 
 var rows = [

@@ -1,9 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.services.system
 import qs.components.surfaces.osd.engine
 
-// Do not disturb's state for the OSD: a stub until its port, with no state,
-// so nothing it watches ever changes
+// Do not disturb's state for the OSD: whether it's on
 OSDWatch {
-  state: ({})
+  state: ({
+      "dnd": {
+        "value": NotificationManager.dnd
+      }
+    })
 }

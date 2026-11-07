@@ -1,9 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.services.system
 import qs.components.surfaces.osd.engine
 
-// Airplane mode's state for the OSD: a stub until its port, with no state,
-// so nothing it watches ever changes
+// Airplane mode's state for the OSD: whether it's on
 OSDWatch {
-  state: ({})
+  state: ({
+      "airplane": {
+        "value": NetworkingManager.airplane
+      }
+    })
 }

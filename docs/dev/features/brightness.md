@@ -41,5 +41,6 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
 
 ### OSD brightness bars
 - An OSD `brightness` bar with `allMonitors` sets every monitor. It shows their mean, and any of them changing pokes it.
+- Only a level set through axiom counts as a change (`brightnessChanged`, which `BrightnessWatch`'s `settled` reads): one a `refresh` finds (on the OSD opening) or idle dimming's silent set only moves its state on.
 - The brightness keys still step only the focused monitor.
 - See [OSD](osd.md).

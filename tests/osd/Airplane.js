@@ -18,7 +18,7 @@ var rows = [
       { "at": 0, "state": { "airplane": { "value": false } } },
       { "at": 3000, "state": { "airplane": { "value": true } },
         "expect": { "key": "airplane", "show": "tile", "kind": "add",
-          "tile": { "icon": "airplanemode_active", "on": true, "notable": true, "hidden": false, "slash": false }, "card": null, "host": "ring" } }
+          "tile": { "icon": "airplanemode_active", "on": true, "notable": true, "hidden": false, "slash": false }, "card": null, "host": "ring", "action": { "id": "airplane", "call": "toggle" } } }
     ]
   },
   {

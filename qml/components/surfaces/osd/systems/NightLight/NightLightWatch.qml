@@ -1,9 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.services.system
 import qs.components.surfaces.osd.engine
 
-// Night light's state for the OSD: a stub until its port, with no state, so
-// nothing it watches ever changes
+// Night light's state for the OSD: whether it's on
 OSDWatch {
-  state: ({})
+  state: ({
+      "nightLight": {
+        "value": NightLightManager.active
+      }
+    })
 }

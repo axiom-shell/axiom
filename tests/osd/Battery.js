@@ -48,7 +48,7 @@ var rows = [
         "expect": { "key": "charger", "show": "card", "kind": "add",
           "tile": { "icon": "power", "on": true, "notable": false, "hidden": false, "slash": false, "name": "64%" },
           "card": { "icon": "battery_charging_full", "title": "64%", "role": "Charging", "detail": "1h 20m", "clickable": false },
-          "host": "open" } }
+          "host": "open", "action": null } }
     ]
   },
   {
