@@ -625,6 +625,10 @@ def check_system_settings(env, name, args, cwd, sends, touched):
 # bluetoothctl's commands that drop, block or pair a real device, turn the
 # adapter off, or register an agent beside the daemon's
 BLUETOOTHCTL_WRITES = {"remove", "block", "disconnect", "pair", "cancel-pairing", "agent", "default-agent"}
+# bluetoothctl's options that take a value (skipped to find its command)
+BLUETOOTHCTL_VALUED = {"-t", "--timeout", "-a", "--agent", "-i", "--init-script"}
+# ... and those that register an agent or run a file's commands
+BLUETOOTHCTL_REFUSED = ("-a", "--agent", "-i", "--init-script")
 # BlueZ's methods that do the same over D-Bus
 BLUEZ_WRITES = ("RemoveDevice", "Disconnect", "Pair", "CancelPairing", "RegisterAgent", "RequestDefaultAgent", "UnregisterAgent")
 # The daemon's Bluetooth methods that do the same
@@ -639,8 +643,14 @@ def check_bluetooth(env, name, args, sends):
     if scratch_system_bus(env):
         return
     words = [a for a in args if not a.startswith("-")]
-    if name == "bluetoothctl" and (words[:1] and words[0] in BLUETOOTHCTL_WRITES or words[:2] == ["power", "off"]):
-        deny("Never, while testing", f"`bluetoothctl {' '.join(words[:2])}` changes a real Bluetooth device or the live adapter; test with the fake BlueZ (go test ./internal/bluez).")
+    if name == "bluetoothctl":
+        command = [a for i, a in enumerate(args) if not a.startswith("-") and (not i or args[i - 1] not in BLUETOOTHCTL_VALUED)]
+        if any(a.split("=")[0] in BLUETOOTHCTL_REFUSED for a in args):
+            deny("Never, while testing", "bluetoothctl's --agent registers a second agent and --init-script runs a file's commands against the live BlueZ; use the fake BlueZ (go test ./internal/bluez).")
+        if not command:
+            deny("Never, while testing", "bluetoothctl with no command reads its commands from stdin (a pipe, a here-string), which can't be checked; give it one command as arguments (`bluetoothctl show`).")
+        if command[0] in BLUETOOTHCTL_WRITES or command[:2] == ["power", "off"]:
+            deny("Never, while testing", f"`bluetoothctl {' '.join(command[:2])}` changes a real Bluetooth device or the live adapter; test with the fake BlueZ (go test ./internal/bluez).")
     if name == "rfkill" and words[:1] == ["block"]:
         deny("Never, while testing", "don't rfkill-block the live radios: a Bluetooth mouse or keyboard could drop out.")
     if name in BUS_CALLERS and any("org.bluez" in a for a in args):

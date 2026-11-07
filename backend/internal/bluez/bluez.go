@@ -81,7 +81,10 @@ type Service struct {
 	// wantDiscovery: the shell asked for a scan (started again when BlueZ
 	// comes back); discovering: this connection's session runs
 	wantDiscovery, discovering bool
-	kick                       chan struct{}
+	// discoveryMu makes one Start/StopDiscovery at a time, each for the
+	// scan wanted last (never held while taking it from under mu)
+	discoveryMu sync.Mutex
+	kick        chan struct{}
 
 	// agentWant: the pairing agent should be registered (SetAgent);
 	// agentOn: it is, on conn
@@ -246,16 +249,13 @@ func (s *Service) sync(ctx context.Context, conn *dbus.Conn) {
 	}
 	s.discovering = false
 	s.agentOn = false
-	want := s.wantDiscovery
 	s.mu.Unlock()
 	// Asked of the BlueZ that went away
 	s.endAgents(dbus.NewError(errCanceled, "BlueZ restarted"))
 	s.rebuild(false)
 	s.applyAgent(ctx, conn)
-	if want {
-		if err := s.Discovery(ctx, true); err != nil && axerr.KindOf(err) != axerr.Unavailable {
-			s.o.Log.Debug("bluetooth: starting the scan again", "err", err)
-		}
+	if err := s.applyDiscovery(ctx); err != nil && axerr.KindOf(err) != axerr.Unavailable {
+		s.o.Log.Debug("bluetooth: starting the scan again", "err", err)
 	}
 }
 
@@ -287,13 +287,18 @@ func (s *Service) signal(ctx context.Context, conn *dbus.Conn, m *dbus.Message) 
 		if m.Store(&name, &old, &owner) != nil || name != busName {
 			return false
 		}
-		// The same owner told twice (a signal two matches let through)
+		// Both matches let the signal through, so it can come twice, the
+		// copies interleaved with the next one's: the owner told again, or
+		// an owner going that isn't the one known any more, is stale (a
+		// new owner is always taken: one signal of a pair may be lost)
 		s.mu.Lock()
-		same := owner == s.owner
-		s.owner = owner
+		stale := owner == s.owner || owner == "" && old != s.owner
+		if !stale {
+			s.owner = owner
+		}
 		s.mu.Unlock()
 		switch {
-		case same:
+		case stale:
 		case owner == "":
 			s.disconnected()
 		default:
@@ -472,13 +477,31 @@ func (s *Service) SetPowered(ctx context.Context, on bool) error {
 func (s *Service) Discovery(ctx context.Context, on bool) error {
 	s.mu.Lock()
 	s.wantDiscovery = on
-	running := s.discovering
+	s.mu.Unlock()
+	return s.applyDiscovery(ctx)
+}
+
+// applyDiscovery starts or stops the scan as last wanted. One runs at a
+// time and reads the wish once it runs, so an off sent while an on waits
+// for BlueZ stops the scan that on started.
+func (s *Service) applyDiscovery(ctx context.Context) error {
+	s.discoveryMu.Lock()
+	defer s.discoveryMu.Unlock()
+	s.mu.Lock()
+	on, running := s.wantDiscovery, s.discovering
 	s.mu.Unlock()
 	if on == running {
 		return nil
 	}
 	conn, ap, err := s.adapter()
 	if err != nil {
+		if !on {
+			// The adapter went, and its scan with it
+			s.mu.Lock()
+			s.discovering = false
+			s.mu.Unlock()
+			return nil
+		}
 		return err
 	}
 	member := "StopDiscovery"

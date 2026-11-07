@@ -273,8 +273,8 @@ func (f *fakeBlueZ) add(p dbus.ObjectPath, ifaces dbus.Interfaces, signal bool) 
 	}}}
 	if _, ok := ifaces[ifaceAdapter]; ok {
 		exports = append(exports, dbus.Interface{Name: ifaceAdapter, Methods: map[string]dbus.Method{
-			"StartDiscovery": {Fn: f.discover(p, true)},
-			"StopDiscovery":  {Fn: f.discover(p, false)},
+			"StartDiscovery": {Defer: f.held("StartDiscovery", f.discover(p, true))},
+			"StopDiscovery":  {Defer: f.held("StopDiscovery", f.discover(p, false))},
 			"RemoveDevice":   {In: "o", Fn: f.removeDevice},
 		}})
 	}
@@ -364,6 +364,21 @@ func (f *fakeBlueZ) discover(p dbus.ObjectPath, on bool) func(context.Context, *
 		f.mu.Unlock()
 		f.changed(p, ifaceAdapter, "Discovering", scanning)
 		return nil, nil
+	}
+}
+
+// held answers a call once its hold (f.hold[member]), if any, is released
+func (f *fakeBlueZ) held(member string, fn func(context.Context, *dbus.Message) ([]any, error)) func(context.Context, *dbus.Message, func([]any, error)) {
+	return func(ctx context.Context, m *dbus.Message, reply func([]any, error)) {
+		f.mu.Lock()
+		hold := f.hold[member]
+		f.mu.Unlock()
+		go func() {
+			if hold != nil {
+				<-hold
+			}
+			reply(fn(ctx, m))
+		}()
 	}
 }
 
@@ -762,6 +777,35 @@ func TestDiscovery(t *testing.T) {
 	if got := f2.takeCalls(); !slices.Equal(got, []string{"StartDiscovery"}) {
 		t.Errorf("calls after the restart %v", got)
 	}
+}
+
+// A scan turned off while its start still waits for BlueZ stops once
+// the start is done: it never keeps running unwanted
+func TestDiscoveryOffWhileStarting(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := newFakeBlueZ(t, bus, fixture())
+	h := start(t, bus)
+	h.wait(t, "sync", func(st State) bool { return st.Available })
+	gate := make(chan struct{})
+	f.mu.Lock()
+	f.hold["StartDiscovery"] = gate
+	f.mu.Unlock()
+	errs := make(chan error, 2)
+	go func() { errs <- h.s.Discovery(t.Context(), true) }()
+	time.Sleep(30 * time.Millisecond)
+	go func() { errs <- h.s.Discovery(t.Context(), false) }()
+	time.Sleep(30 * time.Millisecond)
+	close(gate)
+	for range 2 {
+		if err := <-errs; err != nil {
+			t.Error(err)
+		}
+	}
+	if got := f.takeCalls(); !slices.Equal(got, []string{"StartDiscovery", "StopDiscovery"}) {
+		t.Errorf("calls %v", got)
+	}
+	h.wait(t, "stopped", func(st State) bool { return !st.Adapter.Discovering })
 }
 
 // Rename (and back to its own name), trust and block, each a property

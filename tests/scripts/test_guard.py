@@ -351,8 +351,12 @@ class Bash(LiveSession, unittest.TestCase):
                     "busctl call org.bluez /org/bluez org.bluez.AgentManager1 RegisterAgent os /a KeyboardDisplay",
                     f"dbus-send --system --dest=org.bluez --type=method_call {dev} org.bluez.Device1.Disconnect",
                     "gdbus call --system -d org.bluez -o /org/bluez/hci0 -m org.freedesktop.DBus.Properties.Set org.bluez.Adapter1 Powered '<false>'",
-                    "axiom ipc bluetooth disable", "axiom ipc bluetooth toggle")
-        self.allows("bluetoothctl", "bluetoothctl show", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
+                    "axiom ipc bluetooth disable", "axiom ipc bluetooth toggle",
+                    "bluetoothctl --timeout 5 remove AA:BB:CC:DD:EE:FF", "bluetoothctl -t 5 power off",
+                    "echo 'remove AA:BB:CC:DD:EE:FF' | bluetoothctl", "bluetoothctl <<< 'power off'", "bluetoothctl",
+                    "printf 'power off\\n' | bluetoothctl --timeout 5", "bluetoothctl --agent KeyboardDisplay show",
+                    "bluetoothctl --init-script /tmp/x show")
+        self.allows("bluetoothctl show", "bluetoothctl -t 5 show", "bluetoothctl --timeout=5 devices", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
                     "bluetoothctl power on", "rfkill list", "rfkill unblock bluetooth",
                     "busctl tree org.bluez", "busctl introspect org.bluez /org/bluez/hci0",
                     "busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered",
