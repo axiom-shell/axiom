@@ -14,7 +14,8 @@
 - Surfaces are built on `General.screensFor(target)` (`General.screens` for General's own).
 - Only the instance on `targetFor(target)` answers a shortcut, IPC call or OSD event.
   - Check with `isTarget(screen, target)`.
-  - In "focused" and "all" the target is the focused monitor.
+  - In "focused" and "all" the target is the focused monitor, or the primary one while the compositor still names a monitor that's gone (`General.outputs` doesn't hold it). A target is always a connected monitor, so an unplug never leaves a lock screen without its password field, nor the window switcher nowhere.
+- **The primary monitor.** `General.primaryMonitor` is the one connected: `General.primaryMonitor` as configured while it is, else (unset or unplugged) the first screen. Surfaces, targets, the lock screen's wallpaper and a strip on the primary monitor (the daemon falls back the same way: `manager.primaryOf`) use it. `General.configuredPrimary` is the configured one even while unplugged (unset: the first screen): what the Monitors page marks, what orders the workspace blocks (`WorkspaceGeometry.blockBases`, so an unplug doesn't move a block) and what decides whether a wallpaper set is also the fallback one.
 - IPC handlers are `enabled` on the target instance only, since a target name can have one handler.
 
 ### "all": every monitor at once

@@ -120,7 +120,7 @@ ColumnLayout {
         readonly property bool dragging: root.dragOutput !== "" && root.dragOutput === rule?.output
         readonly property bool selected: MonitorManager.selectedOutput === rule?.output
         readonly property var monitor: MonitorManager.monitorFor(rule)
-        readonly property bool primary: !!monitor && monitor.name === General.primaryMonitor
+        readonly property bool primary: !!monitor && monitor.name === General.configuredPrimary
         readonly property var mode: MonitorLayout.parseMode(rule?.mode)
 
         x: ((dragging ? root.dragPos.x : rect.x) - root.view.x) * root.view.scale

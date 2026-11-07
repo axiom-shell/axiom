@@ -25,7 +25,8 @@ type Facts struct {
 	// StartPattern finds the line starting axiom in a user's config
 	StartPattern string `json:"startPattern"`
 	// PrimaryMonitor is General.primaryMonitor as resolved (the first
-	// output when it's unset): a strip on the primary monitor goes there
+	// output when it's unset or not connected): a strip on the primary
+	// monitor goes there (primaryOf)
 	PrimaryMonitor string    `json:"primaryMonitor"`
 	Look           LookFacts `json:"look"`
 	Blur           BlurFacts `json:"blur"`
@@ -138,7 +139,7 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 		}
 	}
 	workspaces := at("Workspaces")
-	strips := stripsOf(workspaces, f.PrimaryMonitor)
+	strips := stripsOf(workspaces, primaryOf(f.PrimaryMonitor, outputs))
 	stripOptions := jsonx.Obj("stripColumnWidth", getAny(workspaces, "stripColumnWidth"), "stripFollowFocus", getAny(workspaces, "stripFollowFocus"))
 	behaviour := at("WindowBehaviour")
 	managed := jsonx.NewObject()
@@ -253,6 +254,29 @@ func colorsNamed(managed any, palette map[string]string) *jsonx.Object {
 	}
 	walk(managed)
 	return out
+}
+
+// primaryOf is the primary monitor (Facts.PrimaryMonitor) among outputs
+// (nil until read: primary): primary while it's connected and on, else the
+// first output on, as the shell resolves General.primaryMonitor, so a strip
+// on the primary monitor follows it before the shell's facts do.
+func primaryOf(primary string, outputs []render.Output) string {
+	first := ""
+	for _, o := range outputs {
+		if o.Disabled {
+			continue
+		}
+		if o.Name == primary {
+			return primary
+		}
+		if first == "" {
+			first = o.Name
+		}
+	}
+	if first == "" {
+		return primary
+	}
+	return first
 }
 
 // stripsOf are the strips (Hyprland's scrolling layout) per monitor, as

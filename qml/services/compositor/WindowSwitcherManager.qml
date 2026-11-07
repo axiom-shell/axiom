@@ -89,7 +89,9 @@ Singleton {
     root._focusedId = CompositorManager.activeWindowId;
     root._windows = WindowOrder.mru(CompositorManager.windows, win => DockLayout.inScope(win, scope, output?.name ?? "", output?.activeWorkspaceId ?? -1), root._focusedId);
     root._index = 0;
-    root._screenName = ShellManager.targetFor("focused");
+    root._screenName = ShellManager.targetFor({
+      "mode": "focused"
+    });
     root._active = true;
     showTimer.restart();
     if (CompositorManager.supports.switcher && !CompositorManager.supports.switcherRelease)
