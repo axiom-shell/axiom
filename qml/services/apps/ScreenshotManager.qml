@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
+import qs.components.methods
 import qs.config
 import qs.services.core
 import qs.services.compositor
@@ -39,7 +40,7 @@ QtObject {
   // The picker is open (or an immediate capture is running)
   property bool picking: false
   // Picking, or waiting for the launcher to close first (or for grim)
-  readonly property bool busy: root.picking || root._delay.running || root._grabbing
+  readonly property bool busy: root.picking || root._delay.running || root._grabbing || root._stitching
   // { kind, screen: the screen an immediate `screen` capture takes }
   property var request: null
   // Keep nothing on disk, only copy (saved in Paths.statePath screenshot.json)
@@ -153,6 +154,102 @@ QtObject {
   readonly property bool forCaller: root._target !== null
   readonly property bool forArea: root._target?.area === true
 
+  // Picking's state, shared by every screen's picker (ScreenshotPickState)
+  readonly property ScreenshotPickState picker: ScreenshotPickState {
+    oneScreen: root.forArea || root.request?.kind === "record"
+  }
+
+  // A selection over several screens (global): each screen's picker
+  // crops its part from its own frame (`pieceRequest`) and hands it back
+  // (pieceDone); axiom stitches them into one picture (screenshot.stitch)
+  // that goes on as a single screen's does. Never with picker.oneScreen.
+  // { stamp, pieces: [{ screen, path, rect (global) }] } while asked
+  property var pieceRequest: null
+  property var _across: null
+  property bool _stitching: false
+
+  function captureAcross(area) {
+    const rounded = Qt.rect(Math.round(area.x), Math.round(area.y), Math.round(area.width), Math.round(area.height));
+    const stamp = Date.now();
+    const pieces = ScreenRegion.covered(rounded, root.picker.screenBoxes()).map(s => ({
+          "screen": s.name,
+          "path": `${root._scratchDir}/piece-${s.name}-${stamp}.png`,
+          "rect": ScreenRegion.intersect(rounded, s)
+        }));
+    if (pieces.length === 0) {
+      root.cancel();
+      return;
+    }
+    root._across = {
+      "stamp": stamp,
+      "area": rounded,
+      "pieces": pieces,
+      "pending": pieces.length,
+      "failed": false
+    };
+    root._watchdog.restart();
+    root.pieceRequest = {
+      "stamp": stamp,
+      "pieces": pieces
+    };
+  }
+
+  // Called by a picker with its piece (a grabToImage result, or null)
+  function pieceDone(stamp, screenName, result) {
+    const across = root._across;
+    const piece = across?.stamp === stamp ? across.pieces.find(p => p.screen === screenName) : null;
+    if (!piece || piece.done)
+      return;
+    piece.done = true;
+    if (!result || !result.saveToFile(piece.path))
+      across.failed = true;
+    across.pending -= 1;
+    if (across.pending > 0)
+      return;
+    root._across = null;
+    root.pieceRequest = null;
+    root.picking = false;
+    root.request = null;
+    root._watchdog.stop();
+    if (across.failed) {
+      root._dropPieces(across);
+      root.fail(I18n.tr("Couldn't save the picture in {0}.", root._scratchDir));
+      return;
+    }
+    const path = root._outPath();
+    const target = root._target;
+    root._stitching = true;
+    BackendManager.call("screenshot.stitch", {
+      "pieces": across.pieces.map(p => ({
+            "path": p.path,
+            "x": p.rect.x,
+            "y": p.rect.y,
+            "width": p.rect.width,
+            "height": p.rect.height
+          })),
+      "area": {
+        "x": across.area.x,
+        "y": across.area.y,
+        "width": across.area.width,
+        "height": across.area.height
+      },
+      "out": path
+    }, error => {
+      root._stitching = false;
+      root._dropPieces(across);
+      // pick()'s caller was told of a cancel meanwhile
+      if (target && root._target !== target)
+        return;
+      if (error)
+        console.warn("[ScreenshotManager] Couldn't stitch the screenshot:", error.message);
+      root._saved(path, !error);
+    });
+  }
+
+  function _dropPieces(across) {
+    CommandManager.runDetached(["rm", "-f"].concat(across.pieces.map(p => p.path)));
+  }
+
   // audio: the sound a recording started here takes (_audioFor; none by
   // default), so no picker keeps an earlier one's
   function _start(kind, audio) {
@@ -211,13 +308,27 @@ QtObject {
     root.picking = false;
     root.request = null;
     root._watchdog.stop();
+    const path = root._outPath();
+    root._saved(path, !!result && result.saveToFile(path));
+  }
+
+  // Where the picture goes: pick()'s path, else a new file in `folder`
+  // (or the scratch folder with copyOnly)
+  function _outPath() {
+    if (root._target)
+      return root._target.path;
+    const name = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".png"; // allowed: a file name, kept out of the language
+    return (root.copyOnly ? root._scratchDir + "/screenshot-" : root.folder + "/") + name;
+  }
+
+  // The picture is at `path` (or couldn't be written, !ok): pick()'s
+  // caller is called back; else it's copied and said or annotated
+  function _saved(path, ok) {
     if (root._target) {
-      root._callBack(!!result && result.saveToFile(root._target.path));
+      root._callBack(ok);
       return;
     }
-    const name = Qt.formatDateTime(new Date(), "yyyy-MM-dd_HH-mm-ss") + ".png"; // allowed: a file name, kept out of the language
-    const path = (root.copyOnly ? root._scratchDir + "/screenshot-" : root.folder + "/") + name;
-    if (!result || !result.saveToFile(path)) {
+    if (!ok) {
       root.fail(I18n.tr("Couldn't save the picture in {0}.", root.copyOnly ? root._scratchDir : root.folder));
       return;
     }
@@ -438,7 +549,18 @@ QtObject {
 
   // Gone with the picker
   onPickingChanged: {
-    if (root.picking || Object.keys(root._frames).length === 0)
+    if (root.picking) {
+      root.picker.start(root.request);
+      return;
+    }
+    // Cancelled while the pickers cropped their pieces
+    if (root._across) {
+      root._dropPieces(root._across);
+      root._across = null;
+      root.pieceRequest = null;
+    }
+    root.picker.clear();
+    if (Object.keys(root._frames).length === 0)
       return;
     root._dropFrames(root._frames);
     root._frames = {};
