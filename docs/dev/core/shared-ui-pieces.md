@@ -46,6 +46,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `IssueIcon`: one problem's icon in those colors (`level`, `tone`), a `TipIcon` saying what's wrong (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
 - `DropdownSurface`: the box of anything that drops down. In a `Popup` (a combo box's list, `TypePickerPopup`, `StyledContextMenu`) it fills solid, `Theme.backgroundAlt`: nothing blurs behind a Popup, so a translucent fill shows the page through it.
 - `TileFlow`: equal tiles, as many columns as fit.
+- `MonitorMap`: monitors where they stand, read-only: a caller's `delegate` per `model` entry, placed over its rect in `rects` (layout pixels, by index), the layout fitted and centred (`MonitorLayout.fit` / `place`, which the Monitors page's draggable `MonitorCanvas` uses too). The screen-share picker's Screens tab.
 - `TypeLibrary`: the editors' libraries of types to add.
   - An A–Z / By category switch over equal tiles of a caller's `delegate`, by label or under a heading per group (`methods/LibraryOrder`).
   - The label and heading come from the caller's `labelOf` / `headingOf` hooks (the editors translate the schema's).

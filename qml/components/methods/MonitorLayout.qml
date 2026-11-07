@@ -179,6 +179,68 @@ QtObject {
     };
   }
 
+  // The view that fits rects in a box of width × height, `margin` inside
+  // each side, centred: { scale (box pixels per layout pixel), x, y (the
+  // layout point at the box's top left) }
+  function fit(rects, width, height, margin) {
+    const box = bounds(rects);
+    const scale = Math.max(0.01, Math.min((width - margin * 2) / box.width, (height - margin * 2) / box.height));
+    return {
+      "scale": scale,
+      "x": box.x - (width / scale - box.width) / 2,
+      "y": box.y - (height / scale - box.height) / 2
+    };
+  }
+
+  // A layout rect in a fitted view's box pixels
+  function place(rect, view) {
+    return {
+      "x": (rect.x - view.x) * view.scale,
+      "y": (rect.y - view.y) * view.scale,
+      "width": rect.width * view.scale,
+      "height": rect.height * view.scale
+    };
+  }
+
+  // The size rects take scaled to fit in maxWidth × maxHeight, their
+  // shape kept: { width, height }
+  function fitSize(rects, maxWidth, maxHeight) {
+    const box = bounds(rects);
+    const scale = Math.max(0, Math.min(maxWidth / box.width, maxHeight / box.height));
+    return {
+      "width": box.width * scale,
+      "height": box.height * scale
+    };
+  }
+
+  // Rects with every missing one (null: an output with no known place)
+  // standing in to the right of the others, side by side from the top:
+  // 16:9, as tall as the tallest known one (1080 when none is)
+  function fillMissing(rects) {
+    const known = rects.filter(r => !!r);
+    const box = known.length > 0 ? bounds(known) : {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 1080
+    };
+    const height = known.length > 0 ? Math.max(...known.map(r => r.height)) : 1080;
+    const width = Math.round(height * 16 / 9);
+    let x = box.x + box.width;
+    return rects.map(r => {
+      if (r)
+        return r;
+      const placed = {
+        "x": x,
+        "y": box.y,
+        "width": width,
+        "height": height
+      };
+      x += width;
+      return placed;
+    });
+  }
+
   function _intersects(a, b) {
     return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
   }

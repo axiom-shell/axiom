@@ -157,6 +157,90 @@ TestCase {
     });
   }
 
+  function test_fit_centres_and_places() {
+    const rects = [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "x": 1920,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      }
+    ];
+    // 3840×1080 in 400×400 less 20 a side: the width decides
+    const view = MonitorLayout.fit(rects, 400, 400, 20);
+    fuzzyCompare(view.scale, 360 / 3840, 1e-9);
+    const second = MonitorLayout.place(rects[1], view);
+    fuzzyCompare(second.x, 200, 1e-6, "the second starts at the middle");
+    fuzzyCompare(second.width, 180, 1e-6);
+    fuzzyCompare(second.y, (400 - 1080 * view.scale) / 2, 1e-6, "centred down");
+    fuzzyCompare(MonitorLayout.place(rects[0], view).x, 20, 1e-6, "the margin on the left");
+    // A layout away from the origin lands the same
+    const moved = rects.map(r => Object.assign({}, r, {
+        "x": r.x - 5000,
+        "y": r.y + 300
+      }));
+    fuzzyCompare(MonitorLayout.place(moved[1], MonitorLayout.fit(moved, 400, 400, 20)).x, 200, 1e-6);
+    verify(MonitorLayout.fit(rects, 0, 0, 20).scale > 0, "never a zero or negative scale");
+  }
+
+  function test_fitSize() {
+    const tall = [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920
+      }
+    ];
+    compare(MonitorLayout.fitSize(tall, 1000, 480), {
+      "width": 270,
+      "height": 480
+    });
+    compare(MonitorLayout.fitSize([], 960, 1000), {
+      "width": 960,
+      "height": 540
+    }, "no rects: a 16:9 box");
+  }
+
+  function test_fillMissing() {
+    const known = {
+      "x": 100,
+      "y": 50,
+      "width": 2560,
+      "height": 1440
+    };
+    compare(MonitorLayout.fillMissing([null, known, null]), [
+      {
+        "x": 2660,
+        "y": 50,
+        "width": 2560,
+        "height": 1440
+      },
+      known,
+      {
+        "x": 5220,
+        "y": 50,
+        "width": 2560,
+        "height": 1440
+      }
+    ]);
+    compare(MonitorLayout.fillMissing([null]), [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      }
+    ], "none known: one 1080p stand-in at the origin");
+    compare(MonitorLayout.fillMissing([known]), [known]);
+  }
+
   function test_overlaps() {
     const beside = {
       "x": 3440,

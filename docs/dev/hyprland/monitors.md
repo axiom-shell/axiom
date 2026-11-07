@@ -31,7 +31,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - While the page is open, a hotplug re-detects unless the draft has other edits than detection's (`_untouched`), and so does a new name from the daemon (its read can land after the page's) unless a detect is still waiting for the page's read. A draft with the user's edits, or a closed page, only follows the new name.
 - **Hotplugs said:** `MonitorManager` compares each read with the last (by connector, disabled ones included; never the first read) and says a monitor connected or removed through `NotificationManager.announce("monitor", Monitors.notify, …)`: an OSD's `monitor` card (`lastEvent`) or, with `Monitors.notify` (off by default), a notification naming it and its resolution ([OSD](../features/osd.md) › Where events go). Only with `supports.monitors`, which the reads need.
 - **Snapping.** Tiles snap (`MonitorLayout.snap`): edge to edge, or aligned starts/ends/centres, within 14 screen px. Outside that range they drop anywhere, so offsets stay possible.
-- The view holds still during a drag.
+- The view holds still during a drag. It fits the layout in the board, centred (`MonitorLayout.fit` / `place`, the maths the read-only `MonitorMap` shares: [shared UI pieces](../core/shared-ui-pieces.md)).
 - `General.primaryMonitor` is set from the inspector at once, without waiting for Save.
 - For `useWholeScale`, see [Onboarding](../features/onboarding.md).
 - `settingsLinks: false` hides its links into Settings (the inspector's primary monitor, the page's Compositor mode): the onboarder sets it, as following one would open the overlay over it.

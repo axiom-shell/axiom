@@ -235,7 +235,7 @@ function M.layers()
   hl.layer_rule({ name = "axiom-hot-corner", match = { namespace = "^axiom-hot-corner$" }, order = -12 })
   hl.layer_rule({ name = "axiom-screenshot", match = { namespace = "^axiom-screenshot$" }, no_anim = true, order = -20 })
   hl.layer_rule({ name = "axiom-monitor-prompt", match = { namespace = "^axiom-monitor-prompt$" }, order = -25 })
-  hl.layer_rule({ name = "axiom-screenshare", match = { namespace = "^axiom-screenshare$" }, order = -28 })
+  hl.layer_rule({ name = "axiom-screenshare", match = { namespace = "^axiom-screenshare$" }, no_anim = true, order = -28 })
   hl.layer_rule({ name = "axiom-polkit", match = { namespace = "^axiom-polkit$" }, order = -30 })
   hl.layer_rule({ name = "axiom-desktop", match = { namespace = "^axiom-desktop$" }, no_anim = true })
 end
