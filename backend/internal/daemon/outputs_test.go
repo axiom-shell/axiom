@@ -68,7 +68,7 @@ func TestApplyOutputs(t *testing.T) {
 	if err := (manager.Outputs{Hypr: h}).Apply(ctx, rules, details); err != nil {
 		t.Fatal(err)
 	}
-	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "DP-1", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })` {
+	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "DP-1", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })` {
 		t.Errorf("hyprland: %q", got)
 	}
 

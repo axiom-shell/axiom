@@ -397,12 +397,14 @@ func StripsRuntimeLua(lines []string, key string) []string {
 }
 
 // MonitorSpec is HyprLua.monitorSpec: a monitor rule as hl.monitor()'s
-// spec, every key given. An hl.monitor() call changes only the keys it
-// names (Hyprland 0.57 keeps a mirror, a rotation, vrr, the bit depth,
-// the colour and "disabled" from the output's last rule), so a rule
-// leaving one out wouldn't undo it: Apply's revert would leave a mirror
-// on. A disabled rule needs no more: turning the output on again sends
-// every key.
+// spec, every key given but vrr off. An hl.monitor() call changes only
+// the keys it names (Hyprland 0.57 keeps a mirror, a rotation, the bit
+// depth, the colour and "disabled" from the output's last rule), so a
+// rule leaving one out wouldn't undo it: Apply's revert would leave a
+// mirror on. vrr 0 is left out: a rule's vrr, once given, overrides
+// misc:vrr (Compositor's Variable refresh rate) for that output. A
+// disabled rule needs no more: turning the output on again sends every
+// key.
 func MonitorSpec(rule any) *jsonx.Object {
 	if truthy(get(rule, "disabled")) {
 		return jsonx.Obj("output", get(rule, "output"), "disabled", true)
@@ -413,7 +415,9 @@ func MonitorSpec(rule any) *jsonx.Object {
 	spec.Set("transform", or(get(rule, "transform"), 0.0))
 	// "none" (as hyprctl says it) names no output: the mirror ends
 	spec.Set("mirror", jsOr(get(rule, "mirror"), "none"))
-	spec.Set("vrr", or(get(rule, "vrr"), 0.0))
+	if v := get(rule, "vrr"); truthy(v) {
+		spec.Set("vrr", v)
+	}
 	if get(rule, "bitdepth") == 10.0 {
 		spec.Set("bitdepth", 10.0)
 	} else {
