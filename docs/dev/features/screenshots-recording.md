@@ -1,6 +1,6 @@
 # Screenshots and screen recording
 
-> **Files:** `qml/services/apps/ScreenshotManager.qml`, `qml/shell/Screenshot.qml`, `qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `qml/components/content/ScreenRecord/ScreenRecord.qml`, `qml/components/bar/widgets/ScreenRecord/ScreenRecord.qml`, `qml/config/Screenshots.qml`
+> **Files:** `qml/services/apps/ScreenshotManager.qml`, `qml/services/apps/ScreenshotPickState.qml`, `qml/components/methods/ScreenRegion.qml`, `backend/internal/screenshot/screenshot.go` (`screenshot.stitch`), `qml/shell/Screenshot.qml`, `qml/components/surfaces/screenshot/ScreenshotPickerWindow.qml`, `qml/components/content/ScreenRecord/ScreenRecord.qml`, `qml/components/bar/widgets/ScreenRecord/ScreenRecord.qml`, `qml/config/Screenshots.qml`
 > **Config:** `Screenshots` (`folder`, `recordingFolder`, `notify`; reader `qml/config/Screenshots.qml`); the picker's choices persist in `~/.local/state/axiom/ui/screenshot.json`
 > **Related:** [Keybinds](../hyprland/keybinds.md), [Chat](chat.md) (region attachments), [Utility modules](../overlay/utility-modules.md)
 
@@ -14,7 +14,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - Launcher `/screenshot`.
 - The Screenshot card.
 - The chat's region attachments use `pick(path, callback)`. It saves to `path` and calls back instead of copying (see [Chat](chat.md)).
-- The screen-share picker's Region uses `pickArea(callback)`: the same region drag, handing back the screen and the rect (its logical pixels from the screen's top left; `finishArea`) instead of a picture, and a cancel as no screen ([Screen sharing](screen-sharing.md)).
+- The screen-share picker's Region uses `pickArea(callback)`: the same region drag, kept to one screen (below), handing back the screen and the rect (its logical pixels from the screen's top left; `finishArea`) instead of a picture, and a cancel as no screen ([Screen sharing](screen-sharing.md)).
 
 ### The picker
 - While `picking`, `qml/shell/Screenshot` shows `surfaces/screenshot/ScreenshotPickerWindow`:
@@ -26,6 +26,13 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
   - **`window`:** click a window.
   - **`screen`:** grabs at once, on one screen.
 - **Cropping:** a `ShaderEffectSource` + `grabToImage`, at the buffer's resolution.
+
+### Across monitors
+- **One selection for every screen:** the drag, the window under the pointer and the screen that has it live in `ScreenshotManager.picker` (a `ScreenshotPickState`), in global logical pixels. The picker a press lands on feeds it (`press`, `dragTo`, `hover`, `release`) with its mouse position plus its screen's `x`/`y`: the compositor keeps sending the pointer to the surface the press started on, even past its edge, so a drag goes on into the next monitor. Each picker draws its dimming and border from its own part of `picker.selection` (`ScreenRegion.local`); the size label shows on the screen with the pointer, in the picture's pixels (`pixelSize`: at the largest scale among the screens it covers).
+- **Windows snap whole:** `picker.windows` is every screen's shown workspaces' windows (topmost first per screen), as global boxes clipped to the screens' bounding box, taken as the picker opens. `ScreenRegion.boxAt` takes the window under the pointer, the pointer's own screen's windows before one spilling over from another, so a window across two monitors highlights and captures whole.
+- **Capture:** a selection on one screen is cropped by that screen's picker as before. One over several (`captureGlobal` → `ScreenshotManager.captureAcross`) sets `pieceRequest`: each covered picker crops its part from its own frozen frame at its own scale and hands it to `pieceDone`, which saves it as a PNG in `Paths.runtimePath` (`piece-<screen>-<stamp>.png`). Once all are in, the pickers close and the daemon's `screenshot.stitch` (`{ pieces: [{ path, x, y, width, height }], area, out }`, global logical rects; `backend/internal/screenshot`) lays them out at the largest scale among them, scaling lower-scale pieces up (Catmull-Rom; a piece only a rounding pixel off its place repeats a row or column instead, so it stays sharp), and writes `out`: the same path a single-screen capture saves to (`_outPath`: `pick()`'s path, the folder, or the scratch file with `copyOnly`), so it goes on the same way (`_saved`: clipboard, notification or annotator, or `pick()`'s callback). The pieces are removed after. `busy` covers the stitch (`_stitch`). While the pieces are cropped every picker hides its controls and takes no input (`pieceRequest`); the watchdog covers a piece that never comes (its own message). A `cancel` during the stitch drops its answer: nothing is copied or said, and a `take()` picture is removed (`pick()`'s caller is told of the cancel, its path left alone).
+- **Gaps are transparent:** where the selection covers no monitor (monitors of different sizes or offsets), the PNG is transparent, not black: nothing was there to capture.
+- **One screen only** (`picker.oneScreen`): a region to share (`pickArea`: xdph's `region:<output>@x,y,w,h` names one output) and a recording (wf-recorder records one output; below). The selection is then clamped to the screen with the pointer (where the drag started).
 
 ### The frame from grim (niri)
 - **When:** `ScreenshotManager.grimFrames`, on wherever the backend leaves out `CompositorManager.supports.outputCapture` (niri; sway and Hyprland keep the `ScreencopyView`).
@@ -55,7 +62,7 @@ Recording lives in the service, not in the card, because the overlay destroys th
 - Opens the same picker with kind `record`. That kind has no save or annotate controls.
 - R, or the picker's Screenshot / Record switch (`setRecordMode`), flips an open picker between screenshot and record. Each kind still saves to its own folder, and the sound is what the start asked for (`_start`'s `audio`: none but from `startRecording`), so no picker keeps an earlier one's.
 - The pick goes to `record(area, screenName)`:
-  - a region is passed as global logical `-g`;
+  - a region is passed as global logical `-g`, always on one screen: wf-recorder picks the one output that wholly contains the region (`detect_output_from_region`) and captures only on it, so a region over two fails with "Failed to detect output based on geometry (is your geometry overlapping outputs?)". The picker keeps a recording's selection to the screen where the drag started (`picker.oneScreen`);
   - a whole screen as `-o <screen>`.
 
 **Direct (`startRecording({ mode, audio })`):**

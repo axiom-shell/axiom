@@ -193,6 +193,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - `frecency(useRecord, now)`, and `useBonus(frecency)`: the 0–25 it adds to a match's score (apps, commands, emoji).
   - `looksLikeMath(text)`.
 - `methods/ScreenEdge`: the screen edges as numbers (`ScreenEdge.Top`, `Bottom`, `Left`, `Right`, an order code indexes arrays by) and their config names: `name(edge)`, `fromName(name)` (-1 if unknown), `fromConfig(name)` (Top if unknown), `opposite(edge)`.
+- `methods/ScreenRegion`: rects across monitors in global logical pixels (the screenshot picker's shared selection): `between(a, b)`, `intersect`, `isEmpty`, `local(global, screen)` (a screen's part, from its top left), `toGlobal`, `covered(rect, screens)`, `contains`, `boxAt(boxes, x, y, output)` (the topmost box under a point, the point's own screen's first).
 - `methods/ChipRows.split(count, fit)`: a set of equal chips spread evenly over as few rows as `fit` allows (5 at 3 a row: 3 + 2), so each row can fill its width; `starts(sizes)`.
 - `methods/ColorTemperature.color(kelvin)`: light's color at a temperature (the night light's button).
 - `KeybindFilter.columns(sections, count)`: the masonry split of the Keybinds page and the Cheatsheet module.
