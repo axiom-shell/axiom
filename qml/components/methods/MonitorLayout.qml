@@ -311,20 +311,43 @@ QtObject {
       const mode = parseMode(rule.mode);
       if (mode && (mode.width !== monitor.width || mode.height !== monitor.height || (mode.rate > 0 && Math.abs(mode.rate - (monitor.refreshRate ?? 0)) >= 0.5)))
         return true;
-      if ((rule.transform ?? 0) !== now.transform || Math.abs((rule.scale ?? 1) - now.scale) >= 0.005)
+      if ((rule.transform ?? 0) !== now.transform || !_sameScale(rule.scale ?? 1, now.scale, monitor))
         return true;
       return now.mirror === "" && (Math.round(rule.x ?? 0) !== now.x || Math.round(rule.y ?? 0) !== now.y);
     });
   }
 
+  // Whether a monitor shows a rule's scale: Hyprland rounds one that
+  // gives no whole logical size (validScales) to a near one that does,
+  // so either valid scale around it counts
+  function _sameScale(asked, scale, monitor) {
+    if (Math.abs(asked - scale) < 0.005)
+      return true;
+    const valid = validScales(monitor.width, monitor.height);
+    if (valid.some(other => Math.abs(other - asked) < 0.0001))
+      return false;
+    const below = valid.filter(other => other < asked).pop();
+    const above = valid.find(other => other > asked);
+    return [below, above].some(other => other !== undefined && Math.abs(other - scale) < 0.005);
+  }
+
   // `rules` with each connected monitor's rule (in `monitors`) put back as
+  // it was in effect before a trial: the `saved` profile's rule (the
+  // profile's rules in the config) where the monitors (`monitors`, as
+  // they were) showed it, so what Hyprland reads back differently (a
+  // "preferred" mode, vrr 2, cm "auto") stays as it was saved; else as
   // `before` had it (rules from ruleFromMonitor: how the monitors were),
-  // the rule's own `output` kept: the profile as it was in effect before
-  // a trial. Rules for monitors not connected stay as they are.
-  function restored(rules, before, monitors) {
+  // the rule's own `output` kept. Rules for monitors not connected stay
+  // as they are.
+  function restored(rules, before, monitors, saved) {
     return (rules ?? []).map(rule => {
       const monitor = find(rule.output, monitors);
-      const was = monitor ? (before ?? []).find(other => matches(other.output, monitor)) : null;
+      if (!monitor)
+        return rule;
+      const kept = (saved ?? []).find(other => other.output === rule.output);
+      if (kept && !differsFromLive([kept], monitors))
+        return Object.assign({}, kept);
+      const was = (before ?? []).find(other => matches(other.output, monitor));
       return was ? Object.assign({}, was, {
         "output": rule.output
       }) : rule;

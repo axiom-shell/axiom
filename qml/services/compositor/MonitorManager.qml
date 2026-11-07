@@ -404,7 +404,8 @@ Singleton {
     const items = draft.local?.items ?? [];
     const tried = items[_named(items, trial.profile ?? _liveName)];
     if (tried) {
-      tried.outputs = MonitorLayout.restored(tried.outputs, trial.rules, trial.details);
+      const saved = MonitorsConfig.profiles.find(profile => profile.id === tried.id)?.outputs;
+      tried.outputs = MonitorLayout.restored(tried.outputs, trial.rules, trial.details, saved);
       draft.changed();
     }
     _refreshSoon.restart();

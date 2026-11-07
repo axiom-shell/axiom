@@ -376,6 +376,25 @@ TestCase {
       "y": 0
     });
     verify(!MonitorLayout.differsFromLive(loose, live));
+    // a scale giving no whole logical size: Hyprland rounds it to a valid
+    // one near it, which isn't a difference; a valid one is compared
+    const odd = flat.map(monitor => Object.assign({}, monitor, {
+        "width": 1366,
+        "height": 768
+      }));
+    const asked = apart.map(rule => Object.assign({}, rule, {
+        "mode": "1366x768"
+      }));
+    asked[0].scale = 1.25;
+    verify(!MonitorLayout.differsFromLive(asked, odd.map((monitor, i) => i === 0 ? Object.assign({}, monitor, {
+        "scale": MonitorLayout.validScales(1366, 768).find(scale => scale > 1.25)
+      }) : monitor)), "a scale Hyprland rounded");
+    verify(MonitorLayout.differsFromLive(asked, odd.map((monitor, i) => i === 0 ? Object.assign({}, monitor, {
+        "scale": 3
+      }) : monitor)), "a scale far from it");
+    const whole = apart.map(rule => Object.assign({}, rule));
+    whole[0].scale = 2;
+    verify(MonitorLayout.differsFromLive(whole, flat), "a valid scale not shown");
   }
 
   function test_restored() {
@@ -404,5 +423,20 @@ TestCase {
     compare(back[1].mirror, "desc:Main", "the mirror comes back");
     compare(back[2].x, 5000, "a monitor not connected keeps its rule");
     verify(!MonitorLayout.differsFromLive(back, live));
+    // the saved rule where the monitors showed it: what Hyprland reads
+    // back differently stays as saved
+    const saved = [Object.assign({}, before[0], {
+        "output": "DP-1",
+        "mode": "preferred",
+        "vrr": 2,
+        "cm": "auto"
+      }), Object.assign({}, before[1], {
+        "mirror": ""
+      })];
+    const kept = MonitorLayout.restored(tried, before, live, saved);
+    compare(kept[0].mode, "preferred", "the saved rule, which the monitor showed");
+    compare(kept[0].vrr, 2);
+    compare(kept[1].mirror, "desc:Main", "not one the monitors didn't show");
+    verify(!MonitorLayout.differsFromLive(kept, live));
   }
 }
