@@ -68,7 +68,7 @@ func TestApplyOutputs(t *testing.T) {
 	if err := (manager.Outputs{Hypr: h}).Apply(ctx, rules, details); err != nil {
 		t.Fatal(err)
 	}
-	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, mirror = "DP-1" })` {
+	if got := <-hypr; got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })`+"\n"+`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "DP-1", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })` {
 		t.Errorf("hyprland: %q", got)
 	}
 
@@ -94,7 +94,7 @@ func TestApplyOutputs(t *testing.T) {
 	for len(niri) > 0 {
 		sent = append(sent, <-niri)
 	}
-	if len(sent) != 6 || sent[0] != `{"Output":{"output":"DP-2","action":"On"}}` || !strings.Contains(sent[5], `"Off"`) {
+	if len(sent) != 7 || sent[0] != `{"Output":{"output":"DP-2","action":"On"}}` || sent[1] != `{"Output":{"output":"DP-2","action":{"Mode":{"mode":"Automatic"}}}}` || !strings.Contains(sent[6], `"Off"`) {
 		t.Errorf("niri: %q", sent)
 	}
 

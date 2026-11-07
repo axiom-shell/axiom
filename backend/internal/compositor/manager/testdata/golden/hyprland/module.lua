@@ -243,7 +243,7 @@ end
 -- Monitor profiles from the Monitors page: the one for what's connected,
 -- again whenever a monitor comes or goes
 function M.monitors()
-  hl.monitor({ output = "desc:Example Display 0001", mode = "3440x1440@240", position = "0x0", scale = 1, cm = "srgb" })
+  hl.monitor({ output = "desc:Example Display 0001", mode = "3440x1440@240", position = "0x0", scale = 1, bitdepth = 8, cm = "srgb", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })
 end
 
 -- Strips (the scrolling layout) on the monitors Workspaces lists

@@ -31,13 +31,13 @@ func TestOutputsApplied(t *testing.T) {
 	}{
 		{"hyprland mirrors by description", `[{"output": "desc:TV", "mirror": "desc:Main"}]`,
 			func(r any) any { return MonitorCalls(r, MirrorNames(details)) },
-			[]string{`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, mirror = "DP-1" })`}},
+			[]string{`hl.monitor({ output = "desc:TV", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "DP-1", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`}},
 		{"hyprland mirrors by connector", `[{"output": "DP-3", "mirror": "HDMI-A-1"}]`,
 			func(r any) any { return MonitorCalls(r, MirrorNames(details)) },
-			[]string{`hl.monitor({ output = "DP-3", mode = "preferred", position = "0x0", scale = 1, mirror = "HDMI-A-1" })`}},
+			[]string{`hl.monitor({ output = "DP-3", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "HDMI-A-1", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`}},
 		{"hyprland leaves out a mirror not connected", `[{"output": "DP-3", "mirror": "desc:Gone"}, {"output": "DP-3", "mirror": "DP-9"}]`,
 			func(r any) any { return MonitorCalls(r, MirrorNames(details)) },
-			[]string{`hl.monitor({ output = "DP-3", mode = "preferred", position = "0x0", scale = 1 })`, `hl.monitor({ output = "DP-3", mode = "preferred", position = "0x0", scale = 1 })`}},
+			[]string{`hl.monitor({ output = "DP-3", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`, `hl.monitor({ output = "DP-3", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`}},
 		{"sway, by description", `[{"output": "desc:AOC CU34G4Z XJ9", "mode": "3440x1440@240", "x": 15, "y": 83, "scale": 1, "transform": 0, "vrr": 1}]`,
 			func(r any) any { return SwayOutputCommands(r) },
 			`output "AOC CU34G4Z XJ9" enable mode 3440x1440@240Hz pos 15 83 scale 1 transform normal adaptive_sync on render_bit_depth 8`},
@@ -47,7 +47,7 @@ func TestOutputsApplied(t *testing.T) {
 		// leaves out)
 		{"hyprland, a make niri names PNP(…)", `[{"output": "desc:PNP(AOC) CU34G4Z"}]`,
 			func(r any) any { aoc := parse(t, aocDetails); return MonitorCalls(Spelled(r, aoc), MirrorNames(aoc)) },
-			[]string{`hl.monitor({ output = "desc:AOC CU34G4Z", mode = "preferred", position = "0x0", scale = 1 })`}},
+			[]string{`hl.monitor({ output = "desc:AOC CU34G4Z", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`}},
 		{"sway, a make niri names PNP(…), by its connector", `[{"output": "desc:PNP(AOC) CU34G4Z", "disabled": true}]`,
 			func(r any) any { return SwayOutputCommands(SwayConnectorRules(r, parse(t, aocDetails))) },
 			`output DP-2 disable`},
@@ -73,6 +73,15 @@ func TestOutputsApplied(t *testing.T) {
 				return string(jsonx.MarshalCompact(NiriOutputRequests(r, parse(t, `[{"name": "DP-2", "description": "PNP(AOC) CU34G4Z"}]`))))
 			},
 			`[{"Output":{"output":"DP-2","action":"Off"}}]`},
+		// a revert of a trial's mode back to niri's own pick
+		{"niri, the preferred mode said too", `[{"output": "DP-1", "mode": "preferred"}]`,
+			func(r any) any { return string(jsonx.MarshalCompact(NiriOutputRequests(r, details))) },
+			`[{"Output":{"output":"DP-1","action":"On"}},` +
+				`{"Output":{"output":"DP-1","action":{"Mode":{"mode":"Automatic"}}}},` +
+				`{"Output":{"output":"DP-1","action":{"Scale":{"scale":{"Specific":1}}}}},` +
+				`{"Output":{"output":"DP-1","action":{"Transform":{"transform":"Normal"}}}},` +
+				`{"Output":{"output":"DP-1","action":{"Position":{"position":{"Specific":{"x":0,"y":0}}}}}},` +
+				`{"Output":{"output":"DP-1","action":{"Vrr":{"vrr":{"vrr":false,"on_demand":false}}}}}]`},
 		{"niri, every part, disabled last", `[{"output": "HDMI-A-1", "disabled": true}, {"output": "desc:Main", "mode": "3840x2160@60", "x": 0, "y": 0, "scale": 1.5, "transform": 1, "vrr": 2}]`,
 			func(r any) any { return string(jsonx.MarshalCompact(NiriOutputRequests(r, details))) },
 			`[{"Output":{"output":"DP-1","action":"On"}},` +

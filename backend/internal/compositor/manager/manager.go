@@ -401,6 +401,17 @@ func (m *Manager) OutputsChanged() {
 	}
 }
 
+// OutputsApplied tells of rules set from outside the profile switch (the
+// Monitors page's Apply and its revert: outputs.apply):
+// the outputs may no longer be what it applied last, so the next hotplug,
+// reload or config change applies the saved profile again, even for the
+// same outputs and rules.
+func (m *Manager) OutputsApplied() {
+	if m.profiles != nil {
+		m.enqueue(func(context.Context) { m.profiles.applied = "" })
+	}
+}
+
 // outputsChanged reads the outputs again, applies the saved profile for
 // them and writes it in the files
 func (m *Manager) outputsChanged(ctx context.Context) {

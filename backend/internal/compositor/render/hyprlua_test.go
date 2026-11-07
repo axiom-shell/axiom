@@ -219,6 +219,35 @@ end`
 	}
 }
 
+// A rule names every key: hl.monitor() changes only the keys it's given
+// (Hyprland 0.57.1, tried on a nested one), so the revert of a mirror, a
+// rotation or vrr has to say mirror none, transform 0 and vrr 0, and an
+// output the trial turned off has to be told it's on
+func TestMonitorCallsUndoEverything(t *testing.T) {
+	t.Parallel()
+	details := parse(t, `[{"name": "DP-1", "description": "Main"}, {"name": "HDMI-A-1", "description": "TV"}]`)
+	tests := []struct{ name, rules, want string }{
+		{"mirror, rotation and vrr off", `[{"output": "HDMI-A-1", "mode": "1920x1080@60", "x": 2560, "y": 0, "scale": 1, "transform": 0, "mirror": "", "vrr": 0, "bitdepth": 8, "cm": "auto", "sdrBrightness": 1, "sdrSaturation": 1}]`,
+			`hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60", position = "2560x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`},
+		{"a rule leaving the keys out", `[{"output": "HDMI-A-1"}]`,
+			`hl.monitor({ output = "HDMI-A-1", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`},
+		{"the trial's mirror, rotation and vrr on", `[{"output": "HDMI-A-1", "mode": "1920x1080@60", "x": 0, "y": 0, "scale": 1, "transform": 1, "mirror": "desc:Main", "vrr": 2, "bitdepth": 10, "cm": "hdr", "sdrBrightness": 1.2, "sdrSaturation": 0.9}]`,
+			`hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 10, cm = "hdr", disabled = false, mirror = "DP-1", sdrbrightness = 1.2, sdrsaturation = 0.9, transform = 1, vrr = 2 })`},
+		{"a mirror of an output not connected ends", `[{"output": "HDMI-A-1", "mirror": "desc:Gone"}]`,
+			`hl.monitor({ output = "HDMI-A-1", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`},
+		{"turned off", `[{"output": "HDMI-A-1", "disabled": true, "mirror": "DP-1", "transform": 1}]`,
+			`hl.monitor({ output = "HDMI-A-1", disabled = true })`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := MonitorCalls(parse(t, tt.rules), MirrorNames(details)); len(got) != 1 || got[0] != tt.want {
+				t.Errorf("got  %q\nwant %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestIsAgentCommand(t *testing.T) {
 	tab := repoTables(t)
 	for _, c := range []struct {

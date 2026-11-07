@@ -81,35 +81,35 @@ func TestHyprlandRules(t *testing.T) {
 		want     []string
 	}{
 		{"the Dell and the TV agree everywhere; the LG doesn't", nil, []Output{laptop}, []string{
-			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
-			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 		{"a connected output keeps the matched rule", nil, []Output{laptop, dell, lg}, []string{
 			`hl.monitor({ output = "eDP-1", disabled = true })`,
-			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
-			`hl.monitor({ output = "desc:LG", mode = "3840x2160@60", position = "0x0", scale = 2 })`,
-			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "desc:LG", mode = "3840x2160@60", position = "0x0", scale = 2, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 		{"a connected output the match leaves out gets the agreed rule", nil, []Output{laptop, dell, {Name: "DP-3"}}, []string{
-			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
-			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 		{"an output the match names by description gets no second rule by connector", nil, []Output{laptop, {Name: "DP-3", Description: "Dell"}}, []string{
-			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
+			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 		{"no profile matches: none", nil, []Output{{Name: "HDMI-A-1"}}, nil},
 		{"an unplugged monitor named by description and by the connector it was seen on, disagreeing: neither", seenOn, []Output{laptop}, []string{
-			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "DP-4", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "eDP-1", mode = "1920x1200@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "DP-4", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 		{"plugged in elsewhere, known apart: both", seenOn, []Output{laptop, {Name: "DP-1", Description: "Dell"}}, []string{
 			`hl.monitor({ output = "eDP-1", disabled = true })`,
-			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1 })`,
-			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "DP-4", mode = "1920x1080@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "desc:Dell", mode = "2560x1440@60", position = "1920x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "DP-3", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "DP-4", mode = "1920x1080@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 	}
 	for _, tt := range tests {
@@ -142,9 +142,9 @@ func TestProfileSpelling(t *testing.T) {
 		want any
 	}{
 		{"Hyprland", MonitorCalls(jsonx.Arr(HyprlandRules(underNiri, bare)...), MirrorNames(nil)), []string{
-			`hl.monitor({ output = "desc:AOC CU34G4Z X1", mode = "3440x1440@100", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "eDP-1", mode = "preferred", position = "0x0", scale = 1 })`,
-			`hl.monitor({ output = "desc:GSM LG Y2", mode = "3840x2160@60", position = "0x0", scale = 1 })`,
+			`hl.monitor({ output = "desc:AOC CU34G4Z X1", mode = "3440x1440@100", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "eDP-1", mode = "preferred", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
+			`hl.monitor({ output = "desc:GSM LG Y2", mode = "3840x2160@60", position = "0x0", scale = 1, bitdepth = 8, cm = "auto", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0, vrr = 0 })`,
 		}},
 		{"sway", SwayOutputCommands(SwayConnectorRules(jsonx.Arr(SavedRules(underNiri, bare)...), parse(t, `[{"name": "DP-1", "description": "AOC CU34G4Z X1"}]`))),
 			`output DP-1 enable mode 3440x1440@100Hz pos 0 0 scale 1 transform normal adaptive_sync off render_bit_depth 8`},
