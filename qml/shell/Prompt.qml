@@ -5,7 +5,7 @@ import qs.config
 import qs.components.surfaces.prompt
 
 // The shared prompt (PromptManager's shown request: polkit, Bluetooth
-// pairing), on every screen: each dims, and the one focused when the
+// pairing, VPN, Wi-Fi, drives), on every screen: each dims, and the one focused when the
 // request came to the front shows the card
 Scope {
   Variants {

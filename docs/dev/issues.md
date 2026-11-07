@@ -401,6 +401,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Network, Bluetooth and devices
 
+### A drive card's "open" on a locked volume asks in a menu nobody opened
+- **Where:** `qml/services/system/DrivesManager.qml` (`activate`, `open`)
+- **What:** a card's or notification's click whose action is "open" (`DriveInfo.clickAction`) calls `open(drive)`; for a volume still locked that is `askUnlock(v.id, true)`, whose passphrase field shows only in a Drives menu row, so with no menu open nothing visible happens. The Locked card's "unlock" already asks in the shared prompt (`promptUnlock`). Fix: from `activate`, a locked volume goes to `promptUnlock` too (and opens once mounted).
+- **Size:** small
+- **Found:** 2026-11-07, while reviewing the Bluetooth daemon branch
+
 ### Eject may leave a USB stick powered on
 - **Where:** `backend/internal/udisks/udisks.go` (`eject`)
 - **What:** `eject` picks the Drive's `Eject` over `PowerOff` for any drive with `CanEject` and removable media (`case drive.Optical || drive.CanEject && drive.mediaRemovable:` before `case drive.CanPowerOff:`). If udisks2 reports a USB stick with the removable bit as Ejectable, it only gets `Eject`: it stays in udisks2 without media (hidden, `removed` sent) but powered, which contradicts `docs/dev/features/drives.md` ("locks and powers off"). A card reader's card wants `Eject` (the reader stays). PLAUSIBLE: `udisksctl info -b /dev/sdX` on a real stick (Ejectable, CanPowerOff, MediaRemovable) settles it. Fix, if it holds: `PowerOff` first when `CanPowerOff` and the drive isn't a card reader (`Optical` or a media-changing reader keeps `Eject`), the way GNOME's gvfs powers off a stick after its eject.

@@ -615,6 +615,13 @@ QtObject {
     return 2000;
   }
 
+  // Whether a card warns of what no click caused (a Bluetooth device's
+  // battery low or critical), from its type and tile (tile()'s): it opens
+  // an OSD even just after a click marked its type (fromScreen)
+  function alert(type, tile) {
+    return type === "bluetooth" && (tile?.event === "low" || tile?.event === "critical");
+  }
+
   // Whether a change of `type` is the pointer's own, `elapsed` ms after
   // its kind was last marked (Infinity: never)
   function fromScreen(type, elapsed) {

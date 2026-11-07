@@ -166,7 +166,7 @@ QtObject {
     {
       "namespace": "polkit",
       "order": -30,
-      "why": "The shared prompt (polkit, Bluetooth pairing; named for the polkit prompt it began as): after everything, so nothing of axiom's draws over a password prompt."
+      "why": "The shared prompt (polkit, Bluetooth pairing, VPN, Wi-Fi, drives; named for the polkit prompt it began as): after everything, so nothing of axiom's draws over a password prompt."
     },
     {
       "namespace": "desktop",

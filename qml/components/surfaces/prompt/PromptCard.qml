@@ -88,6 +88,9 @@ FocusScope {
       return;
     if (action.primary && !root.filled)
       return;
+    // The request's change is the user's doing, as a menu's click is
+    if (action.primary && root.request?.marks)
+      ShellManager.onScreen(root.request.marks);
     PromptManager.answer(root.requestId, action.id, root.values());
   }
 

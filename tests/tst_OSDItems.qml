@@ -933,6 +933,26 @@ TestCase {
     compare(OSDItems.onScreenKind("brightness"), "brightness");
   }
 
+  function test_alert() {
+    const bt = event => OSDItems.tile("bluetooth", {
+        "available": true,
+        "on": true,
+        "connected": ["Headset"],
+        "event": event ? {
+          "kind": event,
+          "devices": []
+        } : null
+      });
+    verify(OSDItems.alert("bluetooth", bt("low")), "a device's battery low: no click caused it");
+    verify(OSDItems.alert("bluetooth", bt("critical")), "critical");
+    verify(!OSDItems.alert("bluetooth", bt("connected")), "a connect may be the click's");
+    verify(!OSDItems.alert("bluetooth", bt("disconnected")), "a disconnect too");
+    verify(!OSDItems.alert("bluetooth", bt(null)), "no event");
+    verify(!OSDItems.alert("battery", {
+      "event": "low"
+    }), "only Bluetooth's tile says it this way");
+  }
+
   function test_deviceName() {
     const rows = [
       // [device, title, detail, translate, what]

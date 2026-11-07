@@ -6,17 +6,20 @@ import qs.config
 import qs.services.compositor
 
 /*
- * The one prompt for requests the system starts (polkit, Bluetooth
- * pairing): a queue showing one request at a time, drawn by PromptWindow
- * (shell/Prompt) on the monitor focused when it came to the front, so two
- * requests never fight over the screen. A form the user opens by clicking
- * in a menu stays in its row instead.
+ * The one prompt for requests the system starts or that come with no
+ * menu open (polkit, Bluetooth pairing, VPN secrets, a Wi-Fi password, a
+ * drive's passphrase): a queue showing one request at a time, drawn by
+ * PromptWindow (shell/Prompt) on the monitor focused when it came to the
+ * front, so two requests never fight over the screen. A Wi-Fi password or
+ * drive passphrase asked from its menu stays in its row instead.
  *
  * A source calls request(spec, onAnswer, onCancel) and keeps the id:
  *   spec: { source, icon (a glyph), title, message, code (shown large: a
  *   PIN or passkey), entered (how many of code's digits are typed, -1
  *   none), fields [{ key, label, secret, digits, maxLength }], actions
- *   [{ id, label, primary }], error, waits, outsideCancels, content }
+ *   [{ id, label, primary }], error, waits, outsideCancels, content,
+ *   marks (a ShellManager.onScreen kind the card marks as the primary
+ *   action runs: what it leads to is the user's doing) }
  * An action's button calls onAnswer(actionId, values) (values by field
  * key); Escape, and a click outside the card unless outsideCancels is
  * false, call onCancel(). Answered, the request goes, unless it waits:

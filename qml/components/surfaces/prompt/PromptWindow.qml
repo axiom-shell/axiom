@@ -65,6 +65,9 @@ PanelWindow {
   WlrLayershell.keyboardFocus: root.live ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
   Component.onCompleted: {
+    // A window made while a request shows (a monitor plugged in, a
+    // reload): onRequestChanged never ran for its first value
+    root.drawn = root.request;
     SurfaceManager.registerModal(root);
     // Where the compositor blurs only what a window asks: the whole dimmed
     // screen, while backdrops blur (LayerStack.blurBackdrops)

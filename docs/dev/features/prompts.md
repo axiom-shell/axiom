@@ -25,7 +25,8 @@ One prompt for every password, PIN or confirmation the system asks for. **The ru
   - `error`: shown under the last field (or alone with none);
   - `waits` (default false): answered, the request stays, busy, until its source `update`s it with an error (asked again) or `withdraw`s it; else it goes at once;
   - `outsideCancels` (default true): a click outside the card cancels it;
-  - `content`: `"polkit"` draws `PolkitCard` (PolkitManager's flow) in place of the fields and actions.
+  - `content`: `"polkit"` draws `PolkitCard` (PolkitManager's flow) in place of the fields and actions;
+  - `marks`: a `ShellManager.onScreen` kind the card marks as the primary action runs (Bluetooth's `"bluetooth"`): what the answer leads to (a pairing's connect) is the user's doing, so its OSD card updates an open OSD but opens none. The card marks it, not the source: only the UI marks clicks.
 - **`onAnswer(actionId, values)`**: a button was clicked or Enter pressed (`values` by field key). **`onCancel()`**: Escape, or a click outside. Every button goes to `onAnswer`, Cancel and Deny included: the source tells them apart by id.
 - **`update(id, changes)`** changes a queued request's keys: the code as a keyboard types it, or an `error` after a wrong answer (which clears busy and counts an `attempt`: the card clears its fields and shakes the last).
 - **`withdraw(id)`** removes one its source ended (BlueZ cancelled, polkit's flow ended), calling neither callback.

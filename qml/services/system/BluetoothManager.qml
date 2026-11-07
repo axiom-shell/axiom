@@ -311,9 +311,13 @@ QtObject {
       "label": I18n.tr("Allow"),
       "primary": true
     };
+    // Accepting is the user's doing, as a menu's click is (marks, which
+    // the card sets): the connect it leads to updates an open OSD but
+    // opens none (the prompt may have waited past the click's window)
     const spec = {
       "source": "bluetooth",
-      "icon": root.deviceIcon(req.device)
+      "icon": root.deviceIcon(req.device),
+      "marks": "bluetooth"
     };
     switch (req.kind) {
     case "confirm":
@@ -371,14 +375,9 @@ QtObject {
   }
 
   // rpc: bluetooth.agentReply, bluetooth.cancelPair
-  // A code shown has nothing to answer: declining it cancels the pairing.
-  // Accepting is the user's doing, as a menu's click is: the connect it
-  // leads to updates an open OSD but opens none (the prompt may have
-  // waited past the click's window)
+  // A code shown has nothing to answer: declining it cancels the pairing
   function _agentAnswer(req, accept, value) {
     root._forgetPrompt(req.id);
-    if (accept)
-      ShellManager.onScreen("bluetooth");
     if (req.kind === "display")
       BackendManager.call("bluetooth.cancelPair", {
         "address": req.device.address
