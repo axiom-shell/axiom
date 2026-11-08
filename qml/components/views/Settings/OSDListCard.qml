@@ -3,10 +3,12 @@ import QtQuick
 import qs.config
 import qs.services.ui
 
-// The OSD section's first card (its `x-card`): the OSDs as tabs, one shown
-// at a time: where it sits (the screen picker), a Show button,
-// then what it shows (its systems: OSDSystemsEditor), folding, its other
-// settings, and its bars' layout at the bottom (EntryListCard).
+// The OSD section's first card (its `x-card`, spanning the page): the OSDs
+// as tabs, one shown at a time: where it sits (the screen picker), a Show
+// button and, beside them with the room, its other settings (Place and
+// timing), then what it shows (its systems: OSDSystemsEditor, the list
+// beside the selected one's form), and its bars' layout at the bottom
+// (EntryListCard, `wide`).
 EntryListCard {
   id: root
 
@@ -30,6 +32,7 @@ EntryListCard {
   sections: ["barLayout"]
   lastSections: ["barLayout"]
   otherTitle: I18n.tr("Place and timing")
+  wide: true
   labelOf: osd => OSDConfig.labelOf(osd)
   onShow: id => ShellManager.showOsd(id)
 

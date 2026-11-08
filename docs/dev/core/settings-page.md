@@ -27,7 +27,8 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
   - Show/Duplicate/Delete
   - `entryContent` for extras such as the dock's pinned apps and the OSD's systems (`OSDSystemsEditor`); `ownKeys` names the keys it edits, left out of the other settings
   - `sections`: object settings each drawn as a `FoldingSection` of its own (its schema's title and description; the OSD's bars' layout), its fields at their paths in the entry so an `x-showIf` reaches the entry's own keys through `../`; `lastSections` go after the rest
-  - the entry's other settings: its form, folding under `otherTitle` when it has sections.
+  - the entry's other settings: its form, folding under `otherTitle` when it has one (the OSD's "Place and timing").
+  - `wide` (the OSD's, its section's `x-card` `wide: true`): while the card is at least `Widget.px(720)` wide, the picker and the other settings' fold go side by side at the top (`reusable/SplitColumns`, 45 % / 55 %), `entryContent` full width under them; narrower, they stack as without it. The OSD's systems editor does the same inside (`SplitColumns` at `Widget.px(560)`): its list on the left (40 %), the selected system's form on the right.
   - a line between the big parts (none under the accent line the first section sits beneath when there's no `entryContent`).
 - Both sit on `FoldingCard`: a fold header (section line, heading, unsaved dot, chevron, `headerExtras`) and a `FoldingColumn` body.
 - Status cards (Hyprland, Idle, self-update, chat providers, onboarding) are `FieldGroup`s with a `StatusChip` in `headerExtras`.
