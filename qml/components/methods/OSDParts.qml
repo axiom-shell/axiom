@@ -2,7 +2,7 @@ pragma Singleton
 import QtQuick
 
 // The OSD's parts (the bars, the status icons, a card; surfaces/osd):
-// the bars' keys, which tiles the row shows, the parts' order
+// the bars' keys and order, which tiles the row shows, the parts' order
 // out from the edge, their shared deadlines and which close together
 // (docs/dev/features/osd.md › Engine).
 QtObject {
@@ -30,6 +30,21 @@ QtObject {
     if ((spec?.repeats ?? []).includes(kind))
       return kind + ":" + entry.id;
     return spec?.keys?.[kind] ?? kind;
+  }
+
+  // The bars in an OSD's order (its `barOrder`): of `entries` (each
+  // { key, … }: "<System>/<its exposes key>", in the systems' order),
+  // those `order` (keys) names first, in its order, then the rest in
+  // theirs. A key no entry has is skipped, and one named twice counts
+  // once; an empty `order` keeps `entries` as they are
+  function orderBars(entries, order) {
+    const listed = [];
+    for (const key of order ?? []) {
+      const entry = entries.find(e => e.key === key);
+      if (entry && !listed.includes(entry))
+        listed.push(entry);
+    }
+    return listed.concat(entries.filter(e => !listed.includes(e)));
   }
 
   // The tiles the row shows, in the OSD's order: of `types` (its tile

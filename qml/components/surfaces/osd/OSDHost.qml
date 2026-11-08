@@ -117,11 +117,14 @@ Item {
     return change.system + "/" + change.key;
   }
 
-  // The bars, in order: { system, entry } for each `exposes` bar
-  readonly property var _levelEntries: [].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => e.part === "bar").map(e => ({
+  // The bars, in the OSD's order: { key ("<type>/<key>"), system, entry }
+  // for each `exposes` bar, as its `barOrder` puts them (OSDParts.orderBars:
+  // those it names first, the rest in the systems' order)
+  readonly property var _levelEntries: OSDParts.orderBars([].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => e.part === "bar").map(e => ({
+          "key": host.type + "/" + e.key,
           "system": host,
           "entry": e
-        }))))
+        })))), root.osd.barOrder)
   // The tiles it may show, in order (ids), their English names, and each
   // one now (OSDEngine.tileOf's, the watchers')
   readonly property var _tileIds: [].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => OSDEngine.partOf(host.definition, e.key) === "tile").map(e => host.type + "/" + e.key)))

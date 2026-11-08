@@ -109,11 +109,12 @@ QtObject {
   }
 
   // An item's bars, in its order: { key ("<System>/<its exposes key>",
-  // OSDParts.barKey), index (in its `from` list; -1 for a system that is
-  // one bar), name (translated), icon }. A `from` bar is named by its
-  // `named` list joined, else its `by` field's x-enumLabels (Audio's: an
-  // App bar by its apps, the others by their kind), its icon its kind's
-  // (`x-enumIcons`); none without `x-barNames`
+  // OSDParts.barKey: what an OSD's `barOrder` names), index (in its
+  // `from` list; -1 for a system that is one bar), name (translated),
+  // icon }. A `from` bar is named by its `named` list joined, else its
+  // `by` field's x-enumLabels (Audio's: an App bar by its apps, the
+  // others by their kind), its icon its kind's (`x-enumIcons`); none
+  // without `x-barNames`
   function barRows(item) {
     const def = root._systemDefs[item.type];
     const spec = def?.["x-barNames"];
@@ -142,6 +143,16 @@ QtObject {
     });
   }
 
+  // The bars of `systems` (items of an OSD's list) in the OSD's order:
+  // each item's barRows, with its index in `systems` (`system`), ordered
+  // by `order` (its `barOrder`, OSDParts.orderBars: as the host shows
+  // them)
+  function orderedBarRows(systems, order) {
+    return OSDParts.orderBars([].concat(...systems.map((item, system) => root.barRows(item).map(bar => Object.assign(bar, {
+          "system": system
+        })))), order);
+  }
+
   // Every kind of bar an OSD can show, for the settings' Bars picker:
   // { type ("<System>" for a system that is one bar, else
   // "<System>:<kind>", a value of its `by` field), label (English), icon }
@@ -166,12 +177,8 @@ QtObject {
         }));
   }))
 
-  // The names of an item's bars (barRows), those it has
-  function _barNames(item) {
-    return root.barRows(item).map(bar => bar.name).filter(name => name !== "");
-  }
-
-  // The name on its tab: its own, else its bars', else what it shows as
+  // The name on its tab: its own, else its bars' (in its `barOrder`, as
+  // the host shows them), else what it shows as
   // icons (so the default isn't named by all of them), else with its
   // cards on the systems it shows only as cards (Now playing, or a
   // system with a card switch and its tiles off)
@@ -179,7 +186,7 @@ QtObject {
     if (osd.name)
       return osd.name;
     const shown = osd.systems.filter(item => item.tile !== false);
-    const bars = [].concat(...shown.map(item => root._barNames(item)));
+    const bars = root.orderedBarRows(shown, osd.barOrder).map(bar => bar.name).filter(name => name !== "");
     // (a system with no tile switch is only ever a card)
     const tiled = item => root._systemDefs[item.type]?.properties.tile !== undefined;
     const parts = bars.length > 0 ? bars : shown.filter(tiled).map(item => root.nameOf(item.type)).filter(name => name !== "");

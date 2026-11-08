@@ -156,4 +156,11 @@ properties:
       - {type: Drives}
       - {type: Message}
     items: {$ref: '#/definitions/OSDSystem'}
+  barOrder:
+    type: array
+    title: Bar order
+    x-settings: false
+    default: []
+    items: {type: string}
+    description: The bars' order, by key ("<System>/<its bar key>", e.g. Audio/master, Audio/app:<id>, Brightness/brightness), set by dragging them in the Bars part. Bars it doesn't name follow in their systems' order; empty, all do.
 required: [id]
