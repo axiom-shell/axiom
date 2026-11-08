@@ -226,3 +226,49 @@ func TestCommand(t *testing.T) {
 		t.Errorf("a case-sensitive glob matched another case: %q", got)
 	}
 }
+
+func TestGlobs(t *testing.T) {
+	t.Parallel()
+	home, sys := t.TempDir(), t.TempDir()
+	write := func(path, text string) {
+		os.MkdirAll(filepath.Dir(path), 0o755)
+		if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(filepath.Join(sys, "mime/globs2"), "50:text/plain:*.txt\n50:application/gzip:*.gz\n50:application/x-compressed-tar:*.tar.gz\n"+
+		"55:text/x-readme:README\n50:text/x-c:*.C:cs\n50:text/x-csrc:*.c\n10:text/x-log:*.log.[0-9]\n50:image/png:*.png\n")
+	write(filepath.Join(home, "mime/globs2"), "60:image/x-mine:*.png\n")
+	write(filepath.Join(sys, "mime/generic-icons"), "application/gzip:package-x-generic\n")
+	write(filepath.Join(sys, "mime/icons"), "text/x-readme:text-x-readme-special\n")
+	g := LoadGlobs([]string{home, sys})
+	for name, want := range map[string]string{
+		"a.txt":     "text/plain",
+		"A.TXT":     "text/plain",
+		"x.tar.gz":  "application/x-compressed-tar",
+		"x.gz":      "application/gzip",
+		"README":    "text/x-readme",
+		"readme":    "text/x-readme",
+		"m.C":       "text/x-c",
+		"m.c":       "text/x-csrc",
+		"sys.log.1": "text/x-log",
+		"p.png":     "image/x-mine", // heavier
+		"nothing":   "",
+		".hidden":   "",
+	} {
+		if got := g.TypeOfName(name); got != want {
+			t.Errorf("TypeOfName(%q) = %q, want %q", name, got, want)
+		}
+	}
+	for mime, want := range map[string]string{
+		"application/gzip": "application-gzip package-x-generic",
+		"text/x-readme":    "text-x-readme-special text-x-generic",
+		"image/png":        "image-png image-x-generic",
+		"inode/directory":  "folder",
+		"":                 "",
+	} {
+		if got := strings.Join(g.IconOf(mime), " "); got != want {
+			t.Errorf("IconOf(%q) = %q, want %q", mime, got, want)
+		}
+	}
+}

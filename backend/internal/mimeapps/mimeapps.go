@@ -101,7 +101,7 @@ type Apps struct {
 	lists   []appsList // mimeapps.list files, most important first
 	legacy  []appsList // defaults.list files, read last
 	// shared-mime-info's globs, read when a file's type is first asked
-	globList []glob
+	globs *Globs
 }
 
 // Load reads the entries and lists.

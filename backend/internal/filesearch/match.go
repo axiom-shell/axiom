@@ -21,7 +21,7 @@ type Pattern struct {
 type token struct {
 	text []byte   // matched against the name (lower-case unless cased)
 	dirs [][]byte // folder segments before it, outermost first
-	mask uint32 // text's character classes
+	mask uint32   // text's character classes
 }
 
 // ParsePattern parses typed text.
@@ -148,4 +148,30 @@ func Score(text, q []byte) int {
 		return 0
 	}
 	return max(5, 30-2*(last-first+1-len(q)))
+}
+
+// MatchName scores a bare name (a folder's listing) against the tokens,
+// their folder segments left out: the mean of their Scores, 0 when one
+// doesn't match.
+func (p Pattern) MatchName(name string) float64 {
+	if len(p.tokens) == 0 {
+		return 0
+	}
+	n := []byte(name)
+	if !p.cased {
+		n = lowerInto(nil, n)
+	}
+	total := 0
+	for _, t := range p.tokens {
+		if len(t.text) == 0 {
+			total += 50
+			continue
+		}
+		s := Score(n, t.text)
+		if s == 0 {
+			return 0
+		}
+		total += s
+	}
+	return float64(total) / float64(len(p.tokens))
 }

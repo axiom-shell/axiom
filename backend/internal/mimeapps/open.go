@@ -1,12 +1,10 @@
 package mimeapps
 
 import (
-	"bufio"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -141,63 +139,13 @@ func (a *Apps) typeOf(target string) (mime, role string) {
 	return mime, ""
 }
 
-// glob is one of shared-mime-info's globs2 lines
-type glob struct {
-	weight  int
-	mime    string
-	pattern string
-	cased   bool // matched as written ("cs")
-}
-
-// mimeOfName is the type a file's name says it is (shared-mime-info's
-// globs2, the heaviest then longest pattern matching), "" when none does.
+// mimeOfName is the type a file's name says it is (Globs.TypeOfName,
+// the globs read when a file's type is first asked).
 func (a *Apps) mimeOfName(name string) string {
-	best, bestWeight, bestLen := "", -1, -1
-	for _, g := range a.globs() {
-		subject, pattern := name, g.pattern
-		if !g.cased {
-			subject, pattern = strings.ToLower(name), strings.ToLower(pattern)
-		}
-		if ok, _ := filepath.Match(pattern, subject); !ok {
-			continue
-		}
-		if g.weight > bestWeight || g.weight == bestWeight && len(g.pattern) > bestLen {
-			best, bestWeight, bestLen = g.mime, g.weight, len(g.pattern)
-		}
+	if a.globs == nil {
+		a.globs = LoadGlobs(append([]string{a.o.DataHome}, a.o.DataDirs...))
 	}
-	return best
-}
-
-// globs reads the first globs2 each data folder's mime/ has, once.
-func (a *Apps) globs() []glob {
-	if a.globList != nil {
-		return a.globList
-	}
-	a.globList = []glob{}
-	for _, d := range append([]string{a.o.DataHome}, a.o.DataDirs...) {
-		f, err := os.Open(filepath.Join(d, "mime", "globs2"))
-		if err != nil {
-			continue
-		}
-		sc := bufio.NewScanner(f)
-		for sc.Scan() {
-			line := sc.Text()
-			if line == "" || line[0] == '#' {
-				continue
-			}
-			parts := strings.SplitN(line, ":", 4)
-			if len(parts) < 3 {
-				continue
-			}
-			w, err := strconv.Atoi(parts[0])
-			if err != nil {
-				continue
-			}
-			a.globList = append(a.globList, glob{weight: w, mime: parts[1], pattern: parts[2], cased: len(parts) == 4 && strings.Contains(parts[3], "cs")})
-		}
-		f.Close()
-	}
-	return a.globList
+	return a.globs.TypeOfName(name)
 }
 
 // OverridesFrom reads the config's Apps.commands, a command per role

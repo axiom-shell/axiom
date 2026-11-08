@@ -156,6 +156,9 @@ func (ix *Index) Mtime(i uint32) int64 {
 	return int64(e.mtime)*1e9 + int64(e.nsec)
 }
 
+// SetMtime sets a file's modification time (a write seen by a watch).
+func (ix *Index) SetMtime(i uint32, ns int64) { setMtime(ix.at(i), ns) }
+
 // Watched says whether a folder is marked watched.
 func (ix *Index) Watched(i uint32) bool { return ix.at(i).flags&flagWatched != 0 }
 
