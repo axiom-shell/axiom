@@ -199,7 +199,9 @@ func (s *Service) run(ctx context.Context, c *call, req Request, fail string) {
 			c.res = Result{Failed: true}
 			return
 		}
-		c.err = axerr.Wrap(axerr.Unavailable, err, "making the thumbnail failed")
+		// Failed, not Unavailable: the daemon answered, and the shell
+		// doesn't ask again (it asks again what a lost connection cut off)
+		c.err = axerr.Wrap(axerr.Failed, err, "making the thumbnail failed")
 		return
 	}
 	c.res = Result{Path: req.Dst}

@@ -196,8 +196,6 @@ QtObject {
   // key -> true while asked
   property var _asking: ({})
   property int _inFlight: 0
-  // [{ key, path }] whose answer was lost with the connection
-  property var _lost: []
   readonly property int _maxInFlight: 4
   // Kept past this many, only those still wanted are
   readonly property int _maxThumbnails: 400
@@ -214,23 +212,22 @@ QtObject {
   function _ask(key, path) {
     root._inFlight++;
     root._asking[key] = true;
-    // The size the row draws it at (two pixels a point): 128 px or 256 px
+    // The size the row draws it at (two pixels a point): 128 px or 256 px.
+    // A fetch: one cut off by a lost connection is sent again after the
+    // next hello
     BackendManager.call("filesearch.thumbnail", {
       "path": path,
       "size": LauncherConfig.iconSize * 2 > 128 ? "large" : "normal"
     }, (error, result) => {
       root._inFlight--;
       delete root._asking[key];
-      // An answer lost with the connection is asked again after the next
-      // hello, if a row still shows it
-      if (error?.kind === "unavailable")
-        root._lost.push({
-          "key": key,
-          "path": path
-        });
-      else
+      // No daemon (unavailable): not kept, so a row showing it later asks
+      // again; a failure is kept as none, not asked again
+      if (error?.kind !== "unavailable")
         root._keep(key, !error && result.path ? "file://" + result.path : "");
       root._pump();
+    }, {
+      "repeatable": true
     });
   }
 
@@ -266,9 +263,6 @@ QtObject {
     target: BackendManager
     function onGreeted() {
       root._fetchState();
-      root._queued = root._queued.concat(root._lost);
-      root._lost = [];
-      root._pump();
     }
   }
 

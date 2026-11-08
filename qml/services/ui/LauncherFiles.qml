@@ -63,7 +63,7 @@ QtObject {
   }
 
   // Asks again on the next read: the launcher closed (it opens to fresh
-  // results), or the index changed under the shown answer
+  // results)
   function forget() {
     root._mode.text = null;
     root._mainQ = "";
@@ -196,15 +196,16 @@ QtObject {
 
   // The index's phase or size changed: a search answered before it was
   // built asks again while shown (at most twice a second, as the state is
-  // pushed), until an answer from the built index lands; anything else
-  // redraws its info row
+  // pushed), until an answer from the built index lands; one the folder's
+  // own entries answered (from the disk) only once the phase changes;
+  // anything else redraws its info row
   property Connections _index: Connections {
     target: FileSearchManager
     function onStateChanged() {
       const answer = root._mode.answer;
       if (root._mode.text === null || !answer)
         return;
-      if (root.active && answer.request.kind === "search" && answer.phase !== "ready")
+      if (root.active && answer.request.kind === "search" && answer.phase !== "ready" && (!answer.browsed || answer.phase !== FileSearchManager.state.phase))
         root._ask(root._mode.text);
       else
         root.updated();
