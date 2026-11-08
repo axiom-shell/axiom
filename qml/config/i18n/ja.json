@@ -4126,17 +4126,17 @@
     "Only bound while the laptop panel is the only monitor": "",
     "Tiling (no strips)": "",
     "Any layout": "",
-    "An external monitor is connected": "",
-    "Bound only while these monitors are connected.": "",
     "Niri": "",
     "Dynamic workspaces": "",
     "Only under": "",
     "Grid workspaces": "",
     "Bound only under these compositors. None picked is every compositor.": "",
-    "Only the laptop panel is connected": "",
     "Only while": "",
     "Any monitors": "",
     "Only with": "",
-    "Bound only with this workspace layout. Strip actions are bound only with strips whatever this says.": ""
+    "Bound only with this workspace layout. Strip actions are bound only with strips whatever this says.": "",
+    "Laptop panel only": "",
+    "Bound only while an external monitor is connected, or while the laptop's own panel is the only one.": "",
+    "External monitor": ""
   }
 }

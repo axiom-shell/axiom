@@ -304,9 +304,9 @@ properties:
     type: string
     title: Only while
     enum: ['', external, laptopOnly]
-    x-enumLabels: {'': Any monitors, external: An external monitor is connected, laptopOnly: Only the laptop panel is connected}
+    x-enumLabels: {'': Any monitors, external: External monitor, laptopOnly: Laptop panel only}
     default: ''
-    description: Bound only while these monitors are connected.
+    description: 'Bound only while an external monitor is connected, or while the laptop''s own panel is the only one.'
   description:
     type: string
     title: Description
