@@ -20,7 +20,7 @@ GridLayout {
   rowSpacing: Widget.spacing
 
   function bindFor(entry) {
-    return KeybindsConfig.activeBinds.find(bind => bind.action === entry.action && (entry.argument === undefined || String(bind.argument ?? "") === entry.argument)) ?? null;
+    return KeybindManager.boundBinds.find(bind => bind.action === entry.action && (entry.argument === undefined || String(bind.argument ?? "") === entry.argument)) ?? null;
   }
 
   Repeater {

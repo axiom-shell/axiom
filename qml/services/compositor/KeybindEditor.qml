@@ -108,7 +108,10 @@ QtObject {
       "action": action,
       "argument": "",
       "call": "toggle",
-      "description": ""
+      "description": "",
+      "whenCompositors": [],
+      "whenLayout": "",
+      "whenMonitors": ""
     };
     for (const flag of KeybindManager.actionTable?.flagNames ?? [])
       full[flag] = flags.includes(flag);
@@ -319,9 +322,12 @@ QtObject {
     // An argument meant for the old action rarely fits the new one, and
     // the flags follow the new action
     if (field === "action") {
-      // A raw command is written for the compositor running now
-      if (value === "raw")
+      // A raw command is written for the compositor running now, which
+      // is its "Only when" compositor too
+      if (value === "raw") {
         bind.compositor = CompositorManager.kind || "hyprland";
+        bind.whenCompositors = [];
+      }
       const options = KeybindManager.argumentOptions(value);
       if (!KeybindManager.needsArgument(value) || (options && !options.includes(bind.argument)))
         bind.argument = KeybindManager.actionTable?.argumentDefaults?.[value] ?? "";
@@ -334,22 +340,60 @@ QtObject {
     draft.changed();
   }
 
-  // The first of the editor's binds (not paused) on one of `ids` (a
+  // The first of the editor's binds bound now on one of `ids` (a
   // reference row's keys), or -1
   function bindIndexFor(ids) {
-    return root.binds.findIndex(bind => !bind.paused && (ids ?? []).includes(BindKeys.keyId(bind.key)));
+    return root.binds.findIndex((bind, i) => root.held[i] && (ids ?? []).includes(BindKeys.keyId(bind.key)));
   }
+
+  // Per bind, whether it's bound now: not paused, its "Only when" holding
+  // (BindConditions). One that isn't holds no key.
+  readonly property var held: root.binds.map(bind => bind.paused !== true && BindConditions.holds(bind, KeybindManager.conditionFacts))
+
+  // The binds as the key map shows them: one not bound now as paused
+  readonly property var keyMapBinds: root.binds.map((bind, i) => root.held[i] || bind.paused === true ? bind : Object.assign({}, bind, {
+      "paused": true
+    }))
+
+  // Why a bind's "Only when" leaves it unbound now, or ""
+  function conditionNote(bind) {
+    switch (BindConditions.unmet(bind, KeybindManager.conditionFacts)) {
+    case "compositor":
+      return I18n.tr("Only bound under {0}", bind.whenCompositors.map(kind => root._compositorNames[kind] ?? kind).join(", "));
+    case "strips":
+      return I18n.tr("Only bound with strips, so it isn't bound now");
+    case "tiling":
+      return I18n.tr("Only bound without strips, so it isn't bound now");
+    case "grid":
+      return I18n.tr("Only bound on the grid layout, so it isn't bound now");
+    case "dynamic":
+      return I18n.tr("Only bound with dynamic workspaces, so it isn't bound now");
+    case "external":
+      return I18n.tr("Only bound while an external monitor is connected");
+    case "laptopOnly":
+      return I18n.tr("Only bound while the laptop panel is the only monitor");
+    }
+    return "";
+  }
+  readonly property var _compositorNames: ({
+      "hyprland": "Hyprland",
+      "sway": "Sway",
+      "niri": "niri"
+    })
 
   // Per bind: [{ level: "error" | "warning" | "info", text }]; only errors
   // and warnings are issues (issueCount, the issues filter, a row's border)
   readonly property var issues: {
     const ids = root.binds.map(bind => BindKeys.keyId(bind.key));
-    // Paused binds hold no key, so they clash with nothing
-    const counts = {};
+    // Paused binds hold no key, so they clash with nothing; two on one key
+    // clash unless their "Only when" can never hold together
+    // (BindConditions.exclusive), whether or not they're bound now
+    const byId = {};
     ids.forEach((id, i) => {
       if (id !== "" && !root.binds[i].paused)
-        counts[id] = (counts[id] ?? 0) + 1;
+        (byId[id] = byId[id] ?? []).push(i);
     });
+    const clashes = i => (byId[ids[i]] ?? []).some(j => j !== i && !BindConditions.exclusive(root.binds[i], root.binds[j]));
     const runtime = CompositorConfigManager.status !== "loaded";
     return root.binds.map((bind, i) => {
       if (bind.paused)
@@ -359,6 +403,21 @@ QtObject {
             "text": I18n.tr("Paused, so it isn't bound")
           }
         ];
+      // Not bound now: why, and only what would still be wrong once it is
+      if (!root.held[i]) {
+        const later = [
+          {
+            "level": "info",
+            "text": root.conditionNote(bind)
+          }
+        ];
+        if (ids[i] !== "" && clashes(i))
+          later.push({
+            "level": "error",
+            "text": I18n.tr("Bound more than once here")
+          });
+        return later;
+      }
       const found = [];
       const key = String(bind.key ?? "").trim();
       if (key === "")
@@ -404,14 +463,9 @@ QtObject {
           "text": bind.action === "raw" ? I18n.tr("Written for another compositor, so it does nothing here") : I18n.tr("This compositor can't do this, so it isn't bound")
         });
       else
-      // Binds the layout leaves doing nothing: the strip ones with no strip,
-      // Hyprland's split toggle (dwindle's) on its scrolling layout
-      if (bind.action.startsWith("strip") && CompositorManager.supports.stripsAlways !== true && !WorkspacesConfig.hasStrips)
-        found.push({
-          "level": "info",
-          "text": I18n.tr("Only does something on the scrolling layout")
-        });
-      else if (bind.action === "toggleSplit" && WorkspacesConfig.scrolling && CompositorManager.supports.strips === true && CompositorManager.supports.splitToggle === true)
+      // Hyprland's split toggle (dwindle's) does nothing on its scrolling
+      // layout (the strip binds with no strip aren't bound at all: held)
+      if (bind.action === "toggleSplit" && WorkspacesConfig.scrolling && CompositorManager.supports.strips === true && CompositorManager.supports.splitToggle === true)
         found.push({
           "level": "info",
           "text": I18n.tr("Does nothing on the scrolling layout")
@@ -423,7 +477,7 @@ QtObject {
           "level": "info",
           "text": I18n.tr("Fires when tapped on its own")
         });
-      if (ids[i] !== "" && counts[ids[i]] > 1)
+      if (ids[i] !== "" && clashes(i))
         found.push({
           "level": "error",
           "text": I18n.tr("Bound more than once here")
@@ -452,7 +506,7 @@ QtObject {
 
   // The binds on keys the user's compositor config binds too
   readonly property var userConflicts: root.binds.map((bind, index) => {
-    const id = bind.paused ? "" : BindKeys.keyId(bind.key);
+    const id = root.held[index] ? BindKeys.keyId(bind.key) : "";
     return id !== "" && KeybindManager.userKeyCounts[id] > 0 ? index : -1;
   }).filter(index => index >= 0)
 
@@ -632,11 +686,12 @@ QtObject {
     if (!preset)
       return [];
     const ids = draft.local.map(bind => BindKeys.keyId(bind.key));
-    const same = (a, b) => a.action === b.action && String(a.argument ?? "") === String(b.argument ?? "");
+    const same = (a, b) => a.action === b.action && String(a.argument ?? "") === String(b.argument ?? "") && Utils.deepEqual(BindConditions.compositorsOf(a).slice().sort(), BindConditions.compositorsOf(b).slice().sort()) && (a.whenLayout ?? "") === (b.whenLayout ?? "") && (a.whenMonitors ?? "") === (b.whenMonitors ?? "");
     return preset.binds.map(bind => {
       const id = BindKeys.keyId(bind.key);
       const on = ids.map((each, i) => each === id ? i : -1).filter(i => i >= 0);
-      const active = on.filter(i => draft.local[i].paused !== true);
+      // A bind whose "Only when" never holds with this one's leaves it the key
+      const active = on.filter(i => draft.local[i].paused !== true && !BindConditions.exclusive(draft.local[i], bind));
       const resumable = on.filter(i => draft.local[i].paused === true && same(draft.local[i], bind));
       let status = "new";
       let takenBy = [];

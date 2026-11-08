@@ -60,6 +60,7 @@ Monitors on Hyprland's `scrolling` layout: how they're configured, how the Lua r
 - A tiled window dropped on a strip workspace lands as a new column after the nearest one (`stripDropTarget`). `placeWindow` focuses the target, after which scrolling opens it.
 
 ### Binds and onboarding
+- The `strip*` actions are bound only while there are strips ([Keybinds](keybinds.md) › Only when), whatever binds them.
 - The Keybinds page's Strips preset is listed while there are strips. It binds:
   - the `strip*` dispatcher actions: `swapcol`, `colresize ±conf`, `fit visible`
   - `SUPER + mouse_down`/`mouse_up` to focus right/left (`focusDir`), which moves along the strip.
