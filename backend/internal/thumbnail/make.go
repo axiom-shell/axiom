@@ -23,6 +23,7 @@ import (
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/webp"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/procprio"
 	"golang.org/x/image/draw"
@@ -30,16 +31,17 @@ import (
 
 const pngSignature = "\x89PNG\r\n\x1a\n"
 
-// exitUnreadable is the child's exit code for a file it can't make a
-// thumbnail of (recorded as failed, not tried again until it changes)
-const exitUnreadable = 3
-
-// ErrUnreadable: the file isn't an image it can decode, or is too large
+// ErrUnreadable: the file isn't an image it can decode, or is too large.
+// The child returns it as Refused, so its exit code (axerr.ExitCode) says
+// so: recorded as failed, not tried again until the file changes.
 var ErrUnreadable = errors.New("thumbnail: not an image it can make a thumbnail of")
+
+// exitUnreadable is that exit code
+var exitUnreadable = axerr.ExitCode(axerr.New(axerr.Refused, ""))
 
 // RunChild is `axiom thumbnail`: every thread to nice 10 and the lowest
 // best-effort disk priority, a memory limit, then the request on stdin.
-// It returns ErrUnreadable for a file it can't decode.
+// A file it can't decode is a Refused error wrapping ErrUnreadable.
 func RunChild(ctx context.Context, stdin io.Reader) error {
 	if err := procprio.Background(10); err != nil {
 		return err
@@ -49,18 +51,12 @@ func RunChild(ctx context.Context, stdin io.Reader) error {
 	if err := json.NewDecoder(stdin).Decode(&req); err != nil {
 		return err
 	}
-	return Make(req)
-}
-
-// ExitCode is the child's exit code for RunChild's error.
-func ExitCode(err error) int {
-	switch {
-	case err == nil:
-		return 0
-	case errors.Is(err, ErrUnreadable):
-		return exitUnreadable
+	if err := Make(req); errors.Is(err, ErrUnreadable) {
+		return axerr.Wrap(axerr.Refused, err, "no thumbnail of this file")
+	} else if err != nil {
+		return err
 	}
-	return 1
+	return nil
 }
 
 // Make decodes req.Src, scales it to fit req.Size (never up), and writes

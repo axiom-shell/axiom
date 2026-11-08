@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/filesearch"
 )
 
@@ -25,7 +26,7 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-		os.Exit(ExitCode(err))
+		os.Exit(axerr.ExitCode(err))
 	}
 	os.Exit(m.Run())
 }
