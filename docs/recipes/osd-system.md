@@ -57,7 +57,7 @@ icon: toggle_on
 group: Power        # one of the OSD groups in index.yaml's x-libraryGroups
 tile: standard      # its tiles or bars: the item's `tile` switch, labelled "Icon"; a system with bars names it:
 #   tile: {variant: standard, tile: {title: Bar, description: Its bar in the OSD.}}  (as Brightness and Audio do)
-# barNames: label   # it shows bars: where the settings' Bars part finds them (label: it is one bar; {from: <list setting>, by, named, repeats, barOnly}: each entry of that list is one)
+# barNames: {bar: foo}  # it shows bars: where the settings' Bars part finds them and how they're keyed, which tst_OSDSystems checks against exposes ({bar: <its key>}: it is one bar; {from: <list setting>, by, named, repeats, keys, barOnly}: each entry of that list is one, an ItemId `id` on each, keyed by its kind, `keys` naming one that differs, a kind it repeats <kind>:<its id>)
 # card: standard    # cards beside its tiles: the item's `card` switch (a card-only system names no part)
 # settings:         # its own keys, each with a default; one only its tile uses: x-showIf: {tile: true}
 ```

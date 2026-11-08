@@ -70,7 +70,7 @@ EntryListCard {
         }
       ]
     })
-  ownKeys: ["systems", "barLayout"]
+  ownKeys: ["systems", "barLayout", "barOrder"]
   otherTitle: I18n.tr("Place and timing")
   wide: true
   labelOf: osd => OSDConfig.labelOf(osd)
@@ -91,9 +91,7 @@ EntryListCard {
       id: systemsEditor
       entry: root.entry
       foldKey: root.foldKey + ":systems"
-      onEdited: systems => root.edit({
-          "systems": systems
-        })
+      onEdited: values => root.edit(values)
       onSelectedTypeChanged: root.focusType = systemsEditor.selectedType
       Component.onCompleted: root.focusType = systemsEditor.selectedType
     },

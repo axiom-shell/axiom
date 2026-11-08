@@ -21,7 +21,9 @@ import qs.components.views.Layouts
 // bar (`x-barNames: {bar}`, Brightness) isn't listed here, and a system's
 // list of bars (`x-barNames`' `from`, Audio's `bars`) isn't in its form.
 // Every system comes from the schema's OSDSystem kind
-// (OSDConfig.systemTypes). Edits are `edited(systems)`, the whole list.
+// (OSDConfig.systemTypes). Edits are `edited(values)` for the entry:
+// `{ systems }`, the whole list (removing one, with `barOrder` less its
+// bars' keys).
 ColumnLayout {
   id: root
 
@@ -30,7 +32,7 @@ ColumnLayout {
   // The settings group key it folds under
   property string foldKey
 
-  signal edited(var systems)
+  signal edited(var values)
 
   readonly property var listSchema: ConfigManager.configSchema.definitions.OSDEntry.properties.systems
   // A type listed twice (by hand) keeps its first item, as OSDConfig.osds
@@ -79,14 +81,28 @@ ColumnLayout {
     systems.push(SchemaValidation.applyDefaults({
       "type": type
     }, info.schema, ConfigManager.configSchema));
-    root.edited(systems);
+    root._commit(systems);
     root._picked = type;
   }
 
+  function _commit(systems) {
+    root.edited({
+      "systems": systems
+    });
+  }
+
+  // Removes a system, and its bars' keys from the OSD's bar order
   function remove(index) {
     const systems = Utils.clone(root.systems);
-    systems.splice(index, 1);
-    root.edited(systems);
+    const [gone] = systems.splice(index, 1);
+    const order = root.entry?.barOrder ?? [];
+    const kept = order.filter(key => !key.startsWith(gone.type + "/"));
+    const values = {
+      "systems": systems
+    };
+    if (kept.length !== order.length)
+      values.barOrder = kept;
+    root.edited(values);
   }
 
   // Moves the system at `from` (its index in `systems`) to before the
@@ -101,7 +117,7 @@ ColumnLayout {
     const systems = Utils.clone(root.systems);
     const [moved] = systems.splice(from, 1);
     systems.splice(before > from ? before - 1 : before, 0, moved);
-    root.edited(systems);
+    root._commit(systems);
   }
 
   function editSelected(key, value) {
@@ -109,7 +125,7 @@ ColumnLayout {
       return;
     const systems = Utils.clone(root.systems);
     systems[root.selectedIndex][key] = value;
-    root.edited(systems);
+    root._commit(systems);
   }
 
   Layout.fillWidth: true

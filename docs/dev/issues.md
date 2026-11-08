@@ -284,6 +284,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** trivial
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
+### The OSD Bars part's form reads a gone selection as it's torn down
+- **Where:** `qml/components/views/Settings/OSDBarsEditor.qml` (the `barForm` component: `props`, `values`)
+- **What:** The live shell logged `TypeError: Value is null and could not be converted to an object` at `OSDBarsEditor.qml` lines 359 and 365 (the osd-settings branch's dev tree, 2026-11-08): the selected bar's form re-evaluates `root._selectedSpec.from` and `root.selected.index` with `root._selectedSpec` / `root.selected` null while its own `isEntry` still reads true: a form outliving its selection, before the `KeyedLoader` drops it. Which edit leaves the selection null (the last bar removed, another OSD's tab with no bars) wasn't traced. A log warning each time. Fix: read them optionally (`root._selectedSpec?.from`, `root.selected?.index`), or gate the form on `root.selected`.
+- **Size:** trivial
+- **Found:** 2026-11-08, while ordering the OSD's bars across systems (barOrder)
+
 ## Shell-wide: windows, screens, reloads and actions
 
 ### The screen-share picker repeats the shared prompt's modal frame

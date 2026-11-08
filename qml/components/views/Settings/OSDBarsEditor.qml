@@ -11,16 +11,17 @@ import qs.components.views.Layouts
 
 // i18n: keys from the schema (bar kinds, system labels, titles)
 // An OSD's bars in its settings tab (OSDListCard), folding under "Bars":
-// every bar it shows, in order, whichever system it's a setting of (the
-// systems' `x-barNames`, OSDConfig.barRows: each entry of Audio's `bars`,
-// Brightness as one), dragged to reorder (within its system; across
-// another system's bars it moves its whole system in the list, since bars
-// of two systems don't interleave), clicked to select, removed by its X;
-// Add opens a picker of the bar kinds (OSDConfig.barKinds). The selected
+// every bar it shows, in its order (its `barOrder`, as the host shows
+// them: OSDConfig.orderedBarRows), whichever system it's a setting of
+// (the systems' `x-barNames`: each entry of Audio's `bars`, Brightness as
+// one), dragged to reorder anywhere (a drag writes the whole order to
+// `barOrder`, systems mixed), clicked to select, removed by its X; Add
+// opens a picker of the bar kinds (OSDConfig.barKinds). The selected
 // bar's form (its entry's schema, or a one-bar system's settings) is
 // beside the list with the room (SplitColumns), the bars' layout
-// (`barLayout`) under the list. Storage is the systems' own: edits are
-// `edited(values)`, `{ systems }` or `{ barLayout }` for the entry.
+// (`barLayout`) under the list. The bars stay their systems' settings:
+// edits are `edited(values)` for the entry, `{ systems }` (with
+// `barOrder` when a key in it changes), `{ barOrder }` or `{ barLayout }`.
 ColumnLayout {
   id: root
 
@@ -32,18 +33,17 @@ ColumnLayout {
   signal edited(var values)
 
   readonly property var systems: root.entry?.systems ?? []
+  // Its bars' order, by key ([] keeps the systems' order)
+  readonly property var order: root.entry?.barOrder ?? []
   readonly property var layoutSchema: ConfigManager.configSchema.definitions.OSDEntry.properties.barLayout
-  // Every bar, in order: { system (its item's index in `systems`), type,
-  // index (in its `from` list, -1 for a one-bar system), name, icon, off
-  // (its system's bars are switched off) }
-  readonly property var rows: [].concat(...root.systems.map((item, system) => OSDConfig.barRows(item).map(bar => ({
-          "system": system,
-          "type": item.type,
-          "index": bar.index,
-          "name": bar.name,
-          "icon": bar.icon,
-          "off": item.tile === false
-        }))))
+  // Every bar, in the OSD's order: { key ("<System>/<its key>"), system
+  // (its item's index in `systems`), type, index (in its `from` list, -1
+  // for a one-bar system), name, icon, off (its system's bars are
+  // switched off) }
+  readonly property var rows: OSDConfig.orderedBarRows(root.systems, root.order).map(bar => Object.assign(bar, {
+      "type": root.systems[bar.system].type,
+      "off": root.systems[bar.system].tile === false
+    }))
   // The kinds the picker offers: a list's kinds it may repeat
   // (`x-barNames`' `repeats`) and those it has no bar of yet, and the
   // one-bar systems not in the list yet
@@ -76,15 +76,20 @@ ColumnLayout {
     root._pickedIndex = index;
   }
 
-  function _commit(systems) {
-    root.edited({
+  // `systems`, and `order` with it when given (a key in it changed)
+  function _commit(systems, order) {
+    const values = {
       "systems": systems
-    });
+    };
+    if (order !== undefined)
+      values.barOrder = order;
+    root.edited(values);
   }
 
   // A kind from the picker: "<System>" adds that one-bar system; a list's
   // kind ("<System>:<kind>") adds a bar to its system's item (switching
-  // its bars on), or the item with only that bar (its `barOnly`)
+  // its bars on), or the item with only that bar (its `barOnly`). With an
+  // order set, its key goes at its end (shown last, as it would be)
   function add(kindType) {
     const at = kindType.indexOf(":");
     const type = at < 0 ? kindType : kindType.slice(0, at);
@@ -99,7 +104,7 @@ ColumnLayout {
       systems.push(SchemaValidation.applyDefaults({
         "type": type
       }, schema, ConfigManager.configSchema));
-      root._commit(systems);
+      root._commit(systems, root._appended(type + "/" + OSDParts.barKey(spec, null)));
       root._pick(type, -1);
       return;
     }
@@ -122,12 +127,24 @@ ColumnLayout {
       if (systems[index].tile === false)
         systems[index].tile = true;
     }
-    root._commit(systems);
+    root._commit(systems, root._appended(type + "/" + OSDParts.barKey(spec, bar)));
     root._pick(type, systems[index][spec.from].length - 1);
   }
 
-  // Removes a bar, or a one-bar system; an item left with no bars and
-  // nothing but its `barOnly` settings goes too
+  // The order with `key` added at its end; undefined (unchanged) while
+  // there's none
+  function _appended(key) {
+    return root.order.length > 0 ? root.order.filter(other => other !== key).concat([key]) : undefined;
+  }
+
+  // The order without `key`; undefined (unchanged) when it hasn't it
+  function _without(key) {
+    return root.order.includes(key) ? root.order.filter(other => other !== key) : undefined;
+  }
+
+  // Removes a bar, or a one-bar system, and its key from the order; an
+  // item left with no bars and nothing but its `barOnly` settings goes
+  // too
   function remove(rowIndex) {
     const row = root.rows[rowIndex];
     if (!row)
@@ -146,46 +163,41 @@ ColumnLayout {
       if (item[spec.from].length === 0 && only && Object.keys(only).every(key => JSON.stringify(item[key]) === JSON.stringify(only[key])))
         systems.splice(row.system, 1);
     }
-    root._commit(systems);
+    root._commit(systems, root._without(row.key));
   }
 
   // Moves the bar at row `from` to before row `to` (the count: the end),
-  // counted as if it were still in place: within its own system's bars it
-  // moves there; past them it moves its whole system, after the system of
-  // the bar above the drop going down, before the one below it going up
+  // counted as if it were still in place, across systems as anywhere:
+  // the order from then on is the whole list's, explicit (`barOrder`)
   function move(from, to) {
     const row = root.rows[from];
     if (!row || to === from || to === from + 1)
       return;
-    const start = root.rows.findIndex(other => other.system === row.system);
-    const end = start + root.rows.filter(other => other.system === row.system).length;
-    const systems = Utils.clone(root.systems);
-    if (to >= start && to <= end) {
-      const list = systems[row.system][OSDConfig.barSpecOf(row.type).from];
-      const local = to - start;
-      const [moved] = list.splice(row.index, 1);
-      list.splice(local > row.index ? local - 1 : local, 0, moved);
-      root._commit(systems);
-      root._pick(row.type, local > row.index ? local - 1 : local);
-      return;
-    }
-    const target = to > end ? root.rows[to - 1].system + 1 : root.rows[to].system;
-    const [item] = systems.splice(row.system, 1);
-    systems.splice(target > row.system ? target - 1 : target, 0, item);
-    root._commit(systems);
+    const keys = root.rows.map(other => other.key);
+    const [moved] = keys.splice(from, 1);
+    keys.splice(to > from ? to - 1 : to, 0, moved);
+    root.edited({
+      "barOrder": keys
+    });
   }
 
-  // The selected bar's setting `key`: its list entry's, or its system's
+  // The selected bar's setting `key`: its list entry's, or its system's.
+  // A kind changed changes its key (an App bar's is by its id): the order
+  // names it by the new one, in its place
   function editSelected(key, value) {
     const row = root.selected;
     if (!row)
       return;
     const systems = Utils.clone(root.systems);
-    if (row.index < 0)
+    if (row.index < 0) {
       systems[row.system][key] = value;
-    else
-      systems[row.system][root._selectedSpec.from][row.index][key] = value;
-    root._commit(systems);
+      root._commit(systems);
+      return;
+    }
+    const entry = systems[row.system][root._selectedSpec.from][row.index];
+    entry[key] = value;
+    const renamed = row.type + "/" + OSDParts.barKey(root._selectedSpec, entry);
+    root._commit(systems, renamed !== row.key && root.order.includes(row.key) ? root.order.map(other => other === row.key ? renamed : other) : undefined);
   }
 
   Layout.fillWidth: true
