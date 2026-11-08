@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.services.ui
 import qs.components.reusable
 
 // One OSD level bar: a system's bar (an `exposes` entry with part "bar")
@@ -75,6 +76,11 @@ Item {
     scrollStep: OSDConfig.scrollStep
     volumeLevel: root.levelState?.level ?? 0
     iconSource: root.levelState?.icon || root.entry.icon || ""
-    onVolumeChanged: newVolume => root.system?.watch?.setLevel(root.entry.key, newVolume)
+    // marked as the pointer's (its entry's mark, OSDEngine.markOf), so
+    // another OSD listing the system stays shut
+    onVolumeChanged: newVolume => {
+      ShellManager.onScreen(root.entry.mark ?? root.entry.key);
+      root.system?.watch?.setLevel(root.entry.key, newVolume);
+    }
   }
 }

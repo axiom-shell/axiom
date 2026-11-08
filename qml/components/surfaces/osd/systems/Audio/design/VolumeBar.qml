@@ -12,8 +12,7 @@ import qs.components.reusable
 //   app:        the streams its apps match by name (the first shown, all set)
 //   microphone: the default input's volume
 // its icon a click on which mutes it. Whether a change opens the OSD is
-// AudioWatch's; this only draws and sets (was PipewireVolumeBar and
-// OSDBar's microphone bar)
+// AudioWatch's; this only draws and sets
 Item {
   id: root
 
@@ -62,7 +61,10 @@ Item {
     onIconClicked: root.toggleMute()
   }
 
+  // Each set marked as the pointer's (its entry's mark, OSDEngine.markOf),
+  // so another OSD listing Audio stays shut
   function setVolume(newVolume) {
+    ShellManager.onScreen(root.entry.mark ?? root.entry.key);
     if (root.isMaster)
       AudioManager.setVolume(newVolume);
     else if (root.isMic)
@@ -72,7 +74,6 @@ Item {
   }
 
   function toggleMute() {
-    // (marked as the pointer's, so another OSD listing Audio stays shut)
     if (root.isMaster)
       ActionsManager.run("toggleMute", {
         "fromScreen": true
@@ -81,7 +82,9 @@ Item {
       ActionsManager.run("toggleMicMute", {
         "fromScreen": true
       });
-    else
+    else {
+      ShellManager.onScreen(root.entry.mark ?? root.entry.key);
       AudioManager.setNodesMuted(root._nodes, !root.muted);
+    }
   }
 }

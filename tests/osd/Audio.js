@@ -26,8 +26,7 @@
 //                      the device kind's, unmuted
 // Settled (AudioWatch.settled): AudioManager.sinkSettled() for master and
 // audio, sourceSettled() for micLevel and microphone; a stream bar (other,
-// app) is always settled, as the old PipewireVolumeBar never asked (its
-// set of streams changing is `resetBy`).
+// app) is always settled (its set of streams changing is `resetBy`).
 //
 // decided: the microphone's bar is the key `micLevel` (its mark
 //   "microphone"), since the input device's tile keeps `microphone`; an App

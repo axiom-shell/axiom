@@ -4,7 +4,7 @@ import qs.components.methods
 import qs.components.surfaces.osd.engine
 
 // OSDEngine: the judgement by model and policy, the arbitration between
-// changes (what was OSDItems.replaces / besideCard), the card routing
+// changes, the card routing
 // (cardRoute / opensCard), over small stand-in definitions declaring what
 // the real systems do
 TestCase {
@@ -611,7 +611,7 @@ TestCase {
     own.destroy();
   }
 
-  // What was OSDItems.replaces / besideCard, as declarations
+  // The arbitration between changes, as declarations
   function test_arbitrate_data() {
     const w = OSDEngine.quietWindow;
     const headset = {

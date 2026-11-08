@@ -83,10 +83,6 @@ Item {
       "screen": root.screen,
       "osdId": root.osdId
     })
-    onSourceChanged: {
-      if (String(definitionLoader.source) === "")
-        watchLoader.source = "";
-    }
   }
 
   Loader {

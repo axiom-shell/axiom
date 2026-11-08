@@ -2,8 +2,7 @@ import QtQuick
 import QtTest
 import qs.components.methods
 
-// OSDParts: the row, the parts' order and their deadlines (moved from
-// tst_OSDItems with the helpers)
+// OSDParts: the row, the parts' order and their deadlines
 TestCase {
   name: "OSDParts"
 

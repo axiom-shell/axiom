@@ -72,7 +72,8 @@ QtObject {
   // a Bluetooth profile switch changes
   property var updateFields: ["icon", "label"]
   // Its card folds back when its own tile turns off without a card (it
-  // would say what no longer holds: a VPN, Wi-Fi, the charger)
+  // would say what no longer holds: a VPN, Wi-Fi, a Bluetooth device, the
+  // charger)
   property bool retractsCardWhenOff: false
   // Its cards are the lowest: one never replaces another system's card
   // out, at any age (Now playing's pause, as a device switch pauses the

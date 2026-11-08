@@ -7,8 +7,7 @@
 // the camera and the microphone at once is one card. A capture stopping
 // under its card (a picker's preview) keeps naming the apps: the change
 // carries its `members` as it saw them (the card's memory, kept by the
-// host with the change while the card is out; was
-// OSDStatusSource._lastApps).
+// host with the change while the card is out).
 //
 // State by key (PrivacyWatch; PrivacyManager.cameraCaptures /
 // screenCaptures, AudioManager.micCaptures):

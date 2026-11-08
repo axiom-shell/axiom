@@ -5,10 +5,8 @@
 //
 // FROM origin/bluetooth-daemon: every row below that has an event (the
 // per-device card, battery low / critical, its `alert`, and Cross.js's
-// absorbing of Audio's switch by address) comes from that unmerged branch
-// (OSDItems.tile / card "bluetooth", OSDItems.alert, OSDItems.replaces'
-// _connectedNow, OSDItems.retracting, tst_OSDItems test_bluetooth /
-// test_bluetooth_knockOn / test_alert), which merges before this rewrite.
+// absorbing of Audio's switch by address) comes from that unmerged branch,
+// which merges before this rewrite.
 // Only the radio's on/off rows are today's main.
 //
 // State by key (BluetoothWatch):
@@ -28,7 +26,7 @@
 //   scalar).
 // decided: a battery low / critical card carries `alert: true`
 //   (`alertKinds: ["low", "critical"]`): it opens the OSD even just after
-//   a click marked `bluetooth` (was OSDItems.alert; OSDEngine.opens).
+//   a click marked `bluetooth` (OSDEngine.opens).
 // decided: the tile carries `event` and `devices` (the last event's), which
 //   absorbs() reads against Audio's tile `address`.
 

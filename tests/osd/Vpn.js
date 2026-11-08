@@ -14,10 +14,9 @@
 //        row, as it is now), address (the first one up's IPv4) }
 //
 // decided: declared, no judge(): model "set" with `memberState: { field:
-//   "state", on: "on", off: "off" }` (was OSDItems.vpnStep, now in the
-//   engine): the set is the VPNs up; one up that was known before (settled
-//   "on" or "off") is "add" (its card), one down that is still known is
-//   "remove"; a row in transit is judged as it last settled (remember keeps
+//   "state", on: "on", off: "off" }`: the set is the VPNs up; one up
+//   that was known before (settled "on" or "off") is "add" (its card),
+//   one down that is still known is "remove"; a row in transit is judged as it last settled (remember keeps
 //   that reading), one appearing or going away is neither. With both in
 //   one reading (a switch) it's the add.
 // decided: the drop's card is `onUnexpectedRemove: "last"` (a card for the

@@ -101,8 +101,6 @@ QtObject {
     for (const e of def.exposes ?? []) {
       const was = before[e.key];
       const now = after[e.key];
-      if (OSDEngine.same(OSDEngine.policy(def, e.key, "model"), was, now))
-        continue;
       const what = OSDEngine.judge(def, e.key, was, now, {
         "at": at,
         "byUser": OSDEngine.byUser(def, e.key, ShellManager.markAge(OSDEngine.markOf(def, e.key))),
@@ -123,7 +121,6 @@ QtObject {
   }
 
   onStateChanged: Qt.callLater(root._check)
-  onDefinitionChanged: Qt.callLater(root._check)
 
   readonly property Timer _settle: Timer {
     // behaviour timing: how long services take to report their state

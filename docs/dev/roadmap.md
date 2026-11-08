@@ -189,10 +189,11 @@ Found along the way:
 - [A VPN secret request held when the shell leaves waits for NetworkManager's timeout](issues.md#a-vpn-secret-request-held-when-the-shell-leaves-waits-for-networkmanagers-timeout) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 - [The OSD's hover strip opens an empty bars slot when every bar is left out](issues.md#the-osds-hover-strip-opens-an-empty-bars-slot-when-every-bar-is-left-out) (reviewing the OSD engine branch)
-- [An OSD on a screen that isn't the target opens its parts while shut and then stays stuck closing](issues.md#an-osd-on-a-screen-that-isnt-the-target-opens-its-parts-while-shut-and-then-stays-stuck-closing) (the same)
+- [An OSD on a screen that isn't the target opens its parts while shut and then stays open](issues.md#an-osd-on-a-screen-that-isnt-the-target-opens-its-parts-while-shut-and-then-stays-open) (the same)
 - [An OSD tile pops in on its own easing curve](issues.md#an-osd-tile-pops-in-on-its-own-easing-curve) (the same)
 - [The OSD's drive tooltip names the last drive an event came from, even one removed](issues.md#the-osds-drive-tooltip-names-the-last-drive-an-event-came-from-even-one-removed) (the same)
 - [The OSD's System volume bar stays enabled with no audio sink](issues.md#the-osds-system-volume-bar-stays-enabled-with-no-audio-sink) (the same)
+- [The OSD's Wi-Fi Connected card goes blank when the network drops while it's out](issues.md#the-osds-wi-fi-connected-card-goes-blank-when-the-network-drops-while-its-out) (the same)
 - [A type library's search matches the "Other" heading of every ungrouped type](issues.md#a-type-librarys-search-matches-the-other-heading-of-every-ungrouped-type) (the same)
 
 #### The launch gate

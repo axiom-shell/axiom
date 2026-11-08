@@ -143,7 +143,7 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
-### An OSD on a screen that isn't the target opens its parts while shut and then stays stuck closing
+### An OSD on a screen that isn't the target opens its parts while shut and then stays open
 - **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_showLevel`, `_showTile`, `_showCard`, `_due`, `preview`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`), `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`)
 - **What:** With two monitors and an OSD whose `screen` is the focused one, screen B's host still opens its parts while shut (`force`), but `poke` doesn't show B. At the parts' due time `collapse` calls `hide()`, a no-op on a closed popout, so the parts stay open. Later, with B focused, `onHostOpenChanged` sees the stale open parts and skips `_expose`, their deadlines are past and the due timer is stopped, so the OSD on B stays open until the pointer crosses it. The OSD content before the engine had the same structure (`_openBox`). PLAUSIBLE: two monitors, an OSD on the focused screen, a change while the other is focused, then focusing it settles it. Fix: in each `_show*`, drop the change when the host is shut on a screen `ShellManager.showsOn` rejects; `preview()` the same.
 - **Size:** small
@@ -165,6 +165,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Where:** `qml/components/surfaces/osd/systems/Audio/design/VolumeBar.qml` (`enabled`)
 - **What:** `enabled` is `root.isMaster || …`, so the System volume bar takes drags and the mute click with no default sink (nothing to set), where the Microphone bar is disabled with no source and an App bar with no stream. The old volume bar did the same (enabled with the system volume in use). Fix: `AudioManager.defaultSink !== null` for the master bar.
 - **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### The OSD's Wi-Fi Connected card goes blank when the network drops while it's out
+- **Where:** `qml/components/surfaces/osd/systems/Wifi/Wifi.qml` (`card`, `tile`, `onRemove`)
+- **What:** A host re-reads a card out against the state now, and Wi-Fi's `card` takes its name from `tile("wifi", state.wifi)`, which names the network only while joined. Leaving a network is `onRemove: "none"` and the radio stays on, so `retractsCardWhenOff` doesn't fold the card: if the network drops while its Connected card is out, the card stays with an empty title and no signal. The OSD before the engine did the same. Fix: retract the card on leaving, or read the name the change carried.
+- **Size:** small
 - **Found:** 2026-11-08, while reviewing the OSD engine branch
 
 ### A headset's low-battery card gives way to Audio switching to that headset

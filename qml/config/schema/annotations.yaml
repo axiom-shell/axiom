@@ -23,7 +23,6 @@ x-disabledNote: the note instead (English, translated); `false` for none, where 
 x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): its host sizes it elastic (its QML sets no sizePolicy) and only it takes a layout `minSize` and `maxSize`.'
 x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
-x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
 x-enumGroups: '`{ value: group }`: on an ordered array of enum strings (`x-ordered`), files each option under a group in the list of those not chosen.'
 x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
 x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'

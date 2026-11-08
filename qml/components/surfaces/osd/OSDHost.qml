@@ -450,11 +450,9 @@ Item {
       return;
     }
     dueTimer.stop();
-    root._snapping = true;
     root._open = ({});
     root._deadlines = ({});
     root._order = [];
-    root._snapping = false;
     root._clearRing();
     root._kept = [];
     root._previewAll = false;
