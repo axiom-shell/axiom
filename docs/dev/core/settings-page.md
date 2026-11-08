@@ -24,7 +24,7 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - The Dock and OSD list cards are `EntryListCard`s:
   - entries as tabs
   - the screen picker every placed surface has (a floating `ScreenSpotPicker`: its nine spots, the centre, each edge's middle and the corners), with `spotOf` reading `edge`/`position` and, detached, `distance`; a click or drag on it sets `edge` and `position` (nearest edge), and `detached` and `distance` (attached within its snap of an edge)
-  - Show/Duplicate/Delete
+  - Show/Duplicate/Delete, and the card's own `headerButtons` before Add in the header (the OSD's Preview: [OSD](../features/osd.md) › Editing)
   - `entryContent` for extras such as the dock's pinned apps and the OSD's systems and bars (`OSDSystemsEditor`, `OSDBarsEditor`); `ownKeys` names the keys it edits, left out of the other settings
   - the entry's other settings: its form, folding under `otherTitle` when it has one (the OSD's "Place and timing").
   - `wide` (the OSD's, its section's `x-card` `wide: true`): while the card is at least `Widget.px(720)` wide, the picker and the other settings' fold go side by side at the top (`reusable/SplitColumns`, 45 % / 55 %), `entryContent` full width under them; narrower, they stack as without it. The OSD's systems and bars editors do the same inside (`SplitColumns` at `Widget.px(560)`): the list on the left (40 %), the selected entry's form on the right.

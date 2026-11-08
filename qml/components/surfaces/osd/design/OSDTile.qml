@@ -11,7 +11,8 @@ import qs.components.reusable
 // also struck through: SlashedIcon). The one that just changed is ringed
 // (the ring fading in and out) and pops in. Hovered, it takes a faint
 // layer at once and names itself and its state; with `canToggle` a click
-// runs its action (`toggled`).
+// runs its action (`toggled`). With `highlight` (its system selected in
+// the settings' preview) it's outlined in the accent, apart from the ring.
 Rectangle {
   id: tile
 
@@ -24,6 +25,8 @@ Rectangle {
   property bool current: false
   // A click runs its action
   property bool canToggle: false
+  // Outlined: its system is selected in the settings' preview
+  property bool highlight: false
   readonly property int size: Widget.px(40)
 
   signal toggled
@@ -124,6 +127,26 @@ Rectangle {
       radius: Math.max(0, tile.radius - Widget.px(2))
       color: "transparent"
       border.width: Widget.px(2)
+      border.color: Theme.background
+    }
+  }
+
+  // The preview's outline: the accent, a line of the background inside
+  // it so it reads on a lit (accent) tile too
+  Rectangle {
+    anchors.fill: parent
+    visible: tile.highlight
+    radius: tile.radius
+    color: "transparent"
+    border.width: Widget.px(2)
+    border.color: Theme.accent
+
+    Rectangle {
+      anchors.fill: parent
+      anchors.margins: Widget.px(2)
+      radius: Math.max(0, tile.radius - Widget.px(2))
+      color: "transparent"
+      border.width: 1
       border.color: Theme.background
     }
   }

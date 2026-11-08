@@ -13,6 +13,8 @@ import qs.components.reusable
 // and scroll and its icon's click handed to the watcher (setLevel,
 // iconClicked). Left out while its state isn't `available` (Brightness
 // on a monitor with no controller) or, without a design, has no level.
+// With `highlight` (its system selected in the settings' preview) it's
+// outlined in the accent.
 Item {
   id: root
 
@@ -27,6 +29,8 @@ Item {
   // The OSD's own settings: bars run vertically, levels shown as numbers
   property bool vertical: true
   property bool showPercent: true
+  // Outlined: its system is selected in the settings' preview
+  property bool highlight: false
   readonly property int orientation: root.vertical ? Qt.Vertical : Qt.Horizontal
 
   readonly property string design: root.entry.design ?? ""
@@ -77,5 +81,16 @@ Item {
     iconTip: root.levelState?.muted === true ? I18n.tr("Unmute") : I18n.tr("Mute")
     onVolumeChanged: newVolume => root.system?.watch?.setLevel(root.entry.key, newVolume)
     onIconClicked: root.system?.watch?.iconClicked(root.entry.key)
+  }
+
+  // The preview's outline
+  Rectangle {
+    anchors.fill: parent
+    visible: root.highlight && root.shown
+    z: 1
+    radius: Widget.radius
+    color: "transparent"
+    border.width: Widget.px(2)
+    border.color: Theme.accent
   }
 }
