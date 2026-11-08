@@ -1,7 +1,7 @@
 # Removable drives
 
 > **Files:** `qml/services/system/DrivesManager.qml`, `qml/components/methods/DriveInfo.qml`, `qml/components/content/Drives/Drives.qml`, `qml/components/content/parts/DriveRow.qml`, `qml/components/content/parts/SecretField.qml`, `qml/components/bar/widgets/Drives/Drives.qml`, `qml/components/surfaces/osd/systems/Drives/`, `qml/services/ui/LauncherCommands.qml`, `qml/config/DrivesConfig.qml`
-> **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.commands.fileManager`; the OSD's `drive` status
+> **Config:** `Drives` (`DrivesConfig`: `notify`, `onInsert`, `warnUnplugged`, `ignore`), `Apps.commands.fileManager`; the OSD's Drives system
 > **Related:** [OSD](osd.md), [Notifications](notifications.md), [Prompts](prompts.md), [VPN](vpn.md), [Protocol](../backend/protocol.md), [D-Bus](../backend/dbus.md)
 
 USB sticks, memory cards and discs: an OSD card or a notification as one is plugged in, mounting, opening, unmounting, unlocking a LUKS volume and ejecting, from the bar, an overlay card, the launcher and IPC. udisks2 does the work, reached on the system bus by the axiom daemon; Quickshell has no udisks service.

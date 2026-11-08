@@ -211,12 +211,10 @@ Item {
 
   // The card an OSD with no bars or icons opens on (its hover strip, the
   // Show button): a card key its system offers as `preview` (Now
-  // playing), its cards on and not quiet; null for none
+  // playing), its card shown here (OSDEngine.opensCard); null for none
   function _previewChange() {
-    if (!root.osd.cardsEnabled)
-      return null;
     for (const host of root._hosts) {
-      if (!host.definition || host.options.card === false || host.options.quiet === true)
+      if (!host.definition || !OSDEngine.opensCard(root.osd, host.type))
         continue;
       const e = host.definition.exposes.find(entry => entry.preview === true);
       if (e)
