@@ -42,6 +42,9 @@ func TestV101MakesTheOSDsPartsOneListOfSystems(t *testing.T) {
 		{"a quiet audio icon beside an opening bar isn't quiet",
 			`{"OSD":{"items":[{"id":"f","bars":{"items":[{"type":"master","showOsd":true}]},"statuses":{"items":["audio"],"quiet":["audio"]},"cards":{"items":[]}}]}}`,
 			`{"OSD":{"items":[{"id":"f","systems":[{"type":"Audio","bars":[{"type":"master","showOsd":true}],"tiles":["audio"]}]}]}}`, true},
+		{"a second bar of a kind but App is left out, its showOsd with it",
+			`{"OSD":{"items":[{"id":"h","bars":{"items":[{"type":"master","showOsd":true},{"type":"master","showOsd":false},{"type":"app","apps":["a"],"showOsd":true},{"type":"app","apps":["b"],"showOsd":true}]},"statuses":{"items":[]},"cards":{"items":[]}}]}}`,
+			`{"OSD":{"items":[{"id":"h","systems":[{"type":"Audio","bars":[{"type":"master","showOsd":true},{"type":"app","apps":["a"],"showOsd":true},{"type":"app","apps":["b"],"showOsd":true}],"tiles":[]}]}]}}`, true},
 		{"cards only: a card-only OSD",
 			`{"OSD":{"items":[{"id":"g","bars":{"items":[]},"statuses":{"items":[]},"cards":{"items":["screenshot","message"]}}]}}`,
 			`{"OSD":{"items":[{"id":"g","systems":[{"type":"Screenshot"},{"type":"Message"}]}]}}`, true},
@@ -54,7 +57,7 @@ func TestV101MakesTheOSDsPartsOneListOfSystems(t *testing.T) {
 
 func TestV101SaysWhatItDropped(t *testing.T) {
 	t.Parallel()
-	v, err := jsonx.Unmarshal([]byte(`{"OSD":{"items":[{"id":"x","bars":{"items":[{"type":"brightness"},{"type":"brightness"},{"type":"bogus"}]},"statuses":{"items":["old"]},"cards":{"items":[]}}]}}`))
+	v, err := jsonx.Unmarshal([]byte(`{"OSD":{"items":[{"id":"x","bars":{"items":[{"type":"brightness"},{"type":"brightness"},{"type":"master"},{"type":"master"},{"type":"bogus"}]},"statuses":{"items":["old"]},"cards":{"items":[]}}]}}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +65,7 @@ func TestV101SaysWhatItDropped(t *testing.T) {
 	if len(changes) != 2 {
 		t.Fatalf("changes %v", changes)
 	}
-	for _, want := range []string{"OSD x", "a second brightness bar", `"bogus"`, `"old"`} {
+	for _, want := range []string{"OSD x", "a second brightness bar", "a second master bar", `"bogus"`, `"old"`} {
 		if !strings.Contains(changes[1], want) {
 			t.Errorf("%q lacks %q", changes[1], want)
 		}

@@ -143,6 +143,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
+### An OSD on a screen that isn't the target opens its parts while shut and then stays stuck closing
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_showLevel`, `_showTile`, `_showCard`, `_close`, `preview`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`), `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`)
+- **What:** With two monitors and an OSD whose `screen` is the focused one, screen B's host still opens its parts while shut (`force`), but `poke` doesn't show B. At the parts' due time `_close` sets `_closing`, and `hide()` is a no-op on a closed popout, so `_closing` never resets. Later, with B focused, `onHostOpenChanged` sees the stale open parts and skips `_expose`, their deadlines are past and the due timer is stopped, so the OSD on B stays open until the pointer crosses it. The OSD content before the engine had the same structure (`_openBox`). PLAUSIBLE: two monitors, an OSD on the focused screen, a change while the other is focused, then focusing it settles it. Fix: in each `_show*`, drop the change when the host is shut on a screen `ShellManager.showsOn` rejects; `preview()` the same.
+- **Size:** small
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
 ## Overlay, modules and custom widgets
 
 ### A custom element sees another kind's element as its slot changes kind

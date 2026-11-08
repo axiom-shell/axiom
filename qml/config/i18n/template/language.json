@@ -1453,7 +1453,7 @@
     "In init.lua, after your plugin manager's setup (with lazy.nvim, after require(\"lazy\").setup(…)).": "",
     "In keyring": "",
     "In order, by name": "",
-    "In order. Other apps is the first playing stream no App bar matches.": "",
+    "In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.": "",
     "In quarter cards. Drag an edge or corner on the canvas, or step it here.": "",
     "In quarter cards: x and y from the top left, w and h its size.": "",
     "In secrets file": "",

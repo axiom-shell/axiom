@@ -164,6 +164,14 @@ func osdToSystems(entry *jsonx.Object) (dropped, opened []string) {
 				list = jsonx.Arr()
 				s.item.Set("bars", list)
 			}
+			// Audio shows one bar of each kind but App (its keys are unique)
+			if kind != "app" && slices.ContainsFunc(list.Items, func(b any) bool {
+				o, _ := b.(*jsonx.Object)
+				return o != nil && jsonx.ToString(o.Value("type")) == kind
+			}) {
+				drop(fmt.Sprintf("a second %s bar (Audio shows one of each)", kind))
+				continue
+			}
 			kept := jsonx.Obj("type", kind)
 			for _, k := range []string{"apps", "icon", "showOsd"} {
 				if v, ok := bar.Get(k); ok {

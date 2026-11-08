@@ -189,6 +189,7 @@ Found along the way:
 - [A VPN secret request held when the shell leaves waits for NetworkManager's timeout](issues.md#a-vpn-secret-request-held-when-the-shell-leaves-waits-for-networkmanagers-timeout) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 - [The OSD's hover strip opens an empty bars slot when every bar is left out](issues.md#the-osds-hover-strip-opens-an-empty-bars-slot-when-every-bar-is-left-out) (reviewing the OSD engine branch)
+- [An OSD on a screen that isn't the target opens its parts while shut and then stays stuck closing](issues.md#an-osd-on-a-screen-that-isnt-the-target-opens-its-parts-while-shut-and-then-stays-stuck-closing) (the same)
 - [A type library's search matches the "Other" heading of every ungrouped type](issues.md#a-type-librarys-search-matches-the-other-heading-of-every-ungrouped-type) (the same)
 
 #### The launch gate

@@ -11,7 +11,7 @@ settings:
   bars:
     type: array
     title: Bars
-    description: In order. Other apps is the first playing stream no App bar matches.
+    description: In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.
     x-link: {setting: OSD.scrollToChange}
     default:
       - {type: other, icon: music_note}

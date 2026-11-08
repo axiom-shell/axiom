@@ -603,7 +603,7 @@ Item {
     if (!def)
       return;
     const hasTile = OSDEngine.partOf(def, what.key) === "tile";
-    const shown = what.show === "level" ? (host.options.tile !== false ? "level" : "") : OSDEngine.shownAs(root.osd, Object.assign({}, what, {
+    const shown = OSDEngine.shownAs(root.osd, Object.assign({}, what, {
       "system": host.type
     }), hasTile);
     if (shown === "")

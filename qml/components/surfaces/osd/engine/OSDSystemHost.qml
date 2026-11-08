@@ -62,15 +62,14 @@ Item {
     return id;
   }
 
-  // Loaded anew only as the type changes: an edit to the item's own
-  // settings reaches both in place
+  // Loaded once, as it's built: a type change rebuilds the host; an edit
+  // to the item's own settings reaches both in place
   function _load() {
     definitionLoader.setSource(root.type ? Paths.osdSystemUrl(root.type) : "", {
       "type": root.type,
       "options": root.options
     });
   }
-  onTypeChanged: root._load()
   onOptionsChanged: {
     if (root.definition)
       root.definition.options = root.options;

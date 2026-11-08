@@ -996,6 +996,18 @@ TestCase {
       "system": "Vpn",
       "show": "level"
     }, false), "level");
+    compare(OSDEngine.shownAs({
+      "cardsEnabled": true,
+      "systems": [
+        {
+          "type": "Audio",
+          "tile": false
+        }
+      ]
+    }, {
+      "system": "Audio",
+      "show": "level"
+    }, false), "", "the item's tiles off: no level");
   }
 
   function test_cardRoute_data() {

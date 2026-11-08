@@ -3568,7 +3568,6 @@
     "Keep windows from tiling under the bar.": "",
     "Overrides the server's name. Empty keeps it.": "",
     "0 is the start (left/top), 100 the end.": "",
-    "In order. Other apps is the first playing stream no App bar matches.": "",
     "Config version within format 2, used for migration.": "",
     "Label on the Keybinds page. Empty uses the action's name. Write \"Section: Label\" to pick its section.": "",
     "Every monitor puts a copy on each.": "",
@@ -4111,6 +4110,7 @@
     "Connected Bluetooth devices' batteries, under the laptop's. With no laptop battery, only them.": "",
     "Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).": "",
     "Device battery notifications": "",
-    "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).": ""
+    "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).": "",
+    "In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.": ""
   }
 }

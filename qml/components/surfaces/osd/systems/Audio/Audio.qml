@@ -22,7 +22,7 @@ OSDSystem {
   // A Bluetooth headset's profile switch replaces its node, often with
   // none between, and changes its icon, not its look
   keepThroughGap: true
-  updateFields: ["label"]
+  updateFields: []
   // A bar's level changes only on the node it read before, its volume in:
   // a stream bar's set of streams changing (one appearing with its
   // volume, going: Discord joining) or the System volume or Microphone

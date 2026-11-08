@@ -52,10 +52,6 @@ ColumnLayout {
     return info ? I18n.tr(info.label) : String(type ?? "");
   }
 
-  function _commit(systems) {
-    root.edited(systems);
-  }
-
   function add(type) {
     const info = root.typeInfo[type];
     if (!info)
@@ -64,7 +60,7 @@ ColumnLayout {
     systems.push(SchemaValidation.applyDefaults({
       "type": type
     }, info.schema, ConfigManager.configSchema));
-    root._commit(systems);
+    root.edited(systems);
     root.selectedType = type;
   }
 
@@ -73,7 +69,7 @@ ColumnLayout {
     const [gone] = systems.splice(index, 1);
     if (gone?.type === root.selectedType)
       root.selectedType = "";
-    root._commit(systems);
+    root.edited(systems);
   }
 
   // Moves the system at `from` to before the one at `to` (the count: the
@@ -84,7 +80,7 @@ ColumnLayout {
     const systems = Utils.clone(root.systems);
     const [moved] = systems.splice(from, 1);
     systems.splice(to > from ? to - 1 : to, 0, moved);
-    root._commit(systems);
+    root.edited(systems);
   }
 
   function editSelected(key, value) {
@@ -92,7 +88,7 @@ ColumnLayout {
       return;
     const systems = Utils.clone(root.systems);
     systems[root.selectedIndex][key] = value;
-    root._commit(systems);
+    root.edited(systems);
   }
 
   Layout.fillWidth: true

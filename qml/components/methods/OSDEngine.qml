@@ -402,13 +402,14 @@ QtObject {
   // part, model, kind ("add" | "remove" | "change" | "update" | "event" |
   // "level"), show ("card" | "tile" | "level"), card (show is "card"),
   // still, unexpected, alert (opens the OSD even after an on-screen mark:
-  // only a definition's judge() sets it), added, removed, left (a set's
-  // ids), members (a set's, as the change saw them), kept (a group's
-  // "still" card: the key the owner stays on), at, byUser }. Never the
-  // first reading (`before` missing) nor across a state that isn't
-  // `available` (false); then the definition's judge() for an odd case
-  // (it reads ctx.settled itself); else the declarations: nothing for a
-  // `resetBy` field changing with it, within `ignoreWithin`, or a
+  // an event of a kind `alertKinds` lists, or a definition's judge() sets
+  // it), added, removed, left (a set's ids), members (a set's, as the
+  // change saw them), kept (a group's "still" card: the key the owner
+  // stays on), at, byUser }. Never the first reading (`before` missing)
+  // nor across a state that isn't `available` (false); then the
+  // definition's judge() for an odd case (it reads ctx.settled itself);
+  // else the declarations: nothing for a `resetBy` field changing with
+  // it, outside `countsWithin`, within `ignoreWithin`, or a
   // `keepThroughGap` gap, and a kind `settledKinds` names (every kind
   // unless the system counts `anyone`'s) counts only while the watcher
   // calls it settled. `ctx`: { at, byUser, settled, before, after (the
@@ -559,7 +560,8 @@ QtObject {
   // What a change shows on `osd` (an OSD entry: { cardsEnabled, systems
   // }): its own show, a card shown as its tile where the OSD's cards or
   // the item's are off (nothing for a key with no tile, or the item's
-  // tiles off), "" for nothing
+  // tiles off), a level only while the item's `tile` isn't false, "" for
+  // nothing
   function shownAs(osd, change, hasTile) {
     const item = root.itemOf(osd, change.system ?? "") ?? {};
     const tile = hasTile === true && item.tile !== false ? "tile" : "";
@@ -567,6 +569,8 @@ QtObject {
       return osd?.cardsEnabled === true && item.card !== false ? "card" : tile;
     if (change.show === "tile")
       return tile;
+    if (change.show === "level")
+      return item.tile !== false ? "level" : "";
     return change.show ?? "";
   }
 

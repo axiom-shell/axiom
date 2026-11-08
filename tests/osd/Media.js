@@ -19,7 +19,7 @@
 //   the definition's.
 // decided: the card is { title: the track's title, role: its artist, else
 //   the player's name, image: the cover, icon: "play_arrow" while playing,
-//   else "pause" }, the fields OSDMediaCard draws (it keeps its own design).
+//   else "pause" }, the fields its design/MediaCard draws (it keeps its own design).
 
 var opts = { "onTrackChange": true, "onPlayPause": false };
 var both = { "onTrackChange": true, "onPlayPause": true };

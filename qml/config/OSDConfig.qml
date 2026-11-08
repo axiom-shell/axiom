@@ -78,7 +78,7 @@ QtObject {
       "type": type,
       "label": def.properties.type.description || type,
       "icon": def["x-icon"] ?? "extension",
-      "group": def["x-libraryGroup"] ?? "",
+      "group": def["x-libraryGroup"],
       "schema": def
     };
   })
@@ -110,7 +110,8 @@ QtObject {
 
   // The name on its tab: its own, else its bars', else what it shows as
   // icons (so the default isn't named by all of them), else with its
-  // cards on its card-only systems (Now playing)
+  // cards on the systems it shows only as cards (Now playing, or a
+  // system with a card switch and its tiles off)
   function labelOf(osd) {
     if (osd.name)
       return osd.name;
@@ -121,7 +122,8 @@ QtObject {
     const parts = bars.length > 0 ? bars : shown.filter(tiled).map(item => root.nameOf(item.type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");
-    const cards = osd.cardsEnabled ? osd.systems.filter(item => !tiled(item) && item.card !== false).map(item => root.nameOf(item.type)).filter(name => name !== "") : [];
+    const carded = item => !tiled(item) || (item.tile === false && root._systemDefs[item.type]?.properties.card !== undefined);
+    const cards = osd.cardsEnabled ? osd.systems.filter(item => carded(item) && item.card !== false).map(item => root.nameOf(item.type)).filter(name => name !== "") : [];
     return cards.length > 0 ? cards.join(", ") : I18n.tr("Empty OSD");
   }
 }
