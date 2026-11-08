@@ -94,7 +94,7 @@ var rows = [
 ## Verify
 - `scripts/run_tests.sh OSDSystems` (the timelines) and `scripts/run_tests.sh OSDEngine` if the engine changed.
 - `scripts/dev/verify.sh` (`check_structure` checks the folder; `tst_Config` the schema's defaults).
-- In a nested shell (`scripts/dev/nested.sh`), add it to an OSD in Settings → Dock & OSD and make it change; `scripts/log.sh` stays clean.
+- In a nested shell (`scripts/dev/nested.sh`), add it to an OSD in Settings → OSD and make it change; `scripts/log.sh` stays clean.
 
 ## Docs to update
 - [OSD](../dev/features/osd.md) › Systems: a short section for it (its key, what each change shows, its declarations and anything custom).

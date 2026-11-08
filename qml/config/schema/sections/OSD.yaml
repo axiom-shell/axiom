@@ -2,8 +2,8 @@
 
 x-scope: look
 type: object
-x-category: Dock & OSD
-x-card: {file: OSDList, title: OSDs, folds: true}
+x-category: OSD
+x-card: {file: OSDList, title: OSDs, wide: true, folds: true}
 title: OSD
 description: Volume, brightness, lock keys, layout, toggles and the playing track, shown when they change.
 additionalProperties: false
