@@ -5,12 +5,14 @@ additionalProperties: false
 properties:
   id: {$ref: '#/definitions/ItemId'}
   name:
+    x-group: Placement
     type: string
     title: Name
     default: ''
     description: Shown on its tab here. Empty names it by what it shows.
-  enabled: {type: boolean, title: Enabled, default: true}
+  enabled: {x-group: Placement, type: boolean, title: Enabled, default: true}
   screen:
+    x-group: Placement
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
     x-properties:
@@ -28,11 +30,13 @@ properties:
           named: These monitors
         x-link: {setting: General.screen}
   edge:
+    x-group: Placement
     type: string
     title: Screen edge
     default: bottom
     enum: [top, bottom, left, right]
   position:
+    x-group: Placement
     type: integer
     title: Position along edge
     x-unit: '%'
@@ -41,11 +45,13 @@ properties:
     maximum: 100
     description: 0 is the start (left/top), 100 the end.
   detached:
+    x-group: Placement
     type: boolean
     title: Detach from edge
     default: false
     description: A separate box held off the edge, instead of growing out of it.
   distance:
+    x-group: Placement
     type: integer
     title: Distance from edge
     x-unit: '%'
@@ -55,14 +61,17 @@ properties:
     description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {detached: true}
   animation:
+    x-group: Placement
     $ref: '#/definitions/DetachedAnimation'
     x-showIf: {detached: true}
   openOnHover:
+    x-group: Timing and behaviour
     type: boolean
     title: Open on hover
     default: false
     description: Also open when the pointer touches its screen edge.
   timeout:
+    x-group: Timing and behaviour
     type: integer
     title: Timeout
     x-unit: ms
@@ -71,11 +80,13 @@ properties:
     maximum: 10000
     description: How long the bars and status icons stay out after the last change.
   openTogether:
+    x-group: Timing and behaviour
     type: boolean
     title: Bars and status icons together
     default: false
     description: A change to either brings out both.
   iconsPlace:
+    x-group: Timing and behaviour
     type: string
     title: Status icons
     default: outside
@@ -86,6 +97,7 @@ properties:
       inside: By the edge
     description: Where the status icons go when shown with the bars.
   holdStill:
+    x-group: Timing and behaviour
     type: boolean
     title: Hold still under the mouse
     default: true
@@ -118,6 +130,7 @@ properties:
         default: true
         description: Show each level as a percentage.
   row:
+    x-group: Timing and behaviour
     type: string
     title: Icons shown
     default: notable
@@ -128,11 +141,13 @@ properties:
       changed: Only the one that changed
     description: What's unusual shows only states out of the ordinary, plus the one that changed.
   cardsEnabled:
+    x-group: Timing and behaviour
     type: boolean
     title: Show cards
     default: true
     description: Off, statuses show as icons, and the rest as notifications.
   cardTimeout:
+    x-group: Timing and behaviour
     type: integer
     title: Card timeout
     x-unit: ms

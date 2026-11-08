@@ -2851,7 +2851,6 @@
     "Airplane mode": "",
     "Charger": "",
     "Kind": "",
-    "Place and timing": "",
     "Scroll lock": "",
     "What's unusual": "",
     "Icons shown": "",
@@ -4117,6 +4116,7 @@
     "No bars yet: add one to show a level.": "",
     "In order, one bar per kind but App; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.": "",
     "The bars' order, by key (\"<System>/<its bar key>\", e.g. Audio/master, Audio/app:<id>, Brightness/brightness), set by dragging them in the Bars part. Bars it doesn't name follow in their systems' order; empty, all do.": "",
-    "Bar order": ""
+    "Bar order": "",
+    "Timing and behaviour": ""
   }
 }
