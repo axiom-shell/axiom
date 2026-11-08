@@ -1,13 +1,17 @@
 // Package logindtest is a fake systemd-logind on a dbustest bus: one
 // session, Suspend counted and SetBrightness recorded, delay inhibitors
-// as pipes the test can watch, idle inhibitors listed, BlockInhibited
-// changed and signals sent by the test.
+// as pipes the test can watch, idle inhibitors listed (the test's, and
+// those taken with Inhibit until their client closes them, which block
+// idle as logind's do), BlockInhibited changed and signals sent by the
+// test.
 package logindtest
 
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -37,6 +41,8 @@ type Fake struct {
 	blocked    string
 	suspended  int
 	inhibitors []any
+	taken      map[int][]any // idle inhibitors taken with Inhibit, by id
+	nextTaken  int
 	brightness []string
 }
 
@@ -50,7 +56,7 @@ func New(t *testing.T, bus *dbustest.Bus) *Fake {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	f := &Fake{Conn: conn, blocked: "handle-power-key", Inhibited: make(chan *os.File, 8)}
+	f := &Fake{Conn: conn, blocked: "handle-power-key", Inhibited: make(chan *os.File, 8), taken: map[int][]any{}}
 	_, err = conn.Export(ManagerPath, dbus.Interface{Name: ifaceManager, Methods: map[string]dbus.Method{
 		"GetSession": {In: "s", Out: "o", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
 			if m.Body[0] != SessionID {
@@ -71,14 +77,19 @@ func New(t *testing.T, bus *dbustest.Bus) *Fake {
 			return nil, nil
 		}},
 		"Inhibit": {In: "ssss", Out: "h", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
-			if m.Body[0] != "sleep" || m.Body[3] != "delay" {
+			idle := m.Body[0] == "idle" && m.Body[3] == "block"
+			if !idle && (m.Body[0] != "sleep" || m.Body[3] != "delay") {
 				return nil, dbus.NewError(dbus.ErrInvalidArgs, "unexpected inhibitor")
 			}
 			r, w, err := os.Pipe()
 			if err != nil {
 				return nil, err
 			}
-			f.Inhibited <- r
+			if idle {
+				f.takeIdle(r, m.Body[1].(string), m.Body[2].(string))
+			} else {
+				f.Inhibited <- r
+			}
 			fd := dbus.UnixFD(w.Fd())
 			// The reply is sent once this returns: logind's own copy
 			// goes after it, as the real one closes it
@@ -88,7 +99,13 @@ func New(t *testing.T, bus *dbustest.Bus) *Fake {
 		"ListInhibitors": {Out: "a(ssssuu)", Fn: func(context.Context, *dbus.Message) ([]any, error) {
 			f.mu.Lock()
 			defer f.mu.Unlock()
-			return []any{append([]any{}, f.inhibitors...)}, nil
+			rows := append([]any{}, f.inhibitors...)
+			for i := 1; i <= f.nextTaken; i++ {
+				if row, ok := f.taken[i]; ok {
+					rows = append(rows, row)
+				}
+			}
+			return []any{rows}, nil
 		}},
 	}})
 	if err != nil {
@@ -111,7 +128,7 @@ func New(t *testing.T, bus *dbustest.Bus) *Fake {
 			defer f.mu.Unlock()
 			switch m.Body[1] {
 			case "BlockInhibited":
-				return []any{dbus.MakeVariant(f.blocked)}, nil
+				return []any{dbus.MakeVariant(f.blockedLocked())}, nil
 			case "InhibitDelayMaxUSec":
 				return []any{dbus.MakeVariant(uint64(5000000))}, nil
 			}
@@ -161,16 +178,83 @@ func (f *Fake) SetInhibitors(rows ...[]any) {
 	}
 }
 
-// SetBlocked changes BlockInhibited and announces it.
+// SetBlocked changes BlockInhibited (with "idle" added while an idle
+// inhibitor taken with Inhibit is held) and announces it, as logind
+// does, only when that changes it.
 func (f *Fake) SetBlocked(t *testing.T, what string) {
 	t.Helper()
 	f.mu.Lock()
+	was := f.blockedLocked()
 	f.blocked = what
+	changed := f.blockedLocked() != was
 	f.mu.Unlock()
-	if err := f.Conn.Emit(ManagerPath, "org.freedesktop.DBus.Properties", "PropertiesChanged", "sa{sv}as",
-		ifaceManager, map[string]dbus.Variant{"BlockInhibited": dbus.MakeVariant(what)}, []string{}); err != nil {
+	if !changed {
+		return
+	}
+	if err := f.announce(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func (f *Fake) announce() error {
+	f.mu.Lock()
+	what := f.blockedLocked()
+	f.mu.Unlock()
+	return f.Conn.Emit(ManagerPath, "org.freedesktop.DBus.Properties", "PropertiesChanged", "sa{sv}as",
+		ifaceManager, map[string]dbus.Variant{"BlockInhibited": dbus.MakeVariant(what)}, []string{})
+}
+
+func (f *Fake) blockedLocked() string {
+	if len(f.taken) == 0 || hasIdle(f.blocked) {
+		return f.blocked
+	}
+	if f.blocked == "" {
+		return "idle"
+	}
+	return f.blocked + ":idle"
+}
+
+func hasIdle(list string) bool {
+	for _, w := range strings.Split(list, ":") {
+		if w == "idle" {
+			return true
+		}
+	}
+	return false
+}
+
+// takeIdle lists an idle inhibitor (this process's pid: the fake runs in
+// the test's) until every copy of its write end is closed.
+func (f *Fake) takeIdle(r *os.File, who, why string) {
+	f.mu.Lock()
+	f.nextTaken++
+	id := f.nextTaken
+	was := f.blockedLocked()
+	f.taken[id] = []any{"idle", who, why, "block", uint32(os.Getuid()), uint32(os.Getpid())}
+	changed := f.blockedLocked() != was
+	f.mu.Unlock()
+	if changed {
+		f.announce()
+	}
+	go func() {
+		io.Copy(io.Discard, r)
+		r.Close()
+		f.mu.Lock()
+		was := f.blockedLocked()
+		delete(f.taken, id)
+		changed := f.blockedLocked() != was
+		f.mu.Unlock()
+		if changed {
+			f.announce()
+		}
+	}()
+}
+
+// IdleHeld is how many idle inhibitors taken with Inhibit are held.
+func (f *Fake) IdleHeld() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.taken)
 }
 
 // Lock sends the session's Lock signal (loginctl lock-session).

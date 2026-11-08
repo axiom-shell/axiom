@@ -106,11 +106,27 @@ func (l *Logind) SetBrightness(ctx context.Context, subsystem, name string, valu
 	return err
 }
 
+// Manager is logind for its manager's calls only (Inhibit*, Suspend,
+// IdleInhibitors): no session is looked for, so Watch and SetBrightness
+// aren't for it.
+func Manager(conn *dbus.Conn) *Logind { return &Logind{conn: conn} }
+
 // InhibitSleep takes a delay inhibitor on sleep: logind waits (up to
 // InhibitDelayMax) for it to be closed after announcing sleep. The
 // caller closes the file to let sleep go on.
 func (l *Logind) InhibitSleep(ctx context.Context, who, why string) (*os.File, error) {
-	m, err := l.conn.Call(ctx, busName, managerPath, ifaceManager, "Inhibit", "ssss", "sleep", who, why, "delay")
+	return l.inhibit(ctx, "sleep", who, why, "delay")
+}
+
+// InhibitIdle blocks idle (what `systemd-inhibit --what=idle` does): idle
+// daemons that honour logind's inhibitors (hypridle, axiom's own) hold
+// off until the caller closes the file.
+func (l *Logind) InhibitIdle(ctx context.Context, who, why string) (*os.File, error) {
+	return l.inhibit(ctx, "idle", who, why, "block")
+}
+
+func (l *Logind) inhibit(ctx context.Context, what, who, why, mode string) (*os.File, error) {
+	m, err := l.conn.Call(ctx, busName, managerPath, ifaceManager, "Inhibit", "ssss", what, who, why, mode)
 	if err != nil {
 		return nil, err
 	}

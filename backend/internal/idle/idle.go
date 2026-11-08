@@ -4,10 +4,10 @@
 // daemon's Wayland connection, wayland/idlenotify), locking when logind
 // asks (loginctl lock-session) and before sleep (holding sleep with a
 // delay inhibitor until the lock screen is up), and holding off while an
-// app asks it to: over org.freedesktop.ScreenSaver (internal/screensaver),
-// logind's idle inhibitors (systemd-inhibit), or, when the compositor's
-// own inhibitors are ignored, axiom's caffeine. Docs:
-// docs/dev/features/idle.md.
+// app asks it to: over org.freedesktop.ScreenSaver (internal/screensaver)
+// or logind's idle inhibitors (systemd-inhibit), and always for axiom's
+// caffeine, which also holds a logind idle inhibitor of its own (Idle on
+// or off) for a user's own idle daemon. Docs: docs/dev/features/idle.md.
 package idle
 
 import (
@@ -125,7 +125,9 @@ type Service struct {
 	idleApps      []logind.Inhibitor
 	ss            *screensaver.Server
 	sleepHeld     *logind.Logind // the logind the sleep inhibitor was taken from
+	lgCtx         context.Context
 	stopSystem    context.CancelFunc
+	stopCaffeine  context.CancelFunc // caffeine's logind idle inhibitor's holder
 	stopSession   context.CancelFunc
 	busCtx        context.Context
 	wg            sync.WaitGroup
@@ -167,8 +169,9 @@ func (s *Service) Configure(settings Settings) {
 	})
 }
 
-// SetCaffeine is the shell's caffeine switch: it holds idle off itself
-// only where notifications ignore the compositor's inhibitors.
+// SetCaffeine is the shell's caffeine switch: while on, it holds axiom's
+// idle off and holds a logind idle inhibitor (Idle on or off), which a
+// user's own hypridle honours.
 func (s *Service) SetCaffeine(on bool) {
 	s.post(func() {
 		s.caffeine = on
@@ -221,7 +224,17 @@ func (s *Service) reconcile() {
 		s.goBus(func() { s.runLogind(ctx) })
 	} else if !st.Enabled && s.stopSystem != nil {
 		s.stopSystem()
-		s.stopSystem, s.lg, s.idleBlocked, s.idleApps = nil, nil, false, nil
+		s.stopSystem, s.lg, s.lgCtx, s.idleBlocked, s.idleApps = nil, nil, nil, false, nil
+	}
+	// Caffeine's logind idle inhibitor, whatever Idle's settings
+	wantHold := s.caffeine && s.o.SystemBus != nil
+	if wantHold && s.stopCaffeine == nil {
+		var ctx context.Context
+		ctx, s.stopCaffeine = context.WithCancel(s.busCtx)
+		s.goBus(func() { s.runCaffeine(ctx) })
+	} else if !wantHold && s.stopCaffeine != nil {
+		s.stopCaffeine()
+		s.stopCaffeine = nil
 	}
 	wantSession := st.Enabled && st.RespectInhibitors && s.o.SessionBus != nil
 	if wantSession && s.stopSession == nil {
@@ -269,17 +282,20 @@ func (s *Service) stopBuses() {
 	if s.stopSession != nil {
 		s.stopSession()
 	}
+	if s.stopCaffeine != nil {
+		s.stopCaffeine()
+	}
 }
 
 // inhibited: something holds idle off that the compositor doesn't know
-// of. With inhibitors respected, the compositor holds off for Wayland
-// inhibitors (caffeine among them), and axiom for ScreenSaver's and
-// logind's; ignoring them, only caffeine still counts.
+// of: caffeine always; with inhibitors respected (the compositor then
+// holds off for Wayland inhibitors itself), ScreenSaver's and logind's
+// too, but for caffeine's own (others).
 func (s *Service) inhibited() bool {
-	if !s.settings.RespectInhibitors {
-		return s.caffeine
+	if s.caffeine {
+		return true
 	}
-	return s.idleBlocked || s.ss != nil && len(s.ss.Inhibitors()) > 0
+	return s.settings.RespectInhibitors && (s.idleBlocked || s.ss != nil && len(s.ss.Inhibitors()) > 0)
 }
 
 // armKey: a plan armed the same way needs no arming again.
@@ -474,13 +490,13 @@ func (s *Service) logindOnce(ctx context.Context) error {
 	s.o.Log.Debug("idle: logind", "session", lg.Session(), "delay", delay)
 	s.post(func() {
 		if ctx.Err() == nil {
-			s.lg, s.delayMax = lg, delay
+			s.lg, s.lgCtx, s.delayMax = lg, ctx, delay
 			s.reconcile()
 		}
 	})
 	defer s.post(func() {
 		if s.lg == lg {
-			s.lg, s.idleBlocked, s.idleApps = nil, false, nil
+			s.lg, s.lgCtx, s.idleBlocked, s.idleApps = nil, nil, false, nil
 			s.reconcile()
 		}
 	})
@@ -496,11 +512,16 @@ func (s *Service) logindOnce(ctx context.Context) error {
 			sleep := e.Sleep
 			s.post(func() { s.sleepChanged(sleep) })
 		case e.IdleChanged:
+			// Caffeine's own inhibitor blocks idle too: blocked is
+			// whether another one does (listing failed: whether any)
 			var apps []logind.Inhibitor
-			if e.IdleBlocked {
-				apps, _ = lg.IdleInhibitors(ctx)
-			}
 			blocked := e.IdleBlocked
+			if blocked {
+				if listed, err := lg.IdleInhibitors(ctx); err == nil {
+					apps = others(listed)
+					blocked = len(apps) > 0
+				}
+			}
 			s.post(func() {
 				if s.lg == lg {
 					s.idleBlocked, s.idleApps = blocked, apps
@@ -509,6 +530,84 @@ func (s *Service) logindOnce(ctx context.Context) error {
 			})
 		}
 	})
+}
+
+// relist lists logind's idle inhibitors again, once caffeine's let go:
+// BlockInhibited doesn't change while another one holds idle off too, so
+// no event says what is left.
+func (s *Service) relist() {
+	lg, ctx := s.lg, s.lgCtx
+	if lg == nil {
+		return
+	}
+	s.goBus(func() {
+		listed, err := lg.IdleInhibitors(ctx)
+		if err != nil {
+			return
+		}
+		apps := others(listed)
+		s.post(func() {
+			if s.lg == lg {
+				s.idleBlocked, s.idleApps = len(apps) > 0, apps
+				s.reconcile()
+			}
+		})
+	})
+}
+
+// caffeineWho and caffeineWhy name caffeine's logind idle inhibitor.
+const caffeineWho, caffeineWhy = "axiom", "Caffeine"
+
+// others are the inhibitors that aren't caffeine's own (this process's).
+func others(listed []logind.Inhibitor) []logind.Inhibitor {
+	pid := uint32(os.Getpid())
+	var out []logind.Inhibitor
+	for _, in := range listed {
+		if in.Who != caffeineWho || in.PID != pid {
+			out = append(out, in)
+		}
+	}
+	return out
+}
+
+// runCaffeine holds a logind idle inhibitor until ctx ends (caffeine
+// goes off, or the service stops), taken again after Retry when it
+// can't be. A re-exec closes it (close-on-exec): the next image takes
+// its own once the shell, greeting it, sends caffeine again.
+func (s *Service) runCaffeine(ctx context.Context) {
+	for {
+		err := s.caffeineOnce(ctx)
+		if ctx.Err() != nil {
+			return
+		}
+		s.o.Log.Warn("idle: no logind idle inhibitor for caffeine: retrying", "in", s.o.Retry, "err", err)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(s.o.Retry):
+		}
+	}
+}
+
+// caffeineOnce takes the inhibitor on a connection of its own (Idle may
+// be off, with no logind connected), which it needs no longer: logind
+// holds idle off while the descriptor is open.
+func (s *Service) caffeineOnce(ctx context.Context) error {
+	tctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	conn, err := s.o.SystemBus(tctx)
+	if err != nil {
+		return err
+	}
+	f, err := logind.Manager(conn).InhibitIdle(tctx, caffeineWho, caffeineWhy)
+	conn.Close()
+	if err != nil {
+		return err
+	}
+	<-ctx.Done()
+	f.Close()
+	s.post(s.relist)
+	return nil
 }
 
 // sleepChanged: before sleep, lock, then let sleep go on; after it, take
@@ -619,7 +718,7 @@ func (s *Service) publish() {
 	for _, in := range s.idleApps {
 		st.Inhibitors = append(st.Inhibitors, Inhibitor{Source: "logind", App: in.Who, Reason: in.Why})
 	}
-	if s.caffeine && !s.settings.RespectInhibitors {
+	if s.caffeine && s.settings.Enabled {
 		st.Inhibitors = append(st.Inhibitors, Inhibitor{Source: "caffeine"})
 	}
 	if s.published && reflect.DeepEqual(st, s.lastPublished) {
