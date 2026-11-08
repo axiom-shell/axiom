@@ -202,11 +202,15 @@ QtObject {
     };
   }
 
-  // The size rects take scaled to fit in maxWidth × maxHeight, their
-  // shape kept: { width, height }
-  function fitSize(rects, maxWidth, maxHeight) {
+  // The size rects take at one fixed scale: the one that fits every rect
+  // in screenWidth × screenHeight (so a screen keeps its size however many
+  // stand beside it), lowered only when the whole would pass maxWidth ×
+  // maxHeight; their shape kept: { width, height }
+  function fixedSize(rects, screenWidth, screenHeight, maxWidth, maxHeight) {
     const box = bounds(rects);
-    const scale = Math.max(0, Math.min(maxWidth / box.width, maxHeight / box.height));
+    const sized = rects.length > 0 ? rects : [box];
+    const fixed = Math.min(...sized.map(r => Math.min(screenWidth / r.width, screenHeight / r.height)));
+    const scale = Math.max(0, Math.min(fixed, maxWidth / box.width, maxHeight / box.height));
     return {
       "width": box.width * scale,
       "height": box.height * scale

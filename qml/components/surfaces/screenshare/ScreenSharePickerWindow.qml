@@ -195,12 +195,19 @@ PanelWindow {
       "height": s.height
     } : null;
   }))
-  // The screens' map at its largest: most of this screen's width, under
-  // half its height (the card grows to it)
-  readonly property var mapSize: MonitorLayout.fitSize(root.screenRects, root.width * 0.8 - root.pad * 2, root.height * 0.45)
+  // The card's width with one screen, and the most a screen's picture is
+  // tall
+  readonly property int cardBaseWidth: Widget.px(1040)
+  readonly property int screenMaxHeight: Widget.px(340)
+  // The gap a screen's tile leaves around its picture on the map
+  readonly property real screenInset: root.ring + root.tileGap / 2
+  // The screens' map: every screen as big as one alone in the base card,
+  // the card growing as screens are added, scaled down only past what
+  // this screen fits
+  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - root.pad * 2, root.screenMaxHeight + root.screenInset * 2, root.width - Widget.px(48) - root.pad * 2, root.height * 0.6)
   // The body's height for the screens: every tab keeps it, so the card
-  // doesn't jump between tabs
-  readonly property real bodyHeight: Math.max(Widget.px(300), root.mapSize.height)
+  // doesn't jump between tabs; one screen's names under it set the least
+  readonly property real bodyHeight: Math.max(Widget.px(300), root.screenMaxHeight + root.ring * 2 + root.labelsHeight, root.mapSize.height)
 
   StyledText {
     id: titleMetrics
@@ -387,8 +394,8 @@ PanelWindow {
 
     visible: root.hasCard
     anchors.centerIn: parent
-    // As wide as the screens' map asks, with room for the windows' grid
-    width: Math.min(Math.max(Widget.px(840), root.mapSize.width + root.pad * 2), root.width - Widget.px(48))
+    // The base width, wider as the screens' map asks
+    width: Math.min(Math.max(root.cardBaseWidth, root.mapSize.width + root.pad * 2), root.width - Widget.px(48))
     height: Math.min(content.implicitHeight + root.pad * 2, root.height - Widget.px(64))
     color: Appearance.fill(Theme.background)
     border.color: Theme.border
@@ -486,7 +493,10 @@ PanelWindow {
         // Screens: where they stand, each its own shape
         MonitorMap {
           visible: root.tab === "screen"
-          anchors.fill: parent
+          // Its own size, so a taller body doesn't grow the screens
+          anchors.centerIn: parent
+          width: Math.min(parent.width, root.mapSize.width)
+          height: Math.min(parent.height, root.mapSize.height)
           rects: root.screenRects
           model: root.tab === "screen" ? root.outputs : []
           delegate: tileDelegate
