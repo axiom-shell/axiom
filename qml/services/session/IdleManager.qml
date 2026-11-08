@@ -8,13 +8,13 @@ import qs.services.apps
 
 // Idle: what happens when you step away (the Idle section), run by the
 // axiom daemon (idle.state: docs/dev/features/idle.md), and the caffeine
-// switch that keeps the session awake. The Wayland idle inhibitor itself
-// needs a mapped surface, so shell/IdleInhibit holds one while `caffeine`
-// is on; the daemon is told too, as notifications that ignore inhibitors
-// (Idle.respectInhibitors off) would ignore that surface. Caffeine goes on
-// until turned off, or for a set time (a StopwatchClock timer it turns off
-// at the end of, paused it stays on). Both are kept across QML reloads
-// (a DeadlineTicker), but a restart always starts with idle allowed.
+// switch that keeps the session awake. Caffeine is the daemon's to apply
+// (`idle.caffeine`, sent whether Idle is on or not): it holds axiom's own
+// idle off and a logind idle inhibitor, which a user's own hypridle
+// honours. Caffeine goes on until turned off, or for a set time (a
+// StopwatchClock timer it turns off at the end of, paused it stays on).
+// Both are kept across QML reloads (a DeadlineTicker), but a restart
+// always starts with idle allowed.
 // Created from shell.qml's `_services`.
 //
 //   axiom ipc idleInhibit toggle

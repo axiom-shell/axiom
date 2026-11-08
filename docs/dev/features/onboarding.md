@@ -60,7 +60,7 @@ The first-run onboarder: a paged window that sets up the look, the compositor's 
 - The Apps page shows the main modifier and the keys to know only where axiom binds keys (`CompositorManager.supports.keybinds`); elsewhere it's just the apps.
 - The System page, top to bottom: updates, clipboard history, [Idle](idle.md), the lock screen, [Polkit](polkit.md), the login screen.
   - Idle, the lock screen, polkit and the login screen are `OptionCard` choices. The lock screen has two (`Lockscreen.mode`): axiom's, or your own.
-  - It names no compositor's tools (hypridle, hyprpolkitagent): "any idle daemon you start yourself", "any other agent you run", and `axiom lock` as the command your own idle daemon locks with.
+  - It names no compositor's tools (hypridle, hyprpolkitagent): "any idle daemon you start yourself", "any other agent you run", and `axiom lock` as the command your own idle daemon locks with. With Idle off it also says caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.
   - The login screen (`forms/GreeterSetup`, see [Greeter install](greeter-install.md)) is set up only from its Install button.
 - The App colors page, right after it (the last before Checks), holds the [theme integrations](../theming/theme-integrations.md) and the switched-on ones' hookups: optional, needing no decision, so they don't lengthen the System page's choices.
 

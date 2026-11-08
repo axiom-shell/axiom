@@ -7,12 +7,12 @@ import qs.config
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
-// Caffeine toggle: while on, the compositor (and axiom's idle steps) won't
-// treat the session as idle. The state and the inhibitor itself live outside the bar
-// (IdleManager, shell/IdleInhibit), so every bar's widget, the IPC
-// target and the quick action stay in sync. On for a set time, it shows the
-// time left (faded while paused), drawn by its display style too;
-// hovering opens the presets (Caffeine).
+// Caffeine toggle: while on, axiom's idle steps (and an idle daemon that
+// honours logind's idle inhibitors) won't treat the session as idle. The
+// state lives outside the bar (IdleManager, applied by the daemon), so
+// every bar's widget, the IPC target and the quick action stay in sync. On
+// for a set time, it shows the time left (faded while paused), drawn by
+// its display style too; hovering opens the presets (Caffeine).
 ValueStyleWidget {
   id: root
 

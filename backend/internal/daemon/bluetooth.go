@@ -77,16 +77,20 @@ func (d *Daemon) bluetoothPart() part {
 	}
 }
 
-// lastShellGone stops the scan when c was the last shell: it's the
-// daemon's BlueZ session, which BlueZ doesn't end as a shell goes, and a
-// shell that exited cleanly isn't started again to turn it off. One that
-// comes back asks for it again after its hello. The pairing agent's
-// requests still held are rejected: nobody is left to answer them, and a
-// shell that comes back isn't asked them again.
+// lastShellGone, when c was the last shell, undoes what only a shell
+// would: caffeine goes off (its logind idle inhibitor would keep idle off
+// with no shell to turn it off), the scan stops (the daemon's BlueZ
+// session, which BlueZ doesn't end as a shell goes, and a shell that
+// exited cleanly isn't started again to turn it off), and the pairing
+// agent's requests still held are rejected (nobody is left to answer
+// them, and a shell that comes back isn't asked them again). One that
+// comes back sends its caffeine and asks for the scan again after its
+// hello.
 func (d *Daemon) lastShellGone(c *rpc.Conn) {
 	if slices.ContainsFunc(d.server.Conns(), func(o *rpc.Conn) bool { return o != c && fromShell(o) }) {
 		return
 	}
+	d.idle.SetCaffeine(false)
 	d.bluetooth.RejectAgents()
 	d.tasks.Go(func(ctx context.Context) {
 		if err := d.bluetooth.Discovery(ctx, false); err != nil {
