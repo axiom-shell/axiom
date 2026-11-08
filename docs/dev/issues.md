@@ -318,6 +318,24 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while reviewing the popouts system
 
+### File search crawls what .gitignore leaves out
+- **Where:** `backend/internal/fileindex/read.go` (`filter`), `backend/internal/filesearch/exclude.go`
+- **What:** The index skips only `Launcher.providers.files.excludes` (names and path tails) and hidden entries, so a project's build output, vendored folders and caches that its `.gitignore` names but the excludes don't (e.g. `out/`, `coverage/`, `*.log`) fill the index and the results. fd and ripgrep honour `.gitignore` by default. Open for the plan: read each folder's `.gitignore` (and `.ignore`, `.git/info/exclude`) in the crawl child, the rules scoped to their folder, re-read when one changes; a setting to turn it off; what the stat pass and the watches do when a `.gitignore` changes.
+- **Size:** needs a plan
+- **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
+
+### File search matches names only, not what files hold
+- **Where:** `backend/internal/fileindex/service.go` (`Query`), `qml/services/ui/LauncherFiles.qml`
+- **What:** The index holds names, so `~` finds a file by its name or folders, never by a word inside it. Full-text search was deferred from v1 by the maintainer (2026-11-08: "Path browsing, Recent files, Image thumbnails", full-text not among them). Open for the plan: an index of contents (its size, keeping it current at idle priority, which types: text only, or PDFs and office documents through extractors), or a search run on demand below a folder (ripgrep-like, in a child at idle priority, streamed); a prefix or a toggle for it; how its results rank beside names.
+- **Size:** needs a plan
+- **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
+
+### Ctrl+C on a file row copies its path, not the file
+- **Where:** `qml/services/apps/FileSearchManager.qml` (`copyPath`), `backend/internal/daemon/clipboard.go`
+- **What:** Ctrl+C on a file row puts its path on the clipboard as text, so pasting it into a file manager or a chat app's upload doesn't paste the file. File managers copy files as `text/uri-list` (and `x-special/gnome-copied-files` for Nautilus). The daemon's `clipboard.copy` serves a file only as one type (`copyFile(path, mime)`, used for screenshots); offering the path as text and its URI as `text/uri-list` together needs a copy with more than one type.
+- **Size:** small
+- **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
+
 ## Workspaces and monitors
 
 ### A remap runs at startup, from the layout before the config loaded
@@ -403,6 +421,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
   **Decided** (maintainer, 2026-11-06, on a) the rule allows `FileManager.read` in readers, b) the reads move to a data owner; recommended a)): "defer"
 - **Size:** small
 - **Found:** 2026-10-26, while reviewing the repository's organization
+
+### A daemon re-exec during a crawl leaves the crawl child a zombie
+- **Where:** `backend/internal/fileindex/child.go` (`startChild`), `backend/internal/thumbnail/thumbnail.go` (`make`), `backend/internal/daemon/reexec.go` (`reexec`)
+- **What:** The file index's crawl child (`axiom index-crawl`) and the thumbnail child start through their own `exec.Command`, outside the daemon's `command.Children`, so `reexec` doesn't hand them on. A re-exec during a crawl (a dev rebuild, a self-update) closes the daemon's end of the crawl's stdout pipe with the old image; the child then fails its next write and exits, and the new image, which never learned its pid, never reaps it: it stays a zombie until the daemon quits. The new image builds the index again from its cache or a new crawl, so nothing is lost but the process table entry. The same family as the entry above; the fix is to start both children through `command.Children` (killed or handed on at a re-exec).
+- **Size:** small
+- **Found:** 2026-11-09, while building the launcher's file search
 
 ## Lock screen and greeter
 

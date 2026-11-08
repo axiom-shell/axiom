@@ -1,10 +1,10 @@
 # Launcher providers: calculator, clipboard, emoji
 
-> **Files:** `qml/services/apps/CalculatorManager.qml`, `qml/services/system/ClipboardManager.qml`, `backend/internal/clipboard/`, `backend/internal/wayland/datacontrol/`, `backend/internal/daemon/clipboard.go`, `qml/services/apps/EmojiManager.qml`, `qml/config/json/emoji.json`, `scripts/generate_emoji.py`, `qml/components/methods/Search.qml`, `qml/components/content/Calculator/Calculator.qml`, `qml/components/content/ClipboardHistory/ClipboardHistory.qml`, `qml/components/content/EmojiPicker/EmojiPicker.qml`
-> **Config:** `Launcher.providers.clipboard.enabled`, `Launcher.providers.clipboard.maxEntries`, `Launcher.providers.emoji` (reader `LauncherConfig`)
-> **Related:** [Launcher](launcher.md), [Utility modules](../overlay/utility-modules.md)
+> **Files:** `qml/services/apps/CalculatorManager.qml`, `qml/services/system/ClipboardManager.qml`, `backend/internal/clipboard/`, `backend/internal/wayland/datacontrol/`, `backend/internal/daemon/clipboard.go`, `qml/services/apps/EmojiManager.qml`, `qml/config/json/emoji.json`, `scripts/generate_emoji.py`, `qml/components/methods/Search.qml`, `qml/services/apps/FileSearchManager.qml`, `qml/components/content/Calculator/Calculator.qml`, `qml/components/content/ClipboardHistory/ClipboardHistory.qml`, `qml/components/content/EmojiPicker/EmojiPicker.qml`
+> **Config:** `Launcher.providers.clipboard.enabled`, `Launcher.providers.clipboard.maxEntries`, `Launcher.providers.emoji`, `Launcher.providers.files.*` (reader `LauncherConfig`)
+> **Related:** [Launcher](launcher.md), [File search](file-search.md), [Utility modules](../overlay/utility-modules.md)
 
-This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each one also backs an overlay module (Calculator, ClipboardHistory, EmojiPicker).
+This doc covers the services behind the launcher's `=`, `:`, `;` and `~` rows (the files in short: [file search](file-search.md) has the index). Each one also backs an overlay module (Calculator, ClipboardHistory, EmojiPicker).
 
 ### CalculatorManager (qalc)
 - **Backend:** `qalc -t -- expr`. libqalculate fetches and caches its own exchange rates.
@@ -65,3 +65,11 @@ This doc covers the services behind the launcher's `=`, `:` and `;` rows. Each o
   - Enter `copy`s it (`ClipboardManager.copyText`).
   - Shift+Enter also `type`s the emoji, 150 ms later, once the launcher has let go of the keyboard: `input.type`, the daemon's virtual keyboard (`wayland/vkbd`). `canType` is `WaylandManager.typing`: the compositor offers `zwp_virtual_keyboard_manager_v1`.
 - **Binds:** a bind opens it with the `launcherSearch` action and the argument `;`.
+
+### FileSearchManager
+- **Opening it:** the launcher's files are `~` or `/files` (alias `/find`); `Launcher.providers.files.enabled` is on by default. The main search shows the best `inSearch` files (0–5, default 3) below the apps.
+- **Asks the daemon only** (`filesearch.*`, every method the shell's alone): `search(query, dir, limit, done)`, `browse(path, query, limit, done)` and `recent(limit, done)` share one rising id (`_seq`): an answer to anything older than the newest asked is dropped, and `filesearch.query` carries the id, so the daemon stops an older search early (newest wins). Nothing is polled: the index's `state` comes from the `filesearch.state` push (the `fileSearch` hello topic) and `filesearch.get` after each hello.
+- **Acting on a file:** `open(path)` (`DefaultAppsManager.open`, then `filesearch.used`, which ranks it up and lists it in the recent files), `reveal(path)` (`filesearch.reveal`: the file manager shows it selected, else its folder opens), `copyPath(path)` (`ClipboardManager.copyText`).
+- **Icons:** `iconFor(item)`: the first of the item's `icons` (its type's, most specific first) the icon theme holds, then `folder` or `text-x-generic`; worked out once per type.
+- **Thumbnails:** a row showing a file asks for it with `want(key, path)` and lets go with `unwant(key)` (`LauncherRow`, so only rows the list has built ask); the key is the path and mtime, so a changed file is asked again. At most 4 `filesearch.thumbnail` calls are out at once; a queued one no row wants by its turn is skipped. `thumbnails` (key → url, "" for none) is replaced on each answer and trimmed to the wanted ones past 400.
+- **Rows:** `LauncherFiles` (LauncherManager's part) turns the typed text into a request (`FilePaths.parse`) and the answers into rows; see [file search](file-search.md) › The shell.

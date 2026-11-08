@@ -177,6 +177,7 @@ Found along the way:
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh) (the same)
 - [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config) (reviewing the guard's gh and push allowlists)
 - [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren) (moving the daemon's own commands to command.Run)
+- [A daemon re-exec during a crawl leaves the crawl child a zombie](issues.md#a-daemon-re-exec-during-a-crawl-leaves-the-crawl-child-a-zombie) (building the launcher's file search)
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode) (fixing the daemon's config watch)
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
 - [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)
@@ -234,7 +235,7 @@ Done (row 9): measuring ([memory](core/memory.md): a reading script and `bench_o
 ### Phase 13: the maintainer's notes
 Bugs and small features from the maintainer's own use, filed from their notes on 2026-10-28 (compositor-specific ones are in Phase 6 or its [deferred](#deferred) niri entries, fit ones in [Phase 7](#phase-7-fit-geometry-and-performance)). Each feature step follows its recipe (`setting`, `settings-card`, …); the plans go through [Items that need a plan](#items-that-need-a-plan).
 
-Done (row 16 and since): niri's own overview and window switcher (`WorkspaceOverlay.compositorOverview`, `WindowSwitcher.compositorSwitcher`), `Overlay.moduleBorders`, a test notification, caffeine on a timer, Markets ([markets](features/markets.md)), the notifications revamp ([notifications](features/notifications.md)), the overlay and popouts no longer closing each other (#211), the window switcher's blur and key release on sway and niri (#212), low levels kept in their rounded troughs, a Caps Lock warning in password fields (#270), the OSD's statuses (#272), input sources ([input sources](features/input-sources.md)) and Full Bluetooth (maintainer, 2026-11-06; the `bluetooth-daemon` branch: the daemon owns Bluetooth and is its pairing agent, one shared prompt for every password, PIN or confirmation request, the OSD's Bluetooth card and low battery warnings, device actions, discoverable, rfkill unblock and peripheral batteries; [Networking and Bluetooth](features/networking-bluetooth.md), [Prompts](features/prompts.md)).
+Done (row 16 and since): niri's own overview and window switcher (`WorkspaceOverlay.compositorOverview`, `WindowSwitcher.compositorSwitcher`), `Overlay.moduleBorders`, a test notification, caffeine on a timer, Markets ([markets](features/markets.md)), the notifications revamp ([notifications](features/notifications.md)), the overlay and popouts no longer closing each other (#211), the window switcher's blur and key release on sway and niri (#212), low levels kept in their rounded troughs, a Caps Lock warning in password fields (#270), the OSD's statuses (#272), input sources ([input sources](features/input-sources.md)) Full Bluetooth (maintainer, 2026-11-06; the `bluetooth-daemon` branch: the daemon owns Bluetooth and is its pairing agent, one shared prompt for every password, PIN or confirmation request, the OSD's Bluetooth card and low battery warnings, device actions, discoverable, rfkill unblock and peripheral batteries; [Networking and Bluetooth](features/networking-bluetooth.md), [Prompts](features/prompts.md)) and file search in the launcher (maintainer, 2026-11-08: "~ prefix + few in main", "Path browsing, Recent files, Image thumbnails", "Open / reveal / copy"; the `file-search` branch: the daemon's own index, crawled by an idle-priority child, `~` mode, the best files in the main search, browsing, recent files and thumbnails; [File search](features/file-search.md)).
 
 Found meanwhile:
 - [Submenus don't always get their blur backing](issues.md#submenus-dont-always-get-their-blur-backing)
@@ -242,12 +243,15 @@ Found meanwhile:
 - [BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload](issues.md#blurmanagerpaused-and-wallpapermanagerrotationheld-read-undefined-on-a-reload)
 - [A theme can't be generated from an avif or jxl wallpaper](issues.md#a-theme-cant-be-generated-from-an-avif-or-jxl-wallpaper) (a choice: a Go decoder dependency, or the shell handing over the image Qt decoded)
 - [Peripherals only UPower sees aren't in the Battery widget or module](issues.md#peripherals-only-upower-sees-arent-in-the-battery-widget-or-module) (Full Bluetooth)
+- [Ctrl+C on a file row copies its path, not the file](issues.md#ctrlc-on-a-file-row-copies-its-path-not-the-file) (file search, left out of v1)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
 - [Video wallpapers](issues.md#video-wallpapers) (an idea from the wallpaper transitions branch)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
 - [Quick actions can't hold custom toggles or commands](issues.md#quick-actions-cant-hold-custom-toggles-or-commands) (set aside from the unified-actions branch, 2026-11-06)
+- [File search crawls what .gitignore leaves out](issues.md#file-search-crawls-what-gitignore-leaves-out) (file search, left out of v1)
+- [File search matches names only, not what files hold](issues.md#file-search-matches-names-only-not-what-files-hold) (file search: full-text search, deferred from v1)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.
