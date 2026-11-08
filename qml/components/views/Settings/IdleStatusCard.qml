@@ -46,7 +46,7 @@ FieldGroup {
   readonly property string detail: {
     switch (root.status) {
     case "off":
-      return I18n.tr("axiom leaves idle to you: a daemon such as hypridle, if you run one.");
+      return I18n.tr("axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.");
     case "unsupported":
       return I18n.tr("The compositor doesn't tell axiom when you're idle (ext-idle-notify), so nothing happens when you step away.");
     case "unavailable":

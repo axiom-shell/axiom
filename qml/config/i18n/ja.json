@@ -2469,7 +2469,6 @@
     "Watching": "",
     "Held off": "",
     "Unsupported": "",
-    "axiom leaves idle to you: a daemon such as hypridle, if you run one.": "",
     "The compositor doesn't tell axiom when you're idle (ext-idle-notify), so nothing happens when you step away.": "",
     "axiom's daemon isn't running this shell, so nothing watches for idle.": "",
     "An app is keeping the screen on: the steps below wait until it lets go.": "",
@@ -4145,6 +4144,8 @@
     "Laptop panel only": "",
     "Grid workspaces": "",
     "A screen's part of the screenshot never arrived.": "",
-    "Caffeine is keeping the screen on: the steps below wait until it's turned off.": ""
+    "Caffeine is keeping the screen on: the steps below wait until it's turned off.": "",
+    "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
+    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": ""
   }
 }
