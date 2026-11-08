@@ -24,6 +24,11 @@ type token struct {
 	mask uint32   // text's character classes
 }
 
+// maxTokens is how many tokens a pattern keeps (the words after are
+// ignored): a search keeps two tables the index's size per token, so
+// pasted text must not make it allocate (and keep) hundreds of them
+const maxTokens = 8
+
 // ParsePattern parses typed text.
 func ParsePattern(q string) Pattern {
 	p := Pattern{}
@@ -54,6 +59,9 @@ func ParsePattern(q string) Pattern {
 			p.mask |= maskOf(d)
 		}
 		p.tokens = append(p.tokens, t)
+		if len(p.tokens) == maxTokens {
+			break
+		}
 	}
 	return p
 }

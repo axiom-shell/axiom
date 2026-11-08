@@ -331,6 +331,12 @@ func TestCache(t *testing.T) {
 		t.Errorf("before a search: %+v", r2.State())
 	}
 	r2.finds(t, "z.txt", root+"/b/z.txt", true)
+	// Its folders are watched once the stat pass ran
+	if !testkit.Eventually(func() bool { return r2.State().Watched == 3 }) {
+		t.Errorf("after the stat pass: %+v", r2.State())
+	}
+	os.WriteFile(root+"/a/w.txt", nil, 0o644)
+	r2.finds(t, "w.txt", root+"/a/w.txt", true)
 	r2.Configure(Settings{})
 	if !testkit.Eventually(func() bool { _, err := os.Stat(cache); return os.IsNotExist(err) && r2.State().Phase == PhaseOff }) {
 		t.Error("off kept the cache")

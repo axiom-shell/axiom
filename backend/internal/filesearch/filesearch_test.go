@@ -205,6 +205,14 @@ func TestStaleStops(t *testing.T) {
 	}
 }
 
+func TestPatternKeepsEightTokens(t *testing.T) {
+	t.Parallel()
+	p := ParsePattern(strings.Repeat("word ", 300))
+	if len(p.tokens) != maxTokens {
+		t.Errorf("%d tokens from 300 words, want %d", len(p.tokens), maxTokens)
+	}
+}
+
 func TestReplaceDir(t *testing.T) {
 	t.Parallel()
 	ix := build(t, "/r", 1e9, "a/x.txt", "a/sub/deep.txt", "b.txt")
@@ -266,9 +274,13 @@ func TestCompact(t *testing.T) {
 	if !ix.NeedsCompact() {
 		t.Fatalf("%d removed of %d: no compaction", ix.removed, ix.n)
 	}
+	// The root and the ten folders kept
+	if ix.Folders() != 1+10 {
+		t.Errorf("%d folders after removing 20, want 11", ix.Folders())
+	}
 	c := ix.Compact()
-	if c.Len() != ix.Len() || c.removed != 0 || c.Len() != 1+10+1000 {
-		t.Errorf("compacted %d (removed %d), was %d live", c.Len(), c.removed, ix.Len())
+	if c.Len() != ix.Len() || c.removed != 0 || c.Len() != 1+10+1000 || c.Folders() != ix.Folders() {
+		t.Errorf("compacted %d (removed %d, %d folders), was %d live (%d folders)", c.Len(), c.removed, c.Folders(), ix.Len(), ix.Folders())
 	}
 	if i, ok := c.Find("/r/d3/f33"); !ok || c.Path(i) != "/r/d3/f33" {
 		t.Error("lost /r/d3/f33")

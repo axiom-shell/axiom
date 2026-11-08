@@ -178,6 +178,7 @@ Found along the way:
 - [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config) (reviewing the guard's gh and push allowlists)
 - [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren) (moving the daemon's own commands to command.Run)
 - [A daemon re-exec during a crawl leaves the crawl child a zombie](issues.md#a-daemon-re-exec-during-a-crawl-leaves-the-crawl-child-a-zombie) (building the launcher's file search)
+- [The file index's cache is rewritten and fsynced every 5 minutes while files change](issues.md#the-file-indexs-cache-is-rewritten-and-fsynced-every-5-minutes-while-files-change) (reviewing the launcher's file search)
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode) (fixing the daemon's config watch)
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
 - [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)

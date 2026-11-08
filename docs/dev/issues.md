@@ -428,6 +428,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-09, while building the launcher's file search
 
+### The file index's cache is rewritten and fsynced every 5 minutes while files change
+- **Where:** `backend/internal/fileindex/service.go` (`maybeSave`, `flush`), `backend/internal/fileindex/cache.go` (`writeCache`)
+- **What:** Any change under the roots marks the index dirty, a file merely saved too (`IN_CLOSE_WRITE` sets its time in `flush`), and `maybeSave` then encodes the whole index in the daemon and writes it through `fsx.WriteFile`, which fsyncs the file and its folder, at the daemon's normal disk priority: about 17 MB at 500k entries, 45 MB at 1M, every 5 minutes while the user works (up to ~5–13 GB a day), each an allocation that size in the daemon's heap. The user's requirement is that building the index slows nothing down; an fsync of tens of MB can stall other writers on ext4. A cache needs no durability (a torn one fails its CRC and the index is built again at idle priority). Open for the maintainer: write it without fsync, save only on structural changes (not a file's time), save less often or only at shutdown, or write it from the idle child. Each trades how fresh the cache is after a crash or restart against the writes.
+- **Size:** small
+- **Found:** 2026-11-09, while reviewing the launcher's file search
+
 ## Lock screen and greeter
 
 ### The lock screen has no settings for allowing or viewing notifications

@@ -401,6 +401,9 @@ type loop struct {
 	pendingStart  []string
 	statAll       bool
 	statUnwatched bool
+	// watchLoaded: a loaded index's folders are watched once nothing is
+	// left for the child (watchAll)
+	watchLoaded bool
 	// Watched folders to read again, files written
 	changed    map[string]bool
 	written    map[string]bool
@@ -481,7 +484,7 @@ func (l *loop) reset() {
 		}
 	}
 	l.setIndex(nil)
-	l.pendingStart, l.statAll, l.statUnwatched = nil, false, false
+	l.pendingStart, l.statAll, l.statUnwatched, l.watchLoaded = nil, false, false, false
 	clear(l.changed)
 	clear(l.written)
 	l.dirty, l.truncated, l.unreadable, l.errText = false, false, 0, ""
@@ -569,25 +572,47 @@ func (l *loop) load() {
 	}
 	l.setIndex(ix)
 	l.newWatcher()
-	if l.w != nil {
-		var watched []uint32
-		ix.EachDir(func(d uint32) {
-			if len(l.w.byPath) < l.w.budget && l.w.add(ix.Path(d)) {
-				watched = append(watched, d)
-			}
-		})
-		l.s.mu.Lock()
-		for _, d := range watched {
-			ix.SetWatched(d, true)
-		}
-		l.s.mu.Unlock()
-	}
 	l.lastSave = l.s.o.Now()
 	l.phase = PhaseReady
 	l.s.o.Log.Info("file search: loaded the index", "entries", ix.Len())
 	l.statAll = true
+	l.watchLoaded = true
 	l.publish(true)
 	l.next()
+}
+
+// watchAll watches a loaded index's folders, within the budget, once the
+// stat pass has run: adding a watch looks its path up, which on a cold
+// cache (a login) reads the disk, and the idle child's pass has read
+// those folders by then. A folder that changed since the index's time
+// for it is read again (the watch came after the change). Folders never
+// read (left out at the cap) aren't watched, as a crawl leaves them.
+func (l *loop) watchAll() {
+	ix := l.ix()
+	if l.w == nil || ix == nil {
+		return
+	}
+	var watched []uint32
+	ix.EachDir(func(d uint32) {
+		mtime := ix.Mtime(d)
+		if ix.Watched(d) || mtime == 0 || len(l.w.byPath) >= l.w.budget {
+			return
+		}
+		path := ix.Path(d)
+		if !l.w.add(path) {
+			return
+		}
+		watched = append(watched, d)
+		if st, err := os.Lstat(path); err == nil && st.ModTime().UnixNano() != mtime {
+			l.changedDir(path)
+		}
+	})
+	l.s.mu.Lock()
+	for _, d := range watched {
+		ix.SetWatched(d, true)
+	}
+	l.s.mu.Unlock()
+	l.publish(false)
 }
 
 // next starts the child's next job when none runs: folders to crawl,
@@ -621,6 +646,10 @@ func (l *loop) next() {
 			l.startChild(req)
 		}
 	default:
+		if l.watchLoaded {
+			l.watchLoaded = false
+			l.watchAll()
+		}
 		l.maybeSave()
 	}
 }

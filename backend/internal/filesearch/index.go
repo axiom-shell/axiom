@@ -89,6 +89,7 @@ type Index struct {
 	entries [][]entry
 	n       uint32 // entries used, removed ones included
 	removed uint32
+	folders uint32 // folders not removed, roots included
 	names   [][]byte
 	// The folders by their path's hash (no strings for the collector to
 	// scan); collide holds the rare path whose hash another took
@@ -120,16 +121,9 @@ func (ix *Index) name(e *entry) []byte {
 // Len is the number of entries, roots included, removed ones not.
 func (ix *Index) Len() int { return int(ix.n - ix.removed) }
 
-// Folders is the number of folders, roots included.
-func (ix *Index) Folders() int {
-	n := 0
-	for _, d := range ix.dirList {
-		if ix.at(d).flags&flagRemoved == 0 {
-			n++
-		}
-	}
-	return n
-}
+// Folders is the number of folders, roots included (counted as they're
+// added and removed: the state reads it for every folder a crawl sends).
+func (ix *Index) Folders() int { return int(ix.folders) }
 
 // Roots are the roots' entries, in the order added.
 func (ix *Index) Roots() []uint32 { return ix.roots }
@@ -279,6 +273,7 @@ func (ix *Index) add(name []byte, parent uint32, flags uint8, depth uint8, mtime
 	setMtime(e, mtime)
 	if flags&flagDir != 0 {
 		ix.dirList = append(ix.dirList, i)
+		ix.folders++
 	}
 	return i
 }
@@ -441,6 +436,7 @@ func (ix *Index) removeTree(i uint32, dh uint64, ch *Change) {
 				ch.GoneWatched = append(ch.GoneWatched, it.i)
 			}
 			ix.unregisterDir(it.i, it.h)
+			ix.folders--
 		}
 		e.flags |= flagRemoved
 		ix.removed++
