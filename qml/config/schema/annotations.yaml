@@ -8,7 +8,7 @@ x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'
 x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
-x-barNames: 'how an OSD system''s bars name an OSD''s tab (`OSDConfig.labelOf`): `label` its own label; `{ from, by, named }` each entry of its setting `from`, by its `named` list joined, else its `by` field''s `x-enumLabels`.'
+x-barNames: 'an OSD system''s bars, edited in the settings'' Bars part and naming an OSD''s tab (`OSDConfig.barRows`, `labelOf`): `label`, it is one bar, named by its own label; `{ from, by, named, barOnly }`, each entry of its setting `from` is a bar, named by its `named` list joined, else its `by` field''s `x-enumLabels` (its `x-enumIcons` the row''s icon), `barOnly` the settings an item added only for a bar starts with (and is removed with as its last bar goes).'
 x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
 x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
 x-canvasFill: a color property the layouts editor fills a module's tile with (`OverlayConfig`).
@@ -25,7 +25,7 @@ x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
 x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
 x-enumGroups: '`{ value: group }`: on an ordered array of enum strings (`x-ordered`), files each option under a group in the list of those not chosen.'
-x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
+x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip (an OSD bar''s kind: its row in the Bars part).'
 x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'
 x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn''t hold.'
 x-fold: 'a nested object whose rows fold behind its title on its settings card, closed until opened (`SettingsField`; the Keyboard card''s Input method options).'

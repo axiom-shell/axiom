@@ -17,7 +17,10 @@ import qs.components.views.Layouts
 // selected system's form (its schema.yaml: Icon, Card, Quiet, then its own
 // settings) is beside the list with the room, else under it
 // (SplitColumns); one is always selected (the first, on another OSD's
-// tab). Every system comes from the schema's OSDSystem kind
+// tab). Bars are the Bars part's (OSDBarsEditor): a system that is only a
+// bar (`x-barNames: label`, Brightness) isn't listed here, and a system's
+// list of bars (`x-barNames`' `from`, Audio's `bars`) isn't in its form.
+// Every system comes from the schema's OSDSystem kind
 // (OSDConfig.systemTypes). Edits are `edited(systems)`, the whole list.
 ColumnLayout {
   id: root
@@ -35,8 +38,14 @@ ColumnLayout {
     out[info.type] = info;
     return out;
   }, {})
+  // A system that is only a bar: the Bars part's alone
+  function _onlyBar(type) {
+    return OSDConfig.barSpecOf(type) === "label";
+  }
+  // The indexes in `systems` of the ones listed here
+  readonly property var shown: root.systems.map((item, index) => root._onlyBar(item.type) ? -1 : index).filter(index => index >= 0)
   // The systems the picker offers: those not in the list
-  readonly property var addable: OSDConfig.systemTypes.filter(info => !root.systems.some(item => item.type === info.type))
+  readonly property var addable: OSDConfig.systemTypes.filter(info => !root._onlyBar(info.type) && !root.systems.some(item => item.type === info.type))
 
   // The selected system, by type (each is in the list once), so a move
   // keeps it selected; the first when it isn't in the list (another OSD's
@@ -44,10 +53,15 @@ ColumnLayout {
   property string _picked: ""
   readonly property string _osdId: root.entry?.id ?? ""
   on_OsdIdChanged: root._picked = ""
-  readonly property int selectedIndex: Math.max(0, root.systems.findIndex(item => item.type === root._picked))
+  readonly property int selectedIndex: {
+    const picked = root.shown.find(index => root.systems[index].type === root._picked);
+    return picked ?? (root.shown[0] ?? -1);
+  }
   readonly property string selectedType: root.systems[root.selectedIndex]?.type ?? ""
   readonly property var selected: root.systems[root.selectedIndex] ?? null
   readonly property var selectedInfo: root.selected ? (root.typeInfo[root.selected.type] ?? null) : null
+  // How its bars are kept (`x-barNames`), or null
+  readonly property var _barSpec: root.selected ? OSDConfig.barSpecOf(root.selected.type) : null
 
   function labelOf(type) {
     const info = root.typeInfo[type];
@@ -127,18 +141,21 @@ ColumnLayout {
           id: systemList
           dragLayer: carrier
           moveKind: "osd-system-move"
-          count: root.systems.length
-          onDropRequested: (drag, index) => root.move(drag.index, index)
+          count: root.shown.length
+          // (an index past the listed ones: just after the last of them)
+          onDropRequested: (drag, index) => root.move(drag.index, index < root.shown.length ? root.shown[index] : root.shown[root.shown.length - 1] + 1)
 
           Repeater {
             model: systemList.count
 
             EntryListRow {
               id: systemRow
-              readonly property var item: root.systems[systemRow.index] ?? ({})
+              readonly property int at: root.shown[systemRow.index] ?? -1
+              readonly property var item: root.systems[systemRow.at] ?? ({})
               readonly property var info: root.typeInfo[systemRow.item.type] ?? null
 
               list: systemList
+              entryIndex: systemRow.at
               icon: systemRow.info?.icon ?? "help"
               label: root.labelOf(systemRow.item.type)
               selected: systemRow.item.type === root.selectedType
@@ -158,14 +175,14 @@ ColumnLayout {
                 danger: true
                 iconText: "close"
                 tooltipText: I18n.tr("Remove")
-                onClicked: root.remove(systemRow.index)
+                onClicked: root.remove(systemRow.at)
               }
             }
           }
         }
 
         StyledText {
-          visible: root.systems.length === 0
+          visible: root.shown.length === 0
           Layout.fillWidth: true
           text: I18n.tr("Nothing yet: add what this OSD shows.")
           textColor: Theme.foregroundAlt
@@ -217,6 +234,16 @@ ColumnLayout {
             opacity: 0.3
           }
 
+          // Its bars are set in the Bars part
+          StyledText {
+            visible: root._barSpec?.from !== undefined
+            Layout.fillWidth: true
+            text: I18n.tr("Its bars are set under Bars, below.")
+            textColor: Theme.foregroundAlt
+            textSize: Appearance.fontSizeBy(-1)
+            wrapMode: Text.WordWrap
+          }
+
           // A new form per system, so no row writes onto another
           KeyedLoader {
             id: formSlot
@@ -236,9 +263,11 @@ ColumnLayout {
     SchemaPropertiesForm {
       width: formSlot.width
       readonly property var props: root.selectedInfo?.schema.properties ?? ({})
+      // (its list of bars is the Bars part's)
+      readonly property string barsKey: root._barSpec?.from ?? ""
       // Its parts' switches, then whether it's quiet, then its own
       // settings in the schema's order
-      propertiesSchema: Object.keys(props).filter(key => key !== "type").reduce((out, key) => {
+      propertiesSchema: Object.keys(props).filter(key => key !== "type" && key !== barsKey).reduce((out, key) => {
         out[key] = props[key];
         return out;
       }, {})

@@ -5,13 +5,15 @@ tile:
   variant: standard
   tile: {title: Bars and icons, description: Its bars and its status icons in the OSD.}
 card: standard
-# Its bars on an OSD's tab name: each by its apps, else its kind
-barNames: {from: bars, by: type, named: apps}
+# Its bars (edited in the settings' Bars part, an OSD's tab named by
+# them): each by its apps, else its kind; added there with no Audio in the
+# list, it starts with no icons and no cards
+barNames: {from: bars, by: type, named: apps, barOnly: {tiles: [], card: false}}
 settings:
   bars:
     type: array
     title: Bars
-    description: In order. Other apps is the first playing stream no App bar matches.
+    description: In order; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.
     x-link: {setting: OSD.scrollToChange}
     default:
       - {type: other, icon: music_note}
@@ -30,6 +32,11 @@ settings:
             other: Other apps
             app: An app
             microphone: Microphone
+          x-enumIcons:
+            master: volume_up
+            other: music_note
+            app: apps
+            microphone: mic
           default: app
         apps:
           x-scope: personal

@@ -89,23 +89,77 @@ QtObject {
     return english ? I18n.tr(english) : "";
   }
 
-  // The names of an item's bars, by its schema's `x-barNames`: "label",
-  // its own name (Brightness); { from, by, named }, each entry of its
-  // setting `from` by its `named` list joined, else its `by` field's
-  // x-enumLabels (Audio's bars: an App bar by its apps, the others by
-  // their kind); none without it
-  function _barNames(item) {
+  // How a system's bars are named and edited (its schema's `x-barNames`):
+  // "label", it is one bar, named by its label (Brightness); { from, by,
+  // named, barOnly }, each entry of its setting `from` is a bar (Audio's
+  // `bars`), `barOnly` the settings an item added only for a bar starts
+  // with; null for a system with no bars
+  function barSpecOf(type) {
+    return root._systemDefs[type]?.["x-barNames"] ?? null;
+  }
+  // A system's schema (its item's definition), or null
+  function schemaOf(type) {
+    return root._systemDefs[type] ?? null;
+  }
+
+  // An item's bars, in order: { index (in its `from` list; -1 for a
+  // system that is one bar), name (translated), icon }. A `from` bar is
+  // named by its `named` list joined, else its `by` field's x-enumLabels
+  // (Audio's: an App bar by its apps, the others by their kind), its icon
+  // its kind's (`x-enumIcons`); none without `x-barNames`
+  function barRows(item) {
     const def = root._systemDefs[item.type];
     const spec = def?.["x-barNames"];
     if (!spec)
       return [];
     if (spec === "label")
-      return [root.nameOf(item.type)];
-    const labels = def.properties[spec.from]?.items?.properties?.[spec.by]?.["x-enumLabels"] ?? {};
-    return item[spec.from].map(entry => {
-      const named = spec.named ? entry[spec.named] : [];
-      return named.length > 0 ? named.join(" / ") : I18n.tr(labels[entry[spec.by]] ?? "");
-    }).filter(name => name !== "");
+      return [
+        {
+          "index": -1,
+          "name": root.nameOf(item.type),
+          "icon": def["x-icon"] ?? "extension"
+        }
+      ];
+    const by = def.properties[spec.from]?.items?.properties?.[spec.by] ?? {};
+    const labels = by["x-enumLabels"] ?? {};
+    const icons = by["x-enumIcons"] ?? {};
+    return (item[spec.from] ?? []).map((entry, index) => {
+      const named = spec.named ? (entry[spec.named] ?? []) : [];
+      return {
+        "index": index,
+        "name": named.length > 0 ? named.join(" / ") : I18n.tr(labels[entry[spec.by]] ?? ""),
+        "icon": icons[entry[spec.by]] ?? def["x-icon"] ?? "extension"
+      };
+    });
+  }
+
+  // Every kind of bar an OSD can show, for the settings' Bars picker:
+  // { type ("<System>" for a system that is one bar, else
+  // "<System>:<kind>", a value of its `by` field), label (English), icon }
+  readonly property var barKinds: [].concat(...Object.keys(root._systemDefs).map(type => {
+    const def = root._systemDefs[type];
+    const spec = def["x-barNames"];
+    if (!spec)
+      return [];
+    if (spec === "label")
+      return [
+        {
+          "type": type,
+          "label": def.properties.type.description || type,
+          "icon": def["x-icon"] ?? "extension"
+        }
+      ];
+    const by = def.properties[spec.from]?.items?.properties?.[spec.by] ?? {};
+    return (by.enum ?? []).map(kind => ({
+          "type": type + ":" + kind,
+          "label": by["x-enumLabels"]?.[kind] ?? kind,
+          "icon": by["x-enumIcons"]?.[kind] ?? def["x-icon"] ?? "extension"
+        }));
+  }))
+
+  // The names of an item's bars (barRows), those it has
+  function _barNames(item) {
+    return root.barRows(item).map(bar => bar.name).filter(name => name !== "");
   }
 
   // The name on its tab: its own, else its bars', else what it shows as

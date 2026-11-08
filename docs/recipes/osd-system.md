@@ -56,6 +56,7 @@ label: Foo
 icon: toggle_on
 group: Power        # one of the OSD groups in index.yaml's x-libraryGroups
 tile: standard      # its tiles or bars: the item's `tile` switch
+# barNames: label   # it shows bars: where the settings' Bars part finds them (label: it is one bar; {from: <list setting>, by, named, barOnly}: each entry of that list is one)
 # card: standard    # cards beside its tiles: the item's `card` switch (a card-only system names no part)
 # settings:         # its own keys, each with a default; one only its tile uses: x-showIf: {tile: true}
 ```

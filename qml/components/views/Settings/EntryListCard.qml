@@ -11,9 +11,8 @@ import qs.components.reusable
 // A section's list of entries as one card (the Dock and OSD `x-card`s):
 // the entries as tabs, one shown at a time: where it sits (the screen
 // picker every placed surface has, ScreenSpotPicker), Show, Duplicate and
-// Delete, then `entryContent`, its `sections` (each a folding part of its
-// own; `lastSections` after the rest) and its other settings (folding
-// under `otherTitle` when it has one). A `wide` card with the room puts
+// Delete, then `entryContent` and its other settings (folding under
+// `otherTitle` when it has one). A `wide` card with the room puts
 // the picker and the other settings' fold side by side at the top
 // (SplitColumns), `entryContent` under both; narrow, they stack as usual.
 // Edits go through the settings draft like any other row (the list as
@@ -43,15 +42,8 @@ FoldingCard {
   property var spotOf: entry => ScreenEdge.edgeSpot(entry.edge, entry.position / 100, entry.detached ? entry.distance / 100 : 0)
   // Between the picker and the settings
   property alias entryContent: entrySlot.data
-  // Keys of object settings each shown as a folding part of its own, titled
-  // and described by its schema, before the others (an OSD's bars, status
-  // icons and now playing). Their fields' `x-showIf` reach the entry's own
-  // through `../`
-  property var sections: []
-  // Of `sections`, those shown after the other settings, at the bottom
-  property var lastSections: []
   // Keys `entryContent` edits itself, left out of the other settings (an
-  // OSD's systems)
+  // OSD's systems and its bars' layout)
   property var ownKeys: []
   // Titles the entry's other settings, folding under it; "" shows them
   // as they are
@@ -245,61 +237,13 @@ FoldingCard {
     spacing: Widget.spacing * 1.5
   }
 
-  // One of `sections`: a line, then a folding part, its fields at their
-  // paths in the entry
-  Component {
-    id: sectionPart
-
-    ColumnLayout {
-      id: part
-      required property string modelData
-      readonly property var schema: root.entrySchema.properties[part.modelData]
-      readonly property string foldKey: root.foldKey + ":" + part.modelData
-
-      Layout.fillWidth: true
-      spacing: Widget.spacing * 1.5
-
-      // (The first, with no entryContent, sits under the accent line
-      // already)
-      StyledSeparator {
-        visible: entrySlot.visible || part.modelData !== root.sections.filter(key => !root.lastSections.includes(key))[0]
-        Layout.fillWidth: true
-      }
-
-      FoldingSection {
-        Layout.fillWidth: true
-        title: I18n.tr(part.schema.title ?? part.modelData)
-        description: part.schema.description ? I18n.tr(part.schema.description) : ""
-        collapsed: SettingsManager.isCollapsed(part.foldKey)
-        onToggled: SettingsManager.setCollapsed(part.foldKey, !collapsed)
-
-        SchemaPropertiesForm {
-          Layout.fillWidth: true
-          propertiesSchema: ({
-              [part.modelData]: part.schema
-            })
-          values: root.entry ?? ({})
-          onEdited: (path, value) => root.edit({
-              [path[0]]: value
-            })
-        }
-      }
-    }
-  }
-
-  Repeater {
-    model: root.entry !== null ? root.sections.filter(key => !root.lastSections.includes(key)) : []
-
-    delegate: sectionPart
-  }
-
   // The entry's other settings: folding under `otherTitle`, else as they
   // are
   Component {
     id: otherForm
 
     SchemaPropertiesForm {
-      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.sections.includes(key) && !root.ownKeys.includes(key)).reduce((out, key) => {
+      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.ownKeys.includes(key)).reduce((out, key) => {
         out[key] = root.entrySchema.properties[key];
         return out;
       }, {})
@@ -347,11 +291,5 @@ FoldingCard {
     visible: active
     Layout.fillWidth: true
     sourceComponent: othersFold
-  }
-
-  Repeater {
-    model: root.entry !== null ? root.sections.filter(key => root.lastSections.includes(key)) : []
-
-    delegate: sectionPart
   }
 }
