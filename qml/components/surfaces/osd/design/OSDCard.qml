@@ -18,10 +18,8 @@ import qs.components.reusable
 Item {
   id: root
 
-  // The card shown (OSDEngine.cardOf's), null for none; and the change
-  // that brought it (for a design of a system's own)
+  // The card shown (OSDEngine.cardOf's), null for none
   property var card: null
-  property var change: null
 
   // A click on a card that takes one (card.clickable)
   signal clicked

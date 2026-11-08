@@ -629,11 +629,27 @@ Item {
       root._showLevel(incoming, force);
   }
 
-  // The card out, if any, against a change (OSDEngine.arbitrate)
+  // The card out, if any, against a change (OSDEngine.arbitrate); while
+  // closing, the card waiting for the close (`_pending`) instead
   function _againstCard(incoming, now) {
-    if (root._open.card !== true || !root._cardChange)
+    const card = root._closing ? root._pending?.card : (root._open.card === true ? root._cardChange : null);
+    if (!card)
       return "";
-    return OSDEngine.arbitrate(root._cardChange, incoming, now - root._cardAt, root._defs);
+    return OSDEngine.arbitrate(card, incoming, now - (root._closing ? root._pending.cardAt : root._cardAt), root._defs);
+  }
+
+  // A card made stale ("retract"): it folds back, or, while closing, the
+  // one waiting for the close is dropped
+  function _retractCard() {
+    if (!root._closing) {
+      root._closePart("card");
+      return;
+    }
+    const pending = Object.assign({}, root._pending);
+    pending.parts = pending.parts.filter(part => part !== "card");
+    delete pending.card;
+    delete pending.cardAt;
+    root._pending = pending;
   }
 
   function _ring(change) {
@@ -653,17 +669,16 @@ Item {
     if (!force && !root.hostOpen)
       return;
     const now = Date.now();
-    // A card already waiting for the close is judged as the card out
-    // would be: kept ("keep"), the new one queues no card of its own
-    const keepQueued = root._closing && root._pending?.card && OSDEngine.arbitrate(root._pending.card, incoming, now - root._pending.cardAt, root._defs) === "keep";
-    if (root._queued("card", force, keepQueued ? null : {
+    // Kept ("keep"), the new one queues no card of its own
+    const against = root._againstCard(incoming, now);
+    if (root._queued("card", force, against === "keep" ? null : {
       "card": incoming,
       "cardAt": now
     })) {
       root.poked(force);
       return;
     }
-    if (root._againstCard(incoming, now) === "keep")
+    if (against === "keep")
       return;
     root._cardChange = incoming;
     root._cardAt = now;
@@ -680,6 +695,11 @@ Item {
     if (!force && !root.hostOpen)
       return;
     const now = Date.now();
+    const against = root._againstCard(incoming, now);
+    if (against === "suppress")
+      return;
+    if (against === "retract")
+      root._retractCard();
     if (root._queued("status", force, {
       "ring": incoming
     })) {
@@ -687,11 +707,6 @@ Item {
       root.poked(force);
       return;
     }
-    const against = root._againstCard(incoming, now);
-    if (against === "suppress")
-      return;
-    if (against === "retract")
-      root._closePart("card");
     if (root._open.status === true && root._ringChange && OSDEngine.arbitrate(root._ringChange, incoming, now - root._changedAt, root._defs) === "keep")
       return;
     root._ring(incoming);
@@ -704,16 +719,16 @@ Item {
   function _showLevel(incoming, force) {
     if (!force && !root.hostOpen)
       return;
+    const against = root._againstCard(incoming, Date.now());
+    if (against === "suppress")
+      return;
+    if (against === "retract")
+      root._retractCard();
     if (root._queued("level", force)) {
       root._boxParts("level").forEach(other => root._queued(other, force));
       root.poked(force);
       return;
     }
-    const against = root._againstCard(incoming, Date.now());
-    if (against === "suppress")
-      return;
-    if (against === "retract")
-      root._closePart("card");
     root._boxParts("level").forEach(other => root._openPart(other));
     root.poked(force);
   }
@@ -860,7 +875,6 @@ Item {
       x: root._farX(cardSlot, statusCard)
       y: root._farY(cardSlot, statusCard)
       card: root.cardContent
-      change: root._cardChange
 
       HoverHandler {
         id: statusCardHover
@@ -878,7 +892,7 @@ Item {
       delegate: Loader {
         id: designCard
         required property string modelData
-        // ("<type>/<key>/<design>", the design a path that may hold more)
+        // ("<type>/<key>/<design>")
         readonly property var _parts: designCard.modelData.split("/")
         readonly property string cardId: designCard._parts[0] + "/" + designCard._parts[1]
         readonly property bool hovered: designHover.hovered
@@ -896,12 +910,6 @@ Item {
           value: root._designLoader === designCard ? root.cardContent : null
           when: designCard.item !== null
         }
-        Binding {
-          target: designCard.item
-          property: "change"
-          value: root._designLoader === designCard ? root._cardChange : null
-          when: designCard.item !== null
-        }
         Connections {
           target: designCard.item
           ignoreUnknownSignals: true
@@ -911,7 +919,7 @@ Item {
         }
 
         Component.onCompleted: {
-          designCard.source = Paths.osdDesignUrl(designCard._parts[0], designCard._parts.slice(2).join("/"));
+          designCard.source = Paths.osdDesignUrl(designCard._parts[0], designCard._parts[2]);
           root._registerDesign(designCard.cardId, designCard, true);
         }
         Component.onDestruction: root._registerDesign(designCard.cardId, designCard, false)

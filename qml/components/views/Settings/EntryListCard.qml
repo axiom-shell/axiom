@@ -81,6 +81,8 @@ FoldingCard {
   }
 
   function add() {
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
     const entries = Utils.clone(root.entries);
     entries.push(SchemaValidation.applyDefaults(Object.assign(Utils.clone(root.seed), {
       "id": root._freeId(root.idBase)
@@ -90,6 +92,8 @@ FoldingCard {
   }
 
   function duplicate() {
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
     const entries = Utils.clone(root.entries);
     const copy = Utils.clone(root.entry);
     copy.id = root._freeId(copy.id);
@@ -101,6 +105,8 @@ FoldingCard {
   function remove() {
     if (root.entries.length <= 1)
       return;
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
     const entries = Utils.clone(root.entries);
     entries.splice(root.current, 1);
     root._commit(entries);
@@ -131,7 +137,10 @@ FoldingCard {
         text: root.labelOf(tab.entry)
         opacity: tab.entry.enabled ? 1 : 0.6
         active: tab.index === root.current
-        onClicked: root.selected = tab.index
+        onClicked: {
+          EditsManager.commitTyping();
+          root.selected = tab.index;
+        }
       }
     }
   }

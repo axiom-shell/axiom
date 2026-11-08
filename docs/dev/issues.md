@@ -155,6 +155,18 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** trivial
 - **Found:** 2026-11-08, while reviewing the OSD engine branch
 
+### The OSD's drive tooltip names the last drive an event came from, even one removed
+- **Where:** `qml/components/surfaces/osd/systems/Drives/Drives.qml` (`tile`)
+- **What:** The drive tile's name is `state?.event?.name`, the drive of the last event, so with two drives plugged in and the second one ejected and removed, the tile (still shown for the first) names the drive that's gone. The old OSD items did the same. Fix: name a drive still plugged in (or none).
+- **Size:** small
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### The OSD's System volume bar stays enabled with no audio sink
+- **Where:** `qml/components/surfaces/osd/systems/Audio/design/VolumeBar.qml` (`enabled`)
+- **What:** `enabled` is `root.isMaster || …`, so the System volume bar takes drags and the mute click with no default sink (nothing to set), where the Microphone bar is disabled with no source and an App bar with no stream. The old volume bar did the same (enabled with the system volume in use). Fix: `AudioManager.defaultSink !== null` for the master bar.
+- **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
 ## Overlay, modules and custom widgets
 
 ### A custom element sees another kind's element as its slot changes kind

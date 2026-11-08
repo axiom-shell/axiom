@@ -58,6 +58,8 @@ ColumnLayout {
     const info = root.typeInfo[type];
     if (!info)
       return;
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
     const systems = Utils.clone(root.systems);
     systems.push(SchemaValidation.applyDefaults({
       "type": type
@@ -67,6 +69,8 @@ ColumnLayout {
   }
 
   function remove(index) {
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
     const systems = Utils.clone(root.systems);
     const [gone] = systems.splice(index, 1);
     if (gone?.type === root.selectedType)
@@ -130,7 +134,10 @@ ColumnLayout {
           icon: systemRow.info?.icon ?? "help"
           label: root.labelOf(systemRow.item.type)
           selected: systemRow.item.type === root.selectedType
-          onClicked: root.selectedType = systemRow.selected ? "" : systemRow.item.type
+          onClicked: {
+            EditsManager.commitTyping();
+            root.selectedType = systemRow.selected ? "" : systemRow.item.type;
+          }
 
           badges: TipIcon {
             visible: systemRow.item.quiet === true

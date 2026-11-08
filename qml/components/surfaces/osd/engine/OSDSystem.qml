@@ -16,7 +16,7 @@ QtObject {
   property var options: ({})
 
   // What it shows, each { key, part: "bar" | "tile" | "card", icon,
-  // label, group }, `opens: false` for one whose change never opens a shut
+  // label }, `opens: false` for one whose change never opens a shut
   // OSD (an Audio bar's showOsd off), `design` (its view of its own, a
   // file of its design/ folder: Paths.osdDesignUrl), `roles` (a set's
   // card made by the engine: { add, still, stopped }, OSDEngine.cardOf),

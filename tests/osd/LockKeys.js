@@ -6,9 +6,6 @@
 //   capsLock, numLock, scrollLock  { available, value (the LED on) }:
 //   `available` LockKeysManager.available (false: no LEDs read yet, or
 //   gone), the same for every key
-//
-// Not expressible as rows: a tile hidden without LEDs (no change is
-// judged across `available: false`, so no step shows its tile).
 
 var opts = { "keys": ["capsLock", "numLock"] };
 var all = { "keys": ["capsLock", "numLock", "scrollLock"] };
@@ -18,6 +15,14 @@ function led(on, available) {
 }
 
 var rows = [
+  {
+    "name": "no LEDs read: every tile hidden",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": { "capsLock": led(false, false), "numLock": led(false, false) },
+        "tiles": { "capsLock": { "hidden": true }, "numLock": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing",
     "options": opts,

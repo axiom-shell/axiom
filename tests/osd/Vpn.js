@@ -29,8 +29,6 @@
 //   one down isn't marked, so it gets the card too (accepted by the brief).
 // decided: the card's `icon` for a drop is "vpn_key_off" (a card's icon
 //   isn't held to the tiles' base icon, as Drives' "usb_off" isn't).
-//
-// Not expressible as rows: the tile hidden with no VPN.
 
 function v(id, name, on, state) {
   return { "id": id, "name": name, "state": state || (on ? "on" : "off") };
@@ -40,6 +38,13 @@ function vpn(members, address) {
 }
 
 var rows = [
+  {
+    "name": "no VPN: its tile hidden",
+    "steps": [
+      { "at": 0, "state": { "vpn": { "available": false, "members": [], "address": "" } },
+        "tiles": { "vpn": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing, one already up",
     "steps": [

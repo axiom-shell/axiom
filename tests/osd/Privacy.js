@@ -41,9 +41,6 @@
 // decided: `card` for a removal with nobody left reads "Stopped …" with
 //   the change's `members` (the card out re-read as its capture stops,
 //   today's preview case).
-//
-// Not expressible as rows: the tile is never hidden (no row can show a
-// tile without a change).
 
 var opts = { "kinds": ["camera", "micUse", "screenShare"] };
 
@@ -60,6 +57,14 @@ function start(extra) {
 }
 
 var rows = [
+  {
+    "name": "nothing capturing: the tiles unlit, never hidden",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": start(),
+        "tiles": { "camera": { "on": false, "hidden": false }, "micUse": { "on": false, "hidden": false }, "screenShare": { "on": false, "hidden": false } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing, apps already capturing",
     "options": opts,
