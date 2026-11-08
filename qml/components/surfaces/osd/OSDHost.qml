@@ -457,14 +457,20 @@ Item {
     root._renew(["level", "status"]);
     root._schedule();
   }
-  // Held open, a part a system added brings has it come out at once
+  // Held open, a part a system added brings has it come out at once,
+  // opening the OSD if it had closed with nothing to hold (an OSD with no
+  // bars or icons when pinned, its first bar added)
   function _holdPinned() {
-    if (!root.pinned || !root.hostOpen || root._closing)
+    if (!root.pinned || root._closing)
       return;
-    if (root._levelEntries.length > 0 && root._open.level !== true)
+    const level = root._levelEntries.length > 0 && root._open.level !== true;
+    const status = root._tileIds.length > 0 && root._open.status !== true;
+    if (level)
       root._openPart("level");
-    if (root._tileIds.length > 0 && root._open.status !== true)
+    if (status)
       root._openPart("status");
+    if ((level || status) && !root.hostOpen)
+      root.poked(true);
   }
   on_LevelEntriesChanged: root._holdPinned()
   on_TileIdsChanged: root._holdPinned()

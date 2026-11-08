@@ -143,6 +143,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
+### Show on an OSD's other monitors leaves its copy there closing for good
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`preview`, `_close`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`)
+- **What:** `ShellManager.showOsd` reaches every screen's `OSDHost` (`onShowOsd` has no screen check), and `preview()` opens its parts there, but `OSDTriggers.poke` shows only the target screen's host (`ShellManager.showsOn`). On another monitor's copy the parts' time runs out, `_due` calls `_close` (`_closing = true`) and `collapse()` hides a host that never opened, so `hostOpen` never turns false and `onHostOpenChanged` never clears `_closing`, `_open` or `_order`. A later change there (the pointer's monitor focused) is queued behind a close that never ends (`_queued`), and as its host opens `_expose` is skipped (a part still marked open). The settings' Preview (`OSDHost.pinned`) takes the same path as it's let go. PLAUSIBLE: two monitors, an OSD on both, Show, then focus the other monitor and change the volume. Fix: run `preview()` only where `ShellManager.showsOn(screen, osd.screen)`, or reset the parts when a collapse finds the host shut.
+- **Size:** small
+- **Found:** 2026-11-08, while reviewing the OSD settings branch
+
 ## Overlay, modules and custom widgets
 
 ### A custom element sees another kind's element as its slot changes kind

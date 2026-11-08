@@ -190,6 +190,7 @@ Found along the way:
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
 - [The OSD's hover strip opens an empty bars slot when every bar is left out](issues.md#the-osds-hover-strip-opens-an-empty-bars-slot-when-every-bar-is-left-out) (reviewing the OSD engine branch)
 - [A type library's search matches the "Other" heading of every ungrouped type](issues.md#a-type-librarys-search-matches-the-other-heading-of-every-ungrouped-type) (the same)
+- [Show on an OSD's other monitors leaves its copy there closing for good](issues.md#show-on-an-osds-other-monitors-leaves-its-copy-there-closing-for-good) (reviewing the OSD settings branch)
 
 #### The launch gate
 Posting for testers waits for all of these:

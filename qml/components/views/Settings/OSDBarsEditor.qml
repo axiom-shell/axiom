@@ -121,6 +121,9 @@ ColumnLayout {
       return;
     const systems = Utils.clone(root.systems);
     const spec = OSDConfig.barSpecOf(row.type);
+    // A bar above the selected one in its list: the selection stays on it
+    if (row.index >= 0 && row.type === root._pickedType && row.index < root._pickedIndex)
+      root._pickedIndex -= 1;
     if (row.index < 0) {
       systems.splice(row.system, 1);
     } else {

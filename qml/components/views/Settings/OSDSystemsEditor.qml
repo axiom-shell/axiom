@@ -91,14 +91,18 @@ ColumnLayout {
     root._commit(systems);
   }
 
-  // Moves the system at `from` to before the one at `to` (the count: the
-  // end), counted as if it were still in place
+  // Moves the system at `from` (its index in `systems`) to before the
+  // listed row `to` (the count: just after the last listed), counted as if
+  // it were still in place: dropped where it was, nothing moves (not even
+  // past a one-bar system between, which would reorder the bars)
   function move(from, to) {
-    if (to === from || to === from + 1)
+    const at = root.shown.indexOf(from);
+    if (at < 0 || to === at || to === at + 1)
       return;
+    const before = to < root.shown.length ? root.shown[to] : root.shown[root.shown.length - 1] + 1;
     const systems = Utils.clone(root.systems);
     const [moved] = systems.splice(from, 1);
-    systems.splice(to > from ? to - 1 : to, 0, moved);
+    systems.splice(before > from ? before - 1 : before, 0, moved);
     root._commit(systems);
   }
 
@@ -142,8 +146,7 @@ ColumnLayout {
           dragLayer: carrier
           moveKind: "osd-system-move"
           count: root.shown.length
-          // (an index past the listed ones: just after the last of them)
-          onDropRequested: (drag, index) => root.move(drag.index, index < root.shown.length ? root.shown[index] : root.shown[root.shown.length - 1] + 1)
+          onDropRequested: (drag, index) => root.move(drag.index, index)
 
           Repeater {
             model: systemList.count
