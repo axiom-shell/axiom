@@ -36,6 +36,18 @@ QtObject {
     return _applyDefaults(copy, schema);
   }
 
+  // A new item for a list of `itemSchema` objects (the settings list's +),
+  // to append to `items`: its defaults, and an id free in `items` when
+  // its schema requires one (ItemId has no default, so without it the
+  // config refuses the item)
+  function newItem(itemSchema, items, root = itemSchema) {
+    const item = applyDefaults({}, itemSchema, root);
+    const resolved = resolveRef(itemSchema, root);
+    if ((resolved?.required ?? []).includes("id") && item.id === undefined)
+      item.id = Utils.newId("item", items);
+    return item;
+  }
+
   // `schema` with its $ref resolved, for walking a value along its schema
   function resolveRef(schema, root) {
     _ctx.root = root;

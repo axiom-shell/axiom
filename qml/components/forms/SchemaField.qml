@@ -215,7 +215,7 @@ Loader {
 
   function addItem() {
     const items = _arrayCopy();
-    items.push(SchemaValidation.applyDefaults({}, root.fieldSchema.items, ConfigManager.configSchema));
+    items.push(SchemaValidation.newItem(root.fieldSchema.items, items, ConfigManager.configSchema));
     root.commit(items);
   }
 

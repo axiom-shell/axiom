@@ -128,6 +128,45 @@ func TestCheckRefusesTyposAndBadRefs(t *testing.T) {
 	}
 }
 
+// A list's items may require only fields with a default, or `id` (a new
+// item gets one free in its list): anything else makes the settings
+// list's + add an item the config refuses.
+func TestCheckRefusesRequiredFieldsWithoutDefaults(t *testing.T) {
+	t.Parallel()
+	section := `type: object
+properties:
+  bad:
+    type: array
+    default: []
+    items: {$ref: "#/definitions/Item"}
+  good:
+    type: array
+    default: []
+    items:
+      type: object
+      required: [id, kind]
+      properties:
+        id: {type: string}
+        kind: {type: string, default: a}
+`
+	fsys := fstest.MapFS{
+		IndexFile:                     {Data: []byte("type: object\nproperties: {}\nsections: [A]\n")},
+		AnnotationsFile:               {Data: []byte("x-order: \"\"\n")},
+		SectionsDir + "/A.yaml":       {Data: []byte(section)},
+		DefinitionsDir + "/Item.yaml": {Data: []byte("type: object\nrequired: [id, name]\nproperties:\n  id: {type: string}\n  name: {type: string}\n")},
+	}
+	_, err := Assemble(fsys)
+	if err == nil {
+		t.Fatal("accepted")
+	}
+	if !strings.Contains(err.Error(), `bad: the items require "name"`) {
+		t.Errorf("missing the refusal of bad.name in:\n%v", err)
+	}
+	if strings.Contains(err.Error(), "good") || strings.Contains(err.Error(), `"id"`) {
+		t.Errorf("refused a defaulted field or id:\n%v", err)
+	}
+}
+
 // A type's schema.yaml expands into its kind's base: its label, settings,
 // parts and annotations, the kind's oneOf generated.
 func TestKindExpansion(t *testing.T) {

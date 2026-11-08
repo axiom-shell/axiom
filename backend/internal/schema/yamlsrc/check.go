@@ -58,6 +58,7 @@ func (c *checker) node(v any, where string, isRoot bool) {
 		c.errs = append(c.errs, &Error{File: IndexFile, Msg: where + ": a schema must be a mapping"})
 		return
 	}
+	c.listItems(obj, where)
 	for _, key := range obj.Keys() {
 		val := obj.Value(key)
 		at := join(where, key)
@@ -142,6 +143,70 @@ func (c *checker) node(v any, where string, isRoot bool) {
 			}
 		}
 	}
+}
+
+// listItems checks a list of objects: every field its items require has a
+// default, so a new item (a settings list's +, SchemaValidation.newItem)
+// is valid as made. `id` is the exception: newItem gives it one free in
+// its list.
+func (c *checker) listItems(obj *jsonx.Object, where string) {
+	if obj.Value("type") != "array" {
+		return
+	}
+	items := c.resolve(obj.Value("items"))
+	if items == nil {
+		return
+	}
+	req, _ := items.Value("required").(*jsonx.Array)
+	props, _ := items.Value("properties").(*jsonx.Object)
+	if req == nil || props == nil {
+		return
+	}
+	for _, r := range req.Items {
+		key, _ := r.(string)
+		if key == "id" {
+			continue
+		}
+		if prop := c.resolve(props.Value(key)); prop == nil || !prop.Has("default") {
+			c.fail(obj, "items", where, "the items require %q, which has no default: a new item would be refused (give it a default)", key)
+		}
+	}
+}
+
+// resolve follows a $ref, keys beside it over the definition's (as
+// SchemaValidation resolves them); nil for a non-object or a missing
+// definition
+func (c *checker) resolve(v any) *jsonx.Object {
+	obj, _ := v.(*jsonx.Object)
+	for range 10 {
+		if obj == nil {
+			return nil
+		}
+		ref, ok := obj.Value("$ref").(string)
+		if !ok {
+			return obj
+		}
+		defs, _ := c.root.Value("definitions").(*jsonx.Object)
+		name, _ := strings.CutPrefix(ref, "#/definitions/")
+		var def *jsonx.Object
+		if defs != nil {
+			def, _ = defs.Value(name).(*jsonx.Object)
+		}
+		if def == nil {
+			return nil
+		}
+		merged := jsonx.NewObject()
+		for _, k := range def.Keys() {
+			merged.Set(k, def.Value(k))
+		}
+		for _, k := range obj.Keys() {
+			if k != "$ref" {
+				merged.Set(k, obj.Value(k))
+			}
+		}
+		obj = merged
+	}
+	return nil
 }
 
 // pattern checks that a pattern compiles as the validators read it

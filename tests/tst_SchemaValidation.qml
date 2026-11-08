@@ -184,4 +184,59 @@ TestCase {
       }
     }, twoDefaults).a.items, []);
   }
+
+  // A settings list's + : an item whose schema requires an id (ItemId,
+  // no default) gets one free in its list, or the config refuses it
+  function test_new_item_gets_a_free_id() {
+    const withIds = {
+      "type": "object",
+      "properties": {},
+      "definitions": {
+        "ItemId": {
+          "type": "string"
+        },
+        "Corner": {
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/ItemId"
+            },
+            "delay": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        }
+      }
+    };
+    const item = {
+      "$ref": "#/definitions/Corner"
+    };
+    compare(SchemaValidation.newItem(item, [], withIds), {
+      "id": "item",
+      "delay": 0
+    });
+    compare(SchemaValidation.newItem(item, null, withIds).id, "item");
+    compare(SchemaValidation.newItem(item, [
+      {
+        "id": "item"
+      },
+      {
+        "id": "item-2"
+      }
+    ], withIds).id, "item-3");
+    // No required id: none made up
+    compare(SchemaValidation.newItem({
+      "type": "object",
+      "properties": {
+        "delay": {
+          "type": "integer",
+          "default": 0
+        }
+      }
+    }, []), {
+      "delay": 0
+    });
+  }
 }
