@@ -295,19 +295,27 @@ func (d *Daemon) appsPart() part {
 				}
 				return load().State(), nil
 			})
-			// Starts what opens target, as the shell's commands start
-			// (command.Spawn: the shell's environment, its own session)
 			rpc.Handle(reg, "apps.open", func(ctx context.Context, c *rpc.Conn, p openParams) (openResult, error) {
-				var cfg *jsonx.Object
-				if d.store != nil {
-					cfg, _ = d.store.Config()
-				}
-				argv, err := load().Command(p.Target, p.Args, mimeapps.OverridesFrom(cfg))
-				if err != nil {
-					return openResult{}, err
-				}
-				return openResult{Argv: argv}, command.Spawn(ctx, d.commandOptions(), argv, "")
+				argv, err := d.openTarget(ctx, p.Target, p.Args)
+				return openResult{Argv: argv}, err
 			})
 		},
 	}
+}
+
+// openTarget starts what opens target (a role id, a URL or a path) with
+// args, as the shell's commands start (command.Spawn: the shell's
+// environment, its own session): apps.open, and the file search's reveal
+// with no file manager answering. The entries and lists are read again
+// for each call, so a change made anywhere is seen.
+func (d *Daemon) openTarget(ctx context.Context, target string, args []string) ([]string, error) {
+	var cfg *jsonx.Object
+	if d.store != nil {
+		cfg, _ = d.store.Config()
+	}
+	argv, err := mimeapps.Load(mimeapps.FromEnv(d.opts.Getenv)).Command(target, args, mimeapps.OverridesFrom(cfg))
+	if err != nil {
+		return nil, err
+	}
+	return argv, command.Spawn(ctx, d.commandOptions(), argv, "")
 }
