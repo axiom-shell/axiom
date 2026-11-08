@@ -372,13 +372,13 @@ ColumnLayout {
       readonly property bool isEntry: (root.selected?.index ?? -1) >= 0
       // A list's bar: its entry's schema; a one-bar system: its settings
       // (its bar's switch, quiet, then its own), less its card's switch
-      readonly property var props: isEntry ? (root._selectedSchema?.properties[root._selectedSpec.from]?.items?.properties ?? ({})) : (root._selectedSchema?.properties ?? ({}))
+      readonly property var props: isEntry ? (root._selectedSchema?.properties[root._selectedSpec?.from]?.items?.properties ?? ({})) : (root._selectedSchema?.properties ?? ({}))
       propertiesSchema: Object.keys(props).filter(key => isEntry || (key !== "type" && key !== "card")).reduce((out, key) => {
         out[key] = props[key];
         return out;
       }, {})
       order: isEntry ? [] : ["tile", "quiet"].concat(root._selectedSchema?.["x-order"] ?? [])
-      values: (isEntry ? root._selectedItem?.[root._selectedSpec.from]?.[root.selected.index] : root._selectedItem) ?? ({})
+      values: (isEntry ? root._selectedItem?.[root._selectedSpec?.from]?.[root.selected?.index] : root._selectedItem) ?? ({})
       onEdited: (path, value) => root.editSelected(path[0], value)
     }
   }
