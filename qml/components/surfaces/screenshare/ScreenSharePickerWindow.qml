@@ -199,14 +199,18 @@ PanelWindow {
   // tall
   readonly property int cardBaseWidth: Widget.px(1040)
   readonly property int screenMaxHeight: Widget.px(340)
-  // The gap a screen's tile leaves around its picture on the map
-  readonly property real screenInset: root.ring + root.tileGap / 2
+  // The gap a tile leaves around its picture: a screen's tile is its
+  // place on the map (MonitorMap sets its geometry), a window's a grid cell
+  readonly property real tileInset: root.ring + root.tileGap / 2
+  // The widest the card gets
+  readonly property real cardMaxWidth: root.width - Widget.px(48)
   // The screens' map: every screen as big as one alone in the base card,
   // the card growing as screens are added, scaled down only past what
   // this screen fits
-  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - root.pad * 2, root.screenMaxHeight + root.screenInset * 2, root.width - Widget.px(48) - root.pad * 2, root.height * 0.6)
+  readonly property var mapSize: MonitorLayout.fixedSize(root.screenRects, root.cardBaseWidth - root.pad * 2, root.screenMaxHeight + root.tileInset * 2, root.cardMaxWidth - root.pad * 2, root.height * 0.6)
   // The body's height for the screens: every tab keeps it, so the card
-  // doesn't jump between tabs; one screen's names under it set the least
+  // doesn't jump between tabs; at least the one-screen card's old body
+  // (the screen and its names under it)
   readonly property real bodyHeight: Math.max(Widget.px(300), root.screenMaxHeight + root.ring * 2 + root.labelsHeight, root.mapSize.height)
 
   StyledText {
@@ -238,17 +242,13 @@ PanelWindow {
       readonly property bool selected: root.isSelected(root.tab, token)
       readonly property bool hovered: tileMouse.containsMouse
       readonly property var shellScreen: isScreen ? General.outputs.find(s => s.name === tile.modelData.name) ?? null : null
-      // The gap around the picture: a screen's tile is its place on the map
-      // (MonitorMap sets its geometry), a window's a grid cell
-      readonly property real inset: root.ring + root.tileGap / 2
-
       width: grid.cellWidth
       height: grid.cellHeight
 
       Item {
         id: picture
-        x: tile.inset
-        y: tile.isScreen ? tile.inset : root.ring
+        x: root.tileInset
+        y: tile.isScreen ? root.tileInset : root.ring
         width: tile.width - x * 2
         height: tile.isScreen ? tile.height - y * 2 : (grid.cellWidth - root.tileGap - root.ring * 2) * 10 / 16
 
@@ -395,7 +395,7 @@ PanelWindow {
     visible: root.hasCard
     anchors.centerIn: parent
     // The base width, wider as the screens' map asks
-    width: Math.min(Math.max(root.cardBaseWidth, root.mapSize.width + root.pad * 2), root.width - Widget.px(48))
+    width: Math.min(Math.max(root.cardBaseWidth, root.mapSize.width + root.pad * 2), root.cardMaxWidth)
     height: Math.min(content.implicitHeight + root.pad * 2, root.height - Widget.px(64))
     color: Appearance.fill(Theme.background)
     border.color: Theme.border
