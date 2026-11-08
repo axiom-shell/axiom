@@ -189,23 +189,51 @@ TestCase {
     verify(MonitorLayout.fit(rects, 0, 0, 20).scale > 0, "never a zero or negative scale");
   }
 
-  function test_fitSize() {
-    const tall = [
+  function test_fixedSize() {
+    const one = [
       {
         "x": 0,
         "y": 0,
-        "width": 1080,
-        "height": 1920
+        "width": 1920,
+        "height": 1080
       }
     ];
-    compare(MonitorLayout.fitSize(tall, 1000, 480), {
-      "width": 270,
-      "height": 480
-    });
-    compare(MonitorLayout.fitSize([], 960, 1000), {
+    compare(MonitorLayout.fixedSize(one, 1000, 540, 5000, 5000), {
       "width": 960,
       "height": 540
-    }, "no rects: a 16:9 box");
+    }, "one screen: the screen box's size");
+    const two = one.concat([
+      {
+        "x": 1920,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      }
+    ]);
+    compare(MonitorLayout.fixedSize(two, 1000, 540, 5000, 5000), {
+      "width": 1920,
+      "height": 540
+    }, "a second screen beside: same scale, twice as wide");
+    compare(MonitorLayout.fixedSize(two, 1000, 540, 960, 5000), {
+      "width": 960,
+      "height": 270
+    }, "past the max: scaled down to it");
+    const mixed = one.concat([
+      {
+        "x": 1920,
+        "y": 0,
+        "width": 1080,
+        "height": 2160
+      }
+    ]);
+    compare(MonitorLayout.fixedSize(mixed, 1000, 540, 5000, 5000), {
+      "width": 750,
+      "height": 540
+    }, "mixed: the tallest screen sets the scale");
+    compare(MonitorLayout.fixedSize([], 1000, 540, 5000, 5000), {
+      "width": 960,
+      "height": 540
+    }, "no rects: a 16:9 screen");
   }
 
   function test_fillMissing() {
