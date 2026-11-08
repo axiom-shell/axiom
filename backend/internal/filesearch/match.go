@@ -19,9 +19,10 @@ type Pattern struct {
 }
 
 type token struct {
-	text []byte   // matched against the name (lower-case unless cased)
-	dirs [][]byte // folder segments before it, outermost first
-	mask uint32   // text's character classes
+	text     []byte   // matched against the name (lower-case unless cased)
+	dirs     [][]byte // folder segments before it, outermost first
+	dirMasks []uint32 // their character classes
+	mask     uint32   // text's character classes
 }
 
 // maxTokens is how many tokens a pattern keeps (the words after are
@@ -56,7 +57,9 @@ func ParsePattern(q string) Pattern {
 		t.mask = maskOf(t.text)
 		p.mask |= t.mask
 		for _, d := range t.dirs {
-			p.mask |= maskOf(d)
+			dm := maskOf(d)
+			t.dirMasks = append(t.dirMasks, dm)
+			p.mask |= dm
 		}
 		p.tokens = append(p.tokens, t)
 		if len(p.tokens) == maxTokens {
@@ -72,10 +75,25 @@ func (p Pattern) Empty() bool { return len(p.tokens) == 0 }
 // maskOf is a name's character classes, case ignored: a bit per letter,
 // one for digits, '.', '-', '_', ' ', and one for anything else. A name
 // can match a token only if its mask (with its folders') holds the
-// token's: the cheap test that skips most of the index.
+// token's: the cheap test that skips most of the index. A name with
+// non-ASCII letters adds its lower-cased form's, where some become ASCII
+// ("İ" lowers to "i", the Kelvin sign to "k").
 func maskOf(name []byte) uint32 {
-	var m uint32
+	m, wide := asciiMask(name)
+	if wide {
+		lower, _ := asciiMask([]byte(strings.ToLower(string(name))))
+		m |= lower
+	}
+	return m
+}
+
+// asciiMask is maskOf's classes of the bytes as they are; wide: one isn't
+// ASCII.
+func asciiMask(name []byte) (m uint32, wide bool) {
 	for _, c := range name {
+		if c >= utf8.RuneSelf {
+			wide = true
+		}
 		switch {
 		case c >= 'a' && c <= 'z':
 			m |= 1 << (c - 'a')
@@ -95,7 +113,7 @@ func maskOf(name []byte) uint32 {
 			m |= 1 << 31
 		}
 	}
-	return m
+	return m, wide
 }
 
 // lowerInto is name lower-cased into buf (ASCII in place; anything else

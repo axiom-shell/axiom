@@ -117,6 +117,7 @@ func TestSearch(t *testing.T) {
 		"code/axiom/backend/main.go",
 		".config/app/report.conf",
 		"Music/Report Song.mp3",
+		"Trips/İstanbul.jpg",
 		"empty/",
 	)
 	for _, c := range []struct {
@@ -140,6 +141,7 @@ func TestSearch(t *testing.T) {
 		{name: "under a folder", q: "report", under: "/home/u/Downloads", want: []string{"/home/u/Downloads/report-final.pdf"},
 			not: []string{"/home/u/Documents/report.pdf"}},
 		{name: "under a hidden folder shows hidden", q: "report", under: "/home/u/.config", want: []string{"/home/u/.config/app/report.conf"}},
+		{name: "a letter lowered into ASCII", q: "istanbul", want: []string{"/home/u/Trips/İstanbul.jpg"}},
 		{name: "no match", q: "zzzz"},
 	} {
 		t.Run(c.name, func(t *testing.T) {

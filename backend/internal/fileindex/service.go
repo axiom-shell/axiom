@@ -439,10 +439,15 @@ func (l *loop) shutdown() {
 
 func (l *loop) ix() *filesearch.Index { return l.s.ix }
 
+// setIndex swaps the index, dropping the use bonus resolved for the old
+// one (which would keep it, tens of MB, alive: off, compacted, rebuilt).
 func (l *loop) setIndex(ix *filesearch.Index) {
 	l.s.mu.Lock()
 	l.s.ix = ix
 	l.s.mu.Unlock()
+	l.s.bonusMu.Lock()
+	l.s.bonus = bonusCache{}
+	l.s.bonusMu.Unlock()
 }
 
 // configure applies the settings: a change of what's indexed drops the

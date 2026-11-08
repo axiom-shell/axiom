@@ -32,7 +32,9 @@ type CrawlRequest struct {
 	// Stat are folders to check: each whose time changed is read again,
 	// each gone said so (the stat pass)
 	Stat []StatDir `json:"stat,omitempty"`
-	// Max is how many entries it sends at most (0: no cap)
+	// Max is how many entries a crawl sends at most (0: no cap). A stat
+	// pass has none: the folders it reads again are the index's already,
+	// whose own cap leaves out what they add
 	Max int `json:"max"`
 	// Pause is a sleep every 128 folders read (and every 1024 checked),
 	// in ms: a crawl paces itself even where the disk ignores its idle
@@ -69,11 +71,12 @@ func Serve(ctx context.Context, stdin io.Reader, stdout io.Writer) error {
 	f := newFilter(cleanRoots(req.Roots), req.Excludes, req.Skip, req.Hidden)
 	w := &frameWriter{w: bufio.NewWriterSize(stdout, 64<<10)}
 	pause := time.Duration(req.Pause) * time.Millisecond
-	c := &crawler{f: f, w: w, max: req.Max, pause: pause}
+	c := &crawler{f: f, w: w, pause: pause}
 	var err error
 	if len(req.Stat) > 0 {
 		err = c.stat(ctx, req.Stat)
 	} else {
+		c.max = req.Max
 		err = c.crawl(ctx, req.Start)
 	}
 	if err == errCapped {

@@ -177,7 +177,7 @@ func (ix *Index) folderPass(q Query, s *scratch) {
 			}
 			s.anc[t][d] = a
 			g := s.seg[t][p]
-			if int(g) < len(tok.dirs) && maskOf(tok.dirs[g])&^e.mask == 0 {
+			if int(g) < len(tok.dirs) && tok.dirMasks[g]&^e.mask == 0 {
 				if !q.Pattern.cased && !lowered {
 					buf, lowered = lowerInto(buf, name), true
 				}

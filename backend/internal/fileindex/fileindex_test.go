@@ -146,12 +146,13 @@ func TestCrawl(t *testing.T) {
 	}
 }
 
-// The stat pass reads a folder whose time changed, and says one is gone
+// The stat pass reads a folder whose time changed, and says one is gone;
+// the cap is a crawl's (an index at its cap still has its folders checked)
 func TestStatPass(t *testing.T) {
 	t.Parallel()
 	root := tree(t, "a/x", "b/y", "c/")
 	st, _ := os.Lstat(filepath.Join(root, "b"))
-	got, kinds := serve(t, CrawlRequest{Roots: []string{root}, Stat: []StatDir{
+	got, kinds := serve(t, CrawlRequest{Roots: []string{root}, Max: 1, Stat: []StatDir{
 		{Path: root + "/a", Mtime: 1},
 		{Path: root + "/b", Mtime: st.ModTime().UnixNano()},
 		{Path: root + "/gone", Mtime: 1},
