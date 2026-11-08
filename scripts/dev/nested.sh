@@ -10,7 +10,8 @@
 #     the notification, tray or MPRIS names from the live shell
 #   - its config turns off what would reach outside it: idle (logind is
 #     the real system bus: its suspend step would suspend this machine,
-#     and it answers this session's lock requests) and the polkit agent
+#     and it answers this session's lock requests), the polkit agent and
+#     the Bluetooth pairing agent (BlueZ is the real system bus's)
 #
 # Usage: scripts/dev/nested.sh <sway|niri|hyprland> [--copy-config] [--managed]
 #   --copy-config  start from a copy of ~/.config/axiom/config.json (with
@@ -105,6 +106,9 @@ elif os.path.exists(path):
         config = json.load(f)
 for section in ("Idle", "Polkit", "Greeter"):
     config.setdefault(section, {})["enabled"] = False
+# The system bus is the real one: a second pairing agent would take the
+# live BlueZ's pairing requests
+config.setdefault("Bluetooth", {})["pairingAgent"] = False
 tmp = path + ".tmp"
 with open(tmp, "w") as f:
     json.dump(config, f, indent=2)
@@ -115,7 +119,9 @@ EOF
 launch="$scratch/launch.sh"
 cat >"$launch" <<EOF
 #!/usr/bin/env bash
-export XDG_CONFIG_HOME="$scratch/config" XDG_STATE_HOME="$scratch/state" XDG_DATA_HOME="$scratch/data" XDG_CACHE_HOME="$scratch/cache"
+# The system bus is the real one: never a second pairing agent, whatever
+# the config (the dev image reads its own dev/config.json, copied once)
+export XDG_CONFIG_HOME="$scratch/config" XDG_STATE_HOME="$scratch/state" XDG_DATA_HOME="$scratch/data" XDG_CACHE_HOME="$scratch/cache" AXIOM_BLUETOOTH_AGENT=off
 exec "$scratch/axiom" run --dev --tree "$repo"
 EOF
 chmod +x "$launch"

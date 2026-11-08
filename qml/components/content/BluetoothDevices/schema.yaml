@@ -1,4 +1,5 @@
 label: Bluetooth devices
+keyboard: true
 icon: bluetooth
 group: Network & devices
 settings:

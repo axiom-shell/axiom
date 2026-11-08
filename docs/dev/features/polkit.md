@@ -1,8 +1,8 @@
 # Polkit agent
 
-> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/shell/PolkitPrompt.qml`, `qml/components/surfaces/polkit/PolkitWindow.qml`, `qml/components/views/Settings/PolkitStatusCard.qml`
+> **Files:** `qml/services/session/PolkitManager.qml`, `qml/components/methods/PolkitAgents.qml`, `qml/config/PolkitConfig.qml`, `qml/components/surfaces/prompt/PolkitCard.qml`, `qml/components/views/Settings/PolkitStatusCard.qml`
 > **Config:** `Polkit.*` (reader `PolkitConfig`)
-> **Related:** [Lockscreen](lockscreen.md) (shared password field), [Shell manager and targeting](../core/shell-manager-targeting.md), [Greeter install](greeter-install.md)
+> **Related:** [Prompts](prompts.md), [Lockscreen](lockscreen.md) (shared password field), [Shell manager and targeting](../core/shell-manager-targeting.md), [Greeter install](greeter-install.md)
 
 Axiom as the session's polkit agent: it takes over registration from other agents and draws a modal password prompt.
 
@@ -30,15 +30,15 @@ A session has one agent, and Quickshell never retries a failed registration. So:
 - The managed mode's autostart (`Session.autostart`) skips agent commands while this is on.
 
 ### Handling a request
-- It picks the monitor (the focused one).
+- **The queue:** each request (a new `flow`) goes through the shared prompt's queue (`PromptManager.request` with `content: "polkit"` and `outsideCancels: false`), and is withdrawn when the flow ends; a reload queues the open flow again. So a Bluetooth pairing prompt asked meanwhile waits behind it, and the other way round. The prompt picks the monitor (the focused one) when the request comes to the front ([Prompts](prompts.md)).
 - It selects the user's own identity when that's listed.
 - It reads the action's description and vendor from `pkaction`, one at a time. A result for a different action is dropped.
 - **Answering:** `submit` / `cancel` / `selectIdentity` are the only ways. There is no IPC.
 
 ### The prompt
-- Drawn by `qml/shell/PolkitPrompt` → `surfaces/polkit/PolkitWindow`, on every screen.
-- **Layer:** Overlay, with the `axiom-polkit` layer rule, which stacks it over every other axiom surface.
-- **Modal:** it dims everything, bars included.
+- Drawn by the shared prompt's window (`qml/shell/Prompt` → `surfaces/prompt/PromptWindow`, on every screen), which loads `surfaces/prompt/PolkitCard` as its card ([Prompts](prompts.md)).
+- **Layer:** Overlay, with the `axiom-polkit` layer rule (the shared prompt kept the name), which stacks it over every other axiom surface.
+- **Modal:** it dims everything, bars included; a click outside the card does nothing (`outsideCancels: false`), Escape cancels.
 - **`SurfaceManager.modalWindows`:** it is registered there while shown, so a prompt over the overlay clears no focus grab. One case is the greeter's install started from Settings. Without a native grab (sway, niri) the grabbing surface stops asking for exclusive keyboard meanwhile (`SurfaceManager.modalShown`), or it would keep the keyboard from the prompt.
 - **The card:** with exclusive keyboard, on the picked screen (`General.screensNamed`).
 - **The field:** `reusable/PasswordEntry`, shared with the lock screen's `PasswordField`. It takes no keys for 400 ms after it opens.

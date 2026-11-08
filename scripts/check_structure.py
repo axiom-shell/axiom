@@ -486,6 +486,13 @@ def main():
         if re.search(r"^import Quickshell\.Hyprland\b", text, re.M) and not re.fullmatch(r"qml/services/compositor/Hyprland\w*\.qml", path):
             errors.append(f"{path}: imports Quickshell.Hyprland (only the Hyprland* services may; use CompositorManager)")
 
+    # Bluetooth is the daemon's (backend/internal/bluez): nothing reads
+    # Quickshell.Bluetooth, whose calls would run on another BlueZ client
+    # than the daemon's (docs/dev/features/networking-bluetooth.md)
+    for path, text in sources.items():
+        if re.search(r"^import Quickshell\.Bluetooth\b", text, re.M):
+            errors.append(f"{path}: imports Quickshell.Bluetooth (Bluetooth is the daemon's: use BluetoothManager)")
+
     # Likewise only a backend's own services talk to its compositor: read
     # its Quickshell module, run its CLI, use its socket or its services
     # directly (docs/dev/compositor/README.md): (prefix, the compositor,

@@ -66,7 +66,8 @@ QtObject {
   //   use, "" for none), label (its own: "DE", "あ"), icon (its kind's:
   //   "keyboard", "translate") },
   //   audio / microphone { muted, name, detail, icon (the device's,
-  //   unmuted), device (its identity, deviceKey's) }, powerProfile { profile: "powerSaver" |
+  //   unmuted), device (its identity, deviceKey's), address (its
+  //   Bluetooth address, else "") }, powerProfile { profile: "powerSaver" |
   //   "balanced" | "performance" | "" }, charger { available, plugged,
   //   percent, charging, full, untilFull (the time left to full, as
   //   shown) }, wifi { available, on, network (the one joined, else ""),
@@ -82,7 +83,11 @@ QtObject {
   //   monitor { available, event (MonitorManager.lastEvent: { kind:
   //   "added" | "removed", name, description, width, height }, or null) },
   //   screenshot { event (ScreenshotManager.lastShot: { path, title,
-  //   folder }, or null) }, every other
+  //   folder }, or null) }, bluetooth { available, on, connected (the
+  //   connected devices' names), event (BluetoothManager.lastEvent: {
+  //   kind: "connected" | "disconnected" | "low" | "critical", devices:
+  //   [{ address, name, glyph, battery (0-100, -1 none) }] }, or null)
+  //   }, every other
   //   type (recording too) { available, on }
   function tile(type, state) {
     const t = {
@@ -130,6 +135,7 @@ QtObject {
         "name": s.name ?? "",
         "detail": s.detail ?? "",
         "device": s.device ?? "",
+        "address": s.address ?? "",
         "on": s.muted !== true,
         "slash": s.muted === true,
         "notable": s.muted === true,
@@ -197,6 +203,20 @@ QtObject {
           "hidden": s.available !== true
         });
       }
+    case "bluetooth":
+      {
+        // Never unusual; the devices connected name it, the last event
+        // (devices connecting, disconnecting, a battery low) is its card
+        const e = s.event ?? null;
+        return Object.assign(t, {
+          "icon": "bluetooth",
+          "name": s.on === true ? (s.connected ?? []).join(", ") : "",
+          "event": e?.kind ?? "",
+          "devices": e?.devices ?? [],
+          "on": s.on === true,
+          "hidden": s.available === false
+        });
+      }
     case "monitor":
       {
         // Only its card says anything: shown as it changes
@@ -261,7 +281,6 @@ QtObject {
       "dnd": ["do_not_disturb_on", true],
       "nightLight": ["nightlight", true],
       "wifi": ["wifi", false],
-      "bluetooth": ["bluetooth", null],
       "airplane": ["airplanemode_active", true],
       "recording": ["screen_record", true]
     };
@@ -354,9 +373,10 @@ QtObject {
   // audio device switching, a VPN coming up, an app starting to use the
   // camera or share the screen, the charger plugged in, a Wi-Fi network
   // joined, something done to a drive (DrivesManager.lastEvent), the
-  // battery dropping to low or critical, a monitor connected or removed,
-  // a screenshot taken, and a message
-  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive", "battery", "monitor", "screenshot", "message"]
+  // battery dropping to low or critical, Bluetooth devices connecting or
+  // disconnecting or one's battery low (BluetoothManager.lastEvent), a
+  // monitor connected or removed, a screenshot taken, and a message
+  readonly property var cardTypes: ["audio", "microphone", "vpn", "camera", "screenShare", "micUse", "charger", "wifi", "drive", "battery", "bluetooth", "monitor", "screenshot", "message"]
 
   // The types whose card is clicked to act on what it says (a drive's
   // opens or unlocks it, a screenshot's opens the picture)
@@ -379,7 +399,8 @@ QtObject {
     return osd.statuses.items.includes(type) && !osd.statuses.quiet.includes(type);
   }
 
-  // Where an event goes (a drive, the battery, a monitor, a screenshot):
+  // Where an event goes (a drive, the battery, a Bluetooth device's
+  // battery, a monitor, a screenshot):
   // "osd" when an OSD of `osds` opens its card (opensCard), else
   // "notification" with `notify` (its section's switch), else ""
   // (nowhere)
@@ -447,9 +468,10 @@ QtObject {
   // or the charger did, a drive's last event); `detail` an audio device's
   // profile, a VPN's address, a network's signal, the time left to a full
   // battery, where a drive was mounted, the time left on a low battery,
-  // a monitor's connector and resolution, the folder a screenshot was
-  // saved in, a message's second line; `tone` a message's ("warning" for
-  // a refusal, else ""), a critical battery's ("warning")
+  // a Bluetooth device's battery, a monitor's connector and resolution,
+  // the folder a screenshot was saved in, a message's second line; `tone`
+  // a message's ("warning" for a refusal, else ""), a critical battery's
+  // or Bluetooth device's battery's ("warning")
   function card(type, tiles, types) {
     if (!root.cardTypes.includes(type))
       return null;
@@ -517,6 +539,32 @@ QtObject {
         out.detail = t.event === "mounted" ? (t.mountPoint ?? "") : "";
         break;
       }
+    case "bluetooth":
+      {
+        // One device: its own icon and battery; several: their names
+        const devices = t.devices ?? [];
+        const one = devices.length === 1 ? devices[0] : null;
+        const battery = one && one.battery >= 0 ? `${one.battery}%` : "";
+        out.title = devices.map(d => d.name).join(", ");
+        switch (t.event) {
+        case "low":
+        case "critical":
+          out.icon = t.event === "critical" ? "battery_alert" : "battery_low";
+          out.role = t.event === "critical" ? "Battery critically low" : "Battery low";
+          out.detail = battery;
+          out.tone = t.event === "critical" ? "warning" : "";
+          break;
+        case "disconnected":
+          out.icon = "bluetooth_disabled";
+          out.role = "Disconnected";
+          break;
+        default:
+          out.icon = one?.glyph || "bluetooth";
+          out.role = "Connected";
+          out.detail = battery;
+        }
+        break;
+      }
     case "battery":
       out.role = t.level === "critical" ? "Battery critically low" : "Battery low";
       out.detail = t.timeLeft ?? "";
@@ -567,6 +615,13 @@ QtObject {
     return 2000;
   }
 
+  // Whether a card warns of what no click caused (a Bluetooth device's
+  // battery low or critical), from its type and tile (tile()'s): it opens
+  // an OSD even just after a click marked its type (fromScreen)
+  function alert(type, tile) {
+    return type === "bluetooth" && (tile?.event === "low" || tile?.event === "critical");
+  }
+
   // Whether a change of `type` is the pointer's own, `elapsed` ms after
   // its kind was last marked (Infinity: never)
   function fromScreen(type, elapsed) {
@@ -581,13 +636,14 @@ QtObject {
   // Bluetooth just after airplane mode switched them, a card's own status
   // changing again without one (a new device's mute, the other half of a
   // VPN switch, a capture stopping as soon as it started; not a VPN,
-  // Wi-Fi or the charger turning off), the camera and
+  // Wi-Fi, the charger or Bluetooth turning off), the camera and
   // the microphone taken by the same app together (one card says both),
   // the output and
   // input switching to the same device together (one change: a headset),
-  // and either device's mute just after a device switch (its own state
-  // coming in, not the user); a message's card gives way only to another
-  // card (its text gets read)
+  // a Bluetooth device connecting and the output or input then switching
+  // to it (its card says it), and either device's mute just after a
+  // device switch (its own state coming in, not the user); a message's
+  // card gives way only to another card (its text gets read)
   function replaces(shown, incoming, elapsed, tiles, shownCard, incomingCard) {
     if (elapsed >= root.quietWindow)
       return true;
@@ -598,14 +654,16 @@ QtObject {
     if (shownCard !== true)
       return true;
     // A card that said "on" (a VPN up, a network joined, the charger
-    // plugged in) gives way to its status turning off: it would say what
-    // no longer holds
+    // plugged in, devices connected) gives way to its status turning
+    // off: it would say what no longer holds
     if (incoming === shown && incomingCard !== true)
-      return ["vpn", "wifi", "charger"].includes(incoming) && tiles?.[incoming]?.on !== true;
+      return root.retracting.includes(incoming) && tiles?.[incoming]?.on !== true;
+    const audio = ["audio", "microphone"];
+    if (shown === "bluetooth" && incomingCard === true && audio.includes(incoming) && root._connectedNow(tiles?.bluetooth, tiles?.[incoming]?.address))
+      return false;
     const calls = ["camera", "micUse"];
     if (incomingCard === true && shown !== incoming && calls.includes(shown) && calls.includes(incoming) && root._sameApp(tiles?.[shown], tiles?.[incoming]))
       return false;
-    const audio = ["audio", "microphone"];
     if (!audio.includes(shown) || !audio.includes(incoming))
       return true;
     if (incomingCard !== true)
@@ -617,15 +675,29 @@ QtObject {
     return true;
   }
 
+  // The statuses whose card draws back as they turn off (a VPN, Wi-Fi,
+  // the charger, the Bluetooth radio): it would say what no longer holds
+  readonly property var retracting: ["vpn", "wifi", "charger", "bluetooth"]
+
+  // Whether a Bluetooth tile's card (tile()'s) says `address` (an audio
+  // tile's, "" for none) just connected: a headset's output or input
+  // following it is the same change
+  function _connectedNow(bt, address) {
+    if (!address || bt?.event !== "connected")
+      return false;
+    const want = String(address).toUpperCase();
+    return (bt.devices ?? []).some(d => String(d.address).toUpperCase() === want);
+  }
+
   // A status change without a card while a card is out (`cardType`'s,
   // `elapsed` ms old), the two in their own parts: "retract" when the
-  // card would say what no longer holds (its VPN, Wi-Fi or charger turned
-  // off: it draws back, the change shows), "suppress" when it's the
+  // card would say what no longer holds (its VPN, Wi-Fi, charger or
+  // Bluetooth turned off: it draws back, the change shows), "suppress" when it's the
   // card's own knock-on (a new device's mute, the other half of a VPN
   // switch, a capture stopping as it starts: nothing shows), else "show"
   // (unrelated: the card stays, the change shows on the buttons)
   function besideCard(cardType, incoming, elapsed, tiles) {
-    if (incoming === cardType && ["vpn", "wifi", "charger"].includes(incoming) && tiles?.[incoming]?.on !== true)
+    if (incoming === cardType && root.retracting.includes(incoming) && tiles?.[incoming]?.on !== true)
       return "retract";
     if (cardType !== "message" && !root.replaces(cardType, incoming, elapsed, tiles, true, false))
       return "suppress";

@@ -277,6 +277,15 @@ QtObject {
     return key === undefined || key === null ? "" : String(key);
   }
 
+  // A Bluetooth sink's or source's device address ("AA:BB:…", as BlueZ
+  // gives it), "" for another or one not bound yet. Not deviceKey: a
+  // Bluetooth node has a device.id too
+  function bluetoothAddress(node) {
+    if (!node?.ready)
+      return "";
+    return String((node.properties || {})["api.bluez5.address"] ?? "");
+  }
+
   // A sink's or source's name to show ({ title, detail }:
   // OSDItems.deviceName's, a kind's name translated)
   function deviceLabel(node) {

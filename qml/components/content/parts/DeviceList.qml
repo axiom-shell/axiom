@@ -9,7 +9,8 @@ import qs.components.reusable
 // `visibleRows`, then it scrolls: the popout grows away from
 // its controls (Panel.growth), and its content declares `growRoom` in its
 // maxImplicitHeight. In a card it fills the height. Off, a message takes
-// the list's place. Rows are `delegate`s (DeviceRows, with `required
+// the list's place, with a button under it when `offAction` names one
+// (Bluetooth's Unblock). Rows are `delegate`s (DeviceRows, with `required
 // property int index`), modelled by `count` so they survive the list being
 // re-evaluated.
 Item {
@@ -20,10 +21,14 @@ Item {
   property bool on: true
   property string offIcon: ""
   property string offMessage: ""
+  // A button under the off message ("" none): offActionClicked
+  property string offAction: ""
   property string emptyText: ""
   property int count: 0
   property Component delegate
   property int visibleRows: 5
+
+  signal offActionClicked
   // What the list is short of (or, negative, has to spare) to show every
   // row, all of them when the controls above leave it no height; off, all
   // of it is spare; 0 until laid out (no width yet). For a card that grows
@@ -37,7 +42,7 @@ Item {
   }
   readonly property real listHeight: root.rowsHeight(root.visibleRows)
   // In a popout: its rows, up to visibleRows; off, its message; empty, a row
-  readonly property real shownHeight: !root.on ? offState.implicitHeight : Math.max(root.rowHeight, Math.min(list.implicitHeight, root.listHeight))
+  readonly property real shownHeight: !root.on ? offState.implicitHeight + (offButton.item ? offButton.implicitHeight + Widget.spacing : 0) : Math.max(root.rowHeight, Math.min(list.implicitHeight, root.listHeight))
   // How much taller it can grow in a popout (for Panel.maxImplicitHeight)
   readonly property real growRoom: root.embedded ? 0 : root.listHeight - root.shownHeight
 
@@ -61,13 +66,31 @@ Item {
     font.pixelSize: Appearance.fontSizeBy(-3)
   }
 
-  EmptyState {
-    id: offState
+  ColumnLayout {
     visible: !root.on
     anchors.centerIn: parent
-    maxWidth: parent.width
-    icon: root.offIcon
-    text: root.offMessage
+    spacing: 0
+
+    EmptyState {
+      id: offState
+      Layout.alignment: Qt.AlignHCenter
+      maxWidth: root.width
+      icon: root.offIcon
+      text: root.offMessage
+    }
+    // Built only with an action: a Layout misses a child shown while
+    // it's hidden (qml-pitfalls)
+    Loader {
+      id: offButton
+      Layout.alignment: Qt.AlignHCenter
+      Layout.topMargin: offButton.active ? Widget.spacing : 0
+      active: root.offAction !== ""
+
+      sourceComponent: StyledTextButton {
+        text: root.offAction
+        onClicked: root.offActionClicked()
+      }
+    }
   }
 
   StyledScrollView {

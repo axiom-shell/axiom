@@ -76,7 +76,7 @@ All run in CI; `scripts/dev/verify.sh --all` (= `scripts/check_all.sh`) runs eve
 Settings › General's Account and Default apps and System's System info and Date & time change the machine itself: its clock, time zone and hostname (timedated, hostnamed), the user's password, picture and real name (AccountsService, `passwd`) and their default apps (`mimeapps.list`, `xdg-terminals.list`). None of it is undone by a reload, so the guard refuses it on the live system (AGENTS.md › Never):
 - **Go:** each service's package tests it against a fake on a `dbustest` bus (`backend/internal/sysinfo` and the packages beside it), `passwd` against a scripted fake in a pty, and `mimeapps` in `t.TempDir()` folders. They check the calls carry `FlagAllowInteractiveAuthorization` (polkit asks the user through axiom's agent, `PolkitManager`).
 - **A scratch daemon:** `XDG_RUNTIME_DIR=<scratch> XDG_CONFIG_HOME=<scratch>/config DBUS_SYSTEM_BUS_ADDRESS=<a dbus-run-session's>`, where the setters reach nothing real. Reading (`system.info`, `datetime.get`, `account.get`, `apps.roles`, `apps.handlers`) is fine against the live one.
-- **What only the user can check** goes in [roadmap.md](roadmap.md) › Live checks: a real time zone change, a password change, a picture showing on the lock screen.
+- **What only the user can check** goes in [live-checks.md](live-checks.md): a real time zone change, a password change, a picture showing on the lock screen.
 
 ### JS and QML experiments
 - Engine gaps (`flatMap`, `Object.fromEntries`, `Intl`) and the inline-component trap are in [qml-pitfalls](core/qml-pitfalls.md). `toLocaleString(..., { timeZone })` is ignored too: see [clock-timezones](features/clock-timezones.md).

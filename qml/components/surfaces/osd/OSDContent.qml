@@ -758,7 +758,7 @@ Item {
           }
           root.poked(true);
         } else {
-          root.showStatus(watcher.type, !root.osd.statuses.quiet.includes(watcher.type) && root.opensFor(watcher.type), card);
+          root.showStatus(watcher.type, !root.osd.statuses.quiet.includes(watcher.type) && (root.opensFor(watcher.type) || card && OSDItems.alert(watcher.type, watcher.tile)), card);
         }
       }
     }

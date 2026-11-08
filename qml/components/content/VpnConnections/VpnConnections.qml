@@ -10,8 +10,8 @@ import qs.components.content.base
 import qs.components.content.parts
 
 // Every VPN (VpnManager.rows: NetworkManager's, and Tailscale), each a row
-// that connects or disconnects on click and asks for its password inline
-// when the VPN needs one; Import asks for a .conf or .ovpn file
+// that connects or disconnects on click (a password asked for shows in
+// the shared prompt); Import asks for a .conf or .ovpn file
 // (VpnManager.pickImport), Edit connections runs Apps.networkEditor.
 // The Vpn widget's popout, and an overlay card (compact: the VPN up, or
 // off).
@@ -19,11 +19,6 @@ Panel {
   id: root
 
   readonly property var vpns: VpnManager.rows
-
-  // A password field is up: keep the keyboard, and the popout open
-  wantsKeyboardFocus: VpnManager.secretRequest !== null && root.vpns.some(r => r.id === VpnManager.secretRequest.uuid)
-  hovered: pointerInside || wantsKeyboardFocus
-  onFocusLost: VpnManager.cancelSecret()
 
   implicitWidth: Widget.px(360)
   fullMinWidth: Appearance.fontSize * 14
