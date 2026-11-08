@@ -5,9 +5,9 @@ import qs.config
 
 // Two parts side by side while it's at least `minWidth` wide, the first
 // taking `share` of the room, else stacked: a list beside the selected
-// entry's form (an OSD's systems and bars), a picker beside a fold (a wide
-// EntryListCard). Its children are the two parts, each taking the width
-// through `firstWidth` / `secondWidth`
+// entry's form (an OSD's systems and bars), a picker over a fold beside the
+// other folds (a wide EntryListCard). Its children are the two parts, each
+// taking the width through `firstWidth` / `secondWidth`
 // (`Layout.preferredWidth: split.firstWidth`), both aligned to the top.
 GridLayout {
   id: root

@@ -11,10 +11,11 @@ import qs.components.reusable
 // A section's list of entries as one card (the Dock and OSD `x-card`s):
 // the entries as tabs, one shown at a time: where it sits (the screen
 // picker every placed surface has, ScreenSpotPicker), Show, Duplicate and
-// Delete, then `entryContent` and its other settings (folding under
-// `otherTitle` when it has one). A `wide` card with the room puts
-// the picker and the other settings' fold side by side at the top
-// (SplitColumns), `entryContent` under both; narrow, they stack as usual.
+// Delete, then `entryContent` and its other settings. Fields the entry's
+// schema groups (`x-group`) fold by group: the first under the picker,
+// the others beside them (a `wide` card with the room: SplitColumns) or
+// stacked under them, `entryContent` below; an entry with no groups shows
+// its form as it is, last.
 // Edits go through the settings draft like any other row (the list as
 // one value), so they show live and wait for Save. Folds like the
 // generated cards, under `foldKey`.
@@ -45,11 +46,8 @@ FoldingCard {
   // Keys `entryContent` edits itself, left out of the other settings (an
   // OSD's systems and its bars' layout)
   property var ownKeys: []
-  // Titles the entry's other settings, folding under it; "" shows them
-  // as they are
-  property string otherTitle
-  // Spans the page (a wide `x-card`): with the room, the picker and the
-  // other settings' fold go side by side at the top
+  // Spans the page (a wide `x-card`): with the room, the picker and its
+  // group, and the other groups, go side by side at the top
   property bool wide: false
   // Buttons in the header before Add (the OSD's Preview)
   property alias headerButtons: headerSlot.data
@@ -63,9 +61,12 @@ FoldingCard {
   readonly property int current: Math.max(0, Math.min(root.selected, root.entries.length - 1))
   readonly property var entry: root.entries[root.current] ?? null
   readonly property point spot: root.entry ? root.spotOf(root.entry) : Qt.point(0.5, 0.5)
-  // The other settings fold under `otherTitle`, and sit beside the picker
-  readonly property bool _otherFolds: root.otherTitle !== ""
-  readonly property bool _otherBeside: root._otherFolds && placeRow.split
+  // The other settings by their `x-group`s ([{ title, keys, schema }],
+  // SchemaLayout.objectGroups), each a fold; [] when the schema groups none
+  readonly property var _groups: {
+    const groups = SchemaLayout.objectGroups(root.entrySchema, root.ownKeys);
+    return groups.some(group => group.title !== "Other") ? groups : [];
+  }
 
   collapsed: SettingsManager.isCollapsed(root.foldKey)
   onToggled: SettingsManager.setCollapsed(root.foldKey, !root.collapsed)
@@ -166,77 +167,96 @@ FoldingCard {
     }
   }
 
-  // The picker, and beside it with the room the other settings' fold
+  // The picker and the first group under it, and beside them with the
+  // room the other groups
   SplitColumns {
     id: placeRow
     visible: root.entry !== null
     minWidth: root.wide ? Widget.px(720) : Infinity
     share: 0.45
 
-    RowLayout {
+    ColumnLayout {
       Layout.preferredWidth: placeRow.firstWidth
       Layout.alignment: Qt.AlignTop
-      spacing: Widget.spacing * 2
+      spacing: placeRow.rowSpacing
 
-      // The screen, with the shown entry's spot, the presets to click and a
-      // drag to place it on an edge
-      ScreenSpotPicker {
-        Layout.alignment: Qt.AlignTop
-        floats: true
-        spot: root.spot
-        edge: root.entry?.edge ?? "bottom"
-        onPicked: values => root.edit(values)
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Widget.spacing * 2
+
+        // The screen, with the shown entry's spot, the presets to click and a
+        // drag to place it on an edge
+        ScreenSpotPicker {
+          Layout.alignment: Qt.AlignTop
+          floats: true
+          spot: root.spot
+          edge: root.entry?.edge ?? "bottom"
+          onPicked: values => root.edit(values)
+        }
+
+        ColumnLayout {
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          spacing: Widget.spacing
+
+          StyledText {
+            text: root.pickerHint
+            textColor: Theme.foregroundAlt
+            textSize: Appearance.fontSizeBy(-2)
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+          }
+
+          Flow {
+            Layout.fillWidth: true
+            spacing: Widget.spacing / 2
+
+            StyledTextButton {
+              implicitHeight: Widget.height - Widget.px(4)
+              iconText: "visibility"
+              text: I18n.tr("Show")
+              onClicked: root.show(root.entry.id)
+            }
+
+            StyledTextButton {
+              implicitHeight: Widget.height - Widget.px(4)
+              iconText: "content_copy"
+              text: I18n.tr("Duplicate")
+              onClicked: root.duplicate()
+            }
+
+            StyledTextButton {
+              visible: root.entries.length > 1
+              implicitHeight: Widget.height - Widget.px(4)
+              iconText: "delete"
+              text: I18n.tr("Delete")
+              hoverColor: Theme.error
+              onClicked: root.remove()
+            }
+          }
+        }
       }
 
-      ColumnLayout {
-        Layout.fillWidth: true
-        Layout.alignment: Qt.AlignTop
-        spacing: Widget.spacing
-
-        StyledText {
-          text: root.pickerHint
-          textColor: Theme.foregroundAlt
-          textSize: Appearance.fontSizeBy(-2)
-          wrapMode: Text.WordWrap
-          Layout.fillWidth: true
-        }
-
-        Flow {
-          Layout.fillWidth: true
-          spacing: Widget.spacing / 2
-
-          StyledTextButton {
-            implicitHeight: Widget.height - Widget.px(4)
-            iconText: "visibility"
-            text: I18n.tr("Show")
-            onClicked: root.show(root.entry.id)
-          }
-
-          StyledTextButton {
-            implicitHeight: Widget.height - Widget.px(4)
-            iconText: "content_copy"
-            text: I18n.tr("Duplicate")
-            onClicked: root.duplicate()
-          }
-
-          StyledTextButton {
-            visible: root.entries.length > 1
-            implicitHeight: Widget.height - Widget.px(4)
-            iconText: "delete"
-            text: I18n.tr("Delete")
-            hoverColor: Theme.error
-            onClicked: root.remove()
-          }
-        }
+      GroupFold {
+        visible: root.entry !== null && root._groups.length > 0
+        group: root._groups[0] ?? null
       }
     }
 
-    Loader {
-      active: root.entry !== null && root._otherBeside
-      visible: active
+    ColumnLayout {
+      visible: root.entry !== null && root._groups.length > 1
       Layout.preferredWidth: placeRow.secondWidth
       Layout.alignment: Qt.AlignTop
-      sourceComponent: othersFold
+      spacing: placeRow.rowSpacing
+
+      Repeater {
+        model: root._groups.slice(1)
+
+        delegate: GroupFold {
+          required property var modelData
+          group: modelData
+        }
+      }
     }
   }
 
@@ -253,12 +273,35 @@ FoldingCard {
     spacing: Widget.spacing * 1.5
   }
 
-  // The entry's other settings: folding under `otherTitle`, else as they
-  // are
-  Component {
-    id: otherForm
+  // A group of the entry's settings, folding under its title
+  component GroupFold: FoldingSection {
+    id: fold
+    property var group: null
+    readonly property string foldKey: root.foldKey + ":" + (fold.group?.title ?? "")
+    Layout.fillWidth: true
+    // The group's title is its `x-group`, read by check_i18n from the schema
+    title: I18n.tr(fold.group?.title ?? "")
+    collapsed: SettingsManager.isCollapsed(fold.foldKey)
+    onToggled: SettingsManager.setCollapsed(fold.foldKey, !fold.collapsed)
 
     SchemaPropertiesForm {
+      Layout.fillWidth: true
+      propertiesSchema: fold.group?.schema ?? ({})
+      order: fold.group?.keys ?? []
+      // The whole entry, so x-showIf sees keys from other groups
+      values: root.entry ?? ({})
+      onEdited: (path, value) => root.edit({
+          [path[0]]: value
+        })
+    }
+  }
+
+  // An entry with no groups: its other settings as they are
+  Loader {
+    active: root.entry !== null && root._groups.length === 0
+    visible: active
+    Layout.fillWidth: true
+    sourceComponent: SchemaPropertiesForm {
       propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.ownKeys.includes(key)).reduce((out, key) => {
         out[key] = root.entrySchema.properties[key];
         return out;
@@ -269,43 +312,5 @@ FoldingCard {
           [path[0]]: value
         })
     }
-  }
-
-  // Their fold, beside the picker or down here
-  Component {
-    id: othersFold
-
-    FoldingSection {
-      id: others
-      readonly property string foldKey: root.foldKey + ":other"
-      title: root.otherTitle
-      collapsed: SettingsManager.isCollapsed(others.foldKey)
-      onToggled: SettingsManager.setCollapsed(others.foldKey, !others.collapsed)
-
-      Loader {
-        Layout.fillWidth: true
-        sourceComponent: otherForm
-      }
-    }
-  }
-
-  Loader {
-    active: root.entry !== null && !root._otherFolds
-    visible: active
-    Layout.fillWidth: true
-    sourceComponent: otherForm
-  }
-
-  StyledSeparator {
-    visible: othersBelow.active
-    Layout.fillWidth: true
-  }
-
-  Loader {
-    id: othersBelow
-    active: root.entry !== null && root._otherFolds && !root._otherBeside
-    visible: active
-    Layout.fillWidth: true
-    sourceComponent: othersFold
   }
 }

@@ -46,7 +46,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `IssueIcon`: one problem's icon in those colors (`level`, `tone`), a `TipIcon` saying what's wrong (`tip`). Every warning or error icon shown without its text beside it is one (a bind row, a bind section, the onboarding's binds table, the keybinds reference).
 - `DropdownSurface`: the box of anything that drops down. In a `Popup` (a combo box's list, `TypePickerPopup`, `StyledContextMenu`) it fills solid, `Theme.backgroundAlt`: nothing blurs behind a Popup, so a translucent fill shows the page through it.
 - `TileFlow`: equal tiles, as many columns as fit.
-- `SplitColumns`: two parts side by side from `minWidth` on (the first taking `share`, each sized by `firstWidth` / `secondWidth`), stacked below it: a list beside the selected entry's form (an OSD's systems), a wide `EntryListCard`'s picker beside its other settings.
+- `SplitColumns`: two parts side by side from `minWidth` on (the first taking `share`, each sized by `firstWidth` / `secondWidth`), stacked below it: a list beside the selected entry's form (an OSD's systems), a wide `EntryListCard`'s picker and first settings group beside its other groups.
 - `TypeLibrary`: the editors' libraries of types to add.
   - An A–Z / By category switch over equal tiles of a caller's `delegate`, by label or under a heading per group (`methods/LibraryOrder`).
   - The label and heading come from the caller's `labelOf` / `headingOf` hooks (the editors translate the schema's).
@@ -176,7 +176,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 ### Settings cards (`views/Settings/`)
 - `FoldingCard`: fold header + a `FoldingColumn` body, in a faint border so neighbouring cards stay apart.
 - `SettingsGroupCard`: generated.
-- `EntryListCard`: a list of entries as tabs with a screen picker; `wide` puts the picker beside the other settings with the room.
+- `EntryListCard`: a list of entries as tabs with a screen picker; the entry's settings fold by `x-group` (the first under the picker), and `wide` puts the other groups beside the picker's column with the room.
 - `OSDSystemsEditor`: an OSD's `systems` (OSDListCard's `entryContent`): `EntryListRow`s in an `EntryListTarget` on an `InlineDragLayer` (dragged to reorder, clicked to select, X to remove), Add opening a grouped `TypePickerPopup` of the systems not in the list, and the selected one's `SchemaPropertiesForm` beside the list with the room, else under it (`SplitColumns`).
 - `OSDBarsEditor`: an OSD's bars, whichever system keeps them (`x-barNames`): the same list, Add opening a `TypePickerPopup` of bar kinds (`OSDConfig.barKinds`), the selected bar's form beside it, the bars' layout under the list.
 - `ScreenSpotPicker`: a small screen with a spot and preset dots to click, and a press or drag anywhere on it that places the thing on the nearest edge (`ScreenEdge.spotPlace`, the inverse of `ScreenEdge.edgeSpot`; a tie keeps its `edge`, so the middle doesn't flip). With `floats` the drag also sets `distance` and `detached`, attaching it within `snap` of an edge. Either way it emits `picked(values)`, as a preset does, only when the whole-percent values change. With `floats` its dots are the same nine for every placed surface (`placeSpots`: the centre, each edge's middle, the corners), each applying what a drag to it would. Used by docks and OSDs (`EntryListCard`, floating), `PlaceIntro` (floating) and notifications (`NotificationsPreview`, its own dots).

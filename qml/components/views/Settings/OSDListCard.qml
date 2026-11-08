@@ -6,8 +6,8 @@ import qs.components.reusable
 
 // The OSD section's first card (its `x-card`, spanning the page): the OSDs
 // as tabs, one shown at a time: where it sits (the screen picker), a Show
-// button and, beside them with the room, its other settings (Place and
-// timing), then what it shows (its systems: OSDSystemsEditor, the list
+// button and its Placement settings under them, beside them with the room
+// its Timing and behaviour (its schema's `x-group`s), then what it shows (its systems: OSDSystemsEditor, the list
 // beside the selected one's form) and its bars, whichever system they're
 // settings of, with their layout (OSDBarsEditor) (EntryListCard, `wide`).
 // Preview, in the header, holds the shown OSD open while it's edited
@@ -71,7 +71,6 @@ EntryListCard {
       ]
     })
   ownKeys: ["systems", "barLayout"]
-  otherTitle: I18n.tr("Place and timing")
   wide: true
   labelOf: osd => OSDConfig.labelOf(osd)
   onShow: id => ShellManager.showOsd(id)
