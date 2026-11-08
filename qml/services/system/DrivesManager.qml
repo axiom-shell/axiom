@@ -14,11 +14,11 @@ import qs.services.ui
 // On a plug-in it follows DrivesConfig.onInsert: a notification asking
 // (ask, always a notification), a mount (never while the screen is
 // locked: it waits for the unlock), or nothing. Every other event is
-// said once (_say) where the OSD's `drive` status or Drives.notify puts
-// it (NotificationManager.announce): the OSD's card, a notification, or
+// said once (_say) where the OSD's Drives system (its `drive` key) or
+// Drives.notify puts it (NotificationManager.announce): the OSD's card, a notification, or
 // nothing; a click on either runs
-// activate(). The Drives widget, module and popout, the OSD's `drive`
-// status and /eject read it. Inert on the login screen.
+// activate(). The Drives widget, module and popout, the OSD's Drives
+// system and /eject read it. Inert on the login screen.
 QtObject {
   id: root
 
@@ -40,8 +40,8 @@ QtObject {
   property string unlockRequest: ""
   // The last unlock's error, under the field
   property string unlockError: ""
-  // The last thing that happened to a drive, for the OSD's `drive`
-  // status: { kind, driveId, name, mountPoint, serial }, else null. Kinds:
+  // The last thing that happened to a drive, for the OSD's Drives system
+  // (its `drive` key): { kind, driveId, name, mountPoint, serial }, else null. Kinds:
   // "added", "locked" (an encrypted drive plugged in), "mounted" /
   // "unmounted" (by anyone, seen in the state), "ejected", "removed"
   // (unplugged), "pulled" (unplugged while mounted), "busy",
@@ -429,8 +429,8 @@ QtObject {
   }
 
   // Something that happened to a drive (`kind`, lastEvent's), where the
-  // OSD's `drive` status or Drives.notify puts it (NotificationManager.
-  // announce): the OSD's card, a notification, or nothing. `opts`:
+  // OSD's Drives system (its `drive` key) or Drives.notify puts it
+  // (NotificationManager.announce): the OSD's card, a notification, or nothing. `opts`:
   // { name (a drive gone's, as last seen), mountPoint, error (an axerr
   // kind) }
   // A notification is one entry per drive (key `drive:<id>`): what
@@ -450,7 +450,7 @@ QtObject {
         "driveId": drive.id
       }
     });
-    if (NotificationManager.announce("drive", DrivesConfig.notify, notice.summary, notice.body, sent) === "osd")
+    if (NotificationManager.announce("Drives", "drive", DrivesConfig.notify, notice.summary, notice.body, sent) === "osd")
       root._event(kind, drive, opts?.mountPoint ?? "", name);
   }
   readonly property var _quietKinds: ["added", "mounted", "unmounted", "removed"]

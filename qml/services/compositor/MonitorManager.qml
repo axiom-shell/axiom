@@ -24,7 +24,8 @@ import qs.services.ui
  * keeps the trial (its countdown starts over).
  *
  * A monitor connected or removed (seen between two reads) is said where
- * the OSD's `monitor` status or Monitors.notify puts it (lastEvent).
+ * the OSD's Monitors system (its `monitor` key) or Monitors.notify puts
+ * it (lastEvent).
  */
 Singleton {
   id: root
@@ -438,8 +439,8 @@ Singleton {
 
   // --- Monitors coming and going ---
 
-  // The last monitor connected or removed, for the OSD's `monitor`
-  // status: { kind: "added" | "removed", name, description, width,
+  // The last monitor connected or removed, for the OSD's Monitors system
+  // (its `monitor` key): { kind: "added" | "removed", name, description, width,
   // height, serial }, else null. Set only when the OSD says it
   // (_sayHotplugs)
   property var lastEvent: null
@@ -447,8 +448,8 @@ Singleton {
 
   // Each monitor connected or removed between two reads (by connector,
   // disabled ones included: turning one off isn't unplugging it), where
-  // the OSD's `monitor` status or Monitors.notify puts it
-  // (NotificationManager.announce): its card, a notification, or nothing.
+  // the OSD's Monitors system (its `monitor` key) or Monitors.notify puts
+  // it (NotificationManager.announce): its card, a notification, or nothing.
   // Returns whether there was one
   function _sayHotplugs(before, after) {
     const names = list => list.map(monitor => monitor.name);
@@ -467,7 +468,7 @@ Singleton {
     const summary = kind === "added" ? I18n.tr("{0} connected", label) : I18n.tr("{0} disconnected", label);
     const body = [monitor.description ? monitor.name : "", size].filter(part => part !== "").join(" · ");
     // Silent (the Quiet section): one entry per connector, its last change
-    if (NotificationManager.announce("monitor", MonitorsConfig.notify, summary, body, {
+    if (NotificationManager.announce("Monitors", "monitor", MonitorsConfig.notify, summary, body, {
       "icon": "video-display",
       "desktopEntry": root._desktopEntry,
       "key": "monitor:" + monitor.name,

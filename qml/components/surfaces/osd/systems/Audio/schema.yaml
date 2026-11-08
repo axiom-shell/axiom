@@ -1,0 +1,64 @@
+label: Audio
+icon: volume_up
+group: Audio
+tile:
+  variant: standard
+  tile: {title: Bars and icons, description: Its bars and its status icons in the OSD.}
+card: standard
+# Its bars on an OSD's tab name: each by its apps, else its kind
+barNames: {from: bars, by: type, named: apps}
+settings:
+  bars:
+    type: array
+    title: Bars
+    description: In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.
+    x-link: {setting: OSD.scrollToChange}
+    default:
+      - {type: other, icon: music_note}
+      - {type: master}
+    items:
+      x-scopeIf: {when: {type: app}, scope: personal}
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          title: Kind
+          enum: [master, other, app, microphone]
+          x-enumLabels:
+            master: System volume
+            other: Other apps
+            app: An app
+            microphone: Microphone
+          default: app
+        apps:
+          x-scope: personal
+          type: array
+          items: {type: string}
+          title: Apps
+          default: []
+          x-showIf: {type: app}
+          x-suggestions: audioApps
+          description: Comma-separated; matched against a stream's binary or name.
+        icon:
+          type: string
+          x-control: icon
+          title: Icon
+          default: ''
+          description: A Material Symbols name, or text. Empty follows what it shows.
+        showOsd:
+          type: boolean
+          title: Opens the OSD
+          default: true
+          description: Off, it still shows while the OSD is open.
+    x-showIf: {tile: true}
+  tiles:
+    type: array
+    title: Status icons
+    items: {type: string, enum: [audio, microphone]}
+    x-enumLabels: {audio: Output, microphone: Input}
+    x-enumIcons: {audio: volume_up, microphone: mic}
+    default: [audio, microphone]
+    description: The output and input devices, muted or switched.
+    # Its cards are the devices switching: shown while either part is on
+    x-showIf: {anyOf: [{tile: true}, {card: true}]}

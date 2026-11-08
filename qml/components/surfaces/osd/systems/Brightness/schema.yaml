@@ -1,0 +1,22 @@
+label: Brightness
+icon: brightness_6
+group: Power
+# Its bar on an OSD's tab name: its own label
+barNames: label
+tile:
+  variant: standard
+  tile: {title: Bar, description: Its bar in the OSD.}
+settings:
+  allMonitors:
+    type: boolean
+    title: All monitors
+    default: false
+    description: Set every monitor at once, instead of only the OSD's.
+    x-showIf: {tile: true}
+  icon:
+    type: string
+    x-control: icon
+    title: Icon
+    default: ''
+    description: A Material Symbols name, or text. Empty follows what it shows.
+    x-showIf: {tile: true}

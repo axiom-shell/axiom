@@ -202,6 +202,11 @@ var all = []Step{
 	// became idleInhibit and toggleDnd, a Button's appLauncher and
 	// workspaceOverlay actions launcher and workspaceOverview (v100.go)
 	{Version: 100, Run: v100},
+	// v101: an OSD's bars, status icons and cards became one ordered list
+	// of systems (`systems`), the bars' layout `barLayout`, `statuses.row`
+	// `row`, the cards' switch and time `cardsEnabled` / `cardTimeout`
+	// (v101.go)
+	{Version: 101, Run: v101},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

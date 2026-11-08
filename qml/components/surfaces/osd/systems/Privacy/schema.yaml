@@ -1,0 +1,13 @@
+label: Camera, microphone and screen in use
+icon: videocam
+group: Privacy
+tile: standard
+card: standard
+settings:
+  kinds:
+    type: array
+    title: Shows
+    items: {type: string, enum: [camera, micUse, screenShare]}
+    x-enumLabels: {camera: Camera, micUse: Microphone in use, screenShare: Screen sharing}
+    x-enumIcons: {camera: videocam, micUse: record_voice_over, screenShare: screen_share}
+    default: [camera, micUse, screenShare]

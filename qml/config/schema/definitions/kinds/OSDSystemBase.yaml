@@ -1,0 +1,32 @@
+# The base every OSD system's schema.yaml is expanded into (index.yaml's
+# kinds): an item of an OSD's systems list (docs/dev/features/osd.md ›
+# Engine). A system's own settings sit beside `type` and `quiet`; it picks
+# the parts it has: `tile: standard` (its status icons) and `card:
+# standard` (its cards), each a switch on the item.
+
+type: object
+required: [type]
+additionalProperties: false
+x-settingsAt: /properties
+x-parts:
+  tile:
+    standard:
+      tile:
+        type: boolean
+        title: Icon
+        default: true
+        description: Its status icon in the OSD's row.
+  card:
+    standard:
+      card:
+        type: boolean
+        title: Card
+        default: true
+        description: A card saying what changed, where its change needs one.
+properties:
+  type: {}
+  quiet:
+    type: boolean
+    title: Quiet
+    default: false
+    description: Its changes don't open the OSD; they still show on an open one.

@@ -36,8 +36,8 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - A new setting inside a look section that names a monitor, path or account needs `machine`; one that runs something (a command, a terminal) `commands`; a preference that means something on any PC `personal`.
 - `x-scopeIf: { when, scope }` (on an array's item schema): an item that matches `when` (`x-showIf`'s form, over the item's keys) has `scope` as its own: an exec bind is `commands`, an app's OSD bar `personal`.
 - `x-monitorRef` (`"off"` | `"drop"`, on a per-monitor part's `monitor`): a shared file names the monitor by its place, and a part for a place the user has no monitor for is turned off or left out (`share.Apply`).
-- `x-libraryGroups` (root) lists in order the groups the bar editor's and layouts editor's libraries sort their types into (by category).
-  - Each bar widget and overlay module definition joins one with `x-libraryGroup` (`methods/LibraryOrder`, `reusable/TypeLibrary`).
+- `x-libraryGroups` (root) lists in order the groups the bar editor's, layouts editor's and OSD editor's libraries sort their types into (by category; the last seven are the OSD systems': Keys & input, Audio, Connections, Power, Privacy, Capture, Events).
+  - Each bar widget, overlay module and OSD system definition joins one with `x-libraryGroup` (`methods/LibraryOrder`, `reusable/TypeLibrary`).
   - `check_structure.py` errors on an unknown group.
 
 ### Hand-built parts
@@ -87,9 +87,8 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
 - `x-allScreens`: adds All monitors (`"*"`) to a `"screens"` picker.
 - `x-enumLabels` (`{ value: label }`): labels shown instead of raw enum values in dropdowns (and on an array of enum strings' chips, on the array or its `items`).
 - `x-enumIcons` (`{ value: icon }`, on an array of enum strings or its `items`): a Material Symbols icon on each option's chip (an OSD's status icons).
-- `x-ordered: true` (on an array of enum strings): the order counts, so the field keeps the user's (`SchemaOrderedChips`): the chosen options drag into place, and the others are added at the end from a list below. Without it the chips are committed in the options' order. Marked where the order is shown: QuickActions' tiles, the power menu's and Power module's buttons, an OSD's status icons.
+- `x-ordered: true` (on an array of enum strings): the order counts, so the field keeps the user's (`SchemaOrderedChips`): the chosen options drag into place, and the others are added at the end from a list below. Without it the chips are committed in the options' order. Marked where the order is shown: QuickActions' tiles, the power menu's and Power module's buttons.
 - `x-enumGroups` (`{ value: group }`, on an `x-ordered` array or its `items`): files each option not yet chosen under a group header, the groups in the order each first comes. `x-axiomActions` fills it from the table's sections.
-- `x-enumFrom: "<sibling>"` (on an array of enum strings): offers only the options the sibling array holds, as chips (an OSD's `quiet` statuses, from those it shows).
 - `x-suggestions` (`"audioApps"`, `"wallpaperCollections"`, `"notificationApps"`: the history's apps and the shell's sources, labelled by name): chips under a text field (`SettingsManager.suggestionsFor`).
 - `x-multiline: true`: a growing text area that holds line breaks (Enter makes one, Ctrl+Enter commits). Without it a text field is one line, wrapped to four as it grows.
 - `x-control`:
@@ -123,6 +122,7 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
   - `x-slots`: its bindings, in order (keys of its `bind`), each a row of the inspector's Shows.
   - `x-actions`: the commands it runs, in order (keys of its `actions`), each a row of the inspector's Runs.
   - Its `options` are its look, a form of its own; `color: state` or `color: text` adds the colour (`CustomElementBase.yaml`'s parts: Auto takes the state's colour on graphics, a switch asks for it on text).
+- On OSD systems (`OSDSystem`, `qml/components/surfaces/osd/systems/<Type>/schema.yaml`; [OSD](../features/osd.md) › Engine): an item of an OSD's `systems` list, its own settings beside `type` and `quiet`; `tile: standard` and `card: standard` add the switches `tile` and `card` for the parts it has (`OSDSystemBase.yaml`'s parts); `group` its group in the add-picker (one of `x-libraryGroups`, as a bar widget's). `barNames` (`x-barNames`): how its bars name an OSD's tab (`OSDConfig.labelOf`): `label`, its own label (Brightness); `{ from, by, named }`, each entry of its setting `from` by its `named` list joined, else by its `by` field's `x-enumLabels` (Audio's `{ from: bars, by: type, named: apps }`: an App bar by its apps, the others by their kind).
 - `x-tool: true` on the hand-built view types: the navigator's tool group.
 - `x-window: true` on a tool page that can also open as a window of its own (`OverlayConfig.isWindowable`, `windowTypes`; [page windows](../overlay/page-windows.md)).
 - `x-needs: "<capability>"` on a view type: the page is left out (and its launcher command unlisted) unless `CompositorManager.supports` has it (Keybinds, Monitors).

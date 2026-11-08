@@ -125,6 +125,21 @@ QtObject {
   function viewUrl(type) {
     return "file://" + root.axiomPath + "components/views/" + type + "/" + type + ".qml";
   }
+  // An OSD system's definition (systems/<Type>/<Type>.qml); a name with a
+  // slash names another file in its folder ("Audio/design/VolumeBar")
+  function osdSystemUrl(name) {
+    const file = String(name).includes("/") ? name : name + "/" + name;
+    return "file://" + root.axiomPath + "components/surfaces/osd/systems/" + file + ".qml";
+  }
+  // A design of an OSD system's own (an `exposes` entry's `design`): a
+  // file of its folder's design/ ("VolumeBar")
+  function osdDesignUrl(type, design) {
+    return root.osdSystemUrl(type + "/design/" + design);
+  }
+  // Its watcher, beside it (<Type>Watch.qml)
+  function osdWatchUrl(type) {
+    return root.osdSystemUrl(type + "/" + type + "Watch");
+  }
 
   // A path from config or the user: trimmed, a leading ~ as home, no
   // trailing slash ("~/Pictures/" -> "/home/<user>/Pictures")

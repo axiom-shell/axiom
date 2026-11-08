@@ -36,7 +36,6 @@ DragLayer {
   // How many there are, named (the canvas's count, a carried group)
   property var countLabel: n => I18n.tr("{0} modules", n)
 
-  readonly property string draggingKind: root.dragging?.kind ?? ""
   readonly property bool carryingModule: root.draggingKind === "module-add" || root.draggingKind === "module-move"
   // Whether what's carried can go in the trash: a module on the canvas
   // (and the group carried with it) with a removable one among them

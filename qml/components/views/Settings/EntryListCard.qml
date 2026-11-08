@@ -46,6 +46,9 @@ FoldingCard {
   property var sections: []
   // Of `sections`, those shown after the other settings, at the bottom
   property var lastSections: []
+  // Keys `entryContent` edits itself, left out of the other settings (an
+  // OSD's systems)
+  property var ownKeys: []
   // Titles the entry's other settings when it has sections
   property string otherTitle
 
@@ -66,30 +69,41 @@ FoldingCard {
     SettingsManager.setValue([root.sectionKey, root.listKey], entries);
   }
 
-  function _freeId(base) {
-    return Utils.freeId(base, root.entries.map(entry => entry.id));
+  // The list as it is now, a copy to edit: read from the draft at call
+  // time, since the typed text EditsManager.commitTyping writes reaches
+  // `entries` only a tick later (ConfigDraft.changed)
+  function _entriesNow() {
+    return Utils.clone(SettingsManager.localConfig?.[root.sectionKey]?.[root.listKey] ?? root.savedEntries);
+  }
+
+  function _freeId(base, entries) {
+    return Utils.freeId(base, entries.map(entry => entry.id));
   }
 
   // Merges `values` into the shown entry
   function edit(values) {
-    const entries = Utils.clone(root.entries);
+    const entries = root._entriesNow();
     Object.assign(entries[root.current], values);
     root._commit(entries);
   }
 
   function add() {
-    const entries = Utils.clone(root.entries);
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
+    const entries = root._entriesNow();
     entries.push(SchemaValidation.applyDefaults(Object.assign(Utils.clone(root.seed), {
-      "id": root._freeId(root.idBase)
+      "id": root._freeId(root.idBase, entries)
     }), root.entrySchema, ConfigManager.configSchema));
     root._commit(entries);
     root.selected = entries.length - 1;
   }
 
   function duplicate() {
-    const entries = Utils.clone(root.entries);
-    const copy = Utils.clone(root.entry);
-    copy.id = root._freeId(copy.id);
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
+    const entries = root._entriesNow();
+    const copy = Utils.clone(entries[root.current]);
+    copy.id = root._freeId(copy.id, entries);
     entries.splice(root.current + 1, 0, copy);
     root._commit(entries);
     root.selected = root.current + 1;
@@ -98,7 +112,9 @@ FoldingCard {
   function remove() {
     if (root.entries.length <= 1)
       return;
-    const entries = Utils.clone(root.entries);
+    // The typed text in the selected one's form, while it's still selected
+    EditsManager.commitTyping();
+    const entries = root._entriesNow();
     entries.splice(root.current, 1);
     root._commit(entries);
     root.selected = Math.min(root.current, entries.length - 1);
@@ -128,7 +144,10 @@ FoldingCard {
         text: root.labelOf(tab.entry)
         opacity: tab.entry.enabled ? 1 : 0.6
         active: tab.index === root.current
-        onClicked: root.selected = tab.index
+        onClicked: {
+          EditsManager.commitTyping();
+          root.selected = tab.index;
+        }
       }
     }
   }
@@ -218,9 +237,10 @@ FoldingCard {
       Layout.fillWidth: true
       spacing: Widget.spacing * 1.5
 
-      // (The first sits under the accent line already)
+      // (The first, with no entryContent, sits under the accent line
+      // already)
       StyledSeparator {
-        visible: part.modelData !== root.sections[0]
+        visible: entrySlot.visible || part.modelData !== root.sections.filter(key => !root.lastSections.includes(key))[0]
         Layout.fillWidth: true
       }
 
@@ -257,7 +277,7 @@ FoldingCard {
     id: otherForm
 
     SchemaPropertiesForm {
-      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.sections.includes(key)).reduce((out, key) => {
+      propertiesSchema: Object.keys(root.entrySchema.properties).filter(key => !root.sections.includes(key) && !root.ownKeys.includes(key)).reduce((out, key) => {
         out[key] = root.entrySchema.properties[key];
         return out;
       }, {})
