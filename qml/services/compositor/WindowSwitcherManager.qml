@@ -47,7 +47,7 @@ Singleton {
   // The modifiers the switcher binds are held by
   // (BindActions.switcherHeld), or the usual ones with none bound
   readonly property var _heldMods: {
-    const held = [].concat(...KeybindsConfig.activeBinds.filter(bind => KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
+    const held = [].concat(...KeybindManager.boundBinds.filter(bind => KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
     return held.length > 0 ? held.filter((mod, i) => held.indexOf(mod) === i) : ["SUPER", "ALT", "CTRL"];
   }
 

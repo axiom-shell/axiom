@@ -21,6 +21,8 @@ ColumnLayout {
   readonly property var issues: KeybindManager.editor.issues[root.bindIndex] ?? []
   readonly property bool hasError: root.issues.some(issue => issue.level === "error")
   readonly property bool paused: root.bind.paused === true
+  // Not bound now by its "Only when" (its issues say why)
+  readonly property bool idle: !root.paused && KeybindManager.editor.held[root.bindIndex] !== true
   readonly property bool needed: KeybindManager.needsArgument(root.bind.action)
   readonly property var callOptions: KeybindManager.callOptions(root.bind.action)
   readonly property var argumentOptions: {
@@ -33,9 +35,9 @@ ColumnLayout {
 
   InspectorHeader {
     icon: KeybindManager.actionIcon(root.bind.action)
-    filled: !root.paused
+    filled: !root.paused && !root.idle
     title: KeybindManager.displayCombo(root.bind.key) || I18n.tr("No key yet")
-    subtitle: (KeybindManager.actionLabels[root.bind.action] ?? "") + (root.paused ? "  ·  " + I18n.tr("Paused") : "")
+    subtitle: (KeybindManager.actionLabels[root.bind.action] ?? "") + (root.paused ? "  ·  " + I18n.tr("Paused") : root.idle ? "  ·  " + I18n.tr("Not bound now") : "")
 
     SquareIconButton {
       size: Widget.height
@@ -233,6 +235,69 @@ ColumnLayout {
           onClicked: KeybindManager.editor.setField(root.bindIndex, flag.modelData[0], !flag.on)
         }
       }
+    }
+  }
+
+  // Its "Only when": bound only while every part set holds (a raw
+  // command's compositor is its own, above)
+  FieldGroup {
+    title: I18n.tr("Only when")
+
+    // The compositors: a chip each, any of them, none for every one
+    Repeater {
+      model: KeybindManager.conditionFields.filter(part => part.multi)
+
+      delegate: RowLayout {
+        id: part
+        required property var modelData
+        readonly property var chosen: root.bind[part.modelData.field] ?? []
+        visible: root.bind.action !== "raw"
+        spacing: Widget.spacing
+        Layout.fillWidth: true
+
+        StyledText {
+          text: part.modelData.title
+          Layout.fillWidth: true
+        }
+
+        Repeater {
+          model: part.modelData.options
+
+          delegate: SegmentButton {
+            id: chip
+            required property string modelData
+            readonly property bool selected: part.chosen.includes(chip.modelData)
+            text: part.modelData.labels[chip.modelData] ?? chip.modelData
+            active: chip.selected
+            onClicked: {
+              const next = chip.selected ? part.chosen.filter(v => v !== chip.modelData) : part.chosen.concat([chip.modelData]);
+              KeybindManager.editor.setField(root.bindIndex, part.modelData.field, part.modelData.options.filter(v => next.includes(v)));
+            }
+          }
+        }
+      }
+    }
+
+    Repeater {
+      model: KeybindManager.conditionFields.filter(part => !part.multi)
+
+      delegate: SchemaComboBox {
+        required property var modelData
+        label: modelData.title
+        options: modelData.options
+        optionLabels: modelData.labels
+        currentValue: root.bind[modelData.field] ?? ""
+        onSelectionChanged: value => KeybindManager.editor.setField(root.bindIndex, modelData.field, value)
+        Layout.fillWidth: true
+      }
+    }
+
+    StyledText {
+      text: I18n.tr("Bound only while all of these hold (no compositor picked is every one), so one config can serve several setups. Binds that can't hold together may share a key.")
+      opacity: 0.6
+      textSize: Appearance.fontSizeBy(-2)
+      wrapMode: Text.WordWrap
+      Layout.fillWidth: true
     }
   }
 

@@ -149,6 +149,13 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			}
 		}
 	}
+	keybinds, _ := defaults.(*jsonx.Object).Value("Keybinds").(*jsonx.Object)
+	binds, _ := keybinds.Value("binds").(*jsonx.Array)
+	for _, bind := range binds.Items {
+		for _, key := range bindKeysAddedSinceV1 {
+			bind.(*jsonx.Object).Delete(key)
+		}
+	}
 	osdItemFields(converted)
 	osdItemFields(defaults.(*jsonx.Object))
 	detachedPlaceFields(converted)
@@ -283,6 +290,10 @@ func dropModuleKeys(v any) {
 
 // A bar's settings added since (v93: its auto-hide), and its style's
 // textScale (in place of a font size of null, the default)
+// bindKeysAddedSinceV1 are a keybind's settings added since format 1 (its
+// "Only when"), which the default binds get from their defaults at load
+var bindKeysAddedSinceV1 = []string{"whenCompositors", "whenLayout", "whenMonitors"}
+
 var barKeysAddedSinceV1 = []string{"autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
 
 // Every frozen corpus config (each past schema version's defaults, the

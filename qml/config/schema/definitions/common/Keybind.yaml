@@ -284,6 +284,29 @@ properties:
     title: Paused
     default: false
     description: Kept in the list but not bound.
+  # Only when: every part set must hold for the bind to be bound
+  # (BindConditions.holds, the daemon's render.BindHolds)
+  whenCompositors:
+    type: array
+    title: Only under
+    items: {type: string, enum: [hyprland, sway, niri]}
+    x-enumLabels: {hyprland: Hyprland, sway: Sway, niri: niri}
+    default: []
+    description: Bound only under these compositors. None picked is every compositor.
+  whenLayout:
+    type: string
+    title: Only with
+    enum: ['', strips, tiling, grid, dynamic]
+    x-enumLabels: {'': Any layout, strips: Strips, tiling: Tiling (no strips), grid: Grid workspaces, dynamic: Dynamic workspaces}
+    default: ''
+    description: Bound only with this workspace layout. Strip actions are bound only with strips whatever this says.
+  whenMonitors:
+    type: string
+    title: Only while
+    enum: ['', external, laptopOnly]
+    x-enumLabels: {'': Any monitors, external: An external monitor is connected, laptopOnly: Only the laptop panel is connected}
+    default: ''
+    description: Bound only while these monitors are connected.
   description:
     type: string
     title: Description

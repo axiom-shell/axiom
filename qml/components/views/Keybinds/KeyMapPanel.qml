@@ -14,7 +14,7 @@ import qs.components.content.parts
 ColumnLayout {
   id: root
 
-  readonly property var occupancy: KeyMap.occupancy(KeybindManager.editor.binds, KeybindManager.userKeyCounts, KeybindManager.page.keyMapMods)
+  readonly property var occupancy: KeyMap.occupancy(KeybindManager.editor.keyMapBinds, KeybindManager.userKeyCounts, KeybindManager.page.keyMapMods)
 
   spacing: Widget.spacing * 1.5
 
@@ -60,7 +60,7 @@ ColumnLayout {
     mods: KeybindManager.page.keyMapMods
     sourceOf: key => root.held(key).source
     fillFor: source => root.fill(source)
-    legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["paused", I18n.tr("Paused")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
+    legend: [["free", I18n.tr("Free")], ["axiom", I18n.tr("Axiom")], ["paused", I18n.tr("Paused or not bound now")], ["user", I18n.tr("Your compositor config")], ["both", I18n.tr("Both")]]
     clickableOf: key => root.held(key).source !== "user"
     onClicked: key => root.pick(key)
   }

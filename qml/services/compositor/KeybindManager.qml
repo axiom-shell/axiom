@@ -68,6 +68,29 @@ QtObject {
     return labels;
   }, {})
 
+  // A bind's "Only when" parts, from the schema: [{ field, title, options,
+  // labels, multi }], titles and labels translated; `multi` (the
+  // compositors) holds a list, any of which will do
+  readonly property var conditionFields: ["whenCompositors", "whenLayout", "whenMonitors"].map(field => {
+    const schema = ConfigManager.configSchema?.definitions?.Keybind?.properties?.[field] ?? ({});
+    const options = schema.enum ?? schema.items?.enum ?? [];
+    const labels = {};
+    for (const value of options)
+      labels[value] = I18n.tr(schema["x-enumLabels"]?.[value] ?? value);
+    return {
+      "field": field,
+      "title": I18n.tr(schema.title ?? field),
+      "options": options,
+      "labels": labels,
+      "multi": schema.type === "array"
+    };
+  })
+
+  // A bind's condition in words, its parts set joined ("" for none)
+  function conditionText(bind) {
+    return root.conditionFields.map(part => [].concat(bind?.[part.field] ?? []).filter(value => value !== "").map(value => part.labels[value] ?? value).join(" / ")).filter(text => text !== "").join(" · ");
+  }
+
   // The action picker's categories, in tab order ("" is All). `exec` is
   // filed under Apps there; everything else by its section on the page.
   // I18n.tr("Axiom") I18n.tr("System") I18n.tr("Tools") I18n.tr("Apps")
@@ -194,8 +217,23 @@ QtObject {
   // it reports, less the saved axiom binds the layer applied
   readonly property var userKeyCounts: BindKeys.userKeyCounts(root._entries, root._appliedBinds)
 
+  // What a bind's "Only when" is decided on (BindConditions; the
+  // daemon's bindFacts): the compositor, whether any output is a strip,
+  // the grid layout, dynamic workspaces, the connected outputs
+  readonly property var conditionFacts: ({
+      "kind": CompositorManager.kind,
+      "strips": CompositorManager.supports.stripsAlways === true || (CompositorManager.supports.strips === true && WorkspacesConfig.hasStrips),
+      "grid": WorkspacesConfig.grid,
+      "dynamic": CompositorManager.supports.dynamicWorkspaces === true,
+      "outputs": CompositorManager.outputs.map(output => output.name)
+    })
+
+  // The saved binds bound now: not paused, their "Only when" holding (the
+  // daemon binds only these)
+  readonly property var boundBinds: KeybindsConfig.activeBinds.filter(bind => BindConditions.holds(bind, root.conditionFacts))
+
   // The saved axiom binds the runtime layer applied (the rest it skipped)
-  readonly property var _appliedBinds: KeybindsConfig.activeBinds.filter(bind => CompositorConfigManager.isComplete(bind) && !root._skippedIds.includes(BindKeys.keyId(bind.key)))
+  readonly property var _appliedBinds: root.boundBinds.filter(bind => CompositorConfigManager.isComplete(bind) && !root._skippedIds.includes(BindKeys.keyId(bind.key)))
   // The keys the runtime layer skipped, by BindKeys.keyId
   readonly property var _skippedIds: CompositorConfigManager.skippedKeys.map(key => BindKeys.keyId(key))
 
@@ -209,7 +247,7 @@ QtObject {
 
   // The saved axiom binds skipped because the user's config holds their
   // key, their labels by key: { "64:q": "Close window" }
-  readonly property var _skippedLabels: KeybindsConfig.activeBinds.reduce((labels, bind) => {
+  readonly property var _skippedLabels: root.boundBinds.reduce((labels, bind) => {
     const id = BindKeys.keyId(bind.key);
     if (id !== "" && root._skippedIds.includes(id) && labels[id] === undefined)
       labels[id] = root.bindLabel(bind);

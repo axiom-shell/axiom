@@ -71,6 +71,15 @@ func goldenInputs(t *testing.T, kind string, noIM ...bool) Inputs {
 	}
 	f.Kind = kind
 	f.Frameworks = []string{"fcitx5"}
+	// facts.json is a Hyprland shell's: niri's every output is a strip
+	// (its strip binds hold)
+	if kind == "niri" {
+		supports := map[string]bool{"stripsAlways": true}
+		for k, v := range f.Supports {
+			supports[k] = v
+		}
+		f.Supports = supports
+	}
 	data, err = os.ReadFile(filepath.Join("testdata", "config.json"))
 	if err != nil {
 		t.Fatal(err)

@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/axiom-shell/axiom/backend/internal/compositor/render"
 	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
@@ -127,5 +128,49 @@ func TestFrameworks(t *testing.T) {
 	}}}
 	if got := m.frameworks(); len(got) != 1 || got[0] != "ibus" {
 		t.Errorf("frameworks %v, want [ibus]", got)
+	}
+}
+
+// A bind is bound only while its "Only when" holds: the compositor, the
+// strips (a strip action needs them too), the outputs connected (unknown
+// until read, which binds no monitor-gated bind)
+func TestBindConditions(t *testing.T) {
+	t.Parallel()
+	binds := jsonx.Arr(
+		jsonx.Obj("id", "any", "action", "launcher"),
+		jsonx.Obj("id", "niri", "action", "launcher", "whenCompositors", jsonx.Arr("niri")),
+		jsonx.Obj("id", "notNiri", "action", "launcher", "whenCompositors", jsonx.Arr("hyprland", "sway")),
+		jsonx.Obj("id", "narrow", "action", "stripNarrower"),
+		jsonx.Obj("id", "split", "action", "toggleSplit", "whenLayout", "tiling"),
+		jsonx.Obj("id", "docked", "action", "launcher", "whenMonitors", "external"),
+		jsonx.Obj("id", "laptop", "action", "launcher", "whenMonitors", "laptopOnly"),
+	)
+	hypr := map[string]bool{"strips": true}
+	strip := jsonx.Arr(jsonx.Obj("screen", jsonx.Obj("mode", "all"), "direction", "horizontal"))
+	for _, c := range []struct {
+		name      string
+		kind      string
+		supports  map[string]bool
+		workspace *jsonx.Object
+		outputs   []render.Output
+		want      string
+	}{
+		{"hyprland tiling, outputs unknown", "hyprland", hypr, jsonx.Obj("layout", "standard"), nil, `["any","notNiri","split"]`},
+		{"hyprland with a strip", "hyprland", hypr, jsonx.Obj("layout", "standard", "strips", strip), nil, `["any","notNiri","narrow"]`},
+		{"hyprland scrolling", "hyprland", hypr, jsonx.Obj("layout", "scrolling"), nil, `["any","notNiri","narrow"]`},
+		{"sway ignores strips", "sway", nil, jsonx.Obj("layout", "standard", "strips", strip), nil, `["any","notNiri","split"]`},
+		{"niri, always strips", "niri", map[string]bool{"strips": true, "stripsAlways": true}, jsonx.Obj("layout", "standard"), nil, `["any","niri","narrow"]`},
+		{"laptop alone", "hyprland", hypr, jsonx.Obj("layout", "standard"), []render.Output{{Name: "eDP-1"}}, `["any","notNiri","split","laptop"]`},
+		{"docked, lid closed", "hyprland", hypr, jsonx.Obj("layout", "standard"), []render.Output{{Name: "eDP-1", Disabled: true}, {Name: "DP-2"}}, `["any","notNiri","split","docked"]`},
+	} {
+		cfg := jsonx.Obj("Keybinds", jsonx.Obj("binds", binds), "Workspaces", c.workspace)
+		in := buildInputs(cfg, &Facts{Kind: c.kind, Supports: c.supports, PrimaryMonitor: "DP-1"}, c.outputs)
+		ids := jsonx.Arr()
+		for _, b := range itemsOf(in.get("binds")) {
+			ids.Append(getAny(b, "id"))
+		}
+		if got := string(jsonx.MarshalCompact(ids)); got != c.want {
+			t.Errorf("%s: %s, want %s", c.name, got, c.want)
+		}
 	}
 }
