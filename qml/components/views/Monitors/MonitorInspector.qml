@@ -98,7 +98,7 @@ ColumnLayout {
     SchemaSwitch {
       visible: !!root.monitor
       label: "Primary"
-      checked: !!root.monitor && root.monitor.name === General.primaryMonitor
+      checked: !!root.monitor && root.monitor.name === General.configuredPrimary
       onToggled: value => MonitorManager.setPrimary(value ? root.monitor.name : "")
     }
   }

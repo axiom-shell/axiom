@@ -6,8 +6,9 @@ import qs.components.reusable
 import qs.config
 import qs.services.ui
 
-// Save and Discard (both shown while `dirty`, or while a box in this window
-// holds typed text: EditsManager.typingField) for whichever service owns a
+// Save and Discard (both shown while `dirty`, Discard only with `canReset`,
+// or while a box in this window holds typed text:
+// EditsManager.typingField) for whichever service owns a
 // page's pending edits. Save commits that text first, Discard drops it;
 // `reset` drops the edits back to what's saved. `compact` drops the labels
 // to icons with tooltips, for headers too narrow for both.
@@ -17,6 +18,9 @@ RowLayout {
   property bool dirty: false
   // Save stays visible while dirty but is disabled when false
   property bool canSave: true
+  // Discard shows while dirty only when true: false when `dirty` can mean
+  // something other than unsaved edits (MonitorManager.differsFromLive)
+  property bool canReset: true
   property string saveLabel: I18n.tr("Save")
   property bool compact: false
   // Width with labels, whatever `compact` is (for callers deciding it)
@@ -45,7 +49,7 @@ RowLayout {
 
   ActionButton {
     id: resetButton
-    visible: root.dirty || root._typing
+    visible: (root.dirty && root.canReset) || root._typing
     icon: "undo"
     label: I18n.tr("Discard")
     fillColor: Theme.backgroundHighlight

@@ -131,6 +131,11 @@ Singleton {
   readonly property var workspaces: root.backend?.workspaces ?? []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
+  // The focused monitor's name while it's connected (a screen surfaces are
+  // built on: focusedOutput can name one just gone, for a moment), else the
+  // primary monitor's (General.screensNamed): where something opens on
+  // the focused monitor
+  readonly property string focusedOrPrimary: General.screensNamed(root.focusedOutput)[0]?.name ?? ""
   // The focused window's id, or ""
   readonly property string activeWindowId: root.backend?.activeWindowId ?? ""
   // The gaps the compositor leaves at the screen edges, after reserved
@@ -365,7 +370,7 @@ Singleton {
   // Calls back with the name of the screen under the cursor (the focused
   // one if the compositor can't say)
   function withHoveredScreen(callback) {
-    root.withCursorPos(pos => callback((pos ? root._screenAt(pos.x, pos.y) : "") || root.focusedOutput || General.primaryMonitor));
+    root.withCursorPos(pos => callback((pos ? root._screenAt(pos.x, pos.y) : "") || root.focusedOrPrimary));
   }
 
   function _screenAt(x, y) {
@@ -405,13 +410,15 @@ Singleton {
   // Sets the outputs as `rules` (MonitorRule) say, now; `details` are the
   // outputs as withOutputDetails gave them. axiom sends them to the
   // compositor (outputs.apply); the backend reads its state again after
-  // (outputsApplied). Needs monitors
-  function applyOutputs(rules, details) {
+  // (outputsApplied). `revert`: the rules picture the outputs before an
+  // Apply, every part said (Hyprland's vrr 0 too). Needs monitors
+  function applyOutputs(rules, details, revert) {
     if (!root.supports.monitors)
       return;
     BackendManager.call("outputs.apply", {
       "rules": rules,
-      "details": details
+      "details": details,
+      "revert": revert === true
     }, error => {
       if (error)
         console.warn("[CompositorManager] setting the outputs:", error.message);
@@ -655,7 +662,8 @@ Singleton {
   // layout, else its block's (grid/perMonitor: one block per monitor the
   // saved profiles name, connected or not, then per connected one they
   // don't, so a hotplug never moves a named one's block (an unnamed one's
-  // can shift, and isn't remapped); WorkspaceGeometry.blockBases)
+  // can shift, its windows re-homed after it: WorkspaceRemap._rehome);
+  // WorkspaceGeometry.blockBases)
   function workspaceBase(output) {
     return root.perMonitorBlocks ? (root._bases[output] ?? 1) : 1;
   }
@@ -666,7 +674,7 @@ Singleton {
   // standard layout's shared ids can't
   readonly property bool perMonitorBlocks: WorkspacesConfig.perMonitorBlocks || root.supports.outputWorkspaces === true
   // reads: Monitors.items.*.outputs.*.output, Monitors.items.*.outputs.*.label
-  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.primaryMonitor, root.blockSize, MonitorsConfig.profiles)
+  readonly property var _bases: WorkspaceGeometry.blockBases(root.outputs, General.configuredPrimary, root.blockSize, MonitorsConfig.profiles)
 
   // Whether the compositor makes and removes workspaces itself, one list
   // per output (supports.dynamicWorkspaces: niri's). The Workspaces

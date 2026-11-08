@@ -24,11 +24,11 @@ How the schema becomes the settings page: layout, cards, folding, sidebar and se
 - The Dock and OSD list cards are `EntryListCard`s:
   - entries as tabs
   - the screen picker every placed surface has (a floating `ScreenSpotPicker`: its nine spots, the centre, each edge's middle and the corners), with `spotOf` reading `edge`/`position` and, detached, `distance`; a click or drag on it sets `edge` and `position` (nearest edge), and `detached` and `distance` (attached within its snap of an edge)
-  - Show/Duplicate/Delete
-  - `entryContent` for extras such as the dock's pinned apps and the OSD's systems (`OSDSystemsEditor`); `ownKeys` names the keys it edits, left out of the other settings
-  - `sections`: object settings each drawn as a `FoldingSection` of its own (its schema's title and description; the OSD's bars' layout), its fields at their paths in the entry so an `x-showIf` reaches the entry's own keys through `../`; `lastSections` go after the rest
-  - the entry's other settings: its form, folding under `otherTitle` when it has sections.
-  - a line between the big parts (none under the accent line the first section sits beneath when there's no `entryContent`).
+  - Show/Duplicate/Delete, and the card's own `headerButtons` before Add in the header (the OSD's Preview: [OSD](../features/osd.md) › Editing)
+  - `entryContent` for extras such as the dock's pinned apps and the OSD's systems and bars (`OSDSystemsEditor`, `OSDBarsEditor`); `ownKeys` names the keys it edits, left out of the other settings
+  - the entry's other settings: grouped by their `x-group`s when its schema has any (`SchemaLayout.objectGroups`, less `ownKeys`; the OSD's Placement and Timing and behaviour), a `FoldingSection` each (fold key `<foldKey>:<group title>`, its form given the whole entry so `x-showIf` sees the other groups' keys), the first under the picker and the others after it, above `entryContent`; with none (the Dock), its form as it is, after `entryContent`.
+  - `wide` (the OSD's, its section's `x-card` `wide: true`): while the card is at least `Widget.px(720)` wide, the picker with the first group under it and the other groups go side by side at the top, both columns top-aligned (`reusable/SplitColumns`, 45 % / 55 %), `entryContent` full width under them; narrower, they stack: picker, first group, the others. The OSD's systems and bars editors do the same inside (`SplitColumns` at `Widget.px(560)`): the list on the left (40 %), the selected entry's form on the right.
+  - a line between the big parts.
 - Both sit on `FoldingCard`: a fold header (section line, heading, unsaved dot, chevron, `headerExtras`) and a `FoldingColumn` body.
 - Status cards (Hyprland, Idle, self-update, chat providers, onboarding) are `FieldGroup`s with a `StatusChip` in `headerExtras`.
 

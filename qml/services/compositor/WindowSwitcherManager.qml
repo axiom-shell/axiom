@@ -47,7 +47,7 @@ Singleton {
   // The modifiers the switcher binds are held by
   // (BindActions.switcherHeld), or the usual ones with none bound
   readonly property var _heldMods: {
-    const held = [].concat(...KeybindsConfig.activeBinds.filter(bind => KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
+    const held = [].concat(...KeybindManager.boundBinds.filter(bind => KeybindManager.actionTable?.switcherSteps?.[bind.action] !== undefined).map(bind => BindActions.switcherHeld(KeyNames.split(bind.key).mods)));
     return held.length > 0 ? held.filter((mod, i) => held.indexOf(mod) === i) : ["SUPER", "ALT", "CTRL"];
   }
 
@@ -89,7 +89,9 @@ Singleton {
     root._focusedId = CompositorManager.activeWindowId;
     root._windows = WindowOrder.mru(CompositorManager.windows, win => DockLayout.inScope(win, scope, output?.name ?? "", output?.activeWorkspaceId ?? -1), root._focusedId);
     root._index = 0;
-    root._screenName = ShellManager.targetFor("focused");
+    root._screenName = ShellManager.targetFor({
+      "mode": "focused"
+    });
     root._active = true;
     showTimer.restart();
     if (CompositorManager.supports.switcher && !CompositorManager.supports.switcherRelease)

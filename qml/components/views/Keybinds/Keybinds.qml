@@ -259,7 +259,12 @@ BaseView {
                       "value": "paused",
                       "label": I18n.tr("Paused") + "  " + KeybindManager.page.pausedCount
                     }
-                  ] : []).concat(KeybindManager.editor.issueCount > 0 || KeybindManager.page.editIssuesOnly ? [
+                  ] : []).concat(KeybindManager.page.conditionalCount > 0 || KeybindManager.page.editConditionalOnly ? [
+                  {
+                    "value": "conditional",
+                    "label": I18n.tr("Only when") + "  " + KeybindManager.page.conditionalCount
+                  }
+                ] : []).concat(KeybindManager.editor.issueCount > 0 || KeybindManager.page.editIssuesOnly ? [
                   {
                     "value": "issues",
                     "label": I18n.tr("With issues") + "  " + KeybindManager.editor.issueCount
@@ -270,12 +275,14 @@ BaseView {
             selection: ({
                 "editSection": KeybindManager.page.editSectionFilter,
                 "editMod": KeybindManager.page.editModFilter,
-                "editState": (KeybindManager.page.editPausedOnly ? ["paused"] : []).concat(KeybindManager.page.editIssuesOnly ? ["issues"] : [])
+                "editState": (KeybindManager.page.editPausedOnly ? ["paused"] : []).concat(KeybindManager.page.editConditionalOnly ? ["conditional"] : []).concat(KeybindManager.page.editIssuesOnly ? ["issues"] : [])
               })
             filtering: KeybindManager.page.editFiltering
             onToggled: (group, value) => {
               if (group === "editState" && value === "paused")
                 KeybindManager.page.editPausedOnly = !KeybindManager.page.editPausedOnly;
+              else if (group === "editState" && value === "conditional")
+                KeybindManager.page.editConditionalOnly = !KeybindManager.page.editConditionalOnly;
               else if (group === "editState")
                 KeybindManager.page.editIssuesOnly = !KeybindManager.page.editIssuesOnly;
               else

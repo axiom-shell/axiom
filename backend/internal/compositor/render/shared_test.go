@@ -73,7 +73,7 @@ func TestSharedCases(t *testing.T) {
 	t.Parallel()
 	tab := repoTables(t)
 	ran := map[string]int{}
-	for _, suite := range []string{"BindActions.", "BindKeys.", "InputSources.", "KeyNames.", "LayerStack."} {
+	for _, suite := range []string{"BindActions.", "BindConditions.", "BindKeys.", "InputSources.", "KeyNames.", "LayerStack."} {
 		for _, c := range testkit.Cases(t, suite) {
 			op, ok := ops[c.Op]
 			if !ok {
@@ -216,6 +216,9 @@ var ops = map[string]func(t *Tables, a []any) any{
 	"BindActions.needsArgument": func(t *Tables, a []any) any { return t.NeedsArgument(arg(a, 0)) },
 	"BindActions.sectionFor":    func(t *Tables, a []any) any { return t.SectionFor(arg(a, 0)) },
 	"BindActions.switcherHeld":  func(t *Tables, a []any) any { return strList(SwitcherHeld(stringList(arg(a, 0)))) },
+
+	"BindConditions.holds": func(t *Tables, a []any) any { return BindHolds(arg(a, 0), arg(a, 1)) },
+	"BindConditions.unmet": func(t *Tables, a []any) any { return BindUnmet(arg(a, 0), arg(a, 1)) },
 
 	"BindKeys.entryId":      func(t *Tables, a []any) any { return EntryID(arg(a, 0)) },
 	"BindKeys.keyId":        func(t *Tables, a []any) any { return KeyID(arg(a, 0)) },

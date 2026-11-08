@@ -71,8 +71,12 @@ PanelWindow {
     return root.selection?.kind === kind && (kind === "screen" ? root.selection.output : root.selection.window) === token;
   }
 
-  // The tiles of the tab shown, by token
-  readonly property var tokens: root.tab === "screen" ? root.outputs.map(o => o.name) : root.tab === "window" ? root.windows.map(w => w.token) : []
+  // The tiles of the tab shown, by token: screens left to right, as they
+  // stand
+  readonly property var tokens: root.tab === "screen" ? root.outputs.map((o, i) => ({
+        "name": o.name,
+        "rect": root.screenRects[i]
+      })).sort((a, b) => a.rect.x - b.rect.x || a.rect.y - b.rect.y).map(e => e.name) : root.tab === "window" ? root.windows.map(w => w.token) : []
 
   function step(by) {
     if (root.tokens.length === 0)
@@ -105,8 +109,8 @@ PanelWindow {
   exclusionMode: ExclusionMode.Ignore
   color: "transparent"
   focusable: root.hasCard
-  // Gone at once for a region drag, so the screenshot picker's frozen
-  // frame doesn't take it in
+  // Gone at once for a region drag (no compositor fade either: LayerStack's
+  // noAnim), so the screenshot picker's frozen frame doesn't take it in
   visible: shown || (dim.opacity > 0 && !ScreenShareManager.pickingRegion)
 
   WlrLayershell.layer: WlrLayer.Overlay
@@ -116,9 +120,10 @@ PanelWindow {
   Component.onCompleted: {
     SurfaceManager.registerModal(root);
     // Where the compositor blurs only what a window asks: the whole dimmed
-    // screen, while backdrops blur (LayerStack.blurBackdrops)
+    // screen, while backdrops blur (LayerStack.blurBackdrops), and none
+    // the moment it steps aside for a region drag
     if (CompositorManager.supports.blurRegion === true)
-      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) ? dimBlur : null);
+      BackgroundEffect.blurRegion = Qt.binding(() => BlurManager.backdropRegionsOn(root.screen) && !ScreenShareManager.pickingRegion ? dimBlur : null);
   }
   BoxBlurRegion {
     id: dimBlur
@@ -179,26 +184,23 @@ PanelWindow {
   // A tile's two label lines and the gap above them
   readonly property real labelsHeight: titleMetrics.implicitHeight + subtitleMetrics.implicitHeight + Widget.spacing
 
-  // A screen's width over its height (logical, so rotated screens are tall)
-  function aspectOf(output) {
-    const s = General.outputs.find(o => o.name === output.name);
-    return s && s.width > 0 && s.height > 0 ? s.width / s.height : 16 / 9;
-  }
-  readonly property var aspects: root.outputs.map(o => root.aspectOf(o))
-  // The screens in one row at one height, like the screens stand: as tall
-  // as fits the card's width, at most screenMaxHeight
-  readonly property int screenMaxHeight: Widget.px(340)
-  readonly property real screensWidth: content.width
-  readonly property real screenHeightForWidth: {
-    const n = root.aspects.length;
-    if (n === 0)
-      return root.screenMaxHeight;
-    const sum = root.aspects.reduce((a, b) => a + b, 0);
-    return Math.min(root.screenMaxHeight, (root.screensWidth - root.tileGap * (n - 1) - root.ring * 2 * n) / sum);
-  }
+  // Where the request's screens stand (logical, so rotated screens are
+  // tall), by index: a screen the shell doesn't know stands to the right
+  readonly property var screenRects: MonitorLayout.fillMissing(root.outputs.map(o => {
+    const s = General.outputs.find(shell => shell.name === o.name);
+    return s && s.width > 0 && s.height > 0 ? {
+      "x": s.x,
+      "y": s.y,
+      "width": s.width,
+      "height": s.height
+    } : null;
+  }))
+  // The screens' map at its largest: most of this screen's width, under
+  // half its height (the card grows to it)
+  readonly property var mapSize: MonitorLayout.fitSize(root.screenRects, root.width * 0.8 - root.pad * 2, root.height * 0.45)
   // The body's height for the screens: every tab keeps it, so the card
   // doesn't jump between tabs
-  readonly property real bodyHeight: Math.max(Widget.px(300), root.screenHeightForWidth + root.ring * 2 + root.labelsHeight)
+  readonly property real bodyHeight: Math.max(Widget.px(300), root.mapSize.height)
 
   StyledText {
     id: titleMetrics
@@ -229,17 +231,19 @@ PanelWindow {
       readonly property bool selected: root.isSelected(root.tab, token)
       readonly property bool hovered: tileMouse.containsMouse
       readonly property var shellScreen: isScreen ? General.outputs.find(s => s.name === tile.modelData.name) ?? null : null
-      readonly property real pictureHeight: isScreen ? body.screenHeight : (grid.cellWidth - root.tileGap - root.ring * 2) * 10 / 16
+      // The gap around the picture: a screen's tile is its place on the map
+      // (MonitorMap sets its geometry), a window's a grid cell
+      readonly property real inset: root.ring + root.tileGap / 2
 
-      width: isScreen ? body.screenHeight * root.aspectOf(modelData) + root.ring * 2 : grid.cellWidth
-      height: isScreen ? body.height : grid.cellHeight
+      width: grid.cellWidth
+      height: grid.cellHeight
 
       Item {
         id: picture
-        x: tile.isScreen ? root.ring : root.ring + root.tileGap / 2
-        y: root.ring
+        x: tile.inset
+        y: tile.isScreen ? tile.inset : root.ring
         width: tile.width - x * 2
-        height: tile.pictureHeight
+        height: tile.isScreen ? tile.height - y * 2 : (grid.cellWidth - root.tileGap - root.ring * 2) * 10 / 16
 
         Rectangle {
           anchors.fill: parent
@@ -317,38 +321,49 @@ PanelWindow {
         }
       }
 
-      ColumnLayout {
-        anchors.top: picture.bottom
-        anchors.topMargin: root.ring + Widget.spacing / 2
-        x: picture.x
-        width: picture.width
-        spacing: 0
+      // Its name and detail: under a window's picture, on a screen's
+      // (another screen may stand under it)
+      Rectangle {
+        x: picture.x + (tile.isScreen ? Widget.spacing : 0)
+        y: tile.isScreen ? picture.y + picture.height - height - Widget.spacing : picture.y + picture.height + root.ring + Widget.spacing / 2
+        width: picture.width - (tile.isScreen ? Widget.spacing * 2 : 0)
+        height: labels.implicitHeight + (tile.isScreen ? Widget.smallPadding : 0)
+        radius: Widget.radius
+        color: tile.isScreen ? Qt.alpha(Theme.background, 0.85) : "transparent"
 
-        StyledText {
-          Layout.fillWidth: true
-          horizontalAlignment: Text.AlignHCenter
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-1)
-          font.weight: Font.DemiBold
-          textColor: tile.selected ? Theme.accent : Theme.foreground
-          text: tile.isScreen ? tile.modelData.name : (tile.modelData.title || tile.modelData.appId || tile.modelData.token)
+        ColumnLayout {
+          id: labels
+          anchors.verticalCenter: parent.verticalCenter
+          x: tile.isScreen ? Widget.smallPadding : 0
+          width: parent.width - x * 2
+          spacing: 0
 
-          ColorGlide on textColor {}
-        }
+          StyledText {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+            textSize: Appearance.fontSizeBy(-1)
+            font.weight: Font.DemiBold
+            textColor: tile.selected ? Theme.accent : Theme.foreground
+            text: tile.isScreen ? tile.modelData.name : (tile.modelData.title || tile.modelData.appId || tile.modelData.token)
 
-        StyledText {
-          Layout.fillWidth: true
-          horizontalAlignment: Text.AlignHCenter
-          elide: Text.ElideRight
-          textSize: Appearance.fontSizeBy(-2)
-          textColor: Theme.foregroundInactive
-          text: {
-            if (!tile.isScreen)
-              return tile.modelData.title ? tile.modelData.appId : "";
-            const s = tile.shellScreen;
-            const size = s ? Math.round(s.width * s.devicePixelRatio) + " × " + Math.round(s.height * s.devicePixelRatio) : "";
-            const name = tile.modelData.label || (s?.model ?? "");
-            return [size, name].filter(t => t !== "").join("  ·  ");
+            ColorGlide on textColor {}
+          }
+
+          StyledText {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+            textSize: Appearance.fontSizeBy(-2)
+            textColor: Theme.foregroundInactive
+            text: {
+              if (!tile.isScreen)
+                return tile.modelData.title ? tile.modelData.appId : "";
+              const s = tile.shellScreen;
+              const size = s ? Math.round(s.width * s.devicePixelRatio) + " × " + Math.round(s.height * s.devicePixelRatio) : "";
+              const name = tile.modelData.label || (s?.model ?? "");
+              return [size, name].filter(t => t !== "").join("  ·  ");
+            }
           }
         }
       }
@@ -372,7 +387,8 @@ PanelWindow {
 
     visible: root.hasCard
     anchors.centerIn: parent
-    width: Math.min(Widget.px(1040), root.width - Widget.px(48))
+    // As wide as the screens' map asks, with room for the windows' grid
+    width: Math.min(Math.max(Widget.px(840), root.mapSize.width + root.pad * 2), root.width - Widget.px(48))
     height: Math.min(content.implicitHeight + root.pad * 2, root.height - Widget.px(64))
     color: Appearance.fill(Theme.background)
     border.color: Theme.border
@@ -462,25 +478,18 @@ PanelWindow {
       Item {
         id: body
 
-        // The screens' height in what the card leaves the body
-        readonly property real screenHeight: Math.max(Widget.px(40), Math.min(root.screenHeightForWidth, height - root.ring * 2 - root.labelsHeight))
-
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredHeight: root.bodyHeight
         Layout.minimumHeight: Widget.px(120)
 
-        // Screens: side by side, each its own shape
-        Row {
+        // Screens: where they stand, each its own shape
+        MonitorMap {
           visible: root.tab === "screen"
-          anchors.horizontalCenter: parent.horizontalCenter
-          height: parent.height
-          spacing: root.tileGap
-
-          Repeater {
-            model: root.tab === "screen" ? root.outputs : []
-            delegate: tileDelegate
-          }
+          anchors.fill: parent
+          rects: root.screenRects
+          model: root.tab === "screen" ? root.outputs : []
+          delegate: tileDelegate
         }
 
         // Windows: a grid that scrolls

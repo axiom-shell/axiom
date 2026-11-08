@@ -72,7 +72,7 @@ Singleton {
   function _show(request) {
     if (Paths.greeter)
       return;
-    root._screenName = CompositorManager.focusedOutput || General.primaryMonitor;
+    root._screenName = CompositorManager.focusedOrPrimary;
     root._pickingRegion = false;
     root._request = request;
   }
@@ -117,7 +117,11 @@ Singleton {
     root._request = null;
     if (root._pickingRegion) {
       root._pickingRegion = false;
-      ScreenshotManager.cancel();
+      // Not handed over yet, or the drag running
+      if (root._regionDelay.running)
+        root._regionDelay.stop();
+      else
+        ScreenshotManager.cancel();
     }
   }
 
@@ -127,6 +131,20 @@ Singleton {
     if (!root._request?.region || root._pickingRegion)
       return;
     root._pickingRegion = true;
+    root._regionDelay.restart();
+  }
+
+  // The picker's windows go as pickingRegion turns on (no fade, LayerStack's
+  // noAnim); the screenshot picker freezes the screen once the compositor
+  // has drawn a frame without them, never their blurred dim
+  property Timer _regionDelay: Timer {
+    interval: 100 // behaviour timing: the compositor redrawing the screens without the picker
+    onTriggered: root._dragRegion()
+  }
+
+  function _dragRegion() {
+    if (!root._pickingRegion)
+      return;
     const asked = root._request;
     if (!ScreenshotManager.pickArea((screenName, rect) => {
       if (root._request !== asked)

@@ -68,15 +68,23 @@ func (h *Hypr) JSON(ctx context.Context, command string) (any, error) {
 }
 
 // Outputs lists Hyprland's monitors ("monitors all"), disabled ones too,
-// with the description Hyprland gives the shell.
+// with the description Hyprland gives the shell; not the headless
+// FALLBACK it makes while no monitor is on, which no profile names (with
+// it counted on, the one left dark would never be turned on again).
 func (h *Hypr) Outputs(ctx context.Context) ([]render.Output, error) {
 	reply, err := h.Request(ctx, "j/monitors all")
 	if err != nil {
 		return nil, err
 	}
-	var out []render.Output
-	if err := json.Unmarshal([]byte(reply), &out); err != nil {
+	var all []render.Output
+	if err := json.Unmarshal([]byte(reply), &all); err != nil {
 		return nil, err
+	}
+	var out []render.Output
+	for _, o := range all {
+		if o.Name != "FALLBACK" {
+			out = append(out, o)
+		}
 	}
 	return out, nil
 }

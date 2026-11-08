@@ -94,16 +94,16 @@ func connected(output string, outputs []Output) bool {
 
 // MatchProfile is the index of the saved profile (Monitors.items) for
 // what's connected, or -1 when none turns any output on. Only enabled
-// outputs count. A profile listing exactly
-// those wins (a disabled rule's output may be missing), else the one
-// turning on most of them; ties go to the earlier profile
+// outputs count, unless none is (a profile that turned the laptop's panel
+// off, its external monitor unplugged): then every connected output does,
+// so the profile turning one on is picked rather than none. A profile
+// listing exactly those wins (a disabled rule's output may be missing),
+// else the one turning on most of them; ties go to the earlier profile
 // (compositor.state names it for the Monitors page).
 func MatchProfile(profiles any, outputs []Output) int {
-	var on []Output
-	for _, o := range outputs {
-		if !o.Disabled {
-			on = append(on, o)
-		}
+	on := enabled(outputs)
+	if len(on) == 0 {
+		on = outputs
 	}
 	best, bestScore := -1, 0
 	for i, profile := range items(profiles) {
@@ -136,9 +136,18 @@ func MatchProfile(profiles any, outputs []Output) int {
 // (disabled ones too, so an output turned off stays off), or none when no
 // profile matches: what a compositor is told to apply for what's
 // connected, each output in its spelling (spelled).
+//
+// With no output on and no profile turning one on, it's a rule turning
+// one on as the compositor would (lit), so an unplug never leaves every
+// output dark.
 func SavedRules(profiles any, outputs []Output) []any {
 	index := MatchProfile(profiles, outputs)
 	if index < 0 {
+		if lit := lit(outputs); lit != "" {
+			rule := jsonx.Obj()
+			rule.Set("output", lit)
+			return []any{rule}
+		}
 		return nil
 	}
 	var out []any
@@ -148,6 +157,34 @@ func SavedRules(profiles any, outputs []Output) []any {
 		}
 	}
 	return out
+}
+
+// enabled are the outputs that are on.
+func enabled(outputs []Output) []Output {
+	var on []Output
+	for _, o := range outputs {
+		if !o.Disabled {
+			on = append(on, o)
+		}
+	}
+	return on
+}
+
+// lit is the connector of the output to turn on when every connected one
+// is off: the laptop's panel (eDP, LVDS, DSI) if there is one, else the
+// first; "" when one is on or none is connected.
+func lit(outputs []Output) string {
+	if len(outputs) == 0 || len(enabled(outputs)) > 0 {
+		return ""
+	}
+	for _, o := range outputs {
+		for _, panel := range []string{"eDP", "LVDS", "DSI"} {
+			if strings.HasPrefix(o.Name, panel) {
+				return o.Name
+			}
+		}
+	}
+	return outputs[0].Name
 }
 
 // HyprlandRules is SavedRules for Hyprland, which lays a monitor plugged in

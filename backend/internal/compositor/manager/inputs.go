@@ -25,7 +25,8 @@ type Facts struct {
 	// StartPattern finds the line starting axiom in a user's config
 	StartPattern string `json:"startPattern"`
 	// PrimaryMonitor is General.primaryMonitor as resolved (the first
-	// output when it's unset): a strip on the primary monitor goes there
+	// output when it's unset or not connected): a strip on the primary
+	// monitor goes there (primaryOf)
 	PrimaryMonitor string    `json:"primaryMonitor"`
 	Look           LookFacts `json:"look"`
 	Blur           BlurFacts `json:"blur"`
@@ -131,14 +132,16 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	}
 	flag := func(path ...string) bool { b, _ := at(path...).(bool); return b }
 
+	workspaces := at("Workspaces")
+	strips := stripsOf(workspaces, primaryOf(f.PrimaryMonitor, outputs))
+	// The binds to bind: not paused, their "Only when" holding
+	conditions := bindFacts(f, workspaces, strips, outputs)
 	binds := jsonx.Arr()
 	for _, b := range itemsOf(at("Keybinds", "binds")) {
-		if paused, _ := getAny(b, "paused").(bool); !paused {
+		if paused, _ := getAny(b, "paused").(bool); !paused && render.BindHolds(b, conditions) {
 			binds.Append(b)
 		}
 	}
-	workspaces := at("Workspaces")
-	strips := stripsOf(workspaces, f.PrimaryMonitor)
 	stripOptions := jsonx.Obj("stripColumnWidth", getAny(workspaces, "stripColumnWidth"), "stripFollowFocus", getAny(workspaces, "stripFollowFocus"))
 	behaviour := at("WindowBehaviour")
 	managed := jsonx.NewObject()
@@ -255,6 +258,29 @@ func colorsNamed(managed any, palette map[string]string) *jsonx.Object {
 	return out
 }
 
+// primaryOf is the primary monitor (Facts.PrimaryMonitor) among outputs
+// (nil until read: primary): primary while it's connected and on, else the
+// first output on, as the shell resolves General.primaryMonitor, so a strip
+// on the primary monitor follows it before the shell's facts do.
+func primaryOf(primary string, outputs []render.Output) string {
+	first := ""
+	for _, o := range outputs {
+		if o.Disabled {
+			continue
+		}
+		if o.Name == primary {
+			return primary
+		}
+		if first == "" {
+			first = o.Name
+		}
+	}
+	if first == "" {
+		return primary
+	}
+	return first
+}
+
 // stripsOf are the strips (Hyprland's scrolling layout) per monitor, as
 // WorkspacesConfig.strips: [{ monitor, direction }] from each strip's
 // screen target (the primary monitor's name, "*" for every monitor a named
@@ -286,6 +312,31 @@ func stripsOf(workspaces any, primary string) *jsonx.Array {
 		}
 	}
 	return out
+}
+
+// bindFacts are what a bind's "Only when" is decided on (render.BindHolds,
+// KeybindManager.conditionFacts): the compositor, whether any output is a
+// strip (where the compositor has strips), the grid layout, dynamic
+// workspaces, and the connected outputs' names (nil until read, which
+// holds no monitor condition)
+func bindFacts(f *Facts, workspaces any, strips *jsonx.Array, outputs []render.Output) *jsonx.Object {
+	var names any
+	if outputs != nil {
+		list := jsonx.Arr()
+		for _, o := range outputs {
+			if !o.Disabled {
+				list.Append(o.Name)
+			}
+		}
+		names = list
+	}
+	return jsonx.Obj(
+		"kind", f.Kind,
+		"strips", f.Supports["stripsAlways"] || (f.Supports["strips"] && len(strips.Items) > 0),
+		"grid", getAny(workspaces, "layout") == "grid",
+		"dynamic", f.Supports["dynamicWorkspaces"],
+		"outputs", names,
+	)
 }
 
 // inputMethodOf is the input method the session starts (render.

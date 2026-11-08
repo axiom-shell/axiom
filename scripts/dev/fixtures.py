@@ -49,7 +49,7 @@ SHARED = ROOT / "tests/fixtures/shared"
 # (the xkb list the renderer derives too) and the bind and layer helpers the
 # binary also ports, still used by the shell
 # (backend/internal/compositor/render; the rest's cases are frozen there)
-HELPERS = ("BindActions", "BindKeys", "ConfigOps", "InputSources", "KeyNames", "LayerStack")
+HELPERS = ("BindActions", "BindConditions", "BindKeys", "ConfigOps", "InputSources", "KeyNames", "LayerStack")
 RECORD_TESTS = ("Config", "SchemaValidation", "SchemaLayout", "GreeterBundle") + HELPERS
 BLOB_SIZE = 2048
 # What the recorded cases are made from: a change to any re-records them

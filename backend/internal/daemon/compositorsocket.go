@@ -36,11 +36,13 @@ func (d *Daemon) compositorSocketMethods(reg *rpc.Registry) {
 // the compositor running (ipc.Detect), as the Monitors page's Apply and
 // the greeter's saved profile do. details are the outputs connected
 // (CompositorManager.withOutputDetails), which a rule naming its output or
-// mirror by description is resolved in.
+// mirror by description is resolved in. revert marks rules that picture
+// the outputs before an Apply (Outputs.Revert).
 func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 	type applyParams struct {
 		Rules   json.RawMessage `json:"rules"`
 		Details json.RawMessage `json:"details"`
+		Revert  bool            `json:"revert,omitempty"`
 	}
 	outputs := manager.OutputsFromEnv(getenv)
 	rpc.Handle(reg, "outputs.apply", func(ctx context.Context, c *rpc.Conn, p applyParams) (struct{}, error) {
@@ -54,6 +56,9 @@ func outputHandlers(reg *rpc.Registry, getenv func(string) string) {
 		details, err := jsonx.Unmarshal(orNull(p.Details))
 		if err != nil {
 			return struct{}{}, axerr.Wrap(axerr.BadRequest, err, "details")
+		}
+		if p.Revert {
+			return struct{}{}, outputs.Revert(ctx, rules, details)
 		}
 		return struct{}{}, outputs.Apply(ctx, rules, details)
 	})

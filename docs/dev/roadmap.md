@@ -176,7 +176,6 @@ Found along the way:
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all) (reviewing the guard's leading `cd`, config-05)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh) (the same)
 - [A push of a named branch can land on main through git's push config](issues.md#a-push-of-a-named-branch-can-land-on-main-through-gits-push-config) (reviewing the guard's gh and push allowlists)
-- [A hotplug can shift an unnamed output's block, and nothing remaps it](issues.md#a-hotplug-can-shift-an-unnamed-outputs-block-and-nothing-remaps-it) (reviewing the Monitors batch)
 - [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren) (moving the daemon's own commands to command.Run)
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode) (fixing the daemon's config watch)
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
@@ -248,7 +247,6 @@ Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)
 - [Video wallpapers](issues.md#video-wallpapers) (an idea from the wallpaper transitions branch)
 - [A pill bar stacked inside another pill bar grows its pills out of nothing](issues.md#a-pill-bar-stacked-inside-another-pill-bar-grows-its-pills-out-of-nothing)
-- [A bind can't be limited to some compositors](issues.md#a-bind-cant-be-limited-to-some-compositors) (the maintainer's request, 2026-11-02)
 - [Quick actions can't hold custom toggles or commands](issues.md#quick-actions-cant-hold-custom-toggles-or-commands) (set aside from the unified-actions branch, 2026-11-06)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):

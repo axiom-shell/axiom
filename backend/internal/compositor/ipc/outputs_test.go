@@ -76,6 +76,8 @@ func TestOutputs(t *testing.T) {
 		{"hyprland, recorded", hypr(fixture("hypr-monitors-all.json")), []render.Output{{Name: "WAYLAND-1"}}},
 		{"hyprland keeps its description", hypr(`[{"name": "DP-1", "description": "AOC CU34G4Z XJ9", "disabled": false}, {"name": "HDMI-A-1", "description": "LG TV", "disabled": true}]`),
 			[]render.Output{{Name: "DP-1", Description: "AOC CU34G4Z XJ9"}, {Name: "HDMI-A-1", Description: "LG TV", Disabled: true}}},
+		{"hyprland leaves out its FALLBACK (seen on a nested Hyprland, its last monitor on unplugged)", hypr(`[{"name": "eDP-1", "description": "", "disabled": true}, {"name": "FALLBACK", "description": "", "disabled": false}]`),
+			[]render.Output{{Name: "eDP-1", Disabled: true}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
