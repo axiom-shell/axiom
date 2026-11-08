@@ -1,7 +1,9 @@
 package fsx
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,6 +98,31 @@ func TestWriteFileFailsCleanlyInAMissingDir(t *testing.T) {
 	// A kind the CLI and the shell can branch on, not a raw Internal
 	if axerr.KindOf(err) != axerr.Unavailable {
 		t.Errorf("kind %s", axerr.KindOf(err))
+	}
+}
+
+// A cache streams in; a failed fill leaves the old file and no temp file
+func TestWriteCache(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "cache.bin")
+	put := func(s string, err error) error {
+		return WriteCache(path, 0o600, func(w io.Writer) error {
+			io.WriteString(w, s)
+			return err
+		})
+	}
+	if err := put("one", nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := put("tw", errors.New("broke")); axerr.KindOf(err) != axerr.Unavailable {
+		t.Errorf("a failed fill: %v", err)
+	}
+	data, _ := os.ReadFile(path)
+	info, _ := os.Stat(path)
+	entries, _ := os.ReadDir(dir)
+	if string(data) != "one" || info.Mode().Perm() != 0o600 || len(entries) != 1 {
+		t.Errorf("got %q mode %v, %d files", data, info.Mode().Perm(), len(entries))
 	}
 }
 

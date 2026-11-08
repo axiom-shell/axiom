@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -39,6 +40,12 @@ func WriteFile(path string, data []byte, perm fs.FileMode) error {
 }
 
 func writeFile(path string, data []byte, perm fs.FileMode) error {
+	return writeWith(path, perm, true, writeAll(data))
+}
+
+// writeWith is WriteFile's work, with what to write as fill and sync
+// whether to fsync.
+func writeWith(path string, perm fs.FileMode, sync bool, fill func(io.Writer) error) error {
 	target, err := resolve(path)
 	if err != nil {
 		return err
@@ -47,7 +54,14 @@ func writeFile(path string, data []byte, perm fs.FileMode) error {
 	if info, err := os.Stat(target); err == nil {
 		mode = info.Mode().Perm()
 	}
-	return replace(target, data, mode)
+	return replaceWith(target, mode, sync, fill)
+}
+
+func writeAll(data []byte) func(io.Writer) error {
+	return func(w io.Writer) error {
+		_, err := w.Write(data)
+		return err
+	}
 }
 
 // ReplaceLink is WriteFile for a symlink that is to become a file of its
@@ -60,8 +74,27 @@ func ReplaceLink(path string, data []byte, perm fs.FileMode) error {
 	return nil
 }
 
+// WriteCache is WriteFile for a file whose loss costs only its rebuild (a
+// cache that checks itself as it loads): fill streams the content into
+// the temp file, and nothing is fsynced, so the write stalls no other
+// writer. The rename is still atomic: a crash may leave the old file or
+// a short new one, never another's half. A failure (fill's too) is
+// axerr.Unavailable, and leaves the old file.
+func WriteCache(path string, perm fs.FileMode, fill func(io.Writer) error) error {
+	if err := writeWith(path, perm, false, fill); err != nil {
+		return &axerr.Error{Kind: axerr.Unavailable, Err: err}
+	}
+	return nil
+}
+
 // replace puts data at target atomically, with mode.
 func replace(target string, data []byte, mode fs.FileMode) error {
+	return replaceWith(target, mode, true, writeAll(data))
+}
+
+// replaceWith puts what fill writes at target atomically, with mode;
+// with sync, fsynced (the file, then its folder).
+func replaceWith(target string, mode fs.FileMode, sync bool, fill func(io.Writer) error) error {
 	dir := filepath.Dir(target)
 	tmp, err := createTemp(dir, filepath.Base(target), mode)
 	if err != nil {
@@ -75,15 +108,17 @@ func replace(target string, data []byte, mode fs.FileMode) error {
 			os.Remove(name)
 		}
 	}()
-	if _, err := tmp.Write(data); err != nil {
+	if err := fill(tmp); err != nil {
 		return fmt.Errorf("writing %s: %w", name, err)
 	}
 	// The umask may have narrowed the mode the file was created with
 	if err := tmp.Chmod(mode); err != nil {
 		return err
 	}
-	if err := tmp.Sync(); err != nil {
-		return fmt.Errorf("syncing %s: %w", name, err)
+	if sync {
+		if err := tmp.Sync(); err != nil {
+			return fmt.Errorf("syncing %s: %w", name, err)
+		}
 	}
 	if err := tmp.Close(); err != nil {
 		return err
@@ -92,6 +127,9 @@ func replace(target string, data []byte, mode fs.FileMode) error {
 		return fmt.Errorf("replacing %s: %w", target, err)
 	}
 	ok = true
+	if !sync {
+		return nil
+	}
 	return syncDir(dir)
 }
 

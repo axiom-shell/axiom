@@ -6,8 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"math/rand/v2"
+	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -294,12 +297,25 @@ func TestCompact(t *testing.T) {
 	}
 }
 
+func encode(t testing.TB, ix *Index, key uint64) []byte {
+	t.Helper()
+	var b bytes.Buffer
+	if err := ix.Encode(&b, key); err != nil {
+		t.Fatal(err)
+	}
+	return b.Bytes()
+}
+
 func TestSnapshot(t *testing.T) {
 	t.Parallel()
 	ix := build(t, "/home/u", 3e9, "a/b/c.txt", ".hidden/x", "a/link", "e/")
 	r2 := ix.AddRoot("/")
 	ix.ReplaceDir(r2, "/", 2e9, []Child{{Name: []byte("etc"), Dir: true}}, 0)
-	data := ix.Encode(42)
+	// A removed folder, its entries left until compaction
+	if d, ok := ix.Lookup("/home/u/a"); ok {
+		ix.ReplaceDir(d, "/home/u/a", 3e9, []Child{{Name: []byte("link")}}, 0)
+	}
+	data := encode(t, ix, 42)
 	got, err := Decode(data, 42)
 	if err != nil {
 		t.Fatal(err)
@@ -307,7 +323,10 @@ func TestSnapshot(t *testing.T) {
 	if got.Len() != ix.Len() {
 		t.Errorf("len %d, want %d", got.Len(), ix.Len())
 	}
-	for _, p := range []string{"/home/u/a/b/c.txt", "/home/u/.hidden/x", "/home/u/e", "/etc"} {
+	if _, ok := got.Find("/home/u/a/b/c.txt"); ok {
+		t.Error("kept a removed file")
+	}
+	for _, p := range []string{"/home/u/a/link", "/home/u/.hidden/x", "/home/u/e", "/etc"} {
 		i, ok := got.Find(p)
 		j, _ := ix.Find(p)
 		if !ok || got.Mtime(i) != ix.Mtime(j) || got.IsDir(i) != ix.IsDir(j) {
@@ -317,7 +336,7 @@ func TestSnapshot(t *testing.T) {
 	if i, _ := got.Find("/home/u/.hidden/x"); got.at(i).flags&flagHidden == 0 {
 		t.Error("lost hidden")
 	}
-	if !bytes.Equal(got.Encode(42), data) {
+	if !bytes.Equal(encode(t, got, 42), data) {
 		t.Error("a second round trip differs")
 	}
 	for _, c := range []struct {
@@ -516,4 +535,25 @@ func BenchmarkSearch1M(b *testing.B) {
 		b.ReportMetric(float64(times[len(times)*95/100].Microseconds())/1000, "p95-ms")
 	}
 	b.ReportMetric(float64(ix.Len()), "entries")
+}
+
+// The cache's write over a million entries: how long the daemon's loop is
+// busy with it (to a file, as the daemon writes it; no fsync)
+func BenchmarkEncode1M(b *testing.B) {
+	ix := synthetic(b, 1_000_000)
+	path := filepath.Join(b.TempDir(), "cache")
+	var size int64
+	b.ResetTimer()
+	for b.Loop() {
+		f, err := os.Create(path)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if err := ix.Encode(f, 1); err != nil {
+			b.Fatal(err)
+		}
+		size, _ = f.Seek(0, io.SeekCurrent)
+		f.Close()
+	}
+	b.ReportMetric(float64(size)/1e6, "MB")
 }

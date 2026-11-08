@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/filesearch"
 	"github.com/axiom-shell/axiom/backend/internal/procprio"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
 )
@@ -418,5 +419,105 @@ func TestBrowse(t *testing.T) {
 	}
 	if _, err := s.Browse("relative", "", 2, false); err == nil {
 		t.Error("a relative path")
+	}
+}
+
+// loopOn is a loop over root's index, read by hand, ready, its clock now
+func loopOn(t *testing.T, root string, now *time.Time) *loop {
+	t.Helper()
+	o := Options{CacheFile: filepath.Join(t.TempDir(), "fileindex.bin"), Now: func() time.Time { return *now }}
+	s := New(o)
+	st := Settings{Enabled: true, Roots: []string{root}}
+	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}, cur: st, active: true, phase: PhaseReady,
+		f: newFilter(st.Roots, nil, nil, false)}
+	ix := filesearch.New()
+	ix.AddRoot(root)
+	l.setIndex(ix)
+	l.readDir(t, root)
+	return l
+}
+
+// readDir reads a folder into the index as a watch would
+func (l *loop) readDir(t *testing.T, path string) {
+	t.Helper()
+	fo, err := l.f.read(path, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	l.applyDir(path, fo.mtime, fo.kids, false)
+}
+
+func saved(l *loop) bool {
+	_, err := os.Stat(l.s.o.CacheFile)
+	return err == nil
+}
+
+// Only a change of the entries makes the cache dirty: a file's or a
+// folder's time alone doesn't
+func TestCacheDirtiesOnEntries(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a.txt")
+	now := time.Now()
+	l := loopOn(t, root, &now)
+	if !l.dirty {
+		t.Fatal("the first read isn't dirty")
+	}
+	l.dirty = false
+	later := time.Now().Add(time.Hour)
+	os.Chtimes(root+"/a.txt", later, later)
+	os.Chtimes(root, later, later)
+	l.readDir(t, root)
+	l.written[root+"/a.txt"] = true
+	l.flush()
+	if l.dirty {
+		t.Error("a time alone made it dirty")
+	}
+	os.WriteFile(root+"/b.txt", nil, 0o644)
+	l.readDir(t, root)
+	if !l.dirty {
+		t.Error("an added file didn't make it dirty")
+	}
+}
+
+// A dirty cache is written at most every SaveEvery, never while the child
+// runs, and when Run ends
+func TestCacheSaves(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a.txt")
+	now := time.Now()
+	l := loopOn(t, root, &now)
+	l.lastSave = now
+	l.maybeSave()
+	now = now.Add(l.s.o.SaveEvery - time.Second)
+	l.maybeSave()
+	if saved(l) {
+		t.Fatal("saved before the interval")
+	}
+	now = now.Add(time.Second)
+	l.child = &child{}
+	l.maybeSave()
+	if saved(l) {
+		t.Fatal("saved while the child ran")
+	}
+	l.child = nil
+	l.maybeSave()
+	if !saved(l) || l.dirty {
+		t.Fatal("not saved at the interval")
+	}
+	// At the end of Run, before the interval
+	os.Remove(l.s.o.CacheFile)
+	os.WriteFile(root+"/b.txt", nil, 0o644)
+	l.readDir(t, root)
+	l.shutdown()
+	data, err := os.ReadFile(l.s.o.CacheFile)
+	if err != nil {
+		t.Fatal("not saved at shutdown")
+	}
+	ix, err := filesearch.Decode(data, l.key)
+	if err != nil || ix.Len() != 3 {
+		t.Errorf("the saved cache: %v", err)
+	}
+	if info, _ := os.Stat(l.s.o.CacheFile); info.Mode().Perm() != 0o600 {
+		t.Errorf("cache mode %v", info.Mode())
 	}
 }

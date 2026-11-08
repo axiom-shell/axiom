@@ -89,7 +89,8 @@ type Options struct {
 	// QuietSpell: a search after this long without a stat pass starts
 	// one (1 min)
 	QuietSpell time.Duration
-	// SaveEvery: the cache is written at most this often (5 min)
+	// SaveEvery: the cache is written at most this often while its
+	// entries change (30 min), and when Run ends
 	SaveEvery time.Duration
 	// Pause is the crawl's sleep every 128 folders (10 ms; -1: none)
 	Pause time.Duration
@@ -126,7 +127,7 @@ func (o *Options) defaults() {
 	set(&o.LoadDelay, 20*time.Second)
 	set(&o.StatEvery, 10*time.Minute)
 	set(&o.QuietSpell, time.Minute)
-	set(&o.SaveEvery, 5*time.Minute)
+	set(&o.SaveEvery, 30*time.Minute)
 	set(&o.Pause, 10*time.Millisecond)
 	set(&o.PushEvery, 500*time.Millisecond)
 	set(&o.Debounce, 50*time.Millisecond)
@@ -412,6 +413,9 @@ type loop struct {
 	loadTimer  *time.Timer
 	lastStat   time.Time
 	lastSave   time.Time
+	// dirty: entries were added or removed since the cache was written
+	// (a time alone doesn't count: a loaded cache's stat pass reads a
+	// folder whose time differs again anyway)
 	dirty      bool
 	truncated  bool
 	unreadable int
@@ -423,6 +427,9 @@ type loop struct {
 
 func (l *loop) shutdown() {
 	l.stopChild()
+	// A stopped stat pass leaves the index whole (each folder it read is
+	// in); a stopped crawl leaves the phase Crawling, and nothing saved
+	l.save()
 	if l.w != nil {
 		l.w.close()
 		l.w = nil
@@ -654,22 +661,32 @@ func (l *loop) next() {
 	}
 }
 
-// maybeSave writes the cache when it changed, nothing crawls, and the
-// last write is SaveEvery old (the first at once).
+// maybeSave writes the cache when its entries changed and the last write
+// is SaveEvery old (a built index's first at once).
 func (l *loop) maybeSave() {
-	if !l.dirty || l.child != nil || l.ix() == nil || l.phase != PhaseReady {
-		return
-	}
 	if !l.lastSave.IsZero() && l.s.o.Now().Sub(l.lastSave) < l.s.o.SaveEvery {
 		return
 	}
-	// The loop is the only writer: it reads the index without the lock
-	data := l.ix().Encode(l.key)
+	l.save()
+}
+
+// save writes the cache when its entries changed and nothing crawls or
+// runs a stat pass: streamed to the file under the read lock (searches
+// go on; the loop, the only writer, is busy meanwhile: ~30 ms a million
+// entries), never fsynced.
+func (l *loop) save() {
+	ix := l.ix()
+	if !l.dirty || l.child != nil || ix == nil || l.phase != PhaseReady {
+		return
+	}
 	if err := os.MkdirAll(filepath.Dir(l.s.o.CacheFile), 0o700); err != nil {
 		l.s.o.Log.Warn("file search: the cache can't be written", "err", err)
 		return
 	}
-	if err := writeCache(l.s.o.CacheFile, data); err != nil {
+	l.s.mu.RLock()
+	err := writeCache(l.s.o.CacheFile, ix, l.key)
+	l.s.mu.RUnlock()
+	if err != nil {
 		l.s.o.Log.Warn("file search: the cache can't be written", "err", err)
 		return
 	}
@@ -725,7 +742,9 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 		}
 	}
 	l.truncated = l.truncated || ch.Truncated
-	l.dirty = true
+	if ch.Added > 0 || ch.Removed > 0 {
+		l.dirty = true
+	}
 	if watch {
 		// Changed between the read and the watch: the watch missed it
 		if st, err := os.Lstat(path); err == nil && st.ModTime().UnixNano() != mtime {
@@ -797,7 +816,6 @@ func (l *loop) flush() {
 				l.s.mu.Lock()
 				ix.SetMtime(i, st.ModTime().UnixNano())
 				l.s.mu.Unlock()
-				l.dirty = true
 			}
 		}
 	}

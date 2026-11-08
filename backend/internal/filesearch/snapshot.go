@@ -1,9 +1,12 @@
 package filesearch
 
 import (
+	"bufio"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"hash/crc32"
+	"io"
 )
 
 // The cache's format: a header (magic, version, the settings' key, the
@@ -25,49 +28,63 @@ var (
 // persisted flags (watching is the running daemon's)
 const savedFlags = flagDir | flagHidden | flagRoot | flagLink
 
-// Encode is the index as the cache keeps it, made for settings key.
-func (ix *Index) Encode(key uint64) []byte {
-	out := make([]byte, headerSize, headerSize+ix.Len()*20)
-	copy(out, snapshotMagic)
-	binary.LittleEndian.PutUint32(out[4:], snapshotVersion)
-	binary.LittleEndian.PutUint64(out[8:], key)
-	pos := make(map[uint32]uint32, ix.Folders())
-	count := uint32(0)
+// Encode writes the index as the cache keeps it, made for settings key,
+// to w through a small buffer: nothing the index's size is allocated.
+// The caller keeps the index from changing meanwhile (a read lock will
+// do: Encode only reads).
+func (ix *Index) Encode(w io.Writer, key uint64) error {
+	sum := crc32.NewIEEE()
+	bw := bufio.NewWriterSize(io.MultiWriter(w, sum), 64<<10)
+	count := uint32(ix.Len())
+	head := make([]byte, headerSize)
+	copy(head, snapshotMagic)
+	binary.LittleEndian.PutUint32(head[4:], snapshotVersion)
+	binary.LittleEndian.PutUint64(head[8:], key)
+	binary.LittleEndian.PutUint32(head[16:], count)
+	bw.Write(head)
+	// A folder's position travels with it in the queue; a parent always
+	// comes before its children
+	type queued struct{ d, pos uint32 }
+	var queue []queued
+	written := uint32(0)
+	rec := make([]byte, 4+1+4+4+2)
 	put := func(i, parent uint32) {
 		e := ix.at(i)
 		name := ix.name(e)
-		var rec [4 + 1 + 4 + 4 + 2]byte
 		binary.LittleEndian.PutUint32(rec[0:], parent)
 		rec[4] = e.flags & savedFlags
 		binary.LittleEndian.PutUint32(rec[5:], e.mtime)
 		binary.LittleEndian.PutUint32(rec[9:], e.nsec)
 		binary.LittleEndian.PutUint16(rec[13:], uint16(len(name)))
-		out = append(out, rec[:]...)
-		out = append(out, name...)
+		bw.Write(rec)
+		bw.Write(name)
 		if e.flags&flagDir != 0 {
-			pos[i] = count
+			queue = append(queue, queued{i, written})
 		}
-		count++
+		written++
 	}
 	for _, r := range ix.roots {
 		if ix.Removed(r) {
 			continue
 		}
+		queue = queue[:0]
 		put(r, NoEntry)
-		queue := []uint32{r}
-		for len(queue) > 0 {
-			d := queue[0]
-			queue = queue[1:]
-			for c := ix.at(d).child; c != NoEntry; c = ix.at(c).next {
-				put(c, pos[d])
-				if ix.IsDir(c) {
-					queue = append(queue, c)
-				}
+		for k := 0; k < len(queue); k++ {
+			q := queue[k]
+			for c := ix.at(q.d).child; c != NoEntry; c = ix.at(c).next {
+				put(c, q.pos)
 			}
 		}
 	}
-	binary.LittleEndian.PutUint32(out[16:], count)
-	return binary.LittleEndian.AppendUint32(out, crc32.ChecksumIEEE(out))
+	if err := bw.Flush(); err != nil {
+		return err
+	}
+	if written != count {
+		// Every entry not removed hangs off a root: never happens
+		return fmt.Errorf("filesearch: encoded %d entries of %d", written, count)
+	}
+	_, err := w.Write(binary.LittleEndian.AppendUint32(nil, sum.Sum32()))
+	return err
 }
 
 // Decode reads a cache Encode wrote for settings key.
