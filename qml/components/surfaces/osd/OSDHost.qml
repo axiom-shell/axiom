@@ -125,6 +125,11 @@ Item {
           "system": host,
           "entry": e
         })))), root.osd.barOrder)
+  // Their keys in that order, one string: it changes only as a bar comes,
+  // goes or moves, so the bars' Repeater builds each one anew then, never
+  // handing one bar's delegate another system's (its design and watcher
+  // would meet midway: a VolumeBar given Brightness's watcher)
+  readonly property string _levelKeys: root._levelEntries.map(e => e.key).join("\n")
   // The tiles it may show, in order (ids), their English names, and each
   // one now (OSDEngine.tileOf's, the watchers')
   readonly property var _tileIds: [].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => OSDEngine.partOf(host.definition, e.key) === "tile").map(e => host.type + "/" + e.key)))
@@ -801,8 +806,9 @@ Item {
       rowSpacing: root.barSpacing
 
       Repeater {
-        // By count, so edits to a bar update it in place
-        model: root._levelEntries.length
+        // By the keys, so edits to a bar update it in place, and a bar
+        // moved is built anew where it lands
+        model: root._levelKeys === "" ? [] : root._levelKeys.split("\n")
 
         delegate: OSDLevelBar {
           id: levelBar
