@@ -157,7 +157,7 @@ var rows = [
       { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "serial": 1 }, 1) } },
       { "at": 3000, "state": { "battery": bat("none", 6, "", { "level": "critical", "serial": 2 }, 2) },
         "expect": { "key": "battery", "show": "card",
-          "card": { "title": "6%", "role": "Battery critically low", "tone": "warning" } } }
+          "card": { "icon": "battery_alert", "title": "6%", "role": "Battery critically low", "tone": "warning" } } }
     ]
   },
   {

@@ -2,7 +2,7 @@
 // Vpn's timelines: whether a VPN is up. One coming up is its card (its
 // name, Connected, its address); one taken down on screen is the unlit
 // icon; one going down that nobody took down on screen is a "Disconnected"
-// card (new). Every change counts, the user's or not (a drop, an
+// card. Every change counts, the user's or not (a drop, an
 // autoconnect); up and down are judged across connecting / disconnecting,
 // and a row appearing (Tailscale's first status) or going away isn't one.
 // Its card folds back as the VPNs turn off.

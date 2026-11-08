@@ -78,10 +78,7 @@ Item {
     const listed = change => root.osd.systems.some(item => item.type === change.system);
     if (root._cardChange && !listed(root._cardChange))
       root._closePart("card");
-    if (root._pending)
-      root._pending = Object.assign({}, root._pending, {
-        "changes": root._pending.changes.filter(listed)
-      });
+    root._pending = root._pending.filter(waiting => listed(waiting.change));
   }
   // The OSDSystemHosts, in the list's order, as they're built
   property var _hosts: []
@@ -321,8 +318,8 @@ Item {
   // its own countdown, a higher popout). What comes in meanwhile waits
   // for it to be gone (`_pending`), then comes in as it would have
   readonly property bool _closing: root.hostOpen && !root.open
-  // { changes: [change], force } or null
-  property var _pending: null
+  // [{ change, force }], in order
+  property var _pending: []
 
   // Opens a part (or restarts its time), placed by OSDParts.partOrder.
   // The icons coming out with none to show as they are show every one,
@@ -440,7 +437,7 @@ Item {
 
   // Open with nothing out: _expose. Gone: every part with it, then what
   // came in as it closed (`_pending`), each change in order as it would
-  // have come to a shut OSD (`force` if any one opens it)
+  // have come to a shut OSD (forced once it or one before it opens it)
   onHostOpenChanged: {
     if (root.hostOpen) {
       if (!root._order.some(part => root._open[part] === true))
@@ -455,9 +452,12 @@ Item {
     root._kept = [];
     root._previewAll = false;
     const pending = root._pending;
-    root._pending = null;
-    if (pending)
-      pending.changes.forEach(change => root._show(change, pending.force));
+    root._pending = [];
+    let force = false;
+    pending.forEach(waiting => {
+      force = force || waiting.force;
+      root._show(waiting.change, force);
+    });
   }
 
   // Its systems' watchers pick up, as it opens, what nothing pushes
@@ -572,21 +572,18 @@ Item {
   // A system's change (OSDSystemHost.change: OSDEngine.judge's): what it
   // shows on this OSD (OSDEngine.shownAs: a card shown as its tile with
   // the cards off; a bar only with its item's `tile` on), whole for the
-  // arbitration (its `system` and its tile now: a bar's its mark's,
-  // OSDEngine.contextTile), and whether it opens
-  // the OSD shut (OSDSystemHost.opens)
+  // arbitration (its tile now: a bar's its mark's, OSDEngine.contextTile;
+  // its `system` OSDWatch's), and whether it opens the OSD shut
+  // (OSDSystemHost.opens)
   function _onChange(host, what) {
     const def = host.definition;
     if (!def)
       return;
     const hasTile = OSDEngine.partOf(def, what.key) === "tile";
-    const shown = OSDEngine.shownAs(root.osd, Object.assign({}, what, {
-      "system": host.type
-    }), hasTile);
+    const shown = OSDEngine.shownAs(root.osd, what, hasTile);
     if (shown === "")
       return;
     const incoming = Object.assign({}, what, {
-      "system": host.type,
       "show": shown,
       "card": shown === "card",
       "tile": OSDEngine.contextTile(def, what.key, host.snapshot)
@@ -595,13 +592,15 @@ Item {
   }
 
   // A change to show: while closing it waits for the OSD to be gone
-  // (`_pending`, its `force` kept if any one's)
+  // (`_pending`, each with its own `force`)
   function _show(incoming, force) {
     if (root._closing) {
-      root._pending = {
-        "changes": (root._pending?.changes ?? []).concat([incoming]),
-        "force": (root._pending?.force ?? false) || force
-      };
+      root._pending = root._pending.concat([
+        {
+          "change": incoming,
+          "force": force
+        }
+      ]);
       return;
     }
     if (incoming.show === "card")

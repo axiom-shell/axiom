@@ -32,15 +32,18 @@ Item {
   readonly property bool shown: root.levelState?.available !== false && (root.design !== "" || root.levelState?.level !== undefined)
 
   visible: root.shown
-  implicitWidth: root.shown ? (root.design !== "" ? designLoader.implicitWidth : plain.implicitWidth) : 0
-  implicitHeight: root.shown ? (root.design !== "" ? designLoader.implicitHeight : plain.implicitHeight) : 0
+  implicitWidth: root.shown ? (root.design !== "" ? designLoader.implicitWidth : plainLoader.implicitWidth) : 0
+  implicitHeight: root.shown ? (root.design !== "" ? designLoader.implicitHeight : plainLoader.implicitHeight) : 0
 
   // Its design's file, loaded anew only as it changes
   readonly property string _designUrl: root.design !== "" && root.system ? Paths.osdDesignUrl(root.system.type, root.design) : ""
 
+  // One of the two built at a time (each Loader its own: one Loader's
+  // `source` and `sourceComponent` clear each other as either changes)
   Loader {
     id: designLoader
     anchors.fill: parent
+    active: root.design !== ""
     source: root._designUrl
   }
   Binding {
@@ -68,21 +71,23 @@ Item {
     when: designLoader.item !== null
   }
 
-  StyledVolumeBar {
-    id: plain
+  Loader {
+    id: plainLoader
     anchors.fill: parent
-    visible: root.design === ""
-    orientation: root.orientation
-    showPercent: root.showPercent
-    scrollStep: OSDConfig.scrollStep
-    volumeLevel: root.levelState?.level ?? 0
-    iconSource: root.levelState?.icon || root.entry.icon || ""
-    // marked as the pointer's (OSDEngine.markOf), so another OSD listing
-    // the system stays shut
-    onVolumeChanged: newVolume => {
-      if (root.system?.definition)
-        ShellManager.onScreen(OSDEngine.markOf(root.system.definition, root.entry.key));
-      root.system?.watch?.setLevel(root.entry.key, newVolume);
+    active: root.design === ""
+    sourceComponent: StyledVolumeBar {
+      orientation: root.orientation
+      showPercent: root.showPercent
+      scrollStep: OSDConfig.scrollStep
+      volumeLevel: root.levelState?.level ?? 0
+      iconSource: root.levelState?.icon || root.entry.icon || ""
+      // marked as the pointer's (OSDEngine.markOf), so another OSD listing
+      // the system stays shut
+      onVolumeChanged: newVolume => {
+        if (root.system?.definition)
+          ShellManager.onScreen(OSDEngine.markOf(root.system.definition, root.entry.key));
+        root.system?.watch?.setLevel(root.entry.key, newVolume);
+      }
     }
   }
 }

@@ -1,9 +1,9 @@
 .pragma library
 // Timelines across systems: the host's arbitration (OSDEngine.arbitrate)
 // between one system's change and another's: airplane mode's knock-ons,
-// Bluetooth's card taking in Audio's switch to the device it connected
-// (FROM origin/bluetooth-daemon, marked), retracting a card only by its own
-// key, a message's card, and a device's late level after its card (new).
+// Bluetooth's card taking in Audio's switch to the device it connected,
+// retracting a card only by its own key, a message's card, and a device's
+// late level after its card.
 // The states are each system's (see its own file's header).
 
 var audioOpts = {
@@ -168,7 +168,7 @@ var rows = [
         "expect": { "show": "tile", "host": "beside" } }
     ]
   },
-  // ---- A device's late level (new) ----
+  // ---- A device's late level ----
   {
     "name": "a device's own level arriving late after its card: no bars beside it",
     "systems": ["Audio"],
@@ -262,9 +262,9 @@ var rows = [
         "expect": { "key": "microphone", "show": "card", "host": "replace" } }
     ]
   },
-  // ---- Bluetooth takes in Audio's switch (origin/bluetooth-daemon) ----
+  // ---- Bluetooth takes in Audio's switch ----
   {
-    "name": "[bluetooth-daemon] a headset connecting, then the output switching to it: its card says it",
+    "name": "a headset connecting, then the output switching to it: its card says it",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -279,7 +279,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output switching to it past the quiet window: the user's own, it replaces",
+    "name": "the output switching to it past the quiet window: the user's own, it replaces",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -292,7 +292,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output switching to another device (not Bluetooth): it replaces",
+    "name": "the output switching to another device (not Bluetooth): it replaces",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -305,7 +305,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output leaving a headset just disconnected: it shows",
+    "name": "the output leaving a headset just disconnected: it shows",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -318,7 +318,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output's card first, then the headset's: it says more, it replaces",
+    "name": "the output's card first, then the headset's: it says more, it replaces",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -331,7 +331,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the headset's own mute just after its card: beside it (only a switch is taken in)",
+    "name": "the headset's own mute just after its card: beside it (only a switch is taken in)",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Bluetooth": {} },
     "steps": [

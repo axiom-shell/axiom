@@ -69,9 +69,11 @@ OSDSystem {
         "detail": s.full === true ? "" : (s.untilFull ?? "")
       };
     // The drop it says (the event's), not the level now, which turns
-    // "none" as the charger goes in under a card shown
+    // "none" as the charger goes in under a card shown: its icon too (not
+    // the tile's, OSDEngine.cardOf's default)
     const critical = s.event?.level === "critical";
     return {
+      "icon": critical ? "battery_alert" : "battery_low",
       "title": `${s.percent ?? 0}%`,
       "role": critical ? "Battery critically low" : "Battery low",
       "detail": s.timeLeft ?? "",

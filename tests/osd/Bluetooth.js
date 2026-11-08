@@ -3,12 +3,6 @@
 // devices name it) and the devices' card: connecting, disconnecting, a
 // device's battery low or critical.
 //
-// FROM origin/bluetooth-daemon: every row below that has an event (the
-// per-device card, battery low / critical, its `alert`, and Cross.js's
-// absorbing of Audio's switch by address) comes from that unmerged branch,
-// which merges before this rewrite.
-// Only the radio's on/off rows are today's main.
-//
 // State by key (BluetoothWatch):
 //   bluetooth  { available, value (the radio on), connected (the connected
 //              devices' names, BluetoothManager.deviceLabel), event
@@ -89,9 +83,9 @@ var rows = [
       { "at": 3000, "state": { "bluetooth": radio(true, ["MX Master"]) } }
     ]
   },
-  // ---- Devices (origin/bluetooth-daemon) ----
+  // ---- Devices ----
   {
-    "name": "[bluetooth-daemon] a device connected: its card, its icon, name and battery; the tile naming the connected",
+    "name": "a device connected: its card, its icon, name and battery; the tile naming the connected",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [headset], 1, ["WH-1000XM4", "MX Master"]) },
@@ -102,7 +96,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] a device with no battery: no detail",
+    "name": "a device with no battery: no detail",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [mouse], 1) },
@@ -110,7 +104,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] several connected together: their names, Bluetooth's icon",
+    "name": "several connected together: their names, Bluetooth's icon",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [headset, mouse], 1) },
@@ -118,7 +112,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] a device disconnected: its card",
+    "name": "a device disconnected: its card",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true, ["WH-1000XM4"]) } },
       { "at": 3000, "state": { "bluetooth": ev("disconnected", [headset], 1, []) },
@@ -126,7 +120,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] a device's battery low: its card, alert",
+    "name": "a device's battery low: its card, alert",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true, ["MX Master"]) } },
       { "at": 3000, "state": { "bluetooth": ev("low", [dev("AA:BB:CC:00:00:02", "MX Master", "mouse", 18)], 1) },
@@ -135,7 +129,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] critical: on the warning colour, alert",
+    "name": "critical: on the warning colour, alert",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true, ["MX Master"]) } },
       { "at": 3000, "state": { "bluetooth": ev("critical", [dev("AA:BB:CC:00:00:02", "MX Master", "mouse", 4)], 1) },
@@ -144,7 +138,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] a battery low just after a click on Bluetooth: alert still (it opens the OSD)",
+    "name": "a battery low just after a click on Bluetooth: alert still (it opens the OSD)",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true, ["MX Master"]) } },
       { "at": 3000, "byUser": true, "state": { "bluetooth": ev("low", [dev("AA:BB:CC:00:00:02", "MX Master", "mouse", 18)], 1) },
@@ -152,7 +146,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] a connect or disconnect is no alert (it may be the click's)",
+    "name": "a connect or disconnect is no alert (it may be the click's)",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "byUser": true, "state": { "bluetooth": ev("connected", [headset], 1) },
@@ -162,7 +156,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the same event again (a new seq): its card again",
+    "name": "the same event again (a new seq): its card again",
     "steps": [
       { "at": 0, "state": { "bluetooth": ev("connected", [headset], 1) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [headset], 2) },
@@ -170,14 +164,14 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the event cleared: nothing",
+    "name": "the event cleared: nothing",
     "steps": [
       { "at": 0, "state": { "bluetooth": ev("connected", [headset], 1) } },
       { "at": 3000, "state": { "bluetooth": { "available": true, "value": true, "connected": ["WH-1000XM4"], "event": null, "seq": 1 } } }
     ]
   },
   {
-    "name": "[bluetooth-daemon] the radio off just after a connect: the card folds back, its icon shows",
+    "name": "the radio off just after a connect: the card folds back, its icon shows",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [headset], 1) },
@@ -187,7 +181,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the radio off long after a connect: the card folds back too",
+    "name": "the radio off long after a connect: the card folds back too",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [headset], 1) },
@@ -197,7 +191,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the radio on with its devices' card out: suppressed",
+    "name": "the radio on with its devices' card out: suppressed",
     "host": { "card": { "system": "Bluetooth", "key": "bluetooth", "at": 2800 } },
     "steps": [
       { "at": 0, "state": { "bluetooth": { "available": true, "value": false, "connected": [], "event": { "kind": "connected", "devices": [headset] }, "seq": 1 } } },
@@ -206,7 +200,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] another device just after: its card replaces",
+    "name": "another device just after: its card replaces",
     "steps": [
       { "at": 0, "state": { "bluetooth": radio(true) } },
       { "at": 3000, "state": { "bluetooth": ev("connected", [headset], 1) },
