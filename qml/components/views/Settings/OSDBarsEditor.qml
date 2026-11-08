@@ -93,7 +93,7 @@ ColumnLayout {
     if (!schema || !spec)
       return;
     const systems = Utils.clone(root.systems);
-    if (spec === "label") {
+    if (OSDParts.oneBar(spec)) {
       if (systems.some(item => item.type === type))
         return;
       systems.push(SchemaValidation.applyDefaults({
@@ -103,10 +103,14 @@ ColumnLayout {
       root._pick(type, -1);
       return;
     }
-    const bar = SchemaValidation.applyDefaults({
-      [spec.by]: kindType.slice(at + 1)
-    }, schema.properties[spec.from].items, ConfigManager.configSchema);
+    // Its stable id (ItemId), free in its list: its kind, else counted on
+    const kind = kindType.slice(at + 1);
     let index = systems.findIndex(item => item.type === type);
+    const taken = index < 0 ? [] : (systems[index][spec.from] ?? []).map(other => other.id);
+    const bar = SchemaValidation.applyDefaults({
+      "id": Utils.freeId(kind, taken, "-"),
+      [spec.by]: kind
+    }, schema.properties[spec.from].items, ConfigManager.configSchema);
     if (index < 0) {
       systems.push(SchemaValidation.applyDefaults(Object.assign({
         "type": type,

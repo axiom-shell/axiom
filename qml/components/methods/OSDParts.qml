@@ -2,15 +2,35 @@ pragma Singleton
 import QtQuick
 
 // The OSD's parts (the bars, the status icons, a card; surfaces/osd):
-// which tiles the row shows, the parts' order out from the edge, their
-// shared deadlines and which close together (docs/dev/features/osd.md ›
-// Engine).
+// the bars' keys, which tiles the row shows, the parts' order
+// out from the edge, their shared deadlines and which close together
+// (docs/dev/features/osd.md › Engine).
 QtObject {
   id: root
 
   // The OSD's parts, out from the edge in this order: the bars, the
   // status icons, the card
   readonly property var parts: ["level", "status", "card"]
+
+  // Whether a system's `x-barNames` (`spec`) says it is one bar
+  // ({ bar: its key }, Brightness's) rather than a list's entries
+  function oneBar(spec) {
+    return typeof spec?.bar === "string";
+  }
+
+  // A bar's key in its system's `exposes`, by its `x-barNames` (`spec`):
+  // a one-bar system's its `bar`; an entry of its `from` list (`entry`)
+  // its kind (its `by` field), else what `keys` names for that kind
+  // (Audio's microphone: micLevel), and for a kind it `repeats`
+  // "<kind>:<the entry's id>" (an App bar: app:<id>)
+  function barKey(spec, entry) {
+    if (root.oneBar(spec))
+      return spec.bar;
+    const kind = String(entry?.[spec?.by] ?? "");
+    if ((spec?.repeats ?? []).includes(kind))
+      return kind + ":" + entry.id;
+    return spec?.keys?.[kind] ?? kind;
+  }
 
   // The tiles the row shows, in the OSD's order: of `types` (its tile
   // keys), by `mode` ("notable" | "all" | "changed") over `tiles` (by

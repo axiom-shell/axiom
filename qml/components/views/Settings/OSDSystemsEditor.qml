@@ -18,7 +18,7 @@ import qs.components.views.Layouts
 // settings) is beside the list with the room, else under it
 // (SplitColumns); one is always selected (the first, on another OSD's
 // tab). Bars are the Bars part's (OSDBarsEditor): a system that is only a
-// bar (`x-barNames: label`, Brightness) isn't listed here, and a system's
+// bar (`x-barNames: {bar}`, Brightness) isn't listed here, and a system's
 // list of bars (`x-barNames`' `from`, Audio's `bars`) isn't in its form.
 // Every system comes from the schema's OSDSystem kind
 // (OSDConfig.systemTypes). Edits are `edited(systems)`, the whole list.
@@ -42,7 +42,7 @@ ColumnLayout {
   }, {})
   // A system that is only a bar: the Bars part's alone
   function _onlyBar(type) {
-    return OSDConfig.barSpecOf(type) === "label";
+    return OSDParts.oneBar(OSDConfig.barSpecOf(type));
   }
   // The indexes in `systems` of the ones listed here
   readonly property var shown: root.systems.map((item, index) => root._onlyBar(item.type) ? -1 : index).filter(index => index >= 0)

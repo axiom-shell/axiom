@@ -94,11 +94,12 @@ QtObject {
     return english ? I18n.tr(english) : "";
   }
 
-  // How a system's bars are named and edited (its schema's `x-barNames`):
-  // "label", it is one bar, named by its label (Brightness); { from, by,
-  // named, barOnly }, each entry of its setting `from` is a bar (Audio's
-  // `bars`), `barOnly` the settings an item added only for a bar starts
-  // with; null for a system with no bars
+  // How a system's bars are named, keyed and edited (its schema's
+  // `x-barNames`): { bar }, it is one bar of that key, named by its label
+  // (Brightness; OSDParts.oneBar); { from, by, named, repeats, keys,
+  // barOnly }, each entry of its setting `from` is a bar (Audio's `bars`,
+  // keyed by OSDParts.barKey), `barOnly` the settings an item added only
+  // for a bar starts with; null for a system with no bars
   function barSpecOf(type) {
     return root._systemDefs[type]?.["x-barNames"] ?? null;
   }
@@ -107,19 +108,21 @@ QtObject {
     return root._systemDefs[type] ?? null;
   }
 
-  // An item's bars, in order: { index (in its `from` list; -1 for a
-  // system that is one bar), name (translated), icon }. A `from` bar is
-  // named by its `named` list joined, else its `by` field's x-enumLabels
-  // (Audio's: an App bar by its apps, the others by their kind), its icon
-  // its kind's (`x-enumIcons`); none without `x-barNames`
+  // An item's bars, in its order: { key ("<System>/<its exposes key>",
+  // OSDParts.barKey), index (in its `from` list; -1 for a system that is
+  // one bar), name (translated), icon }. A `from` bar is named by its
+  // `named` list joined, else its `by` field's x-enumLabels (Audio's: an
+  // App bar by its apps, the others by their kind), its icon its kind's
+  // (`x-enumIcons`); none without `x-barNames`
   function barRows(item) {
     const def = root._systemDefs[item.type];
     const spec = def?.["x-barNames"];
     if (!spec)
       return [];
-    if (spec === "label")
+    if (OSDParts.oneBar(spec))
       return [
         {
+          "key": item.type + "/" + OSDParts.barKey(spec, null),
           "index": -1,
           "name": root.nameOf(item.type),
           "icon": def["x-icon"] ?? "extension"
@@ -131,6 +134,7 @@ QtObject {
     return (item[spec.from] ?? []).map((entry, index) => {
       const named = spec.named ? (entry[spec.named] ?? []) : [];
       return {
+        "key": item.type + "/" + OSDParts.barKey(spec, entry),
         "index": index,
         "name": named.length > 0 ? named.join(" / ") : I18n.tr(labels[entry[spec.by]] ?? ""),
         "icon": icons[entry[spec.by]] ?? def["x-icon"] ?? "extension"
@@ -146,7 +150,7 @@ QtObject {
     const spec = def["x-barNames"];
     if (!spec)
       return [];
-    if (spec === "label")
+    if (OSDParts.oneBar(spec))
       return [
         {
           "type": type,

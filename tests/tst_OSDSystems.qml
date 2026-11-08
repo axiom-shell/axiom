@@ -191,4 +191,37 @@ TestCase {
         root._holds(OSDEngine.tileOf(def, key, after[key]), step.tiles[key], where + " tiles." + key);
     });
   }
+
+  // A system's bars in the settings (OSDConfig.barRows, an OSD's
+  // barOrder: OSDParts.barKey over its `x-barNames`) are keyed as its
+  // definition's `exposes` keys them: a list's entries, one of each kind,
+  // or a one-bar system's one
+  function test_barKeys() {
+    const schema = repo.json("qml/config/json/config.schema.json");
+    let checked = 0;
+    for (const option of schema.definitions.OSDSystem.oneOf) {
+      const item = schema.definitions[option.$ref.replace("#/definitions/", "")];
+      const spec = item["x-barNames"];
+      if (!spec)
+        continue;
+      const type = item.properties.type.const;
+      const def = root.definition(type);
+      let entries = [];
+      if (OSDParts.oneBar(spec)) {
+        def.options = {};
+      } else {
+        entries = item.properties[spec.from].items.properties[spec.by].enum.map((kind, i) => ({
+              "id": "bar" + i,
+              [spec.by]: kind
+            }));
+        def.options = {
+          [spec.from]: entries
+        };
+      }
+      const expected = OSDParts.oneBar(spec) ? [spec.bar] : entries.map(entry => OSDParts.barKey(spec, entry));
+      compare(def.exposes.filter(e => e.part === "bar").map(e => e.key), expected, type + "'s bar keys");
+      checked++;
+    }
+    verify(checked >= 2, "Audio and Brightness at least");
+  }
 }

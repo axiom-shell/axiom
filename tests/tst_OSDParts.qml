@@ -2,7 +2,8 @@ import QtQuick
 import QtTest
 import qs.components.methods
 
-// OSDParts: the row, the parts' order and their deadlines
+// OSDParts: the bars' keys, the row, the parts' order and their
+// deadlines
 TestCase {
   name: "OSDParts"
 
@@ -13,6 +14,38 @@ TestCase {
       "notable": on,
       "hidden": hidden === true
     };
+  }
+
+  function test_barKey() {
+    const audio = {
+      "from": "bars",
+      "by": "type",
+      "repeats": ["app"],
+      "keys": {
+        "microphone": "micLevel"
+      }
+    };
+    compare(OSDParts.barKey(audio, {
+      "id": "master",
+      "type": "master"
+    }), "master", "its kind");
+    compare(OSDParts.barKey(audio, {
+      "id": "mic",
+      "type": "microphone"
+    }), "micLevel", "what keys names for its kind");
+    compare(OSDParts.barKey(audio, {
+      "id": "app-2",
+      "type": "app",
+      "apps": ["firefox"]
+    }), "app:app-2", "a kind it repeats: by its id");
+    compare(OSDParts.barKey({
+      "bar": "brightness"
+    }, {}), "brightness", "a one-bar system's own");
+    verify(OSDParts.oneBar({
+      "bar": "brightness"
+    }));
+    verify(!OSDParts.oneBar(audio));
+    verify(!OSDParts.oneBar(null));
   }
 
   function test_rowTypes() {

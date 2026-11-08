@@ -43,11 +43,11 @@ OSDSystem {
 
   // The bars in `bars` order (keys unique: the microphone's bar is
   // `micLevel`, its tile keeping `microphone`; an App bar is
-  // `app:<its index>`), then the tiles in `tiles` order; a bar whose
-  // showOsd is off never opens the OSD shut. A bar is drawn by its
-  // `design`, design/VolumeBar.qml (Paths.osdDesignUrl), given its entry
-  // (`bar`: its item in `bars`), which reads and sets PipeWire itself; a
-  // tile's click mutes its device
+  // `app:<its id>`, as its schema's x-barNames says), then the tiles in
+  // `tiles` order; a bar whose showOsd is off never opens the OSD shut. A
+  // bar is drawn by its `design`, design/VolumeBar.qml
+  // (Paths.osdDesignUrl), given its entry (`bar`: its item in `bars`),
+  // which reads and sets PipeWire itself; a tile's click mutes its device
   // I18n.tr("An app") I18n.tr("Input") I18n.tr("Microphone") I18n.tr("Other apps") I18n.tr("Output") I18n.tr("System volume")
   readonly property var _bars: ({
       "master": {
@@ -81,8 +81,8 @@ OSDSystem {
     })
   // A second bar of one kind (two System volume bars) is left out: keys
   // are unique
-  exposes: (options.bars ?? []).map((bar, i) => ({
-        "key": bar.type === "app" ? "app:" + i : bar.type === "microphone" ? "micLevel" : bar.type,
+  exposes: (options.bars ?? []).map(bar => ({
+        "key": bar.type === "app" ? "app:" + bar.id : bar.type === "microphone" ? "micLevel" : bar.type,
         "part": "bar",
         "icon": bar.icon || (_bars[bar.type]?.icon ?? "volume_up"),
         "label": _bars[bar.type]?.label ?? "",

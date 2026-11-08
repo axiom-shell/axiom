@@ -548,7 +548,7 @@ TestCase {
       import qs.components.surfaces.osd.engine
       OSDSystem {
         type: "Bars"
-        exposes: [{ "key": "master", "part": "bar" }, { "key": "app:0", "part": "bar", "opens": false }]
+        exposes: [{ "key": "master", "part": "bar" }, { "key": "app:fx", "part": "bar", "opens": false }]
       }`, this);
     const change = (key, extra) => Object.assign({
         "key": key,
@@ -571,7 +571,7 @@ TestCase {
     }, bars, change("master", {
       "alert": true
     }), false), "quiet, even an alert");
-    verify(!OSDEngine.opens({}, bars, change("app:0"), false), "its key's opens: false (showOsd off)");
+    verify(!OSDEngine.opens({}, bars, change("app:fx"), false), "its key's opens: false (showOsd off)");
     bars.destroy();
   }
 
