@@ -32,16 +32,7 @@ ColumnLayout {
   spacing: Widget.spacing
 
   // { scale, x, y }: layout pixels to canvas pixels, the bounds centred
-  readonly property var _fitView: {
-    const bounds = MonitorLayout.bounds(root.rects);
-    const margin = Widget.padding * 3;
-    const scale = Math.max(0.01, Math.min((board.width - margin * 2) / bounds.width, (board.height - margin * 2) / bounds.height));
-    return {
-      "scale": scale,
-      "x": bounds.x - (board.width / scale - bounds.width) / 2,
-      "y": bounds.y - (board.height / scale - bounds.height) / 2
-    };
-  }
+  readonly property var _fitView: MonitorLayout.fit(root.rects, board.width, board.height, Widget.padding * 3)
   readonly property var view: _heldView ?? _fitView
 
   function begin(index, point) {
@@ -120,13 +111,20 @@ ColumnLayout {
         readonly property bool dragging: root.dragOutput !== "" && root.dragOutput === rule?.output
         readonly property bool selected: MonitorManager.selectedOutput === rule?.output
         readonly property var monitor: MonitorManager.monitorFor(rule)
-        readonly property bool primary: !!monitor && monitor.name === General.primaryMonitor
+        readonly property bool primary: !!monitor && monitor.name === General.configuredPrimary
         readonly property var mode: MonitorLayout.parseMode(rule?.mode)
 
-        x: ((dragging ? root.dragPos.x : rect.x) - root.view.x) * root.view.scale
-        y: ((dragging ? root.dragPos.y : rect.y) - root.view.y) * root.view.scale
-        width: rect.width * root.view.scale
-        height: rect.height * root.view.scale
+        readonly property var placed: MonitorLayout.place(dragging ? {
+          "x": root.dragPos.x,
+          "y": root.dragPos.y,
+          "width": rect.width,
+          "height": rect.height
+        } : rect, root.view)
+
+        x: placed.x
+        y: placed.y
+        width: placed.width
+        height: placed.height
         z: dragging ? 2 : selected ? 1 : 0
         radius: Widget.radius
         color: selected ? Qt.alpha(Theme.accent, 0.25) : Theme.backgroundHighlight

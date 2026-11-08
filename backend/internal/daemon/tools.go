@@ -15,6 +15,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/netif"
 	"github.com/axiom-shell/axiom/backend/internal/notification"
 	"github.com/axiom-shell/axiom/backend/internal/rpc"
+	"github.com/axiom-shell/axiom/backend/internal/screenshot"
 	"github.com/axiom-shell/axiom/backend/internal/sysmon"
 	"github.com/axiom-shell/axiom/backend/internal/tz"
 )
@@ -49,6 +50,25 @@ func (d *Daemon) toolsMethods(reg *rpc.Registry) {
 	rpc.Handle(reg, "media.art", func(ctx context.Context, c *rpc.Conn, p artParams) (struct{}, error) {
 		o := media.Options{Dir: media.ArtDir(d.opts.Getenv("XDG_RUNTIME_DIR"))}
 		return struct{}{}, media.Art(ctx, o, p.URL, p.Path)
+	})
+	// A screenshot across monitors: each picker's piece composed into one
+	// picture at the largest scale among them. It reads and writes the
+	// paths the shell names, so only the shell asks
+	type stitchParams struct {
+		Pieces []screenshot.Piece `json:"pieces"`
+		Area   screenshot.Rect    `json:"area"`
+		Out    string             `json:"out"`
+	}
+	type stitchResult struct {
+		Width  int `json:"width"`
+		Height int `json:"height"`
+	}
+	rpc.Handle(reg, "screenshot.stitch", func(ctx context.Context, c *rpc.Conn, p stitchParams) (stitchResult, error) {
+		if !fromShell(c) {
+			return stitchResult{}, axerr.New(axerr.Refused, "only the shell stitches screenshots")
+		}
+		size, err := screenshot.Stitch(p.Pieces, p.Area, p.Out)
+		return stitchResult{Width: size.X, Height: size.Y}, err
 	})
 	// The community gallery's files, only into its cache, its palettes'
 	// folder and the wallpapers a setup brings

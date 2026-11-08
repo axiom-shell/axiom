@@ -20,8 +20,10 @@ import qs.services.ui
  *
  * Apply tries the selected profile at once (CompositorManager.applyOutputs)
  * and asks to keep it: keep() saves the draft, and revert() (or the
- * countdown running out) puts back what was there before. A QML reload
- * keeps the trial (its countdown starts over).
+ * countdown running out) puts back what was there before, on the monitors
+ * and in the draft. A QML reload keeps the trial (its countdown starts
+ * over). Apply shows while the draft differs from the saved config or
+ * from the monitors as they are (differsFromLive).
  *
  * A monitor connected or removed (seen between two reads) is said where
  * the OSD's Monitors system (its `monitor` key) or Monitors.notify puts
@@ -118,7 +120,7 @@ Singleton {
     let index = _named(local.items, CompositorConfigManager.monitorProfile);
     let edited = false;
     if (index < 0) {
-      local.items.push(_newProfile(local.items.length));
+      local.items.push(_newProfile(local.items));
       index = local.items.length - 1;
       edited = true;
     } else {
@@ -167,9 +169,9 @@ Singleton {
     }
   }
 
-  function _uniqueName(name) {
+  function _uniqueName(name, items) {
     let result = name;
-    for (let n = 2; profiles.some(profile => profile.name === result); n++)
+    for (let n = 2; items.some(profile => profile.name === result); n++)
       result = `${name} (${n})`;
     return result;
   }
@@ -181,10 +183,14 @@ Singleton {
     return draft.local?.items?.[selectedProfile]?.outputs?.find(r => r.output === output);
   }
 
-  // A profile from how the monitors are now, named after its place
-  function _newProfile(count) {
+  // A profile to add to `items` (the draft's list) from how the monitors
+  // are now, named after its place, with an id unique in the list (the
+  // schema requires one)
+  function _newProfile(items) {
+    const name = _uniqueName(I18n.tr("Layout {0}", items.length + 1), items);
     return {
-      "name": _uniqueName(I18n.tr("Layout {0}", count + 1)),
+      "id": Utils.newId(Utils.slug(name) || "layout", items),
+      "name": name,
       "outputs": outputs.map(monitor => MonitorLayout.ruleFromMonitor(monitor, outputs))
     };
   }
@@ -217,7 +223,7 @@ Singleton {
   }
 
   function newProfile() {
-    draft.local.items.push(_newProfile(profiles.length));
+    draft.local.items.push(_newProfile(draft.local.items));
     draft.changed();
     selectProfile(draft.local.items.length - 1);
   }
@@ -297,6 +303,11 @@ Singleton {
     return result;
   }
   readonly property bool canApply: !issues.some(issue => issue.level === "error")
+  // The selected profile isn't what the connected monitors show (a
+  // layout the compositor didn't take, or set elsewhere): Apply shows
+  // though nothing is unsaved (MonitorLayout.differsFromLive). Not while
+  // a change settles: the outputs are read again once it has
+  readonly property bool differsFromLive: selectedIsLive && !_refreshSoon.running && !_reading && MonitorLayout.differsFromLive(rules, outputs, CompositorManager.supports.monitorMirror === true)
 
   // A rule's name on the page: its connector, else its description
   function labelFor(rule) {
@@ -312,8 +323,9 @@ Singleton {
   readonly property int confirmSeconds: 15
 
   // The trial, kept across a QML reload so its way back is too: JSON of
-  // { rules, details } putting back what was there before Apply and the
-  // draft it tried (keep() saves it), "" when none
+  // { rules, details } putting back what was there before Apply, the
+  // draft it tried (keep() saves it) and the name of the profile tried,
+  // "" when none
   PersistentProperties {
     id: _trial
     reloadableId: "axiomMonitorTrial"
@@ -332,25 +344,35 @@ Singleton {
   }
 
   // Tries the selected profile now; keep() saves it. A profile for other
-  // monitors can only be saved.
+  // monitors can only be saved. The monitors are read again first, so
+  // the way back is how they are, not how the last read found them
   function apply() {
-    if (!canApply || pending || !CompositorManager.supports.monitors)
+    if (!canApply || pending || _applying || !CompositorManager.supports.monitors)
       return;
     if (!selectedIsLive) {
       save();
       return;
     }
-    const all = outputs;
-    _trial.state = JSON.stringify({
-      "rules": all.map(monitor => MonitorLayout.ruleFromMonitor(monitor, all)),
-      "details": all,
-      "draft": draft.local
+    _applying = true;
+    CompositorManager.withOutputDetails(read => {
+      root._applying = false;
+      const all = read ?? root.outputs;
+      const saved = MonitorsConfig.profiles.find(profile => profile.id === root.profile.id)?.outputs;
+      _trial.state = JSON.stringify({
+        "rules": MonitorLayout.snapshot(all, saved, CompositorManager.supports.monitorMirror === true),
+        "details": all,
+        "draft": draft.local,
+        "profile": root.profile.name
+      });
+      CompositorManager.applyOutputs(root.rules.filter(rule => MonitorLayout.find(rule.output, all) !== null), all);
+      root.secondsLeft = root.confirmSeconds;
+      _countdown.restart();
+      _refreshSoon.restart();
     });
-    CompositorManager.applyOutputs(rules.filter(rule => monitorFor(rule) !== null), all);
-    secondsLeft = confirmSeconds;
-    _countdown.restart();
-    _refreshSoon.restart();
   }
+
+  // Apply is reading the monitors before it tries the profile
+  property bool _applying: false
 
   function keep() {
     if (!pending)
@@ -375,8 +397,19 @@ Singleton {
     return trial;
   }
 
+  // Puts back the monitors as they were before Apply, and the profile
+  // tried in the draft as they were (the same for revert(), the countdown
+  // and a keep() that couldn't save): what the page shows is then what's
+  // on the monitors, unsaved where the saved profile differs
   function _runRevert(trial) {
-    CompositorManager.applyOutputs(trial.rules, trial.details);
+    CompositorManager.applyOutputs(trial.rules, trial.details, true);
+    const items = draft.local?.items ?? [];
+    const tried = items[_named(items, trial.profile ?? _liveName)];
+    if (tried) {
+      const saved = MonitorsConfig.profiles.find(profile => profile.id === tried.id)?.outputs;
+      tried.outputs = MonitorLayout.restored(tried.outputs, trial.rules, trial.details, saved, CompositorManager.supports.monitorMirror === true);
+      draft.changed();
+    }
     _refreshSoon.restart();
   }
 

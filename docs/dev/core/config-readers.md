@@ -13,7 +13,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
 - Readers whose section name collides with a type get a `Config` suffix (`Popouts`, `Overlay`, `Icons`, `OSD`, `Launcher`, `Notifications`, …).
 
 ### Readers
-- **`General`**: `displayName`, `primaryMonitor`, `monitors` / `screens`, and:
+- **`General`**: `displayName`, `primaryMonitor` (the configured monitor while it's connected, else the first screen) and `configuredPrimary` (the configured one even unplugged: [targeting](shell-manager-targeting.md#building-and-targeting)), `monitors` / `screens`, and:
   - `outputs`: the connected monitors.
     - It is `Quickshell.screens` without Qt's nameless placeholder and Hyprland's headless `FALLBACK`, which stand in while no monitor is connected.
     - A window left on a stand-in when monitors return is moved off a screen Qt then frees, and qs crashed configuring it.

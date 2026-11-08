@@ -45,7 +45,10 @@ BaseView {
     TitledCard {
       title: I18n.tr("Monitors")
       scrollKey: "Monitors"
-      dirty: MonitorManager.isDirty
+      // Unsaved, or not what the monitors show: Apply puts it on;
+      // Discard only for unsaved edits
+      dirty: MonitorManager.isDirty || MonitorManager.differsFromLive
+      canReset: MonitorManager.isDirty
       canSave: MonitorManager.canApply && !MonitorManager.pending
       saveLabel: MonitorManager.selectedIsLive ? I18n.tr("Apply") : I18n.tr("Save")
       onSave: MonitorManager.apply()

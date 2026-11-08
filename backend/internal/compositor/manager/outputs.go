@@ -50,9 +50,26 @@ func (o Outputs) Read(ctx context.Context) ([]render.Output, error) {
 // profile saved under niri may name a make as PNP(XXX)), on niri and sway
 // as the connector.
 func (o Outputs) Apply(ctx context.Context, rules, details any) error {
+	return o.apply(ctx, rules, details, false)
+}
+
+// Revert is Apply for rules that picture the outputs as they were before
+// an Apply (the Monitors page's revert): on Hyprland every key is said,
+// vrr too, a rule's 0 as misc:vrr (render.RevertMonitorCalls). niri and
+// sway say them anyway.
+func (o Outputs) Revert(ctx context.Context, rules, details any) error {
+	return o.apply(ctx, rules, details, true)
+}
+
+func (o Outputs) apply(ctx context.Context, rules, details any, revert bool) error {
 	switch {
 	case o.Hypr != nil:
-		reply, err := o.Hypr.Eval(ctx, strings.Join(render.MonitorCalls(render.Spelled(rules, details), render.MirrorNames(details)), "\n"))
+		spelled, mirrorNames := render.Spelled(rules, details), render.MirrorNames(details)
+		calls := render.MonitorCalls(spelled, mirrorNames)
+		if revert {
+			calls = render.RevertMonitorCalls(spelled, mirrorNames, o.globalVrr(ctx))
+		}
+		reply, err := o.Hypr.Eval(ctx, strings.Join(calls, "\n"))
 		if err != nil {
 			return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
 		}
@@ -90,10 +107,45 @@ func (o Outputs) Apply(ctx context.Context, rules, details any) error {
 	return nil
 }
 
+// globalVrr is Hyprland's misc:vrr, 0 when it can't be read.
+func (o Outputs) globalVrr(ctx context.Context) float64 {
+	option, err := o.Hypr.JSON(ctx, "getoption misc:vrr")
+	if err != nil {
+		slog.Warn("outputs: reading misc:vrr", "err", err)
+		return 0
+	}
+	if o, ok := option.(*jsonx.Object); ok {
+		if v, ok := o.Value("int").(float64); ok {
+			return v
+		}
+	}
+	return 0
+}
+
+// Relight makes rules just applied while no output was on take effect:
+// Hyprland sets its monitors again only as one draws a frame, which none
+// does while only its headless FALLBACK is left, so it reloads its config
+// (which sets them at once). Nothing elsewhere: niri and sway set them as
+// they're told.
+func (o Outputs) Relight(ctx context.Context) error {
+	if o.Hypr == nil {
+		return nil
+	}
+	reply, err := o.Hypr.Eval(ctx, "hl.dispatch(hl.dsp.reload_config())")
+	if err != nil {
+		return axerr.Wrap(axerr.Unavailable, err, "no reply from Hyprland")
+	}
+	if reply != "" {
+		return axerr.New(axerr.Refused, "Hyprland refused to reload: %s", reply)
+	}
+	return nil
+}
+
 // outputsIO reads and sets the outputs (Outputs; a fake in tests).
 type outputsIO interface {
 	Read(ctx context.Context) ([]render.Output, error)
 	Apply(ctx context.Context, rules, details any) error
+	Relight(ctx context.Context) error
 }
 
 // profileRules are profiles' rules for outputs: render.HyprlandRules on
@@ -114,8 +166,16 @@ type profileSwitch struct {
 	// outputs as last read, nil until then
 	outputs []render.Output
 	// applied: the outputs and rules applied last ("" after a reload,
-	// which sets the outputs as the compositor's config says)
+	// which sets the outputs as the compositor's config says). The
+	// Monitors page's outputs.apply leaves it: Hyprland mirroring an
+	// output takes its wl_output away and back, a hotplug of the same
+	// outputs, and applying the saved profile again then would end the
+	// page's trial at once (seen in a nested Hyprland)
 	applied string
+	// relit: the outputs (by name) last relit with none on (Relight), so
+	// the reload that is isn't repeated after it (when the compositor's
+	// config keeps them dark)
+	relit string
 }
 
 // read reads the outputs again.
@@ -167,7 +227,8 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 		names[i] = o.Name + " " + o.Description
 	}
 	slices.Sort(names)
-	key := strings.Join(names, "\n") + string(jsonx.MarshalCompact(rules))
+	connected := strings.Join(names, "\n")
+	key := connected + string(jsonx.MarshalCompact(rules))
 	if key == p.applied {
 		return nil
 	}
@@ -175,6 +236,14 @@ func (p *profileSwitch) apply(ctx context.Context, profiles any) error {
 		return err
 	}
 	p.applied = key
+	// None on (an unplug left only an output a profile turned off): the
+	// rules lighting one take effect once, after the compositor's reload
+	if slices.ContainsFunc(p.outputs, func(o render.Output) bool { return !o.Disabled }) {
+		p.relit = ""
+	} else if p.relit != connected {
+		p.relit = connected
+		return p.io.Relight(ctx)
+	}
 	return nil
 }
 

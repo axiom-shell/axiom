@@ -230,7 +230,7 @@ function M.layers()
   hl.layer_rule({ name = "axiom-hot-corner", match = { namespace = "^axiom-hot-corner$" }, order = -12 })
   hl.layer_rule({ name = "axiom-screenshot", match = { namespace = "^axiom-screenshot$" }, no_anim = true, order = -20 })
   hl.layer_rule({ name = "axiom-monitor-prompt", match = { namespace = "^axiom-monitor-prompt$" }, order = -25 })
-  hl.layer_rule({ name = "axiom-screenshare", match = { namespace = "^axiom-screenshare$" }, order = -28 })
+  hl.layer_rule({ name = "axiom-screenshare", match = { namespace = "^axiom-screenshare$" }, no_anim = true, order = -28 })
   hl.layer_rule({ name = "axiom-polkit", match = { namespace = "^axiom-polkit$" }, order = -30 })
   hl.layer_rule({ name = "axiom-desktop", match = { namespace = "^axiom-desktop$" }, no_anim = true })
 end
@@ -238,7 +238,7 @@ end
 -- Monitor profiles from the Monitors page: the one for what's connected,
 -- again whenever a monitor comes or goes
 function M.monitors()
-  hl.monitor({ output = "desc:Example Display 0001", mode = "3440x1440@240", position = "0x0", scale = 1, cm = "srgb" })
+  hl.monitor({ output = "desc:Example Display 0001", mode = "3440x1440@240", position = "0x0", scale = 1, bitdepth = 8, cm = "srgb", disabled = false, mirror = "none", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })
 end
 
 -- Strips (the scrolling layout) on the monitors Workspaces lists

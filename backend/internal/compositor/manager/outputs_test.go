@@ -21,6 +21,8 @@ type fakeOutputs struct {
 	connected []render.Output
 	reads     int
 	applied   []string
+	// relit: Relight's calls
+	relit int
 	// fail: Apply's error (nil: it succeeds); it's still counted
 	fail error
 }
@@ -37,6 +39,13 @@ func (f *fakeOutputs) Apply(_ context.Context, rules, details any) error {
 	defer f.mu.Unlock()
 	f.applied = append(f.applied, string(jsonx.MarshalCompact(rules)))
 	return f.fail
+}
+
+func (f *fakeOutputs) Relight(context.Context) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.relit++
+	return nil
 }
 
 func (f *fakeOutputs) connect(outputs ...render.Output) {
@@ -149,6 +158,24 @@ func TestHotplugsApplyTheSavedProfile(t *testing.T) {
 	h.eventually("read with none matching", func() bool { r, _ := f.counts(); return r == 4 })
 	h.m.do(context.Background(), func(context.Context) {})
 	profile("")
+
+	// Only an output the last profile turned off is left: it's lit
+	f.connect(render.Output{Name: "eDP-1", Disabled: true})
+	h.m.OutputsChanged()
+	h.eventually("the one left lit", applied(4))
+	if _, a := f.counts(); a[3] != `[{"output":"eDP-1"}]` {
+		t.Fatalf("all off: applied %s", a[3])
+	}
+	// and the compositor reloads, once: after its reload (which applies
+	// them again) it isn't asked again
+	relit := func() int { f.mu.Lock(); defer f.mu.Unlock(); return f.relit }
+	h.eventually("relit", func() bool { return relit() == 1 })
+	h.w.reloadCh <- ipc.Reload{}
+	h.eventually("again after the reload", applied(5))
+	h.m.do(context.Background(), func(context.Context) {})
+	if n := relit(); n != 1 {
+		t.Fatalf("relit %d times", n)
+	}
 }
 
 // A file mode whose file stops loading (included, its include line taken
@@ -240,7 +267,7 @@ func TestBuildInputsMonitorCalls(t *testing.T) {
 	cfg := jsonx.Obj("Monitors", jsonx.Obj("items", items))
 	on := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9"}})
 	off := buildInputs(cfg, &Facts{Kind: "hyprland"}, []render.Output{mainOut, {Name: "DP-9", Disabled: true}})
-	want := `["hl.monitor({ output = \"desc:Main\", mode = \"preferred\", position = \"0x0\", scale = 1 })","hl.monitor({ output = \"HDMI-A-1\", mode = \"preferred\", position = \"2560x0\", scale = 1 })"]`
+	want := `["hl.monitor({ output = \"desc:Main\", mode = \"preferred\", position = \"0x0\", scale = 1, bitdepth = 8, cm = \"auto\", disabled = false, mirror = \"none\", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })","hl.monitor({ output = \"HDMI-A-1\", mode = \"preferred\", position = \"2560x0\", scale = 1, bitdepth = 8, cm = \"auto\", disabled = false, mirror = \"none\", sdrbrightness = 1, sdrsaturation = 1, transform = 0 })"]`
 	if got := string(jsonx.MarshalCompact(on.get("monitorCalls"))); got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 
+import qs.components.methods
 import qs.components.reusable
 import qs.config
 import qs.services.compositor
@@ -12,16 +13,20 @@ import qs.services.ui
 
 // One screen's screenshot picker: the screen frozen (one ScreencopyView
 // frame, or grim's picture of it where Quickshell can't capture it
-// safely: ScreenshotManager.grimFrames), dimmed except for what a click
-// or release would capture, with the window under the cursor highlighted.
-// `region`: drag a region, or click for the window under the cursor (the
-// whole screen where there's none), Enter for the screen. `window`: click a window. Esc or
-// right-click cancels; Shift on release, or E, opens it in the annotator.
-// An immediate `screen` capture shows the same frame with nothing over it
+// safely: ScreenshotManager.grimFrames), dimmed except for its part of
+// what a click or release would capture (ScreenshotManager.picker.selection,
+// shared by every screen's picker so it can cross monitors), with the
+// window under the cursor highlighted. `region`: drag a region, or click
+// for the window under the cursor (the whole screen where there's none),
+// Enter for the screen. `window`: click a window. Esc or right-click
+// cancels; Shift on release, or E, opens it in the annotator. An
+// immediate `screen` capture shows the same frame with nothing over it
 // and grabs as soon as it arrives. The capture is cropped from the frame
-// at the screen's own resolution. `record` picks the same way, but hands
-// the area to ScreenshotManager.record instead of a picture; R or the
-// Screenshot / Record switch turns a picker into one or the other.
+// at the screen's own resolution; one over several screens is each
+// picker's piece, stitched by ScreenshotManager.captureAcross. `record`
+// picks the same way (on one screen), but hands the area to
+// ScreenshotManager.record instead of a picture; R or the Screenshot /
+// Record switch turns a picker into one or the other.
 PanelWindow {
   id: root
 
@@ -40,11 +45,6 @@ PanelWindow {
   readonly property real pixelRatio: root._frameSize.width > 0 && root.width > 0 ? root._frameSize.width / root.width : (screen?.devicePixelRatio ?? 1)
   readonly property rect fullRect: Qt.rect(0, 0, root.width, root.height)
 
-  // The window under the cursor ({ x, y, width, height }, local), or null
-  property var hoveredWindow: null
-  property bool dragging: false
-  property point dragStart: Qt.point(0, 0)
-  property point dragEnd: Qt.point(0, 0)
   property bool grabbing: false
   // The frame is in (SurfaceManager.captureFrozen)
   readonly property bool frozen: ScreenshotManager.grimFrames ? still.status === Image.Ready : frame.hasContent
@@ -52,9 +52,28 @@ PanelWindow {
   readonly property Item _frameItem: ScreenshotManager.grimFrames ? still : frame
   readonly property size _frameSize: ScreenshotManager.grimFrames ? still.sourceSize : frame.sourceSize
 
-  readonly property rect dragRect: Qt.rect(Math.min(dragStart.x, dragEnd.x), Math.min(dragStart.y, dragEnd.y), Math.abs(dragEnd.x - dragStart.x), Math.abs(dragEnd.y - dragStart.y))
-  // What a release would capture
-  readonly property rect selection: dragging ? dragRect : hoveredWindow ? Qt.rect(hoveredWindow.x, hoveredWindow.y, hoveredWindow.width, hoveredWindow.height) : windowsOnly ? Qt.rect(0, 0, 0, 0) : fullRect
+  // This screen in global logical pixels
+  readonly property var _box: ({
+      "name": root.screen?.name ?? "",
+      "x": root.screen?.x ?? 0,
+      "y": root.screen?.y ?? 0,
+      "width": root.width,
+      "height": root.height
+    })
+  // A drag or a window marks the selection
+  readonly property bool marked: ScreenshotManager.picker.dragging || ScreenshotManager.picker.hoveredWindow !== null
+  // This screen's part of what a release would capture (local), else the
+  // screen (a click takes it), or nothing for `window`
+  readonly property rect selection: {
+    const global = ScreenshotManager.picker.selection;
+    if (global) {
+      const part = ScreenRegion.local(global, root._box);
+      return Qt.rect(part.x, part.y, part.width, part.height);
+    }
+    return root.windowsOnly ? Qt.rect(0, 0, 0, 0) : root.fullRect;
+  }
+  // The pointer is here: the size label shows on this screen
+  readonly property bool hasPointer: ScreenshotManager.picker.pointerScreen === root._box.name
 
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
@@ -68,37 +87,6 @@ PanelWindow {
   WlrLayershell.layer: WlrLayer.Overlay
   WlrLayershell.namespace: "axiom-screenshot"
   WlrLayershell.keyboardFocus: root.interactive && root.focusedScreen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-
-  // This screen's windows, topmost first (fullscreen, then floating, then
-  // most recently focused), as local boxes clipped to the screen (by the
-  // screen's size: the window has none yet when this runs). None where
-  // the compositor doesn't say where windows are
-  function _windows() {
-    if (CompositorManager.supports.windowGeometry !== true)
-      return [];
-    const output = CompositorManager.outputFor(root.screen);
-    const shown = [output?.activeWorkspaceId ?? -1, output?.specialWorkspaceId ?? 0].filter(id => id !== -1 && id !== 0);
-    const covers = w => w.fullscreen || w.maximized;
-    return CompositorManager.windows.filter(w => !w.hidden && shown.includes(w.workspaceId)).sort((a, b) => covers(b) - covers(a) || b.floating - a.floating || (a.focusRank ?? 0) - (b.focusRank ?? 0)).map(w => _clip(w.x - root.screen.x, w.y - root.screen.y, w.w, w.h)).filter(box => box.width > 0 && box.height > 0);
-  }
-
-  function _clip(x, y, width, height) {
-    const left = Math.max(0, x);
-    const top = Math.max(0, y);
-    return {
-      "x": left,
-      "y": top,
-      "width": Math.min(root.screen.width, x + width) - left,
-      "height": Math.min(root.screen.height, y + height) - top
-    };
-  }
-
-  // Refreshed as the picker opens: nothing moves while it's up
-  property var windows: []
-
-  function _windowAt(x, y) {
-    return root.windows.find(w => x >= w.x && x < w.x + w.width && y >= w.y && y < w.y + w.height) ?? null;
-  }
 
   // Crops `area` (local logical pixels) out of the frame and hands it over
   function capture(area) {
@@ -118,14 +106,53 @@ PanelWindow {
       ScreenshotManager.record(Qt.rect(rect.x + root.screen.x, rect.y + root.screen.y, rect.width, rect.height), whole ? root.screen.name : "");
       return;
     }
+    root._grab(rect, result => ScreenshotManager.finish(result));
+  }
+
+  // A pointer position here, in global pixels: a drag goes on past this
+  // screen's edge (the compositor keeps sending the pointer here), into
+  // the shared selection
+  function _toGlobal(mouse) {
+    return Qt.point(mouse.x + root._box.x, mouse.y + root._box.y);
+  }
+
+  // What a release or click takes (global): over several screens, each
+  // one's piece (ScreenshotManager.captureAcross), else this screen's part
+  function captureGlobal(area) {
+    if (!ScreenshotManager.picker.oneScreen && ScreenRegion.covered(area, ScreenshotManager.picker.screenBoxes()).length > 1) {
+      ScreenshotManager.captureAcross(area);
+      return;
+    }
+    const part = ScreenRegion.local(area, root._box);
+    root.capture(Qt.rect(part.x, part.y, part.width, part.height));
+  }
+
+  // Grabs `rect` (local, whole pixels) of the frame at the buffer's
+  // resolution: done(grabToImage result, or null)
+  function _grab(rect, done) {
     root.grabbing = true;
     const size = Qt.size(Math.round(rect.width * root.pixelRatio), Math.round(rect.height * root.pixelRatio));
     cropper.width = rect.width;
     cropper.height = rect.height;
     crop.sourceRect = rect;
     crop.textureSize = size;
-    if (!cropper.grabToImage(result => ScreenshotManager.finish(result), size))
-      ScreenshotManager.finish(null);
+    if (!cropper.grabToImage(result => done(result), size))
+      done(null);
+  }
+
+  // This screen's piece of a capture across screens
+  Connections {
+    target: ScreenshotManager
+
+    function onPieceRequestChanged() {
+      const request = ScreenshotManager.pieceRequest;
+      const piece = request?.pieces.find(p => p.screen === root._box.name);
+      if (!piece || root.grabbing)
+        return;
+      const part = ScreenRegion.local(piece.rect, root._box);
+      const name = root._box.name;
+      root._grab(Qt.rect(Math.round(part.x), Math.round(part.y), Math.round(part.width), Math.round(part.height)), result => ScreenshotManager.pieceDone(request.stamp, name, result));
+    }
   }
 
   // The frame arrives once; an immediate capture takes it straight away.
@@ -142,18 +169,7 @@ PanelWindow {
     Qt.callLater(() => root.capture(root.fullRect));
   }
 
-  Component.onCompleted: {
-    SurfaceManager.captureWindows = SurfaceManager.captureWindows.concat([root]);
-    if (!root.interactive)
-      return;
-    root.windows = root._windows();
-    // Highlight what's under the cursor before it moves (the pointer only
-    // reports a position here once it does)
-    CompositorManager.withCursorPos(pos => {
-      if (pos && !root.dragging && root.hoveredWindow === null)
-        root.hoveredWindow = root._windowAt(pos.x - root.screen.x, pos.y - root.screen.y);
-    });
-  }
+  Component.onCompleted: SurfaceManager.captureWindows = SurfaceManager.captureWindows.concat([root])
 
   Component.onDestruction: SurfaceManager.captureWindows = SurfaceManager.captureWindows.filter(w => w !== root)
 
@@ -200,7 +216,9 @@ PanelWindow {
   Item {
     id: chrome
     anchors.fill: parent
-    visible: root.interactive && root.frozen && !root.grabbing
+    // Not while a capture over several screens crops its pieces: no
+    // second capture or key starts meanwhile
+    visible: root.interactive && root.frozen && !root.grabbing && ScreenshotManager.pieceRequest === null
     focus: true
 
     Keys.onPressed: event => {
@@ -239,10 +257,10 @@ PanelWindow {
       width: root.selection.width
       height: root.selection.height
       readonly property color tint: root.recording ? Theme.error : Theme.accent
-      color: root.dragging ? "transparent" : Qt.alpha(tint, 0.12)
+      color: ScreenshotManager.picker.dragging ? "transparent" : Qt.alpha(tint, 0.12)
       border.color: tint
       border.width: Math.max(2, Appearance.borderWidth)
-      visible: root.dragging || root.hoveredWindow !== null
+      visible: root.marked && root.selection.width > 0 && root.selection.height > 0
     }
 
     // Size in the picture's own pixels
@@ -254,12 +272,14 @@ PanelWindow {
       height: sizeText.implicitHeight + Widget.smallPadding
       radius: Appearance.borderRadius / 2
       color: Theme.background
-      visible: root.dragging || root.hoveredWindow !== null
+      visible: root.marked && root.hasPointer && root.selection.width > 0 && root.selection.height > 0
+      // The whole selection's, over every screen it's on
+      readonly property size pixels: ScreenshotManager.picker.selection ? ScreenshotManager.picker.pixelSize(ScreenshotManager.picker.selection) : Qt.size(0, 0)
 
       StyledText {
         id: sizeText
         anchors.centerIn: parent
-        text: `${Math.round(root.selection.width * root.pixelRatio)} × ${Math.round(root.selection.height * root.pixelRatio)}`
+        text: `${parent.pixels.width} × ${parent.pixels.height}`
         textSize: Appearance.fontSizeBy(-3)
       }
     }
@@ -271,34 +291,29 @@ PanelWindow {
       cursorShape: Qt.CrossCursor
 
       onPositionChanged: mouse => {
-        if (pressed && (mouse.buttons & Qt.LeftButton) && !root.windowsOnly) {
-          root.dragEnd = Qt.point(mouse.x, mouse.y);
-          if (!root.dragging && Math.hypot(mouse.x - root.dragStart.x, mouse.y - root.dragStart.y) >= 6)
-            root.dragging = true;
-        } else {
-          root.hoveredWindow = root._windowAt(mouse.x, mouse.y);
-        }
+        if (pressed && (mouse.buttons & Qt.LeftButton) && !root.windowsOnly)
+          ScreenshotManager.picker.dragTo(root._toGlobal(mouse));
+        else
+          ScreenshotManager.picker.hover(root._box.name, root._toGlobal(mouse));
       }
       onPressed: mouse => {
         if (mouse.button === Qt.RightButton) {
           ScreenshotManager.cancel();
           return;
         }
-        root.dragStart = Qt.point(mouse.x, mouse.y);
-        root.dragEnd = root.dragStart;
+        ScreenshotManager.picker.press(root._box.name, root._toGlobal(mouse));
       }
       onReleased: mouse => {
         if (mouse.button !== Qt.LeftButton)
           return;
         if (mouse.modifiers & Qt.ShiftModifier && ScreenshotManager.annotator !== "" && root.picture)
           ScreenshotManager.annotate = true;
-        // Copied: a rect read from a property re-reads it on use, and the
-        // selection falls back to the window or screen once not dragging
-        const sel = root.selection;
-        const area = Qt.rect(sel.x, sel.y, sel.width, sel.height);
-        root.dragging = false;
-        if (area.width > 0 && area.height > 0)
-          root.capture(area);
+        // null: no drag and no window under the pointer
+        const area = ScreenshotManager.picker.release();
+        if (area && !ScreenRegion.isEmpty(area))
+          root.captureGlobal(area);
+        else if (!area && !root.windowsOnly)
+          root.capture(root.fullRect);
       }
     }
 
@@ -315,7 +330,7 @@ PanelWindow {
       color: Theme.background
       border.color: Theme.border
       border.width: Appearance.borderWidth
-      visible: root.focusedScreen && !root.dragging
+      visible: root.focusedScreen && !ScreenshotManager.picker.dragging
 
       // Clicks between the buttons aren't captures
       MouseArea {

@@ -224,6 +224,20 @@ Singleton {
     SwayIpcManager.command(lines.join("; "), () => root.refresh());
   }
 
+  // Puts re-homed windows back on their monitor (WorkspaceRemap._return;
+  // plan: WorkspaceGeometry.returnWindows'). Sway makes a workspace on the
+  // focused output, so each window's monitor is focused before it moves;
+  // a workspace that already was elsewhere moves over; a returning monitor
+  // shows its workspace; then the output that had the focus has it again
+  function returnWorkspaces(plan) {
+    const focus = name => `focus output ${SwayState.quote(name)}`;
+    const monitors = plan.moves.map(m => m.monitor).filter((name, i, all) => all.indexOf(name) === i);
+    const lines = [].concat(...monitors.map(name => [focus(name)].concat(plan.moves.filter(m => m.monitor === name).map(m => `${_con(m.id)} move container to workspace number ${m.to}`))), ...plan.workspaces.map(w => [`workspace number ${w.id}`, `move workspace to output ${SwayState.quote(w.monitor)}`]), ...plan.show.map(s => [focus(s.monitor), `workspace number ${s.id}`]));
+    if (root.focusedOutput)
+      lines.push(focus(root.focusedOutput));
+    SwayIpcManager.command(lines.join("; "), () => root.refresh());
+  }
+
   // --- Special workspaces: groups of scratchpad windows, or a workspace
   // each (CompositorConfig.swaySpecial) ---
 

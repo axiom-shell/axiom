@@ -156,7 +156,7 @@ QtObject {
 
   // `monitor`, or the focused monitor without one
   function monitorFor(monitor) {
-    return monitor || (CompositorManager.focusedOutput || General.primaryMonitor);
+    return monitor || CompositorManager.focusedOrPrimary;
   }
 
   // Sets `monitor`'s fixed wallpaper in the config (the focused monitor's
@@ -166,13 +166,13 @@ QtObject {
     if (!wallpaperUrl)
       return;
     const target = root.monitorFor(monitor);
-    ConfigManager.setWallpaper(wallpaperUrl, target, target === General.primaryMonitor);
+    ConfigManager.setWallpaper(wallpaperUrl, target, target === General.configuredPrimary);
   }
 
   // Sets several monitors' fixed wallpapers at once ({ monitor: url }), with
   // one save; true if any changed
   function setWallpapers(wallpapers) {
-    const primary = General.primaryMonitor;
+    const primary = General.configuredPrimary;
     const changed = Object.keys(wallpapers).filter(monitor => wallpapers[monitor] && (Appearance.fixedWallpapers[monitor] !== wallpapers[monitor] || (monitor === primary && Appearance.fixedWallpaper !== wallpapers[monitor])));
     if (changed.length === 0)
       return false;
@@ -186,7 +186,7 @@ QtObject {
   // Shows wallpapers ({ monitor: url }) as the rotation's, until the next
   // one, without touching the config; true if any changed
   function showRotated(wallpapers) {
-    const primary = General.primaryMonitor;
+    const primary = General.configuredPrimary;
     const changed = Object.keys(wallpapers).filter(monitor => wallpapers[monitor] && root.wallpaperFor(monitor) !== wallpapers[monitor]);
     if (changed.length === 0)
       return false;

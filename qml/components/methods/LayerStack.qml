@@ -161,7 +161,8 @@ QtObject {
     {
       "namespace": "screenshare",
       "order": -28,
-      "why": "The screen-share picker: over the overlay and the screenshot picker (it steps aside while a region is dragged there), under the shared prompt."
+      "noAnim": true,
+      "why": "The screen-share picker: over the overlay and the screenshot picker, under the shared prompt. It fades itself, and goes at once when it steps aside for a region drag, so the screenshot picker doesn't freeze its blurred dim fading out."
     },
     {
       "namespace": "polkit",

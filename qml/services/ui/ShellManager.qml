@@ -205,11 +205,12 @@ QtObject {
 
   // The screen whose instance of a surface answers a shortcut or IPC call
   // and holds the keyboard: the focused monitor when it opens there or
-  // everywhere, else the first it's built on
+  // everywhere (the primary while none connected is), else the first it's
+  // built on
   function targetFor(target) {
     const resolved = modeFor(target);
     if (resolved === "focused" || resolved === "all")
-      return CompositorManager.focusedOutput || General.primaryMonitor;
+      return CompositorManager.focusedOrPrimary;
     return General.screensFor(target)[0]?.name ?? "";
   }
 

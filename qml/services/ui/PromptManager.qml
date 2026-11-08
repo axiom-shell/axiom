@@ -153,7 +153,7 @@ QtObject {
   onCurrentChanged: {
     const id = root.current?.id ?? "";
     if (id !== "" && id !== root._frontId)
-      root._screenName = CompositorManager.focusedOutput || General.primaryMonitor;
+      root._screenName = CompositorManager.focusedOrPrimary;
     root._frontId = id;
   }
 }

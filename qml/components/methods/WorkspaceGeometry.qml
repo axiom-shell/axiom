@@ -463,4 +463,162 @@ QtObject {
       "changed": changed
     };
   }
+
+  // Where windows go after a hotplug (WorkspaceRemap): the compositor
+  // keeps an unplugged output's workspaces on one still connected, at ids
+  // outside that output's block, so no list, step or overview shows them.
+  // A workspace an unplugged output's block held, or its own output's
+  // block before the hotplug moved it (an unnamed output's, blockBases),
+  // and now outside its output's block (an orphan) moves whole into the
+  // first workspace of that block with no window, lowest orphan id first,
+  // so the layout reads the same; one never merges into a workspace with
+  // windows, unless the block has no empty one left: then the rest join
+  // its last. Every other window stays, and each monitor keeps the
+  // workspace it shows unless that one moves (then it shows where it went).
+  // monitors, windows: as remapWorkspaces'; layout: { size, bases } now;
+  // before: { size, bases } before the hotplug; removed: the names gone.
+  // Returns { moves: [{ id, to, from, origin }] (from: the workspace it
+  // left; origin: the unplugged output whose block held it, "" for a
+  // shifted block's), focus: [{ monitor, id }] (every monitor, the focused
+  // one last), changed }; nothing with no orphan.
+  function rehomeWorkspaces(monitors, windows, layout, before, removed) {
+    const inBlock = (bases, size, name, id) => name in bases && id >= bases[name] && id < bases[name] + size;
+    const owned = w => inBlock(layout.bases, layout.size, w.output, w.workspace);
+    const origin = id => removed.find(name => inBlock(before.bases, before.size, name, id)) ?? "";
+    const orphaned = w => w.workspace > 0 && !owned(w) && (inBlock(before.bases, before.size, w.output, w.workspace) || origin(w.workspace) !== "");
+    // Only on an output that has a block now (one turned off may still
+    // read as a window's)
+    const orphans = windows.filter(w => orphaned(w) && w.output in layout.bases && monitors.some(m => m.name === w.output));
+    if (orphans.length === 0)
+      return {
+        "moves": [],
+        "focus": [],
+        "changed": false
+      };
+    const target = {};
+    monitors.forEach(m => {
+      const ids = [];
+      orphans.forEach(w => {
+        if (w.output === m.name && !ids.includes(w.workspace))
+          ids.push(w.workspace);
+      });
+      const lo = layout.bases[m.name];
+      const empty = [];
+      for (let id = lo; id < lo + layout.size; id++) {
+        if (!windows.some(w => w.workspace === id))
+          empty.push(id);
+      }
+      ids.sort((a, b) => a - b).forEach((id, i) => target[m.name + ":" + id] = i < empty.length ? empty[i] : lo + layout.size - 1);
+    });
+    const moves = orphans.map(w => ({
+          "id": w.id,
+          "to": target[w.output + ":" + w.workspace],
+          "from": w.workspace,
+          "origin": origin(w.workspace)
+        }));
+    const focus = monitors.map(m => ({
+          "monitor": m.name,
+          "id": target[m.name + ":" + m.active] ?? (m.active > 0 || !(m.name in layout.bases) ? m.active : layout.bases[m.name]),
+          "active": m.active,
+          "focused": !!m.focused
+        }));
+    return {
+      "moves": moves,
+      "focus": focus.filter(f => !f.focused).concat(focus.filter(f => f.focused)).map(f => ({
+            "monitor": f.monitor,
+            "id": f.id
+          })),
+      "changed": true
+    };
+  }
+
+  // The connected output a re-homed window's record names ({ monitor,
+  // description }: the monitor it was re-homed from), or "". By
+  // description where the record has one: a different monitor on its old
+  // connector isn't it, nor is one whose description isn't known yet (until
+  // it is); among several alike, the one on its old connector, else the
+  // first. By connector where it has none. outputs: [{ name, description }]
+  function returnOutput(record, outputs) {
+    if (!record.description)
+      return outputs.find(o => o.name === record.monitor)?.name ?? "";
+    const alike = outputs.filter(o => o.description === record.description);
+    return (alike.find(o => o.name === record.monitor) ?? alike[0])?.name ?? "";
+  }
+
+  // Where re-homed windows go once their monitor is back (WorkspaceRemap):
+  // every window whose record's monitor is connected (returnOutput) goes
+  // back to the workspace it was re-homed from, wherever it is now, and
+  // that workspace onto its monitor, joining it if it's elsewhere. A
+  // returning monitor showing a workspace outside its block (the
+  // compositor's pick as it connects) shows the one it showed when it left,
+  // else the lowest returned. records: { windowId: { workspace, monitor,
+  // description, shown } } (shown: its workspace was the one its monitor
+  // showed); windows: [{ id, workspace, output }]; outputs: [{ name,
+  // description, active }]; layout: { size, bases } now. Returns { moves:
+  // [{ id, to, monitor }], workspaces: [{ id, monitor }] (each that has,
+  // or gets, a window off that monitor), show: [{ monitor, id }], done:
+  // [windowId] (the records returned, and those whose window is gone),
+  // changed }
+  function returnWindows(records, windows, outputs, layout) {
+    const moves = [];
+    const placed = {};
+    const show = {};
+    const done = [];
+    Object.keys(records).sort().forEach(id => {
+      const record = records[id];
+      const w = windows.find(w => w.id === id);
+      if (!w) {
+        done.push(id);
+        return;
+      }
+      const monitor = root.returnOutput(record, outputs);
+      if (!monitor)
+        return;
+      done.push(id);
+      if (w.workspace !== record.workspace)
+        moves.push({
+          "id": id,
+          "to": record.workspace,
+          "monitor": monitor
+        });
+      placed[record.workspace] = placed[record.workspace] || {
+        "id": record.workspace,
+        "monitor": monitor,
+        "off": false
+      };
+      if (w.output !== monitor)
+        placed[record.workspace].off = true;
+      const lo = layout.bases[monitor];
+      const active = outputs.find(o => o.name === monitor)?.active ?? -1;
+      if (lo !== undefined && (active < lo || active >= lo + layout.size)) {
+        const best = show[monitor];
+        if (!best || (record.shown && !best.shown) || (!!record.shown === best.shown && record.workspace < best.id))
+          show[monitor] = {
+            "id": record.workspace,
+            "shown": !!record.shown
+          };
+      }
+    });
+    // Other windows already on a returning workspace, off its monitor
+    windows.forEach(w => {
+      const p = placed[w.workspace];
+      if (p && w.output !== p.monitor && !done.includes(w.id))
+        p.off = true;
+    });
+    const workspaces = Object.keys(placed).map(k => placed[k]).filter(p => p.off).sort((a, b) => a.id - b.id).map(p => ({
+          "id": p.id,
+          "monitor": p.monitor
+        }));
+    const shows = Object.keys(show).sort().map(monitor => ({
+          "monitor": monitor,
+          "id": show[monitor].id
+        }));
+    return {
+      "moves": moves,
+      "workspaces": workspaces,
+      "show": shows,
+      "done": done,
+      "changed": moves.length > 0 || workspaces.length > 0 || shows.length > 0
+    };
+  }
 }

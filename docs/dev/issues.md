@@ -313,18 +313,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-10-27, while measuring the shell's memory
 
 ### Surfaces touch a dead screen after the outputs go away
-- **Where:** `qml/config/General.qml` (`outputs`: whatever is built on it while no monitor is connected)
-- **What:** After the monitors drop out (`qt.qpa.wayland` `There are no outputs - creating placeholder screen`, e.g. DPMS off), the log fills with `attempted to use dangling screen object` (68 lines in one session, no file named). Something holds a `ShellScreen` past its removal and reads it. Which surface it is hasn't been found yet: next step, reproduce with a nested compositor dropping its output and bisect by commenting out surfaces in `qml/shell.qml`.
+- **Where:** every host building a surface per screen (`qml/shell/*.qml`, `screen: modelData`), and the ~40 reads of a surface's `screen` without `?.` (`root.screen.width`, …) in `qml/components/`
+- **What:** An output that comes within a few tens of ms of another going (seen with `hyprctl output remove <primary>`, 30 ms, then `output create headless <name>` on a nested Hyprland; likely the DPMS and undock bursts that logged 68 lines on a real session) logs `attempted to use dangling screen object` about 200 times. Traced 2026-11-07: Variants deletes a gone screen's surfaces a tick late, its ShellScreen dangling meanwhile, and the new output's change re-evaluates their bindings (ScreenEdgeManager's, EdgePlacement's, ToastStack's, RoundedBorders', Launcher's `isTarget`, direct `screen.width` reads), which read it. (The plain unplug of the primary, 10 lines from SubPopout's `screenFrom`/`screenTo`, is fixed.) Fix: hosts pass `screen: General.connected(modelData)` (a new helper), null once the screen leaves `General.outputs` (tried on Notifications: its share went, no errors), after making every `screen.` read in the surfaces null-safe (else each logs a TypeError instead). Harmless (a warning).
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while reviewing the popouts system
 
 ## Workspaces and monitors
-
-### A hotplug can shift an unnamed output's block, and nothing remaps it
-- **Where:** `qml/components/methods/WorkspaceGeometry.qml` (`blockBases`), `qml/services/compositor/WorkspaceRemap.qml` (`on_BasesChanged`)
-- **What:** `blockBases` numbers the outputs no monitor profile names after the named ones, in `orderMonitors`' order, so plugging in or unplugging an unnamed output that sorts before another unnamed one moves that one's block. A hotplug never remaps (it only records the new bases), so that output's workspaces sit outside its new block, missed by its list and steps, until `axiom ipc workspaces reconcile`. Same as on main. A hotplug doesn't remap so that a reconnected monitor's windows return as they did before (the leader's decision in row 20's Monitors batch); what Hyprland itself does with a returning monitor's workspaces is unverified. Fix: number an unnamed output by an identity that doesn't depend on the others connected, or remap only the outputs that stayed connected.
-- **Size:** small
-- **Found:** 2026-11-06, while reviewing the Monitors batch (row 20)
 
 ### A remap runs at startup, from the layout before the config loaded
 - **Where:** `qml/services/compositor/WorkspaceRemap.qml` (`_applied`, `_timer`, `onBlockSizeChanged`)

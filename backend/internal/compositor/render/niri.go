@@ -681,7 +681,9 @@ func NiriOutputNodes(rules any) *jsonx.Array {
 }
 
 // NiriOutputRequests is NiriConf.outputRequests: monitor rules as niri's
-// Output requests, disabled outputs last.
+// Output requests, disabled outputs last. Each part is sent, its default
+// too (On, the mode, the scale, the transform, the position, vrr), so a
+// revert puts back every part a trial changed.
 func NiriOutputRequests(rules, details any) *jsonx.Array {
 	requests := jsonx.Arr()
 	for _, rule := range disabledLast(rules) {
@@ -695,12 +697,16 @@ func NiriOutputRequests(rules, details any) *jsonx.Array {
 			continue
 		}
 		send("On")
+		// "preferred" (or none) is niri's own pick, said too: each request
+		// sets one part, so a mode left out would stay as it is
 		if w, h, rate, ok := parseMode(get(rule, "mode")); ok {
 			var refresh any
 			if rate > 0 {
 				refresh = rate
 			}
 			send(jsonx.Obj("Mode", jsonx.Obj("mode", jsonx.Obj("Specific", jsonx.Obj("width", w, "height", h, "refresh", refresh)))))
+		} else {
+			send(jsonx.Obj("Mode", jsonx.Obj("mode", "Automatic")))
 		}
 		send(jsonx.Obj("Scale", jsonx.Obj("scale", jsonx.Obj("Specific", num(or(get(rule, "scale"), 1.0))))))
 		send(jsonx.Obj("Transform", jsonx.Obj("transform", transformName(niriIPCTransforms, get(rule, "transform"), "Normal"))))
