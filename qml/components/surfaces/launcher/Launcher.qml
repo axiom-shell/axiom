@@ -22,6 +22,8 @@ Scope {
   required property ShellScreen screen
 
   readonly property bool shown: popout.isOpen
+  // The instances open and close together (SurfaceGroup)
+  onShownChanged: LauncherManager.shown = root.shown
   // What the panel searches for when it's created (it only exists while
   // the host is open)
   property string _openText: ""
@@ -102,6 +104,10 @@ Scope {
     }
     function calculator(): void {
       root.open("=");
+    }
+    // The file search, on the recent files
+    function files(): void {
+      root.open("~");
     }
   }
 

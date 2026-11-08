@@ -530,7 +530,7 @@ QtObject {
       run: () => LockManager.reload()
     },
     // --- Other searches ---
-    root._prefix("calc", ["math"], "calculate", "Calculate (or start with =)", "=", () => LauncherConfig.calculator), root._prefix("run", ["exec", "sh"], "terminal", "Run a shell command (or start with >)", ">", () => LauncherConfig.runCommands), root._prefix("web", ["search"], "web", "Search the web (or start with ?)", "?", () => LauncherConfig.webSearch), root._prefix("clipboard", ["clip", "paste"], "content_paste", "Search the clipboard history (or start with :)", ":", () => LauncherConfig.clipboard), root._prefix("emoji", ["emojis", "emoticon"], "mood", "Search emoji (or start with ;)", ";", () => LauncherConfig.emoji), root._prefix("help", ["commands"], "help", "List every command", "/", () => true)]
+    root._prefix("calc", ["math"], "calculate", "Calculate (or start with =)", "=", () => LauncherConfig.calculator), root._prefix("run", ["exec", "sh"], "terminal", "Run a shell command (or start with >)", ">", () => LauncherConfig.runCommands), root._prefix("web", ["search"], "web", "Search the web (or start with ?)", "?", () => LauncherConfig.webSearch), root._prefix("clipboard", ["clip", "paste"], "content_paste", "Search the clipboard history (or start with :)", ":", () => LauncherConfig.clipboard), root._prefix("emoji", ["emojis", "emoticon"], "mood", "Search emoji (or start with ;)", ";", () => LauncherConfig.emoji), root._prefix("files", ["find"], "folder_open", "Search your files (or start with ~)", "~", () => LauncherConfig.files), root._prefix("help", ["commands"], "help", "List every command", "/", () => true)]
 
   // --- Builders for families of alike commands ---
 
@@ -649,6 +649,7 @@ QtObject {
       // I18n.tr("Calculate (or start with =)") I18n.tr("Run a shell command (or start with >)")
       // I18n.tr("Search the web (or start with ?)") I18n.tr("List every command")
       // I18n.tr("Search the clipboard history (or start with :)") I18n.tr("Search emoji (or start with ;)")
+      // I18n.tr("Search your files (or start with ~)")
       description: () => I18n.tr(description),
       available: available,
       run: arg => prefix + arg

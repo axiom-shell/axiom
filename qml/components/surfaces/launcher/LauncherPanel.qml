@@ -169,7 +169,8 @@ FocusScope {
           web: "web",
           chat: "forum",
           clipboard: "content_paste",
-          emoji: "mood"
+          emoji: "mood",
+          files: "folder_open"
         })
       text: glyphs[LauncherManager.mode] ?? glyphs.apps
       textColor: Theme.accent
@@ -216,6 +217,9 @@ FocusScope {
           root.complete();
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
           root.activate(event.modifiers & Qt.ShiftModifier);
+        } else if (ctrl && event.key === Qt.Key_C && input.selectedText === "" && LauncherManager.copy(list.currentIndex)) {
+          // Nothing selected in the field: the row's (a file's path)
+          root.closeRequested();
         } else {
           return;
         }
@@ -250,7 +254,8 @@ FocusScope {
           web: I18n.tr("Web"),
           chat: I18n.tr("Chat"),
           clipboard: I18n.tr("Clipboard"),
-          emoji: I18n.tr("Emoji")
+          emoji: I18n.tr("Emoji"),
+          files: I18n.tr("Files")
         })
       visible: modeLabel.text !== ""
       implicitWidth: modeLabel.implicitWidth + Widget.spacing * 4
@@ -423,8 +428,8 @@ FocusScope {
       Repeater {
         // I18n.tr("commands") I18n.tr("calculate") I18n.tr("run") I18n.tr("web")
         // I18n.tr("complete") I18n.tr("open") I18n.tr("ask") I18n.tr("clipboard")
-        // I18n.tr("emoji")
-        model: [[LauncherConfig.commands, "/", "commands"], [LauncherConfig.calculator, "=", "calculate"], [LauncherConfig.runCommands, ">", "run"], [LauncherConfig.webSearch, "?", "web"], [LauncherConfig.chat, "@", "ask"], [LauncherConfig.clipboard, ":", "clipboard"], [LauncherConfig.emoji, ";", "emoji"], [true, "Tab", "complete"], [true, "↵", "open"]].filter(hint => hint[0])
+        // I18n.tr("emoji") I18n.tr("files")
+        model: [[LauncherConfig.commands, "/", "commands"], [LauncherConfig.calculator, "=", "calculate"], [LauncherConfig.runCommands, ">", "run"], [LauncherConfig.webSearch, "?", "web"], [LauncherConfig.chat, "@", "ask"], [LauncherConfig.clipboard, ":", "clipboard"], [LauncherConfig.emoji, ";", "emoji"], [LauncherConfig.files, "~", "files"], [true, "Tab", "complete"], [true, "↵", "open"]].filter(hint => hint[0])
 
         KeyHint {
           required property var modelData

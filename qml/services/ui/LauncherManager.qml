@@ -16,13 +16,17 @@ import qs.services.apps
  *   /  shell commands (LauncherCommands)   =  calculator (qalc)
  *   >  run a shell command                 ?  web search
  *   @  ask the chat                        :  clipboard history
- *   ;  emoji (EmojiManager)
+ *   ;  emoji (EmojiManager)                ~  files (LauncherFiles)
  * and anything else searches apps and open windows, with a calculator row
- * when the text is math and a web search row last. Every row is
- *   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift) }
- * where image is an icon path or url, glyph a Material Symbols name, complete the
- * text Tab puts in the search field, and run() returns true to close the
- * launcher, false to keep it open, or a string to search for instead.
+ * when the text is math, the best few files after them and a web search
+ * row last. Every row is
+ *   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift),
+ *     crop, copy() }
+ * where image is an icon path or url (crop: a picture that fills its tile),
+ * glyph a Material Symbols name, complete the text Tab puts in the search
+ * field, and run() returns true to close the launcher, false to keep it
+ * open, or a string to search for instead; copy(), when a row has it, is
+ * Ctrl+C's (a file's path).
  * App launches and commands run are counted (with their last time) for
  * frecency sorting.
  */
@@ -32,8 +36,11 @@ QtObject {
   // --- Public Properties ---
   property var results: []
   // What the search text is: "apps" | "commands" | "calc" | "run" | "web" |
-  // "chat" | "clipboard" | "emoji"
+  // "chat" | "clipboard" | "emoji" | "files"
   property string mode: "apps"
+  // A launcher is open (set by Launcher): file results follow the index
+  // only then, and a closed one opens to fresh ones
+  property bool shown: false
   // The results are the frequent apps shown before anything is typed
   property bool frequent: false
   // The text results was built from
@@ -71,6 +78,8 @@ QtObject {
       return _set("clipboard", _clipboardRows(rest.trim()));
     if (prefix === ";" && LauncherConfig.emoji)
       return _set("emoji", _emojiRows(rest.trim()));
+    if (prefix === "~" && LauncherConfig.files)
+      return _set("files", _files.rowsFor(raw.trim()));
 
     const q = raw.trim();
     if (q === "") {
@@ -83,7 +92,23 @@ QtObject {
     let rows = [];
     if (math && _calcReady(q))
       rows.push(_calcRow(q));
-    rows = rows.concat(_searchRows(q));
+    root._mainRows = {
+      "q": q,
+      "rows": rows.concat(_searchRows(q))
+    };
+    _setMain();
+  }
+
+  // The main search's rows: the calculator's, apps and windows (kept, so
+  // files landing later don't search them again), the files, the web row
+  property var _mainRows: ({
+      "q": "",
+      "rows": []
+    })
+
+  function _setMain() {
+    const q = root._mainRows.q;
+    const rows = root._mainRows.rows.concat(_files.mainRows(q));
     if (LauncherConfig.webSearch)
       rows.push(_webRow(q));
     _set("apps", rows);
@@ -93,6 +118,16 @@ QtObject {
   function activate(index, shift) {
     const row = results[index];
     return row ? row.run(!!shift) : false;
+  }
+
+  // Ctrl+C on results[index]: copies what it offers (a file's path);
+  // false when it offers nothing
+  function copy(index) {
+    const row = results[index];
+    if (!row?.copy)
+      return false;
+    row.copy();
+    return true;
   }
 
   // The text Tab puts in the search field for results[index], or ""
@@ -215,6 +250,23 @@ QtObject {
     return _apps().filter(app => usage[app.id]).sort((a, b) => _frecency(b.id) - _frecency(a.id) || a.name.localeCompare(b.name)).slice(0, LauncherConfig.maxResults).map(app => _appRow(app));
   }
 
+  // --- Files ---
+
+  property LauncherFiles _files: LauncherFiles {
+    active: root.shown && root.mode === "files"
+    onUpdated: {
+      if (root.mode === "files")
+        root._set("files", root._files.rowsFor(root.text.trim()));
+      else if (root.mode === "apps" && root._mainRows.q !== "" && root._mainRows.q === root.text.trim())
+        root._setMain();
+    }
+  }
+
+  onShownChanged: {
+    if (!root.shown)
+      root._files.forget();
+  }
+
   // --- Commands ---
 
   property LauncherCommands _commands: LauncherCommands {}
@@ -318,6 +370,8 @@ QtObject {
       kind: "option",
       glyph: option.image ? "" : option.glyph || command.glyph,
       image: option.image ?? "",
+      // Option pictures (wallpapers, setups' thumbnails) fill their tile
+      crop: true,
       title: option.title,
       subtitle: option.subtitle ?? "",
       complete: next !== undefined ? "/" + command.name + " " + next : "/" + command.name + " " + option.title,
@@ -487,6 +541,7 @@ QtObject {
       kind: "clipboard",
       glyph: entry.format || entry.html ? "image" : entry.pinned ? "keep" : "content_paste",
       image: entry.image,
+      crop: true,
       title: label.length > 120 ? label.slice(0, 120) + "…" : label,
       subtitle: ClipboardManager.detailOf(entry) + (entry.html && entry.image ? " · " + entry.image : ""),
       hint: entry.pinned ? I18n.tr("Shift+Enter unpins") : I18n.tr("Shift+Enter removes"),

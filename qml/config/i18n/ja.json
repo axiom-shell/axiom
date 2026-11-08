@@ -4158,6 +4158,23 @@
     "Type ~ to search your files, ~/ to browse folders. axiom keeps its own index of the folders below, built in the background at idle priority.": "",
     "Folders indexed with everything below them, comma-separated.": "",
     "Names or paths below a folder searched, comma-separated; * matches any text.": "",
-    "Image thumbnails": ""
+    "Image thumbnails": "",
+    "files": "",
+    "{0} more": "",
+    "Type to narrow them down": "",
+    "Empty folder": "",
+    "No recent files": "",
+    "Type a name to search your files, or ~/ to browse": "",
+    "File search is off": "",
+    "Launcher settings › Files": "",
+    "Indexing… {0} files": "",
+    "Results grow as it goes": "",
+    "Only the first {0} files are indexed": "",
+    "{0} files indexed": "",
+    "{0} · {1} · {2}": "",
+    "Folder": "",
+    "File": "",
+    "Shift+Enter shows it": "",
+    "Search your files (or start with ~)": ""
   }
 }

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import qs.components.reusable
 import qs.config
+import qs.services.apps
 
 // One launcher result (a LauncherManager row): an icon or glyph, the title
 // (with a command's usage after it), a description line and a hint chip.
@@ -22,7 +23,26 @@ Item {
   signal hovered(point pos)
   signal clicked
 
-  readonly property bool _image: !!modelData.image
+  // A file's thumbnail once FileSearchManager has it (asked for only while
+  // this row shows the file), in place of its type's icon
+  readonly property string _thumbKey: modelData.thumb ? FileSearchManager.thumbnailKey(modelData.thumb, modelData.mtime) : ""
+  property string _wantedKey: ""
+  readonly property string _thumbnail: _thumbKey ? FileSearchManager.thumbnails[_thumbKey] ?? "" : ""
+  on_ThumbKeyChanged: _want()
+  Component.onDestruction: {
+    if (root._wantedKey)
+      FileSearchManager.unwant(root._wantedKey);
+  }
+  function _want() {
+    if (root._wantedKey)
+      FileSearchManager.unwant(root._wantedKey);
+    root._wantedKey = root._thumbKey;
+    if (root._thumbKey)
+      FileSearchManager.want(root._thumbKey, root.modelData.thumb);
+  }
+
+  readonly property string _source: _thumbnail || (modelData.image ?? "")
+  readonly property bool _image: _source !== ""
   // An emoji is its own picture: bigger, on no tile
   readonly property bool _emoji: modelData.kind === "emoji"
   readonly property color _titleColor: current ? Theme.accent : Theme.foreground
@@ -32,7 +52,10 @@ Item {
   // first, which the list's `add` fades in.
   readonly property string _resultKey: (modelData.kind ?? "") + "\n" + (modelData.title ?? "")
   property bool _placed: false
-  Component.onCompleted: Qt.callLater(() => root._placed = true)
+  Component.onCompleted: {
+    root._want();
+    Qt.callLater(() => root._placed = true);
+  }
   on_ResultKeyChanged: {
     if (root._placed && Appearance.animations)
       refresh.restart();
@@ -94,12 +117,12 @@ Item {
       Image {
         anchors.fill: parent
         visible: root._image
-        source: root._image ? root.modelData.image : ""
+        source: root._source
         sourceSize: Qt.size(width * 2, height * 2)
         asynchronous: true
-        // Pictures (wallpapers, copied images) fill their tile; icons keep
-        // their shape
-        fillMode: root.modelData.kind === "option" || root.modelData.kind === "clipboard" ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+        // Pictures (wallpapers, copied images, thumbnails) fill their
+        // tile; icons keep their shape
+        fillMode: root._thumbnail || root.modelData.crop ? Image.PreserveAspectCrop : Image.PreserveAspectFit
       }
 
       Rectangle {
