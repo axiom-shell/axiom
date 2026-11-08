@@ -35,21 +35,25 @@ StyledContainer {
           "mods": group.mods,
           "row": row
         })))))
-  // The rows' key widths by item index; the column takes the widest
-  property var _keyWidths: ({})
-  readonly property real keyWidth: Object.keys(root._keyWidths).reduce((widest, i) => Math.max(widest, root._keyWidths[i]), 0)
+  // The key column's width: the widest of the rows' keys, measured from the
+  // rows built (_measureKeys), never from reports kept across a rebuild
+  property real keyWidth: 0
 
   signal editRequested(int bindIndex)
 
-  function _reportKeyWidth(index, width) {
-    if (root._keyWidths[index] === width)
-      return;
-    const next = Object.assign({}, root._keyWidths);
-    next[index] = width;
-    root._keyWidths = next;
+  // Once a frame at most (Qt.callLater folds the calls): a row built, gone
+  // or resized
+  function _measureKeys() {
+    let widest = 0;
+    for (let i = 0; i < rows.count; i++)
+      widest = Math.max(widest, root._keyWidthOf(rows.itemAt(i)));
+    root.keyWidth = widest;
   }
 
-  onItemsChanged: root._keyWidths = {}
+  // (untyped: qmllint knows only Item's members)
+  function _keyWidthOf(delegate) {
+    return delegate?.rowKeyWidth ?? 0;
+  }
 
   Layout.fillWidth: true
   implicitHeight: column.implicitHeight + Widget.padding * 2
@@ -97,7 +101,10 @@ StyledContainer {
     }
 
     Repeater {
+      id: rows
       model: root.items
+      onItemAdded: Qt.callLater(root._measureKeys)
+      onItemRemoved: Qt.callLater(root._measureKeys)
 
       delegate: Item {
         id: item
@@ -106,6 +113,9 @@ StyledContainer {
         readonly property string groupKey: KeybindManager.page.refGroupKey(root._section, item.modelData.mods)
         readonly property bool folded: KeybindManager.page.refFolded.includes(item.groupKey)
         readonly property bool grouped: item.modelData.mods.length > 0
+        // Its keys' own width (0 for a header)
+        readonly property real rowKeyWidth: item.modelData.row ? row.keyImplicitWidth : 0
+        onRowKeyWidthChanged: Qt.callLater(root._measureKeys)
         Layout.fillWidth: true
         visible: !item.modelData.row || !item.folded
         implicitHeight: item.modelData.row ? row.implicitHeight : header.implicitHeight
@@ -193,10 +203,6 @@ StyledContainer {
             })
           groupMods: item.modelData.mods
           keyWidth: root.keyWidth
-          onKeyImplicitWidthChanged: if (item.modelData.row)
-            root._reportKeyWidth(item.index, keyImplicitWidth)
-          Component.onCompleted: if (item.modelData.row)
-            root._reportKeyWidth(item.index, keyImplicitWidth)
           onEditRequested: bindIndex => root.editRequested(bindIndex)
         }
       }
