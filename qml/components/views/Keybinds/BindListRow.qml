@@ -216,7 +216,8 @@ StyledContainer {
       level: root.hasError ? "error" : "warning"
       tip: KeybindManager.editor.issueTip(root.indices)
       textColor: root.selected ? root.ink : issueIcon.tone
-      textSize: Appearance.fontSize
+      // The row's other marks' size: larger, the symbol sits below centre
+      textSize: Appearance.fontSizeBy(-1)
     }
 
     UnsavedDot {
