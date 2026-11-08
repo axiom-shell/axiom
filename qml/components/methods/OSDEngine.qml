@@ -57,14 +57,13 @@ QtObject {
     return mark !== key && state?.[mark] !== undefined ? root.tileOf(def, mark, state[mark]) : null;
   }
 
-  // `key`'s tile from its state: { icon, label, tone, on, slash, notable,
-  // hidden } and whatever else the definition's tile() adds; the icon
+  // `key`'s tile from its state: { icon, label, on, slash, notable, hidden }
+  // and whatever else the definition's tile() adds; the icon
   // `exposes`' unless it gives one
   function tileOf(def, key, state) {
     const t = {
       "icon": root.entryOf(def, key).icon ?? "",
       "label": "",
-      "tone": "",
       "on": false,
       "slash": false,
       "notable": false,
@@ -332,8 +331,8 @@ QtObject {
         return counts("add") ? ["add", pick("onAdd"), extra] : null;
       if (removed.length === 0 || !counts("remove"))
         return null;
-      // The last of an owner leaving while it stays on another key of
-      // its group
+      // The set's last member leaving (none left) while its owner stays
+      // on another key of its group
       const gone = root._owners(def, (before?.members ?? []).filter(m => removed.includes(m.id)));
       const kept = sets.left.length === 0 ? (root._partners(def, key, gone, c.after)[0] ?? "") : "";
       return root._removal(def, key, c, sets.left.length > 0, kept, extra);
@@ -402,13 +401,14 @@ QtObject {
   // part, model, kind ("add" | "remove" | "change" | "update" | "event" |
   // "level"), show ("card" | "tile" | "level"), card (show is "card"),
   // still, unexpected, alert (opens the OSD even after an on-screen mark:
-  // only a definition's judge() sets it), added, removed, left (a set's
-  // ids), members (a set's, as the change saw them), kept (a group's
-  // "still" card: the key the owner stays on), at, byUser }. Never the
-  // first reading (`before` missing) nor across a state that isn't
-  // `available` (false); then the definition's judge() for an odd case
-  // (it reads ctx.settled itself); else the declarations: nothing for a
-  // `resetBy` field changing with it, within `ignoreWithin`, or a
+  // an event of a kind `alertKinds` lists, or a definition's judge() sets
+  // it), added, removed, left (a set's ids), members (a set's, as the
+  // change saw them), kept (a group's "still" card: the key the owner
+  // stays on), at, byUser }. Never the first reading (`before` missing)
+  // nor across a state that isn't `available` (false); then the
+  // definition's judge() for an odd case (it reads ctx.settled itself);
+  // else the declarations: nothing for a `resetBy` field changing with
+  // it, outside `countsWithin`, within `ignoreWithin`, or a
   // `keepThroughGap` gap, and a kind `settledKinds` names (every kind
   // unless the system counts `anyone`'s) counts only while the watcher
   // calls it settled. `ctx`: { at, byUser, settled, before, after (the
@@ -497,7 +497,7 @@ QtObject {
   // What a change does to what's shown, `elapsed` ms after `shown` came.
   // Both are whole judged changes (judge()'s: key, part, kind, card
   // (bool), still, unexpected, alert, added, removed, left, …) with their
-  // `system` and `tile` (that key's tile now); `defs` the definitions by
+  // `system` and `tile` (that key's tile as the change came); `defs` the definitions by
   // system. Their sameChange() and absorbs() read any of it (Privacy's
   // `still`). Against a card out (`shown.card`): a card
   // "replace"s it or "keep"s it (the same change: the first card says
@@ -559,7 +559,8 @@ QtObject {
   // What a change shows on `osd` (an OSD entry: { cardsEnabled, systems
   // }): its own show, a card shown as its tile where the OSD's cards or
   // the item's are off (nothing for a key with no tile, or the item's
-  // tiles off), "" for nothing
+  // tiles off), a level only while the item's `tile` isn't false, "" for
+  // nothing
   function shownAs(osd, change, hasTile) {
     const item = root.itemOf(osd, change.system ?? "") ?? {};
     const tile = hasTile === true && item.tile !== false ? "tile" : "";
@@ -567,6 +568,8 @@ QtObject {
       return osd?.cardsEnabled === true && item.card !== false ? "card" : tile;
     if (change.show === "tile")
       return tile;
+    if (change.show === "level")
+      return item.tile !== false ? "level" : "";
     return change.show ?? "";
   }
 

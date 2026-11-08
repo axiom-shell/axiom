@@ -10,8 +10,8 @@ import qs.services.ui
 // (`change`). Nothing counts for its first 1.5 s, while services settle
 // (the LEDs' first reading, PipeWire binding, UPower and D-Bus answering):
 // those only set the state the next change is judged from, but for an
-// event model's events, which are never a first reading
-// (docs/dev/features/osd.md › Engine). A QtObject (an Item's `state` is
+// event model's events, never a first reading, and a key declaring
+// `countsWithin` (it gates itself) (docs/dev/features/osd.md › Engine). A QtObject (an Item's `state` is
 // taken): what it declares inside (Connections, Timers) goes in `data`.
 QtObject {
   id: root
@@ -44,8 +44,8 @@ QtObject {
     return true;
   }
 
-  // A click on its card (a change the definition's activate() hands back
-  // with ""): acts on what it says (a drive's opens it)
+  // A click on its card (a key that's `clickable`): acts on what it says
+  // (a drive's opens it)
   function activate(change) {
   }
 
@@ -55,11 +55,8 @@ QtObject {
   }
 
   // A bar without a design of its own (OSDLevelBar's StyledVolumeBar)
-  // dragged or scrolled to `level` (0-1), or its icon clicked (shown
-  // clickable while its state has `muted`): sets it in its service
+  // dragged or scrolled to `level` (0-1): sets it in its service
   function setLevel(key, level) {
-  }
-  function iconClicked(key) {
   }
 
   // What shows for a change: OSDEngine.judge's, with { system }
@@ -104,8 +101,6 @@ QtObject {
     for (const e of def.exposes ?? []) {
       const was = before[e.key];
       const now = after[e.key];
-      if (OSDEngine.same(OSDEngine.policy(def, e.key, "model"), was, now))
-        continue;
       const what = OSDEngine.judge(def, e.key, was, now, {
         "at": at,
         "byUser": OSDEngine.byUser(def, e.key, ShellManager.markAge(OSDEngine.markOf(def, e.key))),
@@ -120,12 +115,12 @@ QtObject {
     }
     // A keepThroughGap value keeps what it had through an empty reading
     root._last = OSDEngine.remember(def, before, after);
-    // Settling, only an event model's events (OSDEngine.showsWhileSettling)
+    // Settling, only what OSDEngine.showsWhileSettling lets through (an
+    // event model's events, a `countsWithin` key)
     changes.filter(what => root._armed || OSDEngine.showsWhileSettling(def, what)).forEach(what => root.change(what));
   }
 
   onStateChanged: Qt.callLater(root._check)
-  onDefinitionChanged: Qt.callLater(root._check)
 
   readonly property Timer _settle: Timer {
     // behaviour timing: how long services take to report their state
@@ -139,9 +134,11 @@ QtObject {
       service.acquire(root);
     root._check();
   }
-  // The definition goes first on a reload: dropped before releasing, so
-  // a service's state changing as it's released (VpnManager's Tailscale
-  // row) doesn't re-run `tiles` against a destroyed definition
+  // The definition can go first as the host is torn down (a reload, its
+  // OSD's list edited: the two Loaders' items die in no set order), so
+  // it's dropped before releasing: a service's state changing as it's
+  // released (VpnManager's Tailscale row) doesn't re-run `tiles` against
+  // a destroyed definition
   Component.onDestruction: {
     root.definition = null;
     for (const service of root.holds)

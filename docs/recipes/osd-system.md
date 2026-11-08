@@ -55,8 +55,9 @@ OSDWatch {
 label: Foo
 icon: toggle_on
 group: Power        # one of the OSD groups in index.yaml's x-libraryGroups
-tile: standard      # its tiles or bars: the item's `tile` switch
-# barNames: label   # it shows bars: where the settings' Bars part finds them (label: it is one bar; {from: <list setting>, by, named, barOnly}: each entry of that list is one)
+tile: standard      # its tiles or bars: the item's `tile` switch, labelled "Icon"; a system with bars names it:
+#   tile: {variant: standard, tile: {title: Bar, description: Its bar in the OSD.}}  (as Brightness and Audio do)
+# barNames: label   # it shows bars: where the settings' Bars part finds them (label: it is one bar; {from: <list setting>, by, named, repeats, barOnly}: each entry of that list is one)
 # card: standard    # cards beside its tiles: the item's `card` switch (a card-only system names no part)
 # settings:         # its own keys, each with a default; one only its tile uses: x-showIf: {tile: true}
 ```
@@ -77,8 +78,8 @@ var rows = [
 2. Pick the model: `scalar` (`{ value }`: a toggle, a device), `set` (`{ members: [{ id, … }] }`: apps, VPNs) or `event` (`{ event, seq }` through the watcher's `pulse()`: something that happens, not a state). A bar is `{ level, muted }` whatever the model.
 3. Write the rows in `tests/osd/<Type>.js` and list the file in `index.js`: the first reading (nothing shows; `tiles` checks the tile), each change, a change made on screen (`byUser: true` → `opens: false`), `quiet`, and every guard (unavailable, a reload, a gap). Cross-system ones (a knock-on of airplane mode, a card that takes another's in) in `Cross.js`.
 4. Write `schema.yaml` (`label`, `icon`, `group`, its parts, its `settings`).
-5. Write the definition: `exposes` (a binding over `options` where its settings pick what it shows), the model and policies (`onAdd`, `onChange`, `onUpdate`, `onRemove`, `onUnexpectedRemove`, `onEvent`), the declarations it needs (osd.md › Engine › The definition: `anyone`, `settledKinds`, `resetBy`, `ignoreWithin`, `keepThroughGap`, `memberState`, `carriesEvents`, `alertKinds`, `ownerField` + `groups`, `roles`, `takesIn`, `retractsCardWhenOff`, `yieldsCard`, `knockOnOf`, `userWindow`, …), `tile()`, and `card()` for what its card reads. English strings, declared in a comment as `I18n.tr("…")` calls.
-6. Write the watcher: `state` by exposed key, bound to its services; `holds` for a polled service; `settled()` if a service settles after it changes (or, for a change that counts only just after the user's own set, its time in the state and the definition's `countsWithin`); `available: false` while there's nothing to judge; `activate(change)` for a card click the definition hands back.
+5. Write the definition: `exposes` (a binding over `options` where its settings pick what it shows), the model and policies (`onAdd`, `onChange`, `onUpdate`, `onRemove`, `onUnexpectedRemove`, `onEvent`), the declarations it needs (osd.md › Engine › The definition: `anyone`, `settledKinds`, `resetBy`, `countsWithin`, `ignoreWithin`, `keepThroughGap`, `memberState`, `carriesEvents`, `alertKinds`, `ownerField` + `groups`, `roles`, `takesIn`, `retractsCardWhenOff`, `yieldsCard`, `knockOnOf`, `userWindow`, …), `tile()`, and `card()` for what its card reads. English strings, declared in a comment as `I18n.tr("…")` calls.
+6. Write the watcher: `state` by exposed key, bound to its services; `holds` for a polled service; `settled()` if a service settles after it changes (or, for a change that counts only just after the user's own set, its time in the state and the definition's `countsWithin`); `available: false` while there's nothing to judge; `activate(change)` for a click on a `clickable` card.
 7. Run `scripts/run_tests.sh OSDSystems` until its rows pass, then add it to an OSD in Settings and look in a nested shell.
 
 ## Gotchas
@@ -86,7 +87,7 @@ var rows = [
 - The definition imports only `QtQuick`, `qs.components.methods` and `qs.components.surfaces.osd.engine` (`check_structure`); anything reading a service goes in the watcher.
 - No file of the folder names another (`check_structure`): they're loaded by URL. A design file is named by `design` on its `exposes` entry, not imported.
 - Keys are unique in `exposes` and are the on-screen marks by default: a widget or module that changes it calls `ActionsManager.run(id, { fromScreen: true })` (its action's `osdKind`) or `ShellManager.onScreen(<key>)`, so a change made there doesn't open a shut OSD. A connection settling takes longer: raise `userWindow`.
-- The watcher's first 1.5 s only moves the state on (services settling), but for an `event` model's events, which show at once: don't count on a state change at the start being seen.
+- The watcher's first 1.5 s only moves the state on (services settling), but for an `event` model's events and a key declaring `countsWithin` (it gates itself), which show at once: don't count on a state change at the start being seen.
 - An event model's state needs its `seq` (`pulse()` counts it), so the same event twice shows twice and the state read again with another field changed isn't a new one.
 - A card-only system (Monitors, Screenshot, Message, Media) names no part in its schema: its item has no switches, only `quiet`.
 - An event that's a notification where no OSD shows its card: its service says it through `NotificationManager.announce(system, key, notify, …)`, naming the system and its key (`"Drives", "drive"`), so `OSDConfig.routeOf` (`OSDEngine.cardRoute`) picks the OSD or a notification ([OSD](../dev/features/osd.md) › Where events go). The service sets its event only when the route is the OSD.

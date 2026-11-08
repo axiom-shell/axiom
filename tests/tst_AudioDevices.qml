@@ -2,8 +2,7 @@ import QtQuick
 import QtTest
 import qs.components.methods
 
-// AudioDevices: a device's name and profile from its node (moved from
-// tst_OSDItems with deviceName)
+// AudioDevices: a device's name and profile from its node
 TestCase {
   name: "AudioDevices"
 

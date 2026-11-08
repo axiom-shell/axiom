@@ -26,8 +26,7 @@
 //                      the device kind's, unmuted
 // Settled (AudioWatch.settled): AudioManager.sinkSettled() for master and
 // audio, sourceSettled() for micLevel and microphone; a stream bar (other,
-// app) is always settled, as the old PipewireVolumeBar never asked (its
-// set of streams changing is `resetBy`).
+// app) is always settled (its set of streams changing is `resetBy`).
 //
 // decided: the microphone's bar is the key `micLevel` (its mark
 //   "microphone"), since the input device's tile keeps `microphone`; an App
@@ -39,8 +38,8 @@
 //   Bluetooth's absorbs reads; the group's match reads the tile's `owners`.
 // decided: a device switch counts unsettled or not (`settledKinds`: only
 //   "update" and "level" need it; a switch is always unsettled: the new
-//   node binding), as the old watcher reported it whatever sinkSettled()
-//   said; a mute and a level count only while settled.
+//   node binding), whatever sinkSettled() says; a mute and a level count
+//   only while settled.
 
 var opts = {
   "bars": [{ "type": "other" }, { "type": "master" }, { "type": "microphone" }],
@@ -247,7 +246,7 @@ var rows = [
       { "at": 0, "state": start() },
       { "at": 3000, "settled": false, "state": { "audio": audioBox, "master": { "level": 0.3, "muted": false } },
         "expect": { "key": "audio", "show": "card", "kind": "change",
-          "tile": { "icon": "speaker", "on": true, "slash": false, "notable": false, "hidden": false, "device": "60" },
+          "tile": { "icon": "speaker", "on": true, "slash": false, "notable": false, "hidden": false },
           "card": { "icon": "speaker", "title": "AudioBox Go", "role": "Output", "detail": "Analog Stereo", "tone": "", "clickable": false },
           "host": "open" } }
     ]

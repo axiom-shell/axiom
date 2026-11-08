@@ -87,9 +87,8 @@ The schema is written in YAML (`qml/config/schema/`): `index.yaml` is the root a
 - `x-allScreens`: adds All monitors (`"*"`) to a `"screens"` picker.
 - `x-enumLabels` (`{ value: label }`): labels shown instead of raw enum values in dropdowns (and on an array of enum strings' chips, on the array or its `items`).
 - `x-enumIcons` (`{ value: icon }`, on an array of enum strings or its `items`): a Material Symbols icon on each option's chip (an OSD's status icons).
-- `x-ordered: true` (on an array of enum strings): the order counts, so the field keeps the user's (`SchemaOrderedChips`): the chosen options drag into place, and the others are added at the end from a list below. Without it the chips are committed in the options' order. Marked where the order is shown: QuickActions' tiles, the power menu's and Power module's buttons, an OSD's status icons.
+- `x-ordered: true` (on an array of enum strings): the order counts, so the field keeps the user's (`SchemaOrderedChips`): the chosen options drag into place, and the others are added at the end from a list below. Without it the chips are committed in the options' order. Marked where the order is shown: QuickActions' tiles, the power menu's and Power module's buttons.
 - `x-enumGroups` (`{ value: group }`, on an `x-ordered` array or its `items`): files each option not yet chosen under a group header, the groups in the order each first comes. `x-axiomActions` fills it from the table's sections.
-- `x-enumFrom: "<sibling>"` (on an array of enum strings): offers only the options the sibling array holds, as chips (an OSD's `quiet` statuses, from those it shows).
 - `x-suggestions` (`"audioApps"`, `"wallpaperCollections"`, `"notificationApps"`: the history's apps and the shell's sources, labelled by name): chips under a text field (`SettingsManager.suggestionsFor`).
 - `x-multiline: true`: a growing text area that holds line breaks (Enter makes one, Ctrl+Enter commits). Without it a text field is one line, wrapped to four as it grows.
 - `x-control`:

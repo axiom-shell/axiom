@@ -16,10 +16,6 @@
 // decided: `battery` is an "event" model key (its card comes only with
 //   levelEvent, never from `level` alone), its tile reading `level` from
 //   the same state; `charger` is a scalar on `value` (plugged).
-//
-// Not expressible as rows: either tile hidden with no battery (nothing is
-// judged across `available: false`); the battery tile unlit at "none" (no
-// change of it shows without an event).
 
 var opts = { "tiles": ["charger", "battery"] };
 
@@ -31,6 +27,22 @@ function bat(level, percent, timeLeft, event, seq) {
 }
 
 var rows = [
+  {
+    "name": "no battery: both tiles hidden",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": { "charger": ch(false, { "available": false }), "battery": Object.assign(bat("none", 0), { "available": false }) },
+        "tiles": { "charger": { "hidden": true }, "battery": { "hidden": true } } }
+    ]
+  },
+  {
+    "name": "the battery at no level: its tile unlit, ordinary",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": { "charger": ch(false), "battery": bat("none", 64) },
+        "tiles": { "battery": { "icon": "battery_full", "on": false, "notable": false, "hidden": false } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing",
     "options": opts,
@@ -136,6 +148,16 @@ var rows = [
         "expect": { "key": "battery", "show": "card",
           "tile": { "icon": "battery_alert", "on": true, "notable": true },
           "card": { "icon": "battery_alert", "title": "6%", "role": "Battery critically low", "detail": "", "tone": "warning" } } }
+    ]
+  },
+  {
+    "name": "a critical drop's card says critical though the level reads none (plugged in under it)",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "serial": 1 }, 1) } },
+      { "at": 3000, "state": { "battery": bat("none", 6, "", { "level": "critical", "serial": 2 }, 2) },
+        "expect": { "key": "battery", "show": "card",
+          "card": { "icon": "battery_alert", "title": "6%", "role": "Battery critically low", "tone": "warning" } } }
     ]
   },
   {

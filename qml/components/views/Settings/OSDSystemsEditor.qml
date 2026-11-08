@@ -33,7 +33,9 @@ ColumnLayout {
   signal edited(var systems)
 
   readonly property var listSchema: ConfigManager.configSchema.definitions.OSDEntry.properties.systems
-  readonly property var systems: root.entry?.systems ?? []
+  // A type listed twice (by hand) keeps its first item, as OSDConfig.osds
+  // does, so an edit writes the list back without the second
+  readonly property var systems: (root.entry?.systems ?? []).filter((item, i, all) => all.findIndex(other => other.type === item.type) === i)
   readonly property var typeInfo: OSDConfig.systemTypes.reduce((out, info) => {
     out[info.type] = info;
     return out;
@@ -69,10 +71,6 @@ ColumnLayout {
     return info ? I18n.tr(info.label) : String(type ?? "");
   }
 
-  function _commit(systems) {
-    root.edited(systems);
-  }
-
   function add(type) {
     const info = root.typeInfo[type];
     if (!info)
@@ -81,14 +79,14 @@ ColumnLayout {
     systems.push(SchemaValidation.applyDefaults({
       "type": type
     }, info.schema, ConfigManager.configSchema));
-    root._commit(systems);
+    root.edited(systems);
     root._picked = type;
   }
 
   function remove(index) {
     const systems = Utils.clone(root.systems);
     systems.splice(index, 1);
-    root._commit(systems);
+    root.edited(systems);
   }
 
   // Moves the system at `from` (its index in `systems`) to before the
@@ -103,7 +101,7 @@ ColumnLayout {
     const systems = Utils.clone(root.systems);
     const [moved] = systems.splice(from, 1);
     systems.splice(before > from ? before - 1 : before, 0, moved);
-    root._commit(systems);
+    root.edited(systems);
   }
 
   function editSelected(key, value) {
@@ -111,7 +109,7 @@ ColumnLayout {
       return;
     const systems = Utils.clone(root.systems);
     systems[root.selectedIndex][key] = value;
-    root._commit(systems);
+    root.edited(systems);
   }
 
   Layout.fillWidth: true
@@ -162,7 +160,10 @@ ColumnLayout {
               icon: systemRow.info?.icon ?? "help"
               label: root.labelOf(systemRow.item.type)
               selected: systemRow.item.type === root.selectedType
-              onClicked: root._picked = systemRow.item.type
+              onClicked: {
+                EditsManager.commitTyping();
+                root._picked = systemRow.item.type;
+              }
 
               badges: TipIcon {
                 visible: systemRow.item.quiet === true

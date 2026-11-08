@@ -10,10 +10,15 @@
 //   or going: today's `_last !== "" && profile !== ""`), onChange "icon",
 //   onUpdate "none" (its look changes only with a profile: the daemon
 //   answering lights nothing).
-//
-// Not expressible as rows: the tile hidden with no daemon ("").
 
 var rows = [
+  {
+    "name": "no profiles daemon: its tile hidden",
+    "steps": [
+      { "at": 0, "state": { "powerProfile": { "value": "" } },
+        "tiles": { "powerProfile": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing",
     "steps": [

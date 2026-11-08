@@ -4,7 +4,7 @@ import qs.components.surfaces.osd.engine
 
 // Brightness on the OSD: the brightness bar, this screen's (or with
 // `allMonitors` every monitor's mean), left out while there's no
-// controller (`available`); quiet, it never opens a shut OSD. Only a
+// controller (`available`). Only a
 // level set through axiom counts (`countsWithin` its set time,
 // BrightnessWatch's `setAt`), not one a refresh found or idle dimming;
 // every such set counts, so a key at its limit still shows the bar. A

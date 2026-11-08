@@ -44,9 +44,18 @@ ColumnLayout {
           "icon": bar.icon,
           "off": item.tile === false
         }))))
-  // The kinds the picker offers: every kind of a list's bars, and the
+  // The kinds the picker offers: a list's kinds it may repeat
+  // (`x-barNames`' `repeats`) and those it has no bar of yet, and the
   // one-bar systems not in the list yet
-  readonly property var addable: OSDConfig.barKinds.filter(kind => kind.type.includes(":") || !root.systems.some(item => item.type === kind.type))
+  readonly property var addable: OSDConfig.barKinds.filter(kind => {
+    const at = kind.type.indexOf(":");
+    if (at < 0)
+      return !root.systems.some(item => item.type === kind.type);
+    const type = kind.type.slice(0, at);
+    const spec = OSDConfig.barSpecOf(type);
+    const value = kind.type.slice(at + 1);
+    return (spec.repeats ?? []).includes(value) || !root.rows.some(row => row.type === type && row.index >= 0 && root.systems[row.system][spec.from][row.index][spec.by] === value);
+  })
 
   // The selected bar, by its system and index there; the first when it
   // isn't there (another OSD's tab, removed)
@@ -225,7 +234,10 @@ ColumnLayout {
               label: barRow.row.name ?? ""
               dimmed: barRow.row.off === true
               selected: barRow.index === root.selectedRow
-              onClicked: root._pick(barRow.row.type, barRow.row.index)
+              onClicked: {
+                EditsManager.commitTyping();
+                root._pick(barRow.row.type, barRow.row.index);
+              }
 
               badges: TipIcon {
                 visible: barRow.row.off === true

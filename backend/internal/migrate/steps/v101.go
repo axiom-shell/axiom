@@ -50,7 +50,8 @@ var (
 //     `timeout` to `cardsEnabled` / `cardTimeout`;
 //   - the items come in order, each system once, where its first type
 //     was: the bars' first (Audio's master / other / app / microphone
-//     bars, keeping their apps, icon and showOsd; Brightness's
+//     bars, keeping their apps, icon and showOsd, one of each kind but
+//     App: a second is dropped, and said; Brightness's
 //     allMonitors and icon, the first brightness bar's: its showOsd off
 //     is its item's quiet, the one key it has), then
 //     the status icons' (lock keys one LockKeys with its `keys`; audio
@@ -154,7 +155,11 @@ func osdToSystems(entry *jsonx.Object) (dropped, opened []string) {
 		if bar == nil {
 			continue
 		}
-		kind := jsonx.ToString(bar.Value("type"))
+		// (v100's schema default: a bar saved without one was an App bar)
+		kind := "app"
+		if bar.Has("type") {
+			kind = jsonx.ToString(bar.Value("type"))
+		}
 		var s *osdSystem
 		switch {
 		case osdAudioBars[kind]:
@@ -163,6 +168,14 @@ func osdToSystems(entry *jsonx.Object) (dropped, opened []string) {
 			if list == nil {
 				list = jsonx.Arr()
 				s.item.Set("bars", list)
+			}
+			// Audio shows one bar of each kind but App (its keys are unique)
+			if kind != "app" && slices.ContainsFunc(list.Items, func(b any) bool {
+				o, _ := b.(*jsonx.Object)
+				return o != nil && jsonx.ToString(o.Value("type")) == kind
+			}) {
+				drop(fmt.Sprintf("a second %s bar (Audio shows one of each)", kind))
+				continue
 			}
 			kept := jsonx.Obj("type", kind)
 			for _, k := range []string{"apps", "icon", "showOsd"} {

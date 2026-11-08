@@ -143,11 +143,47 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
-### Show on an OSD's other monitors leaves its copy there closing for good
-- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`preview`, `_close`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`)
-- **What:** `ShellManager.showOsd` reaches every screen's `OSDHost` (`onShowOsd` has no screen check), and `preview()` opens its parts there, but `OSDTriggers.poke` shows only the target screen's host (`ShellManager.showsOn`). On another monitor's copy the parts' time runs out, `_due` calls `_close` (`_closing = true`) and `collapse()` hides a host that never opened, so `hostOpen` never turns false and `onHostOpenChanged` never clears `_closing`, `_open` or `_order`. A later change there (the pointer's monitor focused) is queued behind a close that never ends (`_queued`), and as its host opens `_expose` is skipped (a part still marked open). The settings' Preview (`OSDHost.pinned`) takes the same path as it's let go. PLAUSIBLE: two monitors, an OSD on both, Show, then focus the other monitor and change the volume. Fix: run `preview()` only where `ShellManager.showsOn(screen, osd.screen)`, or reset the parts when a collapse finds the host shut.
+### An OSD on a screen that isn't the target opens its parts while shut and then stays open
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_showLevel`, `_showTile`, `_showCard`, `_due`, `preview`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`), `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`)
+- **What:** With two monitors and an OSD whose `screen` is the focused one, screen B's host still opens its parts while shut (`force`), but `poke` doesn't show B. At the parts' due time `collapse` calls `hide()`, a no-op on a closed popout, so the parts stay open. Later, with B focused, `onHostOpenChanged` sees the stale open parts and skips `_expose`, their deadlines are past and the due timer is stopped, so the OSD on B stays open until the pointer crosses it. The OSD content before the engine had the same structure (`_openBox`). PLAUSIBLE: two monitors, an OSD on the focused screen, a change while the other is focused, then focusing it settles it. The settings' Preview (`OSDHost.pinned`) takes the same path on the other monitors. Fix: in each `_show*`, drop the change when the host is shut on a screen `ShellManager.showsOn` rejects; `preview()` the same.
 - **Size:** small
-- **Found:** 2026-11-08, while reviewing the OSD settings branch
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### An OSD tile pops in on its own easing curve
+- **Where:** `qml/components/surfaces/osd/design/OSDTile.qml` (`pop`)
+- **What:** The tile's pop as it becomes the change runs `Appearance.animNormal` with `Easing.OutBack`, neither `Appearance.easing` nor marked `// behaviour timing: <reason>`, which AGENTS.md › Animation asks of a `duration:` (`check_structure` checks only the duration). Moved unchanged from the old `OSDStatusRow`. Fix: `Appearance.easing`, or keep the overshoot and mark it with its reason (a look choice).
+- **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### The OSD's drive tooltip names the last drive an event came from, even one removed
+- **Where:** `qml/components/surfaces/osd/systems/Drives/Drives.qml` (`tile`)
+- **What:** The drive tile's name is `state?.event?.name`, the drive of the last event, so with two drives plugged in and the second one ejected and removed, the tile (still shown for the first) names the drive that's gone. The old OSD items did the same. Fix: name a drive still plugged in (or none).
+- **Size:** small
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### The OSD's System volume bar stays enabled with no audio sink
+- **Where:** `qml/components/surfaces/osd/systems/Audio/design/VolumeBar.qml` (`enabled`)
+- **What:** `enabled` is `root.isMaster || …`, so the System volume bar takes drags and the mute click with no default sink (nothing to set), where the Microphone bar is disabled with no source and an App bar with no stream. The old volume bar did the same (enabled with the system volume in use). Fix: `AudioManager.defaultSink !== null` for the master bar.
+- **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### The OSD's Wi-Fi Connected card goes blank when the network drops while it's out
+- **Where:** `qml/components/surfaces/osd/systems/Wifi/Wifi.qml` (`card`, `tile`, `onRemove`)
+- **What:** A host re-reads a card out against the state now, and Wi-Fi's `card` takes its name from `tile("wifi", state.wifi)`, which names the network only while joined. Leaving a network is `onRemove: "none"` and the radio stays on, so `retractsCardWhenOff` doesn't fold the card: if the network drops while its Connected card is out, the card stays with an empty title and no signal. The OSD before the engine did the same. Fix: retract the card on leaving, or read the name the change carried.
+- **Size:** small
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### An OSD showing only Now playing opens an empty card from its hover strip or Show button when nothing plays
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_previewChange`, `_expose`)
+- **What:** With no bars or icons, `_expose` opens the card `_previewChange` gives, and that picks the first system whose `exposes` has a `preview` entry (Now playing's) with its cards on, never asking whether anything plays: so hovering the strip or the Show button with no player opens an empty media card. The OSD before the engine did the same (`OSDContent._expose`: `hasMedia` alone). Fix: skip a preview key whose state in the host's snapshot is empty, leaving the host's own countdown.
+- **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### A headset's low-battery card gives way to Audio switching to that headset
+- **Where:** `qml/components/surfaces/osd/systems/Bluetooth/Bluetooth.qml` (`absorbs`), `qml/components/methods/DeviceBatteries.qml` (`step`)
+- **What:** A headset at 15% connecting: its "connected" card, then its low-battery card (`step`: a device newly connected with a low battery is a drop from "none"), replacing it, then Audio's Output card for the same address. `absorbs` takes Audio's switch in only under a "connected" event (`own.tile?.event !== "connected"`), so against the low card arbitration says "replace": the battery alert is covered, and routed to the OSD it has no notification either. PLAUSIBLE: a log of `BluetoothManager.lastEvent` kinds against `AudioManager.defaultSink` changes while connecting a low-battery headset settles the order. Fix if it shows: absorb under any device event but a disconnect (`["connected", "low", "critical"].includes(own.tile?.event)`), osd.md › Bluetooth's `absorbs` line, a Cross.js row.
+- **Size:** small
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
 
 ## Overlay, modules and custom widgets
 
@@ -244,7 +280,7 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ### A type library's search matches the "Other" heading of every ungrouped type
 - **Where:** `qml/components/methods/LibraryOrder.qml` (`filtered`), `qml/components/reusable/TypeLibrary.qml` (`headingOf`), `qml/components/reusable/TypePickerPopup.qml` (`headingOf`)
-- **What:** `filtered` matches a type by its group's heading, and an ungrouped type's heading is "Other" (`TypeLibrary` leaves it untranslated, `TypePickerPopup` translates it), so a query such as "th" lists every ungrouped type. The bar library already did it; the OSD Add picker and the bar editor's + picker now share it. Fix: match `headingOf(type.group)` only for a type with a group.
+- **What:** `filtered` matches a type by its group's heading, and an ungrouped type's heading is "Other" (each picker's `headingOf` gives it, translated), so a query such as "th" lists every ungrouped type. The bar library already did it; the OSD Add picker and the bar editor's + picker now share it. Fix: match `headingOf(type.group)` only for a type with a group.
 - **Size:** trivial
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
@@ -263,8 +299,8 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-11-06, while finishing the unified-actions branch
 
 ### BlurManager.paused and WallpaperManager.rotationHeld read undefined on a reload
-- **Where:** `qml/services/ui/BlurManager.qml` (`paused`), `qml/services/ui/WallpaperManager.qml` (`rotationHeld`), `qml/services/compositor/HyprlandManager.qml` (`activeWindowId`)
-- **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `qml/components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found. `WallpaperManager.rotationHeld`, the same shape (`&&`/`||` chains ending in `General.outputs.some(…)` and service reads), logged `@services/ui/WallpaperManager.qml[271:3]: Unable to assign [undefined] to bool` on a reload (2026-11-01, switching the checkout to a branch). `HyprlandManager.activeWindowId` (`"0x" + Hyprland.activeToplevel.address`, the toplevel there but its address not yet) logged `@services/compositor/HyprlandManager.qml[38:3]: Unable to assign [undefined] to QString` three times on a reload (2026-11-04, saving page window files).
+- **Where:** `qml/services/ui/BlurManager.qml` (`paused`), `qml/services/ui/WallpaperManager.qml` (`rotationHeld`), `qml/services/compositor/HyprlandManager.qml` (`activeWindowId`), `qml/components/content/WifiNetworks/WifiNetworks.qml` (`showsVpn`)
+- **What:** A hot reload logged `@services/ui/BlurManager.qml[36:3]: Unable to assign [undefined] to bool` once (2026-10-30, after saving QML files under `qml/components/content/`; neither file the binding reads had changed). `paused` is a `&&` chain whose last term is `General.outputs.some(…)`; something in it (likely a singleton not ready yet during the reload, or `Appearance.blurPauseFullscreen`) reads undefined for a moment. Harmless (it settles at once), but it's log noise; `=== true` on the term that can be undefined, or `!!` on the chain, would silence it once the term is found. `WallpaperManager.rotationHeld`, the same shape (`&&`/`||` chains ending in `General.outputs.some(…)` and service reads), logged `@services/ui/WallpaperManager.qml[271:3]: Unable to assign [undefined] to bool` on a reload (2026-11-01, switching the checkout to a branch). `HyprlandManager.activeWindowId` (`"0x" + Hyprland.activeToplevel.address`, the toplevel there but its address not yet) logged `@services/compositor/HyprlandManager.qml[38:3]: Unable to assign [undefined] to QString` three times on a reload (2026-11-04, saving page window files). Reloads on 2026-11-08 logged `@services/ui/WallpaperManager.qml[301:3]: Unable to assign [undefined] to bool` (`rotationHeld`, moved down) and `WifiNetworks.qml[47:3]: Unable to assign [undefined] to bool` (`qml/components/content/WifiNetworks/WifiNetworks.qml` `showsVpn`, whose embedded branch reads `root.properties.showVpn` before the card's properties are in).
 - **Size:** trivial
 - **Found:** 2026-10-30, while building the network popout's VPN fold and connection details
 

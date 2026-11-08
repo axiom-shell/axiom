@@ -2,15 +2,20 @@
 // Recording's timelines: axiom's own screen recording, lit and unusual
 // while on; either way its icon (no card). A click on its tile only stops
 // it (actionOf: { id: "screenRecord", call: "close" } while recording, null
-// otherwise; not expressible as rows).
+// otherwise).
 //
 // State by key (RecordingWatch):
 //   recording  { available (ScreenshotManager.hasRecorder), value
 //              (ScreenshotManager.recording) }
-//
-// Not expressible as rows: the tile hidden with no recorder.
 
 var rows = [
+  {
+    "name": "no recorder: its tile hidden",
+    "steps": [
+      { "at": 0, "state": { "recording": { "available": false, "value": false } },
+        "tiles": { "recording": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing",
     "steps": [
@@ -23,7 +28,8 @@ var rows = [
       { "at": 0, "state": { "recording": { "available": true, "value": false } } },
       { "at": 3000, "state": { "recording": { "available": true, "value": true } },
         "expect": { "key": "recording", "show": "tile", "kind": "add",
-          "tile": { "icon": "screen_record", "on": true, "notable": true, "hidden": false, "slash": false, "label": "" }, "card": null, "host": "ring" } }
+          "tile": { "icon": "screen_record", "on": true, "notable": true, "hidden": false, "slash": false, "label": "" }, "card": null, "host": "ring",
+          "action": { "id": "screenRecord", "call": "close" } } }
     ]
   },
   {
@@ -31,7 +37,7 @@ var rows = [
     "steps": [
       { "at": 0, "state": { "recording": { "available": true, "value": true } } },
       { "at": 3000, "state": { "recording": { "available": true, "value": false } },
-        "expect": { "key": "recording", "show": "tile", "kind": "remove", "tile": { "icon": "screen_record", "on": false, "slash": false, "notable": false } } }
+        "expect": { "key": "recording", "show": "tile", "kind": "remove", "tile": { "icon": "screen_record", "on": false, "slash": false, "notable": false }, "action": null } }
     ]
   },
   {

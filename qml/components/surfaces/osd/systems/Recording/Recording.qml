@@ -17,15 +17,8 @@ OSDSystem {
     }
   ]
 
-  // state: { available (a recorder found), value (recording) }
-  function tile(key, state) {
-    const on = state?.value === true;
-    return {
-      "on": on,
-      "notable": on,
-      "hidden": state?.available === false
-    };
-  }
+  // state: { available (a recorder found), value (recording) }: the
+  // default tile, hidden with no recorder
 
   // Clickable only while it records, and a click stops it
   function actionOf(key, state) {

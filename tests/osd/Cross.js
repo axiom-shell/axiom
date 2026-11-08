@@ -1,9 +1,9 @@
 .pragma library
 // Timelines across systems: the host's arbitration (OSDEngine.arbitrate)
 // between one system's change and another's: airplane mode's knock-ons,
-// Bluetooth's card taking in Audio's switch to the device it connected
-// (FROM origin/bluetooth-daemon, marked), retracting a card only by its own
-// key, a message's card, and a device's late level after its card (new).
+// Bluetooth's card taking in Audio's switch to the device it connected,
+// retracting a card only by its own key, a message's card, and a device's
+// late level after its card.
 // The states are each system's (see its own file's header).
 
 var audioOpts = {
@@ -20,8 +20,8 @@ var headsetMic = { "value": "84", "address": "AA:BB:CC:00:00:01", "name": "WH-10
 function audioStart() {
   return {
     "other": { "level": 0, "muted": false, "streams": "" },
-    "master": { "level": 0.5, "muted": false },
-    "micLevel": { "level": 0.8, "muted": false },
+    "master": { "level": 0.5, "muted": false, "node": "52" },
+    "micLevel": { "level": 0.8, "muted": false, "node": "53" },
     "audio": speakers,
     "microphone": builtInMic
   };
@@ -147,9 +147,9 @@ var rows = [
     "name": "Wi-Fi off beside a VPN's card: beside it, the card stays",
     "systems": ["Vpn", "Wifi"],
     "steps": [
-      { "system": "Vpn", "at": 0, "state": { "vpn": { "available": true, "members": [{ "id": "home", "name": "Home", "on": false, "state": "off" }], "address": "" } } },
+      { "system": "Vpn", "at": 0, "state": { "vpn": { "available": true, "members": [{ "id": "home", "name": "Home", "state": "off" }], "address": "" } } },
       { "system": "Wifi", "at": 0, "state": { "wifi": w(true, true, "Home") } },
-      { "system": "Vpn", "at": 3000, "state": { "vpn": { "available": true, "members": [{ "id": "home", "name": "Home", "on": true, "state": "on" }], "address": "10.0.0.2" } },
+      { "system": "Vpn", "at": 3000, "state": { "vpn": { "available": true, "members": [{ "id": "home", "name": "Home", "state": "on" }], "address": "10.0.0.2" } },
         "expect": { "show": "card", "host": "open" } },
       { "system": "Wifi", "at": 3300, "state": { "wifi": w(false, false) },
         "expect": { "show": "tile", "host": "beside" } }
@@ -168,16 +168,18 @@ var rows = [
         "expect": { "show": "tile", "host": "beside" } }
     ]
   },
-  // ---- A device's late level (new) ----
+  // ---- A device's late level ----
   {
     "name": "a device's own level arriving late after its card: no bars beside it",
     "systems": ["Audio"],
     "options": { "Audio": audioOpts },
     "steps": [
       { "at": 0, "state": audioStart() },
-      { "at": 3000, "settled": false, "state": { "audio": audioBox },
+      { "at": 3000, "settled": false, "state": { "audio": audioBox, "master": { "level": 0.5, "muted": false, "node": "" } },
         "expect": { "key": "audio", "show": "card", "card": { "title": "AudioBox Go" }, "host": "open" } },
-      { "at": 3600, "state": { "master": { "level": 0.35, "muted": false } },
+      // (its node binding, its volume in: resetBy)
+      { "at": 3300, "state": { "master": { "level": 0.35, "muted": false, "node": "60" } } },
+      { "at": 3600, "state": { "master": { "level": 0.4, "muted": false, "node": "60" } },
         "expect": { "key": "master", "show": "level", "host": "suppress" } }
     ]
   },
@@ -187,9 +189,10 @@ var rows = [
     "options": { "Audio": audioOpts },
     "steps": [
       { "at": 0, "state": audioStart() },
-      { "at": 3000, "settled": false, "state": { "microphone": headsetMic },
+      { "at": 3000, "settled": false, "state": { "microphone": headsetMic, "micLevel": { "level": 0.8, "muted": false, "node": "" } },
         "expect": { "key": "microphone", "show": "card", "host": "open" } },
-      { "at": 3500, "state": { "micLevel": { "level": 0.6, "muted": false } },
+      { "at": 3300, "state": { "micLevel": { "level": 0.6, "muted": false, "node": "84" } } },
+      { "at": 3500, "state": { "micLevel": { "level": 0.55, "muted": false, "node": "84" } },
         "expect": { "key": "micLevel", "show": "level", "host": "suppress" } }
     ]
   },
@@ -199,9 +202,10 @@ var rows = [
     "options": { "Audio": audioOpts },
     "steps": [
       { "at": 0, "state": audioStart() },
-      { "at": 3000, "settled": false, "state": { "audio": audioBox },
+      { "at": 3000, "settled": false, "state": { "audio": audioBox, "master": { "level": 0.5, "muted": false, "node": "" } },
         "expect": { "key": "audio", "show": "card", "host": "open" } },
-      { "at": 5500, "state": { "master": { "level": 0.4, "muted": false } },
+      { "at": 3300, "state": { "master": { "level": 0.35, "muted": false, "node": "60" } } },
+      { "at": 5500, "state": { "master": { "level": 0.4, "muted": false, "node": "60" } },
         "expect": { "key": "master", "show": "level", "host": "beside" } }
     ]
   },
@@ -227,7 +231,7 @@ var rows = [
       { "system": "Audio", "at": 0, "state": audioStart() },
       { "system": "Privacy", "at": 3000, "state": { "camera": { "members": [{ "id": 61, "app": "Firefox" }] } },
         "expect": { "key": "camera", "show": "card", "host": "open" } },
-      { "system": "Audio", "at": 3300, "state": { "master": { "level": 0.6, "muted": false } },
+      { "system": "Audio", "at": 3300, "state": { "master": { "level": 0.6, "muted": false, "node": "52" } },
         "expect": { "key": "master", "show": "level", "host": "beside" } }
     ]
   },
@@ -258,9 +262,9 @@ var rows = [
         "expect": { "key": "microphone", "show": "card", "host": "replace" } }
     ]
   },
-  // ---- Bluetooth takes in Audio's switch (origin/bluetooth-daemon) ----
+  // ---- Bluetooth takes in Audio's switch ----
   {
-    "name": "[bluetooth-daemon] a headset connecting, then the output switching to it: its card says it",
+    "name": "a headset connecting, then the output switching to it: its card says it",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -275,7 +279,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output switching to it past the quiet window: the user's own, it replaces",
+    "name": "the output switching to it past the quiet window: the user's own, it replaces",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -288,7 +292,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output switching to another device (not Bluetooth): it replaces",
+    "name": "the output switching to another device (not Bluetooth): it replaces",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -301,7 +305,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output leaving a headset just disconnected: it shows",
+    "name": "the output leaving a headset just disconnected: it shows",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -314,7 +318,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the output's card first, then the headset's: it says more, it replaces",
+    "name": "the output's card first, then the headset's: it says more, it replaces",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": audioOpts, "Bluetooth": {} },
     "steps": [
@@ -327,7 +331,7 @@ var rows = [
     ]
   },
   {
-    "name": "[bluetooth-daemon] the headset's own mute just after its card: beside it (only a switch is taken in)",
+    "name": "the headset's own mute just after its card: beside it (only a switch is taken in)",
     "systems": ["Bluetooth", "Audio"],
     "options": { "Audio": { "bars": [], "tiles": ["audio", "microphone"] }, "Bluetooth": {} },
     "steps": [
@@ -348,9 +352,10 @@ var rows = [
       { "system": "Audio", "at": 0, "state": audioStart() },
       { "system": "Bluetooth", "at": 3000, "state": { "bluetooth": bt("connected", 1) },
         "expect": { "key": "bluetooth", "show": "card", "host": "open" } },
-      { "system": "Audio", "at": 3800, "settled": false, "state": { "audio": headphones },
+      { "system": "Audio", "at": 3800, "settled": false, "state": { "audio": headphones, "master": { "level": 0.5, "muted": false, "node": "" } },
         "expect": { "key": "audio", "show": "card", "host": "keep" } },
-      { "system": "Audio", "at": 4400, "state": { "master": { "level": 0.35, "muted": false } },
+      { "system": "Audio", "at": 4100, "state": { "master": { "level": 0.35, "muted": false, "node": "84" } } },
+      { "system": "Audio", "at": 4400, "state": { "master": { "level": 0.3, "muted": false, "node": "84" } },
         "expect": { "key": "master", "show": "level", "host": "suppress" } }
     ]
   },
@@ -363,7 +368,7 @@ var rows = [
       { "system": "Audio", "at": 0, "state": audioStart() },
       { "system": "Bluetooth", "at": 3000, "state": { "bluetooth": bt("connected", 1) },
         "expect": { "key": "bluetooth", "show": "card", "host": "open" } },
-      { "system": "Audio", "at": 3400, "state": { "master": { "level": 0.35, "muted": false } },
+      { "system": "Audio", "at": 3400, "state": { "master": { "level": 0.35, "muted": false, "node": "52" } },
         "expect": { "key": "master", "show": "level", "host": "beside" } }
     ]
   },

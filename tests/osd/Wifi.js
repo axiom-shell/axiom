@@ -17,15 +17,19 @@
 // decided: policies onAdd "card" (joined), onRemove "none" (left: today
 //   nothing), onUpdate "icon" (the radio on or off: its `on`); Wi-Fi off
 //   while joined is both, the icon wins (OSDEngine's stronger show).
-//
-// Not expressible as rows: the tile hidden with no NetworkManager (nothing
-// is judged across `available: false`).
 
 function w(on, joined, network, signal) {
   return { "available": true, "on": on, "value": joined, "network": network || "", "signal": signal || 0 };
 }
 
 var rows = [
+  {
+    "name": "no NetworkManager: its tile hidden",
+    "steps": [
+      { "at": 0, "state": { "wifi": Object.assign(w(false, false), { "available": false }) },
+        "tiles": { "wifi": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing, a network already joined",
     "steps": [

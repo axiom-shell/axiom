@@ -126,16 +126,15 @@ QtObject {
     return "file://" + root.axiomPath + "components/views/" + type + "/" + type + ".qml";
   }
   // An OSD system's definition (systems/<Type>/<Type>.qml); a name with a
-  // slash names another file in its folder ("Audio/design/AudioBar")
+  // slash names another file in its folder ("Audio/design/VolumeBar")
   function osdSystemUrl(name) {
     const file = String(name).includes("/") ? name : name + "/" + name;
     return "file://" + root.axiomPath + "components/surfaces/osd/systems/" + file + ".qml";
   }
   // A design of an OSD system's own (an `exposes` entry's `design`): a
-  // file of its folder's design/ ("VolumeBar"), or a path from the
-  // systems' folder ("Audio/design/VolumeBar")
+  // file of its folder's design/ ("VolumeBar")
   function osdDesignUrl(type, design) {
-    return root.osdSystemUrl(String(design).includes("/") ? design : type + "/design/" + design);
+    return root.osdSystemUrl(type + "/design/" + design);
   }
   // Its watcher, beside it (<Type>Watch.qml)
   function osdWatchUrl(type) {

@@ -534,8 +534,7 @@ Loader {
 
   // An array of strings from `items.enum` (or the `marketSymbols` list):
   // one toggle chip per option (with its `x-enumIcons` icon), committed in
-  // the options' order. `x-enumFrom` offers only the options a sibling
-  // array holds
+  // the options' order
   readonly property var _chipOptions: fieldSchema.type !== "array" ? [] : SettingsManager.optionsFor(fieldSchema.items) ?? []
   // An option's chip icon (`x-enumIcons`, on the array or its items)
   readonly property var _chipIcons: Object.assign({}, fieldSchema.items?.["x-enumIcons"] ?? {}, fieldSchema["x-enumIcons"] ?? {})
@@ -552,14 +551,7 @@ Loader {
         Layout.fillWidth: true
         spacing: Widget.spacing / 2
         Repeater {
-          model: {
-            const all = root._chipOptions;
-            const from = root.fieldSchema["x-enumFrom"];
-            if (!from)
-              return all;
-            const held = root._valueOf(from) ?? [];
-            return all.filter(v => held.includes(v));
-          }
+          model: root._chipOptions
           SegmentButton {
             id: chip
             required property string modelData
@@ -586,14 +578,7 @@ Loader {
       description: root.description
       headerExtra: root.headerExtra
       value: root.current ?? []
-      options: {
-        const all = root._chipOptions;
-        const from = root.fieldSchema["x-enumFrom"];
-        if (!from)
-          return all;
-        const held = root._valueOf(from) ?? [];
-        return all.filter(v => held.includes(v));
-      }
+      options: root._chipOptions
       labels: root.optionLabels
       icons: root._chipIcons
       groups: Object.assign({}, root.fieldSchema.items?.["x-enumGroups"] ?? {}, root.fieldSchema["x-enumGroups"] ?? {})

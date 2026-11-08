@@ -89,10 +89,10 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 ### Editor lists and drags (`reusable/`)
 - `ListEntryRow` (+ `RowAction`, `AddEntryButton`).
 - `DragArea`: drag vs tap; with `dragLayer` + `payload` it carries.
-- `DragLayer`: one drag, a target registry, and a hit test.
+- `DragLayer`: one drag (`dragging`, its `kind` as `draggingKind`), a target registry, and a hit test.
   - `accepts` / `priority` hooks; `priority` defaults to a target's `dropPriority`.
   - Signals: `started` / `moved` / `dropped`.
-- `InlineDragLayer`: a `DragLayer` inside a form or card that takes no room in its layout (only the coordinate space, above its siblings) and draws the carried payload's `label` in an accent pill by the pointer; `draggingKind` is the payload's `kind`, so `views/Layouts/EntryListTarget` rows work on it. `SchemaOrderedChips`, the bind editor's rows and an OSD's systems (`OSDSystemsEditor`).
+- `InlineDragLayer`: a `DragLayer` inside a form or card that takes no room in its layout (only the coordinate space, above its siblings) and draws the carried payload's `label` in an accent pill by the pointer, so `views/Layouts/EntryListTarget` rows work on it. `SchemaOrderedChips`, the bind editor's rows and an OSD's systems (`OSDSystemsEditor`).
 - `TrashTarget`: a "Drop to remove" pill shown while `active`, `targetKind: "trash"`, above overlapping targets. The layer's `accepts` says what it takes and its `dropped` removes it.
 - `DragChip`: a carryable icon + name pill; `highlighted` draws it hovered for a pointer elsewhere, and with `hasMenu` a right click is `menuRequested(x, y)`.
 - `views/Layouts/EntryListTarget`: a list of rows that reorders its own carried rows.

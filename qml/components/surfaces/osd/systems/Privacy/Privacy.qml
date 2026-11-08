@@ -71,7 +71,6 @@ OSDSystem {
   function tile(key, state) {
     const apps = [...new Set((state?.members ?? []).map(m => m.app))];
     return {
-      "apps": apps,
       "name": apps.join(", "),
       "on": apps.length > 0,
       "notable": apps.length > 0

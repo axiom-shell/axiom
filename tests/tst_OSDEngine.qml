@@ -4,7 +4,7 @@ import qs.components.methods
 import qs.components.surfaces.osd.engine
 
 // OSDEngine: the judgement by model and policy, the arbitration between
-// changes (what was OSDItems.replaces / besideCard), the card routing
+// changes, the card routing
 // (cardRoute / opensCard), over small stand-in definitions declaring what
 // the real systems do
 TestCase {
@@ -305,7 +305,6 @@ TestCase {
     }), {
       "icon": "coffee",
       "label": "",
-      "tone": "",
       "on": true,
       "slash": false,
       "notable": true,
@@ -612,7 +611,7 @@ TestCase {
     own.destroy();
   }
 
-  // What was OSDItems.replaces / besideCard, as declarations
+  // The arbitration between changes, as declarations
   function test_arbitrate_data() {
     const w = OSDEngine.quietWindow;
     const headset = {
@@ -996,6 +995,18 @@ TestCase {
       "system": "Vpn",
       "show": "level"
     }, false), "level");
+    compare(OSDEngine.shownAs({
+      "cardsEnabled": true,
+      "systems": [
+        {
+          "type": "Audio",
+          "tile": false
+        }
+      ]
+    }, {
+      "system": "Audio",
+      "show": "level"
+    }, false), "", "the item's tiles off: no level");
   }
 
   function test_cardRoute_data() {
@@ -1097,8 +1108,7 @@ TestCase {
   }
 
   // An event's key against an item whose `tiles` pick what it shows (a
-  // low battery only where Battery shows its battery icon; was
-  // OSDConfig.routeOf's own filter)
+  // low battery only where Battery shows its battery icon)
   function test_opensCard_key() {
     const osd = tiles => ({
           "enabled": true,

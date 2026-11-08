@@ -14,8 +14,9 @@ Item {
 
   default property alias content: contentItem.data
 
-  // The payload being carried, else null
+  // The payload being carried, else null, and its `kind` ("" for none)
   property var dragging: null
+  readonly property string draggingKind: root.dragging?.kind ?? ""
   // The target under the pointer, and the index a drop there inserts at
   property var hoverTarget: null
   property int hoverIndex: -1

@@ -3,9 +3,16 @@
 // icon (no card).
 //
 // State by key (NightLightWatch):
-//   nightLight  { value (NightLightManager.active) }
+//   nightLight  { available, value (NightLightManager.active) }
 
 var rows = [
+  {
+    "name": "no night-light tool: its tile hidden",
+    "steps": [
+      { "at": 0, "state": { "nightLight": { "available": false, "value": false } },
+        "tiles": { "nightLight": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing",
     "steps": [

@@ -4111,10 +4111,10 @@
     "Device battery notifications": "",
     "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).": "",
     "Its bars are set under Bars, below.": "",
+    "Keep this OSD open while you edit it, the selected system outlined": "",
     "Every bar this OSD shows, in order, and how they're laid out.": "",
     "Hidden: its system's bars are switched off": "",
     "No bars yet: add one to show a level.": "",
-    "In order; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.": "",
-    "Keep this OSD open while you edit it, the selected system outlined": ""
+    "In order, one bar per kind but App; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.": ""
   }
 }

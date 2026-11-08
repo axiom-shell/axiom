@@ -16,12 +16,13 @@ QtObject {
   property var options: ({})
 
   // What it shows, each { key, part: "bar" | "tile" | "card", icon,
-  // label, group }, `opens: false` for one whose change never opens a shut
+  // label }, `opens: false` for one whose change never opens a shut
   // OSD (an Audio bar's showOsd off), `design` (its view of its own, a
   // file of its design/ folder: Paths.osdDesignUrl), `roles` (a set's
   // card made by the engine: { add, still, stopped }, OSDEngine.cardOf),
-  // and, overriding the system's own for this key, any of `model`, the
-  // policies, `updateFields`, `mark`, `userWindow`, `action`, `call`
+  // `mark` (the on-screen mark it's judged by, OSDEngine.markOf), `action`
+  // and `call` (actionOf) and, overriding the system's own for this key,
+  // any of `model`, the policies, `updateFields`, `userWindow`
   property var exposes: []
 
   // How its state is told apart: "scalar" ({ value, … }: added as it
@@ -72,7 +73,8 @@ QtObject {
   // a Bluetooth profile switch changes
   property var updateFields: ["icon", "label"]
   // Its card folds back when its own tile turns off without a card (it
-  // would say what no longer holds: a VPN, Wi-Fi, the charger)
+  // would say what no longer holds: a VPN, Wi-Fi, a Bluetooth device, the
+  // charger)
   property bool retractsCardWhenOff: false
   // Its cards are the lowest: one never replaces another system's card
   // out, at any age (Now playing's pause, as a device switch pauses the
@@ -125,21 +127,22 @@ QtObject {
   // out, an owner in common, is kept (the card out says both); a card of
   // an arrival ("add", "change") with an owner in common with another
   // listed key of the group says the group's `role` ("Output and input",
-  // "Using the camera and microphone"); a set's last member of one
-  // owner leaving while the owner stays on another listed key of the
+  // "Using the camera and microphone"); a set's last member leaving one
+  // key (none left) while its owner stays on another listed key of the
   // group is a "still" card under onRemove "still" ("Vesktop / Still
   // using the microphone"; the change's `kept` names that key)
   property var groups: []
 
-  // Its tile for `key` from that key's state: any of { icon, label,
-  // tone, on, slash, notable, hidden, … } (OSDEngine.tileOf fills the
-  // rest, the icon from `exposes`). By default a toggle's: lit and
-  // unusual while its `value` is true
+  // Its tile for `key` from that key's state: any of { icon, label, on,
+  // slash, notable, hidden, … } (OSDEngine.tileOf fills the rest, the
+  // icon from `exposes`). By default a toggle's: lit and unusual while
+  // its `value` is true, hidden while it isn't `available`
   function tile(key, state) {
     const on = state?.value === true;
     return {
       "on": on,
-      "notable": on
+      "notable": on,
+      "hidden": state?.available === false
     };
   }
 
@@ -183,11 +186,5 @@ QtObject {
       "id": entry.action,
       "call": entry.call ?? "toggle"
     } : null;
-  }
-
-  // A click on a clickable card: an ActionsManager id to run, or "" to
-  // hand it to the watcher's activate(change)
-  function activate(change) {
-    return "";
   }
 }

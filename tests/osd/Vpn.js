@@ -2,7 +2,7 @@
 // Vpn's timelines: whether a VPN is up. One coming up is its card (its
 // name, Connected, its address); one taken down on screen is the unlit
 // icon; one going down that nobody took down on screen is a "Disconnected"
-// card (new). Every change counts, the user's or not (a drop, an
+// card. Every change counts, the user's or not (a drop, an
 // autoconnect); up and down are judged across connecting / disconnecting,
 // and a row appearing (Tailscale's first status) or going away isn't one.
 // Its card folds back as the VPNs turn off.
@@ -14,10 +14,9 @@
 //        row, as it is now), address (the first one up's IPv4) }
 //
 // decided: declared, no judge(): model "set" with `memberState: { field:
-//   "state", on: "on", off: "off" }` (was OSDItems.vpnStep, now in the
-//   engine): the set is the VPNs up; one up that was known before (settled
-//   "on" or "off") is "add" (its card), one down that is still known is
-//   "remove"; a row in transit is judged as it last settled (remember keeps
+//   "state", on: "on", off: "off" }`: the set is the VPNs up; one up
+//   that was known before (settled "on" or "off") is "add" (its card),
+//   one down that is still known is "remove"; a row in transit is judged as it last settled (remember keeps
 //   that reading), one appearing or going away is neither. With both in
 //   one reading (a switch) it's the add.
 // decided: the drop's card is `onUnexpectedRemove: "last"` (a card for the
@@ -29,8 +28,6 @@
 //   one down isn't marked, so it gets the card too (accepted by the brief).
 // decided: the card's `icon` for a drop is "vpn_key_off" (a card's icon
 //   isn't held to the tiles' base icon, as Drives' "usb_off" isn't).
-//
-// Not expressible as rows: the tile hidden with no VPN.
 
 function v(id, name, on, state) {
   return { "id": id, "name": name, "state": state || (on ? "on" : "off") };
@@ -40,6 +37,13 @@ function vpn(members, address) {
 }
 
 var rows = [
+  {
+    "name": "no VPN: its tile hidden",
+    "steps": [
+      { "at": 0, "state": { "vpn": { "available": false, "members": [], "address": "" } },
+        "tiles": { "vpn": { "hidden": true } } }
+    ]
+  },
   {
     "name": "the first reading shows nothing, one already up",
     "steps": [

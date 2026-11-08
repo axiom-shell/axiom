@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 import qs.services.system
 import qs.services.ui
 import qs.components.reusable
@@ -12,14 +13,16 @@ import qs.components.reusable
 //   app:        the streams its apps match by name (the first shown, all set)
 //   microphone: the default input's volume
 // its icon a click on which mutes it. Whether a change opens the OSD is
-// AudioWatch's; this only draws and sets (was PipewireVolumeBar and
-// OSDBar's microphone bar)
+// AudioWatch's; this only draws and sets
 Item {
   id: root
 
   // Its `exposes` entry ({ key, icon, bar: its item in Audio's `bars`:
   // { type, apps, icon, showOsd } })
   property var entry: ({})
+  // Its system (an OSDSystemHost: its watcher matches a stream bar's
+  // streams, AudioWatch.streamsOf)
+  property var system: null
   // The OSD's bar layout: bars run vertically, levels shown as numbers
   property int orientation: Qt.Vertical
   property bool showPercent: true
@@ -33,7 +36,7 @@ Item {
   // one (a binding: matchStreams reads every stream's ready, volumes and
   // properties, so it follows streams coming, going and binding; each one
   // it returns is bound, its volume in)
-  readonly property var _nodes: root.isStreams ? AudioManager.matchStreams(root.type === "app" ? (root.entry.bar.apps ?? []) : [], root.type === "other", root.type === "other" ? OSDConfig.excludedApps : []) : []
+  readonly property var _nodes: root.isStreams && root.system?.watch ? root.system.watch.streamsOf(root.entry.bar) : []
   readonly property var _node: root._nodes.length > 0 ? root._nodes[0] : null
   readonly property bool _found: root._node !== null
 
@@ -59,7 +62,10 @@ Item {
     onIconClicked: root.toggleMute()
   }
 
+  // Each set marked as the pointer's (OSDEngine.markOf), so another OSD
+  // listing Audio stays shut
   function setVolume(newVolume) {
+    root._mark();
     if (root.isMaster)
       AudioManager.setVolume(newVolume);
     else if (root.isMic)
@@ -68,12 +74,23 @@ Item {
       AudioManager.setNodesVolume(root._nodes, newVolume);
   }
 
+  function _mark() {
+    if (root.system?.definition)
+      ShellManager.onScreen(OSDEngine.markOf(root.system.definition, root.entry.key));
+  }
+
   function toggleMute() {
     if (root.isMaster)
-      ActionsManager.run("toggleMute");
+      ActionsManager.run("toggleMute", {
+        "fromScreen": true
+      });
     else if (root.isMic)
-      ActionsManager.run("toggleMicMute");
-    else
+      ActionsManager.run("toggleMicMute", {
+        "fromScreen": true
+      });
+    else {
+      root._mark();
       AudioManager.setNodesMuted(root._nodes, !root.muted);
+    }
   }
 }

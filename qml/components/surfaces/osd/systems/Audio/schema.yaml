@@ -7,13 +7,13 @@ tile:
 card: standard
 # Its bars (edited in the settings' Bars part, an OSD's tab named by
 # them): each by its apps, else its kind; added there with no Audio in the
-# list, it starts with no icons and no cards
-barNames: {from: bars, by: type, named: apps, barOnly: {tiles: [], card: false}}
+# list, it starts with no icons and no cards; one bar per kind but App
+barNames: {from: bars, by: type, named: apps, repeats: [app], barOnly: {tiles: [], card: false}}
 settings:
   bars:
     type: array
     title: Bars
-    description: In order; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.
+    description: In order, one bar per kind but App; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.
     x-link: {setting: OSD.scrollToChange}
     default:
       - {type: other, icon: music_note}
