@@ -155,7 +155,11 @@ func osdToSystems(entry *jsonx.Object) (dropped, opened []string) {
 		if bar == nil {
 			continue
 		}
-		kind := jsonx.ToString(bar.Value("type"))
+		// (v100's schema default: a bar saved without one was an App bar)
+		kind := "app"
+		if bar.Has("type") {
+			kind = jsonx.ToString(bar.Value("type"))
+		}
 		var s *osdSystem
 		switch {
 		case osdAudioBars[kind]:

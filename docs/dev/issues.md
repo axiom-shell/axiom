@@ -144,8 +144,8 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 
 ### An OSD on a screen that isn't the target opens its parts while shut and then stays stuck closing
-- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_showLevel`, `_showTile`, `_showCard`, `_close`, `preview`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`), `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`)
-- **What:** With two monitors and an OSD whose `screen` is the focused one, screen B's host still opens its parts while shut (`force`), but `poke` doesn't show B. At the parts' due time `_close` sets `_closing`, and `hide()` is a no-op on a closed popout, so `_closing` never resets. Later, with B focused, `onHostOpenChanged` sees the stale open parts and skips `_expose`, their deadlines are past and the due timer is stopped, so the OSD on B stays open until the pointer crosses it. The OSD content before the engine had the same structure (`_openBox`). PLAUSIBLE: two monitors, an OSD on the focused screen, a change while the other is focused, then focusing it settles it. Fix: in each `_show*`, drop the change when the host is shut on a screen `ShellManager.showsOn` rejects; `preview()` the same.
+- **Where:** `qml/components/surfaces/osd/OSDHost.qml` (`_showLevel`, `_showTile`, `_showCard`, `_due`, `preview`, `onHostOpenChanged`), `qml/components/surfaces/osd/OSDTriggers.qml` (`poke`), `qml/components/hosts/popout/PopoutWrapperBase.qml` (`hide`)
+- **What:** With two monitors and an OSD whose `screen` is the focused one, screen B's host still opens its parts while shut (`force`), but `poke` doesn't show B. At the parts' due time `collapse` calls `hide()`, a no-op on a closed popout, so the parts stay open. Later, with B focused, `onHostOpenChanged` sees the stale open parts and skips `_expose`, their deadlines are past and the due timer is stopped, so the OSD on B stays open until the pointer crosses it. The OSD content before the engine had the same structure (`_openBox`). PLAUSIBLE: two monitors, an OSD on the focused screen, a change while the other is focused, then focusing it settles it. Fix: in each `_show*`, drop the change when the host is shut on a screen `ShellManager.showsOn` rejects; `preview()` the same.
 - **Size:** small
 - **Found:** 2026-11-08, while reviewing the OSD engine branch
 
@@ -165,6 +165,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Where:** `qml/components/surfaces/osd/systems/Audio/design/VolumeBar.qml` (`enabled`)
 - **What:** `enabled` is `root.isMaster || …`, so the System volume bar takes drags and the mute click with no default sink (nothing to set), where the Microphone bar is disabled with no source and an App bar with no stream. The old volume bar did the same (enabled with the system volume in use). Fix: `AudioManager.defaultSink !== null` for the master bar.
 - **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
+### A headset's low-battery card gives way to Audio switching to that headset
+- **Where:** `qml/components/surfaces/osd/systems/Bluetooth/Bluetooth.qml` (`absorbs`), `qml/components/methods/DeviceBatteries.qml` (`step`)
+- **What:** A headset at 15% connecting: its "connected" card, then its low-battery card (`step`: a device newly connected with a low battery is a drop from "none"), replacing it, then Audio's Output card for the same address. `absorbs` takes Audio's switch in only under a "connected" event (`own.tile?.event !== "connected"`), so against the low card arbitration says "replace": the battery alert is covered, and routed to the OSD it has no notification either. PLAUSIBLE: a log of `BluetoothManager.lastEvent` kinds against `AudioManager.defaultSink` changes while connecting a low-battery headset settles the order. Fix if it shows: absorb under any device event but a disconnect (`["connected", "low", "critical"].includes(own.tile?.event)`), osd.md › Bluetooth's `absorbs` line, a Cross.js row.
+- **Size:** small
 - **Found:** 2026-11-08, while reviewing the OSD engine branch
 
 ## Overlay, modules and custom widgets
@@ -262,7 +268,7 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ### A type library's search matches the "Other" heading of every ungrouped type
 - **Where:** `qml/components/methods/LibraryOrder.qml` (`filtered`), `qml/components/reusable/TypeLibrary.qml` (`headingOf`), `qml/components/reusable/TypePickerPopup.qml` (`headingOf`)
-- **What:** `filtered` matches a type by its group's heading, and an ungrouped type's heading is "Other" (`TypeLibrary` leaves it untranslated, `TypePickerPopup` translates it), so a query such as "th" lists every ungrouped type. The bar library already did it; the OSD Add picker and the bar editor's + picker now share it. Fix: match `headingOf(type.group)` only for a type with a group.
+- **What:** `filtered` matches a type by its group's heading, and an ungrouped type's heading is "Other" (each picker's `headingOf` gives it, translated), so a query such as "th" lists every ungrouped type. The bar library already did it; the OSD Add picker and the bar editor's + picker now share it. Fix: match `headingOf(type.group)` only for a type with a group.
 - **Size:** trivial
 - **Found:** 2026-11-07, while reviewing the OSD engine branch
 

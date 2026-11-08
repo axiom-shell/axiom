@@ -317,3 +317,4 @@ Bugs an agent's review or audit found and marked PLAUSIBLE: no code is written f
 - [Stop is ignored while chat.send still looks up the key](issues.md#stop-is-ignored-while-chatsend-still-looks-up-the-key)
 - [The panel's relative times go stale while Tailscale's state stays the same](issues.md#the-panels-relative-times-go-stale-while-tailscales-state-stays-the-same)
 - [A custom element sees another kind's element as its slot changes kind](issues.md#a-custom-element-sees-another-kinds-element-as-its-slot-changes-kind)
+- [A headset's low-battery card gives way to Audio switching to that headset](issues.md#a-headsets-low-battery-card-gives-way-to-audio-switching-to-that-headset)

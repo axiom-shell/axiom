@@ -72,10 +72,15 @@ Item {
   }
 
   function toggleMute() {
+    // (marked as the pointer's, so another OSD listing Audio stays shut)
     if (root.isMaster)
-      ActionsManager.run("toggleMute");
+      ActionsManager.run("toggleMute", {
+        "fromScreen": true
+      });
     else if (root.isMic)
-      ActionsManager.run("toggleMicMute");
+      ActionsManager.run("toggleMicMute", {
+        "fromScreen": true
+      });
     else
       AudioManager.setNodesMuted(root._nodes, !root.muted);
   }

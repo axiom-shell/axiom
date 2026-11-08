@@ -72,10 +72,16 @@ Item {
   // list's types. Each one's own settings reach it in place
   readonly property string _systemsKey: root.osd.systems.map(item => item.type).join(",")
   // The card out folds back with its system taken off the list (not as
-  // its host goes: any change to the types rebuilds every host)
+  // its host goes: any change to the types rebuilds every host), and its
+  // changes waiting for a close are dropped
   on_SystemsKeyChanged: {
-    if (root._cardChange && !root.osd.systems.some(item => item.type === root._cardChange.system))
+    const listed = change => root.osd.systems.some(item => item.type === change.system);
+    if (root._cardChange && !listed(root._cardChange))
       root._closePart("card");
+    if (root._pending)
+      root._pending = Object.assign({}, root._pending, {
+        "changes": root._pending.changes.filter(listed)
+      });
   }
   // The OSDSystemHosts, in the list's order, as they're built
   property var _hosts: []
@@ -313,35 +319,12 @@ Item {
     root._deadlines = OSDParts.sharedDeadlines(due);
   }
 
-  // Closing: the last parts' time is up, until the OSD has slid away.
-  // What comes in meanwhile waits for it to be gone (`_pending`)
-  property bool _closing: false
-  // { parts: [part], card, cardAt, ring, force } or null
+  // Closing: its host sliding away, for any reason (the parts' time up,
+  // its own countdown, a higher popout). What comes in meanwhile waits
+  // for it to be gone (`_pending`), then comes in as it would have
+  readonly property bool _closing: root.hostOpen && !root.open
+  // { changes: [change], force } or null
   property var _pending: null
-
-  // Whether a part opening now waits for the close (queued with `force`
-  // and `extra`: the card's { card, cardAt }, the icons' { ring })
-  function _queued(part, force, extra) {
-    if (!root._closing)
-      return false;
-    const pending = root._pending ?? ({
-        "parts": [],
-        "force": false
-      });
-    if (!pending.parts.includes(part))
-      pending.parts = pending.parts.concat([part]);
-    if (extra)
-      Object.assign(pending, extra);
-    pending.force = pending.force || force;
-    root._pending = pending;
-    return true;
-  }
-
-  // The last parts' time is up: the OSD slides away whole
-  function _close() {
-    root._closing = true;
-    root.collapse();
-  }
 
   // Opens a part (or restarts its time), placed by OSDParts.partOrder.
   // The icons coming out with none to show as they are show every one,
@@ -403,7 +386,7 @@ Item {
     const due = OSDParts.partsDue(root._running(), Date.now(), root.grace).due;
     const open = root._order.filter(part => root._open[part] === true);
     if (open.length > 0 && open.every(part => due.includes(part))) {
-      root._close();
+      root.collapse();
       return;
     }
     due.forEach(part => root._closePart(part));
@@ -458,7 +441,8 @@ Item {
   }
 
   // Open with nothing out: _expose. Gone: every part with it, then what
-  // came in as it closed (`_pending`), the OSD opening again for it
+  // came in as it closed (`_pending`), each change in order as it would
+  // have come to a shut OSD (`force` if any one opens it)
   onHostOpenChanged: {
     if (root.hostOpen) {
       if (!root._order.some(part => root._open[part] === true))
@@ -474,19 +458,10 @@ Item {
     root._clearRing();
     root._kept = [];
     root._previewAll = false;
-    root._closing = false;
     const pending = root._pending;
     root._pending = null;
-    if (!pending?.force)
-      return;
-    if (pending.parts.includes("card") && pending.card) {
-      root._cardChange = pending.card;
-      root._cardAt = pending.cardAt;
-    }
-    if (pending.ring)
-      root._ring(pending.ring);
-    pending.parts.forEach(part => root._openPart(part));
-    root.poked(true);
+    if (pending)
+      pending.changes.forEach(change => root._show(change, pending.force));
   }
 
   // Its systems' watchers pick up, as it opens, what nothing pushes
@@ -620,36 +595,32 @@ Item {
       "card": shown === "card",
       "tile": OSDEngine.contextTile(def, what.key, host.snapshot)
     });
-    const force = host.opens(what);
-    if (shown === "card")
+    root._show(incoming, host.opens(what));
+  }
+
+  // A change to show: while closing it waits for the OSD to be gone
+  // (`_pending`, its `force` kept if any one's)
+  function _show(incoming, force) {
+    if (root._closing) {
+      root._pending = {
+        "changes": (root._pending?.changes ?? []).concat([incoming]),
+        "force": (root._pending?.force ?? false) || force
+      };
+      return;
+    }
+    if (incoming.show === "card")
       root._showCard(incoming, force);
-    else if (shown === "tile")
+    else if (incoming.show === "tile")
       root._showTile(incoming, force);
     else
       root._showLevel(incoming, force);
   }
 
-  // The card out, if any, against a change (OSDEngine.arbitrate); while
-  // closing, the card waiting for the close (`_pending`) instead
+  // The card out, if any, against a change (OSDEngine.arbitrate)
   function _againstCard(incoming, now) {
-    const card = root._closing ? root._pending?.card : (root._open.card === true ? root._cardChange : null);
-    if (!card)
+    if (root._open.card !== true)
       return "";
-    return OSDEngine.arbitrate(card, incoming, now - (root._closing ? root._pending.cardAt : root._cardAt), root._defs);
-  }
-
-  // A card made stale ("retract"): it folds back, or, while closing, the
-  // one waiting for the close is dropped
-  function _retractCard() {
-    if (!root._closing) {
-      root._closePart("card");
-      return;
-    }
-    const pending = Object.assign({}, root._pending);
-    pending.parts = pending.parts.filter(part => part !== "card");
-    delete pending.card;
-    delete pending.cardAt;
-    root._pending = pending;
+    return OSDEngine.arbitrate(root._cardChange, incoming, now - root._cardAt, root._defs);
   }
 
   function _ring(change) {
@@ -669,16 +640,7 @@ Item {
     if (!force && !root.hostOpen)
       return;
     const now = Date.now();
-    // Kept ("keep"), the new one queues no card of its own
-    const against = root._againstCard(incoming, now);
-    if (root._queued("card", force, against === "keep" ? null : {
-      "card": incoming,
-      "cardAt": now
-    })) {
-      root.poked(force);
-      return;
-    }
-    if (against === "keep")
+    if (root._againstCard(incoming, now) === "keep")
       return;
     root._cardChange = incoming;
     root._cardAt = now;
@@ -699,14 +661,7 @@ Item {
     if (against === "suppress")
       return;
     if (against === "retract")
-      root._retractCard();
-    if (root._queued("status", force, {
-      "ring": incoming
-    })) {
-      root._boxParts("status").forEach(other => root._queued(other, force));
-      root.poked(force);
-      return;
-    }
+      root._closePart("card");
     if (root._open.status === true && root._ringChange && OSDEngine.arbitrate(root._ringChange, incoming, now - root._changedAt, root._defs) === "keep")
       return;
     root._ring(incoming);
@@ -719,16 +674,8 @@ Item {
   function _showLevel(incoming, force) {
     if (!force && !root.hostOpen)
       return;
-    const against = root._againstCard(incoming, Date.now());
-    if (against === "suppress")
+    if (root._againstCard(incoming, Date.now()) === "suppress")
       return;
-    if (against === "retract")
-      root._retractCard();
-    if (root._queued("level", force)) {
-      root._boxParts("level").forEach(other => root._queued(other, force));
-      root.poked(force);
-      return;
-    }
     root._boxParts("level").forEach(other => root._openPart(other));
     root.poked(force);
   }
@@ -757,8 +704,11 @@ Item {
   }
 
   // The settings page's Show: the bars and the status icons as they are
-  // (every one when none would show)
+  // (every one when none would show). While closing, nothing: the Show
+  // button's poke reopens it (OSDTriggers), which brings them out
   function preview() {
+    if (root._closing)
+      return;
     root._clearRing();
     root._expose();
   }
