@@ -1,6 +1,6 @@
 # Brightness
 
-> **Files:** `qml/services/system/BrightnessManager.qml`, `backend/internal/brightness/`, `backend/internal/daemon/brightness.go`, `qml/components/content/Brightness/Brightness.qml`, `qml/components/surfaces/osd/OSDBar.qml`
+> **Files:** `qml/services/system/BrightnessManager.qml`, `backend/internal/brightness/`, `backend/internal/daemon/brightness.go`, `qml/components/content/Brightness/Brightness.qml`, `qml/components/surfaces/osd/systems/Brightness/`, `qml/components/surfaces/osd/design/OSDLevelBar.qml`
 > **Config:** none of its own (the module's `monitor` property; OSD `brightness` bars)
 > **Related:** [OSD](osd.md), [Idle](idle.md) (dim/undim), [Utility modules](../overlay/utility-modules.md)
 
@@ -19,7 +19,7 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
   - `set` / `stepBy` update the value at once.
   - Writes are coalesced per monitor: one `brightness.set` in flight, with the latest value next.
 - **`brightnessChanged(name)`** fires only for axiom's own sets, so the OSD opens on them. It fires after the write is marked (`_writing`), so the `refresh` of the OSD opening on it skips the monitor being written instead of running `ddcutil getvcp` beside `setvcp`.
-  - Brightness changed outside axiom is picked up when the OSD opens (`OSDTriggers` calls `refresh` for the monitors its brightness bars show).
+  - Brightness changed outside axiom is picked up when the OSD opens (`BrightnessWatch.opened`, called as its OSD opens, `refresh`es the monitors its bar shows).
 - **`icon(level)`**: `brightness_low`, `_medium` or `_high`, for the module, the OSD bar and the Quick actions tile.
 - **Several monitors:**
   - `names` comes from `namesKey`, a string that only notifies when a monitor comes or goes.
@@ -41,5 +41,6 @@ Per-monitor brightness through backlight or DDC, the Brightness overlay module, 
 
 ### OSD brightness bars
 - An OSD `brightness` bar with `allMonitors` sets every monitor. It shows their mean, and any of them changing pokes it.
+- Only a level set through axiom counts as a change (`brightnessChanged`, which `BrightnessWatch` keeps as its state's `setAt`; the Brightness system's `countsWithin` counts a level only within 500 ms of it): one a `refresh` finds (on the OSD opening) or idle dimming's silent set only moves its state on. Every set counts, so a key at 0 % or 100 % (clamped, unchanged) still opens the OSD.
 - The brightness keys still step only the focused monitor.
 - See [OSD](osd.md).

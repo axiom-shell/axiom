@@ -43,6 +43,7 @@ QtObject {
   // the call; the helper's properties are read on the helper itself.
   readonly property var helpers: ({
       "BindActions": BindActions,
+      "BindConditions": BindConditions,
       "BindKeys": BindKeys,
       "ConfigOps": ConfigOps,
       "InputSources": InputSources,

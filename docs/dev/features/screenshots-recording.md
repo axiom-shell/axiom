@@ -49,7 +49,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 - The folders are global settings (General → Screenshots & recordings), not the cards': every entry point saves to the same place. Recordings go to `recordingFolder`: `Screenshots.recordingFolder`, else `folder`.
 - **Copying:** to the clipboard through the daemon (`ClipboardManager.copyFile`, `clipboard.copy {path, mime}`).
 - Then one of:
-  - **Said** (`_sayTaken`, through `NotificationManager.announce("screenshot", Screenshots.notify, …)`): on an OSD listing `screenshot`, its card with the picture (`lastShot`; a click opens it, `open`); else, with `Screenshots.notify` (the default), a notification (a click opens it) with an "Edit in Satty/Swappy" button. Sent through `sendNotification` with an `edit` action, so each one's button stays live until its notification closes. Off, with no such OSD, nothing ([OSD](osd.md) › Where events go).
+  - **Said** (`_sayTaken`, through `NotificationManager.announce("Screenshot", "screenshot", Screenshots.notify, …)`): on an OSD listing `screenshot`, its card with the picture (`lastShot`; a click opens it, `open`); else, with `Screenshots.notify` (the default), a notification (a click opens it) with an "Edit in Satty/Swappy" button. Sent through `sendNotification` with an `edit` action, so each one's button stays live until its notification closes. Off, with no such OSD, nothing ([OSD](osd.md) › Where events go).
   - **Opened in satty/swappy straight away** with `annotate`: the picker's "Edit in …" switch, the E key, or holding Shift on release.
 - **Watchdog:** a single 3 s watchdog in the service fails any capture that gets no frame, so nothing can wedge it.
   - A picker reports its frame with `frameArrived()`.

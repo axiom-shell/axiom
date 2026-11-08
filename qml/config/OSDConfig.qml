@@ -14,33 +14,40 @@ QtObject {
   // Level change per wheel notch (0-1); 0 when scrolling is off
   readonly property real scrollStep: _c.scrollToChange ? _c.scrollStep / 100 : 0
   // A change the pointer made in axiom's own bar and panels
-  // (ShellManager.fromScreen) opens an OSD too
+  // (ShellManager.onScreen's mark, OSDEngine.byUser) opens an OSD too
   readonly property bool onScreenChanges: _c.onScreenChanges
   // [OSDEntry] (see the schema): each with its id, screen (a ScreenTarget),
-  // place, `bars` (their layout and items, { type, icon, showOsd, … }),
-  // `statuses` ({ row, items, quiet }: the status types shown as icons)
-  // and `media` (the now playing card). Goes through a string so a reload
-  // that leaves the list unchanged doesn't rebuild the OSDs.
+  // place, `barLayout`, `row`, `cardsEnabled` / `cardTimeout` and
+  // `systems` (what it shows, in order: [{ type, tile, card, quiet, …its
+  // own settings }], an OSDSystem each). Goes through a string so a
+  // reload that leaves the list unchanged doesn't rebuild the OSDs.
   readonly property string _osdsJson: JSON.stringify(_c.items)
-  readonly property var osds: JSON.parse(_osdsJson)
+  // A type listed twice (only by hand: the schema can't say unique) keeps
+  // its first item, as the editor's list does (OSDSystemsEditor.systems):
+  // the host keys its systems by type alone
+  readonly property var osds: JSON.parse(_osdsJson).map(osd => Object.assign(osd, {
+      "systems": osd.systems.filter((item, i) => osd.systems.findIndex(other => other.type === item.type) === i)
+    }))
   // The enabled ones, by id: what the shell builds
   readonly property var shownIds: osds.filter(osd => osd.enabled).map(osd => osd.id)
-  // The streams the App bars of every OSD match, which the Other apps bars
-  // skip
-  readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.bars.items.filter(item => item.type === "app").map(item => item.apps))))
+  // The streams the App bars of every OSD's Audio match, which the Other
+  // apps bars skip
+  readonly property var excludedApps: [].concat(...osds.map(osd => [].concat(...osd.systems.filter(item => item.type === "Audio").map(item => [].concat(...item.bars.filter(bar => bar.type === "app").map(bar => bar.apps))))))
 
   // An event card shown on an OSD (a drive, the battery, a monitor, a
   // screenshot, a message) is also filed in the notification history,
   // without a popup (NotificationManager.announce)
   readonly property bool cardsToHistory: _c.cardsToHistory
 
-  // Where an event goes (OSDItems.cardRoute): "osd" (an OSD opens its
-  // card: OSDItems.opensCard),
-  // else "notification" with `notify` (its section's switch:
-  // Battery.notify, Drives.notify, Monitors.notify, Screenshots.notify),
-  // else "" (nowhere)
-  function routeOf(type, notify) {
-    return OSDItems.cardRoute(root.osds, type, notify);
+  // Where an event of the OSD system `system` and its key `key` (the
+  // caller's: Drives' drive, Battery's battery, …) goes
+  // (OSDEngine.cardRoute): "osd" (an OSD opens its card:
+  // OSDEngine.opensCard; the low battery's only where Battery's `tiles`
+  // pick `battery`), else "notification" with `notify` (its section's
+  // switch: Battery.notify, Drives.notify, Monitors.notify,
+  // Screenshots.notify), else "" (nowhere)
+  function routeOf(system, key, notify) {
+    return OSDEngine.cardRoute(root.osds, system, notify, key);
   }
 
   function osdById(id) {
@@ -48,34 +55,145 @@ QtObject {
   }
 
   // The OSD a message goes to (`axiom message`) as its card: the one of
-  // that id, else (`id` "") the first, of those that pick Messages under
-  // their cards (OSDItems.opensCard); "" with none: it's a notification
+  // that id, else (`id` "") the first, of those that show Messages
+  // (OSDEngine.opensCard); "" with none: it's a notification
   function messageOsd(id) {
-    const showing = osds.filter(osd => OSDItems.opensCard(osd, "message"));
+    const showing = osds.filter(osd => OSDEngine.opensCard(osd, "Message"));
     const pick = id !== "" ? showing.find(osd => osd.id === id) : showing[0];
     return pick ? pick.id : "";
   }
 
-  // A bar's or status type's name, translated: its label in the schema
-  // (x-enumLabels of a bar's type and of the statuses)
-  readonly property var _typeLabels: {
-    const entry = ConfigManager.configSchema?.definitions?.OSDEntry?.properties;
-    return Object.assign({}, entry?.bars?.properties?.items?.items?.properties?.type?.["x-enumLabels"], entry?.statuses?.properties?.items?.["x-enumLabels"]);
+  // The OSD systems' definitions in the schema (the OSDSystem kind's
+  // oneOf), by type
+  readonly property var _systemDefs: {
+    const schema = ConfigManager.configSchema;
+    const out = {};
+    for (const option of schema.definitions.OSDSystem.oneOf) {
+      const def = schema.definitions[option.$ref.replace("#/definitions/", "")];
+      out[def.properties.type.const] = def;
+    }
+    return out;
   }
+  // Every system an OSD can show, for the settings editor's list and its
+  // picker: { type, label (English), icon, group (`x-libraryGroup`),
+  // schema (its item's definition) }, in the kind's oneOf order
+  readonly property var systemTypes: Object.keys(root._systemDefs).map(type => {
+    const def = root._systemDefs[type];
+    return {
+      "type": type,
+      "label": def.properties.type.description || type,
+      "icon": def["x-icon"] ?? "extension",
+      "group": def["x-libraryGroup"],
+      "schema": def
+    };
+  })
+  // A system's name, translated: its label in the schema (its type's
+  // description); "" for one there isn't
   function nameOf(type) {
-    const english = root._typeLabels[type];
+    const english = root._systemDefs[type]?.properties.type.description;
     return english ? I18n.tr(english) : "";
   }
 
-  // The name on its tab: its own, else its bars', else its status icons'
-  // (so the default isn't named by all of them), else Now playing
+  // How a system's bars are named, keyed and edited (its schema's
+  // `x-barNames`): { bar }, it is one bar of that key, named by its label
+  // (Brightness; OSDParts.oneBar); { from, by, named, repeats, keys,
+  // barOnly }, each entry of its setting `from` is a bar (Audio's `bars`,
+  // keyed by OSDParts.barKey), `barOnly` the settings an item added only
+  // for a bar starts with; null for a system with no bars
+  function barSpecOf(type) {
+    return root._systemDefs[type]?.["x-barNames"] ?? null;
+  }
+  // A system's schema (its item's definition), or null
+  function schemaOf(type) {
+    return root._systemDefs[type] ?? null;
+  }
+
+  // An item's bars, in its order: { key ("<System>/<its exposes key>",
+  // OSDParts.barKey: what an OSD's `barOrder` names), index (in its
+  // `from` list; -1 for a system that is one bar), name (translated),
+  // icon }. A `from` bar is named by its `named` list joined, else its
+  // `by` field's x-enumLabels (Audio's: an App bar by its apps, the
+  // others by their kind), its icon its kind's (`x-enumIcons`); none
+  // without `x-barNames`
+  function barRows(item) {
+    const def = root._systemDefs[item.type];
+    const spec = def?.["x-barNames"];
+    if (!spec)
+      return [];
+    if (OSDParts.oneBar(spec))
+      return [
+        {
+          "key": item.type + "/" + OSDParts.barKey(spec, null),
+          "index": -1,
+          "name": root.nameOf(item.type),
+          "icon": def["x-icon"] ?? "extension"
+        }
+      ];
+    const by = def.properties[spec.from]?.items?.properties?.[spec.by] ?? {};
+    const labels = by["x-enumLabels"] ?? {};
+    const icons = by["x-enumIcons"] ?? {};
+    return (item[spec.from] ?? []).map((entry, index) => {
+      const named = spec.named ? (entry[spec.named] ?? []) : [];
+      return {
+        "key": item.type + "/" + OSDParts.barKey(spec, entry),
+        "index": index,
+        "name": named.length > 0 ? named.join(" / ") : I18n.tr(labels[entry[spec.by]] ?? ""),
+        "icon": icons[entry[spec.by]] ?? def["x-icon"] ?? "extension"
+      };
+    });
+  }
+
+  // The bars of `systems` (items of an OSD's list) in the OSD's order:
+  // each item's barRows, with its index in `systems` (`system`), ordered
+  // by `order` (its `barOrder`, OSDParts.orderBars: as the host shows
+  // them)
+  function orderedBarRows(systems, order) {
+    return OSDParts.orderBars([].concat(...systems.map((item, system) => root.barRows(item).map(bar => Object.assign(bar, {
+          "system": system
+        })))), order);
+  }
+
+  // Every kind of bar an OSD can show, for the settings' Bars picker:
+  // { type ("<System>" for a system that is one bar, else
+  // "<System>:<kind>", a value of its `by` field), label (English), icon }
+  readonly property var barKinds: [].concat(...Object.keys(root._systemDefs).map(type => {
+    const def = root._systemDefs[type];
+    const spec = def["x-barNames"];
+    if (!spec)
+      return [];
+    if (OSDParts.oneBar(spec))
+      return [
+        {
+          "type": type,
+          "label": def.properties.type.description || type,
+          "icon": def["x-icon"] ?? "extension"
+        }
+      ];
+    const by = def.properties[spec.from]?.items?.properties?.[spec.by] ?? {};
+    return (by.enum ?? []).map(kind => ({
+          "type": type + ":" + kind,
+          "label": by["x-enumLabels"]?.[kind] ?? kind,
+          "icon": by["x-enumIcons"]?.[kind] ?? def["x-icon"] ?? "extension"
+        }));
+  }))
+
+  // The name on its tab: its own, else its bars' (in its `barOrder`, as
+  // the host shows them), else what it shows as
+  // icons (so the default isn't named by all of them), else with its
+  // cards on the systems it shows only as cards (Now playing, or a
+  // system with a card switch and its tiles off)
   function labelOf(osd) {
     if (osd.name)
       return osd.name;
-    const bars = osd.bars.items.map(item => item.type === "app" ? (item.apps.join(" / ") || I18n.tr("An app")) : root.nameOf(item.type));
-    const parts = bars.length > 0 ? bars : osd.statuses.items.map(type => root.nameOf(type)).filter(name => name !== "");
+    const shown = osd.systems.filter(item => item.tile !== false);
+    const bars = root.orderedBarRows(shown, osd.barOrder).map(bar => bar.name).filter(name => name !== "");
+    // (a system with no tile switch is only ever a card)
+    const tiled = item => root._systemDefs[item.type]?.properties.tile !== undefined;
+    const parts = bars.length > 0 ? bars : shown.filter(tiled).map(item => root.nameOf(item.type)).filter(name => name !== "");
     if (parts.length > 0)
       return parts.join(", ");
-    return osd.cards.enabled && osd.cards.items.includes("media") ? I18n.tr("Now playing") : I18n.tr("Empty OSD");
+    const carded = item => !tiled(item) || (item.tile === false && root._systemDefs[item.type]?.properties.card !== undefined);
+    const cards = osd.cardsEnabled ? osd.systems.filter(item => carded(item) && item.card !== false).map(item => root.nameOf(item.type)).filter(name => name !== "") : [];
+    return cards.length > 0 ? cards.join(", ") : I18n.tr("Empty OSD");
   }
 }

@@ -29,6 +29,9 @@ StyledContainer {
   readonly property bool expanded: root.isRun && KeybindManager.page.expandedRuns[root.runKey] === true
   readonly property bool selected: !root.isRun && KeybindManager.editor.selectedIndex === root.bindIndex
   readonly property bool paused: root.indices.every(i => KeybindManager.editor.binds[i]?.paused === true)
+  // Not bound now, by its "Only when" (paused says so itself)
+  readonly property bool idle: !root.paused && root.indices.every(i => KeybindManager.editor.held[i] !== true)
+  readonly property string condition: KeybindManager.conditionText(root.bind)
   readonly property var issues: [].concat(...root.indices.map(i => KeybindManager.editor.issues[i] ?? []))
   readonly property bool hasError: root.issues.some(issue => issue.level === "error")
   readonly property bool hasWarning: KeybindManager.editor.hasIssue(root.issues)
@@ -127,7 +130,7 @@ StyledContainer {
       Layout.maximumWidth: Layout.preferredWidth
       spacing: Widget.spacing / 2
       clip: true
-      opacity: root.paused ? 0.5 : 1
+      opacity: root.paused || root.idle ? 0.5 : 1
 
       Repeater {
         model: root.parts.mods
@@ -158,7 +161,7 @@ StyledContainer {
     StyledIcon {
       text: root.isRun ? (root.expanded ? "unfold_less" : "unfold_more") : KeybindManager.actionIcon(root.bind.action)
       textColor: root.selected ? root.ink : Theme.accent
-      opacity: root.paused ? 0.5 : 1
+      opacity: root.paused || root.idle ? 0.5 : 1
       Layout.preferredWidth: Appearance.fontSize * 1.5
     }
 
@@ -167,7 +170,7 @@ StyledContainer {
       textColor: root.ink
       font.bold: root.selected
       font.strikeout: root.paused
-      opacity: root.paused ? 0.5 : 1
+      opacity: root.paused || root.idle ? 0.5 : 1
       elide: Text.ElideRight
       Layout.fillWidth: true
     }
@@ -181,6 +184,16 @@ StyledContainer {
       textSize: Appearance.fontSizeBy(-2)
       elide: Text.ElideRight
       Layout.maximumWidth: root.width * 0.25
+    }
+
+    // Its "Only when", and whether that holds now
+    TipIcon {
+      visible: root.condition !== ""
+      text: "filter_alt"
+      tip: root.idle ? I18n.tr("Only when: {0}. Not bound now.", root.condition) : I18n.tr("Only when: {0}", root.condition)
+      textColor: root.ink
+      opacity: 0.6
+      textSize: Appearance.fontSizeBy(-1)
     }
 
     // Flags that are on
@@ -203,7 +216,8 @@ StyledContainer {
       level: root.hasError ? "error" : "warning"
       tip: KeybindManager.editor.issueTip(root.indices)
       textColor: root.selected ? root.ink : issueIcon.tone
-      textSize: Appearance.fontSize
+      // The row's other marks' size: larger, the symbol sits below centre
+      textSize: Appearance.fontSizeBy(-1)
     }
 
     UnsavedDot {

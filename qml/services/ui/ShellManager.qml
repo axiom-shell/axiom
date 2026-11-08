@@ -67,15 +67,20 @@ QtObject {
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)
   signal showOsd(string id)
+  // The OSD the settings page holds open as its preview (its id; "" for
+  // none: OSDListCard's Preview), and the system selected there (its
+  // type), whose icons and bars that OSD outlines (OSDHost)
+  property string osdPinned: ""
+  property string osdFocus: ""
   // Shows a message card on an OSD (`axiom message`): the OSD of
   // that id (OSDConfig.messageOsd picks it), where it would open for a
   // change; `text` its title, `detail` a faint second line ("" for none),
   // `tone` "warning" for a refusal (refuse()), else ""
   signal osdMessage(string id, string icon, string text, string detail, string tone)
 
-  // Changes the pointer made in axiom's own bar and panels, by kind
-  // (OSDItems.onScreenKind's: "audio", "microphone", "brightness", or a
-  // status type), when (Date.now()): an OSD doesn't open for them unless
+  // Changes the pointer made in axiom's own bar and panels, by kind (an
+  // OSD system's mark: "audio", "microphone", "brightness", or a tile's
+  // key), when (Date.now()): an OSD doesn't open for them unless
   // OSD.onScreenChanges. Marked by the UI right before it calls a setter,
   // never by a service, so keys (IPC) and automation are never mistaken
   // for a click
@@ -85,10 +90,13 @@ QtObject {
     root._onScreen[kind] = Date.now();
   }
 
-  // Whether a change of a bar or status type is the pointer's own
-  function fromScreen(type) {
-    const at = root._onScreen[OSDItems.onScreenKind(type)];
-    return at !== undefined && OSDItems.fromScreen(type, Date.now() - at);
+  // How long ago (ms) the mark `kind` was made, -1 for never; an OSD
+  // system's watcher hands it to OSDEngine.byUser, which judges it by the
+  // system's userWindow (a mark from the future, after a clock change,
+  // is negative: not the pointer's)
+  function markAge(kind) {
+    const at = root._onScreen[kind];
+    return at === undefined ? -1 : Date.now() - at;
   }
 
   // A message to the OSD `id` (OSDConfig.messageOsd's) as its card, also

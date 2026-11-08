@@ -1,0 +1,13 @@
+label: Lock keys
+icon: keyboard_capslock
+group: Keys & input
+tile: standard
+settings:
+  keys:
+    type: array
+    title: Keys
+    items: {type: string, enum: [capsLock, numLock, scrollLock]}
+    x-enumLabels: {capsLock: Caps Lock, numLock: Num Lock, scrollLock: Scroll Lock}
+    x-enumIcons: {capsLock: keyboard_capslock, numLock: dialpad, scrollLock: swap_vert}
+    default: [capsLock, numLock]
+    x-showIf: {tile: true}

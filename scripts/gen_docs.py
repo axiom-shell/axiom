@@ -46,6 +46,7 @@ UNIONS = [
     ("OverlayModule", "OverlayModules", "qml/components/content", "properties", "properties", ""),
     ("OverlayView", "OverlayViews", "qml/components/views", None, "viewConfig|viewConf", ""),
     ("CustomElement", "CustomElements", "qml/components/content/parts/custom/elements", "options", "options", "Custom"),
+    ("OSDSystem", "OSDSystems", "qml/components/surfaces/osd/systems", None, "options", ""),
 ]
 UNION_NAMES = {u[0]: u[1] for u in UNIONS}
 # Plumbing every union member shares, documented once on its page

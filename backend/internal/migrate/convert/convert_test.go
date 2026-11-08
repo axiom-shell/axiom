@@ -149,6 +149,13 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			}
 		}
 	}
+	keybinds, _ := defaults.(*jsonx.Object).Value("Keybinds").(*jsonx.Object)
+	binds, _ := keybinds.Value("binds").(*jsonx.Array)
+	for _, bind := range binds.Items {
+		for _, key := range bindKeysAddedSinceV1 {
+			bind.(*jsonx.Object).Delete(key)
+		}
+	}
 	osdItemFields(converted)
 	osdItemFields(defaults.(*jsonx.Object))
 	detachedPlaceFields(converted)
@@ -188,12 +195,12 @@ func detachedPlaceFields(cfg *jsonx.Object) {
 }
 
 // osdItemFields drops what an OSD gained since format 1 that no step
-// writes: every bar's fields but its type, icon and showOsd (each kind's
-// own options), the status icons' row mode, the cards' switch, timeout
-// and Now playing options (v91 writes `cards` with its list only), the
-// parts opening together, their order and holding still, and the `drive`
-// status of the default list. They come from their defaults at load, or
-// (the list) stay as the config had them.
+// writes: every Audio bar's fields but its type, icon and showOsd (each
+// kind's own options), the icons' row mode, the cards' switch and
+// timeout, the parts opening together, their order and holding still,
+// the bars' order (barOrder), each system's tile and card switches and its quiet when off, and the
+// Removable drives of the default list. They come from their defaults at
+// load, or (the list) stay as the config had them.
 func osdItemFields(cfg *jsonx.Object) {
 	osd, _ := cfg.Value("OSD").(*jsonx.Object)
 	if osd == nil {
@@ -208,44 +215,38 @@ func osdItemFields(cfg *jsonx.Object) {
 		if e == nil {
 			continue
 		}
-		if cards, _ := e.Value("cards").(*jsonx.Object); cards != nil {
-			for _, key := range []string{"enabled", "timeout", "onTrackChange", "onPlayPause"} {
-				cards.Delete(key)
-			}
+		for _, key := range []string{"row", "cardsEnabled", "cardTimeout", "openTogether", "holdStill", "iconsPlace", "barOrder"} {
+			e.Delete(key)
 		}
-		e.Delete("openTogether")
-		e.Delete("holdStill")
-		e.Delete("iconsPlace")
-		if statuses, _ := e.Value("statuses").(*jsonx.Object); statuses != nil {
-			statuses.Delete("row")
-			// A default status added since: a format-1 config keeps its list
-			if shown, _ := statuses.Value("items").(*jsonx.Array); shown != nil {
-				kept := shown.Items[:0]
-				for _, s := range shown.Items {
-					if s != "drive" {
-						kept = append(kept, s)
-					}
-				}
-				shown.Items = kept
-			}
-		}
-		bars, _ := e.Value("bars").(*jsonx.Object)
-		if bars == nil {
+		systems, _ := e.Value("systems").(*jsonx.Array)
+		if systems == nil {
 			continue
 		}
-		items, _ := bars.Value("items").(*jsonx.Array)
-		if items == nil {
-			continue
-		}
-		for _, item := range items.Items {
-			if o, _ := item.(*jsonx.Object); o != nil {
-				for _, k := range o.Keys() {
-					if k != "type" && k != "icon" && k != "showOsd" {
-						o.Delete(k)
+		kept := systems.Items[:0]
+		for _, item := range systems.Items {
+			o, _ := item.(*jsonx.Object)
+			if o == nil || o.Value("type") == "Drives" {
+				continue
+			}
+			o.Delete("tile")
+			o.Delete("card")
+			if o.Value("quiet") == false {
+				o.Delete("quiet")
+			}
+			if bars, _ := o.Value("bars").(*jsonx.Array); bars != nil {
+				for _, bar := range bars.Items {
+					if b, _ := bar.(*jsonx.Object); b != nil {
+						for _, k := range b.Keys() {
+							if k != "type" && k != "icon" && k != "showOsd" {
+								b.Delete(k)
+							}
+						}
 					}
 				}
 			}
+			kept = append(kept, item)
 		}
+		systems.Items = kept
 	}
 }
 
@@ -289,6 +290,10 @@ func dropModuleKeys(v any) {
 
 // A bar's settings added since (v93: its auto-hide), and its style's
 // textScale (in place of a font size of null, the default)
+// bindKeysAddedSinceV1 are a keybind's settings added since format 1 (its
+// "Only when"), which the default binds get from their defaults at load
+var bindKeysAddedSinceV1 = []string{"whenCompositors", "whenLayout", "whenMonitors"}
+
 var barKeysAddedSinceV1 = []string{"autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
 
 // Every frozen corpus config (each past schema version's defaults, the

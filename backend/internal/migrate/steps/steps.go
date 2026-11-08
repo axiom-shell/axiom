@@ -202,6 +202,14 @@ var all = []Step{
 	// became idleInhibit and toggleDnd, a Button's appLauncher and
 	// workspaceOverlay actions launcher and workspaceOverview (v100.go)
 	{Version: 100, Run: v100},
+	// v101: an OSD's bars, status icons and cards became one ordered list
+	// of systems (`systems`), the bars' layout `barLayout`, `statuses.row`
+	// `row`, the cards' switch and time `cardsEnabled` / `cardTimeout`
+	// (v101.go)
+	{Version: 101, Run: v101},
+	// v102: every bar of an OSD's Audio got a stable id, so an App bar is
+	// keyed by it and an OSD's barOrder can name it (v102.go)
+	{Version: 102, Run: v102},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

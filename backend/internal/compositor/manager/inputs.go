@@ -132,14 +132,16 @@ func buildInputs(cfg *jsonx.Object, f *Facts, outputs []render.Output) Inputs {
 	}
 	flag := func(path ...string) bool { b, _ := at(path...).(bool); return b }
 
+	workspaces := at("Workspaces")
+	strips := stripsOf(workspaces, primaryOf(f.PrimaryMonitor, outputs))
+	// The binds to bind: not paused, their "Only when" holding
+	conditions := bindFacts(f, workspaces, strips, outputs)
 	binds := jsonx.Arr()
 	for _, b := range itemsOf(at("Keybinds", "binds")) {
-		if paused, _ := getAny(b, "paused").(bool); !paused {
+		if paused, _ := getAny(b, "paused").(bool); !paused && render.BindHolds(b, conditions) {
 			binds.Append(b)
 		}
 	}
-	workspaces := at("Workspaces")
-	strips := stripsOf(workspaces, primaryOf(f.PrimaryMonitor, outputs))
 	stripOptions := jsonx.Obj("stripColumnWidth", getAny(workspaces, "stripColumnWidth"), "stripFollowFocus", getAny(workspaces, "stripFollowFocus"))
 	behaviour := at("WindowBehaviour")
 	managed := jsonx.NewObject()
@@ -310,6 +312,31 @@ func stripsOf(workspaces any, primary string) *jsonx.Array {
 		}
 	}
 	return out
+}
+
+// bindFacts are what a bind's "Only when" is decided on (render.BindHolds,
+// KeybindManager.conditionFacts): the compositor, whether any output is a
+// strip (where the compositor has strips), the grid layout, dynamic
+// workspaces, and the connected outputs' names (nil until read, which
+// holds no monitor condition)
+func bindFacts(f *Facts, workspaces any, strips *jsonx.Array, outputs []render.Output) *jsonx.Object {
+	var names any
+	if outputs != nil {
+		list := jsonx.Arr()
+		for _, o := range outputs {
+			if !o.Disabled {
+				list.Append(o.Name)
+			}
+		}
+		names = list
+	}
+	return jsonx.Obj(
+		"kind", f.Kind,
+		"strips", f.Supports["stripsAlways"] || (f.Supports["strips"] && len(strips.Items) > 0),
+		"grid", getAny(workspaces, "layout") == "grid",
+		"dynamic", f.Supports["dynamicWorkspaces"],
+		"outputs", names,
+	)
 }
 
 // inputMethodOf is the input method the session starts (render.

@@ -56,6 +56,7 @@ QtObject {
     root.editModFilter = [];
     root.editIssuesOnly = false;
     root.editPausedOnly = false;
+    root.editConditionalOnly = false;
   }
   // The Keybinds page shows the editor instead of the list
   property bool editing: false
@@ -129,7 +130,8 @@ QtObject {
   property var editModFilter: []
   property bool editIssuesOnly: false
   property bool editPausedOnly: false
-  readonly property bool editFiltering: editSectionFilter.length > 0 || editModFilter.length > 0 || editIssuesOnly || editPausedOnly
+  property bool editConditionalOnly: false
+  readonly property bool editFiltering: editSectionFilter.length > 0 || editModFilter.length > 0 || editIssuesOnly || editPausedOnly || editConditionalOnly
   // Rows can be dragged into another order only while every bind shows
   readonly property bool reorderable: editQuery.trim() === "" && !editFiltering
 
@@ -181,7 +183,8 @@ QtObject {
     const mods = root.editModFilter;
     const issuesOnly = root.editIssuesOnly;
     const pausedOnly = root.editPausedOnly;
-    const state = index => (!issuesOnly && !pausedOnly) || (issuesOnly && root.editor.hasIssue(root.editor.issues[index])) || (pausedOnly && root.editor.binds[index].paused === true);
+    const conditionalOnly = root.editConditionalOnly;
+    const state = index => (!issuesOnly && !pausedOnly && !conditionalOnly) || (issuesOnly && root.editor.hasIssue(root.editor.issues[index])) || (pausedOnly && root.editor.binds[index].paused === true) || (conditionalOnly && BindConditions.conditional(root.editor.binds[index]));
     return root.editor.binds.map((bind, index) => {
       const key = String(bind.key ?? "").trim();
       const label = KeybindManager.actionLabels[bind.action] ?? String(bind.action ?? "");
@@ -194,6 +197,8 @@ QtObject {
     }).filter(row => (query === "" || row.text.includes(query)) && (sections.length === 0 || sections.includes(row.section)) && mods.every(mod => row.mods.includes(mod)) && state(row.index)).map(row => row.index).join(",");
   }
   readonly property int pausedCount: root.editor.binds.filter(bind => bind.paused === true).length
+  // Binds with an "Only when" of their own
+  readonly property int conditionalCount: root.editor.binds.filter(bind => BindConditions.conditional(bind)).length
   readonly property var visibleIndices: visibleKey === "" ? [] : visibleKey.split(",").map(Number)
 
   // The shown binds by section, with numbered runs folded

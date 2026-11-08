@@ -81,7 +81,17 @@ LOADERS = [
     ("OverlayView", "qml/components/views", ""),
     ("OverlayModule", "qml/components/content", ""),
     ("CustomElement", "qml/components/content/parts/custom/elements", "Custom"),
+    ("OSDSystem", "qml/components/surfaces/osd/systems", ""),
 ]
+# An OSD system's folder (docs/dev/features/osd.md › Engine): its pure
+# definition <Type>.qml, its watcher <Type>Watch.qml (the only file that
+# reads services, with design/ for its visuals) and schema.yaml. Every file
+# in it is loaded by URL (Paths.osdSystemUrl) and none names another, so
+# the folders are never imported by name; the bases are, by the host
+OSD_SYSTEMS = "qml/components/surfaces/osd/systems"
+OSD_ENGINE = "qs.components.surfaces.osd.engine"
+# What a definition may import: pure, so the unit tests load it
+OSD_DEFINITION_IMPORTS = {"QtQuick", "qs.components.methods", OSD_ENGINE}
 # Bar popouts load content/<popoutName>/<popoutName>.qml, from the same root
 # as overlay modules (a content type can be both)
 POPOUT_DIR = "qml/components/content"
@@ -198,15 +208,42 @@ def main():
             todo |= imports_of(sources.get(rel(f), "")) - scanned
     unreached = {}
     for _, directory, _ in LOADERS:
+        osd = directory == OSD_SYSTEMS
         for f in sorted((ROOT / directory).rglob("*.qml")):
             own = module_of(rel(f.parent))
             needed = imports_of(sources[rel(f)])
-            if len(list(f.parent.glob("*.qml"))) > 1:
+            # A system's files never name each other (checked below)
+            if len(list(f.parent.glob("*.qml"))) > 1 and not osd:
                 needed.add(own)
             for module in sorted(needed - scanned):
                 unreached.setdefault(module, rel(f))
     for module, path in sorted(unreached.items()):
         errors.append(f"{path} needs {module}, which no file reached from shell.qml imports: qs won't scan it (import it in the host that loads it)")
+
+    # An OSD system: its definition, its watcher and its schema.yaml; the
+    # definition pure, services read only by the watcher (and design/),
+    # and no file naming another of its folder (each loads by URL)
+    for d in sorted(p for p in (ROOT / OSD_SYSTEMS).iterdir() if p.is_dir()):
+        for need in (f"{d.name}.qml", f"{d.name}Watch.qml", "schema.yaml"):
+            if not (d / need).exists():
+                errors.append(f"{rel(d)}/: an OSD system without {need}")
+        definition = d / f"{d.name}.qml"
+        if definition.exists():
+            bad = sorted(set(re.findall(r"^import ([\w.]+)", sources.get(rel(definition), ""), re.M)) - OSD_DEFINITION_IMPORTS)
+            if bad:
+                errors.append(f"{rel(definition)}: an OSD system's definition imports {', '.join(bad)}: it imports only "
+                              f"{', '.join(sorted(OSD_DEFINITION_IMPORTS))} (services are its watcher's)")
+        for f in sorted(d.glob("*.qml")):
+            if f == definition or f.stem.endswith("Watch"):
+                continue
+            if re.search(r"^import (qs\.services|qs\.config|Quickshell)\b", sources.get(rel(f), ""), re.M):
+                errors.append(f"{rel(f)}: reads services: only an OSD system's <Type>Watch.qml (and design/) may")
+        files = list(d.rglob("*.qml"))
+        for f in files:
+            text = re.sub(r"//[^\n]*", "", sources.get(rel(f), ""))
+            for other in files:
+                if other != f and re.search(r"\b" + re.escape(other.stem) + r"\s*\{", text):
+                    errors.append(f"{rel(f)}: uses {other.stem} of its own OSD system's folder: load it by URL (Paths.osdSystemUrl)")
 
     # Processes, file views, sockets and IPC handlers are moving to the
     # axiom daemon: only the files listed in quickshell-io-allowlist.json
@@ -266,7 +303,7 @@ def main():
     # Every library type joins one of the root's `x-libraryGroups` (the
     # editors' libraries group by them); required modules aren't offered
     library_groups = schema.get("x-libraryGroups", [])
-    for definition in ("BarWidget", "OverlayModule"):
+    for definition in ("BarWidget", "OverlayModule", "OSDSystem"):
         for option in schema["definitions"][definition]["oneOf"]:
             name = option.get("$ref", "").split("/")[-1]
             target = schema["definitions"].get(name, option)

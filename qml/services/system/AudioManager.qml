@@ -198,8 +198,16 @@ QtObject {
     });
   }
 
-  // Playback streams (bound, with audio) for an OSD app bar: those whose binary,
-  // application name or nickname contains one of `apps` (case-insensitive),
+  // Whether a node's volume has come in: a node binds before PipeWire
+  // sends it its volume (reading 0 until then), so the OSD's bars take
+  // the volume arriving for a node appearing, not a level changing
+  function volumeKnown(node) {
+    return node?.ready === true && (node.audio?.volumes?.length ?? 0) > 0;
+  }
+
+  // Playback streams for an OSD app bar, each bound with its volume in
+  // (volumeKnown): those whose binary, application name or nickname
+  // contains one of `apps` (case-insensitive),
   // by app in the listed order, so the first listed app's stream comes
   // first. With `other`, the first stream no `excluded` entry matches
   // instead (by binary or application name).
@@ -208,7 +216,7 @@ QtObject {
     const wanted = lower(apps);
     if (!other && wanted.length === 0)
       return [];
-    const streams = root._playbackStreams.filter(n => n.audio && n.ready).map(n => ({
+    const streams = root._playbackStreams.filter(n => root.volumeKnown(n)).map(n => ({
           "node": n,
           "binary": n.properties["application.process.binary"]?.toLowerCase() ?? "",
           "name": n.properties["application.name"]?.toLowerCase() ?? "",
@@ -287,7 +295,7 @@ QtObject {
   }
 
   // A sink's or source's name to show ({ title, detail }:
-  // OSDItems.deviceName's, a kind's name translated)
+  // AudioDevices.deviceName's, a kind's name translated)
   function deviceLabel(node) {
     if (!node)
       return {
@@ -295,7 +303,7 @@ QtObject {
         "detail": ""
       };
     const props = node.properties || {};
-    const name = OSDItems.deviceName({
+    const name = AudioDevices.deviceName({
       "nick": props["node.nick"] ?? node.nickname ?? "",
       "description": node.description || node.name || "",
       "profile": props["device.profile.description"] ?? "",

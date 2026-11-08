@@ -258,12 +258,12 @@ QtObject {
   }
 
   // A device's battery dropping to `level` (`device` the daemon's), where
-  // the OSD's `bluetooth` status puts it (NotificationManager.announce):
+  // the OSD's Bluetooth system puts it (NotificationManager.announce):
   // its card (lastEvent), else a notification. One entry per device:
   // critical replaces low
   function _sayLevel(device, level) {
     const body = level === "critical" ? I18n.tr("Battery critically low: {0}%", device.battery) : I18n.tr("Battery low: {0}%", device.battery);
-    const route = NotificationManager.announce("bluetooth", BluetoothConfig.notify, root.deviceLabel(device), body, {
+    const route = NotificationManager.announce("Bluetooth", "bluetooth", BluetoothConfig.notify, root.deviceLabel(device), body, {
       "icon": device.icon || "bluetooth",
       "key": "bluetooth-battery:" + device.address
     });

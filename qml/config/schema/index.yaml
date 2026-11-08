@@ -13,7 +13,8 @@ x-categories:
   - {name: Compositor, icon: desktop_windows}
   - {name: Workspaces, icon: grid_view}
   - {name: Overlay & Popouts, icon: layers}
-  - {name: Dock & OSD, icon: dock_to_bottom}
+  - {name: Dock, icon: dock_to_bottom}
+  - {name: OSD, icon: picture_in_picture}
   - {name: Launcher, icon: rocket_launch}
   - {name: Notifications, icon: notifications}
   - {name: Screen & Power, icon: power_settings_new}
@@ -32,6 +33,14 @@ x-libraryGroups:
   - Look & layout
   - Session
   - Custom
+  # The OSD systems' groups (their own library: none of the above has one)
+  - Keys & input
+  - Audio
+  - Connections
+  - Power
+  - Privacy
+  - Capture
+  - Events
 additionalProperties: false
 properties:
   $schema: {type: string, x-settings: false}
@@ -43,7 +52,7 @@ properties:
     description: 'The config file''s format: 2. A file without it is format 1, which axiom converts once.'
   version:
     type: integer
-    default: 100
+    default: 102
     x-settings: false
     description: Config version within format 2, used for migration.
   meta:
@@ -111,3 +120,4 @@ kinds:
   OverlayModule: {root: components/content, suffix: OverlayModule, base: ModuleBase}
   OverlayView: {root: components/views, suffix: OverlayView, base: ViewBase}
   CustomElement: {root: components/content/parts/custom/elements, suffix: CustomElement, base: CustomElementBase}
+  OSDSystem: {root: components/surfaces/osd/systems, suffix: OSDSystem, base: OSDSystemBase}

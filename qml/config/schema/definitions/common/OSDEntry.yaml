@@ -5,12 +5,14 @@ additionalProperties: false
 properties:
   id: {$ref: '#/definitions/ItemId'}
   name:
+    x-group: Placement
     type: string
     title: Name
     default: ''
     description: Shown on its tab here. Empty names it by what it shows.
-  enabled: {type: boolean, title: Enabled, default: true}
+  enabled: {x-group: Placement, type: boolean, title: Enabled, default: true}
   screen:
+    x-group: Placement
     $ref: '#/definitions/ScreenTarget'
     title: Monitors
     x-properties:
@@ -28,11 +30,13 @@ properties:
           named: These monitors
         x-link: {setting: General.screen}
   edge:
+    x-group: Placement
     type: string
     title: Screen edge
     default: bottom
     enum: [top, bottom, left, right]
   position:
+    x-group: Placement
     type: integer
     title: Position along edge
     x-unit: '%'
@@ -41,11 +45,13 @@ properties:
     maximum: 100
     description: 0 is the start (left/top), 100 the end.
   detached:
+    x-group: Placement
     type: boolean
     title: Detach from edge
     default: false
     description: A separate box held off the edge, instead of growing out of it.
   distance:
+    x-group: Placement
     type: integer
     title: Distance from edge
     x-unit: '%'
@@ -55,14 +61,17 @@ properties:
     description: 0 lines it up with your window border, 50 centres it.
     x-showIf: {detached: true}
   animation:
+    x-group: Placement
     $ref: '#/definitions/DetachedAnimation'
     x-showIf: {detached: true}
   openOnHover:
+    x-group: Timing and behaviour
     type: boolean
     title: Open on hover
     default: false
     description: Also open when the pointer touches its screen edge.
   timeout:
+    x-group: Timing and behaviour
     type: integer
     title: Timeout
     x-unit: ms
@@ -71,11 +80,13 @@ properties:
     maximum: 10000
     description: How long the bars and status icons stay out after the last change.
   openTogether:
+    x-group: Timing and behaviour
     type: boolean
     title: Bars and status icons together
     default: false
     description: A change to either brings out both.
   iconsPlace:
+    x-group: Timing and behaviour
     type: string
     title: Status icons
     default: outside
@@ -86,14 +97,15 @@ properties:
       inside: By the edge
     description: Where the status icons go when shown with the bars.
   holdStill:
+    x-group: Timing and behaviour
     type: boolean
     title: Hold still under the mouse
     default: true
     description: While the pointer is on the OSD, nothing under it moves.
-  bars:
+  barLayout:
     type: object
     title: Bars
-    description: The levels shown as bars. A change to one opens the OSD.
+    description: How the levels are laid out, for the systems that show bars.
     additionalProperties: false
     properties:
       orientation:
@@ -117,226 +129,53 @@ properties:
         title: Show percentages
         default: true
         description: Show each level as a percentage.
-      items:
-        type: array
-        title: Bars
-        description: In order. Other apps is the first playing stream no App bar matches.
-        x-link: {setting: OSD.scrollToChange}
-        default:
-          - {type: other, icon: music_note, showOsd: true}
-          - {type: master, icon: '', showOsd: true}
-        items:
-          x-scopeIf: {when: {type: app}, scope: personal}
-          type: object
-          additionalProperties: false
-          properties:
-            type:
-              type: string
-              title: Kind
-              enum: [master, other, app, microphone, brightness]
-              x-enumLabels:
-                master: System volume
-                other: Other apps
-                app: An app
-                microphone: Microphone
-                brightness: Brightness
-              default: app
-            apps:
-              x-scope: personal
-              type: array
-              items: {type: string}
-              title: Apps
-              default: []
-              x-showIf: {type: app}
-              x-suggestions: audioApps
-              description: Comma-separated; matched against a stream's binary or name.
-            allMonitors:
-              type: boolean
-              title: All monitors
-              default: false
-              x-showIf: {type: brightness}
-              description: Set every monitor at once, instead of only the OSD's.
-            icon:
-              type: string
-              x-control: icon
-              title: Icon
-              default: ''
-              description: A Material Symbols name, or text. Empty follows what it shows.
-            showOsd:
-              type: boolean
-              title: Opens the OSD
-              default: true
-              description: Off, it still shows while the OSD is open.
-  statuses:
-    type: object
-    title: Status icons
-    description: The machine's state as icons. A change to one opens the OSD.
-    additionalProperties: false
-    properties:
-      row:
-        type: string
-        title: Icons shown
-        default: notable
-        enum: [notable, all, changed]
-        x-enumLabels:
-          notable: What's unusual
-          all: Every one picked
-          changed: Only the one that changed
-        description: What's unusual shows only states out of the ordinary, plus the one that changed.
-      items:
-        type: array
-        title: Shows
-        x-ordered: true
-        items:
-          type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, recording, camera, micUse, screenShare]
-        x-enumLabels:
-          capsLock: Caps Lock
-          numLock: Num Lock
-          scrollLock: Scroll Lock
-          keyboardLayout: Keyboard layout
-          audio: Audio
-          microphone: Microphone
-          powerProfile: Power profile
-          caffeine: Caffeine
-          dnd: Do not disturb
-          nightLight: Night light
-          wifi: Wi-Fi
-          bluetooth: Bluetooth
-          airplane: Airplane mode
-          vpn: VPN
-          drive: Removable drives
-          charger: Charger
-          battery: Low battery
-          recording: Screen recording
-          camera: Camera
-          micUse: Microphone in use
-          screenShare: Screen sharing
-        x-enumIcons:
-          capsLock: keyboard_capslock
-          numLock: dialpad
-          scrollLock: swap_vert
-          keyboardLayout: keyboard
-          audio: volume_up
-          microphone: mic
-          powerProfile: speed
-          caffeine: coffee
-          dnd: do_not_disturb_on
-          nightLight: nightlight
-          wifi: wifi
-          bluetooth: bluetooth
-          airplane: airplanemode_active
-          vpn: vpn_key
-          drive: usb
-          charger: power
-          battery: battery_alert
-          recording: screen_record
-          camera: videocam
-          micUse: record_voice_over
-          screenShare: screen_share
-        default: [capsLock, numLock, keyboardLayout, microphone, audio, dnd, caffeine, nightLight, recording, drive]
-        description: Which statuses the OSD shows. Some also show a detail card.
-      quiet:
-        type: array
-        title: Without opening the OSD
-        items:
-          type: string
-          enum: [capsLock, numLock, scrollLock, keyboardLayout, audio, microphone, powerProfile, caffeine, dnd, nightLight, wifi, bluetooth, airplane, vpn, drive, charger, battery, recording, camera, micUse, screenShare]
-        x-enumFrom: items
-        x-showIf: {items: {notEmpty: true}}
-        x-enumLabels:
-          capsLock: Caps Lock
-          numLock: Num Lock
-          scrollLock: Scroll Lock
-          keyboardLayout: Keyboard layout
-          audio: Audio
-          microphone: Microphone
-          powerProfile: Power profile
-          caffeine: Caffeine
-          dnd: Do not disturb
-          nightLight: Night light
-          wifi: Wi-Fi
-          bluetooth: Bluetooth
-          airplane: Airplane mode
-          vpn: VPN
-          drive: Removable drives
-          charger: Charger
-          battery: Low battery
-          recording: Screen recording
-          camera: Camera
-          micUse: Microphone in use
-          screenShare: Screen sharing
-        x-enumIcons:
-          capsLock: keyboard_capslock
-          numLock: dialpad
-          scrollLock: swap_vert
-          keyboardLayout: keyboard
-          audio: volume_up
-          microphone: mic
-          powerProfile: speed
-          caffeine: coffee
-          dnd: do_not_disturb_on
-          nightLight: nightlight
-          wifi: wifi
-          bluetooth: bluetooth
-          airplane: airplanemode_active
-          vpn: vpn_key
-          drive: usb
-          charger: power
-          battery: battery_alert
-          recording: screen_record
-          camera: videocam
-          micUse: record_voice_over
-          screenShare: screen_share
-        default: []
-        description: Shown among the icons, but a change doesn't open the OSD.
-  cards:
-    type: object
-    title: Detail cards
-    description: Cards with more detail than an icon, and the ones that are only ever a card.
-    additionalProperties: false
-    properties:
-      enabled:
-        type: boolean
-        title: Show cards
-        default: true
-        description: Off, statuses show as icons, and the rest as notifications.
-      timeout:
-        type: integer
-        title: Card timeout
-        x-unit: ms
-        default: 4000
-        minimum: 1000
-        maximum: 15000
-        x-showIf: {enabled: true}
-        description: How long a card stays out. Hovering keeps it out.
-      items:
-        type: array
-        title: Only as cards
-        x-showIf: {enabled: true}
-        items:
-          type: string
-          enum: [monitor, screenshot, message, media]
-        x-enumLabels:
-          monitor: Monitors
-          screenshot: Screenshots
-          message: Messages
-          media: Now playing
-        x-enumIcons:
-          monitor: monitor
-          screenshot: screenshot_monitor
-          message: chat
-          media: music_note
-        default: [message]
-        description: Picked here, these show on this OSD instead of as notifications.
-      onTrackChange:
-        type: boolean
-        title: Now playing on a new track
-        default: true
-        x-showIf: {enabled: true, items: {includes: media}}
-      onPlayPause:
-        type: boolean
-        title: Now playing on play and pause
-        default: false
-        x-showIf: {enabled: true, items: {includes: media}}
+  row:
+    x-group: Timing and behaviour
+    type: string
+    title: Icons shown
+    default: notable
+    enum: [notable, all, changed]
+    x-enumLabels:
+      notable: What's unusual
+      all: Every one picked
+      changed: Only the one that changed
+    description: What's unusual shows only states out of the ordinary, plus the one that changed.
+  cardsEnabled:
+    x-group: Timing and behaviour
+    type: boolean
+    title: Show cards
+    default: true
+    description: Off, statuses show as icons, and the rest as notifications.
+  cardTimeout:
+    x-group: Timing and behaviour
+    type: integer
+    title: Card timeout
+    x-unit: ms
+    default: 4000
+    minimum: 1000
+    maximum: 15000
+    x-showIf: {cardsEnabled: true}
+    description: How long a card stays out. Hovering keeps it out.
+  systems:
+    type: array
+    title: Shows
+    description: What the OSD shows, in order (its icons' and its bars' order). A change to one opens the OSD, unless it's quiet.
+    default:
+      - {type: Audio}
+      - {type: LockKeys}
+      - {type: KeyboardLayout}
+      - {type: Dnd}
+      - {type: Caffeine}
+      - {type: NightLight}
+      - {type: Recording}
+      - {type: Drives}
+      - {type: Message}
+    items: {$ref: '#/definitions/OSDSystem'}
+  barOrder:
+    type: array
+    title: Bar order
+    x-settings: false
+    default: []
+    items: {type: string}
+    description: The bars' order, by key ("<System>/<its bar key>", e.g. Audio/master, Audio/app:<id>, Brightness/brightness), set by dragging them in the Bars part. Bars it doesn't name follow in their systems' order; empty, all do.
 required: [id]

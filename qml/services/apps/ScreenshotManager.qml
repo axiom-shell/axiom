@@ -351,15 +351,15 @@ QtObject {
     root._sayTaken(path);
   }
 
-  // A screenshot taken, where the OSD's `screenshot` status or
-  // Screenshots.notify puts it (NotificationManager.announce): its card
+  // A screenshot taken, where the OSD's Screenshot system (its
+  // `screenshot` key) or Screenshots.notify puts it (NotificationManager.announce): its card
   // (lastShot), or a notification (a click opens it; with an annotator an
   // "Edit in …" button, live until the notification closes), or nothing
   function _sayTaken(path) {
     const summary = I18n.tr("Screenshot saved");
     const body = root.copyOnly ? I18n.tr("Copied to the clipboard.") : I18n.tr("Copied to the clipboard. Click to open it.");
     // One entry: the last screenshot's
-    const route = NotificationManager.announce("screenshot", Screenshots.notify, summary, body, {
+    const route = NotificationManager.announce("Screenshot", "screenshot", Screenshots.notify, summary, body, {
       "desktopEntry": root._desktopEntry,
       "key": "screenshot",
       "icon": path,
@@ -385,7 +385,8 @@ QtObject {
     };
   }
 
-  // The last screenshot taken, for the OSD's `screenshot` status: { path,
+  // The last screenshot taken, for the OSD's Screenshot system (its
+  // `screenshot` key): { path,
   // title (what happened, translated), folder (where it was saved, ""
   // when only copied), serial }, else null. Set only when the OSD says it
   // (_sayTaken)

@@ -342,15 +342,15 @@ Singleton {
     });
   }
 
-  // An event of an OSD status type (`type`: "drive", "battery",
-  // "monitor", "screenshot") said where OSDConfig.routeOf puts it, with
-  // `notify` its section's switch: on an OSD listing it (the caller shows
+  // An event of the OSD system `system` and its key `key` ("Drives",
+  // "drive") said where OSDConfig.routeOf puts it, with `notify` its
+  // section's switch: on an OSD listing it (the caller shows
   // its card; filed here without a popup with OSD.cardsToHistory), else
   // as a notification, else nowhere. An urgent one (opts.urgency
   // "critical": a critical battery) pops up beside its card too, unless
   // `notify` is off. Returns the route ("osd", "notification" or "")
-  function announce(type, notify, summary, body, opts) {
-    const route = OSDConfig.routeOf(type, notify);
+  function announce(system, key, notify, summary, body, opts) {
+    const route = OSDConfig.routeOf(system, key, notify);
     if (route === "notification" || (route === "osd" && notify && opts?.urgency === "critical"))
       root.sendNotification("axiom", summary, body, opts);
     else if (route === "osd" && OSDConfig.cardsToHistory)

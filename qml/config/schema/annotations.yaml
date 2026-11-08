@@ -8,6 +8,7 @@ x-allScreens: adds All monitors (`"*"`) to a `"screens"` picker.
 x-applyOnSave: keeps a setting in the draft until Save instead of applying it live (Hyprland's `mode`, which can take over files).
 x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value, start }`); a `null` value passes validation, as an inheriting one does.'
 x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
+x-barNames: 'an OSD system''s bars, edited in the settings'' Bars part and naming an OSD''s tab (`OSDConfig.barRows`, `labelOf`), and their keys in its `exposes` (`OSDParts.barKey`, what an OSD''s `barOrder` names): `{ bar }`, it is one bar of that key, named by its own label; `{ from, by, named, repeats, keys, barOnly }`, each entry of its setting `from` is a bar (with an `id`), named by its `named` list joined, else its `by` field''s `x-enumLabels` (its `x-enumIcons` the row''s icon), keyed by its kind, else what `keys` names for that kind, `repeats` the kinds it may have more than one bar of (keyed `<kind>:<its id>`; the Bars picker offers the others only while it has none), `barOnly` the settings an item added only for a bar starts with (and is removed with as its last bar goes).'
 x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
 x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
 x-canvasFill: a color property the layouts editor fills a module's tile with (`OverlayConfig`).
@@ -22,14 +23,13 @@ x-disabledNote: the note instead (English, translated); `false` for none, where 
 x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): its host sizes it elastic (its QML sets no sizePolicy) and only it takes a layout `minSize` and `maxSize`.'
 x-emptyLabel: offers or renames the empty value under that label.
 x-enabledIf: as `x-showIf`, but a field whose condition fails stays shown, greyed out, its value kept and not editable (`SchemaField.allowed`), with why above its description.
-x-enumFrom: on an array of enum strings, offers only the options a sibling array (named) holds (an OSD's quiet statuses, from the ones it shows).
 x-enumGroups: '`{ value: group }`: on an ordered array of enum strings (`x-ordered`), files each option under a group in the list of those not chosen.'
-x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip.'
+x-enumIcons: '`{ value: icon }`: a Material Symbols icon on each enum option''s chip (an OSD bar''s kind: its row in the Bars part).'
 x-enumLabels: '`{ value: label }`: labels shown instead of raw enum values in dropdowns.'
 x-enumShowIf: '`{ value: condition }`: hides enum options whose condition doesn''t hold.'
 x-fold: 'a nested object whose rows fold behind its title on its settings card, closed until opened (`SettingsField`; the Keyboard card''s Input method options).'
 x-greeter: the greeter's compositor takes it (`methods/GreeterBundle`).
-x-group: puts a field on a card of that name.
+x-group: puts a field on a card of that name, or an object editor's or `EntryListCard`'s fold of that name (`SchemaLayout.objectGroups`).
 x-hintedIf: 'as `x-enabledIf` for a compositor condition, but a field whose condition fails is hidden, unless every failing key is a `/$supports.<capability>` the backend names an upgrade for (`CompositorManager.unsupportedHint`, SwayFX on sway): then it''s greyed out with that note.'
 x-hookup: how the integration hooks into its app (targets, place, text).
 x-hookupNote: a note shown with it.
@@ -39,8 +39,8 @@ x-inherit: 'a setting that may be null, and is by default, meaning the value at 
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
 x-keyboard: the module takes typing.
 x-keywords: more words a bar widget type is found by in the bar editor's library (`LibraryOrder.filtered`), such as its old label.
-x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget or overlay module type is sorted into.
-x-libraryGroups: "(root) the groups, in order, the bar editor's and layouts editor's libraries sort their types into."
+x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget, overlay module or OSD system type is sorted into.
+x-libraryGroups: "(root) the groups, in order, the bar editor's, layouts editor's and OSD editor's libraries sort their types into."
 x-link: where something it follows or names is set, drawn as a `SettingsLink` under the field in every form (`FieldLinks`), or in the bar widget / module inspector for a definition.
 x-links: 'pages its category''s header links to: a view type (`Themes`, `BarEditor`), `Layouts`, or the layouts editor on a screen (`Layouts:lockscreen`, `Layouts:greeter`, `Layouts:desktop`).'
 x-lockActions: 'what an overlay module does on the lock screen: `session`, `media`, `volume`, `layout`, `unlock` (`check_structure` fails any other service call there but a read).'
