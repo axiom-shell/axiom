@@ -57,14 +57,13 @@ QtObject {
     return mark !== key && state?.[mark] !== undefined ? root.tileOf(def, mark, state[mark]) : null;
   }
 
-  // `key`'s tile from its state: { icon, label, tone, on, slash, notable,
-  // hidden } and whatever else the definition's tile() adds; the icon
+  // `key`'s tile from its state: { icon, label, on, slash, notable, hidden }
+  // and whatever else the definition's tile() adds; the icon
   // `exposes`' unless it gives one
   function tileOf(def, key, state) {
     const t = {
       "icon": root.entryOf(def, key).icon ?? "",
       "label": "",
-      "tone": "",
       "on": false,
       "slash": false,
       "notable": false,
@@ -332,8 +331,8 @@ QtObject {
         return counts("add") ? ["add", pick("onAdd"), extra] : null;
       if (removed.length === 0 || !counts("remove"))
         return null;
-      // The last of an owner leaving while it stays on another key of
-      // its group
+      // The set's last member leaving (none left) while its owner stays
+      // on another key of its group
       const gone = root._owners(def, (before?.members ?? []).filter(m => removed.includes(m.id)));
       const kept = sets.left.length === 0 ? (root._partners(def, key, gone, c.after)[0] ?? "") : "";
       return root._removal(def, key, c, sets.left.length > 0, kept, extra);
@@ -498,7 +497,7 @@ QtObject {
   // What a change does to what's shown, `elapsed` ms after `shown` came.
   // Both are whole judged changes (judge()'s: key, part, kind, card
   // (bool), still, unexpected, alert, added, removed, left, …) with their
-  // `system` and `tile` (that key's tile now); `defs` the definitions by
+  // `system` and `tile` (that key's tile as the change came); `defs` the definitions by
   // system. Their sameChange() and absorbs() read any of it (Privacy's
   // `still`). Against a card out (`shown.card`): a card
   // "replace"s it or "keep"s it (the same change: the first card says

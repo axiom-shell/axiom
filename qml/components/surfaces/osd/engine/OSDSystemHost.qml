@@ -53,13 +53,10 @@ Item {
     return root.definition ? root.definition.actionOf(key, root.snapshot[key]) : null;
   }
 
-  // A click on its card: the definition's action id, which the caller
-  // runs (ActionsManager.run), or "" once the watcher has acted on it
+  // A click on its card: its watcher acts on it (a drive's opens it)
   function activate(what) {
-    const id = root.definition ? root.definition.activate(what) : "";
-    if (id === "" && root.watch)
+    if (root.watch)
       root.watch.activate(what);
-    return id;
   }
 
   // Loaded once, as it's built: a type change rebuilds the host; an edit
@@ -75,14 +72,6 @@ Item {
       root.definition.options = root.options;
     if (root.watch)
       root.watch.options = root.options;
-  }
-  onScreenChanged: {
-    if (root.watch)
-      root.watch.screen = root.screen;
-  }
-  onOsdIdChanged: {
-    if (root.watch)
-      root.watch.osdId = root.osdId;
   }
   Component.onCompleted: root._load()
 

@@ -149,6 +149,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-08, while reviewing the OSD engine branch
 
+### An OSD tile pops in on its own easing curve
+- **Where:** `qml/components/surfaces/osd/design/OSDTile.qml` (`pop`)
+- **What:** The tile's pop as it becomes the change runs `Appearance.animNormal` with `Easing.OutBack`, neither `Appearance.easing` nor marked `// behaviour timing: <reason>`, which AGENTS.md › Animation asks of a `duration:` (`check_structure` checks only the duration). Moved unchanged from the old `OSDStatusRow`. Fix: `Appearance.easing`, or keep the overshoot and mark it with its reason (a look choice).
+- **Size:** trivial
+- **Found:** 2026-11-08, while reviewing the OSD engine branch
+
 ## Overlay, modules and custom widgets
 
 ### A custom element sees another kind's element as its slot changes kind

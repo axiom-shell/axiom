@@ -5,14 +5,14 @@ import qs.config
 import qs.components.reusable
 
 // One OSD level bar: a system's bar (an `exposes` entry with part "bar")
-// drawn from its state ({ level, muted, icon, available }). An entry
-// naming a `design` is drawn by that file of its system's folder
-// (Paths.osdDesignUrl: "<Type>/design/<File>", loaded by URL and kept handed
-// its `entry`, `orientation` and `showPercent`: Audio's VolumeBar, which
-// reads and sets its service itself); else a StyledVolumeBar, its drag
-// and scroll and its icon's click handed to the watcher (setLevel,
-// iconClicked). Left out while its state isn't `available` (Brightness
-// on a monitor with no controller) or, without a design, has no level.
+// drawn from its state ({ level, icon, available }). An entry naming a
+// `design` is drawn by that file of its system's folder
+// (Paths.osdDesignUrl: "<Type>/design/<File>", loaded by URL and kept
+// handed its `system`, `entry`, `orientation` and `showPercent`: Audio's
+// VolumeBar, which reads and sets its service itself); else a
+// StyledVolumeBar, its drag and scroll handed to the watcher (setLevel).
+// Left out while its state isn't `available` (Brightness on a monitor
+// with no controller) or, without a design, has no level.
 Item {
   id: root
 
@@ -21,9 +21,6 @@ Item {
   property var system: null
   property var entry: ({})
   readonly property var levelState: root.system?.snapshot?.[root.entry.key]
-  // The system's item ({ type, …its settings }) and the OSD's screen
-  readonly property var options: root.system?.options ?? ({})
-  readonly property var screen: root.system?.screen ?? null
   // The OSD's own settings: bars run vertically, levels shown as numbers
   property bool vertical: true
   property bool showPercent: true
@@ -43,6 +40,12 @@ Item {
     id: designLoader
     anchors.fill: parent
     source: root._designUrl
+  }
+  Binding {
+    target: designLoader.item
+    property: "system"
+    value: root.system
+    when: designLoader.item !== null
   }
   Binding {
     target: designLoader.item
@@ -71,11 +74,7 @@ Item {
     showPercent: root.showPercent
     scrollStep: OSDConfig.scrollStep
     volumeLevel: root.levelState?.level ?? 0
-    isMuted: root.levelState?.muted === true
     iconSource: root.levelState?.icon || root.entry.icon || ""
-    iconClickable: root.levelState?.muted !== undefined
-    iconTip: root.levelState?.muted === true ? I18n.tr("Unmute") : I18n.tr("Mute")
     onVolumeChanged: newVolume => root.system?.watch?.setLevel(root.entry.key, newVolume)
-    onIconClicked: root.system?.watch?.iconClicked(root.entry.key)
   }
 }

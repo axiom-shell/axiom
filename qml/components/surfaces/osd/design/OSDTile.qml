@@ -15,7 +15,7 @@ import qs.components.reusable
 Rectangle {
   id: tile
 
-  // Its tile (OSDEngine.tileOf's): { icon, label, tone, on, slash, name,
+  // Its tile (OSDEngine.tileOf's): { icon, label, on, slash, name,
   // nameOnly, … }
   property var t: ({})
   // Its name, English (its `exposes` entry's label), translated here

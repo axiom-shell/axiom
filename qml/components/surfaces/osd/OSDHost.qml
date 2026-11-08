@@ -71,6 +71,12 @@ Item {
   // every system, deaf while it settles; the string changes only with the
   // list's types. Each one's own settings reach it in place
   readonly property string _systemsKey: root.osd.systems.map(item => item.type).join(",")
+  // The card out folds back with its system taken off the list (not as
+  // its host goes: any change to the types rebuilds every host)
+  on_SystemsKeyChanged: {
+    if (root._cardChange && !root.osd.systems.some(item => item.type === root._cardChange.system))
+      root._closePart("card");
+  }
   // The OSDSystemHosts, in the list's order, as they're built
   property var _hosts: []
   function _register(host, add) {
@@ -647,7 +653,10 @@ Item {
     if (!force && !root.hostOpen)
       return;
     const now = Date.now();
-    if (root._queued("card", force, {
+    // A card already waiting for the close is judged as the card out
+    // would be: kept ("keep"), the new one queues no card of its own
+    const keepQueued = root._closing && root._pending?.card && OSDEngine.arbitrate(root._pending.card, incoming, now - root._pending.cardAt, root._defs) === "keep";
+    if (root._queued("card", force, keepQueued ? null : {
       "card": incoming,
       "cardAt": now
     })) {
@@ -725,14 +734,11 @@ Item {
     });
   }
 
-  // A click on a card that takes one: its system's action, or its
-  // watcher acts on it (a drive's opens it)
+  // A click on a card that takes one: its system's watcher acts on it (a
+  // drive's opens it)
   function _activateCard() {
-    if (!root._cardHost || !root._cardChange)
-      return;
-    const id = root._cardHost.activate(root._cardChange);
-    if (id !== "")
-      ActionsManager.run(id);
+    if (root._cardHost && root._cardChange)
+      root._cardHost.activate(root._cardChange);
   }
 
   // The settings page's Show: the bars and the status icons as they are

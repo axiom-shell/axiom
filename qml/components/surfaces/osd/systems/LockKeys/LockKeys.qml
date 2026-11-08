@@ -27,13 +27,6 @@ OSDSystem {
       "part": "tile"
     }, _keys[key]))
 
-  // state: { available (LEDs read), value (the LED on) }
-  function tile(key, state) {
-    const on = state?.value === true;
-    return {
-      "on": on,
-      "notable": on,
-      "hidden": state?.available !== true
-    };
-  }
+  // state: { available (LEDs read), value (the LED on) }: the default
+  // tile, hidden while no LEDs are read
 }

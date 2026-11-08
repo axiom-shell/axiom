@@ -22,7 +22,12 @@ QtObject {
   // own settings }], an OSDSystem each). Goes through a string so a
   // reload that leaves the list unchanged doesn't rebuild the OSDs.
   readonly property string _osdsJson: JSON.stringify(_c.items)
-  readonly property var osds: JSON.parse(_osdsJson)
+  // A type listed twice (only by hand: the schema can't say unique) keeps
+  // its first item, as the editor's list does (OSDSystemsEditor.systems):
+  // the host keys its systems by type alone
+  readonly property var osds: JSON.parse(_osdsJson).map(osd => Object.assign(osd, {
+      "systems": osd.systems.filter((item, i) => osd.systems.findIndex(other => other.type === item.type) === i)
+    }))
   // The enabled ones, by id: what the shell builds
   readonly property var shownIds: osds.filter(osd => osd.enabled).map(osd => osd.id)
   // The streams the App bars of every OSD's Audio match, which the Other

@@ -305,7 +305,6 @@ TestCase {
     }), {
       "icon": "coffee",
       "label": "",
-      "tone": "",
       "on": true,
       "slash": false,
       "notable": true,

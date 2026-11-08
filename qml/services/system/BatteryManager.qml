@@ -94,8 +94,8 @@ QtObject {
       root._sayLevel(level);
   }
 
-  // The battery dropping to `level`, where the OSD's `battery` status or
-  // Battery.notify puts it (NotificationManager.announce): its card
+  // The battery dropping to `level`, where the OSD's Battery system (its
+  // `battery` key) or Battery.notify puts it (NotificationManager.announce): its card
   // (levelEvent), a notification, or nothing; a critical one is urgent and
   // notifies beside its card too
   function _sayLevel(level) {
@@ -116,8 +116,8 @@ QtObject {
     };
   }
 
-  // The last drop to low or critical, for the OSD's `battery` status:
-  // { level: "low" | "critical", serial }, else null. Set only when the
+  // The last drop to low or critical, for the OSD's Battery system (its
+  // `battery` key): { level: "low" | "critical", serial }, else null. Set only when the
   // OSD says it (_sayLevel)
   property var levelEvent: null
   property int _levelSerial: 0

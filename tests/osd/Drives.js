@@ -14,9 +14,9 @@
 //          "removed" | "pulled" | "busy" | "ejectFailed", driveId, name,
 //          mountPoint, serial }, or null), seq }
 //
-// decided: Drives' activate(change) returns "" (the watcher's own
-//   activate runs DrivesManager.activate(lastEvent)): not expressible as
-//   rows; the card's `clickable` is.
+// decided: a click on its card goes to the watcher's activate
+//   (DrivesManager.activate(lastEvent)): not expressible as rows; the
+//   card's `clickable` is.
 
 function d(count, kind, name, mountPoint, seq) {
   return { "available": true, "count": count, "event": kind ? { "kind": kind, "driveId": "sdb1", "name": name || "STICK", "mountPoint": mountPoint || "", "serial": seq } : null, "seq": seq || 0 };

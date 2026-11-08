@@ -68,7 +68,9 @@ OSDSystem {
         "role": s.full === true ? "Fully charged" : s.charging === true ? "Charging" : "Plugged in",
         "detail": s.full === true ? "" : (s.untilFull ?? "")
       };
-    const critical = s.level === "critical";
+    // The drop it says (the event's), not the level now, which turns
+    // "none" as the charger goes in under a card shown
+    const critical = s.event?.level === "critical";
     return {
       "title": `${s.percent ?? 0}%`,
       "role": critical ? "Battery critically low" : "Battery low",

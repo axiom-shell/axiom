@@ -29,7 +29,9 @@ ColumnLayout {
   signal edited(var systems)
 
   readonly property var listSchema: ConfigManager.configSchema.definitions.OSDEntry.properties.systems
-  readonly property var systems: root.entry?.systems ?? []
+  // A type listed twice (by hand) keeps its first item, as OSDConfig.osds
+  // does, so an edit writes the list back without the second
+  readonly property var systems: (root.entry?.systems ?? []).filter((item, i, all) => all.findIndex(other => other.type === item.type) === i)
   readonly property var typeInfo: OSDConfig.systemTypes.reduce((out, info) => {
     out[info.type] = info;
     return out;

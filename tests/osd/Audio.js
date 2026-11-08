@@ -247,7 +247,7 @@ var rows = [
       { "at": 0, "state": start() },
       { "at": 3000, "settled": false, "state": { "audio": audioBox, "master": { "level": 0.3, "muted": false } },
         "expect": { "key": "audio", "show": "card", "kind": "change",
-          "tile": { "icon": "speaker", "on": true, "slash": false, "notable": false, "hidden": false, "device": "60" },
+          "tile": { "icon": "speaker", "on": true, "slash": false, "notable": false, "hidden": false },
           "card": { "icon": "speaker", "title": "AudioBox Go", "role": "Output", "detail": "Analog Stereo", "tone": "", "clickable": false },
           "host": "open" } }
     ]

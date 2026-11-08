@@ -102,8 +102,6 @@ OSDSystem {
     const muted = state?.muted === true;
     const out = {
       "name": state?.name ?? "",
-      "detail": state?.detail ?? "",
-      "device": state?.value ?? "",
       "address": state?.address ?? "",
       "on": !muted,
       "slash": muted,

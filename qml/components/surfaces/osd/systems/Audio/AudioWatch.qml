@@ -19,11 +19,16 @@ OSDWatch {
   readonly property var _source: AudioManager.defaultSource
 
   // A stream bar's streams (AudioManager.matchStreams: an App bar's apps,
-  // or Other apps' first stream no App bar of any OSD matches): the first
-  // one's level and mute, which it shows, the set of them (`streams`,
-  // resetBy) and every one's level (`levels`: a change on any of them)
+  // or Other apps' first stream no App bar of any OSD matches); its
+  // design (VolumeBar) reads them here too
+  function streamsOf(bar) {
+    return AudioManager.matchStreams(bar.type === "app" ? (bar.apps ?? []) : [], bar.type === "other", bar.type === "other" ? OSDConfig.excludedApps : []);
+  }
+  // Its state: the first one's level and mute, which it shows, the set of
+  // them (`streams`, resetBy) and every one's level (`levels`: a change on
+  // any of them)
   function _streams(bar) {
-    const nodes = AudioManager.matchStreams(bar.type === "app" ? bar.apps : [], bar.type === "other", bar.type === "other" ? OSDConfig.excludedApps : []);
+    const nodes = root.streamsOf(bar);
     const first = nodes[0] ?? null;
     return {
       "level": first ? first.audio.volume : 0,

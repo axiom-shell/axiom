@@ -139,6 +139,16 @@ var rows = [
     ]
   },
   {
+    "name": "a critical drop's card says critical though the level reads none (plugged in under it)",
+    "options": opts,
+    "steps": [
+      { "at": 0, "state": { "charger": ch(false), "battery": bat("low", 8, "", { "level": "low", "serial": 1 }, 1) } },
+      { "at": 3000, "state": { "battery": bat("none", 6, "", { "level": "critical", "serial": 2 }, 2) },
+        "expect": { "key": "battery", "show": "card",
+          "card": { "title": "6%", "role": "Battery critically low", "tone": "warning" } } }
+    ]
+  },
+  {
     "name": "the level changing without an event (never at the start, nor rising): nothing",
     "options": opts,
     "steps": [

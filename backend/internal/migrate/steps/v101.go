@@ -50,7 +50,8 @@ var (
 //     `timeout` to `cardsEnabled` / `cardTimeout`;
 //   - the items come in order, each system once, where its first type
 //     was: the bars' first (Audio's master / other / app / microphone
-//     bars, keeping their apps, icon and showOsd; Brightness's
+//     bars, keeping their apps, icon and showOsd, one of each kind but
+//     App: a second is dropped, and said; Brightness's
 //     allMonitors and icon, the first brightness bar's: its showOsd off
 //     is its item's quiet, the one key it has), then
 //     the status icons' (lock keys one LockKeys with its `keys`; audio

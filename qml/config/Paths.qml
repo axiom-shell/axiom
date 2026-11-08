@@ -126,7 +126,7 @@ QtObject {
     return "file://" + root.axiomPath + "components/views/" + type + "/" + type + ".qml";
   }
   // An OSD system's definition (systems/<Type>/<Type>.qml); a name with a
-  // slash names another file in its folder ("Audio/design/AudioBar")
+  // slash names another file in its folder ("Audio/design/VolumeBar")
   function osdSystemUrl(name) {
     const file = String(name).includes("/") ? name : name + "/" + name;
     return "file://" + root.axiomPath + "components/surfaces/osd/systems/" + file + ".qml";

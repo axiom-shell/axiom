@@ -3,8 +3,8 @@ import QtQuick
 
 // The OSD's parts (the bars, the status icons, a card; surfaces/osd):
 // which tiles the row shows, the parts' order out from the edge, their
-// shared deadlines and which close together. Moved unchanged from
-// OSDItems (docs/dev/features/osd.md › Engine).
+// shared deadlines and which close together (docs/dev/features/osd.md ›
+// Engine).
 QtObject {
   id: root
 

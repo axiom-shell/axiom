@@ -20,6 +20,9 @@ Item {
   // Its `exposes` entry ({ key, icon, bar: its item in Audio's `bars`:
   // { type, apps, icon, showOsd } })
   property var entry: ({})
+  // Its system (an OSDSystemHost: its watcher matches a stream bar's
+  // streams, AudioWatch.streamsOf)
+  property var system: null
   // The OSD's bar layout: bars run vertically, levels shown as numbers
   property int orientation: Qt.Vertical
   property bool showPercent: true
@@ -33,7 +36,7 @@ Item {
   // one (a binding: matchStreams reads every stream's ready, volumes and
   // properties, so it follows streams coming, going and binding; each one
   // it returns is bound, its volume in)
-  readonly property var _nodes: root.isStreams ? AudioManager.matchStreams(root.type === "app" ? (root.entry.bar.apps ?? []) : [], root.type === "other", root.type === "other" ? OSDConfig.excludedApps : []) : []
+  readonly property var _nodes: root.isStreams && root.system?.watch ? root.system.watch.streamsOf(root.entry.bar) : []
   readonly property var _node: root._nodes.length > 0 ? root._nodes[0] : null
   readonly property bool _found: root._node !== null
 

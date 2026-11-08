@@ -44,8 +44,8 @@ QtObject {
     return true;
   }
 
-  // A click on its card (a change the definition's activate() hands back
-  // with ""): acts on what it says (a drive's opens it)
+  // A click on its card (a key that's `clickable`): acts on what it says
+  // (a drive's opens it)
   function activate(change) {
   }
 
@@ -55,11 +55,8 @@ QtObject {
   }
 
   // A bar without a design of its own (OSDLevelBar's StyledVolumeBar)
-  // dragged or scrolled to `level` (0-1), or its icon clicked (shown
-  // clickable while its state has `muted`): sets it in its service
+  // dragged or scrolled to `level` (0-1): sets it in its service
   function setLevel(key, level) {
-  }
-  function iconClicked(key) {
   }
 
   // What shows for a change: OSDEngine.judge's, with { system }
