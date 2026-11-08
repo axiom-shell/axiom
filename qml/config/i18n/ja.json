@@ -4146,6 +4146,18 @@
     "A screen's part of the screenshot never arrived.": "",
     "Caffeine is keeping the screen on: the steps below wait until it's turned off.": "",
     "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
-    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": ""
+    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
+    "Files (~)": "",
+    "Index files and folders whose name starts with a dot. Typing a dot finds them either way while browsing.": "",
+    "Show pictures as thumbnails, shared with your file manager's.": "",
+    "Hidden files": "",
+    "Files in the main search": "",
+    "Folders searched": "",
+    "Skipped names": "",
+    "The best matching files shown below the apps. 0 shows them only after ~.": "",
+    "Type ~ to search your files, ~/ to browse folders. axiom keeps its own index of the folders below, built in the background at idle priority.": "",
+    "Folders indexed with everything below them, comma-separated.": "",
+    "Names or paths below a folder searched, comma-separated; * matches any text.": "",
+    "Image thumbnails": ""
   }
 }
