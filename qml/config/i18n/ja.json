@@ -1471,7 +1471,6 @@
     "Palette": "パレット",
     "Saved configurations": "保存済みの設定",
     "Screen & Power": "画面と電源",
-    "Dock & OSD": "ドックとOSD",
     "Overlay & Popouts": "オーバーレイとポップアウト",
     "Password field border": "パスワード欄の枠",
     "Greeting border": "挨拶の枠",
@@ -2852,7 +2851,6 @@
     "Airplane mode": "",
     "Charger": "",
     "Kind": "",
-    "Place and timing": "",
     "Scroll lock": "",
     "What's unusual": "",
     "Icons shown": "",
@@ -4111,6 +4109,14 @@
     "Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).": "",
     "Device battery notifications": "",
     "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).": "",
-    "In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.": ""
+    "Its bars are set under Bars, below.": "",
+    "Keep this OSD open while you edit it, the selected system outlined": "",
+    "Every bar this OSD shows, in order, and how they're laid out.": "",
+    "Hidden: its system's bars are switched off": "",
+    "No bars yet: add one to show a level.": "",
+    "In order, one bar per kind but App; edited in the OSD's Bars part. Other apps is the first playing stream no App bar matches.": "",
+    "The bars' order, by key (\"<System>/<its bar key>\", e.g. Audio/master, Audio/app:<id>, Brightness/brightness), set by dragging them in the Bars part. Bars it doesn't name follow in their systems' order; empty, all do.": "",
+    "Bar order": "",
+    "Timing and behaviour": ""
   }
 }

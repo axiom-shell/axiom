@@ -8,8 +8,8 @@
 //                      input's; `node` its node's id once its volume is in
 //                      (AudioManager.volumeKnown), else "": resetBy, so a
 //                      switch or the volume arriving isn't a level
-//   other, app:<i>     { level, muted, streams }: the first stream no App bar
-//                      matches / the streams bar <i> of `bars` matches;
+//   other, app:<id>    { level, muted, streams }: the first stream no App bar
+//                      matches / the streams the App bar of that id matches;
 //                      `streams` their node ids joined ("61,74"), so the set
 //                      changing tells itself from a level changing; a
 //                      stream joins it only once its volume is in
@@ -30,7 +30,7 @@
 //
 // decided: the microphone's bar is the key `micLevel` (its mark
 //   "microphone"), since the input device's tile keeps `microphone`; an App
-//   bar is `app:<its index in bars>` (several may be listed); the rest keep
+//   bar is `app:<its id>` (several may be listed); the rest keep
 //   their type. Keys must be unique in `exposes`.
 // decided: `exposes` lists the bars in `bars` order, then the tiles in
 //   `tiles` order (the order a step's changes come in).
@@ -199,13 +199,13 @@ var rows = [
     ]
   },
   {
-    "name": "an App bar: its streams' level, keyed by its place in bars",
-    "options": { "bars": [{ "type": "master" }, { "type": "app", "apps": ["firefox"] }], "tiles": ["audio", "microphone"] },
+    "name": "an App bar: its streams' level, keyed by its id",
+    "options": { "bars": [{ "id": "master", "type": "master" }, { "id": "fx", "type": "app", "apps": ["firefox"] }], "tiles": ["audio", "microphone"] },
     "steps": [
-      { "at": 0, "state": start({ "app:1": { "level": 0.3, "muted": false, "streams": "88" } }) },
-      { "at": 3000, "state": { "app:1": { "level": 0.35, "muted": false, "streams": "88" } },
-        "expect": { "key": "app:1", "show": "level", "host": "open" } },
-      { "at": 6000, "state": { "app:1": { "level": 0.35, "muted": false, "streams": "88,90" } } }
+      { "at": 0, "state": start({ "app:fx": { "level": 0.3, "muted": false, "streams": "88" } }) },
+      { "at": 3000, "state": { "app:fx": { "level": 0.35, "muted": false, "streams": "88" } },
+        "expect": { "key": "app:fx", "show": "level", "host": "open" } },
+      { "at": 6000, "state": { "app:fx": { "level": 0.35, "muted": false, "streams": "88,90" } } }
     ]
   },
   {

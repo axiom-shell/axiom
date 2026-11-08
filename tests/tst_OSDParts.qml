@@ -2,7 +2,8 @@ import QtQuick
 import QtTest
 import qs.components.methods
 
-// OSDParts: the row, the parts' order and their deadlines
+// OSDParts: the bars' keys and order, the row, the parts' order and their
+// deadlines
 TestCase {
   name: "OSDParts"
 
@@ -13,6 +14,62 @@ TestCase {
       "notable": on,
       "hidden": hidden === true
     };
+  }
+
+  function test_barKey() {
+    const audio = {
+      "from": "bars",
+      "by": "type",
+      "repeats": ["app"],
+      "keys": {
+        "microphone": "micLevel"
+      }
+    };
+    compare(OSDParts.barKey(audio, {
+      "id": "master",
+      "type": "master"
+    }), "master", "its kind");
+    compare(OSDParts.barKey(audio, {
+      "id": "mic",
+      "type": "microphone"
+    }), "micLevel", "what keys names for its kind");
+    compare(OSDParts.barKey(audio, {
+      "id": "app-2",
+      "type": "app",
+      "apps": ["firefox"]
+    }), "app:app-2", "a kind it repeats: by its id");
+    compare(OSDParts.barKey({
+      "bar": "brightness"
+    }, {}), "brightness", "a one-bar system's own");
+    verify(OSDParts.oneBar({
+      "bar": "brightness"
+    }));
+    verify(!OSDParts.oneBar(audio));
+    verify(!OSDParts.oneBar(null));
+  }
+
+  // Bar entries by key, as the host and the editor hold them
+  function bars(keys) {
+    return keys.map(key => ({
+          "key": key
+        }));
+  }
+  function keysOf(entries) {
+    return entries.map(e => e.key);
+  }
+
+  function test_orderBars() {
+    const entries = bars(["Audio/other", "Audio/master", "Audio/app:a", "Brightness/brightness"]);
+    compare(keysOf(OSDParts.orderBars(entries, [])), ["Audio/other", "Audio/master", "Audio/app:a", "Brightness/brightness"], "no order: the systems' order");
+    compare(keysOf(OSDParts.orderBars(entries, undefined)), keysOf(entries), "none at all");
+    compare(keysOf(OSDParts.orderBars(entries, ["Audio/master", "Brightness/brightness", "Audio/other", "Audio/app:a"])), ["Audio/master", "Brightness/brightness", "Audio/other", "Audio/app:a"], "a full order, Brightness between Audio's bars");
+    compare(keysOf(OSDParts.orderBars(entries, ["Brightness/brightness", "Audio/master"])), ["Brightness/brightness", "Audio/master", "Audio/other", "Audio/app:a"], "a partial order: the rest after, in the systems' order");
+    compare(keysOf(OSDParts.orderBars(entries, ["Audio/app:gone", "Audio/master", "Vpn/x", "Audio/master"])), ["Audio/master", "Audio/other", "Audio/app:a", "Brightness/brightness"], "stale keys skipped, a repeat counted once");
+    const added = bars(["Audio/other", "Audio/master", "Audio/app:a", "Audio/app:b", "Brightness/brightness"]);
+    compare(keysOf(OSDParts.orderBars(added, ["Brightness/brightness", "Audio/app:a", "Audio/master", "Audio/other"])), ["Brightness/brightness", "Audio/app:a", "Audio/master", "Audio/other", "Audio/app:b"], "a new bar not in the order: appended");
+    compare(OSDParts.orderBars([], ["Audio/master"]), [], "no bars");
+    const same = OSDParts.orderBars(entries, ["Audio/master"]);
+    verify(same[0] === entries[1], "the entries themselves, not copies");
   }
 
   function test_rowTypes() {

@@ -30,9 +30,11 @@ import qs.components.surfaces.osd.design
 // (OSDParts.sharedDeadlines), a card keeping its own; when the last ones
 // end the OSD slides away whole, and what comes in meanwhile waits for it
 // to be gone. Opened from its edge it brings out the bars and the icons,
-// else the card a system offers as its preview (Now playing). Every part
-// is built while the OSD is closed, as its systems report their own
-// changes.
+// else the card a system offers as its preview (Now playing). Held open
+// by the settings page's Preview (ShellManager.osdPinned), its bars and
+// every icon stay out, the system selected there outlined
+// (ShellManager.osdFocus). Every part is built while the OSD is closed,
+// as its systems report their own changes.
 Item {
   id: root
 
@@ -54,6 +56,12 @@ Item {
   property bool hostOpen: false
   // Its host is open: each watcher's opened() picks up what nothing pushes
   property bool open: false
+  // The settings page holds it open as its preview: the bars and the
+  // icons wait, as under the pointer, and every icon shows
+  readonly property bool pinned: ShellManager.osdPinned === root.osd.id
+  // The system selected there while it's held (its type; "" for none):
+  // its icons and bars are outlined
+  readonly property string _focus: root.pinned ? ShellManager.osdFocus : ""
 
   // A system changed; `force` when it opens the OSD
   signal poked(bool force)
@@ -109,11 +117,19 @@ Item {
     return change.system + "/" + change.key;
   }
 
-  // The bars, in order: { system, entry } for each `exposes` bar
-  readonly property var _levelEntries: [].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => e.part === "bar").map(e => ({
+  // The bars, in the OSD's order: { key ("<type>/<key>"), system, entry }
+  // for each `exposes` bar, as its `barOrder` puts them (OSDParts.orderBars:
+  // those it names first, the rest in the systems' order)
+  readonly property var _levelEntries: OSDParts.orderBars([].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => e.part === "bar").map(e => ({
+          "key": host.type + "/" + e.key,
           "system": host,
           "entry": e
-        }))))
+        })))), root.osd.barOrder)
+  // Their keys in that order, one string: it changes only as a bar comes,
+  // goes or moves, so the bars' Repeater builds each one anew then, never
+  // handing one bar's delegate another system's (its design and watcher
+  // would meet midway: a VolumeBar given Brightness's watcher)
+  readonly property string _levelKeys: root._levelEntries.map(e => e.key).join("\n")
   // The tiles it may show, in order (ids), their English names, and each
   // one now (OSDEngine.tileOf's, the watchers')
   readonly property var _tileIds: [].concat(...root._shownHosts.map(host => host.definition.exposes.filter(e => OSDEngine.partOf(host.definition, e.key) === "tile").map(e => host.type + "/" + e.key)))
@@ -156,7 +172,7 @@ Item {
   readonly property var _keptNow: root.changed !== "" && !root._kept.includes(root.changed) ? root._kept.concat([root.changed]) : root._kept
   // The status icons shown (what's unusual, every one, or none, and what
   // was shown since they came out: OSDParts.rowTypes)
-  readonly property var rowTypes: OSDParts.rowTypes(root._tileIds, root.tiles, root._previewAll ? "all" : root.osd.row, root._keptNow)
+  readonly property var rowTypes: OSDParts.rowTypes(root._tileIds, root.tiles, root._previewAll || root.pinned ? "all" : root.osd.row, root._keptNow)
   // Keeps what the row shows while the icons are out: run as they open
   // and as a change rings (every change while they're out does), never
   // from a binding on the row, which it feeds. In every `row` mode: with
@@ -351,8 +367,11 @@ Item {
 
   // The pointer on the OSD holds the bars and the icons; the card only
   // while it's on the card itself (its time runs while the pointer is on
-  // the rest)
+  // the rest). Held open by the settings page, the bars and the icons
+  // wait the same way
   function _pointerHolds(part) {
+    if (root.pinned && part !== "card")
+      return true;
     return root.pointerIn && (part !== "card" || root.cardHovered);
   }
   // The deadlines of the parts not held
@@ -416,6 +435,37 @@ Item {
       root._renew(["card"]);
     root._schedule();
   }
+
+  // Held open by the settings page: the bars and every icon come out;
+  // let go, they get their time anew, as the pointer leaving gives them
+  // (every icon still shown until they close)
+  onPinnedChanged: {
+    if (root.pinned) {
+      root.preview();
+      return;
+    }
+    if (root._open.status === true)
+      root._previewAll = true;
+    root._renew(["level", "status"]);
+    root._schedule();
+  }
+  // Held open, a part a system added brings has it come out at once,
+  // opening the OSD if it had closed with nothing to hold (an OSD with no
+  // bars or icons when pinned, its first bar added)
+  function _holdPinned() {
+    if (!root.pinned || root._closing)
+      return;
+    const level = root._levelEntries.length > 0 && root._open.level !== true;
+    const status = root._tileIds.length > 0 && root._open.status !== true;
+    if (level)
+      root._openPart("level");
+    if (status)
+      root._openPart("status");
+    if ((level || status) && !root.hostOpen)
+      root.poked(true);
+  }
+  on_LevelEntriesChanged: root._holdPinned()
+  on_TileIdsChanged: root._holdPinned()
 
   // The bars and the icons (every icon when none would show, until they
   // close), else the card a system offers as its preview: it opening with
@@ -756,8 +806,9 @@ Item {
       rowSpacing: root.barSpacing
 
       Repeater {
-        // By count, so edits to a bar update it in place
-        model: root._levelEntries.length
+        // By the keys, so edits to a bar update it in place, and a bar
+        // moved is built anew where it lands
+        model: root._levelKeys === "" ? [] : root._levelKeys.split("\n")
 
         delegate: OSDLevelBar {
           id: levelBar
@@ -768,6 +819,7 @@ Item {
           entry: levelBar._at?.entry ?? ({})
           vertical: root.vertical
           showPercent: root.osd.barLayout.showPercent
+          highlight: root._focus !== "" && levelBar.system?.type === root._focus
           Layout.preferredWidth: root.vertical ? implicitWidth : root.barLength
           Layout.preferredHeight: root.vertical ? root.barLength : implicitHeight
         }
@@ -798,6 +850,7 @@ Item {
       tiles: root.tiles
       names: root._tileNames
       changed: root.changed
+      highlighted: root._focus === "" ? [] : root._tileIds.filter(id => id.startsWith(root._focus + "/"))
       vertical: root.edgeVertical
       toggleable: root.toggleable
       onToggled: id => root.toggle(id)

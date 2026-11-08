@@ -26,7 +26,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 - While its page is first being built: the nearest ancestor with a `buildStreaming` property (`BaseView`'s) says so when the loader is made. `BaseView.buildStreaming` is true from the page's creation until the queue first drains (or at once, if the page queued nothing).
 - Made later (a search narrowing a list, a tab switch, a selection), it builds at once like a plain Loader, so the page doesn't fade parts of itself in again while it's being used.
 - `always: true` streams whenever it's made: the settings cards (a category switch builds a whole category, a one-letter search most of the page).
-  - While it fills in (`streamsInside`, until the queue drains), the loaders inside it stream too: a settings card's form fields, and the fields of each row of its lists. Without this, a card switched to built all its fields in the frame it arrived: switching to Dock & OSD (two `EntryListCard`s, the OSD's bars a list of full forms) froze for 300-400 ms, now ~40 ms a frame.
+  - While it fills in (`streamsInside`, until the queue drains), the loaders inside it stream too: a settings card's form fields, and the fields of each row of its lists. Without this, a card switched to built all its fields in the frame it arrived: switching to Dock & OSD (then one category: two `EntryListCard`s, the OSD's bars a list of full forms) froze for 300-400 ms, now ~40 ms a frame.
 - With no `BaseView` above it (a bar popout, an edge menu), it always streams.
 - `stream: false`: never.
 

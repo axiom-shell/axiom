@@ -207,6 +207,9 @@ var all = []Step{
 	// `row`, the cards' switch and time `cardsEnabled` / `cardTimeout`
 	// (v101.go)
 	{Version: 101, Run: v101},
+	// v102: every bar of an OSD's Audio got a stable id, so an App bar is
+	// keyed by it and an OSD's barOrder can name it (v102.go)
+	{Version: 102, Run: v102},
 }
 
 // object is the object at path in cfg, nil when any part isn't one.

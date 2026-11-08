@@ -65,7 +65,7 @@ OSDWatch {
       "audio": root._device(root._sink, true),
       "microphone": root._device(root._source, false)
     };
-    (root.options.bars ?? []).forEach((bar, i) => {
+    (root.options.bars ?? []).forEach(bar => {
       if (bar.type === "master")
         out.master = {
           "level": AudioManager.volume,
@@ -79,7 +79,7 @@ OSDWatch {
           "node": root._node(root._source)
         };
       else
-        out[bar.type === "app" ? "app:" + i : bar.type] = root._streams(bar);
+        out[bar.type === "app" ? "app:" + bar.id : bar.type] = root._streams(bar);
     });
     return out;
   }

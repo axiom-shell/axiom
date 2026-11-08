@@ -2,7 +2,7 @@
 
 x-scope: look
 type: object
-x-category: Dock & OSD
+x-category: Dock
 x-card: {file: DockList, title: Docks, folds: true}
 title: Dock
 additionalProperties: false
