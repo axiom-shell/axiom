@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 import qs.services.system
 import qs.services.ui
 import qs.components.reusable
@@ -61,16 +62,21 @@ Item {
     onIconClicked: root.toggleMute()
   }
 
-  // Each set marked as the pointer's (its entry's mark, OSDEngine.markOf),
-  // so another OSD listing Audio stays shut
+  // Each set marked as the pointer's (OSDEngine.markOf), so another OSD
+  // listing Audio stays shut
   function setVolume(newVolume) {
-    ShellManager.onScreen(root.entry.mark ?? root.entry.key);
+    root._mark();
     if (root.isMaster)
       AudioManager.setVolume(newVolume);
     else if (root.isMic)
       AudioManager.setSourceVolume(newVolume);
     else
       AudioManager.setNodesVolume(root._nodes, newVolume);
+  }
+
+  function _mark() {
+    if (root.system?.definition)
+      ShellManager.onScreen(OSDEngine.markOf(root.system.definition, root.entry.key));
   }
 
   function toggleMute() {
@@ -83,7 +89,7 @@ Item {
         "fromScreen": true
       });
     else {
-      ShellManager.onScreen(root.entry.mark ?? root.entry.key);
+      root._mark();
       AudioManager.setNodesMuted(root._nodes, !root.muted);
     }
   }

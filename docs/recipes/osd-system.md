@@ -55,7 +55,8 @@ OSDWatch {
 label: Foo
 icon: toggle_on
 group: Power        # one of the OSD groups in index.yaml's x-libraryGroups
-tile: standard      # its tiles or bars: the item's `tile` switch
+tile: standard      # its tiles or bars: the item's `tile` switch, labelled "Icon"; a system with bars names it:
+#   tile: {variant: standard, tile: {title: Bar, description: Its bar in the OSD.}}  (as Brightness and Audio do)
 # card: standard    # cards beside its tiles: the item's `card` switch (a card-only system names no part)
 # settings:         # its own keys, each with a default; one only its tile uses: x-showIf: {tile: true}
 ```

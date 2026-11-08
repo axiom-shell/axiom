@@ -38,8 +38,8 @@
 //   Bluetooth's absorbs reads; the group's match reads the tile's `owners`.
 // decided: a device switch counts unsettled or not (`settledKinds`: only
 //   "update" and "level" need it; a switch is always unsettled: the new
-//   node binding), as the old watcher reported it whatever sinkSettled()
-//   said; a mute and a level count only while settled.
+//   node binding), whatever sinkSettled() says; a mute and a level count
+//   only while settled.
 
 var opts = {
   "bars": [{ "type": "other" }, { "type": "master" }, { "type": "microphone" }],

@@ -1108,8 +1108,7 @@ TestCase {
   }
 
   // An event's key against an item whose `tiles` pick what it shows (a
-  // low battery only where Battery shows its battery icon; was
-  // OSDConfig.routeOf's own filter)
+  // low battery only where Battery shows its battery icon)
   function test_opensCard_key() {
     const osd = tiles => ({
           "enabled": true,

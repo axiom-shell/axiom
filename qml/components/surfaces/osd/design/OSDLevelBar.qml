@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 import qs.services.ui
 import qs.components.reusable
 
@@ -76,10 +77,11 @@ Item {
     scrollStep: OSDConfig.scrollStep
     volumeLevel: root.levelState?.level ?? 0
     iconSource: root.levelState?.icon || root.entry.icon || ""
-    // marked as the pointer's (its entry's mark, OSDEngine.markOf), so
-    // another OSD listing the system stays shut
+    // marked as the pointer's (OSDEngine.markOf), so another OSD listing
+    // the system stays shut
     onVolumeChanged: newVolume => {
-      ShellManager.onScreen(root.entry.mark ?? root.entry.key);
+      if (root.system?.definition)
+        ShellManager.onScreen(OSDEngine.markOf(root.system.definition, root.entry.key));
       root.system?.watch?.setLevel(root.entry.key, newVolume);
     }
   }

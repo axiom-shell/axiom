@@ -194,6 +194,7 @@ Found along the way:
 - [The OSD's drive tooltip names the last drive an event came from, even one removed](issues.md#the-osds-drive-tooltip-names-the-last-drive-an-event-came-from-even-one-removed) (the same)
 - [The OSD's System volume bar stays enabled with no audio sink](issues.md#the-osds-system-volume-bar-stays-enabled-with-no-audio-sink) (the same)
 - [The OSD's Wi-Fi Connected card goes blank when the network drops while it's out](issues.md#the-osds-wi-fi-connected-card-goes-blank-when-the-network-drops-while-its-out) (the same)
+- [An OSD showing only Now playing opens an empty card from its hover strip or Show button when nothing plays](issues.md#an-osd-showing-only-now-playing-opens-an-empty-card-from-its-hover-strip-or-show-button-when-nothing-plays) (the same)
 - [A type library's search matches the "Other" heading of every ungrouped type](issues.md#a-type-librarys-search-matches-the-other-heading-of-every-ungrouped-type) (the same)
 
 #### The launch gate

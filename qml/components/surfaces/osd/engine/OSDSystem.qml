@@ -20,8 +20,9 @@ QtObject {
   // OSD (an Audio bar's showOsd off), `design` (its view of its own, a
   // file of its design/ folder: Paths.osdDesignUrl), `roles` (a set's
   // card made by the engine: { add, still, stopped }, OSDEngine.cardOf),
-  // and, overriding the system's own for this key, any of `model`, the
-  // policies, `updateFields`, `mark`, `userWindow`, `action`, `call`
+  // `mark` (the on-screen mark it's judged by, OSDEngine.markOf), `action`
+  // and `call` (actionOf) and, overriding the system's own for this key,
+  // any of `model`, the policies, `updateFields`, `userWindow`
   property var exposes: []
 
   // How its state is told apart: "scalar" ({ value, … }: added as it

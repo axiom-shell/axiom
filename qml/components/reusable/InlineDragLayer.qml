@@ -6,12 +6,9 @@ import qs.config
 // A DragLayer inside a form or card (SchemaOrderedChips' chips, the bind
 // editor's rows, an OSD's systems): it takes no room in its layout (only
 // the coordinate space, `z` above its siblings) and draws the carried
-// payload's `label` in an accent pill by the pointer. `draggingKind` is
-// the payload's `kind`, as the editors' layers name it.
+// payload's `label` in an accent pill by the pointer.
 DragLayer {
   id: root
-
-  readonly property string draggingKind: root.dragging?.kind ?? ""
 
   Layout.fillWidth: true
   Layout.preferredHeight: 0
