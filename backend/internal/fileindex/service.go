@@ -154,6 +154,11 @@ type Service struct {
 	stateMu sync.Mutex
 	state   State
 
+	// bonus is the use bonus by entry, resolved from the history at most
+	// every bonusEvery for an index (and again when the history changes)
+	bonusMu sync.Mutex
+	bonus   bonusCache
+
 	setMu    sync.Mutex
 	settings Settings
 	cfgCh    chan struct{}
@@ -229,7 +234,6 @@ func (s *Service) Query(q Query) Result {
 	signal(s.demandCh)
 	signal(s.freshCh)
 	out := Result{Items: []Item{}}
-	uses := s.hist.snapshot()
 	s.mu.RLock()
 	ix := s.ix
 	if ix == nil {
@@ -245,12 +249,7 @@ func (s *Service) Query(q Query) Result {
 		}
 	}
 	now := s.o.Now()
-	bonus := map[uint32]float64{}
-	for p, u := range uses {
-		if i, ok := ix.Find(p); ok {
-			bonus[i] = filesearch.UseBonus(filesearch.Frecency(u, now.UnixMilli()))
-		}
-	}
+	bonus := s.useBonus(ix, now)
 	hits, stale := ix.Search(filesearch.Query{
 		Pattern: filesearch.ParsePattern(q.Text), Under: under, Hidden: q.Hidden, Limit: q.Limit,
 		Now: now.UnixNano(), Bonus: bonus, Stale: q.Stale, Shards: runtime.GOMAXPROCS(0),
@@ -274,11 +273,43 @@ func (s *Service) Query(q Query) Result {
 	return out
 }
 
+// How long a resolved use bonus is kept
+const bonusEvery = 2 * time.Second
+
+type bonusCache struct {
+	ix      *filesearch.Index
+	version int
+	at      time.Time
+	byEntry map[uint32]float64
+}
+
+// useBonus is the history's use bonus by entry of ix (read-locked by the
+// caller): resolving a path is a lookup, so it's done again only every
+// bonusEvery, for another index (compacted, rebuilt) or a new use.
+func (s *Service) useBonus(ix *filesearch.Index, now time.Time) map[uint32]float64 {
+	uses, version := s.hist.snapshot()
+	s.bonusMu.Lock()
+	defer s.bonusMu.Unlock()
+	b := &s.bonus
+	if b.ix == ix && b.version == version && now.Sub(b.at) < bonusEvery {
+		return b.byEntry
+	}
+	byEntry := make(map[uint32]float64, len(uses))
+	for p, u := range uses {
+		if i, ok := ix.Find(p); ok {
+			byEntry[i] = filesearch.UseBonus(filesearch.Frecency(u, now.UnixMilli()))
+		}
+	}
+	*b = bonusCache{ix: ix, version: version, at: now, byEntry: byEntry}
+	return byEntry
+}
+
 // Recent are the recently used files that still exist, newest first:
 // recently-used.xbel's and the launcher's own.
 func (s *Service) Recent(limit int) []Item {
 	out := []Item{}
-	for _, r := range recent(s.o.XBEL, s.hist.snapshot()) {
+	uses, _ := s.hist.snapshot()
+	for _, r := range recent(s.o.XBEL, uses) {
 		if len(out) >= limit {
 			break
 		}
@@ -541,7 +572,7 @@ func (l *loop) load() {
 	if l.w != nil {
 		var watched []uint32
 		ix.EachDir(func(d uint32) {
-			if l.w.add(ix.Path(d)) {
+			if len(l.w.byPath) < l.w.budget && l.w.add(ix.Path(d)) {
 				watched = append(watched, d)
 			}
 		})

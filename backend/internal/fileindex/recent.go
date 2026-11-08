@@ -26,6 +26,8 @@ type history struct {
 	mu     sync.Mutex
 	loaded bool
 	uses   map[string]filesearch.Use
+	// version counts the changes
+	version int
 }
 
 type historyFile struct {
@@ -48,8 +50,8 @@ func (h *history) load() {
 	}
 }
 
-// snapshot is a copy of the records.
-func (h *history) snapshot() map[string]filesearch.Use {
+// snapshot is a copy of the records, and their version.
+func (h *history) snapshot() (map[string]filesearch.Use, int) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.load()
@@ -57,7 +59,7 @@ func (h *history) snapshot() map[string]filesearch.Use {
 	for k, v := range h.uses {
 		out[k] = v
 	}
-	return out
+	return out, h.version
 }
 
 // used records an opening of path and writes the file.
@@ -68,6 +70,7 @@ func (h *history) used(path string) error {
 	now := h.now().UnixMilli()
 	u := h.uses[path]
 	h.uses[path] = filesearch.Use{Count: u.Count + 1, Last: now}
+	h.version++
 	if len(h.uses) > historyCap {
 		type rec struct {
 			path string
