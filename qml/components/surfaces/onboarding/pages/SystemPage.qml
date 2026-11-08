@@ -121,6 +121,13 @@ OnboardingPage {
   }
 
   StyledText {
+    Layout.fillWidth: true
+    visible: !Idle.enabled
+    text: I18n.tr("Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.")
+    wrapMode: Text.WordWrap
+  }
+
+  StyledText {
     Layout.topMargin: Widget.spacing
     text: I18n.tr("Lock screen")
     font.bold: true

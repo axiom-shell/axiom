@@ -46,12 +46,14 @@ FieldGroup {
   readonly property string detail: {
     switch (root.status) {
     case "off":
-      return I18n.tr("axiom leaves idle to you: a daemon such as hypridle, if you run one.");
+      return I18n.tr("axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.");
     case "unsupported":
       return I18n.tr("The compositor doesn't tell axiom when you're idle (ext-idle-notify), so nothing happens when you step away.");
     case "unavailable":
       return I18n.tr("axiom's daemon isn't running this shell, so nothing watches for idle.");
     case "inhibited":
+      if (IdleManager.inhibitors.length > 0 && IdleManager.inhibitors.every(held => held.source === "caffeine"))
+        return I18n.tr("Caffeine is keeping the screen on: the steps below wait until it's turned off.");
       return I18n.tr("An app is keeping the screen on: the steps below wait until it lets go.");
     case "noLock":
       return I18n.tr("The lock screen is your own locker, but its Lock command is empty or loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker.");

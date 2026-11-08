@@ -124,10 +124,6 @@ ShellRoot {
         id: onboarding
       }
 
-      IdleInhibit {
-        id: idleInhibit
-      }
-
       Prompt {
         id: prompt
       }

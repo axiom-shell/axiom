@@ -235,24 +235,94 @@ func TestConfigureRearmsOnlyAnotherPlan(t *testing.T) {
 	}
 }
 
-func TestCaffeineCountsOnlyWhereInhibitorsAreIgnored(t *testing.T) {
+func TestCaffeineHoldsIdleOffEitherWay(t *testing.T) {
 	t.Parallel()
 	h := start(t, false)
 	s := defaults()
 	h.svc.Configure(s)
-	h.svc.SetCaffeine(true)
-	// Respected: the compositor holds off for caffeine's own inhibitor
-	h.until(t, func(s State) bool { return s.Armed == 3 && !s.Inhibited })
-	s.RespectInhibitors = false
+	h.until(t, func(s State) bool { return s.Armed == 3 })
+	for _, respect := range []bool{true, false} {
+		s.RespectInhibitors = respect
+		h.svc.Configure(s)
+		h.svc.SetCaffeine(true)
+		st := h.until(t, func(s State) bool { return s.Inhibited && s.Armed == 0 })
+		if len(st.Inhibitors) != 1 || st.Inhibitors[0].Source != "caffeine" {
+			t.Errorf("respect %v: inhibitors %+v", respect, st.Inhibitors)
+		}
+		h.svc.SetCaffeine(false)
+		h.until(t, func(s State) bool { return !s.Inhibited && s.Armed == 3 })
+		if w := h.n.at(t, 150*time.Second); w.respect != respect {
+			t.Errorf("respect %v: notifications armed with respect %v", respect, w.respect)
+		}
+	}
+}
+
+// heldIdle waits for the fake logind to hold n idle inhibitors.
+func (h *harness) heldIdle(t *testing.T, n int) {
+	t.Helper()
+	if !testkit.Eventually(func() bool { return h.logind.IdleHeld() == n }) {
+		t.Fatalf("%d logind idle inhibitors held, want %d", h.logind.IdleHeld(), n)
+	}
+}
+
+func TestCaffeineHoldsALogindInhibitorWithIdleOff(t *testing.T) {
+	t.Parallel()
+	h := start(t, true)
+	s := defaults()
+	s.Enabled = false
 	h.svc.Configure(s)
-	st := h.until(t, func(s State) bool { return s.Inhibited && s.Armed == 0 })
-	if len(st.Inhibitors) != 1 || st.Inhibitors[0].Source != "caffeine" {
-		t.Errorf("inhibitors %+v", st.Inhibitors)
+	h.svc.SetCaffeine(true)
+	h.heldIdle(t, 1)
+	// Idle off: nothing of axiom's own to show
+	if st := h.svc.State(); st.Enabled || st.Logind || len(st.Inhibitors) != 0 {
+		t.Errorf("state %+v", st)
 	}
 	h.svc.SetCaffeine(false)
-	h.until(t, func(s State) bool { return s.Armed == 3 })
-	if w := h.n.at(t, 150*time.Second); w.respect {
-		t.Error("input-only notifications weren't asked for")
+	h.heldIdle(t, 0)
+	// Again, then turned on: the one inhibitor is kept
+	h.svc.SetCaffeine(true)
+	h.heldIdle(t, 1)
+	s.Enabled = true
+	h.svc.Configure(s)
+	h.until(t, func(s State) bool { return s.Logind && s.Inhibited })
+	h.heldIdle(t, 1)
+}
+
+func TestCaffeinesOwnLogindInhibitorIsntAnApp(t *testing.T) {
+	t.Parallel()
+	h := start(t, true)
+	h.svc.Configure(defaults())
+	h.until(t, func(s State) bool { return s.Logind && s.Armed == 3 })
+
+	h.svc.SetCaffeine(true)
+	h.heldIdle(t, 1)
+	st := h.until(t, func(s State) bool { return s.Inhibited && s.Armed == 0 })
+	time.Sleep(100 * time.Millisecond) // logind's BlockInhibited change
+	if st = h.svc.State(); len(st.Inhibitors) != 1 || st.Inhibitors[0].Source != "caffeine" {
+		t.Errorf("inhibitors %+v", st.Inhibitors)
+	}
+	// Let go, nothing else holds idle off: armed again, not held by a
+	// stale entry of its own
+	h.svc.SetCaffeine(false)
+	h.heldIdle(t, 0)
+	h.until(t, func(s State) bool { return !s.Inhibited && s.Armed == 3 && len(s.Inhibitors) == 0 })
+
+	// An app starts while caffeine's inhibitor holds idle blocked:
+	// BlockInhibited doesn't change, so logind says nothing; once
+	// caffeine lets go, the app is found
+	h.svc.SetCaffeine(true)
+	h.heldIdle(t, 1)
+	h.until(t, func(s State) bool { return s.Inhibited })
+	time.Sleep(100 * time.Millisecond)
+	h.logind.SetInhibitors([]any{"idle", "mpv", "Playing", "block", uint32(1000), uint32(1)})
+	h.logind.SetBlocked(t, "handle-power-key:idle")
+	h.svc.SetCaffeine(false)
+	h.heldIdle(t, 0)
+	st = h.until(t, func(s State) bool {
+		return s.Inhibited && len(s.Inhibitors) == 1 && s.Inhibitors[0].App == "mpv"
+	})
+	if st.Armed != 0 {
+		t.Errorf("armed %d", st.Armed)
 	}
 }
 

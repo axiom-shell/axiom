@@ -91,6 +91,37 @@ func TestCallsAndInhibitors(t *testing.T) {
 	}
 }
 
+func TestInhibitIdle(t *testing.T) {
+	t.Parallel()
+	bus := dbustest.New(t)
+	f := logindtest.New(t, bus)
+	conn, err := dbus.Dial(ctx(t), bus.Address, dbus.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { conn.Close() })
+	// No session needed: the manager's calls only
+	l := Manager(conn)
+	fd, err := l.InhibitIdle(ctx(t), "axiom", "Caffeine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ins, err := l.IdleInhibitors(ctx(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ins) != 1 || ins[0].Who != "axiom" || ins[0].Why != "Caffeine" || ins[0].Mode != "block" {
+		t.Errorf("inhibitors %+v", ins)
+	}
+	if blocked, err := l.idleBlocked(ctx(t)); err != nil || !blocked {
+		t.Errorf("idle not blocked: %v", err)
+	}
+	fd.Close()
+	if !testkit.Eventually(func() bool { return f.IdleHeld() == 0 }) {
+		t.Error("the idle inhibitor wasn't released")
+	}
+}
+
 func TestWatch(t *testing.T) {
 	t.Parallel()
 	bus := dbustest.New(t)

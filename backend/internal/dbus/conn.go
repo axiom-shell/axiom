@@ -266,10 +266,30 @@ func (c *Conn) send(m *Message, reply chan *Message) (uint32, error) {
 	return serial, nil
 }
 
-func (c *Conn) forget(serial uint32) {
+// forget drops a reply channel; false when it was gone already (its
+// reply routed, or the connection ended).
+func (c *Conn) forget(serial uint32) bool {
 	c.mu.Lock()
+	_, ok := c.pending[serial]
 	delete(c.pending, serial)
 	c.mu.Unlock()
+	return ok
+}
+
+// dropReply closes a reply routed to ch that nobody will read, with the
+// descriptors it carries (an Inhibit's would hold logind's inhibitor).
+// route sends it before the connection's end is announced.
+func (c *Conn) dropReply(ch chan *Message) {
+	select {
+	case m := <-ch:
+		m.Close()
+	case <-c.done:
+		select {
+		case m := <-ch:
+			m.Close()
+		default:
+		}
+	}
 }
 
 // Call calls a method and waits for its reply; an error reply is an
@@ -307,9 +327,12 @@ func (c *Conn) call(ctx context.Context, flags byte, dest string, path ObjectPat
 		}
 		return m, nil
 	case <-ctx.Done():
-		c.forget(serial)
+		if !c.forget(serial) {
+			c.dropReply(ch)
+		}
 		return nil, axerr.Wrap(axerr.Unavailable, ctx.Err(), "%s.%s", iface, member)
 	case <-c.done:
+		c.dropReply(ch)
 		return nil, axerr.New(axerr.Unavailable, "the bus connection ended during %s.%s", iface, member)
 	}
 }

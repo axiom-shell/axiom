@@ -62,6 +62,7 @@ Every value is encoded from a signature, never guessed. `MakeVariant` and `Signa
   - Descriptors queue in arrival order; each message takes as many as its header names.
   - Closing the connection closes any that nobody took.
 - A received message owns its `Files`: whoever gets it takes what it keeps (`File`) and calls `Close` for the rest. A signal matching several subscriptions has its descriptors closed: they can only have one owner; so does one its only subscriber was too far behind to take.
+- A reply that comes after its call gave up (its context ended, or the connection did) has its descriptors closed: nobody takes it, and an `Inhibit`'s would hold logind's inhibitor for the daemon's life (`Conn.dropReply`).
 
 ### Tests
 - `dbustest.New(t)` is an in-process bus:
