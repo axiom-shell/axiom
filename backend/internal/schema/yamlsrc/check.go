@@ -145,7 +145,9 @@ func (c *checker) node(v any, where string, isRoot bool) {
 	}
 }
 
-// listItems checks a list of objects: every field its items require has a
+// listItems checks a list of objects with declared properties (the ones
+// the generic settings list draws; oneOf items have their own pickers):
+// every field its items require has a
 // default, so a new item (a settings list's +, SchemaValidation.newItem)
 // is valid as made. `id` is the exception: newItem gives it one free in
 // its list.
