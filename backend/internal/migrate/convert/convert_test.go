@@ -198,7 +198,7 @@ func detachedPlaceFields(cfg *jsonx.Object) {
 // writes: every Audio bar's fields but its type, icon and showOsd (each
 // kind's own options), the icons' row mode, the cards' switch and
 // timeout, the parts opening together, their order and holding still,
-// each system's tile and card switches and its quiet when off, and the
+// the bars' order (barOrder), each system's tile and card switches and its quiet when off, and the
 // Removable drives of the default list. They come from their defaults at
 // load, or (the list) stay as the config had them.
 func osdItemFields(cfg *jsonx.Object) {
@@ -215,7 +215,7 @@ func osdItemFields(cfg *jsonx.Object) {
 		if e == nil {
 			continue
 		}
-		for _, key := range []string{"row", "cardsEnabled", "cardTimeout", "openTogether", "holdStill", "iconsPlace"} {
+		for _, key := range []string{"row", "cardsEnabled", "cardTimeout", "openTogether", "holdStill", "iconsPlace", "barOrder"} {
 			e.Delete(key)
 		}
 		systems, _ := e.Value("systems").(*jsonx.Array)

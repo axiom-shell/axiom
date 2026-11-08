@@ -799,6 +799,8 @@ TestCase {
     compare(style.map(g => g.title), ["Bar widgets", "Bar accents", "Surface shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.EdgeMenu, ["layout.modules"]);
     compare(menu.map(g => g.title), ["General", "Opening", "Placement", "Style", "Closing"]);
+    const osd = SchemaLayout.objectGroups(schema.definitions.OSDEntry, ["systems", "barLayout"]);
+    compare(osd.slice(0, 2).map(g => g.title), ["Placement", "Timing and behaviour"]);
   }
 
   function test_real_schema_intros_exist() {

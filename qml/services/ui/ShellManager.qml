@@ -67,6 +67,11 @@ QtObject {
   // Opens an OSD by id where it would open for a change (the settings
   // page's Show button)
   signal showOsd(string id)
+  // The OSD the settings page holds open as its preview (its id; "" for
+  // none: OSDListCard's Preview), and the system selected there (its
+  // type), whose icons and bars that OSD outlines (OSDHost)
+  property string osdPinned: ""
+  property string osdFocus: ""
   // Shows a message card on an OSD (`axiom message`): the OSD of
   // that id (OSDConfig.messageOsd picks it), where it would open for a
   // change; `text` its title, `detail` a faint second line ("" for none),
