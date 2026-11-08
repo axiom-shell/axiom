@@ -4111,6 +4111,7 @@
     "Notify when a connected device's battery becomes low, and again when critical (an OSD showing Bluetooth says it as its card instead).": "",
     "Device battery notifications": "",
     "Say when a connected device's battery (headphones, a mouse) drops to this level, on an OSD showing Bluetooth, else as a notification (with notifications on).": "",
-    "In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.": ""
+    "In order, one bar per kind but App. Other apps is the first playing stream no App bar matches.": "",
+    "Caffeine is keeping the screen on: the steps below wait until it's turned off.": ""
   }
 }

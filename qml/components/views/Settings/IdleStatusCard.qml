@@ -52,6 +52,8 @@ FieldGroup {
     case "unavailable":
       return I18n.tr("axiom's daemon isn't running this shell, so nothing watches for idle.");
     case "inhibited":
+      if (IdleManager.inhibitors.length > 0 && IdleManager.inhibitors.every(held => held.source === "caffeine"))
+        return I18n.tr("Caffeine is keeping the screen on: the steps below wait until it's turned off.");
       return I18n.tr("An app is keeping the screen on: the steps below wait until it lets go.");
     case "noLock":
       return I18n.tr("The lock screen is your own locker, but its Lock command is empty or loginctl lock-session, which comes back to axiom: nothing locks. Set the Lock command to your locker.");
