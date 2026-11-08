@@ -22,14 +22,14 @@ func FileURI(path string) string {
 	return b.String()
 }
 
-// uriSafe: unreserved, or reserved but allowed in a path (GLib's
-// G_URI_RESERVED_CHARS_ALLOWED_IN_PATH)
+// uriSafe: what g_filename_to_uri leaves as is (gconvert.c's table for
+// UNSAFE_PATH): unreserved, or reserved but allowed in a path, except ;
 func uriSafe(c byte) bool {
 	switch {
 	case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9':
 		return true
 	}
-	return strings.IndexByte("-._~!$&'()*+,;=:@/", c) >= 0
+	return strings.IndexByte("-._~!$&'()*+,=:@/", c) >= 0
 }
 
 // PathOfURI is the path a file:// URI names ("" for another scheme, or

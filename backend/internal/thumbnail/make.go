@@ -60,8 +60,8 @@ func RunChild(ctx context.Context, stdin io.Reader) error {
 }
 
 // Make decodes req.Src, scales it to fit req.Size (never up), and writes
-// it to req.Dst with the spec's text chunks: atomically, 0600 in a 0700
-// folder.
+// it to req.Dst with the spec's text chunks: atomically (not fsynced),
+// 0600 in a 0700 folder.
 func Make(req Request) error {
 	f, err := os.Open(req.Src)
 	if err != nil {
@@ -118,7 +118,12 @@ func write(path string, img image.Image, texts [][2]string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	return fsx.WriteFile(path, data, 0o600)
+	// A cache (one lost is made again): atomic, never fsynced, so making
+	// one stalls no other writer
+	return fsx.WriteCache(path, 0o600, func(w io.Writer) error {
+		_, err := w.Write(data)
+		return err
+	})
 }
 
 // withTexts puts tEXt chunks after a PNG's IHDR.

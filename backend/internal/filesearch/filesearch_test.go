@@ -389,6 +389,8 @@ func TestURIs(t *testing.T) {
 		"/home/u/ünï.txt":      "file:///home/u/%C3%BCn%C3%AF.txt",
 		"/x/(1)+[2]#%.jpg":     "file:///x/(1)+%5B2%5D%23%25.jpg",
 		"/home/u/it's~fine@!,": "file:///home/u/it's~fine@!,",
+		// As GLib.filename_to_uri has it: ; escaped, the rest kept
+		"/t/a;b=$&*:.png": "file:///t/a%3Bb=$&*:.png",
 	} {
 		if got := FileURI(path); got != uri {
 			t.Errorf("FileURI(%q) = %q, want %q", path, got, uri)
