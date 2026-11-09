@@ -438,7 +438,7 @@ Loader {
   // `x-enumShowIf` fails greyed and saying why on hover (its `x-tileHint`,
   // else generically), each drawn over the preview the form gives this
   // field (its `tilePreview` hook: { component, properties }), if any
-  readonly property var _allOptions: SettingsManager.optionsFor(fieldSchema)
+  readonly property var _allOptions: fieldSchema["x-control"] === "tiles" ? SettingsManager.optionsFor(fieldSchema) : null
   readonly property var _tilePreview: {
     const hook = root.form?.tilePreview ?? null;
     return hook ? hook(root.row.path) : null;

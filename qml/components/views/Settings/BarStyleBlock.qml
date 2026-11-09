@@ -261,7 +261,7 @@ ColumnLayout {
     // Built only while the section is edited here
     Loader {
       Layout.fillWidth: true
-      active: !section.shared
+      active: !section.shared && section.visible
       sourceComponent: SchemaPropertiesForm {
         propertiesSchema: section.keys.reduce((schema, key) => {
           schema[key] = root._properties[key];

@@ -228,8 +228,10 @@ Item {
               BarManager.updateStyleField(path[0], value);
               return;
             }
+            // Only the parts edited: the rest stay inherited
             for (const part in value)
-              BarManager.updateStyleField("shadow", value[part], part);
+              if (!Utils.deepEqual(value[part], block.values.shadow[part]))
+                BarManager.updateStyleField("shadow", value[part], part);
           }
           onDiscardAt: path => BarManager.discardStyleField(path[0], path[1])
           onOwnToggled: (group, value) => BarManager.setStyleOwned(BarsConfig.styleGroups.find(entry => entry.title === group)?.keys ?? [], value)
