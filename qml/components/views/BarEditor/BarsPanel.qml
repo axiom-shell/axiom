@@ -228,6 +228,8 @@ Item {
           }
           onDiscardAt: path => BarManager.discardStyleField(path[0], path[1])
           onOwnToggled: (group, value) => BarManager.setStyleOwned(BarsConfig.styleGroups.find(entry => entry.title === group)?.keys ?? [], value)
+          // A preset: the bar owns each section it touches
+          onPresetPicked: values => BarManager.setStyleOwned([].concat(...BarsConfig.styleGroups.filter(group => group.keys.some(key => key in values) && !block.owned[group.title]).map(group => group.keys)), true, values)
         }
       }
     }

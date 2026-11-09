@@ -4,6 +4,23 @@ type: object
 x-links: [BarEditor]
 description: How every bar draws its widgets. A bar can override any of these in the bar editor.
 additionalProperties: false
+# The Bar style block's Presets menu: each sets its values at once, keys it
+# doesn't name keeping theirs (checked against these properties at build)
+x-presets:
+  - label: Pills
+    values: {widgetStyle: filled, widgetShape: rounded, widgetGrouping: separate}
+  - label: Powerline
+    values: {widgetStyle: filled, widgetShape: slant, widgetGrouping: powerline}
+  - label: Tabs
+    values: {widgetStyle: tinted, widgetShape: tab, tabCorners: flared, widgetGrouping: separate}
+  - label: Outline
+    values: {widgetStyle: outline, widgetShape: rounded, widgetGrouping: separate, separatorStyle: dot}
+  - label: Underline
+    values: {widgetStyle: underline}
+  - label: Minimal
+    values: {widgetStyle: plain, accentLine: inner}
+  - label: Gradient
+    values: {widgetStyle: filled, widgetGrouping: merged, gradient: true}
 properties:
   textScale:
     x-group: Size
