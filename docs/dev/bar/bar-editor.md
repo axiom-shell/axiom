@@ -2,7 +2,7 @@
 
 > **Files:** `qml/components/views/BarEditor/BarEditor.qml`, `qml/components/views/BarEditor/` (`BarsPanel`, `BarDragLayer`, `SectionsBoard`, `SectionLane`, `WidgetChip`, `WidgetInspector`, `LayoutOverrideField`), `qml/services/ui/BarManager.qml`, `qml/services/ui/EditsManager.qml`, `qml/components/bar/BarContainer.qml`
 > **Config:** `Bars` (edited through BarManager's draft)
-> **Related:** [Editors pattern](../core/editors-pattern.md), [Bar composition](composition.md), [Layouts editor](../overlay/layouts-editor.md)
+> **Related:** [Editors pattern](../core/editors-pattern.md), [Bar style block](style-block.md), [Bar composition](composition.md), [Layouts editor](../overlay/layouts-editor.md)
 
 The BarEditor overlay page: the bar list and its settings under tabs, the sections board, the widget inspector beside the widget library, plus the live reports the running bars send back while it's open.
 
@@ -16,7 +16,7 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
     - Their form reads `BarsConfig.lookOf(bar)`, so a look field's `x-showIf` sees what the bar draws, even from a group it doesn't override.
     - Each field has its change marks (`FieldChangeMarks` through the form's `changedAt`): a dot while it differs from the saved bar (`BarManager.barFieldChanged` / `styleFieldChanged`; clicking it puts the saved value back, `discardBarField` / `discardStyleField`), and a reset to the schema default.
   - The Surface group's header copies the bar's look (`BarManager.styleKeys`: its style and its Size and Surface settings) and pastes it onto one bar or onto all. The copied style follows its bar by index.
-  - **The Style tab** is the settings page's Bar style block (`views/Settings/BarStyleBlock`, [settings page](../core/settings-page.md)) over the selected bar's look (`BarsConfig.lookOf(bar, BarManager.localStyle)`, its shadow as its object again), streamed in as one `FieldGroup`. Its live strip shows the selected bar's widgets; at the panel's width its sections stack in one column.
+  - **The Style tab** is the settings page's Bar style block (`views/Settings/BarStyleBlock`, [style block](style-block.md)) over the selected bar's look (`BarsConfig.lookOf(bar, BarManager.localStyle)`, its shadow as its object again), streamed in as one `FieldGroup`. Its live strip shows the selected bar's widgets; at the panel's width its sections stack in one column.
     - **Shared or the bar's own, per section** (the style groups, `BarsConfig.styleGroups`): each section's heading has a "This bar's own" switch (`owned`, `BarManager.ownsStyle(index, keys)`: true while the bar sets any of the section's keys). Turning it on gives the bar all of them, filled from the shared style; off hands them all back (`setStyleOwned`). A shared section collapses to its heading, "Shared with every bar." and a `SettingsLink` to the shared `Bars.style` on the settings page (its Bar style card); its form isn't built (the style's options go with Look).
     - Edits go to `BarManager.updateStyleField` (the shadow's by part, `"shadow", value, part`), change marks to `styleFieldChanged` / `discardStyleField`, so each field's edit is an undo step as everywhere in the editor.
     - Its Presets menu (BarStyle's `x-presets`) sets a preset's values through `setStyleOwned(keys, true, values)`: one undo step, the bar owning each section the preset touches (the keys of those it didn't own yet filled from the shared style), keys it doesn't name kept.
