@@ -3,7 +3,6 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.services.system
 import qs.components.bar.widgets.Workspaces
 import qs.components.reusable
 
@@ -25,6 +24,15 @@ WorkspacePopoutPanel {
 
   implicitWidth: grid.implicitWidth + margins * 2
 
+  CellContents {
+    id: contents
+    barConfig: root.barConfig
+    properties: root.properties
+    base: root.base
+    thickness: root.cellSize
+    restLength: root.cellLength
+  }
+
   Grid {
     id: grid
     columns: root.gridColumns
@@ -42,19 +50,30 @@ WorkspacePopoutPanel {
         readonly property bool hasWindows: (CompositorManager.workspaces.find(ws => ws.id === wsId)?.windowCount ?? 0) > 0
         // In the row (or column) the bar shows
         readonly property bool inBar: root.vertical ? index % root.gridColumns === root.activeIndex % root.gridColumns : Math.floor(index / root.gridColumns) === Math.floor(root.activeIndex / root.gridColumns)
-        readonly property var windowData: root.properties.showAppIcons && hasWindows ? CompositorManager.biggestWindowForWorkspace(wsId) : null
+        // What it shows, as on the bar (its number is its place in the
+        // grid counted from 1 with relative numbers)
+        readonly property var shows: contents.of(wsId, "", true)
 
         barConfig: root.barConfig
         isActive: wsId === root.activeId
-        look: BarsConfig.workspaceCellColors(root.barConfig, root, isActive, hasWindows)
+        look: BarsConfig.workspaceCellColors(root.barConfig, root, isActive, hasWindows, shows.urgent)
+        urgent: shows.urgent
+        solid: root.solidBoxes
+        pulse: root.pulse.value
+        urgentColor: root.urgentColor
         thickness: root.cellSize
-        length: root.cellLength
+        length: shows.length
         radius: root.radius
         hoverColor: root.hoverColor
         labels: root.properties.labels
-        // The workspace id, or its place in the grid counted from 1, as on the bar
-        label: root.properties.relativeNumbers ? index + 1 : wsId
-        iconPath: windowData ? AppIconManager.resolveWindowIcon(windowData.appId, windowData.title) : ""
+        label: shows.number
+        text: shows.kind === "text" || shows.kind === "name" ? shows.text : ""
+        textPlain: shows.plain
+        leadIcon: shows.kind === "text" ? shows.lead : ""
+        leadPlain: shows.leadPlain
+        iconPaths: shows.icons
+        iconLayout: contents.iconLayout
+        iconSlots: contents.iconSlots
         clickable: root.properties.clickToSwitch ?? false
         animated: root._settled
         opacity: inBar ? 1.0 : 0.85

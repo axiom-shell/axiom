@@ -437,34 +437,99 @@ Loader {
   // An icon (`x-control: "icon"`): a Material Symbols name picked from
   // the bundled font's (IconManager), searched by name and tag, or any
   // text typed or pasted (a Nerd Font glyph), which StyledIcon draws in the
-  // text font. The field leads with the icon itself
+  // text font. The field leads with the icon itself, only when the value
+  // draws as one (a name the font has, or a single glyph): longer text in
+  // the icon's room would run over the typed words. With `x-iconText`
+  // ({ mode, text }: sibling keys), the row also has a text box for the
+  // `text` sibling, and an Icon / Text / Both switch at its right sets the
+  // `mode` sibling: the icon box shows for Icon and Both, the text box
+  // for Text and Both
   Component {
     id: iconField
     ColumnLayout {
       id: iconColumn
       spacing: Widget.spacing
       readonly property string value: root.current ?? ""
+      readonly property var iconText: root.fieldSchema["x-iconText"] ?? null
+      readonly property string modeKey: iconColumn.iconText?.mode ?? ""
+      readonly property string textKey: iconColumn.iconText?.text ?? ""
+      // "icon", "text" or "both" (just "icon" without `x-iconText`)
+      readonly property string mode: iconColumn.modeKey !== "" ? (root._valueOf(iconColumn.modeKey) ?? "icon") : "icon"
+      readonly property bool showsIcon: iconColumn.mode !== "text"
+      readonly property bool showsText: iconColumn.textKey !== "" && iconColumn.mode !== "icon"
+      readonly property bool drawsIcon: Utils.isSymbolName(iconColumn.value) ? IconManager.isKnown(iconColumn.value) : Array.from(iconColumn.value).length === 1
+
+      // A sibling's path, for the form's edits
+      function siblingPath(key) {
+        return SchemaLayout.keyPath(root.row.path.slice(0, -1), key);
+      }
+
       FieldHeader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
       }
-      StyledComboEntry {
+      RowLayout {
         Layout.fillWidth: true
-        editable: true
-        icon: iconColumn.value
-        placeholderText: I18n.tr("Search icons, or paste a glyph")
-        search: query => IconManager.search(query, 60).map(name => ({
-                "value": name,
-                "label": name,
-                "icon": name
-              }))
-        value: iconColumn.value
-        onPicked: value => root.commit(value)
+        spacing: Widget.spacing
+
+        // Sharing the row evenly with the text box when both show
+        StyledComboEntry {
+          Layout.fillWidth: true
+          Layout.preferredWidth: 1
+          visible: iconColumn.showsIcon
+          editable: true
+          icon: iconColumn.drawsIcon ? iconColumn.value : ""
+          placeholderText: I18n.tr("Search icons, or paste a glyph")
+          search: query => IconManager.search(query, 60).map(name => ({
+                  "value": name,
+                  "label": name,
+                  "icon": name
+                }))
+          value: iconColumn.value
+          onPicked: value => root.commit(value)
+        }
+
+        // Built only with `x-iconText` (and kept while hidden, so a mode
+        // switch doesn't drop what's being typed)
+        Loader {
+          Layout.fillWidth: true
+          Layout.preferredWidth: 1
+          visible: iconColumn.showsText
+          active: iconColumn.textKey !== ""
+          sourceComponent: SchemaTextField {
+            label: ""
+            placeholderText: I18n.tr("Text")
+            currentConfigValue: root._valueOf(iconColumn.textKey) ?? ""
+            onValueTyped: value => {
+              if (root.form && typeof root.form.typed === "function")
+                root.form.typed(iconColumn.siblingPath(iconColumn.textKey), value);
+            }
+            onValueEdited: value => {
+              if (root.form)
+                root.form.edit(iconColumn.siblingPath(iconColumn.textKey), value);
+            }
+          }
+        }
+
+        StyledToggle {
+          visible: iconColumn.modeKey !== ""
+          options: ["icon", "text", "both"]
+          labels: ({
+              "icon": I18n.tr("Icon"),
+              "text": I18n.tr("Text"),
+              "both": I18n.tr("Both")
+            })
+          value: iconColumn.mode
+          onPicked: value => {
+            if (root.form && value !== iconColumn.mode)
+              root.form.edit(iconColumn.siblingPath(iconColumn.modeKey), value);
+          }
+        }
       }
       StyledText {
         // Reads as a name, but the font has none by it: drawn as text
-        visible: /^[a-z][a-z0-9_]*$/.test(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
+        visible: iconColumn.showsIcon && Utils.isSymbolName(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
         text: I18n.tr("No icon is named \"{0}\": it shows as text", iconColumn.value)
         color: Theme.warning
         textSize: Appearance.fontSizeBy(-2)

@@ -99,6 +99,12 @@ QtObject {
     return root.freeId(stem, (items ?? []).map(item => item?.id), "-");
   }
 
+  // Whether `text` is one or more Material Symbols names ("wifi"), which
+  // StyledIcon draws as icons, not a glyph or words drawn in the text font
+  function isSymbolName(text) {
+    return /^\s*[a-z][a-z0-9_]*(\s+[a-z][a-z0-9_]*)*\s*$/.test(text ?? "");
+  }
+
   // A CamelCase name as words: "SystemTray" -> "System Tray",
   // "Grid2x2" -> "Grid 2x2"
   function spaceWords(name) {

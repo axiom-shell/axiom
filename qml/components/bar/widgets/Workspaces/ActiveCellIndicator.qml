@@ -3,13 +3,15 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // The active workspace's box (or underline) in a bar switcher's row of
 // cells, drawn once over their boxes and under their labels (the row draws
 // its WorkspaceCells in two layers around it), sliding from cell to cell as
 // the active workspace changes, where the cells would each recolour. Placed
 // by the active cell's index, as every cell before it is at its rest
-// length. It fills the row, which clips it: a step
+// length (WorkspaceCells.startOf), and as long as that cell widened. It
+// fills the row, which clips it: a step
 // past one end (`expectWrap`) leaves that end and comes in at the other
 // rather than sliding back across.
 Item {
@@ -21,14 +23,19 @@ Item {
   // The active cell's index in the row, or -1 when none shows
   required property int index
   required property real thickness
-  required property real restLength
-  // The active cell's length (twice the rest with `wideActive`)
-  required property real activeLength
+  // Each cell's length at rest
+  required property var lengths
+  // What the active cell grows by (`wideActive`: one normal cell's length)
+  required property real extra
+  // The active cell's length
+  readonly property real activeLength: (lengths[index] ?? 0) + extra
   required property real spacing
   property real radius: 0
+  // `solidBoxes`: a filled box on every bar style (`look` is the solid one)
+  property bool solid: false
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed
+  readonly property bool boxed: barConfig.widgetBoxed || solid
   // Whether there's anything to slide: a box, or an underline
   readonly property bool slides: boxed || barConfig.widgetStyle === "underline"
   readonly property real _along: _alongAt(index)
@@ -47,7 +54,7 @@ Item {
   property real _shift: 0
 
   function _alongAt(i) {
-    return Math.max(0, i) * (root.restLength + root.spacing);
+    return WorkspaceCells.startOf(root.lengths, root.spacing, Math.max(0, i));
   }
 
   function expectWrap(forward) {
@@ -65,7 +72,7 @@ Item {
       root._wrapPending = false;
       wrapTimeout.stop();
       if (root.index >= 0 && from >= 0 && (root._wrapForward ? root.index < from : root.index > from))
-        root._wrap(root._alongAt(from), root._alongAt(root.index));
+        root._wrap(root._alongAt(from), root._alongAt(root.index), (root.lengths[from] ?? 0) + root.extra);
     }
     if (root.index < 0)
       root._placed = false;
@@ -83,11 +90,13 @@ Item {
   }
 
   // From `fromAlong` out past the end it's leaving, then in from the other
-  // to `toAlong`, where the box now rests (`_shift` offsetting it)
-  function _wrap(fromAlong, toAlong) {
+  // to `toAlong`, where the box now rests (`_shift` offsetting it). Before
+  // the start means past the longer of the two cells: the box's length
+  // glides from the one it left (`fromLength`) meanwhile
+  function _wrap(fromAlong, toAlong, fromLength) {
     const forward = root._wrapForward;
     const pastEnd = root._rowLength + root.spacing;
-    const beforeStart = -root.activeLength - root.spacing;
+    const beforeStart = -Math.max(root.activeLength, fromLength) - root.spacing;
     wrapAnimation.stop();
     wrapOut.from = fromAlong - toAlong;
     wrapOut.to = (forward ? pastEnd : beforeStart) - toAlong;
@@ -139,6 +148,15 @@ Item {
     }
     Glide on y {
       enabled: root._placed && !root._wrapPending && !wrapAnimation.running
+      duration: Appearance.animNormal
+    }
+    // Cells differ in length (a text label, a row of icons)
+    Glide on width {
+      enabled: root._placed
+      duration: Appearance.animNormal
+    }
+    Glide on height {
+      enabled: root._placed
       duration: Appearance.animNormal
     }
 

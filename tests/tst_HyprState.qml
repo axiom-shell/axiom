@@ -219,15 +219,20 @@ TestCase {
         ]
       },
       "active": true,
-      "focused": false
+      "focused": false,
+      "urgent": true
     }), {
       "id": 2,
       "name": "2",
       "output": "DP-1",
       "windowCount": 2,
       "active": true,
-      "focused": false
+      "focused": false,
+      "urgent": true
     });
+    compare(HyprState.workspace({
+      "id": 3
+    }).urgent, false, "not urgent unless it says so");
   }
 
   function test_layerRects() {

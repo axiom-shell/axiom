@@ -268,7 +268,8 @@ TestCase {
         "name": "WL-1"
       },
       "active": true,
-      "focused": true
+      "focused": true,
+      "urgent": true
     }, {
       "3": 2
     }), {
@@ -277,8 +278,12 @@ TestCase {
       "output": "WL-1",
       "windowCount": 2,
       "active": true,
-      "focused": true
+      "focused": true,
+      "urgent": true
     });
+    compare(SwayState.workspace({
+      "num": 4
+    }, {}).urgent, false, "not urgent unless it says so");
     compare(SwayState.workspace({
       "num": -1,
       "name": "music"

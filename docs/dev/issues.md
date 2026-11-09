@@ -254,6 +254,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** needs a plan
 - **Found:** 2026-10-21, while checking the sizing revamp on 1080p (overlaySettingsRevamp)
 
+### A number field in the bar editor logs a polish loop
+- **Where:** `qml/components/forms/SchemaNumberField.qml`, `qml/components/forms/SchemaField.qml` (`spinField`)
+- **What:** With the bar editor's widget inspector open on the Workspaces widget, the live log repeats `SchemaNumberField called polish() inside updatePolish() of SchemaNumberField` and `possible QQuickItem::polish() loop` (220 lines over one session on 2026-11-09, before and after the inspector's change to one column, so not caused by it). A stepper's layout appears to change its own size during polish; which binding feeds back is untraced.
+- **Size:** small
+- **Found:** 2026-11-09, while making the widget inspector one column (PR #398)
+
 ### Setting names that still confuse
 - **Where:** `qml/config/schema/sections/`
 - **What:** From the maintainer's notes: "still confusing option names in settings" (after the look-and-feel renames). The plan lists the settings whose titles or keys read wrong, with a proposed name for each, for the maintainer to decide; a renamed key is a migration step.

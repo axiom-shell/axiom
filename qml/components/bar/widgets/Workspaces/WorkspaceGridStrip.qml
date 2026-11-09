@@ -29,6 +29,7 @@ Item {
 
   readonly property color activeColor: Theme.resolveColor(properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
+  readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
   readonly property color iconColor: Theme.resolveColor(properties.textColor)
   readonly property color hoverColor: BarsConfig.cellHoverColor(properties)
@@ -56,9 +57,10 @@ Item {
   // within the background's
   readonly property real cell: root.barConfig.thickness - root.inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(root.barConfig, root.cell, root.inset)
+  // Between the row and the strip after it
   readonly property real spacing: root.barConfig.innerGap
-  // Along the bar: square, or narrower for dots straight on the bar
-  readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.labels !== "dots" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
+  // Along the bar: square, or narrower for dots or nothing straight on the bar
+  readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.solidBoxes || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
   // Cells the bar shows: a row, or a column on a vertical bar
   readonly property int shown: root.isVertical ? root.rows : root.columns
 
@@ -95,13 +97,15 @@ Item {
     return position === 0 ? "keyboard_double_arrow_up" : position === count - 1 ? "keyboard_double_arrow_down" : position < middle ? "keyboard_arrow_up" : "keyboard_arrow_down";
   }
 
+  // `scrollReverse` turns the wheel's direction round, for the strip too
   NotchWheel {
     enabled: root.properties.scrollToSwitch
     onStepped: direction => {
+      const step = root.properties.scrollReverse ? -direction : direction;
       if (root.stripDirection !== "")
-        CompositorManager.stepStrip(direction, root.output);
+        CompositorManager.stepStrip(step, root.output);
       else
-        CompositorManager.stepWorkspace(root.isVertical ? (direction > 0 ? "down" : "up") : (direction > 0 ? "right" : "left"), "go");
+        CompositorManager.stepWorkspace(root.isVertical ? (step > 0 ? "down" : "up") : (step > 0 ? "right" : "left"), "go");
     }
   }
 
@@ -126,6 +130,7 @@ Item {
       workspaceId: root.activeId
       stripDirection: root.stripDirection
       shownCount: root.lineIds(root.activeLine, root.activeId).length
+      windows: root.properties.stripWindows
       cell: root.cell
       cellRadius: root.cellRadius
       activeColor: root.activeColor
@@ -133,6 +138,8 @@ Item {
       textColor: root.iconColor
       hoverColor: root.hoverColor
       clickable: root.properties.clickToSwitch
+      cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing)
+      solid: root.properties.solidBoxes
       hitArea: root.hitArea
     }
   }
@@ -169,10 +176,12 @@ Item {
       cellRadius: root.cellRadius
       activeColor: root.activeColor
       occupiedColor: root.occupiedColor
+      urgentColor: root.urgentColor
       emptyColor: root.emptyColor
       textColor: root.iconColor
       hitArea: root.hitArea
       hoverColor: root.hoverColor
+      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
       // The active arrow takes the active cell's place
       glyphOf: (id, active) => active && root.properties.showActiveIcon ? root.positionGlyph(line.value, root.isVertical ? root.columns : root.rows) : ""
 
@@ -197,7 +206,7 @@ Item {
         cellSize: root.cell,
         cellLength: root.cellLength,
         barConfig: root.barConfig,
-        cellSpacing: root.spacing,
+        cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing),
         radius: root.cellRadius,
         properties: root.properties
       })
