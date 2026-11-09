@@ -211,14 +211,49 @@ QtObject {
   // segment of its widget's `run` (BarWidget.runPlace), from where the
   // widget is drawn (`run.drawn`): { segment (cellSegment), tab (cellTab,
   // on a tab bar, else null), reachStart, reachEnd (how far its box
-  // reaches past it across, a tab's out to its edge) }. `boxed`, `opaque`
-  // and `gap`: cellSegment's and cellTab's.
+  // reaches past it across, a tab's out to its edge), drawStart, drawEnd
+  // (how far it draws past it along the bar: back under the cell before,
+  // and a flared tab's fillets out past its sides) }. `boxed`, `opaque`
+  // and `gap`: cellSegment's and cellTab's. What it draws past its bounds
+  // is what every clip holding it keeps (cellMargins).
   function cellShape(look, run, boxed, opaque, gap, cell, cells) {
+    const segment = root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.drawn ?? null, cell, cells, look.thickness, opaque);
+    const tab = look.widgetShape === "tab" ? root.cellTab(look.radius, look.thickness, look.tabFillet, gap, !(look.right || look.bottom), run?.tabLimits ?? null, cell, cells) : null;
     return {
-      "segment": root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.drawn ?? null, cell, cells, look.thickness, opaque),
-      "tab": look.widgetShape === "tab" ? root.cellTab(look.radius, look.thickness, look.tabFillet, gap, !(look.right || look.bottom), run?.tabLimits ?? null, cell, cells) : null,
+      "segment": segment,
+      "tab": tab,
       "reachStart": run?.reachStart ?? 0,
-      "reachEnd": run?.reachEnd ?? 0
+      "reachEnd": run?.reachEnd ?? 0,
+      "drawStart": segment.back + (tab?.start.flare ?? 0),
+      "drawEnd": tab?.end.flare ?? 0
+    };
+  }
+
+  // What cells from `first` to `last` (cellShape's; null for none) draw
+  // past the item holding them, as its margins in item coordinates:
+  // { left, top, right, bottom }, the first's reach at its start, the
+  // last's at its end and across out to a tab's edge. A clip holding
+  // cells grows by these.
+  function cellMargins(first, last, vertical) {
+    const start = first?.drawStart ?? 0, end = last?.drawEnd ?? 0;
+    const near = first?.reachStart ?? last?.reachStart ?? 0, far = first?.reachEnd ?? last?.reachEnd ?? 0;
+    return {
+      "left": vertical ? near : start,
+      "top": vertical ? start : near,
+      "right": vertical ? far : end,
+      "bottom": vertical ? end : far
+    };
+  }
+
+  // How far a widget laying its parts out as cells draws past its own ends
+  // along the bar, at its place `run` (BarWidget.runPlace): its first
+  // cell's reach back and its last's on, as one cell alone there would
+  // draw them (cellShape's drawStart, drawEnd): { start, end }
+  function runDraws(look, run) {
+    const s = root.cellShape(look, run, false, false, 0, 0, 1);
+    return {
+      "start": s.drawStart,
+      "end": s.drawEnd
     };
   }
 

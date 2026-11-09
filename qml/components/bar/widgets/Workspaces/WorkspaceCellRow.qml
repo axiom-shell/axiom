@@ -153,17 +153,16 @@ Item {
 
   // Clipped (a cell that left the active state still shrinking, the active
   // box wrapping past an end), but for what its cells draw past it as
-  // segments: back under the one before, out to a tab's edge
+  // segments (BarShapes.cellMargins): back under the one before, a flared
+  // tab's fillets past its ends, out to a tab's edge
   MarginClip {
-    readonly property real _back: root._shapes?.[0]?.segment.back ?? 0
-    readonly property real _near: root.run?.reachStart ?? 0
-    readonly property real _far: root.run?.reachEnd ?? 0
+    readonly property var _margins: BarShapes.cellMargins(root._shapes?.[0] ?? null, root._shapes?.[root.ids.length - 1] ?? null, root.isVertical)
 
     anchors.fill: parent
-    leftMargin: root.isVertical ? _near : _back
-    topMargin: root.isVertical ? _back : _near
-    rightMargin: root.isVertical ? _far : 0
-    bottomMargin: root.isVertical ? 0 : _far
+    leftMargin: _margins.left
+    topMargin: _margins.top
+    rightMargin: _margins.right
+    bottomMargin: _margins.bottom
 
     Grid {
       rows: cells.rows

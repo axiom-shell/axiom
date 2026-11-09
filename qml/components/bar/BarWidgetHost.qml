@@ -296,17 +296,20 @@ Item {
   // mid-animation, and shows through the drawn size, clipped, while that
   // catches up
   // A module drawing its parts as segments draws them back under a
-  // powerline neighbour and out to a tab's edge: kept while it resizes
+  // powerline neighbour, a flared tab's fillets past its ends
+  // (BarShapes.runDraws) and out to a tab's edge: kept while it resizes
   MarginClip {
     anchors.fill: parent
     clipped: root._resizing
     readonly property real _near: root.segments && !root._outerFar ? root.tabReach : 0
     readonly property real _far: root.segments && root._outerFar ? root.tabReach : 0
-    readonly property real _back: root.segments ? hitArea.back : 0
-    leftMargin: root.isVertical ? _near : _back
-    topMargin: root.isVertical ? _back : _near
-    rightMargin: root.isVertical ? _far : 0
-    bottomMargin: root.isVertical ? 0 : _far
+    readonly property var _draws: root._moduleRun ? BarShapes.runDraws(root.barConfig, root._moduleRun) : null
+    readonly property real _start: _draws?.start ?? 0
+    readonly property real _end: _draws?.end ?? 0
+    leftMargin: root.isVertical ? _near : _start
+    topMargin: root.isVertical ? _start : _near
+    rightMargin: root.isVertical ? _far : _end
+    bottomMargin: root.isVertical ? _end : _far
 
     Loader {
       id: contentLoader

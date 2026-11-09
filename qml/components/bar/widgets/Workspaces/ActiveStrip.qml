@@ -80,19 +80,18 @@ Loader {
     }
 
     // Clipped: a longer strip fading out is held to the new one's length,
-    // but for what its cells draw past it as segments (back under the one
-    // before, out to a tab's edge)
+    // but for what its cells draw past it as segments (BarShapes.cellMargins:
+    // back under the one before, a flared tab's fillets past its ends, out
+    // to a tab's edge)
     MarginClip {
-      readonly property real _back: root.run ? BarShapes.cellShape(root.barConfig, root.run, BarWidgetStyle.cellBoxedInRun(root.barConfig.widgetStyle, root.solid), false, root._gap, root.chainFirst, root.chainCount).segment.back : 0
-      readonly property real _near: root.run?.reachStart ?? 0
-      readonly property real _far: root.run?.reachEnd ?? 0
+      readonly property var _margins: BarShapes.cellMargins(root._shapeOf(root.chainFirst), root._shapeOf(root.chainCount - 1), root.isVertical)
 
       implicitWidth: fade.implicitWidth
       implicitHeight: fade.implicitHeight
-      leftMargin: root.isVertical ? _near : _back
-      topMargin: root.isVertical ? _back : _near
-      rightMargin: root.isVertical ? _far : 0
-      bottomMargin: root.isVertical ? 0 : _far
+      leftMargin: _margins.left
+      topMargin: _margins.top
+      rightMargin: _margins.right
+      bottomMargin: _margins.bottom
 
       CrossFade {
         id: fade
@@ -105,6 +104,11 @@ Loader {
 
   // Between its boxes: chained in a powerline as segments
   readonly property real _gap: run ? BarShapes.cellGap(barConfig.widgetGrouping, cellSpacing) : cellSpacing
+  // The shape of its cell at `cell` of the widget's chained ones, for what
+  // its first and last draw past it (BarShapes.cellShape), or null
+  function _shapeOf(cell) {
+    return root.run && root.cells > 0 ? BarShapes.cellShape(root.barConfig, root.run, BarWidgetStyle.cellBoxedInRun(root.barConfig.widgetStyle, root.solid), false, root._gap, cell, root.chainCount) : null;
+  }
 
   Component {
     id: boxEach

@@ -757,4 +757,72 @@ TestCase {
     }), null, false, false, 4, 0, 1);
     compare([tab.segment.startCap, tab.tab.outerStart, tab.reachStart], ["tab", false, 0]);
   }
+
+  // What a cell draws past its own bounds along the bar: back under the
+  // cell before, and a flared tab's fillets past its sides, which every
+  // clip holding cells keeps (cellMargins), the widget's own while it
+  // resizes too (runDraws)
+  function test_cells_draw_past_their_bounds() {
+    const look = {
+      "widgetShape": "tab",
+      "widgetEnds": "shaped",
+      "widgetGrouping": "separate",
+      "radius": 6,
+      "thickness": 30,
+      "tabFillet": 5,
+      "right": false,
+      "bottom": false,
+      "vertical": false
+    };
+    const run = {
+      "sized": null,
+      "drawn": null,
+      "reachStart": 4,
+      "reachEnd": 0,
+      "tabLimits": [null, null]
+    };
+    // The widget's ends take the bar's fillet, between cells half the gap
+    const first = BarShapes.cellShape(look, run, false, false, 4, 0, 3);
+    const last = BarShapes.cellShape(look, run, false, false, 4, 2, 3);
+    compare([first.drawStart, first.drawEnd, last.drawStart, last.drawEnd], [5, 2, 2, 5]);
+    compare(BarShapes.cellMargins(first, last, false), {
+      "left": 5,
+      "top": 4,
+      "right": 5,
+      "bottom": 0
+    });
+    compare(BarShapes.cellMargins(first, last, true), {
+      "left": 4,
+      "top": 5,
+      "right": 0,
+      "bottom": 5
+    });
+    compare(BarShapes.runDraws(look, run), {
+      "start": 5,
+      "end": 5
+    });
+    // A powerline cell reaches back under the one before, nothing past its end
+    const chain = Object.assign({}, look, {
+      "widgetShape": "arrow",
+      "widgetGrouping": "powerline",
+      "tabFillet": 0
+    });
+    const placed = Object.assign({}, run, {
+      "drawn": {
+        "index": 1,
+        "count": 3
+      },
+      "reachStart": 0
+    });
+    compare(BarShapes.runDraws(chain, placed), {
+      "start": 15,
+      "end": 0
+    });
+    compare(BarShapes.cellMargins(null, null, false), {
+      "left": 0,
+      "top": 0,
+      "right": 0,
+      "bottom": 0
+    }, "no cells: nothing past it");
+  }
 }
