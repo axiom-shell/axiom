@@ -206,6 +206,18 @@ TestCase {
     compare(BarShapes.splitRoom("badge", "slant", 30, 10, 6, 4), 10);
   }
 
+  function test_split_part() {
+    // Along a horizontal bar: the gap's middle after the head, the part
+    // the head's length, the size across round the middle
+    const flat = BarShapes.splitPart(false, 8, 20, 10, 15, 12);
+    compare(flat.at, 33);
+    compare([flat.part.x, flat.part.y, flat.part.width, flat.part.height], [8, 9, 20, 12]);
+    // Down a vertical one: the same, turned
+    const tall = BarShapes.splitPart(true, 8, 20, 10, 15, 12);
+    compare(tall.at, 33);
+    compare([tall.part.x, tall.part.y, tall.part.width, tall.part.height], [9, 8, 12, 20]);
+  }
+
   function test_tab_caps_keep_no_room() {
     const lone = BarShapes.segment({
       "name": "tab",

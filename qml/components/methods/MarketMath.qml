@@ -42,6 +42,19 @@ QtObject {
     return wanted.length === 0 ? valid : valid.filter(item => wanted.includes(item.id));
   }
 
+  // What a Markets widget shows: { item } per item `ids` picks (pick), a
+  // { portfolio } first with `showPortfolio` while any item has a quantity
+  function entries(items, ids, showPortfolio) {
+    const portfolio = showPortfolio && items.some(item => item.quantity > 0) ? [
+      {
+        "portfolio": true
+      }
+    ] : [];
+    return portfolio.concat(root.pick(items, ids).map(item => ({
+          "item": item
+        })));
+  }
+
   // Whether any item has an alert set
   function hasAlerts(items) {
     return items.some(item => item.alertAbove > 0 || item.alertBelow > 0);

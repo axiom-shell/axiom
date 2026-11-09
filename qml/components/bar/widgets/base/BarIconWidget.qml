@@ -22,6 +22,9 @@ IconTextWidget {
   property var panel
   property var screen
   property var properties
+  // Drawn one box per item (Boxes: One per item), the one item it draws
+  // (BarBoxes; set by its host), else ""
+  property string box: ""
   // Where its pointer areas go, in its background's shape (set by its
   // BarWidgetHost; null: its own bounds)
   property var hitArea: null

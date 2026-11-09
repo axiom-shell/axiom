@@ -10,7 +10,9 @@ import qs.components.bar.widgets.base
 // CPU / memory / temperature / GPU / disk readouts from SystemManager, one
 // segment per enabled metric in the display style (a ValueGraphic each:
 // docs/dev/bar/display-styles.md). Metrics the machine can't report (no
-// GPU, no CPU sensor) are left out.
+// GPU, no CPU sensor) are left out. Drawn one box per metric (Boxes: One
+// per item), each box is this widget showing its one metric (`box`),
+// which splits and pills as any value widget does.
 BarWidget {
   id: root
 
@@ -54,7 +56,8 @@ BarWidget {
       "graphed": false
     }
   ]
-  readonly property var _enabled: root._metrics.filter(m => root.properties[m.option])
+  // Its one metric when drawn one box per metric, else every one switched on
+  readonly property var _enabled: root._metrics.filter(m => root.box !== "" ? m.key === root.box : root.properties[m.option])
 
   // Whether this machine can report a metric. Disk reads the live disks
   // map, so only call it where re-evaluating on every sample is harmless.
@@ -160,8 +163,22 @@ BarWidget {
   readonly property bool _textByState: BarWidgetStyle.textByState(root.colors, root.appearance)
   readonly property color textColor: root._textByState ? root.accentColor : root.colors.text
 
-  implicitWidth: box.implicitWidth
-  implicitHeight: box.implicitHeight
+  implicitWidth: stack.implicitWidth
+  implicitHeight: stack.implicitHeight
+
+  // With one metric, its icon part and label set apart on a split bar, as
+  // the metric's segment reports them (IconTextWidget.splits), moved from
+  // the segment into the widget: the box's padding, centred in it
+  // (Its first segment registers itself: the segments are in a component
+  // of their own, out of reach of an id)
+  property IconTextWidget _first: null
+  readonly property IconTextWidget _single: root.segments.length === 1 ? root._first : null
+  readonly property real _singleStart: root._single ? Math.round(((root.isVertical ? root.height : root.width) - (root.isVertical ? root._single.height : root._single.width)) / 2) : 0
+  readonly property real _singleAcross: root._single ? Math.round(((root.isVertical ? root.width : root.height) - (root.isVertical ? root._single.width : root._single.height)) / 2) : 0
+  splits: root._single?.splits ?? false
+  // `_single` itself tested: it goes null before `splits` follows
+  splitAt: root._single?.splits ? root._singleStart + root._single.splitAt : -1
+  splitPart: root._single?.splits ? (root.isVertical ? Qt.rect(root._singleAcross + root._single.splitPart.x, root._singleStart + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height) : Qt.rect(root._singleStart + root._single.splitPart.x, root._singleAcross + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height)) : Qt.rect(0, 0, 0, 0)
 
   // Ask only for what's shown; re-acquiring replaces the old request
   readonly property var statsRequest: ({
@@ -189,7 +206,7 @@ BarWidget {
   }
 
   BaseWidget {
-    id: box
+    id: stack
     anchors.fill: parent
     isVertical: root.isVertical
     crossSize: root.barConfig.thickness
@@ -209,6 +226,11 @@ BarWidget {
         delegate: IconTextWidget {
           id: segment
           required property var modelData
+          required property int index
+          Component.onCompleted: if (segment.index === 0)
+            root._first = segment
+          Component.onDestruction: if (root._first === segment)
+            root._first = null
           readonly property var stat: root.segmentData(modelData)
           readonly property var metric: root._metrics.find(m => m.key === segment.modelData)
           readonly property string style: root.segmentStyle(segment.modelData)
@@ -220,6 +242,8 @@ BarWidget {
           spacing: root.isVertical ? 0 : root.barConfig.innerGap * 1.5
           textScale: root.isVertical ? 0.7 : 0.9
           uprightLabel: true
+          // Its icon part and label apart on a split bar, alone in its box
+          splitRoom: root.segments.length === 1 ? root.barConfig.splitRoom : -1
           icon: segment.stat.icon
           text: segment.stat.value
           minimumText: segment.stat.widest

@@ -29,11 +29,14 @@ QtObject {
   // over it (Fill on hover)
   property bool splits: false
   property bool hovered: false
+  // Its text color's name: a widget with no field for it (the tray,
+  // Workspaces: their heads, SplitLead) the field's default
+  readonly property string _foreground: root.properties?.foregroundColor ?? "base00"
 
   readonly property bool accentAuto: root.autoColors[root.accentField] === "accent"
   // Where its middle sits along the bar (0-1), or -1 without a gradient
   readonly property real barSpot: BarGradient.spot(0, root.length, root.barOffset, root.barLength)
-  readonly property var colors: BarsConfig.widgetColors(root.barConfig, root.accentColor, root.properties?.foregroundColor, {
+  readonly property var colors: BarsConfig.widgetColors(root.barConfig, root.accentColor, root._foreground, {
     "splits": root.splits,
     "hovered": root.hovered,
     "spot": root.barSpot,

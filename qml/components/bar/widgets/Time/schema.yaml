@@ -21,6 +21,21 @@ settings:
     description: Default follows Date & time settings.
   showSeconds: {type: boolean, title: Seconds, default: true}
   showDate: {type: boolean, title: Date, default: true}
+  lead:
+    type: string
+    title: Head
+    enum: [none, icon, date]
+    x-enumLabels: {none: None, icon: Icon, date: Date}
+    x-enumShowIf:
+      date: {showDate: true}
+    default: none
+    description: Drawn before the time; a split bar sets it apart as the icon part.
+  leadIcon:
+    type: string
+    x-control: icon
+    title: Head icon
+    default: schedule
+    x-showIf: {lead: icon}
   timezone:
     x-scope: personal
     type: string

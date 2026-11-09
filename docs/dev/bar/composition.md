@@ -20,7 +20,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Each widget's options live under its `<Type>Widget.properties.properties` definition in the schema.
 - `SchemaValidation` picks the `BarWidget` oneOf option by `type`. Widget properties therefore get their defaults filled like the rest of the config, and widgets read `properties.<key>` directly.
 - Widget types come from `BarsConfig.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.
-- `WidgetGroup` models its widgets by count, so live option edits reach a widget in place instead of rebuilding the section. `BarWidgetHost` takes the widget's whole config (`widget`): a changed `type` reloads the module with that type's own properties, any other change hands it the new `properties`.
+- `WidgetGroup` models its widgets by count, so live option edits reach a widget in place instead of rebuilding the section. `BarWidgetHost` takes the widget's whole config (`widget`): a changed `type` reloads the module with that type's own properties, any other change hands it the new `properties` (and `box`, the one item of a widget drawn one box per item: [widget style](widget-style.md#boxes-one-per-item)).
 
 ### Layout math
 - The main-axis layout math is pure and lives in `methods/BarLayout` (tested in `tst_BarLayout`). It covers:

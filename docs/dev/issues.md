@@ -564,6 +564,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** trivial
 - **Found:** 2026-11-06, while moving Bluetooth to the daemon
 
+### TestEnvironmentIsTheDaemonsWithItsAxiomValues failed once under verify.sh --all
+- **Where:** `backend/internal/supervise/supervise_test.go` (`TestEnvironmentIsTheDaemonsWithItsAxiomValues`)
+- **What:** One `scripts/dev/verify.sh --all` run failed it with `supervise_test.go:83: timed out` after 10 s: the wait for the restarted child's `env` dump to hold `AXIOM_LOCK_ON_START=1`. Three runs of the package alone right after passed in 0.6 s each. Not traced: likely the restart under the full suite's load outlasting `testkit.Eventually`, or the old child's dump read before the new one writes it.
+- **Size:** small
+- **Found:** 2026-11-09, while reviewing the bar split refinement
+
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)
 - **What:** One `verify.sh --all` run failed `TestDiscoverCalDAV/from_the_server's_root,_redirected` with `got {Calendars:[]}`, while the other parallel subtests passed. That message didn't print the error, but there was one: traced, `discoverCalDAV` returns no calendars without an error only when its last candidate, `/.well-known/caldav`, answers, and `davServer` 404s it. Ruled out (row 20): the shared account id `acc` (only a read-only `Secrets.Lookup` of a file no test writes); `CloseIdleConnections` on the shared `http.DefaultTransport` (the weather flake's cause), hammered beside the test for about 20 000 runs, never broke a request. Not reproduced in about 15 000 runs of the package under load (`-race`, `-cpu 1,2,4,8`). The test now prints the error: read it the next time it fails before changing anything.
