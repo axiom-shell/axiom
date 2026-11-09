@@ -55,9 +55,9 @@ func (l *loop) startChild(req CrawlRequest) {
 		err = cmd.Start()
 	}
 	if err != nil {
-		l.errText = "the crawl couldn't start: " + err.Error()
 		l.s.o.Log.Warn("file search: the crawl couldn't start", "err", err)
 		if l.phase == PhaseCrawling {
+			l.errText = "the crawl couldn't start: " + err.Error()
 			l.phase = PhaseReady
 		}
 		l.publish(true)
@@ -187,7 +187,11 @@ func (l *loop) childMsg(m childMsg) {
 		build := l.child.build
 		l.child = nil
 		if m.err != nil {
-			l.errText = "the crawl failed: " + m.err.Error()
+			// The state's error is a build's (the shell says the index
+			// couldn't be built); a later run's only logged
+			if build {
+				l.errText = "the crawl failed: " + m.err.Error()
+			}
 			l.s.o.Log.Warn("file search: the crawl failed", "err", m.err)
 		} else {
 			l.errText = ""

@@ -134,7 +134,6 @@ func (ix *Index) Name(i uint32) string { return string(ix.name(ix.at(i))) }
 // IsDir says whether an entry is a folder.
 func (ix *Index) IsDir(i uint32) bool { return ix.at(i).flags&flagDir != 0 }
 
-// IsLink says whether an entry is a symbolic link.
 // IsRoot says whether an entry is a root.
 func (ix *Index) IsRoot(i uint32) bool { return ix.at(i).flags&flagRoot != 0 }
 

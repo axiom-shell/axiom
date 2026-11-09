@@ -714,10 +714,30 @@ func (l *loop) housekeep() {
 		return
 	}
 	l.compact()
+	l.relink()
 	if l.phase == PhaseReady && l.s.o.Now().Sub(l.lastStat) >= l.s.o.StatEvery {
 		l.statUnwatched = true
 	}
 	l.next()
+}
+
+// relink: a root that is a link and leads elsewhere now (or nowhere)
+// sent no event, its watch being on the folder it led to: it's emptied
+// and watched where it leads, which reads it again and crawls its folders
+func (l *loop) relink() {
+	ix := l.ix()
+	if l.w == nil || ix == nil {
+		return
+	}
+	for _, path := range l.w.moved() {
+		l.w.remove(path)
+		if d, ok := ix.Lookup(path); ok {
+			l.s.mu.Lock()
+			ix.SetWatched(d, false)
+			l.s.mu.Unlock()
+			l.applyDir(path, 0, nil, false)
+		}
+	}
 }
 
 // compact swaps in a compacted copy once removals pass a quarter: built

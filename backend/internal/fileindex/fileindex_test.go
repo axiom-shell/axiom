@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/filesearch"
 	"github.com/axiom-shell/axiom/backend/internal/procprio"
 	"github.com/axiom-shell/axiom/backend/internal/testkit"
+	"golang.org/x/sys/unix"
 )
 
 // The test binary is its own crawl child: `<test binary> index-crawl`
@@ -567,6 +569,26 @@ func TestCapWithFoldersQueued(t *testing.T) {
 	}
 }
 
+// Only a failed build is the state's error ("couldn't be built"): a
+// failed stat pass over a built index is only logged
+func TestOnlyABuildFailsTheState(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a.txt")
+	now := time.Now()
+	l := loopOn(t, root, &now)
+	l.child = &child{cmd: &exec.Cmd{}, msgs: make(chan childMsg), stop: make(chan struct{}), stat: true}
+	l.childMsg(childMsg{done: true, err: errors.New("killed")})
+	if l.errText != "" {
+		t.Errorf("a stat pass's error: %q", l.errText)
+	}
+	l.phase = PhaseCrawling
+	l.child = &child{cmd: &exec.Cmd{}, msgs: make(chan childMsg), stop: make(chan struct{}), build: true}
+	l.childMsg(childMsg{done: true, err: errors.New("killed")})
+	if l.errText == "" {
+		t.Error("a build's error is missing")
+	}
+}
+
 // A change held for the push timer is pushed when it fires
 func TestHeldStateIsPushed(t *testing.T) {
 	t.Parallel()
@@ -630,5 +652,70 @@ func TestLinkedRootIsWatched(t *testing.T) {
 	}
 	if ok, _ := w.add(inner, false); ok {
 		t.Error("a link below a root is watched")
+	}
+}
+
+// A linked root leading elsewhere sends no event: housekeeping finds it,
+// reads it again and watches where it leads
+func TestLinkedRootRetargeted(t *testing.T) {
+	t.Parallel()
+	old, now := tree(t, "a.txt"), tree(t, "b.txt")
+	link := filepath.Join(t.TempDir(), "docs")
+	if err := os.Symlink(old, link); err != nil {
+		t.Fatal(err)
+	}
+	clock := time.Now()
+	l := loopOn(t, link, &clock)
+	w, err := newWatcher(8)
+	if err != nil {
+		t.Skip("no inotify:", err)
+	}
+	defer w.file.Close()
+	l.w = w
+	l.changed[link] = true
+	l.flush()
+	if d, _ := l.ix().Lookup(link); !l.ix().Watched(d) {
+		t.Fatal("the linked root isn't watched")
+	}
+	os.Remove(link)
+	os.Symlink(now, link)
+	l.housekeep()
+	l.flush()
+	found := l.ix().FindAll([]string{link + "/a.txt", link + "/b.txt"})
+	if _, ok := found[link+"/b.txt"]; !ok || len(found) != 1 {
+		t.Errorf("after the link moved: %v", found)
+	}
+	if d, _ := l.ix().Lookup(link); !l.ix().Watched(d) || l.w.byPath[link] == 0 {
+		t.Error("not watched where it leads")
+	}
+}
+
+// A disk mounted again at a root (another device number) is read, not
+// emptied: needs mounts, so it runs under `unshare -rm go test` and
+// skips elsewhere
+func TestRootRemounted(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "disk")
+	os.Mkdir(root, 0o755)
+	mount := func(file string) {
+		t.Helper()
+		if err := unix.Mount("tmpfs", root, "tmpfs", 0, ""); err != nil {
+			t.Skip("can't mount here:", err)
+		}
+		os.WriteFile(filepath.Join(root, file), nil, 0o644)
+	}
+	mount("a.txt")
+	t.Cleanup(func() { unix.Unmount(root, unix.MNT_DETACH) })
+	now := time.Now()
+	l := loopOn(t, root, &now)
+	// The old disk kept open: the new one gets another device number
+	old, _ := os.Open(root)
+	defer old.Close()
+	unix.Unmount(root, unix.MNT_DETACH)
+	mount("b.txt")
+	l.changed[root] = true
+	l.flush()
+	ix := l.ix()
+	if _, ok := ix.FindAll([]string{root + "/b.txt"})[root+"/b.txt"]; !ok {
+		t.Errorf("the remounted root's files are missing: %d entries", ix.Len())
 	}
 }

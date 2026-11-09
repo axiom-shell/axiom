@@ -23,7 +23,7 @@ type filter struct {
 	excludes filesearch.Excludes
 	skip     []string
 	hidden   bool
-	devs     map[string]uint64 // a root's device, read once
+	devs     map[string]uint64 // a root's device, as its last read found it
 }
 
 func newFilter(roots, excludes, skip []string, hidden bool) *filter {
@@ -111,9 +111,13 @@ func (f *filter) read(root, path string) (folder, error) {
 		return folder{}, &os.PathError{Op: "open", Path: path, Err: err}
 	}
 	var st unix.Stat_t
-	if err := unix.Fstat(fd, &st); err != nil || st.Dev != dev {
+	if err := unix.Fstat(fd, &st); err != nil || path != root && st.Dev != dev {
 		unix.Close(fd)
 		return folder{}, os.ErrNotExist
+	}
+	if path == root {
+		// A disk mounted again at the root may have another device
+		dev, f.devs[root] = st.Dev, st.Dev
 	}
 	file := os.NewFile(uintptr(fd), path)
 	defer file.Close()

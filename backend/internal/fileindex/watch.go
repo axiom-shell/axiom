@@ -50,7 +50,10 @@ type watcher struct {
 	file   *os.File
 	byWd   map[int32]string
 	byPath map[string]int32
-	budget int
+	// followed are the roots watched through a link (follow): the folder
+	// each led to, which a link leading elsewhere now doesn't report
+	followed map[string]fileID
+	budget   int
 	// events are what read reads; stop ends it
 	events chan []event
 	stop   chan struct{}
@@ -62,7 +65,7 @@ func newWatcher(budget int) (*watcher, error) {
 		return nil, err
 	}
 	// Non-blocking, so the runtime's poller reads it and Close ends a Read
-	return &watcher{fd: fd, file: os.NewFile(uintptr(fd), "inotify"), byWd: map[int32]string{}, byPath: map[string]int32{}, budget: budget,
+	return &watcher{fd: fd, file: os.NewFile(uintptr(fd), "inotify"), byWd: map[int32]string{}, byPath: map[string]int32{}, followed: map[string]fileID{}, budget: budget,
 		events: make(chan []event, 16), stop: make(chan struct{})}, nil
 }
 
@@ -87,11 +90,38 @@ func (w *watcher) add(path string, follow bool) (ok bool, stolen string) {
 	}
 	if old, ok := w.byWd[int32(wd)]; ok {
 		delete(w.byPath, old)
+		delete(w.followed, old)
 		stolen = old
 	}
 	w.byWd[int32(wd)] = path
 	w.byPath[path] = int32(wd)
+	if follow {
+		w.followed[path] = idOf(path)
+	}
 	return true, stolen
+}
+
+// fileID is a folder's device and inode (zero when it can't be read).
+type fileID struct{ dev, ino uint64 }
+
+func idOf(path string) fileID {
+	var st unix.Stat_t
+	if unix.Stat(path, &st) != nil {
+		return fileID{}
+	}
+	return fileID{st.Dev, st.Ino}
+}
+
+// moved are the roots watched through a link that leads elsewhere now
+// (or nowhere): their watch is on the folder it led to.
+func (w *watcher) moved() []string {
+	var out []string
+	for path, id := range w.followed {
+		if idOf(path) != id {
+			out = append(out, path)
+		}
+	}
+	return out
 }
 
 // remove stops watching path.
@@ -102,6 +132,7 @@ func (w *watcher) remove(path string) {
 	}
 	delete(w.byPath, path)
 	delete(w.byWd, wd)
+	delete(w.followed, path)
 	unix.InotifyRmWatch(w.fd, uint32(wd))
 }
 
@@ -111,6 +142,7 @@ func (w *watcher) forget(wd int32) {
 		delete(w.byWd, wd)
 		if w.byPath[path] == wd {
 			delete(w.byPath, path)
+			delete(w.followed, path)
 		}
 	}
 }

@@ -202,7 +202,8 @@ QtObject {
       const answer = root._mode.answer;
       if (!root.active || root._mode.text === null || !answer)
         return;
-      if (answer.request.kind === "search" && answer.phase !== "ready" && (!answer.browsed || answer.phase !== FileSearchManager.state.phase))
+      // (also one asked as ready that found no index: a daemon re-exec)
+      if (answer.request.kind === "search" && (answer.phase !== "ready" || !answer.indexed) && (!answer.browsed || answer.phase !== FileSearchManager.state.phase))
         root._ask(root._mode.text);
       else
         root.updated();
