@@ -6,6 +6,7 @@ import qs.config
 import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
+import qs.components.bar.look
 
 // One bar section: a row (or column, on a vertical bar) of BarWidgetHosts that
 // fits itself into `maxExtent` along the main axis by shrinking elastic

@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 import qs.components.methods
+import qs.components.bar.look
 
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
@@ -115,29 +116,23 @@ Item {
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
-  // Lit, in the hover color, unless its look is filled for the hover
-  // already ("Fill on hover": BarWidgetStyle.cell's showsHover)
-  CellBox {
+  // Its box (BarCells.cellBox) and the look's line. Lit, in the hover
+  // color, unless its look is filled for the hover already ("Fill on
+  // hover": BarWidgetStyle.cell's showsHover)
+  LookBox {
+    readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
     visible: root._drawsBox
-    barConfig: root.barConfig
-    radius: root.radius
-    shape: root.shape
+    bar: root.barConfig
+    outline: _box.outline
+    reach: _box.reach
+    strokeWidth: _box.strokeWidth
+    strokeStyle: _box.strokeStyle
     opacity: root._pulse
-    fillColor: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    strokeColor: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    fill: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    stroke: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    line: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
     animated: root.animated
-  }
-
-  // Underline: along the side the bar's widget lines take
-  CellUnderline {
-    barConfig: root.barConfig
-    visible: root._drawsBox && root.barConfig.look.traits.line
-    opacity: root._pulse
-    color: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
   }
 
   // What it shows, fading with an urgent one's pulse where nothing else

@@ -23,6 +23,14 @@ QtObject {
     return Math.max(0, Math.min(radius, thickness / 2, spacing / 2, endRoom));
   }
 
+  // A box's tab on `bar` (an enriched barConfig: its look's shape, its
+  // radius, thickness and edge), its ends bounded by `limits` (tabLimits),
+  // or null where the look's shape isn't a tab
+  function barTab(bar, limits) {
+    const shape = bar.look.shape;
+    return shape.name === "tab" ? root.tab(bar.radius, bar.thickness, shape.tabFillet, !(bar.right || bar.bottom), limits) : null;
+  }
+
   // A tab (widgetShape tab) reaches from the widget out to the outer edge
   // of what it sits on, where its sides meet that edge squarely or with a
   // concave fillet of `fillet` (tabFillet); its inner corners take the

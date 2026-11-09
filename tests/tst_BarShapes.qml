@@ -421,4 +421,27 @@ TestCase {
     }, "separate", false, 0, 1, 30, 20);
     compare([s.startCap, s.lead, s.trail], ["slant", 0, 0]);
   }
+
+  // A press tints what shows of a widget, but its own part of a merged
+  // run (filled on hover) in the caps it has alone
+  function test_press_caps() {
+    const caps = {
+      "shownStart": "flat",
+      "endCap": "flat",
+      "levelStartCap": "round",
+      "levelEndCap": "round"
+    };
+    compare(BarShapes.pressCaps(caps, "merged", true), {
+      "start": "round",
+      "end": "round"
+    });
+    compare(BarShapes.pressCaps(caps, "merged", false), {
+      "start": "flat",
+      "end": "flat"
+    }, "the run's colors: what shows");
+    compare(BarShapes.pressCaps(caps, "powerline", true), {
+      "start": "flat",
+      "end": "flat"
+    }, "not merged: what shows");
+  }
 }

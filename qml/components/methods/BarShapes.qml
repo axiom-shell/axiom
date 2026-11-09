@@ -203,6 +203,19 @@ QtObject {
     };
   }
 
+  // The caps a press tints a widget's background in (`caps`: segment's
+  // shownStart, endCap, levelStartCap, levelEndCap): what shows of it, but
+  // where it fills its own part of a merged run (`ownFill`: filled on
+  // hover), the caps it has alone, not the run's square middle:
+  // { start, end }
+  function pressCaps(caps, grouping, ownFill) {
+    const own = grouping === "merged" && ownFill;
+    return {
+      "start": own ? caps.levelStartCap : caps.shownStart,
+      "end": own ? caps.levelEndCap : caps.endCap
+    };
+  }
+
   // A cap's points down one end, top to bottom: { x, y, arc } with x in
   // from that end and arc { r, sweep } (sweep as drawn at the far end of
   // a horizontal bar) on the way into the point, `h` across, `d` deep

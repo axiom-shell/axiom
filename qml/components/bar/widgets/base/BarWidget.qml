@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.components.methods
+import qs.components.bar.look
 
 // Base for bar widgets that draw their own content (icon + label widgets
 // extend BarIconWidget instead): the inputs every widget gets from

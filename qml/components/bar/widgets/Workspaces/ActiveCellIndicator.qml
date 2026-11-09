@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 import qs.components.methods
+import qs.components.bar.look
 
 // The active workspace's box (or underline) in a bar switcher's row of
 // cells, drawn once over their boxes and under their labels (the row draws
@@ -183,21 +184,21 @@ Item {
         duration: Appearance.animNormal
       }
 
-      CellBox {
-        visible: root.boxed
-        barConfig: root.barConfig
-        radius: root.radius
-        shape: root.shape
-        fillColor: root.look.fill
-        strokeColor: root.look.stroke
+      // The active cell's box (BarCells.cellBox) and the look's line
+      LookBox {
+        readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
+        bar: root.barConfig
+        boxed: root.boxed
+        outline: _box.outline
+        reach: _box.reach
+        strokeWidth: _box.strokeWidth
+        strokeStyle: _box.strokeStyle
+        fill: root.look.fill
+        stroke: root.look.stroke
+        line: root.look.indicator
         fillSlice: root.look.gradient?.part === "fill" ? root.slice : null
         strokeSlice: root.look.gradient?.part === "stroke" ? root.slice : null
-        animated: true
-      }
-
-      CellUnderline {
-        barConfig: root.barConfig
-        color: root.look.indicator
       }
     }
   }

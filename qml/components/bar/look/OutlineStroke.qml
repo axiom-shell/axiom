@@ -5,57 +5,37 @@ import QtQuick.Shapes
 import qs.components.methods
 
 // An outlined bar widget's or workspace cell's stroke in a style other than
-// solid (the bar's outlineStroke), over the box it outlines (a Rectangle
-// can only draw a solid one): dashed, dotted, double (two lines of `lineWidth`
-// a `lineWidth` apart) or ends (a mark at each end in its shape:
-// BarOutlines.marks). Dashes and dots run along BarOutlines.dashPath, halves
-// from the middle of each side out, a dash centred where they start, so
-// both ends match; a flared tab's fillets are solid (BarOutlines.fillets). It lies inside the box but at a powerline seam, where
-// it lies on the shared edge, as a solid outline does (BarOutlines.path).
+// solid (the look's outline stroke), over the box it outlines (ShapedBox: a
+// Rectangle can only draw a solid one): dashed, dotted, double (two lines
+// of `lineWidth` a `lineWidth` apart) or ends (a mark at each end in its
+// shape: BarOutlines.marks). Dashes and dots run along
+// BarOutlines.dashPath, halves from the middle of each side out, a dash
+// centred where they start, so both ends match; a flared tab's fillets are
+// solid (BarOutlines.fillets). It lies inside the box but at a powerline
+// seam, where it lies on the shared edge, as a solid outline does
+// (BarOutlines.path).
 Item {
   id: root
 
   // dashed, dotted, double or ends
   required property string stroke
-  required property bool vertical
-  property real radius: 0
-  property string startCap: "round"
-  property string endCap: "round"
-  property bool seamStart: false
-  property bool seamEnd: false
-  // Ends left open, where a merged run carries on (BarOutlines.path)
-  property bool openStart: false
-  property bool openEnd: false
-  // A tab's shape (BarTabs.tab): every stroke is open along the edge it
-  // hangs from
-  property var tab: null
+  // What it outlines, at its own size (BarShapes.outline): on a tab, every
+  // stroke is open along the edge it hangs from
+  required property var outline
   property color color: "transparent"
   // Its slice of the bar's gradient in place of `color`
   // (BarGradient.gradientSlice), or null
   property var slice: null
   property real lineWidth: 1
 
-  readonly property real across: vertical ? width : height
-  readonly property real length: vertical ? height : width
+  readonly property bool _vertical: outline.vertical
+  readonly property real _length: outline.length
+  readonly property var _tab: outline.tab
   readonly property real _half: lineWidth / 2
   readonly property bool _dashed: stroke === "dashed" || stroke === "dotted"
-  // What it outlines (BarShapes.outline)
-  readonly property var _outline: BarShapes.outline({
-    "length": root.length,
-    "across": root.across,
-    "radius": root.radius,
-    "startCap": root.startCap,
-    "endCap": root.endCap,
-    "vertical": root.vertical,
-    "seamStart": root.seamStart,
-    "seamEnd": root.seamEnd,
-    "tab": root.tab,
-    "openStart": root.openStart,
-    "openEnd": root.openEnd
-  })
   // A line square to every edge `inset` in, the caps' at a seam on it
   function _offset(inset) {
-    return BarOutlines.offsetPath(root._outline, inset, root.seamStart ? inset - root._half : inset, root.seamEnd ? inset - root._half : inset);
+    return BarOutlines.offsetPath(root.outline, inset, root.outline.seamStart ? inset - root._half : inset, root.outline.seamEnd ? inset - root._half : inset);
   }
 
   Loader {
@@ -67,8 +47,8 @@ Item {
       ShapeSlice {
         id: strokePaint
         slice: root.slice
-        vertical: root.vertical
-        length: root.length
+        vertical: root._vertical
+        length: root._length
       }
 
       ShapePath {
@@ -91,11 +71,11 @@ Item {
           path: {
             switch (root.stroke) {
             case "ends":
-              return BarOutlines.marks(root._outline, root._half);
+              return BarOutlines.marks(root.outline, root._half);
             case "double":
               return root._offset(root._half);
             default:
-              return BarOutlines.dashPath(root._outline, root._half);
+              return BarOutlines.dashPath(root.outline, root._half);
             }
           }
         }
@@ -104,13 +84,13 @@ Item {
       // A dashed or dotted flared tab's fillets, solid
       ShapePath {
         fillColor: "transparent"
-        strokeColor: root._dashed && root.tab ? root.color : "transparent"
-        strokeGradient: root.slice !== null && root._dashed && root.tab ? strokePaint : null
+        strokeColor: root._dashed && root._tab ? root.color : "transparent"
+        strokeGradient: root.slice !== null && root._dashed && root._tab ? strokePaint : null
         strokeWidth: root.lineWidth
         capStyle: ShapePath.FlatCap
 
         PathSvg {
-          path: root._dashed && root.tab ? BarOutlines.fillets(root._outline, root._half) : ""
+          path: root._dashed && root._tab ? BarOutlines.fillets(root.outline, root._half) : ""
         }
       }
 

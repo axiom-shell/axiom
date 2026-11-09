@@ -8,7 +8,7 @@ import qs.services.apps
 import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
-import qs.components.bar
+import qs.components.bar.look
 
 // i18n: keys from the schema (titles, descriptions)
 // Custom widgets page, Bar tab: the widget as it's drawn on a bar across

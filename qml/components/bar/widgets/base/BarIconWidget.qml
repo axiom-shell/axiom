@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
+import qs.components.bar.look
+
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.
 // Modules override accentColor for their states; how it shows (a

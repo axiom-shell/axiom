@@ -83,4 +83,26 @@ TestCase {
     compare(BarTabs.tabShift(5, false), -3);
     compare(BarTabs.tabShift(0, true), 0);
   }
+
+  // A box's tab on a bar: the bar's own tab where its shape is one, from
+  // its outer edge; none on any other shape
+  function test_bar_tab() {
+    const bar = (name, over) => Object.assign({
+        "radius": 6,
+        "thickness": 26,
+        "right": false,
+        "bottom": false,
+        "look": {
+          "shape": {
+            "name": name,
+            "tabFillet": 3
+          }
+        }
+      }, over);
+    compare(BarTabs.barTab(bar("rounded"), [null, null]), null);
+    compare(BarTabs.barTab(bar("tab"), [null, null]), BarTabs.tab(6, 26, 3, true, [null, null]));
+    compare(BarTabs.barTab(bar("tab", {
+      "bottom": true
+    }), [null, null]).outerStart, false, "a bottom bar's outer edge is past its far side");
+  }
 }

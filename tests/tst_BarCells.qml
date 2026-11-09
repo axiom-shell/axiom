@@ -335,4 +335,55 @@ TestCase {
     compare(BarCells.cellSegment(shape("double"), "merged", false, place, 0, 3, 30, false, 14).lead, 6);
     compare(BarCells.cellSegment(shape("double"), "separate", false, place, 0, 3, 30, false, 14).lead, 3);
   }
+
+  // A cell's box: round caps of its own radius alone, a segment's caps,
+  // seams, tab and reach as one, in its own box's outline
+  function test_cell_box() {
+    const look = {
+      "outline": {
+        "width": 4,
+        "stroke": "double"
+      }
+    };
+    compare(BarCells.cellBox(look, null, 5), {
+      "outline": {
+        "startCap": "round",
+        "endCap": "round",
+        "radius": 5
+      },
+      "reach": null,
+      "strokeWidth": 2,
+      "strokeStyle": "double"
+    });
+    const shape = {
+      "segment": {
+        "startCap": "arrowIn",
+        "endCap": "arrowOut",
+        "seamStart": true,
+        "seamEnd": false,
+        "back": 13
+      },
+      "tab": null,
+      "reachStart": 1,
+      "reachEnd": 2
+    };
+    compare(BarCells.cellBox({
+      "outline": null
+    }, shape, 5), {
+      "outline": {
+        "startCap": "arrowIn",
+        "endCap": "arrowOut",
+        "seamStart": true,
+        "seamEnd": false,
+        "tab": null
+      },
+      "reach": {
+        "back": 13,
+        "near": 1,
+        "far": 2
+      },
+      "strokeWidth": 0,
+      "strokeStyle": "solid"
+    });
+  }
 }

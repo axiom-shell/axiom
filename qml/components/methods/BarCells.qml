@@ -73,6 +73,38 @@ QtObject {
     };
   }
 
+  // How a cell's box is drawn (LookBox) in `look` (the bar's), in its
+  // `shape` as a segment of the bar's run (cellShape) or, with none, a box
+  // filling it rounded by `radius`: { outline (ShapedBox's: the segment's
+  // caps, seams and tab, or round caps of `radius`), reach (past it, for
+  // BarShapes.boxRect: back under the cell before, out to a tab's edge, or
+  // null), strokeWidth and strokeStyle (its own box's outline: cellOutline,
+  // 0 and solid for none) }
+  function cellBox(look, shape, radius) {
+    const s = shape?.segment ?? null;
+    const outline = root.cellOutline(look.outline);
+    return {
+      "outline": s ? {
+        "startCap": s.startCap,
+        "endCap": s.endCap,
+        "seamStart": s.seamStart,
+        "seamEnd": s.seamEnd,
+        "tab": shape.tab
+      } : {
+        "startCap": "round",
+        "endCap": "round",
+        "radius": radius
+      },
+      "reach": s ? {
+        "back": s.back,
+        "near": shape.reachStart,
+        "far": shape.reachEnd
+      } : null,
+      "strokeWidth": outline?.width ?? 0,
+      "strokeStyle": outline?.stroke ?? "solid"
+    };
+  }
+
   // The gap between a widget's cells laid out as segments (cellSegment)
   // for their own `spacing`: none in a powerline, where they chain
   function cellGap(grouping, spacing) {
