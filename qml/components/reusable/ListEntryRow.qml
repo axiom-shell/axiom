@@ -64,7 +64,7 @@ StyledContainer {
       Layout.preferredWidth: Appearance.fontSize * 1.5
     }
 
-    StyledText {
+    StyledLabel {
       text: root.label
       textColor: root.ink
       font.bold: root.selected

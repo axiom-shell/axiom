@@ -233,7 +233,7 @@ PanelWindow {
           width: parent.width
           height: Math.max(greeting.implicitHeight, uptimeRow.implicitHeight)
 
-          StyledText {
+          StyledLabel {
             id: greeting
             anchors.left: parent.left
             anchors.right: uptimeRow.left
@@ -258,7 +258,7 @@ PanelWindow {
               textColor: Theme.foregroundInactive
               textSize: Appearance.fontSize
             }
-            StyledText {
+            StyledLabel {
               anchors.verticalCenter: parent.verticalCenter
               text: I18n.tr("up {0}", root.uptime)
               textColor: Theme.foregroundInactive

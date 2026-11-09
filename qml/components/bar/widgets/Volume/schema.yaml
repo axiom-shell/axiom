@@ -9,6 +9,7 @@ appearance:
 colors: standard
 settings:
   showPercentage: {type: boolean, title: Show percentage, default: false}
+  showDevice: {type: boolean, title: Show device, default: false}
   scrollStep:
     type: integer
     title: Scroll step

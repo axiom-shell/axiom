@@ -32,9 +32,10 @@ Every icon is a Material Symbols name (`"wifi"`, `"battery_full"`) that `StyledI
 ### The icon field (`x-control: "icon"`)
 - `SchemaField`'s `iconField` is a `StyledComboEntry` with `editable` on and `search` from `IconManager.search`.
   - Each row shows the icon and its name.
-  - The field leads with the current value drawn as an icon (a glyph shows as itself).
+  - The field leads with the current value drawn as an icon, only when it draws as one: a name the font has, or a single glyph (shown as itself). Longer text gets no lead, which would run over the typed words.
   - Typing filters the list; Up/Down/Enter pick. Anything typed or pasted that isn't in the list is kept on Enter or focus loss, as any typed combo does.
 - When the value reads as a name the font doesn't have, a warning under the field says it will show as text.
+- With `x-iconText: { mode, text }` (sibling keys) the field's row also holds a text box for the `text` sibling (a `SchemaTextField`, committed to the sibling through the form) and, at its right, an Icon / Text / Both switch setting the `mode` sibling (`icon`, `text` or `both`). Icon shows only the icon box, Text only the text box (the combo hidden, and with it the warning), Both the icon box on the left and the text box beside it (the Workspaces widget's labels: an icon, a word like `web` drawn as written though it's an icon name, or an icon before a word).
 - Every icon setting takes it:
   - a custom widget's `icon`
   - an OSD level's `icon`

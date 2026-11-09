@@ -204,15 +204,12 @@ Item {
           key: "BarEditor/" + root.selectionKey
         }
 
-        // Options and sizing side by side, while there's room
-        GridLayout {
+        // Options, then sizing, each the inspector's full width
+        ColumnLayout {
           width: scroll.availableWidth
-          columns: scroll.availableWidth > Widget.px(640) ? 2 : 1
-          columnSpacing: Widget.spacing * 2
-          rowSpacing: Widget.spacing * 2
+          spacing: Widget.spacing * 2
 
           ColumnLayout {
-            Layout.preferredWidth: Widget.px(3)
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             spacing: Widget.spacing
@@ -232,9 +229,7 @@ Item {
           }
 
           FieldGroup {
-            Layout.preferredWidth: 2
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
             title: I18n.tr(BarsConfig.widgetLayoutSchema.title)
             description: root.sizingText(root.measure)
 

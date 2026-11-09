@@ -125,7 +125,7 @@ ColumnLayout {
     visible: KeybindManager.editor.issueCount > 0 || removeConflicts.visible || mergeButton.visible
     Layout.fillWidth: true
 
-    StyledText {
+    StyledLabel {
       text: KeybindManager.editor.issueCount > 0 ? I18n.tr("{0} with issues", KeybindManager.editor.issueCount) : ""
       textColor: Theme.warning
       textSize: Appearance.fontSizeBy(-1)
@@ -179,7 +179,7 @@ ColumnLayout {
         textColor: Theme.accent
       }
 
-      StyledText {
+      StyledLabel {
         text: KeybindManager.editor.undoText
         elide: Text.ElideRight
         Layout.fillWidth: true

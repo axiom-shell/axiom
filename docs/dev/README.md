@@ -133,6 +133,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [bar-ends-pills](bar/bar-ends-pills.md): what a bar's ends meet, pill bars merging at corners, pill stretch.
 - [layering-and-corners](bar/layering-and-corners.md): bars and the screen border sharing an edge, corner ownership, transparent bars, border off.
 - [bar-editor](bar/bar-editor.md): the BarEditor page and live reports.
+- [style-block](bar/style-block.md): the Bar style block (settings card and editor Style tab), its tiles, presets, and the one file drawing bars.
 - [display-styles](bar/display-styles.md): how a widget draws its value (ring, fill, sparkline, ticker, stacked, …), shared with custom widgets.
 
 ### popouts/: everything growing out of an edge

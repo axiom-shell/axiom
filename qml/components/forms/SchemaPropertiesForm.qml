@@ -29,6 +29,16 @@ ColumnLayout {
   // Puts a field marked `x-beside` beside the one before it, each half wide,
   // while both are shown; off, every field takes the whole width
   property bool pairs: false
+  // Keeps its main rows in place: a field marked `x-keepsPlace` whose
+  // `x-showIf` fails is greyed, saying why on hover (its `x-tileHint`),
+  // instead of hidden, so they never move under the pointer
+  // (SchemaField.placeKept; the Bar style block). Other fields hide
+  property bool keepsPlace: false
+  // A hook giving a tiles field's previews: given its path ([key]),
+  // { component, properties }, each tile's preview made from `component`
+  // with the option's `value` and `properties` (ChoiceTiles.preview,
+  // previewProperties), or null for none (the Bar style block's samples)
+  property var tilePreview: null
   // Gives each field its change marks (FieldChangeMarks: reset to the
   // default, and a dot while it has an unsaved edit) when set: a hook
   // telling whether the field at a path ([key]) has one. null: no marks
@@ -40,8 +50,13 @@ ColumnLayout {
   // A field's unsaved-edit dot was clicked (with `changedAt`)
   signal discardAt(var path)
 
+  // Keys an icon field draws in its own row (`x-iconText`): no rows of
+  // their own. Not `x-rowDraws`, nor an `x-row` object's own row: an
+  // `x-row` is drawn only on the settings page, so here the keys it names,
+  // and the fields of an object it draws, keep their own rows
+  readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.iconTextKeys(prop)), [])
   // Depends on the schema only, so edits update the rows in place
-  readonly property var rows: Object.keys(root.propertiesSchema ?? {}).sort((a, b) => {
+  readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
     const rank = key => {
       const index = (root.order ?? []).indexOf(key);
       return index < 0 ? Infinity : index;
@@ -51,7 +66,7 @@ ColumnLayout {
       "properties": {
         [key]: root.propertiesSchema[key]
       }
-    }, []).filter(row => row.kind !== "group")), [])
+    }, []).filter(row => row.kind !== "group" && row.kind !== "object")), [])
 
   function valueAt(path) {
     return Utils.valueAt(root.values, path) ?? SchemaLayout.defaultAt({

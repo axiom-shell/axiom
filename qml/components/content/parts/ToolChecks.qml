@@ -56,12 +56,12 @@ ColumnLayout {
           textColor: tool.present === undefined ? Theme.foregroundInactive : tool.present ? Theme.success : Theme.warning
         }
 
-        StyledText {
+        StyledLabel {
           text: DependencyManager.toolCommand(tool.modelData)
           textFamily: "monospace"
         }
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           // I18n.tr: purposes are declared in DependencyManager
           text: I18n.tr(tool.modelData.purpose)

@@ -15,6 +15,8 @@ import qs.components.bar.widgets.base
 //           screencopy, not the portal, so Pipewire never sees it)
 //   camera: PrivacyManager.cameraCaptures (a camera device's video, or an
 //           app holding the device open itself, as Vesktop does)
+// Drawn one box per indicator (Boxes: One per item), each box is its
+// indicator's icon and short name while it's in use.
 BarIconWidget {
   id: root
 
@@ -29,17 +31,32 @@ BarIconWidget {
     return [...new Set(nodes.filter(n => !root.ignored(n)).map(n => AudioManager.appName(n)))];
   }
 
-  readonly property var micUsers: properties.showMic ? users(AudioManager.micCaptures) : []
-  readonly property var screenUsers: properties.showScreen ? users(PrivacyManager.screenCaptures).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
-  readonly property var cameraUsers: properties.showCamera ? users(PrivacyManager.cameraCaptures) : []
+  // Shows an indicator: its own in a box of its own, else those switched on
+  function shows(key) {
+    return root.box !== "" ? root.box === key : root.properties[{
+        "mic": "showMic",
+        "screen": "showScreen",
+        "camera": "showCamera"
+      }[key]];
+  }
+  readonly property var micUsers: shows("mic") ? users(AudioManager.micCaptures) : []
+  readonly property var screenUsers: shows("screen") ? users(PrivacyManager.screenCaptures).concat(ScreenshotManager.recording ? [I18n.tr("Screen recording")] : []) : []
+  readonly property var cameraUsers: shows("camera") ? users(PrivacyManager.cameraCaptures) : []
 
   readonly property var glyphs: [...(micUsers.length ? ["mic"] : []), ...(screenUsers.length ? ["monitor"] : []), ...(cameraUsers.length ? ["camera"] : [])]
   hidden: glyphs.length === 0
 
   icon: glyphs.join("\n")
-  showText: false
+  // In a box of its own, its short name, so it splits
+  // I18n.tr("Mic") I18n.tr("Screen") I18n.tr("Camera")
+  text: root.box !== "" ? I18n.tr({
+    "mic": "Mic",
+    "screen": "Screen",
+    "camera": "Camera"
+  }[root.box] ?? "") : ""
+  showText: root.box !== ""
 
-  accentColor: Theme.resolveColor(properties.activeColor)
+  accentField: "activeColor"
 
   clickable: true
   onClicked: {

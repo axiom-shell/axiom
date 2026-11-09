@@ -186,7 +186,7 @@ Card {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledText {
+          StyledLabel {
             text: root.title
             textSize: Appearance.fontSizeBy(4)
             font.bold: true
@@ -194,7 +194,7 @@ Card {
             Layout.maximumWidth: root.width / 3
           }
 
-          StyledText {
+          StyledLabel {
             visible: root.editable
             text: root.dragLayer.countLabel(root.list.length)
             opacity: 0.6
@@ -224,7 +224,7 @@ Card {
             enabled: root.canNudgeForward
             onClicked: root.nudge(1)
           }
-          StyledText {
+          StyledLabel {
             Layout.leftMargin: Widget.spacing / 2
             text: root.nudgeText
             opacity: 0.6
@@ -257,7 +257,7 @@ Card {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: fitLinks.visible ? false : true
             Layout.maximumWidth: fitLinks.visible ? implicitWidth : -1
             Layout.minimumWidth: 0
@@ -276,7 +276,7 @@ Card {
         }
       }
 
-      StyledText {
+      StyledLabel {
         visible: root.editable
         Layout.maximumWidth: root.width / 3
         horizontalAlignment: Text.AlignRight
@@ -520,7 +520,7 @@ Card {
           y: root.edge === "top" ? parent.height - 1 : 0
         }
 
-        StyledText {
+        StyledLabel {
           visible: root.reservedLabel !== "" && parent.width > width && parent.height > height
           anchors.centerIn: parent
           rotation: root.alongRows && parent.width < width + Widget.padding ? -90 : 0
@@ -763,7 +763,7 @@ Card {
             border.width: 1
             opacity: 0.9
 
-            StyledText {
+            StyledLabel {
               id: marginLabel
               anchors.centerIn: parent
               text: margin.info ? (margin.info.exact ? "" : "≈") + GridPlacement.cards(margin.info.units) : ""

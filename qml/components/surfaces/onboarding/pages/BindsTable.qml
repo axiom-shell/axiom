@@ -38,7 +38,7 @@ GridLayout {
         key: entryRow.bind ? entryRow.bind.key.replace(/\s*\+\s*/g, " + ") : I18n.tr("not bound")
       }
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: entryRow.modelData.label
         elide: Text.ElideRight

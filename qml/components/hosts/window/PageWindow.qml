@@ -68,7 +68,7 @@ FloatingWindow {
       textColor: Theme.accent
     }
 
-    StyledText {
+    StyledLabel {
       text: OverlayConfig.viewLabel({
         "type": root.type
       }, 0)

@@ -100,7 +100,7 @@ Item {
       Layout.preferredWidth: root.textWidth
       Layout.preferredHeight: root._textHeight
 
-      StyledText {
+      StyledLabel {
         id: titleText
         width: root.textWidth
         text: root.title
@@ -110,7 +110,7 @@ Item {
         maximumLineCount: 1
       }
 
-      StyledText {
+      StyledLabel {
         id: subtitleText
         width: root.textWidth
         // A zero-width break after each / - _, so a path or an id wraps

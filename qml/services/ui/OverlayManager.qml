@@ -160,8 +160,18 @@ QtObject {
       }
     })
 
+  // What a page link leads to inside its page: one the layouts editor
+  // edits ("Layouts:lockscreen"), or a bar's own setting in the bar editor
+  // ("BarEditor:<Bar key>", its schema title: the tab holding it is shown)
   function _linkTarget(link) {
     const parts = link.split(":");
+    if (parts[0] === "BarEditor" && parts[1]) {
+      const field = ConfigManager.configSchema?.definitions?.Bar?.properties?.[parts[1]];
+      return field ? {
+        "label": field.title,
+        "icon": "tune"
+      } : null;
+    }
     return parts[0] === "Layouts" ? root._linkTargets[parts[1] ?? ""] ?? null : null;
   }
 
@@ -198,6 +208,8 @@ QtObject {
       root.editGreeter();
     else if (target === "desktop")
       root.editDesktop();
+    else if (target !== "" && link.split(":")[0] === "BarEditor")
+      BarManager.showBarField(target);
     ShellManager.followLink(link.split(":")[0]);
   }
 

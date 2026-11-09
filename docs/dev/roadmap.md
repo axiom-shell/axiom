@@ -172,6 +172,7 @@ Found by the audits:
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 
 Found along the way:
+- [The strip after a switcher's row warns that its Grid overflows as it loads](issues.md#the-strip-after-a-switchers-row-warns-that-its-grid-overflows-as-it-loads) (the bar style rework)
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded) (investigating Hyprland starting on workspace 10)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all) (reviewing the guard's leading `cd`, config-05)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh) (the same)
@@ -183,12 +184,15 @@ Found along the way:
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
 - [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)
 - [TestNotifySend failed once under verify.sh](issues.md#testnotifysend-failed-once-under-verifysh) (the same)
+- [TestEnvironmentIsTheDaemonsWithItsAxiomValues failed once under verify.sh --all](issues.md#testenvironmentisthedaemonswithitsaxiomvalues-failed-once-under-verifysh---all) (reviewing the bar split refinement)
+- [qml_modules.py builds its tree in a folder named after a flag](issues.md#qml_modulespy-builds-its-tree-in-a-folder-named-after-a-flag) (centring labels outside the bar)
 - [The screen-share picker repeats the shared prompt's modal frame](issues.md#the-screen-share-picker-repeats-the-shared-prompts-modal-frame) (lifting polkit's window into the shared prompt)
 - [A drive card's "open" on a locked volume asks in a menu nobody opened](issues.md#a-drive-cards-open-on-a-locked-volume-asks-in-a-menu-nobody-opened) (reviewing the Bluetooth daemon branch)
 - [guard.py doesn't judge qs ipc call](issues.md#guardpy-doesnt-judge-qs-ipc-call) (the same)
 - [guard.py judges daemon calls and the radio only by argv](issues.md#guardpy-judges-daemon-calls-and-the-radio-only-by-argv) (the same)
 - [A VPN secret request held when the shell leaves waits for NetworkManager's timeout](issues.md#a-vpn-secret-request-held-when-the-shell-leaves-waits-for-networkmanagers-timeout) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
+- [A number field in the bar editor logs a polish loop](issues.md#a-number-field-in-the-bar-editor-logs-a-polish-loop) (making the widget inspector one column)
 - [The OSD's hover strip opens an empty bars slot when every bar is left out](issues.md#the-osds-hover-strip-opens-an-empty-bars-slot-when-every-bar-is-left-out) (reviewing the OSD engine branch)
 - [An OSD on a screen that isn't the target opens its parts while shut and then stays open](issues.md#an-osd-on-a-screen-that-isnt-the-target-opens-its-parts-while-shut-and-then-stays-open) (the same)
 - [An OSD tile pops in on its own easing curve](issues.md#an-osd-tile-pops-in-on-its-own-easing-curve) (the same)
@@ -304,7 +308,6 @@ Deferred by the maintainer (2026-11-01, the clear-out's questions: side-edge sub
 - [Calendar times in a Windows zone name with no VTIMEZONE read as local time](issues.md#calendar-times-in-a-windows-zone-name-with-no-vtimezone-read-as-local-time)
 
 Deferred by the maintainer (2026-11-06, answering the short decisions: "defer"):
-- ["Colour the text by state" does nothing on a bar whose widgets have no fill](issues.md#colour-the-text-by-state-does-nothing-on-a-bar-whose-widgets-have-no-fill)
 - [A menu at the screen-size cap can still lose a bar's depth](issues.md#a-menu-at-the-screen-size-cap-can-still-lose-a-bars-depth)
 - [On Hyprland a click back in an older popout closes it with the newer one](issues.md#on-hyprland-a-click-back-in-an-older-popout-closes-it-with-the-newer-one)
 

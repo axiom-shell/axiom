@@ -48,7 +48,7 @@ ColumnLayout {
       }
     }
 
-    StyledText {
+    StyledLabel {
       text: {
         if (root.live)
           return I18n.tr("Thinking…");

@@ -76,7 +76,7 @@ StyledContainer {
         textColor: Theme.accent
       }
 
-      StyledText {
+      StyledLabel {
         text: KeybindManager.sectionTitle(root._section)
         textColor: Theme.accent
         font.bold: true
@@ -84,7 +84,7 @@ StyledContainer {
         Layout.fillWidth: true
       }
 
-      StyledText {
+      StyledLabel {
         text: root._section.binds.length
         opacity: 0.5
         textSize: Appearance.fontSizeBy(-2)
@@ -154,12 +154,12 @@ StyledContainer {
               opacity: 0.8
             }
 
-            StyledText {
+            StyledLabel {
               text: "+"
               opacity: 0.5
             }
 
-            StyledText {
+            StyledLabel {
               visible: item.folded
               text: item.modelData.count ?? ""
               opacity: 0.5

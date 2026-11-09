@@ -205,7 +205,7 @@ ColumnLayout {
           border.color: Theme.border
         }
 
-        StyledText {
+        StyledLabel {
           text: legendEntry.modelData[1]
           opacity: 0.7
           textSize: Appearance.fontSizeBy(-2)

@@ -226,7 +226,7 @@ Popup {
         Layout.fillHeight: true
         spacing: Widget.spacing
 
-        StyledText {
+        StyledLabel {
           visible: !root.saved
           text: root.preset?.title ?? ""
           font.bold: true
@@ -357,13 +357,13 @@ Popup {
                     }
                   }
 
-                  StyledText {
+                  StyledLabel {
                     text: BindActions.defaultLabel(KeybindManager.actionTable, step.modelData.bind) || (KeybindManager.actionLabels[step.modelData.bind.action] ?? "")
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                   }
 
-                  StyledText {
+                  StyledLabel {
                     visible: root.merging
                     text: {
                       switch (step.modelData.status) {

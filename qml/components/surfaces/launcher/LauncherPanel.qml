@@ -283,7 +283,7 @@ FocusScope {
       radius: Widget.radius
       color: Qt.alpha(Theme.accent, 0.16)
 
-      StyledText {
+      StyledLabel {
         id: modeLabel
         anchors.centerIn: parent
         text: parent.labels[LauncherManager.mode] ?? ""

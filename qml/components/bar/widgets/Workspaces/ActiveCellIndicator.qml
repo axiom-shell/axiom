@@ -3,34 +3,51 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
+import qs.components.bar.look
 
 // The active workspace's box (or underline) in a bar switcher's row of
 // cells, drawn once over their boxes and under their labels (the row draws
 // its WorkspaceCells in two layers around it), sliding from cell to cell as
 // the active workspace changes, where the cells would each recolour. Placed
 // by the active cell's index, as every cell before it is at its rest
-// length. It fills the row, which clips it: a step
+// length (WorkspaceCells.startOf), and as long as that cell widened. It
+// fills the row, which clips it: a step
 // past one end (`expectWrap`) leaves that end and comes in at the other
-// rather than sliding back across.
+// rather than sliding back across. As a segment of the bar's run (the
+// widget's Background off) it takes the active cell's shape (`shape`), and
+// an Auto color its slice of the bar's gradient (`slice`).
 Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for the active state
+  // How its widget's cells draw on this bar
+  required property CellLook cellLook
+  // BarsConfig.cellColors for the active state (CellLook.workspaceColorsOf)
   required property var look
   // The active cell's index in the row, or -1 when none shows
   required property int index
   required property real thickness
-  required property real restLength
-  // The active cell's length (twice the rest with `wideActive`)
-  required property real activeLength
+  // Each cell's length at rest
+  required property var lengths
+  // What the active cell grows by (`wideActive`: one normal cell's length)
+  required property real extra
+  // The active cell's length
+  readonly property real activeLength: (lengths[index] ?? 0) + extra
   required property real spacing
-  property real radius: 0
+  property real radius: cellLook.radius
+  // The active cell's shape as a segment of the bar's run
+  // (BarCells.cellShape), or null
+  property var shape: null
+  // Its slice of the bar's gradient where it rests, for the part of its
+  // box `look.gradient` names, or null
+  property var slice: null
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed
+  // A box (a solid one on every bar style), whatever the run
+  readonly property bool boxed: cellLook.boxes
   // Whether there's anything to slide: a box, or an underline
-  readonly property bool slides: boxed || barConfig.widgetStyle === "underline"
+  readonly property bool slides: cellLook.slides
   readonly property real _along: _alongAt(index)
   readonly property real _rowLength: isVertical ? height : width
 
@@ -47,7 +64,7 @@ Item {
   property real _shift: 0
 
   function _alongAt(i) {
-    return Math.max(0, i) * (root.restLength + root.spacing);
+    return WorkspaceCells.startOf(root.lengths, root.spacing, Math.max(0, i));
   }
 
   function expectWrap(forward) {
@@ -65,7 +82,7 @@ Item {
       root._wrapPending = false;
       wrapTimeout.stop();
       if (root.index >= 0 && from >= 0 && (root._wrapForward ? root.index < from : root.index > from))
-        root._wrap(root._alongAt(from), root._alongAt(root.index));
+        root._wrap(root._alongAt(from), root._alongAt(root.index), (root.lengths[from] ?? 0) + root.extra);
     }
     if (root.index < 0)
       root._placed = false;
@@ -83,11 +100,14 @@ Item {
   }
 
   // From `fromAlong` out past the end it's leaving, then in from the other
-  // to `toAlong`, where the box now rests (`_shift` offsetting it)
-  function _wrap(fromAlong, toAlong) {
+  // to `toAlong`, where the box now rests (`_shift` offsetting it). Before
+  // the start means past the longer of the two cells: the box's length
+  // glides from the one it left (`fromLength`) meanwhile
+  function _wrap(fromAlong, toAlong, fromLength) {
     const forward = root._wrapForward;
-    const pastEnd = root._rowLength + root.spacing;
-    const beforeStart = -root.activeLength - root.spacing;
+    // Out past an end with all it draws past its box (BarCells.cellShape)
+    const pastEnd = root._rowLength + root.spacing + (root.shape?.drawStart ?? 0);
+    const beforeStart = -Math.max(root.activeLength, fromLength) - root.spacing - (root.shape?.drawEnd ?? 0);
     wrapAnimation.stop();
     wrapOut.from = fromAlong - toAlong;
     wrapOut.to = (forward ? pastEnd : beforeStart) - toAlong;
@@ -126,34 +146,61 @@ Item {
   anchors.fill: parent
   visible: slides && index >= 0
 
-  Item {
-    id: box
-    x: root.isVertical ? 0 : root._along + root._shift
-    y: root.isVertical ? root._along + root._shift : 0
-    width: root.isVertical ? root.thickness : root.activeLength
-    height: root.isVertical ? root.activeLength : root.thickness
+  // While it wraps, kept along the bar inside the row's own bounds: the
+  // row's clip lets its cells draw back under the widget before and a
+  // tab's fillets past its ends, which the box passing out would paint
+  // over the cap or fillet there. Across it still reaches a tab's edge.
+  MarginClip {
+    readonly property var _margins: BarCells.cellMargins(root.shape, root.shape, root.isVertical)
 
-    Glide on x {
-      enabled: root._placed && !root._wrapPending && !wrapAnimation.running
-      duration: Appearance.animNormal
-    }
-    Glide on y {
-      enabled: root._placed && !root._wrapPending && !wrapAnimation.running
-      duration: Appearance.animNormal
-    }
+    anchors.fill: parent
+    clipped: wrapAnimation.running
+    leftMargin: root.isVertical ? _margins.left : 0
+    topMargin: root.isVertical ? 0 : _margins.top
+    rightMargin: root.isVertical ? _margins.right : 0
+    bottomMargin: root.isVertical ? 0 : _margins.bottom
 
-    Rectangle {
-      anchors.fill: parent
-      visible: root.boxed
-      radius: root.radius
-      color: root.look.fill
-      border.color: root.look.stroke
-      border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
-    }
+    Item {
+      id: box
+      x: root.isVertical ? 0 : root._along + root._shift
+      y: root.isVertical ? root._along + root._shift : 0
+      width: root.isVertical ? root.thickness : root.activeLength
+      height: root.isVertical ? root.activeLength : root.thickness
 
-    CellUnderline {
-      barConfig: root.barConfig
-      color: root.look.indicator
+      Glide on x {
+        enabled: root._placed && !root._wrapPending && !wrapAnimation.running
+        duration: Appearance.animNormal
+      }
+      Glide on y {
+        enabled: root._placed && !root._wrapPending && !wrapAnimation.running
+        duration: Appearance.animNormal
+      }
+      // Cells differ in length (a text label, a row of icons)
+      Glide on width {
+        enabled: root._placed
+        duration: Appearance.animNormal
+      }
+      Glide on height {
+        enabled: root._placed
+        duration: Appearance.animNormal
+      }
+
+      // The active cell's box (BarCells.cellBox) and the look's line
+      LookBox {
+        readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
+        bar: root.barConfig
+        boxed: root.boxed
+        outline: _box.outline
+        reach: _box.reach
+        strokeWidth: _box.strokeWidth
+        strokeStyle: _box.strokeStyle
+        fill: root.look.fill
+        stroke: root.look.stroke
+        line: root.look.indicator
+        fillSlice: root.look.gradient?.part === "fill" ? root.slice : null
+        strokeSlice: root.look.gradient?.part === "stroke" ? root.slice : null
+      }
     }
   }
 }

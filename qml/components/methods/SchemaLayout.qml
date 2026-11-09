@@ -13,8 +13,24 @@ import QtQuick
 QtObject {
   id: root
 
+  // The keys of its object a field draws itself, so their own rows hide:
+  // its `x-rowDraws`, and an icon field's `x-iconText` siblings
+  function drawnKeys(fieldSchema) {
+    const keys = Array.isArray(fieldSchema?.["x-rowDraws"]) ? fieldSchema["x-rowDraws"].slice() : [];
+    return keys.concat(root.iconTextKeys(fieldSchema));
+  }
+
+  // The sibling keys an icon field's `x-iconText` ({ mode, text }) draws
+  // in its row: its mode's, then its text's, each where given
+  function iconTextKeys(fieldSchema) {
+    const iconText = fieldSchema?.["x-iconText"];
+    return [iconText?.mode, iconText?.text].filter(key => typeof key === "string" && key !== "");
+  }
+
   // Flattens an object schema into form rows:
   //   { kind: "group", title, path, showIf } for a nested object
+  //   { kind: "object", title, path, schema } for a nested object with
+  //     `x-row`, drawn whole by that row
   //   { kind: "field", title, path, schema }  for an editable value
   //   { kind: "array", title, path, schema }  for an array of objects
   // A nested object's `x-showIf` goes on its group row and, as
@@ -22,8 +38,9 @@ QtObject {
   // every row inside it. A nested object marked `x-fold` folds its rows
   // behind its title: its group row has `fold: true`, and each row inside
   // it `foldedBy`, the dotted path of the innermost such object. A row
-  // another field's `x-row` draws (its `x-rowDraws`) has `drawnBy`, that
-  // field's dotted path. Keys go in
+  // another field draws (drawnKeys) has `drawnBy`, that field's dotted
+  // path; every row under an `x-row` object has `drawnBy` its path (and
+  // no `foldedBy`: its folds aren't drawn). Keys go in
   // their object's `x-order` first (the schema reaches QML as a map)
   function rows(objectSchema, path) {
     const result = [];
@@ -39,7 +56,31 @@ QtObject {
       if (prop["x-settings"] === false)
         continue;
       const propPath = path.concat(key);
-      if (prop.type === "object" && prop.properties) {
+      if (prop.type === "object" && prop.properties && prop["x-row"]) {
+        // One row draws it all (Bars.style's BarStyleBlock): its own row,
+        // then every row under it, there for search, the changed list,
+        // Discard and jumps, which take them as that row
+        const showIf = prop["x-showIf"] ?? null;
+        const children = rows(prop, propPath);
+        for (const child of children) {
+          child.drawnBy = propPath.join(".");
+          delete child.foldedBy;
+          if (showIf)
+            child.groupShowIf = [
+              {
+                "condition": showIf,
+                "path": path
+              }
+            ].concat(child.groupShowIf ?? []);
+        }
+        result.push({
+          "kind": "object",
+          "title": prop.title ?? key,
+          "path": propPath,
+          "schema": prop
+        });
+        result.push(...children);
+      } else if (prop.type === "object" && prop.properties) {
         const children = rows(prop, propPath);
         if (children.length > 0) {
           const showIf = prop["x-showIf"] ?? null;
@@ -78,11 +119,12 @@ QtObject {
         });
       }
     }
-    // A field whose `x-row` also draws other keys of its object
-    // (`x-rowDraws`, dotted paths under it) marks their rows `drawnBy`
-    // its dotted path: on the settings page they're drawn inside it
-    for (const row of result.filter(r => r.kind !== "group" && Array.isArray(r.schema["x-rowDraws"]))) {
-      const drawn = row.schema["x-rowDraws"].map(key => path.concat(key.split(".")).join("."));
+    // A field that also draws other keys of its object (drawnKeys: an
+    // `x-row`'s `x-rowDraws`, dotted paths under it, or an icon field's
+    // `x-iconText`) marks their rows `drawnBy` its dotted path: on the
+    // settings page they're drawn inside it
+    for (const row of result.filter(r => r.kind !== "group" && root.drawnKeys(r.schema).length > 0)) {
+      const drawn = root.drawnKeys(row.schema).map(key => path.concat(key.split(".")).join("."));
       result.filter(r => r.kind !== "group" && drawn.includes(r.path.join("."))).forEach(r => r.drawnBy = row.path.join("."));
     }
     return result;
@@ -117,6 +159,55 @@ QtObject {
         return value !== want.not;
       return value === want;
     });
+  }
+
+  // An enum field's options as tiles (`x-control: tiles`): [{ value,
+  // hint }], every option (none hidden, unlike a dropdown's), `hint` null
+  // while it applies, else why not: its `x-enumShowIf` condition fails
+  // (valueOf as showIfHolds), the chosen one too. The hint is English, from
+  // the field's `x-tileHint` (tileHint), "" for none: the form says it
+  // generically and translates it
+  function tileOptions(fieldSchema, options, valueOf) {
+    const conditions = fieldSchema?.["x-enumShowIf"] ?? {};
+    return Array.prototype.map.call(options ?? [], value => ({
+          "value": value,
+          "hint": root.showIfHolds(conditions[value], valueOf) ? null : root.tileHint(fieldSchema, value)
+        }));
+  }
+
+  // `x-tileHint`: why an option (`value`) of a field doesn't apply, from
+  // its map ({ value: reason }); with no `value`, why the whole field
+  // doesn't (its `x-showIf` failing in a form that keeps its place), from
+  // a string, or the map's "*" beside its options'. English, "" for none
+  function tileHint(fieldSchema, value) {
+    const hint = fieldSchema?.["x-tileHint"];
+    const map = hint !== null && typeof hint === "object" ? hint : {};
+    if (value === undefined)
+      return typeof hint === "string" ? hint : typeof map["*"] === "string" ? map["*"] : "";
+    return typeof map[value] === "string" ? map[value] : "";
+  }
+
+  // `keys` (an object's, in order) with each one marked `x-placeUnder:
+  // <sibling>` (`properties`: the object's) moved directly under that
+  // sibling's row: after it, the rows beside it (`x-beside`) and those
+  // placed under it before. One naming a key not in `keys`, or one placed
+  // itself, stays where it is
+  function placedUnder(keys, properties) {
+    const under = key => {
+      const target = properties?.[key]?.["x-placeUnder"];
+      return typeof target === "string" && target !== key && keys.includes(target) && typeof properties[target]?.["x-placeUnder"] !== "string" ? target : null;
+    };
+    const result = keys.filter(key => under(key) === null);
+    for (const key of keys) {
+      const target = under(key);
+      if (target === null)
+        continue;
+      let at = result.indexOf(target) + 1;
+      while (at < result.length && (properties[result[at]]?.["x-beside"] === true || under(result[at]) === target))
+        at++;
+      result.splice(at, 0, key);
+    }
+    return result;
   }
 
   // Whether a setting waits for the user's own Save or card instead of
@@ -320,8 +411,9 @@ QtObject {
   // own. `perField` makes each of the section's direct fields a card of
   // its own, titled and described by the field and sorted by title, a
   // switch's row labelled "Enabled"; the section's description gets a card
-  // first. A card holding a field marked `x-wide` spans both columns
-  // (`wide`).
+  // first. A nested object with `x-row` is one row (and the rows it draws)
+  // on a card of its own, titled by the object. A card holding a field or
+  // `x-row` object marked `x-wide` spans both columns (`wide`).
   function groups(schema, sectionKey) {
     const section = root.resolved(schema.properties[sectionKey], schema);
     const sectionTitle = section.title ?? sectionKey;
@@ -440,7 +532,7 @@ QtObject {
         }, [sectionKey]);
         // A heading repeating the card's title is left out (its rows keep
         // the object's `x-showIf`)
-        if (objectRows[0]?.title === prop["x-group"])
+        if (objectRows[0]?.kind === "group" && objectRows[0].title === prop["x-group"])
           objectRows.shift();
         cardFor(prop["x-group"], {
           "defaultTitle": sectionTitle,
@@ -450,6 +542,23 @@ QtObject {
           "showIf": null,
           "showIfParent": []
         }).rows.push(...objectRows);
+        continue;
+      }
+      // An object one row draws (`x-row`) is that row on a card of its
+      // own, titled by it (its `x-wide` widens the card)
+      if (prop["x-row"]) {
+        cardFor(prop.title ?? key, {
+          "defaultTitle": prop.title ?? key,
+          "description": prop.description ?? "",
+          "section": sectionTitle,
+          "path": [sectionKey, key],
+          "showIf": prop["x-showIf"] ?? null,
+          "showIfParent": [sectionKey]
+        }).rows.push(...root.rows({
+          "properties": {
+            [key]: prop
+          }
+        }, [sectionKey]));
         continue;
       }
       place(prop, [sectionKey, key], {

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.apps
-import qs.config
 import qs.components.methods
 import qs.services.ui
 import qs.components.bar.widgets.base
@@ -18,7 +17,7 @@ BarIconWidget {
   text: StopwatchClock.format(ScreenshotManager.recordingElapsed * 1000)
   showText: properties.showTimer && ScreenshotManager.recordingSince > 0
 
-  accentColor: Theme.resolveColor(properties.activeColor)
+  accentField: "activeColor"
   clickable: true
   onClicked: ActionsManager.run("screenRecord", {
     "call": "close",

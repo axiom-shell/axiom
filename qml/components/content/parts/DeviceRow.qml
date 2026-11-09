@@ -125,14 +125,14 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: root.title
           elide: Text.ElideRight
           textSize: Appearance.fontSizeBy(-1)
           textColor: root.connected ? Theme.foreground : Theme.foregroundAlt
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: root._confirmForget ? I18n.tr("Click again to forget") : root.status
           elide: Text.ElideRight

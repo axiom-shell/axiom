@@ -99,7 +99,7 @@ Item {
           implicitWidth: Math.max(time.implicitWidth, Widget.smallHeight)
           implicitHeight: Widget.smallHeight
 
-          StyledText {
+          StyledLabel {
             id: time
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter

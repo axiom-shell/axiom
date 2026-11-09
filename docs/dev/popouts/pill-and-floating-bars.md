@@ -70,13 +70,14 @@ How surfaces meet the three non-solid bar backgrounds. Solid bars, the border, c
 
 ### Transparent bars (detached popouts)
 - **On a transparent bar, popouts are `detached`:** plain rounded boxes on the bar's own edge.
-  - They never join an end; they're clamped clear of it.
+  - They never join an end; along the bar they reach no further than the windows do at either end (`SurfaceContext.wallLine`: reserved space plus gaps_out, no nearer than the frame line), with no fillet room kept, since a box of its own has none.
   - Across, they sit in line with the windows (`BarsConfig.detachedPush`). Transparent bars are laid inside every other kind on their edge (floating bars and floating pills included), so the box opens past them all, never covering a bar; with another transparent bar inside it, past that too, sliding further. Edge popouts on such an edge meet the transparent bar, the innermost, and are detached past the whole stack as well.
 - **Their window:**
   - Whether it slides under is `EdgePlacement.slidesUnder` (`SurfaceContext.layout`), for bar and edge popouts alike.
   - It is on the bar's layer: the bar popout's window, `BarPopouts.underBar`, which it also hands its `EdgePlacement` as `under`, so `slideFrom` stays at the screen edge when the overlay opens over it.
   - Its namespace is `axiom-popout-under`, whose layer rule ([layer stacking](../generated/layers.md)) stacks it under the bars and border.
   - The surface reaches back to the screen edge (`EdgePlacement.slideFrom`), and the box (`AttachedSurface.detachedOffset`) slides in from off the screen, beneath every bar on its edge ([Sliding in from off the screen](held-off-edge.md#sliding-in-from-off-the-screen)). A floating bar's popout with no island to grow from (`detached`) does the same.
+  - It takes input on its box alone (`boxArea`): over the bar (without layer rules), the surface's reach back would take the pointer from the widget that opened it, and it would close and reopen over and over.
 - **Over the overlay:** that same rule also stacks the window under the overlay.
   - So while the overlay is open on its screen (`SurfaceManager.surfaceOpenOn("overlay", screen)`), the window opens on the Overlay layer instead (`axiom-popout`), over the overlay, coming out of the bars' inner side (the frame line) instead of passing under them.
   - That's latched while the popout is open, so the overlay opening closes the bar popouts and floating edge menus on its screen (`PopoutManager.closeOn`, from `OverlayPanel`); opened again, they open over it. Integrated menus, docks, OSDs and the launcher stay.

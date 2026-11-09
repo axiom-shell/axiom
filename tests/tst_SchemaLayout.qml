@@ -151,6 +151,88 @@ TestCase {
     compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["S.kb:", "S.kb.sources:", "S.kb.method:", "S.kb.method.enabled:S.kb.sources", "S.kb.method.other:"]);
   }
 
+  // An object with `x-row` is one row drawing everything under it: its
+  // `object` row, then every row inside `drawnBy` its path (groups too),
+  // with no `foldedBy` and its `x-showIf` as their `groupShowIf`
+  function test_rows_object_row() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "style": {
+          "type": "object",
+          "title": "Style",
+          "x-row": "Block",
+          "x-showIf": {
+            "on": true
+          },
+          "x-order": ["a", "inner"],
+          "properties": {
+            "a": {
+              "type": "string",
+              "title": "A"
+            },
+            "inner": {
+              "type": "object",
+              "x-fold": true,
+              "properties": {
+                "b": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "hidden": {
+              "type": "string",
+              "x-settings": false
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.kind + ":" + r.path.join(".") + ":" + (r.drawnBy ?? "")), ["field:S.on:", "object:S.style:", "field:S.style.a:S.style", "group:S.style.inner:S.style", "field:S.style.inner.b:S.style"]);
+    compare(rows[1].title, "Style");
+    compare(rows[1].schema["x-row"], "Block");
+    compare(rows.map(r => r.foldedBy ?? ""), ["", "", "", "", ""], "its folds aren't drawn");
+    compare(rows.map(r => (r.groupShowIf ?? []).map(outer => JSON.stringify(outer.condition) + "@" + outer.path.join(".")).join(",")), ["", "", "{\"on\":true}@S", "{\"on\":true}@S", "{\"on\":true}@S"]);
+  }
+
+  // An icon field's `x-iconText` draws its mode and text siblings: their
+  // rows are `drawnBy` it, and drawnKeys names them
+  function test_rows_icon_text() {
+    const icon = {
+      "type": "string",
+      "x-control": "icon",
+      "x-iconText": {
+        "mode": "show",
+        "text": "text"
+      }
+    };
+    const rows = SchemaLayout.rows({
+      "x-order": ["show", "icon", "text"],
+      "properties": {
+        "icon": icon,
+        "show": {
+          "type": "string",
+          "enum": ["icon", "text", "both"]
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    }, []);
+    compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["show:icon", "icon:", "text:icon"]);
+    compare(SchemaLayout.drawnKeys(icon), ["show", "text"]);
+    compare(SchemaLayout.iconTextKeys(icon), ["show", "text"]);
+    compare(SchemaLayout.iconTextKeys({
+      "x-rowDraws": ["a.b"]
+    }), [], "an x-row's keys aren't an icon field's");
+    compare(SchemaLayout.drawnKeys({
+      "x-rowDraws": ["a.b"]
+    }), ["a.b"]);
+    compare(SchemaLayout.drawnKeys(undefined), []);
+  }
+
   // A `$ref` property's fields are rows once the schema is resolved (the
   // settings page's Changed from default and /config list Bars.style.*)
   function test_rows_of_a_resolved_ref() {
@@ -183,6 +265,106 @@ TestCase {
     // /config (SettingsManager.settingPaths) walks the resolved schema to
     // keep them too
     verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "textScale"], key => undefined), "the bar style passes compositorAllows");
+  }
+
+  // `x-placeUnder`: a row moves under the sibling it names, past the rows
+  // beside it and those placed under it before; one naming a key not
+  // there, or a placed one, stays put
+  function test_placedUnder() {
+    const properties = {
+      "style": {},
+      "shape": {},
+      "grouping": {
+        "x-beside": true
+      },
+      "options": {},
+      "sides": {
+        "x-placeUnder": "shape"
+      },
+      "ends": {
+        "x-placeUnder": "shape"
+      },
+      "lost": {
+        "x-placeUnder": "missing"
+      },
+      "chained": {
+        "x-placeUnder": "sides"
+      }
+    };
+    compare(SchemaLayout.placedUnder(["style", "shape", "grouping", "options", "sides", "ends"], properties), ["style", "shape", "grouping", "sides", "ends", "options"]);
+    compare(SchemaLayout.placedUnder(["sides", "style", "shape", "options"], properties), ["style", "shape", "sides", "options"], "from above it too");
+    compare(SchemaLayout.placedUnder(["lost", "style", "sides"], properties), ["lost", "style", "sides"], "its sibling isn't there");
+    compare(SchemaLayout.placedUnder(["shape", "options", "sides", "chained"], properties), ["shape", "sides", "options", "chained"], "under a placed row");
+    compare(SchemaLayout.placedUnder([], properties), []);
+    const bar = schema.definitions.BarStyle.properties;
+    const look = ["widgetStyle", "widgetShape", "widgetGrouping", "tabCorners", "widgetEnds"];
+    compare(SchemaLayout.placedUnder(look, bar), look, "BarStyle's tab sides and ends under the shape and grouping");
+  }
+
+  // `x-control: tiles`: every option, one whose `x-enumShowIf` fails (the
+  // chosen one too) with its `x-tileHint`, "" without one; a string hint
+  // is the whole field's
+  function test_tileOptions() {
+    const field = {
+      "type": "string",
+      "enum": ["a", "b", "c"],
+      "x-control": "tiles",
+      "x-enumShowIf": {
+        "b": {
+          "mode": "x"
+        },
+        "c": {
+          "mode": ["x", "y"]
+        }
+      },
+      "x-tileHint": {
+        "b": "Only in x"
+      }
+    };
+    const values = {
+      "mode": "z"
+    };
+    compare(SchemaLayout.tileOptions(field, field.enum, key => values[key]), [
+      {
+        "value": "a",
+        "hint": null
+      },
+      {
+        "value": "b",
+        "hint": "Only in x"
+      },
+      {
+        "value": "c",
+        "hint": ""
+      }
+    ]);
+    values.mode = "x";
+    compare(SchemaLayout.tileOptions(field, field.enum, key => values[key]).map(option => option.hint), [null, null, null]);
+    compare(SchemaLayout.tileOptions({}, ["a"], key => undefined), [
+      {
+        "value": "a",
+        "hint": null
+      }
+    ], "no conditions");
+    compare(SchemaLayout.tileOptions(field, undefined, key => undefined), []);
+    compare(SchemaLayout.tileHint(field), "", "a map is per option");
+    compare(SchemaLayout.tileHint({
+      "x-tileHint": "Outline only"
+    }), "Outline only");
+    compare(SchemaLayout.tileHint({
+      "x-tileHint": "Outline only"
+    }, "a"), "", "a string is the whole field's");
+    compare(SchemaLayout.tileHint(undefined), "");
+    // A map's "*" is the whole field's, beside its options'
+    const both = {
+      "x-tileHint": {
+        "*": "No box",
+        "b": "Only in x"
+      }
+    };
+    compare(SchemaLayout.tileHint(both), "No box");
+    compare(SchemaLayout.tileHint(both, "b"), "Only in x");
+    compare(SchemaLayout.tileHint(both, "a"), "");
   }
 
   function test_waitsForUser() {
@@ -664,6 +846,65 @@ TestCase {
     compare(groups.map(group => [group.title, group.wide]), [["S", true], ["S", false], ["B", true]]);
   }
 
+  // A nested object with `x-row` is a card of its own, titled by it, its
+  // one row and the rows it draws; `x-wide` on it widens that card
+  function test_object_row_card() {
+    const groups = SchemaLayout.groups({
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "S",
+          "properties": {
+            "a": {
+              "type": "string"
+            },
+            "style": {
+              "type": "object",
+              "title": "Style",
+              "description": "How it looks",
+              "x-row": "Block",
+              "x-wide": true,
+              "properties": {
+                "b": {
+                  "type": "string",
+                  "x-group": "B"
+                },
+                "c": {
+                  "type": "string",
+                  "x-group": "C",
+                  "x-wide": false
+                }
+              }
+            },
+            "other": {
+              "type": "object",
+              "title": "Other",
+              "properties": {
+                "d": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }, "S");
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["S", "S", false], ["S.style", "Style", true], ["S.other", "Other", false]], "its fields' `x-group`s make no cards");
+    compare(groups[1].description, "How it looks");
+    compare(groups[1].rows.map(row => row.kind + ":" + row.path.join(".") + ":" + (row.drawnBy ?? "")), ["object:S.style:", "field:S.style.b:S.style", "field:S.style.c:S.style"]);
+  }
+
+  // Bars.style is one card in the columns, the Bar style block, drawing
+  // every style setting
+  function test_real_schema_bar_style_block() {
+    const groups = SchemaLayout.groups(schema, "Bars");
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Bar style", false]]);
+    compare(groups[0].rows[0].kind, "object");
+    compare(groups[0].rows[0].schema["x-row"], "BarStyleBlock");
+    compare(groups[0].rows.slice(1).filter(row => row.drawnBy !== "Bars.style"), [], "every row under it is drawn by it");
+    verify(groups[0].rows.some(row => row.path.join(".") === "Bars.style.shadow.size"), "the nested shadow's too");
+  }
+
   // Wide cards ahead of every narrow one stay first, the rest go last;
   // the category's own card is wide, after its sections'
   function test_categoryGroups_order() {
@@ -796,7 +1037,7 @@ TestCase {
     const bar = SchemaLayout.objectGroups(schema.definitions.Bar, ["widgets", "style"]);
     compare(bar.map(g => g.title), ["Placement", "Size", "Surface", "Behaviour"]);
     const style = SchemaLayout.objectGroups(schema.definitions.BarStyle, []);
-    compare(style.map(g => g.title), ["Bar widgets", "Bar accents", "Surface shadow"]);
+    compare(style.map(g => g.title), ["Size", "Look", "Colors", "Accents", "Shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.EdgeMenu, ["layout.modules"]);
     compare(menu.map(g => g.title), ["General", "Opening", "Placement", "Style", "Closing"]);
     const osd = SchemaLayout.objectGroups(schema.definitions.OSDEntry, ["systems", "barLayout"]);
@@ -1167,8 +1408,11 @@ TestCase {
             continue;
           // The look of the bar a widget sits on (BarsConfig.lookContext): only
           // a bar widget's options have it, and it names a BarStyle field
+          // or a trait the look gives (BarLook.contextTraits), never the
+          // style's name: what a style shows is its traits'
           if (target.startsWith("$")) {
-            if (!/^\w+Widget\.properties$/.test(where) || !target.startsWith("$bar.") || !(target.slice(5) in schema.definitions.BarStyle.properties))
+            const name = target.slice(5);
+            if (!/^\w+Widget\.properties$/.test(where) || !target.startsWith("$bar.") || name === "widgetStyle" || !(name in schema.definitions.BarStyle.properties || name in BarLook.contextTraits))
               bad.push(`${where}.${key}: ${target}`);
             continue;
           }
@@ -1285,13 +1529,78 @@ TestCase {
     compare(SchemaLayout.locate(schema, "Input.keyboard.options").fold, null);
   }
 
+  // A jump to a setting, or an object, inside an `x-row` object lands on
+  // that object's row, with no fold to open
+  function test_locate_object_row() {
+    const schema = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "S",
+          "properties": {
+            "style": {
+              "type": "object",
+              "title": "Style",
+              "x-row": "Block",
+              "properties": {
+                "a": {
+                  "type": "string",
+                  "title": "A"
+                },
+                "inner": {
+                  "type": "object",
+                  "title": "Inner",
+                  "x-fold": true,
+                  "properties": {
+                    "b": {
+                      "type": "boolean",
+                      "title": "B"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.locate(schema, "S.style.a"), {
+      "category": "S",
+      "key": "S.style",
+      "title": "A",
+      "row": ["S", "style"],
+      "fold": null
+    });
+    compare(SchemaLayout.locate(schema, "S.style.inner.b"), {
+      "category": "S",
+      "key": "S.style",
+      "title": "B",
+      "row": ["S", "style"],
+      "fold": null
+    });
+    compare(SchemaLayout.locate(schema, "S.style.inner").row, ["S", "style"]);
+    compare(SchemaLayout.locate(schema, "S.style"), {
+      "category": "S",
+      "key": "S.style",
+      "title": "Style",
+      "row": ["S", "style"],
+      "fold": null
+    });
+    compare(SchemaLayout.locate(schema, "S").key, "S.style", "the section: its card");
+    // The real Bar style block
+    compare(SchemaLayout.locate(test.schema, "Bars.style.outlineWidth").row, ["Bars", "style"]);
+    compare(SchemaLayout.locate(test.schema, "Bars.style.shadow.size").row, ["Bars", "style"]);
+  }
+
   // Every `x-link` leads to a setting the settings page shows, or a page
   // the overlay can have; every `x-links` to such a page
   function test_real_schema_links_resolve() {
     const views = schema.definitions.OverlayView.oneOf.map(option => schema.definitions[option.$ref.replace("#/definitions/", "")].properties.type.const);
     const pageOk = link => {
       const parts = link.split(":");
-      return (parts[0] === "Layouts" || views.includes(parts[0])) && (parts.length === 1 || (parts[0] === "Layouts" && ["lockscreen", "greeter", "desktop"].includes(parts[1])));
+      // Layouts:<what it edits>, BarEditor:<a bar's own setting>
+      const inside = parts[0] === "Layouts" ? ["lockscreen", "greeter", "desktop"].includes(parts[1]) : parts[0] === "BarEditor" && schema.definitions.Bar.properties[parts[1]] !== undefined;
+      return (parts[0] === "Layouts" || views.includes(parts[0])) && (parts.length === 1 || inside);
     };
     const bad = [];
     const visit = (node, where) => {

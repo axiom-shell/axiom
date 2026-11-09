@@ -4,10 +4,11 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.content.base
+import qs.components.bar.look
 
 // The root of the Workspaces widget's popouts (WorkspaceStrips,
 // WorkspaceGrid): the widget's payload and the colours its cells take, as
-// the bar's row has them.
+// the bar's row has them, and their urgent fade (`pulse`).
 Panel {
   id: root
 
@@ -31,9 +32,17 @@ Panel {
 
   readonly property color activeColor: Theme.resolveColor(root.properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(root.properties.occupiedColor)
+  readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(root.properties.textColor)
-  readonly property color hoverColor: BarsConfig.cellHoverColor(root.properties)
+  // How its cells draw: as the bar's row, off the bar (no run), at the
+  // bar's cell size and corners
+  readonly property CellLook cellLook: CellLook {
+    barConfig: root.barConfig
+    properties: root.properties
+    thickness: root.cellSize
+    radius: root.radius
+  }
   readonly property int base: CompositorManager.workspaceBase(root.output)
   readonly property int activeId: root.monitor?.activeWorkspaceId ?? -1
 
@@ -41,5 +50,10 @@ Panel {
   // onLoaded), so the cells first bind to fallbacks: animate only once
   // they've settled, or the opening cells fade in from the wrong color
   property bool _settled: false
+
+  // Every urgent cell's fade, in step
+  readonly property UrgentPulse pulse: UrgentPulse {
+    running: (root.properties.urgentPulse ?? false) && CompositorManager.workspaces.some(ws => ws.urgent)
+  }
   Component.onCompleted: Qt.callLater(() => root._settled = true)
 }

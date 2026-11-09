@@ -168,7 +168,7 @@ TitledCard {
         Layout.fillWidth: true
         spacing: Widget.spacing / 2
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: tile.modelData.label
           textColor: tile.preview.foreground ?? Theme.foreground

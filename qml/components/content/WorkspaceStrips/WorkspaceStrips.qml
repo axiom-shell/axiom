@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.compositor
-import qs.config
 import qs.components.bar.widgets.Workspaces
 
 // The Workspaces bar widget's popout on a strip monitor: each of the
@@ -24,6 +23,15 @@ WorkspacePopoutPanel {
 
   implicitWidth: lines.implicitWidth + margins * 2
 
+  CellContents {
+    id: contents
+    barConfig: root.barConfig
+    properties: root.properties
+    base: root.base
+    thickness: root.cellSize
+    restLength: root.cellLength
+  }
+
   // Lines stacked across the bar: rows under a horizontal bar, columns
   // beside a vertical one
   Grid {
@@ -41,23 +49,34 @@ WorkspacePopoutPanel {
         required property int index
         readonly property int wsId: root.ids[index] ?? 0
         readonly property bool isActive: wsId === root.activeId
+        // What its cell shows, as on the bar, less app icons: its windows
+        // follow it
+        readonly property var shows: contents.of(wsId, "", false)
+        readonly property bool _text: shows.kind === "text" || shows.kind === "name"
 
         rows: root.vertical ? 2 : 1
         columns: root.vertical ? 1 : 2
         spacing: root.cellSpacing
 
         WorkspaceCell {
+          id: stripCell
           barConfig: root.barConfig
+          cellLook: root.cellLook
           isActive: line.isActive
           // Every workspace shown has windows or is the active one
-          look: BarsConfig.workspaceCellColors(root.barConfig, root, line.isActive, true)
+          look: root.cellLook.workspaceColorsOf(root, line.isActive, true, line.shows.urgent, {
+            "hovered": stripCell.lit
+          })
+          urgent: line.shows.urgent
+          pulse: root.pulse.value
           thickness: root.cellSize
-          length: root.cellLength
-          radius: root.radius
-          hoverColor: root.hoverColor
+          length: line._text ? line.shows.length : root.cellLength
           labels: root.properties.labels
-          // The workspace id, or its number on this monitor, as on the bar
-          label: root.properties.relativeNumbers ? line.wsId - root.base + 1 : line.wsId
+          label: line.shows.number
+          text: line._text ? line.shows.text : ""
+          textPlain: line.shows.plain
+          leadIcon: line.shows.kind === "text" ? line.shows.lead : ""
+          leadPlain: line.shows.leadPlain
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
           onClicked: CompositorManager.goToWorkspace(line.wsId, "go", root.output)
@@ -65,13 +84,10 @@ WorkspacePopoutPanel {
 
         StripWindows {
           barConfig: root.barConfig
+          cellLook: root.cellLook
           workspaceId: line.wsId
           stripVertical: root.stripVertical
           isVertical: root.vertical
-          thickness: root.cellSize
-          cellLength: root.cellSize
-          radius: root.radius
-          hoverColor: root.hoverColor
           activeColor: root.activeColor
           occupiedColor: root.occupiedColor
           textColor: root.textColor

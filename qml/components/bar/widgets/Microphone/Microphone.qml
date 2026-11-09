@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.system
-import qs.config
 import qs.components.bar.widgets.base
 
 // Default input. The icon follows mute and the device type (headset,
@@ -13,5 +12,5 @@ AudioLevelWidget {
   mode: "input"
   hidden: properties.hideWhenIdle && !AudioManager.micInUse && !muted
   icon: AudioManager.inputIcon(AudioManager.deviceKind(node), muted)
-  accentColor: Theme.resolveColor(muted ? properties.mutedColor : AudioManager.micInUse ? properties.activeColor : properties.backgroundColor)
+  accentField: muted ? "mutedColor" : AudioManager.micInUse ? "activeColor" : "backgroundColor"
 }

@@ -24,7 +24,7 @@ RowLayout {
   }
 
   // Shrinks (eliding) before the buttons are pushed out of a narrow card
-  StyledText {
+  StyledLabel {
     Layout.fillWidth: true
     Layout.maximumWidth: Math.ceil(implicitWidth)
     elide: Text.ElideRight
@@ -40,7 +40,7 @@ RowLayout {
     radius: height / 2
     color: Theme.accent
 
-    StyledText {
+    StyledLabel {
       id: countLabel
       anchors.centerIn: parent
       text: NotificationManager.countLabel

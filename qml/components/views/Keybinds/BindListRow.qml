@@ -146,7 +146,7 @@ StyledContainer {
         text: root.isRun ? BindGroups.runKeys(KeybindManager.editor.binds, root.indices) : KeybindManager.displayKey(root.parts.key)
       }
 
-      StyledText {
+      StyledLabel {
         visible: root.parts.key === ""
         text: KeybindManager.editor.recordingIndex === root.bindIndex ? I18n.tr("Press a combo…") : I18n.tr("No key")
         textColor: root.selected ? root.ink : Theme.warning
@@ -165,7 +165,7 @@ StyledContainer {
       Layout.preferredWidth: Appearance.fontSize * 1.5
     }
 
-    StyledText {
+    StyledLabel {
       text: root.label || root.actionLabel
       textColor: root.ink
       font.bold: root.selected
@@ -176,7 +176,7 @@ StyledContainer {
     }
 
     // The action, when the label doesn't say it
-    StyledText {
+    StyledLabel {
       visible: root.label !== "" && root.label !== root.actionLabel && root.width > Widget.height * 14
       text: root.isRun ? I18n.tr("{0} binds", root.indices.length) : root.actionLabel
       textColor: root.ink

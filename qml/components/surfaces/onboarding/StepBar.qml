@@ -86,7 +86,7 @@ RowLayout {
       anchors.centerIn: parent
       spacing: Widget.spacing * 2
 
-      StyledText {
+      StyledLabel {
         text: I18n.tr("Skip the rest? Your choices so far are kept, and /welcome in the launcher brings this back.")
       }
 

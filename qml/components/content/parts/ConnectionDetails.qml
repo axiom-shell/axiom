@@ -73,7 +73,7 @@ GridLayout {
       Layout.preferredHeight: root.lineHeight
       implicitWidth: cell.column === 0 ? label.implicitWidth : cell.column === 2 ? root.lineHeight : 0
 
-      StyledText {
+      StyledLabel {
         id: label
         visible: cell.column < 2
         anchors.left: parent.left

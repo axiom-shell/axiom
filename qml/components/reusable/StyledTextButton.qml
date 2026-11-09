@@ -66,7 +66,7 @@ Rectangle {
       textSize: root.textSize
     }
 
-    StyledText {
+    StyledLabel {
       id: label
       visible: text !== ""
       textColor: root._contentColor

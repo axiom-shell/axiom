@@ -173,7 +173,7 @@ ColumnLayout {
     open: root.more
     onToggled: root.more = !root.more
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("More options")
       textSize: Appearance.fontSizeBy(-2)
@@ -227,7 +227,7 @@ ColumnLayout {
       Layout.fillWidth: true
       spacing: Widget.spacing
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: root.caCert !== "" ? root.caCert : I18n.tr("No file chosen")
         elide: Text.ElideMiddle

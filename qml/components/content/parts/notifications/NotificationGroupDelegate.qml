@@ -159,7 +159,7 @@ Item {
             size: Widget.px(18)
           }
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: (root.group?.appName ?? "") + (root.count > 1 ? "  ·  " + root.count : "")
@@ -172,7 +172,7 @@ Item {
             implicitWidth: Math.max(newest.implicitWidth, Widget.smallHeight)
             implicitHeight: Widget.smallHeight
 
-            StyledText {
+            StyledLabel {
               id: newest
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter

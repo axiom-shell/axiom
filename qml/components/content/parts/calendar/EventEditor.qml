@@ -86,7 +86,7 @@ ColumnLayout {
 
       RowLayout {
         Layout.fillWidth: true
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: I18n.tr("All day")
         }
@@ -117,7 +117,7 @@ ColumnLayout {
 
       RowLayout {
         Layout.fillWidth: true
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 4.5
           text: I18n.tr("Reminder")
           textColor: Theme.foregroundAlt
@@ -209,7 +209,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
-    StyledText {
+    StyledLabel {
       id: askText
       Layout.fillWidth: true
       text: root.session.asking === "confirm" ? I18n.tr("Delete this event?") : root.session.asking === "delete" ? I18n.tr("Delete which?") : I18n.tr("Change which?")

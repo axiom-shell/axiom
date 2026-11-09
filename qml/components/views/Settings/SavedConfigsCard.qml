@@ -119,7 +119,7 @@ FieldGroup {
             implicitWidth: nameText.implicitWidth + (badges.visible ? Widget.spacing + badges.implicitWidth : 0)
             implicitHeight: Math.max(nameText.implicitHeight, badges.implicitHeight)
 
-            StyledText {
+            StyledLabel {
               id: nameText
               anchors.verticalCenter: parent.verticalCenter
               width: Math.min(implicitWidth, nameLine.width - (badges.visible ? Widget.spacing + badges.implicitWidth : 0))
@@ -200,7 +200,7 @@ FieldGroup {
         Layout.fillWidth: true
         spacing: 0
 
-        StyledText {
+        StyledLabel {
           text: I18n.tr("Defaults")
           font.bold: true
           elide: Text.ElideRight
@@ -239,7 +239,7 @@ FieldGroup {
       id: includePersonal
     }
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Include preferences, keybinds and apps")
       elide: Text.ElideRight
@@ -274,7 +274,7 @@ FieldGroup {
       id: includeCommands
     }
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Include commands (for a backup or your other PCs)")
       elide: Text.ElideRight
@@ -321,14 +321,14 @@ FieldGroup {
           Layout.fillWidth: true
           spacing: 0
 
-          StyledText {
+          StyledLabel {
             text: importRow.importing?.title ?? ""
             font.bold: true
             elide: Text.ElideRight
             Layout.fillWidth: true
           }
 
-          StyledText {
+          StyledLabel {
             visible: text !== ""
             text: importRow.importing?.description ?? ""
             opacity: 0.6
@@ -337,7 +337,7 @@ FieldGroup {
             Layout.fillWidth: true
           }
 
-          StyledText {
+          StyledLabel {
             text: Paths.shortenHome(importRow.importing?.path ?? "")
             opacity: 0.6
             textSize: Appearance.fontSizeBy(-2)
@@ -443,7 +443,7 @@ FieldGroup {
           Layout.fillWidth: true
           spacing: 0
 
-          StyledText {
+          StyledLabel {
             text: exampleRow.modelData.title
             font.bold: true
             elide: Text.ElideRight

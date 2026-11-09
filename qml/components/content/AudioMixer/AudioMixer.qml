@@ -329,7 +329,7 @@ Panel {
                     textColor: deviceRow.selected ? Theme.accent : Theme.foregroundAlt
                   }
 
-                  StyledText {
+                  StyledLabel {
                     Layout.fillWidth: true
                     text: root.deviceName(deviceRow.node)
                     elide: Text.ElideRight

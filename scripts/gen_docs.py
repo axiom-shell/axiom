@@ -51,9 +51,16 @@ UNIONS = [
 UNION_NAMES = {u[0]: u[1] for u in UNIONS}
 # Plumbing every union member shares, documented once on its page
 SHARED_KEYS = {"type", "visible", "layout", "place"}
-# Sections whose fields are merged into each bar's `barConfig` (BarsConfig.lookOf,
-# BarsConfig.enrichBarConfig), so widgets read them as barConfig.<key>
-BARCONFIG_PATHS = ["BarStyle", "Bars[]"]
+# A bar's own fields, which each bar's `barConfig` carries
+# (BarsConfig.enrichBarConfig), so widgets read them as barConfig.<key>
+BARCONFIG_PATHS = ["Bars.items[]"]
+# A bar's style (the shared one and each bar's own: BarStyle keys), resolved
+# into its look, `barConfig.look` (BarLook.resolve, which reads each from
+# the merged values, `values.<key>`); the shadow alone stays flat on
+# barConfig, as shadow / shadowColor / shadowSize (BarLook.merge)
+BARSTYLE_PATHS = ["Bars.style", "Bars.items[].style"]
+BARSTYLE_LOOK = "qml/components/methods/BarLook.qml"
+BARSTYLE_SHADOW = {"enabled": "shadow", "color": "shadowColor", "size": "shadowSize"}
 # Annotations shown elsewhere in a setting's line (or noise in a reference)
 # A section page over this many chars is split by its top-level objects
 SPLIT_AT = 16000
@@ -449,9 +456,21 @@ class ConfigReference:
         parts = plain.split(".")
         for i in range(2, len(parts) + 1):
             files.update(self.direct.get(".".join(parts[:i]), ()))
-        if any(path.startswith(p + ".") for p in BARCONFIG_PATHS):
-            files.update(self.usage.of(r"barConfig\??\." + re.escape(last) + r"\b"))
-            read.append(f"`barConfig.{last}`")
+        style = next((p for p in BARSTYLE_PATHS if path.startswith(p + ".")), None)
+        if style:
+            rest = path[len(style) + 1:]
+            if rest.startswith("shadow.") and last in BARSTYLE_SHADOW:
+                flat = BARSTYLE_SHADOW[last]
+                files.update(self.usage.of(r"barConfig\??\." + flat + r"\b"))
+                read.append(f"`barConfig.{flat}`")
+            elif "." not in rest and re.search(r"\bvalues\." + re.escape(last) + r"\b", self.usage.files.get(BARSTYLE_LOOK, "")):
+                files.add(BARSTYLE_LOOK)
+                read.append(f"`barConfig.look` (`BarLook.resolve`, from `values.{last}`)")
+        elif any(path.startswith(p + ".") and "." not in path[len(p) + 1:] for p in BARCONFIG_PATHS):
+            users = self.usage.of(r"barConfig\??\." + re.escape(last) + r"\b")
+            if users:
+                files.update(users)
+                read.append(f"`barConfig.{last}`")
         if "[]" in path and not (files - {r["file"] for r in self.readers.values()}):
             # An entry field: entries are passed on as whole objects and read
             # (or copied into same-named properties) in the feature's files

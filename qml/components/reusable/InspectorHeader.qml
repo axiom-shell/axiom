@@ -48,7 +48,7 @@ ColumnLayout {
       Layout.fillWidth: true
       spacing: 0
 
-      StyledText {
+      StyledLabel {
         text: root.title
         textSize: Appearance.fontSizeBy(4)
         font.bold: true
@@ -56,7 +56,7 @@ ColumnLayout {
         Layout.fillWidth: true
       }
 
-      StyledText {
+      StyledLabel {
         text: root.subtitle
         opacity: 0.6
         textSize: Appearance.fontSizeBy(-2)

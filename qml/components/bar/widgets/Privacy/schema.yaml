@@ -3,6 +3,10 @@ keywords: ['Privacy Indicators']
 icon: visibility
 group: System
 popout: menu
+boxes:
+  variant: each
+  boxes:
+    x-boxItems: {options: {mic: showMic, screen: showScreen, camera: showCamera}}
 settings:
   showMic: {type: boolean, title: Microphone, default: true}
   showScreen: {type: boolean, title: Screen share, default: true}
@@ -20,7 +24,4 @@ settings:
     title: Text color
     x-options: colors
     default: base00
-    x-showIf:
-      $bar.widgetStyle: filled
-      $bar.widgetGrouping: {not: merged}
-      $bar.widgetTextColor: ''
+    x-showIf: {$bar.textColorShows: true}

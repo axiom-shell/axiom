@@ -4,80 +4,145 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.reusable
+import qs.components.methods
+import qs.components.bar.look
 
 // What a switcher shows after its workspaces on a strip monitor (loaded
 // only there, shown only while the workspace has windows: `hasWindows`):
 // a divider in the bar's separator style (a line when that's none), then
-// the active workspace's windows in strip order (StripWindows),
+// the active workspace's windows in strip order, a box each
+// (StripWindows) or all in one (StripWindowsBox) as `windows` says,
 // cross-fading to the next workspace's when it changes. Down to one
 // workspace shown (`stripOnly`), the windows show alone, without the
-// divider.
+// divider. With `windows` off nothing loads. As segments of the bar's run
+// (the widget's Background off: its cell look's `run`) its boxes take the bar's widget
+// shape, cells `chainFirst` on of the widget's `chainCount`, and in a
+// powerline chain on from the row's with no divider.
 Loader {
   id: root
 
   required property var barConfig
+  // How the widget's cells draw on this bar (its switcher's): their size,
+  // corners, spacing, run and colors
+  required property CellLook cellLook
   required property int workspaceId
   // "horizontal" | "vertical" on a strip monitor, else "" (nothing loads)
   required property string stripDirection
   // How many workspaces the switcher shows
   required property int shownCount
-  required property real cell
-  required property real cellRadius
+  // The widget's `stripWindows`: "off", "each" or "one"
+  required property string windows
   required property color activeColor
   required property color occupiedColor
   required property color textColor
-  required property color hoverColor
   property bool clickable: true
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
+  // Where its cells start among the widget's chained ones (its cells
+  // being segments of the bar's run: its cell look's `run`), and how many
+  // those are
+  property int chainFirst: 0
+  property int chainCount: cells
 
   readonly property bool isVertical: barConfig.vertical
+  readonly property real cell: cellLook.thickness
   readonly property bool stripVertical: stripDirection === "vertical"
   readonly property bool hasWindows: active && CompositorManager.stripWindows(root.workspaceId, root.stripVertical).length > 0
   // The strip is all there is: its windows show alone while it has any
   // (the switcher's cell stands in while it's empty)
   readonly property bool stripOnly: shownCount <= 1 && hasWindows
+  // How many cells it shows: a box each, or one
+  readonly property int cells: !hasWindows ? 0 : windows === "one" ? 1 : CompositorManager.stripWindows(root.workspaceId, root.stripVertical).length
+  // A powerline's segments chain on from the row's, with no divider
+  readonly property bool _chained: cellLook.run !== null && barConfig.look.grouping === "powerline"
+  readonly property bool _divided: !stripOnly && !_chained
 
-  active: stripDirection !== ""
+  active: stripDirection !== "" && windows !== "off"
   visible: hasWindows
 
   sourceComponent: Grid {
     // Only what's shown: a Grid keeps spacing for an empty column or row
-    rows: root.isVertical && !root.stripOnly ? 2 : 1
-    columns: !root.isVertical && !root.stripOnly ? 2 : 1
+    rows: root.isVertical && root._divided ? 2 : 1
+    columns: !root.isVertical && root._divided ? 2 : 1
     spacing: root.barConfig.innerGap
 
     SeparatorMark {
-      visible: !root.stripOnly
-      style: root.barConfig.separatorStyle === "none" ? "line" : root.barConfig.separatorStyle
-      color: Theme.resolveColor(root.barConfig.separatorColor)
-      thickness: root.barConfig.separatorThickness
+      visible: root._divided
+      style: root.barConfig.look.separators.style === "none" ? "line" : root.barConfig.look.separators.style
+      color: Theme.resolveColor(root.barConfig.look.separators.color)
+      thickness: root.barConfig.look.separators.thickness
       length: root.cell * (style === "chevron" ? 0.6 : 0.5)
       vertical: root.isVertical
       width: root.isVertical ? root.cell : implicitWidth
       height: root.isVertical ? implicitHeight : root.cell
     }
 
-    // Clipped: a longer strip fading out is held to the new one's length
-    CrossFade {
-      clip: true
-      value: root.workspaceId
-      delegate: StripWindows {
-        required property var value
-        barConfig: root.barConfig
-        workspaceId: value
-        stripVertical: root.stripVertical
-        isVertical: root.isVertical
-        thickness: root.cell
-        cellLength: root.cell
-        radius: root.cellRadius
-        activeColor: root.activeColor
-        occupiedColor: root.occupiedColor
-        textColor: root.textColor
-        hoverColor: root.hoverColor
-        clickable: root.clickable
-        hitArea: root.hitArea
+    // Clipped: a longer strip fading out is held to the new one's length,
+    // but for what its cells draw past it as segments (BarCells.cellMargins:
+    // back under the one before, a flared tab's fillets past its ends, out
+    // to a tab's edge)
+    MarginClip {
+      readonly property var _margins: BarCells.cellMargins(root._shapeOf(root.chainFirst), root._shapeOf(root.chainCount - 1), root.isVertical)
+
+      implicitWidth: fade.implicitWidth
+      implicitHeight: fade.implicitHeight
+      leftMargin: _margins.left
+      topMargin: _margins.top
+      rightMargin: _margins.right
+      bottomMargin: _margins.bottom
+
+      CrossFade {
+        id: fade
+        anchors.fill: parent
+        value: root.workspaceId
+        delegate: root.windows === "one" ? oneBox : boxEach
       }
+    }
+  }
+
+  // The shape of its cell at `cell` of the widget's chained ones, for what
+  // its first and last draw past it (CellLook.shapeOf), or null
+  function _shapeOf(cell) {
+    return root.cells > 0 ? root.cellLook.shapeOf(cell, root.chainCount, false, root.cellLook.iconContent) : null;
+  }
+
+  Component {
+    id: boxEach
+
+    StripWindows {
+      required property var value
+      barConfig: root.barConfig
+      cellLook: root.cellLook
+      workspaceId: value
+      stripVertical: root.stripVertical
+      isVertical: root.isVertical
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      textColor: root.textColor
+      clickable: root.clickable
+      hitArea: root.hitArea
+      chainFirst: root.chainFirst
+      chainCount: root.chainCount
+    }
+  }
+
+  Component {
+    id: oneBox
+
+    StripWindowsBox {
+      required property var value
+      barConfig: root.barConfig
+      cellLook: root.cellLook
+      workspaceId: value
+      stripVertical: root.stripVertical
+      isVertical: root.isVertical
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      textColor: root.textColor
+      clickable: root.clickable
+      hitArea: root.hitArea
+      chainFirst: root.chainFirst
+      chainCount: root.chainCount
     }
   }
 }

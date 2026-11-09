@@ -227,7 +227,8 @@ QtObject {
       "output": ws?.monitor?.name ?? "",
       "windowCount": counts?.[num] ?? 0,
       "active": ws?.active === true,
-      "focused": ws?.focused === true
+      "focused": ws?.focused === true,
+      "urgent": ws?.urgent === true
     };
   }
 

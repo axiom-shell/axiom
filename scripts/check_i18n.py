@@ -87,7 +87,7 @@ def enum_label(value):
 
 def schema_strings(node, out):
     if isinstance(node, dict):
-        for key in ("title", "description", "x-group", "x-hookupNote", "x-emptyLabel", "x-disabledNote"):
+        for key in ("title", "description", "x-group", "x-hookupNote", "x-emptyLabel", "x-disabledNote", "x-tileHint"):
             if isinstance(node.get(key), str):
                 out.add(node[key])
         if isinstance(node.get("x-card"), dict) and isinstance(node["x-card"].get("title"), str):
@@ -98,7 +98,7 @@ def schema_strings(node, out):
             out.update(g for g in node["x-libraryGroups"] if isinstance(g, str))
         if isinstance(node.get("x-hookup"), list):
             out.update(t["where"] for t in node["x-hookup"] if isinstance(t, dict) and isinstance(t.get("where"), str))
-        for key in ("x-enumLabels", "x-enumGroups"):
+        for key in ("x-enumLabels", "x-enumGroups", "x-tileHint"):
             if isinstance(node.get(key), dict):
                 out.update(v for v in node[key].values() if isinstance(v, str))
         if node.get("type") == "string" and isinstance(node.get("enum"), list):

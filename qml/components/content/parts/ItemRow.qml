@@ -86,7 +86,7 @@ Rectangle {
       Layout.fillWidth: true
       spacing: 0
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: root.title
         textSize: Appearance.fontSizeBy(-1)
@@ -94,7 +94,7 @@ Rectangle {
         wrapMode: root.titleLines > 1 ? Text.Wrap : Text.NoWrap
         maximumLineCount: root.titleLines
       }
-      StyledText {
+      StyledLabel {
         visible: root.subtitle !== ""
         Layout.fillWidth: true
         text: root.subtitle
@@ -104,7 +104,7 @@ Rectangle {
       }
     }
 
-    StyledText {
+    StyledLabel {
       visible: root.detail !== ""
       text: root.detail
       textSize: Appearance.fontSizeBy(-1)

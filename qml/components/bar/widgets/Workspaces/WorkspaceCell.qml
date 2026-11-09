@@ -3,31 +3,77 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
+import qs.components.bar.look
 
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
-// widgets have no boxes, its number (or a dot) straight on the bar, under a
-// line of its color for underline. Shows an app icon or a glyph instead of
-// the label when given one. A row with a sliding ActiveCellIndicator draws
-// its cells twice, the boxes (`part: "background"`) under the indicator and
-// the labels (`"content"`) over it.
+// widgets have no boxes, straight on the bar, under a line of its color for
+// underline. Its label (`labels`) is its number, a dot or nothing; a
+// glyph, text (a label of one's own, an icon, text or the icon before
+// the text, or a name: a Material Symbols name the font has draws as that
+// icon, anything else as text) or app icons show instead
+// when given, in that order (CellContents picks one). An urgent one fades
+// in and out (`pulse`), with a dot at its corner where an app icon would
+// otherwise hide it. A row with a sliding ActiveCellIndicator draws its
+// cells twice, the boxes (`part: "background"`) under the indicator and
+// the labels (`"content"`) over it. As a segment of the bar's run (the
+// widget's Background off) its box takes the bar's widget shape (`shape`)
+// and its content keeps clear of its caps (`room`).
 Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for its state
+  // How its widget's cells draw on this bar or popout
+  required property CellLook cellLook
+  // BarsConfig.cellColors for its state (CellLook.colorsOf)
   required property var look
   required property bool isActive
   // Across the bar, and along it (`restLength` when not widened)
   required property real thickness
   required property real length
   property real restLength: length
-  property real radius: 0
-  // "numbers" or "dots"
+  property real radius: cellLook.radius
+  // Its shape as a segment of the bar's run (BarCells.cellShape), or
+  // null: a box filling it, rounded by `radius`
+  property var shape: null
+  // The room its content keeps clear of its caps along it (BarCells.cellRoom:
+  // { lead, trail }), or null
+  property var room: null
+  // "numbers", "dots" or "none" (dots where a cell would have neither box
+  // nor line to show: `none`'s option is hidden there, but the bar's style
+  // can change after)
   property string labels: "numbers"
+  readonly property bool _dot: labels === "dots" || labels === "none" && !_framed
   property string label: ""
+  // A label of one's own or the compositor's name; `textPlain` (a name, or
+  // a label that isn't an icon the font has: CellContents.plain) in the
+  // text font
+  property string text: ""
+  property bool textPlain: false
+  // An icon before `text` (a label showing both), and whether it's drawn
+  // in the text font (CellContents.leadPlain)
+  property string leadIcon: ""
+  property bool leadPlain: false
   property string iconPath: ""
+  // App icons' paths (`iconPath` alone by default), laid out as
+  // `iconLayout` says: "largest" (the first alone), "row" (side by side
+  // along the bar) or "square" (up to four in a block the cell's size:
+  // WorkspaceCells.squareSlots), of which it has room for `iconSlots`
+  property var iconPaths: iconPath !== "" ? [iconPath] : []
+  property string iconLayout: "largest"
+  property int iconSlots: 1
   property string glyph: ""
+  // What it shows: "glyph", "text", "icons" or its "labels"
+  readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
+  // A window on it asks for attention (its `look` is the urgent one)
+  property bool urgent: false
+  // The urgent fade's opacity (UrgentPulse.value), 1 while still
+  property real pulse: 1
+  // The corner dot an urgent cell with neither box nor line shows over
+  // an app icon
+  property color urgentColor: "transparent"
+  readonly property real _pulse: urgent && !isActive ? pulse : 1
   property bool clickable: true
   // Off until its inputs have settled (a popout's payload lands after
   // creation), so it doesn't animate from fallbacks
@@ -38,108 +84,255 @@ Item {
   // "all", or only its box and underline ("background") or its label, dot
   // or icon and pointer area ("content")
   property string part: "all"
-  // Its box in the hover color: when hovered, or for a background layer,
-  // when its content layer is
+  // Its box in the hover color (or, with "Fill on hover", filled: its
+  // `look` passes it to BarsConfig.cellColors): when hovered, or for a
+  // background layer, when its content layer is
   property bool lit: hovered
-  // Its box while lit (BarsConfig.cellHoverColor)
-  property color hoverColor: Theme.backgroundHighlight
+  // Its box while lit
+  property color hoverColor: cellLook.hoverColor
   readonly property bool _drawsBox: part !== "content"
   readonly property bool _drawsContent: part !== "background"
   // Its box while the indicator stands for it stays at rest under the
   // indicator, unless its tint would show through
-  readonly property bool _clearActive: root.isActive && root.indicated && root.barConfig.widgetStyle === "tinted"
+  readonly property bool _clearActive: root.isActive && root.indicated && root.cellLook.clearsActive
 
   signal clicked
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed
+  // A box of its own (in a merged run, which draws its box, only where it
+  // still draws one: CellLook.boxed); its state shows in a box or a line,
+  // without either in its content
+  readonly property bool boxed: cellLook.boxed
+  readonly property bool _framed: cellLook.framed
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
-  // cells and takes the hover, so it's asked; elsewhere (a popout), the
-  // cell's own pointer area
+  // cells and takes the hover, so it's asked whether the pointer is in
+  // the cell's pointer area (its box as drawn); elsewhere (a popout), that
+  // area itself
   property var hitArea: null
-  readonly property bool hovered: hitArea ? hitArea.hovers(root) : cellArea.containsMouse
+  readonly property bool hovered: hitArea ? hitArea.hovers(cellArea) : cellArea.containsMouse
 
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
-  Rectangle {
-    anchors.fill: parent
+  // Its box (BarCells.cellBox) and the look's line. Lit, in the hover
+  // color, unless its look is filled for the hover already ("Fill on
+  // hover": BarWidgetStyle.cell's showsHover)
+  LookBox {
+    readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
     visible: root._drawsBox
-    radius: root.radius
-    color: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    border.color: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
-    border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
-    ColorGlide on border.color {
-      enabled: root.animated
-    }
+    bar: root.barConfig
+    outline: _box.outline
+    reach: _box.reach
+    strokeWidth: _box.strokeWidth
+    strokeStyle: _box.strokeStyle
+    opacity: root._pulse
+    fill: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    stroke: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    line: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
+    animated: root.animated
   }
 
-  // Underline: along the side the bar's widget lines take
-  CellUnderline {
-    barConfig: root.barConfig
-    visible: root._drawsBox && root.barConfig.widgetStyle === "underline"
-    color: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
+  // What it shows, fading with an urgent one's pulse where nothing else
+  // carries its state, centred clear of its caps
+  Item {
+    readonly property real _lead: root.room?.lead ?? 0
+    readonly property real _trail: root.room?.trail ?? 0
 
-    ColorGlide on color {
-      enabled: root.animated
-    }
-  }
-
-  // A dot (a pill when widened) for a cell with no box of its own to show
-  Rectangle {
-    readonly property real size: Math.max(4, Math.round(root.thickness * 0.35))
-    readonly property real along: size + root.length - root.restLength
-
-    anchors.centerIn: parent
-    visible: root._drawsContent && !root.boxed && root.labels === "dots" && root.iconPath === "" && root.glyph === ""
-    width: root.isVertical ? size : along
-    height: root.isVertical ? along : size
-    radius: size / 2
-    color: root.look.content
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
-  }
-
-  StyledIcon {
-    anchors.centerIn: parent
-    visible: root._drawsContent && root.glyph !== ""
-    text: root.glyph
-    font.pixelSize: root.barConfig.fontSize * 1.2
-    color: root.look.content
-  }
-
-  Image {
-    anchors.centerIn: parent
-    width: root.thickness * 0.65
-    height: width
-    sourceSize: Qt.size(64, 64)
-    source: root.glyph === "" ? root.iconPath : ""
-    visible: root._drawsContent && root.glyph === "" && root.iconPath !== ""
-    opacity: root.boxed || root.isActive ? 1 : 0.7
-  }
-
-  StyledText {
-    anchors.centerIn: parent
-    visible: root._drawsContent && root.labels === "numbers" && root.glyph === "" && root.iconPath === ""
-    text: root.label
-    textColor: root.look.content
-    textSize: root.barConfig.fontSize - 1
-    font.bold: root.isActive && !root.boxed
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
-  }
-
-  MouseArea {
-    id: cellArea
     anchors.fill: parent
+    anchors.leftMargin: root.isVertical ? 0 : _lead
+    anchors.rightMargin: root.isVertical ? 0 : _trail
+    anchors.topMargin: root.isVertical ? _lead : 0
+    anchors.bottomMargin: root.isVertical ? _trail : 0
+    visible: root._drawsContent
+    opacity: root._framed ? 1 : root._pulse
+
+    // A dot (a pill when widened), smaller inside a box
+    Rectangle {
+      readonly property real size: Math.max(4, Math.round(root.thickness * (root.boxed ? 0.28 : 0.35)))
+      readonly property real along: size + root.length - root.restLength
+
+      anchors.centerIn: parent
+      visible: root._dot && root._shows === "labels"
+      width: root.isVertical ? size : along
+      height: root.isVertical ? along : size
+      radius: size / 2
+      color: root.look.content
+
+      ColorGlide on color {
+        enabled: root.animated
+      }
+    }
+
+    StyledIcon {
+      anchors.centerIn: parent
+      visible: root._shows === "glyph"
+      text: root.glyph
+      font.pixelSize: root.barConfig.fontSize * 1.2
+      color: root.look.content
+    }
+
+    // A label of one's own or a name: an icon at the glyph's size, text at
+    // the number's, with a label's icon before it (`leadIcon`); the two
+    // turned along a vertical bar when wider than the cell is thick (the
+    // icon then below the text, where it starts)
+    Row {
+      id: textRow
+      anchors.centerIn: parent
+      visible: root._shows === "text"
+      spacing: WorkspaceCells.iconGap(root.thickness)
+      rotation: root.isVertical && !textLabel.symbol && textRow.implicitWidth > root.thickness * 0.8 ? -90 : 0
+      // What's drawn as words, the two on one band (TextBand: a plain
+      // lead and its text share a baseline)
+      readonly property string words: (leadLabel.symbol ? "" : root.leadIcon) + (textLabel.symbol ? "" : root.text)
+
+      StyledIcon {
+        id: leadLabel
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
+        visible: root.leadIcon !== ""
+        readonly property bool symbol: leadLabel.isSymbol && !root.leadPlain
+        // As words, centred on their letters
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !leadLabel.symbol
+          label: leadLabel
+          text: root.leadIcon
+          bandText: textRow.words
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
+
+        // An icon stays upright as the text turns
+        rotation: leadLabel.symbol && textRow.rotation !== 0 ? 90 : 0
+        text: root.leadIcon
+        textFamily: leadLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
+        textSize: leadLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+        textColor: root.look.content
+        font.bold: !leadLabel.symbol && root.isActive && !root.boxed
+
+        ColorGlide on color {
+          enabled: root.animated
+        }
+      }
+
+      StyledIcon {
+        id: textLabel
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
+        readonly property bool symbol: textLabel.isSymbol && !root.textPlain
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !textLabel.symbol
+          label: textLabel
+          text: root.text
+          bandText: textRow.words
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
+
+        text: root.text
+        textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
+        textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+        textColor: root.look.content
+        font.bold: !textLabel.symbol && root.isActive && !root.boxed
+
+        ColorGlide on color {
+          enabled: root.animated
+        }
+      }
+    }
+
+    // App icons alone or in a row, packed in the middle. The slots come
+    // from the layout (config), each shown while it has an icon. Only the
+    // line's count across is fixed: the Grid counts the other way from the
+    // icons shown, so it's only as long as they are (a set count keeps
+    // spacing for an empty column, pushing them off centre, and lags the
+    // icons' visibility as one comes, warning that it overflows)
+    Grid {
+      id: iconRow
+      readonly property int _shown: Math.max(1, Math.min(root.iconPaths.length, root.iconLayout === "row" ? root.iconSlots : 1))
+
+      anchors.centerIn: parent
+      visible: root._shows === "icons" && root.iconLayout !== "square"
+      flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
+      rows: root.isVertical ? -1 : 1
+      columns: root.isVertical ? 1 : -1
+      spacing: WorkspaceCells.iconGap(root.thickness)
+
+      Repeater {
+        model: root.iconLayout === "square" ? 0 : root.iconLayout === "row" ? root.iconSlots : 1
+
+        Image {
+          required property int index
+          width: WorkspaceCells.iconSize(root.thickness)
+          height: width
+          sourceSize: Qt.size(64, 64)
+          source: root._shows === "icons" ? (root.iconPaths[index] ?? "") : ""
+          visible: index < iconRow._shown && index < root.iconPaths.length
+          opacity: root.boxed || root.isActive ? 1 : 0.7
+        }
+      }
+    }
+
+    // Up to four in a block the cell's own size, in its middle
+    Item {
+      anchors.centerIn: parent
+      visible: root._shows === "icons" && root.iconLayout === "square"
+      width: root.thickness
+      height: root.thickness
+
+      Repeater {
+        model: root.iconLayout === "square" ? 4 : 0
+
+        Image {
+          required property int index
+          readonly property var slot: WorkspaceCells.squareSlots(root.iconPaths.length)[index] ?? null
+
+          visible: slot !== null
+          x: slot ? root.thickness * slot.x - width / 2 : 0
+          y: slot ? root.thickness * slot.y - height / 2 : 0
+          width: root.thickness * (slot?.size ?? 0)
+          height: width
+          sourceSize: Qt.size(64, 64)
+          source: slot ? root.iconPaths[index] : ""
+          opacity: root.boxed || root.isActive ? 1 : 0.7
+        }
+      }
+    }
+
+    // Centred on its figures
+    StyledLabel {
+      anchors.centerIn: parent
+      visible: root.labels === "numbers" && root._shows === "labels"
+      text: root.label
+      textColor: root.look.content
+      textSize: root.barConfig.fontSize - 1
+      font.bold: root.isActive && !root.boxed
+
+      ColorGlide on color {
+        enabled: root.animated
+      }
+    }
+
+    // Urgent, where an app icon is all it shows on the bar
+    Rectangle {
+      readonly property real size: Math.max(4, Math.round(root.thickness * 0.22))
+
+      visible: root.urgent && !root.isActive && !root._framed && root._shows === "icons"
+      x: parent.width - size
+      y: 0
+      width: size
+      height: size
+      radius: size / 2
+      color: root.urgentColor
+    }
+  }
+
+  // In its box as drawn: as a segment, back under the cell before and out
+  // to a tab's edge
+  CellHitArea {
+    id: cellArea
+    shape: root.shape
+    vertical: root.isVertical
     enabled: root.clickable && root._drawsContent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor

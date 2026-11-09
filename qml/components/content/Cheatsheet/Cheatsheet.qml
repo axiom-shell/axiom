@@ -77,7 +77,7 @@ Panel {
       escapeClears: true
       input.wrapMode: Text.NoWrap
     }
-    StyledText {
+    StyledLabel {
       text: I18n.tr("{0} binds", root.bindCount)
       textSize: Appearance.fontSizeBy(-2)
       textColor: Theme.foregroundAlt

@@ -86,6 +86,18 @@ Rectangle {
   // (on the stroke it covers, at least)
   readonly property real _pillJoinReach: Math.max(root.barConfig.overlap, ...[root.ends.start, root.ends.end].map((end, i) => end.held ? 0 : root.endMargins[i] - root.barConfig.pillGap)) + 0.5
 
+  // Tabs (the look's shape tab) reach out to the outer edge of what the
+  // widgets sit on, this far in from the window's outer edge
+  // (BarEnds.tabEdge), an end by an island's or the rounded border's
+  // corner taking its curve (BarEnds.tabBounds)
+  readonly property bool tabs: root.barConfig.look.shape.name === "tab"
+  readonly property real tabEdge: BarEnds.tabEdge(root.barConfig, Appearance.borderWidth)
+  readonly property var tabBounds: root.tabs ? BarEnds.tabBounds(root.barConfig, root.length, root.islands ? root.pillShapes : [], {
+    "border": Appearance.screenBorder,
+    "borderWidth": Appearance.borderWidth,
+    "radius": Appearance.borderRadius
+  }) : []
+
   // One { start, length, joinStart, joinEnd } per pill along the bar: one
   // per joined group (BarLayout.joinGroups, pillRects): grown by the pill
   // gap, those reaching an end stretched onto it and joining it. On a
@@ -337,15 +349,19 @@ Rectangle {
   readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount), centerGroup.centerParts)
 
   // A section's shown widgets; `configIndex` is each one's place in the
-  // section's config, which hidden widgets leave out
+  // section's config, which hidden widgets leave out. A widget drawn one
+  // box per item is one entry per item (BarBoxes.expand), each with its
+  // `box`, all with its configIndex.
   function widgetModel(widgetConfigArray) {
-    return (widgetConfigArray || []).map((widgetConf, i) => ({
+    return BarBoxes.expand((widgetConfigArray || []).map((widgetConf, i) => ({
           "type": widgetConf.type,
           "properties": widgetConf.properties || {},
+          // Its Auto color fields' roles (BarsConfig.withAutoColors)
+          "autoColors": widgetConf.autoColors || {},
           "layout": widgetConf.layout || {},
           "configIndex": i,
           "visible": widgetConf.visible !== false
-        })).filter(widget => widget.visible);
+        })).filter(widget => widget.visible), BarsConfig.boxItems);
   }
 
   // While the bar editor is on screen, what it shows of this bar (see
@@ -408,6 +424,10 @@ Rectangle {
     chainEnd: section.bar.sectionJoins[section.slotIndex].chainEnd
     joinEndReach: section.bar.sectionReaches[section.slotIndex]
     readonly property real mainPos: Math.round(section.slot.offset + (section.slot.extent - section.usedLength) * section.align)
+    // The bar's gradient runs along its whole length, wherever widgets are,
+    // so a widget coming or going never shifts its colors
+    barStart: section.mainPos
+    barLength: section.barConfig.look.gradient !== null ? section.bar.length : 0
 
     barConfig: section.bar.barConfig
     panel: section.bar.panel
@@ -423,6 +443,15 @@ Rectangle {
       const farSide = section.barConfig.right || section.barConfig.bottom;
       return farSide ? across - start - size : start;
     }
+    // Tabs reach from the widgets out to the bar's tabEdge, their ends
+    // bounded as the bar's, in the section's own coordinates
+    tabReach: section.bar.tabs ? Math.max(0, Math.round(section.barConfig.crossStart) - section.bar.tabEdge) : 0
+    tabBounds: section.bar.tabBounds.map(b => ({
+          "start": b.start - section.drawnPos,
+          "end": b.end - section.drawnPos,
+          "startRadius": b.startRadius,
+          "endRadius": b.endRadius
+        }))
 
     // Where it's drawn along the bar, and how long: gliding to the layout's
     // (as its widgets do, BarWidgetHost), which pills follow. Off until
@@ -937,92 +966,11 @@ Rectangle {
     }
   }
 
-  // A line along the bar's inner or outer edge, from its color fading
-  // into another along the bar. Inline components can't see this file's
-  // ids, hence `bar`. Where an outer bar's popout lies over it
-  // (coveredSpans) it gives way, as the islands and sections do: on a pill
-  // bar not, its pills merging with the popout.
-  component AccentLine: Rectangle {
-    id: line
-    required property Item bar
-    opacity: !line.bar.pills && line.bar.covers(line.start, line.start + line.length) ? 0 : 1
-    Behavior on opacity {
-      NumberAnimation {
-        duration: Appearance.animFast
-        easing.type: Appearance.easing
-      }
-    }
-    // Along the bar, and in from its outer edge
-    required property real start
-    required property real length
-    required property real inset
-
-    readonly property bool vertical: bar.isVertical
-    readonly property real thickness: bar.barConfig.accentLineWidth
-    readonly property bool far: bar.barConfig.right || bar.barConfig.bottom
-    readonly property real across: far ? (vertical ? bar.width : bar.height) - inset - thickness : inset
-    readonly property color from: Theme.resolveColor(bar.barConfig.accentLineColor)
-
-    x: vertical ? across : start
-    y: vertical ? start : across
-    width: vertical ? thickness : length
-    height: vertical ? length : thickness
-    gradient: Gradient {
-      orientation: line.vertical ? Gradient.Vertical : Gradient.Horizontal
-      GradientStop {
-        position: 0
-        color: line.from
-      }
-      GradientStop {
-        position: 1
-        color: line.bar.barConfig.accentLineFade ? Theme.resolveColor(line.bar.barConfig.accentLineFade) : line.from
-      }
-    }
-  }
-
-  // How far in from the outer edge the accent line sits: inside whatever
-  // stroke is there (the border strip's or the bar's own on a solid bar's
-  // inner edge, the border's under a floating bar's outer edge)
-  readonly property real _accentInset: {
-    const width = root.barConfig.accentLineWidth;
-    if (root.barConfig.accentLine === "outer") {
-      if (root.islands)
-        return root.barConfig.islandStart + Appearance.borderWidth;
-      return root.pills ? root.barConfig.stripCover + root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
-    }
-    if (root.pills)
-      return root.barConfig.pillDepth - Appearance.borderWidth - width;
-    return root.barConfig.extent - width - (root.barConfig.solid || root.islands ? Appearance.borderWidth : 0);
-  }
-
-  // Along a plain bar: its whole length, or clear of the border's sides
-  // inside the border and of a bar it makes way for
-  AccentLine {
-    visible: root.barConfig.accentLine !== "none" && !root.pills && !root.islands
+  // The accent line along its inner or outer edge, along the bar or each
+  // pill or island (the look's accentLine)
+  AccentLines {
+    anchors.fill: parent
     bar: root
-    start: root.barConfig.insideBorder || root.ends.start.held ? root.endMargins[0] : 0
-    length: root.length - start - (root.barConfig.insideBorder || root.ends.end.held ? root.endMargins[1] : 0)
-    inset: root._accentInset
-  }
-
-  // Along each pill, clear of its rounded corners on the inner side
-  Repeater {
-    model: root.barConfig.accentLine !== "none" && (root.pills || root.islands) ? root.pillRects.length : 0
-
-    AccentLine {
-      required property int index
-      readonly property var rect: root.pillRects[index] ?? {
-        "start": 0,
-        "length": 0
-      }
-      // Pills only round their inner side; islands both
-      readonly property real corner: root.islands ? Appearance.borderRadius : root.barConfig.accentLine === "inner" ? root.pillRadii.corner : 0
-
-      bar: root
-      start: rect.start + (rect.joinStart ? 0 : corner)
-      length: Math.max(0, rect.length - (rect.joinStart ? 0 : corner) - (rect.joinEnd ? 0 : corner))
-      inset: root._accentInset
-    }
   }
 
   Section {

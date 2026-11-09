@@ -50,7 +50,7 @@ Card {
           onWheel: wheel => dial.stepped(wheel.angleDelta.y > 0 ? 0.05 : -0.05)
         }
       }
-      StyledText {
+      StyledLabel {
         id: dialLabel
         visible: dial.labelled
         Layout.alignment: Qt.AlignCenter

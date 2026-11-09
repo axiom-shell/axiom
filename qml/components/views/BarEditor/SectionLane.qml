@@ -95,7 +95,7 @@ Rectangle {
     width: parent.width - Widget.padding * 2
     spacing: Widget.spacing / 2
 
-    StyledText {
+    StyledLabel {
       text: root.title
       font.bold: true
       elide: Text.ElideRight
@@ -202,7 +202,7 @@ Rectangle {
     }
   }
 
-  StyledText {
+  StyledLabel {
     id: empty
     visible: repeater.count === 0 && !root.hovering
     x: flow.x

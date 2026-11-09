@@ -54,6 +54,12 @@ QtObject {
     root.panelTab = index;
   }
 
+  // Shows the tab holding a Bar field (`key`, a Bar definition key: a
+  // page link's "BarEditor:<key>", OverlayManager.followPageLink)
+  function showBarField(key) {
+    root.selectPanelTab(BarsConfig.editorTabOf(key));
+  }
+
   // The selected bar as the board's live chips draw its widgets: the
   // draft bar enriched at a fixed thickness, along a top edge (chips are
   // rows) whatever its own, standing alone (no ends meet it)
@@ -445,8 +451,15 @@ QtObject {
     return keys.some(key => key === "shadow" ? Object.values(style.shadow ?? {}).some(value => value !== null) : (style[key] ?? null) !== null);
   }
 
-  // Gives the selected bar its own `keys`, starting from what it inherits,
-  // or (`owned` false) hands them back to the shared style
+  // Whether the bar at `index` sets every one of `keys` (each shadow part)
+  function ownsAllStyle(index, keys) {
+    const style = root.localConfig?.[index]?.style ?? {};
+    return keys.every(key => key === "shadow" ? Object.values(style.shadow ?? {}).every(value => value !== null) : (style[key] ?? null) !== null);
+  }
+
+  // Gives the selected bar its own `keys`, starting from what it inherits
+  // (a key it already sets keeps its value), or (`owned` false) hands them
+  // back to the shared style, as one undo step
   function setStyleOwned(keys, owned) {
     const bar = selectedBar();
     if (!bar)
@@ -457,11 +470,11 @@ QtObject {
       if (key === "shadow") {
         const shared = root.localStyle.shadow;
         style.shadow = Object.keys(style.shadow).reduce((out, part) => {
-          out[part] = owned ? shared[part] : null;
+          out[part] = owned ? (style.shadow[part] ?? shared[part]) : null;
           return out;
         }, {});
       } else {
-        style[key] = owned ? root._inherited(key) : null;
+        style[key] = owned ? (style[key] ?? root._inherited(key)) : null;
       }
     }
     applyChanges();
