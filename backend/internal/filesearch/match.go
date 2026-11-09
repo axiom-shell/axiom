@@ -139,7 +139,8 @@ func lowerInto(buf, name []byte) []byte {
 // of Search.score (qml/components/methods/Search.qml), so a match reads
 // the same in files as in apps. Files are never ranked against apps, so
 // the two needn't stay equal. (It counts bytes where the JS counts UTF-16
-// units.)
+// units, but the letters in order are whole characters: one character's
+// bytes never match pieces of several.)
 func Score(text, q []byte) int {
 	if len(text) == 0 || len(q) == 0 {
 		return 0
@@ -157,23 +158,35 @@ func Score(text, q []byte) int {
 		}
 		return 50
 	}
-	if len(q) < 2 {
+	if utf8.RuneCount(q) < 2 {
 		return 0
 	}
 	matched, first, last := 0, -1, 0
-	for i := 0; i < len(text) && matched < len(q); i++ {
-		if text[i] == q[matched] {
+	for i := 0; i < len(text) && matched < len(q); {
+		n := runeLen(text[i:])
+		if m := runeLen(q[matched:]); n == m && bytes.Equal(text[i:i+n], q[matched:matched+m]) {
 			if first < 0 {
 				first = i
 			}
-			last = i
-			matched++
+			last = i + n - 1
+			matched += m
 		}
+		i += n
 	}
 	if matched < len(q) {
 		return 0
 	}
 	return max(5, 30-2*(last-first+1-len(q)))
+}
+
+// runeLen is the length of the character b starts with (1 for a byte
+// that's no valid one).
+func runeLen(b []byte) int {
+	if b[0] < utf8.RuneSelf {
+		return 1
+	}
+	_, n := utf8.DecodeRune(b)
+	return n
 }
 
 // MatchName scores a bare name (a folder's listing) against the tokens,

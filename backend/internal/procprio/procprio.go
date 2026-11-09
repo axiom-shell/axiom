@@ -34,12 +34,16 @@ func Idle() error {
 	})
 }
 
-// Background puts every thread of this process at nice and in the
-// best-effort I/O class's lowest level (7).
+// Background puts every thread of this process at nice (one already
+// nicer stays: raising it back needs a privilege) and in the best-effort
+// I/O class's lowest level (7).
 func Background(nice int) error {
 	return eachThread(func(tid int) error {
-		if err := unix.Setpriority(unix.PRIO_PROCESS, tid, nice); err != nil {
-			return fmt.Errorf("nice: %w", err)
+		// The raw call's value is 20 - nice
+		if prio, err := unix.Getpriority(unix.PRIO_PROCESS, tid); err != nil || 20-prio < nice {
+			if err := unix.Setpriority(unix.PRIO_PROCESS, tid, nice); err != nil {
+				return fmt.Errorf("nice: %w", err)
+			}
 		}
 		return setIOPrio(tid, ClassBestEffort, 7)
 	})

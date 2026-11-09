@@ -84,6 +84,12 @@ QtObject {
     const land = answer => {
       if (text !== root._mode.text)
         return;
+      // The index's phase changed while this was asked (a push it can
+      // land after, the crawl's end among them): ask again
+      if (request.kind === "search" && phase !== FileSearchManager.state.phase) {
+        root._ask(text);
+        return;
+      }
       root._mode = {
         "text": text,
         "answer": Object.assign({

@@ -20,7 +20,11 @@ func TestMain(m *testing.M) {
 		os.Stdout.WriteString("ready\n")
 		os.Stdin.Read(make([]byte, 1))
 		os.Exit(0)
-	case "background":
+	case "background", "nicer":
+		// A process already nicer stays so, without failing
+		if os.Getenv(childEnv) == "nicer" && Background(15) != nil {
+			os.Exit(2)
+		}
 		if err := Background(10); err != nil {
 			os.Stderr.WriteString(err.Error())
 			os.Exit(2)
@@ -42,6 +46,7 @@ func TestLowersEveryThread(t *testing.T) {
 	}{
 		{"idle", 5, ClassIdle, 0},
 		{"background", 0, ClassBestEffort, 7},
+		{"nicer", 0, ClassBestEffort, 7},
 	} {
 		t.Run(c.mode, func(t *testing.T) {
 			t.Parallel()

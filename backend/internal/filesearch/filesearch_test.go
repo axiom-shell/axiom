@@ -97,6 +97,14 @@ func TestScore(t *testing.T) {
 		{"rap", "rp", 28},
 		{"", "a", 0},
 		{"a", "", 0},
+		{"计划的文件", "的", 50},
+		{"瀀业丄", "的", 0}, // 的 is E7 9A 84, bytes of each of the three
+		{"文档件", "文件", 24},
+		{"计文划件", "的件", 0},
+		{"é", "é", 100},
+		{"éa", "a", 50},
+		{"xé", "é", 50},
+		{"ébé", "éé", 28},
 	} {
 		if got := Score([]byte(c.text), []byte(c.q)); got != c.want {
 			t.Errorf("Score(%q, %q) = %d, want %d", c.text, c.q, got, c.want)
