@@ -32,7 +32,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - **Its place in the stack.** A `LayerSlot`, `held`. Where layers stack by map order, it is mapped from the start and draws and takes nothing while closed (`idle`), so opening it never puts it after the bars. With layer rules it maps only while open. On Top, the compositor hides it under a fullscreen window.
 - **Keyboard.** `OnDemand`: it takes the keyboard when clicked. Escape closes it (`EdgeMenuBody`).
 - **Outside clicks.** A `FocusGrab`, only while it is open, unpinned (not `EdgeMenuSync.held`) and `close.onOutsideClick` is on. A click in its submenu is inside it.
-- **The box.** A detached `EdgeSurface`. What it meets comes from `SurfaceContext.free()`: nothing (no joins, no flush ends, never straight off an edge), with BarStyle's shadow. A small `shape` object hands that to the surface and the `SubmenuHost`, in the shape an `EdgePlacement` would.
+- **The box.** A detached `EdgeSurface`. What it meets comes from `SurfaceContext.free()`: nothing (no joins, no flush ends, never straight off an edge). With no bar, its shadow is BarStyle's. A small `shape` object hands that to the surface and the `SubmenuHost`, in the shape an `EdgePlacement` would.
 - **Its fill.** The blur window draws it where it backs Top surfaces on the menu's screen, except while it scales: the blur window's copy doesn't scale.
 - **Animation (`freeAnimation`).**
   - `fade`: `AttachedSurface.fade`.

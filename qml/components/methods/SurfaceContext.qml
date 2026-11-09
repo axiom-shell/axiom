@@ -128,9 +128,9 @@ QtObject {
 
   // A box floating free of the edges (a free menu, surfaces/edgemenu/
   // FreeMenu): a box of its own that meets nothing, joins and runs flush
-  // to nothing, runs straight off no edge and casts BarStyle's shadow. Its
-  // `place` is the part of EdgeAttach.place's answer an AttachedSurface
-  // and a submenu read
+  // to nothing and runs straight off no edge (with no bar, it casts
+  // BarStyle's shadow). Its `place` is the part of EdgeAttach.place's
+  // answer an AttachedSurface and a submenu read
   function free() {
     return {
       "detached": true,
@@ -141,12 +141,7 @@ QtObject {
         "joinEnd": false,
         "flushStart": false,
         "flushEnd": false
-      },
-      "shadow": root.shadow({
-        "detached": true,
-        "bar": null,
-        "onBar": false
-      })
+      }
     };
   }
 
