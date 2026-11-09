@@ -1,7 +1,7 @@
 # Bar widget shapes, runs, separators and accents
 
 > **Files:** `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetBackground.qml`, `qml/components/methods/BarShapes.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/reusable/SeparatorMark.qml`, `qml/components/bar/BarContainer.qml` (inline `AccentLine`), `qml/components/bar/BarWidgetHost.qml`
-> **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `widgetEnds`, `widgetGrouping`, `splitIcon`, `splitDivider`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach` are derived `barConfig` values.)
+> **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `tabCorners`, `widgetEnds`, `widgetGrouping`, `splitIcon`, `splitDivider`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach`, `tabFillet` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 
 How widget backgrounds are drawn: their shapes, merged and powerline runs, hit testing in the drawn shape, separators at section ends, separator marks, the bar's shadow and the accent line.
@@ -9,11 +9,12 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 ### Backgrounds and shapes
 - `WidgetGroup` draws a `bar/WidgetBackground` under each host that has one (`BarWidgetHost.background`). The background follows the host's geometry and `contentOpacity`.
 - It is drawn in the bar's shape settings:
-  - **`widgetShape`:** rounded, capsule, slanted or arrow.
+  - **`widgetShape`:** rounded, capsule, slanted, arrow or tab.
     - Rounded takes the bar's widget radius. Qt caps a radius at half the thickness, so a radius that large draws the same as capsule.
     - Capsule is always a full pill, and so are the Workspaces cells inside it (`BarsConfig.cellRadius`).
   - **`widgetEnds`:** a slanted or arrow widget's (or run's) own ends. They can be shaped (an arrow's notched and pointed), pointed at both ends (an arrow's only, via `x-enumShowIf`), or rounded.
   - **`widgetGrouping`:** see Runs below.
+  - **Tab** reaches from the widget out to the outer edge of what it sits on (see Tabs below).
 - `methods/BarShapes` gives each widget two things:
   - **`segment`:** the widget's caps, and the room its content keeps clear of them. `WidgetGroup` sets this as the host's `leadInset`/`trailInset`, which are added to its sizes, and the module is inset by them.
   - **`path`:** the outline, as an SVG path. A `Rectangle` draws rounded and capsule ends.
@@ -24,6 +25,20 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 - **Joined:** the label's part is the background's whole shape in `fill`; the icon part is drawn over it in `iconFill`, from the background's start cap to the bar's `splitCap` centred on `splitAt` (`BarShapes.dividerCap`: `splitDivider` match is slanted for slant, an arrow for arrow, else straight; or straight, slant, arrow, or `curve`, a shallow arc a quarter of the thickness deep). The level, the press tint, the hover outline and the editor's highlight cover the whole shape.
 - **Badge:** no box; a shape in `iconFill` round `splitPart`, `badgePad` out, at least as long as it's thick: a circle (or a pill round a lead graphic) under capsule, otherwise a square rounded by the widget radius scaled to its size.
 - **Runs:** merged, each widget keeps its own icon part (or badge) on the run's `groupColor` (`groupColors` draws split's run filled), and `splitLabelFill` is hidden. Powerline chains the segments as usual, each with its own icon part; a segment counts as opaque (`BarWidgetStyle.opaque`) only when its label part has a color of its own. A badge has no box to chain: its powerline draws as separate (`BarWidgetStyle.grouping`, `BarsConfig.groupingOf`) and isn't offered.
+
+### Tabs
+- A tab's background runs from the widget's inner side (the bar's edge padding kept) out to the edge it hangs from, `tabReach` past the widget (`WidgetGroup.tabReach`, from `BarContainer`). Where that edge is, per surface, is `BarEnds.tabEdge` (in from the bar window's outer edge):
+  - **Solid bar:** the window's edge (the screen edge, or the bar outside it), border on or off.
+  - **Pills:** a pill bar on the border reaches back over the frame (its pills one with it, `stripCover`), so its tabs run to the screen edge; a pill bar stacked inside another bar stops inside the stroke it lies on.
+  - **Floating:** inside its island's stroke, not the screen.
+  - **No surface:** inside the rounded border's stroke, or the screen edge with the border off.
+- Its outer corners are square (`tabCorners: square`) or flared (`flared`: a concave fillet out into that edge). Its inner corners take the widget radius, at most half the thickness (`BarShapes.tab`).
+- **Every flared tab on a bar takes one fillet radius** (`barConfig.tabFillet`, `BarShapes.tabFillet`, worked out in `BarsConfig.enrichBarConfig`), on both sides and at a run's ends alike, so all its tabs look the same: the inner corners' radius, but no more than half the configured gap between widgets (`groupSpacing`: neighbours' fillets meet in it, tangent at a gap of twice the radius, never crossing; none at a gap of 0, which draws as square) nor the room at the bar's ends (`BarEnds.tabEndRoom`: a pill's gap, a solid bar's margin, a transparent bar's gaps past the border's corner). From config, never the gaps as drawn: a spacer widening a gap changes nothing, and the layout never makes room for a fillet.
+- **A corner's curve** (`BarEnds.tabBounds`, `BarShapes.tabLimits`): a tab's end nearer an island's (or, on a transparent bar, the rounded border's) corner than its radius takes that corner's curve on its outer corner instead of a fillet.
+- An outline's stroke is left open along the outer edge (`BarShapes.path`'s `open`), as are the hover outline's and the editor highlight's.
+- Merged runs are one tab, with fillets at the run's ends only. Tabs never chain as a powerline (`BarWidgetStyle.grouping` draws a saved powerline as separate; the option is hidden).
+- The host's hit area reaches out with the tab, and its content is centred in the tab (`BarWidgetHost.tabReach`).
+- **Split on a tab:** the icon part reaches the edge too (it's drawn by the same tab path, its end the divider: `_tabPath` draws a side that isn't a tab's as `_cap` has it, the right way up on either side). A badge has no box, so a separate badge isn't offered the tab shape (`x-enumShowIf`).
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
