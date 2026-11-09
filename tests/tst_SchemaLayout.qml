@@ -267,6 +267,62 @@ TestCase {
     verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "textScale"], key => undefined), "the bar style passes compositorAllows");
   }
 
+  // `x-control: tiles`: every option, one whose `x-enumShowIf` fails (the
+  // chosen one too) with its `x-tileHint`, "" without one; a string hint
+  // is the whole field's
+  function test_tileOptions() {
+    const field = {
+      "type": "string",
+      "enum": ["a", "b", "c"],
+      "x-control": "tiles",
+      "x-enumShowIf": {
+        "b": {
+          "mode": "x"
+        },
+        "c": {
+          "mode": ["x", "y"]
+        }
+      },
+      "x-tileHint": {
+        "b": "Only in x"
+      }
+    };
+    const values = {
+      "mode": "z"
+    };
+    compare(SchemaLayout.tileOptions(field, field.enum, key => values[key]), [
+      {
+        "value": "a",
+        "hint": null
+      },
+      {
+        "value": "b",
+        "hint": "Only in x"
+      },
+      {
+        "value": "c",
+        "hint": ""
+      }
+    ]);
+    values.mode = "x";
+    compare(SchemaLayout.tileOptions(field, field.enum, key => values[key]).map(option => option.hint), [null, null, null]);
+    compare(SchemaLayout.tileOptions({}, ["a"], key => undefined), [
+      {
+        "value": "a",
+        "hint": null
+      }
+    ], "no conditions");
+    compare(SchemaLayout.tileOptions(field, undefined, key => undefined), []);
+    compare(SchemaLayout.tileHint(field), "", "a map is per option");
+    compare(SchemaLayout.tileHint({
+      "x-tileHint": "Outline only"
+    }), "Outline only");
+    compare(SchemaLayout.tileHint({
+      "x-tileHint": "Outline only"
+    }, "a"), "", "a string is the whole field's");
+    compare(SchemaLayout.tileHint(undefined), "");
+  }
+
   function test_waitsForUser() {
     verify(SchemaLayout.waitsForUser({
       "type": "string",

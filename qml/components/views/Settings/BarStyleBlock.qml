@@ -10,18 +10,19 @@ import qs.components.forms
 ColumnLayout {
   id: root
 
-  // The settings row (SettingsField's `x-row`) and its form
-  required property var row
-  required property var form
+  // The settings row (SettingsField's `x-row`) and its form, handed in
+  // as it loads
+  property var row: null
+  property var form: null
 
   Layout.fillWidth: true
 
   SchemaPropertiesForm {
     Layout.fillWidth: true
-    propertiesSchema: root.row.schema.properties
-    order: root.row.schema["x-order"] ?? []
+    propertiesSchema: root.row?.schema?.properties ?? ({})
+    order: root.row?.schema?.["x-order"] ?? []
     pairs: true
-    values: root.form.valueAt(root.row.path) ?? ({})
+    values: root.form?.valueAt(root.row.path) ?? ({})
     changedAt: path => SettingsManager.isChanged(root.row.path.concat(path))
     onEdited: (path, value) => root.form.edit(root.row.path.concat(path), value)
     onDiscardAt: path => {

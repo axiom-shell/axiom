@@ -4208,6 +4208,7 @@
     "Merged outline": "",
     "The line round each merged run. Widget colors show on their icons instead.": "",
     "A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.": "",
-    "Bar style": ""
+    "Bar style": "",
+    "Not used by this style": ""
   }
 }

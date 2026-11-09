@@ -161,6 +161,31 @@ QtObject {
     });
   }
 
+  // An enum field's options as tiles (`x-control: tiles`): [{ value,
+  // hint }], every option (none hidden, unlike a dropdown's), `hint` null
+  // while it applies, else why not: its `x-enumShowIf` condition fails
+  // (valueOf as showIfHolds), the chosen one too. The hint is English, from
+  // the field's `x-tileHint` (tileHint), "" for none: the form says it
+  // generically and translates it
+  function tileOptions(fieldSchema, options, valueOf) {
+    const conditions = fieldSchema?.["x-enumShowIf"] ?? {};
+    return Array.prototype.map.call(options ?? [], value => ({
+          "value": value,
+          "hint": root.showIfHolds(conditions[value], valueOf) ? null : root.tileHint(fieldSchema, value)
+        }));
+  }
+
+  // `x-tileHint`: why an option (`value`) of a field doesn't apply, from
+  // its map ({ value: reason }); with no `value`, why the whole field
+  // doesn't (its `x-showIf` failing in a form that keeps its place), from
+  // a string. English, "" for none
+  function tileHint(fieldSchema, value) {
+    const hint = fieldSchema?.["x-tileHint"];
+    if (value === undefined)
+      return typeof hint === "string" ? hint : "";
+    return hint !== null && typeof hint === "object" && typeof hint[value] === "string" ? hint[value] : "";
+  }
+
   // Whether a setting waits for the user's own Save or card instead of
   // going live or being set from the launcher: `x-applyOnSave` (Hyprland's
   // mode) or `x-takeover` (the locker, idle, polkit, the greeter), whose
