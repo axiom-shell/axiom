@@ -230,9 +230,10 @@ TestCase {
     const pts = points(both);
     compare(pts.slice(0, 4), [[8.5, 1], [1, 1], [1, 29], [8.5, 29]]);
     compare(pts.slice(4), [[91.5, 1], [99, 1], [99, 29], [91.5, 29]]);
-    // A shaped end is its line alone: an arrow's point
-    compare(points(BarShapes.marks(100, 30, 0, "flat", "arrowOut", false, 0, false, false)).slice(4), [[85, 0], [100, 15], [85, 30]]);
-    // A capsule's half circle
+    // A slant's or an arrow's line, with arms from its corners: a bracket
+    compare(points(BarShapes.marks(100, 30, 0, "flat", "arrowOut", false, 0, false, false)).slice(4), [[77.5, 0], [85, 0], [100, 15], [85, 30], [77.5, 30]]);
+    compare(points(BarShapes.marks(100, 30, 0, "slant", "flat", false, 0, false, false)).slice(0, 4), [[17.5, 0], [10, 0], [0, 30], [7.5, 30]]);
+    // A capsule's half circle alone
     verify(BarShapes.marks(100, 30, 0, "capsule", "capsule", false, 1, false, false).includes("A 14 14"));
   }
 

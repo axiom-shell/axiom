@@ -564,9 +564,10 @@ QtObject {
   }
 
   // An outline at its ends only (outlineStroke `ends`), as open SVG paths
-  // over path's outline at `inset`: each cap's line, a round or flat one
-  // with arms a quarter of the thickness along the bar (`[ ]`), a capsule
-  // `( )`, a slant `/ /`, an arrow `> >`. At a seam the cap before draws
+  // over path's outline at `inset`: each cap's line with arms a quarter of
+  // the thickness along the bar from its two corners, so it reads as a
+  // bracket (round or flat `[ ]`, a slant's, an arrow's), but a capsule's
+  // `( )` (and a powerline's half circles) alone. At a seam the cap before draws
   // the one mark (`seamStart` leaves the start out, and puts no inset on
   // the end there).
   // A tab's (`tab`): its two sides, open at the edge it hangs from
@@ -576,7 +577,8 @@ QtObject {
       return root._tabMarks(length, across, startCap, endCap, vertical, inset, tab, tab.thickness / 4);
     const pen = root._pen(length, vertical);
     const arm = across / 4;
-    const armed = cap => cap === "round" || cap === "flat";
+    // Brackets: every mark but a capsule's or a half circle's has arms
+    const armed = cap => ["round", "flat", "slant", "arrowOut", "arrowIn"].includes(cap);
     // The mark down one end, top to bottom: each arc is the one into the
     // point it reaches, as drawn at the end; down the start, mirrored, it
     // sweeps the other way
