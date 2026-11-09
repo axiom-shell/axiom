@@ -4165,6 +4165,8 @@
     "Every workspace a box filled with its state's color, whatever the bar's widget style.": "",
     "Tight": "",
     "The gap between workspaces. Tight: none. Bar: the bar's own gap between items. Wide: twice that.": "",
-    "Spacing": ""
+    "Spacing": "",
+    "Scrolling down goes back instead of on, for workspaces and a strip's windows alike.": "",
+    "Reverse scrolling": ""
   }
 }

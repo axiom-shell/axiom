@@ -103,6 +103,7 @@ One workspace layout serves everything that shows workspaces or moves between th
   - The grid strip cross-fades (`CrossFade`) to another row or column; the old one keeps its active cell while it fades.
   - `ActiveStrip` cross-fades to the windows of the next workspace.
 - **Background.** With `showBackground` off, `Workspaces.qml` leaves its box clear (the bar's color shows through) and drops the inset: the cells take the bar's full `thickness`, while the widget keeps its place among the bar's boxed widgets (`hasBackground`).
+- **Scrolling.** With `scrollToSwitch` the wheel steps through the shown workspaces (the grid strip: along its row or column), or on a strip monitor scrolls the strip (`stepStrip`); `scrollReverse` turns its direction round for both.
 - **Pinned start.** The widget keeps its start put while its box resizes (`pinStart`, which `BarWidgetHost` reads), so its cells don't drift as the strip after them comes and goes.
 - **Options.** The strips share one schema definition. Layout-only options hide themselves with `x-showIf: { "/Workspaces.layout": … }`.
 - **Grid popout.** In a grid, the widget hands its `properties` and its bar's config to the `WorkspaceGrid` popout. Its cells are the strip's own `WorkspaceCell`s, with the same:

@@ -88,13 +88,15 @@ Item {
     }
   }
 
+  // `scrollReverse` turns the wheel's direction round, for the strip too
   NotchWheel {
     enabled: root.properties.scrollToSwitch
     onStepped: direction => {
+      const step = root.properties.scrollReverse ? -direction : direction;
       if (root.stripDirection !== "")
-        CompositorManager.stepStrip(direction, root.output);
+        CompositorManager.stepStrip(step, root.output);
       else
-        root.step(direction);
+        root.step(step);
     }
   }
 

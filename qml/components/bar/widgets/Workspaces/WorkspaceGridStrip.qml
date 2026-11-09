@@ -97,13 +97,15 @@ Item {
     return position === 0 ? "keyboard_double_arrow_up" : position === count - 1 ? "keyboard_double_arrow_down" : position < middle ? "keyboard_arrow_up" : "keyboard_arrow_down";
   }
 
+  // `scrollReverse` turns the wheel's direction round, for the strip too
   NotchWheel {
     enabled: root.properties.scrollToSwitch
     onStepped: direction => {
+      const step = root.properties.scrollReverse ? -direction : direction;
       if (root.stripDirection !== "")
-        CompositorManager.stepStrip(direction, root.output);
+        CompositorManager.stepStrip(step, root.output);
       else
-        CompositorManager.stepWorkspace(root.isVertical ? (direction > 0 ? "down" : "up") : (direction > 0 ? "right" : "left"), "go");
+        CompositorManager.stepWorkspace(root.isVertical ? (step > 0 ? "down" : "up") : (step > 0 ? "right" : "left"), "go");
     }
   }
 

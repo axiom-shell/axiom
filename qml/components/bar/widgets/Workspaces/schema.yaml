@@ -136,6 +136,12 @@ settings:
     title: Scroll to switch
     default: true
     description: Step through workspaces by scrolling over the widget.
+  scrollReverse:
+    type: boolean
+    title: Reverse scrolling
+    default: false
+    x-showIf: {scrollToSwitch: true}
+    description: Scrolling down goes back instead of on, for workspaces and a strip's windows alike.
   showBackground:
     type: boolean
     title: Background
