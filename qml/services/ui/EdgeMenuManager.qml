@@ -127,7 +127,9 @@ Singleton {
     return root.pinnedMenus[id] === true;
   }
 
-  // A module's host (Card/Panel.host) is an edge menu it can pin
+  // A module's host (Card/Panel.host) is an edge menu it can pin: an
+  // edge, strip or free menu in its own host, not one shown in another
+  // menu's submenu
   function canPin(host) {
     return host?.kind === "edgeMenu" && !!host.id && !host.submenu;
   }
