@@ -443,10 +443,12 @@ PopoutWrapperBase {
       }
     }
 
-    // Only the surface takes input (sliding from the screen edge, only its
-    // box: the bars keep their own, and windows the strip it slid through)
+    // Only the surface takes input; a detached one only its box. Its
+    // surface reaches back over the bar (and the strip it slides through),
+    // and over a bar (niri, sway) the window would take the pointer from
+    // the widget that opened it, which closes it and opens it again
     mask: Region {
-      item: root.slideDistance > 0 ? boxArea : surface
+      item: surface.detached ? boxArea : surface
     }
     Item {
       id: boxArea

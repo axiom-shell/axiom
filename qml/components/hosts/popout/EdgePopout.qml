@@ -489,12 +489,12 @@ PopoutWrapperBase {
     implicitWidth: root.vertical ? surfaceWindow.depth : 0
     implicitHeight: root.vertical ? 0 : surfaceWindow.depth
 
-    // One sliding in from the screen edge takes input on its box alone
-    // (under a bar, the bar keeps its own; the strip it slides through
-    // stays the window's below); none until it's granted its place, or
-    // while it's given it up
+    // A detached one takes input on its box alone: its surface reaches
+    // back over the bars (and the strip it slides through), which keep
+    // their own; none until it's granted its place, or while it's given
+    // it up
     mask: Region {
-      item: !root.claimed ? null : root.slideDistance > 0 || root.fades ? boxArea : surface
+      item: !root.claimed ? null : placement.detached ? boxArea : surface
     }
 
     Item {

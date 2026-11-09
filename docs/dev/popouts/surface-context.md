@@ -35,7 +35,7 @@ Every surface that grows out of a screen edge asks one pure helper what each of 
 
 ### One placement for every host
 - `SurfaceContext.frame(p)` gives a surface's ends and the room it has along its edge before its box is known:
-  - `lo`/`hi`, `joinFrom`/`joinTo`
+  - `lo`/`hi` (held: its gaps past the frame lines; past a transparent bar: in line with the windows; at a wall: in line with the windows, its fillet clear of the frame's corner; else the frame's corner room), `joinFrom`/`joinTo`
   - walls and the strokes' reach
   - `joinsOf`: its joins from where it would rest
 - `layout(f, p)` gives its box (via `EdgeAttach.place`) and everything that follows from it:
