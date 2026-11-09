@@ -34,13 +34,14 @@ QtObject {
 
   // The room across a bar `thickness` thick inside a widget's box, in
   // the look's `shape` (look.shape): the thickness less its outline's
-  // stroke band (BarShapes.strokeBand) either side, or on its inner side
-  // only for a tab (its outline is open along the edge it hangs from);
-  // the whole thickness where no box is drawn (`capped` false: an unboxed
-  // style) or it has no outline
+  // stroke band (BarShapes.strokeBand) either side, a tab's too: its
+  // outline is open along the edge it hangs from, but what fits in the
+  // room is centred across the thickness, so clearing its inner stroke
+  // takes the same margin on both sides; the whole thickness where no box
+  // is drawn (`capped` false: an unboxed style) or it has no outline
   function boxRoom(thickness, shape) {
     const band = shape?.capped ? BarShapes.strokeBand(shape.outline ?? null) : 0;
-    return Math.max(0, thickness - band * (shape?.name === "tab" ? 1 : 2));
+    return Math.max(0, thickness - band * 2);
   }
 
   // The scale stacked's two lines shrink by to fit in `room` across the

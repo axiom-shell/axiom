@@ -40,7 +40,7 @@ TestCase {
         "stroke": "solid"
       },
       "capped": true
-    }), 24, "a tab: open along the edge it hangs from, its inner side's stroke only");
+    }), 22, "a tab: its lines are centred across, so clearing its inner stroke takes the margin on both sides");
     compare(ValueGraphics.boxRoom(26, shape({
       "width": 2,
       "stroke": "solid"
