@@ -407,9 +407,62 @@ TestCase {
     compare(row("underline", {
       "hoverFill": true
     })[4], false, "no fill on hover where it doesn't apply");
+    // A hovered Workspaces cell filled on hover draws its label in the
+    // widget's text color (BarWidgetStyle.cell): it shows
+    compare(row("tinted", {
+      "hoverFill": true
+    })[5], true, "cells filled on hover");
+    compare(row("outline", {
+      "hoverFill": true
+    })[5], true, "an outline's cells filled on hover");
+    compare(row("underline", {
+      "hoverFill": true
+    })[5], false, "no cell filled on hover where it doesn't apply");
     compare(row("filled", {
       "widgetTextColor": "base05"
     })[4], false, "the bar's own text color");
+  }
+
+  // The Workspaces widget's Text color shows where it draws: in a cell
+  // filled in its color, or one filled while hovered (Fill on hover on a
+  // tinted or outline bar), and only while the bar's text color is Auto
+  function test_workspaces_text_color_shows_where_it_draws() {
+    const condition = root.schema.definitions.WorkspacesWidget.properties.properties.properties.textColor["x-showIf"];
+    const shows = (own, options) => {
+      const context = BarLook.context(root.look(own, null));
+      return SchemaLayout.showIfHolds(condition, key => key.startsWith("$bar.") ? context[key] : (options ?? {
+            "labels": "numbers"
+          })[key]);
+    };
+    verify(shows({
+      "widgetStyle": "filled"
+    }), "filled cells");
+    verify(!shows({
+      "widgetStyle": "tinted"
+    }), "tinted cells: the label reads on the bar");
+    verify(shows({
+      "widgetStyle": "tinted",
+      "hoverFill": true
+    }), "a tinted cell filled on hover");
+    verify(shows({
+      "widgetStyle": "outline",
+      "hoverFill": true
+    }), "an outline cell filled on hover");
+    verify(!shows({
+      "widgetStyle": "underline",
+      "hoverFill": true
+    }), "no fill on hover on an underline");
+    verify(!shows({
+      "widgetStyle": "tinted",
+      "hoverFill": true
+    }, {
+      "labels": "none"
+    }), "no label to color");
+    verify(!shows({
+      "widgetStyle": "tinted",
+      "hoverFill": true,
+      "widgetTextColor": "base05"
+    }), "the bar's own text color");
   }
 
   // BarStyle.yaml's own conditions (on its sibling keys: the settings page

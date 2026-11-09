@@ -440,8 +440,9 @@ QtObject {
   //                   own fill (a box whose text reads on its color, not
   //                   merged), a split icon part, or a widget filled on
   //                   hover; and the bar sets no text color of its own
-  //   cellsFilled     a Workspaces cell is a box filled in its color, its
-  //                   label reading on it (split's cells are filled's)
+  //   cellsFilled     a Workspaces cell's label reads on a fill of its
+  //                   color: a box filled in it (split's cells are
+  //                   filled's), or, with Fill on hover, a hovered cell
   readonly property var contextTraits: ({
       "boxed": look => look.traits.boxed,
       "merged": look => look.grouping === "merged",
@@ -450,7 +451,7 @@ QtObject {
       "textColorShows": look => look.textColor === "" && ((look.grouping !== "merged" && look.traits.box?.text === "own") || look.traits.iconPart || look.hoverFill),
       "cellsFilled": look => {
         const cell = look.traits.fallback ? root.traitsOf(look.traits.fallback, look) : look.traits;
-        return cell.box?.text === "own";
+        return cell.box?.text === "own" || look.hoverFill;
       }
     })
 
