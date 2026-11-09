@@ -4263,7 +4263,6 @@
     "Some of these follow the shared style.": "",
     "Make all this bar's own": "",
     "{0} network folders don't answer": "",
-    "Opens beside a menu placed on an edge, from its Submenu module": "",
     "Its centre, from the screen's top edge.": "",
     "A point": "",
     "Where a bind or a script opens it. Opened by a bar widget, it opens at that widget.": "",
@@ -4275,6 +4274,8 @@
     "Opens at": "",
     "Its centre, from the screen's left edge.": "",
     "Holds it open where a keybind opens it while you edit it, showing unsaved changes.": "",
-    "Nothing yet: add a bar button or keybind, make it a bar widget's popout, or pick it in a menu's Submenu module.": ""
+    "Nothing yet: add a bar button or keybind, make it a bar widget's popout, or pick it in a menu's Submenu module.": "",
+    "No edge: it opens at its widget or anchor, or beside a menu from its Submenu module": "",
+    "How long the pointer rests on its edge before it opens, or, for a free menu, on the bar widget that opens it.": ""
   }
 }

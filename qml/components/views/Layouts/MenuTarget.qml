@@ -46,7 +46,7 @@ EditTarget {
     if (!root.menu)
       return "";
     if (root.free)
-      return I18n.tr("Opens beside a menu placed on an edge, from its Submenu module");
+      return I18n.tr("No edge: it opens at its widget or anchor, or beside a menu from its Submenu module");
     if (GridPlacement.menuFillsEdge(root.menu))
       return I18n.tr("Takes its whole edge");
     if (root.tooLong)

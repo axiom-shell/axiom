@@ -41,6 +41,7 @@ properties:
         minimum: 0
         maximum: 2000
         x-unit: ms
+        description: How long the pointer rests on its edge before it opens, or, for a free menu, on the bar widget that opens it.
         x-showIf:
           anyOf:
             - {onHover: true, ../placement: {not: free}}
