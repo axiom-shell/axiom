@@ -4,7 +4,7 @@
 > **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `tabCorners`, `widgetEnds`, `widgetGrouping`, `splitIcon`, `splitDivider`, `outlineStroke`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach`, `tabFillet` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 
-How widget backgrounds are drawn: their shapes, merged and powerline runs, hit testing in the drawn shape, separators at section ends, separator marks, the bar's shadow and the accent line.
+How widget backgrounds are drawn: their shapes (split's two parts, tabs, outline strokes among them), merged and powerline runs, hit testing in the drawn shape, separators at section ends, separator marks, the bar's shadow and the accent line. Which colors they're drawn in, the bar gradient included, is [Widget style](widget-style.md); how the styles, shapes and runs combine is its [Combinations](widget-style.md#combinations).
 
 ### Backgrounds and shapes
 - `WidgetGroup` draws a `bar/WidgetBackground` under each host that has one (`BarWidgetHost.background`). The background follows the host's geometry and `contentOpacity`.
@@ -17,12 +17,12 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
   - **Tab** reaches from the widget out to the outer edge of what it sits on (see Tabs below).
 - `methods/BarShapes` gives each widget two things:
   - **`segment`:** the widget's caps, and the room its content keeps clear of them. `WidgetGroup` sets this as the host's `leadInset`/`trailInset`, which are added to its sizes, and the module is inset by them.
-  - **`path`:** the outline, as an SVG path. A `Rectangle` draws rounded and capsule ends, except under the bar's gradient (a `Rectangle`'s border can't take one), where the path's `LinearGradient` fills or strokes the widget's slice.
+  - **`path`:** the outline, as an SVG path. A `Rectangle` draws rounded and capsule ends, except under the bar's gradient (a `Rectangle`'s border can't take one), where the path's `LinearGradient` (`ShapeSlice`; a `Rectangle`'s, `RectSlice`, for an underline or a split badge) fills or strokes the widget's slice; a tab and a stroke other than solid are paths too.
 - Insets follow what widgets have to show, never the room they're given (which the insets help decide), so they can't feed back into the layout. Shapes follow what's shown.
 
 ### Split
 - A split widget's host reports its parts (`BarWidgetHost.split`, from `IconTextWidget.splitAt` / `splitPart`): where the middle of the gap between its icon part and its label lies along it, and what the icon part holds. `WidgetGroup` hands them to its `WidgetBackground` (`splitAt`, `splitPart`), shifted by the segment's `back`.
-- **Joined:** the label's part is the background's whole shape in `fill`; the icon part is drawn over it in `iconFill`, from the background's start cap to the bar's `splitCap` centred on `splitAt` (`BarShapes.dividerCap`: `splitDivider` match is slanted for slant, an arrow for arrow, else straight; or straight, slant, arrow, or `curve`, a shallow arc a quarter of the thickness deep). The level, the press tint, the hover outline and the editor's highlight cover the whole shape.
+- **Joined:** the label's part is the background's whole shape in `fill`; on a tab both parts reach the edge (see Tabs); the icon part is drawn over it in `iconFill`, from the background's start cap to the bar's `splitCap` centred on `splitAt` (`BarShapes.dividerCap`: `splitDivider` match is slanted for slant, an arrow for arrow, else straight; or straight, slant, arrow, or `curve`, a shallow arc a quarter of the thickness deep). The level, the press tint, the hover outline and the editor's highlight cover the whole shape.
 - **Badge:** no box; a shape in `iconFill` round `splitPart`, `badgePad` out, at least as long as it's thick: a circle (or a pill round a lead graphic) under capsule, otherwise a square rounded by the widget radius scaled to its size.
 - **Runs:** merged, each widget keeps its own icon part (or badge) on the run's `groupColor` (`groupColors` draws split's run filled), and `splitLabelFill` is hidden; a widget that doesn't split fills its own box there instead (its `levelStartCap` / `levelEndCap`), a tab in the row. Powerline chains the segments as usual, each with its own icon part; a segment counts as opaque (`BarWidgetStyle.opaque`) only when its label part has a color of its own. A badge has no box to chain: its powerline draws as separate (`BarWidgetStyle.grouping`, `BarsConfig.groupingOf`) and isn't offered.
 
@@ -49,7 +49,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
-- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`), or with a bar gradient one strip of it from the run's start to its end ([Widget style › Bar gradient](widget-style.md#bar-gradient)). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
+- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`), or with a bar gradient one strip of it from the run's start to its end ([Widget style › Bar gradient](widget-style.md#bar-gradient)). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`), but for split's icon parts (see Split), a tab run (one tab, see Tabs) and a widget filled on hover (its own part). A merged outline's Ends only marks are at the run's two ends.
   - Widget insets keep their cap room, joined or not.
 - A spacer given room splits runs, as it splits groups; a collapsed one is passed over.
 
