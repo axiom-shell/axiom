@@ -194,8 +194,11 @@ ColumnLayout {
     // The bar editor's section the bar doesn't own: its heading and where
     // it's set, no form
     readonly property bool shared: root.owned !== null && root.owned[section.title] !== true
+    // Whether it's shown here (not `visible`, false while an ancestor is
+    // hidden: the form would be rebuilt each time)
+    property bool shown: root.sections.includes(section.title)
 
-    visible: root.sections.includes(section.title)
+    visible: section.shown
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignTop
     spacing: Widget.spacing
@@ -261,7 +264,7 @@ ColumnLayout {
     // Built only while the section is edited here
     Loader {
       Layout.fillWidth: true
-      active: !section.shared && section.visible
+      active: !section.shared && section.shown
       sourceComponent: SchemaPropertiesForm {
         propertiesSchema: section.keys.reduce((schema, key) => {
           schema[key] = root._properties[key];
@@ -288,7 +291,7 @@ ColumnLayout {
 
   // The chosen style's own options, those that apply
   Section {
-    visible: root._hasOptions && root.sections.includes("Look") && root.owned?.Look !== false
+    shown: root._hasOptions && root.sections.includes("Look") && root.owned?.Look !== false
     title: "Look"
     heading: I18n.tr("{0} options", root._styleLabel)
     keys: root._options
