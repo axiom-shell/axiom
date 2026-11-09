@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
 
-// Globs is shared-mime-info's globs2 and its icon lists, read once: what
-// type a file's name says it is, and the icons a type shows. A plain
+// Globs is shared-mime-info's globs2, its icon lists and its type
+// hierarchy, read once: what type a file's name says it is, the icons a
+// type shows, and the types it's a kind of. A plain
 // "*.ext" or literal pattern (nearly all of them) is a map lookup, so the
 // launcher can ask for every result; only the rest are matched in turn.
 type Globs struct {
@@ -18,8 +20,11 @@ type Globs struct {
 	literal  map[string]glob // "readme" → README, case ignored
 	litCased map[string]glob
 	other    []glob
-	icons    map[string]string // mime/icons
-	generic  map[string]string // mime/generic-icons
+	icons    map[string]string   // mime/icons
+	generic  map[string]string   // mime/generic-icons
+	alias    map[string]string   // mime/aliases: an alias → its type
+	aliases  map[string][]string // a type → its aliases
+	parents  map[string][]string // mime/subclasses: a type → the types it's a kind of
 }
 
 // glob is one of shared-mime-info's globs2 lines
@@ -47,12 +52,13 @@ func (g glob) beats(o glob) bool {
 
 const globMeta = "*?[\\"
 
-// LoadGlobs reads the first mime/globs2, mime/icons and mime/generic-icons
-// of each data folder, most important first ($XDG_DATA_HOME, then
-// $XDG_DATA_DIRS).
+// LoadGlobs reads the mime/globs2, mime/icons, mime/generic-icons,
+// mime/aliases and mime/subclasses of each data folder, most important
+// first ($XDG_DATA_HOME, then $XDG_DATA_DIRS).
 func LoadGlobs(dataDirs []string) *Globs {
 	g := &Globs{ext: map[string]glob{}, extCased: map[string]glob{}, literal: map[string]glob{}, litCased: map[string]glob{},
-		icons: map[string]string{}, generic: map[string]string{}}
+		icons: map[string]string{}, generic: map[string]string{},
+		alias: map[string]string{}, aliases: map[string][]string{}, parents: map[string][]string{}}
 	order := 0
 	for _, d := range dataDirs {
 		eachLine(filepath.Join(d, "mime", "globs2"), func(line string) {
@@ -77,8 +83,66 @@ func LoadGlobs(dataDirs []string) *Globs {
 				}
 			})
 		}
+		eachLine(filepath.Join(d, "mime", "aliases"), func(line string) {
+			if alias, mime, ok := strings.Cut(line, " "); ok && alias != mime {
+				if _, seen := g.alias[alias]; !seen {
+					g.alias[alias] = mime
+					g.aliases[mime] = append(g.aliases[mime], alias)
+				}
+			}
+		})
+		eachLine(filepath.Join(d, "mime", "subclasses"), func(line string) {
+			if child, parent, ok := strings.Cut(line, " "); ok && !slices.Contains(g.parents[child], parent) {
+				g.parents[child] = append(g.parents[child], parent)
+			}
+		})
 	}
 	return g
+}
+
+// Canonical is the type an alias stands for (mime/aliases), else mime.
+func (g *Globs) Canonical(mime string) string {
+	if m, ok := g.alias[mime]; ok {
+		return m
+	}
+	return mime
+}
+
+// Lineage is the types to look an app up by for a type, nearest first
+// (the MIME Applications spec: with no app for a type, its parents'):
+// the type itself (an alias as its type), each followed by its aliases
+// (lists and entries may name either), then its parents level by level
+// (mime/subclasses, and text/plain for every other text/*), each once,
+// so a cycle in the files ends. "" has none.
+func (g *Globs) Lineage(mime string) []string {
+	if mime == "" {
+		return nil
+	}
+	var out []string
+	seen := map[string]bool{}
+	queue := []string{g.Canonical(mime)}
+	for len(queue) > 0 {
+		t := queue[0]
+		queue = queue[1:]
+		if seen[t] {
+			continue
+		}
+		seen[t] = true
+		out = append(out, t)
+		for _, a := range g.aliases[t] {
+			if !seen[a] {
+				seen[a] = true
+				out = append(out, a)
+			}
+		}
+		for _, p := range g.parents[t] {
+			queue = append(queue, g.Canonical(p))
+		}
+		if strings.HasPrefix(t, "text/") && t != "text/plain" {
+			queue = append(queue, "text/plain")
+		}
+	}
+	return out
 }
 
 func (g *Globs) addGlob(gl glob) {

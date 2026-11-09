@@ -28,22 +28,27 @@ var schemePattern = regexp.MustCompile(`^([a-zA-Z][a-zA-Z0-9+.-]+):`)
 //
 // An override for the role (Overrides) runs instead of its app, args
 // after its words (the terminal's command after -e). With no app for a
-// URL or file, xdg-open gets it, when installed.
+// URL or file of its own, its parent types' are tried, nearest first
+// (Globs.Lineage: a script no app claims opens as text/plain, so in the
+// text editor role's app); with none, xdg-open gets it, when installed.
 func (a *Apps) Command(target string, args []string, ov Overrides) ([]string, error) {
 	if r, ok := RoleOf(target); ok {
 		return a.roleCommand(r, args, ov)
 	}
-	mime, role := a.typeOf(target)
-	if role != "" {
-		r, _ := RoleOf(role)
-		// A web or mail link follows its role's app (https as http), as
-		// does a file of the role's main type
-		if ov[role] != "" || mime == r.Types[0] || strings.HasPrefix(mime, "x-scheme-handler/") {
-			return a.roleCommand(r, append([]string{target}, args...), ov)
+	withTarget := append([]string{target}, args...)
+	mime := a.typeOf(target)
+	for _, t := range a.lineage(mime) {
+		if r, ok := roleOfType(t); ok {
+			// A web or mail link follows its role's app (https as http),
+			// as does a file of the role's main type, and any of the
+			// role's types when the role has a command set
+			if ov[r.ID] != "" || t == r.Types[0] || strings.HasPrefix(t, "x-scheme-handler/") {
+				return a.roleCommand(r, withTarget, ov)
+			}
 		}
-	}
-	if id := a.Default(mime); id != "" && mime != "" {
-		return a.entryCommand(a.entries[id], append([]string{target}, args...), ov)
+		if id := a.ownDefault(t); id != "" {
+			return a.entryCommand(a.entries[id], withTarget, ov)
+		}
 	}
 	if _, err := exec.LookPath("xdg-open"); err == nil {
 		return []string{"xdg-open", target}, nil
@@ -109,43 +114,38 @@ func (a *Apps) terminalCommand(argv []string, ov Overrides) ([]string, error) {
 	return nil, axerr.New(axerr.NotFound, "no terminal is installed")
 }
 
-// typeOf is what a URL or path is: its MIME type, and the role that type
-// is the main one of ("" for none).
-func (a *Apps) typeOf(target string) (mime, role string) {
+// typeOf is the MIME type of a URL (its scheme's handler type) or a path
+// (a folder's, else the type its name says), "" for none.
+func (a *Apps) typeOf(target string) string {
 	if m := schemePattern.FindStringSubmatch(target); m != nil && !strings.HasPrefix(target, "/") {
 		scheme := strings.ToLower(m[1])
 		if scheme != "file" {
-			mime = "x-scheme-handler/" + scheme
-			switch scheme {
-			case "http", "https":
-				return mime, "browser"
-			case "mailto":
-				return mime, "mail"
-			}
-			return mime, ""
+			return "x-scheme-handler/" + scheme
 		}
 		target = strings.TrimPrefix(strings.TrimPrefix(target, "file://"), "file:")
 	}
-	st, err := os.Stat(target)
-	if err == nil && st.IsDir() {
-		return "inode/directory", "fileManager"
+	if st, err := os.Stat(target); err == nil && st.IsDir() {
+		return "inode/directory"
 	}
-	mime = a.mimeOfName(filepath.Base(target))
-	for _, r := range Roles {
-		if len(r.Types) > 0 && contains(r.Types, mime) {
-			return mime, r.ID
-		}
-	}
-	return mime, ""
+	return a.mimeDB().TypeOfName(filepath.Base(target))
 }
 
-// mimeOfName is the type a file's name says it is (Globs.TypeOfName,
-// the globs read when a file's type is first asked).
-func (a *Apps) mimeOfName(name string) string {
+// roleOfType is the role a type is one of, ok false for none.
+func roleOfType(mime string) (Role, bool) {
+	for _, r := range Roles {
+		if contains(r.Types, mime) {
+			return r, true
+		}
+	}
+	return Role{}, false
+}
+
+// mimeDB is shared-mime-info's database, read when first asked.
+func (a *Apps) mimeDB() *Globs {
 	if a.globs == nil {
 		a.globs = LoadGlobs(append([]string{a.o.DataHome}, a.o.DataDirs...))
 	}
-	return a.globs.TypeOfName(name)
+	return a.globs
 }
 
 // OverridesFrom reads the config's Apps.commands, a command per role

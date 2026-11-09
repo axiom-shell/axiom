@@ -100,7 +100,8 @@ type Apps struct {
 	entries map[string]Entry
 	lists   []appsList // mimeapps.list files, most important first
 	legacy  []appsList // defaults.list files, read last
-	// shared-mime-info's globs, read when a file's type is first asked
+	// shared-mime-info's globs and type hierarchy, read when first asked
+	// (mimeDB)
 	globs *Globs
 }
 
@@ -156,10 +157,32 @@ func (a *Apps) Entry(id string) (Entry, bool) {
 	return e, ok
 }
 
-// Default is the desktop entry that opens a type: the first installed one
-// a Default Applications line lists (not removed by a more important
-// list), else defaults.list's, else the first one associated with it.
+// Default is the desktop entry that opens a type: its own (ownDefault),
+// else the nearest of its aliases' and parent types' (Globs.Lineage: a
+// script with no app of its own opens in text/plain's).
 func (a *Apps) Default(mime string) string {
+	for _, t := range a.lineage(mime) {
+		if id := a.ownDefault(t); id != "" {
+			return id
+		}
+	}
+	return ""
+}
+
+// lineage is the types an app for mime is looked up by, nearest first
+// (Globs.Lineage; just mime when it's not a known type).
+func (a *Apps) lineage(mime string) []string {
+	if mime == "" {
+		return nil
+	}
+	return a.mimeDB().Lineage(mime)
+}
+
+// ownDefault is the desktop entry that opens a type itself: the first
+// installed one a Default Applications line lists (not removed by a more
+// important list), else defaults.list's, else the first one associated
+// with it.
+func (a *Apps) ownDefault(mime string) string {
 	removed := map[string]bool{}
 	for _, l := range a.lists {
 		for _, id := range l[groupDefault][mime] {
