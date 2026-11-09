@@ -13,7 +13,9 @@ import qs.components.bar.widgets.base
 // Japanese uses 午前/午後 and 時分秒 / 年月日); a custom `timeFormat` /
 // `dateFormat` (Qt format strings) overrides that. On a vertical bar each
 // is stacked into short lines. A `timezone` shows another zone's time
-// (TimeZoneManager), the system's until its offset is read.
+// (TimeZoneManager), the system's until its offset is read. A head
+// (`lead`: an icon, or the date moved before the time) is its icon part on
+// a split bar (SplitLead).
 BarWidget {
   id: root
 
@@ -27,8 +29,51 @@ BarWidget {
   hasBackground: true
   accentField: "backgroundColor"
 
-  implicitWidth: isVertical ? root.barConfig.thickness : (layoutLoader.item ? layoutLoader.item.implicitWidth + root.barConfig.innerPadding * 2 : 0)
-  implicitHeight: isVertical ? (layoutLoader.item ? layoutLoader.item.implicitHeight + root.barConfig.innerPadding * 2 : 0) : root.barConfig.thickness
+  // The date as the head (only while it shows), else after the time
+  readonly property bool dateLeads: properties.lead === "date" && showDate
+  readonly property bool dateAfter: showDate && !dateLeads
+  readonly property real _contentLength: layoutLoader.item ? (isVertical ? layoutLoader.item.implicitHeight : layoutLoader.item.implicitWidth) : 0
+  // Where the head and the clock after it start, centred in the widget
+  readonly property real _start: Math.round(((isVertical ? height : width) - lead.length - _contentLength) / 2)
+
+  implicitWidth: isVertical ? root.barConfig.thickness : (layoutLoader.item ? lead.length + _contentLength + root.barConfig.innerPadding * 2 : 0)
+  implicitHeight: isVertical ? (layoutLoader.item ? lead.length + _contentLength + root.barConfig.innerPadding * 2 : 0) : root.barConfig.thickness
+
+  splits: lead.splits
+  splitAt: lead.splitAt
+  splitPart: lead.splitPart
+
+  SplitLead {
+    id: lead
+    barConfig: root.barConfig
+    start: root._start
+    icon: root.properties.lead === "icon" ? root.properties.leadIcon : ""
+    iconColor: root.colors.icon
+    ownHead: root.dateLeads ? dateHead : null
+  }
+
+  // The date as the head: a line, or its stacked lines on a vertical
+  // bar
+  Loader {
+    id: dateHead
+    active: root.dateLeads
+    sourceComponent: root.isVertical ? dateLinesHead : dateLineHead
+
+    Component {
+      id: dateLineHead
+      ClockText {
+        text: root.dateText
+        color: root.colors.icon
+      }
+    }
+    Component {
+      id: dateLinesHead
+      LineStack {
+        lines: root.dateLines
+        color: root.colors.icon
+      }
+    }
+  }
 
   SystemClock {
     id: clock
@@ -123,6 +168,7 @@ BarWidget {
   component LineStack: Column {
     id: stack
     required property var lines
+    property color color: root.foregroundColor
     spacing: root.japanese ? 2 : 0
 
     // Modelled by count, not by the line objects: those are rebuilt on
@@ -133,6 +179,7 @@ BarWidget {
       delegate: ClockText {
         required property int index
         readonly property var line: stack.lines[index] ?? root._line("")
+        color: stack.color
         x: Math.round((stack.width - width) / 2)
         horizontalAlignment: Text.AlignHCenter
         lineHeight: 0.9
@@ -148,7 +195,8 @@ BarWidget {
 
   Loader {
     id: layoutLoader
-    anchors.centerIn: parent
+    x: root.isVertical ? Math.round((root.width - width) / 2) : root._start + lead.length
+    y: root.isVertical ? root._start + lead.length : Math.round((root.height - height) / 2)
     sourceComponent: root.isVertical ? verticalComponent : horizontalComponent
 
     Component {
@@ -158,7 +206,7 @@ BarWidget {
 
         ClockText {
           text: root.dateText
-          visible: root.showDate
+          visible: root.dateAfter
         }
 
         Rectangle {
@@ -166,7 +214,7 @@ BarWidget {
           height: root.barConfig.fontSize
           color: root.foregroundColor
           opacity: 0.5
-          visible: root.showDate
+          visible: root.dateAfter
           anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -189,7 +237,7 @@ BarWidget {
 
         LineStack {
           lines: root.dateLines
-          visible: root.showDate
+          visible: root.dateAfter
           anchors.horizontalCenter: parent.horizontalCenter
         }
       }

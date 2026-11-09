@@ -38,7 +38,8 @@ Item {
   property var panel
   property var screen
 
-  // The widget's config ({ type, properties, layout })
+  // The widget's config ({ type, properties, layout }; `box`: the one item
+  // it draws, of a widget drawn one box per item: BarBoxes)
   required property var widget
   readonly property var properties: root.widget.properties ?? {}
   readonly property var layoutOverrides: root.widget.layout ?? {}
@@ -235,7 +236,8 @@ Item {
       "panel": root.panel,
       "screen": root.screen,
       "properties": root.widget.properties ?? {},
-      "autoColors": root.widget.autoColors ?? {}
+      "autoColors": root.widget.autoColors ?? {},
+      "box": root.widget.box ?? ""
     });
   }
   onWidgetChanged: {
@@ -244,6 +246,7 @@ Item {
     else if (root._item) {
       root._item.properties = root.widget.properties ?? {};
       root._item.autoColors = root.widget.autoColors ?? {};
+      root._item.box = root.widget.box ?? "";
     }
   }
 

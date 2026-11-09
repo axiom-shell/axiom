@@ -8,6 +8,10 @@ appearance:
     enum: [label, icon, ring, fill, pill, segments, stacked]
     description: The fullest account's percent, or the first's; stacked puts it over the limit's name.
 colors: standard
+boxes:
+  variant: each
+  boxes:
+    x-boxItems: {source: claudeAccounts}
 settings:
   metric:
     type: string
@@ -24,6 +28,7 @@ settings:
     enum: [max, all, first]
     x-enumLabels: {max: Fullest, all: All, first: First}
     description: The popout lists every account.
+    x-showIf: {boxes: one}
   icon:
     type: string
     x-control: icon

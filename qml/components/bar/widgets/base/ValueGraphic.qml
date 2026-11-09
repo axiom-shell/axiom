@@ -48,7 +48,9 @@ Item {
   // Across a bar, where the icon beside it has its middle (IconTextWidget's
   // iconMiddle), in this item's coordinates; below 0, its own middle
   property real middle: -1
-  readonly property color trackColor: Qt.alpha(root.textColor, 0.2)
+  // The unlit part, its graphic's color faded: on a split bar the graphic
+  // sits in the icon part, which the text color isn't picked for
+  readonly property color trackColor: Qt.alpha(root.color, 0.2)
 
   // Whether this style draws anything here
   readonly property bool drawn: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)

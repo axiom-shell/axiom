@@ -197,6 +197,27 @@ settings:
     default: true
     description: A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.
     x-showIf: {$bar.boxed: true}
+  lead:
+    type: string
+    title: Head
+    enum: [none, icon, active]
+    x-enumLabels: {none: None, icon: Icon, active: Active workspace}
+    default: none
+    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part.
+    x-showIf:
+      anyOf:
+        - {$bar.boxed: false}
+        - {showBackground: true}
+  leadIcon:
+    type: string
+    x-control: icon
+    title: Head icon
+    default: grid_view
+    x-showIf:
+      lead: icon
+      anyOf:
+        - {$bar.boxed: false}
+        - {showBackground: true}
   backgroundColor:
     type: string
     title: Background color

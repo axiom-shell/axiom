@@ -11,7 +11,9 @@ import qs.components.bar.widgets.base
 // or the symbols this widget picks), with the portfolio first when asked.
 // Label and stacked show one symbol at a time, cycling (or, label, all side
 // by side), ticker scrolls them all, sparkline draws the shown one's day.
-// The change is coloured by its trend. Hovering opens the watchlist.
+// The change is coloured by its trend. Hovering opens the watchlist. Drawn
+// one box per symbol (Boxes: One per item), each box is this widget
+// showing its one symbol (or the portfolio): `box`, its id.
 ValueStyleWidget {
   id: root
 
@@ -20,14 +22,9 @@ ValueStyleWidget {
 
   // What it shows, from config only: { item } per symbol, a { portfolio }
   // first when asked
-  readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.properties.symbols)
-  readonly property var entries: (root.properties.showPortfolio && MarketsConfig.symbols.some(item => item.quantity > 0) ? [
-      {
-        "portfolio": true
-      }
-    ] : []).concat(root.items.map(item => ({
-        "item": item
-      })))
+  readonly property var _all: MarketMath.entries(MarketsConfig.symbols, root.properties.symbols, root.properties.showPortfolio)
+  // Its one entry in a box of its own
+  readonly property var entries: root.box === "" ? root._all : root._all.filter(entry => root.box === "portfolio" ? entry.portfolio === true : entry.item?.id === root.box)
   readonly property bool cycles: root.properties.rotate && root.style !== "ticker" && root.entries.length > 1
   property int _index: 0
   readonly property var shown: root.entries.length > 0 ? root.entries[root._index % root.entries.length] : null
