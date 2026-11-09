@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 import qs.services.core
 import qs.services.system
 import qs.services.ui
@@ -24,9 +25,18 @@ ValueStyleWidget {
   readonly property bool muted: root.node?.audio?.muted ?? false
   readonly property real maxVolume: properties.maxVolume / 100
 
-  text: `${Math.round(root.level * 100)}%`
-  minimumText: "00%"
-  labelShown: properties.showPercentage
+  readonly property string percentText: `${Math.round(root.level * 100)}%`
+  // The device's name, cut short: a long one would widen the bar
+  readonly property string deviceText: properties.showDevice ? Utils.truncate(AudioManager.deviceLabel(root.node).title, 24, "…") : ""
+  readonly property bool _both: properties.showPercentage && root.deviceText !== ""
+
+  text: root._both ? I18n.tr("{0} · {1}%", root.deviceText, Math.round(root.level * 100)) : root.deviceText || root.percentText
+  // The label's room never changes with the level
+  minimumText: root._both ? I18n.tr("{0} · {1}%", root.deviceText, "00") : root.deviceText !== "" ? "" : "00%"
+  labelShown: properties.showPercentage || root.deviceText !== ""
+  // Stacked: the device over its level
+  styleText: root.deviceText || root.percentText
+  subtext: root._both ? root.percentText : ""
   ratio: root.node ? Math.min(1, root.level) : -1
 
   clickable: true

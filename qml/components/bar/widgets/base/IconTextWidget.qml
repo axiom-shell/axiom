@@ -19,6 +19,9 @@ BaseWidget {
   // one, side by side on a horizontal one (not joined by spaces: the icon
   // font's space is a whole icon wide)
   property string icon: ""
+  // An image in the icon's place instead (an app's icon: a path or URL),
+  // a square the icon's size; empty for the glyphs
+  property string iconSource: ""
   property string text: ""
   // Text.PlainText for text from outside (an event's title), which
   // mustn't render as styled text or load images
@@ -47,8 +50,8 @@ BaseWidget {
   property bool uprightLabel: false
   readonly property bool _turned: isVertical && !uprightLabel
 
-  readonly property bool _hasIcon: !hidden && showIcon && icon !== ""
-  readonly property var _iconLines: icon.split("\n")
+  readonly property bool _hasIcon: !hidden && showIcon && (iconSource !== "" || icon !== "")
+  readonly property var _iconLines: iconSource !== "" ? [] : icon.split("\n")
   readonly property string displayText: !hidden && showText ? (text || "—") : ""
   readonly property bool _hasText: displayText !== ""
   readonly property real _gap: _hasIcon && _hasText ? spacing : 0
@@ -131,7 +134,7 @@ BaseWidget {
     // widest line's width
     Grid {
       id: iconLabel
-      columns: root.isVertical ? 1 : root._iconLines.length
+      columns: root.isVertical ? 1 : Math.max(1, root._iconLines.length)
       columnSpacing: root.iconSpacing
       horizontalItemAlignment: Grid.AlignHCenter
       verticalItemAlignment: Grid.AlignVCenter
@@ -152,6 +155,15 @@ BaseWidget {
 
           ColorGlide on color {}
         }
+      }
+
+      Image {
+        visible: root.iconSource !== ""
+        width: visible ? Math.round(root.fontSize * root.iconScale) : 0
+        height: width
+        sourceSize: Qt.size(64, 64)
+        source: root.iconSource
+        asynchronous: true
       }
     }
 

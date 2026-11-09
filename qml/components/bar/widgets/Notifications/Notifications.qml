@@ -9,14 +9,20 @@ import qs.components.reusable
 import qs.components.hosts.popout
 import qs.components.bar.widgets.base
 
-// The notification bell: a badge with the count, the do-not-disturb icon
+// The notification bell: a badge with the count (or the count or the
+// newest alert's app as its label), the do-not-disturb icon
 // while it's on. Click toggles do-not-disturb, middle click clears every
 // notification; hovering opens the notification list.
 BarIconWidget {
   id: root
 
   icon: NotificationManager.dnd ? "notifications_off" : "notifications"
-  showText: false
+  readonly property string labelKind: properties.label
+  text: labelKind === "count" ? (NotificationManager.count > 0 ? NotificationManager.countLabel : "") : labelKind === "lastApp" ? NotificationManager.alerts[0]?.appName ?? "" : ""
+  // With nothing to say (no alerts) it shows the bell alone
+  showText: labelKind !== "none" && text !== ""
+  minimumText: labelKind === "count" ? "00" : ""
+  textFormat: Text.PlainText
   iconColor: NotificationManager.dnd ? Theme.resolveColor(properties.dndColor) : colors.icon
 
   // News: the unread count rose, with do-not-disturb off
@@ -40,7 +46,7 @@ BarIconWidget {
   // as the widget clips to its box (BaseWidget)
   CountBadge {
     parent: root.parent
-    shown: root.properties.showCount && NotificationManager.count > 0
+    shown: root.properties.showCount && root.labelKind !== "count" && NotificationManager.count > 0
     x: Math.round((root.width + root.iconLength) / 2 - width / 2)
     y: 1
     color: Theme.resolveColor(root.properties.badgeColor)
