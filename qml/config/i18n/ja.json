@@ -4263,9 +4263,18 @@
     "Some of these follow the shared style.": "",
     "Make all this bar's own": "",
     "{0} network folders don't answer": "",
-    "Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens beside an edge menu from its Submenu module.": "",
     "Opens beside a menu placed on an edge, from its Submenu module": "",
     "Add a Submenu module opening it to an enabled menu placed on an edge to show it.": "",
-    "Nothing yet: add a Submenu module to a menu placed on an edge and pick this one.": ""
+    "Nothing yet: add a Submenu module to a menu placed on an edge and pick this one.": "",
+    "Its centre, from the screen's top edge.": "",
+    "A point": "",
+    "Where a bind or a script opens it. Opened by a bar widget, it opens at that widget.": "",
+    "Down": "",
+    "Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens where it's asked for, at the bar widget that opens it, or beside a menu from its Submenu module.": "",
+    "Slide comes in from the bar widget that opened it, or from the nearest screen edge.": "",
+    "Across": "",
+    "Your compositor can't say where the cursor is.": "",
+    "Opens at": "",
+    "Its centre, from the screen's left edge.": ""
   }
 }

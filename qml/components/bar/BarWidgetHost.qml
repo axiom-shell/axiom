@@ -306,6 +306,7 @@ Item {
   PopoutAnchor {
     hitArea: root._hitArea
     menu: EdgeMenusConfig.popoutMenuOf(root.properties)
+    openDelay: EdgeMenusConfig.popoutDelayOf(menu)
     active: menu !== "" && !root.preview
   }
 

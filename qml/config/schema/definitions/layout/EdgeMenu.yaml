@@ -12,7 +12,6 @@ properties:
     x-group: General
     title: Monitor
     description: Empty uses the primary monitor.
-    x-showIf: {placement: {not: free}}
     x-properties:
       mode:
         x-scope: look
@@ -33,6 +32,7 @@ properties:
         title: Open on hover
         default: false
         description: Open when the pointer rests on the screen edge.
+        x-showIf: {../placement: {not: free}}
       delay:
         x-group: Opening
         type: integer
@@ -41,8 +41,10 @@ properties:
         minimum: 0
         maximum: 2000
         x-unit: ms
-        x-showIf: {onHover: true}
-    x-showIf: {placement: {not: free}}
+        x-showIf:
+          anyOf:
+            - {onHover: true, ../placement: {not: free}}
+            - {../placement: free}
   edge:
     x-group: Placement
     type: string
@@ -57,7 +59,55 @@ properties:
     default: edge
     enum: [edge, strip, free]
     x-enumLabels: {edge: Edge, strip: Strip, free: Free}
-    description: Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens beside an edge menu from its Submenu module.
+    description: Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens where it's asked for, at the bar widget that opens it, or beside a menu from its Submenu module.
+  freeAnchor:
+    type: object
+    title: Opens at
+    additionalProperties: false
+    x-showIf: {placement: free}
+    properties:
+      at:
+        x-group: Placement
+        type: string
+        title: Opens at
+        default: centre
+        enum: [centre, cursor, point]
+        x-control: tiles
+        x-enumLabels: {centre: Centre, cursor: Cursor, point: A point}
+        x-enumShowIf: {cursor: {/$supports.cursorPos: true}}
+        x-tileHint: {cursor: Your compositor can't say where the cursor is.}
+        description: Where a bind or a script opens it. Opened by a bar widget, it opens at that widget.
+      x:
+        x-group: Placement
+        type: integer
+        title: Across
+        default: 50
+        minimum: 0
+        maximum: 100
+        x-unit: '%'
+        description: Its centre, from the screen's left edge.
+        x-showIf: {at: point}
+      'y':
+        x-group: Placement
+        type: integer
+        title: Down
+        default: 50
+        minimum: 0
+        maximum: 100
+        x-unit: '%'
+        description: Its centre, from the screen's top edge.
+        x-showIf: {at: point}
+        x-beside: true
+  freeAnimation:
+    x-group: Placement
+    type: string
+    title: Animation
+    default: fade
+    enum: [fade, scale, slide]
+    x-control: toggle
+    x-enumLabels: {fade: Fade, scale: Scale, slide: Slide}
+    description: Slide comes in from the bar widget that opened it, or from the nearest screen edge.
+    x-showIf: {placement: free}
   offset:
     x-settings: false
     type: integer
@@ -145,21 +195,18 @@ properties:
     title: Pin button
     default: false
     description: A pinned menu stays open until unpinned.
-    x-showIf: {placement: {not: free}}
   backgroundColor:
     x-group: Style
     type: string
     title: Background
     x-options: colors
     default: base00
-    x-showIf: {placement: {not: free}}
   borderColor:
     x-group: Style
     type: string
     title: Border
     x-options: colors
     default: base05
-    x-showIf: {placement: {not: free}}
   close:
     type: object
     title: Closing
@@ -171,7 +218,6 @@ properties:
         title: Close when the pointer leaves
         default: true
         description: A pinned menu stays open.
-        x-showIf: {../placement: {not: free}}
       delay:
         x-group: Closing
         type: integer
@@ -180,10 +226,10 @@ properties:
         minimum: 0
         maximum: 5000
         x-unit: ms
-        x-showIf: {../placement: {not: free}, onLeave: true}
+        x-showIf: {onLeave: true}
       onOutsideClick:
         x-group: Closing
         type: boolean
         title: Close on outside click
         default: false
-        x-showIf: {../placement: edge}
+        x-showIf: {../placement: [edge, free]}

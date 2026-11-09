@@ -18,8 +18,10 @@ QtObject {
   // A menu's own fields in groups (`x-group`), for the edge menu editor
   readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.EdgeMenu, ["layout.modules"])
 
-  // A menu with no edge of its own (`placement` free): it opens only
-  // beside another, from a Submenu module there (content/Submenu/MenuSubmenu)
+  // A menu with no edge of its own (`placement` free): it opens in a window
+  // of its own (surfaces/edgemenu/FreeMenu) at the bar widget that opens
+  // it as its popout or at its `freeAnchor`, or beside another menu from
+  // a Submenu module there (content/Submenu/MenuSubmenu)
   function isFree(menu) {
     return menu?.placement === "free";
   }
@@ -32,9 +34,18 @@ QtObject {
   // `popout.enabled` on), else "": it opens its own popout, if any. A menu
   // that's gone or disabled leaves it its own. Widgets without the fields
   // (Separator, the tray) have none; a Button has no popout of its own.
+  // A free menu opens at the widget (FreeMenuPlace)
   function popoutMenuOf(properties) {
     const id = properties?.popout?.enabled ? (properties.popout.menu ?? "") : "";
-    return id !== "" && root.enabledMenus.some(menu => menu.id === id && !root.isFree(menu)) ? id : "";
+    return id !== "" && root.enabledMenus.some(menu => menu.id === id) ? id : "";
+  }
+
+  // How long a bar widget's pointer rests before it opens menu `id` as its
+  // popout: a free menu's own `open.delay` (it has no edge to hover), else
+  // the popouts' (Popouts.timing.openDelay)
+  function popoutDelayOf(id) {
+    const menu = root.menuById(id);
+    return root.isFree(menu) ? menu.open.delay : PopoutsConfig.openDelay;
   }
 
   // The ids of the menus a bar widget entry opens, as configured (gone or
