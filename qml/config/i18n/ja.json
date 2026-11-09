@@ -4205,6 +4205,8 @@
     "Count": "",
     "Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.": "",
     "An icon (a Material Symbols name or a pasted glyph), text drawn as written, or both: the icon, then the text.": "",
-    "Your own label for a workspace, by the number its cell shows: an icon, text or both. It wins over app icons and names.": ""
+    "Your own label for a workspace, by the number its cell shows: an icon, text or both. It wins over app icons and names.": "",
+    "Merged outline": "",
+    "The line round each merged run. Widget colors show on their icons instead.": ""
   }
 }

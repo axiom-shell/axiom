@@ -62,7 +62,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - **`alt`:** a second state, as unlike its accent as possible.
   - **`warning`/`critical`:** the theme's `warning`/`error`.
   - **`off` and `neutral`:** the subtlest of base01–04 that still stands out. They are for an off state, or for a box whose content has its own colors (the tray's and Workspaces').
-- Each color must stand out (WCAG contrast) from what it's seen on: the bar, or a filled or split merged run's `groupColor` (`BarWidgetStyle.autoContrast`).
+- Each color must stand out (WCAG contrast) from what it's seen on: the bar, or a filled or split merged run's `groupColor` (`BarWidgetStyle.autoContrast`). A tinted or outlined run's widgets are seen on the bar (through the tint, or inside the run's line).
   - A fill only has to show (contrast 1.3).
   - Text, strokes and icons have to read (contrast 3). Split's color is its icon part's fill, and also its label's text unless the label has a color of its own or sits on a merged run.
 - Text colors are not Auto. Workspaces' cells are not Auto either, except the active one.
@@ -83,6 +83,7 @@ How the four widget-style features meet (each decided in `BarWidgetStyle` or `Ba
 - **Split + Fill on hover:** not offered (split is already filled where it shows its color).
 - **Tab + outline strokes:** every stroke is open along the edge (dashed, dotted, double, ends only: [Shapes and runs](widget-shapes-runs.md#outline-strokes)). **Tab + Fill on hover:** the hovered tab fills in its own shape, out to the edge. **Tab + gradient:** each tab its slice, fillets included. Tabs never chain as a powerline.
 - **Gradient + outline strokes:** the stroke takes the slice in every stroke. **Gradient + Fill on hover:** the hovered widget fills with its slice.
+- **Merged + outline:** the run is outlined in `groupStrokeColor` ("Merged outline", default accent; shown for outline + merged, and `groupColor` hidden there, as an outline run has no background), or with the gradient on, one strip of it. Its widgets' colors move to their icons, as on any merged run, and Workspaces' cells draw no borders of their own (see Workspaces cells).
 - **Merged + Ends only:** a mark at the run's two ends only.
 
 ### Which color fields show

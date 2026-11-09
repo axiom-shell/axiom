@@ -201,8 +201,16 @@ properties:
     title: Merged background
     x-options: colors
     default: backgroundAlt
-    x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetGrouping: merged, gradient: false}
+    x-showIf: {widgetStyle: [filled, tinted, split], widgetGrouping: merged, gradient: false}
     description: Widget colors show on their icons instead.
+  groupStrokeColor:
+    x-group: Bar widgets
+    type: string
+    title: Merged outline
+    x-options: colors
+    default: accent
+    x-showIf: {widgetStyle: outline, widgetGrouping: merged, gradient: false}
+    description: The line round each merged run. Widget colors show on their icons instead.
   widgetTextColor:
     x-group: Bar widgets
     type: string

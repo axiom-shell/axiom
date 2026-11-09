@@ -49,7 +49,7 @@ How widget backgrounds are drawn: their shapes (split's two parts, tabs, outline
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
-- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`), or with a bar gradient one strip of it from the run's start to its end ([Widget style › Bar gradient](widget-style.md#bar-gradient)). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`), but for split's icon parts (see Split), a tab run (one tab, see Tabs) and a widget filled on hover (its own part). A merged outline's Ends only marks are at the run's two ends.
+- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`; an outline run, whose background is its line, in `groupStrokeColor`), or with a bar gradient one strip of it from the run's start to its end ([Widget style › Bar gradient](widget-style.md#bar-gradient)). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`), but for split's icon parts (see Split), a tab run (one tab, see Tabs) and a widget filled on hover (its own part). A merged outline's Ends only marks are at the run's two ends.
   - Widget insets keep their cap room, joined or not.
 - A spacer given room splits runs, as it splits groups; a collapsed one is passed over.
 

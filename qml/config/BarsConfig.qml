@@ -146,6 +146,8 @@ QtObject {
       "tabCorners": look.tabCorners,
       "widgetGrouping": grouping,
       "groupColor": look.groupColor,
+      // The line round a merged outline run (groupColors)
+      "groupStrokeColor": look.groupStrokeColor,
       // Split's icon part (joined, badge), its label's background (tint,
       // color, none), that color (a name) and the cut between them (match,
       // straight, slant, arrow, curve)
@@ -323,9 +325,10 @@ QtObject {
 
   // What a merged run of widgets draws its shared background in: with a
   // gradient on the bar, one strip of it (`spot`: the run's middle along
-  // the bar, 0-1), else groupColor
+  // the bar, 0-1), else groupColor, an outline run's line
+  // groupStrokeColor (it has no background of its own)
   function groupColors(barConfig, spot = -1) {
-    const group = Theme.resolveColor(barConfig.groupColor);
+    const group = Theme.resolveColor(barConfig.widgetStyle === "outline" ? barConfig.groupStrokeColor : barConfig.groupColor);
     return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false, {
       "spot": spot,
       "auto": true,

@@ -604,6 +604,11 @@ TestCase {
       "onRun": false,
       "minContrast": 3
     });
+    // An outline run has no background: its widgets sit on the bar
+    compare(BarWidgetStyle.autoContrast("outline", "merged", "joined", "tint"), {
+      "onRun": false,
+      "minContrast": 3
+    });
     // Split's color is the label's text too, unless the label has its own
     compare(BarWidgetStyle.autoContrast("split", "separate", "joined", "tint").minContrast, 3);
     compare(BarWidgetStyle.autoContrast("split", "separate", "badge", "color").minContrast, 3);
