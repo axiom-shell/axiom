@@ -10,7 +10,8 @@ import QtQuick
 // Caps: flat, round (the widget radius), capsule (half the thickness),
 // arrowOut/arrowIn (a point or a notch), slant (a parallelogram's side),
 // roundOut/roundIn (a half circle bulging out or in), curve (a shallow
-// arc bulging out: split's divider). Powerline segments
+// arc bulging out: split's divider), tab (a tab's side: see tab and path).
+// Powerline segments
 // overlap: each after the first reaches back under the one before it (or,
 // when fills don't hide what's under them, meets its cap edge to edge).
 QtObject {
@@ -70,6 +71,8 @@ QtObject {
       return ["slant", "slant"];
     case "arrow":
       return ends === "pointed" ? ["arrowOut", "arrowOut"] : ["arrowIn", "arrowOut"];
+    case "tab":
+      return ["tab", "tab"];
     default:
       return ["round", "round"];
     }
@@ -198,13 +201,160 @@ QtObject {
     }
   }
 
+  // The one fillet radius every flared tab on a bar takes (tabCorners
+  // flared; 0 square), on both sides, a run's ends included, so all its
+  // tabs look alike: the inner corners' radius, but no more than half the
+  // configured gap between widgets (`spacing`: two neighbours' fillets
+  // then meet in it, never crossing) nor the room at the ends where a
+  // fillet sits (`endRoom`, BarEnds.tabEndRoom). From config alone, never
+  // the gaps as drawn: a gap a spacer widens changes nothing.
+  function tabFillet(radius, thickness, corners, spacing, endRoom) {
+    if (corners !== "flared")
+      return 0;
+    return Math.max(0, Math.min(radius, thickness / 2, spacing / 2, endRoom));
+  }
+
+  // A tab (widgetShape tab) reaches from the widget out to the outer edge
+  // of what it sits on, where its sides meet that edge squarely or with a
+  // concave fillet of `fillet` (tabFillet); its inner corners take the
+  // widget radius, at most half the bar's `thickness`. `limits` [start,
+  // end] (tabLimits) are what bounds each end along the bar, or null: an
+  // end nearer a bound than its corner's radius takes that corner's curve
+  // on its outer corner instead of a fillet. `outerStart`: the outer edge
+  // is at the start of `across` (a top or left bar).
+  // -> { outerStart, radius, start: { flare, corner }, end } (corner:
+  // { radius, gap } or null), path's `tab`
+  function tab(radius, thickness, fillet, outerStart, limits) {
+    const r = Math.max(0, Math.min(radius, thickness / 2));
+    const end = limit => {
+      const gap = Math.max(0, limit?.gap ?? 0);
+      if (limit && gap < limit.radius)
+        return {
+          "flare": 0,
+          "corner": {
+            "radius": limit.radius,
+            "gap": gap
+          }
+        };
+      return {
+        "flare": fillet,
+        "corner": null
+      };
+    };
+    return {
+      "outerStart": outerStart,
+      "radius": r,
+      "start": end(limits?.[0] ?? null),
+      "end": end(limits?.[1] ?? null)
+    };
+  }
+
+  // What bounds a tab running `start` to `end` along the bar at each end:
+  // the inner side of the surface it hangs from, from `bounds` [{ start,
+  // end, startRadius, endRadius }] (the curves of its corners at each of
+  // its ends: an island's, the rounded border's), as tab's `limits`:
+  // [{ gap, radius }, …], or null where none holds it
+  function tabLimits(start, end, bounds) {
+    const middle = (start + end) / 2;
+    const bound = (bounds ?? []).find(b => b.start <= middle && middle <= b.end) ?? null;
+    if (!bound)
+      return [null, null];
+    return [
+      {
+        "gap": start - bound.start,
+        "radius": bound.startRadius
+      },
+      {
+        "gap": bound.end - end,
+        "radius": bound.endRadius
+      }
+    ];
+  }
+
+  // A tab's outline (path with `tab`): along its start side from the
+  // outer edge in, along its inner side, back out along its end side,
+  // then closed along the outer edge, or left open there (`open`, an
+  // outline: a tab has no line along the edge it hangs from). Drawn as if
+  // the outer edge were at the top, then flipped. Its outer side keeps no
+  // inset, so a stroke runs right to that edge.
+  function _tabPath(length, across, startCap, endCap, vertical, inset, tab, open) {
+    const h = Math.max(0, across - inset);
+    const room = Math.max(0, length - 2 * inset);
+    const r = Math.min(tab.radius, room / 2, h / 2);
+    // Points down one side, from the outer edge in: { x in from that end,
+    // y down from the outer edge, arc into it }
+    const side = (cap, end) => {
+      const p = (x, y, arc) => ({
+            "x": x,
+            "y": y,
+            "arc": arc ?? null
+          });
+      if (cap !== "tab")
+        return [p(0, 0), p(0, h)];
+      const out = [];
+      const corner = end.corner;
+      if (corner) {
+        // The bound's curve: it runs from the outer edge, its radius in
+        // from the bound, round to where it crosses this side
+        const along = Math.min(corner.radius - corner.gap, room / 2);
+        const off = corner.radius - corner.gap;
+        const down = Math.min(h - r, corner.radius - Math.sqrt(Math.max(0, corner.radius * corner.radius - off * off)));
+        out.push(p(along, 0), p(0, down, {
+          "r": corner.radius,
+          "convex": true
+        }));
+      } else if (end.flare > 0) {
+        const f = Math.min(end.flare, h - r);
+        out.push(p(-f, 0), p(0, f, {
+          "r": f,
+          "convex": false
+        }));
+      } else {
+        out.push(p(0, 0));
+      }
+      if (r > 0)
+        out.push(p(0, h - r), p(r, h, {
+          "r": r,
+          "convex": true
+        }));
+      else
+        out.push(p(0, h));
+      return out;
+    };
+    const head = side(startCap, tab.start);
+    const tail = side(endCap, tab.end);
+    // Flipped across when the outer edge is at the far side, and swapped
+    // on a vertical bar: each a reflection, which flips the arcs
+    const flip = !tab.outerStart;
+    const toUv = (q, atEnd) => [atEnd ? length - inset - q.x : inset + q.x, flip ? across - q.y : q.y];
+    const pt = uv => vertical ? `${uv[1]} ${uv[0]}` : `${uv[0]} ${uv[1]}`;
+    // Round the start side outer to inner, then the end side inner to
+    // outer: convex corners turn one way, fillets the other
+    const to = (uv, arc) => {
+      if (!arc)
+        return `L ${pt(uv)} `;
+      const sweep = (arc.convex ? 0 : 1) ^ (flip ? 1 : 0) ^ (vertical ? 1 : 0);
+      return `A ${arc.r} ${arc.r} 0 0 ${sweep} ${pt(uv)} `;
+    };
+    let d = `M ${pt(toUv(head[0], false))} `;
+    for (let k = 1; k < head.length; k++)
+      d += to(toUv(head[k], false), head[k].arc);
+    d += to(toUv(tail[tail.length - 1], true));
+    for (let k = tail.length - 2; k >= 0; k--)
+      d += to(toUv(tail[k], true), tail[k + 1].arc);
+    return open ? d.trim() : d + "Z";
+  }
+
   // The outline of a background `length` along the bar and `across` it,
   // as an SVG path in its item's coordinates (on a vertical bar the length
   // runs down). `inset` shrinks it all round, so an outline's stroke stays
   // inside, except at a seam (`seamStart`/`seamEnd`), where it meets a
   // powerline neighbour and both strokes lie on the shared edge; caps keep
   // their depth for the full thickness, so neighbours' edges still meet.
-  function path(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd) {
+  // A tab's (`tab`, from tab; null otherwise) is its own: see _tabPath.
+  function path(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab, open) {
+    if (tab)
+      return root._tabPath(length, across, startCap, endCap, vertical, inset, tab, open ?? false);
     const h = Math.max(0, across - inset * 2);
     const r = Math.min(radius, h / 2);
     const head = root._cap(startCap, true, h, root.depth(startCap, across), r);

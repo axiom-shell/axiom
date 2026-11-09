@@ -222,4 +222,145 @@ TestCase {
     const b = bounds(BarShapes.path(100, 40, 0, "flat", "curve", false, 0));
     compare(b.maxX, 90);
   }
+
+  // Tabs (widgetShape tab): a widget's background out to the edge it
+  // hangs from
+  function square(outerStart) {
+    return BarShapes.tab(6, 26, 0, outerStart, [null, null]);
+  }
+
+  function test_tab_caps_keep_no_room() {
+    const lone = BarShapes.segment("tab", "shaped", "separate", true, 0, 1, 30);
+    compare([lone.startCap, lone.endCap, lone.lead, lone.trail, lone.back], ["tab", "tab", 0, 0, 0]);
+    const middle = BarShapes.segment("tab", "shaped", "merged", true, 1, 3, 30);
+    compare([middle.startCap, middle.endCap, middle.levelStartCap], ["flat", "flat", "tab"]);
+  }
+
+  function test_tab_radius_and_flare() {
+    const t = BarShapes.tab(20, 26, 5, true, [null, null]);
+    compare([t.radius, t.start.flare, t.end.flare], [13, 5, 5]);
+    const s = BarShapes.tab(6, 26, 0, false, [null, null]);
+    compare([s.radius, s.start.flare, s.outerStart], [6, 0, false]);
+  }
+
+  // One fillet for every tab on a bar: the corner radius, within half the
+  // widget gap and the room at the bar's ends; none when square
+  function test_tab_fillet() {
+    compare(BarShapes.tabFillet(6, 26, "flared", 20, 8), 6);
+    compare(BarShapes.tabFillet(6, 26, "flared", 4, 8), 2);
+    compare(BarShapes.tabFillet(20, 26, "flared", 40, Infinity), 13);
+    compare(BarShapes.tabFillet(6, 26, "flared", 20, 5), 5);
+    compare(BarShapes.tabFillet(6, 26, "flared", 0, 8), 0);
+    compare(BarShapes.tabFillet(6, 26, "square", 20, 8), 0);
+  }
+
+  // An end nearer a bound than its curve takes the curve, else the
+  // bar's fillet like every other tab
+  function test_tab_limits() {
+    const near = BarShapes.tab(6, 26, 4, true, [
+      {
+        "gap": 4,
+        "radius": 10
+      },
+      {
+        "gap": 3,
+        "radius": 0
+      }
+    ]);
+    compare(near.start.corner, {
+      "radius": 10,
+      "gap": 4
+    });
+    compare(near.start.flare, 0);
+    compare([near.end.corner, near.end.flare], [null, 4]);
+  }
+
+  function test_tab_limits_find_the_bound_holding_it() {
+    const bounds = [
+      {
+        "start": 0,
+        "end": 100,
+        "startRadius": 8,
+        "endRadius": 8
+      },
+      {
+        "start": 150,
+        "end": 300,
+        "startRadius": 8,
+        "endRadius": 0
+      }
+    ];
+    compare(BarShapes.tabLimits(155, 200, bounds), [
+      {
+        "gap": 5,
+        "radius": 8
+      },
+      {
+        "gap": 100,
+        "radius": 0
+      }
+    ]);
+    compare(BarShapes.tabLimits(110, 140, bounds), [null, null]);
+    compare(BarShapes.tabLimits(10, 20, []), [null, null]);
+  }
+
+  function test_square_tab_reaches_its_outer_edge() {
+    // Outer edge on top: square corners there, rounded below
+    const top = BarShapes.path(100, 30, 0, "tab", "tab", false, 0, false, false, square(true));
+    const pts = points(top);
+    verify(pts.some(p => p[0] === 0 && p[1] === 0) && pts.some(p => p[0] === 100 && p[1] === 0), top);
+    verify(!pts.some(p => p[0] === 0 && p[1] === 30), "inner corners rounded: " + top);
+    verify(top.endsWith("Z"));
+    // On the far side, flipped
+    const bottom = points(BarShapes.path(100, 30, 0, "tab", "tab", false, 0, false, false, square(false)));
+    compare(bottom, pts.map(p => [p[0], 30 - p[1]]));
+  }
+
+  function test_tab_outline_is_open_along_its_outer_edge() {
+    const open = BarShapes.path(100, 30, 0, "tab", "tab", false, 1, false, false, square(true), true);
+    verify(!open.includes("Z"));
+    const pts = points(open);
+    // From the outer edge down, round and back up to it, inset but on
+    // the outer side
+    compare(pts[0], [1, 0]);
+    compare(pts[pts.length - 1], [99, 0]);
+    compare(bounds(open).maxY, 29);
+  }
+
+  function test_flared_tab_curves_out_into_the_edge() {
+    const t = BarShapes.tab(6, 26, 6, true, [null, null]);
+    const path = BarShapes.path(100, 30, 0, "tab", "tab", false, 0, false, false, t);
+    const b = bounds(path);
+    compare([b.minX, b.maxX, b.minY, b.maxY], [-6, 106, 0, 30]);
+    // Concave: swept the other way from the inner corners
+    verify(path.includes("A 6 6 0 0 1 0 6") && path.includes("A 6 6 0 0 0 6 30"), path);
+  }
+
+  function test_tab_vertical_swaps_the_axes_and_flips_arcs() {
+    const t = BarShapes.tab(6, 26, 6, true, [null, null]);
+    const across = BarShapes.path(100, 30, 0, "tab", "tab", false, 0, false, false, t);
+    const down = BarShapes.path(100, 30, 0, "tab", "tab", true, 0, false, false, t);
+    compare(points(down), points(across).map(p => [p[1], p[0]]));
+    verify(down.includes("A 6 6 0 0 0 6 0") && down.includes("A 6 6 0 0 1 30 6"), down);
+  }
+
+  // At an island's end the tab's outer corner follows the island's curve:
+  // from the outer edge at radius − gap in, round to its side
+  function test_tab_takes_a_bounds_corner_curve() {
+    const t = BarShapes.tab(6, 26, "square", true, [
+      {
+        "gap": 4,
+        "radius": 10
+      },
+      null]);
+    const path = BarShapes.path(100, 30, 0, "tab", "tab", false, 0, false, false, t);
+    compare(points(path)[0], [6, 0]);
+    // 10 − √(10² − 6²) = 2 down the side
+    verify(path.includes("A 10 10 0 0 0 0 2"), path);
+  }
+
+  function test_tab_hits_reach_its_outer_edge() {
+    verify(BarShapes.contains(1, 1, 100, 30, "tab", "tab"));
+    verify(BarShapes.contains(99, 29, 100, 30, "tab", "tab"));
+  }
 }
