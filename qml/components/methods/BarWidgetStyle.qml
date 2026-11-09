@@ -173,15 +173,18 @@ QtObject {
   }
 
   // A cell inside a widget (a workspace) in the same style: { fill, stroke,
-  // indicator, content, showsHover }. `color` is the cell's color for its
-  // state, `own` what reads on it filled, `state` "active" | "occupied" |
+  // indicator, content, showsHover }; a `fill` of "solid" is a filled box
+  // whatever the bar's style, its outline and line (where the bar draws
+  // them) its color too. `color` is the cell's color for its state, `own`
+  // what reads on it filled, `state` "active" | "occupied" | "urgent" |
   // "empty"; `style.hovered` the pointer over it. Where the content sits on
   // the bar rather than on the cell's color, an empty cell's is the bar's
   // text faded (its own color is meant to barely show), and plain text
-  // tells the states apart by fading alone. `showsHover`: hovered, it's
-  // filled (fillsOnHover), so the cell draws no hover box of its own. An
-  // Auto color (`style.auto`) gives way to the bar gradient's where the
-  // cell sits (style.gradient), as a widget's does.
+  // tells the states apart by fading alone, but for an urgent cell, whose
+  // content takes its color. `showsHover`: hovered, it's filled
+  // (fillsOnHover), so the cell draws no hover box of its own. An Auto
+  // color (`style.auto`) gives way to the bar gradient's where the cell
+  // sits (style.gradient), as a widget's does.
   function cell(style, color, own, state) {
     if ((style.gradient ?? null) !== null && style.auto === true) {
       own = root.readableOn(style.gradient, own);
@@ -194,6 +197,8 @@ QtObject {
     const faded = Qt.alpha(text(style.barText), 0.4);
     const onBar = c => state === "empty" ? faded : text(c);
     switch (style.fill) {
+    case "solid":
+      return root._makeCell(color, color, color, text(own));
     case "split":
       // A cell has no label apart: filled
       return root._makeCell(color, none, none, text(own));
@@ -206,7 +211,7 @@ QtObject {
     case "accentText":
       return root._makeCell(none, none, none, onBar(color));
     case "plain":
-      return root._makeCell(none, none, none, state === "active" ? text(style.barText) : state === "occupied" ? Qt.alpha(text(style.barText), 0.7) : faded);
+      return root._makeCell(none, none, none, state === "active" ? text(style.barText) : state === "urgent" ? color : state === "occupied" ? Qt.alpha(text(style.barText), 0.7) : faded);
     default:
       return root._makeCell(color, none, none, text(own));
     }

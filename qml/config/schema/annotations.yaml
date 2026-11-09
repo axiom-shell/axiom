@@ -35,6 +35,7 @@ x-hookup: how the integration hooks into its app (targets, place, text).
 x-hookupNote: a note shown with it.
 x-hosts: '`overlay`, `edgeMenu`, `lockscreen`, `greeter`, `desktop`.'
 x-icon: a Material Symbols name on bar widget, overlay module and view definitions.
+x-iconText: 'on an icon field (`x-control: icon`): `{ mode, text }`, the keys of two siblings it draws in its own row: `mode` a string of `icon`, `text` or `both` that an Icon / Text / Both switch at the row''s right sets, `text` a string typed in a box beside the icon''s (each box shown while the mode shows its part); the siblings'' own rows hide.'
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
 x-keyboard: the module takes typing.

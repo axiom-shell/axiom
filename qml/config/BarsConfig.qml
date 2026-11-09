@@ -265,14 +265,18 @@ QtObject {
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
-  // active/occupied/empty, `cell` what of the cell its look depends on
-  // (_widgetStyle's hovered and spot: where the middle of a cell whose
+  // active/occupied/urgent/empty, `cell` what of the cell its look depends
+  // on (_widgetStyle's hovered and spot: where the middle of a cell whose
   // color is Auto sits along the bar, for the bar's gradient to take its
-  // place)
+  // place; and `solid`: a filled box whatever the bar's style, Workspaces'
+  // `solidBoxes`)
   function cellColors(barConfig, color, own, state, cell) {
-    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false, Object.assign({
+    const style = BarsConfig._widgetStyle(barConfig, false, Object.assign({
       "auto": (cell?.spot ?? -1) >= 0
-    }, cell)), color, own, state);
+    }, cell));
+    if (cell?.solid === true)
+      style.fill = "solid";
+    return BarWidgetStyle.cell(style, color, own, state);
   }
 
   // The bar's gradient's colors, resolved, start to end (null for none)
@@ -281,11 +285,27 @@ QtObject {
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
-  // `colors` ({ activeColor, occupiedColor, emptyColor, textColor })
-  function workspaceCellColors(barConfig, colors, active, occupied, hovered) {
-    return BarsConfig.cellColors(barConfig, active ? colors.activeColor : occupied ? colors.occupiedColor : colors.emptyColor, active || occupied ? colors.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty", {
-      "hovered": hovered === true
-    });
+  // `colors` ({ activeColor, occupiedColor, urgentColor, emptyColor,
+  // textColor, solidBoxes }): urgent beats occupied, active beats both.
+  // `cell`: cellColors' (hovered, spot; solid comes from `colors`)
+  function workspaceCellColors(barConfig, colors, active, occupied, urgent, cell) {
+    const state = active ? "active" : urgent ? "urgent" : occupied ? "occupied" : "empty";
+    const color = {
+      "active": colors.activeColor,
+      "urgent": colors.urgentColor,
+      "occupied": colors.occupiedColor,
+      "empty": colors.emptyColor
+    }[state];
+    return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state, Object.assign({}, cell, {
+      "solid": colors.solidBoxes === true
+    }));
+  }
+
+  // The gap between Workspaces cells on `barConfig`'s bar for their
+  // `spacing` option: none ("tight"), the bar's inner gap ("bar") or twice
+  // it ("wide")
+  function workspaceCellSpacing(barConfig, spacing) {
+    return spacing === "tight" ? 0 : spacing === "wide" ? barConfig.innerGap * 2 : barConfig.innerGap;
   }
 
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its

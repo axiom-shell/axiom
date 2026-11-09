@@ -125,6 +125,23 @@ TestCase {
     same(cell("accentText", "active").fill, "transparent", "no fill");
   }
 
+  function test_solid_cells_are_filled_boxes_whatever_the_style() {
+    const c = cell("solid", "occupied");
+    same(c.fill, accent, "fill");
+    same(c.stroke, accent, "the outline matches the fill");
+    same(c.indicator, accent, "and the line");
+    same(c.content, own, "content reads on the fill");
+    same(cell("solid", "empty").content, own, "an empty one's too: it sits on its fill");
+  }
+
+  function test_urgent_cells_carry_their_color() {
+    same(cell("plain", "urgent").content, accent, "plain: the content takes it, or urgency wouldn't show");
+    same(cell("plain", "urgent", custom).content, accent, "even over the bar's text color");
+    same(cell("filled", "urgent").fill, accent, "filled: the box, as occupied");
+    same(cell("underline", "urgent").indicator, accent, "underline: the line");
+    same(cell("tinted", "urgent").content, accent, "not faded as an empty one");
+  }
+
   function test_empty_cells_on_the_bar_fade_the_bar_text() {
     ["tinted", "outline", "underline", "accentText", "plain"].forEach(fill => {
       same(cell(fill, "empty").content, Qt.alpha(barText, 0.4), fill);
@@ -238,6 +255,18 @@ TestCase {
     verify(!hoveredCell("tinted", "active", true, false).showsHover, "option off");
     verify(!hoveredCell("filled", "active", true).showsHover, "filled");
     verify(!cell("outline", "active").showsHover, "no hover given");
+  }
+
+  // Solid boxes are filled already: hovered, they keep their look and
+  // light in the hover color; an urgent cell fills in its own
+  function test_solid_and_urgent_cells_under_fill_on_hover() {
+    const solid = hoveredCell("solid", "occupied", true);
+    verify(!solid.showsHover, "solid lights itself");
+    same(solid.fill, accent, "solid keeps its fill");
+    same(solid.stroke, accent, "and its outline");
+    const urgent = hoveredCell("outline", "urgent", true);
+    same(urgent.fill, accent, "urgent fills in its color");
+    verify(urgent.showsHover, "urgent shows the hover");
   }
 
   function test_level_color_is_the_icon_faded() {
@@ -355,6 +384,22 @@ TestCase {
     same(BarWidgetStyle.cell(Object.assign({}, style, {
       "auto": false
     }), accent, own, "active").fill, accent, "set color");
+  }
+
+  function test_an_auto_solid_cell_takes_the_gradient() {
+    const c = BarWidgetStyle.cell({
+      "fill": "solid",
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "group": null,
+      "gradient": graded,
+      "auto": true
+    }, accent, "#ffffff", "active");
+    same(c.fill, graded, "fill");
+    same(c.stroke, graded, "outline");
+    same(c.indicator, graded, "line");
+    same(c.content, "#000000", "content reads on it");
   }
 
   // Split under the gradient: its icon part takes its slice (the widget's

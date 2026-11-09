@@ -18,6 +18,8 @@ GridLayout {
   // After the label (FieldHeader.trailing)
   property Component headerExtra: null
   property var pattern: null
+  // Shown in the empty box
+  property string placeholderText: ""
   // Lines of its own (`x-multiline`), e.g. a system prompt: Enter makes a
   // new one. Otherwise the value is one line, wrapped to show it whole
   property bool multiline: false
@@ -146,6 +148,7 @@ GridLayout {
       // Enter is a new line in a multiline field: nothing to submit
       newlineOnEnter: root.multiline
       text: root.currentConfigValue
+      placeholderText: root.placeholderText
 
       onTextEdited: root._type()
       onAccepted: root._commitTyped()

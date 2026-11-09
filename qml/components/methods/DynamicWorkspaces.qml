@@ -17,7 +17,7 @@ QtObject {
   // after the last unless that one is already empty. Special and named
   // workspaces (ids below 1) are left out, and so are empty ones not
   // shown (a `persistent` rule's): the one after the last covers a new one. real: [{ id, name, output,
-  // windowCount, active, focused }]. Returns the same shape.
+  // windowCount, active, focused, urgent }]. Returns the same shape.
   function workspaces(real, bases, size) {
     const result = [];
     for (const output of Object.keys(bases)) {
@@ -37,7 +37,8 @@ QtObject {
           "output": output,
           "windowCount": 0,
           "active": false,
-          "focused": false
+          "focused": false,
+          "urgent": false
         });
     }
     return result;

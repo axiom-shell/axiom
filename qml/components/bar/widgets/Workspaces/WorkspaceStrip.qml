@@ -33,11 +33,12 @@ Item {
   // background's
   readonly property real cell: barConfig.thickness - inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(barConfig, cell, inset)
-  // Along the bar: square, or narrower for dots straight on the bar
-  readonly property real cellLength: barConfig.widgetBoxed || properties.labels !== "dots" || properties.showAppIcons || CompositorManager.dynamicWorkspaces ? cell : Math.round(cell * 0.6)
+  // Along the bar: square, or narrower for dots or nothing straight on the bar
+  readonly property real cellLength: barConfig.widgetBoxed || properties.solidBoxes || properties.labels === "numbers" || properties.showAppIcons ? cell : Math.round(cell * 0.6)
 
   readonly property color activeColor: Theme.resolveColor(properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
+  readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(properties.textColor)
   readonly property color hoverColor: BarsConfig.cellHoverColor(properties)
@@ -90,13 +91,15 @@ Item {
     }
   }
 
+  // `scrollReverse` turns the wheel's direction round, for the strip too
   NotchWheel {
     enabled: root.properties.scrollToSwitch
     onStepped: direction => {
+      const step = root.properties.scrollReverse ? -direction : direction;
       if (root.stripDirection !== "")
-        CompositorManager.stepStrip(direction, root.output);
+        CompositorManager.stepStrip(step, root.output);
       else
-        root.step(direction);
+        root.step(step);
     }
   }
 
@@ -125,11 +128,13 @@ Item {
       cellRadius: root.cellRadius
       activeColor: root.activeColor
       occupiedColor: root.occupiedColor
+      urgentColor: root.urgentColor
       emptyColor: root.emptyColor
       textColor: root.textColor
       hitArea: root.hitArea
       barSpotOf: root.barSpotOf
       hoverColor: root.hoverColor
+      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
     }
 
     ActiveStrip {
@@ -138,6 +143,7 @@ Item {
       workspaceId: root.activeId
       stripDirection: root.stripDirection
       shownCount: root.ids.length
+      windows: root.properties.stripWindows
       cell: root.cell
       cellRadius: root.cellRadius
       activeColor: root.activeColor
@@ -145,6 +151,8 @@ Item {
       textColor: root.textColor
       hoverColor: root.hoverColor
       clickable: root.properties.clickToSwitch
+      cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing)
+      solid: root.properties.solidBoxes
       hitArea: root.hitArea
     }
   }
@@ -161,7 +169,7 @@ Item {
         cellSize: root.cell,
         cellLength: root.cellLength,
         barConfig: root.barConfig,
-        cellSpacing: root.barConfig.innerGap,
+        cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing),
         radius: root.cellRadius,
         properties: root.properties
       })

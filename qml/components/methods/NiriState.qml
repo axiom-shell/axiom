@@ -165,7 +165,8 @@ QtObject {
       "output": ws.output ?? "",
       "windowCount": windowCount ?? 0,
       "active": ws.is_active === true,
-      "focused": ws.is_focused === true
+      "focused": ws.is_focused === true,
+      "urgent": ws.is_urgent === true
     };
   }
 

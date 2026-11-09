@@ -127,7 +127,8 @@ Singleton {
   // Every monitor: [{ name, description, x, y, width, height, scale,
   // focused, activeWorkspaceId, specialWorkspaceId, reserved }]
   readonly property var outputs: root.backend?.outputs ?? []
-  // Every workspace: [{ id, name, output, windowCount, active, focused }]
+  // Every workspace: [{ id, name, output, windowCount, active, focused,
+  // urgent }] (urgent: a window on it asks for attention)
   readonly property var workspaces: root.backend?.workspaces ?? []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
@@ -294,11 +295,14 @@ Singleton {
     }, windows);
   }
 
-  // The largest window on a workspace (its icon stands for the workspace),
-  // or null
-  function biggestWindowForWorkspace(workspaceId) {
+  // A workspace's windows, the biggest (by area) first, ties in the
+  // windows' order
+  function windowsBySize(workspaceId) {
     const area = w => (w?.w ?? 0) * (w?.h ?? 0);
-    return root.windows.filter(w => w.workspaceId === workspaceId).reduce((biggest, w) => area(w) > area(biggest) ? w : biggest, null);
+    return root.windows.filter(w => w.workspaceId === workspaceId).map((w, i) => ({
+          "w": w,
+          "i": i
+        })).sort((a, b) => area(b.w) - area(a.w) || a.i - b.i).map(e => e.w);
   }
 
   // A workspace's windows in strip order (WorkspaceGeometry.stripOrder)

@@ -3,7 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.services.system
+import qs.components.methods
 
 // A bar switcher's row (a column on a vertical bar) of WorkspaceCells for
 // workspaces `ids`: the cells' boxes at rest, the active one's sliding over
@@ -26,6 +26,7 @@ Item {
   required property real cellRadius
   required property color activeColor
   required property color occupiedColor
+  required property color urgentColor
   required property color emptyColor
   required property color textColor
   required property color hoverColor
@@ -38,21 +39,31 @@ Item {
   // the active cell's Auto color gives way to the bar's gradient there.
   // Null to keep it.
   property var barSpotOf: null
+  // Whether the active workspace's cell may show app icons (off: its
+  // label instead, while the strip windows after the row show them:
+  // `activeWorkspaceIcons`)
+  property bool activeIcons: true
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property real spacing: barConfig.innerGap
-  // App icons on occupied cells: always where the compositor makes the
-  // workspaces (niri's show only the occupied ones, so a bare number says
-  // little)
-  readonly property bool appIcons: properties.showAppIcons || CompositorManager.dynamicWorkspaces
+  // Between cells (`spacing`: BarsConfig.workspaceCellSpacing)
+  readonly property real spacing: BarsConfig.workspaceCellSpacing(barConfig, properties.spacing)
+  // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
+  readonly property bool solidBoxes: properties.solidBoxes
   // The workspace whose cell is hovered, which its box (drawn apart from
   // it) shows
   property int hoveredId: -1
 
+  // Each cell's length at rest, and where they sit with the active one
+  // widened by one normal cell's length (`wideActive`: WorkspaceCells)
+  readonly property int _activeIndex: ids.indexOf(activeId)
+  // What each cell shows (CellContents.of), in `ids` order
+  readonly property var _contents: ids.map(id => contents.of(id, root.glyphOf(id, id === root.activeId), id !== root.activeId || root.activeIcons))
+  readonly property var _lengths: _contents.map(c => c.length)
+  readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLength : 0)
   // Measured from the cells' lengths to be, never their gliding ones
   // (composition.md › Bar motion), and clipped to it: a cell that left the
   // active state still shrinking, the active box wrapping past an end
-  readonly property real _measured: ids.length * cellLength + Math.max(0, ids.length - 1) * spacing + (properties.wideActive && ids.indexOf(activeId) >= 0 ? cellLength : 0)
+  readonly property real _measured: _layout.total
   implicitWidth: isVertical ? cells.implicitWidth : _measured
   implicitHeight: isVertical ? _measured : cells.implicitHeight
   clip: true
@@ -63,31 +74,42 @@ Item {
     indicator.expectWrap(forward);
   }
 
-  function _occupied(id) {
-    return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;
+  CellContents {
+    id: contents
+    barConfig: root.barConfig
+    properties: root.properties
+    base: root.base
+    thickness: root.cell
+    restLength: root.cellLength
   }
 
-  // BarsConfig.cellColors for a workspace's cell, active or at rest, and
-  // lit (the pointer over it)
-  function _look(id, active, lit) {
+  // Every urgent cell's fade, in step
+  UrgentPulse {
+    id: urgentPulse
+    running: root.properties.urgentPulse && root._contents.some(c => c.urgent)
+  }
+
+  // BarsConfig.cellColors for cell `index`'s, active or at rest, and lit
+  // (the pointer over it)
+  function _look(index, active, lit) {
     if (active)
-      return root._activeLook(root.ids.indexOf(id), lit);
-    return BarsConfig.workspaceCellColors(root.barConfig, root, false, root._occupied(id), lit);
+      return root._activeLook(index, lit);
+    const content = root._contents[index];
+    return BarsConfig.workspaceCellColors(root.barConfig, root, false, content?.occupied ?? false, content?.urgent ?? false, {
+      "hovered": lit === true
+    });
   }
 
   // The active cell's look (BarsConfig.cellColors) at index `index` of the
   // row, `lit` or not: in the bar's gradient where its middle sits, its
   // color Auto
   function _activeLook(index, lit) {
-    const spot = root.barSpotOf && index >= 0 ? root.barSpotOf(root, index * (root.cellLength + root.spacing) + root._length(true) / 2) : -1;
-    return BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active", {
+    const middle = (root._layout.starts[index] ?? 0) + (root._layout.lengths[index] ?? 0) / 2;
+    const spot = root.barSpotOf && index >= 0 ? root.barSpotOf(root, middle) : -1;
+    return BarsConfig.workspaceCellColors(root.barConfig, root, true, false, false, {
       "hovered": lit === true,
       "spot": spot
     });
-  }
-
-  function _length(active) {
-    return root.cellLength * (active && root.properties.wideActive ? 2 : 1);
   }
 
   Grid {
@@ -108,10 +130,13 @@ Item {
         isActive: wsId === root.activeId
         indicated: indicator.slides
         lit: wsId === root.hoveredId
-        look: root._look(wsId, isActive && !indicator.slides, backgroundCell.lit)
+        look: root._look(index, isActive && !indicator.slides, backgroundCell.lit)
+        urgent: root._contents[index]?.urgent ?? false
+        solid: root.solidBoxes
+        pulse: urgentPulse.value
         thickness: root.cell
-        restLength: root.cellLength
-        length: root._length(isActive)
+        restLength: root._lengths[index] ?? root.cellLength
+        length: root._layout.lengths[index] ?? root.cellLength
         radius: root.cellRadius
         hoverColor: root.hoverColor
       }
@@ -122,10 +147,11 @@ Item {
     id: indicator
     barConfig: root.barConfig
     look: root._activeLook(indicator.index, root.hoveredId !== -1 && root.hoveredId === root.activeId)
-    index: root.ids.indexOf(root.activeId)
+    solid: root.solidBoxes
+    index: root._activeIndex
     thickness: root.cell
-    restLength: root.cellLength
-    activeLength: root._length(true)
+    lengths: root._lengths
+    extra: root.properties.wideActive ? root.cellLength : 0
     spacing: root.spacing
     radius: root.cellRadius
   }
@@ -146,25 +172,32 @@ Item {
         id: contentCell
         required property int index
         readonly property int wsId: root.ids[index] ?? 0
-        readonly property string _glyph: root.glyphOf(wsId, isActive)
-        readonly property var biggestWindow: root.appIcons && _glyph === "" && root._occupied(wsId) ? CompositorManager.biggestWindowForWorkspace(wsId) : null
+        readonly property var _content: root._contents[index] ?? null
 
         part: "content"
         hitArea: root.hitArea
         barConfig: root.barConfig
         isActive: wsId === root.activeId
-        look: root._look(wsId, isActive, contentCell.lit)
+        look: root._look(index, isActive, contentCell.lit)
+        urgent: _content?.urgent ?? false
+        solid: root.solidBoxes
+        pulse: urgentPulse.value
+        urgentColor: root.urgentColor
         thickness: root.cell
-        restLength: root.cellLength
-        length: root._length(isActive)
+        restLength: root._lengths[index] ?? root.cellLength
+        length: root._layout.lengths[index] ?? root.cellLength
         radius: root.cellRadius
         hoverColor: root.hoverColor
         labels: root.properties.labels
-        // The workspace id, or counted from the monitor's first (its place
-        // in the grid)
-        label: root.properties.relativeNumbers ? wsId - root.base + 1 : wsId
-        glyph: _glyph
-        iconPath: biggestWindow ? AppIconManager.resolveWindowIcon(biggestWindow.appId, biggestWindow.title) : ""
+        label: _content ? _content.number : ""
+        glyph: _content?.kind === "glyph" ? _content.text : ""
+        text: _content?.kind === "text" || _content?.kind === "name" ? _content.text : ""
+        textPlain: _content ? _content.plain : false
+        leadIcon: _content?.kind === "text" ? _content.lead : ""
+        leadPlain: _content ? _content.leadPlain : false
+        iconPaths: _content ? _content.icons : []
+        iconLayout: contents.iconLayout
+        iconSlots: contents.iconSlots
         clickable: root.properties.clickToSwitch
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.monitor?.name ?? "")
         // Also when the cell under the pointer comes to stand for another
