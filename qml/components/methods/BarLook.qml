@@ -23,9 +23,28 @@ QtObject {
   //                   the next starts square beneath its end cap
   //   cellOpaque      a cell's box hides what's under it (cells chained in
   //                   a powerline)
-  //   cellBoxedInRun  a cell in a merged run still draws a box of its own
+  //   boxedInRun      a widget or cell in a merged run still draws a box of
+  //                   its own (split's: a widget that doesn't split, and a
+  //                   cell; solid's)
   //   groupCell       a cell in a merged run draws no box: its color moves
   //                   to its content
+  //   box             what a box of the style paints each part in ({ fill,
+  //                   stroke, indicator, text, icon }): "color" (its own
+  //                   color), "tint" (that at the look's tint), "unfilled"
+  //                   (clear: its color cleared where it fills on hover),
+  //                   "own" (what reads on its color: its content reads on
+  //                   its own fill), "bar" (the bar's text), or null
+  //                   (nothing); `keepsIcon`, the icon keeps its color under
+  //                   the bar's text color (it carries the state). Null for
+  //                   a style that draws parts apart instead (iconPart)
+  //   iconPart        draws an icon part filled in its color and a label
+  //                   apart (split: the label's fill is the look's
+  //                   split.label)
+  //   runTints        a merged run's strip of the bar gradient is a tint
+  //                   (its labels'), under icon parts in their own slices
+  //   colored         its widgets' own colors show at all: plain text tells
+  //                   a cell's states apart by fading alone, and has
+  //                   nothing for the bar gradient to color
   //   tints           its box is a see-through tint of its color (a box
   //                   at rest under another shows through it)
   //   line            draws a line along one side (underline)
@@ -46,8 +65,19 @@ QtObject {
         "hoverFills": false,
         "opaque": look => true,
         "cellOpaque": true,
-        "cellBoxedInRun": false,
+        "boxedInRun": false,
         "groupCell": true,
+        "box": {
+          "fill": "color",
+          "stroke": null,
+          "indicator": null,
+          "text": "own",
+          "icon": "own",
+          "keepsIcon": false
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": true,
         "tints": false,
         "line": false,
         "stroke": false,
@@ -61,8 +91,19 @@ QtObject {
         "hoverFills": true,
         "opaque": look => false,
         "cellOpaque": false,
-        "cellBoxedInRun": false,
+        "boxedInRun": false,
         "groupCell": true,
+        "box": {
+          "fill": "tint",
+          "stroke": null,
+          "indicator": null,
+          "text": "color",
+          "icon": "color",
+          "keepsIcon": false
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": true,
         "tints": true,
         "line": false,
         "stroke": false,
@@ -76,8 +117,19 @@ QtObject {
         "hoverFills": true,
         "opaque": look => false,
         "cellOpaque": false,
-        "cellBoxedInRun": false,
+        "boxedInRun": false,
         "groupCell": true,
+        "box": {
+          "fill": "unfilled",
+          "stroke": "color",
+          "indicator": null,
+          "text": "color",
+          "icon": "color",
+          "keepsIcon": false
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": true,
         "tints": false,
         "line": false,
         "stroke": true,
@@ -92,17 +144,21 @@ QtObject {
         "boxed": true,
         "hasBox": look => look.split.icon !== "badge",
         "hoverFills": false,
-        "opaque": look => look.split.icon === "joined" && look.split.labelFill === "color",
+        "opaque": look => look.split.label === "color",
         "cellOpaque": true,
-        "cellBoxedInRun": true,
+        "boxedInRun": true,
         "groupCell": false,
+        "box": null,
+        "iconPart": true,
+        "runTints": true,
+        "colored": true,
         "tints": false,
         "line": false,
         "stroke": false,
         "gradientPart": look => root._part("iconFill", 1),
         "autoContrast": look => {
           const merged = look.grouping === "merged";
-          return root._contrast(merged, merged || (look.split.icon === "joined" && look.split.labelFill === "color") ? 1.3 : 3);
+          return root._contrast(merged, merged || look.split.label === "color" ? 1.3 : 3);
         },
         "fallback": "filled"
       },
@@ -112,8 +168,19 @@ QtObject {
         "hoverFills": false,
         "opaque": look => false,
         "cellOpaque": false,
-        "cellBoxedInRun": false,
+        "boxedInRun": false,
         "groupCell": false,
+        "box": {
+          "fill": null,
+          "stroke": null,
+          "indicator": "color",
+          "text": "bar",
+          "icon": "bar",
+          "keepsIcon": false
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": true,
         "tints": false,
         "line": true,
         "stroke": false,
@@ -128,8 +195,19 @@ QtObject {
         "hoverFills": false,
         "opaque": look => false,
         "cellOpaque": false,
-        "cellBoxedInRun": false,
+        "boxedInRun": false,
         "groupCell": false,
+        "box": {
+          "fill": null,
+          "stroke": null,
+          "indicator": null,
+          "text": "bar",
+          "icon": "color",
+          "keepsIcon": true
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": true,
         "tints": false,
         "line": false,
         "stroke": false,
@@ -143,8 +221,19 @@ QtObject {
         "hoverFills": false,
         "opaque": look => false,
         "cellOpaque": false,
-        "cellBoxedInRun": false,
+        "boxedInRun": false,
         "groupCell": false,
+        "box": {
+          "fill": null,
+          "stroke": null,
+          "indicator": null,
+          "text": "bar",
+          "icon": "bar",
+          "keepsIcon": false
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": false,
         "tints": false,
         "line": false,
         "stroke": false,
@@ -162,8 +251,19 @@ QtObject {
         "hoverFills": false,
         "opaque": look => true,
         "cellOpaque": true,
-        "cellBoxedInRun": true,
+        "boxedInRun": true,
         "groupCell": false,
+        "box": {
+          "fill": "color",
+          "stroke": "color",
+          "indicator": "color",
+          "text": "own",
+          "icon": "own",
+          "keepsIcon": false
+        },
+        "iconPart": false,
+        "runTints": false,
+        "colored": true,
         "tints": false,
         "line": false,
         "stroke": false,
@@ -183,8 +283,12 @@ QtObject {
       "hoverFills": t.hoverFills,
       "opaque": t.opaque(look),
       "cellOpaque": t.cellOpaque,
-      "cellBoxedInRun": t.cellBoxedInRun,
+      "boxedInRun": t.boxedInRun,
       "groupCell": t.groupCell,
+      "box": t.box,
+      "iconPart": t.iconPart,
+      "runTints": t.runTints,
+      "colored": t.colored,
       "tints": t.tints,
       "line": t.line,
       "stroke": t.stroke,
@@ -240,18 +344,21 @@ QtObject {
   //               fills it in, BarsConfig.enrichBarConfig; else 0) }
   //   grouping    as drawn: separate for unboxed styles, and a powerline
   //               of what can't chain (a badge, tabs)
-  //   split       { icon, labelFill, labelColor (a name), divider, cap
+  //   split       { icon, labelFill, label (the label's fill as drawn:
+  //               a badge's none), labelColor (a name), divider, cap
   //               (BarShapes.dividerCap), room (BarShapes.splitRoom),
-  //               badgePad }: split's, or null
+  //               badgePad }: an icon part's (split's), or null
   //   group       { color, strokeColor }: a merged run's (names)
   //   gradient    the bar gradient's colors (names, start to end), or
-  //               null: none, or plain text, which has nothing to color
+  //               null: none, or a style with no color of its own to show
+  //               (`colored`: plain text)
   //   separators  { style (as drawn: none in a powerline, where widgets
   //               touch), color, thickness, gap }
   //   accentLine  { side, color, fade, width }, or null for none
   function resolve(section, own, bar) {
     const values = root.merge(section, own);
     const style = values.widgetStyle;
+    const table = root.table[style] ?? root.table.filled;
     const thickness = bar?.thickness ?? null;
     const splitCap = BarShapes.dividerCap(values.widgetShape, values.splitDivider);
     const look = {
@@ -261,9 +368,10 @@ QtObject {
       "textScale": values.textScale,
       "tint": values.tintOpacity / 100,
       "textColor": values.widgetTextColor,
-      "split": style === "split" ? {
+      "split": table.iconPart ? {
         "icon": values.splitIcon,
         "labelFill": values.splitLabelFill,
+        "label": values.splitIcon === "badge" ? "none" : values.splitLabelFill,
         "labelColor": values.splitLabelColor,
         "divider": values.splitDivider,
         "cap": splitCap,
@@ -274,7 +382,7 @@ QtObject {
         "color": values.groupColor,
         "strokeColor": values.groupStrokeColor
       },
-      "gradient": values.gradient && style !== "plain" ? [values.gradientFrom].concat(values.gradientVia ? [values.gradientVia] : [], [values.gradientTo]) : null,
+      "gradient": values.gradient && table.colored ? [values.gradientFrom].concat(values.gradientVia ? [values.gradientVia] : [], [values.gradientTo]) : null,
       "accentLine": values.accentLine !== "none" ? {
         "side": values.accentLine,
         "color": values.accentLineColor,
@@ -282,7 +390,6 @@ QtObject {
         "width": values.accentLineWidth
       } : null
     };
-    const table = root.table[style] ?? root.table.filled;
     look.grouping = root._groupingOf(look, table);
     look.shape = {
       "name": table.boxed ? root._shapeOf(look, table) : "rounded",

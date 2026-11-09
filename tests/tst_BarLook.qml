@@ -130,9 +130,9 @@ TestCase {
     const cell = (style, solid) => BarLook.cellTraits(root.look({
         "widgetStyle": style
       }), solid);
-    verify(cell("outline", true).cellBoxedInRun, "solid boxes");
-    verify(cell("split", false).cellBoxedInRun, "split's fill");
-    verify(!cell("filled", false).cellBoxedInRun);
+    verify(cell("outline", true).boxedInRun, "solid boxes");
+    verify(cell("split", false).boxedInRun, "split's fill");
+    verify(!cell("filled", false).boxedInRun);
     verify(cell("filled", false).cellOpaque);
     verify(cell("split", false).cellOpaque, "split's cells are filled");
     verify(cell("outline", true).cellOpaque, "solid boxes");
@@ -140,6 +140,61 @@ TestCase {
     verify(!cell("outline", false).cellOpaque);
     verify(cell("tinted", false).tints, "a tint shows through");
     verify(!cell("tinted", true).tints, "a solid box doesn't");
+  }
+
+  // What a box of each style paints each part in, as data: paint reads
+  // only these (BarWidgetStyle._box)
+  function test_box_paints() {
+    const box = style => BarLook.table[style].box;
+    const row = b => [b.fill, b.stroke, b.indicator, b.text, b.icon, b.keepsIcon];
+    compare(row(box("filled")), ["color", null, null, "own", "own", false]);
+    compare(row(box("tinted")), ["tint", null, null, "color", "color", false]);
+    compare(row(box("outline")), ["unfilled", "color", null, "color", "color", false]);
+    compare(row(box("underline")), [null, null, "color", "bar", "bar", false]);
+    compare(row(box("accentText")), [null, null, null, "bar", "color", true], "colored icons keep the state");
+    compare(row(box("plain")), [null, null, null, "bar", "bar", false]);
+    compare(row(box("solid")), ["color", "color", "color", "own", "own", false], "its line and stroke its color too");
+    compare(box("split"), null, "its parts instead (iconPart)");
+    // Every value is one paint resolves
+    const roles = ["color", "tint", "unfilled", "own", "bar", null];
+    for (const name in BarLook.table)
+      if (BarLook.table[name].box)
+        for (const part of ["fill", "stroke", "indicator", "text", "icon"])
+          verify(roles.indexOf(BarLook.table[name].box[part]) >= 0, `${name}.${part}`);
+  }
+
+  function test_icon_parts_and_runs() {
+    const traits = style => root.look({
+        "widgetStyle": style
+      }).traits;
+    for (const style of ["filled", "tinted", "outline", "underline", "accentText", "plain"]) {
+      verify(!traits(style).iconPart, style);
+      verify(!traits(style).runTints, style);
+      verify(!traits(style).boxedInRun, style);
+    }
+    verify(traits("split").iconPart);
+    verify(traits("split").runTints, "a gradient run is its labels' tint");
+    verify(traits("split").boxedInRun, "a widget that doesn't split keeps its box in a run");
+    compare(traits("split").fallback, "filled");
+  }
+
+  function test_only_plain_shows_no_color() {
+    for (const name in BarLook.table)
+      compare(BarLook.table[name].colored, name !== "plain", name);
+  }
+
+  // The label's fill as drawn: a badge's is always on the bar
+  function test_split_label_as_drawn() {
+    const label = (icon, fill) => root.look({
+        "widgetStyle": "split",
+        "splitIcon": icon,
+        "splitLabelFill": fill
+      }).split.label;
+    compare(label("joined", "tint"), "tint");
+    compare(label("joined", "color"), "color");
+    compare(label("joined", "none"), "none");
+    compare(label("badge", "color"), "none");
+    compare(label("badge", "tint"), "none");
   }
 
   function test_auto_contrast() {

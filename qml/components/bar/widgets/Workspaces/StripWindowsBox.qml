@@ -53,7 +53,7 @@ Item {
   // onBar)
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solid)
-  readonly property bool _boxedInRun: _traits.cellBoxedInRun
+  readonly property bool _boxedInRun: _traits.boxedInRun
   readonly property var _room: run ? BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
   readonly property real _lead: _room?.lead ?? 0
   // Its box's shape as a segment (BarShapes.cellShape), else null, and

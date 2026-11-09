@@ -63,7 +63,7 @@ Item {
   // As segments of a merged run, the cells that draw a box of their own
   // there: solid ones, and split's fill (BarWidgetStyle.cell)
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solidBoxes)
-  readonly property bool _boxedInRun: _traits.cellBoxedInRun
+  readonly property bool _boxedInRun: _traits.boxedInRun
   // Each cell's shape as a segment of the run and the room it keeps clear
   // of its caps (BarShapes.cellShape, cellRoom), else null
   // A cell after the widget's first starts square beneath the one before

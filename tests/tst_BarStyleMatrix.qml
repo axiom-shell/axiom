@@ -225,7 +225,7 @@ TestCase {
 
   function cellFlags(bar, solid) {
     const traits = BarLook.cellTraits(bar.look, solid);
-    return [traits.cellOpaque, traits.cellBoxedInRun];
+    return [traits.cellOpaque, traits.boxedInRun];
   }
 
   function segment(shape, ends, grouping, opaque, index, count, across) {

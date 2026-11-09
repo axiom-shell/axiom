@@ -107,7 +107,7 @@ Loader {
   // The shape of its cell at `cell` of the widget's chained ones, for what
   // its first and last draw past it (BarShapes.cellShape), or null
   function _shapeOf(cell) {
-    return root.run && root.cells > 0 ? BarShapes.cellShape(root.barConfig, root.run, BarLook.cellTraits(root.barConfig.look, root.solid).cellBoxedInRun, false, root._gap, cell, root.chainCount) : null;
+    return root.run && root.cells > 0 ? BarShapes.cellShape(root.barConfig, root.run, BarLook.cellTraits(root.barConfig.look, root.solid).boxedInRun, false, root._gap, cell, root.chainCount) : null;
   }
 
   Component {

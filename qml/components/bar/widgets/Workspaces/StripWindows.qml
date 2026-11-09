@@ -52,7 +52,7 @@ Grid {
   // onBar)
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solid)
-  readonly property bool _boxedInRun: _traits.cellBoxedInRun
+  readonly property bool _boxedInRun: _traits.boxedInRun
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the cells are only rebuilt when the windows or their

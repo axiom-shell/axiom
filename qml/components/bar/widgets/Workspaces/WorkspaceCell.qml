@@ -102,7 +102,7 @@ Item {
   // A segment of a merged run, which draws its box (BarsConfig.cellColors'
   // group): boxed only where it still draws one of its own
   property bool inRun: false
-  readonly property bool boxed: inRun ? BarLook.cellTraits(barConfig.look, solid).cellBoxedInRun : barConfig.look.traits.boxed || solid
+  readonly property bool boxed: inRun ? BarLook.cellTraits(barConfig.look, solid).boxedInRun : barConfig.look.traits.boxed || solid
   // Its state shows in a box or a line; without either, in its content
   readonly property bool _framed: boxed || barConfig.look.traits.line
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the

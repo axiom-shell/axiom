@@ -28,6 +28,7 @@ TestCase {
       "split": name === "split" ? {
         "icon": style.splitIcon ?? "joined",
         "labelFill": style.labelFill ?? "tint",
+        "label": (style.splitIcon ?? "joined") === "badge" ? "none" : style.labelFill ?? "tint",
         "labelColor": ""
       } : null,
       "grouping": style.group ? "merged" : "separate",

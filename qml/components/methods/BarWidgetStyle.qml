@@ -113,7 +113,7 @@ QtObject {
   // holds draws no box, its color moving to its content (an empty one's
   // faded, reading on the run); a solid cell stays a filled box, and a
   // split one fills its box, a tab in the row as a widget that doesn't
-  // split (the `cellBoxedInRun` trait).
+  // split (the `boxedInRun` trait).
   function cell(look, palette, state, color, own, cellState) {
     const graded = state.gradient !== null && state.auto;
     const fill = graded ? state.gradient : color;
@@ -122,76 +122,80 @@ QtObject {
     return result;
   }
 
-  // The style a widget draws in: its look's, or the style's `fallback`
-  // where it can't (split, for a widget that doesn't split)
+  // The traits a widget draws in: its look's, or its style's `fallback`'s
+  // where it can't draw that (split's, for a widget that doesn't split)
   function _drawn(look, state) {
-    const fallback = look.traits.fallback;
-    return fallback && !state.splits ? fallback : look.style;
+    return root._fallback(look, look.traits, !state.splits);
   }
 
-  // The style a cell draws in: solid, or its look's (split's filled: a
-  // cell has no label apart)
+  // The traits a cell draws in: a solid box's or its look's (cellTraits),
+  // their `fallback`'s where they have one (split's filled: a cell has no
+  // label apart)
   function _cellDrawn(look, state) {
-    return state.solid ? "solid" : look.traits.fallback ?? look.style;
+    return root._fallback(look, BarLook.cellTraits(look, state.solid), true);
   }
 
-  // Whether a widget or cell of style `name` fills while hovered: "Fill on
-  // hover" on (the look's, as drawn) for a style it applies to
-  function _fills(look, name) {
-    return look.hoverFill && BarLook.traitsOf(name, look).hoverFills;
+  function _fallback(look, traits, falls) {
+    return traits.fallback && falls ? BarLook.traitsOf(traits.fallback, look) : traits;
   }
 
-  // A box in `color` in style `name` and what reads in it, before the bar's
-  // text color: { fill, stroke, indicator, text, icon, onFill, keepsIcon }.
-  // `onFill`: the content reads on the box's own fill (`own`), not on the
-  // bar; `keepsIcon`: the icon keeps its color under the bar's text color
-  // (colored icons: it carries the state). `unfilled` is an unfilled
-  // box's fill: its color cleared where it fills on hover, so the fill
-  // fades in from nothing rather than through black. A widget's and a
-  // cell's boxes are the same; split's own (an icon part and a label) is
-  // the widget's alone (_widget).
-  function _box(name, look, palette, color, own, unfilled) {
-    const none = "transparent";
-    const paint = (fill, stroke, indicator, text, icon, onFill, keepsIcon) => ({
-          "fill": fill,
-          "stroke": stroke,
-          "indicator": indicator,
-          "text": text,
-          "icon": icon,
-          "onFill": onFill,
-          "keepsIcon": keepsIcon === true
-        });
-    switch (name) {
-    case "solid":
-      return paint(color, color, color, own, own, true);
-    case "tinted":
-      return paint(root.faded(color, look.tint), none, none, color, color, false);
-    case "outline":
-      return paint(unfilled, color, none, color, color, false);
-    case "underline":
-      return paint(none, none, color, palette.barText, palette.barText, false);
-    case "accentText":
-      // The icon carries the state, the label reads as the bar's text
-      return paint(none, none, none, palette.barText, color, false, true);
-    case "plain":
-      return paint(none, none, none, palette.barText, palette.barText, false);
-    default:
-      return paint(color, none, none, own, own, true);
-    }
+  // Whether a box drawn in `traits` holds its content on its own fill
+  // (the `box` trait's text reads on its color), so a merged run of them
+  // is a fill its labels read on too
+  function _onFill(traits) {
+    return traits.box?.text === "own";
+  }
+
+  // A box drawn in `traits` (their `box` trait) in `color` and what reads
+  // in it, before the bar's text color: { fill, stroke, indicator, text,
+  // icon, onFill, keepsIcon }. `onFill`: the content reads on the box's
+  // own fill (`own`), not on the bar; `keepsIcon`: the icon keeps its
+  // color under the bar's text color (colored icons: it carries the
+  // state). `unfilled` is an unfilled box's fill: its color cleared where
+  // it fills on hover, so the fill fades in from nothing rather than
+  // through black. A widget's and a cell's boxes are the same; an icon
+  // part and a label apart (iconPart) are the widget's alone (_widget).
+  function _box(traits, look, palette, color, own, unfilled) {
+    const b = traits.box;
+    const of = role => {
+      switch (role) {
+      case "color":
+        return color;
+      case "tint":
+        return root.faded(color, look.tint);
+      case "unfilled":
+        return unfilled;
+      case "own":
+        return own;
+      case "bar":
+        return palette.barText;
+      default:
+        return "transparent";
+      }
+    };
+    return {
+      "fill": of(b.fill),
+      "stroke": of(b.stroke),
+      "indicator": of(b.indicator),
+      "text": of(b.text),
+      "icon": of(b.icon),
+      "onFill": root._onFill(traits),
+      "keepsIcon": b.keepsIcon
+    };
   }
 
   function _widget(look, palette, state, accent, own, graded) {
     const none = "transparent";
     const text = c => palette.override ?? c;
     const drawn = root._drawn(look, state);
-    const fills = root._fills(look, look.style);
+    const fills = look.hoverFill;
     const unfilled = fills ? Qt.alpha(accent, 0) : none;
     if (state.hovered && fills)
       // Filled in its own color, its text and icon reading on it; an
       // outline keeps its stroke (unseen on the fill) so it doesn't fade
       // out and back. In a merged run, the widget's own part alone
-      return root._make(accent, drawn === "outline" && !state.group ? accent : none, none, text(own), text(own), none, true);
-    if (state.run && graded && look.style === "split")
+      return root._make(accent, drawn.stroke && !state.group ? accent : none, none, text(own), text(own), none, true);
+    if (state.run && graded && look.traits.runTints)
       // A split run's strip of the gradient is its labels' tint, under
       // icon parts each in their own slice of it
       return root._make(root.faded(accent, look.tint), none, none, text(own), text(own), none, false);
@@ -204,20 +208,21 @@ QtObject {
       // sits, and an Auto icon reads on it as the label does (through a
       // tint or outline it takes that color)
       // (A split run with a gradient is its labels' tint, not a fill)
-      if (drawn === "split")
+      if (drawn.iconPart)
         return root._make(none, none, none, text(state.gradient ? accent : root._readable(palette, palette.group, palette.barText)), text(own), accent, !state.gradient);
-      if (look.style === "split")
+      if (look.traits.boxedInRun)
         // One that doesn't split fills its own box in the run, a tab in
         // the row of them
         return root._make(accent, none, none, text(own), text(own), none, true);
       const group = state.gradient ?? palette.group;
-      const label = text(drawn === "filled" ? root._readable(palette, group, palette.barText) : palette.barText);
-      return root._make(unfilled, none, none, label, graded && drawn === "filled" ? label : accent, none, drawn === "filled");
+      const onRun = root._onFill(drawn);
+      const label = text(onRun ? root._readable(palette, group, palette.barText) : palette.barText);
+      return root._make(unfilled, none, none, label, graded && onRun ? label : accent, none, onRun);
     }
-    if (drawn === "split") {
+    if (drawn.iconPart) {
       // The icon part filled, the label on a tint of it, on a color of
       // its own (reading on it) or on the bar; a badge's always on the bar
-      const label = look.split.icon === "badge" ? "none" : look.split.labelFill;
+      const label = look.split.label;
       if (label === "color")
         return root._make(palette.labelColor, none, none, text(root._readable(palette, palette.labelColor, palette.barText)), text(own), accent, true);
       return root._make(label === "tint" ? root.faded(accent, look.tint) : none, none, none, text(accent), text(own), accent, false);
@@ -227,52 +232,52 @@ QtObject {
   }
 
   // What of a widget's background takes the bar's gradient: filled on
-  // hover, its fill in full; a split run's strip, at the labels' tint; in
-  // a merged run (which draws it) none, but for a split icon part or the
-  // box of one that doesn't split; else its drawn style's `gradientPart`
+  // hover, its fill in full; a run's strip that tints (runTints), at the
+  // tint; in a merged run (which draws it) none, but for an icon part or
+  // the box of one boxed in the run; else its drawn traits' `gradientPart`
   function _widgetGradient(look, state) {
     const drawn = root._drawn(look, state);
-    if (state.hovered && root._fills(look, look.style))
+    if (state.hovered && look.hoverFill)
       return root._part("fill", 1);
-    if (state.run && look.style === "split")
+    if (state.run && look.traits.runTints)
       return root._part("fill", look.tint);
     if (state.group)
-      return drawn === "split" ? root._part("iconFill", 1) : look.style === "split" ? root._part("fill", 1) : null;
-    return BarLook.traitsOf(drawn, look).gradientPart;
+      return drawn.iconPart ? root._part("iconFill", 1) : look.traits.boxedInRun ? root._part("fill", 1) : null;
+    return drawn.gradientPart;
   }
 
   function _cell(look, palette, state, color, own, cellState) {
     const none = "transparent";
     const text = c => palette.override ?? c;
-    const style = state.solid ? "solid" : look.style;
+    const traits = BarLook.cellTraits(look, state.solid);
     const drawn = root._cellDrawn(look, state);
-    const fills = root._fills(look, style);
+    const fills = look.hoverFill && traits.hoverFills;
     if (state.hovered && fills)
-      return root._makeCell(color, drawn === "outline" && !state.group ? color : none, none, text(own), true);
-    const merged = state.group && BarLook.traitsOf(style, look).groupCell;
+      return root._makeCell(color, drawn.stroke && !state.group ? color : none, none, text(own), true);
+    const merged = state.group && traits.groupCell;
     // What the content sits on: the run's color where it's filled, else
     // the bar (through a tint or an outline)
-    const under = merged && drawn === "filled" ? root._readable(palette, palette.group, palette.barText) : palette.barText;
+    const under = merged && root._onFill(drawn) ? root._readable(palette, palette.group, palette.barText) : palette.barText;
     const faded = Qt.alpha(text(under), 0.4);
     const onBar = c => cellState === "empty" ? faded : text(c);
     const unfilled = fills ? Qt.alpha(color, 0) : none;
     if (merged)
       return root._makeCell(unfilled, none, none, onBar(color));
     const box = root._box(drawn, look, palette, color, own, unfilled);
-    if (drawn === "plain")
+    if (!drawn.colored)
       return root._makeCell(box.fill, box.stroke, box.indicator, cellState === "active" ? text(palette.barText) : cellState === "urgent" ? color : cellState === "occupied" ? Qt.alpha(text(palette.barText), 0.7) : faded);
     return root._makeCell(box.fill, box.stroke, box.indicator, box.onFill ? text(box.icon) : onBar(box.icon));
   }
 
   // What of a cell's box takes the bar's gradient (cell): filled on hover
   // its fill; in a merged run that draws its box, none; else its drawn
-  // style's `gradientPart`
+  // traits' `gradientPart`
   function _cellGradient(look, state, result) {
     if (result.showsHover)
       return root._part("fill", 1);
-    if (state.group && BarLook.traitsOf(state.solid ? "solid" : look.style, look).groupCell)
+    if (state.group && BarLook.cellTraits(look, state.solid).groupCell)
       return null;
-    return BarLook.traitsOf(root._cellDrawn(look, state), look).gradientPart;
+    return root._cellDrawn(look, state).gradientPart;
   }
 
   // A value widget's pill (its background filled to its value) in its
