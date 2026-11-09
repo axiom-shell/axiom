@@ -209,18 +209,25 @@ func (a *Apps) ownDefault(names []string) string {
 			}
 		}
 	}
-	for _, mime := range names {
-		if handlers := a.Handlers(mime); len(handlers) > 0 {
-			return handlers[0].ID
-		}
+	if handlers := a.handlers(names); len(handlers) > 0 {
+		return handlers[0].ID
 	}
 	return ""
 }
 
 // Handlers are the installed entries that open a type: the Added
 // Associations in list order, then those declaring it (by name), less
-// the Removed Associations of the lists above each.
+// the Removed Associations of the lists above each; under any of its
+// names (the type and its aliases).
 func (a *Apps) Handlers(mime string) []Entry {
+	if l := a.lineage(mime); len(l) > 0 {
+		return a.handlers(l[0])
+	}
+	return nil
+}
+
+// handlers is Handlers of one type given by its names.
+func (a *Apps) handlers(names []string) []Entry {
 	var out []Entry
 	seen, removed := map[string]bool{}, map[string]bool{}
 	add := func(id string) {
@@ -230,16 +237,20 @@ func (a *Apps) Handlers(mime string) []Entry {
 		}
 	}
 	for _, l := range a.lists {
-		for _, id := range l[groupAdded][mime] {
-			add(id)
+		for _, mime := range names {
+			for _, id := range l[groupAdded][mime] {
+				add(id)
+			}
 		}
-		for _, id := range l[groupRemoved][mime] {
-			removed[id] = true
+		for _, mime := range names {
+			for _, id := range l[groupRemoved][mime] {
+				removed[id] = true
+			}
 		}
 	}
 	var declared []Entry
 	for _, e := range a.entries {
-		if e.handles(mime) {
+		if slices.ContainsFunc(names, e.handles) {
 			declared = append(declared, e)
 		}
 	}
@@ -386,9 +397,15 @@ func (a *Apps) SetTypes(mimes []string, id string) error {
 			return axerr.New(axerr.BadRequest, "%q is no MIME type", m)
 		}
 	}
+	// Under the type's own name, which a list checks before its aliases
+	// (ownDefault): a line for it there would beat one for the alias
+	names := make([]string, len(mimes))
+	for i, m := range mimes {
+		names[i] = a.mimeDB().Canonical(m)
+	}
 	path := a.userList("mimeapps.list")
 	data, _ := os.ReadFile(path)
-	return writeText(path, setDefaults(string(data), mimes, id))
+	return writeText(path, setDefaults(string(data), names, id))
 }
 
 // userList is the user's list called name in their config home: a

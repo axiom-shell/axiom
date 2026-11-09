@@ -329,4 +329,22 @@ func TestParentTypes(t *testing.T) {
 	if got := a.Default("text/javascript"); got != "chromium.desktop" {
 		t.Errorf("Default(text/javascript) = %q, want the alias's explicit default", got)
 	}
+	// Added and Removed Associations under an alias count for the type
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Added Associations]\napplication/javascript=chromium.desktop;\n")
+	if got := tr.load().Default("text/javascript"); got != "chromium.desktop" {
+		t.Errorf("an Added Association under the alias: %q", got)
+	}
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Removed Associations]\napplication/javascript=jsedit.desktop;\n")
+	if a = tr.load(); a.Default("text/javascript") != a.Default("text/plain") {
+		t.Errorf("a Removed Association under the alias: %q", a.Default("text/javascript"))
+	}
+	// A default picked under an alias is written under the type's own
+	// name, so an older line for that name doesn't beat it
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Default Applications]\ntext/javascript=jsedit.desktop;\n")
+	if err := tr.load().SetTypes([]string{"application/javascript"}, "chromium.desktop"); err != nil {
+		t.Fatal(err)
+	}
+	if got := tr.load().Default("application/javascript"); got != "chromium.desktop" {
+		t.Errorf("after SetTypes under the alias: %q", got)
+	}
 }
