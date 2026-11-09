@@ -852,6 +852,7 @@ TestCase {
     };
     const menu = {
       "edge": "right",
+      "placement": "edge",
       "length": "fit",
       "offset": -1,
       "layout": {
@@ -904,6 +905,8 @@ TestCase {
     compare(GridPlacement.menuFillsEdge(menu("strip", "content", "left", [])), true, "strip: always");
     compare(GridPlacement.menuKeepsLead(menu("edge", "edge", "left", [])), true, "a whole-edge edge menu keeps its lead");
     compare(GridPlacement.menuKeepsLead(menu("strip", "edge", "left", [])), false);
+    compare(GridPlacement.menuFillsEdge(menu("free", "edge", "left", [])), false, "free: no edge, whatever its kept length");
+    compare(GridPlacement.menuKeepsLead(menu("free", "edge", "left", [])), false);
     const offset = [at(1, 3, 2, 4), at(0, 7, 2, 2)];
     const side = GridPlacement.menuModules(menu("strip", "content", "left", offset));
     compare(side.map(module => [module.place.x, module.place.y]), [[1, 0], [0, 4]], "moved up to start at the first, across untouched");

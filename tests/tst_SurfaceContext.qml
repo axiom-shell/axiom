@@ -292,6 +292,21 @@ TestCase {
     });
   }
 
+  // A free menu's box meets nothing: detached, no joins, BarStyle's shadow
+  function test_free() {
+    const f = SurfaceContext.free();
+    verify(f.detached);
+    verify(!f.straight);
+    compare(f.backfill, 0);
+    compare(f.place, {
+      "joinStart": false,
+      "joinEnd": false,
+      "flushStart": false,
+      "flushEnd": false
+    });
+    compare(f.shadow.look, "style");
+  }
+
   function test_opening() {
     compare(SurfaceContext.opening(10.4, 50.6), {
       "start": 11,

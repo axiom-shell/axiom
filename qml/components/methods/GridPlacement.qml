@@ -872,11 +872,11 @@ QtObject {
     return menu.edge === "left" || menu.edge === "right" ? reach.rows : reach.cols;
   }
 
-  // Whether a menu takes its whole edge, stretched along it: one set to
-  // (`length` "edge"), and an integrated one always, as its strip spans
-  // the edge
+  // Whether a menu takes its whole edge, stretched along it: an edge one
+  // set to (`length` "edge"), and an integrated one always, as its strip
+  // spans the edge. A free menu has no edge (its kept `length` is hidden)
   function menuFillsEdge(menu) {
-    return menu.length === "edge" || menu.placement === "strip";
+    return (menu.length === "edge" && menu.placement === "edge") || menu.placement === "strip";
   }
 
   // Whether a gap before a menu's modules along its edge is kept: a
@@ -884,7 +884,7 @@ QtObject {
   // holds it). An integrated menu's modules start at its edge's start
   // (menuModules)
   function menuKeepsLead(menu) {
-    return menu.length === "edge" && menu.placement !== "strip";
+    return menu.length === "edge" && menu.placement === "edge";
   }
 
   // A menu's `modules` (its own by default) as it lays them out: one

@@ -126,6 +126,30 @@ QtObject {
     return bar.kind === "transparent" || (!!bar.island && mode === "plain");
   }
 
+  // A box floating free of the edges (a free menu, surfaces/edgemenu/
+  // FreeMenu): a box of its own that meets nothing, joins and runs flush
+  // to nothing, runs straight off no edge and casts BarStyle's shadow. Its
+  // `place` is the part of EdgeAttach.place's answer an AttachedSurface
+  // and a submenu read
+  function free() {
+    return {
+      "detached": true,
+      "straight": false,
+      "backfill": 0,
+      "place": {
+        "joinStart": false,
+        "joinEnd": false,
+        "flushStart": false,
+        "flushEnd": false
+      },
+      "shadow": root.shadow({
+        "detached": true,
+        "bar": null,
+        "onBar": false
+      })
+    };
+  }
+
   // How a surface casts its shadow: { look ("style": BarStyle's, "bar":
   // its bar's) }. It takes it from what it grows out of, so joined shapes
   // cast one shadow (BlurBacking groups them by look) running unbroken
