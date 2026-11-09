@@ -96,9 +96,11 @@ BarWidget {
   function segmentStyle(key) {
     return ValueGraphics.resolvedStyle(root.style, root.isVertical, root._metrics.find(m => m.key === key).history !== "", 0);
   }
+  // The room across inside its box, which stacked's lines fit in
+  readonly property real _boxRoom: ValueGraphics.boxRoom(root.barConfig.thickness, root.barConfig.look.shape)
   // A line, or the graphic reaching furthest across the bar of those its
   // shown metrics draw
-  contentAcross: Math.max(root.barConfig.fontSize, ...root.segments.map(key => ValueGraphics.across(root.segmentStyle(key), root.isVertical, root.barConfig.thickness, root.barConfig.fontSize)))
+  contentAcross: Math.max(root.barConfig.fontSize, ...root.segments.map(key => ValueGraphics.across(root.segmentStyle(key), root.isVertical, root.barConfig.thickness, root.barConfig.fontSize, root._boxRoom)))
 
   // Live icon/value/level for one segment key
   function segmentData(key) {
@@ -244,6 +246,7 @@ BarWidget {
             preferredLength: root.appearance.width
             vertical: root.isVertical
             crossSize: root.barConfig.thickness
+            room: root._boxRoom
             fontSize: root.barConfig.fontSize
             middle: segment.iconMiddle
             color: root.colors.icon

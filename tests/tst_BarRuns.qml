@@ -196,7 +196,7 @@ TestCase {
     // (ValueGraphics.across, as ValueStyleWidget's contentAcross takes it)
     // keeps its caps' room at its extent: 26 px bars at a 14 px font
     const graphic = style => Object.assign({}, label, {
-        "contentAcross": Math.max(14, ValueGraphics.across(style, false, 26, 14))
+        "contentAcross": Math.max(14, ValueGraphics.across(style, false, 26, 14, 26))
       });
     compare(BarRuns.insets(arrow, null, graphic("fill"), 0, section).trail, 7, "a fill: no taller than a line, a label's room");
     compare(BarRuns.insets(arrow, null, graphic("ring"), 0, section).trail, 9, "a ring, 0.62 of the thickness: clear of the arrow's side");

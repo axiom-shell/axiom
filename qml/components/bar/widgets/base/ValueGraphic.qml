@@ -39,6 +39,9 @@ Item {
   property real preferredLength: 0
   property bool vertical: false
   property real crossSize: 0
+  // The room across inside the widget's box (ValueGraphics.boxRoom), which
+  // stacked's two lines fit in; the whole crossSize by default
+  property real room: crossSize
   property int fontSize: 0
   property color color: "white"
   property color textColor: "white"
@@ -54,7 +57,7 @@ Item {
   // How far across the bar it reaches (px), from config and its style,
   // never measured: the ring, the sparkline and stacked's two lines; 0 for
   // one no taller than a line (ValueGraphics.across)
-  readonly property real across: ValueGraphics.across(root.style, root.vertical, root.crossSize, root.fontSize)
+  readonly property real across: ValueGraphics.across(root.style, root.vertical, root.crossSize, root.fontSize, root.room)
   readonly property real length: {
     switch (root.style) {
     case "ring":
@@ -249,9 +252,9 @@ Item {
       Column {
         id: stack
         // Its two lines (about 1.4 of the font, each a line high) shrink
-        // to fit across a bar the text is large for (a text scale past
-        // 100%)
-        readonly property real fit: ValueGraphics.stackedFit(root.crossSize, root.fontSize)
+        // to fit inside the box's outline across a bar the text is large
+        // for (a thin bar, a text scale past 100%)
+        readonly property real fit: ValueGraphics.stackedFit(root.room, root.fontSize)
         anchors.centerIn: parent
         spacing: 0
 

@@ -70,6 +70,7 @@ BarIconWidget {
     preferredLength: root.appearance.width
     vertical: root.isVertical
     crossSize: root.crossSize
+    room: ValueGraphics.boxRoom(root.crossSize, root.barConfig.look.shape)
     fontSize: root.fontSize
     middle: root.iconMiddle
     color: root.colors.icon
