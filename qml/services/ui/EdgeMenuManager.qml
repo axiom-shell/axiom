@@ -114,7 +114,7 @@ Singleton {
   }
 
   // True for a menu held open by the editor: it ignores closeOnLeave and
-  // outside clicks, as a pinned one does (previewing a submenu menu holds
+  // outside clicks, as a pinned one does (previewing a free menu holds
   // the menu it opens from, previewParent)
   function isHeld(id) {
     return root.isPinned(id) || (id !== "" && (OverlayManager.menus.previewing === id || OverlayManager.menus.previewParent === id));

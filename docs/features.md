@@ -133,8 +133,8 @@ Edge menus are the overlay's other half. Every overlay module fits in them, plac
 
 <p align="center"><img src="screenshots/demo-menus.webp" alt="The right menu opening beside the bar while the windows retile to make room, then a floating menu on the left" width="900"></p>
 
-- **Floating** menus open over your windows. They grow out of the screen border or a solid bar like the popouts, or sit apart as a box.
-- **Integrated** menus open outside the border and bars. They push the bars and your windows inwards, like a sidebar, and give the space back when they close.
+- **Edge** menus open over your windows. They grow out of the screen border or a solid bar like the popouts, or sit apart as a box.
+- **Strip** menus open outside the border and bars. They push the bars and your windows inwards, like a sidebar, and give the space back when they close.
 - **Opening a menu.** Rest the pointer on its edge, or use a bar **Button**, a keybind, or IPC (`edgeMenu toggle <id>`).
 - **Closing it.** A menu can close when the pointer leaves or when you click outside it. Its pin button, or the pin quick action, keeps it open.
 - **Per-menu settings.** Each menu has its own:
@@ -143,9 +143,9 @@ Edge menus are the overlay's other half. Every overlay module fits in them, plac
   - module size and colors
   - hover timings
 
-  An integrated menu can also draw a framed box along the whole edge.
+  A strip menu can also draw a framed box along the whole edge.
 
-| Left: media at hand (floating) | Right: chat beside the bar (integrated) | Right: the week ahead (integrated) |
+| Left: media at hand (edge) | Right: chat beside the bar (strip) | Right: the week ahead (strip) |
 | :---: | :---: | :---: |
 | <img src="screenshots/menu-left.webp" alt="A floating menu on the left edge with quick actions, now playing and the audio mixer"> | <img src="screenshots/menu-right.webp" alt="An integrated menu on the right edge with quick actions, AI chat, now playing and weather"> | <img src="screenshots/menu-calendar.webp" alt="An integrated menu on the right edge with a clock, the month and the week's agenda"> |
 | **Top: wallpaper and theme, dropping from a pill** | **Right: a notepad** | |
