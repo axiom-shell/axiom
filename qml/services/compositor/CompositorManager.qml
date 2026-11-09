@@ -298,8 +298,17 @@ Singleton {
   // The largest window on a workspace (its icon stands for the workspace),
   // or null
   function biggestWindowForWorkspace(workspaceId) {
+    return root.windowsBySize(workspaceId)[0] ?? null;
+  }
+
+  // A workspace's windows, the biggest (by area) first, ties in the
+  // windows' order
+  function windowsBySize(workspaceId) {
     const area = w => (w?.w ?? 0) * (w?.h ?? 0);
-    return root.windows.filter(w => w.workspaceId === workspaceId).reduce((biggest, w) => area(w) > area(biggest) ? w : biggest, null);
+    return root.windows.filter(w => w.workspaceId === workspaceId).map((w, i) => ({
+          "w": w,
+          "i": i
+        })).sort((a, b) => area(b.w) - area(a.w) || a.i - b.i).map(e => e.w);
   }
 
   // A workspace's windows in strip order (WorkspaceGeometry.stripOrder)

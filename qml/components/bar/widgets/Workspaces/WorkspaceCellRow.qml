@@ -160,6 +160,8 @@ Item {
         glyph: _content?.kind === "glyph" ? _content.text : ""
         text: _content?.kind === "text" ? _content.text : ""
         iconPaths: _content ? _content.icons : []
+        iconLayout: contents.iconLayout
+        iconSlots: contents.iconSlots
         clickable: root.properties.clickToSwitch
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.monitor?.name ?? "")
         // Also when the cell under the pointer comes to stand for another

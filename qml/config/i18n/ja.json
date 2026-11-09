@@ -4144,7 +4144,6 @@
     "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
     "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
     "What each workspace shows. None: just its box or line.": "",
-    "Workspaces with windows show their largest window's icon instead.": "",
     "Numbers, dots in boxes and the grid's active arrow.": "",
     "Make the active workspace one cell longer.": "",
     "A Material Symbols name, a pasted glyph, or text.": "",
@@ -4155,6 +4154,12 @@
     "Fade urgent workspaces in and out until you visit them.": "",
     "A workspace with a window asking for attention. The active one keeps its own color.": "",
     "Urgent": "",
-    "Pulse urgent workspaces": ""
+    "Pulse urgent workspaces": "",
+    "Workspaces with windows show their apps' icons instead.": "",
+    "Row": "",
+    "Icons in a row": "",
+    "Largest": "",
+    "The most apps a workspace shows, the biggest windows first.": "",
+    "Largest: the biggest window's icon. Row: each app once, side by side, the cell growing to fit. Square: up to four in a block the size of a cell.": ""
   }
 }

@@ -38,6 +38,57 @@ TestCase {
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 3), 102, "past the end: where a next cell would start");
   }
 
+  function test_rowLength() {
+    compare(WorkspaceCells.rowLength(1, 20, 20), 20, "one icon: a normal cell");
+    // 3 × 13 + 2 × 2 + 7
+    compare(WorkspaceCells.rowLength(3, 20, 20), 50);
+    compare(WorkspaceCells.rowLength(0, 20, 12), 12, "never under the rest length");
+  }
+
+  function test_distinctApps() {
+    const windows = [
+      {
+        "id": "a",
+        "appId": "firefox"
+      },
+      {
+        "id": "b",
+        "appId": "Firefox"
+      },
+      {
+        "id": "c",
+        "appId": "kitty"
+      },
+      {
+        "id": "d",
+        "appId": ""
+      },
+      {
+        "id": "e",
+        "appId": ""
+      }
+    ];
+    compare(WorkspaceCells.distinctApps(windows, 5).map(w => w.id), ["a", "c", "d", "e"], "each app once, its biggest window; no app id: each window its own");
+    compare(WorkspaceCells.distinctApps(windows, 2).map(w => w.id), ["a", "c"], "at most max, biggest first");
+    compare(WorkspaceCells.distinctApps([], 3), []);
+  }
+
+  function test_squareSlots() {
+    compare(WorkspaceCells.squareSlots(0), []);
+    compare(WorkspaceCells.squareSlots(1), [
+      {
+        "x": 0.5,
+        "y": 0.5,
+        "size": 0.65
+      }
+    ], "one: a full-size icon");
+    const two = WorkspaceCells.squareSlots(2);
+    compare(two.map(s => [s.x, s.y]), [[0.3, 0.5], [0.7, 0.5]], "two: side by side, centred");
+    verify(two[0].size < 0.5, "half size");
+    compare(WorkspaceCells.squareSlots(3).map(s => [s.x, s.y]), [[0.3, 0.3], [0.7, 0.3], [0.5, 0.7]], "three: two over one centred");
+    compare(WorkspaceCells.squareSlots(7).length, 4, "four or more: a 2×2 block");
+  }
+
   function test_isSymbol() {
     verify(WorkspaceCells.isSymbol("terminal"));
     verify(!WorkspaceCells.isSymbol("Web"), "capitals: words");

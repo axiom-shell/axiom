@@ -39,6 +39,68 @@ QtObject {
     return along;
   }
 
+  // An app icon's size in a cell `thickness` thick (one alone, or each of
+  // a row's)
+  function iconSize(thickness) {
+    return thickness * 0.65;
+  }
+
+  // The gap between a row's app icons
+  function iconGap(thickness) {
+    return Math.round(thickness * 0.1);
+  }
+
+  // A cell's length along the bar for `count` app icons side by side (the
+  // Row layout): room for them all with a lone icon's room around them, and
+  // never under `rest`
+  function rowLength(count, thickness, rest) {
+    const icon = root.iconSize(thickness);
+    const along = count * icon + Math.max(0, count - 1) * root.iconGap(thickness) + (thickness - icon);
+    return Math.max(rest, Math.ceil(along));
+  }
+
+  // Of `windows` (biggest first), one per app (by app id, a window without
+  // one its own), at most `max`: the apps a cell shows
+  function distinctApps(windows, max) {
+    const seen = [];
+    const result = [];
+    for (const w of windows ?? []) {
+      if (result.length >= max)
+        break;
+      const key = w.appId ? "app:" + String(w.appId).toLowerCase() : "window:" + w.id;
+      if (seen.indexOf(key) >= 0)
+        continue;
+      seen.push(key);
+      result.push(w);
+    }
+    return result;
+  }
+
+  // Where `count` app icons sit in the Square layout, in a square
+  // `thickness` across (the middle of a widened cell): [{ x, y, size }],
+  // each icon's centre and size as fractions of it. One: a single full
+  // icon; two: half-size side by side; three: two over one centred; four
+  // or more: a 2×2 block (the first four)
+  function squareSlots(count) {
+    const half = 0.36;
+    const near = 0.3;
+    const far = 0.7;
+    const slot = (x, y, size) => ({
+          "x": x,
+          "y": y,
+          "size": size
+        });
+    if (count <= 0)
+      return [];
+    if (count === 1)
+      return [slot(0.5, 0.5, 0.65)];
+    if (count === 2)
+      return [slot(near, 0.5, half), slot(far, 0.5, half)];
+    if (count === 3)
+      return [slot(near, near, half), slot(far, near, half), slot(0.5, far, half)];
+    return [slot(near, near, half), slot(far, near, half), slot(near, far, half), slot(far, far, half)];
+  }
+
   // Whether `text` is a Material Symbols name (as StyledIcon reads it:
   // drawn as that icon), not a glyph or words drawn in the text font
   function isSymbol(text) {

@@ -61,15 +61,23 @@ QtObject {
     };
   }
 
-  // The app icons a workspace with windows shows: its largest window's
+  // "largest", "row" or "square" (`appIconsLayout`)
+  readonly property string iconLayout: root.properties.appIconsLayout ?? "largest"
+  // How many app icons a cell can show in that layout
+  readonly property int iconSlots: root.iconLayout === "row" ? (root.properties.appIconsMax ?? 3) : root.iconLayout === "square" ? 4 : 1
+
+  // The app icons a workspace with windows shows: its largest window's, or
+  // in a row or square its apps' (each once, by its biggest window, the
+  // biggest first)
   function _icons(wsId) {
-    const biggest = CompositorManager.biggestWindowForWorkspace(wsId);
-    return biggest ? [AppIconManager.resolveWindowIcon(biggest.appId, biggest.title)] : [];
+    return WorkspaceCells.distinctApps(CompositorManager.windowsBySize(wsId), root.iconSlots).map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
   }
 
-  // Along the bar: the rest length, or longer for text that needs it
-  // (with half a cell's thickness of room around it)
+  // Along the bar: the rest length, longer for text that needs it (with
+  // half a cell's thickness of room around it) or a row of icons
   function _length(shown, icons) {
+    if (shown.kind === "icons" && root.iconLayout === "row")
+      return WorkspaceCells.rowLength(icons.length, root.thickness, root.restLength);
     if (shown.kind !== "text" || WorkspaceCells.isSymbol(shown.text))
       return root.restLength;
     // The size read, so a binding calling this measures again when it changes

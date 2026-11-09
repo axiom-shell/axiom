@@ -68,6 +68,8 @@ WorkspacePopoutPanel {
         label: shows.number
         text: shows.kind === "text" ? shows.text : ""
         iconPaths: shows.icons
+        iconLayout: contents.iconLayout
+        iconSlots: contents.iconSlots
         clickable: root.properties.clickToSwitch ?? false
         animated: root._settled
         opacity: inBar ? 1.0 : 0.85

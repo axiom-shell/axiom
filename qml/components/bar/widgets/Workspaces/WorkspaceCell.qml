@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
@@ -36,8 +37,13 @@ Item {
   // A label of one's own or the compositor's name
   property string text: ""
   property string iconPath: ""
-  // App icons' paths (`iconPath` alone by default)
+  // App icons' paths (`iconPath` alone by default), laid out as
+  // `iconLayout` says: "largest" (the first alone), "row" (side by side
+  // along the bar) or "square" (up to four in a block the cell's size:
+  // WorkspaceCells.squareSlots), of which it has room for `iconSlots`
   property var iconPaths: iconPath !== "" ? [iconPath] : []
+  property string iconLayout: "largest"
+  property int iconSlots: 1
   property string glyph: ""
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
@@ -164,14 +170,55 @@ Item {
       }
     }
 
-    Image {
+    // App icons alone or in a row, packed in the middle. The slots come
+    // from the layout (config), each shown while it has an icon
+    Grid {
       anchors.centerIn: parent
-      width: root.thickness * 0.65
-      height: width
-      sourceSize: Qt.size(64, 64)
-      source: root._shows === "icons" ? root.iconPaths[0] : ""
-      visible: root._shows === "icons"
-      opacity: root.boxed || root.isActive ? 1 : 0.7
+      visible: root._shows === "icons" && root.iconLayout !== "square"
+      flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
+      rows: root.isVertical ? Math.max(1, root.iconSlots) : 1
+      columns: root.isVertical ? 1 : Math.max(1, root.iconSlots)
+      spacing: WorkspaceCells.iconGap(root.thickness)
+
+      Repeater {
+        model: root.iconLayout === "square" ? 0 : root.iconLayout === "row" ? root.iconSlots : 1
+
+        Image {
+          required property int index
+          width: WorkspaceCells.iconSize(root.thickness)
+          height: width
+          sourceSize: Qt.size(64, 64)
+          source: root._shows === "icons" ? (root.iconPaths[index] ?? "") : ""
+          visible: index < root.iconPaths.length
+          opacity: root.boxed || root.isActive ? 1 : 0.7
+        }
+      }
+    }
+
+    // Up to four in a block the cell's own size, in its middle
+    Item {
+      anchors.centerIn: parent
+      visible: root._shows === "icons" && root.iconLayout === "square"
+      width: root.thickness
+      height: root.thickness
+
+      Repeater {
+        model: root.iconLayout === "square" ? 4 : 0
+
+        Image {
+          required property int index
+          readonly property var slot: WorkspaceCells.squareSlots(root.iconPaths.length)[index] ?? null
+
+          visible: slot !== null
+          x: slot ? root.thickness * slot.x - width / 2 : 0
+          y: slot ? root.thickness * slot.y - height / 2 : 0
+          width: root.thickness * (slot?.size ?? 0)
+          height: width
+          sourceSize: Qt.size(64, 64)
+          source: slot ? root.iconPaths[index] : ""
+          opacity: root.boxed || root.isActive ? 1 : 0.7
+        }
+      }
     }
 
     StyledText {
