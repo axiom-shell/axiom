@@ -336,12 +336,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
 
-### Rows re-ranked under the selection while the file index builds
-- **Where:** `qml/services/ui/LauncherFiles.qml` (`_index`, `onStateChanged`), `qml/components/surfaces/launcher/LauncherPanel.qml` (`_syncRows`)
-- **What:** During the first crawl a shown `~` search is asked again on each state push (up to twice a second) and its answer replaces the rows; the panel keeps the selection by index, not by row, so a user who moved down to a file can find another one there after the next push, and Enter or Ctrl+C acts on it. Only while the index is first built (the user sees the row change). A fix keeps the selected row by its path when rows are rebuilt for the same text, or stops asking again once the selection moved.
-- **Size:** small
-- **Found:** 2026-11-09, while reviewing the launcher's file search
-
 ### appLauncher files has no keybind action
 - **Where:** `qml/components/surfaces/launcher/Launcher.qml` (`files`), `backend/internal/compositor/actions/table.json`
 - **What:** The file search's IPC function `appLauncher files` (the launcher on `~`, the recent files) has no row in the keybind actions table, unlike `clipboard`, `emoji` and `calculator`, so it can't be bound from the keybinds page or reached as an action. Whether it should be one (a new action in the catalogue, its icon and Tools entry in `docs/usage.md`) is the maintainer's call.

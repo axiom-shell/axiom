@@ -27,13 +27,14 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 
 ### Row shape
 Every provider returns the same row shape:
-`{ kind, image, glyph, title, usage, subtitle, hint, complete, run(shift), crop, copy() }`
+`{ kind, image, glyph, title, usage, subtitle, hint, complete, run(shift), crop, copy(), key }`
 - `crop`: `image` is a picture that fills its tile (an option's wallpaper or setup thumbnail, a copied image); an icon keeps its shape.
 - `copy()`, when a row has one: <kbd>Ctrl</kbd>+<kbd>C</kbd> with nothing selected in the field runs it and closes the launcher (`LauncherManager.copy`; a file's path). Otherwise Ctrl+C copies the field's selection as usual.
+- `key`, when a row has one, names what it shows (a file row's path): rows rebuilt for the same text keep the row of the selected key selected wherever it moved (`LauncherPanel._syncRows`); a row without one, or one gone, keeps the selection's place (clamped), whose row's key it then follows. New text starts at the top.
 - A file row also has `thumb` (the file) and `mtime`: `LauncherRow` asks `FileSearchManager` for its thumbnail while it shows the row and draws it cropped in place of the type's icon once it lands.
 - What `run` returns decides what happens next:
   - true closes the launcher;
-  - false keeps it open, and the rows are rebuilt with the selection kept;
+  - false keeps it open, and the rows are rebuilt with the selection kept (by `key`, else by place);
   - a string is searched for instead.
 - Tab puts `complete` into the field.
 

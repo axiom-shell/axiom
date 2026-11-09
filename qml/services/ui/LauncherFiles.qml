@@ -15,8 +15,9 @@ import qs.services.apps
  * doesn't flicker) and ask once per new text; `updated` says new rows are
  * in, and the launcher reads them again, which asks nothing.
  * A row is the launcher's shape plus `thumb` (the file whose thumbnail
- * LauncherRow shows once FileSearchManager has it), `mtime`, and copy()
- * (Ctrl+C: the path).
+ * LauncherRow shows once FileSearchManager has it), `mtime`, copy()
+ * (Ctrl+C: the path) and its path as `key` (the panel keeps the selected
+ * file selected when an answer while the index builds moves it).
  */
 QtObject {
   id: root
@@ -166,6 +167,7 @@ QtObject {
       glyph: item.dir ? "folder" : "draft",
       thumb: LauncherConfig.fileThumbnails && !item.dir && FilePaths.thumbnailable(item.mime) ? item.path : "",
       mtime: item.mtime,
+      key: item.path,
       title: item.name,
       subtitle: item.dir ? I18n.tr("{0} · {1}", where, when) : I18n.tr("{0} · {1} · {2}", where, Utils.formatBytes(item.size), when),
       hint: inMain ? (item.dir ? I18n.tr("Folder") : I18n.tr("File")) : I18n.tr("Shift+Enter shows it"),

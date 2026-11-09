@@ -21,12 +21,14 @@ import qs.services.apps
  * when the text is math, the best few files after them and a web search
  * row last. Every row is
  *   { kind, image, glyph, title, usage, subtitle, hint, complete, run(shift),
- *     crop, copy() }
+ *     crop, copy(), key }
  * where image is an icon path or url (crop: a picture that fills its tile),
  * glyph a Material Symbols name, complete the text Tab puts in the search
  * field, and run() returns true to close the launcher, false to keep it
  * open, or a string to search for instead; copy(), when a row has it, is
- * Ctrl+C's (a file's path).
+ * Ctrl+C's (a file's path); key, when a row has it, names what it shows
+ * (a file's path), so rows rebuilt for the same text keep the selected one
+ * selected however they moved.
  * App launches and commands run are counted (with their last time) for
  * frecency sorting.
  */

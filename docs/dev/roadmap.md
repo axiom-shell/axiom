@@ -245,7 +245,6 @@ Found meanwhile:
 - [A theme can't be generated from an avif or jxl wallpaper](issues.md#a-theme-cant-be-generated-from-an-avif-or-jxl-wallpaper) (a choice: a Go decoder dependency, or the shell handing over the image Qt decoded)
 - [Peripherals only UPower sees aren't in the Battery widget or module](issues.md#peripherals-only-upower-sees-arent-in-the-battery-widget-or-module) (Full Bluetooth)
 - [Ctrl+C on a file row copies its path, not the file](issues.md#ctrlc-on-a-file-row-copies-its-path-not-the-file) (file search, left out of v1)
-- [Rows re-ranked under the selection while the file index builds](issues.md#rows-re-ranked-under-the-selection-while-the-file-index-builds) (reviewing the file search)
 - [appLauncher files has no keybind action](issues.md#applauncher-files-has-no-keybind-action) (reviewing the file search; the maintainer's call)
 
 Needs a plan:

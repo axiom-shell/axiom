@@ -17,8 +17,11 @@ FocusScope {
   property bool reversed: LauncherConfig.reverse
   // Blinks the cursor only while shown
   property bool shown: true
-  // The row kept selected when the rows are rebuilt for the same text
+  // The row kept selected when the rows are rebuilt for the same text: by
+  // its key (a row's `key`, its file's path) while the new rows hold it,
+  // else by its place
   property int selected: 0
+  property string _selectedKey: ""
   // Whether the pointer picks rows. Typing and keys turn it off, and only a
   // real move turns it back on: rows rebuilt under a still pointer get a
   // synthetic hover, which would otherwise select and highlight them
@@ -54,6 +57,7 @@ FocusScope {
     if (LauncherManager.text !== input.text)
       LauncherManager.query(input.text);
     root.selected = 0;
+    root._selectedKey = "";
     list.currentIndex = 0;
     root.pointerActive = false;
     root._pointer = Qt.point(-1, -1);
@@ -80,20 +84,36 @@ FocusScope {
     if (!moved)
       return;
     root.pointerActive = true;
+    root._choose(index);
+  }
+
+  // Selects row index, remembering its key
+  function _choose(index) {
     root.selected = index;
+    root._selectedKey = LauncherManager.results[index]?.key ?? "";
     list.currentIndex = index;
   }
 
   function _syncRows() {
     const count = LauncherManager.results.length;
+    // A rebuild for the same text (a command that keeps the launcher open,
+    // a file search answered again as the index grows) keeps the selection:
+    // the same row when it's still there, else the same place (whose row
+    // it then follows)
+    const results = LauncherManager.results;
+    if (root._selectedKey !== "") {
+      const kept = results.findIndex(row => row.key === root._selectedKey);
+      if (kept >= 0)
+        root.selected = kept;
+      else
+        root._selectedKey = results[Math.min(root.selected, count - 1)]?.key ?? "";
+    }
     if (rowModel.count > count)
       rowModel.remove(count, rowModel.count - count);
     while (rowModel.count < count)
       rowModel.append({
         row: 0
       });
-    // A rebuild for the same text (a command that keeps the launcher open)
-    // keeps the selection
     list.currentIndex = Math.max(0, Math.min(root.selected, count - 1));
   }
 
@@ -116,8 +136,7 @@ FocusScope {
     root.pointerActive = false;
     if (list.count === 0)
       return;
-    root.selected = (index + list.count) % list.count;
-    list.currentIndex = root.selected;
+    root._choose((index + list.count) % list.count);
   }
 
   function activate(shift) {
@@ -194,6 +213,7 @@ FocusScope {
 
       onTextChanged: {
         root.selected = 0;
+        root._selectedKey = "";
         root.pointerActive = false;
         if (text !== LauncherManager.text)
           LauncherManager.query(text);
