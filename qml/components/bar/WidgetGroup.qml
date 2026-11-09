@@ -24,6 +24,10 @@ Item {
   // count, so edits to a widget's options reach it in place instead of
   // rebuilding every widget in the section.
   property var widgets: []
+  // A live copy in the bar editor (a WidgetChip's one widget): its hosts
+  // are previews (BarWidgetHost.preview), never outlined for the editor
+  // and reporting no hover to it
+  property bool preview: false
 
   // A powerline's widgets touch (BarsConfig.enrichBarConfig)
   readonly property int spacing: root.barConfig.groupSpacing
@@ -146,6 +150,8 @@ Item {
   // content, never the room they're given), and whether its ends join
   // (for the insets: BarRuns.insets)
   readonly property var _hasContent: root._modules.map(m => m.naturalSize > 0)
+  // Any of its widgets has something to show (a bar editor chip's)
+  readonly property bool hasContent: root._hasContent.includes(true)
   readonly property var _section: ({
       "first": root._hasContent.indexOf(true),
       "last": root._hasContent.lastIndexOf(true),
@@ -272,10 +278,11 @@ Item {
       barStart: root._graded ? root.barStart + module._offset : 0
       barLength: root._graded ? root.barLength : 0
       widget: module.modelData
-      highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
-      hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
+      preview: root.preview
+      highlighted: !root.preview && BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
+      hoverHighlighted: !root.preview && BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
       // The bar editor's chip of the widget under the pointer looks hovered
-      onPointerHoveredChanged: if (BarManager.editing)
+      onPointerHoveredChanged: if (BarManager.editing && !root.preview)
         BarManager.setBarHover(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1, module.pointerHovered)
       panel: root.panel
       screen: root.screen
