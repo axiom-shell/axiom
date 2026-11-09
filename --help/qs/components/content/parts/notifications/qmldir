@@ -1,0 +1,10 @@
+module qs.components.content.parts.notifications
+NotificationActions 1.0 NotificationActions.qml
+NotificationAvatar 1.0 NotificationAvatar.qml
+NotificationGroupDelegate 1.0 NotificationGroupDelegate.qml
+NotificationHeader 1.0 NotificationHeader.qml
+NotificationItemDelegate 1.0 NotificationItemDelegate.qml
+NotificationQuietHeader 1.0 NotificationQuietHeader.qml
+NotificationReply 1.0 NotificationReply.qml
+NotificationSwipe 1.0 NotificationSwipe.qml
+NotificationText 1.0 NotificationText.qml

@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.Bluetooth
+Bluetooth 1.0 Bluetooth.qml
+BluetoothWatch 1.0 BluetoothWatch.qml

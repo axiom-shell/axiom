@@ -1,0 +1,3 @@
+module qs.components.surfaces.onboarding
+OnboardingWindow 1.0 OnboardingWindow.qml
+StepBar 1.0 StepBar.qml

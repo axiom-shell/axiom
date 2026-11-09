@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.NightLight
+NightLight 1.0 NightLight.qml
+NightLightWatch 1.0 NightLightWatch.qml

@@ -1,0 +1,3 @@
+module qs.components.content.Submenu
+MenuSubmenu 1.0 MenuSubmenu.qml
+Submenu 1.0 Submenu.qml

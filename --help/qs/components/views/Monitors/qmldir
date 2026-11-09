@@ -1,0 +1,4 @@
+module qs.components.views.Monitors
+MonitorCanvas 1.0 MonitorCanvas.qml
+MonitorInspector 1.0 MonitorInspector.qml
+Monitors 1.0 Monitors.qml

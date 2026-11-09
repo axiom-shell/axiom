@@ -1,0 +1,10 @@
+module qs.services.session
+singleton AccountManager 1.0 AccountManager.qml
+singleton AuthManager 1.0 AuthManager.qml
+singleton GreetdManager 1.0 GreetdManager.qml
+singleton GreeterManager 1.0 GreeterManager.qml
+singleton IdleManager 1.0 IdleManager.qml
+singleton LockManager 1.0 LockManager.qml
+singleton OnboardingManager 1.0 OnboardingManager.qml
+singleton PolkitManager 1.0 PolkitManager.qml
+singleton SessionManager 1.0 SessionManager.qml

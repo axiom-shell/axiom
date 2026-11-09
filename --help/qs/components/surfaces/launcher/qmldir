@@ -1,0 +1,4 @@
+module qs.components.surfaces.launcher
+Launcher 1.0 Launcher.qml
+LauncherPanel 1.0 LauncherPanel.qml
+LauncherRow 1.0 LauncherRow.qml

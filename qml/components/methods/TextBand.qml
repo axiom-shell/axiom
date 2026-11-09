@@ -5,7 +5,9 @@ import QtQuick
 // on its line box (ascent + descent), which holds the room for accents
 // above and descenders below and so centres lowercase text a pixel or two
 // low beside an icon. The band is fixed by the font, never the string's
-// ink, so a label doesn't move as its text changes: the x-height for text
+// ink, so a label doesn't move with its text's descenders or capitals,
+// only (by half the two bands' difference) when lowercase comes or goes
+// from it: the x-height for text
 // with lowercase in it (whose middle is also the middle of its ascenders
 // over its descenders), a figure's height (a digit's, as tall as a
 // capital) for text without (numbers, capitals). TextBandPadding pads a

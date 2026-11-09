@@ -1,0 +1,4 @@
+module qs.components.surfaces.prompt
+PolkitCard 1.0 PolkitCard.qml
+PromptCard 1.0 PromptCard.qml
+PromptWindow 1.0 PromptWindow.qml

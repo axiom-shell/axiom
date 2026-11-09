@@ -1,0 +1,7 @@
+module qs.components.content.base
+Card 1.0 Card.qml
+CardHeader 1.0 CardHeader.qml
+Panel 1.0 Panel.qml
+SaveResetActions 1.0 SaveResetActions.qml
+SlotContext 1.0 SlotContext.qml
+TitledCard 1.0 TitledCard.qml

@@ -1,0 +1,7 @@
+module qs.components.content.parts.calendar
+DateTimeField 1.0 DateTimeField.qml
+DayAgenda 1.0 DayAgenda.qml
+DayPane 1.0 DayPane.qml
+EventEditor 1.0 EventEditor.qml
+EventRow 1.0 EventRow.qml
+MonthGrid 1.0 MonthGrid.qml

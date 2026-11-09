@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.Audio
+Audio 1.0 Audio.qml
+AudioWatch 1.0 AudioWatch.qml

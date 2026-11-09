@@ -1,0 +1,11 @@
+module qs.components.content.parts.chat
+AttachmentChip 1.0 AttachmentChip.qml
+ChatCodeBlock 1.0 ChatCodeBlock.qml
+ChatComposer 1.0 ChatComposer.qml
+ChatHeader 1.0 ChatHeader.qml
+ChatMarkdownText 1.0 ChatMarkdownText.qml
+ChatMessage 1.0 ChatMessage.qml
+ChatMessageList 1.0 ChatMessageList.qml
+ChatThinking 1.0 ChatThinking.qml
+ConversationList 1.0 ConversationList.qml
+ModelPicker 1.0 ModelPicker.qml

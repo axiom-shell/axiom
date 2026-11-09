@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.Media
+Media 1.0 Media.qml
+MediaWatch 1.0 MediaWatch.qml

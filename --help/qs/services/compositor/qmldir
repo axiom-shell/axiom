@@ -1,0 +1,16 @@
+module qs.services.compositor
+singleton CompositorConfigManager 1.0 CompositorConfigManager.qml
+singleton CompositorManager 1.0 CompositorManager.qml
+FocusGrab 1.0 FocusGrab.qml
+HyprlandGrab 1.0 HyprlandGrab.qml
+singleton HyprlandManager 1.0 HyprlandManager.qml
+KeybindEditor 1.0 KeybindEditor.qml
+singleton KeybindManager 1.0 KeybindManager.qml
+KeybindsPageState 1.0 KeybindsPageState.qml
+singleton LayerManager 1.0 LayerManager.qml
+singleton MonitorManager 1.0 MonitorManager.qml
+singleton NiriManager 1.0 NiriManager.qml
+singleton SwayIpcManager 1.0 SwayIpcManager.qml
+singleton SwayManager 1.0 SwayManager.qml
+singleton WindowSwitcherManager 1.0 WindowSwitcherManager.qml
+WorkspaceRemap 1.0 WorkspaceRemap.qml

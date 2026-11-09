@@ -1,0 +1,2 @@
+module qs.components.hosts.window
+PageWindow 1.0 PageWindow.qml

@@ -1,0 +1,461 @@
+pragma Singleton
+
+import QtQuick
+
+// Pure helpers for the Monitors page (MonitorManager): modes, scales,
+// rotation, the layout's rects and snapping, and picking the profile for
+// the connected outputs. A monitor is an entry of `hyprctl monitors all -j`;
+// a rule is a Monitors.items profile output (the MonitorRule schema);
+// rects are { x, y, width, height } in layout (logical) pixels.
+QtObject {
+  id: root
+
+  // --- Modes ---
+
+  // "3440x1440@240.00Hz", "3440x1440@240" or "3440x1440" as
+  // { width, height, rate } (rate 0 when absent), or null
+  function parseMode(mode) {
+    const match = /^(\d+)x(\d+)(?:@([\d.]+)(?:Hz)?)?$/.exec(String(mode ?? "").trim());
+    if (!match)
+      return null;
+    return {
+      "width": Number(match[1]),
+      "height": Number(match[2]),
+      "rate": match[3] ? Number(match[3]) : 0
+    };
+  }
+
+  // A rate as Hyprland takes it: at most two decimals, none when whole
+  function formatRate(rate) {
+    return String(Math.round(rate * 100) / 100);
+  }
+
+  function formatMode(width, height, rate) {
+    return `${width}x${height}` + (rate > 0 ? "@" + formatRate(rate) : "");
+  }
+
+  // A refresh rate in mHz (sway's and niri's) as Hz, two decimals at most
+  function hz(milli) {
+    return Math.round((milli ?? 0) / 10) / 100;
+  }
+
+  // A mode as every compositor's availableModes spell it ("WxH@R.RRHz", from
+  // a rate in mHz): parseModes and the rules match them as strings
+  function availableMode(width, height, milli) {
+    return `${width}x${height}@${root.hz(milli).toFixed(2)}Hz`;
+  }
+
+  // An output's description from its make, model and serial (sway's and
+  // niri's), those it has: what outputId names it by
+  function describe(output) {
+    return [output?.make, output?.model, output?.serial].filter(part => part && part !== "Unknown").join(" ");
+  }
+
+  // availableModes as resolutions, largest first, each with its rates
+  // (highest first, duplicates dropped): [{ width, height, rates: [...] }]
+  function parseModes(availableModes) {
+    const byResolution = {};
+    const order = [];
+    for (const text of availableModes ?? []) {
+      const mode = parseMode(text);
+      if (!mode)
+        continue;
+      const key = `${mode.width}x${mode.height}`;
+      if (!byResolution[key]) {
+        byResolution[key] = {
+          "width": mode.width,
+          "height": mode.height,
+          "rates": []
+        };
+        order.push(key);
+      }
+      const rate = Number(formatRate(mode.rate));
+      if (!byResolution[key].rates.includes(rate))
+        byResolution[key].rates.push(rate);
+    }
+    const list = order.map(key => byResolution[key]);
+    list.forEach(entry => entry.rates.sort((a, b) => b - a));
+    return list.sort((a, b) => b.width * b.height - a.width * a.height || b.width - a.width);
+  }
+
+  // --- Scale and rotation ---
+
+  // Scales that give a whole logical size (Hyprland rounds others to the
+  // nearest that does, in 1/120 steps), from 0.5 to 3, plus `keep`
+  function validScales(width, height, keep) {
+    const result = [];
+    const whole = v => Math.abs(v - Math.round(v)) < 0.001;
+    for (let step = 60; step <= 360; step++) {
+      const scale = step / 120;
+      if (whole(width / scale) && whole(height / scale))
+        result.push(Math.round(scale * 10000) / 10000);
+    }
+    if (keep !== undefined && keep > 0 && !result.some(scale => Math.abs(scale - keep) < 0.0001))
+      result.push(keep);
+    return result.sort((a, b) => a - b);
+  }
+
+  // Transforms 1, 3, 5 and 7 turn the output a quarter
+  function isSideways(transform) {
+    return transform % 2 === 1;
+  }
+
+  // The size an output takes in the layout: its mode, turned, over its scale
+  function logicalSize(width, height, scale, transform) {
+    const s = scale > 0 ? scale : 1;
+    const w = Math.round(width / s);
+    const h = Math.round(height / s);
+    return isSideways(transform) ? {
+      "width": h,
+      "height": w
+    } : {
+      "width": w,
+      "height": h
+    };
+  }
+
+  // --- The layout ---
+
+  // A rect's snapped position against `others`: each axis moves to the
+  // nearest line within `threshold` (edge to edge, or aligned start, end or
+  // centre), else stays. { x, y, guides: [{ axis: "x"|"y", at }] }, the
+  // guides being the lines it snapped to.
+  function snap(rect, others, threshold) {
+    const axis = (pos, size, otherPos, otherSize) => {
+      let best = null;
+      for (const other of others) {
+        const start = other[otherPos];
+        const end = start + other[otherSize];
+        const candidates = [[start, start], [end - rect[size], end], [end, end], [start - rect[size], start], [start + (other[otherSize] - rect[size]) / 2, start + other[otherSize] / 2]];
+        for (const [target, line] of candidates) {
+          const distance = Math.abs(rect[pos] - target);
+          if (distance <= threshold && (best === null || distance < best.distance))
+            best = {
+              "target": Math.round(target),
+              "line": Math.round(line),
+              "distance": distance
+            };
+        }
+      }
+      return best;
+    };
+    const bx = axis("x", "width", "x", "width");
+    const by = axis("y", "height", "y", "height");
+    const guides = [];
+    if (bx)
+      guides.push({
+        "axis": "x",
+        "at": bx.line
+      });
+    if (by)
+      guides.push({
+        "axis": "y",
+        "at": by.line
+      });
+    return {
+      "x": bx ? bx.target : Math.round(rect.x),
+      "y": by ? by.target : Math.round(rect.y),
+      "guides": guides
+    };
+  }
+
+  // The box around rects ({ x, y, width, height }); a 1920×1080 one at the
+  // origin when there are none
+  function bounds(rects) {
+    if (rects.length === 0)
+      return {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 1080
+      };
+    const x = Math.min(...rects.map(r => r.x));
+    const y = Math.min(...rects.map(r => r.y));
+    return {
+      "x": x,
+      "y": y,
+      "width": Math.max(...rects.map(r => r.x + r.width)) - x,
+      "height": Math.max(...rects.map(r => r.y + r.height)) - y
+    };
+  }
+
+  // The view that fits rects in a box of width × height, `margin` inside
+  // each side, centred: { scale (box pixels per layout pixel), x, y (the
+  // layout point at the box's top left) }
+  function fit(rects, width, height, margin) {
+    const box = bounds(rects);
+    const scale = Math.max(0.01, Math.min((width - margin * 2) / box.width, (height - margin * 2) / box.height));
+    return {
+      "scale": scale,
+      "x": box.x - (width / scale - box.width) / 2,
+      "y": box.y - (height / scale - box.height) / 2
+    };
+  }
+
+  // A layout rect in a fitted view's box pixels
+  function place(rect, view) {
+    return {
+      "x": (rect.x - view.x) * view.scale,
+      "y": (rect.y - view.y) * view.scale,
+      "width": rect.width * view.scale,
+      "height": rect.height * view.scale
+    };
+  }
+
+  // The size rects take at one fixed scale: the one that fits every rect
+  // in screenWidth × screenHeight (so a screen keeps its size however many
+  // stand beside it), lowered only when the whole would pass maxWidth ×
+  // maxHeight; their shape kept: { width, height }
+  function fixedSize(rects, screenWidth, screenHeight, maxWidth, maxHeight) {
+    const box = bounds(rects);
+    const sized = rects.length > 0 ? rects : [box];
+    const fixed = Math.min(...sized.map(r => Math.min(screenWidth / r.width, screenHeight / r.height)));
+    const scale = Math.max(0, Math.min(fixed, maxWidth / box.width, maxHeight / box.height));
+    return {
+      "width": box.width * scale,
+      "height": box.height * scale
+    };
+  }
+
+  // Rects with every missing one (null: an output with no known place)
+  // standing in to the right of the others, side by side from the top:
+  // 16:9, as tall as the tallest known one (1080 when none is)
+  function fillMissing(rects) {
+    const known = rects.filter(r => !!r);
+    const box = known.length > 0 ? bounds(known) : {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 1080
+    };
+    const height = known.length > 0 ? Math.max(...known.map(r => r.height)) : 1080;
+    const width = Math.round(height * 16 / 9);
+    let x = box.x + box.width;
+    return rects.map(r => {
+      if (r)
+        return r;
+      const placed = {
+        "x": x,
+        "y": box.y,
+        "width": width,
+        "height": height
+      };
+      x += width;
+      return placed;
+    });
+  }
+
+  function _intersects(a, b) {
+    return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  }
+
+  // Pairs of indices whose rects overlap (Hyprland would stack them)
+  function overlaps(rects) {
+    const pairs = [];
+    for (let i = 0; i < rects.length; i++)
+      for (let j = i + 1; j < rects.length; j++)
+        if (_intersects(rects[i], rects[j]))
+          pairs.push([i, j]);
+    return pairs;
+  }
+
+  // Whether two rects share a stretch of edge (the cursor can cross it)
+  function _touches(a, b) {
+    const spanX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+    const spanY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+    const sideBySide = (a.x + a.width === b.x || b.x + b.width === a.x) && spanY > 0;
+    const stacked = (a.y + a.height === b.y || b.y + b.height === a.y) && spanX > 0;
+    return sideBySide || stacked || _intersects(a, b);
+  }
+
+  // Indices of rects the cursor can't reach from the first one
+  function islands(rects) {
+    if (rects.length < 2)
+      return [];
+    const reached = [0];
+    for (let i = 0; i < reached.length; i++)
+      for (let j = 0; j < rects.length; j++)
+        if (!reached.includes(j) && _touches(rects[reached[i]], rects[j]))
+          reached.push(j);
+    return rects.map((_, i) => i).filter(i => !reached.includes(i));
+  }
+
+  // --- Outputs and profiles ---
+
+  // The rule `output` for a monitor: its description, which follows it to
+  // another port, unless another connected monitor has the same one
+  function outputId(monitor, all) {
+    const description = String(monitor?.description ?? "").trim();
+    const shared = (all ?? []).filter(other => String(other?.description ?? "").trim() === description).length > 1;
+    return description !== "" && !shared ? "desc:" + description : monitor.name;
+  }
+
+  // Whether a rule's `output` names the monitor (render.names in Go)
+  function matches(output, monitor) {
+    if (String(output).startsWith("desc:"))
+      return _bare(monitor?.description) === _bare(output.slice(5));
+    return monitor?.name === output;
+  }
+
+  // A description trimmed, with niri's spelling of a make it has no name
+  // for ("PNP(AOC)") the bare code Hyprland and sway give, so a profile
+  // saved under one compositor matches under another
+  function _bare(description) {
+    return String(description ?? "").trim().replace(/^PNP\(([^)]*)\)/, "$1");
+  }
+
+  // The connected monitor a rule's `output` names, or null
+  function find(output, monitors) {
+    return (monitors ?? []).find(monitor => matches(output, monitor)) ?? null;
+  }
+
+  // Color presets hyprctl reports, as the rule's `cm`
+  readonly property var _cmPresets: ["srgb", "dcip3", "dp3", "adobe", "wide", "edid", "hdr", "hdredid"]
+
+  // Rules for the monitors as they are, but every fractional scale rounded
+  // down to a whole one (1.5 to 1, 2.5 to 2; 2 stays, so a HiDPI panel
+  // stays readable) and side by side from left to right in their current
+  // order (a mirror keeps its place): the first run's layout on Hyprland's
+  // example config, whose "auto" scale is often 1.25 or 1.5
+  function wholeScaleRules(all) {
+    let x = 0;
+    return [...all].sort((a, b) => a.x - b.x || a.y - b.y).map(monitor => {
+      const rule = ruleFromMonitor(monitor, all);
+      rule.scale = Math.max(1, Math.floor(monitor.scale));
+      rule.y = 0;
+      rule.x = x;
+      if (!rule.disabled && rule.mirror === "")
+        x += logicalSize(monitor.width, monitor.height, rule.scale, rule.transform).width;
+      return rule;
+    });
+  }
+
+  // A rule with every field, describing a monitor as it is now
+  function ruleFromMonitor(monitor, all) {
+    const mirror = monitor.mirrorOf && monitor.mirrorOf !== "none" ? (all ?? []).find(other => other.name === monitor.mirrorOf || String(other.id) === String(monitor.mirrorOf)) : null;
+    const preset = String(monitor.colorManagementPreset ?? "");
+    return {
+      "output": outputId(monitor, all),
+      "label": monitor.name,
+      "mode": formatMode(monitor.width, monitor.height, monitor.refreshRate),
+      "x": Math.round(monitor.x),
+      "y": Math.round(monitor.y),
+      "scale": Math.round((monitor.scale || 1) * 10000) / 10000,
+      "transform": monitor.transform ?? 0,
+      "disabled": !!monitor.disabled,
+      "mirror": mirror ? outputId(mirror, all) : "",
+      "vrr": monitor.vrr ? 1 : 0,
+      "bitdepth": /2101010/.test(String(monitor.currentFormat ?? "")) ? 10 : 8,
+      "cm": _cmPresets.includes(preset) ? preset : "auto",
+      "sdrBrightness": monitor.sdrBrightness ?? 1,
+      "sdrSaturation": monitor.sdrSaturation ?? 1
+    };
+  }
+
+  // Whether rules would change the connected monitors (each rule for one
+  // that's connected, against how it is now): turned on or off, mirroring
+  // another, or its position, scale, rotation or mode (a "preferred" one
+  // is the monitor's own pick: left out). A mirror's position isn't
+  // compared (it shows the other's). Neither are vrr, the bit depth or
+  // the colour: what Hyprland reads back isn't what the rule asked (vrr 2
+  // reads off outside fullscreen, cm "auto" as the preset it picked).
+  // Apply shows while they differ, so a layout the compositor didn't take
+  // (or a revert that missed) can always be applied again. Where the
+  // compositor can't mirror (`canMirror` false: niri, sway), a rule's
+  // mirror is set aside, as applying it does: the output is placed by
+  // its position.
+  function differsFromLive(rules, monitors, canMirror) {
+    const name = output => canMirror === false ? "" : find(output, monitors)?.name ?? "";
+    return (rules ?? []).some(rule => {
+      const monitor = find(rule.output, monitors);
+      if (!monitor)
+        return false;
+      const now = ruleFromMonitor(monitor, monitors);
+      if (!!rule.disabled !== now.disabled)
+        return true;
+      if (now.disabled)
+        return false;
+      if (name(rule.mirror ?? "") !== name(now.mirror))
+        return true;
+      const mode = parseMode(rule.mode);
+      if (mode && (mode.width !== monitor.width || mode.height !== monitor.height || (mode.rate > 0 && Math.abs(mode.rate - (monitor.refreshRate ?? 0)) >= 0.5)))
+        return true;
+      if ((rule.transform ?? 0) !== now.transform || !_sameScale(rule.scale ?? 1, now.scale, monitor))
+        return true;
+      return (now.mirror === "" || canMirror === false) && (Math.round(rule.x ?? 0) !== now.x || Math.round(rule.y ?? 0) !== now.y);
+    });
+  }
+
+  // Whether a monitor shows a rule's scale: Hyprland rounds one that
+  // gives no whole logical size (validScales) to a near one that does,
+  // so either valid scale around it counts
+  function _sameScale(asked, scale, monitor) {
+    if (Math.abs(asked - scale) < 0.005)
+      return true;
+    const valid = validScales(monitor.width, monitor.height);
+    if (valid.some(other => Math.abs(other - asked) < 0.0001))
+      return false;
+    const below = valid.filter(other => other < asked).pop();
+    const above = valid.find(other => other > asked);
+    return [below, above].some(other => other !== undefined && Math.abs(other - scale) < 0.005);
+  }
+
+  // Rules putting back the monitors as they are (ruleFromMonitor each),
+  // for a revert. vrr is the `saved` profile's rule's (its rules in the
+  // config) where the monitors show that rule and it has one: what
+  // Hyprland reads back is whether VRR is active now, so vrr 2 reads off
+  // outside fullscreen and on in it. A vrr still 0 is the compositor's
+  // own setting (render.RevertMonitorCalls). `canMirror` as
+  // differsFromLive takes it.
+  function snapshot(monitors, saved, canMirror) {
+    return (monitors ?? []).map(monitor => {
+      const rule = ruleFromMonitor(monitor, monitors);
+      const kept = (saved ?? []).find(other => matches(other.output, monitor));
+      if (kept?.vrr && !differsFromLive([kept], monitors, canMirror))
+        rule.vrr = kept.vrr;
+      return rule;
+    });
+  }
+
+  // `rules` with each connected monitor's rule (in `monitors`) put back as
+  // it was in effect before a trial: the `saved` profile's rule (the
+  // profile's rules in the config) where the monitors (`monitors`, as
+  // they were) showed it, so what Hyprland reads back differently (a
+  // "preferred" mode, vrr 2, cm "auto") stays as it was saved; else as
+  // `before` had it (rules from ruleFromMonitor: how the monitors were),
+  // the rule's own `output` kept. Rules for monitors not connected stay
+  // as they are. `canMirror` as differsFromLive takes it.
+  function restored(rules, before, monitors, saved, canMirror) {
+    return (rules ?? []).map(rule => {
+      const monitor = find(rule.output, monitors);
+      if (!monitor)
+        return rule;
+      const kept = (saved ?? []).find(other => other.output === rule.output);
+      if (kept && !differsFromLive([kept], monitors, canMirror))
+        return Object.assign({}, kept);
+      const was = (before ?? []).find(other => matches(other.output, monitor));
+      return was ? Object.assign({}, was, {
+        "output": rule.output
+      }) : rule;
+    });
+  }
+
+  // A rule's rect in the layout, from its mode (or the monitor's own when
+  // "preferred" or unreadable)
+  function ruleRect(rule, monitor) {
+    const mode = parseMode(rule.mode) ?? (monitor ? {
+        "width": monitor.width,
+        "height": monitor.height
+      } : {
+        "width": 1920,
+        "height": 1080
+      });
+    const size = logicalSize(mode.width, mode.height, rule.scale, rule.transform);
+    return {
+      "x": rule.x,
+      "y": rule.y,
+      "width": size.width,
+      "height": size.height
+    };
+  }
+}

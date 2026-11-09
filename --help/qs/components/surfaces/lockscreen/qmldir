@@ -1,0 +1,3 @@
+module qs.components.surfaces.lockscreen
+LockPreviewWindow 1.0 LockPreviewWindow.qml
+LockSurface 1.0 LockSurface.qml

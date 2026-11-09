@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.Wifi
+Wifi 1.0 Wifi.qml
+WifiWatch 1.0 WifiWatch.qml

@@ -1,0 +1,2 @@
+module qs.components.surfaces.desktop
+DesktopWindow 1.0 DesktopWindow.qml

@@ -1,0 +1,9 @@
+module qs.components.views.BarEditor
+BarDragLayer 1.0 BarDragLayer.qml
+BarEditor 1.0 BarEditor.qml
+BarsPanel 1.0 BarsPanel.qml
+LayoutOverrideField 1.0 LayoutOverrideField.qml
+SectionLane 1.0 SectionLane.qml
+SectionsBoard 1.0 SectionsBoard.qml
+WidgetChip 1.0 WidgetChip.qml
+WidgetInspector 1.0 WidgetInspector.qml

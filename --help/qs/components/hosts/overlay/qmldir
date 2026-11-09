@@ -1,0 +1,12 @@
+module qs.components.hosts.overlay
+ExpandedModule 1.0 ExpandedModule.qml
+ModuleGrid 1.0 ModuleGrid.qml
+OverlayGrid 1.0 OverlayGrid.qml
+OverlayPage 1.0 OverlayPage.qml
+OverlayPageNavigator 1.0 OverlayPageNavigator.qml
+OverlayPages 1.0 OverlayPages.qml
+OverlayPanel 1.0 OverlayPanel.qml
+OverlaySlot 1.0 OverlaySlot.qml
+OverlayView 1.0 OverlayView.qml
+PoppedOutCard 1.0 PoppedOutCard.qml
+ReservedAreaWindow 1.0 ReservedAreaWindow.qml

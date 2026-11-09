@@ -1,0 +1,23 @@
+module qs.services.apps
+singleton CalculatorManager 1.0 CalculatorManager.qml
+singleton CalendarManager 1.0 CalendarManager.qml
+CalendarPageState 1.0 CalendarPageState.qml
+singleton ChatManager 1.0 ChatManager.qml
+singleton ClaudeUsageManager 1.0 ClaudeUsageManager.qml
+singleton CommunitySetupsManager 1.0 CommunitySetupsManager.qml
+CustomWidgetsEditor 1.0 CustomWidgetsEditor.qml
+singleton CustomWidgetsManager 1.0 CustomWidgetsManager.qml
+DeadlineTicker 1.0 DeadlineTicker.qml
+singleton EmojiManager 1.0 EmojiManager.qml
+EventDraft 1.0 EventDraft.qml
+singleton FilePickerManager 1.0 FilePickerManager.qml
+singleton MarketsManager 1.0 MarketsManager.qml
+singleton NotesManager 1.0 NotesManager.qml
+singleton PomodoroManager 1.0 PomodoroManager.qml
+singleton ScreenShareManager 1.0 ScreenShareManager.qml
+singleton ScreenshotManager 1.0 ScreenshotManager.qml
+ScreenshotPickState 1.0 ScreenshotPickState.qml
+singleton StopwatchManager 1.0 StopwatchManager.qml
+singleton TailscaleManager 1.0 TailscaleManager.qml
+singleton TodoManager 1.0 TodoManager.qml
+singleton WeatherManager 1.0 WeatherManager.qml

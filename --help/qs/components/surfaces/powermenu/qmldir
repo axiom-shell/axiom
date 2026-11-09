@@ -1,0 +1,3 @@
+module qs.components.surfaces.powermenu
+PowerMenuTile 1.0 PowerMenuTile.qml
+PowerMenuWindow 1.0 PowerMenuWindow.qml

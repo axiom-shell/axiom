@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.Message
+Message 1.0 Message.qml
+MessageWatch 1.0 MessageWatch.qml

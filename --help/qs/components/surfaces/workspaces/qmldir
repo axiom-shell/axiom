@@ -1,0 +1,6 @@
+module qs.components.surfaces.workspaces
+OverviewGrid 1.0 OverviewGrid.qml
+OverviewInput 1.0 OverviewInput.qml
+WindowPreview 1.0 WindowPreview.qml
+WorkspaceCell 1.0 WorkspaceCell.qml
+WorkspaceNumber 1.0 WorkspaceNumber.qml

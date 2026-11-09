@@ -148,8 +148,11 @@ BaseWidget {
         // Across a bar, its letters centred where the icon's middle is (the
         // run's, with none) on a whole pixel, and turned along a vertical
         // one, across it: its box is padded to centre on them
-        // (TextBandPadding), not on its line, which holds the descent
+        // (TextBandPadding), not on its line, which holds the descent.
+        // Upright under the icon it centres across nothing, and padded it
+        // would lengthen the widget along the bar
         readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !(root.isVertical && root.uprightLabel)
           font: textLabel.font
           text: steadyMetrics.text
           contentHeight: textLabel.contentHeight

@@ -1,0 +1,3 @@
+module qs.components.surfaces.osd.systems.Airplane
+Airplane 1.0 Airplane.qml
+AirplaneWatch 1.0 AirplaneWatch.qml

@@ -1,0 +1,66 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import qs.config
+import qs.services.core
+import qs.services.system
+import qs.services.ui
+import qs.components.reusable
+import qs.components.content.parts
+
+// The top of the Night light card (the section's `x-intro`): whether it's
+// on, how it warms the screens, and a switch to try the settings
+ColumnLayout {
+  id: root
+
+  readonly property bool missing: NightLightManager.tool === ""
+
+  // Empty until it's known how
+  readonly property string detail: {
+    if (NightLightManager.tool === undefined)
+      return "";
+    if (root.missing)
+      return I18n.tr("The compositor can't change the screens' colors, and wlsunset isn't installed. Install wlsunset to use the night light.");
+    if (NightLightManager.blocked)
+      return I18n.tr("The screens' colors couldn't be set: another program holds them (hyprsunset, wlsunset, gammastep), or a screen doesn't take gamma tables.");
+    const how = NightLightManager.tool === "wlsunset" ? "wlsunset" : WaylandManager.nightLight === "ctm" ? I18n.tr("the compositor's color transform") : I18n.tr("the screens' gamma");
+    if (NightLight.schedule)
+      return I18n.tr("Through {0}, on from {1} until {2}.", how, NightLight.startAt, NightLight.endAt);
+    return I18n.tr("Through {0}, when you turn it on.", how);
+  }
+
+  spacing: Widget.spacing
+
+  RowLayout {
+    Layout.fillWidth: true
+    spacing: Widget.spacing
+
+    StatusChip {
+      text: root.missing ? I18n.tr("Not installed") : NightLightManager.blocked ? I18n.tr("Blocked") : NightLightManager.active ? I18n.tr("On") : I18n.tr("Off")
+      color: root.missing ? Theme.error : NightLightManager.blocked ? Theme.warning : NightLightManager.active ? Theme.success : Theme.foregroundAlt
+    }
+
+    StyledText {
+      text: root.detail
+      textColor: root.missing ? Theme.error : NightLightManager.blocked ? Theme.warning : Theme.foreground
+      wrapMode: Text.WordWrap
+      Layout.fillWidth: true
+    }
+
+    StyledTextButton {
+      visible: NightLightManager.available
+      implicitHeight: Widget.height - Widget.px(4)
+      text: NightLightManager.active ? I18n.tr("Turn off") : I18n.tr("Turn on")
+      onClicked: ActionsManager.run("nightLight", {
+        "fromScreen": true
+      })
+    }
+  }
+
+  // How to install it here (nothing on a distribution axiom has no
+  // package names for)
+  CodeLine {
+    visible: root.missing && text !== ""
+    text: DependencyManager.installCommand("wlsunset")
+  }
+}

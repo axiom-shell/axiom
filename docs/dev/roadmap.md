@@ -196,6 +196,7 @@ Found along the way:
 - [The OSD's Wi-Fi Connected card goes blank when the network drops while it's out](issues.md#the-osds-wi-fi-connected-card-goes-blank-when-the-network-drops-while-its-out) (the same)
 - [An OSD showing only Now playing opens an empty card from its hover strip or Show button when nothing plays](issues.md#an-osd-showing-only-now-playing-opens-an-empty-card-from-its-hover-strip-or-show-button-when-nothing-plays) (the same)
 - [A type library's search matches the "Other" heading of every ungrouped type](issues.md#a-type-librarys-search-matches-the-other-heading-of-every-ungrouped-type) (the same)
+- [Icon and text outside the bar centre the text on its line box](issues.md#icon-and-text-outside-the-bar-centre-the-text-on-its-line-box) (centring bar text on its letters)
 
 #### The launch gate
 Posting for testers waits for all of these:

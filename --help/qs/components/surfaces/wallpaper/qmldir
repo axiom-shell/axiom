@@ -1,0 +1,3 @@
+module qs.components.surfaces.wallpaper
+WallpaperView 1.0 WallpaperView.qml
+WallpaperWindow 1.0 WallpaperWindow.qml

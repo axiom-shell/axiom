@@ -1,0 +1,2 @@
+module qs.components.surfaces.screenshot
+ScreenshotPickerWindow 1.0 ScreenshotPickerWindow.qml

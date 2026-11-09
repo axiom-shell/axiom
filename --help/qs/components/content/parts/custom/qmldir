@@ -1,0 +1,4 @@
+module qs.components.content.parts.custom
+CustomElement 1.0 CustomElement.qml
+CustomElementBase 1.0 CustomElementBase.qml
+CustomLayout 1.0 CustomLayout.qml

@@ -1,0 +1,4 @@
+module qs.components.surfaces.osd.engine
+OSDSystem 1.0 OSDSystem.qml
+OSDSystemHost 1.0 OSDSystemHost.qml
+OSDWatch 1.0 OSDWatch.qml
