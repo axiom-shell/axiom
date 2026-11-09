@@ -25,7 +25,7 @@ BarWidget {
   readonly property color foregroundColor: colors.text
 
   hasBackground: true
-  accentColor: Theme.resolveColor(properties.backgroundColor)
+  accentField: "backgroundColor"
 
   implicitWidth: isVertical ? root.barConfig.thickness : (layoutLoader.item ? layoutLoader.item.implicitWidth + root.barConfig.innerPadding * 2 : 0)
   implicitHeight: isVertical ? (layoutLoader.item ? layoutLoader.item.implicitHeight + root.barConfig.innerPadding * 2 : 0) : root.barConfig.thickness

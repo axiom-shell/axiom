@@ -99,10 +99,11 @@ One workspace layout serves everything that shows workspaces or moves between th
   - It sits where the active cell starts at rest (`WorkspaceCells.startOf`: only cells after the active one move when it widens) and is as long as that cell widened, gliding to a new length as it moves.
   - It is drawn between the cells' two parts (`WorkspaceCell`'s `part`): the boxes at rest are under it, the labels and icons over it.
   - A step past an end (`CompositorManager.workspaceWrapped`, or the strip's own wheel wrap) sends it out of that end and in at the other.
+  - With a bar gradient its Auto color is the gradient's where the active cell rests (`WorkspaceCellRow._activeLook`, the widget's `barSpotOf` handed down as `barSpotOf`), never where it glides ([Widget style › Bar gradient](../bar/widget-style.md#bar-gradient)).
 - **Cross-fades.**
   - The grid strip cross-fades (`CrossFade`) to another row or column; the old one keeps its active cell while it fades.
   - `ActiveStrip` cross-fades to the windows of the next workspace.
-- **Background.** With `showBackground` off, `Workspaces.qml` leaves its box clear (the bar's color shows through) and drops the inset: the cells take the bar's full `thickness`, while the widget keeps its place among the bar's boxed widgets (`hasBackground`).
+- **Background.** With `showBackground` off there's no box (`segmented`) and no inset: the cells take the bar's full `thickness` and are segments of the bar's run, each in the bar's widget shape (rounded, capsule, slant, arrow, tab), chaining on in a powerline (the row's cells then the strip's, with no divider between them there) and sitting in a merged run as widgets do, the widget keeping its place among the bar's boxed widgets (`hasBackground`) ([Shapes and runs › Parts as segments](../bar/widget-shapes-runs.md#parts-as-segments)). The popouts keep their rounded cells.
 - **Scrolling.** With `scrollToSwitch` the wheel steps through the shown workspaces (the grid strip: along its row or column), or on a strip monitor scrolls the strip (`stepStrip`); `scrollReverse` turns its direction round for both.
 - **Pinned start.** The widget keeps its start put while its box resizes (`pinStart`, which `BarWidgetHost` reads), so its cells don't drift as the strip after them comes and goes.
 - **Options.** The strips share one schema definition. Layout-only options hide themselves with `x-showIf: { "/Workspaces.layout": … }`.

@@ -822,4 +822,130 @@ TestCase {
       })];
     compare(placed(bars, withBorder).map(b => b.layerRank), [1, 0, 0, 0, 0, 0, 0]);
   }
+
+  // Tabs reach the outer edge of what the widgets sit on, inside any
+  // stroke there
+  function test_tab_edge() {
+    compare(BarEnds.tabEdge({
+      "kind": "solid",
+      "insideBorder": false
+    }, 2), 0);
+    // A pill bar on the border reaches back over the frame
+    compare(BarEnds.tabEdge({
+      "kind": "pills",
+      "insideBorder": true,
+      "stripCover": 6
+    }, 2), 0);
+    // ...one stacked inside another bar lies on its stroke
+    compare(BarEnds.tabEdge({
+      "kind": "pills",
+      "insideBorder": true,
+      "stripCover": 0
+    }, 2), 2);
+    compare(BarEnds.tabEdge({
+      "kind": "transparent",
+      "insideBorder": true
+    }, 2), 2);
+    compare(BarEnds.tabEdge({
+      "kind": "transparent",
+      "insideBorder": false
+    }, 2), 0);
+    compare(BarEnds.tabEdge({
+      "kind": "floating",
+      "island": true,
+      "insideBorder": true,
+      "islandStart": 12
+    }, 2), 14);
+  }
+
+  function test_tab_bounds() {
+    const opts = {
+      "border": true,
+      "borderWidth": 2,
+      "radius": 12
+    };
+    // Inside each island's stroke, its curve inside it
+    compare(BarEnds.tabBounds({
+      "kind": "floatingPills",
+      "island": true
+    }, 1000, [
+      {
+        "start": 20,
+        "length": 100
+      }
+    ], opts), [
+      {
+        "start": 22,
+        "end": 118,
+        "startRadius": 10,
+        "endRadius": 10
+      }
+    ]);
+    // A transparent bar's frame: the border's corner where an end meets it
+    compare(BarEnds.tabBounds({
+      "kind": "transparent",
+      "ends": {
+        "start": {
+          "kind": "border",
+          "reach": 2
+        },
+        "end": {
+          "kind": "bar",
+          "reach": 0
+        }
+      }
+    }, 1000, [], opts), [
+      {
+        "start": 2,
+        "end": 1000,
+        "startRadius": 10,
+        "endRadius": 0
+      }
+    ]);
+    // No border, or a frame bar: nothing takes their corners
+    compare(BarEnds.tabBounds({
+      "kind": "transparent"
+    }, 1000, [], Object.assign({}, opts, {
+      "border": false
+    })), []);
+    compare(BarEnds.tabBounds({
+      "kind": "pills"
+    }, 1000, [], opts), []);
+  }
+
+  // The room a flared tab's fillet has at a bar's ends
+  function test_tab_end_room() {
+    const opts = {
+      "border": true,
+      "borderWidth": 1,
+      "margin": 8,
+      "radius": 6,
+      "floatGaps": {
+        "left": 10,
+        "right": 12,
+        "top": 3,
+        "bottom": 3
+      }
+    };
+    const at = (kind, extra) => BarEnds.tabEndRoom(Object.assign({
+        "kind": kind,
+        "edgePadding": 4,
+        "vertical": false
+      }, extra ?? {}), opts);
+    compare(at("pills"), 5);
+    compare(at("solid"), 8);
+    compare(BarEnds.tabEndRoom({
+      "kind": "solid",
+      "edgePadding": 12
+    }, Object.assign({}, opts, {
+      "border": false
+    })), 12);
+    // Past the frame's gaps, less the border's corner
+    compare(at("transparent"), 5);
+    // Within the corner's curve, which takes the tab's corner instead
+    compare(at("transparent", {
+      "vertical": true
+    }), Infinity);
+    compare(at("floating"), Infinity);
+  }
 }

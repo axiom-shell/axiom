@@ -59,8 +59,10 @@ x-parts:
         x-options: colors
         default: base00
         x-showIf:
-          $bar.widgetStyle: filled
-          $bar.widgetGrouping: {not: merged}
+          anyOf:
+            - {$bar.widgetStyle: filled, $bar.widgetGrouping: {not: merged}}
+            - {$bar.widgetStyle: split}
+            - {$bar.widgetStyle: [tinted, outline], $bar.hoverFill: true}
           $bar.widgetTextColor: ''
 properties:
   type: {}

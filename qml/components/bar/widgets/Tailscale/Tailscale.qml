@@ -26,7 +26,7 @@ ValueStyleWidget {
   labelShown: properties.showLabel
   subtext: isConnected ? TailscaleManager.ip : ""
 
-  accentColor: Theme.resolveColor(isConnected ? properties.connectedColor : properties.disconnectedColor)
+  accentField: isConnected ? "connectedColor" : "disconnectedColor"
 
   iconScale: 1.1
   textScale: 0.9

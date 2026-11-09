@@ -19,7 +19,7 @@ ValueStyleWidget {
   readonly property string kind: NetworkingManager.primaryKind
   readonly property bool connected: kind !== ""
 
-  accentColor: Theme.resolveColor(connected ? properties.backgroundColor : properties.disconnectedColor)
+  accentField: connected ? "backgroundColor" : "disconnectedColor"
   icon: getIcon()
   text: iface
   labelShown: properties.showName && iface !== ""

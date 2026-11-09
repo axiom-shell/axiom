@@ -47,7 +47,8 @@ ValueStyleWidget {
   minimumText: "00"
 
   subtext: aurPackages.length > 0 ? I18n.tr("{0} AUR", aurPackages.length) : I18n.tr("updates")
-  accentColor: failed ? Theme.error : Theme.resolveColor(count >= properties.manyThreshold ? properties.manyColor : properties.backgroundColor)
+  accentField: failed ? "" : count >= properties.manyThreshold ? "manyColor" : "backgroundColor"
+  accentColor: failed ? Theme.error : Theme.resolveColor(properties[accentField])
 
   // Re-acquiring replaces the old request
   readonly property var updatesRequest: ({

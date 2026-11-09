@@ -37,7 +37,7 @@ ValueStyleWidget {
   styleText: connected.length > 1 ? text : firstDevice ? BluetoothManager.deviceLabel(firstDevice) : ""
   subtext: hasBattery ? `${Math.round(firstDevice.battery * 100)}%` : ""
 
-  accentColor: Theme.resolveColor(!BluetoothManager.enabled ? properties.disabledColor : connected.length > 0 ? properties.connectedColor : properties.backgroundColor)
+  accentField: !BluetoothManager.enabled ? "disabledColor" : connected.length > 0 ? "connectedColor" : "backgroundColor"
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton
   onClicked: button => {

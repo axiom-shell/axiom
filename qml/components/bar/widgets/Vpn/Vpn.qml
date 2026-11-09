@@ -26,7 +26,7 @@ ValueStyleWidget {
   text: connected ? vpn.name : ""
   labelShown: properties.showName && connected
   subtext: connected ? vpn.ipv4 : ""
-  accentColor: Theme.resolveColor(connected ? properties.connectedColor : properties.disconnectedColor)
+  accentField: connected ? "connectedColor" : "disconnectedColor"
 
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton
