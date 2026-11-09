@@ -348,10 +348,11 @@ QtObject {
   //               BarShapes.segment keeps content clear of
   //   grouping    as drawn: separate for unboxed styles, and a powerline
   //               of what can't chain (a badge, tabs)
-  //   split       { icon, labelFill, label (the label's fill as drawn:
-  //               a badge's none), labelColor (a name), divider, cap
-  //               (BarShapes.dividerCap), room (BarShapes.splitRoom),
-  //               badgePad }: an icon part's (split's), or null
+  //   split       { icon, label (the label's fill as drawn: a badge's
+  //               none), labelColor (a name), cap (BarShapes.dividerCap
+  //               of the shape and the divider), room
+  //               (BarShapes.splitRoom), badgePad }: an icon part's
+  //               (split's), or null
   //   group       { color, strokeColor }: a merged run's (names)
   //   gradient    the bar gradient's colors (names, start to end), or
   //               null: none, or a style with no color of its own to show
@@ -374,10 +375,8 @@ QtObject {
       "textColor": values.widgetTextColor,
       "split": table.iconPart ? {
         "icon": values.splitIcon,
-        "labelFill": values.splitLabelFill,
         "label": values.splitIcon === "badge" ? "none" : values.splitLabelFill,
         "labelColor": values.splitLabelColor,
-        "divider": values.splitDivider,
         "cap": splitCap,
         "room": bar ? BarShapes.splitRoom(values.splitIcon, splitCap, thickness, bar.innerPadding, bar.innerGap * 1.5, bar.innerGap) : -1,
         "badgePad": bar?.innerGap ?? null

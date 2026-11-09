@@ -5,11 +5,13 @@ import "barstyle/Matrix.js" as Matrix
 
 // The bar widget style system's characterization: every widget style,
 // grouping, shape, split, Fill on hover, gradient and cell state run
-// through the style helpers, and what they give recorded once
-// (barstyle/Matrix.js) from the code before the style rework. The
-// expected data is never edited: only the adapters below change, to reach
-// the same results through a new API. Colour the text by state
-// (textByState) is left out: the rework changes it on purpose.
+// through the style helpers, and what they give recorded
+// (barstyle/Matrix.js): main's behaviour before the style rework, plus
+// the rework's intended changes, each re-recorded in the commit that made
+// it (text on a fill by WCAG contrast; the room at a run's ends). The
+// expected data is never edited by hand: otherwise only the adapters below
+// change, to reach the same results through a new API. Colour the text by
+// state (textByState) is left out: the rework changes it on purpose.
 TestCase {
   id: root
 
@@ -180,7 +182,7 @@ TestCase {
   // part the look's style doesn't draw, as saved)
   function passed(bar) {
     const look = bar.look, values = look.values;
-    return [look.style, look.outline?.width ?? values.outlineWidth, look.outline?.stroke ?? values.outlineStroke, values.hoverFill, look.line?.width ?? values.lineWidth, look.line?.side ?? values.lineSide, look.textColor, look.shape.ends, look.shape.tabCorners, look.group.color, look.group.strokeColor, look.split?.icon ?? values.splitIcon, look.split?.labelFill ?? values.splitLabelFill, look.split?.labelColor ?? values.splitLabelColor, look.split?.divider ?? values.splitDivider, look.separators.color, look.separators.thickness, look.accentLine?.side ?? "none", look.accentLine?.color ?? values.accentLineColor, look.accentLine?.fade ?? values.accentLineFade, look.accentLine?.width ?? values.accentLineWidth];
+    return [look.style, look.outline?.width ?? values.outlineWidth, look.outline?.stroke ?? values.outlineStroke, values.hoverFill, look.line?.width ?? values.lineWidth, look.line?.side ?? values.lineSide, look.textColor, look.shape.ends, look.shape.tabCorners, look.group.color, look.group.strokeColor, look.split?.icon ?? values.splitIcon, values.splitLabelFill, look.split?.labelColor ?? values.splitLabelColor, values.splitDivider, look.separators.color, look.separators.thickness, look.accentLine?.side ?? "none", look.accentLine?.color ?? values.accentLineColor, look.accentLine?.fade ?? values.accentLineFade, look.accentLine?.width ?? values.accentLineWidth];
   }
 
   // `$bar.<key>` for a bar widget's x-showIf (BarLook.context)

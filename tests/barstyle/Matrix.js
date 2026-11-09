@@ -1,7 +1,9 @@
 .pragma library
 // tst_BarStyleMatrix's expected data, recorded from the bar style helpers
-// before the style rework (the test's `recording`). Never edited by hand:
-// a change here is a change in what the bar draws.
+// (the test's `recording`): main's behaviour before the style rework, plus
+// the rework's intended changes, each re-recorded in the commit that made
+// it (text on a fill by WCAG contrast; the room at a run's ends). Never
+// edited by hand: a change here is a change in what the bar draws.
 //
 // Rows by group:
 //   colors, runs  fill stroke indicator text icon iconFill gradient
