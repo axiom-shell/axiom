@@ -35,6 +35,10 @@ Item {
   property var glyphOf: (id, active) => ""
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
+  // Whether the active workspace's cell may show app icons (off: its
+  // label instead, while the strip windows after the row show them:
+  // `activeWorkspaceIcons`)
+  property bool activeIcons: true
 
   readonly property bool isVertical: barConfig.vertical
   // Between cells (`spacing`: BarsConfig.workspaceCellSpacing)
@@ -49,7 +53,7 @@ Item {
   // widened by one normal cell's length (`wideActive`: WorkspaceCells)
   readonly property int _activeIndex: ids.indexOf(activeId)
   // What each cell shows (CellContents.of), in `ids` order
-  readonly property var _contents: ids.map(id => contents.of(id, root.glyphOf(id, id === root.activeId), true))
+  readonly property var _contents: ids.map(id => contents.of(id, root.glyphOf(id, id === root.activeId), id !== root.activeId || root.activeIcons))
   readonly property var _lengths: _contents.map(c => c.length)
   readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLength : 0)
   // Measured from the cells' lengths to be, never their gliding ones

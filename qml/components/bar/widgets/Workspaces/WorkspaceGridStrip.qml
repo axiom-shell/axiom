@@ -181,6 +181,7 @@ Item {
       textColor: root.iconColor
       hitArea: root.hitArea
       hoverColor: root.hoverColor
+      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
       // The active arrow takes the active cell's place
       glyphOf: (id, active) => active && root.properties.showActiveIcon ? root.positionGlyph(line.value, root.isVertical ? root.columns : root.rows) : ""
 

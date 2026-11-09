@@ -121,6 +121,21 @@ settings:
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
     description: 'On a strip monitor, the active workspace''s windows after its cells. One box: every window''s icon in one cell, the focused one marked. The popout shows a box each whatever this says.'
+  activeWorkspaceIcons:
+    type: string
+    title: Active workspace icons
+    x-control: toggle
+    enum: [keep, hide]
+    x-enumLabels: {keep: Keep, hide: Hide while strip windows show}
+    default: keep
+    x-showIf:
+      showAppIcons: true
+      stripWindows: {not: 'off'}
+      anyOf:
+        - {/Workspaces.strips: {notEmpty: true}, /$supports.strips: true}
+        - {/Workspaces.layout: scrolling, /$supports.strips: true}
+        - {/$supports.stripsAlways: true}
+    description: 'Hide: while its windows show after the cells, the active workspace shows its number, dot or label instead of app icons. The others keep theirs.'
   spacing:
     type: string
     title: Spacing

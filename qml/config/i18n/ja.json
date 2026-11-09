@@ -4171,6 +4171,9 @@
     "One box": "",
     "On a strip monitor, the active workspace's windows after its cells. One box: every window's icon in one cell, the focused one marked. The popout shows a box each whatever this says.": "",
     "A box each": "",
-    "Strip windows": ""
+    "Strip windows": "",
+    "Active workspace icons": "",
+    "Hide while strip windows show": "",
+    "Hide: while its windows show after the cells, the active workspace shows its number, dot or label instead of app icons. The others keep theirs.": ""
   }
 }

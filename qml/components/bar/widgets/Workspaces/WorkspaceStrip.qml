@@ -130,6 +130,7 @@ Item {
       textColor: root.textColor
       hitArea: root.hitArea
       hoverColor: root.hoverColor
+      activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
     }
 
     ActiveStrip {
