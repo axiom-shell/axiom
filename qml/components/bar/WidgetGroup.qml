@@ -334,6 +334,8 @@ Item {
       gradientStart: root._graded ? root._barSpot(_from) : -1
       gradientEnd: root._graded ? root._barSpot((root.allocation.offsets[index] ?? 0) + (root.allocation.sizes[index] ?? 0)) : -1
       highlighted: host?.editorOutlined ?? false
+      // Its widget draws its parts itself (BarWidgetHost.segments)
+      bare: host?.segments ?? false
       // Its split parts, from the host's start to its own (back under the
       // one before)
       readonly property var _split: host?.split ?? null
@@ -370,14 +372,24 @@ Item {
       required property int index
       readonly property var modelData: root.widgets[index] ?? {}
 
-      // Clear of its caps; a widget with no background sits loose
+      // Clear of its caps; a widget with no background sits loose, and
+      // one laying its parts out as segments keeps their room itself
       readonly property var _place: root._insetPlaces[module.index] ?? null
       readonly property var _segment: root.segmentAt(_place)
-      leadInset: module.hasBackground ? module._segment.lead : ((module.index > root._firstContent || root.joinStart) && !module.fills ? root._looseGap : 0)
+      leadInset: module.segments ? 0 : module.hasBackground ? module._segment.lead : ((module.index > root._firstContent || root.joinStart) && !module.fills ? root._looseGap : 0)
       // Hovered and clicked in its background's shape as drawn
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
       hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
-      trailInset: module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
+      trailInset: module.segments ? 0 : module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
+      // Its place in the run, for its parts to take as segments of it:
+      // their room from what's shown, their shapes from where they're
+      // drawn, a tab's ends bounded as its own background's would be
+      // (from where it's laid out, never as it glides)
+      runPlace: module.segments ? {
+        "sized": module._place,
+        "drawn": module._drawnPlace,
+        "tabLimits": root.tabLimitsOf(module._offset, module.mainSize)
+      } : null
       // Its tab's reach past its outer side (a tab hangs only from a background)
       tabReach: module.hasBackground ? root._reach : 0
 

@@ -137,6 +137,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - A Behavior with another easing or animation is written out.
 - `CrossFade`: `value` shown through a `delegate` with `required property var value`; a new copy fades in over the old on change.
   - A copy with `ready` false (an image loading) waits. Used by the cover and track text, weather and OSD icons.
+- `MarginClip`: clips its children (`clipped`) to its bounds grown by `leftMargin` / `topMargin` / `rightMargin` / `bottomMargin`, for content drawn past its box on purpose (a bar widget's parts as segments of the bar's run reaching back under a powerline neighbour or out to a tab's edge: `BarWidgetHost`, the Workspaces cells).
 - Everything else animates with Behaviors on `Appearance.animFast` / `animNormal` / `animSlow` and `Appearance.easing`. A `duration:` in ms fails `check_structure` unless its line says why it's a behaviour timing (`// behaviour timing: the cursor blink`).
   - Gate it with a `_settled` / `_placed` flag (`Qt.callLater` from `Component.onCompleted`) where a first layout would otherwise fly in from 0. Hand `callLater` a method of the item (`Qt.callLater(root._settle)`), not a closure: a method's call is dropped if the item is destroyed first (a bar rebuilt), a closure's runs and throws on its null `root`.
 - (Rule: AGENTS.md › Config, "Animation".)

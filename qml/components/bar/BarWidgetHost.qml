@@ -66,6 +66,21 @@ Item {
   // (BarsConfig.widgetColors), or null when it has no background
   readonly property bool hasBackground: _item?.hasBackground ?? false
   readonly property var background: hasBackground ? _item.colors : null
+  // It draws its own parts as segments of the bar's run (BarWidget's
+  // `segmented`), and its place there (set by WidgetGroup: { sized, drawn,
+  // tabLimits }), which its module gets with how far its parts reach past
+  // it across (BarWidget.runPlace)
+  readonly property bool segments: hasBackground && (_item?.segmented ?? false)
+  property var runPlace: null
+  // A tab's reach as the module sees it, moved across by _tabShift: from
+  // the background's near side (in from the outer edge, or the host's) to
+  // its far one
+  readonly property real _reachNear: _tabShift - (_outerFar ? 0 : -tabReach)
+  readonly property real _reachFar: (_outerFar ? tabReach : 0) - _tabShift
+  readonly property var _moduleRun: segments && runPlace ? Object.assign({}, runPlace, {
+    "reachStart": _reachNear,
+    "reachEnd": _reachFar
+  }) : null
   // The module's own fade, which its background follows: its `dim` when
   // it has one (a press fades only its content; the background shows it
   // by `pressed`, as a fade would let a powerline neighbour's square start
@@ -280,9 +295,18 @@ Item {
   // start, with `pinStart`): it never re-fits (eliding its label)
   // mid-animation, and shows through the drawn size, clipped, while that
   // catches up
-  Item {
+  // A module drawing its parts as segments draws them back under a
+  // powerline neighbour and out to a tab's edge: kept while it resizes
+  MarginClip {
     anchors.fill: parent
-    clip: root._resizing
+    clipped: root._resizing
+    readonly property real _near: root.segments && !root._outerFar ? root.tabReach : 0
+    readonly property real _far: root.segments && root._outerFar ? root.tabReach : 0
+    readonly property real _back: root.segments ? hitArea.back : 0
+    leftMargin: root.isVertical ? _near : _back
+    topMargin: root.isVertical ? _back : _near
+    rightMargin: root.isVertical ? _far : 0
+    bottomMargin: root.isVertical ? 0 : _far
 
     Loader {
       id: contentLoader
@@ -303,6 +327,8 @@ Item {
           root._item.barLength = Qt.binding(() => root.barLength);
           if ("hitArea" in item)
             item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
+          if ("runPlace" in item)
+            root._item.runPlace = Qt.binding(() => root._moduleRun);
         }
       }
     }

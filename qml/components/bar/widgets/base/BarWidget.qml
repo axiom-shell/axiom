@@ -28,6 +28,19 @@ Item {
   property bool pinStart: false
 
   property bool hasBackground: false
+  // With a background, it lays its own parts out as segments of the bar's
+  // run (Workspaces' cells with its Background off): its background draws
+  // no box, its host keeps no cap room for it, and it's told its place in
+  // the run (`runPlace`, set by its host), from which its parts take their
+  // shapes (BarShapes.cellShape, cellRoom)
+  property bool segmented: false
+  // While `segmented`: { sized, drawn: its place in the bar's run ({ index,
+  // count }, null alone), from what it shows (its parts' room) and as
+  // laid out (their shapes); reachStart, reachEnd: how far its parts reach
+  // past it across (a tab's out to its edge); tabLimits: what bounds a tab
+  // at its two ends (BarShapes.tabLimits) }; null otherwise, or with no
+  // place (a preview)
+  property var runPlace: null
   // The color field its accentColor shows for its state ("" for none or a
   // color of its own), and that color. Only its Auto own color
   // (`accentAuto`) gives way to the bar's gradient.
