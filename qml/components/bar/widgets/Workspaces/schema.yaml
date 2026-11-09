@@ -135,7 +135,7 @@ settings:
     title: Active workspace icons
     x-control: toggle
     enum: [keep, hide]
-    x-enumLabels: {keep: Keep, hide: Hide while strip windows show}
+    x-enumLabels: {keep: Show, hide: Hide}
     default: keep
     x-showIf:
       showAppIcons: true
@@ -144,7 +144,7 @@ settings:
         - {/Workspaces.strips: {notEmpty: true}, /$supports.strips: true}
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
-    description: 'Hide: while its windows show after the cells, the active workspace shows its number, dot or label instead of app icons. The others keep theirs.'
+    description: 'Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.'
   spacing:
     type: string
     title: Spacing

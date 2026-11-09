@@ -41,8 +41,12 @@ QtObject {
 
   // An app icon's size in a cell `thickness` thick (one alone, or each of
   // a row's)
+  // About 0.65 of the cell, in whole pixels leaving an even margin, so a
+  // centred icon sits on a whole pixel (an odd margin rounded it to one
+  // side)
   function iconSize(thickness) {
-    return thickness * 0.65;
+    const t = Math.round(thickness);
+    return t - 2 * Math.round(t * 0.175);
   }
 
   // The gap between a row's app icons

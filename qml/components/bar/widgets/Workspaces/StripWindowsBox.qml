@@ -12,7 +12,9 @@ import qs.components.methods
 // bar. Each icon has a cell's room, `cellSpacing` apart, so the box covers
 // what a box each would. The window focused last shows at full opacity
 // with a short line in the active color under it (toward the windows on a
-// vertical bar), the rest dimmed. Click an icon to focus its window.
+// vertical bar), the rest dimmed. Each icon lights its own room in the
+// hover color under the pointer (the box itself never lights); click one
+// to focus its window.
 Item {
   id: root
 
@@ -51,9 +53,11 @@ Item {
   implicitWidth: root.isVertical ? root.thickness : root._along
   implicitHeight: root.isVertical ? root._along : root.thickness
 
-  // The box: a workspace cell's, without content
+  // The box: a workspace cell's, without content, unlit (its icons light
+  // their own rooms)
   WorkspaceCell {
     part: "background"
+    lit: false
     barConfig: root.barConfig
     isActive: false
     look: BarsConfig.cellColors(root.barConfig, root.occupiedColor, root.textColor, "occupied", root.solid)
@@ -81,9 +85,31 @@ Item {
         readonly property string address: root.addresses[index] ?? ""
         readonly property var window: root.windows.find(w => w.id === address) ?? null
         readonly property bool isFocused: address === root.focused
+        // On the bar, from the widget's hit area (which lies over the
+        // icons); elsewhere, its own pointer area
+        readonly property bool hovered: root.hitArea ? root.hitArea.hovers(slot) : slotArea.containsMouse
 
         width: root.isVertical ? root.thickness : root.cellLength
         height: root.isVertical ? root.cellLength : root.thickness
+
+        // Its room lit under the pointer, inset inside the box
+        Rectangle {
+          readonly property real inset: Math.max(1, Math.round(root.thickness * 0.08))
+
+          anchors.fill: parent
+          anchors.margins: inset
+          radius: Math.max(0, root.radius - inset)
+          color: root.hoverColor
+          opacity: slot.hovered ? 1 : 0
+
+          Behavior on opacity {
+            enabled: root.animated
+            NumberAnimation {
+              duration: Appearance.animFast
+              easing.type: Appearance.easing
+            }
+          }
+        }
 
         Image {
           id: icon
@@ -120,8 +146,10 @@ Item {
         }
 
         MouseArea {
+          id: slotArea
           anchors.fill: parent
           enabled: root.clickable
+          hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: CompositorManager.focusWindow(slot.address)
         }

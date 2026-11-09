@@ -38,10 +38,16 @@ TestCase {
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 3), 102, "past the end: where a next cell would start");
   }
 
+  function test_iconSize() {
+    compare(WorkspaceCells.iconSize(20), 12, "an even margin on an even cell");
+    compare(WorkspaceCells.iconSize(21), 13, "and on an odd one");
+    compare(WorkspaceCells.iconSize(26), 16);
+  }
+
   function test_rowLength() {
     compare(WorkspaceCells.rowLength(1, 20, 20), 20, "one icon: a normal cell");
-    // 3 × 13 + 2 × 2 + 7
-    compare(WorkspaceCells.rowLength(3, 20, 20), 50);
+    // 3 × 12 + 2 × 2 + 8
+    compare(WorkspaceCells.rowLength(3, 20, 20), 48);
     compare(WorkspaceCells.rowLength(0, 20, 12), 12, "never under the rest length");
   }
 

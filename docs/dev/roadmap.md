@@ -187,6 +187,7 @@ Found along the way:
 - [guard.py judges daemon calls and the radio only by argv](issues.md#guardpy-judges-daemon-calls-and-the-radio-only-by-argv) (the same)
 - [A VPN secret request held when the shell leaves waits for NetworkManager's timeout](issues.md#a-vpn-secret-request-held-when-the-shell-leaves-waits-for-networkmanagers-timeout) (the same)
 - [Making a note or folder creates a linked notes folder that doesn't exist](issues.md#making-a-note-or-folder-creates-a-linked-notes-folder-that-doesnt-exist) (fixing the notes folder entries)
+- [A number field in the bar editor logs a polish loop](issues.md#a-number-field-in-the-bar-editor-logs-a-polish-loop) (making the widget inspector one column)
 - [The OSD's hover strip opens an empty bars slot when every bar is left out](issues.md#the-osds-hover-strip-opens-an-empty-bars-slot-when-every-bar-is-left-out) (reviewing the OSD engine branch)
 - [An OSD on a screen that isn't the target opens its parts while shut and then stays open](issues.md#an-osd-on-a-screen-that-isnt-the-target-opens-its-parts-while-shut-and-then-stays-open) (the same)
 - [An OSD tile pops in on its own easing curve](issues.md#an-osd-tile-pops-in-on-its-own-easing-curve) (the same)
