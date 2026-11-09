@@ -10,7 +10,6 @@ properties:
     $ref: '#/definitions/BarStyle'
     title: Bar style
     x-row: BarStyleBlock
-    x-wide: true
     description: How every bar draws its widgets. A bar can override any of these in the bar editor.
   items:
     type: array

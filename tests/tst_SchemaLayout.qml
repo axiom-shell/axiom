@@ -894,11 +894,11 @@ TestCase {
     compare(groups[1].rows.map(row => row.kind + ":" + row.path.join(".") + ":" + (row.drawnBy ?? "")), ["object:S.style:", "field:S.style.b:S.style", "field:S.style.c:S.style"]);
   }
 
-  // Bars.style is one wide card, the Bar style block, drawing every style
-  // setting
+  // Bars.style is one card in the columns, the Bar style block, drawing
+  // every style setting
   function test_real_schema_bar_style_block() {
     const groups = SchemaLayout.groups(schema, "Bars");
-    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Bar style", true]]);
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Bar style", false]]);
     compare(groups[0].rows[0].kind, "object");
     compare(groups[0].rows[0].schema["x-row"], "BarStyleBlock");
     compare(groups[0].rows.slice(1).filter(row => row.drawnBy !== "Bars.style"), [], "every row under it is drawn by it");

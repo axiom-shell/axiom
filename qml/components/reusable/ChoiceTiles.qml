@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.config
+import qs.components.methods
 
 // A single choice as a wrapping row of equal tiles (a TileFlow), each a
 // preview over its label: the chosen one filled with the accent, one that
@@ -95,13 +96,19 @@ TileFlow {
 
         Glide on opacity {}
 
-        // The preview, made with the option's value
-        Item {
+        // The preview, made once with the option's value, from the build
+        // queue (a frame's worth at a time, not every tile in the frame
+        // the tiles appear). A new value or new properties are set on it
+        // in place, only those that differ (an edit elsewhere, handing
+        // equal ones again, redraws nothing); only a new component makes
+        // it again.
+        StreamedLoader {
           id: slot
           readonly property Component component: tile.option.preview ?? root.preview
-          readonly property var optionValue: tile.option.value
-          property Item _made: null
 
+          always: true
+          label: "choice tile preview"
+          wanted: root._previews && slot.component !== null
           visible: root._previews
           anchors.top: parent.top
           anchors.left: parent.left
@@ -110,32 +117,47 @@ TileFlow {
           height: root.previewHeight
           clip: true
 
-          function _make() {
-            if (slot._made)
-              slot._made.destroy();
-            slot._made = slot.component ? slot.component.createObject(slot, Object.assign({}, root.previewProperties, {
-              "value": slot.optionValue
-            })) : null;
-            if (slot._made)
-              slot._made.anchors.fill = slot;
-          }
+          sourceComponent: Item {
+            id: holder
+            property Item made: null
 
-          // New properties go to the preview made, not a new one
-          function _update() {
-            if (!slot._made)
-              return;
-            for (const key in root.previewProperties)
-              slot._made[key] = root.previewProperties[key];
-          }
+            function make() {
+              if (holder.made)
+                holder.made.destroy();
+              holder.made = slot.component ? slot.component.createObject(holder, Object.assign({}, root.previewProperties, {
+                "value": tile.option.value
+              })) : null;
+              if (holder.made)
+                holder.made.anchors.fill = holder;
+            }
 
-          onComponentChanged: slot._make()
-          onOptionValueChanged: slot._make()
-          Component.onCompleted: slot._make()
+            function set(key, value) {
+              if (holder.made && !Utils.deepEqual(holder.made[key], value))
+                holder.made[key] = value;
+            }
 
-          Connections {
-            target: root
-            function onPreviewPropertiesChanged() {
-              slot._update();
+            Component.onCompleted: holder.make()
+
+            Connections {
+              target: slot
+              function onComponentChanged() {
+                holder.make();
+              }
+            }
+
+            Connections {
+              target: tile
+              function onOptionChanged() {
+                holder.set("value", tile.option.value);
+              }
+            }
+
+            Connections {
+              target: root
+              function onPreviewPropertiesChanged() {
+                for (const key in root.previewProperties)
+                  holder.set(key, root.previewProperties[key]);
+              }
             }
           }
         }

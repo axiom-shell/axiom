@@ -35,13 +35,30 @@ Item {
   // The boxes' thickness, as a bar's
   readonly property real _thickness: Math.round(Widget.px(22))
   // The sample bar: `bar` along a top edge with no widgets of its own,
-  // in the style drawn
-  readonly property var _barConfig: BarsConfig.enrichBarConfig(Object.assign({}, root.bar ?? {}, {
-    "location": "top",
-    "thickness": root._thickness,
-    "widgets": {},
-    "style": root._style
-  }), {}, {})
+  // in the style drawn. Worked out again only when what it's drawn from
+  // changes, and kept only if it differs: as a binding it would read the
+  // config readers, which every settings edit replaces, and every tile
+  // would redraw on an edit that changes none of them.
+  // (Its first value a binding, replaced as it completes)
+  property var _barConfig: root._enriched()
+  Component.onCompleted: root._barConfig = root._enriched()
+  function _enriched() {
+    return BarsConfig.enrichBarConfig(Object.assign({}, root.bar ?? {}, {
+      "location": "top",
+      "thickness": root._thickness,
+      "widgets": {},
+      "style": root._style
+    }), {}, {});
+  }
+  function _refresh() {
+    const next = root._enriched();
+    if (!Utils.deepEqual(next, root._barConfig))
+      root._barConfig = next;
+  }
+  on_StyleChanged: root._refresh()
+  onBarChanged: root._refresh()
+  on_ThicknessChanged: root._refresh()
+
   // Its look, resolved (shape and grouping as drawn, its traits), and
   // what of it the runs read (BarRuns.context)
   readonly property var _look: root._barConfig.look

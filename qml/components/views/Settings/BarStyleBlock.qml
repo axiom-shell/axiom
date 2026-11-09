@@ -15,8 +15,8 @@ import qs.components.reusable
 // in place, greyed with why while they don't apply, and under them the
 // rows placed there (`x-placeUnder`: tab sides, ends); then the chosen style's own
 // options in one panel (Look's other fields). Every other row shows only
-// while its `x-showIf` holds. Then Colors and Accents,
-// Size and Shadow, side by side from Widget.px(720) wide, else stacked.
+// while its `x-showIf` holds. Then Colors, Accents, Size and Shadow, one
+// under another; on the settings page each a fold, shut until opened.
 // Each look tile shows its look (BarLookSample). It holds no style rules:
 // what shows, greys and why is the schema's. Its header's Presets menu
 // sets the values of one of the schema's presets (BarStyle's
@@ -119,12 +119,15 @@ ColumnLayout {
     return I18n.tr(field["x-enumLabels"]?.[value] ?? Utils.enumLabel(value));
   }
 
-  // Each tile's preview: the look with the tile's value (BarLookSample)
+  // Each tile's preview: the look with the tile's value (BarLookSample),
+  // over a copy of the values (the settings draft changes its own in
+  // place, so the tiles could never tell an edit had changed them)
+  readonly property var _sampleValues: Utils.clone(root.values)
   readonly property var _tilePreview: path => ({
         "component": sample,
         "properties": {
           "key": path[0],
-          "values": root.values,
+          "values": root._sampleValues,
           "bar": root.bar
         }
       })
@@ -136,6 +139,9 @@ ColumnLayout {
 
   Layout.fillWidth: true
   spacing: Widget.spacing * 2
+
+  // A jump made before it was built (a link from another category)
+  Component.onCompleted: root._openFoldFor(SettingsManager.pendingJump)
 
   // The header: the Presets menu, at its end
   RowLayout {
@@ -167,47 +173,62 @@ ColumnLayout {
     onTriggered: id => root.presetPicked(root._presets[Number(id)].values)
   }
 
-  // One section: its heading (with the bar's own switch) and its form
+  // One section: its heading (with the bar's own switch) and its form;
+  // with `folds`, a fold instead, its form built only while open
   component Section: ColumnLayout {
-    id: section
+    id: piece
 
     property string title: ""
     // The heading's text, else the title's
     property string heading: ""
     property var keys: []
+    // A fold, shut until opened (kept with the page's folds), and open in
+    // search results and the changed list
+    property bool folds: false
+    readonly property string foldKey: root.row ? root.row.path.join(".") + ":" + piece.title : ""
+    readonly property bool open: !piece.folds || root.form?.listing === true || SettingsManager.isFoldOpen(piece.foldKey)
     // The bar editor's section the bar doesn't own: its heading and where
     // it's set, no form
-    readonly property bool shared: root.owned !== null && root.owned[section.title] !== true
+    readonly property bool shared: root.owned !== null && root.owned[piece.title] !== true
     // Whether it's shown here (not `visible`, false while an ancestor is
     // hidden: the form would be rebuilt each time)
-    property bool shown: root.sections.includes(section.title)
+    property bool shown: root.sections.includes(piece.title)
 
-    visible: section.shown
+    visible: piece.shown
     Layout.fillWidth: true
-    Layout.alignment: Qt.AlignTop
     spacing: Widget.spacing
 
+    FoldHeader {
+      visible: piece.folds
+      title: I18n.tr(piece.title)
+      collapsed: !piece.open
+      // Shut, a dot while any of its settings has an unsaved edit
+      marked: piece.keys.some(key => root.changedAt?.([key]) === true)
+      onToggled: SettingsManager.setFoldOpen(piece.foldKey, !piece.open)
+    }
+
     RowLayout {
+      visible: !piece.folds
       Layout.fillWidth: true
       spacing: Widget.spacing * 2
 
       SectionHeading {
-        title: section.heading !== "" ? section.heading : I18n.tr(section.title)
+        title: piece.heading !== "" ? piece.heading : I18n.tr(piece.title)
       }
 
       // (Not on the style's options: they're Look's too)
       SchemaSwitch {
-        visible: root.owned !== null && section.heading === ""
+        visible: root.owned !== null && piece.heading === ""
         Layout.fillWidth: false
         label: I18n.tr("This bar's own")
-        checked: root.owned?.[section.title] === true
-        onToggled: value => root.ownToggled(section.title, value)
+        checked: root.owned?.[piece.title] === true
+        onToggled: value => root.ownToggled(piece.title, value)
       }
     }
 
     // Owned, but some of its keys still shared: they can all be the bar's
     RowLayout {
-      visible: !section.shared && section.heading === "" && root.partlyOwned?.[section.title] === true
+      visible: !piece.shared && piece.heading === "" && root.partlyOwned?.[piece.title] === true
       Layout.fillWidth: true
       spacing: Widget.spacing
 
@@ -221,13 +242,13 @@ ColumnLayout {
 
       StyledTextButton {
         text: I18n.tr("Make all this bar's own")
-        onClicked: root.ownAllRequested(section.title)
+        onClicked: root.ownAllRequested(piece.title)
       }
     }
 
     // Where the shared values are set: the settings page's Bar style card
     RowLayout {
-      visible: section.shared && section.heading === ""
+      visible: piece.shared && piece.heading === ""
       Layout.fillWidth: true
       spacing: Widget.spacing
 
@@ -240,31 +261,60 @@ ColumnLayout {
       SettingsLink {
         id: sharedLink
         Layout.fillWidth: true
-        setting: "Bars.style." + (section.keys[0] ?? "")
-        text: I18n.tr("{0} in {1}", I18n.tr(section.title), I18n.tr(sharedLink.target?.category ?? ""))
+        setting: "Bars.style." + (piece.keys[0] ?? "")
+        text: I18n.tr("{0} in {1}", I18n.tr(piece.title), I18n.tr(sharedLink.target?.category ?? ""))
       }
     }
 
-    // Built only while the section is edited here
-    Loader {
+    FoldingColumn {
+      id: body
+      open: piece.open
       Layout.fillWidth: true
-      active: !section.shared && section.shown
-      sourceComponent: SchemaPropertiesForm {
-        propertiesSchema: section.keys.reduce((schema, key) => {
-          schema[key] = root._properties[key];
-          return schema;
-        }, {})
-        order: section.keys
-        // Side by side only as wide as the two columns (not the bar
-        // editor's panel): the tiles keep their room
-        pairs: root.width >= Widget.px(720)
-        keepsPlace: true
-        values: root.values
-        changedAt: root.changedAt
-        tilePreview: root._tilePreview
-        onEdited: (path, value) => root.edited(path, value)
-        onDiscardAt: path => root.discardAt(path)
+
+      // Built only while the section is edited here (and open, or still
+      // folding shut). Hidden when not built: an unloaded Loader keeps
+      // its last height, which left a gap where a section's form had been
+      Loader {
+        Layout.fillWidth: true
+        active: !piece.shared && piece.shown && body.shown
+        visible: active
+        sourceComponent: SchemaPropertiesForm {
+          propertiesSchema: piece.keys.reduce((schema, key) => {
+            schema[key] = root._properties[key];
+            return schema;
+          }, {})
+          order: piece.keys
+          keepsPlace: true
+          values: root.values
+          changedAt: root.changedAt
+          tilePreview: root._tilePreview
+          onEdited: (path, value) => root.edited(path, value)
+          onDiscardAt: path => root.discardAt(path)
+        }
       }
+    }
+  }
+
+  // A jump to a setting in a shut fold (a link, Changed from default)
+  // opens it first
+  function _openFoldFor(jump) {
+    if (!root.row || !jump?.setting)
+      return;
+    const path = jump.setting;
+    const base = root.row.path;
+    if (path.length <= base.length || base.some((key, index) => path[index] !== key))
+      return;
+    const title = root._groups.find(group => group.keys.includes(path[base.length]))?.title ?? "";
+    if (root._folding.includes(title))
+      SettingsManager.setFoldOpen(base.join(".") + ":" + title, true);
+  }
+  // The sections that fold: all but Look, on the settings page
+  readonly property var _folding: root.owned === null ? ["Colors", "Accents", "Size", "Shadow"] : []
+
+  Connections {
+    target: SettingsManager
+    function onJumpRequested() {
+      root._openFoldFor(SettingsManager.pendingJump);
     }
   }
 
@@ -281,33 +331,14 @@ ColumnLayout {
     keys: root._options
   }
 
-  SplitColumns {
-    id: columns
-    minWidth: Widget.px(720)
-    share: 0.5
+  Repeater {
+    model: ["Colors", "Accents", "Size", "Shadow"]
 
-    Section {
-      Layout.preferredWidth: columns.firstWidth
-      title: "Colors"
-      keys: root._keysOf("Colors")
-    }
-
-    Section {
-      Layout.preferredWidth: columns.secondWidth
-      title: "Accents"
-      keys: root._keysOf("Accents")
-    }
-
-    Section {
-      Layout.preferredWidth: columns.firstWidth
-      title: "Size"
-      keys: root._keysOf("Size")
-    }
-
-    Section {
-      Layout.preferredWidth: columns.secondWidth
-      title: "Shadow"
-      keys: root._keysOf("Shadow")
+    delegate: Section {
+      required property string modelData
+      title: modelData
+      keys: root._keysOf(modelData)
+      folds: root._folding.includes(modelData)
     }
   }
 }
