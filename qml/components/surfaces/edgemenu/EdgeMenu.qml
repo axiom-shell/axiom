@@ -21,8 +21,9 @@ Scope {
   Component.onCompleted: root._follow()
   readonly property ShellScreen screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
   readonly property bool integrated: root.menu?.placement === "strip"
-  // A free menu has no host of its own (EdgeMenusConfig.isFree)
   readonly property bool floating: root.menu?.placement === "edge"
+  // On no edge (EdgeMenusConfig.isFree)
+  readonly property bool free: root.menu?.placement === "free"
 
   LazyLoader {
     active: !!root._live && !!root.screen && root.floating
@@ -37,6 +38,15 @@ Scope {
     active: !!root._live && !!root.screen && root.integrated
 
     IntegratedEdgeMenu {
+      menu: root.menu
+      screen: root.screen
+    }
+  }
+
+  LazyLoader {
+    active: !!root._live && !!root.screen && root.free
+
+    FreeMenu {
       menu: root.menu
       screen: root.screen
     }

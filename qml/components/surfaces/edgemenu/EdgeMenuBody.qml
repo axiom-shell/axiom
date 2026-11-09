@@ -14,7 +14,8 @@ import qs.components.hosts.overlay
 // (or columns) growing or shrinking evenly to `maxLength` (scrolling only
 // past half a unit); otherwise it's capped there and scrolls past that.
 // In another menu's submenu (`submenu`, MenuSubmenu) it's only capped, with
-// no pin or Escape of its own.
+// no pin or Escape of its own. A free menu (FreeMenu) has no edge either:
+// capped, its pin at the top right, growing modules growing downward.
 Item {
   id: root
 
@@ -26,6 +27,10 @@ Item {
   // The screen its cards are sized on (EdgeMenusConfig.cardUnitOf): a
   // submenu's, that of the menu it opens from; null for the menu's own
   property var screen: null
+
+  // The menu's edge as it lays out ("" with none: a submenu's or a free
+  // menu's kept `edge` is hidden)
+  readonly property string edge: root.submenu || EdgeMenusConfig.isFree(root.menu) ? "" : root.menu.edge
 
   // Modules re-read only when they actually change, so an unrelated config
   // save doesn't rebuild every module. As the menu lays them out
@@ -100,23 +105,22 @@ Item {
       stretch: root._stretch
       host: root.host
       zoom: EdgeMenusConfig.zoomOf(root.menu, root.screen)
-      // A bottom menu's edge is under its modules (a submenu has no edge:
-      // its kept `edge` is hidden)
-      growTowards: !root.submenu && root.menu.edge === "bottom" ? 1 : -1
+      // A bottom menu's edge is under its modules
+      growTowards: root.edge === "bottom" ? 1 : -1
     }
   }
 
   // The menu's pin (pinButton): in the corner away from its edge, at the
-  // end, over the modules' corner
+  // end, over the modules' corner (with no edge, the top right)
   readonly property bool pinned: EdgeMenuManager.isPinned(root.menu.id)
   StyledIconButton {
     visible: root.menu.pinButton && !root.submenu
     z: 2
     size: Widget.height
-    anchors.top: root.menu.edge === "top" ? undefined : parent.top
-    anchors.bottom: root.menu.edge === "top" ? parent.bottom : undefined
-    anchors.right: root.menu.edge === "right" ? undefined : parent.right
-    anchors.left: root.menu.edge === "right" ? parent.left : undefined
+    anchors.top: root.edge === "top" ? undefined : parent.top
+    anchors.bottom: root.edge === "top" ? parent.bottom : undefined
+    anchors.right: root.edge === "right" ? undefined : parent.right
+    anchors.left: root.edge === "right" ? parent.left : undefined
     anchors.margins: Widget.spacing / 4
     iconText: "push_pin"
     iconColor: root.pinned ? Theme.background : Theme.foreground

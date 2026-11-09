@@ -167,7 +167,8 @@ QtObject {
   // The menu the editor holds open to try edits on ("" for none). A
   // free menu (EdgeMenusConfig.isFree) shows beside the first edge-placed
   // menu with a Submenu module opening it (`previewParent`, held
-  // open too), whose module opens it and holds it (content/Submenu)
+  // open too), whose module opens it and holds it (content/Submenu);
+  // with none, on its own, at its freeAnchor (FreeMenu)
   readonly property string previewing: root._previewing
   property string _previewing: ""
   readonly property string previewParent: root._previewParent
@@ -469,9 +470,7 @@ QtObject {
   property bool _wantPreview: false
 
   function canPreview(menu) {
-    if (!menu?.id || menu.enabled === false)
-      return false;
-    return !EdgeMenusConfig.isFree(menu) || root.submenuParentOf(menu.id) !== null;
+    return !!menu?.id && menu.enabled !== false;
   }
 
   function startPreviewing() {

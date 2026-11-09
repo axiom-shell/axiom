@@ -7,7 +7,7 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.hosts.popout
 
-// What both edge menu hosts (FloatingEdgeMenu, IntegratedEdgeMenu) share:
+// What the edge menu hosts (FloatingEdgeMenu, IntegratedEdgeMenu, FreeMenu) share:
 // following EdgeMenuManager (opening and closing when it says, telling it
 // when the menu closes by itself), being held open (pinned, or by the
 // editor), and a reveal (EdgeMenuManager.reveal): held open until hovered,
@@ -22,8 +22,8 @@ QtObject {
   // The host's window: a grab partner, and what must be mapped to warp
   required property var window
   // Its hover strip, also a grab partner: hovering it opens the menu while
-  // the overlay holds the grab
-  required property var triggerWindow
+  // the overlay holds the grab (none for a free menu, which has no edge)
+  property var triggerWindow: null
 
   // Where the host's modules can sit on its screen (EdgeMenuManager.frames)
   property var frame: null
@@ -99,13 +99,15 @@ QtObject {
 
   Component.onCompleted: {
     SurfaceManager.registerGrabPartner(root.window, root.screen?.name ?? "");
-    SurfaceManager.registerGrabPartner(root.triggerWindow, root.screen?.name ?? "");
+    if (root.triggerWindow)
+      SurfaceManager.registerGrabPartner(root.triggerWindow, root.screen?.name ?? "");
     Qt.callLater(root._sync);
     root._publishFrame();
   }
   Component.onDestruction: {
     SurfaceManager.unregisterGrabPartner(root.window);
-    SurfaceManager.unregisterGrabPartner(root.triggerWindow);
+    if (root.triggerWindow)
+      SurfaceManager.unregisterGrabPartner(root.triggerWindow);
     EdgeMenuManager.clearFrame(root._frameId, root.screen?.name ?? "");
   }
 }

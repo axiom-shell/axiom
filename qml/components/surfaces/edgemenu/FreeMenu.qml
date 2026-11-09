@@ -1,0 +1,376 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import Quickshell
+import Quickshell.Wayland
+
+import qs.config
+import qs.services.compositor
+import qs.services.ui
+import qs.components.methods
+import qs.components.hosts.popout
+
+// A free menu (placement `free`): a box of its own on no edge, in a
+// full-screen Top-layer window (axiom-menu) that never resizes, its input
+// masked to the box. It opens where FreeMenuPlace puts it: at the bar
+// widget that opened it as its popout, else at its `freeAnchor` (the
+// free area's centre, the cursor, or a point), clamped clear of the bars;
+// and comes in as `freeAnimation` says (a fade, a scale, or a slide from
+// its widget's side or the nearest screen edge). The box is a detached
+// EdgeSurface (SurfaceContext.free), with a submenu (SubmenuHost) for its
+// Submenu rows. Like the edge hosts it follows EdgeMenuManager
+// (EdgeMenuSync) and holds a PopoutClaim, ranked as it was opened.
+//
+// Open/close and hover-loss dismissal are PopoutWrapperBase's, as for the
+// popouts.
+PopoutWrapperBase {
+  id: root
+
+  required property var menu
+  required property ShellScreen screen
+  readonly property string menuId: root.menu.id
+
+  // Its box's frame: a box floating free of the edges
+  readonly property var _free: SurfaceContext.free()
+  readonly property real contentPadding: Appearance.borderWidth + PopoutsConfig.padding
+  readonly property var colors: EdgeMenusConfig.colorsOf(root.menu)
+  // fade | scale | slide
+  readonly property string animation: root.menu.freeAnimation
+  // Its window is on Top, under the Overlay layer (SubPopout reads it)
+  readonly property bool onOverlayLayer: false
+
+  // What's kept clear at each screen edge: what's reserved there, and the
+  // gap windows keep from it
+  function _inset(side) {
+    return ScreenEdgeManager.reservedWithMenusOn(root.screen, side) + (CompositorManager.gapsOut[ScreenEdge.name(side)] ?? 0);
+  }
+  readonly property var insets: ({
+      "top": root._inset(ScreenEdge.Top),
+      "bottom": root._inset(ScreenEdge.Bottom),
+      "left": root._inset(ScreenEdge.Left),
+      "right": root._inset(ScreenEdge.Right)
+    })
+
+  // The box at its content's size (a submenu's stretch drawn round it)
+  readonly property Item contentItem: loader.item as Item
+  readonly property real boxWidth: Math.ceil(root.contentItem?.implicitWidth ?? 0) + root.contentPadding * 2
+  readonly property real boxHeight: Math.ceil(root.contentItem?.implicitHeight ?? 0) + root.contentPadding * 2
+  // Room for the modules down the free area: past it they scroll
+  readonly property real maxLength: (root.screen?.height ?? 0) - root.insets.top - root.insets.bottom - root.contentPadding * 2
+
+  // What opened it, taken as it opens: a bar widget on its screen
+  // (PopoutAnchor.screenRect, its bar's edge as a name), and the cursor
+  // for `freeAnchor.at: cursor` (asked for first: `_locating` holds the
+  // claim back until it's known). A close (no data) keeps them until the
+  // box has gone.
+  property var _opener: null
+  property var _cursor: null
+  property bool _locating: false
+  onCurrentDataChanged: {
+    const data = root.currentData;
+    if (!data)
+      return;
+    const rect = data.anchorItem?.screenRect?.() ?? null;
+    root._opener = rect && rect.screen?.name === root.screen?.name ? {
+      "x": rect.x,
+      "y": rect.y,
+      "width": rect.width,
+      "height": rect.height,
+      "edge": ScreenEdge.name(rect.edge)
+    } : null;
+    root._cursor = null;
+    root._locating = !root._opener && root.menu.freeAnchor.at === "cursor";
+    if (!root._locating)
+      return;
+    CompositorManager.withCursorPos(pos => {
+      if (root.currentData !== data)
+        return;
+      root._cursor = pos && root.screen ? {
+        "x": pos.x - root.screen.x,
+        "y": pos.y - root.screen.y
+      } : null;
+      root._locating = false;
+    });
+  }
+
+  // Where its box goes on the screen, and the edge it slides in from
+  readonly property var place: FreeMenuPlace.place({
+    "width": root.screen?.width ?? 0,
+    "height": root.screen?.height ?? 0,
+    "insets": root.insets,
+    "box": {
+      "width": root.boxWidth,
+      "height": root.boxHeight
+    },
+    "opener": root._opener,
+    "anchor": root.menu.freeAnchor,
+    "cursor": root._cursor
+  })
+  // ...that edge, kept once shown: its box growing past its middle
+  // mustn't turn its shape round
+  property ClosedLatch _slideFrom: ClosedLatch {
+    source: ScreenEdge.fromName(root.place.slideFrom)
+    closed: !root._shown
+  }
+  readonly property int slideEdge: root._slideFrom.value ?? ScreenEdge.Top
+
+  // Set a tick after the box first shows, so it opens at its size and
+  // shape and only animates after (as EdgePopout's)
+  readonly property bool _shown: panel.visible && root.isOpen
+  property bool settled: false
+  on_ShownChanged: {
+    if (!root._shown)
+      root.settled = false;
+    else
+      Qt.callLater(() => root.settled = root._shown);
+  }
+
+  // Scaling in or out (`animation: scale`): its fill isn't the blur
+  // window's meanwhile, which doesn't scale with it
+  readonly property real _scaleTarget: root.animation !== "scale" || surface.active ? 1 : 0.9
+  property real _scale: root._scaleTarget
+  Behavior on _scale {
+    NumberAnimation {
+      duration: Appearance.animNormal
+      easing.type: Appearance.easing
+    }
+  }
+  readonly property bool scaling: root._scale < 1
+
+  // In use: the pointer on it or what opened it, or just opened or asked
+  // for again (engage()) and not let go since. Pinned, it ranks as its
+  // kind meanwhile (as EdgePopout's)
+  readonly property bool engaged: surface.hovered || root.anchorHovered || root._grace
+  property bool _grace: false
+  function engage() {
+    root._grace = true;
+    graceTimer.restart();
+  }
+  property Timer graceTimer: Timer {
+    interval: Math.max(root.dismissDelay, 2500)
+    onTriggered: root._grace = false
+  }
+  readonly property bool _pointerIn: surface.hovered
+  on_PointerInChanged: {
+    if (!root._pointerIn)
+      root._grace = false;
+  }
+  onIsOpenChanged: {
+    if (root.isOpen)
+      root.engage();
+  }
+
+  // Its place among the popouts (PopoutManager), ranked as it was opened
+  // (EdgeMenuManager.claimKinds): a widget's popout as a bar popout, else
+  // a menu; pinned, lowest; pinned or held by the editor, it gives way
+  // and comes back
+  property PopoutClaim claim: PopoutClaim {
+    key: "menu:" + root.menuId
+    kind: root.currentData?.claimKind ?? "menu"
+    screen: root.screen?.name ?? ""
+    edge: ""
+    pinned: EdgeMenuManager.pinnedMenus[root.menuId] === true && !root.engaged
+    resident: sync.held
+    occupied: root.occupied
+    closing: root.isClosing
+    wanted: root.isOpen && root.contentItem !== null && placeOnScreen.settled && !root._locating
+    footprint: PopoutGeometry.offset(surface.footprint, Qt.point(placeOnScreen.placed.x + surface.x, placeOnScreen.placed.y + surface.y))
+    onEvicted: root.hide()
+    onRefused: root.hide()
+  }
+  // Granted (or closing after it was)
+  readonly property bool claimed: root.claim.held
+
+  autoDismiss: sync.autoDismiss
+  dismissDelay: root.menu.close.delay
+  keepAlive: surface.hovered
+  currentItem: root.contentItem
+  window: panel
+
+  EdgeMenuSync {
+    id: sync
+    host: root
+    menu: root.menu
+    screen: root.screen
+    window: panel
+    onWarpRequested: CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2)
+  }
+
+  // Asked for again while open (EdgeMenuManager.engageRequested): it
+  // comes forward
+  Connections {
+    target: EdgeMenuManager
+
+    function onEngageRequested(id) {
+      if (id === root.menuId)
+        root.engage();
+    }
+  }
+
+  // What its box meets (SurfaceContext.free), as an EdgeSurface and its
+  // SubmenuHost read a host's EdgePlacement: nothing, sliding in from
+  // `slideEdge`; its fill drawn by the blur window where that backs Top
+  // surfaces on its screen (not while it scales), its shadow BarStyle's
+  QtObject {
+    id: shape
+    readonly property int edge: root.slideEdge
+    readonly property int connectorGap: Appearance.connectorGap
+    readonly property bool detached: root._free.detached
+    readonly property bool straight: root._free.straight
+    readonly property var place: root._free.place
+    readonly property bool straightJoinStart: false
+    readonly property bool straightJoinEnd: false
+    readonly property int backfill: root._free.backfill
+    readonly property bool onOverlayLayer: root.onOverlayLayer
+    readonly property var origin: placeOnScreen.origin
+    readonly property bool backed: BlurManager.backsOn(root.screen, false) && placeOnScreen.origin !== null && !root.scaling
+    readonly property bool opaque: BlurManager.opaqueOn(root.screen)
+    readonly property var shadowLook: BarStyle.look
+    readonly property var submenuJoin: null
+  }
+
+  // ---- Its submenu (SubPopout, through its SubmenuHost) ----
+  // Opened by a Submenu row in it, beside its box: towards the screen's
+  // nearer half (SubmenuSide); one longer than the box stretches it
+  // past its top or bottom
+  submenuHost: slot
+  SubmenuHost {
+    id: slot
+    wrapper: root
+    screen: root.screen
+    popupSurface: surface
+    boxRect: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
+    popupScreenOrigin: placeOnScreen.origin
+    popupScreenPlaced: placeOnScreen.placed
+    animate: root.settled
+    geometry: shape
+  }
+  readonly property real _stretchTop: slot.shownStretchTop
+  readonly property real _stretchBottom: slot.shownStretchBottom
+
+  PanelWindow {
+    id: panel
+    screen: root.screen
+    // Where map order alone stacks: mapped from the start, drawing and
+    // taking nothing while closed (LayerSlot.idle), so opening never
+    // maps it after the bars and popouts it sits under
+    visible: menuSlot.shown
+    LayerSlot {
+      id: menuSlot
+      window: panel
+      namespace: "axiom-menu"
+      wanted: root.occupied && loader.status === Loader.Ready
+      held: true
+    }
+    color: "transparent"
+
+    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.namespace: "axiom-menu"
+    WlrLayershell.keyboardFocus: focusGrab.exclusive ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+    // The whole screen, the bars' zones included: FreeMenuPlace keeps
+    // the box clear of them
+    exclusionMode: ExclusionMode.Ignore
+    exclusiveZone: 0
+    anchors {
+      top: true
+      bottom: true
+      left: true
+      right: true
+    }
+
+    // What PopoutAnchors in its content open in
+    readonly property var popoutHost: root.submenu
+    // Its content doesn't grow the box (a menu's cards are fixed): a
+    // StyledComboEntry opens its list inline (BarPopouts' room is a number)
+    readonly property var popoutRoom: null
+
+    // Input on the box alone, once it's granted its place
+    mask: Region {
+      item: root.claimed && !menuSlot.idle ? boxArea : null
+    }
+
+    // The box, in the window (as drawn, a submenu's stretch included)
+    Item {
+      id: boxArea
+      x: surface.x + surface.boxRect.x
+      y: surface.y + surface.boxRect.y
+      width: surface.boxRect.width
+      height: surface.boxRect.height
+    }
+
+    // Unpinned with close.onOutsideClick: a click outside it (and its
+    // submenu) closes it
+    FocusGrab {
+      id: focusGrab
+      windows: [panel, slot.submenu.popupWindow].concat(SurfaceManager.modalWindows)
+      active: panel.visible && root.isOpen && root.claimed && root.menu.close.onOutsideClick && !sync.held
+
+      onActiveChanged: {
+        if (active)
+          root.contentItem?.forceActiveFocus();
+      }
+
+      // Only a real click, never another surface's grab starting
+      onDismissed: root.hide()
+    }
+
+    // Where the window is on screen (its whole screen): the blur window
+    // draws the box's fill from there
+    LayerOrigin {
+      id: placeOnScreen
+      window: panel
+      namespace: "axiom-menu"
+      layer: WlrLayer.Top
+    }
+
+    EdgeSurface {
+      id: surface
+
+      geometry: shape
+      submenu: slot
+      screenName: root.screen?.name ?? ""
+      windowShown: panel.visible
+      animateShape: root.settled
+
+      // Its box where FreeMenuPlace puts it, a submenu's stretch round it
+      x: root.place.x - surface.boxRect.x
+      y: root.place.y - root._stretchTop - surface.boxRect.y
+      width: implicitWidth
+      height: implicitHeight
+
+      // Fades in place, or scales as it does; slides from its edge
+      fade: root.animation !== "slide"
+      // While the blur window backs surfaces, once it knows where this
+      // one is, so it never shows unbacked beside them
+      active: root.isOpen && root.claimed && panel.visible && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
+      boxWidth: root.boxWidth
+      boxHeight: root.boxHeight + root._stretchTop + root._stretchBottom
+      fillColor: root.colors.fill
+      strokeColor: root.colors.stroke
+
+      transform: Scale {
+        origin.x: surface.boxRect.x + surface.boxRect.width / 2
+        origin.y: surface.boxRect.y + surface.boxRect.height / 2
+        xScale: root._scale
+        yScale: root._scale
+      }
+
+      Loader {
+        id: loader
+        x: root.contentPadding
+        y: root.contentPadding + root._stretchTop
+        width: root.contentItem?.implicitWidth ?? 0
+        height: root.contentItem?.implicitHeight ?? 0
+        active: root.occupied
+        asynchronous: false
+
+        sourceComponent: EdgeMenuBody {
+          menu: root.menu
+          vertical: true
+          maxLength: root.maxLength
+        }
+
+        onLoaded: root.updateDismissTimer()
+      }
+    }
+  }
+}

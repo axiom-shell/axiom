@@ -4264,8 +4264,6 @@
     "Make all this bar's own": "",
     "{0} network folders don't answer": "",
     "Opens beside a menu placed on an edge, from its Submenu module": "",
-    "Add a Submenu module opening it to an enabled menu placed on an edge to show it.": "",
-    "Nothing yet: add a Submenu module to a menu placed on an edge and pick this one.": "",
     "Its centre, from the screen's top edge.": "",
     "A point": "",
     "Where a bind or a script opens it. Opened by a bar widget, it opens at that widget.": "",
@@ -4275,6 +4273,8 @@
     "Across": "",
     "Your compositor can't say where the cursor is.": "",
     "Opens at": "",
-    "Its centre, from the screen's left edge.": ""
+    "Its centre, from the screen's left edge.": "",
+    "Holds it open where a keybind opens it while you edit it, showing unsaved changes.": "",
+    "Nothing yet: add a bar button or keybind, make it a bar widget's popout, or pick it in a menu's Submenu module.": ""
   }
 }
