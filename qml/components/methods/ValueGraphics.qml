@@ -8,10 +8,16 @@ import QtQuick
 QtObject {
   id: root
 
-  // Stacked's two lines: a line is about 1.2 of its font, the value's 0.8
-  // of the bar's font and the caption's 0.6
+  // The sizes ValueGraphic draws at, which `across` reads too: the ring's
+  // side, of the thickness; the sparkline's inset either side across, of
+  // the thickness; stacked's value and caption, of the bar's font, each
+  // line about 1.2 of its font
+  readonly property real ringScale: 0.62
+  readonly property real sparklineInset: 0.2
+  readonly property real stackedValueScale: 0.8
+  readonly property real stackedCaptionScale: 0.6
   readonly property real lineHeight: 1.2
-  readonly property real stackedLines: 0.8 + 0.6
+  readonly property real stackedLines: root.stackedValueScale + root.stackedCaptionScale
 
   // The style a widget's `style` draws as where it can't draw it: stacked
   // on a vertical bar is a label, a sparkline with no history a fill, and
@@ -28,12 +34,13 @@ QtObject {
 
   // The room across a bar `thickness` thick inside a widget's box, in
   // the look's `shape` (look.shape): the thickness less its outline's
-  // stroke band (BarShapes.strokeBand) either side; the whole thickness
-  // where no box is drawn (`capped` false: an unboxed style) or it has no
-  // outline
+  // stroke band (BarShapes.strokeBand) either side, or on its inner side
+  // only for a tab (its outline is open along the edge it hangs from);
+  // the whole thickness where no box is drawn (`capped` false: an unboxed
+  // style) or it has no outline
   function boxRoom(thickness, shape) {
     const band = shape?.capped ? BarShapes.strokeBand(shape.outline ?? null) : 0;
-    return Math.max(0, thickness - band * 2);
+    return Math.max(0, thickness - band * (shape?.name === "tab" ? 1 : 2));
   }
 
   // The scale stacked's two lines shrink by to fit in `room` across the
@@ -54,9 +61,9 @@ QtObject {
   function across(style, vertical, crossSize, fontSize, room) {
     switch (style) {
     case "ring":
-      return crossSize * 0.62;
+      return crossSize * root.ringScale;
     case "sparkline":
-      return vertical ? crossSize : crossSize * 0.6;
+      return vertical ? crossSize : crossSize * (1 - 2 * root.sparklineInset);
     case "stacked":
       return root.lineHeight * root.stackedLines * fontSize * root.stackedFit(room, fontSize);
     }

@@ -33,6 +33,14 @@ TestCase {
       "stroke": "double"
     })), 20, "a double's three lines");
     compare(ValueGraphics.boxRoom(26, shape(null)), 26, "no outline: the whole thickness");
+    compare(ValueGraphics.boxRoom(26, {
+      "name": "tab",
+      "outline": {
+        "width": 2,
+        "stroke": "solid"
+      },
+      "capped": true
+    }), 24, "a tab: open along the edge it hangs from, its inner side's stroke only");
     compare(ValueGraphics.boxRoom(26, shape({
       "width": 2,
       "stroke": "solid"

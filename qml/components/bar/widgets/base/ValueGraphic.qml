@@ -61,7 +61,7 @@ Item {
   readonly property real length: {
     switch (root.style) {
     case "ring":
-      return root.crossSize * 0.62;
+      return root.crossSize * ValueGraphics.ringScale;
     case "fill":
     case "segments":
     case "sparkline":
@@ -146,8 +146,8 @@ Item {
     Item {
       Sparkline {
         anchors.fill: parent
-        anchors.topMargin: root.crossSize * 0.2
-        anchors.bottomMargin: root.crossSize * 0.2
+        anchors.topMargin: root.crossSize * ValueGraphics.sparklineInset
+        anchors.bottomMargin: root.crossSize * ValueGraphics.sparklineInset
         values: root.history
         minValue: root.graphMin
         maxValue: root.graphMax
@@ -265,7 +265,7 @@ Item {
           textFormat: root.textFormat
           color: root.textColor
           font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.8 * stack.fit
+          font.pixelSize: root.fontSize * ValueGraphics.stackedValueScale * stack.fit
           font.bold: true
           font.features: {
             "tnum": 1
@@ -278,7 +278,7 @@ Item {
           textFormat: root.textFormat
           color: Qt.alpha(root.textColor, 0.7)
           font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.6 * stack.fit
+          font.pixelSize: root.fontSize * ValueGraphics.stackedCaptionScale * stack.fit
         }
       }
     }
