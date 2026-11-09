@@ -50,7 +50,7 @@ Item {
     Repeater {
       model: root.options
 
-      StyledText {
+      StyledLabel {
         required property var modelData
         text: root.labels[modelData] ?? ""
       }
@@ -86,7 +86,7 @@ Item {
     Repeater {
       model: root.options
 
-      StyledText {
+      StyledLabel {
         required property var modelData
         required property int index
         width: root._segment

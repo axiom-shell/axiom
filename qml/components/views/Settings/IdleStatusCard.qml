@@ -91,7 +91,7 @@ FieldGroup {
         textColor: Theme.accent
       }
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: inhibitor.held.source === "caffeine" ? I18n.tr("Keeping awake") : inhibitor.held.reason ? `${inhibitor.held.app}: ${inhibitor.held.reason}` : inhibitor.held.app
         elide: Text.ElideRight

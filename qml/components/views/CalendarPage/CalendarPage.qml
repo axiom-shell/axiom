@@ -80,7 +80,7 @@ BaseView {
             textColor: Theme.accent
             textSize: Appearance.fontSizeBy(4)
           }
-          StyledText {
+          StyledLabel {
             text: I18n.formatDate(new Date(root.pageState.year, root.pageState.month, 1), I18n.dateFormat("monthYear"))
             textSize: Appearance.fontSizeBy(4)
             font.bold: true
@@ -88,7 +88,7 @@ BaseView {
           Item {
             Layout.fillWidth: true
           }
-          StyledText {
+          StyledLabel {
             text: CalendarManager.syncing ? I18n.tr("Syncing…") : CalendarManager.lastSync > 0 ? I18n.tr("Synced {0}", I18n.formatDate(new Date(CalendarManager.lastSync), CalendarConfig.timeFormat)) : ""
             textColor: Theme.foregroundAlt
             textSize: Appearance.fontSizeBy(-2)
@@ -162,7 +162,7 @@ BaseView {
           }
           RowLayout {
             Layout.fillWidth: true
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               text: I18n.tr("Calendars")
               font.bold: true
@@ -204,7 +204,7 @@ BaseView {
                     color: calendarRow.calendar.color
                     opacity: calendarRow.calendar.enabled ? 1 : 0.4
                   }
-                  StyledText {
+                  StyledLabel {
                     Layout.fillWidth: true
                     text: calendarRow.calendar.name
                     textFormat: Text.PlainText

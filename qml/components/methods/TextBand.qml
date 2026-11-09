@@ -11,7 +11,8 @@ import QtQuick
 // with lowercase in it (whose middle is also the middle of its ascenders
 // over its descenders), a figure's height (a digit's, as tall as a
 // capital) for text without (numbers, capitals). TextBandPadding pads a
-// Text by it, for anything placing that Text by its box.
+// Text by it, for anything placing that Text by its box; the padding keeps
+// the Text's size, so no layout grows for it.
 QtObject {
   id: root
 
@@ -28,17 +29,26 @@ QtObject {
     return root.onXHeight(text) ? xHeight : figureHeight;
   }
 
-  // { top, bottom }: the padding (≥ 0, one side 0) that puts a Text's box's
-  // middle on the band's middle, for a line `contentHeight` high (the
-  // Text's, padding left out) with its baseline `ascent` below its top and
-  // the band `band` high above the baseline
-  function padding(ascent, contentHeight, band) {
-    // How much further the band's middle is from the top than from the
-    // bottom
-    const over = 2 * ascent - contentHeight - band;
+  // { top, bottom, offset }: the padding that moves a Text's lines so the
+  // middle of its box is the middle of its letters' bands, its size kept
+  // (one side the other's negative), for lines `lineHeight` high (one
+  // line's height, padding left out) with their baseline `ascent` below
+  // their top and the band `band` high above the baseline. Over several
+  // lines the first line's band top to the last's baseline is centred.
+  // The lines move by whole pixels, as a baseline is drawn on one (moved
+  // by a fraction, it would round either way with where the box is):
+  // `offset` is what that leaves, how far the band's middle is then below
+  // the box's (at most half a pixel), for a host placing the Text itself
+  // to take off its position
+  function padding(ascent, lineHeight, band) {
+    // How far the band's middle is above the box's: the lines move up by
+    // that
+    const shift = (2 * ascent - lineHeight - band) / 2;
+    const whole = Math.round(shift);
     return {
-      "top": Math.max(0, -over),
-      "bottom": Math.max(0, over)
+      "top": -whole,
+      "bottom": whole,
+      "offset": shift - whole
     };
   }
 }

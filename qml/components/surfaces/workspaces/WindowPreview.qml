@@ -85,7 +85,7 @@ Item {
       visible: root.showTitle && root.hovered && !root.resizing && root.height > height * 2.5
       color: Qt.alpha(Theme.background, 0.85)
 
-      StyledText {
+      StyledLabel {
         id: title
         anchors.left: parent.left
         anchors.right: parent.right
@@ -132,7 +132,7 @@ Item {
     radius: height / 2
     color: Theme.accent
 
-    StyledText {
+    StyledLabel {
       id: sizeLabel
       anchors.centerIn: parent
       text: `${root.windowData?.w ?? 0} × ${root.windowData?.h ?? 0}`

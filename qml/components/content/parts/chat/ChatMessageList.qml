@@ -141,7 +141,7 @@ Item {
         text: "arrow_downward"
         textSize: Appearance.fontSizeBy(-1)
       }
-      StyledText {
+      StyledLabel {
         text: I18n.tr("Jump to latest")
         textSize: Appearance.fontSizeBy(-2)
       }

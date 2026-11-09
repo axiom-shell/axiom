@@ -227,7 +227,7 @@ ColumnLayout {
       Layout.fillWidth: true
       spacing: Widget.spacing
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: root.caCert !== "" ? root.caCert : I18n.tr("No file chosen")
         elide: Text.ElideMiddle

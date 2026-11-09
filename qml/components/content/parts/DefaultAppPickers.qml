@@ -90,7 +90,7 @@ ColumnLayout {
           textColor: Theme.accent
         }
 
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Widget.px(130)
           // I18n.tr: the labels are declared in DefaultAppsManager
           text: I18n.tr(row.modelData.label)

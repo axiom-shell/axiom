@@ -216,7 +216,7 @@ Card {
             borderColor: slot.selected ? Theme.accent : slotArea.containsMouse ? Theme.foreground : Theme.border
             borderWidth: slot.selected ? 3 : 2
 
-            StyledText {
+            StyledLabel {
               anchors.centerIn: parent
               visible: slot.url === ""
               text: I18n.tr("Pick one below")
@@ -241,7 +241,7 @@ Card {
               textColor: slot.selected ? Theme.accent : Theme.foreground
             }
 
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               text: I18n.tr(slot.modelData === "dark" ? "Dark" : "Light")
               textColor: slot.selected ? Theme.accent : Theme.foreground
@@ -274,7 +274,7 @@ Card {
       sourceSize: Qt.size(640, 400)
       borderColor: Theme.accent
 
-      StyledText {
+      StyledLabel {
         anchors.centerIn: parent
         visible: root.wallpaper === ""
         text: I18n.tr("No wallpaper set")

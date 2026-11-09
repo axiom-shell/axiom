@@ -111,7 +111,7 @@ Card {
       textColor: root.tint
     }
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       visible: !root.compact && root.label !== ""
       text: root.label

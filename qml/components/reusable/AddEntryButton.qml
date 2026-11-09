@@ -27,7 +27,7 @@ StyledContainer {
       text: "add"
     }
 
-    StyledText {
+    StyledLabel {
       text: root.text
     }
   }

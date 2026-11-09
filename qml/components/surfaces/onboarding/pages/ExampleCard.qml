@@ -160,7 +160,7 @@ StyledContainer {
       Layout.fillWidth: true
       spacing: Widget.spacing / 2
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: root.example.title
         textFormat: Text.PlainText

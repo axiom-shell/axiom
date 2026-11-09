@@ -324,12 +324,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** needs a plan
 - **Found:** 2026-10-20, while reviewing the popouts system
 
-### Icon and text outside the bar centre the text on its line box
-- **Where:** `qml/components/reusable/StyledTextButton.qml`, `qml/components/reusable/DragChip.qml`, `qml/components/reusable/ActionPill.qml` (and other rows of a `StyledIcon` beside a `StyledText`)
-- **What:** these lay an icon and a label in a `RowLayout`, whose default vertical centring centres the label's line box (ascent + descent) on the icon, the way the bar did before `TextBandPadding`: all-lowercase text sits a pixel or two low beside its icon. Fix: give such labels a `TextBandPadding` (`topPadding` / `bottomPadding`), as the bar's labels have; which pieces want it is a pass over `docs/dev/core/shared-ui-pieces.md`'s icon-and-text pieces.
-- **Size:** small
-- **Found:** 2026-11-09, while reviewing the bar's text centring on its letters
-
 ## Workspaces and monitors
 
 ### A remap runs at startup, from the layout before the config loaded
@@ -534,6 +528,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-11-01, while reviewing the feature:todo-pomodoro system
 
 ## Tooling, tests and CI
+
+### qml_modules.py builds its tree in a folder named after a flag
+- **Where:** `scripts/qml_modules.py` (`main`)
+- **What:** any one argument but `--pure` is taken as the output folder, so `scripts/qml_modules.py --help` empties and fills `./--help` with a copy of `qml/` (one was committed on `fix/text-centering` and removed again). Fix: print the usage for an argument starting with `-` that isn't `--pure`.
+- **Size:** trivial
+- **Found:** 2026-11-09, while centring labels outside the bar on their letters
 
 ### guard.py judges daemon calls and the radio only by argv
 - **Where:** `.claude/hooks/guard.py` (`check_bluetooth`, `scratch_system_bus`, `axiom_live_display`)

@@ -25,7 +25,7 @@ DragLayer {
     implicitHeight: Widget.height
     backgroundColor: Theme.accent
 
-    StyledText {
+    StyledLabel {
       id: ghostLabel
       anchors.centerIn: parent
       text: root.dragging?.label ?? ""

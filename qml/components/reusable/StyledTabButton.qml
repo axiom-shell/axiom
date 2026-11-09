@@ -17,7 +17,7 @@ TabButton {
   Layout.fillWidth: true
   Layout.fillHeight: true
 
-  contentItem: StyledText {
+  contentItem: StyledLabel {
     text: root.text
     textSize: Appearance.fontSizeBy(-2)
     textColor: root.checked ? root.activeColor : root.inactiveColor

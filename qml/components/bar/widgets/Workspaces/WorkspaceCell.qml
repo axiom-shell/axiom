@@ -180,6 +180,7 @@ Item {
       StyledIcon {
         id: leadLabel
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
         visible: root.leadIcon !== ""
         readonly property bool symbol: leadLabel.isSymbol && !root.leadPlain
         // As words, centred on their letters
@@ -208,6 +209,7 @@ Item {
       StyledIcon {
         id: textLabel
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
         readonly property bool symbol: textLabel.isSymbol && !root.textPlain
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !textLabel.symbol
@@ -288,17 +290,9 @@ Item {
       }
     }
 
-    StyledText {
-      id: numberLabel
-      // Centred on its figures
-      readonly property TextBandPadding _band: TextBandPadding {
-        font: numberLabel.font
-        text: numberLabel.text
-        contentHeight: numberLabel.contentHeight
-      }
+    // Centred on its figures
+    StyledLabel {
       anchors.centerIn: parent
-      topPadding: _band.top
-      bottomPadding: _band.bottom
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
       textColor: root.look.content

@@ -166,13 +166,13 @@ Card {
             textColor: Theme.accent
             textSize: Appearance.fontSizeBy(2)
           }
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: NotesManager.titleOf(root.path)
             font.bold: true
             elide: Text.ElideMiddle
           }
-          StyledText {
+          StyledLabel {
             visible: editor.progress.total > 0
             text: editor.progress.done + "/" + editor.progress.total
             textColor: Theme.foregroundAlt
@@ -280,7 +280,7 @@ Card {
           }
         }
       }
-      StyledText {
+      StyledLabel {
         visible: findField.text !== ""
         text: editor.findCount === 0 ? I18n.tr("No matches") : I18n.tr("{0}/{1}", editor.findIndex + 1, editor.findCount)
         textColor: editor.findCount === 0 ? Theme.error : Theme.foregroundAlt

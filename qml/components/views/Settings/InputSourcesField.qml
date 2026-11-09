@@ -207,13 +207,13 @@ ColumnLayout {
           Layout.fillWidth: true
           spacing: 0
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: row.ime ? (row.engine?.displayName || row.source.engine) : InputSources.describe(root.registry, row.source.layout, row.source.variant)
           }
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             elide: Text.ElideRight
             textColor: row.ime && root.chosenRuns && !row.engine ? Theme.warning : Theme.foregroundAlt
@@ -229,7 +229,7 @@ ColumnLayout {
         }
 
         // An engine's typing layout: one of the xkb sources', or the first
-        StyledText {
+        StyledLabel {
           visible: row.ime
           text: I18n.tr("Types on")
           textColor: Theme.foregroundAlt

@@ -388,12 +388,12 @@ Panel {
         Layout.preferredHeight: root.smallLine
         spacing: Widget.spacing
 
-        StyledText {
+        StyledLabel {
           text: I18n.tr("Public IP")
           textSize: Appearance.fontSizeBy(-3)
           textColor: Theme.foregroundAlt
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: VpnManager.publicIpBusy ? I18n.tr("Checking…") : VpnManager.publicIp || "—"
           elide: Text.ElideRight

@@ -194,6 +194,7 @@ Item {
             contentHeight: tickerText.contentHeight
           }
           anchors.verticalCenter: parent.verticalCenter
+          anchors.verticalCenterOffset: -_band.offset
           topPadding: _band.top
           bottomPadding: _band.bottom
           text: root.text

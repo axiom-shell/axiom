@@ -278,7 +278,7 @@ Item {
         Layout.fillWidth: true
       }
 
-      StyledText {
+      StyledLabel {
         visible: root.links.length > 0
         text: I18n.tr("More in")
         opacity: 0.6
@@ -386,7 +386,7 @@ Item {
               textColor: Theme.accent
             }
 
-            StyledText {
+            StyledLabel {
               text: I18n.tr(block.modelData.name)
               textSize: Appearance.fontSizeBy(2)
               font.bold: true

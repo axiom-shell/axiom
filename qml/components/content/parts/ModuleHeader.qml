@@ -23,7 +23,7 @@ RowLayout {
     textSize: Appearance.fontSizeBy(2)
   }
 
-  StyledText {
+  StyledLabel {
     Layout.fillWidth: true
     text: root.title
     elide: Text.ElideRight

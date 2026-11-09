@@ -62,7 +62,7 @@ Flickable {
           source: pill.iconSource
         }
 
-        StyledText {
+        StyledLabel {
           id: label
           visible: !pill.showIcon
           anchors.centerIn: parent

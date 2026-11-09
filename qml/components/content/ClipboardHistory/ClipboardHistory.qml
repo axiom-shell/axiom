@@ -198,7 +198,7 @@ Panel {
       textColor: Theme.accent
       textSize: Appearance.fontSizeBy(2)
     }
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: root.off ? I18n.tr("Clipboard history is off") : root.newest ? ClipboardManager.labelOf(root.newest) : I18n.tr("Nothing copied yet")
       textColor: root.newest && !root.off ? Theme.foreground : Theme.foregroundAlt

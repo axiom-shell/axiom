@@ -41,7 +41,7 @@ CustomElementBase {
     RowLayout {
       spacing: Widget.spacing
 
-      StyledText {
+      StyledLabel {
         visible: text !== ""
         Layout.fillWidth: true
         text: root.label

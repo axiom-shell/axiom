@@ -60,7 +60,7 @@ Item {
       Layout.fillWidth: true
       Layout.minimumWidth: Appearance.fontSize * 4
       spacing: 0
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: MarketMath.displayName(root.item, root.quote)
         font.weight: Font.DemiBold
@@ -75,7 +75,7 @@ Item {
           textSize: Appearance.fontSizeBy(-2)
           textColor: Theme.warning
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           textSize: Appearance.fontSizeBy(-2)
           textColor: root.quote?.error ? Theme.error : Theme.foregroundInactive
@@ -88,7 +88,7 @@ Item {
           }
         }
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         visible: root.holding !== null
         textSize: Appearance.fontSizeBy(-2)
@@ -116,7 +116,7 @@ Item {
       Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
       Layout.minimumWidth: Appearance.fontSize * 7
       spacing: Widget.spacing / 2
-      StyledText {
+      StyledLabel {
         Layout.alignment: Qt.AlignRight
         text: root.hasPrice ? MarketMath.formatPrice(root.quote.price, root.quote.currency) : "—"
         font.weight: Font.DemiBold
@@ -131,7 +131,7 @@ Item {
         implicitHeight: change.implicitHeight + Widget.px(2)
         radius: height / 2
         color: Qt.alpha(root.trendColor, 0.16)
-        StyledText {
+        StyledLabel {
           id: change
           anchors.centerIn: parent
           textSize: Appearance.fontSizeBy(-2)

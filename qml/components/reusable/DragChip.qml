@@ -59,7 +59,7 @@ Rectangle {
       Layout.preferredWidth: Appearance.fontSize * 1.3
     }
 
-    StyledText {
+    StyledLabel {
       visible: root.showsLabel
       text: root.label
       textColor: root.ink

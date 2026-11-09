@@ -183,7 +183,7 @@ FieldGroup {
       Layout.fillWidth: true
       spacing: Widget.spacing / 2
 
-      StyledText {
+      StyledLabel {
         visible: !root.renaming
         text: root.name || I18n.tr("This computer")
         textSize: Appearance.fontSizeLarge
@@ -221,7 +221,7 @@ FieldGroup {
         }
       }
 
-      StyledText {
+      StyledLabel {
         visible: !!root.info.prettyHostname && root.info.hostname && root.info.prettyHostname !== root.info.hostname && !root.renaming
         text: I18n.tr("Hostname {0}", root.info.hostname)
         textColor: Theme.foregroundAlt
@@ -229,7 +229,7 @@ FieldGroup {
         textSize: Appearance.fontSizeBy(-1)
       }
 
-      StyledText {
+      StyledLabel {
         text: root.info.os ?? ""
         textColor: Theme.foregroundAlt
         elide: Text.ElideRight
@@ -285,7 +285,7 @@ FieldGroup {
         Layout.alignment: Qt.AlignTop
         spacing: Widget.spacing * 2
 
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Widget.px(130)
           Layout.alignment: Qt.AlignTop
           // I18n.tr: the labels are declared above

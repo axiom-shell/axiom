@@ -60,7 +60,7 @@ Rectangle {
         opacity: root.available ? 1 : 0.5
         spacing: Widget.spacing
 
-        StyledText {
+        StyledLabel {
           text: root.title
           font.bold: true
         }
@@ -72,7 +72,7 @@ Rectangle {
           radius: height / 2
           color: root.tagColor
 
-          StyledText {
+          StyledLabel {
             id: tag
             anchors.centerIn: parent
             text: root.tag

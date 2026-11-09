@@ -127,7 +127,7 @@ Item {
         Layout.fillWidth: true
         spacing: Widget.spacing * 2
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: usage.text === ""
           text: root.modelData.title ?? ""
           // Titles are clipboard text, window titles, file names: never markup
@@ -138,7 +138,7 @@ Item {
           ColorGlide on color {}
         }
 
-        StyledText {
+        StyledLabel {
           id: usage
           Layout.fillWidth: true
           visible: text !== ""
@@ -150,7 +150,7 @@ Item {
         }
       }
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         visible: LauncherConfig.showDescriptions && text !== ""
         text: root.modelData.subtitle ?? ""
@@ -170,7 +170,7 @@ Item {
       radius: Widget.radius
       color: root.modelData.armed ? Theme.error : Theme.backgroundAlt
 
-      StyledText {
+      StyledLabel {
         id: hint
         anchors.fill: parent
         anchors.leftMargin: Widget.smallPadding

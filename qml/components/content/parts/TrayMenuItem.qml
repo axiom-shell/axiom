@@ -77,7 +77,7 @@ Rectangle {
     }
 
     // Label
-    StyledText {
+    StyledLabel {
       id: label
       text: root.menuItem.text
       Layout.fillWidth: true

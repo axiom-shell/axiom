@@ -148,7 +148,7 @@ ColumnLayout {
               textColor: Theme.accent
             }
 
-            StyledText {
+            StyledLabel {
               text: MonitorManager.labelFor(tile.rule)
               font.bold: true
               elide: Text.ElideRight

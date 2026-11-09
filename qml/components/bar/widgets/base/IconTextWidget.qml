@@ -147,10 +147,9 @@ BaseWidget {
         id: textLabel
         // Across a bar, its letters centred where the icon's middle is (the
         // run's, with none) on a whole pixel, and turned along a vertical
-        // one, across it: its box is padded to centre on them
+        // one, across it: its lines are moved in its box to centre on them
         // (TextBandPadding), not on its line, which holds the descent.
-        // Upright under the icon it centres across nothing, and padded it
-        // would lengthen the widget along the bar
+        // Upright under the icon it centres across nothing
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !(root.isVertical && root.uprightLabel)
           font: textLabel.font
@@ -164,7 +163,7 @@ BaseWidget {
         // it fills the room and elides
         readonly property real _alongRoom: root._turned ? textSlot.height : textSlot.width
         x: root._turned ? (textSlot.width - width) / 2 : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
-        y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - height / 2)
+        y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - height / 2 - _band.offset)
         width: root.isVertical && root.uprightLabel ? textSlot.width : Math.min(Math.ceil(implicitWidth), _alongRoom)
         rotation: root._turned ? -90 : 0
         horizontalAlignment: root.isVertical && root.uprightLabel ? Text.AlignHCenter : Text.AlignLeft
