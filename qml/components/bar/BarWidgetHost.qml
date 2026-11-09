@@ -112,7 +112,8 @@ Item {
   // Its content's extent across the bar, in px: the module's
   // `contentAcross` (BarWidget's, BarIconWidget's: from config, never
   // measured from the live item, so it can't feed back into the layout).
-  // Its caps' room is kept clear of content that tall (BarRuns.insets).
+  // A module declaring none is taken to fill the bar's thickness. Its
+  // caps' room is kept clear of content that tall (BarRuns.insets).
   readonly property real contentAcross: _item?.contentAcross ?? barConfig.thickness
   // Room along the bar kept clear of its background's caps, at its start
   // and end (set by WidgetGroup): added to its sizes, the module inside

@@ -30,11 +30,10 @@ Item {
   property bool hasBackground: false
   // Its content's extent across the bar (px), which its background's caps
   // keep clear of (BarWidgetHost.contentAcross): from config, never
-  // measured. A label or an icon at the bar's font size on a horizontal
-  // bar; on a vertical one, where its width isn't known from config (a
-  // stacked label), the bar's thickness. A widget whose content is taller
-  // declares its own (Workspaces' cells).
-  property real contentAcross: isVertical ? barConfig.thickness : barConfig.fontSize
+  // measured. A label or an icon at the bar's font size (on a vertical
+  // bar a label is turned along it: one line across). A widget whose
+  // content is taller declares its own (Workspaces' cells).
+  property real contentAcross: barConfig.fontSize
   // With a background, it lays its own parts out as segments of the bar's
   // run (Workspaces' cells with its Background off): its background draws
   // no box, its host keeps no cap room for it, and it's told its place in

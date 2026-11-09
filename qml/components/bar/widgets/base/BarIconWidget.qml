@@ -70,11 +70,10 @@ IconTextWidget {
   property bool hoverOutline: false
   // Its content's extent across the bar (px), which its background's caps
   // keep clear of (BarWidgetHost.contentAcross): from config, never
-  // measured. On a horizontal bar its icon's height, at its scale where
-  // its type draws it larger (iconScale), else its label's; on a vertical
-  // one, where an upright label's width isn't known from config, the
-  // bar's thickness.
-  property real contentAcross: isVertical ? barConfig.thickness : barConfig.fontSize * Math.max(1, iconScale)
+  // measured. Its icon at the bar's font size, at its scale where its type
+  // draws it larger (iconScale), else its label's line (on a vertical bar
+  // the label is turned along it: one line across too).
+  property real contentAcross: barConfig.fontSize * Math.max(1, iconScale)
   // A level (0-1) its WidgetGroup fills its background's shape to, along
   // the bar (up a vertical one), in backgroundLevelColor; -1 for none (a custom
   // widget's pill style)

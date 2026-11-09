@@ -179,26 +179,27 @@ TestCase {
     compare(BarRuns.insets(arrow, null, Object.assign({}, cells(0), {
       "contentAcross": 14
     }), 0, section).trail, 7, "a label at the font size: less");
-    // On a vertical bar a widget's content is the bar's thickness across
-    // (its width isn't known from config): an arrow's point and a
-    // capsule's curve kept clear of all of it
-    const iconOn = {
+    // On a vertical bar a label is turned along it: one line across, as
+    // on a horizontal bar, so a capsule's end keeps what it keeps there
+    const capsule26 = ctx("capsule", "separate", false, 26);
+    const label = {
       "background": true,
       "segments": false,
       "fills": false,
-      "contentAcross": 26
+      "contentAcross": 14
     };
-    compare(BarRuns.insets(arrow, null, iconOn, 0, section), {
-      "lead": 13,
-      "trail": 13
-    }, "vertical: the arrow's point, as deep as it reaches");
-    compare(BarRuns.insets(ctx("capsule", "separate", false, 26), null, iconOn, 0, section), {
-      "lead": 13,
-      "trail": 13
-    }, "vertical: the capsule's curve");
-    compare(BarRuns.insets(arrow, null, Object.assign({}, iconOn, {
+    compare(BarRuns.insets(capsule26, null, label, 0, section), {
+      "lead": 3,
+      "trail": 3
+    }, "a vertical bar's label: a horizontal one's room, not the thickness's");
+    // A module declaring nothing fills the thickness (BarWidgetHost's
+    // fallback): the capsule's whole curve
+    compare(BarRuns.insets(capsule26, null, Object.assign({}, label, {
       "contentAcross": undefined
-    }), 0, section), BarRuns.insets(arrow, null, iconOn, 0, section), "none given: the bar's thickness");
+    }), 0, section), {
+      "lead": 13,
+      "trail": 13
+    }, "none given: the bar's thickness");
     const loose = {
       "background": false,
       "segments": false,
