@@ -86,7 +86,6 @@ QtObject {
     const rank = rankOf(claim, byId[claim.parentId]);
     const evict = [];
     const yields = [];
-    const unique = list => list.filter((id, i) => id && list.indexOf(id) === i);
     if (isUnderlay(claim, byId[claim.parentId]))
       return {
         "allowed": true,
@@ -123,6 +122,7 @@ QtObject {
       else
         (e.resident ? yields : evict).push(e.id);
     }
+    const unique = list => list.filter((id, i) => id && list.indexOf(id) === i);
     return {
       "allowed": true,
       "evict": unique(evict),

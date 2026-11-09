@@ -45,7 +45,7 @@ QtObject {
     {
       "namespace": "menu",
       "order": 7,
-      "why": "Free menus (FreeMenu): on Top over the windows, under the popouts sliding out from under the bars (and the Overlay layer's: popouts, the overlay). Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
+      "why": "Free menus (FreeMenu): on Top over the windows, under every popout: those sliding out from under the bars and the dock on Top, and the Overlay layer's (popouts, the overlay). Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
     },
     {
       "namespace": "popout-under",

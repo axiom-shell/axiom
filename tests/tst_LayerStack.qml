@@ -60,8 +60,8 @@ TestCase {
 
   // A free menu's window: over the windows on Top, under the blur window
   // and the shadows (which draw its fill and shadow), under every popout
-  // that can be on Top (those sliding out from under the bars, and the
-  // rest wherever they are); its fill drawn by the blur window
+  // that can be on Top (those sliding out from under the bars, the dock,
+  // and the rest wherever they are); its fill drawn by the blur window
   // and its popups blurred
   function test_free_menu_order() {
     const menu = order("menu");
@@ -69,7 +69,7 @@ TestCase {
       verify(order(ns) > menu, "over " + ns);
     // Every popout on Top draws over it (a pinned one stays under them:
     // PopoutGeometry.isUnderlay)
-    for (const ns of ["popout-under", "popout", "edge-popout", "dock-preview", "osd"])
+    for (const ns of ["popout-under", "dock", "popout", "edge-popout", "dock-preview", "osd"])
       verify(menu > order(ns), "under " + ns);
     verify(LayerStack.blurBacked.includes("menu") && LayerStack.blurChrome.includes("menu"));
     verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops).includes("menu"), "never blurred whole");
