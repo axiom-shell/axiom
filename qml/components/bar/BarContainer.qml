@@ -349,9 +349,12 @@ Rectangle {
   readonly property var slots: BarLayout.layoutSections(root._groups.map(g => g.preferredLength), root._groups.map(g => g.minimumLength), root.length, root.endMargins, root._sectionGaps, root.barConfig.lockCenter, centerGroup.layoutHang, root._groups.map(g => g.fillCount), centerGroup.centerParts)
 
   // A section's shown widgets; `configIndex` is each one's place in the
-  // section's config, which hidden widgets leave out
+  // section's config, which hidden widgets leave out. A widget drawn one
+  // box per item is one entry per item (BarBoxes.expand), each with its
+  // `box`, all with its configIndex.
   function widgetModel(widgetConfigArray) {
-    return (widgetConfigArray || []).map((widgetConf, i) => ({
+    return BarBoxes.expand((widgetConfigArray || []).map((widgetConf, i) => ({
+          "id": widgetConf.id,
           "type": widgetConf.type,
           "properties": widgetConf.properties || {},
           // Its Auto color fields' roles (BarsConfig.withAutoColors)
@@ -359,7 +362,7 @@ Rectangle {
           "layout": widgetConf.layout || {},
           "configIndex": i,
           "visible": widgetConf.visible !== false
-        })).filter(widget => widget.visible);
+        })).filter(widget => widget.visible), BarsConfig.boxItems);
   }
 
   // While the bar editor is on screen, what it shows of this bar (see

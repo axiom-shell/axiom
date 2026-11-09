@@ -66,4 +66,4 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
   - the board's fit line and lane meters (above)
   - the chips' crowded badge
   - the inspector's sizing text.
-- `BarContainer.widgetModel` keeps each widget's `configIndex`, since widgets hidden in config aren't on the bar.
+- `BarContainer.widgetModel` keeps each widget's `configIndex`, since widgets hidden in config aren't on the bar; a widget drawn one box per item is several hosts with its one `configIndex` ([widget style](widget-style.md#boxes-one-per-item)), so they're selected, hovered and reported as one.

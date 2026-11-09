@@ -147,6 +147,10 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 					for _, key := range widgetKeysAddedSinceV1 {
 						props.Delete(key)
 					}
+					typ, _ := w.(*jsonx.Object).Value("type").(string)
+					for _, key := range widgetTypeKeysAddedSinceV1[typ] {
+						props.Delete(key)
+					}
 				}
 			}
 		}
@@ -272,7 +276,11 @@ func osdItemFields(cfg *jsonx.Object) {
 // the Network widget's VPN lock and its popout's VPN section, the
 // Workspaces widget's labels, urgency, icon layouts, solid boxes, spacing
 // and reverse scrolling)
-var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount"}
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows", "activeWorkspaceIcons", "appIconsCount", "lead", "leadIcon", "appIcon", "boxes"}
+
+// A type's settings added since format 1 under a name another type had
+// then (Bluetooth's showDevice, Button's label)
+var widgetTypeKeysAddedSinceV1 = map[string][]string{"Notifications": {"label"}, "Volume": {"showDevice"}, "Microphone": {"showDevice"}}
 
 // moduleKeysAddedSinceV1 are a module type's settings added since format
 // 1, which a default layout's modules get from their defaults at load

@@ -527,6 +527,9 @@ QtObject {
         // Its own priority when the bar is crowded (`x-priority`)
         "priority": def["x-priority"] ?? 0,
         "propertiesSchema": def.properties?.properties?.properties || null,
+        // Its items, which Boxes: One per item draws each in a box
+        // (`x-boxItems` on its `boxes` setting), null for none
+        "boxItems": def.properties?.properties?.properties?.boxes?.["x-boxItems"] ?? null,
         // Its options shown first, in order (their `x-order`)
         "propertiesOrder": def.properties?.properties?.["x-order"] ?? [],
         // Where its feature is set (`x-link`), shown in the widget
@@ -544,6 +547,27 @@ QtObject {
   // its host sizes it elastic, and the editor offers its minSize and maxSize
   function isElastic(type) {
     return BarsConfig.availableWidgetTypes.find(t => t.type === type)?.elastic ?? false;
+  }
+  // The items a widget `entry` ({ type, properties }) draws one box each
+  // (BarBoxes.expand), from config only: with Boxes: One per item, its
+  // options that are on, or the list its `source` names (Markets' symbols,
+  // its portfolio first; ClaudeUsage's accounts); [] for one box
+  function boxItems(entry) {
+    const spec = BarsConfig.availableWidgetTypes.find(t => t.type === entry.type)?.boxItems ?? null;
+    const p = entry.properties ?? {};
+    if (!spec || p.boxes !== "each")
+      return [];
+    if (spec.options)
+      return BarBoxes.fromOptions(spec.options, p);
+    switch (spec.source) {
+    case "marketSymbols":
+      return (p.showPortfolio && MarketsConfig.symbols.some(item => item.quantity > 0) ? ["portfolio"] : []).concat(MarketMath.pick(MarketsConfig.symbols, p.symbols).map(item => item.id));
+    case "claudeAccounts":
+      return ClaudeUsageConfig.accounts.map(account => account.configDir);
+    default:
+      console.warn(`BarsConfig: ${entry.type}'s x-boxItems names no source "${spec.source}"`);
+      return [];
+    }
   }
   // What the bar editor's library offers: the widget types, the custom
   // widgets one by one (keyed "CustomWidget:<id>",

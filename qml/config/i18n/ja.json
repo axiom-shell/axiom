@@ -3415,7 +3415,6 @@
     "Hide workspaces on another monitor.": "",
     "Show only while one of the keys is on.": "",
     "At or below Battery's critical level.": "",
-    "Pill only with one metric shown; the disk shows a fill instead of a sparkline.": "",
     "Stacked puts the label over this machine's address.": "",
     "e.g. Asia/Tokyo. Empty follows the system.": "",
     "The list on hover, to add to and tick off.": "",
@@ -4218,6 +4217,14 @@
     "Drawn before the time; a split bar sets it apart as the icon part.": "",
     "Drawn before the items; a split bar sets it apart as the icon part. Empty shows none.": "",
     "Active workspace": "",
-    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part.": ""
+    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part.": "",
+    "Caps": "",
+    "Num": "",
+    "Scroll": "",
+    "One": "",
+    "Pill only with one metric in a box; the disk shows a fill instead of a sparkline.": "",
+    "One per item takes the bar's widget style, pill and split for each.": "",
+    "One per item": "",
+    "Boxes": ""
   }
 }

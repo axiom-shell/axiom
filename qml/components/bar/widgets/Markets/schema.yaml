@@ -9,6 +9,10 @@ appearance:
     enum: [label, icon, ticker, stacked, sparkline]
     description: Ticker scrolls every symbol past; stacked puts the price under the name; sparkline draws the day's line.
 colors: standard
+boxes:
+  variant: each
+  boxes:
+    x-boxItems: {source: marketSymbols}
 settings:
   symbols:
     # Ids from the user's watchlist: personal, as the watchlist is
@@ -34,6 +38,7 @@ settings:
     title: Cycle through symbols
     default: true
     description: Shows one symbol at a time (not the ticker, which scrolls them all). Off, the label shows them all side by side.
+    x-showIf: {boxes: one}
   rotateInterval:
     type: integer
     x-control: stepper
@@ -42,7 +47,7 @@ settings:
     default: 6000
     minimum: 2000
     maximum: 60000
-    x-showIf: {rotate: true}
+    x-showIf: {rotate: true, boxes: one}
   showPortfolio:
     type: boolean
     title: Show the portfolio
