@@ -426,14 +426,46 @@ QtObject {
     return look;
   }
 
+  // What a bar widget's options' x-showIf can ask of the look it sits on
+  // beyond its BarStyle values (`$bar.<name>`, context): what the user
+  // sees of the style, from its traits, so a widget's schema never lists
+  // styles. Each a function of a resolved look:
+  //   boxed           each widget sits on a box of its own (a style with
+  //                   shapes, grouping and runs)
+  //   merged          neighbouring boxes share one run background (the
+  //                   grouping as drawn)
+  //   underlined      each widget has a line along one side
+  //   ownColorShows   a widget's own colors (its state colors) show at
+  //                   all: not under plain text
+  //   textColorShows  a widget's own Text color draws: its content on its
+  //                   own fill (a box whose text reads on its color, not
+  //                   merged), a split icon part, or a widget filled on
+  //                   hover; and the bar sets no text color of its own
+  //   cellsFilled     a Workspaces cell is a box filled in its color, its
+  //                   label reading on it (split's cells are filled's)
+  readonly property var contextTraits: ({
+      "boxed": look => look.traits.boxed,
+      "merged": look => look.grouping === "merged",
+      "underlined": look => look.traits.line,
+      "ownColorShows": look => look.traits.colored,
+      "textColorShows": look => look.textColor === "" && ((look.grouping !== "merged" && look.traits.box?.text === "own") || look.traits.iconPart || look.hoverFill),
+      "cellsFilled": look => {
+        const cell = look.traits.fallback ? root.traitsOf(look.traits.fallback, look) : look.traits;
+        return cell.box?.text === "own";
+      }
+    })
+
   // The look as `$bar.<key>` for a bar widget's options' x-showIf: its
-  // BarStyle values, with shape and grouping as drawn
+  // BarStyle values, with shape and grouping as drawn, and its traits as
+  // the user sees them (contextTraits)
   function context(look) {
     const table = root.table[look.style] ?? root.table.filled;
     const drawn = Object.assign({}, look.values, {
       "widgetShape": root._shapeOf(look, table),
       "widgetGrouping": look.grouping
     });
+    for (const name in root.contextTraits)
+      drawn[name] = root.contextTraits[name](look);
     return Object.keys(drawn).filter(key => key !== "shadowColor" && key !== "shadowSize").reduce((context, key) => {
       context["$bar." + key] = drawn[key];
       return context;

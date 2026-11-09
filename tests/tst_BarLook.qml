@@ -356,7 +356,8 @@ TestCase {
   }
 
   // `$bar.<key>`: every BarStyle key, shape and grouping as drawn (the
-  // shape whether boxed or not, as the inspector has it)
+  // shape whether boxed or not, as the inspector has it), and the traits
+  // the user sees (contextTraits)
   function test_context() {
     const context = BarLook.context(root.look({
       "widgetStyle": "split",
@@ -364,7 +365,7 @@ TestCase {
       "widgetShape": "tab",
       "widgetGrouping": "powerline"
     }, null));
-    compare(Object.keys(context).sort(), Object.keys(root.schema.definitions.BarStyle.properties).map(key => "$bar." + key).sort());
+    compare(Object.keys(context).sort(), Object.keys(root.schema.definitions.BarStyle.properties).concat(Object.keys(BarLook.contextTraits)).map(key => "$bar." + key).sort());
     compare(context["$bar.widgetShape"], "rounded");
     compare(context["$bar.widgetGrouping"], "separate");
     compare(context["$bar.shadow"], false, "the shadow, flat");
@@ -373,6 +374,77 @@ TestCase {
       "widgetShape": "tab"
     }, null));
     compare([plain["$bar.widgetShape"], plain["$bar.widgetGrouping"]], ["tab", "separate"]);
+  }
+
+  // The traits a widget's options ask of its bar (`$bar.<trait>`), per
+  // style: [boxed, merged, underlined, ownColorShows, textColorShows,
+  // cellsFilled]
+  function test_context_traits() {
+    const names = ["boxed", "merged", "underlined", "ownColorShows", "textColorShows", "cellsFilled"];
+    compare(Object.keys(BarLook.contextTraits).sort(), names.slice().sort());
+    const row = (style, own) => {
+      const context = BarLook.context(root.look(Object.assign({
+        "widgetStyle": style
+      }, own ?? {}), null));
+      return names.map(name => context["$bar." + name]);
+    };
+    compare(row("filled"), [true, false, false, true, true, true], "filled");
+    compare(row("tinted"), [true, false, false, true, false, false], "tinted");
+    compare(row("outline"), [true, false, false, true, false, false], "outline");
+    compare(row("split"), [true, false, false, true, true, true], "split");
+    compare(row("underline"), [false, false, true, true, false, false], "underline");
+    compare(row("accentText"), [false, false, false, true, false, false], "colored icons");
+    compare(row("plain"), [false, false, false, false, false, false], "plain text");
+    const merged = {
+      "widgetGrouping": "merged"
+    };
+    compare(row("filled", merged), [true, true, false, true, false, true], "a merged filled run: the text reads on the run");
+    compare(row("split", merged), [true, true, false, true, true, true], "a merged split run: the icon parts keep theirs");
+    compare(row("underline", merged)[1], false, "merged as drawn: an unboxed style draws separate");
+    compare(row("tinted", {
+      "hoverFill": true
+    })[4], true, "filled on hover");
+    compare(row("underline", {
+      "hoverFill": true
+    })[4], false, "no fill on hover where it doesn't apply");
+    compare(row("filled", {
+      "widgetTextColor": "base05"
+    })[4], false, "the bar's own text color");
+  }
+
+  // BarStyle.yaml's own conditions (on its sibling keys: the settings page
+  // has no `$bar` context) list styles; each list is the styles of one
+  // trait, so the two can't drift: [field, the list in its condition, the
+  // trait as a predicate of a style's name]
+  function test_bar_style_conditions_agree_with_the_traits() {
+    const props = root.schema.definitions.BarStyle.properties;
+    const styles = props.widgetStyle.enum;
+    const traits = style => root.look({
+        "widgetStyle": style
+      }, null).traits;
+    const has = trait => style => traits(style)[trait];
+    // A box whatever the split icon: what chains in a powerline or hangs
+    // as a tab
+    const steadyBox = style => {
+      const record = BarLook.table[style];
+      return record.hasBox(root.look({
+        "widgetStyle": style,
+        "splitIcon": "badge"
+      }, null)) === record.hasBox(root.look({
+        "widgetStyle": style,
+        "splitIcon": "joined"
+      }, null));
+    };
+    const showIf = field => props[field]["x-showIf"];
+    const separators = ["separatorStyle", "separatorColor", "separatorThickness", "separatorGap"].map(field => [field, showIf(field).anyOf[1].widgetStyle, style => !traits(style).boxed]);
+    const rules = [["splitIcon", showIf("splitIcon").widgetStyle, has("iconPart")], ["splitLabelFill", showIf("splitLabelFill").widgetStyle, has("iconPart")], ["splitLabelColor", showIf("splitLabelColor").widgetStyle, has("iconPart")], ["splitDivider", showIf("splitDivider").widgetStyle, has("iconPart")], ["tintOpacity", showIf("tintOpacity").anyOf[0].widgetStyle, has("tints")], ["tintOpacity (split's label)", showIf("tintOpacity").anyOf[1].widgetStyle, has("iconPart")], ["tintOpacity (split's run)", showIf("tintOpacity").anyOf[2].widgetStyle, has("runTints")], ["outlineWidth", showIf("outlineWidth").widgetStyle, has("stroke")], ["outlineStroke", showIf("outlineStroke").widgetStyle, has("stroke")], ["hoverFill", showIf("hoverFill").widgetStyle, has("hoverFills")], ["lineWidth", showIf("lineWidth").widgetStyle, has("line")], ["lineSide", showIf("lineSide").widgetStyle, has("line")], ["widgetShape", showIf("widgetShape").widgetStyle, has("boxed")], ["widgetShape: tab", props.widgetShape["x-enumShowIf"].tab.anyOf[0].widgetStyle, steadyBox], ["widgetGrouping", showIf("widgetGrouping").widgetStyle, has("boxed")], ["widgetGrouping: powerline", props.widgetGrouping["x-enumShowIf"].powerline.anyOf[0].widgetStyle, steadyBox], ["tabCorners", showIf("tabCorners").widgetStyle, has("boxed")], ["widgetEnds", showIf("widgetEnds").widgetStyle, has("boxed")], ["widgetEnds (split)", showIf("widgetEnds").anyOf[0].widgetStyle, steadyBox], ["groupColor", showIf("groupColor").widgetStyle, style => traits(style).boxed && !traits(style).stroke], ["groupStrokeColor", showIf("groupStrokeColor").widgetStyle, has("stroke")], ["gradient", showIf("gradient").widgetStyle, has("colored")], ["gradientFrom", showIf("gradientFrom").widgetStyle, has("colored")], ["gradientTo", showIf("gradientTo").widgetStyle, has("colored")], ["gradientVia", showIf("gradientVia").widgetStyle, has("colored")]].concat(separators);
+    for (const [field, list, trait] of rules) {
+      verify(list !== undefined, field + " lists styles");
+      const listed = styles.filter(style => SchemaLayout.showIfHolds({
+          "widgetStyle": list
+        }, () => style));
+      compare(listed, styles.filter(trait), field);
+    }
   }
 
   // What a widget's content keeps clear of at its ends (BarShapes.segment):

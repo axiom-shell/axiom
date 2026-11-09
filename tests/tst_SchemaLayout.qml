@@ -1203,8 +1203,11 @@ TestCase {
             continue;
           // The look of the bar a widget sits on (BarsConfig.lookContext): only
           // a bar widget's options have it, and it names a BarStyle field
+          // or a trait the look gives (BarLook.contextTraits), never the
+          // style's name: what a style shows is its traits'
           if (target.startsWith("$")) {
-            if (!/^\w+Widget\.properties$/.test(where) || !target.startsWith("$bar.") || !(target.slice(5) in schema.definitions.BarStyle.properties))
+            const name = target.slice(5);
+            if (!/^\w+Widget\.properties$/.test(where) || !target.startsWith("$bar.") || name === "widgetStyle" || !(name in schema.definitions.BarStyle.properties || name in BarLook.contextTraits))
               bad.push(`${where}.${key}: ${target}`);
             continue;
           }

@@ -91,17 +91,17 @@ How the four widget-style features meet (each decided in `BarLook`, `BarWidgetSt
 
 ### Which color fields show
 - A widget's color fields show in the bar editor's inspector only in the bar looks where they draw something.
-  - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys. The values come from `BarsConfig.lookContext`: `lookOf`, with grouping counted only for boxed styles.
-  - `tst_SchemaLayout` (`test_real_schema_showIf_targets_exist`) checks that each such key names a `BarStyle` field, in a bar widget's options only.
+  - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys (`BarsConfig.lookContext`, `BarLook.context`): a `BarStyle` value, with shape and grouping as drawn, or a trait the user sees (`BarLook.contextTraits`): `boxed`, `merged`, `underlined`, `ownColorShows`, `textColorShows`, `cellsFilled`. A widget's schema never lists styles: what a style shows is its traits'.
+  - `tst_SchemaLayout` (`test_real_schema_showIf_targets_exist`) checks that each such key names a `BarStyle` field or a trait, never `widgetStyle`, in a bar widget's options only; `tst_BarLook` holds each trait per style.
 - **The widget's own color** (`backgroundColor` titled "Color", and its state colors). It is the fill when filled, the tint or outline when tinted or outlined, the icon part's fill (and the label's tint or text) when split, the line when underlined, and the icon when merged or under colored icons.
-  - Hidden under Plain text.
-  - A widget with no icon (Time, the tray's box) shows it only when boxed and not merged, or when underlined.
+  - Hidden under Plain text (`$bar.ownColorShows`).
+  - A widget with no icon (Time, the tray's box) shows it only when boxed and not merged, or when underlined (`$bar.boxed` and not `$bar.merged`, or `$bar.underlined`).
   - Notifications' DND and badge colors are content, so they always show.
-- **`foregroundColor`.** It is read only by a filled widget that isn't merged, a split one (its icon on the icon part, merged or not), or a tinted or outlined one with Fill on hover (its text while filled), and only while the bar's `widgetTextColor` is Auto. Elsewhere the text is the bar's.
+- **`foregroundColor`.** It is read only by a filled widget that isn't merged, a split one (its icon on the icon part, merged or not), or a tinted or outlined one with Fill on hover (its text while filled), and only while the bar's `widgetTextColor` is Auto (`$bar.textColorShows`, every widget's alike). Elsewhere the text is the bar's.
 - **Workspaces** (its popouts draw cells in the same style):
-  - `showBackground` shows only for boxed styles (split among them: `BarLook`'s `boxed` trait). `backgroundColor` also needs the background on and the grouping not merged.
-  - `activeColor` and `occupiedColor` hide under Plain. `emptyColor` shows only when filled, tinted, outlined, split or underlined. `urgentColor` always shows: under Plain an urgent cell's content takes it. With `solidBoxes` on, the active, occupied and empty colors show under every style.
-  - `textColor` shows only while the bar's text color is Auto, when filled or split and the cells show numbers, dots, labels of one's own, names or the grid's arrow, or with `solidBoxes` on.
+  - `showBackground` shows only for boxed styles (`$bar.boxed`, split among them). `backgroundColor` also needs the background on and the grouping not merged.
+  - `activeColor` and `occupiedColor` hide under Plain. `emptyColor` (and the None labels choice) shows only when boxed or underlined. `urgentColor` always shows: under Plain an urgent cell's content takes it. With `solidBoxes` on, the active, occupied and empty colors show under every style.
+  - `textColor` shows only while the bar's text color is Auto, when cells are filled boxes (`$bar.cellsFilled`: filled, and split's cells) and show numbers, dots, labels of one's own, names or the grid's arrow, or with `solidBoxes` on.
   - Cells follow the widget shape: pills under capsule (`BarsConfig.cellRadius`), otherwise the radius less the inset. With the background off they're segments of the bar's run in its shape ([Shapes and runs › Parts as segments](widget-shapes-runs.md#parts-as-segments)).
 - The bar's own look fields read the look it uses too (`BarsPanel` hands its form `BarsConfig.lookOf(bar)`). The separator fields hide in a boxed powerline, where `enrichBarConfig` drops separators.
 
