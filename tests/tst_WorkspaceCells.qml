@@ -171,12 +171,24 @@ TestCase {
       {
         "workspace": 3,
         "label": ""
+      },
+      {
+        "workspace": 5,
+        "label": "mail",
+        "asText": true
       }
     ];
-    compare(WorkspaceCells.labelFor(entries, 2), "web");
-    compare(WorkspaceCells.labelFor(entries, 3), "", "an empty label is none");
-    compare(WorkspaceCells.labelFor(entries, 4), "");
-    compare(WorkspaceCells.labelFor(undefined, 1), "");
+    compare(WorkspaceCells.labelFor(entries, 2), {
+      "text": "web",
+      "asText": false
+    });
+    compare(WorkspaceCells.labelFor(entries, 5), {
+      "text": "mail",
+      "asText": true
+    }, "Text: drawn as written");
+    compare(WorkspaceCells.labelFor(entries, 3).text, "", "an empty label is none");
+    compare(WorkspaceCells.labelFor(entries, 4).text, "");
+    compare(WorkspaceCells.labelFor(undefined, 1).text, "");
   }
 
   function test_nameShown() {

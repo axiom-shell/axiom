@@ -151,6 +151,30 @@ TestCase {
     compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["S.kb:", "S.kb.sources:", "S.kb.method:", "S.kb.method.enabled:S.kb.sources", "S.kb.method.other:"]);
   }
 
+  // An icon field's `x-textSwitch` draws its sibling boolean: that row is
+  // `drawnBy` it, and drawnKeys names it
+  function test_rows_text_switch() {
+    const label = {
+      "type": "string",
+      "x-control": "icon",
+      "x-textSwitch": "asText"
+    };
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "label": label,
+        "asText": {
+          "type": "boolean"
+        }
+      }
+    }, []);
+    compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["label:", "asText:label"]);
+    compare(SchemaLayout.drawnKeys(label), ["asText"]);
+    compare(SchemaLayout.drawnKeys({
+      "x-rowDraws": ["a.b"]
+    }), ["a.b"]);
+    compare(SchemaLayout.drawnKeys(undefined), []);
+  }
+
   // A `$ref` property's fields are rows once the schema is resolved (the
   // settings page's Changed from default and /config list Bars.style.*)
   function test_rows_of_a_resolved_ref() {

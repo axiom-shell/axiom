@@ -51,7 +51,9 @@ QtObject {
     const labelNumber = CompositorManager.dynamicWorkspaces ? wsId - root.base + 1 : number;
     const icons = withIcons && root.properties.showAppIcons && (ws?.windowCount ?? 0) > 0 ? root._icons(wsId) : [];
     const name = root.properties.useNames ? WorkspaceCells.nameShown(ws?.name, wsId, number) : "";
-    const shown = WorkspaceCells.pick(glyph, WorkspaceCells.labelFor(root.properties.workspaceLabels, labelNumber), icons, name);
+    const label = WorkspaceCells.labelFor(root.properties.workspaceLabels, labelNumber);
+    const shown = WorkspaceCells.pick(glyph, label.text, icons, name);
+    shown.asText = shown.kind === "text" && label.asText;
     return {
       "kind": shown.kind,
       "text": shown.text,
@@ -90,11 +92,11 @@ QtObject {
   }
 
   // Whether `shown`'s text is words: a name always, a label of one's own
-  // unless it's an icon the font has (as the icon picker tells: a word like
-  // "dev" reads as a name but has no icon, and drawn in the icon font it's
-  // unreadable)
+  // set to Text (`asText`), or unless it's an icon the font has (as the
+  // icon picker tells: a word like "dev" reads as a name but has no icon,
+  // and drawn in the icon font it's unreadable)
   function _plain(shown) {
-    return shown.kind === "name" || shown.kind === "text" && !(Utils.isSymbolName(shown.text) && IconManager.isKnown(shown.text));
+    return shown.kind === "name" || shown.kind === "text" && (shown.asText || !(Utils.isSymbolName(shown.text) && IconManager.isKnown(shown.text)));
   }
 
   // Along the bar: the rest length, longer for text that needs it (with

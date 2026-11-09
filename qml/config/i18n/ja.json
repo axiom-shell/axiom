@@ -4145,10 +4145,8 @@
     "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
     "What each workspace shows. None: just its box or line.": "",
     "Make the active workspace one cell longer.": "",
-    "A Material Symbols name, a pasted glyph, or text.": "",
     "Show a workspace's name from the compositor where it says more than its number.": "",
     "Workspace labels": "",
-    "Your own label for a workspace, by the number its cell shows: an icon name, a pasted glyph or text. It wins over app icons and names.": "",
     "Use workspace names": "",
     "Fade urgent workspaces in and out until you visit them.": "",
     "A workspace with a window asking for attention. The active one keeps its own color.": "",
@@ -4175,6 +4173,9 @@
     "Apps: each app once. Windows: an icon per window, so three terminals show three.": "",
     "Largest: the biggest window's icon. Row: side by side, the cell growing to fit. Square: up to four in a block the size of a cell.": "",
     "Count": "",
-    "Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.": ""
+    "Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.": "",
+    "Icon: a Material Symbols name or a pasted glyph. Text: drawn as written.": "",
+    "Your own label for a workspace, by the number its cell shows: an icon or text. It wins over app icons and names.": "",
+    "Show as text": ""
   }
 }

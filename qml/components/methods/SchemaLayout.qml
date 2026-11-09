@@ -25,6 +25,15 @@ QtObject {
   // another field's `x-row` draws (its `x-rowDraws`) has `drawnBy`, that
   // field's dotted path. Keys go in
   // their object's `x-order` first (the schema reaches QML as a map)
+  // The keys of its object a field draws itself, so their own rows hide:
+  // its `x-rowDraws`, and an icon field's `x-textSwitch`
+  function drawnKeys(fieldSchema) {
+    const keys = Array.isArray(fieldSchema?.["x-rowDraws"]) ? fieldSchema["x-rowDraws"].slice() : [];
+    if (typeof fieldSchema?.["x-textSwitch"] === "string")
+      keys.push(fieldSchema["x-textSwitch"]);
+    return keys;
+  }
+
   function rows(objectSchema, path) {
     const result = [];
     const order = objectSchema["x-order"] ?? [];
@@ -81,8 +90,8 @@ QtObject {
     // A field whose `x-row` also draws other keys of its object
     // (`x-rowDraws`, dotted paths under it) marks their rows `drawnBy`
     // its dotted path: on the settings page they're drawn inside it
-    for (const row of result.filter(r => r.kind !== "group" && Array.isArray(r.schema["x-rowDraws"]))) {
-      const drawn = row.schema["x-rowDraws"].map(key => path.concat(key.split(".")).join("."));
+    for (const row of result.filter(r => r.kind !== "group" && root.drawnKeys(r.schema).length > 0)) {
+      const drawn = root.drawnKeys(row.schema).map(key => path.concat(key.split(".")).join("."));
       result.filter(r => r.kind !== "group" && drawn.includes(r.path.join("."))).forEach(r => r.drawnBy = row.path.join("."));
     }
     return result;

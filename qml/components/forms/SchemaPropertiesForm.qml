@@ -40,8 +40,10 @@ ColumnLayout {
   // A field's unsaved-edit dot was clicked (with `changedAt`)
   signal discardAt(var path)
 
+  // Keys another field draws itself (SchemaLayout.drawnKeys): no rows
+  readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.drawnKeys(prop)), [])
   // Depends on the schema only, so edits update the rows in place
-  readonly property var rows: Object.keys(root.propertiesSchema ?? {}).sort((a, b) => {
+  readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
     const rank = key => {
       const index = (root.order ?? []).indexOf(key);
       return index < 0 ? Infinity : index;

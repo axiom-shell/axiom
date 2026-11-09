@@ -437,34 +437,60 @@ Loader {
   // An icon (`x-control: "icon"`): a Material Symbols name picked from
   // the bundled font's (IconManager), searched by name and tag, or any
   // text typed or pasted (a Nerd Font glyph), which StyledIcon draws in the
-  // text font. The field leads with the icon itself
+  // text font. The field leads with the icon itself, only when the value
+  // draws as one (a name the font has, or a single glyph): longer text in
+  // the icon's room would run over the typed words. With `x-textSwitch`,
+  // an Icon / Text switch at its right sets that sibling boolean (true:
+  // drawn as text, searched for nothing)
   Component {
     id: iconField
     ColumnLayout {
       id: iconColumn
       spacing: Widget.spacing
       readonly property string value: root.current ?? ""
+      readonly property string switchKey: root.fieldSchema["x-textSwitch"] ?? ""
+      readonly property bool asText: iconColumn.switchKey !== "" && root._valueOf(iconColumn.switchKey) === true
+      readonly property bool drawsIcon: !iconColumn.asText && (Utils.isSymbolName(iconColumn.value) ? IconManager.isKnown(iconColumn.value) : Array.from(iconColumn.value).length === 1)
       FieldHeader {
         label: root.label
         description: root.description
         trailing: root.headerExtra
       }
-      StyledComboEntry {
+      RowLayout {
         Layout.fillWidth: true
-        editable: true
-        icon: iconColumn.value
-        placeholderText: I18n.tr("Search icons, or paste a glyph")
-        search: query => IconManager.search(query, 60).map(name => ({
-                "value": name,
-                "label": name,
-                "icon": name
-              }))
-        value: iconColumn.value
-        onPicked: value => root.commit(value)
+        spacing: Widget.spacing
+
+        StyledComboEntry {
+          Layout.fillWidth: true
+          editable: true
+          icon: iconColumn.drawsIcon ? iconColumn.value : ""
+          placeholderText: iconColumn.asText ? I18n.tr("Text") : I18n.tr("Search icons, or paste a glyph")
+          search: iconColumn.asText ? null : query => IconManager.search(query, 60).map(name => ({
+                  "value": name,
+                  "label": name,
+                  "icon": name
+                }))
+          value: iconColumn.value
+          onPicked: value => root.commit(value)
+        }
+
+        StyledToggle {
+          visible: iconColumn.switchKey !== ""
+          options: [false, true]
+          labels: ({
+              "false": I18n.tr("Icon"),
+              "true": I18n.tr("Text")
+            })
+          value: iconColumn.asText
+          onPicked: value => {
+            if (root.form && value !== iconColumn.asText)
+              root.form.edit(SchemaLayout.keyPath(root.row.path.slice(0, -1), iconColumn.switchKey), value);
+          }
+        }
       }
       StyledText {
         // Reads as a name, but the font has none by it: drawn as text
-        visible: /^[a-z][a-z0-9_]*$/.test(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
+        visible: !iconColumn.asText && Utils.isSymbolName(iconColumn.value) && !IconManager.isKnown(iconColumn.value)
         text: I18n.tr("No icon is named \"{0}\": it shows as text", iconColumn.value)
         color: Theme.warning
         textSize: Appearance.fontSizeBy(-2)

@@ -134,10 +134,14 @@ QtObject {
   }
 
   // The label of one's own for the workspace numbered `number` (the
-  // widget's `workspaceLabels`: [{ workspace, label }]), or "" with none
+  // widget's `workspaceLabels`: [{ workspace, label, asText }]): { text
+  // ("" with none), asText (drawn as text, never as an icon) }
   function labelFor(entries, number) {
     const entry = (entries ?? []).find(e => e.workspace === number && (e.label ?? "") !== "");
-    return entry ? entry.label : "";
+    return {
+      "text": entry ? entry.label : "",
+      "asText": entry?.asText === true
+    };
   }
 
   // A workspace's compositor `name` where it says more than its id or the

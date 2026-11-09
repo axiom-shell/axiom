@@ -61,11 +61,11 @@ settings:
     type: array
     title: Workspace labels
     default: []
-    description: 'Your own label for a workspace, by the number its cell shows: an icon name, a pasted glyph or text. It wins over app icons and names.'
+    description: 'Your own label for a workspace, by the number its cell shows: an icon or text. It wins over app icons and names.'
     items:
       type: object
       additionalProperties: false
-      x-order: [workspace, label]
+      x-order: [workspace, label, asText]
       properties:
         id: {$ref: '#/definitions/ItemId'}
         workspace:
@@ -77,9 +77,14 @@ settings:
         label:
           type: string
           x-control: icon
+          x-textSwitch: asText
           title: Label
           default: ''
-          description: A Material Symbols name, a pasted glyph, or text.
+          description: 'Icon: a Material Symbols name or a pasted glyph. Text: drawn as written.'
+        asText:
+          type: boolean
+          title: Show as text
+          default: false
   useNames:
     type: boolean
     title: Use workspace names
