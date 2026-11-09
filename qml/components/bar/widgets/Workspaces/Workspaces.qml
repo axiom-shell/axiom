@@ -28,6 +28,9 @@ BarWidget {
   // Its cells stay put while the strip after them comes and goes
   pinStart: true
   hasBackground: true
+  // Its cells across the bar, in from its box by the inset, which its
+  // background's caps keep clear of (a cell's thickness, CellLook's)
+  contentAcross: barConfig.thickness - inset * 2
   // No box: its cells are the bar's segments
   segmented: barConfig.look.traits.boxed && !properties.showBackground
   // Its place in the bar's run for its cells (alone where it has none: a

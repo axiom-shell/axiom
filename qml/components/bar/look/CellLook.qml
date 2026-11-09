@@ -34,12 +34,10 @@ QtObject {
   readonly property var _look: barConfig?.look ?? null
   readonly property var _flags: BarCells.cellLook(_look, solid, onBar)
   // BarCells.cellLook's
-  readonly property bool inGroup: _flags.inGroup
   readonly property bool boxedInRun: _flags.boxedInRun
   readonly property bool opaque: _flags.opaque
   readonly property bool boxes: _flags.boxes
   readonly property bool boxed: _flags.boxed
-  readonly property bool drawsLine: _flags.drawsLine
   readonly property bool framed: _flags.framed
   readonly property bool slides: _flags.slides
   readonly property bool clearsActive: _flags.clearsActive

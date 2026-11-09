@@ -246,7 +246,7 @@ Item {
         "background": module.hasBackground,
         "segments": module.segments,
         "fills": module.fills,
-        "contentScale": module.contentScale
+        "contentAcross": module.contentAcross
       }, module.index, root._section)
       leadInset: module._room.lead
       trailInset: module._room.trail

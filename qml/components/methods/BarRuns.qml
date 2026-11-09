@@ -11,8 +11,7 @@ QtObject {
 
   // What of an enriched barConfig `bar` a section's runs read: its look's
   // shape and grouping, its `opaque` trait (a powerline segment may start
-  // square beneath the one before), its thickness, its content's height
-  // across (an icon or a label at its font size) and the loose gap (a
+  // square beneath the one before), its thickness and the loose gap (a
   // widget with no background keeps it from its neighbours in a powerline:
   // the bar's widget gap, else none)
   function context(bar) {
@@ -22,17 +21,16 @@ QtObject {
       "grouping": look.grouping,
       "opaque": look.traits.opaque,
       "across": bar.thickness,
-      "content": bar.fontSize,
       "looseGap": look.grouping === "powerline" ? bar.widgetGap : 0
     };
   }
 
   // The caps and room at `place` in a run (BarLayout.runPlaces' { index,
-  // count }, null alone): BarShapes.segment's, for content `scale` times
-  // the bar's content height across (1 when left out: a widget whose icon
-  // is drawn larger, IconTextWidget.iconScale, keeps more)
-  function segmentAt(ctx, place, scale) {
-    return BarShapes.segment(ctx.shape, ctx.grouping, ctx.opaque, place?.index ?? 0, place?.count ?? 1, ctx.across, ctx.content * (scale ?? 1));
+  // count }, null alone): BarShapes.segment's, for content `content` px
+  // across the bar (its widget's contentAcross; left out, the bar's whole
+  // thickness)
+  function segmentAt(ctx, place, content) {
+    return BarShapes.segment(ctx.shape, ctx.grouping, ctx.opaque, place?.index ?? 0, place?.count ?? 1, ctx.across, content ?? ctx.across);
   }
 
   // Run flags (true: a background; false: shown without one; null: showing
@@ -80,8 +78,8 @@ QtObject {
   // The separator marks of a section whose widgets are `sizes` long as
   // allocated, `divides` (a divider of their own: the Separator), `fills`
   // (spacers), its end joining the next section (`joinEnd`): one per
-  // widget, { shown, next, joined }. A mark follows a shown widget, in the
-  // gap to the next shown one (`next`, -1 for none) or, after the last
+  // widget, { shown, joined }. A mark follows a shown widget, in the gap
+  // to the next shown one or, after the last
   // widget (not a spacer) where the section joins the next, in the gap
   // between them (`joined`); never beside a divider.
   function marks(sizes, divides, fills, joinEnd) {
@@ -104,7 +102,6 @@ QtObject {
       const between = size > 0 && (next >= 0 || joined);
       return {
         "shown": between && !(divides[i] ?? false) && !(divides[next] ?? false),
-        "next": next,
         "joined": joined
       };
     });
@@ -114,8 +111,9 @@ QtObject {
   // and end ({ lead, trail }), at `place` in its run (from what it shows):
   // `host` { background (it has one), segments (it lays its parts out as
   // the run's segments, which keep their own), fills (a spacer),
-  // contentScale (its content's height across as a share of the bar's:
-  // BarWidgetHost.contentScale; 1 when left out) }; `section` { first,
+  // contentAcross (its content's extent across the bar, px:
+  // BarWidgetHost.contentAcross; the bar's thickness when left out) };
+  // `section` { first,
   // last (its first and last widgets with something to show), joinStart,
   // joinEnd (its ends join the next sections) }. With a background, the
   // room its caps keep (segmentAt); without, the loose gap from a
@@ -127,7 +125,7 @@ QtObject {
         "trail": 0
       };
     if (host.background) {
-      const s = root.segmentAt(ctx, place, host.contentScale);
+      const s = root.segmentAt(ctx, place, host.contentAcross);
       return {
         "lead": s.lead,
         "trail": s.trail

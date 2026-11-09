@@ -75,24 +75,21 @@ QtObject {
 
   // How a Workspaces widget's cells show on a bar's `look` (null: none
   // yet, all false), every cell a filled box (`solid`: solidBoxes), drawn
-  // in the widget on the bar (`onBar`, not a popout): { inGroup (in a
-  // merged run, which draws their box), boxedInRun, opaque (their cell
-  // traits, BarLook.cellTraits), boxes (a box of their own off a run: the
-  // sliding active box's), boxed (a box of their own where they are: in a
-  // merged run only boxedInRun's), drawsLine (the look's line), framed
-  // (their state shows in a box or a line, else in their content), slides
-  // (the active box has something to slide: a box or a line), clearsActive
-  // (the active cell clears its own box under the sliding one, which a
-  // tint would show through) }
+  // in the widget on the bar (`onBar`, not a popout): { boxedInRun,
+  // opaque (their cell traits, BarLook.cellTraits), boxes (a box of their
+  // own off a run: the sliding active box's), boxed (a box of their own
+  // where they are: in a merged run on the bar, which draws their box,
+  // only boxedInRun's), framed (their state shows in a box or a line,
+  // else in their content), slides (the active box has something to
+  // slide: a box or a line), clearsActive (the active cell clears its own
+  // box under the sliding one, which a tint would show through) }
   function cellLook(look, solid, onBar) {
     if (!look)
       return {
-        "inGroup": false,
         "boxedInRun": false,
         "opaque": false,
         "boxes": false,
         "boxed": false,
-        "drawsLine": false,
         "framed": false,
         "slides": false,
         "clearsActive": false
@@ -103,12 +100,10 @@ QtObject {
     const boxed = inGroup ? traits.boxedInRun : boxes;
     const line = look.traits.line;
     return {
-      "inGroup": inGroup,
       "boxedInRun": traits.boxedInRun,
       "opaque": traits.cellOpaque,
       "boxes": boxes,
       "boxed": boxed,
-      "drawsLine": line,
       "framed": boxed || line,
       "slides": boxes || line,
       "clearsActive": look.traits.tints

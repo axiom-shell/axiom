@@ -9,9 +9,9 @@ TestCase {
 
   // A bar's context: its look's shape, grouping and opaque trait, its
   // sizes, the loose gap of a powerline
-  function ctx(name, grouping, opaque) {
+  function ctx(name, grouping, opaque, thickness) {
     return BarRuns.context({
-      "thickness": 30,
+      "thickness": thickness ?? 30,
       "fontSize": 14,
       "widgetGap": 6,
       "look": {
@@ -31,7 +31,7 @@ TestCase {
 
   function test_context() {
     const c = ctx("slant", "powerline", true);
-    compare([c.grouping, c.opaque, c.across, c.content, c.looseGap], ["powerline", true, 30, 14, 6]);
+    compare([c.grouping, c.opaque, c.across, c.looseGap], ["powerline", true, 30, 6]);
     compare(ctx("slant", "merged").looseGap, 0, "no loose gap off a powerline");
   }
 
@@ -41,8 +41,9 @@ TestCase {
       "index": 1,
       "count": 3
     };
-    compare(BarRuns.segmentAt(c, place), BarShapes.segment(c.shape, "powerline", false, 1, 3, 30, 14));
-    compare(BarRuns.segmentAt(c, null), BarShapes.segment(c.shape, "powerline", false, 0, 1, 30, 14), "alone");
+    compare(BarRuns.segmentAt(c, place, 14), BarShapes.segment(c.shape, "powerline", false, 1, 3, 30, 14));
+    compare(BarRuns.segmentAt(c, null, 14), BarShapes.segment(c.shape, "powerline", false, 0, 1, 30, 14), "alone");
+    compare(BarRuns.segmentAt(c, null), BarShapes.segment(c.shape, "powerline", false, 0, 1, 30, 30), "no content given: the bar's thickness");
   }
 
   function test_flags_key_round_trips() {
@@ -99,7 +100,6 @@ TestCase {
   function test_marks() {
     const m = BarRuns.marks([20, 0, 30, 10, 40], [false, false, false, true, false], [false, false, false, false, false], false);
     compare(m.map(s => s.shown), [true, false, false, false, false]);
-    compare(m.map(s => s.next), [2, 2, 3, 4, -1]);
     const joined = BarRuns.marks([20, 30], [false, false], [false, false], true);
     compare(joined.map(s => [s.shown, s.joined]), [[true, false], [true, true]]);
     // A spacer last: the mark goes after the widget before it, not the spacer
@@ -124,7 +124,8 @@ TestCase {
     compare(BarRuns.insets(c, place, {
       "background": true,
       "segments": false,
-      "fills": false
+      "fills": false,
+      "contentAcross": 14
     }, 0, section), {
       "lead": s.lead,
       "trail": s.trail
@@ -144,18 +145,60 @@ TestCase {
       "background": true,
       "segments": false,
       "fills": false,
-      "contentScale": 1.1
+      "contentAcross": 14 * 1.1
     };
     compare(BarRuns.insets(capsule, null, tall, 0, section), {
       "lead": 3,
       "trail": 3
     }, "a larger icon: its caps' room at its height");
     compare(BarRuns.insets(capsule, null, Object.assign({}, tall, {
-      "contentScale": 1
+      "contentAcross": 14
     }), 0, section), {
       "lead": 2,
       "trail": 2
     }, "at the bar's font size");
+    // Workspaces with its Background on: its cells fill the bar across
+    // but for its box's inset (the inner gap), so at an arrow's point
+    // (26 thick, a 14 px font) they keep the room their height needs, not
+    // a label's
+    const arrow = ctx("arrow", "separate", false, 26);
+    const cells = gap => ({
+          "background": true,
+          "segments": false,
+          "fills": false,
+          "contentAcross": 26 - 2 * gap
+        });
+    compare(BarRuns.insets(arrow, null, cells(0), 0, section), {
+      "lead": 13,
+      "trail": 13
+    }, "cells the bar's whole thickness: clear of the point's side");
+    compare(BarRuns.insets(arrow, null, cells(2), 0, section), {
+      "lead": 13,
+      "trail": 11
+    }, "cells inset by an inner gap of 2");
+    compare(BarRuns.insets(arrow, null, Object.assign({}, cells(0), {
+      "contentAcross": 14
+    }), 0, section).trail, 7, "a label at the font size: less");
+    // On a vertical bar a widget's content is the bar's thickness across
+    // (its width isn't known from config): an arrow's point and a
+    // capsule's curve kept clear of all of it
+    const iconOn = {
+      "background": true,
+      "segments": false,
+      "fills": false,
+      "contentAcross": 26
+    };
+    compare(BarRuns.insets(arrow, null, iconOn, 0, section), {
+      "lead": 13,
+      "trail": 13
+    }, "vertical: the arrow's point, as deep as it reaches");
+    compare(BarRuns.insets(ctx("capsule", "separate", false, 26), null, iconOn, 0, section), {
+      "lead": 13,
+      "trail": 13
+    }, "vertical: the capsule's curve");
+    compare(BarRuns.insets(arrow, null, Object.assign({}, iconOn, {
+      "contentAcross": undefined
+    }), 0, section), BarRuns.insets(arrow, null, iconOn, 0, section), "none given: the bar's thickness");
     const loose = {
       "background": false,
       "segments": false,
