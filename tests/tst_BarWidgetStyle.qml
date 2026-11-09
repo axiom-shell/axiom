@@ -256,6 +256,170 @@ TestCase {
     }), "off");
   }
 
+  // The bar's gradient where a widget sits: a light color, which the
+  // bar's white text can't be read on
+  readonly property color graded: "#ffff00"
+
+  function gradientStyled(fill, auto, group = null, override = null, options = {}) {
+    return BarWidgetStyle.colors(Object.assign({
+      "fill": fill,
+      "barText": barText,
+      "override": override,
+      "tint": 0.25,
+      "group": group,
+      "gradient": graded,
+      "auto": auto
+    }, options), accent, "#ffffff");
+  }
+
+  function test_gradient_takes_the_place_of_an_auto_color() {
+    const c = gradientStyled("filled", true);
+    same(c.fill, graded, "fill");
+    // Its own text no longer reads on the fill: black instead
+    same(c.text, "#000000", "text reads on the gradient");
+    compare(c.gradient.part, "fill");
+    compare(c.gradient.alpha, 1);
+  }
+
+  function test_a_set_or_state_color_keeps_its_own() {
+    const c = gradientStyled("filled", false);
+    same(c.fill, accent, "fill");
+    compare(c.gradient, null, "no gradient");
+    // No gradient on the bar: as before
+    compare(styled("filled").gradient, null, "none on the bar");
+  }
+
+  function test_gradient_parts_by_style() {
+    compare(gradientStyled("tinted", true).gradient.part, "fill", "tinted");
+    compare(gradientStyled("tinted", true).gradient.alpha, 0.25, "tinted alpha");
+    same(gradientStyled("tinted", true).text, graded, "tinted text");
+    compare(gradientStyled("outline", true).gradient.part, "stroke", "outline");
+    same(gradientStyled("outline", true).stroke, graded, "outline stroke");
+    compare(gradientStyled("underline", true).gradient.part, "indicator", "underline");
+    same(gradientStyled("underline", true).text, barText, "underline text");
+    // Colored icons: the icon takes the color where it sits, no background
+    compare(gradientStyled("accentText", true).gradient, null, "accentText");
+    same(gradientStyled("accentText", true).icon, graded, "accentText icon");
+  }
+
+  function test_a_merged_run_is_one_gradient_strip() {
+    const c = gradientStyled("filled", true, "#222222");
+    // The run draws it, its widgets nothing
+    compare(c.gradient, null, "the widget's own");
+    same(c.fill, "transparent", "fill");
+    // Label and Auto icon read on the strip where the widget sits, not on
+    // the run's own color
+    same(c.text, "#000000", "label");
+    same(c.icon, "#000000", "Auto icon");
+    // A set color keeps it on its icon
+    same(gradientStyled("filled", false, "#222222").icon, accent, "set icon");
+    // Through a tint the icon takes the gradient's color
+    same(gradientStyled("tinted", true, "#222222").icon, graded, "tinted icon");
+  }
+
+  function test_gradient_at_spreads_the_stops_evenly() {
+    same(BarWidgetStyle.gradientAt(["#000000", "#ffffff"], 0), "#000000", "start");
+    same(BarWidgetStyle.gradientAt(["#000000", "#ffffff"], 1), "#ffffff", "end");
+    same(BarWidgetStyle.gradientAt(["#ff0000", "#00ff00", "#0000ff"], 0.5), "#00ff00", "via at the middle");
+    same(BarWidgetStyle.gradientAt(["#ff0000", "#00ff00", "#0000ff"], 0.25), Qt.rgba(0.5, 0.5, 0, 1), "a quarter");
+    same(BarWidgetStyle.gradientAt(["#000000", "#ffffff"], 2), "#ffffff", "clamped");
+  }
+
+  function test_gradient_slice_is_the_bars_between_its_ends() {
+    const two = BarWidgetStyle.gradientSlice(["#000000", "#ffffff"], 0.25, 0.75, 1);
+    compare(two.map(s => s.position), [0, 0.5, 1]);
+    same(two[0].color, Qt.rgba(0.25, 0.25, 0.25, 1), "start");
+    same(two[1].color, Qt.rgba(0.5, 0.5, 0.5, 1), "middle");
+    same(two[2].color, Qt.rgba(0.75, 0.75, 0.75, 1), "end");
+    // The via stop inside it is a stop of the slice
+    const three = BarWidgetStyle.gradientSlice(["#ff0000", "#00ff00", "#0000ff"], 0.4, 0.8, 1);
+    fuzzyCompare(three[1].position, 0.25, 1e-9);
+    same(three[1].color, "#00ff00", "via");
+    // Faded for a tint
+    compare(BarWidgetStyle.gradientSlice(["#000000", "#ffffff"], 0, 1, 0.25)[2].color.a, 0.25);
+  }
+
+  function test_an_auto_cell_takes_the_gradient() {
+    const style = {
+      "fill": "filled",
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "group": null,
+      "gradient": graded,
+      "auto": true
+    };
+    const c = BarWidgetStyle.cell(style, accent, "#ffffff", "active");
+    same(c.fill, graded, "fill");
+    same(c.content, "#000000", "content reads on it");
+    same(BarWidgetStyle.cell(Object.assign({}, style, {
+      "auto": false
+    }), accent, own, "active").fill, accent, "set color");
+  }
+
+  // Split under the gradient: its icon part takes its slice (the widget's
+  // own, or in a merged run each icon part its own over the run's tint)
+  function test_split_icon_part_takes_the_gradient() {
+    const split = {
+      "splits": true,
+      "splitIcon": "joined",
+      "labelFill": "tint"
+    };
+    const c = gradientStyled("split", true, null, null, split);
+    compare(c.gradient, {
+      "part": "iconFill",
+      "alpha": 1
+    });
+    same(c.iconFill, graded, "icon part");
+    same(c.fill, Qt.alpha(graded, 0.25), "label on its tint");
+    const merged = gradientStyled("split", true, "#222222", null, split);
+    compare(merged.gradient.part, "iconFill", "merged: its own icon part");
+    same(merged.text, graded, "merged label in its color, on the run's tint");
+    // The run's own background: the labels' tint of the strip
+    const run = gradientStyled("split", true, null, null, {
+      "run": true
+    });
+    compare(run.gradient, {
+      "part": "fill",
+      "alpha": 0.25
+    });
+    same(run.fill, Qt.alpha(graded, 0.25), "run tint");
+    // A filled or tinted run: the strip in full, or its tint
+    compare(gradientStyled("filled", true, null, null, {
+      "run": true
+    }).gradient.alpha, 1, "filled run");
+    compare(gradientStyled("tinted", true, null, null, {
+      "run": true
+    }).gradient.alpha, 0.25, "tinted run");
+    // A widget that doesn't split draws filled, its fill the slice
+    compare(gradientStyled("split", true).gradient.part, "fill", "unsplit");
+  }
+
+  // Fill on hover under the gradient: the fill takes the slice in full
+  function test_hover_fills_with_the_gradient() {
+    for (const fill of ["tinted", "outline"]) {
+      const c = gradientStyled(fill, true, null, null, {
+        "hoverFill": true,
+        "hovered": true
+      });
+      compare(c.gradient, {
+        "part": "fill",
+        "alpha": 1
+      }, fill);
+      same(c.fill, graded, fill + " fill");
+      same(c.text, "#000000", fill + " text reads on it");
+    }
+    // In a merged run, the hovered widget's own part
+    compare(gradientStyled("tinted", true, "#222222", null, {
+      "hoverFill": true,
+      "hovered": true
+    }).gradient.part, "fill", "merged");
+    // At rest, as without the option
+    compare(gradientStyled("outline", true, null, null, {
+      "hoverFill": true
+    }).gradient.part, "stroke", "rest");
+  }
+
   function test_readable_on() {
     same(BarWidgetStyle.readableOn("#000000", "#ffffff"), "#ffffff", "contrasting");
     same(BarWidgetStyle.readableOn("#ffffff", "#eeeeee"), "#000000", "too close");

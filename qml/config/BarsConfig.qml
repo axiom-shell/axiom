@@ -159,6 +159,10 @@ QtObject {
       "splitCap": splitCap,
       "badgePad": innerGap,
       "splitRoom": look.widgetStyle === "split" ? BarShapes.splitRoom(look.splitIcon, splitCap, thickness, innerPadding, innerGap * 1.5, innerGap) : -1,
+      // One gradient along the bar (its colors' names, start to end), in
+      // place of its widgets' Auto colors, or null: none, or plain text,
+      // which has nothing to color
+      "gradientColors": look.gradient && look.widgetStyle !== "plain" ? [look.gradientFrom].concat(look.gradientVia ? [look.gradientVia] : [], [look.gradientTo]) : null,
       // A powerline's widgets touch, leaving no gap to divide
       "separatorStyle": grouping === "powerline" ? "none" : look.separatorStyle,
       "separatorColor": look.separatorColor,
@@ -250,10 +254,10 @@ QtObject {
   }
 
   // What a bar widget draws in on its bar ({ fill, stroke, indicator,
-  // text, icon, iconFill }, see BarWidgetStyle): `accent` is its color for
-  // its state, `foregroundName` the text color it's configured with,
-  // `widget` what of the widget itself the style depends on ({ splits,
-  // hovered }, each left out false; _widgetStyle)
+  // text, icon, iconFill, gradient }, see BarWidgetStyle): `accent` is
+  // its color for its state, `foregroundName` the text color it's
+  // configured with, `widget` what of the widget itself its look depends
+  // on (_widgetStyle; left out, none of it)
   function widgetColors(barConfig, accent, foregroundName, widget) {
     return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged", widget), accent, Theme.resolveColor(foregroundName));
   }
@@ -261,10 +265,19 @@ QtObject {
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
-  // active/occupied/empty, `cell` what of the cell the style depends on
-  // ({ hovered }: the pointer over it; _widgetStyle)
+  // active/occupied/empty, `cell` what of the cell its look depends on
+  // (_widgetStyle's hovered and spot: where the middle of a cell whose
+  // color is Auto sits along the bar, for the bar's gradient to take its
+  // place)
   function cellColors(barConfig, color, own, state, cell) {
-    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false, cell), color, own, state);
+    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false, Object.assign({
+      "auto": (cell?.spot ?? -1) >= 0
+    }, cell)), color, own, state);
+  }
+
+  // The bar's gradient's colors, resolved, start to end (null for none)
+  function gradientStops(barConfig) {
+    return barConfig.gradientColors ? barConfig.gradientColors.map(name => Theme.resolveColor(name)) : null;
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
@@ -288,17 +301,23 @@ QtObject {
     return properties?.hoverColor ? Theme.resolveColor(properties.hoverColor) : Theme.backgroundHighlight;
   }
 
-  // What a merged run of widgets draws its shared background in
-  function groupColors(barConfig) {
+  // What a merged run of widgets draws its shared background in: with a
+  // gradient on the bar, one strip of it (`spot`: the run's middle along
+  // the bar, 0-1), else groupColor
+  function groupColors(barConfig, spot = -1) {
     const group = Theme.resolveColor(barConfig.groupColor);
-    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false), group, BarWidgetStyle.readableOn(group, Theme.foreground));
+    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false, {
+      "spot": spot,
+      "auto": true,
+      "run": true
+    }), group, BarWidgetStyle.readableOn(group, Theme.foreground));
   }
 
   // A bar's widgets (by section) with each Auto color field (`x-autoColor`,
   // left empty) set to the color BarAutoColors picks for it among its shown
   // neighbours, seen against the bar or, filled and merged, the run
   // (BarWidgetStyle.autoContrast; `split`: a look's splitIcon and
-  // splitLabelFill)
+  // splitLabelFill), and those fields' roles as the widget's `autoColors`
   function withAutoColors(widgets, widgetStyle, grouping, groupColor, split) {
     const shown = [].concat(...BarsConfig.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
             "section": section,
@@ -337,7 +356,13 @@ QtObject {
       if (result[entry.section] === widgets[entry.section])
         result[entry.section] = widgets[entry.section].slice();
       result[entry.section][entry.index] = Object.assign({}, entry.widget, {
-        "properties": Object.assign({}, entry.widget.properties, picks[n])
+        "properties": Object.assign({}, entry.widget.properties, picks[n]),
+        // Which of its fields are Auto, by role ({ key: role }): only an
+        // Auto own color (`accent`) gives way to the bar's gradient
+        "autoColors": Object.keys(picks[n]).reduce((roles, key) => {
+          roles[key] = fields[n].roles[key];
+          return roles;
+        }, {})
       });
     });
     return result;
@@ -361,13 +386,23 @@ QtObject {
   }, {})
 
   // BarWidgetStyle's `style` for a bar, its colors resolved, for a widget
-  // (or cell) `widget`: { splits: an icon part and a label apart, hovered:
-  // the pointer over it }, each left out false
+  // (or cell) `widget`, each left out false or none:
+  //   splits   it shows an icon part and a label apart
+  //   hovered  the pointer is over it
+  //   spot     where its middle sits along the bar (0-1, -1 for nowhere)
+  //   auto     its color is its Auto own color, which the bar's gradient
+  //            takes the place of
+  //   run      it's a merged run's own background (groupColors)
   function _widgetStyle(barConfig, merged, widget) {
+    const spot = widget?.spot ?? -1;
+    const stops = spot >= 0 ? BarsConfig.gradientStops(barConfig) : null;
     return {
+      "gradient": stops ? BarWidgetStyle.gradientAt(stops, spot) : null,
       "fill": barConfig.widgetStyle,
       "splits": widget?.splits === true,
       "hovered": widget?.hovered === true,
+      "auto": widget?.auto === true,
+      "run": widget?.run === true,
       "splitIcon": barConfig.splitIcon,
       "labelFill": barConfig.splitLabelFill,
       "labelColor": Theme.resolveColor(barConfig.splitLabelColor),

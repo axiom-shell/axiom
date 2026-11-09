@@ -46,6 +46,10 @@ Item {
   // levelEndCap): in a merged run the widget's own, not the run's
   property string levelStartCap: startCap
   property string levelEndCap: endCap
+  // Where it starts and ends along its bar (0-1), for the bar's gradient,
+  // or -1 for none (WidgetGroup, from where it's laid out)
+  property real gradientStart: -1
+  property real gradientEnd: -1
 
   // A split widget's parts (BarWidgetHost.split): along it, the middle of
   // the gap between its icon part and its label, -1 when it doesn't split;
@@ -63,10 +67,28 @@ Item {
   // A merged run's widget filling its own part (on hover), in the caps it
   // has alone: a press tints that, not the run's square middle
   readonly property bool _ownFill: barConfig.widgetGrouping === "merged" && colors !== null && Qt.color(colors.fill).a > 0
+  // What of it draws the bar's gradient (its colors' `gradient`: its fill,
+  // stroke, line or split's icon part), and the slice of it from `from`
+  // to `to` along it (0-1), else null
+  readonly property string _gradientPart: root.gradientStart >= 0 ? (root.colors?.gradient?.part ?? "") : ""
+  function _sliceOf(from, to) {
+    const stops = BarsConfig.gradientStops(root.barConfig);
+    if (root._gradientPart === "" || stops === null)
+      return null;
+    const span = root.gradientEnd - root.gradientStart;
+    return BarWidgetStyle.gradientSlice(stops, root.gradientStart + span * from, root.gradientStart + span * to, root.colors.gradient.alpha);
+  }
+  readonly property var _slice: root._sliceOf(0, 1)
+  readonly property real _along: barConfig.vertical ? height : width
+  // Split's icon part's own slice, along it from `start` for `length`
+  function _partSlice(start, length) {
+    return root._gradientPart === "iconFill" && root._along > 0 ? root._sliceOf(start / root._along, (start + length) / root._along) : null;
+  }
 
   // The shape in one fill and stroke: a Rectangle when both ends are
-  // alike and rounded (or square), else a path; a stroke other than solid
-  // over it (OutlineStroke)
+  // alike and rounded (or square), else a path, as also for a slice of the
+  // bar's gradient (`fillSlice` or `strokeSlice`, BarWidgetStyle.gradientSlice);
+  // a stroke other than solid over it (OutlineStroke)
   component ShapedBox: Item {
     id: box
 
@@ -83,6 +105,8 @@ Item {
     property var tab: null
     // solid, or the outline's own (OutlineStroke)
     property string stroke: "solid"
+    property var fillSlice: null
+    property var strokeSlice: null
 
     readonly property bool vertical: bar.vertical
     readonly property bool solid: stroke === "solid"
@@ -91,7 +115,7 @@ Item {
     readonly property real across: vertical ? width : height
     readonly property real length: vertical ? height : width
     readonly property real rectRadius: {
-      if (startCap !== endCap || seamStart || seamEnd || tab)
+      if (startCap !== endCap || seamStart || seamEnd || tab || box.fillSlice !== null || box.strokeSlice !== null)
         return -1;
       switch (startCap) {
       case "round":
@@ -124,7 +148,9 @@ Item {
 
         ShapePath {
           fillColor: box.fillColor
+          fillGradient: box.fillSlice !== null ? fillPaint : null
           strokeColor: box._solidWidth > 0 && !box.tab ? box.strokeColor : "transparent"
+          strokeGradient: box.strokeSlice !== null && box._solidWidth > 0 && !box.tab ? strokePaint : null
           strokeWidth: box._solidWidth
           joinStyle: ShapePath.MiterJoin
 
@@ -138,12 +164,27 @@ Item {
         ShapePath {
           fillColor: "transparent"
           strokeColor: box._solidWidth > 0 && box.tab ? box.strokeColor : "transparent"
+          strokeGradient: box.strokeSlice !== null && box._solidWidth > 0 && box.tab ? strokePaint : null
           strokeWidth: box._solidWidth
           joinStyle: ShapePath.MiterJoin
 
           PathSvg {
             path: box.tab ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, false, false, box.tab, true) : ""
           }
+        }
+
+        // Along the bar, the slices of its gradient
+        ShapeSlice {
+          id: fillPaint
+          slice: box.fillSlice
+          vertical: box.vertical
+          length: box.length
+        }
+        ShapeSlice {
+          id: strokePaint
+          slice: box.strokeSlice
+          vertical: box.vertical
+          length: box.length
         }
       }
     }
@@ -159,6 +200,7 @@ Item {
       seamStart: box.seamStart
       seamEnd: box.seamEnd
       tab: box.tab
+      slice: box.strokeSlice
       color: box.strokeColor
       lineWidth: box.strokeWidth
     }
@@ -179,6 +221,8 @@ Item {
     strokeColor: root.colors?.stroke ?? "transparent"
     strokeWidth: root._fill === "outline" ? root.barConfig.outlineWidth : 0
     stroke: root._fill === "outline" ? root.barConfig.outlineStroke : "solid"
+    fillSlice: root._gradientPart === "fill" ? root._slice : null
+    strokeSlice: root._gradientPart === "stroke" ? root._slice : null
 
     // State changes (mute, a warning level) recolour smoothly
     ColorGlide on fillColor {}
@@ -188,6 +232,7 @@ Item {
   // Split's icon part, joined: the shape from its start to the divider
   // (the bar's splitCap) centred in the gap to the label
   ShapedBox {
+    id: iconPart
     readonly property real _length: root.splitAt + BarShapes.depth(root.barConfig.splitCap, root.barConfig.thickness) / 2
 
     visible: root.barConfig.splitIcon === "joined" && root.splitAt >= 0 && root.colors !== null
@@ -199,6 +244,7 @@ Item {
     startCap: root.startCap
     endCap: root.barConfig.splitCap
     fillColor: root.colors?.iconFill ?? "transparent"
+    fillSlice: root._partSlice(0, iconPart._length)
 
     ColorGlide on fillColor {}
   }
@@ -207,6 +253,7 @@ Item {
   // least as long as it's thick (a circle for one icon under capsule), a
   // rounded square otherwise, its radius the widgets' scaled to its size
   Rectangle {
+    id: badge
     readonly property bool vertical: root.barConfig.vertical
     readonly property real thickness: root.barConfig.thickness
     readonly property real pad: root.barConfig.badgePad
@@ -226,12 +273,21 @@ Item {
     height: vertical ? along : across
     radius: root.barConfig.widgetShape === "capsule" ? across / 2 : Math.min(across / 2, root.barConfig.radius * across / thickness)
     color: root.colors?.iconFill ?? "transparent"
+    // Its slice of the bar's gradient
+    gradient: badgeGradient.slice !== null ? badgeGradient : null
 
     ColorGlide on color {}
+
+    RectSlice {
+      id: badgeGradient
+      slice: root._partSlice(badge.alongMiddle - badge.along / 2, badge.along)
+      vertical: badge.vertical
+    }
   }
 
   // Along the side toward the windows (inner) or the screen edge (outer)
   Rectangle {
+    id: line
     readonly property real thickness: root.barConfig.lineWidth
     readonly property bool vertical: root.barConfig.vertical
     // The side further from the bar's outer edge, in item coordinates
@@ -239,6 +295,8 @@ Item {
 
     visible: root._fill === "underline" && root.colors !== null
     color: root.colors?.indicator ?? "transparent"
+    // A slice of the bar's gradient, along it
+    gradient: root._gradientPart === "indicator" ? lineGradient : null
     radius: thickness / 2
     x: vertical && farSide ? root.width - thickness : 0
     y: !vertical && farSide ? root.height - thickness : 0
@@ -246,6 +304,12 @@ Item {
     height: vertical ? root.height : thickness
 
     ColorGlide on color {}
+
+    RectSlice {
+      id: lineGradient
+      slice: root._slice
+      vertical: line.vertical
+    }
   }
 
   // The level: the background's own shape (in a merged run, the one the

@@ -17,7 +17,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
   - **Tab** reaches from the widget out to the outer edge of what it sits on (see Tabs below).
 - `methods/BarShapes` gives each widget two things:
   - **`segment`:** the widget's caps, and the room its content keeps clear of them. `WidgetGroup` sets this as the host's `leadInset`/`trailInset`, which are added to its sizes, and the module is inset by them.
-  - **`path`:** the outline, as an SVG path. A `Rectangle` draws rounded and capsule ends.
+  - **`path`:** the outline, as an SVG path. A `Rectangle` draws rounded and capsule ends, except under the bar's gradient (a `Rectangle`'s border can't take one), where the path's `LinearGradient` fills or strokes the widget's slice.
 - Insets follow what widgets have to show, never the room they're given (which the insets help decide), so they can't feed back into the layout. Shapes follow what's shown.
 
 ### Split
@@ -49,7 +49,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
-- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
+- **Merged** draws one background per run in `groupColor` (`BarsConfig.groupColors`), or with a bar gradient one strip of it from the run's start to its end ([Widget style › Bar gradient](widget-style.md#bar-gradient)). Its widgets' colors move to their icons (`BarWidgetStyle`'s `group`).
   - Widget insets keep their cap room, joined or not.
 - A spacer given room splits runs, as it splits groups; a collapsed one is passed over.
 

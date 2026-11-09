@@ -4170,6 +4170,12 @@
     "Ends only": "",
     "Dotted": "",
     "A widget under the pointer fills with its color.": "",
-    "Fill on hover": ""
+    "Fill on hover": "",
+    "Bar gradient": "",
+    "A color it passes through halfway along the bar.": "",
+    "One gradient along the whole bar, each widget showing its part. It takes the place of Auto widget colors; a color set on a widget, and state colors, stay.": "",
+    "Gradient": "",
+    "To": "",
+    "Through": ""
   }
 }

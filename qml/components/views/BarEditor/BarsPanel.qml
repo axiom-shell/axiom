@@ -40,7 +40,7 @@ Item {
     {
       "label": I18n.tr("Widgets"),
       "fields": [],
-      "styles": ["Bar widgets"]
+      "styles": ["Bar widgets", "Bar gradient"]
     },
     {
       "label": I18n.tr("Behaviour"),
@@ -55,7 +55,7 @@ Item {
 
   // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
   // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Bar widgets")
-  // I18n.tr("Bar accents") I18n.tr("Surface shadow")
+  // I18n.tr("Bar gradient") I18n.tr("Bar accents") I18n.tr("Surface shadow")
   TitledCard {
     title: I18n.tr("Bar Editor")
     scrollKey: "BarEditor"

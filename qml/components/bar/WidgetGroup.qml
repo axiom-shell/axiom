@@ -53,6 +53,14 @@ Item {
     return root.barConfig.widgetShape === "tab" ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
   }
 
+  // The bar's gradient (barConfig.gradientColors) runs along the whole
+  // bar, `barLength` long (0 with none), each widget showing its slice:
+  // where the group starts along the bar as laid out. Laid-out places,
+  // never gliding ones, so nothing re-reads them each frame of a glide.
+  property real barStart: 0
+  property real barLength: 0
+  readonly property bool _graded: root.barLength > 0 && root.barConfig.gradientColors !== null
+
   property var _modules: []
 
   readonly property var measures: root._modules.map(m => ({
@@ -202,6 +210,11 @@ Item {
     return place !== null && place.index < place.count - 1 && root.chainEnd ? root.joinEndReach : 0;
   }
 
+  // Where `along` (in the group, as laid out) sits along the bar (0-1)
+  function _barSpot(along) {
+    return (root.barStart + along) / root.barLength;
+  }
+
   // The caps and insets at `place` in a run (BarShapes.segment)
   function segmentAt(place) {
     return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
@@ -228,10 +241,16 @@ Item {
       // over the gap between them
       readonly property var _lastPlace: root._drawPlaces[run.members[run.count - 1]] ?? null
       readonly property real _reach: root._reachOf(_lastPlace)
+      // Along the group as laid out, for the bar's gradient: one strip of
+      // it from the run's start to its end
+      readonly property real _from: root.allocation.offsets[run.members[0]] ?? 0
+      readonly property real _to: (root.allocation.offsets[run.members[run.count - 1]] ?? 0) + (root.allocation.sizes[run.members[run.count - 1]] ?? 0) + _reach
 
       z: -2
       barConfig: root.barConfig
-      colors: BarsConfig.groupColors(root.barConfig)
+      colors: BarsConfig.groupColors(root.barConfig, root._graded ? root._barSpot((_from + _to) / 2) : -1)
+      gradientStart: root._graded ? root._barSpot(_from) : -1
+      gradientEnd: root._graded ? root._barSpot(_to) : -1
       startCap: root.segmentAt(root._drawPlaces[run.members[0]] ?? null).startCap
       endCap: root.segmentAt(_lastPlace).endCap
       x: (first?.x ?? 0) - (root.isVertical && !root._outerFar ? root._reach : 0)
@@ -293,6 +312,8 @@ Item {
         _last = _shown
       readonly property var place: _shown?.place ?? null
       readonly property var segment: root.segmentAt(place)
+      // Along the group as laid out, back under a powerline neighbour too
+      readonly property real _from: (root.allocation.offsets[index] ?? 0) - segment.back
 
       z: -1 - index / Math.max(1, root.widgets.length)
       barConfig: root.barConfig
@@ -308,6 +329,8 @@ Item {
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       levelStartCap: segment.levelStartCap
       levelEndCap: segment.levelEndCap
+      gradientStart: root._graded ? root._barSpot(_from) : -1
+      gradientEnd: root._graded ? root._barSpot((root.allocation.offsets[index] ?? 0) + (root.allocation.sizes[index] ?? 0)) : -1
       highlighted: host?.editorOutlined ?? false
       // Its split parts, from the host's start to its own (back under the
       // one before)
@@ -357,6 +380,8 @@ Item {
       tabReach: module.hasBackground ? root._reach : 0
 
       barConfig: root.barConfig
+      barStart: root._graded ? root.barStart + module._offset : 0
+      barLength: root._graded ? root.barLength : 0
       widget: module.modelData
       highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
       hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)

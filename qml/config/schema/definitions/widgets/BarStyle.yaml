@@ -73,6 +73,7 @@ properties:
       anyOf:
         - {widgetStyle: tinted}
         - {widgetStyle: split, splitIcon: joined, splitLabelFill: tint, widgetGrouping: {not: merged}}
+        - {widgetStyle: split, widgetGrouping: merged, gradient: true}
   splitLabelColor:
     x-group: Bar widgets
     type: string
@@ -199,7 +200,7 @@ properties:
     title: Merged background
     x-options: colors
     default: backgroundAlt
-    x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetGrouping: merged}
+    x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetGrouping: merged, gradient: false}
     description: Widget colors show on their icons instead.
   widgetTextColor:
     x-group: Bar widgets
@@ -209,6 +210,37 @@ properties:
     x-emptyLabel: Auto
     default: ''
     description: One color for every widget's text and icons. Auto picks one per widget.
+  gradient:
+    x-group: Bar gradient
+    type: boolean
+    title: Gradient
+    default: false
+    x-showIf: {widgetStyle: {not: plain}}
+    description: One gradient along the whole bar, each widget showing its part. It takes the place of Auto widget colors; a color set on a widget, and state colors, stay.
+  gradientFrom:
+    x-group: Bar gradient
+    type: string
+    title: From
+    x-options: colors
+    default: accent
+    x-showIf: {widgetStyle: {not: plain}, gradient: true}
+  gradientTo:
+    x-group: Bar gradient
+    type: string
+    title: To
+    x-options: colors
+    default: accentAlt
+    x-beside: true
+    x-showIf: {widgetStyle: {not: plain}, gradient: true}
+  gradientVia:
+    x-group: Bar gradient
+    type: string
+    title: Through
+    x-options: colors
+    x-emptyLabel: None
+    default: ''
+    x-showIf: {widgetStyle: {not: plain}, gradient: true}
+    description: A color it passes through halfway along the bar.
   separatorStyle:
     x-group: Bar accents
     type: string

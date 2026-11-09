@@ -144,7 +144,7 @@ BarWidget {
   readonly property bool warning: segments.some(key => segmentData(key).level >= properties.warnThreshold)
 
   hasBackground: segments.length > 0
-  accentColor: Theme.resolveColor(warning ? properties.warnColor : properties.backgroundColor)
+  accentField: warning ? "warnColor" : "backgroundColor"
   backgroundLevel: root.pill ? Math.min(1, root.segmentData(root.segments[0]).level / 100) : -1
   backgroundLevelColor: BarWidgetStyle.levelColor(root.colors)
   readonly property bool _textByState: BarWidgetStyle.textByState(root.colors, root.appearance)

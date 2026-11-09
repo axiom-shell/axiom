@@ -28,7 +28,7 @@ ValueStyleWidget {
   subtext: root.style === "stacked" ? root.artist : ""
   // A track title is any player's: never styled text or a remote image
   textFormat: Text.PlainText
-  accentColor: Theme.resolveColor(MediaManager.isPlaying ? root.properties.playingColor : root.properties.pausedColor)
+  accentField: MediaManager.isPlaying ? "playingColor" : "pausedColor"
 
   // News: the track changed while playing (a player appearing, its first
   // track, isn't). Set once at start and by the handler only: as a

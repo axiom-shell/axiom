@@ -31,8 +31,8 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 ### Widget style
 - Widgets don't draw their own backgrounds. Each reports two things:
   - `hasBackground`: on by default for `BarIconWidget`, opt-in on `BarWidget`.
-  - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. This used to be the background.
-- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, widget)`, which gives `{ fill, stroke, indicator, text, icon, iconFill }`.
+  - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. This used to be the background. A widget names the color field it shows (`accentField`, `backgroundColor` by default on `BarIconWidget`, none on `BarWidget`), and `accentColor` is that field's color; one with a color of its own for a state (DevMode's and Updates' failure, NextEvent's soon, a custom widget's state) sets `accentField` to `""` then and its `accentColor` itself.
+- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, widget)`, which gives `{ fill, stroke, indicator, text, icon, iconFill, gradient }`. `widget` is what of the widget itself its look depends on: `splits` (Split), `hovered` (Fill on hover), `spot` and `auto` (the bar gradient); `BarsConfig._widgetStyle` puts them in the `style` the helper reads, so `BarWidgetStyle.colors(style, accent, own)` and `cell(style, color, own, state)` take one shape.
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, split, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
   - An outline is drawn in the bar's `outlineStroke` ([Shapes and runs](widget-shapes-runs.md#outline-strokes)).
@@ -61,6 +61,14 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - A fill only has to show (contrast 1.3).
   - Text, strokes and icons have to read (contrast 3). Split's color is its icon part's fill, and also its label's text unless the label has a color of its own or sits on a merged run.
 - Text colors are not Auto. Workspaces' cells are not Auto either, except the active one.
+
+### Bar gradient
+- `gradient` (`gradientFrom`, `gradientVia` (optional, halfway), `gradientTo`; group "Bar gradient", hidden under Plain text) runs one gradient along the whole bar, left to right (top to bottom on a vertical bar). `enrichBarConfig` gives it as `gradientColors` (the names, start to end, or null: off, or plain).
+- It's measured against the bar's full length (`BarContainer.length`), not its first to last widget, so its colors don't shift when widgets come and go. Places are the layout's (`Section.mainPos`, `allocation.offsets`), never the gliding ones, so nothing re-reads them each frame of a glide: `WidgetGroup.barStart`/`barLength` → each host's `barStart`/`barLength` → its module's `barOffset`/`barLength`, from which the module works out `barSpot`, where its middle sits (0–1).
+- **Only an Auto own color gives way to it.** `BarsConfig.withAutoColors` hands each widget its Auto fields' roles (`autoColors`, `{ key: role }`), and `accentAuto` is whether its `accentField` is Auto with the `accent` role. A color set on the widget, and its state colors (the other roles: alt, off, warning, critical; a recording, a low battery), keep theirs.
+- `BarWidgetStyle.colors` then draws the widget in the gradient's color at `barSpot` (its text readable on it), and says in `gradient` what of its background shows the gradient itself (`gradientPart`: the fill when filled, the tint when tinted, the stroke when outlined, the line when underlined; null under colored icons, whose icon takes the color where it sits). `WidgetBackground` draws its slice of it there (`BarWidgetStyle.gradientSlice`: three stops from where it starts to where it ends along the bar, `gradientStart`/`gradientEnd`), in a path shape (a `Rectangle`'s border takes no gradient) or, for the line, a `Rectangle`'s gradient.
+- **A merged run** is one gradient strip in place of `groupColor` (hidden while the gradient's on): its run background takes the slice from the run's start to its end (`BarsConfig.groupColors` with the run's middle). Its widgets' labels read on the strip where they sit, and an Auto icon too (through a tint or outline it takes the gradient's color there); a set or state color stays on its icon.
+- With no place on a bar (the bar editor's chips and the custom widget preview) a widget shows its Auto color.
 
 ### Which color fields show
 - A widget's color fields show in the bar editor's inspector only in the bar looks where they draw something.

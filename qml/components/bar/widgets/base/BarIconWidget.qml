@@ -49,14 +49,28 @@ IconTextWidget {
   // The icon's gap to its label (6 px at the default inner spacing of 4)
   spacing: barConfig.innerGap * 1.5
   iconSpacing: barConfig.innerGap
-  // Its color for its state, and what it draws in on this bar (filled
-  // while its hit area is hovered, with the bar's "Fill on hover")
-  property color accentColor: Theme.resolveColor(properties.backgroundColor)
+  // The color field its accentColor shows for its state ("" for a color
+  // of its own: a failure's error), and that color. Only its Auto own
+  // color (`accentAuto`) gives way to the bar's gradient.
+  property string accentField: "backgroundColor"
+  property color accentColor: Theme.resolveColor(properties[accentField] ?? "")
+  // Its Auto fields' roles (BarsConfig.withAutoColors), and where it sits
+  // along its bar as laid out, for the bar's gradient (set by its host)
+  property var autoColors: ({})
+  property real barOffset: 0
+  property real barLength: 0
+  readonly property bool accentAuto: root.autoColors[root.accentField] === "accent"
+  // Where its middle sits along the bar (0-1), or -1 without a gradient
+  readonly property real barSpot: root.barLength > 0 ? (root.barOffset + (root.isVertical ? root.height : root.width) / 2) / root.barLength : -1
   // On a split bar, its icon part and label set apart (BarShapes.splitRoom)
   splitRoom: barConfig.splitRoom
+  // What it draws in on this bar (filled while its hit area is hovered,
+  // with the bar's "Fill on hover")
   readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor, {
     "splits": root.splits,
-    "hovered": root.hitArea?.hovered ?? false
+    "hovered": root.hitArea?.hovered ?? false,
+    "spot": root.barSpot,
+    "auto": root.accentAuto
   })
   // Whether its WidgetGroup draws a background under it, and an outline
   // in its shape while it's hovered

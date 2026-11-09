@@ -796,7 +796,7 @@ TestCase {
     const bar = SchemaLayout.objectGroups(schema.definitions.Bar, ["widgets", "style"]);
     compare(bar.map(g => g.title), ["Placement", "Size", "Surface", "Behaviour"]);
     const style = SchemaLayout.objectGroups(schema.definitions.BarStyle, []);
-    compare(style.map(g => g.title), ["Bar widgets", "Bar accents", "Surface shadow"]);
+    compare(style.map(g => g.title), ["Bar widgets", "Bar gradient", "Bar accents", "Surface shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.EdgeMenu, ["layout.modules"]);
     compare(menu.map(g => g.title), ["General", "Opening", "Placement", "Style", "Closing"]);
     const osd = SchemaLayout.objectGroups(schema.definitions.OSDEntry, ["systems", "barLayout"]);

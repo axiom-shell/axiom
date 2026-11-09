@@ -25,6 +25,9 @@ Item {
   // hangs from
   property var tab: null
   property color color: "transparent"
+  // Its slice of the bar's gradient in place of `color`
+  // (BarWidgetStyle.gradientSlice), or null
+  property var slice: null
   property real lineWidth: 1
 
   readonly property real across: vertical ? width : height
@@ -41,9 +44,17 @@ Item {
     sourceComponent: Shape {
       preferredRendererType: Shape.CurveRenderer
 
+      ShapeSlice {
+        id: strokePaint
+        slice: root.slice
+        vertical: root.vertical
+        length: root.length
+      }
+
       ShapePath {
         fillColor: "transparent"
         strokeColor: root.color
+        strokeGradient: root.slice !== null ? strokePaint : null
         strokeWidth: root.lineWidth
         strokeStyle: root.stroke === "dashed" || root.stroke === "dotted" ? ShapePath.DashLine : ShapePath.SolidLine
         // In line widths: dashes three long two apart, dots square ones
@@ -71,6 +82,7 @@ Item {
       ShapePath {
         fillColor: "transparent"
         strokeColor: root.stroke === "double" ? root.color : "transparent"
+        strokeGradient: root.slice !== null && root.stroke === "double" ? strokePaint : null
         strokeWidth: root.lineWidth
         joinStyle: ShapePath.MiterJoin
 

@@ -25,7 +25,7 @@ ValueStyleWidget {
   ratio: IdleManager.caffeineTimed ? 1 - IdleManager.caffeineProgress : -1
   dim: IdleManager.caffeineTimed && !IdleManager.caffeineTimer.running ? 0.6 : 1
 
-  accentColor: Theme.resolveColor(IdleManager.caffeine ? properties.activeColor : properties.inactiveColor)
+  accentField: IdleManager.caffeine ? "activeColor" : "inactiveColor"
   clickable: true
   onClicked: ActionsManager.run("idleInhibit", {
     "fromScreen": true

@@ -32,7 +32,7 @@ ValueStyleWidget {
   styleText: root.labelShown ? root.text : ""
   ratio: root.showsTimer ? StopwatchManager.timerProgress : root.showsStopwatch ? (StopwatchManager.elapsed % 60000) / 60000 : -1
   subtext: root.showsTimer ? I18n.tr("Timer") : root.showsStopwatch ? I18n.tr("Lap {0}", StopwatchManager.laps.length + 1) : ""
-  accentColor: Theme.resolveColor(root.showsTimer ? properties.timerColor : root.showsStopwatch ? properties.stopwatchColor : properties.idleColor)
+  accentField: root.showsTimer ? "timerColor" : root.showsStopwatch ? "stopwatchColor" : "idleColor"
   // Paused: faded
   dim: (root.showsTimer || root.showsStopwatch) && !root.running ? 0.6 : 1
 

@@ -41,6 +41,11 @@ Item {
   required property var widget
   readonly property var properties: root.widget.properties ?? {}
   readonly property var layoutOverrides: root.widget.layout ?? {}
+  // Where it starts along its bar as laid out (never as it glides), and the
+  // bar's length, which the bar's gradient spans: 0 for no gradient (set by
+  // WidgetGroup). Its module reads its slice of the gradient from them.
+  property real barStart: 0
+  property real barLength: 0
   // The bar editor's selected widget: outlined, and its sizing reported
   property bool highlighted: false
   // The widget hovered in the bar editor: outlined as the selected one
@@ -207,14 +212,17 @@ Item {
       "barConfig": root.barConfig,
       "panel": root.panel,
       "screen": root.screen,
-      "properties": root.widget.properties ?? {}
+      "properties": root.widget.properties ?? {},
+      "autoColors": root.widget.autoColors ?? {}
     });
   }
   onWidgetChanged: {
     if ((root.widget.type ?? "") !== root._type)
       root._load();
-    else if (root._item)
+    else if (root._item) {
       root._item.properties = root.widget.properties ?? {};
+      root._item.autoColors = root.widget.autoColors ?? {};
+    }
   }
 
   // Where the module's pointer areas go (BarWidget.hitArea), over the
@@ -289,6 +297,10 @@ Item {
           item.barConfig = Qt.binding(() => root.barConfig);
           item.panel = Qt.binding(() => root.panel);
           item.screen = Qt.binding(() => root.screen);
+          // Where it sits along the bar, for the bar's gradient: its
+          // module starts past its lead inset (at rest)
+          root._item.barOffset = Qt.binding(() => root.barStart + root.leadInset);
+          root._item.barLength = Qt.binding(() => root.barLength);
           if ("hitArea" in item)
             item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
         }

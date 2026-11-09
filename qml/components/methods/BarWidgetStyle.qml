@@ -20,11 +20,91 @@ import QtQuick
 //   hoverFill the bar's "Fill on hover"
 //   hovered   the pointer is over the widget (its hit area): a tinted or
 //             outlined widget then draws as filled (fillsOnHover)
+//   gradient  the bar gradient's color where the widget sits (its middle),
+//             or null: no gradient (or no place on a bar, a preview)
+//   auto      `accent` is the widget's Auto own color (its `accent` role
+//             left empty, BarsConfig.withAutoColors): only that gives way
+//             to the bar's gradient. A color set on the widget and its
+//             state colors keep theirs.
+//   run       the style is a merged run's own background (groupColors)
 // `iconFill` is split's icon part (its icon or badge), else transparent.
+// The result's `gradient` says what of the background draws the bar's
+// gradient (gradientPart), else null.
 QtObject {
   id: root
 
   function colors(style, accent, own) {
+    const graded = (style.gradient ?? null) !== null && style.auto === true;
+    const result = root._colors(style, graded ? style.gradient : accent, graded ? root.readableOn(style.gradient, own) : own, graded);
+    result.gradient = graded ? root.gradientPart(style) : null;
+    return result;
+  }
+
+  // What of a background in `style` takes the bar's gradient, and how
+  // clear: { part: "fill" | "stroke" | "indicator" | "iconFill", alpha },
+  // or null where the gradient colors no background (colored icons: the
+  // icon takes the color where it sits). A widget filled on hover fills
+  // with it. In a merged run the run draws it (a split run's at the
+  // labels' tint), so a widget there has none, but for a split icon part.
+  function gradientPart(style) {
+    const fill = root.drawnFill(style);
+    if (style.hovered === true && root.fillsOnHover(style))
+      return root._part("fill", 1);
+    if (style.run && style.fill === "split")
+      return root._part("fill", style.tint);
+    if (style.group)
+      return fill === "split" ? root._part("iconFill", 1) : null;
+    switch (fill) {
+    case "split":
+      return root._part("iconFill", 1);
+    case "tinted":
+      return root._part("fill", style.tint);
+    case "outline":
+      return root._part("stroke", 1);
+    case "underline":
+      return root._part("indicator", 1);
+    case "accentText":
+    case "plain":
+      return null;
+    default:
+      return root._part("fill", 1);
+    }
+  }
+
+  // The bar gradient's color `t` along it (0 its start, 1 its end), its
+  // `stops` (colors, from first to last) spread evenly
+  function gradientAt(stops, t) {
+    const n = stops.length - 1;
+    if (n <= 0)
+      return Qt.color(stops[0]);
+    const x = Math.max(0, Math.min(1, t)) * n;
+    const k = Math.min(n - 1, Math.floor(x));
+    return root._mix(stops[k], stops[k + 1], x - k);
+  }
+
+  // The part of the bar gradient from `start` to `end` along the bar (0 to
+  // 1), as three stops 0 to 1 along it ({ position, color }, `alpha` its
+  // opacity): its ends and the one bar stop inside it (a three-stop
+  // gradient's middle), or its middle where none is (the gradient straight
+  // there). Linear between them, as the bar's is, so slices meet seamlessly.
+  function gradientSlice(stops, start, end, alpha) {
+    const span = end - start;
+    const n = stops.length - 1;
+    let inner = 0.5;
+    for (let k = 1; k < n; k++) {
+      if (span > 0 && k / n > start && k / n < end) {
+        inner = (k / n - start) / span;
+        break;
+      }
+    }
+    const at = position => ({
+          "position": position,
+          "color": Qt.alpha(root.gradientAt(stops, start + span * position), alpha)
+        });
+    return [at(0), at(inner), at(1)];
+  }
+
+  function _colors(style, accent, own, graded) {
     const none = "transparent";
     const text = c => style.override ?? c;
     const fill = root.drawnFill(style);
@@ -37,13 +117,23 @@ QtObject {
       // outline keeps its stroke (unseen on the fill) so it doesn't fade
       // out and back. In a merged run, the widget's own part alone
       return root._make(accent, fill === "outline" && !style.group ? accent : none, none, text(own), text(own));
+    if (style.run && graded && style.fill === "split")
+      // A split run's strip of the gradient is its labels' tint, under
+      // icon parts each in their own slice of it
+      return root._make(Qt.alpha(accent, style.tint), none, none, text(own), text(own));
     if (style.group) {
       // The run draws the background: the icon keeps the state, the label
       // reads on the run (or on the bar, through a tint or outline). A
-      // split icon part keeps its own fill on the run.
+      // split icon part keeps its own fill on the run, its label on the
+      // run's color, or on a gradient's tint in the widget's color. On a
+      // gradient run the run's color is the gradient's where the widget
+      // sits, and an Auto icon reads on it as the label does (through a
+      // tint or outline it takes that color)
       if (fill === "split")
-        return root._make(none, none, none, text(root.readableOn(style.group, style.barText)), text(own), accent);
-      return root._make(unfilled, none, none, text(fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText), accent);
+        return root._make(none, none, none, text(style.gradient ? accent : root.readableOn(style.group, style.barText)), text(own), accent);
+      const group = style.gradient ?? style.group;
+      const label = text(fill === "filled" ? root.readableOn(group, style.barText) : style.barText);
+      return root._make(unfilled, none, none, label, graded && fill === "filled" ? label : accent);
     }
     switch (fill) {
     case "split":
@@ -80,12 +170,18 @@ QtObject {
   // A cell inside a widget (a workspace) in the same style: { fill, stroke,
   // indicator, content, showsHover }. `color` is the cell's color for its
   // state, `own` what reads on it filled, `state` "active" | "occupied" |
-  // "empty"; `style.hovered` the pointer over it. Where the content sits on the
-  // bar rather than on the cell's color, an empty cell's is the bar's text
-  // faded (its own color is meant to barely show), and plain text tells
-  // the states apart by fading alone. `showsHover`: hovered, it's filled
-  // (fillsOnHover), so the cell draws no hover box of its own.
+  // "empty"; `style.hovered` the pointer over it. Where the content sits on
+  // the bar rather than on the cell's color, an empty cell's is the bar's
+  // text faded (its own color is meant to barely show), and plain text
+  // tells the states apart by fading alone. `showsHover`: hovered, it's
+  // filled (fillsOnHover), so the cell draws no hover box of its own. An
+  // Auto color (`style.auto`) gives way to the bar gradient's where the
+  // cell sits (style.gradient), as a widget's does.
   function cell(style, color, own, state) {
+    if ((style.gradient ?? null) !== null && style.auto === true) {
+      own = root.readableOn(style.gradient, own);
+      color = style.gradient;
+    }
     const none = "transparent";
     const text = c => style.override ?? c;
     if (style.hovered === true && root.fillsOnHover(style))
@@ -174,6 +270,18 @@ QtObject {
   // `preferred` if it contrasts with `background`, else black or white
   function readableOn(background, preferred) {
     return Utils.isColorDark(background) !== Utils.isColorDark(preferred) ? preferred : Utils.getContrastColor(background);
+  }
+
+  function _mix(a, b, f) {
+    const p = Qt.color(a), q = Qt.color(b);
+    return Qt.rgba(p.r + (q.r - p.r) * f, p.g + (q.g - p.g) * f, p.b + (q.b - p.b) * f, p.a + (q.a - p.a) * f);
+  }
+
+  function _part(part, alpha) {
+    return {
+      "part": part,
+      "alpha": alpha
+    };
   }
 
   function _makeCell(fill, stroke, indicator, content, showsHover) {

@@ -22,7 +22,7 @@ ValueStyleWidget {
   minimumText: "0"
   labelShown: properties.showCount && count > 0
   subtext: I18n.tr("{0} mounted", mounted)
-  accentColor: Theme.resolveColor(mounted > 0 ? properties.mountedColor : properties.idleColor)
+  accentField: mounted > 0 ? "mountedColor" : "idleColor"
 
   clickable: true
   acceptedButtons: Qt.LeftButton | Qt.MiddleButton

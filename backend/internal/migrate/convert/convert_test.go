@@ -171,8 +171,10 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 }
 
 // Keys a BarStyle (the Bars section's style and each bar's own) gained
-// after format 1 was frozen
-var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners", "outlineStroke", "hoverFill"}
+// after format 1 was frozen: textScale (in place of a font size of null,
+// the default) and the widget styles' (split, tab, outline strokes, fill
+// on hover, the bar gradient)
+var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners", "outlineStroke", "hoverFill", "gradient", "gradientFrom", "gradientVia", "gradientTo"}
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load (the Bars
@@ -304,12 +306,11 @@ func dropModuleKeys(v any) {
 	}
 }
 
-// A bar's settings added since (v93: its auto-hide), and its style's
-// textScale (in place of a font size of null, the default)
 // bindKeysAddedSinceV1 are a keybind's settings added since format 1 (its
 // "Only when"), which the default binds get from their defaults at load
 var bindKeysAddedSinceV1 = []string{"whenCompositors", "whenLayout", "whenMonitors"}
 
+// A bar's settings added since (v93: its auto-hide)
 var barKeysAddedSinceV1 = []string{"autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
 
 // Every frozen corpus config (each past schema version's defaults, the

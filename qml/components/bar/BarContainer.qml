@@ -354,6 +354,8 @@ Rectangle {
     return (widgetConfigArray || []).map((widgetConf, i) => ({
           "type": widgetConf.type,
           "properties": widgetConf.properties || {},
+          // Its Auto color fields' roles (BarsConfig.withAutoColors)
+          "autoColors": widgetConf.autoColors || {},
           "layout": widgetConf.layout || {},
           "configIndex": i,
           "visible": widgetConf.visible !== false
@@ -420,6 +422,10 @@ Rectangle {
     chainEnd: section.bar.sectionJoins[section.slotIndex].chainEnd
     joinEndReach: section.bar.sectionReaches[section.slotIndex]
     readonly property real mainPos: Math.round(section.slot.offset + (section.slot.extent - section.usedLength) * section.align)
+    // The bar's gradient runs along its whole length, wherever widgets are,
+    // so a widget coming or going never shifts its colors
+    barStart: section.mainPos
+    barLength: section.barConfig.gradientColors !== null ? section.bar.length : 0
 
     barConfig: section.bar.barConfig
     panel: section.bar.panel
