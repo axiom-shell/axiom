@@ -24,6 +24,8 @@ QtObject {
     // How much bigger than a 26 px bar it is: what's inside it scales so
     const scale = thickness / BarsConfig.referenceThickness;
     const edgePadding = barConfig.edgePadding;
+    const innerPadding = Math.round(barConfig.innerPadding * scale);
+    const innerGap = Math.round(barConfig.innerGap * scale);
     // What it draws as: its surface (one bar, a pill per group, none) and
     // whether that floats. With no surface it doesn't float.
     const kind = BarsConfig.kindOf(barConfig);
@@ -66,7 +68,8 @@ QtObject {
     const borderShadowed = solid && Appearance.screenBorder && reserves;
     // Shapes and grouping are for widgets drawn on a background
     const boxed = BarsConfig.boxedStyles.includes(look.widgetStyle);
-    const grouping = boxed ? look.widgetGrouping : "separate";
+    const grouping = BarsConfig.groupingOf(look);
+    const splitCap = BarShapes.dividerCap(look.widgetShape, look.splitDivider);
     // Between the widgets within a section: a powerline's touch, and
     // dividers drawn between them take their own room and margins
     const groupSpacing = grouping === "powerline" ? 0 : look.separatorStyle !== "none" ? BarLayout.dividerGap(look.separatorStyle, look.separatorThickness, thickness, look.separatorGap) : barConfig.widgetGap;
@@ -116,8 +119,8 @@ QtObject {
       // section (that's for panels, popouts and controls): its text, icons
       // and inner spacing scale with its thickness, as set at 26 px (its
       // text scale of Appearance's font size there)
-      "innerPadding": Math.round(barConfig.innerPadding * scale),
-      "innerGap": Math.round(barConfig.innerGap * scale),
+      "innerPadding": innerPadding,
+      "innerGap": innerGap,
       "fontSize": Math.round(Appearance.baseFontSize * scale * look.textScale / 100),
       // Widget chips only, else the interior radius: pills and fillets keep
       // Appearance's, to meet the border
@@ -136,6 +139,19 @@ QtObject {
       "widgetEnds": look.widgetEnds,
       "widgetGrouping": grouping,
       "groupColor": look.groupColor,
+      // Split's icon part (joined, badge), its label's background (tint,
+      // color, none), that color (a name) and the cut between them (match,
+      // straight, slant, arrow, curve)
+      "splitIcon": look.splitIcon,
+      "splitLabelFill": look.splitLabelFill,
+      "splitLabelColor": look.splitLabelColor,
+      "splitDivider": look.splitDivider,
+      // The cap split's icon part ends in (BarShapes.dividerCap), what
+      // a badge reaches round its icon, and the gap a split widget keeps
+      // between its parts (BarShapes.splitRoom), -1 on other styles
+      "splitCap": splitCap,
+      "badgePad": innerGap,
+      "splitRoom": look.widgetStyle === "split" ? BarShapes.splitRoom(look.splitIcon, splitCap, thickness, innerPadding, innerGap * 1.5, innerGap) : -1,
       // A powerline's widgets touch, leaving no gap to divide
       "separatorStyle": grouping === "powerline" ? "none" : look.separatorStyle,
       "separatorColor": look.separatorColor,
@@ -169,7 +185,7 @@ QtObject {
       // and corners go by, so hiding, showing and pinning never move them)
       "reserveSpace": reserves,
       // Each Auto color picked for its place on this bar
-      "widgets": BarsConfig.withAutoColors(barConfig.widgets, look.widgetStyle, grouping, look.groupColor),
+      "widgets": BarsConfig.withAutoColors(barConfig.widgets, look.widgetStyle, grouping, look.groupColor, look),
       "vertical": vertical,
       // Along its screen's shorter edge: of two bars of a kind meeting at a
       // corner, it takes the corner (BarEnds)
@@ -222,10 +238,12 @@ QtObject {
   }
 
   // What a bar widget draws in on its bar ({ fill, stroke, indicator,
-  // text, icon }, see BarWidgetStyle): `accent` is its color for its state,
-  // `foregroundName` the text color it's configured with
-  function widgetColors(barConfig, accent, foregroundName) {
-    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged"), accent, Theme.resolveColor(foregroundName));
+  // text, icon, iconFill }, see BarWidgetStyle): `accent` is its color for
+  // its state, `foregroundName` the text color it's configured with,
+  // `splits` whether it shows an icon part and a label apart (a split bar
+  // draws it filled otherwise; left out, it doesn't)
+  function widgetColors(barConfig, accent, foregroundName, splits) {
+    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged", splits === true), accent, Theme.resolveColor(foregroundName));
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
@@ -263,7 +281,9 @@ QtObject {
   // A bar's widgets (by section) with each Auto color field (`x-autoColor`,
   // left empty) set to the color BarAutoColors picks for it among its shown
   // neighbours, seen against the bar or, filled and merged, the run
-  function withAutoColors(widgets, widgetStyle, grouping, groupColor) {
+  // (BarWidgetStyle.autoContrast; `split`: a look's splitIcon and
+  // splitLabelFill)
+  function withAutoColors(widgets, widgetStyle, grouping, groupColor, split) {
     const shown = [].concat(...BarsConfig.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
             "section": section,
             "index": index,
@@ -280,7 +300,7 @@ QtObject {
         }, {})
       };
     });
-    const filledRun = widgetStyle === "filled" && grouping === "merged";
+    const seen = BarWidgetStyle.autoContrast(widgetStyle, grouping, split.splitIcon, split.splitLabelFill);
     const named = name => ({
           "name": name,
           "color": Theme.resolveColor(name)
@@ -290,9 +310,9 @@ QtObject {
       "neutrals": Theme.baseColorNames.slice(1, 5).map(named),
       "warning": named("warning"),
       "critical": named("error"),
-      "backdrop": filledRun ? Theme.resolveColor(groupColor) : Theme.background,
+      "backdrop": seen.onRun ? Theme.resolveColor(groupColor) : Theme.background,
       // A fill need only show on the bar; otherwise the color is text or a stroke
-      "minContrast": widgetStyle === "filled" && !filledRun ? 1.3 : 3
+      "minContrast": seen.minContrast
     });
     const result = Object.assign({}, widgets);
     shown.forEach((entry, n) => {
@@ -324,10 +344,15 @@ QtObject {
     return result;
   }, {})
 
-  // BarWidgetStyle's `style` for a bar, its colors resolved
-  function _widgetStyle(barConfig, merged) {
+  // BarWidgetStyle's `style` for a bar, its colors resolved, for a widget
+  // that `splits` (an icon part and a label apart)
+  function _widgetStyle(barConfig, merged, splits) {
     return {
       "fill": barConfig.widgetStyle,
+      "splits": splits === true,
+      "splitIcon": barConfig.splitIcon,
+      "labelFill": barConfig.splitLabelFill,
+      "labelColor": Theme.resolveColor(barConfig.splitLabelColor),
       "barText": Theme.foreground,
       "override": barConfig.widgetTextColor ? Theme.resolveColor(barConfig.widgetTextColor) : null,
       "tint": barConfig.tintOpacity,
@@ -386,7 +411,15 @@ QtObject {
 
   // The widget styles that draw each widget on a box of its own: only they
   // have shapes and grouping
-  readonly property var boxedStyles: ["filled", "tinted", "outline"]
+  readonly property var boxedStyles: ["filled", "tinted", "outline", "split"]
+
+  // A look's grouping as drawn: separate for unboxed styles, and as
+  // BarWidgetStyle.grouping has it
+  function groupingOf(look) {
+    if (!BarsConfig.boxedStyles.includes(look.widgetStyle))
+      return "separate";
+    return BarWidgetStyle.grouping(look.widgetStyle, look.splitIcon, look.widgetGrouping);
+  }
 
   // A bar's look: its `style` (a BarStyle) with every key it leaves null
   // (inherit) taken from the Bars section's (`section`, BarStyle.values
@@ -410,12 +443,11 @@ QtObject {
   }
 
   // The look a bar's widgets draw in, as `$bar.<key>` for their options'
-  // `x-showIf`: lookOf's BarStyle keys, with grouping only for boxed styles
-  // (as enrichBarConfig)
+  // `x-showIf`: lookOf's BarStyle keys, with grouping as drawn (groupingOf,
+  // as enrichBarConfig)
   function lookContext(barConfig) {
     const look = BarsConfig.lookOf(barConfig ?? {});
-    if (!BarsConfig.boxedStyles.includes(look.widgetStyle))
-      look.widgetGrouping = "separate";
+    look.widgetGrouping = BarsConfig.groupingOf(look);
     return Object.keys(BarStyle.values).reduce((context, key) => {
       context["$bar." + key] = look[key];
       return context;

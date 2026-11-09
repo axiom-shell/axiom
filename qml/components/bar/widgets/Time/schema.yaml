@@ -9,7 +9,7 @@ colors:
   backgroundColor:
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: [filled, tinted, outline], $bar.widgetGrouping: {not: merged}}
+        - {$bar.widgetStyle: [filled, tinted, outline, split], $bar.widgetGrouping: {not: merged}}
         - {$bar.widgetStyle: underline}
 settings:
   hourFormat:

@@ -44,7 +44,7 @@ ColumnLayout {
       return widget.properties;
     return BarsConfig.withAutoColors({
       "center": [widget]
-    }, root.barConfig.widgetStyle, root.barConfig.widgetGrouping, root.barConfig.groupColor).center[0].properties;
+    }, root.barConfig.widgetStyle, root.barConfig.widgetGrouping, root.barConfig.groupColor, root.barConfig).center[0].properties;
   }
 
   width: parent?.width ?? 0

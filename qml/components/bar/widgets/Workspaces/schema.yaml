@@ -81,7 +81,7 @@ settings:
     title: Background
     default: true
     description: A box around the workspaces. Off, they sit on the bar.
-    x-showIf: {$bar.widgetStyle: [filled, tinted, outline]}
+    x-showIf: {$bar.widgetStyle: [filled, tinted, outline, split]}
   backgroundColor:
     type: string
     title: Background color
@@ -91,7 +91,7 @@ settings:
     x-autoColor: neutral
     x-showIf:
       showBackground: true
-      $bar.widgetStyle: [filled, tinted, outline]
+      $bar.widgetStyle: [filled, tinted, outline, split]
       $bar.widgetGrouping: {not: merged}
   activeColor: {$ref: '#/definitions/WidgetColor', title: Active}
   occupiedColor:
@@ -106,14 +106,14 @@ settings:
     x-options: colors
     default: base01
     x-showIf:
-      $bar.widgetStyle: [filled, tinted, outline, underline]
+      $bar.widgetStyle: [filled, tinted, outline, split, underline]
   textColor:
     type: string
     title: Text color
     x-options: colors
     default: base00
     description: Numbers and the grid's active arrow.
-    x-showIf: {$bar.widgetStyle: filled, $bar.widgetTextColor: ''}
+    x-showIf: {$bar.widgetStyle: [filled, split], $bar.widgetTextColor: ''}
   hoverColor:
     type: string
     title: Hover

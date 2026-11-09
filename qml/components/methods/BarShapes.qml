@@ -9,7 +9,8 @@ import QtQuick
 //
 // Caps: flat, round (the widget radius), capsule (half the thickness),
 // arrowOut/arrowIn (a point or a notch), slant (a parallelogram's side),
-// roundOut/roundIn (a half circle bulging out or in). Powerline segments
+// roundOut/roundIn (a half circle bulging out or in), curve (a shallow
+// arc bulging out: split's divider). Powerline segments
 // overlap: each after the first reaches back under the one before it (or,
 // when fills don't hide what's under them, meets its cap edge to edge).
 QtObject {
@@ -25,9 +26,35 @@ QtObject {
       return across / 2;
     case "slant":
       return across / 3;
+    case "curve":
+      return across / 4;
     default:
       return 0;
     }
+  }
+
+  // The cap a split widget's icon part ends in, where the label's part
+  // starts (Bars[].splitDivider): match takes the shape's own (slanted,
+  // an arrow), else straight
+  function dividerCap(shape, divider) {
+    switch (divider === "match" ? shape : divider) {
+    case "slant":
+      return "slant";
+    case "arrow":
+      return "arrowOut";
+    case "curve":
+      return "curve";
+    default:
+      return "flat";
+    }
+  }
+
+  // The gap a split widget keeps between its icon part and its label:
+  // joined, its padding either side of the divider (`cap`, dividerCap)
+  // and the divider's depth; a badge (`icon` "badge") reaches `badgePad`
+  // round the icon, then the usual `spacing`
+  function splitRoom(icon, cap, across, padding, spacing, badgePad) {
+    return icon === "badge" ? spacing + badgePad : padding * 2 + root.depth(cap, across);
   }
 
   // A run's own ends by shape, and a slant's or arrow's by widgetEnds
@@ -160,6 +187,12 @@ QtObject {
           "r": h / 2,
           "sweep": 0
         })];
+    case "curve":
+      // An arc through both corners bulging `d` out at the middle
+      return [p(d, 0), p(d, h, {
+          "r": d > 0 ? (h * h / 4 + d * d) / (2 * d) : h,
+          "sweep": 1
+        })];
     default:
       return [p(0, 0), p(0, h)];
     }
@@ -213,6 +246,11 @@ QtObject {
       return r - chord;
     case "roundIn":
       return chord;
+    case "curve":
+      {
+        const R = d > 0 ? (r * r + d * d) / (2 * d) : 0;
+        return d > 0 ? R - Math.sqrt(Math.max(0, R * R - off * off)) : 0;
+      }
     default:
       return 0;
     }

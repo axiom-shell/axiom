@@ -135,7 +135,9 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			bar.(*jsonx.Object).Delete(key)
 		}
 		if style, ok := bar.(*jsonx.Object).Value("style").(*jsonx.Object); ok {
-			style.Delete("textScale")
+			for _, key := range barStyleKeysAddedSinceV1 {
+				style.Delete(key)
+			}
 		}
 		sections, _ := bar.(*jsonx.Object).Value("widgets").(*jsonx.Object)
 		for _, side := range sections.Keys() {
@@ -168,9 +170,12 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	}
 }
 
+// Keys a bar's own style gained after format 1 was frozen
+var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider"}
+
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load
-var addedSinceV1 = []string{"Bars.style.textScale", "Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method"}
+var addedSinceV1 = []string{"Bars.style.textScale", "Bars.style.splitIcon", "Bars.style.splitLabelFill", "Bars.style.splitLabelColor", "Bars.style.splitDivider", "Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method"}
 
 // detachedPlaceFields drops what an OSD and a dock gained since format 1
 // in place of their `gap` (v97 drops it): `distance` and `animation`,

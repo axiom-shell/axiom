@@ -157,4 +157,114 @@ TestCase {
     same(BarWidgetStyle.readableOn("#000000", "#ffffff"), "#ffffff", "contrasting");
     same(BarWidgetStyle.readableOn("#ffffff", "#eeeeee"), "#000000", "too close");
   }
+
+  function split(labelFill, options = {}) {
+    return BarWidgetStyle.colors(Object.assign({
+      "fill": "split",
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "group": null,
+      "splits": true,
+      "splitIcon": "joined",
+      "labelFill": labelFill,
+      "labelColor": "#eeeeee"
+    }, options), accent, own);
+  }
+
+  function test_split_fills_the_icon_part_and_sets_the_label_apart() {
+    const tint = split("tint");
+    same(tint.iconFill, accent, "icon part");
+    same(tint.icon, own, "icon reads on it");
+    same(tint.fill, Qt.alpha(accent, 0.25), "label on a tint");
+    same(tint.text, accent, "label in the color");
+    const color = split("color");
+    same(color.fill, "#eeeeee", "label on its color");
+    same(color.text, "#000000", "label reads on it");
+    same(split("color", {
+      "override": custom
+    }).text, custom, "override");
+    const none = split("none");
+    same(none.fill, "transparent", "label on the bar");
+    same(none.text, accent, "label in the color");
+  }
+
+  function test_split_badge_leaves_the_label_on_the_bar() {
+    const c = split("color", {
+      "splitIcon": "badge"
+    });
+    same(c.iconFill, accent, "badge");
+    same(c.fill, "transparent", "no label background");
+    same(c.text, accent, "label in the color");
+  }
+
+  function test_split_without_parts_is_filled() {
+    const c = split("tint", {
+      "splits": false
+    });
+    same(c.fill, accent, "fill");
+    same(c.text, own, "text");
+    same(c.iconFill, "transparent", "no icon part");
+    same(styled("filled").iconFill, "transparent", "other styles have none");
+  }
+
+  function test_split_merged_keeps_the_icon_part_on_the_run() {
+    const light = "#eeeeee";
+    const c = split("tint", {
+      "group": light
+    });
+    same(c.fill, "transparent", "the run draws the label's");
+    same(c.iconFill, accent, "icon part");
+    same(c.icon, own, "icon reads on it");
+    same(c.text, "#000000", "label reads on the run");
+    // A widget with no parts: as a filled merged one
+    same(split("tint", {
+      "group": light,
+      "splits": false
+    }).icon, accent, "the icon keeps the state");
+  }
+
+  function test_split_cells_are_filled() {
+    const c = cell("split", "empty");
+    same(c.fill, accent, "fill");
+    same(c.content, own, "content");
+  }
+
+  function test_opaque_fills() {
+    verify(BarWidgetStyle.opaque("filled", "joined", "tint"), "filled");
+    verify(!BarWidgetStyle.opaque("tinted", "joined", "color"), "tinted");
+    verify(BarWidgetStyle.opaque("split", "joined", "color"), "split on a color");
+    verify(!BarWidgetStyle.opaque("split", "joined", "tint"), "split on a tint");
+    verify(!BarWidgetStyle.opaque("split", "badge", "color"), "badge");
+  }
+
+  function test_badge_has_no_powerline() {
+    compare(BarWidgetStyle.grouping("split", "badge", "powerline"), "separate");
+    compare(BarWidgetStyle.grouping("split", "badge", "merged"), "merged");
+    compare(BarWidgetStyle.grouping("split", "joined", "powerline"), "powerline");
+    compare(BarWidgetStyle.grouping("filled", "badge", "powerline"), "powerline");
+  }
+
+  function test_auto_contrast() {
+    compare(BarWidgetStyle.autoContrast("filled", "separate", "joined", "tint"), {
+      "onRun": false,
+      "minContrast": 1.3
+    });
+    compare(BarWidgetStyle.autoContrast("filled", "merged", "joined", "tint"), {
+      "onRun": true,
+      "minContrast": 3
+    });
+    compare(BarWidgetStyle.autoContrast("tinted", "merged", "joined", "tint"), {
+      "onRun": false,
+      "minContrast": 3
+    });
+    // Split's color is the label's text too, unless the label has its own
+    compare(BarWidgetStyle.autoContrast("split", "separate", "joined", "tint").minContrast, 3);
+    compare(BarWidgetStyle.autoContrast("split", "separate", "badge", "color").minContrast, 3);
+    compare(BarWidgetStyle.autoContrast("split", "powerline", "joined", "color").minContrast, 1.3);
+    compare(BarWidgetStyle.autoContrast("split", "merged", "joined", "tint"), {
+      "onRun": true,
+      "minContrast": 1.3
+    });
+  }
 }

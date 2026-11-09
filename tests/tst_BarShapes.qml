@@ -43,7 +43,7 @@ TestCase {
   }
 
   function test_every_cap_stays_in_its_box_data() {
-    return ["flat", "round", "capsule", "arrowOut", "arrowIn", "slant", "roundOut", "roundIn"].map(cap => ({
+    return ["flat", "round", "capsule", "arrowOut", "arrowIn", "slant", "roundOut", "roundIn", "curve"].map(cap => ({
           "tag": cap,
           "cap": cap
         }));
@@ -189,5 +189,37 @@ TestCase {
     verify(BarShapes.contains(1, 1, 100, 30, "arrowIn", "arrowOut"));
     verify(BarShapes.contains(50, 15, 100, 30, "flat", "flat"));
     verify(!BarShapes.contains(50, 31, 100, 30, "flat", "flat"));
+  }
+
+  function test_divider_cap_matches_the_shape_or_is_chosen() {
+    compare(BarShapes.dividerCap("slant", "match"), "slant");
+    compare(BarShapes.dividerCap("arrow", "match"), "arrowOut");
+    compare(BarShapes.dividerCap("rounded", "match"), "flat");
+    compare(BarShapes.dividerCap("capsule", "match"), "flat");
+    compare(BarShapes.dividerCap("capsule", "slant"), "slant");
+    compare(BarShapes.dividerCap("slant", "straight"), "flat");
+    compare(BarShapes.dividerCap("rounded", "arrow"), "arrowOut");
+    compare(BarShapes.dividerCap("rounded", "curve"), "curve");
+  }
+
+  function test_split_room_holds_the_divider_or_the_badge() {
+    // Joined: the padding either side and the divider's depth
+    compare(BarShapes.splitRoom("joined", "flat", 30, 10, 6, 4), 20);
+    compare(BarShapes.splitRoom("joined", "slant", 30, 10, 6, 4), 30);
+    compare(BarShapes.splitRoom("joined", "arrowOut", 30, 10, 6, 4), 35);
+    // A badge: its reach round the icon, then the usual spacing
+    compare(BarShapes.splitRoom("badge", "slant", 30, 10, 6, 4), 10);
+  }
+
+  function test_curve_is_a_shallow_arc_to_the_end() {
+    // Bulging a quarter of the thickness: its middle reaches the end, its
+    // corners stop that far in
+    const d = BarShapes.depth("curve", 40);
+    compare(d, 10);
+    verify(BarShapes.contains(99.5, 20, 100, 40, "flat", "curve"));
+    verify(!BarShapes.contains(95, 0.5, 100, 40, "flat", "curve"));
+    verify(BarShapes.contains(89, 0.5, 100, 40, "flat", "curve"));
+    const b = bounds(BarShapes.path(100, 40, 0, "flat", "curve", false, 0));
+    compare(b.maxX, 90);
   }
 }

@@ -4146,6 +4146,18 @@
     "A screen's part of the screenshot never arrived.": "",
     "Caffeine is keeping the screen on: the steps below wait until it's turned off.": "",
     "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
-    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": ""
+    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
+    "Match the shape": "",
+    "Split": "",
+    "Label color": "",
+    "Label background": "",
+    "Straight": "",
+    "Joined: one box cut in two. Badge: a small shape behind the icon, the label on the bar.": "",
+    "Tint": "",
+    "Tint: the widget's color, faded. None: the bar shows through.": "",
+    "Divider": "",
+    "Joined": "",
+    "Icon part": "",
+    "Where the icon's part meets the label's. Match is slanted or an arrow for those shapes, else straight.": ""
   }
 }
