@@ -211,9 +211,11 @@ Item {
     }
 
     // App icons alone or in a row, packed in the middle. The slots come
-    // from the layout (config), each shown while it has an icon; the grid
-    // is only as long as the icons shown (a Grid keeps spacing for an empty
-    // column or row, which would push them off centre)
+    // from the layout (config), each shown while it has an icon. Only the
+    // line's count across is fixed: the Grid counts the other way from the
+    // icons shown, so it's only as long as they are (a set count keeps
+    // spacing for an empty column, pushing them off centre, and lags the
+    // icons' visibility as one comes, warning that it overflows)
     Grid {
       id: iconRow
       readonly property int _shown: Math.max(1, Math.min(root.iconPaths.length, root.iconLayout === "row" ? root.iconSlots : 1))
@@ -221,8 +223,8 @@ Item {
       anchors.centerIn: parent
       visible: root._shows === "icons" && root.iconLayout !== "square"
       flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
-      rows: root.isVertical ? _shown : 1
-      columns: root.isVertical ? 1 : _shown
+      rows: root.isVertical ? -1 : 1
+      columns: root.isVertical ? 1 : -1
       spacing: WorkspaceCells.iconGap(root.thickness)
 
       Repeater {
