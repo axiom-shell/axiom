@@ -25,6 +25,17 @@ TestCase {
     compare(TextBand.height("12:30", 8, 11), 11);
   }
 
+  function test_lineAscent() {
+    // Inter at 13 px: ascent 12.59, a 16 px line, moved up a pixel
+    compare(TextBand.lineAscent(11.59375, -1, 1, 16, 16, Text.AlignTop), 12.59375, "the padding taken off");
+    compare(TextBand.lineAscent(12.59375, 0, 0, 16, 16, Text.AlignVCenter), 12.59375, "a box its lines' height: nothing to align");
+    compare(TextBand.lineAscent(18.59375, -1, 1, 30, 16, Text.AlignVCenter), 12.59375, "centred in a 30 px box: 7 px down");
+    compare(TextBand.lineAscent(25.59375, -1, 1, 30, 16, Text.AlignBottom), 12.59375, "at its bottom: 14 px down");
+    compare(TextBand.lineAscent(8.59375, -1, 1, 10, 16, Text.AlignVCenter), 12.59375, "a box shorter than its lines: 3 px up");
+    // "音楽" lays its line out on the CJK font's taller ascent
+    compare(TextBand.lineAscent(13.078125, -2, 2, 19, 19, Text.AlignTop), 15.078125);
+  }
+
   function test_padding() {
     // Inter at 15 px: ascent 14.53, a 19 px line, x-height 8, figures 11
     const x = TextBand.padding(14.53125, 19, 8);

@@ -174,9 +174,8 @@ BaseWidget {
         // Upright under the icon it centres across nothing
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !(root.isVertical && root.uprightLabel)
-          font: textLabel.font
+          label: textLabel
           text: steadyMetrics.text
-          contentHeight: textLabel.contentHeight
         }
         topPadding: _band.top
         bottomPadding: _band.bottom

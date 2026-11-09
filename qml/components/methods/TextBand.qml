@@ -29,6 +29,20 @@ QtObject {
     return root.onXHeight(text) ? xHeight : figureHeight;
   }
 
+  // The ascent of a Text's first line as it was laid out, from its
+  // `baselineOffset`: less its top padding and how far its vertical
+  // alignment moved its lines (`contentHeight` high) down its box (`height`
+  // less its paddings). Read off the laid-out line, it's exact where
+  // measuring the text isn't: a fallback font's taller ascent (CJK, emoji)
+  // moves the baseline down only on the line it's on, and not when it's
+  // elided away; Qt lays out some glyphs from a fallback font (Arabic, an
+  // icon font's glyph) on the primary font's ascent
+  function lineAscent(baselineOffset, topPadding, bottomPadding, height, contentHeight, verticalAlignment) {
+    const room = height - topPadding - bottomPadding - contentHeight;
+    const moved = verticalAlignment === Text.AlignBottom ? room : verticalAlignment === Text.AlignVCenter ? room / 2 : 0;
+    return baselineOffset - topPadding - moved;
+  }
+
   // { top, bottom, offset }: the padding that moves a Text's lines so the
   // middle of its box is the middle of its letters' bands, its size kept
   // (one side the other's negative), for lines `lineHeight` high (one

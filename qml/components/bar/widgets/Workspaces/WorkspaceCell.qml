@@ -202,10 +202,9 @@ Item {
         // As words, centred on their letters
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !leadLabel.symbol
-          font: leadLabel.font
+          label: leadLabel
           text: root.leadIcon
           bandText: textRow.words
-          contentHeight: leadLabel.contentHeight
         }
         topPadding: _band.top
         bottomPadding: _band.bottom
@@ -230,10 +229,9 @@ Item {
         readonly property bool symbol: textLabel.isSymbol && !root.textPlain
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !textLabel.symbol
-          font: textLabel.font
+          label: textLabel
           text: root.text
           bandText: textRow.words
-          contentHeight: textLabel.contentHeight
         }
         topPadding: _band.top
         bottomPadding: _band.bottom

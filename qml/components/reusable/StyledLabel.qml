@@ -12,10 +12,8 @@ StyledText {
   id: root
 
   readonly property TextBandPadding _band: TextBandPadding {
-    font: root.font
+    label: root
     text: root.textFormat === Text.PlainText ? root.text : root.text.replace(/<[^>]*>/g, "")
-    contentHeight: root.contentHeight
-    lineCount: root.lineCount
   }
   // How far its letters' middle is below its box's (under half a pixel)
   readonly property real bandOffset: _band.offset
