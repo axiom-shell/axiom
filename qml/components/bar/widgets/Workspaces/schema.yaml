@@ -130,6 +130,17 @@ settings:
     x-options: colors
     default: base04
     x-showIf: {$bar.widgetStyle: {not: plain}}
+  urgentColor:
+    type: string
+    title: Urgent
+    x-options: colors
+    default: base08
+    description: A workspace with a window asking for attention. The active one keeps its own color.
+  urgentPulse:
+    type: boolean
+    title: Pulse urgent workspaces
+    default: true
+    description: Fade urgent workspaces in and out until you visit them.
   emptyColor:
     type: string
     title: Empty

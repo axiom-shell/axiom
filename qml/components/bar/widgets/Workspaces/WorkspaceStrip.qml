@@ -35,6 +35,7 @@ Item {
 
   readonly property color activeColor: Theme.resolveColor(properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
+  readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(properties.textColor)
   readonly property color hoverColor: BarsConfig.cellHoverColor(properties)
@@ -122,6 +123,7 @@ Item {
       cellRadius: root.cellRadius
       activeColor: root.activeColor
       occupiedColor: root.occupiedColor
+      urgentColor: root.urgentColor
       emptyColor: root.emptyColor
       textColor: root.textColor
       hitArea: root.hitArea

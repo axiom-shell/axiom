@@ -236,9 +236,17 @@ QtObject {
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
-  // `colors` ({ activeColor, occupiedColor, emptyColor, textColor })
-  function workspaceCellColors(barConfig, colors, active, occupied) {
-    return BarsConfig.cellColors(barConfig, active ? colors.activeColor : occupied ? colors.occupiedColor : colors.emptyColor, active || occupied ? colors.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
+  // `colors` ({ activeColor, occupiedColor, urgentColor, emptyColor,
+  // textColor }): urgent beats occupied, active beats both
+  function workspaceCellColors(barConfig, colors, active, occupied, urgent) {
+    const state = active ? "active" : urgent ? "urgent" : occupied ? "occupied" : "empty";
+    const color = {
+      "active": colors.activeColor,
+      "urgent": colors.urgentColor,
+      "occupied": colors.occupiedColor,
+      "empty": colors.emptyColor
+    }[state];
+    return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state);
   }
 
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its

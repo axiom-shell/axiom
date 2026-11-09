@@ -125,6 +125,14 @@ TestCase {
     same(cell("accentText", "active").fill, "transparent", "no fill");
   }
 
+  function test_urgent_cells_carry_their_color() {
+    same(cell("plain", "urgent").content, accent, "plain: the content takes it, or urgency wouldn't show");
+    same(cell("plain", "urgent", custom).content, accent, "even over the bar's text color");
+    same(cell("filled", "urgent").fill, accent, "filled: the box, as occupied");
+    same(cell("underline", "urgent").indicator, accent, "underline: the line");
+    same(cell("tinted", "urgent").content, accent, "not faded as an empty one");
+  }
+
   function test_empty_cells_on_the_bar_fade_the_bar_text() {
     ["tinted", "outline", "underline", "accentText", "plain"].forEach(fill => {
       same(cell(fill, "empty").content, Qt.alpha(barText, 0.4), fill);

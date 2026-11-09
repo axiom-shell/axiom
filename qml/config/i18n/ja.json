@@ -4151,6 +4151,10 @@
     "Show a workspace's name from the compositor where it says more than its number.": "",
     "Workspace labels": "",
     "Your own label for a workspace, by the number its cell shows: an icon name, a pasted glyph or text. It wins over app icons and names.": "",
-    "Use workspace names": ""
+    "Use workspace names": "",
+    "Fade urgent workspaces in and out until you visit them.": "",
+    "A workspace with a window asking for attention. The active one keeps its own color.": "",
+    "Urgent": "",
+    "Pulse urgent workspaces": ""
   }
 }

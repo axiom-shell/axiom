@@ -7,7 +7,7 @@ import qs.components.content.base
 
 // The root of the Workspaces widget's popouts (WorkspaceStrips,
 // WorkspaceGrid): the widget's payload and the colours its cells take, as
-// the bar's row has them.
+// the bar's row has them, and their urgent fade (`pulse`).
 Panel {
   id: root
 
@@ -31,6 +31,7 @@ Panel {
 
   readonly property color activeColor: Theme.resolveColor(root.properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(root.properties.occupiedColor)
+  readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor ?? "base08")
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(root.properties.textColor)
   readonly property color hoverColor: BarsConfig.cellHoverColor(root.properties)
@@ -41,5 +42,10 @@ Panel {
   // onLoaded), so the cells first bind to fallbacks: animate only once
   // they've settled, or the opening cells fade in from the wrong color
   property bool _settled: false
+
+  // Every urgent cell's fade, in step
+  readonly property UrgentPulse pulse: UrgentPulse {
+    running: (root.properties.urgentPulse ?? false) && CompositorManager.workspaces.some(ws => ws.urgent)
+  }
   Component.onCompleted: Qt.callLater(() => root._settled = true)
 }

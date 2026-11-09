@@ -40,7 +40,7 @@ QtObject {
   // What workspace `wsId`'s cell shows, `glyph` taking its place (the
   // grid's arrow, or ""), app icons only with `withIcons`: { kind
   // (WorkspaceCells.pick), text, icons (icon paths), number, length
-  // (along the bar, at rest) }
+  // (along the bar, at rest), occupied, urgent }
   function of(wsId, glyph, withIcons) {
     const ws = CompositorManager.workspaces.find(w => w.id === wsId);
     const number = root.numberOf(wsId);
@@ -55,7 +55,9 @@ QtObject {
       "text": shown.text,
       "icons": shown.kind === "icons" ? icons : [],
       "number": number,
-      "length": root._length(shown, icons)
+      "length": root._length(shown, icons),
+      "occupied": (ws?.windowCount ?? 0) > 0,
+      "urgent": ws?.urgent === true
     };
   }
 

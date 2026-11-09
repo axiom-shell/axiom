@@ -10,8 +10,10 @@ import qs.components.reusable
 // underline. Its label (`labels`) is its number, a dot or nothing; a
 // glyph, text (a label of one's own or a name: a Material Symbols name
 // draws as that icon, anything else as text) or app icons show instead
-// when given, in that order (CellContents picks one). A row with a sliding ActiveCellIndicator draws
-// its cells twice, the boxes (`part: "background"`) under the indicator and
+// when given, in that order (CellContents picks one). An urgent one fades
+// in and out (`pulse`), with a dot at its corner where an app icon would
+// otherwise hide it. A row with a sliding ActiveCellIndicator draws its
+// cells twice, the boxes (`part: "background"`) under the indicator and
 // the labels (`"content"`) over it.
 Item {
   id: root
@@ -29,7 +31,7 @@ Item {
   // nor line to show: `none`'s option is hidden there, but the bar's style
   // can change after)
   property string labels: "numbers"
-  readonly property bool _dot: labels === "dots" || labels === "none" && !boxed && barConfig.widgetStyle !== "underline"
+  readonly property bool _dot: labels === "dots" || labels === "none" && !_framed
   property string label: ""
   // A label of one's own or the compositor's name
   property string text: ""
@@ -39,6 +41,14 @@ Item {
   property string glyph: ""
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
+  // A window on it asks for attention (its `look` is the urgent one)
+  property bool urgent: false
+  // The urgent fade's opacity (UrgentPulse.value), 1 while still
+  property real pulse: 1
+  // The corner dot an urgent cell with neither box nor line shows over
+  // an app icon
+  property color urgentColor: "transparent"
+  readonly property real _pulse: urgent && !isActive ? pulse : 1
   property bool clickable: true
   // Off until its inputs have settled (a popout's payload lands after
   // creation), so it doesn't animate from fallbacks
@@ -64,6 +74,8 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
   readonly property bool boxed: barConfig.widgetBoxed
+  // Its state shows in a box or a line; without either, in its content
+  readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
   // cells and takes the hover, so it's asked; elsewhere (a popout), the
   // cell's own pointer area
@@ -77,6 +89,7 @@ Item {
     anchors.fill: parent
     visible: root._drawsBox
     radius: root.radius
+    opacity: root._pulse
     color: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
     border.color: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
     border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
@@ -93,6 +106,7 @@ Item {
   CellUnderline {
     barConfig: root.barConfig
     visible: root._drawsBox && root.barConfig.widgetStyle === "underline"
+    opacity: root._pulse
     color: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
 
     ColorGlide on color {
@@ -100,69 +114,90 @@ Item {
     }
   }
 
-  // A dot (a pill when widened), smaller inside a box
-  Rectangle {
-    readonly property real size: Math.max(4, Math.round(root.thickness * (root.boxed ? 0.28 : 0.35)))
-    readonly property real along: size + root.length - root.restLength
+  // What it shows, fading with an urgent one's pulse where nothing else
+  // carries its state
+  Item {
+    anchors.fill: parent
+    visible: root._drawsContent
+    opacity: root._framed ? 1 : root._pulse
 
-    anchors.centerIn: parent
-    visible: root._drawsContent && root._dot && root._shows === "labels"
-    width: root.isVertical ? size : along
-    height: root.isVertical ? along : size
-    radius: size / 2
-    color: root.look.content
+    // A dot (a pill when widened), smaller inside a box
+    Rectangle {
+      readonly property real size: Math.max(4, Math.round(root.thickness * (root.boxed ? 0.28 : 0.35)))
+      readonly property real along: size + root.length - root.restLength
 
-    ColorGlide on color {
-      enabled: root.animated
+      anchors.centerIn: parent
+      visible: root._dot && root._shows === "labels"
+      width: root.isVertical ? size : along
+      height: root.isVertical ? along : size
+      radius: size / 2
+      color: root.look.content
+
+      ColorGlide on color {
+        enabled: root.animated
+      }
     }
-  }
 
-  StyledIcon {
-    anchors.centerIn: parent
-    visible: root._drawsContent && root._shows === "glyph"
-    text: root.glyph
-    font.pixelSize: root.barConfig.fontSize * 1.2
-    color: root.look.content
-  }
-
-  // A label of one's own or a name: an icon at the glyph's size, text at
-  // the number's (turned along a vertical bar when wider than the cell is
-  // thick)
-  StyledIcon {
-    id: textLabel
-    anchors.centerIn: parent
-    visible: root._drawsContent && root._shows === "text"
-    text: root.text
-    textSize: textLabel.isSymbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
-    textColor: root.look.content
-    font.bold: !textLabel.isSymbol && root.isActive && !root.boxed
-    isVertical: root.isVertical && !textLabel.isSymbol && textLabel.implicitWidth > root.thickness * 0.8
-
-    ColorGlide on color {
-      enabled: root.animated
+    StyledIcon {
+      anchors.centerIn: parent
+      visible: root._shows === "glyph"
+      text: root.glyph
+      font.pixelSize: root.barConfig.fontSize * 1.2
+      color: root.look.content
     }
-  }
 
-  Image {
-    anchors.centerIn: parent
-    width: root.thickness * 0.65
-    height: width
-    sourceSize: Qt.size(64, 64)
-    source: root._shows === "icons" ? root.iconPaths[0] : ""
-    visible: root._drawsContent && root._shows === "icons"
-    opacity: root.boxed || root.isActive ? 1 : 0.7
-  }
+    // A label of one's own or a name: an icon at the glyph's size, text at
+    // the number's (turned along a vertical bar when wider than the cell is
+    // thick)
+    StyledIcon {
+      id: textLabel
+      anchors.centerIn: parent
+      visible: root._shows === "text"
+      text: root.text
+      textSize: textLabel.isSymbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+      textColor: root.look.content
+      font.bold: !textLabel.isSymbol && root.isActive && !root.boxed
+      isVertical: root.isVertical && !textLabel.isSymbol && textLabel.implicitWidth > root.thickness * 0.8
 
-  StyledText {
-    anchors.centerIn: parent
-    visible: root._drawsContent && root.labels === "numbers" && root._shows === "labels"
-    text: root.label
-    textColor: root.look.content
-    textSize: root.barConfig.fontSize - 1
-    font.bold: root.isActive && !root.boxed
+      ColorGlide on color {
+        enabled: root.animated
+      }
+    }
 
-    ColorGlide on color {
-      enabled: root.animated
+    Image {
+      anchors.centerIn: parent
+      width: root.thickness * 0.65
+      height: width
+      sourceSize: Qt.size(64, 64)
+      source: root._shows === "icons" ? root.iconPaths[0] : ""
+      visible: root._shows === "icons"
+      opacity: root.boxed || root.isActive ? 1 : 0.7
+    }
+
+    StyledText {
+      anchors.centerIn: parent
+      visible: root.labels === "numbers" && root._shows === "labels"
+      text: root.label
+      textColor: root.look.content
+      textSize: root.barConfig.fontSize - 1
+      font.bold: root.isActive && !root.boxed
+
+      ColorGlide on color {
+        enabled: root.animated
+      }
+    }
+
+    // Urgent, where an app icon is all it shows on the bar
+    Rectangle {
+      readonly property real size: Math.max(4, Math.round(root.thickness * 0.22))
+
+      visible: root.urgent && !root.isActive && !root._framed && root._shows === "icons"
+      x: parent.width - size
+      y: 0
+      width: size
+      height: size
+      radius: size / 2
+      color: root.urgentColor
     }
   }
 

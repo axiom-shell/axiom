@@ -43,7 +43,8 @@ TestCase {
       "output": "winit",
       "windowCount": 3,
       "active": true,
-      "focused": true
+      "focused": true,
+      "urgent": false
     });
     // Past the block, or on an output without one: no id of axiom's
     compare(NiriState.workspaces(loaded(), bases, 2).map(ws => ws.id), [1, 2]);
@@ -174,6 +175,18 @@ TestCase {
       "index": 0,
       "keymap": "English (US)"
     });
+  }
+
+  function test_workspace_urgency() {
+    const state = NiriState.reduce(loaded(), {
+      "WorkspaceUrgencyChanged": {
+        "id": 2,
+        "urgent": true
+      }
+    });
+    const byId = id => NiriState.workspaces(state, bases, 10).find(ws => ws.id === id);
+    compare(byId(2).urgent, true, "its urgency event reaches the shape");
+    compare(byId(1).urgent, false);
   }
 
   function test_reduceFocusAndWorkspaces() {

@@ -88,6 +88,7 @@ One workspace layout serves everything that shows workspaces or moves between th
   5. its number, dot or nothing (`labels`).
   - Text (not an icon name) longer than a number makes its cell longer: measured with a `FontMetrics` at the cell's text size, bold, plus half a cell's thickness of room (`CellContents._length`). On a vertical bar such text is turned along the bar.
   - The strip popout's number cells show the same, less app icons (each line's windows follow it).
+- **Urgent.** A workspace a window on it marks urgent (the shape's `urgent`) draws in `urgentColor`, pulsing with `urgentPulse` ([widget style](../bar/widget-style.md) › Workspaces cells), on the bar and in both popouts.
 - **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`.
   - It holds every shown workspace, or one grid row.
   - `glyphOf` gives the grid's position arrow.

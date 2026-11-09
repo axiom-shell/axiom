@@ -28,6 +28,7 @@ TestCase {
     compare(shown.map(w => w.id), [1, 2, 3]);
     compare(shown[2].windowCount, 0);
     compare(shown[2].output, "A");
+    compare(shown[2].urgent, false, "the added empty one is never urgent");
   }
 
   function test_workspaces_keep_an_empty_last_one_alone() {

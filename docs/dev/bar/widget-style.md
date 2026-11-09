@@ -62,7 +62,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - **`foregroundColor`.** It is read only by a filled widget that isn't merged, and only while the bar's `widgetTextColor` is Auto. Elsewhere the text is the bar's.
 - **Workspaces** (its popouts draw cells in the same style):
   - `showBackground` shows only for boxed styles. `backgroundColor` also needs the background on and the grouping not merged.
-  - `activeColor` and `occupiedColor` hide under Plain. `emptyColor` shows only when filled, tinted, outlined or underlined.
+  - `activeColor` and `occupiedColor` hide under Plain. `emptyColor` shows only when filled, tinted, outlined or underlined. `urgentColor` always shows: under Plain an urgent cell's content takes it.
   - `textColor` shows only when filled and the bar's text color is Auto.
   - Cells follow the widget shape: pills under capsule (`BarsConfig.cellRadius`), otherwise the radius less the inset.
 - The bar's own look fields read the look it uses too (`BarsPanel` hands its form `BarsConfig.lookOf(bar)`). The separator fields hide in a boxed powerline, where `enrichBarConfig` drops separators.
@@ -82,4 +82,5 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - `showAppIcons` puts the largest window's icon in place of the label on occupied cells, under every compositor. A label of one's own (`workspaceLabels`) wins over it, and it over a compositor name (`useNames`): [Workspaces](../hyprland/workspaces.md) › The bar widget.
     - For underline, each cell is underlined itself and the widget's own line is off.
     - An empty cell's content is the bar text, faded.
-    - Plain tells the states apart by fading alone.
+    - Plain tells the states apart by fading alone, but for urgent, whose content takes `urgentColor`.
+  - **Urgent** (the workspace shape's `urgent`): `BarsConfig.workspaceCellColors` gives it the `"urgent"` state in `urgentColor`, which beats occupied but not active; it colours the box, line or content as the other states do. With `urgentPulse` its box or line (its content where it has neither) fades in and out, every urgent cell of a row or popout in step (`workspaces/UrgentPulse`, one looping animation, running only while one is urgent and `Appearance.animations`). Where a cell has neither box nor line (plain, colored icons) and shows an app icon, a small dot in `urgentColor` at its corner shows it.

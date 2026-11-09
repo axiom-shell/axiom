@@ -26,6 +26,7 @@ Item {
   required property real cellRadius
   required property color activeColor
   required property color occupiedColor
+  required property color urgentColor
   required property color emptyColor
   required property color textColor
   required property color hoverColor
@@ -71,13 +72,16 @@ Item {
     restLength: root.cellLength
   }
 
-  function _occupied(id) {
-    return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;
+  // Every urgent cell's fade, in step
+  UrgentPulse {
+    id: urgentPulse
+    running: root.properties.urgentPulse && root._contents.some(c => c.urgent)
   }
 
-  // BarsConfig.cellColors for a workspace's cell, active or at rest
-  function _look(id, active) {
-    return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id));
+  // BarsConfig.cellColors for cell `index`'s, active or at rest
+  function _look(index, active) {
+    const content = root._contents[index];
+    return BarsConfig.workspaceCellColors(root.barConfig, root, active, content?.occupied ?? false, content?.urgent ?? false);
   }
 
   Grid {
@@ -97,7 +101,9 @@ Item {
         isActive: wsId === root.activeId
         indicated: indicator.slides
         lit: wsId === root.hoveredId
-        look: root._look(wsId, isActive && !indicator.slides)
+        look: root._look(index, isActive && !indicator.slides)
+        urgent: root._contents[index]?.urgent ?? false
+        pulse: urgentPulse.value
         thickness: root.cell
         restLength: root._lengths[index] ?? root.cellLength
         length: root._layout.lengths[index] ?? root.cellLength
@@ -140,7 +146,10 @@ Item {
         hitArea: root.hitArea
         barConfig: root.barConfig
         isActive: wsId === root.activeId
-        look: root._look(wsId, isActive)
+        look: root._look(index, isActive)
+        urgent: _content?.urgent ?? false
+        pulse: urgentPulse.value
+        urgentColor: root.urgentColor
         thickness: root.cell
         restLength: root._lengths[index] ?? root.cellLength
         length: root._layout.lengths[index] ?? root.cellLength

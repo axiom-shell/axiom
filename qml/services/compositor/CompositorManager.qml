@@ -127,7 +127,8 @@ Singleton {
   // Every monitor: [{ name, description, x, y, width, height, scale,
   // focused, activeWorkspaceId, specialWorkspaceId, reserved }]
   readonly property var outputs: root.backend?.outputs ?? []
-  // Every workspace: [{ id, name, output, windowCount, active, focused }]
+  // Every workspace: [{ id, name, output, windowCount, active, focused,
+  // urgent }] (urgent: a window on it asks for attention)
   readonly property var workspaces: root.backend?.workspaces ?? []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
