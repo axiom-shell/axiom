@@ -2,16 +2,16 @@
 
 > **Files:** `qml/shell/EdgeMenus.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/FloatingEdgeMenu.qml`, `qml/components/surfaces/edgemenu/IntegratedEdgeMenu.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/PopoutWrapperBase.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `EdgeMenus.items[].placement` (`edge` | `strip` | `free`), `length`, `offset`, `gridOffset`, `moduleScale`, `pinButton`, `frame`, `detached`, `distance`, `animation`
-> **Related:** [Overview](overview.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
+> **Related:** [Overview](overview.md), [Free menus](free-menus.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Edge attach](../popouts/edge-attach.md), [Held off an edge](../popouts/held-off-edge.md), [Pill and floating bars](../popouts/pill-and-floating-bars.md), [Layering and corners](../bar/layering-and-corners.md)
 
-How an edge menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two hosts, `FloatingEdgeMenu` (placement `edge`) and `IntegratedEdgeMenu` (placement `strip`). A `free` menu has no host: see [Editing and submenus](editing-submenus.md).
+How an edge menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two edge hosts, `FloatingEdgeMenu` (placement `edge`) and `IntegratedEdgeMenu` (placement `strip`). A `free` menu's host, `FreeMenu`, is in [Free menus](free-menus.md).
 
 ### Building (`surfaces/edgemenu/`)
 - `qml/shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement.
 - `EdgeMenu` keeps the last live entry, so the hosts read its (schema-defaulted) fields directly.
 
 ### The body (`EdgeMenuBody`)
-- Both hosts put `EdgeMenuBody` inside: a `ModuleGrid` on an `OverlayGrid`.
+- Every host (`FreeMenu` too) puts `EdgeMenuBody` inside: a `ModuleGrid` on an `OverlayGrid`.
 - `fixedUnit` is the card size on its screen (`EdgeMenusConfig.cardUnitOf`):
   - `OverlayConfig.cardUnitOn` of the screen: the card size there (two cards fill its short side, times `Widget.cardSize`%). It's the same whether an overlay is open or not, and the overlay's own Module size (`Overlay.moduleScale`) doesn't reach menus;
   - times the menu's Module size (`EdgeMenusConfig.scaleOf`): its `moduleScale`%, shrunk where its modules' depth across its edge (a free menu's width) would pass its screen less its padding (`GridPlacement.fitModuleScale`), its cards, gaps and zoom together. Along the edge it scrolls or is fitted instead (below).
@@ -22,7 +22,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - Submenus (`MenuSubmenu`) are an `EdgeMenuBody` too, with `submenu` set and `screen` that of their parent menu: the same grid and zoom on its screen, only capped (never stretched), with no pin or Escape of its own.
 - Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
 - Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.
-- With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`).
+- With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`). With no edge (`EdgeMenuBody.edge` is `""` for a free menu or a submenu) the pin is at the top right and growing modules grow downward.
 
 ### The lattice along the edge
 - Along the edge the modules sit on a lattice fixed to the screen (`GridPlacement.menuAlong`, at the host's `unit`).
@@ -38,10 +38,10 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - The editor uses it, and also draws the other menus from it (`OverlayManager.menus.screenRectsOf`).
 
 ### Shared behaviour (`EdgeMenuSync`)
-- Follows `EdgeMenuManager`, and tells it when the menu closes by itself. Unwanted, it calls `hide()` even while closing, so an open queued by a quick toggle is dropped.
-- Held/revealing state, `autoDismiss`, the trigger length, grab-partner registration.
+- Shared by all three hosts. Follows `EdgeMenuManager`, and tells it when the menu closes by itself. Unwanted, it calls `hide()` even while closing, so an open queued by a quick toggle is dropped.
+- Held/revealing state, `autoDismiss`, the trigger length, grab-partner registration (the hover strip's `triggerWindow` is optional: a free menu has none).
 - The reveal's cursor warp (`warpRequested`), each host warping into its own box.
-- Both hosts centre their hover strip on the modules from config (`EdgeTrigger.centre`; the floating one through `EdgePopout.triggerCentre`), since the body only loads while open.
+- The edge hosts centre their hover strip on the modules from config (`EdgeTrigger.centre`; the floating one through `EdgePopout.triggerCentre`), since the body only loads while open.
 
 ### `edge`: `FloatingEdgeMenu`
 - An `EdgePopout` (`contentPadding`, `edgeOffset`, `fillColor` / `strokeColor`, defaulting to what the OSD uses).

@@ -34,6 +34,7 @@ Seen live: pairing a controller from the Bluetooth menu. Tested against the fake
 - On sway, niri and Hyprland with `Overlay.closeOnOutsideClick` on, open the overlay, click another monitor, the screen border and a floating bar's gap (it stays open), then its own background (it closes) (#378).
 - With an edge menu that closes on leave, run `axiom edge-menu open <id>` from a bind and check it stays up until the pointer enters and leaves it (#379).
 - Open the Calendar popout and start a new event: the popout doesn't grow or flash as the editor opens (#379).
+- Once the shell runs free menus (menus rework stage 2), on Hyprland, niri and sway: a free menu open (pinned) hides under a fullscreen window and comes back after; with blur on, its box is blurred (SwayFX: the blur window's fill under `axiom-menu`); one opened as a bar widget's popout sits at the widget; a Submenu row in it opens its submenu beside it; Close on outside click closes it on a click on a window, a bar and another monitor.
 
 **Dock, launcher and icons:**
 - Confirm the missing app icon fallback in the launcher and dock with an icon theme lacking `applications-system-symbolic` (#196).

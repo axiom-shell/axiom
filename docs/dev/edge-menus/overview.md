@@ -2,9 +2,9 @@
 
 > **Files:** `qml/services/ui/EdgeMenuManager.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/shell/EdgeMenus.qml`, `qml/components/surfaces/edgemenu/`, `qml/components/content/QuickActions/QuickActions.qml`
 > **Config:** `EdgeMenus.items[]` (→ `definitions.EdgeMenu` in the schema)
-> **Related:** [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Popout registry](../popouts/registry.md), [Held off an edge](../popouts/held-off-edge.md)
+> **Related:** [Hosts](hosts.md), [Free menus](free-menus.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Popout registry](../popouts/registry.md), [Held off an edge](../popouts/held-off-edge.md)
 
-Menus that pop out of a screen edge, holding overlay modules. This doc lists an entry's fields, the open/pinned state in `EdgeMenuManager`, pinning and how modules learn their host. How the two hosts (placements `edge` and `strip`) draw is in [Hosts](hosts.md); editing in [Editing and submenus](editing-submenus.md).
+Menus that pop out of a screen edge, holding overlay modules. This doc lists an entry's fields, the open/pinned state in `EdgeMenuManager`, pinning and how modules learn their host. How the two edge hosts (placements `edge` and `strip`) draw is in [Hosts](hosts.md), the `free` placement's window in [Free menus](free-menus.md), editing in [Editing and submenus](editing-submenus.md).
 
 ### The section
 - `EdgeMenus` is an array like `Bars`.
@@ -13,6 +13,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 
 ### An entry's fields
 - `id`, `name`, `monitor`, `edge`, `placement` (`edge` | `strip` | `free`; until config v103 `mode`: `floating` | `integrated` | `submenu`).
+- Free menus: `freeAnchor` and `freeAnimation` ([Free menus](free-menus.md)); their edge, length, offsets and hover opening hide.
 - `offset` / `gridOffset`: where the modules sit along the edge (see [Hosts](hosts.md)).
 - `length` (`edge` menus only: a `strip` menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {placement: edge}`):
   - `content`: as long as its modules;

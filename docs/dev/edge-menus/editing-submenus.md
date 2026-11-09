@@ -48,10 +48,10 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 - How the `SubPopout` itself is placed and joined: see [Popout submenus](../popouts/submenus.md).
 
 ### Submenus: `placement: "free"` menus
-- `EdgeMenusConfig.isFree`. It has no host of its own (`EdgeMenu` loads none) and no place on an edge.
-- Its edge, placement, style colours, opening and closing fields hide (`x-showIf`), and `placementOf` is null.
+- `EdgeMenusConfig.isFree`. It has no place on an edge; its own window is `FreeMenu` ([Free menus](free-menus.md)).
+- Its edge, length, offsets and hover opening hide (`x-showIf`); its monitor, pin, colours, open delay, closing, `freeAnchor` and `freeAnimation` show. `placementOf` is null.
 - The layouts editor draws just its grid (`MenuTarget`).
 - Any other menu can be opened as a submenu too.
 - `references(id)` lists the Submenu modules opening a menu; one opening the menu it's in is a problem.
-- "Show on screen" on a free menu opens the first enabled `edge` menu with a Submenu module opening it (`submenuParentOf`, `previewParent`, held as the preview is). That menu's first such row opens it and holds it (`content/Submenu.previewed`).
-- A bar widget's `popout.menu` never opens a free menu (`popoutMenuOf`).
+- "Show on screen" on a free menu opens the first enabled `edge` menu with a Submenu module opening it (`submenuParentOf`, `previewParent`, held as the preview is). That menu's first such row opens it and holds it (`content/Submenu.previewed`). With no such menu, the free menu opens on its own, at its `freeAnchor`.
+- A bar widget's `popout.menu` can open a free menu, at the widget (`popoutMenuOf`), and the Opening group offers a bar button and a keybind for it as for any menu (`OpenerButtons`).
