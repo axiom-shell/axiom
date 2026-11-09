@@ -99,6 +99,13 @@ Item {
   // powerline neighbour, and not in a slant's or arrow's cut-off corners.
   // Null (no background) leaves the module's own bounds.
   property var hitShape: null
+  // How far its background reaches past its outer side as a tab
+  // (widgetShape tab, set by WidgetGroup): hovered and clicked out to
+  // there, its content centred in the tab
+  property real tabReach: 0
+  readonly property bool _outerFar: barConfig.right || barConfig.bottom
+  // The module's shift across to the tab's middle
+  readonly property real _tabShift: Math.round(tabReach / 2) * (_outerFar ? 1 : -1)
   // The hit area below, by a name its menu anchor (whose own `hitArea`
   // would shadow the id) can read
   readonly property Item _hitArea: hitArea
@@ -239,10 +246,10 @@ Item {
     }
 
     z: 1
-    x: root.isVertical ? 0 : -back
-    y: root.isVertical ? -back : 0
-    width: root.width + (root.isVertical ? 0 : back)
-    height: root.height + (root.isVertical ? back : 0)
+    x: root.isVertical ? (root._outerFar ? 0 : -root.tabReach) : -back
+    y: root.isVertical ? -back : (root._outerFar ? 0 : -root.tabReach)
+    width: root.width + (root.isVertical ? root.tabReach : back)
+    height: root.height + (root.isVertical ? back : root.tabReach)
     containmentMask: mask
 
     HoverHandler {
@@ -273,8 +280,8 @@ Item {
       id: contentLoader
       readonly property real length: Math.max(0, root.mainSize - root.leadInset - root.trailInset)
       readonly property real start: (root._item?.pinStart ? 0 : Math.round((root._drawnMain - root.mainSize) / 2)) + root.leadInset
-      x: root.isVertical ? 0 : start
-      y: root.isVertical ? start : 0
+      x: root.isVertical ? root._tabShift : start
+      y: root.isVertical ? start : root._tabShift
       width: root.isVertical ? root.width : length
       height: root.isVertical ? length : root.height
       onLoaded: {

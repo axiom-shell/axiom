@@ -137,6 +137,9 @@ QtObject {
       "widgetTextColor": look.widgetTextColor,
       "widgetShape": boxed ? look.widgetShape : "rounded",
       "widgetEnds": look.widgetEnds,
+      // A tab's sides where they meet the edge it hangs from: square or
+      // flared (BarShapes.tab)
+      "tabCorners": look.tabCorners,
       "widgetGrouping": grouping,
       "groupColor": look.groupColor,
       // Split's icon part (joined, badge), its label's background (tint,
@@ -200,6 +203,11 @@ QtObject {
     // it reserves there and what its ends meet depend on the other bars on
     // its screen: ScreenEdgeManager.bars adds them (BarEnds.withEnds).
     bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0);
+    // The one fillet radius its flared tabs share (BarShapes.tabFillet):
+    // within the gap between widgets and the room at its ends
+    bar.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.tabCorners, groupSpacing, BarEnds.tabEndRoom(bar, Object.assign(BarsConfig.endsOptions(gapsOut, floatGaps), {
+      "radius": Appearance.borderRadius
+    })));
     return bar;
   }
 
@@ -418,7 +426,7 @@ QtObject {
   function groupingOf(look) {
     if (!BarsConfig.boxedStyles.includes(look.widgetStyle))
       return "separate";
-    return BarWidgetStyle.grouping(look.widgetStyle, look.splitIcon, look.widgetGrouping);
+    return BarWidgetStyle.grouping(look);
   }
 
   // A bar's look: its `style` (a BarStyle) with every key it leaves null

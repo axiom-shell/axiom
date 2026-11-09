@@ -359,6 +359,27 @@ TestCase {
     verify(path.includes("A 10 10 0 0 0 0 2"), path);
   }
 
+  // Split's icon part on a tab: its divider end (a non-tab cap) keeps its
+  // shape, the right way up on either side
+  function test_tab_with_a_divider_end() {
+    const d = 26 / 3;
+    const top = points(BarShapes.path(100, 30, 0, "tab", "slant", false, 0, false, false, square(true)));
+    verify(top.some(p => p[0] === 100 && p[1] === 0) && top.some(p => Math.abs(p[0] - (100 - d)) < 1e-9 && p[1] === 30), JSON.stringify(top));
+    // A bottom bar's: the same slant as on a bar without tabs
+    const bottom = points(BarShapes.path(100, 30, 0, "tab", "slant", false, 0, false, false, square(false)));
+    verify(bottom.some(p => p[0] === 100 && p[1] === 0) && bottom.some(p => Math.abs(p[0] - (100 - d)) < 1e-9 && p[1] === 30), JSON.stringify(bottom));
+    // A curve bulges out, as drawn without tabs, on both sides
+    const plain = BarShapes.path(100, 30, 0, "flat", "curve", false, 0);
+    verify(plain.includes(" 0 0 1 "), plain);
+    for (const outerStart of [true, false]) {
+      const curve = BarShapes.path(100, 30, 0, "tab", "curve", false, 0, false, false, square(outerStart));
+      // Drawn up the end on a top tab (sweep flipped), down it on a bottom one
+      verify(curve.includes(outerStart ? " 0 0 0 " : " 0 0 1 "), curve);
+      // Its corners in by its depth (the arc reaches the end)
+      compare(bounds(curve).maxX, 100 - 26 / 4);
+    }
+  }
+
   function test_tab_hits_reach_its_outer_edge() {
     verify(BarShapes.contains(1, 1, 100, 30, "tab", "tab"));
     verify(BarShapes.contains(99, 29, 100, 30, "tab", "tab"));

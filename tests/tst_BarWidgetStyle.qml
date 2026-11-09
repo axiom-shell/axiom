@@ -238,11 +238,22 @@ TestCase {
     verify(!BarWidgetStyle.opaque("split", "badge", "color"), "badge");
   }
 
-  function test_badge_has_no_powerline() {
-    compare(BarWidgetStyle.grouping("split", "badge", "powerline"), "separate");
-    compare(BarWidgetStyle.grouping("split", "badge", "merged"), "merged");
-    compare(BarWidgetStyle.grouping("split", "joined", "powerline"), "powerline");
-    compare(BarWidgetStyle.grouping("filled", "badge", "powerline"), "powerline");
+  function look(style, splitIcon, shape, grouping) {
+    return {
+      "widgetStyle": style,
+      "splitIcon": splitIcon,
+      "widgetShape": shape,
+      "widgetGrouping": grouping
+    };
+  }
+
+  function test_badge_and_tab_have_no_powerline() {
+    compare(BarWidgetStyle.grouping(look("split", "badge", "rounded", "powerline")), "separate");
+    compare(BarWidgetStyle.grouping(look("split", "badge", "rounded", "merged")), "merged");
+    compare(BarWidgetStyle.grouping(look("split", "joined", "rounded", "powerline")), "powerline");
+    compare(BarWidgetStyle.grouping(look("filled", "badge", "rounded", "powerline")), "powerline");
+    compare(BarWidgetStyle.grouping(look("filled", "joined", "tab", "powerline")), "separate");
+    compare(BarWidgetStyle.grouping(look("split", "joined", "tab", "merged")), "merged");
   }
 
   function test_auto_contrast() {

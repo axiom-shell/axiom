@@ -3607,7 +3607,6 @@
     "How every bar draws its widgets. A bar can override any of these in the bar editor.": "",
     "What's unusual shows only states out of the ordinary, plus the one that changed.": "",
     "Expensive: redraws the blur every frame.": "",
-    "Rounded follows the corner radius. Capsule always has round ends.": "",
     "While the pointer is on the OSD, nothing under it moves.": "",
     "Notify when the battery becomes low, and again when critical.": "",
     "Random shows every wallpaper once before repeating.": "",
@@ -4158,6 +4157,11 @@
     "Divider": "",
     "Joined": "",
     "Icon part": "",
-    "Where the icon's part meets the label's. Match is slanted or an arrow for those shapes, else straight.": ""
+    "Where the icon's part meets the label's. Match is slanted or an arrow for those shapes, else straight.": "",
+    "Tab sides": "",
+    "Rounded follows the corner radius. Capsule always has round ends. Tab reaches out to the bar's outer edge.": "",
+    "Flared": "",
+    "Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.": "",
+    "Tab": ""
   }
 }

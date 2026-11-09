@@ -10,8 +10,11 @@ import qs.components.reusable
 // What a bar widget sits on, in its bar's widget style (widgetStyle,
 // widgetShape): a fill or outline shaped by its caps (BarShapes), or for
 // underline a line along one side. Split fills its icon part over the
-// label's (joined, cut by the divider) or draws a badge behind the icon. Its hover outline and the bar editor's
-// highlight take the same shape. WidgetGroup draws one under each widget
+// label's (joined, cut by the divider) or draws a badge behind the icon.
+// Its hover outline and the bar editor's highlight take the same shape. A
+// tab (widgetShape tab) is set reaching out to the edge it hangs from by
+// its WidgetGroup, which hands it what bounds its ends (`tabLimits`).
+// WidgetGroup draws one under each widget
 // with a background, and one under each merged run.
 Item {
   id: root
@@ -49,8 +52,13 @@ Item {
   property real splitAt: -1
   property rect splitPart: Qt.rect(0, 0, 0, 0)
 
+  // What bounds a tab's ends along the bar (BarShapes.tabLimits)
+  property var tabLimits: [null, null]
+
   readonly property string _fill: barConfig.widgetStyle
   readonly property bool _boxed: barConfig.widgetBoxed
+  // A tab's shape (BarShapes.tab), or null
+  readonly property var _tab: barConfig.widgetShape === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, barConfig.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
 
   // The shape in one fill and stroke: a Rectangle when both ends are
   // alike and rounded (or square), else a path
@@ -65,12 +73,15 @@ Item {
     property color fillColor: "transparent"
     property color strokeColor: "transparent"
     property real strokeWidth: 0
+    // A tab's shape (BarShapes.tab): its stroke is left open along the
+    // edge it hangs from
+    property var tab: null
 
     readonly property bool vertical: bar.vertical
     readonly property real across: vertical ? width : height
     readonly property real length: vertical ? height : width
     readonly property real rectRadius: {
-      if (startCap !== endCap || seamStart || seamEnd)
+      if (startCap !== endCap || seamStart || seamEnd || tab)
         return -1;
       switch (startCap) {
       case "round":
@@ -103,13 +114,25 @@ Item {
 
         ShapePath {
           fillColor: box.fillColor
-          strokeColor: box.strokeWidth > 0 ? box.strokeColor : "transparent"
+          strokeColor: box.strokeWidth > 0 && !box.tab ? box.strokeColor : "transparent"
           strokeWidth: box.strokeWidth
           joinStyle: ShapePath.MiterJoin
 
           // Inset by half the stroke, which is centred on the path
           PathSvg {
-            path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box.strokeWidth / 2, box.seamStart, box.seamEnd)
+            path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box.strokeWidth / 2, box.seamStart, box.seamEnd, box.tab)
+          }
+        }
+
+        // A tab's stroke, open along its outer edge
+        ShapePath {
+          fillColor: "transparent"
+          strokeColor: box.strokeWidth > 0 && box.tab ? box.strokeColor : "transparent"
+          strokeWidth: box.strokeWidth
+          joinStyle: ShapePath.MiterJoin
+
+          PathSvg {
+            path: box.tab ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box.strokeWidth / 2, false, false, box.tab, true) : ""
           }
         }
       }
@@ -119,6 +142,7 @@ Item {
   ShapedBox {
     visible: root._boxed && root.colors !== null
     bar: root.barConfig
+    tab: root._tab
     startCap: root.startCap
     endCap: root.endCap
     seamStart: root.seamStart
@@ -142,6 +166,7 @@ Item {
     width: root.barConfig.vertical ? root.width : _length
     height: root.barConfig.vertical ? _length : root.height
     bar: root.barConfig
+    tab: root._tab
     startCap: root.startCap
     endCap: root.barConfig.splitCap
     fillColor: root.colors?.iconFill ?? "transparent"
@@ -162,7 +187,8 @@ Item {
     readonly property real along: Math.max(partAlong + pad * 2, across)
     readonly property real alongMiddle: vertical ? root.splitPart.y + partAlong / 2 : root.splitPart.x + partAlong / 2
     readonly property real acrossMiddle: vertical ? root.splitPart.x + partAcross / 2 : root.splitPart.y + partAcross / 2
-    readonly property real acrossStart: Math.max(0, Math.min(thickness - across, acrossMiddle - across / 2))
+    // Within the background across (a tab's reaches past the bar's thickness)
+    readonly property real acrossStart: Math.max(0, Math.min((vertical ? root.width : root.height) - across, acrossMiddle - across / 2))
 
     visible: root.barConfig.splitIcon === "badge" && root.splitAt >= 0 && root.colors !== null
     x: vertical ? acrossStart : alongMiddle - along / 2
@@ -238,6 +264,7 @@ Item {
       width: root.width
       height: root.height
       bar: root.barConfig
+      tab: root._tab
       startCap: root.levelStartCap
       endCap: root.levelEndCap
       seamStart: root.seamStart
@@ -252,6 +279,7 @@ Item {
     // Built only while it shows, fading out included
     visible: root._boxed && fillColor.a > 0
     bar: root.barConfig
+    tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
     fillColor: Qt.alpha(root.colors?.text ?? Theme.foreground, root.pressed && root.colors !== null ? 0.2 : 0)
@@ -262,6 +290,7 @@ Item {
   ShapedBox {
     visible: root.highlighted
     bar: root.barConfig
+    tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
     fillColor: Qt.alpha(Theme.accent, 0.15)
@@ -273,6 +302,7 @@ Item {
     // Built only while it shows, fading out included
     visible: strokeColor.a > 0
     bar: root.barConfig
+    tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
     strokeColor: root.hovered ? Theme.border : Qt.alpha(Theme.border, 0)

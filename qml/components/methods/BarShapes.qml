@@ -243,6 +243,7 @@ QtObject {
     };
     return {
       "outerStart": outerStart,
+      "thickness": thickness,
       "radius": r,
       "start": end(limits?.[0] ?? null),
       "end": end(limits?.[1] ?? null)
@@ -271,6 +272,32 @@ QtObject {
     ];
   }
 
+  // A side of a tab that isn't a tab's (a merged run's flat middle,
+  // split's divider), as _tabPath's points from its outer edge in: _cap's,
+  // `h` deep (`d` its depth), turned over when the outer edge is at the
+  // far side (`flip`), each arc kept on the later point with its sweep as
+  // drawn down the item (`down`)
+  function _tabSideCap(cap, atStart, h, d, flip) {
+    const pts = root._cap(cap, atStart, h, d, 0);
+    // _cap's sweeps: a tail's as drawn down it, a head's as drawn up
+    const arcs = pts.map(q => q.arc ? {
+        "r": q.arc.r,
+        "down": atStart ? 1 - q.arc.sweep : q.arc.sweep
+      } : null);
+    const out = pts.map((q, k) => ({
+          "x": q.x,
+          "y": flip ? h - q.y : q.y,
+          "arc": null
+        }));
+    if (!flip) {
+      out.forEach((q, k) => q.arc = arcs[k]);
+      return out;
+    }
+    // Reversed: the arc between k - 1 and k now leads into k - 1
+    out.forEach((q, k) => q.arc = arcs[k + 1] ?? null);
+    return out.reverse();
+  }
+
   // A tab's outline (path with `tab`): along its start side from the
   // outer edge in, along its inner side, back out along its end side,
   // then closed along the outer edge, or left open there (`open`, an
@@ -281,16 +308,17 @@ QtObject {
     const h = Math.max(0, across - inset);
     const room = Math.max(0, length - 2 * inset);
     const r = Math.min(tab.radius, room / 2, h / 2);
+    const flip = !tab.outerStart;
     // Points down one side, from the outer edge in: { x in from that end,
     // y down from the outer edge, arc into it }
-    const side = (cap, end) => {
+    const side = (cap, end, atStart) => {
       const p = (x, y, arc) => ({
             "x": x,
             "y": y,
             "arc": arc ?? null
           });
       if (cap !== "tab")
-        return [p(0, 0), p(0, h)];
+        return root._tabSideCap(cap, atStart, h, root.depth(cap, tab.thickness), flip);
       const out = [];
       const corner = end.corner;
       if (corner) {
@@ -321,27 +349,28 @@ QtObject {
         out.push(p(0, h));
       return out;
     };
-    const head = side(startCap, tab.start);
-    const tail = side(endCap, tab.end);
+    const head = side(startCap, tab.start, true);
+    const tail = side(endCap, tab.end, false);
     // Flipped across when the outer edge is at the far side, and swapped
     // on a vertical bar: each a reflection, which flips the arcs
-    const flip = !tab.outerStart;
     const toUv = (q, atEnd) => [atEnd ? length - inset - q.x : inset + q.x, flip ? across - q.y : q.y];
     const pt = uv => vertical ? `${uv[1]} ${uv[0]}` : `${uv[0]} ${uv[1]}`;
     // Round the start side outer to inner, then the end side inner to
     // outer: convex corners turn one way, fillets the other
-    const to = (uv, arc) => {
+    const to = (uv, arc, atStart) => {
       if (!arc)
         return `L ${pt(uv)} `;
-      const sweep = (arc.convex ? 0 : 1) ^ (flip ? 1 : 0) ^ (vertical ? 1 : 0);
+      // A cap's own arc (_tabSideCap) keeps its sweep as drawn downwards
+      // in the item: the head runs down it unless flipped, the tail up
+      const sweep = arc.down !== undefined ? ((atStart !== flip) ? arc.down : 1 - arc.down) ^ (vertical ? 1 : 0) : (arc.convex ? 0 : 1) ^ (flip ? 1 : 0) ^ (vertical ? 1 : 0);
       return `A ${arc.r} ${arc.r} 0 0 ${sweep} ${pt(uv)} `;
     };
     let d = `M ${pt(toUv(head[0], false))} `;
     for (let k = 1; k < head.length; k++)
-      d += to(toUv(head[k], false), head[k].arc);
+      d += to(toUv(head[k], false), head[k].arc, true);
     d += to(toUv(tail[tail.length - 1], true));
     for (let k = tail.length - 2; k >= 0; k--)
-      d += to(toUv(tail[k], true), tail[k + 1].arc);
+      d += to(toUv(tail[k], true), tail[k + 1].arc, false);
     return open ? d.trim() : d + "Z";
   }
 

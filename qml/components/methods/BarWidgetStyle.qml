@@ -95,10 +95,15 @@ QtObject {
     return style.fill === "split" && !style.splits ? "filled" : style.fill;
   }
 
-  // A boxed style's grouping as drawn: a split badge has no box to chain,
-  // so its powerline draws as separate
-  function grouping(fill, splitIcon, grouping) {
-    return fill === "split" && splitIcon === "badge" && grouping === "powerline" ? "separate" : grouping;
+  // A boxed look's grouping as drawn (`look`: a BarStyle's widgetStyle,
+  // splitIcon, widgetShape, widgetGrouping): a powerline draws as separate
+  // where there's nothing to chain, a split badge (no box) and tabs (each
+  // hangs from the edge; the option is hidden for them)
+  function grouping(look) {
+    if (look.widgetGrouping !== "powerline")
+      return look.widgetGrouping;
+    const unchained = (look.widgetStyle === "split" && look.splitIcon === "badge") || look.widgetShape === "tab";
+    return unchained ? "separate" : "powerline";
   }
 
   // Whether a powerline segment's fill hides what's under it, so the next

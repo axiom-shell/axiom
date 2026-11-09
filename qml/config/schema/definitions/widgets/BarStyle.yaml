@@ -123,10 +123,16 @@ properties:
     type: string
     title: Shape
     default: rounded
-    enum: [rounded, capsule, slant, arrow]
-    x-enumLabels: {rounded: Rounded, capsule: Capsule, slant: Slanted, arrow: Arrow}
+    enum: [rounded, capsule, slant, arrow, tab]
+    x-enumLabels: {rounded: Rounded, capsule: Capsule, slant: Slanted, arrow: Arrow, tab: Tab}
     x-showIf: {widgetStyle: [filled, tinted, outline, split]}
-    description: Rounded follows the corner radius. Capsule always has round ends.
+    x-enumShowIf:
+      tab:
+        anyOf:
+          - {widgetStyle: {not: split}}
+          - {splitIcon: joined}
+          - {widgetGrouping: merged}
+    description: Rounded follows the corner radius. Capsule always has round ends. Tab reaches out to the bar's outer edge.
   widgetGrouping:
     x-group: Bar widgets
     type: string
@@ -138,10 +144,21 @@ properties:
     x-showIf: {widgetStyle: [filled, tinted, outline, split]}
     x-enumShowIf:
       powerline:
+        widgetShape: {not: tab}
         anyOf:
           - {widgetStyle: {not: split}}
           - {splitIcon: joined}
     description: 'Merged: neighbours share one background. Powerline: each runs into the next.'
+  tabCorners:
+    x-group: Bar widgets
+    type: string
+    title: Tab sides
+    default: square
+    x-control: toggle
+    enum: [square, flared]
+    x-enumLabels: {square: Square, flared: Flared}
+    x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetShape: tab}
+    description: Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.
   widgetEnds:
     x-group: Bar widgets
     type: string
@@ -187,6 +204,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
   separatorColor:
     x-group: Bar accents
     type: string
@@ -197,6 +215,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
       separatorStyle: {not: none}
   separatorThickness:
     x-group: Bar accents
@@ -211,6 +230,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
       separatorStyle: {not: none}
   separatorGap:
     x-group: Bar accents
@@ -226,6 +246,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
       separatorStyle: {not: none}
   accentLine:
     x-group: Bar accents

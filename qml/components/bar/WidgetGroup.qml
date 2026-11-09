@@ -39,6 +39,20 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
 
+  // Tabs (widgetShape tab): backgrounds reach `tabReach` past the
+  // widgets' outer side, out to the edge they hang from, their ends
+  // bounded by `tabBounds` (BarShapes.tabLimits; along it, in its own
+  // coordinates). Both set by BarContainer.
+  property real tabReach: 0
+  property var tabBounds: []
+  readonly property real _reach: root.barConfig.widgetShape === "tab" ? root.tabReach : 0
+  // The outer edge is past the far side of the widgets (a bottom or right bar)
+  readonly property bool _outerFar: root.barConfig.right || root.barConfig.bottom
+  // What bounds a tab drawn from `start` for `length` along the group
+  function tabLimitsOf(start, length) {
+    return root.barConfig.widgetShape === "tab" ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
+  }
+
   property var _modules: []
 
   readonly property var measures: root._modules.map(m => ({
@@ -220,10 +234,11 @@ Item {
       colors: BarsConfig.groupColors(root.barConfig)
       startCap: root.segmentAt(root._drawPlaces[run.members[0]] ?? null).startCap
       endCap: root.segmentAt(_lastPlace).endCap
-      x: first?.x ?? 0
-      y: first?.y ?? 0
-      width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x + _reach
-      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - y + _reach : (first?.height ?? 0)
+      x: (first?.x ?? 0) - (root.isVertical && !root._outerFar ? root._reach : 0)
+      y: (first?.y ?? 0) - (!root.isVertical && !root._outerFar ? root._reach : 0)
+      width: root.isVertical ? (first?.width ?? 0) + root._reach : (last?.x ?? 0) + (last?.width ?? 0) - (first?.x ?? 0) + _reach
+      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - (first?.y ?? 0) + _reach : (first?.height ?? 0) + root._reach
+      tabLimits: root.tabLimitsOf(root.isVertical ? (first?.y ?? 0) : (first?.x ?? 0), root.isVertical ? height : width)
     }
   }
 
@@ -298,13 +313,17 @@ Item {
       // one before)
       readonly property var _split: host?.split ?? null
       splitAt: _split ? _split.at + segment.back : -1
-      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? 0 : segment.back), _split.part.y + (root.isVertical ? segment.back : 0), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
+      // (and across, past a tab's reach on the near side)
+      readonly property real _nearReach: root._outerFar ? 0 : root._reach
+      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? _nearReach : segment.back), _split.part.y + (root.isVertical ? segment.back : _nearReach), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
-      x: (host?.x ?? 0) - (root.isVertical ? 0 : segment.back)
-      y: (host?.y ?? 0) - (root.isVertical ? segment.back : 0)
-      width: (host?.width ?? 0) + (root.isVertical ? 0 : segment.back)
-      height: (host?.height ?? 0) + (root.isVertical ? segment.back : 0)
+      // A tab reaches out past the widget (tabReach)
+      x: (host?.x ?? 0) - (root.isVertical ? (root._outerFar ? 0 : root._reach) : segment.back)
+      y: (host?.y ?? 0) - (root.isVertical ? segment.back : (root._outerFar ? 0 : root._reach))
+      width: (host?.width ?? 0) + (root.isVertical ? root._reach : segment.back)
+      height: (host?.height ?? 0) + (root.isVertical ? segment.back : root._reach)
+      tabLimits: root.tabLimitsOf(root.isVertical ? y : x, root.isVertical ? height : width)
     }
   }
 
@@ -334,6 +353,8 @@ Item {
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
       hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
       trailInset: module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
+      // Its tab's reach past its outer side (a tab hangs only from a background)
+      tabReach: module.hasBackground ? root._reach : 0
 
       barConfig: root.barConfig
       widget: module.modelData
