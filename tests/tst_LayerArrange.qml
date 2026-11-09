@@ -80,6 +80,42 @@ TestCase {
     compare(r.box, [300, 200, 200, 200], "ignoring zones: from the output's corner");
   }
 
+  // A free menu's window (ExclusionMode.Ignore, anchored to every side):
+  // the whole output, however many strips reserve before it, which keep
+  // their places
+  function test_full_screen_ignore() {
+    const menu = {
+      "id": "menu",
+      "output": "O",
+      "namespace": "axiom-menu",
+      "order": LayerStack.orderOf("axiom-menu"),
+      "seq": 0,
+      "anchors": {
+        "left": true,
+        "right": true,
+        "top": true,
+        "bottom": true
+      },
+      "margins": {},
+      "w": 0,
+      "h": 0,
+      "zone": -1
+    };
+    const bar = Object.assign(strip("bar", 1, "top", 30, 30), {
+      "order": LayerStack.orderOf("axiom-bar")
+    });
+    for (const ordered of [true, false]) {
+      const r = rectsById(LayerArrange.arrange({
+        "O": {
+          "w": 1000,
+          "h": 800
+        }
+      }, [menu, bar], ordered), "O");
+      compare(r.menu, [0, 0, 1000, 800], "the whole output");
+      compare(r.bar, [0, 0, 1000, 30], "the bar keeps its edge");
+    }
+  }
+
   // Hyprland sorts by order first: a solid bar (5) mapped after the
   // border (0) still reserves first
   function test_ordered_sorts_by_order() {

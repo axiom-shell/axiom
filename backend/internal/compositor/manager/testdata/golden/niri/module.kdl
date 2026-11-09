@@ -315,7 +315,7 @@ layer-rule {
     }
 }
 layer-rule {
-    match namespace="^axiom-(bar|bar-long|bar-pill|bar-pill-long|bar-floating|bar-floating-long|bar-transparent|bar-transparent-long|popout|popout-under|edge-popout|edge-menu|dock)$"
+    match namespace="^axiom-(bar|bar-long|bar-pill|bar-pill-long|bar-floating|bar-floating-long|bar-transparent|bar-transparent-long|popout|popout-under|edge-popout|edge-menu|menu|dock)$"
     background-effect {
         xray false
     }

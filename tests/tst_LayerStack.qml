@@ -58,6 +58,31 @@ TestCase {
       verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops, LayerStack.blurOverOverlay).includes(ns), ns + " not blurred");
   }
 
+  // A free menu's window: over the windows on Top, under the blur window
+  // and the shadows (which draw its fill and shadow), under the popouts
+  // sliding out from under the bars; its fill drawn by the blur window
+  // and its popups blurred
+  function test_free_menu_order() {
+    const menu = order("menu");
+    for (const ns of ["blur-backing", "shadows"])
+      verify(order(ns) > menu, "over " + ns);
+    verify(menu > order("popout-under"), "under the popouts sliding out from under the bars");
+    verify(LayerStack.blurBacked.includes("menu") && LayerStack.blurChrome.includes("menu"));
+    verify(![].concat(LayerStack.blurSurfaces, LayerStack.blurBackdrops).includes("menu"), "never blurred whole");
+  }
+
+  // Held where the compositor stacks by map order: mapped from the start
+  // with the integrated menus (its order), before the bars and the border
+  function test_sequence_free_menu_held() {
+    const menu = entry("menu", order("menu"), {
+      "wanted": false,
+      "held": true
+    });
+    const bar = entry("bar", order("bar"));
+    compare(shared.calls.LayerStack.sequence([bar, menu], false).show, ["menu"], "the bar waits for it");
+    compare(shared.calls.LayerStack.sequence([bar, menu], true).show, ["bar"], "layer rules: mapped only while open");
+  }
+
   function test_orderOf() {
     compare(shared.calls.LayerStack.orderOf("axiom-bar"), 5);
     compare(shared.calls.LayerStack.orderOf("dock"), -7);

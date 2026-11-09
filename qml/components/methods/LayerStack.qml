@@ -43,6 +43,11 @@ QtObject {
       "why": "An integrated edge menu: arranged before the bars and border, so it sits at the screen edge and pushes them and the windows inwards."
     },
     {
+      "namespace": "menu",
+      "order": 7,
+      "why": "Free menus (FreeMenu): on Top over the windows, under the popouts sliding out from under the bars (and the Overlay layer's: popouts, the overlay). Their full-screen window reserves nothing and keeps clear of what's reserved, so it never meets an integrated menu of its order. Held (mapped from the start, drawing and taking nothing while closed) where layers stack by map order."
+    },
+    {
       "namespace": "popout-under",
       "order": 6,
       "why": "Detached popouts and floating edge menus: drawn under the bars and border, so they slide out from beneath them. Only with layer rules (supports.layerOrder): elsewhere they open over the bar, as over the overlay."
@@ -194,12 +199,12 @@ QtObject {
   readonly property var blurOverOverlay: ["blur-backing-overlay"]
   // The chrome's own windows, for their popups alone (tooltips, the dock's
   // menu): the chrome doesn't blur itself, its popups do
-  readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "dock"])
+  readonly property var blurChrome: root.barLayers.concat(["popout", "popout-under", "edge-popout", "edge-menu", "menu", "dock"])
   // The windows whose fill, blur and shadow the blur window draws: not
   // animated by the compositor while it does (they slide themselves), or
   // their stroke and content fade or pop in and out while what the blur
   // window draws for them doesn't
-  readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "dock", "notifications"])
+  readonly property var blurBacked: root.barLayers.concat(["border", "popout", "popout-under", "edge-popout", "osd", "edge-menu", "menu", "dock", "notifications"])
 
   // A namespace's order (with or without its "axiom-" prefix); 0 (where
   // Hyprland puts a surface without a rule) for one not listed or without
