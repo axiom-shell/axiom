@@ -139,3 +139,48 @@ func TestNetworkRootLeftToTheChild(t *testing.T) {
 		t.Errorf("the loop read a network root's folder: %d entries, had %d", l.ix().Len(), n)
 	}
 }
+
+// A root below a link to a network mount (~/nas/docs, ~/nas -> /mnt/nas)
+// is that mount's too, found by readlink alone
+func TestNetworkRootBelowALink(t *testing.T) {
+	t.Parallel()
+	base := tree(t, "nas/docs/x", "home/y")
+	link := base + "/home/nas"
+	if err := os.Symlink("../nas", link); err != nil {
+		t.Fatal(err)
+	}
+	m := parseMounts(fmt.Sprintf("1 1 0:999 / %s rw - nfs4 nas:/ rw\n", base+"/nas"))
+	if !m.networkRoot(link+"/docs") || m.networkRoot(base+"/home") {
+		t.Errorf("a root below a link to a network mount")
+	}
+}
+
+// A share mounted over a watched root drops its folders' watches (they
+// sat on what was there before) and asks the child's stat pass
+func TestShareMountedOverAWatchedRoot(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a/x")
+	now := time.Now()
+	l := loopOn(t, root, &now)
+	l.s.o.Mountinfo = fakeMounts(t, false)
+	w, err := newWatcher(100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.close()
+	l.w = w
+	l.refreshMounts()
+	l.readDir(t, root+"/a")
+	if len(w.byPath) == 0 {
+		t.Fatal("nothing watched")
+	}
+	l.s.o.Mountinfo = fakeMounts(t, true, root)
+	l.refreshMounts()
+	if len(w.byPath) != 0 || !l.statUnwatched {
+		t.Errorf("watches %v, stat pass asked %v", w.byPath, l.statUnwatched)
+	}
+	ix := l.ix()
+	if d, ok := ix.Lookup(root + "/a"); !ok || ix.Watched(d) {
+		t.Errorf("a network root's folder still marked watched")
+	}
+}

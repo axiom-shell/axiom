@@ -759,6 +759,9 @@ func (l *loop) housekeep() {
 		return
 	}
 	l.compact()
+	// (before relink stats the linked roots: one now on the network
+	// isn't watched any more)
+	l.refreshMounts()
 	l.relink()
 	if l.phase == PhaseReady && l.s.o.Now().Sub(l.lastStat) >= l.s.o.StatEvery {
 		l.statUnwatched = true
@@ -846,9 +849,35 @@ func (l *loop) recheck(path string, mtime int64) {
 }
 
 // refreshMounts reads the mount table again (a disk or share mounted
-// since): read before the loop reads or watches folders itself.
+// since): read before the loop reads or watches folders itself. A root
+// on the network now that wasn't (a share mounted over it, a link to
+// one) has its folders' watches dropped, unstat-ed, and a stat pass
+// asked: the watches sat on what was there before, so only the idle
+// child's pass sees the share.
 func (l *loop) refreshMounts() {
+	was := l.f.netRoots
 	l.f.setMounts(readMounts(l.s.o.Mountinfo))
+	ix := l.ix()
+	if l.w == nil || ix == nil {
+		return
+	}
+	var drop []string
+	for path := range l.w.byPath {
+		if r := l.f.rootOf(path); l.f.netRoots[r] && !was[r] {
+			drop = append(drop, path)
+		}
+	}
+	for _, path := range drop {
+		l.w.remove(path)
+		if d, ok := ix.Lookup(path); ok {
+			l.s.mu.Lock()
+			ix.SetWatched(d, false)
+			l.s.mu.Unlock()
+		}
+	}
+	if len(drop) > 0 {
+		l.statUnwatched = true
+	}
 }
 
 // watch adds a watch on path within the budget; the path it was watched

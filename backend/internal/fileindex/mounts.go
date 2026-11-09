@@ -119,23 +119,38 @@ func (m mounts) network(path string) bool {
 }
 
 // networkRoot says whether root is on a network filesystem, following
-// the links it is (root itself, not its folders) by readlink alone,
-// which never stats the target, and never through a network mount: a
-// root that is a link to a network mount is that mount's.
+// the links on its way (root itself, or a folder above it such as
+// ~/nas -> /mnt/nas for ~/nas/docs) one component at a time by readlink
+// alone, which never stats a target, and never through a network mount:
+// a root reached through a link to a network mount is that mount's.
 func (m mounts) networkRoot(root string) bool {
-	path := root
-	for range 8 {
+	rest := components(root)
+	path := "/"
+	for links := 0; len(rest) > 0; {
+		path, rest = join(path, rest[0]), rest[1:]
 		if m.network(path) {
 			return true
 		}
 		target, err := os.Readlink(path)
 		if err != nil {
+			continue // not a link (or gone)
+		}
+		if links++; links > 40 {
 			return false
 		}
 		if !strings.HasPrefix(target, "/") {
 			target = join(filepath.Dir(path), target)
 		}
-		path = filepath.Clean(target)
+		rest, path = append(components(target), rest...), "/"
 	}
 	return m.network(path)
+}
+
+// components are a path's names, cleaned ("/a/../b/" is [b]).
+func components(path string) []string {
+	clean := strings.TrimPrefix(filepath.Clean("/"+path), "/")
+	if clean == "" {
+		return nil
+	}
+	return strings.Split(clean, "/")
 }
