@@ -21,6 +21,9 @@ Item {
   property string endCap: "round"
   property bool seamStart: false
   property bool seamEnd: false
+  // Ends left open, where a merged run carries on (BarShapes.path)
+  property bool openStart: false
+  property bool openEnd: false
   // A tab's shape (BarShapes.tab): every stroke is open along the edge it
   // hangs from
   property var tab: null
@@ -35,7 +38,7 @@ Item {
   readonly property real _half: lineWidth / 2
   // A line square to every edge `inset` in, the caps' at a seam on it
   function _offset(inset) {
-    return BarShapes.offsetPath(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, inset, root.seamStart ? inset - root._half : inset, root.seamEnd ? inset - root._half : inset, root.tab);
+    return BarShapes.offsetPath(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, inset, root.seamStart ? inset - root._half : inset, root.seamEnd ? inset - root._half : inset, root.tab, root.openStart, root.openEnd);
   }
 
   Loader {
@@ -68,11 +71,11 @@ Item {
           path: {
             switch (root.stroke) {
             case "ends":
-              return BarShapes.marks(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, root._half, root.seamStart, root.seamEnd, root.tab);
+              return BarShapes.marks(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, root._half, root.seamStart, root.seamEnd, root.tab, root.openStart, root.openEnd);
             case "double":
               return root._offset(root._half);
             default:
-              return BarShapes.path(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, root._half, root.seamStart, root.seamEnd, root.tab, true);
+              return BarShapes.path(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, root._half, root.seamStart, root.seamEnd, root.tab, true, root.openStart, root.openEnd);
             }
           }
         }

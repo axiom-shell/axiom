@@ -237,6 +237,57 @@ TestCase {
     verify(BarShapes.marks(100, 30, 0, "capsule", "capsule", false, 1, false, false).includes("A 14 14"));
   }
 
+  // A merged run carried on into the next section's, drawn apart: no line
+  // across the join (a divider there), its long sides running to it
+  function test_open_ends_leave_the_join_unlined() {
+    const closed = BarShapes.path(100, 30, 0, "flat", "flat", false, 1, false, false, null, true);
+    verify(closed.endsWith("Z"));
+    const end = BarShapes.path(100, 30, 6, "round", "flat", false, 1, false, false, null, true, false, true);
+    verify(!end.includes("Z"), end);
+    const ep = points(end);
+    // From the end's bottom corner round the start to its top corner, at
+    // the very end (no inset there)
+    compare(ep[0], [100, 29]);
+    compare(ep[ep.length - 1], [100, 1]);
+    verify(!ep.slice(1, -1).some(p => p[0] === 100), "nothing across the end: " + end);
+    const start = points(BarShapes.path(100, 30, 6, "flat", "round", false, 1, false, false, null, true, true, false));
+    compare(start[0], [0, 1]);
+    compare(start[start.length - 1], [0, 29]);
+    verify(!start.slice(1, -1).some(p => p[0] === 0), "nothing across the start");
+    // Both: the two long sides alone
+    compare(points(BarShapes.path(100, 30, 0, "flat", "flat", false, 1, false, false, null, true, true, true)), [[0, 1], [100, 1], [100, 29], [0, 29]]);
+    // The fill stays closed, reaching the open end
+    const fill = BarShapes.path(100, 30, 0, "flat", "flat", false, 1, false, false, null, false, false, true);
+    verify(fill.endsWith("Z"));
+    compare(bounds(fill).maxX, 100);
+    // Every other stroke: a double's lines run to it, a mark is left out
+    const double = BarShapes.offsetPath(100, 30, 0, "flat", "flat", false, 3, 3, 3, null, false, true);
+    verify(!double.includes("Z"));
+    compare(bounds(double).maxX, 100);
+    compare(BarShapes.marks(100, 30, 0, "round", "flat", false, 1, false, false, null, false, true).split("M").length - 1, 1);
+    compare(BarShapes.marks(100, 30, 0, "flat", "flat", false, 1, false, false, null, true, true), "");
+    // Slanted runs meet flat at a join too
+    verify(!BarShapes.path(100, 30, 0, "slant", "flat", false, 1, false, false, null, true, false, true).includes("Z"));
+  }
+
+  function test_tab_open_ends_leave_the_join_unlined() {
+    const t = square(true);
+    // The start side drawn, the inner side running on to the end, no side there
+    const end = points(BarShapes.path(100, 30, 0, "tab", "flat", false, 1, false, false, t, true, false, true));
+    compare(end[end.length - 1][0], 100);
+    compare(end[end.length - 1][1], 29);
+    compare(end.filter(p => p[0] === 100).length, 1);
+    const start = points(BarShapes.path(100, 30, 0, "flat", "tab", false, 1, false, false, t, true, true, false));
+    compare(start[0], [0, 29]);
+    // Both: the inner side alone
+    compare(points(BarShapes.path(100, 30, 0, "flat", "flat", false, 1, false, false, t, true, true, true)), [[0, 29], [100, 29]]);
+    // Marks: none at an open end
+    compare(BarShapes.marks(100, 30, 0, "flat", "flat", false, 1, false, false, t, true, true), "");
+    // A double's lines too
+    const double = points(BarShapes.offsetPath(100, 30, 0, "flat", "flat", false, 3, 3, 3, t, true, true));
+    compare(double.map(p => p[0]), [0, 100]);
+  }
+
   function test_marks_one_per_seam() {
     // A powerline segment's start at a seam is the one before's end mark
     const mid = BarShapes.marks(100, 30, 0, "arrowIn", "arrowOut", false, 1, true, true);
