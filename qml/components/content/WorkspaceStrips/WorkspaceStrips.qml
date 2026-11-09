@@ -74,7 +74,7 @@ WorkspacePopoutPanel {
           labels: root.properties.labels
           label: line.shows.number
           text: line._text ? line.shows.text : ""
-          textPlain: line.shows.kind === "name"
+          textPlain: line.shows.plain
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
           onClicked: CompositorManager.goToWorkspace(line.wsId, "go", root.output)

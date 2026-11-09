@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.services.system
+import qs.services.ui
 import qs.config
 import qs.components.methods
 
@@ -39,8 +40,9 @@ QtObject {
 
   // What workspace `wsId`'s cell shows, `glyph` taking its place (the
   // grid's arrow, or ""), app icons only with `withIcons`: { kind
-  // (WorkspaceCells.pick), text, icons (icon paths), number, length
-  // (along the bar, at rest), occupied, urgent }
+  // (WorkspaceCells.pick), text, plain (text drawn as words, not an
+  // icon), icons (icon paths), number, length (along the bar, at rest),
+  // occupied, urgent }
   function of(wsId, glyph, withIcons) {
     const ws = CompositorManager.workspaces.find(w => w.id === wsId);
     const number = root.numberOf(wsId);
@@ -53,6 +55,7 @@ QtObject {
     return {
       "kind": shown.kind,
       "text": shown.text,
+      "plain": root._plain(shown),
       "icons": shown.kind === "icons" ? icons : [],
       "number": number,
       "length": root._length(shown, icons),
@@ -86,12 +89,20 @@ QtObject {
     return direction !== "" ? CompositorManager.stripWindows(wsId, direction === "vertical") : WorkspaceCells.byPosition(windows);
   }
 
+  // Whether `shown`'s text is words: a name always, a label of one's own
+  // unless it's an icon the font has (as the icon picker tells: a word like
+  // "dev" reads as a name but has no icon, and drawn in the icon font it's
+  // unreadable)
+  function _plain(shown) {
+    return shown.kind === "name" || shown.kind === "text" && !(Utils.isSymbolName(shown.text) && IconManager.isKnown(shown.text));
+  }
+
   // Along the bar: the rest length, longer for text that needs it (with
   // half a cell's thickness of room around it) or a row of icons
   function _length(shown, icons) {
     if (shown.kind === "icons" && root.iconLayout === "row")
       return WorkspaceCells.rowLength(icons.length, root.thickness, root.restLength);
-    if (shown.kind !== "name" && (shown.kind !== "text" || Utils.isSymbolName(shown.text)))
+    if (!root._plain(shown))
       return root.restLength;
     // The size read, so a binding calling this measures again when it changes
     if (root._metrics.font.pixelSize <= 0)

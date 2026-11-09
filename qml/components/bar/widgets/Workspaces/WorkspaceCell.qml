@@ -34,8 +34,9 @@ Item {
   property string labels: "numbers"
   readonly property bool _dot: labels === "dots" || labels === "none" && !_framed
   property string label: ""
-  // A label of one's own or the compositor's name, the name (`textPlain`)
-  // always in the text font
+  // A label of one's own or the compositor's name; `textPlain` (a name, or
+  // a label that isn't an icon the font has: CellContents.plain) in the
+  // text font
   property string text: ""
   property bool textPlain: false
   property string iconPath: ""
