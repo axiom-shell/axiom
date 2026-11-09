@@ -444,6 +444,34 @@ TestCase {
     compare(SurfaceContext.wallAt(80, 14, 22, 34), 58);
   }
 
+  function test_frame_detached_lines_up_with_the_windows() {
+    // Past a transparent bar, a box of its own reaches as far as the
+    // windows at either end (reserved plus gaps_out, no nearer than the
+    // frame line), not the frame's corner room a fillet needs
+    const transparent = Object.assign(bar("transparent"), {
+      "extent": 30
+    });
+    const f = SurfaceContext.frame(params({
+      "bar": transparent,
+      "start": side("none", {
+        "reserved": 0,
+        "gapsOut": 0
+      }),
+      "end": side("transparent", {
+        "frame": 40,
+        "reserved": 34,
+        "gapsOut": 10
+      })
+    }));
+    verify(!f.startEnd.joins && !f.endEnd.joins);
+    compare(f.lo, 20);
+    compare(f.hi, 1000 - 44);
+    compare(f.wallTo, undefined);
+    // No fillet to hold: its window reaches back no further
+    compare(f.startEnd.strokeInset, 0);
+    compare(f.endEnd.strokeInset, 0);
+  }
+
   function test_frame_held_keeps_its_gaps() {
     const f = SurfaceContext.frame(params({
       "held": true,

@@ -200,23 +200,29 @@ QtObject {
     // Along the edge from its start: a side's distance from its own edge
     const at = (side, d) => side === "start" ? d : p.span - d;
     const sign = side => side === "start" ? 1 : -1;
+    // Past a transparent bar: a box of its own, with no fillet at its ends
+    const detached = !!bar && !bar.solid && !pillBar;
     const sides = {};
     for (const side of ["start", "end"]) {
       const q = p[side];
       const e = root.end(q.kind, {
         "held": p.held,
-        "detached": !!bar && !bar.solid && !pillBar,
+        "detached": detached,
         "ownIsland": island,
         "ownEndHeld": island && !!q.barHeld,
         "stroke": p.stroke
       });
       // Unjoined: held, its gap past the frame line (no nearer than where
-      // windows start); at a wall, in line with the windows past it, its
-      // fillet clear of the frame's corner (wallAt); on a floating bar, its
-      // islands' reach; else the frame's corner room
+      // windows start); detached, in line with the windows (it has no
+      // fillet to keep clear of the frame's corner); at a wall, in line
+      // with the windows past it, its fillet clear of the frame's corner
+      // (wallAt); on a floating bar, its islands' reach; else the frame's
+      // corner room
       let limit, wall;
       if (p.held)
         limit = at(side, Math.max(q.reserved, q.frame + (p.gaps?.[side] ?? 0)));
+      else if (detached)
+        limit = at(side, root.wallLine(q.frame, q.reserved, q.gapsOut));
       else if (e.wall) {
         wall = at(side, root.wallAt(root.wallLine(q.frame, q.reserved, q.gapsOut), q.corner ?? 0, fm, room));
         limit = wall + sign(side) * fm;
@@ -230,7 +236,7 @@ QtObject {
       // surface may: a joined end onto the stroke it sits on, an unjoined
       // one to where its fillet starts (a wall's past the windows' line,
       // over what's reserved there), or that part of it is clipped
-      const from = p.held ? limit : limit - sign(side) * fm;
+      const from = p.held || detached ? limit : limit - sign(side) * fm;
       const reach = Math.ceil(sign(side) * (at(side, q.reserved) - from));
       sides[side] = {
         "end": Object.assign({}, e, {
