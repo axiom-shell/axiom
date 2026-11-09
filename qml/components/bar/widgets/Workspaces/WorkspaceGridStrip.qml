@@ -20,6 +20,9 @@ Item {
   property var screen
   // The widget's (BarWidget.hitArea), which its popout reads hover from
   property var hitArea: null
+  // Where a point of its active cell sits along the bar, for the bar's
+  // gradient (BarWidget.barSpotOf), or null
+  property var barSpotOf: null
   property var barConfig
   property var properties
   // Room kept to the widget's background across the bar
@@ -172,6 +175,7 @@ Item {
       emptyColor: root.emptyColor
       textColor: root.iconColor
       hitArea: root.hitArea
+      barSpotOf: root.barSpotOf
       hoverColor: root.hoverColor
       // The active arrow takes the active cell's place
       glyphOf: (id, active) => active && root.properties.showActiveIcon ? root.positionGlyph(line.value, root.isVertical ? root.columns : root.rows) : ""

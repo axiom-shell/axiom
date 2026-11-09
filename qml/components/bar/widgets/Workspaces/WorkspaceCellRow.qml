@@ -34,6 +34,10 @@ Item {
   property var glyphOf: (id, active) => ""
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
+  // Where a point of an item of it sits along the bar (BarWidget.barSpotOf):
+  // the active cell's Auto color gives way to the bar's gradient there.
+  // Null to keep it.
+  property var barSpotOf: null
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real spacing: barConfig.innerGap
@@ -66,7 +70,20 @@ Item {
   // BarsConfig.cellColors for a workspace's cell, active or at rest, and
   // lit (the pointer over it)
   function _look(id, active, lit) {
-    return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id), lit);
+    if (active)
+      return root._activeLook(root.ids.indexOf(id), lit);
+    return BarsConfig.workspaceCellColors(root.barConfig, root, false, root._occupied(id), lit);
+  }
+
+  // The active cell's look (BarsConfig.cellColors) at index `index` of the
+  // row, `lit` or not: in the bar's gradient where its middle sits, its
+  // color Auto
+  function _activeLook(index, lit) {
+    const spot = root.barSpotOf && index >= 0 ? root.barSpotOf(root, index * (root.cellLength + root.spacing) + root._length(true) / 2) : -1;
+    return BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active", {
+      "hovered": lit === true,
+      "spot": spot
+    });
   }
 
   function _length(active) {
@@ -104,9 +121,7 @@ Item {
   ActiveCellIndicator {
     id: indicator
     barConfig: root.barConfig
-    look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active", {
-      "hovered": root.hoveredId !== -1 && root.hoveredId === root.activeId
-    })
+    look: root._activeLook(indicator.index, root.hoveredId !== -1 && root.hoveredId === root.activeId)
     index: root.ids.indexOf(root.activeId)
     thickness: root.cell
     restLength: root.cellLength

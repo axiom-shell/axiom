@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.config
 import qs.services.compositor
 import qs.components.bar.widgets.base
 
@@ -29,7 +28,7 @@ BarWidget {
   // Its cells fill on hover, each on its own
   fillsOnHover: false
   // Its box; an underline is each cell's own
-  accentColor: boxed ? Theme.resolveColor(properties.backgroundColor) : "transparent"
+  accentField: boxed ? "backgroundColor" : ""
 
   implicitWidth: loader.implicitWidth + (isVertical ? 0 : inset * 2)
   implicitHeight: loader.implicitHeight + (isVertical ? inset * 2 : 0)
@@ -40,11 +39,18 @@ BarWidget {
     sourceComponent: CompositorManager.workspaceGrid ? gridStrip : strip
   }
 
+  // Where its active cell sits along the bar, for an Auto active color to
+  // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
+  // Not in a merged run: that's a strip of the gradient itself, which the
+  // cell would vanish into, so it keeps its own.
+  readonly property var _activeSpotOf: root.autoColors.activeColor === "accent" && root.barLength > 0 && root.barConfig.widgetGrouping !== "merged" ? root.barSpotOf : null
+
   Component {
     id: strip
     WorkspaceStrip {
       screen: root.screen
       hitArea: root.hitArea
+      barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
       inset: root.inset
@@ -56,6 +62,7 @@ BarWidget {
     WorkspaceGridStrip {
       screen: root.screen
       hitArea: root.hitArea
+      barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
       inset: root.inset
