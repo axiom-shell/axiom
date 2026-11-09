@@ -1,7 +1,7 @@
 # Bar widget shapes, runs, separators and accents
 
 > **Files:** `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetBackground.qml`, `qml/components/methods/BarShapes.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/reusable/SeparatorMark.qml`, `qml/components/bar/BarContainer.qml` (inline `AccentLine`), `qml/components/bar/BarWidgetHost.qml`
-> **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `widgetEnds`, `widgetGrouping`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach` are derived `barConfig` values.)
+> **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `widgetEnds`, `widgetGrouping`, `splitIcon`, `splitDivider`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 
 How widget backgrounds are drawn: their shapes, merged and powerline runs, hit testing in the drawn shape, separators at section ends, separator marks, the bar's shadow and the accent line.
@@ -18,6 +18,12 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
   - **`segment`:** the widget's caps, and the room its content keeps clear of them. `WidgetGroup` sets this as the host's `leadInset`/`trailInset`, which are added to its sizes, and the module is inset by them.
   - **`path`:** the outline, as an SVG path. A `Rectangle` draws rounded and capsule ends.
 - Insets follow what widgets have to show, never the room they're given (which the insets help decide), so they can't feed back into the layout. Shapes follow what's shown.
+
+### Split
+- A split widget's host reports its parts (`BarWidgetHost.split`, from `IconTextWidget.splitAt` / `splitPart`): where the middle of the gap between its icon part and its label lies along it, and what the icon part holds. `WidgetGroup` hands them to its `WidgetBackground` (`splitAt`, `splitPart`), shifted by the segment's `back`.
+- **Joined:** the label's part is the background's whole shape in `fill`; the icon part is drawn over it in `iconFill`, from the background's start cap to the bar's `splitCap` centred on `splitAt` (`BarShapes.dividerCap`: `splitDivider` match is slanted for slant, an arrow for arrow, else straight; or straight, slant, arrow, or `curve`, a shallow arc a quarter of the thickness deep). The level, the press tint, the hover outline and the editor's highlight cover the whole shape.
+- **Badge:** no box; a shape in `iconFill` round `splitPart`, `badgePad` out, at least as long as it's thick: a circle (or a pill round a lead graphic) under capsule, otherwise a square rounded by the widget radius scaled to its size.
+- **Runs:** merged, each widget keeps its own icon part (or badge) on the run's `groupColor` (`groupColors` draws split's run filled), and `splitLabelFill` is hidden. Powerline chains the segments as usual, each with its own icon part; a segment counts as opaque (`BarWidgetStyle.opaque`) only when its label part has a color of its own. A badge has no box to chain: its powerline draws as separate (`BarWidgetStyle.grouping`, `BarsConfig.groupingOf`) and isn't offered.
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).
@@ -37,7 +43,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
   - A widget with no background facing it keeps `widgetGap` from it in a powerline, as inside a section.
 - **Powerline** chains the widgets with no gap (`groupSpacing` 0).
   - Each segment's end cap runs into the next segment, which reaches back under it (`back`).
-  - With a see-through fill (tinted or outline), the next segment fits against the cap instead.
+  - With a see-through fill (tinted, outline, or split but for a label on a color of its own), the next segment fits against the cap instead.
   - An outline's two strokes lie on the shared seam (`seamStart`/`seamEnd`).
   - A segment's content is centred on the part of it that shows: from half a join before its box to half a join before its end. Its `trail` takes the difference.
 - **What breaks a chain:**

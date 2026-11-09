@@ -9,7 +9,8 @@ import qs.components.reusable
 
 // What a bar widget sits on, in its bar's widget style (widgetStyle,
 // widgetShape): a fill or outline shaped by its caps (BarShapes), or for
-// underline a line along one side. Its hover outline and the bar editor's
+// underline a line along one side. Split fills its icon part over the
+// label's (joined, cut by the divider) or draws a badge behind the icon. Its hover outline and the bar editor's
 // highlight take the same shape. WidgetGroup draws one under each widget
 // with a background, and one under each merged run.
 Item {
@@ -42,8 +43,14 @@ Item {
   property string levelStartCap: startCap
   property string levelEndCap: endCap
 
+  // A split widget's parts (BarWidgetHost.split): along it, the middle of
+  // the gap between its icon part and its label, -1 when it doesn't split;
+  // what the icon part holds, in its coordinates
+  property real splitAt: -1
+  property rect splitPart: Qt.rect(0, 0, 0, 0)
+
   readonly property string _fill: barConfig.widgetStyle
-  readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
+  readonly property bool _boxed: barConfig.widgetBoxed
 
   // The shape in one fill and stroke: a Rectangle when both ends are
   // alike and rounded (or square), else a path
@@ -123,6 +130,49 @@ Item {
     // State changes (mute, a warning level) recolour smoothly
     ColorGlide on fillColor {}
     ColorGlide on strokeColor {}
+  }
+
+  // Split's icon part, joined: the shape from its start to the divider
+  // (the bar's splitCap) centred in the gap to the label
+  ShapedBox {
+    readonly property real _length: root.splitAt + BarShapes.depth(root.barConfig.splitCap, root.barConfig.thickness) / 2
+
+    visible: root.barConfig.splitIcon === "joined" && root.splitAt >= 0 && root.colors !== null
+    anchors.fill: undefined
+    width: root.barConfig.vertical ? root.width : _length
+    height: root.barConfig.vertical ? _length : root.height
+    bar: root.barConfig
+    startCap: root.startCap
+    endCap: root.barConfig.splitCap
+    fillColor: root.colors?.iconFill ?? "transparent"
+
+    ColorGlide on fillColor {}
+  }
+
+  // Split's badge: the icon part's content with badgePad round it, at
+  // least as long as it's thick (a circle for one icon under capsule), a
+  // rounded square otherwise, its radius the widgets' scaled to its size
+  Rectangle {
+    readonly property bool vertical: root.barConfig.vertical
+    readonly property real thickness: root.barConfig.thickness
+    readonly property real pad: root.barConfig.badgePad
+    readonly property real partAlong: vertical ? root.splitPart.height : root.splitPart.width
+    readonly property real partAcross: vertical ? root.splitPart.width : root.splitPart.height
+    readonly property real across: Math.min(thickness, partAcross + pad * 2)
+    readonly property real along: Math.max(partAlong + pad * 2, across)
+    readonly property real alongMiddle: vertical ? root.splitPart.y + partAlong / 2 : root.splitPart.x + partAlong / 2
+    readonly property real acrossMiddle: vertical ? root.splitPart.x + partAcross / 2 : root.splitPart.y + partAcross / 2
+    readonly property real acrossStart: Math.max(0, Math.min(thickness - across, acrossMiddle - across / 2))
+
+    visible: root.barConfig.splitIcon === "badge" && root.splitAt >= 0 && root.colors !== null
+    x: vertical ? acrossStart : alongMiddle - along / 2
+    y: vertical ? alongMiddle - along / 2 : acrossStart
+    width: vertical ? across : along
+    height: vertical ? along : across
+    radius: root.barConfig.widgetShape === "capsule" ? across / 2 : Math.min(across / 2, root.barConfig.radius * across / thickness)
+    color: root.colors?.iconFill ?? "transparent"
+
+    ColorGlide on color {}
   }
 
   // Along the side toward the windows (inner) or the screen edge (outer)

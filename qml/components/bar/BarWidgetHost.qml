@@ -70,6 +70,19 @@ Item {
   // A level filling its background's shape (the module's `backgroundLevel`), -1 none
   readonly property real backgroundLevel: _item?.backgroundLevel ?? -1
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
+  // A split bar's widget showing its icon part and label apart
+  // (IconTextWidget.splits): along it, the middle of the gap between them
+  // (`at`), and what the icon part holds (`part`), in its own coordinates;
+  // null otherwise
+  readonly property var split: {
+    if (!(_item?.splits ?? false))
+      return null;
+    const part = _item.splitPart;
+    return {
+      "at": (isVertical ? contentLoader.y : contentLoader.x) + _item.splitAt,
+      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height)
+    };
+  }
   // A divider of its own (Separator): the group draws none beside it
   readonly property bool divides: _item?.divides ?? false
   // Room that takes the free space on its side of the bar (Spacer): it

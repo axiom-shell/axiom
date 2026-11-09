@@ -111,7 +111,7 @@ Item {
   readonly property var _drawRuns: BarLayout.runs(root._drawn)
   // Opaque fills hide what's under them: a powerline segment can then
   // start square beneath the one before
-  readonly property bool _opaque: root.barConfig.widgetStyle === "filled"
+  readonly property bool _opaque: BarWidgetStyle.opaque(root.barConfig.widgetStyle, root.barConfig.splitIcon, root.barConfig.splitLabelFill)
   // A widget with no background in a powerline (a Separator) splits the
   // chain, keeping the bar's spacing to the widgets beside it in the
   // section as between separate widgets. At the section's end the gap to
@@ -294,6 +294,11 @@ Item {
       levelStartCap: segment.levelStartCap
       levelEndCap: segment.levelEndCap
       highlighted: host?.editorOutlined ?? false
+      // Its split parts, from the host's start to its own (back under the
+      // one before)
+      readonly property var _split: host?.split ?? null
+      splitAt: _split ? _split.at + segment.back : -1
+      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? 0 : segment.back), _split.part.y + (root.isVertical ? segment.back : 0), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
       x: (host?.x ?? 0) - (root.isVertical ? 0 : segment.back)

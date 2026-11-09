@@ -32,10 +32,16 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Widgets don't draw their own backgrounds. Each reports two things:
   - `hasBackground`: on by default for `BarIconWidget`, opt-in on `BarWidget`.
   - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. This used to be the background.
-- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName)`, which gives `{ fill, stroke, indicator, text, icon }`.
-  - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, underline, colored icons or plain.
+- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, splits)`, which gives `{ fill, stroke, indicator, text, icon, iconFill }`.
+  - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, split, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
 - Colors that are content rather than a background stay the widget's own: workspace cells, separators, badges, the DND icon.
+- **Split** sets a widget's icon part apart from its label (`BarWidgetStyle.colors`' `split` case):
+  - The icon part (the icon, and a lead graphic: a display style's ring, sparkline or ticker) is filled with the widget's color (`iconFill`), its icon in `own`.
+  - `splitIcon` joined: one box round the whole widget, cut at the icon part's end by `splitDivider` ([Shapes and runs](widget-shapes-runs.md#split)). The label's part (`splitLabelFill`) is a tint of the color (`tintOpacity`), a color of its own (`splitLabelColor`, its text reading on it) or none (the bar's); its text is the widget's color on a tint or none. `widgetTextColor` overrides both texts.
+  - `splitIcon` badge: no box; a small shape behind the icon part, the label on the bar in the widget's color.
+  - Only an `IconTextWidget` showing an icon (or a lead graphic) and a label splits (`IconTextWidget.splits`, which `BarIconWidget` hands `widgetColors` as `splits`). Icon-only and text-only widgets, and every `BarWidget` (Workspaces, the tray, Media, …: `widgetColors` called without `splits`), draw as filled (`BarWidgetStyle.drawnFill`), and so do Workspaces' cells (`cell`'s `split` case).
+  - A split bar's widgets keep `BarsConfig.enrichBarConfig`'s `splitRoom` between the two parts instead of `spacing` (`BarShapes.splitRoom`: joined, the padding either side of the divider and its depth; a badge, its reach `badgePad` plus the spacing).
 - `backgroundLevel` (0–1, -1 for none) with `backgroundLevelColor`: a level its WidgetGroup fills the background's shape to (the custom widget's pill), in the background's caps with a rounded leading edge ([Shapes and runs](widget-shapes-runs.md)). A graphic a widget draws itself reads in `colors.icon`, which contrasts with a filled background.
 
 ### Auto colors
@@ -46,24 +52,24 @@ The base classes bar widgets extend, where their sizes come from, and how their 
   - **`alt`:** a second state, as unlike its accent as possible.
   - **`warning`/`critical`:** the theme's `warning`/`error`.
   - **`off` and `neutral`:** the subtlest of base01–04 that still stands out. They are for an off state, or for a box whose content has its own colors (the tray's and Workspaces').
-- Each color must stand out (WCAG contrast) from what it's seen on: the bar, or a filled merged run's `groupColor`.
+- Each color must stand out (WCAG contrast) from what it's seen on: the bar, or a filled or split merged run's `groupColor` (`BarWidgetStyle.autoContrast`).
   - A fill only has to show (contrast 1.3).
-  - Text, strokes and icons have to read (contrast 3).
+  - Text, strokes and icons have to read (contrast 3). Split's color is its icon part's fill, and also its label's text unless the label has a color of its own or sits on a merged run.
 - Text colors are not Auto. Workspaces' cells are not Auto either, except the active one.
 
 ### Which color fields show
 - A widget's color fields show in the bar editor's inspector only in the bar looks where they draw something.
   - Their `x-showIf` reads the look of the selected bar through `$bar.<key>` keys. The values come from `BarsConfig.lookContext`: `lookOf`, with grouping counted only for boxed styles.
   - `tst_SchemaLayout` (`test_real_schema_showIf_targets_exist`) checks that each such key names a `BarStyle` field, in a bar widget's options only.
-- **The widget's own color** (`backgroundColor` titled "Color", and its state colors). It is the fill when filled, the tint or outline when tinted or outlined, the line when underlined, and the icon when merged or under colored icons.
+- **The widget's own color** (`backgroundColor` titled "Color", and its state colors). It is the fill when filled, the tint or outline when tinted or outlined, the icon part's fill (and the label's tint or text) when split, the line when underlined, and the icon when merged or under colored icons.
   - Hidden under Plain text.
   - A widget with no icon (Time, the tray's box) shows it only when boxed and not merged, or when underlined.
   - Notifications' DND and badge colors are content, so they always show.
-- **`foregroundColor`.** It is read only by a filled widget that isn't merged, and only while the bar's `widgetTextColor` is Auto. Elsewhere the text is the bar's.
+- **`foregroundColor`.** It is read only by a filled widget that isn't merged, or a split one (its icon on the icon part, merged or not), and only while the bar's `widgetTextColor` is Auto. Elsewhere the text is the bar's.
 - **Workspaces** (its popouts draw cells in the same style):
-  - `showBackground` shows only for boxed styles. `backgroundColor` also needs the background on and the grouping not merged.
+  - `showBackground` shows only for boxed styles (split among them: `BarsConfig.boxedStyles`). `backgroundColor` also needs the background on and the grouping not merged.
   - `activeColor` and `occupiedColor` hide under Plain. `emptyColor` shows only when filled, tinted, outlined or underlined.
-  - `textColor` shows only when filled and the bar's text color is Auto.
+  - `textColor` shows only when filled or split and the bar's text color is Auto.
   - Cells follow the widget shape: pills under capsule (`BarsConfig.cellRadius`), otherwise the radius less the inset.
 - The bar's own look fields read the look it uses too (`BarsPanel` hands its form `BarsConfig.lookOf(bar)`). The separator fields hide in a boxed powerline, where `enrichBarConfig` drops separators.
 
@@ -77,7 +83,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Its cells (`workspaces/WorkspaceCell`) are inset by `innerGap` inside that box.
 - A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
 - Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
-  - **Filled, tinted or outlined** styles draw boxes.
+  - **Filled, tinted or outlined** styles draw boxes; split draws them filled.
   - **Styles with no box** (underline, colored icons, plain) draw the cell's number or a dot straight on the bar. The dot becomes a pill when wide, with the cells narrowed to fit.
     - For underline, each cell is underlined itself and the widget's own line is off.
     - An empty cell's content is the bar text, faded.

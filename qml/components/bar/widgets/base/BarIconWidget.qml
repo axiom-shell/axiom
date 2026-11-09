@@ -51,7 +51,9 @@ IconTextWidget {
   iconSpacing: barConfig.innerGap
   // Its color for its state, and what it draws in on this bar
   property color accentColor: Theme.resolveColor(properties.backgroundColor)
-  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)
+  // On a split bar, its icon part and label set apart (BarShapes.splitRoom)
+  splitRoom: barConfig.splitRoom
+  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor, root.splits)
   // Whether its WidgetGroup draws a background under it, and an outline
   // in its shape while it's hovered
   property bool hasBackground: !hidden
