@@ -45,7 +45,8 @@ QtObject {
   // or null where the gradient colors no background (colored icons: the
   // icon takes the color where it sits). A widget filled on hover fills
   // with it. In a merged run the run draws it (a split run's at the
-  // labels' tint), so a widget there has none, but for a split icon part.
+  // labels' tint), so a widget there has none, but for a split icon part
+  // or the box of one that doesn't split.
   function gradientPart(style) {
     const fill = root.drawnFill(style);
     if (style.hovered === true && root.fillsOnHover(style))
@@ -53,7 +54,7 @@ QtObject {
     if (style.run && style.fill === "split")
       return root._part("fill", style.tint);
     if (style.group)
-      return fill === "split" ? root._part("iconFill", 1) : null;
+      return fill === "split" ? root._part("iconFill", 1) : style.fill === "split" ? root._part("fill", 1) : null;
     switch (fill) {
     case "split":
       return root._part("iconFill", 1);
@@ -131,6 +132,10 @@ QtObject {
       // tint or outline it takes that color)
       if (fill === "split")
         return root._make(none, none, none, text(style.gradient ? accent : root.readableOn(style.group, style.barText)), text(own), accent);
+      if (style.fill === "split")
+        // One that doesn't split fills its own box in the run, a tab in
+        // the row of them
+        return root._make(accent, none, none, text(own), text(own));
       const group = style.gradient ?? style.group;
       const label = text(fill === "filled" ? root.readableOn(group, style.barText) : style.barText);
       return root._make(unfilled, none, none, label, graded && fill === "filled" ? label : accent);

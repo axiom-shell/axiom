@@ -439,6 +439,28 @@ TestCase {
     }, options), accent, own);
   }
 
+  // In a merged split run, a widget that doesn't split (icon or text
+  // alone, one drawing its own content) fills its own box: a tab in the
+  // row, as the others' icon parts are
+  function test_unsplit_widget_fills_its_box_in_a_merged_split_run() {
+    const c = split("tint", {
+      "splits": false,
+      "group": "#222222"
+    });
+    same(c.fill, accent, "its box");
+    same(c.text, own, "text on it");
+    same(c.icon, own, "icon on it");
+    // Separate, it draws as filled anyway
+    same(split("tint", {
+      "splits": false
+    }).fill, accent, "separate");
+    // Under the gradient its box takes its slice
+    compare(gradientStyled("split", true, "#222222").gradient, {
+      "part": "fill",
+      "alpha": 1
+    });
+  }
+
   function test_split_fills_the_icon_part_and_sets_the_label_apart() {
     const tint = split("tint");
     same(tint.iconFill, accent, "icon part");
@@ -484,11 +506,12 @@ TestCase {
     same(c.iconFill, accent, "icon part");
     same(c.icon, own, "icon reads on it");
     same(c.text, "#000000", "label reads on the run");
-    // A widget with no parts: as a filled merged one
+    // A widget with no parts fills its own box on the run
+    // (test_unsplit_widget_fills_its_box_in_a_merged_split_run)
     same(split("tint", {
       "group": light,
       "splits": false
-    }).icon, accent, "the icon keeps the state");
+    }).fill, accent, "its own box");
   }
 
   function test_split_cells_are_filled() {
