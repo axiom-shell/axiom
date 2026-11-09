@@ -37,7 +37,8 @@ Item {
   property var hitArea: null
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property real spacing: barConfig.innerGap
+  // Between cells (`spacing`: BarsConfig.workspaceCellSpacing)
+  readonly property real spacing: BarsConfig.workspaceCellSpacing(barConfig, properties.spacing)
   // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
   readonly property bool solidBoxes: properties.solidBoxes
   // The workspace whose cell is hovered, which its box (drawn apart from

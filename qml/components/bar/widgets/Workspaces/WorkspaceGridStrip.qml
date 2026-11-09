@@ -57,6 +57,7 @@ Item {
   // within the background's
   readonly property real cell: root.barConfig.thickness - root.inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(root.barConfig, root.cell, root.inset)
+  // Between the row and the strip after it
   readonly property real spacing: root.barConfig.innerGap
   // Along the bar: square, or narrower for dots or nothing straight on the bar
   readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.solidBoxes || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
@@ -199,7 +200,7 @@ Item {
         cellSize: root.cell,
         cellLength: root.cellLength,
         barConfig: root.barConfig,
-        cellSpacing: root.spacing,
+        cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing),
         radius: root.cellRadius,
         properties: root.properties
       })

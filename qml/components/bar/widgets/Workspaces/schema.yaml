@@ -108,6 +108,14 @@ settings:
     x-control: stepper
     x-showIf: {showAppIcons: true, appIconsLayout: row}
     description: The most apps a workspace shows, the biggest windows first.
+  spacing:
+    type: string
+    title: Spacing
+    x-control: toggle
+    enum: [tight, bar, wide]
+    x-enumLabels: {tight: Tight, bar: Bar, wide: Wide}
+    default: bar
+    description: 'The gap between workspaces. Tight: none. Bar: the bar''s own gap between items. Wide: twice that.'
   wideActive:
     type: boolean
     title: Wide active

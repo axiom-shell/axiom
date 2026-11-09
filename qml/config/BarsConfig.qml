@@ -254,6 +254,13 @@ QtObject {
     return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state, colors.solidBoxes === true);
   }
 
+  // The gap between Workspaces cells on `barConfig`'s bar for their
+  // `spacing` option: none ("tight"), the bar's inner gap ("bar") or twice
+  // it ("wide")
+  function workspaceCellSpacing(barConfig, spacing) {
+    return spacing === "tight" ? 0 : spacing === "wide" ? barConfig.innerGap * 2 : barConfig.innerGap;
+  }
+
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its
   // widget: a pill for capsule widgets, else the widgets' radius less the
   // inset

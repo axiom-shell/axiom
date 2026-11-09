@@ -159,7 +159,7 @@ Item {
         cellSize: root.cell,
         cellLength: root.cellLength,
         barConfig: root.barConfig,
-        cellSpacing: root.barConfig.innerGap,
+        cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing),
         radius: root.cellRadius,
         properties: root.properties
       })
