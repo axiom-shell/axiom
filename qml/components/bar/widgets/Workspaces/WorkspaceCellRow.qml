@@ -69,8 +69,10 @@ Item {
   // A cell after the widget's first starts square beneath the one before
   // where their boxes hide what's under them (drawn earlier over later);
   // the sliding active box, drawn over them all, always fits against it
-  readonly property var _shapes: run ? ids.map((_, j) => BarCells.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, spacing, chainFirst + j, chainCount)) : null
-  readonly property var _rooms: run ? ids.map((_, j) => BarCells.cellRoom(barConfig, run, _boxedInRun, chainFirst + j, chainCount)) : null
+  readonly property var _shapes: run ? ids.map((_, j) => BarCells.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, spacing, chainFirst + j, chainCount, _content)) : null
+  readonly property var _rooms: run ? ids.map((_, j) => BarCells.cellRoom(barConfig, run, _boxedInRun, chainFirst + j, chainCount, _content)) : null
+  // The tallest a cell's content shows across (its label, or an app icon)
+  readonly property real _content: WorkspaceCells.contentSize(cell, barConfig.fontSize, properties.showAppIcons)
   // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
   // onBar)
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
@@ -212,7 +214,7 @@ Item {
       extra: root.properties.wideActive ? root.cellLength : 0
       spacing: root.spacing
       radius: root.cellRadius
-      shape: root.run && indicator.index >= 0 ? BarCells.cellShape(root.barConfig, root.run, root._boxedInRun, false, root.spacing, root.chainFirst + indicator.index, root.chainCount) : null
+      shape: root.run && indicator.index >= 0 ? BarCells.cellShape(root.barConfig, root.run, root._boxedInRun, false, root.spacing, root.chainFirst + indicator.index, root.chainCount, root._content) : null
       slice: root._activeSlice(indicator.look, indicator.index)
     }
 

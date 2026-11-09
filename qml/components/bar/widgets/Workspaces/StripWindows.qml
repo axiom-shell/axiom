@@ -53,6 +53,8 @@ Grid {
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solid)
   readonly property bool _boxedInRun: _traits.boxedInRun
+  // What a cell shows across: its app icon
+  readonly property real _content: WorkspaceCells.iconSize(thickness)
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the cells are only rebuilt when the windows or their
@@ -89,8 +91,8 @@ Grid {
       inRun: root._inGroup
       // Drawn over the next, which may start beneath it (BarCells.cellSegment)
       z: -index
-      shape: root.run ? BarCells.cellShape(root.barConfig, root.run, root._boxedInRun, root._traits.cellOpaque, root._gap, root.chainFirst + index, root.chainCount) : null
-      room: root.run ? BarCells.cellRoom(root.barConfig, root.run, root._boxedInRun, root.chainFirst + index, root.chainCount) : null
+      shape: root.run ? BarCells.cellShape(root.barConfig, root.run, root._boxedInRun, root._traits.cellOpaque, root._gap, root.chainFirst + index, root.chainCount, root._content) : null
+      room: root.run ? BarCells.cellRoom(root.barConfig, root.run, root._boxedInRun, root.chainFirst + index, root.chainCount, root._content) : null
       length: root.cellLength + (windowCell.room ? windowCell.room.lead + windowCell.room.trail : 0)
       radius: root.radius
       hoverColor: root.hoverColor

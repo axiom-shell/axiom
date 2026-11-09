@@ -54,11 +54,13 @@ Item {
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solid)
   readonly property bool _boxedInRun: _traits.boxedInRun
-  readonly property var _room: run ? BarCells.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
+  // What it shows across: app icons
+  readonly property real _content: WorkspaceCells.iconSize(thickness)
+  readonly property var _room: run ? BarCells.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount, _content) : null
   readonly property real _lead: _room?.lead ?? 0
   // Its box's shape as a segment (BarCells.cellShape), else null, and
   // what it draws past its bounds (BarCells.cellMargins)
-  readonly property var _shape: run ? BarCells.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, cellSpacing, chainFirst, chainCount) : null
+  readonly property var _shape: run ? BarCells.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, cellSpacing, chainFirst, chainCount, _content) : null
   readonly property var _margins: BarCells.cellMargins(_shape, _shape, isVertical)
   // How far icon `index`'s pointer area reaches past its room, sharing
   // the box: the first back to the box's start, the last on to its end,

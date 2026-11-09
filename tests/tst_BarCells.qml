@@ -15,17 +15,17 @@ TestCase {
     }, "separate", false, {
       "index": 1,
       "count": 3
-    }, 1, 3, 30);
+    }, 1, 3, 30, false, 20);
     compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 10]);
     const r = BarCells.cellSegment({
       "name": "rounded",
       "ends": "shaped"
-    }, "separate", false, null, 0, 2, 30);
+    }, "separate", false, null, 0, 2, 30, false, 20);
     compare([r.startCap, r.endCap, r.lead, r.trail], ["round", "round", 0, 0]);
     compare(BarCells.cellSegment({
       "name": "tab",
       "ends": "shaped"
-    }, "separate", false, null, 0, 2, 30).startCap, "tab");
+    }, "separate", false, null, 0, 2, 30, false, 20).startCap, "tab");
   }
 
   // Powerline: the cells chain on in the bar's chain, as one run with the
@@ -41,22 +41,22 @@ TestCase {
     const first = BarCells.cellSegment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", true, place, 0, 2, 30);
+    }, "powerline", true, place, 0, 2, 30, false, 20);
     const last = BarCells.cellSegment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", true, place, 1, 2, 30);
+    }, "powerline", true, place, 1, 2, 30, false, 20);
     compare([first.startCap, first.endCap, first.back, first.lead, first.trail, first.seamStart], ["arrowIn", "arrowOut", 15, 0, 15, true]);
     compare([last.startCap, last.endCap, last.back, last.lead, last.trail], ["arrowIn", "arrowOut", 15, 0, 15]);
     // Alone, the first cell takes the run's start and the last its end
     const a = BarCells.cellSegment({
       "name": "slant",
       "ends": "shaped"
-    }, "powerline", true, null, 0, 3, 30);
+    }, "powerline", true, null, 0, 3, 30, false, 20);
     const z = BarCells.cellSegment({
       "name": "slant",
       "ends": "shaped"
-    }, "powerline", true, null, 2, 3, 30);
+    }, "powerline", true, null, 2, 3, 30, false, 20);
     compare([a.startCap, a.back, a.lead], ["slant", 0, 9]);
     compare([z.endCap, z.back, z.trail], ["slant", 10, 5 + 9]);
     // The run's last widget: its last cell gives the run's end cap
@@ -66,14 +66,14 @@ TestCase {
     }, "powerline", false, {
       "index": 2,
       "count": 3
-    }, 2, 3, 30);
+    }, 2, 3, 30, false, 20);
     compare([end.endCap, end.seamEnd], ["arrowOut", false]);
     // Opaque cells: a later one starts square beneath the one before; the
     // widget's first still fits against the cap before it
     const opaque = cell => BarCells.cellSegment({
         "name": "arrow",
         "ends": "shaped"
-      }, "powerline", false, place, cell, 2, 30, true);
+      }, "powerline", false, place, cell, 2, 30, true, 20);
     compare([opaque(0).startCap, opaque(0).seamStart], ["arrowIn", true]);
     compare([opaque(1).startCap, opaque(1).back, opaque(1).seamStart], ["flat", 15, false]);
   }
@@ -88,11 +88,11 @@ TestCase {
     const first = BarCells.cellSegment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", false, place, 0, 3, 30);
+    }, "merged", false, place, 0, 3, 30, false, 20);
     const middle = BarCells.cellSegment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", false, place, 1, 3, 30);
+    }, "merged", false, place, 1, 3, 30, false, 20);
     compare([first.lead, first.trail, first.back], [9, 0, 0]);
     compare([middle.lead, middle.trail], [0, 0]);
     compare([middle.startCap, middle.endCap], ["slant", "slant"], "a box of its own: the caps it has alone");
@@ -100,7 +100,7 @@ TestCase {
     const boxed = BarCells.cellSegment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", true, place, 1, 3, 30);
+    }, "merged", true, place, 1, 3, 30, false, 20);
     compare([boxed.lead, boxed.trail, boxed.seamStart, boxed.seamEnd], [9, 9, false, false]);
   }
 
@@ -169,9 +169,9 @@ TestCase {
       "reachEnd": 2,
       "tabLimits": [null, null]
     };
-    const shape = BarCells.cellShape(look, run, false, false, 0, 0, 2);
+    const shape = BarCells.cellShape(look, run, false, false, 0, 0, 2, 20);
     compare([shape.segment.startCap, shape.segment.back, shape.tab, shape.reachStart, shape.reachEnd], ["arrowIn", 15, null, 1, 2]);
-    compare(BarCells.cellRoom(look, run, false, 0, 2).lead, 15, "room from what's shown");
+    compare(BarCells.cellRoom(look, run, false, 0, 2, 20).lead, 15, "room from what's shown");
     const tab = BarCells.cellShape(cellBar("tab", "separate", 0, {
       "bottom": true
     }), null, false, false, 4, 0, 1);
@@ -315,7 +315,7 @@ TestCase {
       "index": 0,
       "count": 2
     };
-    const lead = (stroke, grouping, boxed) => BarCells.cellSegment(shape(stroke), grouping, boxed, place, 0, 3, 30).lead;
+    const lead = (stroke, grouping, boxed) => BarCells.cellSegment(shape(stroke), grouping, boxed, place, 0, 3, 30, false, 20).lead;
     // Separate: its own box, a double's three 1 px lines (8 - sqrt(5² - 3²))
     compare(lead("double", "separate", false), 4);
     compare(lead("solid", "separate", false), 3);
@@ -329,6 +329,10 @@ TestCase {
     compare(lead("double", "powerline", false), 4);
     compare(lead("solid", "powerline", true), 1);
     // The run's middle keeps none
-    compare(BarCells.cellSegment(shape("solid"), "merged", false, place, 1, 3, 30).lead, 0);
+    compare(BarCells.cellSegment(shape("solid"), "merged", false, place, 1, 3, 30, false, 20).lead, 0);
+    // Content 14 across (a number) lies inside the corner's straight
+    // side: the stroke's band alone, a merged run's or its own box's
+    compare(BarCells.cellSegment(shape("double"), "merged", false, place, 0, 3, 30, false, 14).lead, 6);
+    compare(BarCells.cellSegment(shape("double"), "separate", false, place, 0, 3, 30, false, 14).lead, 3);
   }
 }

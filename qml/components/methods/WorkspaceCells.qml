@@ -56,6 +56,16 @@ QtObject {
     return t - 2 * Math.round(t * 0.175);
   }
 
+  // The tallest a cell's content shows across, on a bar `thickness` thick
+  // with text `fontSize`: its label (a symbol's, the largest drawn,
+  // WorkspaceCell), or with `appIcons` an app icon if that's taller. From
+  // the bar's sizes, never measured: what a cell keeps clear of its caps
+  // (BarCells.cellRoom)
+  function contentSize(thickness, fontSize, appIcons) {
+    const label = Math.round(fontSize * 1.2);
+    return appIcons ? Math.max(label, root.iconSize(thickness)) : label;
+  }
+
   // The gap between a row's app icons
   function iconGap(thickness) {
     return Math.round(thickness * 0.1);

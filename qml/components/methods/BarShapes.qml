@@ -106,24 +106,22 @@ QtObject {
     return outline.stroke === "double" ? outline.width * 3 : outline.width;
   }
 
-  // Room content keeps clear of a run's end `cap` on a widget `across`
-  // thick (round caps of `radius`): how far in from the end the inner
-  // edge of what's drawn there lies (the cap, inset by an outline's
-  // `band`, strokeBand) at the content's edges across, where it reaches
-  // furthest into the content's rows. The content is taken as the
-  // tallest a widget shows, centred: two thirds of the thickness (a
-  // Workspaces app icon, WorkspaceCells.iconSize). In whole pixels, so
-  // content inset by it stays on whole pixels.
-  function _clearOf(cap, across, radius, band) {
-    return Math.ceil(root._innerEdge(cap, across, radius, band) - 1e-6);
+  // Room content `content` high across, centred, keeps clear of a run's
+  // end `cap` on a widget `across` thick (round caps of `radius`): how far
+  // in from the end the inner edge of what's drawn there lies (the cap,
+  // inset by an outline's `band`, strokeBand) at the content's edges
+  // across, where it reaches furthest into the content's rows. In whole
+  // pixels, so content inset by it stays on whole pixels.
+  function _clearOf(cap, across, radius, band, content) {
+    return Math.ceil(root._innerEdge(cap, across, radius, band, content) - 1e-6);
   }
 
   // _clearOf's inner edge, unrounded. A slant's or arrow's inset side
   // lies `band` square to it, further along the bar.
-  function _innerEdge(cap, across, radius, band) {
+  function _innerEdge(cap, across, radius, band, content) {
     const half = across / 2;
     // From the middle out to the content's edge
-    const off = across / 3;
+    const off = Math.min(across, Math.max(0, content)) / 2;
     const d = root.depth(cap, across);
     switch (cap) {
     case "round":
@@ -150,18 +148,20 @@ QtObject {
     }
   }
 
-  // Widget `index` of a run of `count` in a look's `shape` (look.shape:
-  // { name, ends, radius (its round caps'), outline (look.outline: the
-  // stroke its run's ends draw, or null), capped (false: no box is drawn
-  // at its ends, so its content keeps no room there) }; a radius or
-  // outline it leaves out is none, a `capped` true), `grouping`
-  // (look.grouping) and `opaque` (its
-  // `opaque` trait): { startCap, endCap, shownStart, levelStartCap,
-  // levelEndCap, back, lead, trail, seamStart, seamEnd }. `back` is how
-  // far its background reaches back under the one before; `lead`/`trail`
-  // the room its content keeps at each end: at the run's ends clear of
-  // its cap and stroke (_clearOf). In a merged run only the run's
-  // ends have caps (the run is one background). `opaque`: the fill hides
+  // Widget `index` of a run of `count`, `across` thick, its content
+  // `content` high across (the tallest it shows, from the bar's sizes,
+  // never measured: the whole thickness left out), in a look's `shape`
+  // (look.shape: { name, ends, radius (its round caps'), outline
+  // (look.outline: the stroke its run's ends draw, or null), capped
+  // (false: no box is drawn at its ends, so its content keeps no room
+  // there) }; a radius or outline it leaves out is none, a `capped`
+  // true), `grouping` (look.grouping) and `opaque` (its `opaque` trait):
+  // { startCap, endCap, shownStart, levelStartCap, levelEndCap, back,
+  // lead, trail, seamStart, seamEnd }. `back` is how far its background
+  // reaches back under the one before; `lead`/`trail` the room its
+  // content keeps at each end: at the run's ends clear of its cap and
+  // stroke at the content's edges (_clearOf). In a merged run only the
+  // run's ends have caps (the run is one background). `opaque`: the fill hides
   // what's under it, so a powerline segment can start square beneath the
   // one before instead of fitting against it. `seamStart`/`seamEnd`: that end meets a
   // neighbour's edge to edge, so an outline there is drawn on the seam
@@ -175,7 +175,7 @@ QtObject {
   // its first `join` px, to its own end cap: on average half a join
   // earlier than its box at each joined end. Its content keeps that much
   // more room at the end, so it sits centred on what shows.
-  function segment(shape, grouping, opaque, index, count, across) {
+  function segment(shape, grouping, opaque, index, count, across, content) {
     const ends = root._ends(shape);
     const joins = root._joins(shape.name);
     const alone = grouping === "separate";
@@ -188,7 +188,7 @@ QtObject {
     const endCap = last ? ends[1] : powerline ? joins[0] : "flat";
     const merged = grouping === "merged";
     const band = root.strokeBand(shape.outline ?? null);
-    const clear = cap => shape.capped === false ? 0 : root._clearOf(cap, across, shape.radius, band);
+    const clear = cap => shape.capped === false ? 0 : root._clearOf(cap, across, shape.radius, band, content ?? across);
     return {
       "startCap": startCap,
       "shownStart": first ? ends[0] : powerline ? joins[1] : "flat",

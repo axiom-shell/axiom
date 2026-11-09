@@ -233,9 +233,10 @@ Item {
     return BarGradient.spot(along, 0, root.barStart, root.barLength);
   }
 
-  // The caps and insets at `place` in a run (BarShapes.segment)
+  // The caps and insets at `place` in a run (BarShapes.segment), its
+  // content an icon or a label at the bar's font size
   function segmentAt(place) {
-    return BarShapes.segment(root.barConfig.look.shape, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
+    return BarShapes.segment(root.barConfig.look.shape, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness, root.barConfig.fontSize);
   }
 
   implicitWidth: isVertical ? root.barConfig.thickness : usedLength

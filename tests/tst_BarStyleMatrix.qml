@@ -40,6 +40,8 @@ TestCase {
     })
   // Widget.radius's stand-in, for a look with no widgetRadius
   readonly property int widgetRadius: 8
+  // Appearance.baseFontSize's stand-in (the schema's default)
+  readonly property int baseFontSize: 14
 
   function resolve(name) {
     return Qt.color(root.theme[name] ?? name);
@@ -138,6 +140,7 @@ TestCase {
       "thickness": thickness,
       "innerPadding": innerPadding,
       "innerGap": innerGap,
+      "fontSize": Math.round(root.baseFontSize * scale * look.textScale / 100),
       "groupSpacing": groupSpacing,
       "radius": look.radius,
       "right": geo.location === "right",
@@ -228,19 +231,22 @@ TestCase {
     return [traits.cellOpaque, traits.boxedInRun];
   }
 
+  // A widget's content across: an icon or a label at the bar's font size
+  // (a 26 px bar's at 100%: the base font's)
   function segment(shape, ends, grouping, opaque, index, count, across) {
     return BarShapes.segment({
       "name": shape,
       "ends": ends
-    }, grouping, opaque, index, count, across);
+    }, grouping, opaque, index, count, across, root.baseFontSize * across / 26);
   }
 
+  // A cell's content across: its label (no app icons)
   function cellShape(bar, run, boxed, opaque, gap, cell, cells) {
-    return BarCells.cellShape(bar, run, boxed, opaque, gap, cell, cells);
+    return BarCells.cellShape(bar, run, boxed, opaque, gap, cell, cells, WorkspaceCells.contentSize(bar.thickness, bar.fontSize, false));
   }
 
   function cellRoom(bar, run, boxed, cell, cells) {
-    return BarCells.cellRoom(bar, run, boxed, cell, cells);
+    return BarCells.cellRoom(bar, run, boxed, cell, cells, WorkspaceCells.contentSize(bar.thickness, bar.fontSize, false));
   }
 
   function runDraws(bar, run) {

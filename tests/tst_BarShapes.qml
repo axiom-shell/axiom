@@ -10,12 +10,12 @@ TestCase {
     const s = BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "separate", true, 1, 3, 30);
+    }, "separate", true, 1, 3, 30, 20);
     compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 10]);
     const r = BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
-    }, "separate", true, 0, 1, 30);
+    }, "separate", true, 0, 1, 30, 20);
     compare([r.startCap, r.endCap, r.lead, r.trail], ["round", "round", 0, 0]);
   }
 
@@ -23,15 +23,15 @@ TestCase {
     const first = BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", true, 0, 3, 30);
+    }, "merged", true, 0, 3, 30, 20);
     const middle = BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", true, 1, 3, 30);
+    }, "merged", true, 1, 3, 30, 20);
     const last = BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", true, 2, 3, 30);
+    }, "merged", true, 2, 3, 30, 20);
     compare([first.startCap, first.lead, first.trail], ["slant", 9, 0]);
     compare([middle.startCap, middle.endCap, middle.lead, middle.trail, middle.back], ["flat", "flat", 0, 0, 0]);
     compare([last.endCap, last.trail], ["slant", 9]);
@@ -41,22 +41,22 @@ TestCase {
     const middle = BarShapes.segment({
       "name": "capsule",
       "ends": "shaped"
-    }, "merged", true, 1, 3, 30);
+    }, "merged", true, 1, 3, 30, 20);
     compare([middle.levelStartCap, middle.levelEndCap], ["capsule", "capsule"]);
     const first = BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
-    }, "merged", true, 0, 2, 30);
+    }, "merged", true, 0, 2, 30, 20);
     compare([first.levelStartCap, first.levelEndCap], ["round", "round"]);
     const lone = BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "separate", true, 0, 1, 30);
+    }, "separate", true, 0, 1, 30, 20);
     compare([lone.levelStartCap, lone.levelEndCap], ["arrowIn", "arrowOut"]);
     const segment = BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", false, 1, 3, 30);
+    }, "powerline", false, 1, 3, 30, 20);
     compare([segment.levelStartCap, segment.levelEndCap], ["arrowIn", "arrowOut"]);
   }
 
@@ -64,11 +64,11 @@ TestCase {
     const first = BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", true, 0, 2, 30);
+    }, "powerline", true, 0, 2, 30, 20);
     const second = BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", true, 1, 2, 30);
+    }, "powerline", true, 1, 2, 30, 20);
     compare([first.startCap, first.endCap, first.back, first.lead], ["arrowIn", "arrowOut", 0, 15]);
     // Opaque: square, beneath the arrow before it
     compare([second.startCap, second.back, second.lead], ["flat", 15, 0]);
@@ -77,15 +77,15 @@ TestCase {
     compare(BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", false, 1, 2, 30).startCap, "arrowIn");
+    }, "powerline", false, 1, 2, 30, 20).startCap, "arrowIn");
     compare(BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
-    }, "powerline", false, 1, 2, 30).startCap, "roundIn");
+    }, "powerline", false, 1, 2, 30, 20).startCap, "roundIn");
     compare(BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "powerline", false, 1, 2, 30).startCap, "slant");
+    }, "powerline", false, 1, 2, 30, 20).startCap, "slant");
   }
 
   // Content sits centred on what shows of a segment: from half a join
@@ -96,7 +96,7 @@ TestCase {
     const at = index => BarShapes.segment({
         "name": "arrow",
         "ends": "shaped"
-      }, "powerline", true, index, 3, 30);
+      }, "powerline", true, index, 3, 30, 20);
     const first = at(0), middle = at(1), last = at(2);
     compare([first.lead, first.trail], [15, join / 2]);
     compare([middle.lead, middle.trail], [0, join]);
@@ -110,11 +110,11 @@ TestCase {
       const first = BarShapes.segment({
         "name": shape,
         "ends": ends
-      }, grouping, true, 0, 2, 30);
+      }, grouping, true, 0, 2, 30, 20);
       const last = BarShapes.segment({
         "name": shape,
         "ends": ends
-      }, grouping, true, 1, 2, 30);
+      }, grouping, true, 1, 2, 30, 20);
       return [first.startCap, last.endCap, first.lead];
     };
     ["separate", "merged", "powerline"].forEach(grouping => {
@@ -129,7 +129,7 @@ TestCase {
     const last = BarShapes.segment({
       "name": "arrow",
       "ends": "rounded"
-    }, "powerline", true, 1, 2, 30);
+    }, "powerline", true, 1, 2, 30, 20);
     compare([last.back, last.trail], [15, 7.5]);
   }
 
@@ -137,17 +137,17 @@ TestCase {
     const opaque = BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
-    }, "powerline", true, 1, 3, 30);
+    }, "powerline", true, 1, 3, 30, 20);
     const clear = BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
-    }, "powerline", false, 1, 3, 30);
+    }, "powerline", false, 1, 3, 30, 20);
     compare([opaque.seamStart, opaque.seamEnd], [false, false]);
     compare([clear.seamStart, clear.seamEnd], [true, true]);
     const alone = BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
-    }, "separate", false, 0, 1, 30);
+    }, "separate", false, 0, 1, 30, 20);
     compare([alone.seamStart, alone.seamEnd], [false, false]);
   }
 
@@ -155,19 +155,19 @@ TestCase {
     compare(BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "powerline", true, 1, 2, 30).shownStart, "slant");
+    }, "powerline", true, 1, 2, 30, 20).shownStart, "slant");
     compare(BarShapes.segment({
       "name": "arrow",
       "ends": "shaped"
-    }, "powerline", true, 1, 2, 30).shownStart, "arrowIn");
+    }, "powerline", true, 1, 2, 30, 20).shownStart, "arrowIn");
     compare(BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "merged", true, 1, 3, 30).shownStart, "flat");
+    }, "merged", true, 1, 3, 30, 20).shownStart, "flat");
     compare(BarShapes.segment({
       "name": "slant",
       "ends": "shaped"
-    }, "separate", true, 0, 1, 30).shownStart, "slant");
+    }, "separate", true, 0, 1, 30, 20).shownStart, "slant");
   }
 
   function test_contains_follows_the_caps() {
@@ -210,12 +210,12 @@ TestCase {
     const lone = BarShapes.segment({
       "name": "tab",
       "ends": "shaped"
-    }, "separate", true, 0, 1, 30);
+    }, "separate", true, 0, 1, 30, 20);
     compare([lone.startCap, lone.endCap, lone.lead, lone.trail, lone.back], ["tab", "tab", 0, 0, 0]);
     const middle = BarShapes.segment({
       "name": "tab",
       "ends": "shaped"
-    }, "merged", true, 1, 3, 30);
+    }, "merged", true, 1, 3, 30, 20);
     compare([middle.startCap, middle.endCap, middle.levelStartCap], ["flat", "flat", "tab"]);
   }
 
@@ -320,9 +320,10 @@ TestCase {
     }), 3);
   }
 
-  // A run's ends keep their content (the middle two thirds across) clear
-  // of the cap's curve where it reaches into the content's rows and of
-  // the stroke inset round it, in whole pixels; a run's middle keeps none
+  // A run's ends keep their content (here 20 px across, centred: a
+  // Workspaces app icon) clear of the cap's curve where it reaches into
+  // the content's rows and of the stroke inset round it, in whole pixels;
+  // a run's middle keeps none
   function test_run_ends_keep_clear_of_the_curve_and_the_stroke() {
     const room = (name, outline, radius, grouping, index, count) => {
       const s = BarShapes.segment({
@@ -330,7 +331,7 @@ TestCase {
         "ends": "shaped",
         "radius": radius,
         "outline": outline
-      }, grouping ?? "separate", false, index ?? 0, count ?? 1, 30);
+      }, grouping ?? "separate", false, index ?? 0, count ?? 1, 30, 20);
       return [s.lead, s.trail];
     };
     const solid = {
@@ -377,6 +378,37 @@ TestCase {
     compare(room("rounded", solid, 8, "powerline", 1, 3), [0, 15]);
   }
 
+  // The room follows the content's own height: a glyph icon (14 px on a
+  // 30 px bar) sits nearer a round end's corner than a 20 px app icon,
+  // and the whole thickness, left out, keeps the most
+  function test_run_ends_keep_room_for_the_content_height() {
+    const room = (name, outline, radius, content) => {
+      const s = BarShapes.segment({
+        "name": name,
+        "ends": "shaped",
+        "radius": radius,
+        "outline": outline
+      }, "separate", false, 0, 1, 30, content);
+      return [s.lead, s.trail];
+    };
+    const double = {
+      "width": 2,
+      "stroke": "double"
+    };
+    // Double at radius 10: its inner line 4 round the corner's centre,
+    // the content's edge 2 past it: 10 - sqrt(4² - 2²) = 6.54
+    compare(room("rounded", double, 10, 14), [7, 7]);
+    compare(room("rounded", double, 10, 20), [10, 10], "past the inner line: the corner's centre");
+    // Content inside the straight sides keeps the stroke's band alone
+    compare(room("rounded", double, 8, 14), [6, 6]);
+    // Capsule: 15 - sqrt(15² - 7²) = 1.73
+    compare(room("capsule", null, 8, 14), [2, 2]);
+    compare(room("capsule", null, 8), [15, 15], "the whole thickness: the curve's depth");
+    // Slant and arrow: their sides at the content's edges
+    compare(room("slant", null, 8, 14), [8, 8]);
+    compare(room("arrow", null, 8, 14), [15, 7]);
+  }
+
   // No box drawn at its ends (an unboxed style, a separate badge): its
   // content keeps no room there
   function test_uncapped_ends_keep_no_room() {
@@ -386,7 +418,7 @@ TestCase {
       "radius": 8,
       "outline": null,
       "capped": false
-    }, "separate", false, 0, 1, 30);
+    }, "separate", false, 0, 1, 30, 20);
     compare([s.startCap, s.lead, s.trail], ["slant", 0, 0]);
   }
 }

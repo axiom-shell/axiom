@@ -15,8 +15,9 @@ QtObject {
   // itself (Workspaces with its Background off: its workspaces, then its
   // strip's windows), the widget at `place` in its run ({ index, count },
   // BarLayout.runPlaces; null alone), in a look's `shape` and `grouping`
-  // (BarShapes.segment's): segment's { startCap, endCap, shownStart, back,
-  // lead, trail, seamStart, seamEnd }.
+  // (BarShapes.segment's), its content `content` high across (segment's):
+  // segment's { startCap, endCap, shownStart, back, lead, trail,
+  // seamStart, seamEnd }.
   //   separate   each cell alone, in the shape's own ends
   //   powerline  the cells chain on in the bar's chain: the widget's first
   //              cell takes the cap the segment before it expects, its last
@@ -33,11 +34,11 @@ QtObject {
   // run the run's (the look's outline), else the cell's own box's
   // (cellOutline); a box of its own in a run (`boxed`) draws its stroke
   // in its fill's color, so only its caps count.
-  function cellSegment(shape, grouping, boxed, place, cell, cells, across, opaque) {
+  function cellSegment(shape, grouping, boxed, place, cell, cells, across, opaque, content) {
     const own = Object.assign({}, shape, {
       "outline": boxed ? null : root.cellOutline(shape.outline ?? null)
     });
-    const lone = BarShapes.segment(own, "separate", false, 0, 1, across);
+    const lone = BarShapes.segment(own, "separate", false, 0, 1, across, content);
     const pick = (s, startCap, endCap, lead, trail) => ({
           "startCap": startCap,
           "endCap": endCap,
@@ -54,7 +55,7 @@ QtObject {
       return pick(lone, lone.startCap, lone.endCap, lone.lead, lone.trail);
     const index = (place?.index ?? 0) + cell;
     const count = (place?.count ?? 1) + Math.max(1, cells) - 1;
-    const s = BarShapes.segment(grouping === "powerline" ? own : shape, grouping, opaque === true && cell > 0, index, count, across);
+    const s = BarShapes.segment(grouping === "powerline" ? own : shape, grouping, opaque === true && cell > 0, index, count, across, content);
     if (grouping === "powerline")
       return pick(s, s.startCap, s.endCap, s.lead, s.trail);
     return pick(s, s.levelStartCap, s.levelEndCap, boxed ? lone.lead : s.lead, boxed ? lone.trail : s.trail);
@@ -101,12 +102,14 @@ QtObject {
   // reaches past it across, a tab's out to its edge), drawStart, drawEnd
   // (how far it draws past it along the bar: back under the cell before,
   // and a flared tab's fillets out past its sides) }. `boxed`, `opaque`
-  // and `gap`: cellSegment's and cellTab's. What it draws past its bounds
-  // is what every clip holding it keeps (cellMargins) and, but for the
-  // fillets, where it's hovered and clicked (cellContains).
-  function cellShape(bar, run, boxed, opaque, gap, cell, cells) {
+  // and `gap`: cellSegment's and cellTab's, and `content` the cell's
+  // content's height across (WorkspaceCells.contentSize). What it draws
+  // past its bounds is what every clip holding it keeps (cellMargins)
+  // and, but for the fillets, where it's hovered and clicked
+  // (cellContains).
+  function cellShape(bar, run, boxed, opaque, gap, cell, cells, content) {
     const shape = bar.look.shape;
-    const segment = root.cellSegment(shape, bar.look.grouping, boxed, run?.drawn ?? null, cell, cells, bar.thickness, opaque);
+    const segment = root.cellSegment(shape, bar.look.grouping, boxed, run?.drawn ?? null, cell, cells, bar.thickness, opaque, content);
     const tab = shape.name === "tab" ? root.cellTab(bar.radius, bar.thickness, shape.tabFillet, gap, !(bar.right || bar.bottom), run?.tabLimits ?? null, cell, cells) : null;
     return {
       "segment": segment,
@@ -165,9 +168,10 @@ QtObject {
 
   // The room cell `cell` of `cells` keeps clear of its caps along the bar
   // (cellSegment's lead and trail), from what its widget shows (`run.sized`,
-  // never the room it's given, which this helps decide): { lead, trail }
-  function cellRoom(bar, run, boxed, cell, cells) {
-    const s = root.cellSegment(bar.look.shape, bar.look.grouping, boxed, run?.sized ?? null, cell, cells, bar.thickness);
+  // never the room it's given, which this helps decide), its content
+  // `content` high across (WorkspaceCells.contentSize): { lead, trail }
+  function cellRoom(bar, run, boxed, cell, cells, content) {
+    const s = root.cellSegment(bar.look.shape, bar.look.grouping, boxed, run?.sized ?? null, cell, cells, bar.thickness, false, content);
     return {
       "lead": s.lead,
       "trail": s.trail
