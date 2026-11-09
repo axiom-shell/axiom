@@ -4207,6 +4207,7 @@
     "Your own label for a workspace, by the number its cell shows: an icon, text or both. It wins over app icons and names.": "",
     "Merged outline": "",
     "The line round each merged run. Widget colors show on their icons instead.": "",
-    "A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.": ""
+    "A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.": "",
+    "Bar style": ""
   }
 }

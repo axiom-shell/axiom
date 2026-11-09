@@ -16,7 +16,7 @@ The BarEditor overlay page: the bar list and its settings under tabs, the sectio
     - Their form reads `BarsConfig.lookOf(bar)`, so a look field's `x-showIf` sees what the bar draws, even from a group it doesn't override.
     - Each field has its change marks (`FieldChangeMarks` through the form's `changedAt`): a dot while it differs from the saved bar (`BarManager.barFieldChanged` / `styleFieldChanged`; clicking it puts the saved value back, `discardBarField` / `discardStyleField`), and a reset to the schema default.
   - The Surface group's header copies the bar's look (`BarManager.styleKeys`: its style and its Size and Surface settings) and pastes it onto one bar or onto all. The copied style follows its bar by index.
-  - The style groups (`BarsConfig.styleGroups`) are shared with every bar until the bar takes its own; each links (`SettingsLink`) to its card in the shared `Bars.style` on the settings page.
+  - The style groups (`BarsConfig.styleGroups`) are shared with every bar until the bar takes its own; each links (`SettingsLink`) to the shared `Bars.style` on the settings page (its Bar style card, one row drawing every style setting).
 - **Right: `BarDragLayer`.** It holds `SectionsBoard` across the top, as deep as its rows (`board.implicitHeight`), whatever the bar's edge, with `WidgetInspector` under it. A side bar's board is drawn as a top bar's; only its sections' names follow its direction (`barVertical`: Top, Center, Bottom).
   - `WidgetInspector` shows two cards, both always: the inspector (about 55%) and the widget library, side by side, or one over the other when its room is taller than wide (`stacked`).
 

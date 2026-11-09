@@ -151,6 +151,52 @@ TestCase {
     compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["S.kb:", "S.kb.sources:", "S.kb.method:", "S.kb.method.enabled:S.kb.sources", "S.kb.method.other:"]);
   }
 
+  // An object with `x-row` is one row drawing everything under it: its
+  // `object` row, then every row inside `drawnBy` its path (groups too),
+  // with no `foldedBy` and its `x-showIf` as their `groupShowIf`
+  function test_rows_object_row() {
+    const rows = SchemaLayout.rows({
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "style": {
+          "type": "object",
+          "title": "Style",
+          "x-row": "Block",
+          "x-showIf": {
+            "on": true
+          },
+          "x-order": ["a", "inner"],
+          "properties": {
+            "a": {
+              "type": "string",
+              "title": "A"
+            },
+            "inner": {
+              "type": "object",
+              "x-fold": true,
+              "properties": {
+                "b": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "hidden": {
+              "type": "string",
+              "x-settings": false
+            }
+          }
+        }
+      }
+    }, ["S"]);
+    compare(rows.map(r => r.kind + ":" + r.path.join(".") + ":" + (r.drawnBy ?? "")), ["field:S.on:", "object:S.style:", "field:S.style.a:S.style", "group:S.style.inner:S.style", "field:S.style.inner.b:S.style"]);
+    compare(rows[1].title, "Style");
+    compare(rows[1].schema["x-row"], "Block");
+    compare(rows.map(r => r.foldedBy ?? ""), ["", "", "", "", ""], "its folds aren't drawn");
+    compare(rows.map(r => (r.groupShowIf ?? []).map(outer => JSON.stringify(outer.condition) + "@" + outer.path.join(".")).join(",")), ["", "", "{\"on\":true}@S", "{\"on\":true}@S", "{\"on\":true}@S"]);
+  }
+
   // An icon field's `x-iconText` draws its mode and text siblings: their
   // rows are `drawnBy` it, and drawnKeys names them
   function test_rows_icon_text() {
@@ -698,6 +744,65 @@ TestCase {
       }
     }, "S");
     compare(groups.map(group => [group.title, group.wide]), [["S", true], ["S", false], ["B", true]]);
+  }
+
+  // A nested object with `x-row` is a card of its own, titled by it, its
+  // one row and the rows it draws; `x-wide` on it widens that card
+  function test_object_row_card() {
+    const groups = SchemaLayout.groups({
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "S",
+          "properties": {
+            "a": {
+              "type": "string"
+            },
+            "style": {
+              "type": "object",
+              "title": "Style",
+              "description": "How it looks",
+              "x-row": "Block",
+              "x-wide": true,
+              "properties": {
+                "b": {
+                  "type": "string",
+                  "x-group": "B"
+                },
+                "c": {
+                  "type": "string",
+                  "x-group": "C",
+                  "x-wide": false
+                }
+              }
+            },
+            "other": {
+              "type": "object",
+              "title": "Other",
+              "properties": {
+                "d": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }, "S");
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["S", "S", false], ["S.style", "Style", true], ["S.other", "Other", false]], "its fields' `x-group`s make no cards");
+    compare(groups[1].description, "How it looks");
+    compare(groups[1].rows.map(row => row.kind + ":" + row.path.join(".") + ":" + (row.drawnBy ?? "")), ["object:S.style:", "field:S.style.b:S.style", "field:S.style.c:S.style"]);
+  }
+
+  // Bars.style is one wide card, the Bar style block, drawing every style
+  // setting
+  function test_real_schema_bar_style_block() {
+    const groups = SchemaLayout.groups(schema, "Bars");
+    compare(groups.map(group => [group.key, group.title, group.wide]), [["Bars.style", "Bar style", true]]);
+    compare(groups[0].rows[0].kind, "object");
+    compare(groups[0].rows[0].schema["x-row"], "BarStyleBlock");
+    compare(groups[0].rows.slice(1).filter(row => row.drawnBy !== "Bars.style"), [], "every row under it is drawn by it");
+    verify(groups[0].rows.some(row => row.path.join(".") === "Bars.style.shadow.size"), "the nested shadow's too");
   }
 
   // Wide cards ahead of every narrow one stay first, the rest go last;
@@ -1319,6 +1424,69 @@ TestCase {
     const folded = SchemaLayout.locate(schema, "Input.keyboard.method.framework");
     compare([folded.row, folded.fold], [["Input", "keyboard", "method", "framework"], "Input.keyboard.method"]);
     compare(SchemaLayout.locate(schema, "Input.keyboard.options").fold, null);
+  }
+
+  // A jump to a setting, or an object, inside an `x-row` object lands on
+  // that object's row, with no fold to open
+  function test_locate_object_row() {
+    const schema = {
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "S",
+          "properties": {
+            "style": {
+              "type": "object",
+              "title": "Style",
+              "x-row": "Block",
+              "properties": {
+                "a": {
+                  "type": "string",
+                  "title": "A"
+                },
+                "inner": {
+                  "type": "object",
+                  "title": "Inner",
+                  "x-fold": true,
+                  "properties": {
+                    "b": {
+                      "type": "boolean",
+                      "title": "B"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+    compare(SchemaLayout.locate(schema, "S.style.a"), {
+      "category": "S",
+      "key": "S.style",
+      "title": "A",
+      "row": ["S", "style"],
+      "fold": null
+    });
+    compare(SchemaLayout.locate(schema, "S.style.inner.b"), {
+      "category": "S",
+      "key": "S.style",
+      "title": "B",
+      "row": ["S", "style"],
+      "fold": null
+    });
+    compare(SchemaLayout.locate(schema, "S.style.inner").row, ["S", "style"]);
+    compare(SchemaLayout.locate(schema, "S.style"), {
+      "category": "S",
+      "key": "S.style",
+      "title": "Style",
+      "row": ["S", "style"],
+      "fold": null
+    });
+    compare(SchemaLayout.locate(schema, "S").key, "S.style", "the section: its card");
+    // The real Bar style block
+    compare(SchemaLayout.locate(test.schema, "Bars.style.outlineWidth").row, ["Bars", "style"]);
+    compare(SchemaLayout.locate(test.schema, "Bars.style.shadow.size").row, ["Bars", "style"]);
   }
 
   // Every `x-link` leads to a setting the settings page shows, or a page

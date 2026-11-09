@@ -29,6 +29,8 @@ QtObject {
 
   // Flattens an object schema into form rows:
   //   { kind: "group", title, path, showIf } for a nested object
+  //   { kind: "object", title, path, schema } for a nested object with
+  //     `x-row`, drawn whole by that row
   //   { kind: "field", title, path, schema }  for an editable value
   //   { kind: "array", title, path, schema }  for an array of objects
   // A nested object's `x-showIf` goes on its group row and, as
@@ -37,7 +39,8 @@ QtObject {
   // behind its title: its group row has `fold: true`, and each row inside
   // it `foldedBy`, the dotted path of the innermost such object. A row
   // another field draws (drawnKeys) has `drawnBy`, that field's dotted
-  // path. Keys go in
+  // path; every row under an `x-row` object has `drawnBy` its path (and
+  // no `foldedBy`: its folds aren't drawn). Keys go in
   // their object's `x-order` first (the schema reaches QML as a map)
   function rows(objectSchema, path) {
     const result = [];
@@ -53,7 +56,31 @@ QtObject {
       if (prop["x-settings"] === false)
         continue;
       const propPath = path.concat(key);
-      if (prop.type === "object" && prop.properties) {
+      if (prop.type === "object" && prop.properties && prop["x-row"]) {
+        // One row draws it all (Bars.style's BarStyleBlock): its own row,
+        // then every row under it, there for search, the changed list,
+        // Discard and jumps, which take them as that row
+        const showIf = prop["x-showIf"] ?? null;
+        const children = rows(prop, propPath);
+        for (const child of children) {
+          child.drawnBy = propPath.join(".");
+          delete child.foldedBy;
+          if (showIf)
+            child.groupShowIf = [
+              {
+                "condition": showIf,
+                "path": path
+              }
+            ].concat(child.groupShowIf ?? []);
+        }
+        result.push({
+          "kind": "object",
+          "title": prop.title ?? key,
+          "path": propPath,
+          "schema": prop
+        });
+        result.push(...children);
+      } else if (prop.type === "object" && prop.properties) {
         const children = rows(prop, propPath);
         if (children.length > 0) {
           const showIf = prop["x-showIf"] ?? null;
@@ -335,8 +362,9 @@ QtObject {
   // own. `perField` makes each of the section's direct fields a card of
   // its own, titled and described by the field and sorted by title, a
   // switch's row labelled "Enabled"; the section's description gets a card
-  // first. A card holding a field marked `x-wide` spans both columns
-  // (`wide`).
+  // first. A nested object with `x-row` is one row (and the rows it draws)
+  // on a card of its own, titled by the object. A card holding a field or
+  // `x-row` object marked `x-wide` spans both columns (`wide`).
   function groups(schema, sectionKey) {
     const section = root.resolved(schema.properties[sectionKey], schema);
     const sectionTitle = section.title ?? sectionKey;
@@ -455,7 +483,7 @@ QtObject {
         }, [sectionKey]);
         // A heading repeating the card's title is left out (its rows keep
         // the object's `x-showIf`)
-        if (objectRows[0]?.title === prop["x-group"])
+        if (objectRows[0]?.kind === "group" && objectRows[0].title === prop["x-group"])
           objectRows.shift();
         cardFor(prop["x-group"], {
           "defaultTitle": sectionTitle,
@@ -465,6 +493,23 @@ QtObject {
           "showIf": null,
           "showIfParent": []
         }).rows.push(...objectRows);
+        continue;
+      }
+      // An object one row draws (`x-row`) is that row on a card of its
+      // own, titled by it (its `x-wide` widens the card)
+      if (prop["x-row"]) {
+        cardFor(prop.title ?? key, {
+          "defaultTitle": prop.title ?? key,
+          "description": prop.description ?? "",
+          "section": sectionTitle,
+          "path": [sectionKey, key],
+          "showIf": prop["x-showIf"] ?? null,
+          "showIfParent": [sectionKey]
+        }).rows.push(...root.rows({
+          "properties": {
+            [key]: prop
+          }
+        }, [sectionKey]));
         continue;
       }
       place(prop, [sectionKey, key], {

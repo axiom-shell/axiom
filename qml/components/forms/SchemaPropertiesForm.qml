@@ -41,8 +41,9 @@ ColumnLayout {
   signal discardAt(var path)
 
   // Keys an icon field draws in its own row (`x-iconText`): no rows of
-  // their own. Not `x-rowDraws`: an `x-row` is drawn only on the settings
-  // page, so here the keys it names keep their own rows
+  // their own. Not `x-rowDraws`, nor an `x-row` object's own row: an
+  // `x-row` is drawn only on the settings page, so here the keys it names,
+  // and the fields of an object it draws, keep their own rows
   readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.iconTextKeys(prop)), [])
   // Depends on the schema only, so edits update the rows in place
   readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
@@ -55,7 +56,7 @@ ColumnLayout {
       "properties": {
         [key]: root.propertiesSchema[key]
       }
-    }, []).filter(row => row.kind !== "group")), [])
+    }, []).filter(row => row.kind !== "group" && row.kind !== "object")), [])
 
   function valueAt(path) {
     return Utils.valueAt(root.values, path) ?? SchemaLayout.defaultAt({
