@@ -11,7 +11,7 @@ TestCase {
       "name": "arrow",
       "ends": "shaped"
     }, "separate", true, 1, 3, 30);
-    compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 15]);
+    compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 10]);
     const r = BarShapes.segment({
       "name": "rounded",
       "ends": "shaped"
@@ -32,9 +32,9 @@ TestCase {
       "name": "slant",
       "ends": "shaped"
     }, "merged", true, 2, 3, 30);
-    compare([first.startCap, first.lead, first.trail], ["slant", 5, 0]);
+    compare([first.startCap, first.lead, first.trail], ["slant", 9, 0]);
     compare([middle.startCap, middle.endCap, middle.lead, middle.trail, middle.back], ["flat", "flat", 0, 0, 0]);
-    compare([last.endCap, last.trail], ["slant", 5]);
+    compare([last.endCap, last.trail], ["slant", 9]);
   }
 
   function test_levels_keep_their_own_caps() {
@@ -100,7 +100,7 @@ TestCase {
     const first = at(0), middle = at(1), last = at(2);
     compare([first.lead, first.trail], [15, join / 2]);
     compare([middle.lead, middle.trail], [0, join]);
-    compare([last.lead, last.trail], [0, join / 2 + 15]);
+    compare([last.lead, last.trail], [0, join / 2 + 10]);
   }
 
   // widgetEnds: a run's own ends notched and pointed (shaped), pointed at
@@ -119,11 +119,11 @@ TestCase {
     };
     ["separate", "merged", "powerline"].forEach(grouping => {
       compare(caps("arrow", "shaped", grouping), ["arrowIn", "arrowOut", 15]);
-      compare(caps("arrow", "pointed", grouping), ["arrowOut", "arrowOut", 15]);
+      compare(caps("arrow", "pointed", grouping), ["arrowOut", "arrowOut", 10]);
       compare(caps("arrow", "rounded", grouping), ["round", "round", 0]);
-      compare(caps("slant", "pointed", grouping), ["slant", "slant", 5]);
+      compare(caps("slant", "pointed", grouping), ["slant", "slant", 9]);
       compare(caps("slant", "rounded", grouping), ["round", "round", 0]);
-      compare(caps("capsule", "rounded", grouping), ["capsule", "capsule", 0]);
+      compare(caps("capsule", "rounded", grouping), ["capsule", "capsule", 4]);
     });
     // Rounded ends keep a powerline's joins, and its content centred
     const last = BarShapes.segment({
@@ -300,5 +300,93 @@ TestCase {
       "width": 30,
       "height": 52
     }, "vertical: along runs down");
+  }
+
+  // An outline's band: one line, a double's three, an Ends only mark's
+  // end line
+  function test_stroke_band() {
+    compare(BarShapes.strokeBand(null), 0);
+    compare(BarShapes.strokeBand({
+      "width": 2,
+      "stroke": "solid"
+    }), 2);
+    compare(BarShapes.strokeBand({
+      "width": 2,
+      "stroke": "double"
+    }), 6);
+    compare(BarShapes.strokeBand({
+      "width": 3,
+      "stroke": "ends"
+    }), 3);
+  }
+
+  // A run's ends keep their content (the middle two thirds across) clear
+  // of the cap's curve where it reaches into the content's rows and of
+  // the stroke inset round it, in whole pixels; a run's middle keeps none
+  function test_run_ends_keep_clear_of_the_curve_and_the_stroke() {
+    const room = (name, outline, radius, grouping, index, count) => {
+      const s = BarShapes.segment({
+        "name": name,
+        "ends": "shaped",
+        "radius": radius,
+        "outline": outline
+      }, grouping ?? "separate", false, index ?? 0, count ?? 1, 30);
+      return [s.lead, s.trail];
+    };
+    const solid = {
+      "width": 2,
+      "stroke": "solid"
+    };
+    const double = {
+      "width": 2,
+      "stroke": "double"
+    };
+    // Rounded, radius 8 at 30: the content's edge 5 in, 3 past the
+    // corner's centre: 8 - sqrt(8² - 3²) = 0.58
+    compare(room("rounded", null, 8), [1, 1]);
+    // A 2 px stroke: its inner edge 6 round the same centre
+    compare(room("rounded", solid, 8), [3, 3]);
+    compare(room("rounded", {
+      "width": 2,
+      "stroke": "ends"
+    }, 8), [3, 3], "ends only: the end's line");
+    // A radius the content's rows don't reach: just the stroke
+    compare(room("rounded", solid, 4), [2, 2]);
+    compare(room("rounded", null, 4), [0, 0]);
+    // Capsule: 15 - sqrt(13² - 10²) = 6.69 with the stroke
+    compare(room("capsule", null, 8), [4, 4]);
+    compare(room("capsule", solid, 8), [7, 7]);
+    // Double: three widths, past the content's edge row: the corner's
+    // centre, as far as a curve reaches
+    compare(room("rounded", double, 8), [8, 8]);
+    compare(room("rounded", double, 0), [6, 6]);
+    // Slant: its side at the content's edge (5/6 of its depth), the
+    // stroke square to it (2 * sqrt(30² + 10²) / 30)
+    compare(room("slant", null, 8), [9, 9]);
+    compare(room("slant", solid, 8), [11, 11]);
+    // Arrow: the notch's middle, the point's sides at the content's edges
+    compare(room("arrow", null, 8), [15, 10]);
+    compare(room("arrow", solid, 8), [18, 13]);
+    // Tab: its inner corners, as a rounded end's
+    compare(room("tab", solid, 8), [3, 3]);
+    // A merged run: its ends only
+    compare(room("rounded", solid, 8, "merged", 0, 3), [3, 0]);
+    compare(room("rounded", solid, 8, "merged", 1, 3), [0, 0]);
+    compare(room("rounded", solid, 8, "merged", 2, 3), [0, 3]);
+    // A powerline's joins keep their own room (half a join), not the stroke's
+    compare(room("rounded", solid, 8, "powerline", 1, 3), [0, 15]);
+  }
+
+  // No box drawn at its ends (an unboxed style, a separate badge): its
+  // content keeps no room there
+  function test_uncapped_ends_keep_no_room() {
+    const s = BarShapes.segment({
+      "name": "slant",
+      "ends": "shaped",
+      "radius": 8,
+      "outline": null,
+      "capped": false
+    }, "separate", false, 0, 1, 30);
+    compare([s.startCap, s.lead, s.trail], ["slant", 0, 0]);
   }
 }

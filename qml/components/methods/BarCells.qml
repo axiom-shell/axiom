@@ -29,8 +29,15 @@ QtObject {
   //              run's end where it has one; one drawing a box of its own
   //              (`boxed`: solid boxes, split's fill) takes the caps it has
   //              alone, and their room, as a merged widget's level does
+  // The room at an end keeps clear of the stroke drawn there: in a merged
+  // run the run's (the look's outline), else the cell's own box's
+  // (cellOutline); a box of its own in a run (`boxed`) draws its stroke
+  // in its fill's color, so only its caps count.
   function cellSegment(shape, grouping, boxed, place, cell, cells, across, opaque) {
-    const lone = BarShapes.segment(shape, "separate", false, 0, 1, across);
+    const own = Object.assign({}, shape, {
+      "outline": boxed ? null : root.cellOutline(shape.outline ?? null)
+    });
+    const lone = BarShapes.segment(own, "separate", false, 0, 1, across);
     const pick = (s, startCap, endCap, lead, trail) => ({
           "startCap": startCap,
           "endCap": endCap,
@@ -47,10 +54,22 @@ QtObject {
       return pick(lone, lone.startCap, lone.endCap, lone.lead, lone.trail);
     const index = (place?.index ?? 0) + cell;
     const count = (place?.count ?? 1) + Math.max(1, cells) - 1;
-    const s = BarShapes.segment(shape, grouping, opaque === true && cell > 0, index, count, across);
+    const s = BarShapes.segment(grouping === "powerline" ? own : shape, grouping, opaque === true && cell > 0, index, count, across);
     if (grouping === "powerline")
       return pick(s, s.startCap, s.endCap, s.lead, s.trail);
     return pick(s, s.levelStartCap, s.levelEndCap, boxed ? lone.lead : s.lead, boxed ? lone.trail : s.trail);
+  }
+
+  // The outline a cell's own box draws (`outline`: the look's { width,
+  // stroke }, or null for none): a double one in half-width lines (at
+  // least 1 px), so its inner line keeps clear of the label
+  function cellOutline(outline) {
+    if (!outline)
+      return null;
+    return {
+      "width": outline.stroke === "double" ? Math.max(1, Math.floor(outline.width / 2)) : outline.width,
+      "stroke": outline.stroke
+    };
   }
 
   // The gap between a widget's cells laid out as segments (cellSegment)

@@ -16,7 +16,7 @@ TestCase {
       "index": 1,
       "count": 3
     }, 1, 3, 30);
-    compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 15]);
+    compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 10]);
     const r = BarCells.cellSegment({
       "name": "rounded",
       "ends": "shaped"
@@ -57,8 +57,8 @@ TestCase {
       "name": "slant",
       "ends": "shaped"
     }, "powerline", true, null, 2, 3, 30);
-    compare([a.startCap, a.back, a.lead], ["slant", 0, 5]);
-    compare([z.endCap, z.back, z.trail], ["slant", 10, 5 + 5]);
+    compare([a.startCap, a.back, a.lead], ["slant", 0, 9]);
+    compare([z.endCap, z.back, z.trail], ["slant", 10, 5 + 9]);
     // The run's last widget: its last cell gives the run's end cap
     const end = BarCells.cellSegment({
       "name": "arrow",
@@ -93,7 +93,7 @@ TestCase {
       "name": "slant",
       "ends": "shaped"
     }, "merged", false, place, 1, 3, 30);
-    compare([first.lead, first.trail, first.back], [5, 0, 0]);
+    compare([first.lead, first.trail, first.back], [9, 0, 0]);
     compare([middle.lead, middle.trail], [0, 0]);
     compare([middle.startCap, middle.endCap], ["slant", "slant"], "a box of its own: the caps it has alone");
     compare(middle.shownStart, "slant", "shown from its own start");
@@ -101,7 +101,7 @@ TestCase {
       "name": "slant",
       "ends": "shaped"
     }, "merged", true, place, 1, 3, 30);
-    compare([boxed.lead, boxed.trail, boxed.seamStart, boxed.seamEnd], [5, 5, false, false]);
+    compare([boxed.lead, boxed.trail, boxed.seamStart, boxed.seamEnd], [9, 9, false, false]);
   }
 
   function test_cell_gap() {
@@ -275,5 +275,60 @@ TestCase {
     // No shape: its own box
     verify(BarCells.cellContains(null, 0, 0, 40, 30, false));
     verify(!BarCells.cellContains(null, 40, 0, 40, 30, false));
+  }
+
+  // A cell's own box's outline: a double one in half-width lines
+  function test_cell_outline() {
+    compare(BarCells.cellOutline(null), null);
+    compare(BarCells.cellOutline({
+      "width": 2,
+      "stroke": "solid"
+    }), {
+      "width": 2,
+      "stroke": "solid"
+    });
+    compare(BarCells.cellOutline({
+      "width": 3,
+      "stroke": "double"
+    }).width, 1);
+    compare(BarCells.cellOutline({
+      "width": 1,
+      "stroke": "double"
+    }).width, 1, "at least 1 px");
+  }
+
+  // A cell's room at an end keeps clear of the stroke drawn there: a
+  // merged run's (the look's whole band), else its own box's (a double
+  // in half-width lines); a box of its own in a run draws its stroke in
+  // its fill's color, so only its caps count
+  function test_cell_room_keeps_clear_of_the_stroke() {
+    const shape = stroke => ({
+          "name": "rounded",
+          "ends": "shaped",
+          "radius": 8,
+          "outline": stroke ? {
+            "width": 2,
+            "stroke": stroke
+          } : null
+        });
+    const place = {
+      "index": 0,
+      "count": 2
+    };
+    const lead = (stroke, grouping, boxed) => BarCells.cellSegment(shape(stroke), grouping, boxed, place, 0, 3, 30).lead;
+    // Separate: its own box, a double's three 1 px lines (8 - sqrt(5² - 3²))
+    compare(lead("double", "separate", false), 4);
+    compare(lead("solid", "separate", false), 3);
+    compare(lead(null, "separate", false), 1);
+    // Merged: the run's band (past the content's edge row: the corner)
+    compare(lead("double", "merged", false), 8);
+    compare(lead("solid", "merged", false), 3);
+    // Merged, a box of its own: its caps alone
+    compare(lead("double", "merged", true), 1);
+    // Powerline: the cells' own boxes
+    compare(lead("double", "powerline", false), 4);
+    compare(lead("solid", "powerline", true), 1);
+    // The run's middle keeps none
+    compare(BarCells.cellSegment(shape("solid"), "merged", false, place, 1, 3, 30).lead, 0);
   }
 }

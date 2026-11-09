@@ -34,9 +34,8 @@ Item {
   readonly property string _stroke: _outlineLook?.stroke ?? "solid"
   readonly property bool _solid: _stroke === "solid"
   readonly property bool _vertical: barConfig.vertical
-  // A double outline's band is three lines wide: in a cell, half-width
-  // lines, so the inner one keeps clear of the label
-  readonly property real _lineWidth: !_outline ? 0 : _stroke === "double" ? Math.max(1, Math.floor(_outlineLook.width / 2)) : _outlineLook.width
+  // Its own box's line (BarCells.cellOutline: a double one's half width)
+  readonly property real _lineWidth: BarCells.cellOutline(_outlineLook)?.width ?? 0
 
   anchors.fill: parent
 

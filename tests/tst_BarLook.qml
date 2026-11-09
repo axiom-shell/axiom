@@ -374,4 +374,28 @@ TestCase {
     }, null));
     compare([plain["$bar.widgetShape"], plain["$bar.widgetGrouping"]], ["tab", "separate"]);
   }
+
+  // What a widget's content keeps clear of at its ends (BarShapes.segment):
+  // the look's radius and outline, and whether a box is drawn there at all
+  function test_shape_carries_what_content_keeps_clear_of() {
+    const outlined = root.look({
+      "widgetStyle": "outline",
+      "outlineWidth": 3,
+      "outlineStroke": "double"
+    }).shape;
+    compare([outlined.radius, outlined.outline.width, outlined.outline.stroke, outlined.capped], [8, 3, "double", true]);
+    compare(root.look({
+      "widgetStyle": "filled"
+    }).shape.outline, null);
+    const capped = (style, icon, grouping) => root.look({
+        "widgetStyle": style,
+        "splitIcon": icon,
+        "widgetGrouping": grouping
+      }).shape.capped;
+    compare(capped("underline", "joined", "separate"), false, "no box");
+    compare(capped("plain", "joined", "merged"), false, "no box");
+    compare(capped("split", "joined", "separate"), true);
+    compare(capped("split", "badge", "separate"), false, "a badge: no box round it");
+    compare(capped("split", "badge", "merged"), true, "a merged run of badges: the run's box");
+  }
 }

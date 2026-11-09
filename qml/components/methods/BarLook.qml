@@ -341,7 +341,11 @@ QtObject {
   //   shape       { name (as drawn: rounded for an unboxed style, and for
   //               a separate split badge saved as a tab), ends,
   //               tabCorners, tabFillet (BarTabs.tabFillet: the bar
-  //               fills it in, BarsConfig.enrichBarConfig; else 0) }
+  //               fills it in, BarsConfig.enrichBarConfig; else 0),
+  //               radius (the look's), outline (the look's), capped (a
+  //               box is drawn at a widget's or run's ends: not for an
+  //               unboxed style, nor a badge but in a merged run) }: what
+  //               BarShapes.segment keeps content clear of
   //   grouping    as drawn: separate for unboxed styles, and a powerline
   //               of what can't chain (a badge, tabs)
   //   split       { icon, labelFill, label (the label's fill as drawn:
@@ -395,7 +399,10 @@ QtObject {
       "name": table.boxed ? root._shapeOf(look, table) : "rounded",
       "ends": values.widgetEnds,
       "tabCorners": values.tabCorners,
-      "tabFillet": 0
+      "tabFillet": 0,
+      "radius": look.radius,
+      "outline": null,
+      "capped": false
     };
     look.traits = root.traitsOf(style, look);
     look.hoverFill = values.hoverFill && look.traits.hoverFills;
@@ -403,6 +410,8 @@ QtObject {
       "width": values.outlineWidth,
       "stroke": values.outlineStroke
     } : null;
+    look.shape.capped = look.traits.boxed && (look.traits.hasBox || look.grouping === "merged");
+    look.shape.outline = look.outline;
     look.line = look.traits.line ? {
       "width": values.lineWidth,
       "side": values.lineSide,

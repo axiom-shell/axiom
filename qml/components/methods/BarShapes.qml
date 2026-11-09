@@ -96,25 +96,71 @@ QtObject {
     }
   }
 
-  // Room content keeps clear of a run's end cap
-  function _clearOf(cap, across) {
-    switch (cap) {
-    case "slant":
-      return root.depth(cap, across) / 2;
-    case "arrowOut":
-    case "arrowIn":
-      return root.depth(cap, across);
-    default:
+  // How far in from its edge an outline's stroke reaches (`outline`:
+  // look.outline's { width, stroke }, or null for none): one line (an Ends
+  // only mark's is the end's line, its arms along the sides), a double's
+  // three (two lines a line apart)
+  function strokeBand(outline) {
+    if (!outline)
       return 0;
+    return outline.stroke === "double" ? outline.width * 3 : outline.width;
+  }
+
+  // Room content keeps clear of a run's end `cap` on a widget `across`
+  // thick (round caps of `radius`): how far in from the end the inner
+  // edge of what's drawn there lies (the cap, inset by an outline's
+  // `band`, strokeBand) at the content's edges across, where it reaches
+  // furthest into the content's rows. The content is taken as the
+  // tallest a widget shows, centred: two thirds of the thickness (a
+  // Workspaces app icon, WorkspaceCells.iconSize). In whole pixels, so
+  // content inset by it stays on whole pixels.
+  function _clearOf(cap, across, radius, band) {
+    return Math.ceil(root._innerEdge(cap, across, radius, band) - 1e-6);
+  }
+
+  // _clearOf's inner edge, unrounded. A slant's or arrow's inset side
+  // lies `band` square to it, further along the bar.
+  function _innerEdge(cap, across, radius, band) {
+    const half = across / 2;
+    // From the middle out to the content's edge
+    const off = across / 3;
+    const d = root.depth(cap, across);
+    switch (cap) {
+    case "round":
+    case "tab":
+    case "capsule":
+      {
+        // Its corner's centre `r` in from the end and the side, the
+        // stroke's inner edge `r - band` round it (BarOutlines.offsetPath)
+        const r = cap === "capsule" ? half : Math.min(Math.max(0, radius ?? 0), half);
+        const past = off - (half - r);
+        if (past <= 0)
+          return band;
+        const inner = r - band;
+        return past < inner ? r - Math.sqrt(inner * inner - past * past) : r;
+      }
+    case "slant":
+      return d * (half + off) / across + band * Math.hypot(across, d) / across;
+    case "arrowOut":
+      return d * off / half + band * Math.hypot(half, d) / half;
+    case "arrowIn":
+      return d + band * Math.hypot(half, d) / half;
+    default:
+      return band;
     }
   }
 
   // Widget `index` of a run of `count` in a look's `shape` (look.shape:
-  // { name, ends }), `grouping` (look.grouping) and `opaque` (its
+  // { name, ends, radius (its round caps'), outline (look.outline: the
+  // stroke its run's ends draw, or null), capped (false: no box is drawn
+  // at its ends, so its content keeps no room there) }; a radius or
+  // outline it leaves out is none, a `capped` true), `grouping`
+  // (look.grouping) and `opaque` (its
   // `opaque` trait): { startCap, endCap, shownStart, levelStartCap,
   // levelEndCap, back, lead, trail, seamStart, seamEnd }. `back` is how
   // far its background reaches back under the one before; `lead`/`trail`
-  // the room its content keeps at each end. In a merged run only the run's
+  // the room its content keeps at each end: at the run's ends clear of
+  // its cap and stroke (_clearOf). In a merged run only the run's
   // ends have caps (the run is one background). `opaque`: the fill hides
   // what's under it, so a powerline segment can start square beneath the
   // one before instead of fitting against it. `seamStart`/`seamEnd`: that end meets a
@@ -141,6 +187,8 @@ QtObject {
     const startCap = first ? ends[0] : powerline && !opaque ? joins[1] : "flat";
     const endCap = last ? ends[1] : powerline ? joins[0] : "flat";
     const merged = grouping === "merged";
+    const band = root.strokeBand(shape.outline ?? null);
+    const clear = cap => shape.capped === false ? 0 : root._clearOf(cap, across, shape.radius, band);
     return {
       "startCap": startCap,
       "shownStart": first ? ends[0] : powerline ? joins[1] : "flat",
@@ -148,8 +196,8 @@ QtObject {
       "levelStartCap": merged ? ends[0] : startCap,
       "levelEndCap": merged ? ends[1] : endCap,
       "back": !first && powerline ? join : 0,
-      "lead": first ? root._clearOf(ends[0], across) : 0,
-      "trail": (last ? root._clearOf(ends[1], across) : 0) + shift,
+      "lead": first ? clear(ends[0]) : 0,
+      "trail": (last ? clear(ends[1]) : 0) + shift,
       "seamStart": !first && powerline && !opaque,
       "seamEnd": !last && powerline && !opaque
     };
