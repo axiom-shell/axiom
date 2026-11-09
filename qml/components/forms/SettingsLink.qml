@@ -68,7 +68,7 @@ Item {
       textSize: Appearance.fontSizeBy(-1)
     }
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: root.label
       textColor: Theme.accent

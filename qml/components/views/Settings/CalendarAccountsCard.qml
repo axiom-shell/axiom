@@ -250,7 +250,7 @@ FoldingCard {
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
-    StyledText {
+    StyledLabel {
       text: I18n.tr("Password")
     }
     StyledTextEntry {
@@ -351,7 +351,7 @@ FoldingCard {
         radius: width / 2
         color: calendarRow.joined?.color ?? Theme.accent
       }
-      StyledText {
+      StyledLabel {
         visible: !root.isLocal
         Layout.fillWidth: true
         text: calendarRow.joined?.name || calendarRow.calendar.href

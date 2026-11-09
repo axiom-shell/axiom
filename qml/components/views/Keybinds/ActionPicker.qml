@@ -115,7 +115,7 @@ Item {
         textColor: Theme.accent
       }
 
-      StyledText {
+      StyledLabel {
         text: KeybindManager.actionLabels[root.currentValue] ?? root.currentValue
         elide: Text.ElideRight
         Layout.fillWidth: true
@@ -204,7 +204,7 @@ Item {
               opacity: row.header && root.searching ? 0.4 : 1
             }
 
-            StyledText {
+            StyledLabel {
               text: row.header ? I18n.tr(row.entry.section ?? "") : (row.entry.info?.label ?? "")
               textColor: row.header || row.current ? Theme.accent : Theme.foreground
               font.bold: row.header || row.current
@@ -212,7 +212,7 @@ Item {
               Layout.fillWidth: true
             }
 
-            StyledText {
+            StyledLabel {
               visible: row.header
               text: String(row.entry.count ?? "")
               opacity: 0.5

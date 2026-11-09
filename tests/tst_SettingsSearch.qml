@@ -91,6 +91,51 @@ TestCase {
     }, true)), ["Kb:Kb.sources"], "listed once");
   }
 
+  // Every row under an `x-row` object (the Bar style block) is found,
+  // and listed changed, as the object's row
+  function test_object_row() {
+    const groups = SchemaLayout.groups({
+      "properties": {
+        "S": {
+          "type": "object",
+          "title": "S",
+          "properties": {
+            "style": {
+              "type": "object",
+              "title": "Style",
+              "x-row": "Block",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "title": "Outline width"
+                },
+                "shadow": {
+                  "type": "object",
+                  "title": "Shadow",
+                  "properties": {
+                    "size": {
+                      "type": "integer",
+                      "title": "Shadow size"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }, "S");
+    const index = SettingsSearch.index(groups, tr);
+    compare(keys(SettingsSearch.filter(index, "outline width", {}, false)), ["S.style:S.style"]);
+    compare(keys(SettingsSearch.filter(index, "shadow size", {}, false)), ["S.style:S.style"], "inside a nested object");
+    compare(keys(SettingsSearch.filter(index, "style", {}, false)), ["S.style:S.style"], "the card's title: its row once");
+    compare(keys(SettingsSearch.filter(index, "", {
+      "S.style.width": true,
+      "S.style.shadow.size": true
+    }, true)), ["S.style:S.style"], "listed once");
+    compare(keys(SettingsSearch.filter(index, "", {}, true)), []);
+  }
+
   function test_empty() {
     const index = SettingsSearch.index(groups, tr);
     compare(SettingsSearch.filter(index, "zzz", {}, false), []);

@@ -20,13 +20,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Bar and border
 
-### "Colour the text by state" does nothing on a bar whose widgets have no fill
-- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`); the same test in `qml/components/bar/widgets/Markets/Markets.qml` (`rich`: the change coloured inline, so on an unfilled bar it isn't, and on a tinted one it is)
-- **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
-  **Decided** (maintainer, 2026-11-06, on a) a merged run's fill counts as a fill (its text not coloured), b) colour the text in merged runs too; recommended a)): "defer"
-- **Size:** trivial
-- **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
-
 ### A pill bar stacked inside another pill bar grows its pills out of nothing
 - **Where:** `qml/components/bar/BarContainer.qml` (`borderOpening`), `qml/components/methods/BarEnds.qml` (`placeStack`)
 - **What:** A pill bar's pills grow out of a stroke at its outer edge: the border's, which they cover and open. Stacked inside another pill bar (`offBorder`: pill bars are the first kind inside the border), there is no such stroke. Its outer edge lies on the far side of the bar outside it, which only that bar's pills stroke. Where an inner pill sits under an outer pill it joins that pill's far stroke and looks right; seen in a nested niri (two top pill bars, the inner one's end pills under the outer one's). Under a gap between the outer bar's pills, its outer side is open and its fillets curve into nothing. Since `offBorder`, it opens no border stroke (it used to cut the border's under the outer bar), and merged popouts on it open none either. Open for the plan: draw an inner pill bar's pills closed on their outer side (as islands), stretch the outer bar's pills over them, or leave pills inside the border's first bar to the user.
@@ -38,6 +31,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **What:** The border leaves its inner stroke open under a joined surface whenever `Appearance.translucent`, not only while the blur window backs it. In nested niri with a top and a left pill bar meeting at the top-left corner (translucency 80%, the look's blur off, so nothing is backed), the top frame's stroke row (y = 7) is bare wallpaper across the left frame's width (x 0–6): nothing fills it there, as the keepFill row was before compositor-20. Backed, the blur window fills it. Which opening takes that stretch (the left pill's `joinOpening` or the top pill's `borderOpening`) wasn't traced.
 - **Size:** small
 - **Found:** 2026-11-04, while fixing a keepFill opening's unfilled row (compositor-20)
+
+### The strip after a switcher's row warns that its Grid overflows as it loads
+- **Where:** `qml/components/bar/widgets/Workspaces/ActiveStrip.qml` (its Grid's `rows` / `columns`, `_divided`)
+- **What:** On a strip monitor a nested niri shell logged `Grid contains more visible items (2) than rows*columns (1)` (`@components/bar/widgets/Workspaces/ActiveStrip.qml`) twice as a config loaded, with the bar style rework's 3c commit and its last alike. The Grid sizes itself from `_divided` while its divider's `visible` reads it too; one appears to update before the other as the strip's windows arrive. Not traced further: PLAUSIBLE. Nothing wrong was seen drawn.
+- **Size:** trivial
+- **Found:** 2026-11-09, while refactoring the bar's widget styles (stage 6)
 
 ## Popouts and edge menus
 
@@ -529,6 +528,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Tooling, tests and CI
 
+### qml_modules.py builds its tree in a folder named after a flag
+- **Where:** `scripts/qml_modules.py` (`main`)
+- **What:** any one argument but `--pure` is taken as the output folder, so `scripts/qml_modules.py --help` empties and fills `./--help` with a copy of `qml/` (one was committed on `fix/text-centering` and removed again). Fix: print the usage for an argument starting with `-` that isn't `--pure`.
+- **Size:** trivial
+- **Found:** 2026-11-09, while centring labels outside the bar on their letters
+
 ### guard.py judges daemon calls and the radio only by argv
 - **Where:** `.claude/hooks/guard.py` (`check_bluetooth`, `scratch_system_bus`, `axiom_live_display`)
 - **What:** every daemon-RPC rule matches the method name in the command's arguments, so a request fed from stdin or a file (`socat - UNIX-CONNECT:… < req.json`, `nc -U`) or sent by another program (`node`) passes; a write straight to `/dev/rfkill` isn't judged; and `scratch_system_bus` takes `unix:path=/run/dbus/../dbus/system_bus_socket` for a scratch bus (it compares the string, not the resolved path). Neither are an axiom binary run under another name (`go run ./cmd/axiom bluetooth off`, a copy named `axiom.new`), a raw `ipc.call` written as JSON in `printf`'s arguments (judged by method, not target: `lockscreen` too), nor a `python3 -c` calling BlueZ, timedate1 or hostname1 through python-dbus or Gio. Fix: resolve the bus path before comparing; refuse writes to `/dev/rfkill`; judge a redirect or pipe into a socket client by its input file where it's one.
@@ -558,6 +563,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **What:** One `scripts/dev/verify.sh` run failed it with `pushed {ID:1 Action:}`; 20 runs of it alone right after passed. Traced: the fake server answers every `Notify` with id 1 and emits its signal from a goroutine (`go server.Emit`), so the first send's `NotificationClosed` for id 1 can arrive after the second send (the one with a button) is waiting on id 1, which then reads as closed with no button. Fix: a new id per `Notify` in the fake.
 - **Size:** trivial
 - **Found:** 2026-11-06, while moving Bluetooth to the daemon
+
+### TestEnvironmentIsTheDaemonsWithItsAxiomValues failed once under verify.sh --all
+- **Where:** `backend/internal/supervise/supervise_test.go` (`TestEnvironmentIsTheDaemonsWithItsAxiomValues`)
+- **What:** One `scripts/dev/verify.sh --all` run failed it with `supervise_test.go:83: timed out` after 10 s: the wait for the restarted child's `env` dump to hold `AXIOM_LOCK_ON_START=1`. Three runs of the package alone right after passed in 0.6 s each. Not traced: likely the restart under the full suite's load outlasting `testkit.Eventually`, or the old child's dump read before the new one writes it.
+- **Size:** small
+- **Found:** 2026-11-09, while reviewing the bar split refinement
 
 ### TestDiscoverCalDAV failed once under verify.sh --all
 - **Where:** `backend/internal/calendar/calendar_test.go` (`TestDiscoverCalDAV`)

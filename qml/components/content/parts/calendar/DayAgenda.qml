@@ -38,7 +38,7 @@ ColumnLayout {
       iconText: "arrow_back"
       onClicked: root.closed()
     }
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       Layout.leftMargin: root.closable ? 0 : Widget.spacing / 2
       text: I18n.formatDate(CalendarEvents.dateOf(root.dayKey), I18n.dateFormat("longDate"))

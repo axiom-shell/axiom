@@ -46,7 +46,7 @@ Rectangle {
           textSize: root.textSize
         }
 
-        StyledText {
+        StyledLabel {
           id: label
           visible: !mod.asIcon
           anchors.centerIn: parent

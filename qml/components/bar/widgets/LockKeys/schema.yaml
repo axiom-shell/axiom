@@ -2,6 +2,10 @@ label: Lock keys
 icon: keyboard_capslock
 group: System
 popout: menu
+boxes:
+  variant: each
+  boxes:
+    x-boxItems: {options: {caps: showCaps, num: showNum, scroll: showScroll}}
 settings:
   showCaps: {type: boolean, title: Caps Lock, default: true}
   showNum: {type: boolean, title: Num Lock, default: false}
@@ -18,7 +22,4 @@ settings:
     title: Text color
     x-options: colors
     default: base00
-    x-showIf:
-      $bar.widgetStyle: filled
-      $bar.widgetGrouping: {not: merged}
-      $bar.widgetTextColor: ''
+    x-showIf: {$bar.textColorShows: true}

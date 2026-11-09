@@ -109,7 +109,7 @@ Item {
                 color: linkArea.containsMouse ? Theme.accent : Theme.border
               }
 
-              StyledText {
+              StyledLabel {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.leftMargin: Widget.padding

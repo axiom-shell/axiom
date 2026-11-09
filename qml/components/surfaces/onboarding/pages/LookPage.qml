@@ -166,7 +166,7 @@ OnboardingPage {
     visible: root.bar !== null
     spacing: Widget.spacing
 
-    StyledText {
+    StyledLabel {
       text: I18n.tr("Edge")
     }
 

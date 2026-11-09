@@ -290,7 +290,7 @@ Item {
 
       Glide on opacity {}
 
-      StyledText {
+      StyledLabel {
         visible: !root.isUser && (root.message?.model ?? "") !== ""
         Layout.alignment: Qt.AlignVCenter
         Layout.rightMargin: Widget.spacing

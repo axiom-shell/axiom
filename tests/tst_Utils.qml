@@ -193,6 +193,14 @@ TestCase {
     verify(!Utils.isColorDark("#f0f0f0"));
     compare(Utils.getContrastColor("#000000"), "#FFFFFF");
     compare(Utils.getContrastColor("#ffffff"), "#000000");
+    fuzzyCompare(Utils.contrast("#000000", "#ffffff"), 21, 0.01);
+    fuzzyCompare(Utils.contrast("#777777", "#777777"), 1, 0.001);
+    fuzzyCompare(Utils.luminance("#ffffff"), 1, 0.001);
+    // By contrast, not by a luma split: gruvbox's red reads better in
+    // black (6.1) than white (3.4); a mid blue in white
+    compare(Utils.getContrastColor("#fb4934"), "#000000");
+    compare(Utils.getContrastColor("#458588"), "#000000");
+    compare(Utils.getContrastColor("#3060c0"), "#FFFFFF");
   }
 
   function test_rates() {

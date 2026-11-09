@@ -4,6 +4,7 @@ import qs.config
 import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
+import qs.components.bar.look
 // Imported (though widgets load by URL) so qs scans what they import and
 // the folders whose files see each other (scripts/check_structure.py)
 import qs.components.bar.widgets.base // qmllint disable unused-imports
@@ -37,10 +38,16 @@ Item {
   property var panel
   property var screen
 
-  // The widget's config ({ type, properties, layout })
+  // The widget's config ({ type, properties, layout }; `box`: the one item
+  // it draws, of a widget drawn one box per item: BarBoxes)
   required property var widget
   readonly property var properties: root.widget.properties ?? {}
   readonly property var layoutOverrides: root.widget.layout ?? {}
+  // Where it starts along its bar as laid out (never as it glides), and the
+  // bar's length, which the bar's gradient spans: 0 for no gradient (set by
+  // WidgetGroup). Its module reads its slice of the gradient from them.
+  property real barStart: 0
+  property real barLength: 0
   // The bar editor's selected widget: outlined, and its sizing reported
   property bool highlighted: false
   // The widget hovered in the bar editor: outlined as the selected one
@@ -61,6 +68,19 @@ Item {
   // (BarsConfig.widgetColors), or null when it has no background
   readonly property bool hasBackground: _item?.hasBackground ?? false
   readonly property var background: hasBackground ? _item.colors : null
+  // It draws its own parts as segments of the bar's run (BarWidget's
+  // `segmented`), and its place there (set by WidgetGroup: { sized, drawn,
+  // tabLimits }), which its module gets with how far its parts reach past
+  // it across (BarWidget.runPlace)
+  readonly property bool segments: hasBackground && (_item?.segmented ?? false)
+  property var runPlace: null
+  // Its run place as the module sees it: how far its parts reach past it
+  // across, a tab's from the background's near side (in from the outer
+  // edge, or the host's) to its far one, moved across by _tabShift
+  readonly property var _moduleRun: segments && runPlace ? Object.assign({}, runPlace, {
+    "reachStart": _tabShift + _reach.near,
+    "reachEnd": _reach.far - _tabShift
+  }) : null
   // The module's own fade, which its background follows: its `dim` when
   // it has one (a press fades only its content; the background shows it
   // by `pressed`, as a fade would let a powerline neighbour's square start
@@ -70,6 +90,19 @@ Item {
   // A level filling its background's shape (the module's `backgroundLevel`), -1 none
   readonly property real backgroundLevel: _item?.backgroundLevel ?? -1
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
+  // A split bar's widget showing its icon part and label apart
+  // (IconTextWidget.splits): along it, the middle of the gap between them
+  // (`at`), and what the icon part holds (`part`), in its own coordinates;
+  // null otherwise
+  readonly property var split: {
+    if (!(_item?.splits ?? false))
+      return null;
+    const part = _item.splitPart;
+    return {
+      "at": (isVertical ? contentLoader.y : contentLoader.x) + _item.splitAt,
+      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height)
+    };
+  }
   // A divider of its own (Separator): the group draws none beside it
   readonly property bool divides: _item?.divides ?? false
   // Room that takes the free space on its side of the bar (Spacer): it
@@ -77,6 +110,12 @@ Item {
   readonly property bool fills: _item?.fills ?? false
   // Hovered, on a module that shows an outline then (its hoverOutline)
   readonly property bool outlined: (_item?.hoverOutline ?? false) && (_item?.hovered ?? false)
+  // Its content's extent across the bar, in px: the module's
+  // `contentAcross` (BarWidget's, BarIconWidget's: from config, never
+  // measured from the live item, so it can't feed back into the layout).
+  // A module declaring none is taken to fill the bar's thickness. Its
+  // caps' room is kept clear of content that tall (BarRuns.insets).
+  readonly property real contentAcross: _item?.contentAcross ?? barConfig.thickness
   // Room along the bar kept clear of its background's caps, at its start
   // and end (set by WidgetGroup): added to its sizes, the module inside
   property real leadInset: 0
@@ -86,6 +125,15 @@ Item {
   // powerline neighbour, and not in a slant's or arrow's cut-off corners.
   // Null (no background) leaves the module's own bounds.
   property var hitShape: null
+  // How far its background reaches past its outer side as a tab
+  // (widgetShape tab, set by WidgetGroup): hovered and clicked out to
+  // there, its content centred in the tab
+  property real tabReach: 0
+  readonly property bool _outerFar: barConfig.right || barConfig.bottom
+  // The tab's reach before its near side or past its far one
+  // (BarTabs.reachAcross), and the module's shift across to its middle
+  readonly property var _reach: BarTabs.reachAcross(tabReach, _outerFar)
+  readonly property real _tabShift: BarTabs.tabShift(tabReach, _outerFar)
   // The hit area below, by a name its menu anchor (whose own `hitArea`
   // would shadow the id) can read
   readonly property Item _hitArea: hitArea
@@ -187,14 +235,19 @@ Item {
       "barConfig": root.barConfig,
       "panel": root.panel,
       "screen": root.screen,
-      "properties": root.widget.properties ?? {}
+      "properties": root.widget.properties ?? {},
+      "autoColors": root.widget.autoColors ?? {},
+      "box": root.widget.box ?? ""
     });
   }
   onWidgetChanged: {
     if ((root.widget.type ?? "") !== root._type)
       root._load();
-    else if (root._item)
+    else if (root._item) {
       root._item.properties = root.widget.properties ?? {};
+      root._item.autoColors = root.widget.autoColors ?? {};
+      root._item.box = root.widget.box ?? "";
+    }
   }
 
   // Where the module's pointer areas go (BarWidget.hitArea), over the
@@ -225,11 +278,19 @@ Item {
       }
     }
 
+    // Back under the one before, out to a tab's edge
+    readonly property var _box: BarShapes.boxRect({
+      "x": 0,
+      "y": 0,
+      "width": root.width,
+      "height": root.height
+    }, back, root._reach.near, root._reach.far, root.isVertical)
+
     z: 1
-    x: root.isVertical ? 0 : -back
-    y: root.isVertical ? -back : 0
-    width: root.width + (root.isVertical ? 0 : back)
-    height: root.height + (root.isVertical ? back : 0)
+    x: _box.x
+    y: _box.y
+    width: _box.width
+    height: _box.height
     containmentMask: mask
 
     HoverHandler {
@@ -252,16 +313,31 @@ Item {
   // start, with `pinStart`): it never re-fits (eliding its label)
   // mid-animation, and shows through the drawn size, clipped, while that
   // catches up
-  Item {
+  // A module drawing its parts as segments draws them back under a
+  // powerline neighbour, a flared tab's fillets past its ends
+  // (BarCells.runDraws) and out to a tab's edge: kept while it resizes
+  MarginClip {
     anchors.fill: parent
-    clip: root._resizing
+    clipped: root._resizing
+    readonly property var _draws: root._moduleRun ? BarCells.runDraws(root.barConfig, root._moduleRun) : null
+    // What it draws past its own bounds, as a box round none
+    readonly property var _box: BarShapes.boxRect({
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    }, _draws?.start ?? 0, root.segments ? root._reach.near : 0, root.segments ? root._reach.far : 0, root.isVertical, _draws?.end ?? 0)
+    leftMargin: -_box.x
+    topMargin: -_box.y
+    rightMargin: _box.x + _box.width
+    bottomMargin: _box.y + _box.height
 
     Loader {
       id: contentLoader
       readonly property real length: Math.max(0, root.mainSize - root.leadInset - root.trailInset)
       readonly property real start: (root._item?.pinStart ? 0 : Math.round((root._drawnMain - root.mainSize) / 2)) + root.leadInset
-      x: root.isVertical ? 0 : start
-      y: root.isVertical ? start : 0
+      x: root.isVertical ? root._tabShift : start
+      y: root.isVertical ? start : root._tabShift
       width: root.isVertical ? root.width : length
       height: root.isVertical ? length : root.height
       onLoaded: {
@@ -269,8 +345,14 @@ Item {
           item.barConfig = Qt.binding(() => root.barConfig);
           item.panel = Qt.binding(() => root.panel);
           item.screen = Qt.binding(() => root.screen);
+          // Where it sits along the bar, for the bar's gradient: its
+          // module starts past its lead inset (at rest)
+          root._item.barOffset = Qt.binding(() => root.barStart + root.leadInset);
+          root._item.barLength = Qt.binding(() => root.barLength);
           if ("hitArea" in item)
             item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
+          if ("runPlace" in item)
+            root._item.runPlace = Qt.binding(() => root._moduleRun);
         }
       }
     }
@@ -287,13 +369,14 @@ Item {
     }
   }
 
-  // A module with a background shows it in its shape (WidgetBackground)
-  Rectangle {
-    anchors.fill: parent
-    visible: root.editorOutlined && !root.hasBackground
-    radius: root.barConfig.radius
-    color: Qt.alpha(Theme.accent, 0.15)
-    border.color: Theme.accent
-    border.width: 2
+  // The bar editor's highlight, in its own bounds: a module with a
+  // background shows it in its shape (WidgetBackground)
+  ShapeOverlay {
+    shown: root.editorOutlined && !root.hasBackground
+    bar: root.barConfig
+    fill: Qt.alpha(Theme.accent, 0.15)
+    stroke: Theme.accent
+    strokeWidth: 2
+    glides: false
   }
 }

@@ -43,7 +43,8 @@ settings:
     x-enumShowIf:
       none:
         anyOf:
-          - {$bar.widgetStyle: [filled, tinted, outline, underline]}
+          - {$bar.boxed: true}
+          - {$bar.underlined: true}
           - {solidBoxes: true}
     default: numbers
     description: 'What each workspace shows. None: just its box or line.'
@@ -194,8 +195,29 @@ settings:
     type: boolean
     title: Background
     default: true
-    description: A box around the workspaces. Off, they sit on the bar.
-    x-showIf: {$bar.widgetStyle: [filled, tinted, outline]}
+    description: A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.
+    x-showIf: {$bar.boxed: true}
+  lead:
+    type: string
+    title: Head
+    enum: [none, icon, active]
+    x-enumLabels: {none: None, icon: Icon, active: Active workspace}
+    default: none
+    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part.
+    x-showIf:
+      anyOf:
+        - {$bar.boxed: false}
+        - {showBackground: true}
+  leadIcon:
+    type: string
+    x-control: icon
+    title: Head icon
+    default: grid_view
+    x-showIf:
+      lead: icon
+      anyOf:
+        - {$bar.boxed: false}
+        - {showBackground: true}
   backgroundColor:
     type: string
     title: Background color
@@ -205,8 +227,8 @@ settings:
     x-autoColor: neutral
     x-showIf:
       showBackground: true
-      $bar.widgetStyle: [filled, tinted, outline]
-      $bar.widgetGrouping: {not: merged}
+      $bar.boxed: true
+      $bar.merged: false
   solidBoxes:
     type: boolean
     title: Solid boxes
@@ -217,7 +239,7 @@ settings:
     title: Active
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: {not: plain}}
+        - {$bar.ownColorShows: true}
         - {solidBoxes: true}
   occupiedColor:
     type: string
@@ -226,7 +248,7 @@ settings:
     default: base04
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: {not: plain}}
+        - {$bar.ownColorShows: true}
         - {solidBoxes: true}
   urgentColor:
     type: string
@@ -246,7 +268,8 @@ settings:
     default: base01
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: [filled, tinted, outline, underline]}
+        - {$bar.boxed: true}
+        - {$bar.underlined: true}
         - {solidBoxes: true}
   textColor:
     type: string
@@ -258,10 +281,10 @@ settings:
       $bar.widgetTextColor: ''
       anyOf:
         - {solidBoxes: true}
-        - {$bar.widgetStyle: filled, labels: [numbers, dots]}
-        - {$bar.widgetStyle: filled, workspaceLabels: {notEmpty: true}}
-        - {$bar.widgetStyle: filled, useNames: true}
-        - {$bar.widgetStyle: filled, showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
+        - {$bar.cellsFilled: true, labels: [numbers, dots]}
+        - {$bar.cellsFilled: true, workspaceLabels: {notEmpty: true}}
+        - {$bar.cellsFilled: true, useNames: true}
+        - {$bar.cellsFilled: true, showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
   hoverColor:
     type: string
     title: Hover

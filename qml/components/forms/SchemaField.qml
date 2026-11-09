@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 import qs.config
 import qs.services.core
@@ -14,9 +15,10 @@ import qs.components.reusable
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
 // One row of a schema-driven form: picks the control for the row's schema
 // type (or a list editor for an array of objects), hidden while its
-// `x-showIf` doesn't hold. `form` provides valueAt(path) and
-// edit(path, value) (SchemaPropertiesForm, SettingRows, or the settings
-// page's SettingsContent).
+// `x-showIf` doesn't hold (one marked `x-keepsPlace` greyed instead,
+// saying why on hover, in a form with `keepsPlace`). `form` provides valueAt(path) and edit(path, value)
+// (SchemaPropertiesForm, SettingRows, or the settings page's
+// SettingsContent).
 Loader {
   id: root
 
@@ -147,7 +149,21 @@ Loader {
   // row is inside (`groupShowIf`), checked against _valueOf
   // and `x-hintedIf` (SchemaLayout.hintedHides: hidden where the compositor
   // can't do it and the backend names nothing that can)
-  readonly property bool shown: SchemaLayout.showIfHolds(row.kind === "group" ? row.showIf : fieldSchema["x-showIf"], root._valueOf) && (row.groupShowIf ?? []).every(outer => SchemaLayout.showIfHolds(outer.condition, key => root._valueFrom(outer.path, key))) && !SchemaLayout.hintedHides(fieldSchema["x-hintedIf"], root._valueOf, capability => CompositorManager.unsupportedHint(capability))
+  readonly property bool shown: (root._conditionsHold || root.placeKept) && !SchemaLayout.hintedHides(fieldSchema["x-hintedIf"], root._valueOf, capability => CompositorManager.unsupportedHint(capability))
+  readonly property bool _conditionsHold: SchemaLayout.showIfHolds(row.kind === "group" ? row.showIf : fieldSchema["x-showIf"], root._valueOf) && (row.groupShowIf ?? []).every(outer => SchemaLayout.showIfHolds(outer.condition, key => root._valueFrom(outer.path, key)))
+
+  // In a form keeping its main rows in place (`keepsPlace`: the Bar style
+  // block, so they never move under the pointer), a field marked
+  // `x-keepsPlace` whose `x-showIf` fails is greyed and not editable
+  // instead of hidden, saying why on hover: its `x-tileHint` (a string, or
+  // its map's "*"), else generically. Any other field hides as anywhere
+  readonly property bool placeKept: root.form?.keepsPlace === true && row.kind !== "group" && fieldSchema["x-keepsPlace"] === true && !root._conditionsHold
+  readonly property string placeKeptReason: {
+    if (!root.placeKept)
+      return "";
+    const own = SchemaLayout.tileHint(fieldSchema);
+    return own !== "" ? I18n.tr(own) : I18n.tr("Doesn't apply here");
+  }
 
   // `x-enabledIf` (as x-showIf), or a shown `x-hintedIf`: while it doesn't
   // hold the row is greyed out, its value kept, and says why
@@ -180,7 +196,29 @@ Loader {
 
   visible: shown
   enabled: allowed
-  opacity: allowed ? 1 : 0.5
+  opacity: allowed && !placeKept ? 1 : 0.5
+
+  // Kept in place, greyed: the control can't be used, but the row still
+  // takes the hover that shows why
+  Binding {
+    target: root.item
+    property: "enabled"
+    value: false
+    when: root.placeKept && root.item !== null
+  }
+
+  HoverHandler {
+    id: keptHover
+    enabled: root.placeKeptReason !== ""
+  }
+
+  LazyLoader {
+    active: keptHover.hovered && root.placeKeptReason !== ""
+    StyledToolTip {
+      target: root
+      text: root.placeKeptReason
+    }
+  }
 
   Layout.fillWidth: true
 
@@ -264,6 +302,9 @@ Loader {
         return searchField;
       if (fieldSchema["x-control"] === "icon")
         return iconField;
+      // Every option as a tile (`x-control: "tiles"`)
+      if (root._allOptions?.length > 0 && fieldSchema["x-control"] === "tiles")
+        return tilesField;
       // Two or three values toggled between (`x-control: "toggle"`)
       if (root.options?.length >= 2 && root.options.length <= 3 && fieldSchema["x-control"] === "toggle")
         return toggleField;
@@ -361,7 +402,7 @@ Loader {
         // Centred on a control taller than it (a label alone)
         Layout.alignment: Qt.AlignVCenter
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         horizontalAlignment: Text.AlignRight
@@ -390,6 +431,40 @@ Loader {
       // (An inheriting one shows the value it follows)
       currentValue: root.current ?? SettingsManager.inheritedValue(root.fieldSchema) ?? ""
       onPicked: value => root.commit(value)
+    }
+  }
+
+  // An enum as tiles (`x-control: "tiles"`): every option, one whose
+  // `x-enumShowIf` fails greyed and saying why on hover (its `x-tileHint`,
+  // else generically), each drawn over the preview the form gives this
+  // field (its `tilePreview` hook: { component, properties }), if any
+  readonly property var _allOptions: fieldSchema["x-control"] === "tiles" ? SettingsManager.optionsFor(fieldSchema) : null
+  readonly property var _tilePreview: {
+    const hook = root.form?.tilePreview ?? null;
+    return hook ? hook(root.row.path) : null;
+  }
+  Component {
+    id: tilesField
+    ColumnLayout {
+      spacing: Widget.spacing
+      FieldHeader {
+        label: root.label
+        description: root.description
+        trailing: root.headerExtra
+      }
+      ChoiceTiles {
+        Layout.fillWidth: true
+        options: SchemaLayout.tileOptions(root.fieldSchema, root._allOptions, root._valueOf).map(option => ({
+              "value": option.value,
+              "label": root.optionLabels[option.value] ?? String(option.value),
+              "disabledReason": option.hint === null ? "" : option.hint !== "" ? I18n.tr(option.hint) : I18n.tr("Doesn't apply here")
+            }))
+        preview: root._tilePreview?.component ?? null
+        previewProperties: root._tilePreview?.properties ?? ({})
+        // (An inheriting one shows the value it follows)
+        value: root.current ?? SettingsManager.inheritedValue(root.fieldSchema) ?? ""
+        onPicked: value => root.commit(value)
+      }
     }
   }
 

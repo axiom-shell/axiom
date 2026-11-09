@@ -77,13 +77,12 @@ Rectangle {
     }
 
     // Label
-    StyledText {
+    StyledLabel {
       id: label
       text: root.menuItem.text
       Layout.fillWidth: true
       elide: Text.ElideRight
       wrapMode: Text.NoWrap
-      clip: true
       horizontalAlignment: root.openToLeft ? Text.AlignRight : Text.AlignLeft
     }
 

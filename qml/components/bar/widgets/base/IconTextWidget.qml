@@ -4,12 +4,15 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // An icon followed by a label, laid along the bar's main axis (the label is
 // rotated on a vertical bar, or upright under the icon with uprightLabel).
-// The label's figures are centred on the icon's middle, on whole pixels. Reports the size it needs to show everything
-// as its implicit size; given less, the label elides to fit, so its length
-// is decided by the bar layout rather than by character counts.
+// The label's letters (TextBand) are centred on the icon's middle, on
+// whole pixels, and across a vertical bar. Reports the size it needs to
+// show everything as its implicit size; given less, the label elides to
+// fit, so its length is decided by the bar layout rather than by character
+// counts.
 BaseWidget {
   id: root
 
@@ -17,6 +20,9 @@ BaseWidget {
   // one, side by side on a horizontal one (not joined by spaces: the icon
   // font's space is a whole icon wide)
   property string icon: ""
+  // An image in the icon's place instead (an app's icon: a path or URL),
+  // a square the icon's size; empty for the glyphs
+  property string iconSource: ""
   property string text: ""
   // Text.PlainText for text from outside (an event's title), which
   // mustn't render as styled text or load images
@@ -45,8 +51,8 @@ BaseWidget {
   property bool uprightLabel: false
   readonly property bool _turned: isVertical && !uprightLabel
 
-  readonly property bool _hasIcon: !hidden && showIcon && icon !== ""
-  readonly property var _iconLines: icon.split("\n")
+  readonly property bool _hasIcon: !hidden && showIcon && (iconSource !== "" || icon !== "")
+  readonly property var _iconLines: iconSource !== "" ? [] : icon.split("\n")
   readonly property string displayText: !hidden && showText ? (text || "—") : ""
   readonly property bool _hasText: displayText !== ""
   readonly property real _gap: _hasIcon && _hasText ? spacing : 0
@@ -64,7 +70,7 @@ BaseWidget {
   readonly property real _iconStart: leadAfterIcon ? 0 : _leadRoom
 
   // Across a bar, where the icon's middle is (the run's, with none): what
-  // the label's figures and a lead graphic centre on, in the lead slot's
+  // the label's letters and a lead graphic centre on, in the lead slot's
   // coordinates as in the run's
   readonly property real iconMiddle: _hasIcon ? iconLabel.y + iconLabel.height / 2 : run.height / 2
 
@@ -73,8 +79,32 @@ BaseWidget {
   // Where the icon is drawn, in the widget's coordinates (for a badge on
   // it); empty with no icon
   readonly property rect iconRect: _hasIcon ? Qt.rect(run.x + iconLabel.x, run.y + iconLabel.y, iconLabel.width, iconLabel.height) : Qt.rect(0, 0, 0, 0)
+  // The gap between its icon part (the lead graphic and the icon) and its
+  // label when they're set apart (a split bar's widget), instead of
+  // `spacing`; -1 for none
+  property real splitRoom: -1
+  // It shows an icon part and a label apart: it has a splitRoom, an icon
+  // or a lead graphic, and a label
+  readonly property bool splits: splitRoom >= 0 && _hasText && (_hasIcon || _leadRoom > 0)
+  readonly property real _splitExtra: splits ? splitRoom - spacing : 0
+  // Where the middle of the gap between the two parts is along the bar
+  // (splitAt, -1 when it doesn't split), and what the icon part holds
+  // (splitPart), in the widget's coordinates (BarShapes.splitPart)
+  readonly property var _splitPlace: {
+    if (!splits)
+      return null;
+    // Across, the icon's middle (the run's, with none), in the run's
+    // coordinates
+    const middle = _hasIcon ? (isVertical ? iconLabel.x + iconLabel.width / 2 : iconLabel.y + iconLabel.height / 2) : (isVertical ? run.width : run.height) / 2;
+    return BarShapes.splitPart(isVertical, isVertical ? run.y : run.x, textSlot.start - splitRoom, splitRoom, (isVertical ? run.x : run.y) + middle, fontSize * iconScale);
+  }
+  readonly property real splitAt: _splitPlace?.at ?? -1
+  // What the icon part holds (the lead graphic and the icon) in the
+  // widget's coordinates: along the bar from its start to the gap, across
+  // it the icon's size round its middle (the run's, with none)
+  readonly property rect splitPart: _splitPlace?.part ?? Qt.rect(0, 0, 0, 0)
   readonly property real _textLength: isVertical && uprightLabel ? textLabel.implicitHeight : Math.ceil(Math.max(textLabel.implicitWidth, steadyMetrics.advanceWidth, minimumMetrics.advanceWidth))
-  readonly property real _naturalLength: _leadRoom + iconLength + _gap + (_hasText ? _textLength : 0)
+  readonly property real _naturalLength: _leadRoom + iconLength + _gap + _splitExtra + (_hasText ? _textLength : 0)
 
   readonly property real _padding: hidden ? 0 : padding
   // Down to its icon, with a lead graphic drawn before it: the least an
@@ -107,7 +137,7 @@ BaseWidget {
     // widest line's width
     Grid {
       id: iconLabel
-      columns: root.isVertical ? 1 : root._iconLines.length
+      columns: root.isVertical ? 1 : Math.max(1, root._iconLines.length)
       columnSpacing: root.iconSpacing
       horizontalItemAlignment: Grid.AlignHCenter
       verticalItemAlignment: Grid.AlignVCenter
@@ -129,13 +159,22 @@ BaseWidget {
           ColorGlide on color {}
         }
       }
+
+      Image {
+        visible: root.iconSource !== ""
+        width: visible ? Math.round(root.fontSize * root.iconScale) : 0
+        height: width
+        sourceSize: Qt.size(64, 64)
+        source: root.iconSource
+        asynchronous: true
+      }
     }
 
     // Space left for the label along the main axis
     Item {
       id: textSlot
       visible: root._hasText
-      readonly property real start: root._leadRoom + root.iconLength + root._gap
+      readonly property real start: root._leadRoom + root.iconLength + root._gap + root._splitExtra
       x: root.isVertical ? 0 : start
       y: root.isVertical ? start : 0
       width: root.isVertical ? run.width : Math.max(0, run.length - start)
@@ -143,16 +182,25 @@ BaseWidget {
 
       Text {
         id: textLabel
-        // Across a bar, its figures (a digit's height) centred where the
-        // icon's middle is (the run's, with none) on a whole pixel: centred
-        // as a box, a label sits high, its box holding the descent
-        readonly property rect _figure: figureMetrics.tightBoundingRect
+        // Across a bar, its letters centred where the icon's middle is (the
+        // run's, with none) on a whole pixel, and turned along a vertical
+        // one, across it: its lines are moved in its box to centre on them
+        // (TextBandPadding), not on its line, which holds the descent.
+        // Upright under the icon it centres across nothing
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !(root.isVertical && root.uprightLabel)
+          label: textLabel
+          text: steadyMetrics.text
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
         // Along the bar, centred in its room (wider than the text when its
         // minimum or its zeros measure wider), on a whole pixel; given less,
-        // it fills the room and elides
+        // it fills the room and elides. Turned, its x is across the bar
+        // (its lines' down is the bar's right), less its band's offset too
         readonly property real _alongRoom: root._turned ? textSlot.height : textSlot.width
-        x: root._turned ? (textSlot.width - width) / 2 : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
-        y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - baselineOffset + _figure.height / 2)
+        x: root._turned ? (textSlot.width - width) / 2 - _band.offset : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
+        y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - height / 2 - _band.offset)
         width: root.isVertical && root.uprightLabel ? textSlot.width : Math.min(Math.ceil(implicitWidth), _alongRoom)
         rotation: root._turned ? -90 : 0
         horizontalAlignment: root.isVertical && root.uprightLabel ? Text.AlignHCenter : Text.AlignLeft
@@ -169,14 +217,6 @@ BaseWidget {
         ColorGlide on color {}
       }
     }
-  }
-
-  // A digit's ink, measured again with the font (FontMetrics'
-  // tightBoundingRect() is a call, which a binding never re-runs)
-  TextMetrics {
-    id: figureMetrics
-    font: textLabel.font
-    text: "0"
   }
 
   // The label as it reads (styled text's tags left out), and its minimum,

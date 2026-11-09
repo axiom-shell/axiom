@@ -669,6 +669,21 @@ def main():
             if m and "// allowed:" not in line:
                 errors.append(f"{path}:{n}: {m.group(0)[:-1]}: run the action through ActionsManager.run(id, {{fromScreen: true}}) (or mark a use that must stay `// allowed: <reason>`)")
 
+    # What a bar widget style is lives in BarLook's trait table alone
+    # (qml/components/bar/AGENTS.md, docs/dev/bar/widget-style.md): nothing
+    # else reads the style's name, the saved `widgetStyle` or the resolved
+    # look's `style`, to compare it; it reads the look's traits. (Comparing
+    # a name like "outline" can't be told from other uses of the word, so
+    # the check is on where the name comes from.) Tests build looks from
+    # BarStyle keys.
+    for path, text in sources.items():
+        if path.startswith("tests/") or path == "qml/components/methods/BarLook.qml":
+            continue
+        for n, line in enumerate(text.split("\n"), 1):
+            m = re.search(r"\bwidgetStyle\b|\blook\.style\b", line.split("//")[0])
+            if m and "// allowed:" not in line:
+                errors.append(f"{path}:{n}: reads `{m.group(0)}`: a style is BarLook's alone; read the look's traits (or mark a use that must stay `// allowed: <reason>`)")
+
     # Readers: the schema fills every default, so `_c.key ?? x` is dead
     for path, text in sources.items():
         if not path.startswith("qml/config/"):

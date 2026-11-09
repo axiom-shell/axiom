@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 import qs.components.methods
+import qs.components.bar.look
 
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
@@ -16,19 +17,29 @@ import qs.components.methods
 // in and out (`pulse`), with a dot at its corner where an app icon would
 // otherwise hide it. A row with a sliding ActiveCellIndicator draws its
 // cells twice, the boxes (`part: "background"`) under the indicator and
-// the labels (`"content"`) over it.
+// the labels (`"content"`) over it. As a segment of the bar's run (the
+// widget's Background off) its box takes the bar's widget shape (`shape`)
+// and its content keeps clear of its caps (`room`).
 Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for its state
+  // How its widget's cells draw on this bar or popout
+  required property CellLook cellLook
+  // BarsConfig.cellColors for its state (CellLook.colorsOf)
   required property var look
   required property bool isActive
   // Across the bar, and along it (`restLength` when not widened)
   required property real thickness
   required property real length
   property real restLength: length
-  property real radius: 0
+  property real radius: cellLook.radius
+  // Its shape as a segment of the bar's run (BarCells.cellShape), or
+  // null: a box filling it, rounded by `radius`
+  property var shape: null
+  // The room its content keeps clear of its caps along it (BarCells.cellRoom:
+  // { lead, trail }), or null
+  property var room: null
   // "numbers", "dots" or "none" (dots where a cell would have neither box
   // nor line to show: `none`'s option is hidden there, but the bar's style
   // can change after)
@@ -73,68 +84,66 @@ Item {
   // "all", or only its box and underline ("background") or its label, dot
   // or icon and pointer area ("content")
   property string part: "all"
-  // Its box in the hover color: when hovered, or for a background layer,
-  // when its content layer is
+  // Its box in the hover color (or, with "Fill on hover", filled: its
+  // `look` passes it to BarsConfig.cellColors): when hovered, or for a
+  // background layer, when its content layer is
   property bool lit: hovered
-  // Its box while lit (BarsConfig.cellHoverColor)
-  property color hoverColor: Theme.backgroundHighlight
+  // Its box while lit
+  property color hoverColor: cellLook.hoverColor
   readonly property bool _drawsBox: part !== "content"
   readonly property bool _drawsContent: part !== "background"
   // Its box while the indicator stands for it stays at rest under the
   // indicator, unless its tint would show through
-  readonly property bool _clearActive: root.isActive && root.indicated && root.barConfig.widgetStyle === "tinted"
+  readonly property bool _clearActive: root.isActive && root.indicated && root.cellLook.clearsActive
 
   signal clicked
 
   readonly property bool isVertical: barConfig.vertical
-  // `solidBoxes`: a filled box whatever the bar's style (`look` is the
-  // solid one)
-  property bool solid: false
-  readonly property bool boxed: barConfig.widgetBoxed || solid
-  // Its state shows in a box or a line; without either, in its content
-  readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
+  // A box of its own (in a merged run, which draws its box, only where it
+  // still draws one: CellLook.boxed); its state shows in a box or a line,
+  // without either in its content
+  readonly property bool boxed: cellLook.boxed
+  readonly property bool _framed: cellLook.framed
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
-  // cells and takes the hover, so it's asked; elsewhere (a popout), the
-  // cell's own pointer area
+  // cells and takes the hover, so it's asked whether the pointer is in
+  // the cell's pointer area (its box as drawn); elsewhere (a popout), that
+  // area itself
   property var hitArea: null
-  readonly property bool hovered: hitArea ? hitArea.hovers(root) : cellArea.containsMouse
+  readonly property bool hovered: hitArea ? hitArea.hovers(cellArea) : cellArea.containsMouse
 
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
-  Rectangle {
-    anchors.fill: parent
+  // Its box (BarCells.cellBox) and the look's line. Lit, in the hover
+  // color, unless its look is filled for the hover already ("Fill on
+  // hover": BarWidgetStyle.cell's showsHover)
+  LookBox {
+    readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
     visible: root._drawsBox
-    radius: root.radius
+    bar: root.barConfig
+    outline: _box.outline
+    reach: _box.reach
+    strokeWidth: _box.strokeWidth
+    strokeStyle: _box.strokeStyle
     opacity: root._pulse
-    color: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    border.color: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
-    border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
-    ColorGlide on border.color {
-      enabled: root.animated
-    }
-  }
-
-  // Underline: along the side the bar's widget lines take
-  CellUnderline {
-    barConfig: root.barConfig
-    visible: root._drawsBox && root.barConfig.widgetStyle === "underline"
-    opacity: root._pulse
-    color: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
+    fill: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    stroke: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    line: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
+    animated: root.animated
   }
 
   // What it shows, fading with an urgent one's pulse where nothing else
-  // carries its state
+  // carries its state, centred clear of its caps
   Item {
+    readonly property real _lead: root.room?.lead ?? 0
+    readonly property real _trail: root.room?.trail ?? 0
+
     anchors.fill: parent
+    anchors.leftMargin: root.isVertical ? 0 : _lead
+    anchors.rightMargin: root.isVertical ? 0 : _trail
+    anchors.topMargin: root.isVertical ? _lead : 0
+    anchors.bottomMargin: root.isVertical ? _trail : 0
     visible: root._drawsContent
     opacity: root._framed ? 1 : root._pulse
 
@@ -173,12 +182,25 @@ Item {
       visible: root._shows === "text"
       spacing: WorkspaceCells.iconGap(root.thickness)
       rotation: root.isVertical && !textLabel.symbol && textRow.implicitWidth > root.thickness * 0.8 ? -90 : 0
+      // What's drawn as words, the two on one band (TextBand: a plain
+      // lead and its text share a baseline)
+      readonly property string words: (leadLabel.symbol ? "" : root.leadIcon) + (textLabel.symbol ? "" : root.text)
 
       StyledIcon {
         id: leadLabel
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
         visible: root.leadIcon !== ""
         readonly property bool symbol: leadLabel.isSymbol && !root.leadPlain
+        // As words, centred on their letters
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !leadLabel.symbol
+          label: leadLabel
+          text: root.leadIcon
+          bandText: textRow.words
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
 
         // An icon stays upright as the text turns
         rotation: leadLabel.symbol && textRow.rotation !== 0 ? 90 : 0
@@ -196,7 +218,16 @@ Item {
       StyledIcon {
         id: textLabel
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
         readonly property bool symbol: textLabel.isSymbol && !root.textPlain
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !textLabel.symbol
+          label: textLabel
+          text: root.text
+          bandText: textRow.words
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
 
         text: root.text
         textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
@@ -268,7 +299,8 @@ Item {
       }
     }
 
-    StyledText {
+    // Centred on its figures
+    StyledLabel {
       anchors.centerIn: parent
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label
@@ -295,9 +327,12 @@ Item {
     }
   }
 
-  MouseArea {
+  // In its box as drawn: as a segment, back under the cell before and out
+  // to a tab's edge
+  CellHitArea {
     id: cellArea
-    anchors.fill: parent
+    shape: root.shape
+    vertical: root.isVertical
     enabled: root.clickable && root._drawsContent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor

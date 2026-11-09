@@ -160,7 +160,7 @@ Panel {
       textColor: Theme.accent
       textSize: Appearance.fontSizeBy(2)
     }
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: root.recording ? I18n.tr("Recording · {0}", root.elapsed) : I18n.tr("Screen recording")
       textColor: root.recording ? Theme.error : Theme.foreground
@@ -298,7 +298,7 @@ Panel {
       RowLayout {
         id: listTitle
         Layout.fillWidth: true
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: I18n.tr("Recent recordings")
           textSize: Appearance.fontSizeBy(-2)

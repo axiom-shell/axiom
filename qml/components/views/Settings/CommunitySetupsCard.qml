@@ -155,7 +155,7 @@ FieldGroup {
             Layout.fillWidth: true
             spacing: 0
 
-            StyledText {
+            StyledLabel {
               text: details.setup?.title ?? ""
               textFormat: Text.PlainText
               font.bold: true
@@ -164,7 +164,7 @@ FieldGroup {
               Layout.fillWidth: true
             }
 
-            StyledText {
+            StyledLabel {
               elide: Text.ElideRight
               text: I18n.tr("by {0}", details.setup?.author ?? "")
               textFormat: Text.PlainText
@@ -262,7 +262,7 @@ FieldGroup {
               Layout.fillWidth: true
             }
 
-            StyledText {
+            StyledLabel {
               readonly property var wallpaper: details.setup?.wallpaper ?? null
               text: wallpaper ? I18n.tr("License: {0} · Source: {1}", wallpaper.license, wallpaper.source) + (wallpaper.credit ? " · " + wallpaper.credit : "") : ""
               textFormat: Text.PlainText
@@ -278,7 +278,7 @@ FieldGroup {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: CommunitySetupsManager.applying === details.setup?.id ? I18n.tr("Applying…") : root.armed === details.setup?.id ? SavedConfigsManager.keepHint("") : ""
             opacity: 0.7
@@ -338,7 +338,7 @@ FieldGroup {
               Layout.fillWidth: true
               spacing: Widget.spacing / 2
 
-              StyledText {
+              StyledLabel {
                 Layout.fillWidth: true
                 text: tile.modelData.title
                 textFormat: Text.PlainText
@@ -384,7 +384,7 @@ FieldGroup {
       Layout.fillWidth: true
       spacing: Widget.spacing
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: SavedConfigsManager.status
         opacity: 0.7

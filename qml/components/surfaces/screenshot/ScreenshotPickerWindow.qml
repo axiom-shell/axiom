@@ -276,7 +276,7 @@ PanelWindow {
       // The whole selection's, over every screen it's on
       readonly property size pixels: ScreenshotManager.picker.selection ? ScreenshotManager.picker.pixelSize(ScreenshotManager.picker.selection) : Qt.size(0, 0)
 
-      StyledText {
+      StyledLabel {
         id: sizeText
         anchors.centerIn: parent
         text: `${parent.pixels.width} × ${parent.pixels.height}`

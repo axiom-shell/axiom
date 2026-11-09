@@ -285,7 +285,7 @@ FocusScope {
             width: parent?.width ?? 0
             spacing: Widget.spacing / 2
 
-            StyledText {
+            StyledLabel {
               height: Widget.height
               verticalAlignment: Text.AlignVCenter
               text: I18n.tr("No room on {0} for", screenFit.modelData.screen)

@@ -6,8 +6,12 @@ appearance:
   variant: value
   style:
     enum: [label, icon, ring, fill, pill, segments, sparkline, stacked]
-    description: Pill only with one metric shown; the disk shows a fill instead of a sparkline.
+    description: Pill only with one metric in a box; the disk shows a fill instead of a sparkline.
 colors: standard
+boxes:
+  variant: each
+  boxes:
+    x-boxItems: {options: {cpu: showCpu, mem: showMemory, temp: showTemp, gpu: showGpu, disk: showDisk}}
 settings:
   showCpu: {type: boolean, title: CPU usage, default: true}
   showMemory: {type: boolean, title: Memory, default: true}

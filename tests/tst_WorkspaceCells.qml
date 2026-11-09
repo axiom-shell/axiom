@@ -31,6 +31,20 @@ TestCase {
     compare(WorkspaceCells.layout([], 4, -1, 0).total, 0);
   }
 
+  function test_roomed_adds_each_cells_cap_room() {
+    compare(WorkspaceCells.roomed([20, 30], [
+      {
+        "lead": 5,
+        "trail": 0
+      },
+      {
+        "lead": 0,
+        "trail": 7.5
+      }
+    ]), [25, 37.5]);
+    compare(WorkspaceCells.roomed([20, 30], null), [20, 30], "not segments: as they are");
+  }
+
   function test_startOf() {
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 0), 0);
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 2), 78);
@@ -42,6 +56,12 @@ TestCase {
     compare(WorkspaceCells.iconSize(20), 12, "an even margin on an even cell");
     compare(WorkspaceCells.iconSize(21), 13, "and on an odd one");
     compare(WorkspaceCells.iconSize(26), 16);
+  }
+
+  function test_contentSize() {
+    compare(WorkspaceCells.contentSize(26, 14, false), 17, "a symbol label, 1.2 × the text");
+    compare(WorkspaceCells.contentSize(30, 14, true), 20, "an app icon taller than the label");
+    compare(WorkspaceCells.contentSize(20, 14, true), 17, "a label taller than the app icon");
   }
 
   function test_rowLength() {

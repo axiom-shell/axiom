@@ -178,7 +178,7 @@ Item {
     border.width: 1
     border.color: Theme.border
 
-    StyledText {
+    StyledLabel {
       id: labelText
       anchors.centerIn: parent
       textSize: Appearance.fontSizeBy(-2)

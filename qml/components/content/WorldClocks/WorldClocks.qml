@@ -191,7 +191,7 @@ Card {
                 textColor: entry.local ? Theme.accent : Theme.foregroundAlt
                 textSize: Appearance.fontSizeBy(-1)
               }
-              StyledText {
+              StyledLabel {
                 Layout.fillWidth: true
                 text: root.cityOf(entry.place)
                 textSize: Appearance.fontSizeBy(-1)
@@ -241,14 +241,14 @@ Card {
               ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
-                StyledText {
+                StyledLabel {
                   Layout.fillWidth: true
                   text: root.cityOf(entry.place)
                   textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 1.3, root.rowHeight * 0.24))
                   font.bold: entry.local
                   elide: Text.ElideRight
                 }
-                StyledText {
+                StyledLabel {
                   Layout.fillWidth: true
                   visible: text !== "" && root.rowHeight >= Appearance.fontSize * 2.6
                   text: root.detailOf(entry.place.timezone, entry.there)
@@ -257,7 +257,7 @@ Card {
                   elide: Text.ElideRight
                 }
               }
-              StyledText {
+              StyledLabel {
                 text: root.timeText(entry.there)
                 textSize: Math.max(Appearance.fontSize, Math.min(Appearance.fontSize * 2, root.rowHeight * 0.42))
                 textColor: entry.local ? Theme.accent : Theme.foreground

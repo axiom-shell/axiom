@@ -57,7 +57,9 @@ ValueStyleWidget {
   styleText: root.style === "stacked" ? root.when : root.text
   subtext: root.title
   // Soon (a quarter hour or less): the warning color
-  accentColor: root.event && !root.event.allDay && root.minutesAway <= 15 ? Theme.warning : Theme.resolveColor(properties.backgroundColor)
+  readonly property bool _soon: root.event && !root.event.allDay && root.minutesAway <= 15
+  accentField: root._soon ? "" : "backgroundColor"
+  accentColor: root._soon ? Theme.warning : Theme.resolveColor(properties.backgroundColor)
 
   clickable: true
   onClicked: CalendarManager.openPage({

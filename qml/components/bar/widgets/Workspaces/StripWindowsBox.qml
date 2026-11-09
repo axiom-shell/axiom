@@ -5,40 +5,72 @@ import qs.services.compositor
 import qs.config
 import qs.services.system
 import qs.components.methods
+import qs.components.bar.look
 
 // A strip workspace's windows in one bar cell (`stripWindows: one`): a box
 // in the widget's style and its occupied color, holding every window's app
 // icon in strip order (CompositorManager.stripWindows), no limit, along the
-// bar. Each icon has a cell's room, `cellSpacing` apart, so the box covers
+// bar. Each icon has a cell's room, the cells' `spacing` apart, so the box covers
 // what a box each would. The window focused last shows at full opacity
 // with a short line in the active color under it (toward the windows on a
 // vertical bar), the rest dimmed. Each icon lights its own room in the
 // hover color under the pointer (the box itself never lights); click one
-// to focus its window.
+// to focus its window. As a segment of the bar's run (`run`: the widget's
+// Background off) the box takes the bar's widget shape, its icons kept
+// clear of its caps, cell `chainFirst` of the widget's `chainCount`.
 Item {
   id: root
 
   required property var barConfig
+  // How the widget's cells draw on this bar or popout: its size, corners,
+  // spacing and colors
+  required property CellLook cellLook
   required property int workspaceId
   // The strip's own direction, which orders the windows
   required property bool stripVertical
   // Along the bar's direction, which lays the icons out
   required property bool isVertical
-  required property real thickness
-  required property real cellLength
-  property real radius: 0
   required property color activeColor
   required property color occupiedColor
   required property color textColor
-  required property color hoverColor
   property bool clickable: true
   // The widget's (BarWidget.hitArea), which the box reads hover from
   property var hitArea: null
   property bool animated: true
-  // Between the icons' rooms (the widget's `spacing`), and the box a
-  // filled one (`solidBoxes`)
-  property real cellSpacing: barConfig.innerGap
-  property bool solid: false
+  // Where its box sits among the widget's chained cells, and how many
+  // those are
+  property int chainFirst: 0
+  property int chainCount: 1
+  // Across, and each icon's room along it and between them (the widget's
+  // `spacing`)
+  readonly property real thickness: cellLook.thickness
+  readonly property real _iconRoom: cellLook.thickness
+  readonly property real _iconSpacing: cellLook.spacing
+  // The room it keeps clear of its caps as a segment of the bar's run, its
+  // content app icons (CellLook.roomOf), else null
+  readonly property var _room: cellLook.roomOf(chainFirst, chainCount, cellLook.iconContent)
+  readonly property real _lead: _room?.lead ?? 0
+  // Its box's shape as a segment (CellLook.shapeOf), else null, and
+  // what it draws past its bounds (BarCells.cellMargins)
+  readonly property var _shape: cellLook.shapeOf(chainFirst, chainCount, cellLook.opaque, cellLook.iconContent)
+  readonly property var _margins: BarCells.cellMargins(_shape, _shape, isVertical)
+  // How far icon `index`'s pointer area reaches past its room, sharing
+  // the box: the first back to the box's start, the last on to its end,
+  // the rest to the middle of the gaps beside them; across, as the box
+  // does. None but the box's own off the bar's run.
+  function _slotMargins(index) {
+    if (!root._shape)
+      return BarCells.cellMargins(null, null, root.isVertical);
+    const half = root._iconSpacing / 2;
+    const start = index === 0 ? root._lead + (root.isVertical ? root._margins.top : root._margins.left) : half;
+    const end = index === root.addresses.length - 1 ? (root._room?.trail ?? 0) + (root.isVertical ? root._margins.bottom : root._margins.right) : half;
+    return {
+      "left": root.isVertical ? root._margins.left : start,
+      "top": root.isVertical ? start : root._margins.top,
+      "right": root.isVertical ? root._margins.right : end,
+      "bottom": root.isVertical ? end : root._margins.bottom
+    };
+  }
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the icons are only rebuilt when the windows or their
@@ -46,7 +78,7 @@ Item {
   readonly property string _key: root.windows.map(w => w.id).join(",")
   readonly property var addresses: root._key === "" ? [] : root._key.split(",")
   readonly property string focused: CompositorManager.lastFocused(root.windows)?.id ?? ""
-  readonly property real _along: root.addresses.length > 0 ? root.addresses.length * root.cellLength + (root.addresses.length - 1) * root.cellSpacing : 0
+  readonly property real _along: root.addresses.length > 0 ? root.addresses.length * root._iconRoom + (root.addresses.length - 1) * root._iconSpacing + root._lead + (root._room?.trail ?? 0) : 0
 
   // Nothing (not even a gap beside it) on an empty workspace
   visible: root.addresses.length > 0
@@ -56,25 +88,28 @@ Item {
   // The box: a workspace cell's, without content, unlit (its icons light
   // their own rooms)
   WorkspaceCell {
+    id: boxCell
     part: "background"
     lit: false
     barConfig: root.barConfig
+    cellLook: root.cellLook
     isActive: false
-    look: BarsConfig.cellColors(root.barConfig, root.occupiedColor, root.textColor, "occupied", root.solid)
-    solid: root.solid
+    look: root.cellLook.colorsOf(root.occupiedColor, root.textColor, "occupied", {})
     thickness: root.thickness
     length: root._along
-    radius: root.radius
-    hoverColor: root.hoverColor
+    shape: root._shape
     hitArea: root.hitArea
     animated: root.animated
   }
 
+  // Clear of its caps
   Grid {
+    x: root.isVertical ? 0 : root._lead
+    y: root.isVertical ? root._lead : 0
     flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
     rows: root.isVertical ? Math.max(1, root.addresses.length) : 1
     columns: root.isVertical ? 1 : Math.max(1, root.addresses.length)
-    spacing: root.cellSpacing
+    spacing: root._iconSpacing
 
     Repeater {
       model: root.addresses.length
@@ -86,11 +121,12 @@ Item {
         readonly property var window: root.windows.find(w => w.id === address) ?? null
         readonly property bool isFocused: address === root.focused
         // On the bar, from the widget's hit area (which lies over the
-        // icons); elsewhere, its own pointer area
-        readonly property bool hovered: root.hitArea ? root.hitArea.hovers(slot) : slotArea.containsMouse
+        // icons), asked whether the pointer is in its pointer area;
+        // elsewhere, that area itself
+        readonly property bool hovered: root.hitArea ? root.hitArea.hovers(slotArea) : slotArea.containsMouse
 
-        width: root.isVertical ? root.thickness : root.cellLength
-        height: root.isVertical ? root.cellLength : root.thickness
+        width: root.isVertical ? root.thickness : root._iconRoom
+        height: root.isVertical ? root._iconRoom : root.thickness
 
         // Its room lit under the pointer, inset inside the box
         Rectangle {
@@ -98,8 +134,8 @@ Item {
 
           anchors.fill: parent
           anchors.margins: inset
-          radius: Math.max(0, root.radius - inset)
-          color: root.hoverColor
+          radius: Math.max(0, root.cellLook.radius - inset)
+          color: root.cellLook.hoverColor
           opacity: slot.hovered ? 1 : 0
 
           Behavior on opacity {
@@ -145,9 +181,14 @@ Item {
           y: root.isVertical ? (parent.height - height) / 2 : root.thickness - room + (room - size) / 2
         }
 
-        MouseArea {
+        // Its share of the box as drawn (back under the cell before, out
+        // to a tab's edge)
+        CellHitArea {
           id: slotArea
-          anchors.fill: parent
+          shape: root._shape
+          vertical: root.isVertical
+          box: boxCell
+          margins: root._slotMargins(slot.index)
           enabled: root.clickable
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor

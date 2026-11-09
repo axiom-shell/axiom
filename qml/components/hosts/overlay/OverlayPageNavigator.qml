@@ -306,7 +306,7 @@ Rectangle {
                   textColor: tab.ink
                 }
 
-                StyledText {
+                StyledLabel {
                   anchors.verticalCenter: parent.verticalCenter
                   text: tab.modelData.label
                   visible: tab.showLabel

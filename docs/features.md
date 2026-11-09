@@ -43,7 +43,7 @@ Everything below is one shell and one config, and everything is set from inside 
 
 <p align="center"><img src="screenshots/bar-styles.webp" alt="Seven bars in seven styles, each in its own theme: solid filled, floating capsules with glow, powerline pills, outlined arrows, filled slants, transparent accent text with dots, and transparent underlines" width="900"></p>
 
-Set a style once under **Settings → Look & Feel → Bar widgets**, and give any bar its own:
+Set a style once under **Settings → Look & Feel → Bar style**, and give any bar its own. In the bar editor's **Style** tab each section (Look, Colors, Accents, Size, Shadow) is shared or the bar's own:
 
 | | Options |
 | --- | --- |

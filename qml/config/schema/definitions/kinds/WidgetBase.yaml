@@ -50,6 +50,18 @@ x-parts:
   appearance:
     value:
       appearance: {$ref: '#/definitions/BarDisplay'}
+  # One box for all its items, or one each (`boxes: {variant: each,
+  # boxes: {x-boxItems: …}}` names the items: BarsConfig.boxItems)
+  boxes:
+    each:
+      boxes:
+        type: string
+        title: Boxes
+        x-control: toggle
+        enum: [one, each]
+        x-enumLabels: {one: One, each: One per item}
+        default: one
+        description: One per item takes the bar's widget style, pill and split for each.
   colors:
     standard:
       backgroundColor: {$ref: '#/definitions/WidgetColor'}
@@ -58,10 +70,7 @@ x-parts:
         title: Text color
         x-options: colors
         default: base00
-        x-showIf:
-          $bar.widgetStyle: filled
-          $bar.widgetGrouping: {not: merged}
-          $bar.widgetTextColor: ''
+        x-showIf: {$bar.textColorShows: true}
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}

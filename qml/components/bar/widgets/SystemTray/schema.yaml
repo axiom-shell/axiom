@@ -19,5 +19,11 @@ settings:
     x-autoColor: neutral
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: [filled, tinted, outline], $bar.widgetGrouping: {not: merged}}
-        - {$bar.widgetStyle: underline}
+        - {$bar.boxed: true, $bar.merged: false}
+        - {$bar.underlined: true}
+  leadIcon:
+    type: string
+    x-control: icon
+    title: Head icon
+    default: ''
+    description: Drawn before the items; a split bar sets it apart as the icon part. Empty shows none.

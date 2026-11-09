@@ -55,16 +55,16 @@ WorkspacePopoutPanel {
         readonly property var shows: contents.of(wsId, "", true)
 
         barConfig: root.barConfig
+        cellLook: root.cellLook
         isActive: wsId === root.activeId
-        look: BarsConfig.workspaceCellColors(root.barConfig, root, isActive, hasWindows, shows.urgent)
+        look: root.cellLook.workspaceColorsOf(root, isActive, hasWindows, shows.urgent, {
+          "hovered": wsCell.lit
+        })
         urgent: shows.urgent
-        solid: root.solidBoxes
         pulse: root.pulse.value
         urgentColor: root.urgentColor
         thickness: root.cellSize
         length: shows.length
-        radius: root.radius
-        hoverColor: root.hoverColor
         labels: root.properties.labels
         label: shows.number
         text: shows.kind === "text" || shows.kind === "name" ? shows.text : ""

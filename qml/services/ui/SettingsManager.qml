@@ -117,7 +117,7 @@ QtObject {
       ShellManager.followLink("Settings");
     else
       ShellManager.openOverlayPage("Settings");
-    root.jumpTo(found.key, found.row);
+    root.jumpTo(found.key, found.row, Array.isArray(path) ? path : String(path).split("."));
     return true;
   }
 
@@ -150,15 +150,18 @@ QtObject {
 
   // The page scrolls to a card (by SchemaLayout group key), unfolding it
   // first; `unfolded` says it had to, so the page waits for it to open.
-  // `row` (a key path): the row in it to outline
+  // `row` (a key path): the row in it to outline; `setting` (a key path):
+  // the setting asked for, which may be inside that row (one row drawing
+  // many, as the Bar style block, opens the fold holding it)
   signal jumpRequested(string key, bool unfolded)
-  function jumpTo(key, row) {
+  function jumpTo(key, row, setting) {
     const unfolded = root.isCollapsed(key);
     if (unfolded)
       root.setCollapsed(key, false);
     root._pendingJump = {
       "key": key,
-      "row": row ?? null
+      "row": row ?? null,
+      "setting": setting ?? row ?? null
     };
     root.jumpRequested(key, unfolded);
   }

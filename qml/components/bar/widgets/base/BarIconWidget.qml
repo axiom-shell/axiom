@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.config
+import qs.components.bar.look
 
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.
@@ -22,6 +22,9 @@ IconTextWidget {
   property var panel
   property var screen
   property var properties
+  // Drawn one box per item (Boxes: One per item), the one item it draws
+  // (BarBoxes; set by its host), else ""
+  property string box: ""
   // Where its pointer areas go, in its background's shape (set by its
   // BarWidgetHost; null: its own bounds)
   property var hitArea: null
@@ -49,13 +52,31 @@ IconTextWidget {
   // The icon's gap to its label (6 px at the default inner spacing of 4)
   spacing: barConfig.innerGap * 1.5
   iconSpacing: barConfig.innerGap
-  // Its color for its state, and what it draws in on this bar
-  property color accentColor: Theme.resolveColor(properties.backgroundColor)
-  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)
+  // Its color field ("backgroundColor" unless a state names another, ""
+  // for a color of its own: a failure's error) and color for its state,
+  // its Auto fields' roles and place along the bar, and the colors it
+  // draws in (WidgetLook's; filled while its hit area is hovered, with the
+  // bar's "Fill on hover")
+  property alias accentField: look.accentField
+  property alias accentColor: look.accentColor
+  property alias autoColors: look.autoColors
+  property alias barOffset: look.barOffset
+  property alias barLength: look.barLength
+  readonly property alias accentAuto: look.accentAuto
+  readonly property alias barSpot: look.barSpot
+  readonly property alias colors: look.colors
+  // On a split bar, its icon part and label set apart (BarShapes.splitRoom)
+  splitRoom: barConfig.splitRoom
   // Whether its WidgetGroup draws a background under it, and an outline
   // in its shape while it's hovered
   property bool hasBackground: !hidden
   property bool hoverOutline: false
+  // Its content's extent across the bar (px), which its background's caps
+  // keep clear of (BarWidgetHost.contentAcross): from config, never
+  // measured. Its icon at the bar's font size, at its scale where its type
+  // draws it larger (iconScale), else its label's line (on a vertical bar
+  // the label is turned along it: one line across too).
+  property real contentAcross: barConfig.fontSize * Math.max(1, iconScale)
   // A level (0-1) its WidgetGroup fills its background's shape to, along
   // the bar (up a vertical one), in backgroundLevelColor; -1 for none (a custom
   // widget's pill style)
@@ -65,6 +86,16 @@ IconTextWidget {
   foregroundColor: colors.text
   iconColor: colors.icon
   opacity: (root.pressed ? 0.8 : 1) * root.dim
+
+  readonly property WidgetLook _look: WidgetLook {
+    id: look
+    barConfig: root.barConfig
+    properties: root.properties
+    accentField: "backgroundColor"
+    length: root.isVertical ? root.height : root.width
+    splits: root.splits
+    hovered: root.hitArea?.hovered ?? false
+  }
 
   HoverHandler {
     id: hover

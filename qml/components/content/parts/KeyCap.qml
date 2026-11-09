@@ -16,7 +16,7 @@ Rectangle {
   radius: Widget.radius / 2
   color: Theme.backgroundHighlight
 
-  StyledText {
+  StyledLabel {
     id: content
     anchors.centerIn: parent
     text: root.text

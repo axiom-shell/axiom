@@ -73,7 +73,7 @@ DropdownSurface {
               width: row.width
               spacing: Widget.spacing / 2
 
-              StyledText {
+              StyledLabel {
                 elide: Text.ElideRight
                 Layout.topMargin: row.index > 0 ? Widget.spacing * 2 : Widget.spacing / 2
                 Layout.bottomMargin: Widget.spacing / 2
@@ -149,7 +149,7 @@ DropdownSurface {
                   textColor: choice.selected ? Theme.accent : Theme.foregroundAlt
                   textSize: Appearance.fontSize
                 }
-                StyledText {
+                StyledLabel {
                   Layout.fillWidth: true
                   text: choice.preset ? choice.preset.name : row.rowData.model
                   textColor: choice.selected ? Theme.accent : Theme.foreground

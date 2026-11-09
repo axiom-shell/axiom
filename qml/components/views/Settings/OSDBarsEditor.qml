@@ -329,7 +329,7 @@ ColumnLayout {
               textColor: Theme.accent
             }
 
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               text: root.selected?.name ?? ""
               font.bold: true
@@ -337,7 +337,7 @@ ColumnLayout {
             }
 
             // Whose setting it is (a list's bar)
-            StyledText {
+            StyledLabel {
               visible: (root.selected?.index ?? -1) >= 0
               text: root.selected ? OSDConfig.nameOf(root.selected.type) : ""
               textColor: Theme.foregroundAlt

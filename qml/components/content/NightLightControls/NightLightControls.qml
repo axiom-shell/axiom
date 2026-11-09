@@ -116,7 +116,7 @@ Card {
       onMoved: ratio => setting.moved(ratio)
       onReleased: ratio => setting.released(ratio)
     }
-    StyledText {
+    StyledLabel {
       Layout.preferredWidth: Appearance.fontSize * 3.6
       horizontalAlignment: Text.AlignRight
       text: setting.valueText
@@ -206,13 +206,13 @@ Card {
           Layout.fillWidth: !warmthInline.visible
           Layout.preferredWidth: warmthInline.visible ? Appearance.fontSize * 7 : -1
           spacing: 0
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: I18n.tr("Night light")
             font.bold: true
             elide: Text.ElideRight
           }
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: root.status
             textSize: Appearance.fontSizeBy(-2)
@@ -270,7 +270,7 @@ Card {
           textColor: NightLight.schedule ? Theme.accent : Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(1)
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: NightLight.schedule ? I18n.tr("On from {0} to {1}", NightLight.startAt, NightLight.endAt) : I18n.tr("No schedule")
           textSize: Appearance.fontSizeBy(-2)

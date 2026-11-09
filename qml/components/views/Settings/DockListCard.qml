@@ -199,13 +199,13 @@ EntryListCard {
       asynchronous: true
     }
 
-    StyledText {
+    StyledLabel {
       text: row.name
       elide: Text.ElideRight
       Layout.fillWidth: true
     }
 
-    StyledText {
+    StyledLabel {
       visible: row.detail !== ""
       text: row.detail
       textColor: Theme.error

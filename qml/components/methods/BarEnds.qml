@@ -106,6 +106,110 @@ QtObject {
   }
 
   /**
+   * Where a tab (widgetShape tab) reaches out to across a bar, in from its
+   * window's outer edge: the outer edge of what its widgets sit on, inside
+   * any stroke there. A solid bar's is its window's edge (the screen edge,
+   * or the bar outside it). A pill bar on the border reaches back over the
+   * frame, its pills one with it, so its tabs run to the screen edge too.
+   * Any other bar inside the border lies on a stroke (the border's, or a
+   * bar's outside it): its tabs stop inside it. A floating bar's reach its
+   * island's stroke. With the border off a transparent bar's run to the
+   * screen edge. `bar`: an enriched bar (with placeStack's stripCover).
+   */
+  function tabEdge(bar, borderWidth) {
+    if (bar.island)
+      return bar.islandStart + borderWidth;
+    if (bar.insideBorder && !(bar.stripCover > 0))
+      return borderWidth;
+    return 0;
+  }
+
+  /**
+   * How far in from a bar's window's outer edge its accent line (its
+   * look's accentLine: { side, width }, or null) starts across it, inside
+   * whatever stroke is there. Along the outer edge: a floating bar's
+   * inside its island's stroke; a pill bar's past the frame it reaches
+   * back over (stripCover) and the stroke it overlaps; a bar inside the
+   * border inside the border's stroke; else at the edge. Along the inner
+   * edge, its width back from it: a pill bar's from its pills' far stroke
+   * (pillDepth), a solid or floating bar's from its own stroke there, a
+   * transparent bar's from its extent. `bar`: an enriched bar (with
+   * placeStack's stripCover).
+   */
+  function accentInset(bar, borderWidth) {
+    const line = bar.look.accentLine;
+    const width = line?.width ?? 0;
+    if (line?.side === "outer") {
+      if (bar.island)
+        return bar.islandStart + borderWidth;
+      return bar.pills ? bar.stripCover + bar.overlap : bar.insideBorder ? borderWidth : 0;
+    }
+    if (bar.pills)
+      return bar.pillDepth - borderWidth - width;
+    return bar.extent - width - (bar.solid || bar.island ? borderWidth : 0);
+  }
+
+  /**
+   * What bounds tabs along a bar (BarTabs.tabLimits), from its start:
+   * where a corner's curve takes a tab's outer corner at its end. A
+   * floating bar's islands (`islands`, [{ start, length }] along the
+   * bar), inside their stroke, their corners' curve inside it; on a
+   * transparent bar inside the border, the frame's inner sides, the
+   * border's rounded corner at an end meeting the border. Other bars'
+   * ends fill the corner: nothing bounds them. `opts`: { border,
+   * borderWidth, radius (the surfaces' corner radius) }.
+   * -> [{ start, end, startRadius, endRadius }]
+   */
+  function tabBounds(bar, length, islands, opts) {
+    const bw = opts.borderWidth;
+    const curve = Math.max(0, opts.radius - bw);
+    if (bar.island)
+      return (islands ?? []).map(island => ({
+            "start": island.start + bw,
+            "end": island.start + island.length - bw,
+            "startRadius": curve,
+            "endRadius": curve
+          }));
+    if (bar.kind !== "transparent" || !opts.border)
+      return [];
+    const ends = bar.ends ?? {};
+    const reach = end => end?.reach ?? 0;
+    const corner = end => end?.kind === "border" ? curve : 0;
+    return [
+      {
+        "start": reach(ends.start),
+        "end": length - reach(ends.end),
+        "startRadius": corner(ends.start),
+        "endRadius": corner(ends.end)
+      }
+    ];
+  }
+
+  /**
+   * The room a flared tab's fillet has at a bar's ends, for the one
+   * fillet radius its tabs share (BarTabs.tabFillet), from config: a
+   * pill's free end its pill gap (padding and stroke) past the widgets; a
+   * solid bar's end widgets the screen margin in (BarEnds.endInset; with
+   * the border off, at least the padding); a transparent bar's the
+   * compositor's gaps (`floatGaps`, its ends' edges) past the frame, less
+   * the rounded border's corner there. Where a corner's curve takes a
+   * tab's outer corner instead (an island's end, a gap within the
+   * border's curve) no fillet sits: no limit. `opts`: { border,
+   * borderWidth, margin, radius, floatGaps }.
+   */
+  function tabEndRoom(bar, opts) {
+    if (bar.kind === "floating" || bar.kind === "floatingPills")
+      return Infinity;
+    if (bar.kind === "pills")
+      return bar.edgePadding + opts.borderWidth;
+    if (bar.kind === "solid")
+      return opts.border ? opts.margin : Math.max(opts.margin, bar.edgePadding);
+    const gap = Math.min(...root.endEdges(bar).map(side => opts.floatGaps?.[side] ?? 0));
+    const curve = opts.border ? Math.max(0, opts.radius - opts.borderWidth) : 0;
+    return gap < curve ? Infinity : gap - curve;
+  }
+
+  /**
    * How far along a solid or pill bar its first or last widgets sit from
    * its window's start at `end` (one of its ends, endsOf), where that end
    * isn't held: past the line its window counts from (`from`), as both

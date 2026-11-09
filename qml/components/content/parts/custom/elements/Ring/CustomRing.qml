@@ -39,7 +39,7 @@ CustomElementBase {
     iconColor: ring.fillColor
   }
 
-  StyledText {
+  StyledLabel {
     elide: Text.ElideRight
     visible: root.label !== ""
     anchors.centerIn: parent

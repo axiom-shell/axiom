@@ -25,7 +25,4 @@ settings:
     title: Text color
     x-options: colors
     default: base00
-    x-showIf:
-      $bar.widgetStyle: filled
-      $bar.widgetGrouping: {not: merged}
-      $bar.widgetTextColor: ''
+    x-showIf: {$bar.textColorShows: true}

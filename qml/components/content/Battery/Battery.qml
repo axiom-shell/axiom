@@ -133,7 +133,7 @@ Card {
             textSize: Appearance.fontSize
             textColor: root.peripheralColor(line.peripheral?.level ?? "none")
           }
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: line.peripheral?.name ?? ""
             elide: Text.ElideRight
@@ -146,7 +146,7 @@ Card {
             share: (line.peripheral?.percentage ?? 0) / 100
             fillColor: root.peripheralColor(line.peripheral?.level ?? "none")
           }
-          StyledText {
+          StyledLabel {
             Layout.preferredWidth: percentMetrics.advanceWidth("100%") // fixed px: a measuring string, the widest percent
             horizontalAlignment: Text.AlignRight
             text: (line.peripheral?.percentage ?? 0) + "%"

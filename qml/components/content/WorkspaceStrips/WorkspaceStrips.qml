@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.compositor
-import qs.config
 import qs.components.bar.widgets.Workspaces
 
 // The Workspaces bar widget's popout on a strip monitor: each of the
@@ -60,17 +59,18 @@ WorkspacePopoutPanel {
         spacing: root.cellSpacing
 
         WorkspaceCell {
+          id: stripCell
           barConfig: root.barConfig
+          cellLook: root.cellLook
           isActive: line.isActive
           // Every workspace shown has windows or is the active one
-          look: BarsConfig.workspaceCellColors(root.barConfig, root, line.isActive, true, line.shows.urgent)
+          look: root.cellLook.workspaceColorsOf(root, line.isActive, true, line.shows.urgent, {
+            "hovered": stripCell.lit
+          })
           urgent: line.shows.urgent
-          solid: root.solidBoxes
           pulse: root.pulse.value
           thickness: root.cellSize
           length: line._text ? line.shows.length : root.cellLength
-          radius: root.radius
-          hoverColor: root.hoverColor
           labels: root.properties.labels
           label: line.shows.number
           text: line._text ? line.shows.text : ""
@@ -84,20 +84,15 @@ WorkspacePopoutPanel {
 
         StripWindows {
           barConfig: root.barConfig
+          cellLook: root.cellLook
           workspaceId: line.wsId
           stripVertical: root.stripVertical
           isVertical: root.vertical
-          thickness: root.cellSize
-          cellLength: root.cellSize
-          radius: root.radius
-          hoverColor: root.hoverColor
           activeColor: root.activeColor
           occupiedColor: root.occupiedColor
           textColor: root.textColor
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
-          cellSpacing: root.cellSpacing
-          solid: root.solidBoxes
         }
       }
     }

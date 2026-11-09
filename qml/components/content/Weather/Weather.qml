@@ -82,7 +82,7 @@ Card {
         readonly property real high: root.daily.temperature_2m_max[index]
         Layout.fillWidth: true
         spacing: Widget.spacing * 1.5
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 3.5
           text: WeatherManager.dayLabel(day.index)
         }
@@ -94,7 +94,7 @@ Card {
         Item {
           Layout.fillWidth: true
         }
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 2.2
           horizontalAlignment: Text.AlignRight
           text: `${Math.round(day.low)}°`
@@ -125,7 +125,7 @@ Card {
             }
           }
         }
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 2.2
           horizontalAlignment: Text.AlignRight
           text: `${Math.round(day.high)}°`

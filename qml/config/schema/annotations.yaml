@@ -10,6 +10,7 @@ x-auto: 'a switch in front of an integer whose `value` means automatic (`{ value
 x-autoColor: a bar widget color picked by its bar when left empty (`BarsConfig.autoColorFields`, `methods/BarAutoColors`).
 x-barNames: 'an OSD system''s bars, edited in the settings'' Bars part and naming an OSD''s tab (`OSDConfig.barRows`, `labelOf`), and their keys in its `exposes` (`OSDParts.barKey`, what an OSD''s `barOrder` names): `{ bar }`, it is one bar of that key, named by its own label; `{ from, by, named, repeats, keys, barOnly }`, each entry of its setting `from` is a bar (with an `id`), named by its `named` list joined, else its `by` field''s `x-enumLabels` (its `x-enumIcons` the row''s icon), keyed by its kind, else what `keys` names for that kind, `repeats` the kinds it may have more than one bar of (keyed `<kind>:<its id>`; the Bars picker offers the others only while it has none), `barOnly` the settings an item added only for a bar starts with (and is removed with as its last bar goes).'
 x-beside: puts a field beside the one before it on its settings card, each half wide (`SettingsGroupCard`'s two-column grid; Workspaces' rows beside columns).
+x-boxItems: 'a bar widget''s items, each a box of its own with Boxes: One per item (`BarsConfig.boxItems`): `{ options: { item: option } }`, those whose boolean option is on, or `{ source }`, a list BarsConfig reads (`marketSymbols`, `claudeAccounts`).'
 x-canvasDetail: a module property the layouts editor shows on its tile (a list joined).
 x-canvasFill: a color property the layouts editor fills a module's tile with (`OverlayConfig`).
 x-card: 'a hand-built settings card: `{ file, title, wide, folds, perField }` (`file`: `views/Settings/<file>Card.qml` as the first card, titled `title`; `wide` spans both columns; `folds` folds like the generated cards; `perField` makes each direct field a card of its own).'
@@ -17,7 +18,7 @@ x-categories: 'orders the categories and gives their icons (`SchemaLayout.catego
 x-category: names its sidebar category.
 x-commands: the commands any of which shows a theme integration's app is installed (the onboarder's App colors page); `[]` for one every desktop has, the key when left out (`ThemeManager.integrationCommands`).
 x-compositor: 'how a compositor config writer writes it, per compositor: `hyprland: { key, value, scale, if, skip, always, device, from }`, `sway: { key, value, scale, if, map, skip, configOnly, from }`, `niri: { key, value, scale, if, skip, from }`, or a list of them (schema-annotations.md › Compositor).'
-x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`, `toggle`; see schema-annotations.md › Fields).
+x-control: the form control drawing a field instead of the one its type picks (`stepper`, `slider`, `search`, `folder`, `readonly`, `icon`, `toggle`, `tiles`; see schema-annotations.md › Fields).
 x-defaultSize: the size it's added at.
 x-disabledNote: the note instead (English, translated); `false` for none, where the section's `x-intro` says why (the Workspaces section under niri).
 x-elastic: 'a bar widget type that shrinks when its bar is crowded (Window title, Media): its host sizes it elastic (its QML sets no sizePolicy) and only it takes a layout `minSize` and `maxSize`.'
@@ -38,6 +39,7 @@ x-icon: a Material Symbols name on bar widget, overlay module and view definitio
 x-iconText: 'on an icon field (`x-control: icon`): `{ mode, text }`, the keys of two siblings it draws in its own row: `mode` a string of `icon`, `text` or `both` that an Icon / Text / Both switch at the row''s right sets, `text` a string typed in a box beside the icon''s (each box shown while the mode shows its part); the siblings'' own rows hide.'
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
+x-keepsPlace: 'stays in its place in a form that keeps its place (`keepsPlace`, the Bar style block): greyed, saying why on hover (`x-tileHint`), while its `x-showIf` fails, instead of hidden (the style, shape and grouping rows).'
 x-keyboard: the module takes typing.
 x-keywords: more words a bar widget type is found by in the bar editor's library (`LibraryOrder.filtered`), such as its old label.
 x-libraryGroup: the library group (from the root's `x-libraryGroups`) a bar widget, overlay module or OSD system type is sorted into.
@@ -52,10 +54,11 @@ x-needs: the page is left out (and its launcher command unlisted) unless `Compos
 x-options: a dynamic option list.
 x-order: the keys shown first, in order.
 x-ordered: on an array of enum strings, keeps the order the user gives it (chosen options drag into place, the rest are added from a list).
+x-placeUnder: 'a sibling key: in the Bar style block, the field''s row goes directly under that sibling''s (and the rows beside it), not with the style''s options (`SchemaLayout.placedUnder`; Tab sides and Ends under the shape).'
 x-priority: a bar widget type's own priority when its bar is crowded (higher stays longer; default 0), which its `layout.priority` overrides (`BarsConfig.defaultPriority`).
 x-profiles: profile locations to search (Firefox and its forks; the daemon's hookups and its `firefox` integration).
 x-required: part of every grid on its hosts; never removed, duplicated or in the library (the lock screen's `Password`).
-x-row: 'a field''s settings row drawn by `views/Settings/<Name>.qml` (given `row` and `form`) instead of a generated control (the Keyboard card''s layouts, `InputSourcesField`).'
+x-row: 'a field''s settings row drawn by `views/Settings/<Name>.qml` (given `row` and `form`) instead of a generated control (the Keyboard card''s layouts, `InputSourcesField`); on a nested object, one row drawing every setting under it, on a card of its own (`Bars.style`, `BarStyleBlock`).'
 x-rowDraws: 'dotted paths, under its object, of other fields an `x-row` draws: their own rows hide on the settings page, and a search or the changed list finds them as this row (the layouts row''s input method switch).'
 x-scope: what a snapshot, example, import or export carries.
 x-scopeIf: 'an item that matches `when` (`x-showIf`''s form, over the item''s keys) has `scope` as its own: an exec bind is `commands`, an app''s OSD bar `personal`.'
@@ -65,8 +68,9 @@ x-slots: a custom widget element's bindings, in order (keys of its `bind`; `Cust
 x-snapshot: 'a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on.'
 x-suggestions: chips under a text field (`SettingsManager.suggestionsFor`).
 x-takeover: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter).
+x-tileHint: 'why an option of an `x-control: tiles` field doesn''t apply (`{ value: reason }`); a string, or that map''s `"*"`, why the whole field doesn''t, while an `x-keepsPlace` field is greyed; English, translated; without one, a generic "Doesn''t apply here".'
 x-tool: the navigator's tool group.
 x-unit: the unit shown after a number (`px`, `%`, `ms`, …), and how the command line reads a value given with one.
-x-wide: the settings card the field lands on spans both columns (`SchemaLayout.groups`' `wide`).
+x-wide: the settings card the field (or an `x-row` object) lands on spans both columns (`SchemaLayout.groups`' `wide`).
 x-window: a tool page that can also open as a window of its own (page windows, `PageWindowManager`; `OverlayConfig.isWindowable`).
 x-inline: 'a definition copied into each use (the builder''s; never in the built schema).'

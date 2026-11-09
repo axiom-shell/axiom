@@ -218,7 +218,7 @@ FieldGroup {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledText {
+          StyledLabel {
             text: root.rowTitle(entry.row)
             font.weight: Font.Medium
             elide: Text.ElideMiddle

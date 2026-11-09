@@ -63,5 +63,6 @@ What each end of a bar meets and whether surfaces may join it there, how two pil
   - Or it adds a stub joined at that end, up to `pillConnector` long but never past the reach asked (so it grows from the corner with a request following a sliding surface), and stretches that. `pillRects` holds the stub as a pill like any other.
   - A request reaching nowhere past the end asks nothing.
 - In pill mode the bar window is `borderRadius` thicker than `extent`, for that fillet, and masked to the bar itself.
+- **Tabs** (`widgetShape: tab`) reach a pill's outer edge, which on a pill bar on the border is the screen edge (the pill and the frame are one there), their fillets no wider than the pill's gap; at a floating pill's (island's) end a tab's outer corner takes the island's curve (`BarEnds.tabEdge`, `tabBounds`; [Widget shapes](widget-shapes-runs.md#tabs)).
 - Floating bars take `-borderWidth` margins on both ends too, so bar-window 0 along the bar is the perpendicular stroke's outer edge.
 - Floating bars and bar popouts on pill bars: see [Pill and floating bars](../popouts/pill-and-floating-bars.md). Surfaces held off an edge: see [Held off an edge](../popouts/held-off-edge.md).

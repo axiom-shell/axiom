@@ -62,7 +62,7 @@ Rectangle {
         spacing: Widget.spacing / 2
 
         // As wide as the widest time range, so a list's titles line up
-        StyledText {
+        StyledLabel {
           visible: !root.twoLines
           Layout.minimumWidth: widest.implicitWidth
           Layout.rightMargin: Widget.spacing / 2
@@ -70,7 +70,7 @@ Rectangle {
           textColor: Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(-1)
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: root.event?.title || I18n.tr("(No title)")
           textFormat: Text.PlainText
@@ -83,7 +83,7 @@ Rectangle {
           textColor: Theme.foregroundAlt
         }
       }
-      StyledText {
+      StyledLabel {
         visible: root.twoLines
         Layout.fillWidth: true
         text: root.event?.location ? I18n.tr("{0} · {1}", root.when, root.event.location) : root.when

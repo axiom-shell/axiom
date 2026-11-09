@@ -106,7 +106,7 @@ OnboardingPage {
               radius: Widget.px(3)
               color: active ? Theme.accent : Theme.backgroundHighlight
 
-              StyledText {
+              StyledLabel {
                 anchors.centerIn: parent
                 visible: root.layout !== "grid" && parent.width > Appearance.fontSize
                 text: String(parent.index + 1)

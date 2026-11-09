@@ -41,7 +41,7 @@ Rectangle {
       spinning: DevManager.building
     }
 
-    StyledText {
+    StyledLabel {
       text: root.text
       elide: Text.ElideMiddle
       Layout.fillWidth: true

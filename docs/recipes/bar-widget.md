@@ -70,8 +70,10 @@ settings:
 - Every widget but Button, Separator, Spacer and the tray has a `popout` part, even without a popout of its own (`menu`: they open an edge menu).
 - A label's digits are always of equal width and measured as zeros, so a ticking time doesn't resize the bar. A value that gains or drops digits (a percent, a count) sets `minimumText` on its `BarIconWidget` to its widest (`"100%"`, as `Battery.qml` does).
 - Sizes come from the bar (`barConfig.thickness`, `barConfig` innerPadding/innerGap/fontSize/radius), never `Widget.*`. `BarIconWidget` already does this; a widget drawing more must too.
+- A widget drawing content taller across the bar than one line at the bar's `fontSize` (two lines, a graphic, cells) declares its own `contentAcross`, from config, never measured, so a capsule's or arrow's end keeps clear of it (`ValueStyleWidget` and `SystemStats` take their graphic's `ValueGraphics.across`, `Workspaces` its cells': [Shapes and runs](../dev/bar/widget-shapes-runs.md#backgrounds-and-shapes)).
 - A color field the bar should pick when empty is a `WidgetColor` (`default: ''`, `x-emptyLabel: Auto`) with an `x-autoColor` role (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`). `tst_Config` checks these.
-- Color fields show only in the bar looks they do something in (`$bar.<key>` conditions; the rules are in [bar/widget-style](../dev/bar/widget-style.md#which-color-fields-show)): the state colors that feed `accentColor` hide under Plain text, and `foregroundColor` shows only when filled, not merged, with the bar's text color Auto. A widget without an icon shows its color only boxed and not merged, or underlined (`TimeWidget`).
+- Color fields show only in the bar looks they do something in (`$bar.<key>` conditions; the rules are in [bar/widget-style](../dev/bar/widget-style.md#which-color-fields-show)): the state colors that feed `accentColor` hide under Plain text (`$bar.ownColorShows: true`, as the `WidgetColor` definition has it), and a `foregroundColor` of its own shows as the standard one does (`$bar.textColorShows: true`). A widget without an icon shows its color only boxed and not merged, or underlined (`TimeWidget`: `$bar.boxed`, `$bar.merged`, `$bar.underlined`). Never list styles (`$bar.widgetStyle`): ask for the trait ([schema annotations](../dev/core/schema-annotations.md) › Bar look).
+- A widget never asks which style its bar has: it draws in its `colors` (`WidgetLook`) and, where it draws its own parts, reads the look's traits and resolved fields (`barConfig.look.traits`, `look.shape`, `look.grouping`). `check_structure` fails a read of `widgetStyle` or `look.style` outside `BarLook` ([bar/widget-style](../dev/bar/widget-style.md#the-style-system-in-five-layers)).
 - The type const must not match a `qml/components/content/` file another file sees alongside it (e.g. a `Battery` widget and `Battery` content): `check_structure.py` errors.
 - `hidden: true` hides the widget and disables its clicks; use it for "hide when empty" settings.
 - `onClicked` gets the button when `acceptedButtons` lists more than one (`Updates.qml`).
@@ -82,5 +84,5 @@ settings:
 - Add it to a bar in the bar editor and look: `scripts/dev/shot.sh page BarEditor`.
 
 ## Docs to update
-- [bar/widget-style](../dev/bar/widget-style.md) only if it introduces a new base or color rule.
+- [bar/widget-style](../dev/bar/widget-style.md) only if it introduces a new base or color rule (a style rule is a trait in `BarLook`'s table: its Adding a widget style).
 - `docs/features.md` bar widget list, if it lists widgets.

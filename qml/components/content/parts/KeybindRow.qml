@@ -125,7 +125,7 @@ Item {
       opacity: root.bind.action ? 1 : 0.6
     }
 
-    StyledText {
+    StyledLabel {
       text: root.bind.label || I18n.tr("No description")
       opacity: root.bind.label ? 1 : 0.5
       elide: Text.ElideRight
@@ -139,7 +139,7 @@ Item {
     }
   }
 
-  component Slash: StyledText {
+  component Slash: StyledLabel {
     anchors.verticalCenter: parent.verticalCenter
     text: "/"
     opacity: 0.4

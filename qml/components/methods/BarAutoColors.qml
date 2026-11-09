@@ -26,7 +26,7 @@ QtObject {
 
   function assign(widgets, palette) {
     const usable = root._usable(palette.accents, palette.backdrop, palette.minContrast);
-    const off = palette.neutrals.find(n => root.contrast(n.color, palette.backdrop) >= palette.minContrast) ?? palette.neutrals[palette.neutrals.length - 1];
+    const off = palette.neutrals.find(n => Utils.contrast(n.color, palette.backdrop) >= palette.minContrast) ?? palette.neutrals[palette.neutrals.length - 1];
     // Each widget's accent as it's settled: fixed ones are known up front
     const accents = widgets.map(w => root._accentKey(w) !== null ? (w.set[root._accentKey(w)] ?? null) : null);
     const used = accents.filter(c => c !== null);
@@ -70,13 +70,6 @@ QtObject {
     });
   }
 
-  // WCAG contrast ratio, 1 to 21
-  function contrast(a, b) {
-    const la = root._luminance(a);
-    const lb = root._luminance(b);
-    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
-  }
-
   // 0 (alike) to 1 (black against white)
   function distance(a, b) {
     const ca = Qt.color(a);
@@ -96,10 +89,10 @@ QtObject {
 
   // The accents that stand out from the backdrop, else the three that do most
   function _usable(accents, backdrop, minContrast) {
-    const enough = accents.filter(a => root.contrast(a.color, backdrop) >= minContrast);
+    const enough = accents.filter(a => Utils.contrast(a.color, backdrop) >= minContrast);
     if (enough.length >= 3)
       return enough;
-    return accents.slice().sort((a, b) => root.contrast(b.color, backdrop) - root.contrast(a.color, backdrop)).slice(0, 3);
+    return accents.slice().sort((a, b) => Utils.contrast(b.color, backdrop) - Utils.contrast(a.color, backdrop)).slice(0, 3);
   }
 
   // The lowest-scoring candidate; ties go round the palette from `index`,
@@ -116,11 +109,5 @@ QtObject {
       }
     }
     return best;
-  }
-
-  function _luminance(color) {
-    const c = Qt.color(color);
-    const lin = v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-    return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
   }
 }

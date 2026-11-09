@@ -197,7 +197,7 @@ Popup {
               textColor: Theme.accent
             }
 
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               elide: Text.ElideRight
               text: rowDelegate.entry ? root.labelOf(rowDelegate.entry) : ""

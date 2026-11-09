@@ -9,6 +9,13 @@ settings:
     type: boolean
     title: Show count
     default: true
+  label:
+    type: string
+    title: Label
+    enum: [none, count, lastApp]
+    x-enumLabels: {none: None, count: Count, lastApp: Last app}
+    default: none
+    description: Beside the bell. The count as the label hides the badge.
   dndColor:
     type: string
     title: Do-not-disturb icon
