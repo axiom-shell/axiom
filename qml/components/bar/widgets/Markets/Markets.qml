@@ -94,9 +94,10 @@ ValueStyleWidget {
   }
 
   readonly property var current: root.figures(root.shown)
-  // The change coloured inline only where the widget isn't filled (its
-  // text must read on the fill: there `colorText` colours it all, or not)
-  readonly property bool rich: root.properties.colorize && root.colors.fill.a < 1
+  // The change coloured inline only where the text doesn't sit on a fill
+  // (`textOnFill`: it must read on it; there `colorText` colours it all,
+  // or not)
+  readonly property bool rich: root.properties.colorize && !root.colors.textOnFill
 
   icon: {
     if (MarketsManager.error !== "" && !root.current)

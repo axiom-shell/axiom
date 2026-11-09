@@ -393,6 +393,142 @@ TestCase {
     verify(!BarWidgetStyle.textByState(styled("tinted"), {
       "colorText": false
     }), "off");
+    // An unfilled style's fill is the string "transparent": its text
+    // still takes the state's colour
+    for (const fill of ["outline", "underline", "accentText", "plain"])
+      verify(BarWidgetStyle.textByState(styled(fill), on), fill);
+    verify(BarWidgetStyle.textByState(styled("outline", null, "#222222"), on), "an outline run's text");
+    verify(!BarWidgetStyle.textByState(styled("filled", null, "#222222"), on), "a filled run's fill counts");
+  }
+
+  // Whether a widget's text sits on a fill it must read on (textOnFill):
+  // every style, merged or not, split's label fills, and Fill on hover
+  function test_text_on_fill_data() {
+    return [["filled",
+        {},
+        true], ["tinted",
+        {},
+        false], ["outline",
+        {},
+        false], ["underline",
+        {},
+        false], ["accentText",
+        {},
+        false], ["plain",
+        {},
+        false], ["merged filled",
+        {
+          "fill": "filled",
+          "group": "#222222"
+        },
+        true], ["merged filled, gradient",
+        {
+          "fill": "filled",
+          "group": "#222222",
+          "gradient": "#00ff00",
+          "auto": true
+        },
+        true], ["merged tinted",
+        {
+          "fill": "tinted",
+          "group": "#222222"
+        },
+        false], ["merged outline",
+        {
+          "fill": "outline",
+          "group": "#222222"
+        },
+        false], ["merged split",
+        {
+          "fill": "split",
+          "splits": true,
+          "group": "#222222"
+        },
+        true], ["merged split, gradient: the run is the labels' tint",
+        {
+          "fill": "split",
+          "splits": true,
+          "group": "#222222",
+          "gradient": "#00ff00",
+          "auto": true
+        },
+        false], ["merged split, a widget that doesn't split",
+        {
+          "fill": "split",
+          "group": "#222222"
+        },
+        true], ["split, label on its own color",
+        {
+          "fill": "split",
+          "splits": true,
+          "labelFill": "color"
+        },
+        true], ["split, label on a tint",
+        {
+          "fill": "split",
+          "splits": true,
+          "labelFill": "tint"
+        },
+        false], ["split, label on the bar",
+        {
+          "fill": "split",
+          "splits": true,
+          "labelFill": "none"
+        },
+        false], ["split badge",
+        {
+          "fill": "split",
+          "splits": true,
+          "splitIcon": "badge",
+          "labelFill": "color"
+        },
+        false], ["split, a widget that doesn't split",
+        {
+          "fill": "split"
+        },
+        true], ["tinted, hovered with Fill on hover",
+        {
+          "fill": "tinted",
+          "hoverFill": true,
+          "hovered": true
+        },
+        true], ["outline, hovered with Fill on hover",
+        {
+          "fill": "outline",
+          "hoverFill": true,
+          "hovered": true
+        },
+        true], ["outline, at rest with Fill on hover",
+        {
+          "fill": "outline",
+          "hoverFill": true
+        },
+        false], ["merged tinted, hovered with Fill on hover",
+        {
+          "fill": "tinted",
+          "group": "#222222",
+          "hoverFill": true,
+          "hovered": true
+        },
+        true]].map(row => ({
+          "tag": row[0],
+          "style": Object.assign({
+            "fill": row[0],
+            "barText": barText,
+            "override": null,
+            "tint": 0.25,
+            "group": null,
+            "labelColor": "#eeeeee"
+          }, row[1]),
+          "onFill": row[2]
+        }));
+  }
+  function test_text_on_fill(data) {
+    const c = paint(data.style, accent, own);
+    compare(c.textOnFill, data.onFill, "textOnFill");
+    compare(BarWidgetStyle.textByState(c, {
+      "colorText": true
+    }), !data.onFill, "textByState");
   }
 
   // The bar's gradient where a widget sits: a light color, which the

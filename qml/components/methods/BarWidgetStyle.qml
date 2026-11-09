@@ -63,11 +63,15 @@ QtObject {
   }
 
   // What a widget draws in: { fill, stroke, indicator, text, icon,
-  // iconFill, gradient }. `accent` is its own color for its state (its
-  // background while filled), `own` its text color (picked to read on
-  // that background). `iconFill` is split's icon part (its icon or badge),
-  // else transparent; `gradient` what of its background draws the bar's
-  // gradient ({ part, alpha }: the look's `gradientPart` trait), else null.
+  // iconFill, gradient, textOnFill }. `accent` is its own color for its
+  // state (its background while filled), `own` its text color (picked to
+  // read on that background). `iconFill` is split's icon part (its icon or
+  // badge), else transparent; `gradient` what of its background draws the
+  // bar's gradient ({ part, alpha }: the look's `gradientPart` trait), else
+  // null. `textOnFill`: its text sits on a fill it must read on (filled; in
+  // a merged run on a filled or split bar, the run's; split's label on a
+  // color of its own; filled on hover), so it never takes a state's color
+  // (textByState).
   function colors(look, palette, state, accent, own) {
     const graded = state.gradient !== null && state.auto;
     const result = root._widget(look, palette, state, graded ? state.gradient : accent, graded ? root.readableOn(state.gradient, own) : own, graded);
@@ -181,11 +185,11 @@ QtObject {
       // Filled in its own color, its text and icon reading on it; an
       // outline keeps its stroke (unseen on the fill) so it doesn't fade
       // out and back. In a merged run, the widget's own part alone
-      return root._make(accent, drawn === "outline" && !state.group ? accent : none, none, text(own), text(own));
+      return root._make(accent, drawn === "outline" && !state.group ? accent : none, none, text(own), text(own), none, true);
     if (state.run && graded && look.style === "split")
       // A split run's strip of the gradient is its labels' tint, under
       // icon parts each in their own slice of it
-      return root._make(root.faded(accent, look.tint), none, none, text(own), text(own));
+      return root._make(root.faded(accent, look.tint), none, none, text(own), text(own), none, false);
     if (state.group) {
       // The run draws the background: the icon keeps the state, the label
       // reads on the run (or on the bar, through a tint or outline). A
@@ -194,26 +198,27 @@ QtObject {
       // gradient run the run's color is the gradient's where the widget
       // sits, and an Auto icon reads on it as the label does (through a
       // tint or outline it takes that color)
+      // (A split run with a gradient is its labels' tint, not a fill)
       if (drawn === "split")
-        return root._make(none, none, none, text(state.gradient ? accent : root.readableOn(palette.group, palette.barText)), text(own), accent);
+        return root._make(none, none, none, text(state.gradient ? accent : root.readableOn(palette.group, palette.barText)), text(own), accent, !state.gradient);
       if (look.style === "split")
         // One that doesn't split fills its own box in the run, a tab in
         // the row of them
-        return root._make(accent, none, none, text(own), text(own));
+        return root._make(accent, none, none, text(own), text(own), none, true);
       const group = state.gradient ?? palette.group;
       const label = text(drawn === "filled" ? root.readableOn(group, palette.barText) : palette.barText);
-      return root._make(unfilled, none, none, label, graded && drawn === "filled" ? label : accent);
+      return root._make(unfilled, none, none, label, graded && drawn === "filled" ? label : accent, none, drawn === "filled");
     }
     if (drawn === "split") {
       // The icon part filled, the label on a tint of it, on a color of
       // its own (reading on it) or on the bar; a badge's always on the bar
       const label = look.split.icon === "badge" ? "none" : look.split.labelFill;
       if (label === "color")
-        return root._make(palette.labelColor, none, none, text(root.readableOn(palette.labelColor, palette.barText)), text(own), accent);
-      return root._make(label === "tint" ? root.faded(accent, look.tint) : none, none, none, text(accent), text(own), accent);
+        return root._make(palette.labelColor, none, none, text(root.readableOn(palette.labelColor, palette.barText)), text(own), accent, true);
+      return root._make(label === "tint" ? root.faded(accent, look.tint) : none, none, none, text(accent), text(own), accent, false);
     }
     const box = root._box(drawn, look, palette, accent, own, unfilled);
-    return root._make(box.fill, box.stroke, box.indicator, text(box.text), box.keepsIcon ? box.icon : text(box.icon));
+    return root._make(box.fill, box.stroke, box.indicator, text(box.text), box.keepsIcon ? box.icon : text(box.icon), none, box.onFill);
   }
 
   // What of a widget's background takes the bar's gradient: filled on
@@ -273,10 +278,9 @@ QtObject {
 
   // Whether a value widget with "Colour the text by state" on (its
   // display `appearance`) takes its state's colour for its text: only
-  // where that isn't its background already (a filled widget's text must
-  // read on it)
+  // where its text doesn't sit on a fill it must read on (`textOnFill`)
   function textByState(colors, appearance) {
-    return appearance.colorText && colors.fill.a < 1;
+    return appearance.colorText && !colors.textOnFill;
   }
 
   // `color` at `alpha` of its own opacity: a clear color (a widget with no
@@ -309,14 +313,15 @@ QtObject {
     };
   }
 
-  function _make(fill, stroke, indicator, text, icon, iconFill = "transparent") {
+  function _make(fill, stroke, indicator, text, icon, iconFill, textOnFill) {
     return {
       "fill": fill,
       "stroke": stroke,
       "indicator": indicator,
       "text": text,
       "icon": icon,
-      "iconFill": iconFill
+      "iconFill": iconFill,
+      "textOnFill": textOnFill
     };
   }
 }
