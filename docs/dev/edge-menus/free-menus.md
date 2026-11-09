@@ -47,7 +47,6 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - A `PopoutClaim` keyed `menu:<id>`, with edge `""` and the box's footprint on the screen.
 - Its kind is the opener's (`EdgeMenuManager.claimKinds`): `bar` for a widget's popout, else `menu`.
 - Held by the editor (previewing), it is `resident`: it gives way and comes back.
-- Asked for again while open (`engageRequested`), or under the pointer, it ranks as its kind (as `EdgePopout.engage`).
 - **Pinned, it is an `underlay`** (`PopoutGeometry.isUnderlay`): it never collides, so it never closes anything and nothing opening over it closes it or makes it give way. Its submenu neither. The overlay opening leaves it too (`PopoutGeometry.closedByOverlay`); the overlay draws over it. Only free menus do this: every edge menu, detached ones included, still gives way when covered and comes back ([Popout registry](../popouts/registry.md) › Underlays).
 - **What draws on top is the layer, not the rank.** Its window is on Top under every popout: bar and edge popouts are on the Overlay layer, or on Top in namespaces ordered over `axiom-menu` (`tst_LayerStack`'s `test_free_menu_order`).
 - **Clicks.** It is no grab partner of the other popouts: a click on it closes an open bar or edge popout, as any outside click does. It takes the keyboard only when clicked (`OnDemand`).

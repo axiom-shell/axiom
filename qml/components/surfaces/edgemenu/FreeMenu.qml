@@ -136,41 +136,17 @@ PopoutWrapperBase {
   }
   readonly property bool scaling: root._scale < 1
 
-  // In use: the pointer on it or what opened it, or just opened or asked
-  // for again (engage()) and not let go since. Pinned, it ranks as its
-  // kind meanwhile (as EdgePopout's)
-  readonly property bool engaged: surface.hovered || root.anchorHovered || root._grace
-  property bool _grace: false
-  function engage() {
-    root._grace = true;
-    graceTimer.restart();
-  }
-  property Timer graceTimer: Timer {
-    interval: Math.max(root.dismissDelay, 2500)
-    onTriggered: root._grace = false
-  }
-  readonly property bool _pointerIn: surface.hovered
-  on_PointerInChanged: {
-    if (!root._pointerIn)
-      root._grace = false;
-  }
-  onIsOpenChanged: {
-    if (root.isOpen)
-      root.engage();
-  }
-
   // Its place among the popouts (PopoutManager), ranked as it was opened
   // (EdgeMenuManager.claimKinds): a widget's popout as a bar popout, else
-  // a menu; pinned, lowest; held by the editor, it gives way and comes
-  // back. Pinned, it's an underlay: drawn under the popouts on its Top
-  // layer, it never closes anything and nothing opening over it closes it
+  // a menu; held by the editor, it gives way and comes back. Pinned, it's
+  // an underlay: drawn under the popouts on its Top layer, it never closes
+  // anything and nothing opening over it closes it
   // (PopoutGeometry.isUnderlay)
   property PopoutClaim claim: PopoutClaim {
     key: "menu:" + root.menuId
     kind: root.currentData?.claimKind ?? "menu"
     screen: root.screen?.name ?? ""
     edge: ""
-    pinned: EdgeMenuManager.pinnedMenus[root.menuId] === true && !root.engaged
     resident: sync.held
     underlay: EdgeMenuManager.isPinned(root.menuId)
     occupied: root.occupied
@@ -196,17 +172,6 @@ PopoutWrapperBase {
     screen: root.screen
     window: panel
     onWarpRequested: CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2)
-  }
-
-  // Asked for again while open (EdgeMenuManager.engageRequested): it
-  // comes forward
-  Connections {
-    target: EdgeMenuManager
-
-    function onEngageRequested(id) {
-      if (id === root.menuId)
-        root.engage();
-    }
   }
 
   // What its box meets (SurfaceContext.free), as an EdgeSurface and its
