@@ -4178,6 +4178,7 @@
     "Search your files (or start with ~)": "",
     "No such folder": "",
     "This folder can't be read": "",
-    "The file index couldn't be built": ""
+    "The file index couldn't be built": "",
+    "File search": ""
   }
 }

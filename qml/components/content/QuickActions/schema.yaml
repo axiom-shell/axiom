@@ -13,7 +13,7 @@ settings:
       type: string
       # The tiles of its own open a module (Brightness's sliders, Volume's
       # mixer, the Theme and Wallpaper pickers) or pin its edge menu
-      x-axiomActions: {noArgument: true, except: [clipboard, emoji, calculator], extra: [logout, brightness, volume, themePicker, wallpaperPicker, pin]}
+      x-axiomActions: {noArgument: true, except: [clipboard, emoji, calculator, fileSearch], extra: [logout, brightness, volume, themePicker, wallpaperPicker, pin]}
       x-enumLabels:
         logout: Log out
         brightness: Brightness

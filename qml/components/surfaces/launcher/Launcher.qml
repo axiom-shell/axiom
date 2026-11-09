@@ -95,7 +95,8 @@ Scope {
     function search(text: string): void {
       root.open(text);
     }
-    // The clipboard history, emoji and calculator rows (keybind actions)
+    // The clipboard history, emoji, calculator and file search rows
+    // (keybind actions)
     function clipboard(): void {
       root.open(":");
     }
@@ -105,7 +106,7 @@ Scope {
     function calculator(): void {
       root.open("=");
     }
-    // The file search, on the recent files
+    // On the recent files
     function files(): void {
       root.open("~");
     }

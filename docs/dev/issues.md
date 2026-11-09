@@ -336,12 +336,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
 
-### appLauncher files has no keybind action
-- **Where:** `qml/components/surfaces/launcher/Launcher.qml` (`files`), `backend/internal/compositor/actions/table.json`
-- **What:** The file search's IPC function `appLauncher files` (the launcher on `~`, the recent files) has no row in the keybind actions table, unlike `clipboard`, `emoji` and `calculator`, so it can't be bound from the keybinds page or reached as an action. Whether it should be one (a new action in the catalogue, its icon and Tools entry in `docs/usage.md`) is the maintainer's call.
-- **Size:** small
-- **Found:** 2026-11-09, while reviewing the launcher's file search
-
 ## Workspaces and monitors
 
 ### A remap runs at startup, from the layout before the config loaded
