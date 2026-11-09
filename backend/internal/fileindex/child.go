@@ -22,8 +22,9 @@ type child struct {
 	msgs chan childMsg
 	stop chan struct{}
 	// build: the index's first crawl; stat: a stat pass (whose new
-	// folders are crawled next, where a crawl reads them itself)
-	build, stat bool
+	// folders are crawled next, where a crawl reads them itself); refill:
+	// a stat pass of what the index left out (loop.refillPass)
+	build, stat, refill bool
 }
 
 type childMsg struct {
@@ -207,11 +208,24 @@ func (l *loop) childMsg(m childMsg) {
 		l.next()
 		return
 	case m.kind == msgDir:
+		if l.child.refill && ix.Len() >= l.s.o.MaxEntries {
+			// Full again: the rest stays left out (still marked, or
+			// never read), not replaced under the lock for nothing
+			l.truncated = true
+			break
+		}
 		l.applyDir(m.path, m.mtime, m.kids, l.child.stat)
 	case m.kind == msgGone:
 		if l.f.rootOf(m.path) == m.path {
 			l.applyDir(m.path, 0, nil, false)
 		} else {
+			// Gone (its folder drops it) or unreadable: no longer asked
+			// for by a refill
+			if d, ok := ix.Lookup(m.path); ok {
+				l.s.mu.Lock()
+				ix.ClearLeftOut(d)
+				l.s.mu.Unlock()
+			}
 			l.changedDir(filepath.Dir(m.path))
 		}
 	case m.kind == msgUnreadable:

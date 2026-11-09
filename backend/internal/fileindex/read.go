@@ -80,6 +80,15 @@ func (f *filter) rootDev(root string) (uint64, bool) {
 	return st.Dev, true
 }
 
+// rootOn says whether root is on device dev, as it is now: the device
+// kept for it is stale when a disk was mounted again at the root and a
+// folder below is read first.
+func (f *filter) rootOn(root string, dev uint64) bool {
+	delete(f.devs, root)
+	d, ok := f.rootDev(root)
+	return ok && d == dev
+}
+
 // folder is one folder read from the disk.
 type folder struct {
 	mtime int64
@@ -111,7 +120,7 @@ func (f *filter) read(root, path string) (folder, error) {
 		return folder{}, &os.PathError{Op: "open", Path: path, Err: err}
 	}
 	var st unix.Stat_t
-	if err := unix.Fstat(fd, &st); err != nil || path != root && st.Dev != dev {
+	if err := unix.Fstat(fd, &st); err != nil || path != root && st.Dev != dev && !f.rootOn(root, st.Dev) {
 		unix.Close(fd)
 		return folder{}, os.ErrNotExist
 	}

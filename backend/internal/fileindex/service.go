@@ -674,6 +674,9 @@ func (l *loop) next() {
 		}
 	case l.refill && l.refillPass(&req):
 		l.startChild(req)
+		if l.child != nil {
+			l.child.refill = true
+		}
 	default:
 		if l.watchLoaded {
 			l.watchLoaded = false
@@ -689,7 +692,8 @@ func (l *loop) next() {
 // and those never read. A full index, or one that left nothing out, asks
 // for nothing (false). The folders read mark themselves again if the cap
 // still leaves entries out, and their new folders are crawled after, so
-// truncated is set again by whatever is still left out.
+// truncated is set again by whatever is still left out; once the index is
+// full again the pass's other folders are passed over (childMsg).
 func (l *loop) refillPass(req *CrawlRequest) bool {
 	l.refill = false
 	ix := l.ix()

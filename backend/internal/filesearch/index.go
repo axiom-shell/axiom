@@ -137,6 +137,15 @@ func (ix *Index) LeftOut() int { return int(ix.leftOut) }
 // cap: its time is the one read, so only a forced read finds them.
 func (ix *Index) LeftOutDir(d uint32) bool { return ix.at(d).flags&flagLeftOut != 0 }
 
+// ClearLeftOut unmarks folder d (LeftOutDir): it can't be read, so a
+// refill would ask for it again and again.
+func (ix *Index) ClearLeftOut(d uint32) {
+	if e := ix.at(d); e.flags&flagLeftOut != 0 {
+		e.flags &^= flagLeftOut
+		ix.leftOut--
+	}
+}
+
 // Roots are the roots' entries, in the order added.
 func (ix *Index) Roots() []uint32 { return ix.roots }
 

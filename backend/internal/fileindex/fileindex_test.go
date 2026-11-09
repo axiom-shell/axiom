@@ -720,6 +720,18 @@ func TestRootRemounted(t *testing.T) {
 	}
 }
 
+// A folder below a root mounted again is read before the root: the device
+// kept for the root is found stale, not the folder another disk's
+func TestRootRemountedReadBelowFirst(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "sub/a")
+	f := newFilter([]string{root}, nil, nil, false)
+	f.devs[root] = ^uint64(0)
+	if fo, err := f.read(root, root+"/sub"); err != nil || len(fo.kids) != 1 {
+		t.Errorf("read %v, %v", fo.kids, err)
+	}
+}
+
 // Files left out at the cap come back once removals make room: a folder
 // read when the index was full is read again, as is one never read
 func TestLeftOutComeBack(t *testing.T) {
@@ -832,6 +844,24 @@ func TestLeftOutNoExtraReads(t *testing.T) {
 	l.applyDir(root+"/b", fo.mtime, fo.kids, true)
 	if ix.LeftOutDir(b) || ix.LeftOut() != 0 || ix.Len() != 6 || l.truncated {
 		t.Errorf("after the refill: left out %v, %d entries, truncated %v", ix.LeftOutDir(b), ix.Len(), l.truncated)
+	}
+	// A marked folder the child can't read is no longer asked for
+	kids := append(fo.kids, filesearch.Child{Name: []byte("y4")})
+	if ix.ReplaceDir(b, root+"/b", fo.mtime, kids, ix.Len()); ix.LeftOut() != 1 {
+		t.Fatalf("b not marked: %d", ix.LeftOut())
+	}
+	// A refill pass's folders are passed over once the index is full
+	l.child = &child{stat: true, refill: true}
+	n := ix.Len()
+	l.truncated = false
+	l.childMsg(childMsg{kind: msgDir, path: root + "/a", kids: []filesearch.Child{{Name: []byte("new")}}})
+	if ix.Len() != n || !l.truncated {
+		t.Errorf("a full index replaced a refill's folder: %d entries, truncated %v", ix.Len(), l.truncated)
+	}
+	l.childMsg(childMsg{kind: msgGone, path: root + "/b"})
+	l.child = nil
+	if ix.LeftOut() != 0 {
+		t.Errorf("an unreadable folder still marked: %d", ix.LeftOut())
 	}
 }
 
