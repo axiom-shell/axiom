@@ -132,7 +132,7 @@ QtObject {
       // gradient, separators and accent line (BarLook.resolve)
       "look": look,
       // The look's colors, resolved (BarWidgetStyle.palette)
-      "palette": BarWidgetStyle.palette(look, name => Theme.resolveColor(name), Theme.foreground),
+      "palette": BarWidgetStyle.palette(look, name => Theme.resolveColor(name), Theme.foreground, Theme.background),
       // The gap a split widget keeps between its parts
       // (BarShapes.splitRoom), -1 on other styles
       "splitRoom": look.split ? look.split.room : -1,

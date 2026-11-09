@@ -191,7 +191,7 @@ TestCase {
 
   // The bar's palette (enrichBarConfig's)
   function palette(bar) {
-    return BarWidgetStyle.palette(bar.look, name => root.resolve(name), root.resolve("foreground"));
+    return BarWidgetStyle.palette(bar.look, name => root.resolve(name), root.resolve("foreground"), root.resolve("background"));
   }
 
   // A widget's colors (BarsConfig.widgetColors)

@@ -45,6 +45,7 @@ TestCase {
   function paletteOf(style) {
     return {
       "barText": style.barText,
+      "background": style.background ?? "#000000",
       "override": style.override ?? null,
       "labelColor": style.labelColor ?? null,
       "group": style.group ?? null,
@@ -692,6 +693,57 @@ TestCase {
   function test_readable_on() {
     same(BarWidgetStyle.readableOn("#000000", "#ffffff"), "#ffffff", "contrasting");
     same(BarWidgetStyle.readableOn("#ffffff", "#eeeeee"), "#000000", "too close");
+    // By contrast, not a luma split: gruvbox's dark text on its red reads
+    // at about 4.3, black at 6.1 (white, which a luma split picked, 3.4)
+    same(BarWidgetStyle.readableOn("#fb4934", "#282828"), "#000000", "black beats the dark text");
+    // Kept where it reads (4.5), though both are light by luma
+    same(BarWidgetStyle.readableOn("#3060c0", "#ffffff"), "#ffffff", "white on a mid blue");
+    // An alternate that reads better is taken
+    same(BarWidgetStyle.readableOn("#808080", "#909090", ["#000000"]), "#000000", "an alternate");
+    same(BarWidgetStyle.readableOn("#fb4934", "#282828", ["#101010"]), "#000000", "black still beats an alternate near it");
+    same(BarWidgetStyle.readableOn("#777777", "#ffffff", ["#000000"]), "#000000", "the alternate with the most contrast");
+    // Never less contrast than the luma split's choice (its two options
+    // are among the candidates)
+    for (const bg of ["#fb4934", "#458588", "#b8bb26", "#d3869b", "#665c54", "#fabd2f"]) {
+      const old = Utils.isColorDark(bg) !== Utils.isColorDark("#282828") ? "#282828" : Utils.getContrastColor(bg);
+      verify(Utils.contrast(bg, BarWidgetStyle.readableOn(bg, "#282828", ["#ebdbb2"])) >= Utils.contrast(bg, old) - 1e-9, bg);
+    }
+  }
+
+  // Text and icons on a fill the widget paints read on it: filled, Fill on
+  // hover, split's icon part, solid and filled cells. Not on the bar:
+  // tinted, outline and the rest keep theirs.
+  function test_text_on_a_fill_reads() {
+    const red = "#fb4934", dark = "#282828";
+    const look = fill => paint({
+        "fill": fill,
+        "barText": barText,
+        "background": dark,
+        "tint": 0.25,
+        "splits": true,
+        "hoverFill": true,
+        "hovered": fill === "tinted"
+      }, red, dark);
+    same(look("filled").text, "#000000", "filled");
+    same(look("filled").icon, "#000000", "filled icon");
+    same(look("tinted").text, "#000000", "filled on hover");
+    same(look("split").icon, "#000000", "split's icon part");
+    same(look("outline").text, red, "outline keeps its color");
+    const cellOf = (fill, state) => paintCell({
+        "fill": fill,
+        "barText": barText,
+        "background": dark,
+        "tint": 0.25
+      }, red, dark, state);
+    same(cellOf("filled", "active").content, "#000000", "a filled cell");
+    same(cellOf("solid", "occupied").content, "#000000", "a solid cell");
+    same(cellOf("tinted", "active").content, red, "a tinted cell's content is its color");
+    // A clear fill is no fill: the text is on the bar
+    same(paint({
+      "fill": "filled",
+      "barText": barText,
+      "background": dark
+    }, "transparent", dark).text, dark, "a clear fill");
   }
 
   function split(labelFill, options = {}) {
@@ -866,7 +918,9 @@ TestCase {
       },
       "gradient": ["accent", "red"]
     };
-    const p = BarWidgetStyle.palette(look, resolve, "#ffffff");
+    const p = BarWidgetStyle.palette(look, resolve, "#ffffff", "#101010");
+    same(p.barText, "#ffffff", "the bar's text");
+    same(p.background, "#101010", "the background");
     compare(p.override, null, "Auto text");
     compare(p.labelColor, null, "no split");
     same(p.group, "#333333", "group");
@@ -878,7 +932,7 @@ TestCase {
         "labelColor": "red"
       },
       "gradient": null
-    }), resolve, "#ffffff");
+    }), resolve, "#ffffff", "#101010");
     same(own.override, "#ffffff", "set text color");
     same(own.labelColor, "#aa0000", "split's label color");
     compare(own.gradientStops, null, "no gradient");
@@ -911,6 +965,7 @@ TestCase {
     });
     const palette = {
       "barText": barText,
+      "background": "#000000",
       "override": null,
       "labelColor": null,
       "group": "#333333",

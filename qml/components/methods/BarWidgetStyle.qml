@@ -7,7 +7,8 @@ import QtQuick
 // gradient, …) is the look's traits; this only colors.
 //
 // `palette` is the look's colors resolved once (palette(),
-// barConfig.palette): barText (what reads on the bar itself), override
+// barConfig.palette): barText (what reads on the bar itself: the theme's
+// foreground), background (the theme's background), override
 // (the bar's text color, replacing the automatic one, or null),
 // labelColor (split's label color, or null), group and groupStroke (a
 // merged run's background and outline), gradientStops (the bar
@@ -32,10 +33,12 @@ QtObject {
   id: root
 
   // The look's colors resolved (`palette` above): `resolve` maps a color
-  // name to a color (Theme.resolveColor), `barText` reads on the bar
-  function palette(look, resolve, barText) {
+  // name to a color (Theme.resolveColor); `barText` reads on the bar (the
+  // theme's foreground), `background` is the theme's
+  function palette(look, resolve, barText, background) {
     return {
       "barText": barText,
+      "background": background,
       "override": look.textColor ? resolve(look.textColor) : null,
       "labelColor": look.split ? resolve(look.split.labelColor) : null,
       "group": resolve(look.group.color),
@@ -74,7 +77,8 @@ QtObject {
   // (textByState).
   function colors(look, palette, state, accent, own) {
     const graded = state.gradient !== null && state.auto;
-    const result = root._widget(look, palette, state, graded ? state.gradient : accent, graded ? root.readableOn(state.gradient, own) : own, graded);
+    const color = graded ? state.gradient : accent;
+    const result = root._widget(look, palette, state, color, root._readable(palette, color, own), graded);
     result.gradient = graded ? root._widgetGradient(look, state) : null;
     return result;
   }
@@ -89,7 +93,7 @@ QtObject {
       "spot": spot,
       "auto": true,
       "run": true
-    }), group, root.readableOn(group, palette.barText));
+    }), group, root._readable(palette, group, palette.barText));
   }
 
   // A cell inside a widget (a workspace) in the same look: { fill, stroke,
@@ -112,7 +116,8 @@ QtObject {
   // split (the `cellBoxedInRun` trait).
   function cell(look, palette, state, color, own, cellState) {
     const graded = state.gradient !== null && state.auto;
-    const result = root._cell(look, palette, state, graded ? state.gradient : color, graded ? root.readableOn(state.gradient, own) : own, cellState);
+    const fill = graded ? state.gradient : color;
+    const result = root._cell(look, palette, state, fill, root._readable(palette, fill, own), cellState);
     result.gradient = graded ? root._cellGradient(look, state, result) : null;
     return result;
   }
@@ -200,13 +205,13 @@ QtObject {
       // tint or outline it takes that color)
       // (A split run with a gradient is its labels' tint, not a fill)
       if (drawn === "split")
-        return root._make(none, none, none, text(state.gradient ? accent : root.readableOn(palette.group, palette.barText)), text(own), accent, !state.gradient);
+        return root._make(none, none, none, text(state.gradient ? accent : root._readable(palette, palette.group, palette.barText)), text(own), accent, !state.gradient);
       if (look.style === "split")
         // One that doesn't split fills its own box in the run, a tab in
         // the row of them
         return root._make(accent, none, none, text(own), text(own), none, true);
       const group = state.gradient ?? palette.group;
-      const label = text(drawn === "filled" ? root.readableOn(group, palette.barText) : palette.barText);
+      const label = text(drawn === "filled" ? root._readable(palette, group, palette.barText) : palette.barText);
       return root._make(unfilled, none, none, label, graded && drawn === "filled" ? label : accent, none, drawn === "filled");
     }
     if (drawn === "split") {
@@ -214,7 +219,7 @@ QtObject {
       // its own (reading on it) or on the bar; a badge's always on the bar
       const label = look.split.icon === "badge" ? "none" : look.split.labelFill;
       if (label === "color")
-        return root._make(palette.labelColor, none, none, text(root.readableOn(palette.labelColor, palette.barText)), text(own), accent, true);
+        return root._make(palette.labelColor, none, none, text(root._readable(palette, palette.labelColor, palette.barText)), text(own), accent, true);
       return root._make(label === "tint" ? root.faded(accent, look.tint) : none, none, none, text(accent), text(own), accent, false);
     }
     const box = root._box(drawn, look, palette, accent, own, unfilled);
@@ -247,7 +252,7 @@ QtObject {
     const merged = state.group && BarLook.traitsOf(style, look).groupCell;
     // What the content sits on: the run's color where it's filled, else
     // the bar (through a tint or an outline)
-    const under = merged && drawn === "filled" ? root.readableOn(palette.group, palette.barText) : palette.barText;
+    const under = merged && drawn === "filled" ? root._readable(palette, palette.group, palette.barText) : palette.barText;
     const faded = Qt.alpha(text(under), 0.4);
     const onBar = c => cellState === "empty" ? faded : text(c);
     const unfilled = fills ? Qt.alpha(color, 0) : none;
@@ -291,9 +296,24 @@ QtObject {
     return Qt.alpha(c, c.a * alpha);
   }
 
-  // `preferred` if it contrasts with `background`, else black or white
-  function readableOn(background, preferred) {
-    return Utils.isColorDark(background) !== Utils.isColorDark(preferred) ? preferred : Utils.getContrastColor(background);
+  // `preferred` where it reads on `background` (WCAG contrast at least
+  // 4.5), else whichever of it, the `alternates` (colors) and black and
+  // white contrasts with it most (`preferred` on a tie)
+  function readableOn(background, preferred, alternates) {
+    if (Utils.contrast(background, preferred) >= 4.5)
+      return preferred;
+    const candidates = [preferred].concat(alternates ?? [], ["#000000", "#FFFFFF"]);
+    return candidates.reduce((best, c) => Utils.contrast(background, c) > Utils.contrast(background, best) ? c : best);
+  }
+
+  // What reads on a fill the widget or run paints (`background`):
+  // `preferred` or, where it doesn't read, the palette's foreground or
+  // background, or black or white (readableOn). On a clear fill (a widget
+  // with no color of its own) the text is on the bar: `preferred`.
+  function _readable(palette, background, preferred) {
+    if (Qt.color(background).a === 0)
+      return preferred;
+    return root.readableOn(background, preferred, [palette.barText, palette.background]);
   }
 
   function _part(part, alpha) {
