@@ -58,6 +58,7 @@ WorkspacePopoutPanel {
         isActive: wsId === root.activeId
         look: BarsConfig.workspaceCellColors(root.barConfig, root, isActive, hasWindows, shows.urgent)
         urgent: shows.urgent
+        solid: root.solidBoxes
         pulse: root.pulse.value
         urgentColor: root.urgentColor
         thickness: root.cellSize

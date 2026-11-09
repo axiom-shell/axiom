@@ -59,7 +59,7 @@ Item {
   readonly property real cellRadius: BarsConfig.cellRadius(root.barConfig, root.cell, root.inset)
   readonly property real spacing: root.barConfig.innerGap
   // Along the bar: square, or narrower for dots or nothing straight on the bar
-  readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
+  readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.solidBoxes || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
   // Cells the bar shows: a row, or a column on a vertical bar
   readonly property int shown: root.isVertical ? root.rows : root.columns
 

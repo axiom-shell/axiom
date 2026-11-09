@@ -31,7 +31,7 @@ Item {
   readonly property real cell: barConfig.thickness - inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(barConfig, cell, inset)
   // Along the bar: square, or narrower for dots or nothing straight on the bar
-  readonly property real cellLength: barConfig.widgetBoxed || properties.labels === "numbers" || properties.showAppIcons ? cell : Math.round(cell * 0.6)
+  readonly property real cellLength: barConfig.widgetBoxed || properties.solidBoxes || properties.labels === "numbers" || properties.showAppIcons ? cell : Math.round(cell * 0.6)
 
   readonly property color activeColor: Theme.resolveColor(properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)

@@ -35,6 +35,8 @@ Panel {
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(root.properties.textColor)
   readonly property color hoverColor: BarsConfig.cellHoverColor(root.properties)
+  // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
+  readonly property bool solidBoxes: root.properties.solidBoxes ?? false
   readonly property int base: CompositorManager.workspaceBase(root.output)
   readonly property int activeId: root.monitor?.activeWorkspaceId ?? -1
 

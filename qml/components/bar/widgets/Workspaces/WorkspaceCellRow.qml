@@ -38,6 +38,8 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real spacing: barConfig.innerGap
+  // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
+  readonly property bool solidBoxes: properties.solidBoxes
   // The workspace whose cell is hovered, which its box (drawn apart from
   // it) shows
   property int hoveredId: -1
@@ -103,6 +105,7 @@ Item {
         lit: wsId === root.hoveredId
         look: root._look(index, isActive && !indicator.slides)
         urgent: root._contents[index]?.urgent ?? false
+        solid: root.solidBoxes
         pulse: urgentPulse.value
         thickness: root.cell
         restLength: root._lengths[index] ?? root.cellLength
@@ -116,7 +119,8 @@ Item {
   ActiveCellIndicator {
     id: indicator
     barConfig: root.barConfig
-    look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active")
+    look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active", root.solidBoxes)
+    solid: root.solidBoxes
     index: root._activeIndex
     thickness: root.cell
     lengths: root._lengths
@@ -148,6 +152,7 @@ Item {
         isActive: wsId === root.activeId
         look: root._look(index, isActive)
         urgent: _content?.urgent ?? false
+        solid: root.solidBoxes
         pulse: urgentPulse.value
         urgentColor: root.urgentColor
         thickness: root.cell

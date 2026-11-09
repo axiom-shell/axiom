@@ -125,6 +125,15 @@ TestCase {
     same(cell("accentText", "active").fill, "transparent", "no fill");
   }
 
+  function test_solid_cells_are_filled_boxes_whatever_the_style() {
+    const c = cell("solid", "occupied");
+    same(c.fill, accent, "fill");
+    same(c.stroke, accent, "the outline matches the fill");
+    same(c.indicator, accent, "and the line");
+    same(c.content, own, "content reads on the fill");
+    same(cell("solid", "empty").content, own, "an empty one's too: it sits on its fill");
+  }
+
   function test_urgent_cells_carry_their_color() {
     same(cell("plain", "urgent").content, accent, "plain: the content takes it, or urgency wouldn't show");
     same(cell("plain", "urgent", custom).content, accent, "even over the bar's text color");

@@ -40,7 +40,11 @@ settings:
     x-enumLabels: {numbers: Numbers, dots: Dots, none: None}
     # None on a bar whose cells have neither box nor line would leave
     # nothing to see (it shows dots there)
-    x-enumShowIf: {none: {$bar.widgetStyle: [filled, tinted, outline, underline]}}
+    x-enumShowIf:
+      none:
+        anyOf:
+          - {$bar.widgetStyle: [filled, tinted, outline, underline]}
+          - {solidBoxes: true}
     default: numbers
     description: 'What each workspace shows. None: just its box or line.'
   relativeNumbers:
@@ -141,13 +145,27 @@ settings:
       showBackground: true
       $bar.widgetStyle: [filled, tinted, outline]
       $bar.widgetGrouping: {not: merged}
-  activeColor: {$ref: '#/definitions/WidgetColor', title: Active}
+  solidBoxes:
+    type: boolean
+    title: Solid boxes
+    default: false
+    description: Every workspace a box filled with its state's color, whatever the bar's widget style.
+  activeColor:
+    $ref: '#/definitions/WidgetColor'
+    title: Active
+    x-showIf:
+      anyOf:
+        - {$bar.widgetStyle: {not: plain}}
+        - {solidBoxes: true}
   occupiedColor:
     type: string
     title: Occupied
     x-options: colors
     default: base04
-    x-showIf: {$bar.widgetStyle: {not: plain}}
+    x-showIf:
+      anyOf:
+        - {$bar.widgetStyle: {not: plain}}
+        - {solidBoxes: true}
   urgentColor:
     type: string
     title: Urgent
@@ -165,19 +183,23 @@ settings:
     x-options: colors
     default: base01
     x-showIf:
-      $bar.widgetStyle: [filled, tinted, outline, underline]
+      anyOf:
+        - {$bar.widgetStyle: [filled, tinted, outline, underline]}
+        - {solidBoxes: true}
   textColor:
     type: string
     title: Text color
     x-options: colors
     default: base00
-    description: Numbers, dots in boxes and the grid's active arrow.
+    description: Numbers, dots and labels in boxes, and the grid's active arrow.
     x-showIf:
-      $bar.widgetStyle: filled
       $bar.widgetTextColor: ''
       anyOf:
-        - {labels: [numbers, dots]}
-        - {showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
+        - {solidBoxes: true}
+        - {$bar.widgetStyle: filled, labels: [numbers, dots]}
+        - {$bar.widgetStyle: filled, workspaceLabels: {notEmpty: true}}
+        - {$bar.widgetStyle: filled, useNames: true}
+        - {$bar.widgetStyle: filled, showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
   hoverColor:
     type: string
     title: Hover

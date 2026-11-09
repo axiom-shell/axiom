@@ -31,9 +31,11 @@ Item {
   readonly property real activeLength: (lengths[index] ?? 0) + extra
   required property real spacing
   property real radius: 0
+  // `solidBoxes`: a filled box on every bar style (`look` is the solid one)
+  property bool solid: false
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed
+  readonly property bool boxed: barConfig.widgetBoxed || solid
   // Whether there's anything to slide: a box, or an underline
   readonly property bool slides: boxed || barConfig.widgetStyle === "underline"
   readonly property real _along: _alongAt(index)

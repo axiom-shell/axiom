@@ -79,7 +79,10 @@ Item {
   signal clicked
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed
+  // `solidBoxes`: a filled box whatever the bar's style (`look` is the
+  // solid one)
+  property bool solid: false
+  readonly property bool boxed: barConfig.widgetBoxed || solid
   // Its state shows in a box or a line; without either, in its content
   readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the

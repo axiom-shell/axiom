@@ -230,14 +230,19 @@ QtObject {
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
   // stroke, indicator, content }, see BarWidgetStyle.cell): `color` is its
-  // state color, `own` what reads on it filled, `state` active/occupied/empty
-  function cellColors(barConfig, color, own, state) {
-    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false), color, own, state);
+  // state color, `own` what reads on it filled, `state`
+  // active/occupied/urgent/empty; `solid`: a filled box whatever the bar's
+  // style (Workspaces' `solidBoxes`)
+  function cellColors(barConfig, color, own, state, solid) {
+    const style = BarsConfig._widgetStyle(barConfig, false);
+    if (solid === true)
+      style.fill = "solid";
+    return BarWidgetStyle.cell(style, color, own, state);
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
   // `colors` ({ activeColor, occupiedColor, urgentColor, emptyColor,
-  // textColor }): urgent beats occupied, active beats both
+  // textColor, solidBoxes }): urgent beats occupied, active beats both
   function workspaceCellColors(barConfig, colors, active, occupied, urgent) {
     const state = active ? "active" : urgent ? "urgent" : occupied ? "occupied" : "empty";
     const color = {
@@ -246,7 +251,7 @@ QtObject {
       "occupied": colors.occupiedColor,
       "empty": colors.emptyColor
     }[state];
-    return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state);
+    return BarsConfig.cellColors(barConfig, color, state === "empty" ? Theme.foreground : colors.textColor, state, colors.solidBoxes === true);
   }
 
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its

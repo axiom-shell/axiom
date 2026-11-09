@@ -39,7 +39,9 @@ QtObject {
   }
 
   // A cell inside a widget (a workspace) in the same style: { fill, stroke,
-  // indicator, content }. `color` is the cell's color for its state, `own`
+  // indicator, content }; a `fill` of "solid" is a filled box whatever the
+  // bar's style, its outline and line (where the bar draws them) its
+  // color too. `color` is the cell's color for its state, `own`
   // what reads on it filled, `state` "active" | "occupied" | "urgent" |
   // "empty". Where the content sits on the bar rather than on the cell's
   // color, an empty cell's is the bar's text faded (its own color is meant
@@ -51,6 +53,8 @@ QtObject {
     const faded = Qt.alpha(text(style.barText), 0.4);
     const onBar = c => state === "empty" ? faded : text(c);
     switch (style.fill) {
+    case "solid":
+      return root._makeCell(color, color, color, text(own));
     case "tinted":
       return root._makeCell(Qt.alpha(color, style.tint), none, none, onBar(color));
     case "outline":
