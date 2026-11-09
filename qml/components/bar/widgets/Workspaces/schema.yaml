@@ -107,7 +107,7 @@ settings:
     maximum: 5
     x-control: stepper
     x-showIf: {showAppIcons: true, appIconsLayout: row}
-    description: The most apps a workspace shows, the biggest windows first.
+    description: The most icons a workspace shows, for its biggest windows, in their order on screen.
   stripWindows:
     type: string
     title: Strip windows

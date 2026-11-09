@@ -73,6 +73,73 @@ TestCase {
     compare(WorkspaceCells.distinctApps([], 3), []);
   }
 
+  function test_byPosition() {
+    const windows = [
+      {
+        "id": "right",
+        "x": 900,
+        "y": 0
+      },
+      {
+        "id": "lowerLeft",
+        "x": 0,
+        "y": 500
+      },
+      {
+        "id": "upperLeft",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "floating",
+        "x": 400,
+        "y": 300,
+        "floating": true
+      }
+    ];
+    compare(WorkspaceCells.byPosition(windows).map(w => w.id), ["upperLeft", "lowerLeft", "floating", "right"], "left to right, then top to bottom, a floating one by its own place");
+    compare(WorkspaceCells.byPosition([]), []);
+  }
+
+  // Biggest first: a big kitty, firefox, a small kitty, mpv
+  readonly property var bySize: [
+    {
+      "id": "k1",
+      "appId": "kitty"
+    },
+    {
+      "id": "ff",
+      "appId": "firefox"
+    },
+    {
+      "id": "k2",
+      "appId": "kitty"
+    },
+    {
+      "id": "mpv",
+      "appId": "mpv"
+    }
+  ]
+
+  function test_chosen_by_size_ordered_by_place() {
+    // On screen: mpv, small kitty, firefox, big kitty
+    const onScreen = [bySize[3], bySize[2], bySize[1], bySize[0]];
+    compare(WorkspaceCells.chosen(bySize, 2, true, onScreen).map(w => w.id), ["ff", "k1"], "the two biggest, in their order on screen");
+    compare(WorkspaceCells.chosen(bySize, 4, true, onScreen).map(w => w.id), ["mpv", "k2", "ff", "k1"], "every window counts with perWindow");
+  }
+
+  function test_chosen_apps_at_their_biggest_window() {
+    // The small kitty first on screen, the big one last
+    const onScreen = [bySize[2], bySize[1], bySize[3], bySize[0]];
+    compare(WorkspaceCells.chosen(bySize, 5, false, onScreen).map(w => w.id), ["ff", "mpv", "k1"], "kitty once, at its biggest window's place");
+    compare(WorkspaceCells.chosen(bySize, 2, false, onScreen).map(w => w.id), ["ff", "k1"], "the two biggest apps, ordered by place");
+  }
+
+  function test_chosen_without_a_place() {
+    compare(WorkspaceCells.chosen(bySize, 3, true, [bySize[1]]).map(w => w.id), ["ff", "k1", "k2"], "windows not on screen go last, biggest first");
+    compare(WorkspaceCells.chosen([], 3, false, []), []);
+  }
+
   function test_squareSlots() {
     compare(WorkspaceCells.squareSlots(0), []);
     compare(WorkspaceCells.squareSlots(1), [

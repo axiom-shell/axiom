@@ -67,10 +67,22 @@ QtObject {
   readonly property int iconSlots: root.iconLayout === "row" ? (root.properties.appIconsMax ?? 3) : root.iconLayout === "square" ? 4 : 1
 
   // The app icons a workspace with windows shows: its largest window's, or
-  // in a row or square its apps' (each once, by its biggest window, the
-  // biggest first)
+  // in a row or square its apps' (each once, by its biggest window), the
+  // biggest up to the slots, in the order they sit on screen
+  // (WorkspaceCells.chosen): on a strip monitor strip order, else left to
+  // right, then top to bottom
   function _icons(wsId) {
-    return WorkspaceCells.distinctApps(CompositorManager.windowsBySize(wsId), root.iconSlots).map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
+    const bySize = CompositorManager.windowsBySize(wsId);
+    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, false, root._onScreen(wsId, bySize));
+    return windows.map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
+  }
+
+  // A workspace's windows (`windows`) in the order they sit on screen: on
+  // a strip monitor (its output's) strip order, else by position
+  function _onScreen(wsId, windows) {
+    const output = CompositorManager.workspaces.find(w => w.id === wsId)?.output ?? "";
+    const direction = output !== "" ? CompositorManager.stripDirection(output) : "";
+    return direction !== "" ? CompositorManager.stripWindows(wsId, direction === "vertical") : WorkspaceCells.byPosition(windows);
   }
 
   // Along the bar: the rest length, longer for text that needs it (with

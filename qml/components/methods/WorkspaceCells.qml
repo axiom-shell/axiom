@@ -76,6 +76,34 @@ QtObject {
     return result;
   }
 
+  // `windows` in the order they sit on screen off a strip: left to right
+  // by their x, then top to bottom (floating ones by their own place)
+  function byPosition(windows) {
+    return (windows ?? []).map((w, i) => ({
+          "w": w,
+          "i": i
+        })).sort((a, b) => (a.w.x ?? 0) - (b.w.x ?? 0) || (a.w.y ?? 0) - (b.w.y ?? 0) || a.i - b.i).map(e => e.w);
+  }
+
+  // The windows whose icons a cell shows in the Row and Square layouts:
+  // of `bySize` (biggest first), the biggest `max`, one per app unless
+  // `perWindow` (an app by its biggest window), then put in the order of
+  // `onScreen` (the same windows as they sit: strip order, or byPosition),
+  // an app at its biggest window's place. A window `onScreen` lacks goes
+  // after the rest, biggest first
+  function chosen(bySize, max, perWindow, onScreen) {
+    const picked = perWindow ? (bySize ?? []).slice(0, max) : root.distinctApps(bySize, max);
+    const ids = (onScreen ?? []).map(w => w.id);
+    const place = w => {
+      const at = ids.indexOf(w.id);
+      return at < 0 ? ids.length : at;
+    };
+    return picked.map((w, i) => ({
+          "w": w,
+          "i": i
+        })).sort((a, b) => place(a.w) - place(b.w) || a.i - b.i).map(e => e.w);
+  }
+
   // Where `count` app icons sit in the Square layout, in a square
   // `thickness` across (the middle of a widened cell): [{ x, y, size }],
   // each icon's centre and size as fractions of it. One: a single full
