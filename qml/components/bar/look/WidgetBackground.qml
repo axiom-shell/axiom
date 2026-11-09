@@ -79,12 +79,16 @@ Item {
   // stroke, line or split's icon part), and the slice of it from `from`
   // to `to` along it (0-1), else null
   readonly property string _gradientPart: root.gradientStart >= 0 ? (root.colors?.gradient?.part ?? "") : ""
+  // (Its gradient read here from `colors`, not through `_gradientPart`:
+  // as `colors` changes, that one can still be the old colors', and a
+  // gradient they no longer have was read as null)
   function _sliceOf(from, to) {
+    const gradient = root.gradientStart >= 0 ? (root.colors?.gradient ?? null) : null;
     const stops = root.barConfig.palette.gradientStops;
-    if (root._gradientPart === "" || stops === null)
+    if (!gradient?.part || stops === null)
       return null;
     const span = root.gradientEnd - root.gradientStart;
-    return BarGradient.gradientSlice(stops, root.gradientStart + span * from, root.gradientStart + span * to, root.colors.gradient.alpha);
+    return BarGradient.gradientSlice(stops, root.gradientStart + span * from, root.gradientStart + span * to, gradient.alpha);
   }
   readonly property var _slice: root._sliceOf(0, 1)
   readonly property real _along: barConfig.vertical ? height : width
