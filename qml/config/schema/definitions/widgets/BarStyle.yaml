@@ -177,6 +177,7 @@ properties:
     x-enumLabels: {square: Square, flared: Flared}
     x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetShape: tab}
     description: Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.
+    x-link: {page: 'BarEditor:widgetGap'}
   widgetEnds:
     x-group: Bar widgets
     type: string

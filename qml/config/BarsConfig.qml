@@ -543,6 +543,38 @@ QtObject {
   // inheriting, or the Bars section's)
   readonly property var styleGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.BarStyle, [])
 
+  // The bar editor's tabs (its left panel's), by the groups (`x-group`
+  // titles) of fieldGroups and styleGroups each shows: a Bar group no tab
+  // names goes on the first
+  readonly property var editorTabs: [
+    {
+      "label": I18n.tr("Layout"),
+      "fields": ["Placement", "Size"],
+      "styles": []
+    },
+    {
+      "label": I18n.tr("Surface"),
+      "fields": ["Surface"],
+      "styles": ["Bar accents", "Surface shadow"]
+    },
+    {
+      "label": I18n.tr("Widgets"),
+      "fields": [],
+      "styles": ["Bar widgets", "Bar gradient"]
+    },
+    {
+      "label": I18n.tr("Behaviour"),
+      "fields": ["Behaviour"],
+      "styles": []
+    }
+  ]
+
+  // The editor tab holding a Bar field (a Bar definition key)
+  function editorTabOf(key) {
+    const title = BarsConfig.fieldGroups.find(group => group.keys.includes(key))?.title ?? "";
+    return Math.max(0, BarsConfig.editorTabs.findIndex(tab => tab.fields.includes(title)));
+  }
+
   readonly property var availableWidgetTypes: {
     const oneOf = ConfigManager.configSchema?.definitions?.BarWidget?.oneOf || [];
     return oneOf.map(refObj => {

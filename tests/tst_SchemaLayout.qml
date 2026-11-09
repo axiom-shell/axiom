@@ -1291,7 +1291,9 @@ TestCase {
     const views = schema.definitions.OverlayView.oneOf.map(option => schema.definitions[option.$ref.replace("#/definitions/", "")].properties.type.const);
     const pageOk = link => {
       const parts = link.split(":");
-      return (parts[0] === "Layouts" || views.includes(parts[0])) && (parts.length === 1 || (parts[0] === "Layouts" && ["lockscreen", "greeter", "desktop"].includes(parts[1])));
+      // Layouts:<what it edits>, BarEditor:<a bar's own setting>
+      const inside = parts[0] === "Layouts" ? ["lockscreen", "greeter", "desktop"].includes(parts[1]) : parts[0] === "BarEditor" && schema.definitions.Bar.properties[parts[1]] !== undefined;
+      return (parts[0] === "Layouts" || views.includes(parts[0])) && (parts.length === 1 || inside);
     };
     const bad = [];
     const visit = (node, where) => {
