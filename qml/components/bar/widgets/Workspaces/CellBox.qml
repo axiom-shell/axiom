@@ -20,7 +20,7 @@ Item {
   property real radius: 0
   // Its shape as a segment of the bar's run (BarShapes.cellShape), or null
   property var shape: null
-  // Its slice of the bar's gradient (BarWidgetStyle.gradientSlice) for its
+  // Its slice of the bar's gradient (BarGradient.gradientSlice) for its
   // fill or stroke, else null
   property var fillSlice: null
   property var strokeSlice: null

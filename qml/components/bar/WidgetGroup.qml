@@ -226,7 +226,7 @@ Item {
 
   // Where `along` (in the group, as laid out) sits along the bar (0-1)
   function _barSpot(along) {
-    return (root.barStart + along) / root.barLength;
+    return BarGradient.spot(along, 0, root.barStart, root.barLength);
   }
 
   // The caps and insets at `place` in a run (BarShapes.segment)

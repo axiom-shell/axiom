@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.components.methods
 
 // Base for bar widgets that draw their own content (icon + label widgets
 // extend BarIconWidget instead): the inputs every widget gets from
@@ -56,7 +57,7 @@ Item {
     if (root.barLength <= 0)
       return -1;
     const point = item.mapToItem(root, root.isVertical ? 0 : along, root.isVertical ? along : 0);
-    return (root.barOffset + (root.isVertical ? point.y : point.x)) / root.barLength;
+    return BarGradient.spot(root.isVertical ? point.y : point.x, 0, root.barOffset, root.barLength);
   }
   // Filled while its hit area is hovered, with the bar's "Fill on hover"
   // (off for a widget whose parts fill instead: Workspaces' cells)

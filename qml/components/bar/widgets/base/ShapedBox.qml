@@ -7,7 +7,7 @@ import qs.components.methods
 // A box in a bar's widget shape (BarShapes), filling its parent: one fill
 // and stroke between two caps, a Rectangle when both ends are alike and
 // rounded (or square), else a path, as also for a slice of the bar's
-// gradient (`fillSlice` or `strokeSlice`, BarWidgetStyle.gradientSlice); a
+// gradient (`fillSlice` or `strokeSlice`, BarGradient.gradientSlice); a
 // stroke other than solid over it (OutlineStroke). A widget's background
 // (WidgetBackground) and a Workspaces cell as a segment of the bar's run
 // (CellBox) draw in it.

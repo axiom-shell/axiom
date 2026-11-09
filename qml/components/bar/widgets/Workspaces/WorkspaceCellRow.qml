@@ -149,7 +149,7 @@ Item {
       return null;
     const start = (root._layout.starts[index] ?? 0) - (root._shapes[index]?.segment.back ?? 0);
     const end = (root._layout.starts[index] ?? 0) + (root._layout.lengths[index] ?? 0);
-    return BarWidgetStyle.gradientSlice(BarsConfig.gradientStops(root.barConfig), root.barSpotOf(root, start), root.barSpotOf(root, end), part.alpha);
+    return BarGradient.gradientSlice(root.barConfig.palette.gradientStops, root.barSpotOf(root, start), root.barSpotOf(root, end), part.alpha);
   }
 
   // Clipped (a cell that left the active state still shrinking, the active

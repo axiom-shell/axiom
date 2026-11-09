@@ -31,7 +31,7 @@ Item {
   property var tab: null
   property color color: "transparent"
   // Its slice of the bar's gradient in place of `color`
-  // (BarWidgetStyle.gradientSlice), or null
+  // (BarGradient.gradientSlice), or null
   property var slice: null
   property real lineWidth: 1
 

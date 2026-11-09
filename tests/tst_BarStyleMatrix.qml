@@ -189,52 +189,38 @@ TestCase {
     }, {});
   }
 
-  // BarsConfig._widgetStyle's copy: the style BarWidgetStyle reads
-  function _style(bar, merged, widget) {
-    const look = bar.look;
-    const spot = widget?.spot ?? -1;
-    const stops = spot >= 0 && look.gradient ? look.gradient.map(name => root.resolve(name)) : null;
-    return {
-      "gradient": stops ? BarWidgetStyle.gradientAt(stops, spot) : null,
-      "fill": look.style,
-      "splits": widget?.splits === true,
-      "hovered": widget?.hovered === true,
-      "auto": widget?.auto === true,
-      "run": widget?.run === true,
-      "splitIcon": look.split?.icon ?? null,
-      "labelFill": look.split?.labelFill ?? null,
-      "labelColor": look.split ? root.resolve(look.split.labelColor) : null,
-      "barText": root.resolve("foreground"),
-      "override": look.textColor ? root.resolve(look.textColor) : null,
-      "tint": look.tint,
-      "hoverFill": look.hoverFill,
-      "group": merged ? root.resolve(look.group.color) : null
-    };
+  // The bar's palette (enrichBarConfig's)
+  function palette(bar) {
+    return BarWidgetStyle.palette(bar.look, name => root.resolve(name), root.resolve("foreground"));
   }
 
   // A widget's colors (BarsConfig.widgetColors)
   function widgetColors(bar, accent, foregroundName, widget) {
-    return BarWidgetStyle.colors(root._style(bar, bar.look.grouping === "merged", widget), accent, root.resolve(foregroundName));
+    const palette = root.palette(bar);
+    return BarWidgetStyle.colors(bar.look, palette, BarWidgetStyle.state(palette, {
+      "splits": widget?.splits,
+      "hovered": widget?.hovered,
+      "spot": widget?.spot,
+      "auto": widget?.auto,
+      "group": bar.look.grouping === "merged"
+    }), accent, root.resolve(foregroundName));
   }
 
   // A cell's colors (BarsConfig.cellColors)
   function cellColors(bar, color, own, state, cell) {
-    const style = root._style(bar, cell?.onBar === true && bar.look.grouping === "merged", Object.assign({
-      "auto": (cell?.spot ?? -1) >= 0
-    }, cell));
-    if (cell?.solid === true)
-      style.fill = "solid";
-    return BarWidgetStyle.cell(style, color, own, state);
+    const palette = root.palette(bar);
+    return BarWidgetStyle.cell(bar.look, palette, BarWidgetStyle.state(palette, {
+      "hovered": cell?.hovered,
+      "spot": cell?.spot,
+      "auto": (cell?.spot ?? -1) >= 0,
+      "solid": cell?.solid,
+      "group": cell?.onBar === true && bar.look.grouping === "merged"
+    }), color, own, state);
   }
 
   // A merged run's own background (BarsConfig.groupColors)
   function groupColors(bar, spot) {
-    const group = root.resolve(bar.look.traits.stroke ? bar.look.group.strokeColor : bar.look.group.color);
-    return BarWidgetStyle.colors(root._style(bar, false, {
-      "spot": spot,
-      "auto": true,
-      "run": true
-    }), group, BarWidgetStyle.readableOn(group, root.resolve("foreground")));
+    return BarWidgetStyle.runColors(bar.look, root.palette(bar), spot);
   }
 
   function cellFlags(bar, solid) {

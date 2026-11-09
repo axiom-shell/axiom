@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// A Rectangle's slice of the bar's gradient (BarWidgetStyle.gradientSlice's
+// A Rectangle's slice of the bar's gradient (BarGradient.gradientSlice's
 // three stops, null for none), along the bar (down a vertical one): an
 // underline's line, a split badge
 Gradient {

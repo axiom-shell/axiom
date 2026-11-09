@@ -14,8 +14,67 @@ TestCase {
     verify(Qt.colorEqual(actual, expected), `${message}: ${actual} != ${expected}`);
   }
 
+  // The rows give a widget's style flat, as one object ({ fill, barText,
+  // override, tint, group (a merged run's color, or null), splits,
+  // splitIcon, labelFill, labelColor, hoverFill, hovered, gradient, auto,
+  // run }; a `fill` of "solid" a cell's solid box): as the look, palette
+  // and state paint takes
+  function lookOf(style) {
+    const name = style.fill === "solid" ? "filled" : style.fill;
+    const look = {
+      "style": name,
+      "tint": style.tint ?? 0.2,
+      "textColor": "",
+      "split": name === "split" ? {
+        "icon": style.splitIcon ?? "joined",
+        "labelFill": style.labelFill ?? "tint",
+        "labelColor": ""
+      } : null,
+      "grouping": style.group ? "merged" : "separate",
+      "group": {
+        "color": "",
+        "strokeColor": ""
+      },
+      "gradient": null
+    };
+    look.traits = BarLook.traitsOf(name, look);
+    look.hoverFill = style.hoverFill === true && look.traits.hoverFills;
+    return look;
+  }
+
+  function paletteOf(style) {
+    return {
+      "barText": style.barText,
+      "override": style.override ?? null,
+      "labelColor": style.labelColor ?? null,
+      "group": style.group ?? null,
+      "groupStroke": null,
+      "gradientStops": null
+    };
+  }
+
+  function stateOf(style) {
+    return {
+      "gradient": style.gradient ?? null,
+      "splits": style.splits === true,
+      "hovered": style.hovered === true,
+      "auto": style.auto === true,
+      "run": style.run === true,
+      "group": !!style.group,
+      "solid": style.fill === "solid"
+    };
+  }
+
+  function paint(style, accent, own) {
+    return BarWidgetStyle.colors(lookOf(style), paletteOf(style), stateOf(style), accent, own);
+  }
+
+  function paintCell(style, color, own, state) {
+    return BarWidgetStyle.cell(lookOf(style), paletteOf(style), stateOf(style), color, own, state);
+  }
+
   function styled(fill, override = null, group = null) {
-    return BarWidgetStyle.colors({
+    return paint({
       "fill": fill,
       "barText": barText,
       "override": override,
@@ -47,7 +106,7 @@ TestCase {
   // A widget with no color of its own (a clear one) tints nothing,
   // rather than black at the tint's opacity
   function test_a_clear_color_stays_clear_where_faded() {
-    const clear = c => BarWidgetStyle.colors({
+    const clear = c => paint({
         "fill": c,
         "barText": barText,
         "override": null,
@@ -121,7 +180,7 @@ TestCase {
   }
 
   function cell(fill, state, override = null) {
-    return BarWidgetStyle.cell({
+    return paintCell({
       "fill": fill,
       "barText": barText,
       "override": override,
@@ -177,7 +236,7 @@ TestCase {
   }
 
   function mergedCell(fill, state, group, hovered = false) {
-    return BarWidgetStyle.cell({
+    return paintCell({
       "fill": fill,
       "barText": barText,
       "override": null,
@@ -214,7 +273,7 @@ TestCase {
   }
 
   function hovering(fill, hovered, hoverFill = true, group = null) {
-    return BarWidgetStyle.colors({
+    return paint({
       "fill": fill,
       "barText": barText,
       "override": null,
@@ -250,14 +309,6 @@ TestCase {
       same(hovered.fill, rest.fill, fill + " fill");
       same(hovered.text, rest.text, fill + " text");
     });
-    verify(!BarWidgetStyle.fillsOnHover({
-      "fill": "filled",
-      "hoverFill": true
-    }), "filled");
-    verify(BarWidgetStyle.fillsOnHover({
-      "fill": "outline",
-      "hoverFill": true
-    }), "outline");
   }
 
   function test_hover_fill_fades_in_from_its_own_color() {
@@ -279,7 +330,7 @@ TestCase {
   }
 
   function hoveredCell(fill, state, hovered, hoverFill = true) {
-    return BarWidgetStyle.cell({
+    return paintCell({
       "fill": fill,
       "barText": barText,
       "override": null,
@@ -349,7 +400,7 @@ TestCase {
   readonly property color graded: "#ffff00"
 
   function gradientStyled(fill, auto, group = null, override = null, options = {}) {
-    return BarWidgetStyle.colors(Object.assign({
+    return paint(Object.assign({
       "fill": fill,
       "barText": barText,
       "override": override,
@@ -405,28 +456,6 @@ TestCase {
     same(gradientStyled("tinted", true, "#222222").icon, graded, "tinted icon");
   }
 
-  function test_gradient_at_spreads_the_stops_evenly() {
-    same(BarWidgetStyle.gradientAt(["#000000", "#ffffff"], 0), "#000000", "start");
-    same(BarWidgetStyle.gradientAt(["#000000", "#ffffff"], 1), "#ffffff", "end");
-    same(BarWidgetStyle.gradientAt(["#ff0000", "#00ff00", "#0000ff"], 0.5), "#00ff00", "via at the middle");
-    same(BarWidgetStyle.gradientAt(["#ff0000", "#00ff00", "#0000ff"], 0.25), Qt.rgba(0.5, 0.5, 0, 1), "a quarter");
-    same(BarWidgetStyle.gradientAt(["#000000", "#ffffff"], 2), "#ffffff", "clamped");
-  }
-
-  function test_gradient_slice_is_the_bars_between_its_ends() {
-    const two = BarWidgetStyle.gradientSlice(["#000000", "#ffffff"], 0.25, 0.75, 1);
-    compare(two.map(s => s.position), [0, 0.5, 1]);
-    same(two[0].color, Qt.rgba(0.25, 0.25, 0.25, 1), "start");
-    same(two[1].color, Qt.rgba(0.5, 0.5, 0.5, 1), "middle");
-    same(two[2].color, Qt.rgba(0.75, 0.75, 0.75, 1), "end");
-    // The via stop inside it is a stop of the slice
-    const three = BarWidgetStyle.gradientSlice(["#ff0000", "#00ff00", "#0000ff"], 0.4, 0.8, 1);
-    fuzzyCompare(three[1].position, 0.25, 1e-9);
-    same(three[1].color, "#00ff00", "via");
-    // Faded for a tint
-    compare(BarWidgetStyle.gradientSlice(["#000000", "#ffffff"], 0, 1, 0.25)[2].color.a, 0.25);
-  }
-
   function test_an_auto_cell_takes_the_gradient() {
     const style = {
       "fill": "filled",
@@ -437,16 +466,16 @@ TestCase {
       "gradient": graded,
       "auto": true
     };
-    const c = BarWidgetStyle.cell(style, accent, "#ffffff", "active");
+    const c = paintCell(style, accent, "#ffffff", "active");
     same(c.fill, graded, "fill");
     same(c.content, "#000000", "content reads on it");
-    same(BarWidgetStyle.cell(Object.assign({}, style, {
+    same(paintCell(Object.assign({}, style, {
       "auto": false
     }), accent, own, "active").fill, accent, "set color");
   }
 
   function test_an_auto_solid_cell_takes_the_gradient() {
-    const c = BarWidgetStyle.cell({
+    const c = paintCell({
       "fill": "solid",
       "barText": barText,
       "override": null,
@@ -530,7 +559,7 @@ TestCase {
   }
 
   function split(labelFill, options = {}) {
-    return BarWidgetStyle.colors(Object.assign({
+    return paint(Object.assign({
       "fill": "split",
       "barText": barText,
       "override": null,
@@ -627,7 +656,7 @@ TestCase {
   // Cells as segments of a merged run (Workspaces with its Background
   // off): the run draws the box, the content takes the state's color
   function test_cells_in_a_merged_run_leave_the_box_to_it() {
-    const groupCell = (fill, state, extra) => BarWidgetStyle.cell(Object.assign({
+    const groupCell = (fill, state, extra) => paintCell(Object.assign({
         "fill": fill,
         "barText": barText,
         "override": null,
@@ -655,7 +684,7 @@ TestCase {
 
   // What of a cell's box takes the bar's gradient, under an Auto color
   function test_cell_gradient_parts() {
-    const part = (fill, extra) => BarWidgetStyle.cell(Object.assign({
+    const part = (fill, extra) => paintCell(Object.assign({
         "fill": fill,
         "barText": barText,
         "override": null,
@@ -681,5 +710,82 @@ TestCase {
     compare(part("filled", {
       "auto": false
     }), null, "a set color: none");
+  }
+
+  // The look's colors resolved once
+  function test_palette() {
+    const names = {
+      "accent": "#ff0000",
+      "base03": "#333333",
+      "red": "#aa0000",
+      "fg": "#ffffff"
+    };
+    const resolve = name => Qt.color(names[name] ?? "#000000");
+    const look = {
+      "textColor": "",
+      "split": null,
+      "group": {
+        "color": "base03",
+        "strokeColor": "accent"
+      },
+      "gradient": ["accent", "red"]
+    };
+    const p = BarWidgetStyle.palette(look, resolve, "#ffffff");
+    compare(p.override, null, "Auto text");
+    compare(p.labelColor, null, "no split");
+    same(p.group, "#333333", "group");
+    same(p.groupStroke, "#ff0000", "group stroke");
+    same(p.gradientStops[1], "#aa0000", "stops");
+    const own = BarWidgetStyle.palette(Object.assign({}, look, {
+      "textColor": "fg",
+      "split": {
+        "labelColor": "red"
+      },
+      "gradient": null
+    }), resolve, "#ffffff");
+    same(own.override, "#ffffff", "set text color");
+    same(own.labelColor, "#aa0000", "split's label color");
+    compare(own.gradientStops, null, "no gradient");
+  }
+
+  // A spot along the bar stands for the gradient's color there
+  function test_state() {
+    const palette = {
+      "gradientStops": ["#000000", "#ffffff"]
+    };
+    const s = BarWidgetStyle.state(palette, {
+      "spot": 0.5,
+      "auto": true
+    });
+    same(s.gradient, Qt.rgba(0.5, 0.5, 0.5, 1), "the gradient at its spot");
+    compare([s.auto, s.splits, s.hovered, s.run, s.group, s.solid], [true, false, false, false, false, false]);
+    compare(BarWidgetStyle.state(palette, {}).gradient, null, "no spot");
+    compare(BarWidgetStyle.state({
+      "gradientStops": null
+    }, {
+      "spot": 0.5
+    }).gradient, null, "no gradient");
+  }
+
+  // A merged run's own background: its group color, an outline run's line
+  // its stroke color
+  function test_run_colors() {
+    const look = lookOf({
+      "fill": "filled"
+    });
+    const palette = {
+      "barText": barText,
+      "override": null,
+      "labelColor": null,
+      "group": "#333333",
+      "groupStroke": "#ff0000",
+      "gradientStops": null
+    };
+    same(BarWidgetStyle.runColors(look, palette, -1).fill, "#333333", "filled run");
+    const outline = BarWidgetStyle.runColors(lookOf({
+      "fill": "outline"
+    }), palette, -1);
+    same(outline.stroke, "#ff0000", "outline run's line");
+    compare(outline.gradient, null, "no gradient");
   }
 }

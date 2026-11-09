@@ -85,11 +85,11 @@ Item {
   // to `to` along it (0-1), else null
   readonly property string _gradientPart: root.gradientStart >= 0 ? (root.colors?.gradient?.part ?? "") : ""
   function _sliceOf(from, to) {
-    const stops = BarsConfig.gradientStops(root.barConfig);
+    const stops = root.barConfig.palette.gradientStops;
     if (root._gradientPart === "" || stops === null)
       return null;
     const span = root.gradientEnd - root.gradientStart;
-    return BarWidgetStyle.gradientSlice(stops, root.gradientStart + span * from, root.gradientStart + span * to, root.colors.gradient.alpha);
+    return BarGradient.gradientSlice(stops, root.gradientStart + span * from, root.gradientStart + span * to, root.colors.gradient.alpha);
   }
   readonly property var _slice: root._sliceOf(0, 1)
   readonly property real _along: barConfig.vertical ? height : width

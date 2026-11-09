@@ -131,6 +131,8 @@ QtObject {
       // How its widgets are drawn: their style, shapes, runs, split, the
       // gradient, separators and accent line (BarLook.resolve)
       "look": look,
+      // The look's colors, resolved (BarWidgetStyle.palette)
+      "palette": BarWidgetStyle.palette(look, name => Theme.resolveColor(name), Theme.foreground),
       // The gap a split widget keeps between its parts
       // (BarShapes.splitRoom), -1 on other styles
       "splitRoom": look.split ? look.split.room : -1,
@@ -220,32 +222,37 @@ QtObject {
   // text, icon, iconFill, gradient }, see BarWidgetStyle): `accent` is
   // its color for its state, `foregroundName` the text color it's
   // configured with, `widget` what of the widget itself its look depends
-  // on (_widgetStyle; left out, none of it)
+  // on (BarWidgetStyle.state's: splits, hovered, spot, auto; left out,
+  // none of it). In a merged run on a merged bar.
   function widgetColors(barConfig, accent, foregroundName, widget) {
-    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.look.grouping === "merged", widget), accent, Theme.resolveColor(foregroundName));
+    const palette = barConfig.palette;
+    return BarWidgetStyle.colors(barConfig.look, palette, BarWidgetStyle.state(palette, {
+      "splits": widget?.splits,
+      "hovered": widget?.hovered,
+      "spot": widget?.spot,
+      "auto": widget?.auto,
+      "group": barConfig.look.grouping === "merged"
+    }), accent, Theme.resolveColor(foregroundName));
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
   // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
   // `color` is its state color, `own` what reads on it filled, `state`
   // active/occupied/urgent/empty, `cell` what of the cell its look depends
-  // on (_widgetStyle's hovered and spot: where the middle of a cell whose
+  // on (BarWidgetStyle.state's hovered and spot: where the middle of a cell whose
   // color is Auto sits along the bar, for the bar's gradient to take its
   // place; `solid`: a filled box whatever the bar's style, Workspaces'
   // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
   // popout, so in a merged run on a merged bar)
   function cellColors(barConfig, color, own, state, cell) {
-    const style = BarsConfig._widgetStyle(barConfig, cell?.onBar === true && barConfig.look.grouping === "merged", Object.assign({
-      "auto": (cell?.spot ?? -1) >= 0
-    }, cell));
-    if (cell?.solid === true)
-      style.fill = "solid";
-    return BarWidgetStyle.cell(style, color, own, state);
-  }
-
-  // The bar's gradient's colors, resolved, start to end (null for none)
-  function gradientStops(barConfig) {
-    return barConfig.look.gradient ? barConfig.look.gradient.map(name => Theme.resolveColor(name)) : null;
+    const palette = barConfig.palette;
+    return BarWidgetStyle.cell(barConfig.look, palette, BarWidgetStyle.state(palette, {
+      "hovered": cell?.hovered,
+      "spot": cell?.spot,
+      "auto": (cell?.spot ?? -1) >= 0,
+      "solid": cell?.solid,
+      "group": cell?.onBar === true && barConfig.look.grouping === "merged"
+    }), color, own, state);
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
@@ -290,13 +297,7 @@ QtObject {
   // the bar, 0-1), else groupColor, an outline run's line
   // groupStrokeColor (it has no background of its own)
   function groupColors(barConfig, spot = -1) {
-    const look = barConfig.look;
-    const group = Theme.resolveColor(look.traits.stroke ? look.group.strokeColor : look.group.color);
-    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false, {
-      "spot": spot,
-      "auto": true,
-      "run": true
-    }), group, BarWidgetStyle.readableOn(group, Theme.foreground));
+    return BarWidgetStyle.runColors(barConfig.look, barConfig.palette, spot);
   }
 
   // A bar's widgets (by section) with each Auto color field (`x-autoColor`,
@@ -370,36 +371,6 @@ QtObject {
     }, {});
     return result;
   }, {})
-
-  // BarWidgetStyle's `style` for a bar, its colors resolved, for a widget
-  // (or cell) `widget`, each left out false or none:
-  //   splits   it shows an icon part and a label apart
-  //   hovered  the pointer is over it
-  //   spot     where its middle sits along the bar (0-1, -1 for nowhere)
-  //   auto     its color is its Auto own color, which the bar's gradient
-  //            takes the place of
-  //   run      it's a merged run's own background (groupColors)
-  function _widgetStyle(barConfig, merged, widget) {
-    const look = barConfig.look;
-    const spot = widget?.spot ?? -1;
-    const stops = spot >= 0 ? BarsConfig.gradientStops(barConfig) : null;
-    return {
-      "gradient": stops ? BarWidgetStyle.gradientAt(stops, spot) : null,
-      "fill": look.style,
-      "splits": widget?.splits === true,
-      "hovered": widget?.hovered === true,
-      "auto": widget?.auto === true,
-      "run": widget?.run === true,
-      "splitIcon": look.split?.icon ?? null,
-      "labelFill": look.split?.labelFill ?? null,
-      "labelColor": look.split ? Theme.resolveColor(look.split.labelColor) : null,
-      "barText": Theme.foreground,
-      "override": look.textColor ? Theme.resolveColor(look.textColor) : null,
-      "tint": look.tint,
-      "hoverFill": look.hoverFill,
-      "group": merged ? Theme.resolveColor(look.group.color) : null
-    };
-  }
 
   // The color of a shadow: `shadowColor` as a bar's look or the BarStyle
   // section has it. Automatic is the accent.
