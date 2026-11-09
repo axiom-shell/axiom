@@ -84,7 +84,7 @@ Item {
     thickness: root.thickness
     length: root._along
     inRun: root._inGroup
-    shape: root.run ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, false, root.cellSpacing, root.chainFirst, root.chainCount) : null
+    shape: root.run ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, BarWidgetStyle.cellOpaque(root.barConfig.widgetStyle, root.solid), root.cellSpacing, root.chainFirst, root.chainCount) : null
     radius: root.radius
     hoverColor: root.hoverColor
     hitArea: root.hitArea
