@@ -102,133 +102,124 @@ TestCase {
 
   // ---- Adapters: the only part of this file a later stage changes ----
 
-  // The style keys of a bar as enrichBarConfig derives them (a pure copy
-  // of its look block: BarsConfig needs Theme and the config). The
-  // returned bar is what the other adapters take.
+  // The shared BarStyle a raw look stands for (its shadow an object)
+  function sectionOf(raw) {
+    const section = Object.assign({}, raw, {
+      "shadow": {
+        "enabled": raw.shadow,
+        "color": raw.shadowColor,
+        "size": raw.shadowSize
+      }
+    });
+    delete section.shadowColor;
+    delete section.shadowSize;
+    return section;
+  }
+
+  // A bar's look as enrichBarConfig resolves it (a pure copy of its look
+  // block: BarsConfig needs Theme and the config). The returned bar is
+  // what the other adapters take.
   function enrich(raw, geo) {
-    const look = raw;
     const thickness = geo.thickness;
     const scale = thickness / 26;
     const innerPadding = Math.round(geo.innerPadding * scale);
     const innerGap = Math.round(geo.innerGap * scale);
-    const boxedStyles = ["filled", "tinted", "outline", "split"];
-    const boxed = boxedStyles.includes(look.widgetStyle);
-    const grouping = boxed ? BarWidgetStyle.grouping(look) : "separate";
-    const splitCap = BarShapes.dividerCap(look.widgetShape, look.splitDivider);
-    const groupSpacing = grouping === "powerline" ? 0 : look.separatorStyle !== "none" ? BarLayout.dividerGap(look.separatorStyle, look.separatorThickness, thickness, look.separatorGap) : geo.widgetGap;
+    const far = geo.location === "right" || geo.location === "bottom";
+    const look = BarLook.resolve(root.sectionOf(raw), {}, {
+      "thickness": thickness,
+      "innerPadding": innerPadding,
+      "innerGap": innerGap,
+      "radius": root.widgetRadius,
+      "far": far
+    });
+    const separators = look.separators;
+    const groupSpacing = look.grouping === "powerline" ? 0 : separators.style !== "none" ? BarLayout.dividerGap(separators.style, separators.thickness, thickness, separators.gap) : geo.widgetGap;
     const bar = {
       "thickness": thickness,
       "innerPadding": innerPadding,
       "innerGap": innerGap,
       "groupSpacing": groupSpacing,
-      "radius": look.widgetRadius ?? root.widgetRadius,
+      "radius": look.radius,
       "right": geo.location === "right",
       "bottom": geo.location === "bottom",
       "vertical": geo.location === "left" || geo.location === "right",
-      "widgetStyle": look.widgetStyle,
-      "widgetBoxed": boxed,
-      "tintOpacity": look.tintOpacity / 100,
-      "outlineWidth": look.outlineWidth,
-      "outlineStroke": look.outlineStroke,
-      "hoverFill": look.hoverFill,
-      "lineWidth": look.lineWidth,
-      "lineSide": look.lineSide,
-      "widgetTextColor": look.widgetTextColor,
-      "widgetShape": boxed ? BarWidgetStyle.shape(look) : "rounded",
-      "widgetEnds": look.widgetEnds,
-      "tabCorners": look.tabCorners,
-      "widgetGrouping": grouping,
-      "groupColor": look.groupColor,
-      "groupStrokeColor": look.groupStrokeColor,
-      "splitIcon": look.splitIcon,
-      "splitLabelFill": look.splitLabelFill,
-      "splitLabelColor": look.splitLabelColor,
-      "splitDivider": look.splitDivider,
-      "splitCap": splitCap,
-      "badgePad": innerGap,
-      "splitRoom": look.widgetStyle === "split" ? BarShapes.splitRoom(look.splitIcon, splitCap, thickness, innerPadding, innerGap * 1.5, innerGap) : -1,
-      "gradientColors": look.gradient && look.widgetStyle !== "plain" ? [look.gradientFrom].concat(look.gradientVia ? [look.gradientVia] : [], [look.gradientTo]) : null,
-      "separatorStyle": grouping === "powerline" ? "none" : look.separatorStyle,
-      "separatorColor": look.separatorColor,
-      "separatorThickness": look.separatorThickness,
-      "accentLine": look.accentLine,
-      "accentLineColor": look.accentLineColor,
-      "accentLineFade": look.accentLineFade,
-      "accentLineWidth": look.accentLineWidth
+      "look": look,
+      "splitRoom": look.split ? look.split.room : -1
     };
-    bar.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.tabCorners, groupSpacing, geo.endRoom);
-    // What enrichBarConfig hands BarAutoColors (withAutoColors)
-    bar.autoContrast = BarWidgetStyle.autoContrast(look.widgetStyle, grouping, look.splitIcon, look.splitLabelFill);
+    look.shape.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, geo.endRoom);
     return bar;
   }
 
-  // What the matrix records of an enriched bar, by the old flat names
+  // What the matrix records of an enriched bar, by the old flat names. A
+  // split value off split (where the look has no split) is what main
+  // derived from the saved values there.
   function derived(bar) {
+    const look = bar.look;
     return {
-      "boxed": bar.widgetBoxed,
-      "shape": bar.widgetShape,
-      "grouping": bar.widgetGrouping,
-      "splitCap": bar.splitCap,
+      "boxed": look.traits.boxed,
+      "shape": look.shape.name,
+      "grouping": look.grouping,
+      "splitCap": look.split ? look.split.cap : BarShapes.dividerCap(look.values.widgetShape, look.values.splitDivider),
       "splitRoom": bar.splitRoom,
-      "badgePad": bar.badgePad,
-      "tint": bar.tintOpacity,
-      "gradient": bar.gradientColors,
-      "separators": bar.separatorStyle,
+      "badgePad": look.split ? look.split.badgePad : bar.innerGap,
+      "tint": look.tint,
+      "gradient": look.gradient,
+      "separators": look.separators.style,
       "groupSpacing": bar.groupSpacing,
-      "tabFillet": bar.tabFillet,
+      "tabFillet": look.shape.tabFillet,
       "radius": bar.radius,
-      "opaque": BarWidgetStyle.opaque(bar.widgetStyle, bar.splitIcon, bar.splitLabelFill),
-      "autoContrast": [bar.autoContrast.onRun, bar.autoContrast.minContrast]
+      "opaque": look.traits.opaque,
+      "autoContrast": [look.traits.autoContrast.onRun, look.traits.autoContrast.minContrast]
     };
   }
 
-  // Every other style key of an enriched bar, by the old flat names
+  // Every other style key of an enriched bar, by the old flat names (a
+  // part the look's style doesn't draw, as saved)
   function passed(bar) {
-    return ["widgetStyle", "outlineWidth", "outlineStroke", "hoverFill", "lineWidth", "lineSide", "widgetTextColor", "widgetEnds", "tabCorners", "groupColor", "groupStrokeColor", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "separatorColor", "separatorThickness", "accentLine", "accentLineColor", "accentLineFade", "accentLineWidth"].map(key => bar[key]);
+    const look = bar.look, values = look.values;
+    return [look.style, look.outline?.width ?? values.outlineWidth, look.outline?.stroke ?? values.outlineStroke, values.hoverFill, look.line?.width ?? values.lineWidth, look.line?.side ?? values.lineSide, look.textColor, look.shape.ends, look.shape.tabCorners, look.group.color, look.group.strokeColor, look.split?.icon ?? values.splitIcon, look.split?.labelFill ?? values.splitLabelFill, look.split?.labelColor ?? values.splitLabelColor, look.split?.divider ?? values.splitDivider, look.separators.color, look.separators.thickness, look.accentLine?.side ?? "none", look.accentLine?.color ?? values.accentLineColor, look.accentLine?.fade ?? values.accentLineFade, look.accentLine?.width ?? values.accentLineWidth];
   }
 
-  // `$bar.<key>` for a bar widget's x-showIf (BarsConfig.lookContext), as
-  // the keys whose value differs from the raw look's
+  // `$bar.<key>` for a bar widget's x-showIf (BarLook.context)
   function context(raw) {
-    const look = Object.assign({}, raw);
-    look.widgetShape = BarWidgetStyle.shape(look);
-    look.widgetGrouping = ["filled", "tinted", "outline", "split"].includes(look.widgetStyle) ? BarWidgetStyle.grouping(look) : "separate";
-    return root.styleKeys.reduce((context, key) => {
-      context["$bar." + key] = look[key];
-      return context;
+    const context = BarLook.context(BarLook.resolve(root.sectionOf(raw), {}, null));
+    return root.styleKeys.reduce((out, key) => {
+      out["$bar." + key] = context["$bar." + key];
+      return out;
     }, {});
   }
 
   // BarsConfig._widgetStyle's copy: the style BarWidgetStyle reads
   function _style(bar, merged, widget) {
+    const look = bar.look;
     const spot = widget?.spot ?? -1;
-    const stops = spot >= 0 && bar.gradientColors ? bar.gradientColors.map(name => root.resolve(name)) : null;
+    const stops = spot >= 0 && look.gradient ? look.gradient.map(name => root.resolve(name)) : null;
     return {
       "gradient": stops ? BarWidgetStyle.gradientAt(stops, spot) : null,
-      "fill": bar.widgetStyle,
+      "fill": look.style,
       "splits": widget?.splits === true,
       "hovered": widget?.hovered === true,
       "auto": widget?.auto === true,
       "run": widget?.run === true,
-      "splitIcon": bar.splitIcon,
-      "labelFill": bar.splitLabelFill,
-      "labelColor": root.resolve(bar.splitLabelColor),
+      "splitIcon": look.split?.icon ?? null,
+      "labelFill": look.split?.labelFill ?? null,
+      "labelColor": look.split ? root.resolve(look.split.labelColor) : null,
       "barText": root.resolve("foreground"),
-      "override": bar.widgetTextColor ? root.resolve(bar.widgetTextColor) : null,
-      "tint": bar.tintOpacity,
-      "hoverFill": bar.hoverFill,
-      "group": merged ? root.resolve(bar.groupColor) : null
+      "override": look.textColor ? root.resolve(look.textColor) : null,
+      "tint": look.tint,
+      "hoverFill": look.hoverFill,
+      "group": merged ? root.resolve(look.group.color) : null
     };
   }
 
   // A widget's colors (BarsConfig.widgetColors)
   function widgetColors(bar, accent, foregroundName, widget) {
-    return BarWidgetStyle.colors(root._style(bar, bar.widgetGrouping === "merged", widget), accent, root.resolve(foregroundName));
+    return BarWidgetStyle.colors(root._style(bar, bar.look.grouping === "merged", widget), accent, root.resolve(foregroundName));
   }
 
   // A cell's colors (BarsConfig.cellColors)
   function cellColors(bar, color, own, state, cell) {
-    const style = root._style(bar, cell?.onBar === true && bar.widgetGrouping === "merged", Object.assign({
+    const style = root._style(bar, cell?.onBar === true && bar.look.grouping === "merged", Object.assign({
       "auto": (cell?.spot ?? -1) >= 0
     }, cell));
     if (cell?.solid === true)
@@ -238,7 +229,7 @@ TestCase {
 
   // A merged run's own background (BarsConfig.groupColors)
   function groupColors(bar, spot) {
-    const group = root.resolve(bar.widgetStyle === "outline" ? bar.groupStrokeColor : bar.groupColor);
+    const group = root.resolve(bar.look.traits.stroke ? bar.look.group.strokeColor : bar.look.group.color);
     return BarWidgetStyle.colors(root._style(bar, false, {
       "spot": spot,
       "auto": true,
@@ -247,7 +238,8 @@ TestCase {
   }
 
   function cellFlags(bar, solid) {
-    return [BarWidgetStyle.cellOpaque(bar.widgetStyle, solid), BarWidgetStyle.cellBoxedInRun(bar.widgetStyle, solid)];
+    const traits = BarLook.cellTraits(bar.look, solid);
+    return [traits.cellOpaque, traits.cellBoxedInRun];
   }
 
   function segment(shape, ends, grouping, opaque, index, count, across) {

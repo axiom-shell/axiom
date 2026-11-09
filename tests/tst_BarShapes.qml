@@ -724,19 +724,30 @@ TestCase {
     compare(BarShapes.cellTab(6, 30, 5, 0, true, null, 1, 2).start.flare, 0, "no gap: square");
   }
 
+  // An enriched bar as cellShape reads it: its look's shape and grouping,
+  // its radius, thickness and side
+  function cellBar(shape, grouping, fillet, extra) {
+    return Object.assign({
+      "look": {
+        "shape": {
+          "name": shape,
+          "ends": "shaped",
+          "tabFillet": fillet
+        },
+        "grouping": grouping
+      },
+      "radius": 6,
+      "thickness": 30,
+      "right": false,
+      "bottom": false,
+      "vertical": false
+    }, extra ?? {});
+  }
+
   // A cell's shape and room on a bar's look, from where its widget is
   // drawn and what it shows
   function test_cell_shape_and_room() {
-    const look = {
-      "widgetShape": "arrow",
-      "widgetEnds": "shaped",
-      "widgetGrouping": "powerline",
-      "radius": 6,
-      "thickness": 30,
-      "tabFillet": 0,
-      "right": false,
-      "bottom": false
-    };
+    const look = cellBar("arrow", "powerline", 0);
     const run = {
       "sized": {
         "index": 0,
@@ -753,9 +764,7 @@ TestCase {
     const shape = BarShapes.cellShape(look, run, false, false, 0, 0, 2);
     compare([shape.segment.startCap, shape.segment.back, shape.tab, shape.reachStart, shape.reachEnd], ["arrowIn", 15, null, 1, 2]);
     compare(BarShapes.cellRoom(look, run, false, 0, 2).lead, 15, "room from what's shown");
-    const tab = BarShapes.cellShape(Object.assign({}, look, {
-      "widgetShape": "tab",
-      "widgetGrouping": "separate",
+    const tab = BarShapes.cellShape(cellBar("tab", "separate", 0, {
       "bottom": true
     }), null, false, false, 4, 0, 1);
     compare([tab.segment.startCap, tab.tab.outerStart, tab.reachStart], ["tab", false, 0]);
@@ -766,17 +775,7 @@ TestCase {
   // clip holding cells keeps (cellMargins), the widget's own while it
   // resizes too (runDraws)
   function test_cells_draw_past_their_bounds() {
-    const look = {
-      "widgetShape": "tab",
-      "widgetEnds": "shaped",
-      "widgetGrouping": "separate",
-      "radius": 6,
-      "thickness": 30,
-      "tabFillet": 5,
-      "right": false,
-      "bottom": false,
-      "vertical": false
-    };
+    const look = cellBar("tab", "separate", 5);
     const run = {
       "sized": null,
       "drawn": null,
@@ -805,11 +804,7 @@ TestCase {
       "end": 5
     });
     // A powerline cell reaches back under the one before, nothing past its end
-    const chain = Object.assign({}, look, {
-      "widgetShape": "arrow",
-      "widgetGrouping": "powerline",
-      "tabFillet": 0
-    });
+    const chain = cellBar("arrow", "powerline", 0);
     const placed = Object.assign({}, run, {
       "drawn": {
         "index": 1,
@@ -834,16 +829,7 @@ TestCase {
   // cell's reach back under the widget before is its own, and a tab's
   // reaches out to its edge
   function test_cells_hit_as_drawn() {
-    const look = {
-      "widgetShape": "arrow",
-      "widgetEnds": "shaped",
-      "widgetGrouping": "powerline",
-      "radius": 6,
-      "thickness": 30,
-      "tabFillet": 0,
-      "right": false,
-      "bottom": false
-    };
+    const look = cellBar("arrow", "powerline", 0);
     const run = {
       "sized": null,
       "drawn": {
@@ -873,11 +859,7 @@ TestCase {
     verify(!BarShapes.cellContains(a, 1, 39, 30, 40, true));
     // A tab cell reaches across out to its edge (4 before it), not along
     // into its fillets
-    const tab = BarShapes.cellShape(Object.assign({}, look, {
-      "widgetShape": "tab",
-      "widgetGrouping": "separate",
-      "tabFillet": 5
-    }), Object.assign({}, run, {
+    const tab = BarShapes.cellShape(cellBar("tab", "separate", 5), Object.assign({}, run, {
       "reachStart": 4
     }), false, false, 4, 0, 2);
     verify(BarShapes.cellContains(tab, 1, -3, 40, 30, false));

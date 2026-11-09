@@ -56,7 +56,7 @@ Loader {
   // How many cells it shows: a box each, or one
   readonly property int cells: !hasWindows ? 0 : windows === "one" ? 1 : CompositorManager.stripWindows(root.workspaceId, root.stripVertical).length
   // A powerline's segments chain on from the row's, with no divider
-  readonly property bool _chained: run !== null && barConfig.widgetGrouping === "powerline"
+  readonly property bool _chained: run !== null && barConfig.look.grouping === "powerline"
   readonly property bool _divided: !stripOnly && !_chained
 
   active: stripDirection !== "" && windows !== "off"
@@ -70,9 +70,9 @@ Loader {
 
     SeparatorMark {
       visible: root._divided
-      style: root.barConfig.separatorStyle === "none" ? "line" : root.barConfig.separatorStyle
-      color: Theme.resolveColor(root.barConfig.separatorColor)
-      thickness: root.barConfig.separatorThickness
+      style: root.barConfig.look.separators.style === "none" ? "line" : root.barConfig.look.separators.style
+      color: Theme.resolveColor(root.barConfig.look.separators.color)
+      thickness: root.barConfig.look.separators.thickness
       length: root.cell * (style === "chevron" ? 0.6 : 0.5)
       vertical: root.isVertical
       width: root.isVertical ? root.cell : implicitWidth
@@ -103,11 +103,11 @@ Loader {
   }
 
   // Between its boxes: chained in a powerline as segments
-  readonly property real _gap: run ? BarShapes.cellGap(barConfig.widgetGrouping, cellSpacing) : cellSpacing
+  readonly property real _gap: run ? BarShapes.cellGap(barConfig.look.grouping, cellSpacing) : cellSpacing
   // The shape of its cell at `cell` of the widget's chained ones, for what
   // its first and last draw past it (BarShapes.cellShape), or null
   function _shapeOf(cell) {
-    return root.run && root.cells > 0 ? BarShapes.cellShape(root.barConfig, root.run, BarWidgetStyle.cellBoxedInRun(root.barConfig.widgetStyle, root.solid), false, root._gap, cell, root.chainCount) : null;
+    return root.run && root.cells > 0 ? BarShapes.cellShape(root.barConfig, root.run, BarLook.cellTraits(root.barConfig.look, root.solid).cellBoxedInRun, false, root._gap, cell, root.chainCount) : null;
   }
 
   Component {

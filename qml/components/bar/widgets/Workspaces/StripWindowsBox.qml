@@ -51,13 +51,14 @@ Item {
   // split (BarWidgetStyle.cell)
   // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
   // onBar)
-  readonly property bool _inGroup: hitArea !== null && barConfig.widgetGrouping === "merged"
-  readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid)
+  readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
+  readonly property var _traits: BarLook.cellTraits(barConfig.look, solid)
+  readonly property bool _boxedInRun: _traits.cellBoxedInRun
   readonly property var _room: run ? BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
   readonly property real _lead: _room?.lead ?? 0
   // Its box's shape as a segment (BarShapes.cellShape), else null, and
   // what it draws past its bounds (BarShapes.cellMargins)
-  readonly property var _shape: run ? BarShapes.cellShape(barConfig, run, _boxedInRun, BarWidgetStyle.cellOpaque(barConfig.widgetStyle, solid), cellSpacing, chainFirst, chainCount) : null
+  readonly property var _shape: run ? BarShapes.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, cellSpacing, chainFirst, chainCount) : null
   readonly property var _margins: BarShapes.cellMargins(_shape, _shape, isVertical)
   // How far icon `index`'s pointer area reaches past its room, sharing
   // the box: the first back to the box's start, the last on to its end,

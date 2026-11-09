@@ -20,7 +20,7 @@ BarWidget {
   id: root
 
   // A box in its own color, else clear over the bar
-  readonly property bool boxed: barConfig.widgetBoxed && properties.showBackground
+  readonly property bool boxed: barConfig.look.traits.boxed && properties.showBackground
   // Within a colored box
   readonly property real inset: boxed ? barConfig.innerGap : 0
 
@@ -28,7 +28,7 @@ BarWidget {
   pinStart: true
   hasBackground: true
   // No box: its cells are the bar's segments
-  segmented: barConfig.widgetBoxed && !properties.showBackground
+  segmented: barConfig.look.traits.boxed && !properties.showBackground
   // Its place in the bar's run for its cells (alone where it has none: a
   // preview), or null with a box
   readonly property var _run: segmented ? (runPlace ?? {
@@ -56,7 +56,7 @@ BarWidget {
   // give way to the bar's gradient there (BarWidget.barSpotOf), else null.
   // Not in a merged run: that's a strip of the gradient itself, which the
   // cell would vanish into, so it keeps its own.
-  readonly property var _activeSpotOf: root.autoColors.activeColor === "accent" && root.barLength > 0 && root.barConfig.widgetGrouping !== "merged" ? root.barSpotOf : null
+  readonly property var _activeSpotOf: root.autoColors.activeColor === "accent" && root.barLength > 0 && root.barConfig.look.grouping !== "merged" ? root.barSpotOf : null
 
   Component {
     id: strip

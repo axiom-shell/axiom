@@ -29,7 +29,7 @@ Item {
 
   // A powerline's widgets touch (BarsConfig.enrichBarConfig)
   readonly property int spacing: root.barConfig.groupSpacing
-  readonly property string grouping: root.barConfig.widgetGrouping
+  readonly property string grouping: root.barConfig.look.grouping
   // Room the bar's section layout gives this group along the main axis
   property real maxExtent: Infinity
   // Which way the group grows within its slot (0 start, 1 end, 0.5 center)
@@ -39,27 +39,28 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
 
-  // Tabs (widgetShape tab): backgrounds reach `tabReach` past the
+  // Tabs (the look's shape tab): backgrounds reach `tabReach` past the
   // widgets' outer side, out to the edge they hang from, their ends
   // bounded by `tabBounds` (BarShapes.tabLimits; along it, in its own
   // coordinates). Both set by BarContainer.
   property real tabReach: 0
   property var tabBounds: []
-  readonly property real _reach: root.barConfig.widgetShape === "tab" ? root.tabReach : 0
+  readonly property bool _tabs: root.barConfig.look.shape.name === "tab"
+  readonly property real _reach: root._tabs ? root.tabReach : 0
   // The outer edge is past the far side of the widgets (a bottom or right bar)
   readonly property bool _outerFar: root.barConfig.right || root.barConfig.bottom
   // What bounds a tab drawn from `start` for `length` along the group
   function tabLimitsOf(start, length) {
-    return root.barConfig.widgetShape === "tab" ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
+    return root._tabs ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
   }
 
-  // The bar's gradient (barConfig.gradientColors) runs along the whole
+  // The bar's gradient (its look's `gradient`) runs along the whole
   // bar, `barLength` long (0 with none), each widget showing its slice:
   // where the group starts along the bar as laid out. Laid-out places,
   // never gliding ones, so nothing re-reads them each frame of a glide.
   property real barStart: 0
   property real barLength: 0
-  readonly property bool _graded: root.barLength > 0 && root.barConfig.gradientColors !== null
+  readonly property bool _graded: root.barLength > 0 && root.barConfig.look.gradient !== null
 
   property var _modules: []
 
@@ -145,8 +146,8 @@ Item {
   readonly property bool endsInRun: root._insetFlags.slice().reverse().find(f => f !== null) === true
   readonly property var _drawRuns: BarLayout.runs(root._drawn)
   // Opaque fills hide what's under them: a powerline segment can then
-  // start square beneath the one before
-  readonly property bool _opaque: BarWidgetStyle.opaque(root.barConfig.widgetStyle, root.barConfig.splitIcon, root.barConfig.splitLabelFill)
+  // start square beneath the one before (the look's `opaque` trait)
+  readonly property bool _opaque: root.barConfig.look.traits.opaque
   // A widget with no background in a powerline (a Separator) splits the
   // chain, keeping the bar's spacing to the widgets beside it in the
   // section as between separate widgets. At the section's end the gap to
@@ -230,7 +231,7 @@ Item {
 
   // The caps and insets at `place` in a run (BarShapes.segment)
   function segmentAt(place) {
-    return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
+    return BarShapes.segment(root.barConfig.look.shape.name, root.barConfig.look.shape.ends, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
   }
 
   implicitWidth: isVertical ? root.barConfig.thickness : usedLength
@@ -279,11 +280,11 @@ Item {
     }
   }
 
-  // A divider in each gap between shown widgets (Bars[].separatorStyle),
+  // A divider in each gap between shown widgets (the look's separators),
   // and in the gap to the next section where it joins (joinEnd), except
   // beside a Separator widget
   Repeater {
-    model: root.barConfig.separatorStyle !== "none" ? root.widgets.length : 0
+    model: root.barConfig.look.separators.style !== "none" ? root.widgets.length : 0
 
     delegate: SeparatorMark {
       id: mark
@@ -296,9 +297,9 @@ Item {
       readonly property real center: (host ? (root.isVertical ? host.y + host.height : host.x + host.width) : 0) + (_joined ? root.joinEndReach : root.spacing) / 2
 
       visible: between && !(root._modules[index]?.divides ?? false) && !(root._modules[next]?.divides ?? false)
-      style: root.barConfig.separatorStyle
-      color: Theme.resolveColor(root.barConfig.separatorColor)
-      thickness: root.barConfig.separatorThickness
+      style: root.barConfig.look.separators.style
+      color: Theme.resolveColor(root.barConfig.look.separators.color)
+      thickness: root.barConfig.look.separators.thickness
       length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root.isVertical
       // Across, centred as the tabs' content is (BarShapes.tabShift)

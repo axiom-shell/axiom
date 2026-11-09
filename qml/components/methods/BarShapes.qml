@@ -210,7 +210,8 @@ QtObject {
     return t;
   }
 
-  // Cell `cell` of `cells` on a bar `look` (an enriched barConfig) as a
+  // Cell `cell` of `cells` on a bar `bar` (an enriched barConfig: its
+  // look's shape and grouping, its thickness and radius) as a
   // segment of its widget's `run` (BarWidget.runPlace), from where the
   // widget is drawn (`run.drawn`): { segment (cellSegment), tab (cellTab,
   // on a tab bar, else null), reachStart, reachEnd (how far its box
@@ -220,9 +221,10 @@ QtObject {
   // and `gap`: cellSegment's and cellTab's. What it draws past its bounds
   // is what every clip holding it keeps (cellMargins) and, but for the
   // fillets, where it's hovered and clicked (cellContains).
-  function cellShape(look, run, boxed, opaque, gap, cell, cells) {
-    const segment = root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.drawn ?? null, cell, cells, look.thickness, opaque);
-    const tab = look.widgetShape === "tab" ? root.cellTab(look.radius, look.thickness, look.tabFillet, gap, !(look.right || look.bottom), run?.tabLimits ?? null, cell, cells) : null;
+  function cellShape(bar, run, boxed, opaque, gap, cell, cells) {
+    const shape = bar.look.shape;
+    const segment = root.cellSegment(shape.name, shape.ends, bar.look.grouping, boxed, run?.drawn ?? null, cell, cells, bar.thickness, opaque);
+    const tab = shape.name === "tab" ? root.cellTab(bar.radius, bar.thickness, shape.tabFillet, gap, !(bar.right || bar.bottom), run?.tabLimits ?? null, cell, cells) : null;
     return {
       "segment": segment,
       "tab": tab,
@@ -254,8 +256,8 @@ QtObject {
   // along the bar, at its place `run` (BarWidget.runPlace): its first
   // cell's reach back and its last's on, as one cell alone there would
   // draw them (cellShape's drawStart, drawEnd): { start, end }
-  function runDraws(look, run) {
-    const s = root.cellShape(look, run, false, false, 0, 0, 1);
+  function runDraws(bar, run) {
+    const s = root.cellShape(bar, run, false, false, 0, 0, 1);
     return {
       "start": s.drawStart,
       "end": s.drawEnd
@@ -280,8 +282,8 @@ QtObject {
   // The room cell `cell` of `cells` keeps clear of its caps along the bar
   // (cellSegment's lead and trail), from what its widget shows (`run.sized`,
   // never the room it's given, which this helps decide): { lead, trail }
-  function cellRoom(look, run, boxed, cell, cells) {
-    const s = root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.sized ?? null, cell, cells, look.thickness);
+  function cellRoom(bar, run, boxed, cell, cells) {
+    const s = root.cellSegment(bar.look.shape.name, bar.look.shape.ends, bar.look.grouping, boxed, run?.sized ?? null, cell, cells, bar.thickness);
     return {
       "lead": s.lead,
       "trail": s.trail

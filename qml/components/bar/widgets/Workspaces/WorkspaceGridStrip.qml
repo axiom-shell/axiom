@@ -68,9 +68,9 @@ Item {
   readonly property real cellRadius: BarsConfig.cellRadius(root.barConfig, root.cell, root.inset)
   // Between the row and the strip after it (a powerline's segments chain
   // on into it)
-  readonly property real spacing: root.run ? BarShapes.cellGap(root.barConfig.widgetGrouping, root.barConfig.innerGap) : root.barConfig.innerGap
+  readonly property real spacing: root.run ? BarShapes.cellGap(root.barConfig.look.grouping, root.barConfig.innerGap) : root.barConfig.innerGap
   // Along the bar: square, or narrower for dots or nothing straight on the bar
-  readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.solidBoxes || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
+  readonly property real cellLength: root.barConfig.look.traits.boxed || root.properties.solidBoxes || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
   // Cells the bar shows: a row, or a column on a vertical bar
   readonly property int shown: root.isVertical ? root.rows : root.columns
 

@@ -5,7 +5,7 @@ import qs.components.reusable
 import qs.components.bar.widgets.base
 
 // A bar switcher cell's box in the boxed widget styles, filling its parent:
-// its fill, and an outline's stroke in the bar's outlineStroke (a solid one
+// its fill, and an outline's stroke in the look's stroke (a solid one
 // the Rectangle's border, any other an OutlineStroke over it). As a segment
 // of the bar's run (`shape`: the widget's Background off) it's a ShapedBox
 // in the bar's widget shape instead, reaching back under the cell before
@@ -27,12 +27,15 @@ Item {
   // Color changes glide
   property bool animated: false
 
-  readonly property bool _outline: barConfig.widgetStyle === "outline"
-  readonly property bool _solid: barConfig.outlineStroke === "solid"
+  // The look's outline ({ width, stroke }), or null: not outline
+  readonly property var _outlineLook: barConfig.look.outline
+  readonly property bool _outline: _outlineLook !== null
+  readonly property string _stroke: _outlineLook?.stroke ?? "solid"
+  readonly property bool _solid: _stroke === "solid"
   readonly property bool _vertical: barConfig.vertical
   // A double outline's band is three lines wide: in a cell, half-width
   // lines, so the inner one keeps clear of the label
-  readonly property real _lineWidth: barConfig.outlineStroke === "double" ? Math.max(1, Math.floor(barConfig.outlineWidth / 2)) : barConfig.outlineWidth
+  readonly property real _lineWidth: !_outline ? 0 : _stroke === "double" ? Math.max(1, Math.floor(_outlineLook.width / 2)) : _outlineLook.width
 
   anchors.fill: parent
 
@@ -42,7 +45,7 @@ Item {
     radius: root.radius
     color: root.fillColor
     border.color: root.strokeColor
-    border.width: root._outline && root._solid ? root.barConfig.outlineWidth : 0
+    border.width: root._outline && root._solid ? root._outlineLook.width : 0
 
     ColorGlide on color {
       enabled: root.animated
@@ -55,7 +58,7 @@ Item {
   OutlineStroke {
     anchors.fill: parent
     visible: root.shape === null && root._outline && !root._solid && color.a > 0
-    stroke: root.barConfig.outlineStroke
+    stroke: root._stroke
     vertical: root._vertical
     radius: root.radius
     color: root.strokeColor
@@ -92,7 +95,7 @@ Item {
       fillColor: root.fillColor
       strokeColor: root.strokeColor
       strokeWidth: root._outline ? root._lineWidth : 0
-      stroke: root._outline ? root.barConfig.outlineStroke : "solid"
+      stroke: root._stroke
       fillSlice: root.fillSlice
       strokeSlice: root.strokeSlice
 

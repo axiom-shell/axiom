@@ -43,9 +43,9 @@ Item {
   property var slice: null
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed || solid
+  readonly property bool boxed: barConfig.look.traits.boxed || solid
   // Whether there's anything to slide: a box, or an underline
-  readonly property bool slides: boxed || barConfig.widgetStyle === "underline"
+  readonly property bool slides: boxed || barConfig.look.traits.line
   readonly property real _along: _alongAt(index)
   readonly property real _rowLength: isVertical ? height : width
 

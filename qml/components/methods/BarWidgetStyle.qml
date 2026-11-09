@@ -190,7 +190,7 @@ QtObject {
   // background, as for a widget: a filled, tinted or outlined cell draws no
   // box, its color moving to its content (an empty one's faded, reading on
   // the run); a solid cell stays a filled box, and a split one fills its
-  // box, a tab in the row as a widget that doesn't split (cellBoxedInRun).
+  // box, a tab in the row as a widget that doesn't split (BarLook's cellBoxedInRun trait).
   function cell(style, color, own, state) {
     const graded = (style.gradient ?? null) !== null && style.auto === true;
     if (graded) {
@@ -226,12 +226,6 @@ QtObject {
   // A cell in a merged run that draws no box of its own (cell)
   function _groupCell(style) {
     return !!style.group && ["filled", "tinted", "outline"].includes(style.fill);
-  }
-
-  // Whether a cell as a segment of a merged run (cell's `group`) still
-  // draws a box of its own there: a solid one, and split's fill
-  function cellBoxedInRun(fill, solid) {
-    return solid || fill === "solid" || fill === "split";
   }
 
   function _cell(style, color, own, state) {
@@ -272,62 +266,6 @@ QtObject {
   // and a label), filled otherwise
   function drawnFill(style) {
     return style.fill === "split" && !style.splits ? "filled" : style.fill;
-  }
-
-  // A boxed look's grouping as drawn (`look`: a BarStyle's widgetStyle,
-  // splitIcon, widgetShape, widgetGrouping): a powerline draws as separate
-  // where there's nothing to chain, a split badge (no box) and tabs (each
-  // hangs from the edge; the option is hidden for them)
-  function grouping(look) {
-    if (look.widgetGrouping !== "powerline")
-      return look.widgetGrouping;
-    const unchained = (look.widgetStyle === "split" && look.splitIcon === "badge") || look.widgetShape === "tab";
-    return unchained ? "separate" : "powerline";
-  }
-
-  // Whether a cell's box (cell) hides what's under it, so the next cell
-  // in a powerline of them can start square beneath it: filled, split's
-  // (filled) and solid boxes
-  function cellOpaque(fill, solid) {
-    return solid || fill === "filled" || fill === "split";
-  }
-
-  // A boxed look's shape as drawn (`look` as grouping's): a separate split
-  // badge has no box to hang from the edge, so a tab saved with it draws
-  // rounded (the option is hidden there); a merged run of badges is one
-  // tab still
-  function shape(look) {
-    const badge = look.widgetStyle === "split" && look.splitIcon === "badge" && look.widgetGrouping !== "merged";
-    return badge && look.widgetShape === "tab" ? "rounded" : look.widgetShape;
-  }
-
-  // Whether a powerline segment's fill hides what's under it, so the next
-  // can start square beneath its end cap: filled, and split's joined label
-  // on a color of its own
-  function opaque(fill, splitIcon, labelFill) {
-    return fill === "filled" || (fill === "split" && splitIcon === "joined" && labelFill === "color");
-  }
-
-  // What an Auto color is seen against and how much it must stand out
-  // (BarsConfig.withAutoColors): { onRun, minContrast }. onRun: against a
-  // merged run's background instead of the bar. A fill need only show
-  // (1.3); text, strokes and icons must read (3). Split's color is its
-  // icon part's fill, and the label's text too where the label sits on a
-  // tint of it or the bar.
-  function autoContrast(fill, grouping, splitIcon, labelFill) {
-    const merged = grouping === "merged";
-    if (fill === "filled")
-      return root._contrast(merged, merged ? 3 : 1.3);
-    if (fill === "split")
-      return root._contrast(merged, merged || (splitIcon === "joined" && labelFill === "color") ? 1.3 : 3);
-    return root._contrast(false, 3);
-  }
-
-  function _contrast(onRun, minContrast) {
-    return {
-      "onRun": onRun,
-      "minContrast": minContrast
-    };
   }
 
   // A value widget's pill (its background filled to its value) in its

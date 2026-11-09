@@ -15,9 +15,6 @@ QtObject {
   // islands keep from the screen edges as windows do.
   function enrichBarConfig(barConfig, gapsOut, floatGaps) {
     const loc = ScreenEdge.fromConfig(barConfig.location);
-    // Its widget style, accents and shadow: its own style's, each key it
-    // leaves null the Bars section's
-    const look = BarsConfig.lookOf(barConfig);
     // The bar is sized by its widgets, never the other way round, so no
     // setting can leave them cut off
     const thickness = barConfig.thickness;
@@ -26,6 +23,15 @@ QtObject {
     const edgePadding = barConfig.edgePadding;
     const innerPadding = Math.round(barConfig.innerPadding * scale);
     const innerGap = Math.round(barConfig.innerGap * scale);
+    // Its widget style, accents and shadow resolved (BarLook): its own
+    // style's, each key it leaves null the Bars section's
+    const look = BarLook.resolve(BarStyle.values, barConfig.style ?? {}, {
+      "thickness": thickness,
+      "innerPadding": innerPadding,
+      "innerGap": innerGap,
+      "radius": Widget.radius,
+      "far": loc === ScreenEdge.Right || loc === ScreenEdge.Bottom
+    });
     // What it draws as: its surface (one bar, a pill per group, none) and
     // whether that floats. With no surface it doesn't float.
     const kind = BarsConfig.kindOf(barConfig);
@@ -66,13 +72,10 @@ QtObject {
     const autoHiding = barConfig.autoHide !== "never";
     const reserves = barConfig.reserveSpace && !autoHiding;
     const borderShadowed = solid && Appearance.screenBorder && reserves;
-    // Shapes and grouping are for widgets drawn on a background
-    const boxed = BarsConfig.boxedStyles.includes(look.widgetStyle);
-    const grouping = BarsConfig.groupingOf(look);
-    const splitCap = BarShapes.dividerCap(look.widgetShape, look.splitDivider);
     // Between the widgets within a section: a powerline's touch, and
     // dividers drawn between them take their own room and margins
-    const groupSpacing = grouping === "powerline" ? 0 : look.separatorStyle !== "none" ? BarLayout.dividerGap(look.separatorStyle, look.separatorThickness, thickness, look.separatorGap) : barConfig.widgetGap;
+    const separators = look.separators;
+    const groupSpacing = look.grouping === "powerline" ? 0 : separators.style !== "none" ? BarLayout.dividerGap(separators.style, separators.thickness, thickness, separators.gap) : barConfig.widgetGap;
 
     const vertical = loc === ScreenEdge.Left || loc === ScreenEdge.Right;
     const screen = General.outputs.find(s => s.name === barConfig.monitor) ?? null;
@@ -124,65 +127,22 @@ QtObject {
       "fontSize": Math.round(Appearance.baseFontSize * scale * look.textScale / 100),
       // Widget chips only, else the interior radius: pills and fillets keep
       // Appearance's, to meet the border
-      "radius": look.widgetRadius ?? Widget.radius,
-      // How widgets show their colors (see widgetColors); the color
-      // names stay unresolved
-      "widgetStyle": look.widgetStyle,
-      // Its widgets are boxes (filled, tinted, outline), not bare on the bar
-      "widgetBoxed": boxed,
-      "tintOpacity": look.tintOpacity / 100,
-      "outlineWidth": look.outlineWidth,
-      // solid, dashed, dotted, double or ends (WidgetBackground, cells)
-      "outlineStroke": look.outlineStroke,
-      // A tinted or outlined widget fills while hovered (BarWidgetStyle)
-      "hoverFill": look.hoverFill,
-      "lineWidth": look.lineWidth,
-      "lineSide": look.lineSide,
-      "widgetTextColor": look.widgetTextColor,
-      // As drawn (BarWidgetStyle.shape)
-      "widgetShape": boxed ? BarWidgetStyle.shape(look) : "rounded",
-      "widgetEnds": look.widgetEnds,
-      // A tab's sides where they meet the edge it hangs from: square or
-      // flared (BarShapes.tab)
-      "tabCorners": look.tabCorners,
-      "widgetGrouping": grouping,
-      "groupColor": look.groupColor,
-      // The line round a merged outline run (groupColors)
-      "groupStrokeColor": look.groupStrokeColor,
-      // Split's icon part (joined, badge), its label's background (tint,
-      // color, none), that color (a name) and the cut between them (match,
-      // straight, slant, arrow, curve)
-      "splitIcon": look.splitIcon,
-      "splitLabelFill": look.splitLabelFill,
-      "splitLabelColor": look.splitLabelColor,
-      "splitDivider": look.splitDivider,
-      // The cap split's icon part ends in (BarShapes.dividerCap), what
-      // a badge reaches round its icon, and the gap a split widget keeps
-      // between its parts (BarShapes.splitRoom), -1 on other styles
-      "splitCap": splitCap,
-      "badgePad": innerGap,
-      "splitRoom": look.widgetStyle === "split" ? BarShapes.splitRoom(look.splitIcon, splitCap, thickness, innerPadding, innerGap * 1.5, innerGap) : -1,
-      // One gradient along the bar (its colors' names, start to end), in
-      // place of its widgets' Auto colors, or null: none, or plain text,
-      // which has nothing to color
-      "gradientColors": look.gradient && look.widgetStyle !== "plain" ? [look.gradientFrom].concat(look.gradientVia ? [look.gradientVia] : [], [look.gradientTo]) : null,
-      // A powerline's widgets touch, leaving no gap to divide
-      "separatorStyle": grouping === "powerline" ? "none" : look.separatorStyle,
-      "separatorColor": look.separatorColor,
-      "separatorThickness": look.separatorThickness,
-      "accentLine": look.accentLine,
-      "accentLineColor": look.accentLineColor,
-      "accentLineFade": look.accentLineFade,
-      "accentLineWidth": look.accentLineWidth,
+      "radius": look.radius,
+      // How its widgets are drawn: their style, shapes, runs, split, the
+      // gradient, separators and accent line (BarLook.resolve)
+      "look": look,
+      // The gap a split widget keeps between its parts
+      // (BarShapes.splitRoom), -1 on other styles
+      "splitRoom": look.split ? look.split.room : -1,
       // Cast by what the bar paints: a transparent one paints nothing. A
       // solid bar reserving its edge under the border leaves it to the
       // border, whose stroke is its inner edge (RoundedBorders)
-      "shadow": kind !== "transparent" && !borderShadowed && look.shadow,
-      "shadowColor": look.shadowColor,
-      "shadowSize": look.shadowSize,
+      "shadow": kind !== "transparent" && !borderShadowed && look.values.shadow,
+      "shadowColor": look.values.shadowColor,
+      "shadowSize": look.values.shadowSize,
       // How far past the bar a shadow reaches (its blur and offset), which
       // the bar window takes on its inner side
-      "shadowReach": kind !== "transparent" && !borderShadowed && look.shadow ? Math.ceil(look.shadowSize * 1.25) : 0,
+      "shadowReach": kind !== "transparent" && !borderShadowed && look.values.shadow ? Math.ceil(look.values.shadowSize * 1.25) : 0,
       "lockCenter": barConfig.lockCenter,
       // never, always, whenCovered; what shows a hidden bar, and how long
       "autoHide": barConfig.autoHide,
@@ -199,7 +159,7 @@ QtObject {
       // and corners go by, so hiding, showing and pinning never move them)
       "reserveSpace": reserves,
       // Each Auto color picked for its place on this bar
-      "widgets": BarsConfig.withAutoColors(barConfig.widgets, look.widgetStyle, grouping, look.groupColor, look),
+      "widgets": BarsConfig.withAutoColors(barConfig.widgets, look),
       "vertical": vertical,
       // Along its screen's shorter edge: of two bars of a kind meeting at a
       // corner, it takes the corner (BarEnds)
@@ -216,7 +176,7 @@ QtObject {
     bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0);
     // The one fillet radius its flared tabs share (BarShapes.tabFillet):
     // within the gap between widgets and the room at its ends
-    bar.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.tabCorners, groupSpacing, BarEnds.tabEndRoom(bar, Object.assign(BarsConfig.endsOptions(gapsOut, floatGaps), {
+    look.shape.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, BarEnds.tabEndRoom(bar, Object.assign(BarsConfig.endsOptions(gapsOut, floatGaps), {
       "radius": Appearance.borderRadius
     })));
     return bar;
@@ -262,7 +222,7 @@ QtObject {
   // configured with, `widget` what of the widget itself its look depends
   // on (_widgetStyle; left out, none of it)
   function widgetColors(barConfig, accent, foregroundName, widget) {
-    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged", widget), accent, Theme.resolveColor(foregroundName));
+    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.look.grouping === "merged", widget), accent, Theme.resolveColor(foregroundName));
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
@@ -275,7 +235,7 @@ QtObject {
   // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
   // popout, so in a merged run on a merged bar)
   function cellColors(barConfig, color, own, state, cell) {
-    const style = BarsConfig._widgetStyle(barConfig, cell?.onBar === true && barConfig.widgetGrouping === "merged", Object.assign({
+    const style = BarsConfig._widgetStyle(barConfig, cell?.onBar === true && barConfig.look.grouping === "merged", Object.assign({
       "auto": (cell?.spot ?? -1) >= 0
     }, cell));
     if (cell?.solid === true)
@@ -285,7 +245,7 @@ QtObject {
 
   // The bar's gradient's colors, resolved, start to end (null for none)
   function gradientStops(barConfig) {
-    return barConfig.gradientColors ? barConfig.gradientColors.map(name => Theme.resolveColor(name)) : null;
+    return barConfig.look.gradient ? barConfig.look.gradient.map(name => Theme.resolveColor(name)) : null;
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
@@ -316,7 +276,7 @@ QtObject {
   // widget: a pill for capsule widgets, else the widgets' radius less the
   // inset
   function cellRadius(barConfig, cell, inset) {
-    return barConfig.widgetShape === "capsule" ? cell / 2 : Math.max(0, barConfig.radius - inset);
+    return barConfig.look.shape.name === "capsule" ? cell / 2 : Math.max(0, barConfig.radius - inset);
   }
 
   // A Workspaces cell's box while hovered: its `hoverColor`, or for Auto
@@ -330,7 +290,8 @@ QtObject {
   // the bar, 0-1), else groupColor, an outline run's line
   // groupStrokeColor (it has no background of its own)
   function groupColors(barConfig, spot = -1) {
-    const group = Theme.resolveColor(barConfig.widgetStyle === "outline" ? barConfig.groupStrokeColor : barConfig.groupColor);
+    const look = barConfig.look;
+    const group = Theme.resolveColor(look.traits.stroke ? look.group.strokeColor : look.group.color);
     return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false, {
       "spot": spot,
       "auto": true,
@@ -341,9 +302,9 @@ QtObject {
   // A bar's widgets (by section) with each Auto color field (`x-autoColor`,
   // left empty) set to the color BarAutoColors picks for it among its shown
   // neighbours, seen against the bar or, filled and merged, the run
-  // (BarWidgetStyle.autoContrast; `split`: a look's splitIcon and
-  // splitLabelFill), and those fields' roles as the widget's `autoColors`
-  function withAutoColors(widgets, widgetStyle, grouping, groupColor, split) {
+  // (`look`'s autoContrast trait, BarLook), and those fields' roles as the
+  // widget's `autoColors`
+  function withAutoColors(widgets, look) {
     const shown = [].concat(...BarsConfig.sectionNames.map(section => (widgets?.[section] ?? []).map((widget, index) => ({
             "section": section,
             "index": index,
@@ -360,7 +321,7 @@ QtObject {
         }, {})
       };
     });
-    const seen = BarWidgetStyle.autoContrast(widgetStyle, grouping, split.splitIcon, split.splitLabelFill);
+    const seen = look.traits.autoContrast;
     const named = name => ({
           "name": name,
           "color": Theme.resolveColor(name)
@@ -370,7 +331,7 @@ QtObject {
       "neutrals": Theme.baseColorNames.slice(1, 5).map(named),
       "warning": named("warning"),
       "critical": named("error"),
-      "backdrop": seen.onRun ? Theme.resolveColor(groupColor) : Theme.background,
+      "backdrop": seen.onRun ? Theme.resolveColor(look.group.color) : Theme.background,
       // A fill need only show on the bar; otherwise the color is text or a stroke
       "minContrast": seen.minContrast
     });
@@ -419,23 +380,24 @@ QtObject {
   //            takes the place of
   //   run      it's a merged run's own background (groupColors)
   function _widgetStyle(barConfig, merged, widget) {
+    const look = barConfig.look;
     const spot = widget?.spot ?? -1;
     const stops = spot >= 0 ? BarsConfig.gradientStops(barConfig) : null;
     return {
       "gradient": stops ? BarWidgetStyle.gradientAt(stops, spot) : null,
-      "fill": barConfig.widgetStyle,
+      "fill": look.style,
       "splits": widget?.splits === true,
       "hovered": widget?.hovered === true,
       "auto": widget?.auto === true,
       "run": widget?.run === true,
-      "splitIcon": barConfig.splitIcon,
-      "labelFill": barConfig.splitLabelFill,
-      "labelColor": Theme.resolveColor(barConfig.splitLabelColor),
+      "splitIcon": look.split?.icon ?? null,
+      "labelFill": look.split?.labelFill ?? null,
+      "labelColor": look.split ? Theme.resolveColor(look.split.labelColor) : null,
       "barText": Theme.foreground,
-      "override": barConfig.widgetTextColor ? Theme.resolveColor(barConfig.widgetTextColor) : null,
-      "tint": barConfig.tintOpacity,
-      "hoverFill": barConfig.hoverFill,
-      "group": merged ? Theme.resolveColor(barConfig.groupColor) : null
+      "override": look.textColor ? Theme.resolveColor(look.textColor) : null,
+      "tint": look.tint,
+      "hoverFill": look.hoverFill,
+      "group": merged ? Theme.resolveColor(look.group.color) : null
     };
   }
 
@@ -465,7 +427,7 @@ QtObject {
   // windows keep gaps_out from it, as from a solid bar's stroke or a
   // floating bar's islands.
   function reserveTrim(barConfig, gapsOut) {
-    if (barConfig.kind === "transparent" && barConfig.accentLine !== "inner")
+    if (barConfig.kind === "transparent" && barConfig.look.accentLine?.side !== "inner")
       return gapsOut;
     return 0;
   }
@@ -488,50 +450,21 @@ QtObject {
   // (The exclusive zone a bar sets is BarEnds.placeStack's `zone`: it
   // depends on the bars beside it on its edge.)
 
-  // The widget styles that draw each widget on a box of its own: only they
-  // have shapes and grouping
-  readonly property var boxedStyles: ["filled", "tinted", "outline", "split"]
-
-  // A look's grouping as drawn: separate for unboxed styles, and as
-  // BarWidgetStyle.grouping has it
-  function groupingOf(look) {
-    if (!BarsConfig.boxedStyles.includes(look.widgetStyle))
-      return "separate";
-    return BarWidgetStyle.grouping(look);
-  }
-
-  // A bar's look: its `style` (a BarStyle) with every key it leaves null
-  // (inherit) taken from the Bars section's (`section`, BarStyle.values
-  // when left out), its shadow as flat shadow / shadowColor / shadowSize,
-  // and the bar's own fields beside them. widgetRadius stays null where
-  // both leave it (Widget's then).
+  // A bar's style values, flat: its `style` (a BarStyle) with every key
+  // it leaves null (inherit) taken from the Bars section's (`section`,
+  // BarStyle.values when left out; BarLook.merge), its shadow as flat
+  // shadow / shadowColor / shadowSize, and the bar's own fields beside
+  // them. widgetRadius stays null where both leave it (Widget's then).
+  // For the bar editor's forms; what a bar draws is barConfig.look.
   function lookOf(barConfig, section) {
-    const base = section ?? BarStyle.values;
-    const own = barConfig?.style ?? {};
-    const look = Object.assign({}, barConfig);
-    for (const key in base) {
-      if (key === "shadow")
-        continue;
-      look[key] = own[key] ?? base[key];
-    }
-    const shadow = own.shadow ?? {};
-    look.shadow = shadow.enabled ?? base.shadow.enabled;
-    look.shadowColor = shadow.color ?? base.shadow.color;
-    look.shadowSize = shadow.size ?? base.shadow.size;
-    return look;
+    return Object.assign({}, barConfig, BarLook.merge(section ?? BarStyle.values, barConfig?.style ?? {}));
   }
 
   // The look a bar's widgets draw in, as `$bar.<key>` for their options'
-  // `x-showIf`: lookOf's BarStyle keys, with shape and grouping as drawn
-  // (BarWidgetStyle.shape, groupingOf, as enrichBarConfig)
+  // `x-showIf` (BarLook.context): its BarStyle values, with shape and
+  // grouping as drawn
   function lookContext(barConfig) {
-    const look = BarsConfig.lookOf(barConfig ?? {});
-    look.widgetShape = BarWidgetStyle.shape(look);
-    look.widgetGrouping = BarsConfig.groupingOf(look);
-    return Object.keys(BarStyle.values).reduce((context, key) => {
-      context["$bar." + key] = look[key];
-      return context;
-    }, {});
+    return BarLook.context(BarLook.resolve(BarStyle.values, barConfig?.style ?? {}, null));
   }
 
   // The bars as saved (Bars.items): no previews, unexpanded

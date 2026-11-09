@@ -91,7 +91,7 @@ Item {
   readonly property bool _drawsContent: part !== "background"
   // Its box while the indicator stands for it stays at rest under the
   // indicator, unless its tint would show through
-  readonly property bool _clearActive: root.isActive && root.indicated && root.barConfig.widgetStyle === "tinted"
+  readonly property bool _clearActive: root.isActive && root.indicated && root.barConfig.look.traits.tints
 
   signal clicked
 
@@ -102,9 +102,9 @@ Item {
   // A segment of a merged run, which draws its box (BarsConfig.cellColors'
   // group): boxed only where it still draws one of its own
   property bool inRun: false
-  readonly property bool boxed: inRun ? BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid) : barConfig.widgetBoxed || solid
+  readonly property bool boxed: inRun ? BarLook.cellTraits(barConfig.look, solid).cellBoxedInRun : barConfig.look.traits.boxed || solid
   // Its state shows in a box or a line; without either, in its content
-  readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
+  readonly property bool _framed: boxed || barConfig.look.traits.line
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
   // cells and takes the hover, so it's asked whether the pointer is in
   // the cell's pointer area (its box as drawn); elsewhere (a popout), that
@@ -131,7 +131,7 @@ Item {
   // Underline: along the side the bar's widget lines take
   CellUnderline {
     barConfig: root.barConfig
-    visible: root._drawsBox && root.barConfig.widgetStyle === "underline"
+    visible: root._drawsBox && root.barConfig.look.traits.line
     opacity: root._pulse
     color: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
 

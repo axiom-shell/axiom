@@ -86,11 +86,11 @@ Rectangle {
   // (on the stroke it covers, at least)
   readonly property real _pillJoinReach: Math.max(root.barConfig.overlap, ...[root.ends.start, root.ends.end].map((end, i) => end.held ? 0 : root.endMargins[i] - root.barConfig.pillGap)) + 0.5
 
-  // Tabs (widgetShape tab) reach out to the outer edge of what the
+  // Tabs (the look's shape tab) reach out to the outer edge of what the
   // widgets sit on, this far in from the window's outer edge
   // (BarEnds.tabEdge), an end by an island's or the rounded border's
   // corner taking its curve (BarEnds.tabBounds)
-  readonly property bool tabs: root.barConfig.widgetShape === "tab"
+  readonly property bool tabs: root.barConfig.look.shape.name === "tab"
   readonly property real tabEdge: BarEnds.tabEdge(root.barConfig, Appearance.borderWidth)
   readonly property var tabBounds: root.tabs ? BarEnds.tabBounds(root.barConfig, root.length, root.islands ? root.pillShapes : [], {
     "border": Appearance.screenBorder,
@@ -425,7 +425,7 @@ Rectangle {
     // The bar's gradient runs along its whole length, wherever widgets are,
     // so a widget coming or going never shifts its colors
     barStart: section.mainPos
-    barLength: section.barConfig.gradientColors !== null ? section.bar.length : 0
+    barLength: section.barConfig.look.gradient !== null ? section.bar.length : 0
 
     barConfig: section.bar.barConfig
     panel: section.bar.panel
@@ -985,10 +985,10 @@ Rectangle {
     required property real inset
 
     readonly property bool vertical: bar.isVertical
-    readonly property real thickness: bar.barConfig.accentLineWidth
+    readonly property real thickness: bar.accentLine?.width ?? 0
     readonly property bool far: bar.barConfig.right || bar.barConfig.bottom
     readonly property real across: far ? (vertical ? bar.width : bar.height) - inset - thickness : inset
-    readonly property color from: Theme.resolveColor(bar.barConfig.accentLineColor)
+    readonly property color from: bar.accentLine ? Theme.resolveColor(bar.accentLine.color) : "transparent"
 
     x: vertical ? across : start
     y: vertical ? start : across
@@ -1002,17 +1002,20 @@ Rectangle {
       }
       GradientStop {
         position: 1
-        color: line.bar.barConfig.accentLineFade ? Theme.resolveColor(line.bar.barConfig.accentLineFade) : line.from
+        color: line.bar.accentLine?.fade ? Theme.resolveColor(line.bar.accentLine.fade) : line.from
       }
     }
   }
 
+  // The accent line along its edge (the look's: { side, color, fade,
+  // width }), or null for none
+  readonly property var accentLine: root.barConfig.look.accentLine
   // How far in from the outer edge the accent line sits: inside whatever
   // stroke is there (the border strip's or the bar's own on a solid bar's
   // inner edge, the border's under a floating bar's outer edge)
   readonly property real _accentInset: {
-    const width = root.barConfig.accentLineWidth;
-    if (root.barConfig.accentLine === "outer") {
+    const width = root.accentLine?.width ?? 0;
+    if (root.accentLine?.side === "outer") {
       if (root.islands)
         return root.barConfig.islandStart + Appearance.borderWidth;
       return root.pills ? root.barConfig.stripCover + root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
@@ -1025,7 +1028,7 @@ Rectangle {
   // Along a plain bar: its whole length, or clear of the border's sides
   // inside the border and of a bar it makes way for
   AccentLine {
-    visible: root.barConfig.accentLine !== "none" && !root.pills && !root.islands
+    visible: root.accentLine !== null && !root.pills && !root.islands
     bar: root
     start: root.barConfig.insideBorder || root.ends.start.held ? root.endMargins[0] : 0
     length: root.length - start - (root.barConfig.insideBorder || root.ends.end.held ? root.endMargins[1] : 0)
@@ -1034,7 +1037,7 @@ Rectangle {
 
   // Along each pill, clear of its rounded corners on the inner side
   Repeater {
-    model: root.barConfig.accentLine !== "none" && (root.pills || root.islands) ? root.pillRects.length : 0
+    model: root.accentLine !== null && (root.pills || root.islands) ? root.pillRects.length : 0
 
     AccentLine {
       required property int index
@@ -1043,7 +1046,7 @@ Rectangle {
         "length": 0
       }
       // Pills only round their inner side; islands both
-      readonly property real corner: root.islands ? Appearance.borderRadius : root.barConfig.accentLine === "inner" ? root.pillRadii.corner : 0
+      readonly property real corner: root.islands ? Appearance.borderRadius : root.accentLine.side === "inner" ? root.pillRadii.corner : 0
 
       bar: root
       start: rect.start + (rect.joinStart ? 0 : corner)

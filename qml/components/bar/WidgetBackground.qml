@@ -7,12 +7,12 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.bar.widgets.base
 
-// What a bar widget sits on, in its bar's widget style (widgetStyle,
-// widgetShape): a fill or outline shaped by its caps (BarShapes), or for
-// underline a line along one side, an outline in the bar's outlineStroke.
+// What a bar widget sits on, in its bar's look (barConfig.look: its style
+// and shape): a fill or outline shaped by its caps (BarShapes), or for
+// underline a line along one side, an outline in the look's stroke.
 // Split fills its icon part over the label's (joined, cut by the divider)
 // or draws a badge behind the icon. Its hover outline and the bar editor's
-// highlight take the same shape. A tab (widgetShape tab) is set reaching
+// highlight take the same shape. A tab (the look's shape tab) is set reaching
 // out to the edge it hangs from by its WidgetGroup, which hands it what
 // bounds its ends (`tabLimits`). WidgetGroup draws one under each widget
 // with a background, and one under each merged run.
@@ -68,13 +68,18 @@ Item {
   // own, only its states (the press, the hover outline, the highlight)
   property bool bare: false
 
-  readonly property string _fill: barConfig.widgetStyle
-  readonly property bool _boxed: barConfig.widgetBoxed
+  readonly property var _look: barConfig.look
+  readonly property bool _boxed: _look.traits.boxed
+  // An outline's ({ width, stroke }) or a line's ({ width, farSide }), or null
+  readonly property var _outline: _look.outline
+  readonly property var _line: _look.line
+  // Split's parts ({ icon, cap, badgePad, … }), or null
+  readonly property var _splitLook: _look.split
   // A tab's shape (BarShapes.tab), or null
-  readonly property var _tab: barConfig.widgetShape === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, barConfig.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
+  readonly property var _tab: _look.shape.name === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, _look.shape.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
   // A merged run's widget filling its own part (on hover), in the caps it
   // has alone: a press tints that, not the run's square middle
-  readonly property bool _ownFill: barConfig.widgetGrouping === "merged" && colors !== null && Qt.color(colors.fill).a > 0
+  readonly property bool _ownFill: _look.grouping === "merged" && colors !== null && Qt.color(colors.fill).a > 0
   // What of it draws the bar's gradient (its colors' `gradient`: its fill,
   // stroke, line or split's icon part), and the slice of it from `from`
   // to `to` along it (0-1), else null
@@ -108,8 +113,8 @@ Item {
     openEnd: root.openEnd
     fillColor: root.colors?.fill ?? "transparent"
     strokeColor: root.colors?.stroke ?? "transparent"
-    strokeWidth: root._fill === "outline" ? root.barConfig.outlineWidth : 0
-    stroke: root._fill === "outline" ? root.barConfig.outlineStroke : "solid"
+    strokeWidth: root._outline ? root._outline.width : 0
+    stroke: root._outline ? root._outline.stroke : "solid"
     fillSlice: root._gradientPart === "fill" ? root._slice : null
     strokeSlice: root._gradientPart === "stroke" ? root._slice : null
 
@@ -119,19 +124,20 @@ Item {
   }
 
   // Split's icon part, joined: the shape from its start to the divider
-  // (the bar's splitCap) centred in the gap to the label
+  // (the look's split cap) centred in the gap to the label
   ShapedBox {
     id: iconPart
-    readonly property real _length: root.splitAt + BarShapes.depth(root.barConfig.splitCap, root.barConfig.thickness) / 2
+    readonly property string _cap: root._splitLook?.cap ?? "flat"
+    readonly property real _length: root.splitAt + BarShapes.depth(_cap, root.barConfig.thickness) / 2
 
-    visible: root.barConfig.splitIcon === "joined" && root.splitAt >= 0 && root.colors !== null
+    visible: root._splitLook?.icon === "joined" && root.splitAt >= 0 && root.colors !== null
     anchors.fill: undefined
     width: root.barConfig.vertical ? root.width : _length
     height: root.barConfig.vertical ? _length : root.height
     bar: root.barConfig
     tab: root._tab
     startCap: root.startCap
-    endCap: root.barConfig.splitCap
+    endCap: iconPart._cap
     fillColor: root.colors?.iconFill ?? "transparent"
     fillSlice: root._partSlice(0, iconPart._length)
 
@@ -145,7 +151,7 @@ Item {
     id: badge
     readonly property bool vertical: root.barConfig.vertical
     readonly property real thickness: root.barConfig.thickness
-    readonly property real pad: root.barConfig.badgePad
+    readonly property real pad: root._splitLook?.badgePad ?? 0
     readonly property real partAlong: vertical ? root.splitPart.height : root.splitPart.width
     readonly property real partAcross: vertical ? root.splitPart.width : root.splitPart.height
     readonly property real across: Math.min(thickness, partAcross + pad * 2)
@@ -155,12 +161,12 @@ Item {
     // Within the background across (a tab's reaches past the bar's thickness)
     readonly property real acrossStart: Math.max(0, Math.min((vertical ? root.width : root.height) - across, acrossMiddle - across / 2))
 
-    visible: root.barConfig.splitIcon === "badge" && root.splitAt >= 0 && root.colors !== null
+    visible: root._splitLook?.icon === "badge" && root.splitAt >= 0 && root.colors !== null
     x: vertical ? acrossStart : alongMiddle - along / 2
     y: vertical ? alongMiddle - along / 2 : acrossStart
     width: vertical ? across : along
     height: vertical ? along : across
-    radius: root.barConfig.widgetShape === "capsule" ? across / 2 : Math.min(across / 2, root.barConfig.radius * across / thickness)
+    radius: root._look.shape.name === "capsule" ? across / 2 : Math.min(across / 2, root.barConfig.radius * across / thickness)
     color: root.colors?.iconFill ?? "transparent"
     // Its slice of the bar's gradient
     gradient: badgeGradient.slice !== null ? badgeGradient : null
@@ -177,12 +183,12 @@ Item {
   // Along the side toward the windows (inner) or the screen edge (outer)
   Rectangle {
     id: line
-    readonly property real thickness: root.barConfig.lineWidth
+    readonly property real thickness: root._line?.width ?? 0
     readonly property bool vertical: root.barConfig.vertical
     // The side further from the bar's outer edge, in item coordinates
-    readonly property bool farSide: (root.barConfig.lineSide === "inner") !== (root.barConfig.right || root.barConfig.bottom)
+    readonly property bool farSide: root._line?.farSide ?? false
 
-    visible: root._fill === "underline" && root.colors !== null
+    visible: root._line !== null && root.colors !== null
     color: root.colors?.indicator ?? "transparent"
     // A slice of the bar's gradient, along it
     gradient: root._gradientPart === "indicator" ? lineGradient : null
@@ -223,7 +229,7 @@ Item {
     color: "transparent"
     // A Rectangle keeps it to half the thickness, which the window never
     // drops below
-    radius: root.barConfig.widgetShape === "capsule" ? across / 2 : root.barConfig.radius
+    radius: root._look.shape.name === "capsule" ? across / 2 : root.barConfig.radius
     x: vertical ? 0 : -across
     y: vertical ? root.height - shown : 0
     width: vertical ? root.width : shown + across

@@ -58,21 +58,22 @@ Item {
   readonly property bool isVertical: barConfig.vertical
   // Between cells (`spacing`: BarsConfig.workspaceCellSpacing), chained in
   // a powerline as segments
-  readonly property real spacing: run ? BarShapes.cellGap(barConfig.widgetGrouping, _cellSpacing) : _cellSpacing
+  readonly property real spacing: run ? BarShapes.cellGap(barConfig.look.grouping, _cellSpacing) : _cellSpacing
   readonly property real _cellSpacing: BarsConfig.workspaceCellSpacing(barConfig, properties.spacing)
   // As segments of a merged run, the cells that draw a box of their own
   // there: solid ones, and split's fill (BarWidgetStyle.cell)
-  readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solidBoxes)
+  readonly property var _traits: BarLook.cellTraits(barConfig.look, solidBoxes)
+  readonly property bool _boxedInRun: _traits.cellBoxedInRun
   // Each cell's shape as a segment of the run and the room it keeps clear
   // of its caps (BarShapes.cellShape, cellRoom), else null
   // A cell after the widget's first starts square beneath the one before
   // where their boxes hide what's under them (drawn earlier over later);
   // the sliding active box, drawn over them all, always fits against it
-  readonly property var _shapes: run ? ids.map((_, j) => BarShapes.cellShape(barConfig, run, _boxedInRun, BarWidgetStyle.cellOpaque(barConfig.widgetStyle, solidBoxes), spacing, chainFirst + j, chainCount)) : null
+  readonly property var _shapes: run ? ids.map((_, j) => BarShapes.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, spacing, chainFirst + j, chainCount)) : null
   readonly property var _rooms: run ? ids.map((_, j) => BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst + j, chainCount)) : null
   // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
   // onBar)
-  readonly property bool _inGroup: hitArea !== null && barConfig.widgetGrouping === "merged"
+  readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
   // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
   readonly property bool solidBoxes: properties.solidBoxes
   // The workspace whose cell is hovered, which its box (drawn apart from

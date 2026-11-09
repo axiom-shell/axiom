@@ -41,7 +41,7 @@ Item {
   readonly property real cell: barConfig.thickness - inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(barConfig, cell, inset)
   // Along the bar: square, or narrower for dots or nothing straight on the bar
-  readonly property real cellLength: barConfig.widgetBoxed || properties.solidBoxes || properties.labels === "numbers" || properties.showAppIcons ? cell : Math.round(cell * 0.6)
+  readonly property real cellLength: barConfig.look.traits.boxed || properties.solidBoxes || properties.labels === "numbers" || properties.showAppIcons ? cell : Math.round(cell * 0.6)
 
   readonly property color activeColor: Theme.resolveColor(properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
@@ -120,7 +120,7 @@ Item {
     rows: !root.isVertical && columns === -1 ? 1 : -1
     columns: root.isVertical && rows === -1 ? 1 : -1
     // A powerline's segments chain on into the strip
-    spacing: root.run ? BarShapes.cellGap(root.barConfig.widgetGrouping, root.barConfig.innerGap) : root.barConfig.innerGap
+    spacing: root.run ? BarShapes.cellGap(root.barConfig.look.grouping, root.barConfig.innerGap) : root.barConfig.innerGap
 
     WorkspaceCellRow {
       id: cellRow
