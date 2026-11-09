@@ -55,6 +55,27 @@ Item {
   readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid)
   readonly property var _room: run ? BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
   readonly property real _lead: _room?.lead ?? 0
+  // Its box's shape as a segment (BarShapes.cellShape), else null, and
+  // what it draws past its bounds (BarShapes.cellMargins)
+  readonly property var _shape: run ? BarShapes.cellShape(barConfig, run, _boxedInRun, BarWidgetStyle.cellOpaque(barConfig.widgetStyle, solid), cellSpacing, chainFirst, chainCount) : null
+  readonly property var _margins: BarShapes.cellMargins(_shape, _shape, isVertical)
+  // How far icon `index`'s pointer area reaches past its room, sharing
+  // the box: the first back to the box's start, the last on to its end,
+  // the rest to the middle of the gaps beside them; across, as the box
+  // does. None but the box's own off the bar's run.
+  function _slotMargins(index) {
+    if (!root._shape)
+      return BarShapes.cellMargins(null, null, root.isVertical);
+    const half = root.cellSpacing / 2;
+    const start = index === 0 ? root._lead + (root.isVertical ? root._margins.top : root._margins.left) : half;
+    const end = index === root.addresses.length - 1 ? (root._room?.trail ?? 0) + (root.isVertical ? root._margins.bottom : root._margins.right) : half;
+    return {
+      "left": root.isVertical ? root._margins.left : start,
+      "top": root.isVertical ? start : root._margins.top,
+      "right": root.isVertical ? root._margins.right : end,
+      "bottom": root.isVertical ? end : root._margins.bottom
+    };
+  }
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the icons are only rebuilt when the windows or their
@@ -72,6 +93,7 @@ Item {
   // The box: a workspace cell's, without content, unlit (its icons light
   // their own rooms)
   WorkspaceCell {
+    id: boxCell
     part: "background"
     lit: false
     barConfig: root.barConfig
@@ -84,7 +106,7 @@ Item {
     thickness: root.thickness
     length: root._along
     inRun: root._inGroup
-    shape: root.run ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, BarWidgetStyle.cellOpaque(root.barConfig.widgetStyle, root.solid), root.cellSpacing, root.chainFirst, root.chainCount) : null
+    shape: root._shape
     radius: root.radius
     hoverColor: root.hoverColor
     hitArea: root.hitArea
@@ -110,8 +132,9 @@ Item {
         readonly property var window: root.windows.find(w => w.id === address) ?? null
         readonly property bool isFocused: address === root.focused
         // On the bar, from the widget's hit area (which lies over the
-        // icons); elsewhere, its own pointer area
-        readonly property bool hovered: root.hitArea ? root.hitArea.hovers(slot) : slotArea.containsMouse
+        // icons), asked whether the pointer is in its pointer area;
+        // elsewhere, that area itself
+        readonly property bool hovered: root.hitArea ? root.hitArea.hovers(slotArea) : slotArea.containsMouse
 
         width: root.isVertical ? root.thickness : root.cellLength
         height: root.isVertical ? root.cellLength : root.thickness
@@ -169,9 +192,14 @@ Item {
           y: root.isVertical ? (parent.height - height) / 2 : root.thickness - room + (room - size) / 2
         }
 
-        MouseArea {
+        // Its share of the box as drawn (back under the cell before, out
+        // to a tab's edge)
+        CellHitArea {
           id: slotArea
-          anchors.fill: parent
+          shape: root._shape
+          vertical: root.isVertical
+          box: boxCell
+          margins: root._slotMargins(slot.index)
           enabled: root.clickable
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor

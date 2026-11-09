@@ -689,6 +689,7 @@ TestCase {
     compare([first.lead, first.trail, first.back], [5, 0, 0]);
     compare([middle.lead, middle.trail], [0, 0]);
     compare([middle.startCap, middle.endCap], ["slant", "slant"], "a box of its own: the caps it has alone");
+    compare(middle.shownStart, "slant", "shown from its own start");
     const boxed = BarShapes.cellSegment("slant", "shaped", "merged", true, place, 1, 3, 30);
     compare([boxed.lead, boxed.trail, boxed.seamStart, boxed.seamEnd], [5, 5, false, false]);
   }
@@ -824,5 +825,63 @@ TestCase {
       "right": 0,
       "bottom": 0
     }, "no cells: nothing past it");
+  }
+
+  // Cells are hit in their boxes as drawn: a powerline's corners beside a
+  // cell's end cap are the next cell's (its box shows there), the first
+  // cell's reach back under the widget before is its own, and a tab's
+  // reaches out to its edge
+  function test_cells_hit_as_drawn() {
+    const look = {
+      "widgetShape": "arrow",
+      "widgetEnds": "shaped",
+      "widgetGrouping": "powerline",
+      "radius": 6,
+      "thickness": 30,
+      "tabFillet": 0,
+      "right": false,
+      "bottom": false
+    };
+    const run = {
+      "sized": null,
+      "drawn": {
+        "index": 1,
+        "count": 3
+      },
+      "reachStart": 0,
+      "reachEnd": 0,
+      "tabLimits": [null, null]
+    };
+    // Two opaque cells 40 long: the second starts square beneath the
+    // first, yet shows from the first's arrow
+    const a = BarShapes.cellShape(look, run, false, true, 0, 0, 2);
+    const b = BarShapes.cellShape(look, run, false, true, 0, 1, 2);
+    compare([b.segment.startCap, b.segment.shownStart], ["flat", "arrowIn"]);
+    // Near the shared end's edge (a at 39, b at -1): the arrow's point is a's, its corners b's
+    verify(BarShapes.cellContains(a, 39, 15, 40, 30, false), "the arrow's point");
+    verify(!BarShapes.cellContains(a, 39, 1, 40, 30, false), "a corner beside it isn't a's");
+    verify(BarShapes.cellContains(b, -1, 1, 40, 30, false), "it's the next cell's");
+    verify(!BarShapes.cellContains(b, -1, 15, 40, 30, false), "the point isn't the next cell's");
+    // The first cell, back under the widget before, beside its cap
+    verify(BarShapes.cellContains(a, -14, 1, 40, 30, false));
+    verify(!BarShapes.cellContains(a, -14, 15, 40, 30, false));
+    verify(!BarShapes.cellContains(a, -16, 1, 40, 30, false), "no further back than it reaches");
+    // Vertical: the same along y
+    verify(BarShapes.cellContains(b, 1, -1, 30, 40, true));
+    verify(!BarShapes.cellContains(a, 1, 39, 30, 40, true));
+    // A tab cell reaches across out to its edge (4 before it), not along
+    // into its fillets
+    const tab = BarShapes.cellShape(Object.assign({}, look, {
+      "widgetShape": "tab",
+      "widgetGrouping": "separate",
+      "tabFillet": 5
+    }), Object.assign({}, run, {
+      "reachStart": 4
+    }), false, false, 4, 0, 2);
+    verify(BarShapes.cellContains(tab, 1, -3, 40, 30, false));
+    verify(!BarShapes.cellContains(tab, -1, -3, 40, 30, false));
+    // No shape: its own box
+    verify(BarShapes.cellContains(null, 0, 0, 40, 30, false));
+    verify(!BarShapes.cellContains(null, 40, 0, 40, 30, false));
   }
 }

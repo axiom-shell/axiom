@@ -106,10 +106,11 @@ Item {
   // Its state shows in a box or a line; without either, in its content
   readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
-  // cells and takes the hover, so it's asked; elsewhere (a popout), the
-  // cell's own pointer area
+  // cells and takes the hover, so it's asked whether the pointer is in
+  // the cell's pointer area (its box as drawn); elsewhere (a popout), that
+  // area itself
   property var hitArea: null
-  readonly property bool hovered: hitArea ? hitArea.hovers(root) : cellArea.containsMouse
+  readonly property bool hovered: hitArea ? hitArea.hovers(cellArea) : cellArea.containsMouse
 
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
@@ -310,9 +311,12 @@ Item {
     }
   }
 
-  MouseArea {
+  // In its box as drawn: as a segment, back under the cell before and out
+  // to a tab's edge
+  CellHitArea {
     id: cellArea
-    anchors.fill: parent
+    shape: root.shape
+    vertical: root.isVertical
     enabled: root.clickable && root._drawsContent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor

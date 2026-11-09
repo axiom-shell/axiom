@@ -105,6 +105,7 @@ How widget backgrounds are drawn: their shapes (split's two parts, tabs, outline
   - A widget with several anchors (the tray's icons) gives each one `hitArea.hovers(item)`.
   - The Workspaces switchers likewise pass the widget's hit area on to their anchors.
   - (A HoverHandler moved in after it's made isn't reliably hovered.)
+- A widget's parts laid out as segments (Workspaces' cells, its strip's windows) are hit in their boxes as drawn too: each has a `Workspaces/CellHitArea`, a MouseArea grown by what its box draws past it (`cellMargins`) and masked by `BarShapes.cellContains` (its box from where it shows, `cellSegment`'s `shownStart`, to its end cap, out to a tab's edge). So a powerline's corners beside a cell's end cap answer for the next cell, whose box shows there, the first cell's reach back under the widget before is its own, and a tab cell is clicked out to the screen's edge. The cells ask the widget's hit area `hovers(area)` of these areas; the one box holding a strip's windows gives each icon its share of it.
 
 ### Separators at a section's end
 - Separators at a section's end stand in the gap between sections rather than in their own section (`BarLayout.edgeHang`, from each group's `divides` widgets).

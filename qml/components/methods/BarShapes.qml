@@ -151,8 +151,8 @@ QtObject {
   // Cell `cell` of `cells` a widget lays out as segments of the bar's run
   // itself (Workspaces with its Background off: its workspaces, then its
   // strip's windows), the widget at `place` in its run ({ index, count },
-  // BarLayout.runPlaces; null alone): segment's { startCap, endCap, back,
-  // lead, trail, seamStart, seamEnd }.
+  // BarLayout.runPlaces; null alone): segment's { startCap, endCap,
+  // shownStart, back, lead, trail, seamStart, seamEnd }.
   //   separate   each cell alone, in the shape's own ends
   //   powerline  the cells chain on in the bar's chain: the widget's first
   //              cell takes the cap the segment before it expects, its last
@@ -170,6 +170,9 @@ QtObject {
     const pick = (s, startCap, endCap, lead, trail) => ({
           "startCap": startCap,
           "endCap": endCap,
+          // Its start as it shows (segment's): a powerline cell's past the
+          // cap before, however it's drawn; else its own
+          "shownStart": grouping === "powerline" ? s.shownStart : startCap,
           "back": s.back,
           "lead": lead,
           "trail": trail,
@@ -215,7 +218,8 @@ QtObject {
   // (how far it draws past it along the bar: back under the cell before,
   // and a flared tab's fillets out past its sides) }. `boxed`, `opaque`
   // and `gap`: cellSegment's and cellTab's. What it draws past its bounds
-  // is what every clip holding it keeps (cellMargins).
+  // is what every clip holding it keeps (cellMargins) and, but for the
+  // fillets, where it's hovered and clicked (cellContains).
   function cellShape(look, run, boxed, opaque, gap, cell, cells) {
     const segment = root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.drawn ?? null, cell, cells, look.thickness, opaque);
     const tab = look.widgetShape === "tab" ? root.cellTab(look.radius, look.thickness, look.tabFillet, gap, !(look.right || look.bottom), run?.tabLimits ?? null, cell, cells) : null;
@@ -233,7 +237,8 @@ QtObject {
   // past the item holding them, as its margins in item coordinates:
   // { left, top, right, bottom }, the first's reach at its start, the
   // last's at its end and across out to a tab's edge. A clip holding
-  // cells grows by these.
+  // cells grows by these; a cell's hit area by its own (`first` and
+  // `last` both it).
   function cellMargins(first, last, vertical) {
     const start = first?.drawStart ?? 0, end = last?.drawEnd ?? 0;
     const near = first?.reachStart ?? last?.reachStart ?? 0, far = first?.reachEnd ?? last?.reachEnd ?? 0;
@@ -255,6 +260,21 @@ QtObject {
       "start": s.drawStart,
       "end": s.drawEnd
     };
+  }
+
+  // Whether a point `x`, `y` in a cell's own coordinates (`width` by
+  // `height`) lies in its `shape` (cellShape) as drawn: back under the
+  // cell before from where it shows past that one's cap (its shownStart),
+  // out to a tab's edge across, and short of its own end cap's cut-off
+  // corners, so neighbours never answer for each other (a flared tab's
+  // fillets don't count); with no shape, its own bounds
+  function cellContains(shape, x, y, width, height, vertical) {
+    if (!shape)
+      return x >= 0 && y >= 0 && x < width && y < height;
+    const s = shape.segment;
+    const near = shape.reachStart, far = shape.reachEnd;
+    const u = (vertical ? y : x) + s.back, v = (vertical ? x : y) + near;
+    return root.contains(u, v, (vertical ? height : width) + s.back, (vertical ? width : height) + near + far, s.shownStart, s.endCap);
   }
 
   // The room cell `cell` of `cells` keeps clear of its caps along the bar
