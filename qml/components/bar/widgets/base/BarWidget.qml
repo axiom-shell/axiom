@@ -1,8 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-import qs.config
-
 // Base for bar widgets that draw their own content (icon + label widgets
 // extend BarIconWidget instead): the inputs every widget gets from
 // BarWidgetHost, and its orientation from the bar. One that wants a
@@ -28,19 +26,16 @@ Item {
   property bool pinStart: false
 
   property bool hasBackground: false
-  // The color field its accentColor shows for its state ("" for none or a
-  // color of its own), and that color. Only its Auto own color
-  // (`accentAuto`) gives way to the bar's gradient.
-  property string accentField: ""
-  property color accentColor: Theme.resolveColor(properties[accentField] ?? "")
-  // Its Auto fields' roles (BarsConfig.withAutoColors), and where it sits
-  // along its bar as laid out, for the bar's gradient (set by its host)
-  property var autoColors: ({})
-  property real barOffset: 0
-  property real barLength: 0
-  readonly property bool accentAuto: root.autoColors[root.accentField] === "accent"
-  // Where its middle sits along the bar (0-1), or -1 without a gradient
-  readonly property real barSpot: root.barLength > 0 ? (root.barOffset + (root.isVertical ? root.height : root.width) / 2) / root.barLength : -1
+  // Its color field and color for its state, its Auto fields' roles and
+  // place along the bar, and the colors it draws in (WidgetLook's)
+  property alias accentField: look.accentField
+  property alias accentColor: look.accentColor
+  property alias autoColors: look.autoColors
+  property alias barOffset: look.barOffset
+  property alias barLength: look.barLength
+  readonly property alias accentAuto: look.accentAuto
+  readonly property alias barSpot: look.barSpot
+  readonly property alias colors: look.colors
   // Where a point `along` the bar from `item`'s start (an item inside it)
   // sits along the bar (0-1), or -1 without a gradient. Read when what
   // places the point changes: mapping isn't a binding.
@@ -58,9 +53,12 @@ Item {
   // widget's pill style)
   property real backgroundLevel: -1
   property color backgroundLevelColor: "transparent"
-  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor, {
-    "hovered": fillsOnHover && (hitArea?.hovered ?? false),
-    "spot": barSpot,
-    "auto": accentAuto
-  })
+
+  readonly property WidgetLook _look: WidgetLook {
+    id: look
+    barConfig: root.barConfig
+    properties: root.properties
+    length: root.isVertical ? root.height : root.width
+    hovered: root.fillsOnHover && (root.hitArea?.hovered ?? false)
+  }
 }

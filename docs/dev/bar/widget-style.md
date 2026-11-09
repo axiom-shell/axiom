@@ -1,6 +1,6 @@
 # Bar widget classes, style and colors
 
-> **Files:** `qml/components/bar/widgets/base/BarIconWidget.qml`, `qml/components/bar/widgets/base/BarWidget.qml`, `qml/components/bar/widgets/base/AudioLevelWidget.qml`, `qml/components/bar/widgets/base/BaseWidget.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/methods/BarAutoColors.qml`, `qml/config/BarsConfig.qml`, `qml/config/BarStyle.qml`, `qml/components/bar/widgets/Workspaces/WorkspaceCell.qml`
+> **Files:** `qml/components/bar/widgets/base/BarIconWidget.qml`, `qml/components/bar/widgets/base/BarWidget.qml`, `qml/components/bar/widgets/base/AudioLevelWidget.qml`, `qml/components/bar/widgets/base/BaseWidget.qml`, `qml/components/bar/widgets/base/WidgetLook.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/methods/BarAutoColors.qml`, `qml/config/BarsConfig.qml`, `qml/config/BarStyle.qml`, `qml/components/bar/widgets/Workspaces/WorkspaceCell.qml`
 > **Config:** `BarStyle.*`, `Bars.style.*`, per bar `style` (inheriting) and `widgetTextColor`, widget color fields with `x-autoColor`
 > **Related:** [Bar composition](composition.md), [Widget shapes and runs](widget-shapes-runs.md), [Schema annotations](../core/schema-annotations.md)
 
@@ -32,6 +32,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Widgets don't draw their own backgrounds. Each reports two things:
   - `hasBackground`: on by default for `BarIconWidget`, opt-in on `BarWidget`.
   - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. This used to be the background. A widget names the color field it shows (`accentField`, `backgroundColor` by default on `BarIconWidget`, none on `BarWidget`), and `accentColor` is that field's color; one with a color of its own for a state (DevMode's and Updates' failure, NextEvent's soon, a custom widget's state) sets `accentField` to `""` then and its `accentColor` itself.
+- Both bases work these out in one `bar/widgets/base/WidgetLook` (its `accentField`, `accentColor`, `autoColors`, `barOffset`/`barLength` set through the bases' aliases; `accentAuto`, `barSpot` and `colors` read back), so the gradient and Auto handling is written once.
 - They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, widget)`, which gives `{ fill, stroke, indicator, text, icon, iconFill, gradient }`. `widget` is what of the widget itself its look depends on: `splits` (Split), `hovered` (Fill on hover), `spot` and `auto` (the bar gradient); `BarsConfig._widgetStyle` puts them in the `style` the helper reads, so `BarWidgetStyle.colors(style, accent, own)` and `cell(style, color, own, state)` take one shape.
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, split, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.

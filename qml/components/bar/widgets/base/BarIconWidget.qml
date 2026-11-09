@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.config
-
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.
 // Modules override accentColor for their states; how it shows (a
@@ -49,29 +47,21 @@ IconTextWidget {
   // The icon's gap to its label (6 px at the default inner spacing of 4)
   spacing: barConfig.innerGap * 1.5
   iconSpacing: barConfig.innerGap
-  // The color field its accentColor shows for its state ("" for a color
-  // of its own: a failure's error), and that color. Only its Auto own
-  // color (`accentAuto`) gives way to the bar's gradient.
-  property string accentField: "backgroundColor"
-  property color accentColor: Theme.resolveColor(properties[accentField] ?? "")
-  // Its Auto fields' roles (BarsConfig.withAutoColors), and where it sits
-  // along its bar as laid out, for the bar's gradient (set by its host)
-  property var autoColors: ({})
-  property real barOffset: 0
-  property real barLength: 0
-  readonly property bool accentAuto: root.autoColors[root.accentField] === "accent"
-  // Where its middle sits along the bar (0-1), or -1 without a gradient
-  readonly property real barSpot: root.barLength > 0 ? (root.barOffset + (root.isVertical ? root.height : root.width) / 2) / root.barLength : -1
+  // Its color field ("backgroundColor" unless a state names another, ""
+  // for a color of its own: a failure's error) and color for its state,
+  // its Auto fields' roles and place along the bar, and the colors it
+  // draws in (WidgetLook's; filled while its hit area is hovered, with the
+  // bar's "Fill on hover")
+  property alias accentField: look.accentField
+  property alias accentColor: look.accentColor
+  property alias autoColors: look.autoColors
+  property alias barOffset: look.barOffset
+  property alias barLength: look.barLength
+  readonly property alias accentAuto: look.accentAuto
+  readonly property alias barSpot: look.barSpot
+  readonly property alias colors: look.colors
   // On a split bar, its icon part and label set apart (BarShapes.splitRoom)
   splitRoom: barConfig.splitRoom
-  // What it draws in on this bar (filled while its hit area is hovered,
-  // with the bar's "Fill on hover")
-  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor, {
-    "splits": root.splits,
-    "hovered": root.hitArea?.hovered ?? false,
-    "spot": root.barSpot,
-    "auto": root.accentAuto
-  })
   // Whether its WidgetGroup draws a background under it, and an outline
   // in its shape while it's hovered
   property bool hasBackground: !hidden
@@ -85,6 +75,16 @@ IconTextWidget {
   foregroundColor: colors.text
   iconColor: colors.icon
   opacity: (root.pressed ? 0.8 : 1) * root.dim
+
+  readonly property WidgetLook _look: WidgetLook {
+    id: look
+    barConfig: root.barConfig
+    properties: root.properties
+    accentField: "backgroundColor"
+    length: root.isVertical ? root.height : root.width
+    splits: root.splits
+    hovered: root.hitArea?.hovered ?? false
+  }
 
   HoverHandler {
     id: hover
