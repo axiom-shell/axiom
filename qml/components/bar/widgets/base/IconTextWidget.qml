@@ -7,9 +7,11 @@ import qs.components.reusable
 
 // An icon followed by a label, laid along the bar's main axis (the label is
 // rotated on a vertical bar, or upright under the icon with uprightLabel).
-// The label's figures are centred on the icon's middle, on whole pixels. Reports the size it needs to show everything
-// as its implicit size; given less, the label elides to fit, so its length
-// is decided by the bar layout rather than by character counts.
+// The label's letters (TextBand) are centred on the icon's middle, on
+// whole pixels, and across a vertical bar. Reports the size it needs to
+// show everything as its implicit size; given less, the label elides to
+// fit, so its length is decided by the bar layout rather than by character
+// counts.
 BaseWidget {
   id: root
 
@@ -64,7 +66,7 @@ BaseWidget {
   readonly property real _iconStart: leadAfterIcon ? 0 : _leadRoom
 
   // Across a bar, where the icon's middle is (the run's, with none): what
-  // the label's figures and a lead graphic centre on, in the lead slot's
+  // the label's letters and a lead graphic centre on, in the lead slot's
   // coordinates as in the run's
   readonly property real iconMiddle: _hasIcon ? iconLabel.y + iconLabel.height / 2 : run.height / 2
 
@@ -143,16 +145,23 @@ BaseWidget {
 
       Text {
         id: textLabel
-        // Across a bar, its figures (a digit's height) centred where the
-        // icon's middle is (the run's, with none) on a whole pixel: centred
-        // as a box, a label sits high, its box holding the descent
-        readonly property rect _figure: figureMetrics.tightBoundingRect
+        // Across a bar, its letters centred where the icon's middle is (the
+        // run's, with none) on a whole pixel, and turned along a vertical
+        // one, across it: its box is padded to centre on them
+        // (TextBandPadding), not on its line, which holds the descent
+        readonly property TextBandPadding _band: TextBandPadding {
+          font: textLabel.font
+          text: steadyMetrics.text
+          contentHeight: textLabel.contentHeight
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
         // Along the bar, centred in its room (wider than the text when its
         // minimum or its zeros measure wider), on a whole pixel; given less,
         // it fills the room and elides
         readonly property real _alongRoom: root._turned ? textSlot.height : textSlot.width
         x: root._turned ? (textSlot.width - width) / 2 : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
-        y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - baselineOffset + _figure.height / 2)
+        y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - height / 2)
         width: root.isVertical && root.uprightLabel ? textSlot.width : Math.min(Math.ceil(implicitWidth), _alongRoom)
         rotation: root._turned ? -90 : 0
         horizontalAlignment: root.isVertical && root.uprightLabel ? Text.AlignHCenter : Text.AlignLeft
@@ -169,14 +178,6 @@ BaseWidget {
         ColorGlide on color {}
       }
     }
-  }
-
-  // A digit's ink, measured again with the font (FontMetrics'
-  // tightBoundingRect() is a call, which a binding never re-runs)
-  TextMetrics {
-    id: figureMetrics
-    font: textLabel.font
-    text: "0"
   }
 
   // The label as it reads (styled text's tags left out), and its minimum,

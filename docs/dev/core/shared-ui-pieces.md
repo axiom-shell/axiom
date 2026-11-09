@@ -28,6 +28,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Text and structure (`reusable/`)
 - `StyledText` / `StyledIcon`.
+- `TextBandPadding`: the `topPadding` / `bottomPadding` that centre a one-line Text on its letters (`methods/TextBand`) instead of its line box, so a Text placed by its box (centred in a cell, beside an icon, turned along a vertical bar) centres what reads. A line box holds the descent and an accent's room, so centred as a box all-lowercase text sits a pixel or two low beside an icon. The band is the font's, not the string's ink, so a label never moves as its text changes: the x-height for text with a lowercase letter in it (its middle is also the middle of ascenders over descenders, so "gaming", "Gaming" and "vpn.batk.me" sit alike), a digit's height for text without (numbers, capitals). Every text on a bar uses it: `IconTextWidget`'s label, `ValueGraphic`'s ticker and the Workspaces cells' numbers, names and labels (a plain lead and its text on one band).
 - `SpinningIcon`: a `StyledIcon` that turns while `spinning` (gated on `Appearance.animations`), upright again when it stops: the busy mark (the radio menus' scan, the dev build in the DevMode widget and the Settings banner).
 - `SlashedIcon`: an icon struck through while `slashed`, one drawn slash (top left to bottom right, Material's direction) over a `cutout` line in what it sits on. Every off state is the base icon slashed, never an icon's own `_off` form, so they all look the same (the OSD's bars and status icons).
 - `SectionHeading`: accent title + muted description, folded past three lines.
@@ -199,6 +200,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - `looksLikeMath(text)`.
 - `methods/ScreenEdge`: the screen edges as numbers (`ScreenEdge.Top`, `Bottom`, `Left`, `Right`, an order code indexes arrays by) and their config names: `name(edge)`, `fromName(name)` (-1 if unknown), `fromConfig(name)` (Top if unknown), `opposite(edge)`.
 - `methods/ScreenRegion`: rects across monitors in global logical pixels (the screenshot picker's shared selection): `between(a, b)`, `intersect`, `isEmpty`, `local(global, screen)` (a screen's part, from its top left), `toGlobal`, `covered(rect, screens)`, `contains`, `boxAt(boxes, x, y, output)` (the topmost box under a point, the point's own screen's first).
+- `methods/TextBand`: where a line of text centres (`TextBandPadding`): `onXHeight(text)`, `height(text, xHeight, figureHeight)`, `padding(ascent, contentHeight, band)`.
 - `methods/ChipRows.split(count, fit)`: a set of equal chips spread evenly over as few rows as `fit` allows (5 at 3 a row: 3 + 2), so each row can fill its width; `starts(sizes)`.
 - `methods/ColorTemperature.color(kelvin)`: light's color at a temperature (the night light's button).
 - `KeybindFilter.columns(sections, count)`: the masonry split of the Keybinds page and the Cheatsheet module.
