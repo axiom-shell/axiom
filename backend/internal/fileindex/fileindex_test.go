@@ -819,6 +819,11 @@ func TestLeftOutNoExtraReads(t *testing.T) {
 	if !l.refill || !l.refillPass(&req) || !slices.Equal(req.Stat, []StatDir{{Path: root + "/b"}}) || l.truncated {
 		t.Fatalf("refill %+v, truncated %v", req.Stat, l.truncated)
 	}
+	// A pass that didn't finish (its child failed) is asked again
+	var again CrawlRequest
+	if !l.refillPass(&again) || !slices.Equal(again.Stat, req.Stat) {
+		t.Errorf("after a lost pass: %+v", again.Stat)
+	}
 	dirs, _ := serve(t, CrawlRequest{Roots: st.Roots, Stat: req.Stat})
 	if len(dirs[root+"/b"]) != 3 {
 		t.Fatalf("b read as %v", dirs)
@@ -827,5 +832,42 @@ func TestLeftOutNoExtraReads(t *testing.T) {
 	l.applyDir(root+"/b", fo.mtime, fo.kids, true)
 	if ix.LeftOutDir(b) || ix.LeftOut() != 0 || ix.Len() != 6 || l.truncated {
 		t.Errorf("after the refill: left out %v, %d entries, truncated %v", ix.LeftOutDir(b), ix.Len(), l.truncated)
+	}
+}
+
+// Files removed one at a time from a full index don't each re-read every
+// folder left out: a refill waits for room of a hundredth of the cap
+func TestLeftOutRefillWaitsForRoom(t *testing.T) {
+	t.Parallel()
+	var paths []string
+	for i := range 300 {
+		paths = append(paths, fmt.Sprintf("a/f%03d", i))
+	}
+	for i := range 10 {
+		paths = append(paths, fmt.Sprintf("z/f%d", i))
+	}
+	root := tree(t, paths...)
+	now := time.Now()
+	s := New(Options{CacheFile: filepath.Join(t.TempDir(), "c.bin"), MaxEntries: 300, Now: func() time.Time { return now }})
+	st := Settings{Enabled: true, Roots: []string{root}}
+	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}, cur: st, active: true, phase: PhaseReady,
+		f: newFilter(st.Roots, nil, nil, false)}
+	ix := filesearch.New()
+	ix.AddRoot(root)
+	l.setIndex(ix)
+	l.readDir(t, root)
+	l.readDir(t, root+"/z")
+	l.readDir(t, root+"/a")
+	if ix.Len() != 300 || ix.LeftOut() != 1 {
+		t.Fatalf("%d entries, %d left out", ix.Len(), ix.LeftOut())
+	}
+	for i := range 4 {
+		os.Remove(fmt.Sprintf("%s/z/f%d", root, i))
+		l.readDir(t, root+"/z")
+		var req CrawlRequest
+		refilled := l.refillPass(&req)
+		if want := i == 3; refilled != want {
+			t.Errorf("%d removed: refilled %v, want %v", i+1, refilled, want)
+		}
 	}
 }

@@ -684,16 +684,19 @@ func (l *loop) next() {
 }
 
 // refillPass fills req with a stat pass of what the index left out at
-// the cap, once removals made room: the folders marked left out (their
-// time as 0, so each is read again) and those never read. A full index,
-// or one that left nothing out, asks for nothing (false). The folders read
-// mark themselves again if the cap still leaves entries out, and their new
-// folders are crawled after, so truncated is set again by whatever is
-// still left out.
+// the cap, once removals made room (more than a hundredth of the cap):
+// the folders marked left out (their time as 0, so each is read again)
+// and those never read. A full index, or one that left nothing out, asks
+// for nothing (false). The folders read mark themselves again if the cap
+// still leaves entries out, and their new folders are crawled after, so
+// truncated is set again by whatever is still left out.
 func (l *loop) refillPass(req *CrawlRequest) bool {
 	l.refill = false
 	ix := l.ix()
-	if !l.truncated || ix.Len() >= l.s.o.MaxEntries {
+	// The marks outlive a pass that didn't finish; files removed one at a
+	// time from a full index don't each re-read every folder left out
+	room := l.s.o.MaxEntries - ix.Len()
+	if !l.truncated && ix.LeftOut() == 0 || room <= l.s.o.MaxEntries/100 {
 		return false
 	}
 	ix.EachDir(func(d uint32) {
