@@ -245,7 +245,8 @@ Item {
       readonly property var _room: BarRuns.insets(root._ctx, module._place, {
         "background": module.hasBackground,
         "segments": module.segments,
-        "fills": module.fills
+        "fills": module.fills,
+        "contentScale": module.contentScale
       }, module.index, root._section)
       leadInset: module._room.lead
       trailInset: module._room.trail

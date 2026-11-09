@@ -109,6 +109,11 @@ Item {
   readonly property bool fills: _item?.fills ?? false
   // Hovered, on a module that shows an outline then (its hoverOutline)
   readonly property bool outlined: (_item?.hoverOutline ?? false) && (_item?.hovered ?? false)
+  // Its content's height across as a share of the bar's font size: its
+  // icon's scale where the icon is drawn larger (IconTextWidget.iconScale,
+  // a constant its type sets, never a measured size), else 1. Its caps'
+  // room is kept at that height (BarRuns.insets).
+  readonly property real contentScale: Math.max(1, _item?.iconScale ?? 1)
   // Room along the bar kept clear of its background's caps, at its start
   // and end (set by WidgetGroup): added to its sizes, the module inside
   property real leadInset: 0

@@ -137,6 +137,25 @@ TestCase {
       "lead": 0,
       "trail": 0
     }, "its parts as segments keep their own");
+    // A widget whose icon is drawn larger (Battery's 1.1) keeps its caps'
+    // room at the icon's height: a capsule's curve is further in there
+    const capsule = ctx("capsule", "separate");
+    const tall = {
+      "background": true,
+      "segments": false,
+      "fills": false,
+      "contentScale": 1.1
+    };
+    compare(BarRuns.insets(capsule, null, tall, 0, section), {
+      "lead": 3,
+      "trail": 3
+    }, "a larger icon: its caps' room at its height");
+    compare(BarRuns.insets(capsule, null, Object.assign({}, tall, {
+      "contentScale": 1
+    }), 0, section), {
+      "lead": 2,
+      "trail": 2
+    }, "at the bar's font size");
     const loose = {
       "background": false,
       "segments": false,

@@ -28,9 +28,11 @@ QtObject {
   }
 
   // The caps and room at `place` in a run (BarLayout.runPlaces' { index,
-  // count }, null alone): BarShapes.segment's
-  function segmentAt(ctx, place) {
-    return BarShapes.segment(ctx.shape, ctx.grouping, ctx.opaque, place?.index ?? 0, place?.count ?? 1, ctx.across, ctx.content);
+  // count }, null alone): BarShapes.segment's, for content `scale` times
+  // the bar's content height across (1 when left out: a widget whose icon
+  // is drawn larger, IconTextWidget.iconScale, keeps more)
+  function segmentAt(ctx, place, scale) {
+    return BarShapes.segment(ctx.shape, ctx.grouping, ctx.opaque, place?.index ?? 0, place?.count ?? 1, ctx.across, ctx.content * (scale ?? 1));
   }
 
   // Run flags (true: a background; false: shown without one; null: showing
@@ -111,11 +113,13 @@ QtObject {
   // The room widget `index` of a section keeps along the bar at its start
   // and end ({ lead, trail }), at `place` in its run (from what it shows):
   // `host` { background (it has one), segments (it lays its parts out as
-  // the run's segments, which keep their own), fills (a spacer) };
-  // `section` { first, last (its first and last widgets with something to
-  // show), joinStart, joinEnd (its ends join the next sections) }. With a
-  // background, the room its caps keep (segmentAt); without, the loose gap
-  // from a neighbour (none at the section's ends, unless joined there)
+  // the run's segments, which keep their own), fills (a spacer),
+  // contentScale (its content's height across as a share of the bar's:
+  // BarWidgetHost.contentScale; 1 when left out) }; `section` { first,
+  // last (its first and last widgets with something to show), joinStart,
+  // joinEnd (its ends join the next sections) }. With a background, the
+  // room its caps keep (segmentAt); without, the loose gap from a
+  // neighbour (none at the section's ends, unless joined there)
   function insets(ctx, place, host, index, section) {
     if (host.segments)
       return {
@@ -123,7 +127,7 @@ QtObject {
         "trail": 0
       };
     if (host.background) {
-      const s = root.segmentAt(ctx, place);
+      const s = root.segmentAt(ctx, place, host.contentScale);
       return {
         "lead": s.lead,
         "trail": s.trail
