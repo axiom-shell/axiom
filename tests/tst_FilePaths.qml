@@ -13,14 +13,12 @@ TestCase {
     compare(FilePaths.parse("~rep", home), {
       "kind": "search",
       "dir": "",
-      "typed": "",
       "query": "rep"
     });
     compare(FilePaths.parse("~ my report ", home).query, "my report", "words inside are kept");
     compare(FilePaths.parse("~doc/rep", home), {
       "kind": "search",
       "dir": "",
-      "typed": "",
       "query": "doc/rep"
     }, "a slash after a name is a segment of the pattern, not a folder");
   }
@@ -29,25 +27,21 @@ TestCase {
     compare(FilePaths.parse("~/", home), {
       "kind": "browse",
       "dir": "/home/u",
-      "typed": "~/",
       "query": ""
     });
     compare(FilePaths.parse("~/Documents/", home), {
       "kind": "browse",
       "dir": "/home/u/Documents",
-      "typed": "~/Documents/",
       "query": ""
     });
     compare(FilePaths.parse("~/Documents/rep", home), {
       "kind": "search",
       "dir": "/home/u/Documents",
-      "typed": "~/Documents/",
       "query": "rep"
     });
     compare(FilePaths.parse("~/Doc", home), {
       "kind": "search",
       "dir": "/home/u",
-      "typed": "~/",
       "query": "Doc"
     }, "a name not ended by a slash is searched for below its folder");
     compare(FilePaths.parse("~/../", home).dir, "/home", "..");

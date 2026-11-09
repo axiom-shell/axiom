@@ -20,6 +20,7 @@ import (
 	"slices"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/axiom-shell/axiom/backend/internal/filesearch"
 )
@@ -235,7 +236,6 @@ func (s *Service) Query(q Query) Result {
 	signal(s.demandCh)
 	signal(s.freshCh)
 	out := Result{Items: []Item{}}
-	hidden := s.currentSettings().Hidden
 	s.mu.RLock()
 	ix := s.ix
 	if ix == nil {
@@ -253,7 +253,7 @@ func (s *Service) Query(q Query) Result {
 	now := s.o.Now()
 	bonus := s.useBonus(ix, now)
 	hits, stale := ix.Search(filesearch.Query{
-		Pattern: filesearch.ParsePattern(q.Text), Under: under, Hidden: hidden, Limit: q.Limit,
+		Pattern: filesearch.ParsePattern(q.Text), Under: under, Limit: q.Limit,
 		Now: now.UnixNano(), Bonus: bonus, Stale: q.Stale, Shards: runtime.GOMAXPROCS(0),
 	})
 	paths := make([]string, len(hits))
@@ -307,6 +307,10 @@ func (s *Service) Recent(limit int) []Item {
 	for _, r := range recent(s.o.XBEL, uses) {
 		if len(out) >= limit {
 			break
+		}
+		// A name that isn't UTF-8: JSON would carry another path
+		if !utf8.ValidString(r.Path) {
+			continue
 		}
 		if it, ok := s.meta.item(r.Path); ok {
 			out = append(out, it)
@@ -637,18 +641,17 @@ func (l *loop) next() {
 	ix := l.ix()
 	req := CrawlRequest{Roots: l.cur.Roots, Excludes: l.cur.Excludes, Skip: l.s.o.Skip, Hidden: l.cur.Hidden,
 		Max: max(1, l.s.o.MaxEntries-ix.Len()), Pause: int(l.s.o.Pause / time.Millisecond)}
+	if len(l.pendingStart) > 0 && ix.Len() >= l.s.o.MaxEntries {
+		l.pendingStart = nil
+		l.truncated = true
+		// Nothing left to crawl: built (saved below as a crawl's end is)
+		if l.phase == PhaseCrawling {
+			l.phase = PhaseReady
+			l.publish(true)
+		}
+	}
 	switch {
 	case len(l.pendingStart) > 0:
-		if ix.Len() >= l.s.o.MaxEntries {
-			l.pendingStart = nil
-			l.truncated = true
-			// Nothing left to crawl: built
-			if l.phase == PhaseCrawling {
-				l.phase = PhaseReady
-				l.publish(true)
-			}
-			return
-		}
 		req.Start, l.pendingStart = l.pendingStart, nil
 		l.startChild(req)
 	case l.statAll || l.statUnwatched:
@@ -767,7 +770,7 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 // watch adds a watch on path within the budget; the path it was watched
 // under until now is no longer marked watched (left to the stat pass).
 func (l *loop) watch(path string) bool {
-	ok, stolen := l.w.add(path)
+	ok, stolen := l.w.add(path, slices.Contains(l.cur.Roots, path))
 	if ix := l.ix(); stolen != "" && ix != nil {
 		if d, found := ix.Lookup(stolen); found {
 			l.s.mu.Lock()

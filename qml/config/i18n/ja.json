@@ -4175,6 +4175,9 @@
     "Folder": "",
     "File": "",
     "Shift+Enter shows it": "",
-    "Search your files (or start with ~)": ""
+    "Search your files (or start with ~)": "",
+    "No such folder": "",
+    "This folder can't be read": "",
+    "The file index couldn't be built": ""
   }
 }

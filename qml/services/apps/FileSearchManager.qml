@@ -37,6 +37,9 @@ QtObject {
 
   // --- Searching ---
 
+  // The three calls only read: one cut off by a lost connection (a
+  // re-exec) is sent again, as the text it answers is still shown
+
   // done({ items, indexed }) with the files best matching `query` (below
   // `dir`, absolute, when given): unless something newer was asked
   // meanwhile. `indexed` is false while there's no index yet, or when it
@@ -62,12 +65,15 @@ QtObject {
         "items": result.items,
         "indexed": result.indexed
       });
+    }, {
+      "repeatable": true
     });
   }
 
   // done({ items, total, error }) with the folder's entries from the disk
   // (folders first, or best matching `query`), unless something newer
-  // was asked meanwhile; error is the reason it can't be listed, else ""
+  // was asked meanwhile; error is why it can't be listed (the error's
+  // kind: not_found, failed, …), else ""
   function browse(path, query, limit, done) {
     const id = root._next();
     BackendManager.call("filesearch.browse", {
@@ -81,12 +87,14 @@ QtObject {
       done(error ? {
         "items": [],
         "total": 0,
-        "error": error.message
+        "error": error.kind
       } : {
         "items": result.items,
         "total": result.total,
         "error": ""
       });
+    }, {
+      "repeatable": true
     });
   }
 
@@ -98,6 +106,8 @@ QtObject {
     }, (error, result) => {
       if (id === root._seq && error?.kind !== "unavailable")
         done(error ? [] : result.items);
+    }, {
+      "repeatable": true
     });
   }
 

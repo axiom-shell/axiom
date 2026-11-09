@@ -121,16 +121,14 @@ func TestSearch(t *testing.T) {
 		"empty/",
 	)
 	for _, c := range []struct {
-		name   string
-		q      string
-		under  string
-		hidden bool
-		want   []string // in order (a prefix of the hits)
-		not    []string
+		name  string
+		q     string
+		under string
+		want  []string // in order (a prefix of the hits)
+		not   []string
 	}{
-		{name: "exact and prefix", q: "report", want: []string{"/home/u/Documents/Reports", "/home/u/Documents/report.pdf"},
-			not: []string{"/home/u/.config/app/report.conf"}},
-		{name: "hidden on asks", q: "report.conf", hidden: true, want: []string{"/home/u/.config/app/report.conf"}},
+		{name: "exact and prefix", q: "report", want: []string{"/home/u/Documents/Reports", "/home/u/Documents/report.pdf"}},
+		{name: "hidden (indexed only with showHidden)", q: "report.conf", want: []string{"/home/u/.config/app/report.conf"}},
 		{name: "smart case", q: "Report", want: []string{"/home/u/Documents/Reports", "/home/u/Music/Report Song.mp3"},
 			not: []string{"/home/u/Documents/report.pdf"}},
 		{name: "segments", q: "doc/rep", want: []string{"/home/u/Documents/Reports", "/home/u/Documents/report.pdf"},
@@ -153,7 +151,7 @@ func TestSearch(t *testing.T) {
 					t.Fatalf("no %s", c.under)
 				}
 			}
-			hits, stale := ix.Search(Query{Pattern: ParsePattern(c.q), Under: under, Hidden: c.hidden, Limit: 20, Now: now, Shards: 3})
+			hits, stale := ix.Search(Query{Pattern: ParsePattern(c.q), Under: under, Limit: 20, Now: now, Shards: 3})
 			if stale {
 				t.Fatal("stale")
 			}
@@ -189,7 +187,7 @@ func TestRankRecencyAndUse(t *testing.T) {
 	if hits, _ = ix.Search(q); hits[0].Entry != b {
 		t.Errorf("used: got %q", names(ix, hits))
 	}
-	ix.ReplaceDir(ix.Parent(a), "/r/a", now, []Child{{Name: []byte("notes.txt"), Mtime: now}}, 0)
+	ix.ReplaceDir(ix.at(a).parent, "/r/a", now, []Child{{Name: []byte("notes.txt"), Mtime: now}}, 0)
 	q.Bonus = nil
 	if hits, _ = ix.Search(q); hits[0].Entry != a {
 		t.Errorf("recent: got %q", names(ix, hits))
@@ -565,4 +563,10 @@ func BenchmarkEncode1M(b *testing.B) {
 		f.Close()
 	}
 	b.ReportMetric(float64(size)/1e6, "MB")
+}
+
+// Find is the entry at path (FindAll for one)
+func (ix *Index) Find(path string) (uint32, bool) {
+	i, ok := ix.FindAll([]string{path})[path]
+	return i, ok
 }

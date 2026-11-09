@@ -12,7 +12,8 @@ import (
 
 // The events a watched folder reports: entries made, removed, renamed in
 // or out, a file written; the folder itself removed or moved. Never
-// through a link (IN_DONT_FOLLOW), only folders (IN_ONLYDIR).
+// through a link (IN_DONT_FOLLOW; but a root, which the user named), only
+// folders (IN_ONLYDIR).
 const watchMask = unix.IN_CREATE | unix.IN_DELETE | unix.IN_MOVED_FROM | unix.IN_MOVED_TO |
 	unix.IN_CLOSE_WRITE | unix.IN_DELETE_SELF | unix.IN_MOVE_SELF |
 	unix.IN_ONLYDIR | unix.IN_DONT_FOLLOW | unix.IN_EXCL_UNLINK
@@ -67,15 +68,20 @@ func newWatcher(budget int) (*watcher, error) {
 
 // add watches the folder at path, unless the budget is spent; stolen is
 // the path the folder was watched under until now (it moved here, or
-// another root reaches it through a link), "" for none.
-func (w *watcher) add(path string) (ok bool, stolen string) {
+// another root reaches it through a link), "" for none. follow watches
+// a link's folder (a root that is a link).
+func (w *watcher) add(path string, follow bool) (ok bool, stolen string) {
 	if _, ok := w.byPath[path]; ok {
 		return true, ""
 	}
 	if len(w.byPath) >= w.budget {
 		return false, ""
 	}
-	wd, err := unix.InotifyAddWatch(w.fd, path, watchMask)
+	mask := uint32(watchMask)
+	if follow {
+		mask &^= unix.IN_DONT_FOLLOW
+	}
+	wd, err := unix.InotifyAddWatch(w.fd, path, mask)
 	if err != nil {
 		return false, ""
 	}

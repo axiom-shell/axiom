@@ -126,8 +126,9 @@ QtObject {
       return [];
     const request = answer.request;
     const rows = answer.items.map(item => root._row(item, false));
+    // The daemon's error kind (its message stays English)
     if (answer.error)
-      return [root._info(answer.error, Paths.shortenHome(request.dir), "folder_off")];
+      return [root._info(answer.error === "not_found" ? I18n.tr("No such folder") : I18n.tr("This folder can't be read"), Paths.shortenHome(request.dir), "folder_off")];
     if (answer.browsed) {
       if (answer.total > rows.length)
         rows.push(root._info(I18n.tr("{0} more", answer.total - rows.length), I18n.tr("Type to narrow them down"), "more_horiz"));
@@ -138,11 +139,11 @@ QtObject {
     // A search: while the index builds, say so after what it has
     const state = FileSearchManager.state;
     if (state.phase === "off")
-      return [root._info(I18n.tr("File search is off"), state.error || I18n.tr("Launcher settings › Files"), "search_off")];
+      return [root._info(I18n.tr("File search is off"), I18n.tr("Launcher settings › Files"), "search_off")];
     if (!answer.indexed || state.phase === "loading" || state.phase === "crawling" || state.phase === "waiting")
       rows.push(root._info(I18n.tr("Indexing… {0} files", state.entries), I18n.tr("Results grow as it goes"), "manage_search"));
     else if (rows.length === 0)
-      rows.push(root._info(I18n.tr("No matches"), state.truncated ? I18n.tr("Only the first {0} files are indexed", state.entries) : I18n.tr("{0} files indexed", state.entries), "search_off"));
+      rows.push(root._info(I18n.tr("No matches"), state.error ? I18n.tr("The file index couldn't be built") : state.truncated ? I18n.tr("Only the first {0} files are indexed", state.entries) : I18n.tr("{0} files indexed", state.entries), "search_off"));
     return rows;
   }
 
@@ -199,9 +200,9 @@ QtObject {
     target: FileSearchManager
     function onStateChanged() {
       const answer = root._mode.answer;
-      if (root._mode.text === null || !answer)
+      if (!root.active || root._mode.text === null || !answer)
         return;
-      if (root.active && answer.request.kind === "search" && answer.phase !== "ready" && (!answer.browsed || answer.phase !== FileSearchManager.state.phase))
+      if (answer.request.kind === "search" && answer.phase !== "ready" && (!answer.browsed || answer.phase !== FileSearchManager.state.phase))
         root._ask(root._mode.text);
       else
         root.updated();

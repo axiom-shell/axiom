@@ -378,10 +378,13 @@ func TestCapTruncates(t *testing.T) {
 
 func TestRecentAndUsed(t *testing.T) {
 	t.Parallel()
-	root := tree(t, "a.txt", "b.txt", "c.txt")
+	// caf\xe9.txt: a name that isn't UTF-8 is left out (JSON would carry
+	// another path)
+	root := tree(t, "a.txt", "b.txt", "c.txt", "caf\xe9.txt")
 	r := start(t, Options{WatchBudget: -1}, Settings{})
 	xbel := `<xbel version="1.0"><bookmark href="file://` + root + `/a.txt" modified="2026-01-02T10:00:00Z"/>` +
-		`<bookmark href="file://` + root + `/gone.txt" modified="2026-01-03T10:00:00Z"/></xbel>`
+		`<bookmark href="file://` + root + `/gone.txt" modified="2026-01-03T10:00:00Z"/>` +
+		`<bookmark href="file://` + root + `/caf%E9.txt" modified="2026-01-04T10:00:00Z"/></xbel>`
 	os.WriteFile(r.o.XBEL, []byte(xbel), 0o644)
 	if err := r.Used(root + "/b.txt"); err != nil {
 		t.Fatal(err)
@@ -543,7 +546,8 @@ func TestCapWithFoldersQueued(t *testing.T) {
 	t.Parallel()
 	root := tree(t, "a.txt", "b.txt", "sub/c.txt")
 	now := time.Now()
-	s := New(Options{CacheFile: filepath.Join(t.TempDir(), "c.bin"), MaxEntries: 4, Now: func() time.Time { return now }})
+	cache := filepath.Join(t.TempDir(), "c.bin")
+	s := New(Options{CacheFile: cache, MaxEntries: 4, Now: func() time.Time { return now }})
 	st := Settings{Enabled: true, Roots: []string{root}}
 	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}, cur: st, active: true, phase: PhaseCrawling,
 		f: newFilter(st.Roots, nil, nil, false)}
@@ -556,6 +560,10 @@ func TestCapWithFoldersQueued(t *testing.T) {
 	l.childMsg(childMsg{done: true})
 	if l.phase != PhaseReady || !l.truncated || l.child != nil {
 		t.Errorf("phase %s, truncated %v, a child %v", l.phase, l.truncated, l.child != nil)
+	}
+	// Saved at once, as a crawl that ends is
+	if _, err := os.Stat(cache); err != nil {
+		t.Errorf("no cache: %v", err)
 	}
 }
 
@@ -595,4 +603,32 @@ func TestLinkedRoots(t *testing.T) {
 	os.WriteFile(target+"/sub/b.txt", nil, 0o644)
 	r.finds(t, "b.txt", target+"/sub/b.txt", true)
 	r.finds(t, "b.txt", link+"/sub/b.txt", true)
+}
+
+// A root that is a link is watched (its folder); a link below one never is
+func TestLinkedRootIsWatched(t *testing.T) {
+	t.Parallel()
+	target := tree(t, "sub/a.txt")
+	link := filepath.Join(t.TempDir(), "docs")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	w, err := newWatcher(8)
+	if err != nil {
+		t.Skip("no inotify:", err)
+	}
+	defer w.file.Close()
+	if ok, _ := w.add(link, true); !ok {
+		t.Error("the linked root isn't watched")
+	}
+	if ok, _ := w.add(filepath.Join(t.TempDir(), "x"), false); ok {
+		t.Error("a missing folder is watched")
+	}
+	inner := filepath.Join(target, "in")
+	if err := os.Symlink(filepath.Join(target, "sub"), inner); err != nil {
+		t.Fatal(err)
+	}
+	if ok, _ := w.add(inner, false); ok {
+		t.Error("a link below a root is watched")
+	}
 }

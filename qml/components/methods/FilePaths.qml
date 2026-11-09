@@ -12,8 +12,7 @@ QtObject {
   //   "~rep"      { kind: "search", dir: "", query: "rep" }   every root
   //   "~/a/"      { kind: "browse", dir: home/a, query: "" }  a's entries
   //   "~/a/rep"   { kind: "search", dir: home/a, query: "rep" } below a
-  // `typed` is the folder as typed ("~/a/"), "" for none. A folder's . and
-  // .. are resolved ("~/../" is home's parent); spaces around the query are
+  // A folder's . and .. are resolved ("~/../" is home's parent); spaces around the query are
   // dropped, those inside kept (each word must match)
   function parse(text, home) {
     const body = String(text ?? "").replace(/^\s*~/, "");
@@ -22,22 +21,18 @@ QtObject {
       return query === "" ? {
         "kind": "recent",
         "dir": "",
-        "typed": "",
         "query": ""
       } : {
         "kind": "search",
         "dir": "",
-        "typed": "",
         "query": query
       };
     }
     const slash = body.lastIndexOf("/");
-    const typed = "~" + body.slice(0, slash + 1);
     const query = body.slice(slash + 1).trim();
     return {
       "kind": query === "" ? "browse" : "search",
       "dir": root.join(home, body.slice(0, slash)),
-      "typed": typed,
       "query": query
     };
   }

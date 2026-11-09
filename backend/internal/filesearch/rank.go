@@ -19,10 +19,8 @@ type Query struct {
 	Pattern Pattern
 	// Under keeps entries below this folder (NoEntry: every root)
 	Under uint32
-	// Hidden keeps hidden entries (always, below a hidden Under)
-	Hidden bool
-	Limit  int
-	Now    int64 // nanoseconds since the epoch, for recency
+	Limit int
+	Now   int64 // nanoseconds since the epoch, for recency
 	// Bonus is a use bonus by entry (UseBonus of its frecency)
 	Bonus map[uint32]float64
 	// Stale says a newer query replaced this one: the scan stops
@@ -99,9 +97,6 @@ func (ix *Index) putScratch(s *scratch) {
 func (ix *Index) Search(q Query) (hits []Hit, stale bool) {
 	if q.Pattern.Empty() || q.Limit <= 0 || ix.n == 0 {
 		return nil, false
-	}
-	if q.Under != NoEntry && ix.at(q.Under).flags&flagHidden != 0 {
-		q.Hidden = true
 	}
 	toks := q.Pattern.tokens
 	s := ix.getScratch(len(toks))
@@ -212,7 +207,7 @@ func (ix *Index) scan(q Query, s *scratch, lo, hi uint32, stopped *atomic.Bool) 
 			}
 		}
 		e := ix.at(i)
-		if e.flags&(flagRemoved|flagRoot) != 0 || !q.Hidden && e.flags&flagHidden != 0 {
+		if e.flags&(flagRemoved|flagRoot) != 0 {
 			continue
 		}
 		p := e.parent

@@ -135,8 +135,6 @@ func (ix *Index) Name(i uint32) string { return string(ix.name(ix.at(i))) }
 func (ix *Index) IsDir(i uint32) bool { return ix.at(i).flags&flagDir != 0 }
 
 // IsLink says whether an entry is a symbolic link.
-func (ix *Index) IsLink(i uint32) bool { return ix.at(i).flags&flagLink != 0 }
-
 // IsRoot says whether an entry is a root.
 func (ix *Index) IsRoot(i uint32) bool { return ix.at(i).flags&flagRoot != 0 }
 
@@ -165,9 +163,6 @@ func (ix *Index) SetWatched(i uint32, on bool) {
 		e.flags &^= flagWatched
 	}
 }
-
-// Parent is an entry's folder (NoEntry for a root).
-func (ix *Index) Parent(i uint32) uint32 { return ix.at(i).parent }
 
 // Path is an entry's whole path.
 func (ix *Index) Path(i uint32) string {
@@ -214,13 +209,7 @@ func (ix *Index) Lookup(path string) (uint32, bool) {
 	return i, true
 }
 
-// Find is the entry at path, file or folder.
-func (ix *Index) Find(path string) (uint32, bool) {
-	i, ok := ix.FindAll([]string{path})[path]
-	return i, ok
-}
-
-// FindAll is Find for many paths at once, those found by path: each
+// FindAll is the entries at paths, file or folder, those found by path: each
 // folder's entries are walked once, however many of its names are asked
 // (a walk per path would cost the folder's size each).
 func (ix *Index) FindAll(paths []string) map[string]uint32 {

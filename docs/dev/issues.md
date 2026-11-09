@@ -331,8 +331,8 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
 
 ### Ctrl+C on a file row copies its path, not the file
-- **Where:** `qml/services/apps/FileSearchManager.qml` (`copyPath`), `backend/internal/daemon/clipboard.go`
-- **What:** Ctrl+C on a file row puts its path on the clipboard as text, so pasting it into a file manager or a chat app's upload doesn't paste the file. File managers copy files as `text/uri-list` (and `x-special/gnome-copied-files` for Nautilus). The daemon's `clipboard.copy` serves a file only as one type (`copyFile(path, mime)`, used for screenshots); offering the path as text and its URI as `text/uri-list` together needs a copy with more than one type.
+- **Where:** `qml/services/apps/FileSearchManager.qml` (`copyPath`), `backend/internal/daemon/clipboard.go`, `backend/internal/clipboard/clipboard.go` (`History.CopyFile`)
+- **What:** Ctrl+C on a file row puts its path on the clipboard as text, so pasting it into a file manager or a chat app's upload doesn't paste the file. File managers copy files as `text/uri-list` (and `x-special/gnome-copied-files` for Nautilus). The daemon's `clipboard.copy` serves a file only as one type (`History.CopyFile(path, mime)`, used for screenshots); offering the path as text and its URI as `text/uri-list` together needs a copy with more than one type.
 - **Size:** small
 - **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
 
