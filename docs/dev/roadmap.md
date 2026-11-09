@@ -172,6 +172,7 @@ Found by the audits:
 - [Tailscale's state is polled where it could be pushed](issues.md#tailscales-state-is-polled-where-it-could-be-pushed)
 
 Found along the way:
+- [The strip after a switcher's row warns that its Grid overflows as it loads](issues.md#the-strip-after-a-switchers-row-warns-that-its-grid-overflows-as-it-loads) (the bar style rework)
 - [A remap runs at startup, from the layout before the config loaded](issues.md#a-remap-runs-at-startup-from-the-layout-before-the-config-loaded) (investigating Hyprland starting on workspace 10)
 - [TestDiscoverCalDAV failed once under verify.sh --all](issues.md#testdiscovercaldav-failed-once-under-verifysh---all) (reviewing the guard's leading `cd`, config-05)
 - [TestLogindLockAndSleep failed once under verify.sh](issues.md#testlogindlockandsleep-failed-once-under-verifysh) (the same)

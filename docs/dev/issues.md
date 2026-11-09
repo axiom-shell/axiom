@@ -32,6 +32,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-04, while fixing a keepFill opening's unfilled row (compositor-20)
 
+### The strip after a switcher's row warns that its Grid overflows as it loads
+- **Where:** `qml/components/bar/widgets/Workspaces/ActiveStrip.qml` (its Grid's `rows` / `columns`, `_divided`)
+- **What:** On a strip monitor a nested niri shell logged `Grid contains more visible items (2) than rows*columns (1)` (`@components/bar/widgets/Workspaces/ActiveStrip.qml`) twice as a config loaded, with the bar style rework's 3c commit and its last alike. The Grid sizes itself from `_divided` while its divider's `visible` reads it too; one appears to update before the other as the strip's windows arrive. Not traced further: PLAUSIBLE. Nothing wrong was seen drawn.
+- **Size:** trivial
+- **Found:** 2026-11-09, while refactoring the bar's widget styles (stage 6)
+
 ## Popouts and edge menus
 
 ### EdgePlacement logs a binding loop on _layout
