@@ -128,7 +128,7 @@ DropdownSurface {
                 anchors.rightMargin: Widget.spacing
                 spacing: 0
 
-                StyledText {
+                StyledLabel {
                   visible: !item.editing
                   Layout.fillWidth: true
                   text: item.conversation.title || I18n.tr("Untitled")

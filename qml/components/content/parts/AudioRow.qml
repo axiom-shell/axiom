@@ -69,7 +69,7 @@ Item {
         Layout.fillWidth: true
         spacing: Widget.spacing
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: !subtitleText.visible
           Layout.maximumWidth: subtitleText.visible ? implicitWidth : -1
           text: root.title
@@ -78,7 +78,7 @@ Item {
           textColor: root.muted ? Theme.foregroundAlt : Theme.foreground
         }
 
-        StyledText {
+        StyledLabel {
           id: subtitleText
           Layout.fillWidth: true
           visible: root.subtitle !== "" && root.subtitle !== root.title
@@ -100,7 +100,7 @@ Item {
       }
     }
 
-    StyledText {
+    StyledLabel {
       Layout.preferredWidth: percentMetrics.width
       horizontalAlignment: Text.AlignRight
       text: `${Math.round(root.volume * 100)}%`

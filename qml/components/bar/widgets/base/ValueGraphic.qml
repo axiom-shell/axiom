@@ -187,7 +187,15 @@ Item {
 
         Text {
           id: tickerText
+          // Centred across on its letters, as a label is
+          readonly property TextBandPadding _band: TextBandPadding {
+            label: tickerText
+            text: root._plainText
+          }
           anchors.verticalCenter: parent.verticalCenter
+          anchors.verticalCenterOffset: -_band.offset
+          topPadding: _band.top
+          bottomPadding: _band.bottom
           text: root.text
           textFormat: root.textFormat
           color: root.textColor

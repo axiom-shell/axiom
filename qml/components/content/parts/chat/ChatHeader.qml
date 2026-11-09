@@ -31,7 +31,7 @@ RowLayout {
     onClicked: root.toggleList()
   }
 
-  StyledText {
+  StyledLabel {
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignVCenter
     Layout.leftMargin: root.listDocked ? Widget.spacing : 0
@@ -66,7 +66,7 @@ RowLayout {
         textColor: Theme.accent
         textSize: Appearance.fontSize
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         text: ChatManager.model || I18n.tr("No model")

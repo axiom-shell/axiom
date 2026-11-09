@@ -86,12 +86,12 @@ Panel {
       spacing: Widget.padding
       ColumnLayout {
         spacing: 0
-        StyledText {
+        StyledLabel {
           text: I18n.tr("Portfolio")
           textSize: Appearance.fontSizeBy(-2)
           textColor: Theme.foregroundAlt
         }
-        StyledText {
+        StyledLabel {
           text: root.portfolio ? MarketMath.formatPrice(root.portfolio.value, MarketsConfig.baseCurrency) : ""
           textSize: Appearance.fontSize * 1.6
           font.weight: Font.Bold
@@ -102,13 +102,13 @@ Panel {
       }
       ColumnLayout {
         spacing: 0
-        StyledText {
+        StyledLabel {
           Layout.alignment: Qt.AlignRight
           textColor: MarketsManager.trendColor(MarketMath.trend(root.portfolio?.dayChange ?? 0))
           font.weight: Font.DemiBold
           text: root.portfolio ? I18n.tr("{0} ({1}) today", MarketMath.formatChange(root.portfolio.dayChange, MarketsConfig.baseCurrency), MarketMath.formatPercent(root.portfolio.dayPercent)) : ""
         }
-        StyledText {
+        StyledLabel {
           Layout.alignment: Qt.AlignRight
           visible: root.portfolio?.gain !== null && root.portfolio?.gain !== undefined
           textSize: Appearance.fontSizeBy(-2)

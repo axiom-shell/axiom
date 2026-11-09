@@ -74,7 +74,7 @@ StyledContainer {
       text: KeybindManager.displayKey(root.parts.key)
     }
 
-    StyledText {
+    StyledLabel {
       visible: root.recording || root.parts.key === ""
       text: root.recording ? I18n.tr("Press a combo…") : root.placeholder
       textColor: root.recording ? Theme.accent : Theme.foreground

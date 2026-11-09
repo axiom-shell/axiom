@@ -69,7 +69,7 @@ ColumnLayout {
   RowLayout {
     Layout.fillWidth: true
     spacing: Widget.padding
-    StyledText {
+    StyledLabel {
       text: MarketMath.formatPrice(root.price, root.currency)
       textSize: Appearance.fontSize * 1.8
       font.weight: Font.Bold
@@ -79,12 +79,12 @@ ColumnLayout {
     }
     ColumnLayout {
       spacing: 0
-      StyledText {
+      StyledLabel {
         textColor: root.trendColor
         font.weight: Font.DemiBold
         text: isNaN(root.price) ? "" : I18n.tr("{0} ({1})", MarketMath.formatChange(root.change, root.currency), MarketMath.formatPercent(root.percent))
       }
-      StyledText {
+      StyledLabel {
         textSize: Appearance.fontSizeBy(-2)
         textColor: Theme.foregroundInactive
         text: {

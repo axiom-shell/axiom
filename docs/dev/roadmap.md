@@ -182,6 +182,7 @@ Found along the way:
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
 - [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)
 - [TestNotifySend failed once under verify.sh](issues.md#testnotifysend-failed-once-under-verifysh) (the same)
+- [qml_modules.py builds its tree in a folder named after a flag](issues.md#qml_modulespy-builds-its-tree-in-a-folder-named-after-a-flag) (centring labels outside the bar)
 - [The screen-share picker repeats the shared prompt's modal frame](issues.md#the-screen-share-picker-repeats-the-shared-prompts-modal-frame) (lifting polkit's window into the shared prompt)
 - [A drive card's "open" on a locked volume asks in a menu nobody opened](issues.md#a-drive-cards-open-on-a-locked-volume-asks-in-a-menu-nobody-opened) (reviewing the Bluetooth daemon branch)
 - [guard.py doesn't judge qs ipc call](issues.md#guardpy-doesnt-judge-qs-ipc-call) (the same)

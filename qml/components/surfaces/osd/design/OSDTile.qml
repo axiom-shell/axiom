@@ -97,7 +97,7 @@ Rectangle {
     opacity: tile.inkOpacity
   }
 
-  StyledText {
+  StyledLabel {
     anchors.centerIn: parent
     visible: !!tile.t.label
     text: tile.t.label ?? ""

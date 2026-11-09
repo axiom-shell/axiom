@@ -107,11 +107,11 @@ FieldGroup {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledText {
+          StyledLabel {
             text: row.provider.name
             font.bold: true
           }
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: row.provider.baseUrl
             textColor: Theme.foregroundInactive
@@ -192,7 +192,7 @@ FieldGroup {
           Layout.fillWidth: true
           spacing: Widget.spacing / 2
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: row.result?.busy ? I18n.tr("Connecting…") : row.result?.text ?? ""
             textColor: row.result?.busy ? Theme.foregroundAlt : row.result?.ok ? Theme.success : Theme.error

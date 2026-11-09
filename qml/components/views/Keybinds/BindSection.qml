@@ -106,7 +106,7 @@ ColumnLayout {
         Glide on rotation {}
       }
 
-      StyledText {
+      StyledLabel {
         // Section names come from BindActions.sectionFor (or a bind's own
         // "Section:" description)
         text: I18n.tr(root.section.key)
@@ -114,7 +114,7 @@ ColumnLayout {
         font.bold: true
       }
 
-      StyledText {
+      StyledLabel {
         text: root.section.indices.length
         opacity: 0.5
         textSize: Appearance.fontSizeBy(-2)
@@ -126,7 +126,7 @@ ColumnLayout {
         textSize: Appearance.fontSizeBy(-1)
       }
 
-      StyledText {
+      StyledLabel {
         visible: root.issueCount > 0
         text: root.issueCount
         textColor: Theme.warning
@@ -141,7 +141,7 @@ ColumnLayout {
         Layout.fillWidth: true
       }
 
-      StyledText {
+      StyledLabel {
         text: root.allPaused ? I18n.tr("Paused") : ""
         opacity: 0.5
         textSize: Appearance.fontSizeBy(-2)

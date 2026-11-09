@@ -22,7 +22,7 @@ FoldRow {
     textSize: Appearance.fontSizeBy(-1)
   }
 
-  StyledText {
+  StyledLabel {
     Layout.fillWidth: true
     elide: Text.ElideRight
     text: I18n.tr("Quiet") + "  ·  " + NotificationManager.quietCount

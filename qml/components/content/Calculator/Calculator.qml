@@ -137,7 +137,7 @@ Panel {
     ColorGlide on color {}
     Glide on scale {}
 
-    StyledText {
+    StyledLabel {
       visible: !key.modelData.icon
       anchors.centerIn: parent
       text: key.modelData.label ?? key.modelData.key

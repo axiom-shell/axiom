@@ -47,7 +47,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Widget.spacing / 2
 
-    StyledText {
+    StyledLabel {
       visible: root.label !== ""
       Layout.preferredWidth: Appearance.fontSize * 4.5
       text: root.label

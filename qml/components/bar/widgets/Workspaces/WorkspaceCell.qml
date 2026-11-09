@@ -182,12 +182,25 @@ Item {
       visible: root._shows === "text"
       spacing: WorkspaceCells.iconGap(root.thickness)
       rotation: root.isVertical && !textLabel.symbol && textRow.implicitWidth > root.thickness * 0.8 ? -90 : 0
+      // What's drawn as words, the two on one band (TextBand: a plain
+      // lead and its text share a baseline)
+      readonly property string words: (leadLabel.symbol ? "" : root.leadIcon) + (textLabel.symbol ? "" : root.text)
 
       StyledIcon {
         id: leadLabel
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
         visible: root.leadIcon !== ""
         readonly property bool symbol: leadLabel.isSymbol && !root.leadPlain
+        // As words, centred on their letters
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !leadLabel.symbol
+          label: leadLabel
+          text: root.leadIcon
+          bandText: textRow.words
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
 
         // An icon stays upright as the text turns
         rotation: leadLabel.symbol && textRow.rotation !== 0 ? 90 : 0
@@ -205,7 +218,16 @@ Item {
       StyledIcon {
         id: textLabel
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -_band.offset
         readonly property bool symbol: textLabel.isSymbol && !root.textPlain
+        readonly property TextBandPadding _band: TextBandPadding {
+          enabled: !textLabel.symbol
+          label: textLabel
+          text: root.text
+          bandText: textRow.words
+        }
+        topPadding: _band.top
+        bottomPadding: _band.bottom
 
         text: root.text
         textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
@@ -277,7 +299,8 @@ Item {
       }
     }
 
-    StyledText {
+    // Centred on its figures
+    StyledLabel {
       anchors.centerIn: parent
       visible: root.labels === "numbers" && root._shows === "labels"
       text: root.label

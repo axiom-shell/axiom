@@ -21,7 +21,7 @@ Row {
     border.color: Theme.border
     border.width: 1
 
-    StyledText {
+    StyledLabel {
       id: keyText
       anchors.centerIn: parent
       text: root.key
@@ -30,7 +30,7 @@ Row {
     }
   }
 
-  StyledText {
+  StyledLabel {
     anchors.verticalCenter: parent.verticalCenter
     text: root.label
     textColor: Theme.foregroundInactive

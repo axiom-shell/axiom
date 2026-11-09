@@ -186,7 +186,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    StyledText {
+    StyledLabel {
       visible: root.busy
       text: GreeterManager.phase === "password" ? I18n.tr("Waiting for your password...") : GreeterManager.action === "uninstall" ? I18n.tr("Removing now...") : I18n.tr("Installing now...")
       opacity: 0.7

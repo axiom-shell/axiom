@@ -77,7 +77,7 @@ DeviceRow {
           Layout.fillWidth: true
           spacing: Widget.spacing
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: [volumeRow.volume?.label || I18n.tr("Volume {0}", volumeRow.index + 1), volumeRow.volume?.fsType ?? "", DriveInfo.size(volumeRow.volume?.size)].filter(s => s !== "").join(" · ")

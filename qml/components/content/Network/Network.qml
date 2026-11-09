@@ -102,7 +102,7 @@ Card {
           textColor: Theme.accent
           textSize: Appearance.fontSizeBy(2)
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: root.info.name || I18n.tr("Disconnected")
           elide: Text.ElideRight

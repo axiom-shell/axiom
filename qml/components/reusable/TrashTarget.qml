@@ -53,7 +53,7 @@ Item {
         textColor: root.hovered ? Theme.background : Theme.error
         textSize: Appearance.fontSizeBy(4)
       }
-      StyledText {
+      StyledLabel {
         id: label
         anchors.verticalCenter: parent.verticalCenter
         text: I18n.tr("Drop to remove")

@@ -361,7 +361,7 @@ Loader {
         // Centred on a control taller than it (a label alone)
         Layout.alignment: Qt.AlignVCenter
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         horizontalAlignment: Text.AlignRight

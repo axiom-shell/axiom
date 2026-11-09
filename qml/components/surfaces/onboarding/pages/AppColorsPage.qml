@@ -59,7 +59,7 @@ OnboardingPage {
           textColor: integration.present ? Theme.success : Theme.foregroundInactive
         }
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: I18n.tr(ThemeManager.integrationTitle(integration.modelData))
           elide: Text.ElideRight

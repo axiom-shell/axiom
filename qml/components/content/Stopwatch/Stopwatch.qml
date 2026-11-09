@@ -142,7 +142,7 @@ Panel {
     Layout.fillWidth: true
     spacing: Widget.spacing
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: I18n.tr("Laps")
       font.bold: true
@@ -186,18 +186,18 @@ Panel {
       width: ListView.view.width
       spacing: Widget.spacing
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: I18n.tr("Lap {0}", lapRow.lap.number)
         textColor: lapRow.lap.fastest || lapRow.lap.slowest ? lapRow.tint : Theme.foregroundAlt
         textSize: Appearance.fontSizeBy(-1)
       }
-      StyledText {
+      StyledLabel {
         text: StopwatchClock.format(lapRow.lap.split, true, false)
         textColor: lapRow.tint
         textSize: Appearance.fontSizeBy(-1)
       }
-      StyledText {
+      StyledLabel {
         Layout.preferredWidth: Appearance.fontSize * 5
         horizontalAlignment: Text.AlignRight
         text: StopwatchClock.format(lapRow.lap.total, true, false)

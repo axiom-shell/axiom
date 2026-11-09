@@ -240,7 +240,7 @@ ColumnLayout {
               textColor: Theme.accent
             }
 
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               text: root.selected ? root.labelOf(root.selected.type) : ""
               font.bold: true
