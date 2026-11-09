@@ -1,8 +1,0 @@
-module qs.components.views.CustomWidgets
-BarTab 1.0 BarTab.qml
-CustomWidgets 1.0 CustomWidgets.qml
-DataTab 1.0 DataTab.qml
-DefinitionsPanel 1.0 DefinitionsPanel.qml
-ElementEditorLayout 1.0 ElementEditorLayout.qml
-ElementInspector 1.0 ElementInspector.qml
-ModuleTab 1.0 ModuleTab.qml

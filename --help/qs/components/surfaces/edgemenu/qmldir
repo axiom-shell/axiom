@@ -1,6 +1,0 @@
-module qs.components.surfaces.edgemenu
-EdgeMenu 1.0 EdgeMenu.qml
-EdgeMenuBody 1.0 EdgeMenuBody.qml
-EdgeMenuSync 1.0 EdgeMenuSync.qml
-FloatingEdgeMenu 1.0 FloatingEdgeMenu.qml
-IntegratedEdgeMenu 1.0 IntegratedEdgeMenu.qml

@@ -1,4 +1,0 @@
-module qs.components.surfaces.greeter
-GreeterPreviewWindow 1.0 GreeterPreviewWindow.qml
-GreeterSurface 1.0 GreeterSurface.qml
-GreeterWindow 1.0 GreeterWindow.qml

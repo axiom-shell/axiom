@@ -1,3 +1,0 @@
-module qs.components.surfaces.border
-BorderPanel 1.0 BorderPanel.qml
-RoundedBorders 1.0 RoundedBorders.qml

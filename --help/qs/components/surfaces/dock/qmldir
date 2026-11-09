@@ -1,4 +1,0 @@
-module qs.components.surfaces.dock
-DockItem 1.0 DockItem.qml
-DockMenu 1.0 DockMenu.qml
-DockWindow 1.0 DockWindow.qml

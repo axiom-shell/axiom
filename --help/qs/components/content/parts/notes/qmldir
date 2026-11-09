@@ -1,4 +1,0 @@
-module qs.components.content.parts.notes
-NoteBlock 1.0 NoteBlock.qml
-NoteBrowser 1.0 NoteBrowser.qml
-NoteEditor 1.0 NoteEditor.qml

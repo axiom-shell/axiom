@@ -1,5 +1,0 @@
-module qs.components.surfaces.osd.design
-OSDCard 1.0 OSDCard.qml
-OSDLevelBar 1.0 OSDLevelBar.qml
-OSDTile 1.0 OSDTile.qml
-OSDTileRow 1.0 OSDTileRow.qml

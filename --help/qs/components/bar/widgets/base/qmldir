@@ -1,9 +1,0 @@
-module qs.components.bar.widgets.base
-AudioLevelWidget 1.0 AudioLevelWidget.qml
-BarIconWidget 1.0 BarIconWidget.qml
-BarToolTip 1.0 BarToolTip.qml
-BarWidget 1.0 BarWidget.qml
-BaseWidget 1.0 BaseWidget.qml
-IconTextWidget 1.0 IconTextWidget.qml
-ValueGraphic 1.0 ValueGraphic.qml
-ValueStyleWidget 1.0 ValueStyleWidget.qml

@@ -1,7 +1,0 @@
-module qs.components.bar
-BarContainer 1.0 BarContainer.qml
-BarPanel 1.0 BarPanel.qml
-BarWidgetHost 1.0 BarWidgetHost.qml
-CornerMerge 1.0 CornerMerge.qml
-WidgetBackground 1.0 WidgetBackground.qml
-WidgetGroup 1.0 WidgetGroup.qml

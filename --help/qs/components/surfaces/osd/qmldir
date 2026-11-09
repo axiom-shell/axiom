@@ -1,3 +1,0 @@
-module qs.components.surfaces.osd
-OSDHost 1.0 OSDHost.qml
-OSDTriggers 1.0 OSDTriggers.qml

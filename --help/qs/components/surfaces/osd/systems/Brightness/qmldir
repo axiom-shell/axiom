@@ -1,3 +1,0 @@
-module qs.components.surfaces.osd.systems.Brightness
-Brightness 1.0 Brightness.qml
-BrightnessWatch 1.0 BrightnessWatch.qml

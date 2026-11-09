@@ -1,3 +1,0 @@
-module qs.components.surfaces.notifications
-ToastItem 1.0 ToastItem.qml
-ToastStack 1.0 ToastStack.qml
