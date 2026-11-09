@@ -704,7 +704,6 @@
     "Latest on main": "main の最新",
     "No main branch": "main ブランチがありません",
     "axiom has {0} new commits on main": "axiom の main に {0} 件の新しいコミットがあります",
-    "Make the active workspace twice as long.": "アクティブなワークスペースを2倍の長さにします。",
     "{0}d {1}h": "{0}日{1}時間",
     "Goodbye, {0}": "お疲れさま、{0}",
     "up {0}": "稼働 {0}",
@@ -4146,6 +4145,7 @@
     "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
     "What each workspace shows. None: just its box or line.": "",
     "Workspaces with windows show their largest window's icon instead.": "",
-    "Numbers, dots in boxes and the grid's active arrow.": ""
+    "Numbers, dots in boxes and the grid's active arrow.": "",
+    "Make the active workspace one cell longer.": ""
   }
 }

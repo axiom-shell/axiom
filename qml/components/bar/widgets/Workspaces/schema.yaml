@@ -62,7 +62,7 @@ settings:
     type: boolean
     title: Wide active
     default: true
-    description: Make the active workspace twice as long.
+    description: Make the active workspace one cell longer.
   showActiveIcon:
     type: boolean
     title: Active icon

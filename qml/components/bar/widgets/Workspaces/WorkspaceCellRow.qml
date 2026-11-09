@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.services.system
+import qs.components.methods
 
 // A bar switcher's row (a column on a vertical bar) of WorkspaceCells for
 // workspaces `ids`: the cells' boxes at rest, the active one's sliding over
@@ -43,10 +44,15 @@ Item {
   // it) shows
   property int hoveredId: -1
 
+  // Each cell's length at rest, and where they sit with the active one
+  // widened by one normal cell's length (`wideActive`: WorkspaceCells)
+  readonly property var _lengths: ids.map(() => root.cellLength)
+  readonly property int _activeIndex: ids.indexOf(activeId)
+  readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLength : 0)
   // Measured from the cells' lengths to be, never their gliding ones
   // (composition.md › Bar motion), and clipped to it: a cell that left the
   // active state still shrinking, the active box wrapping past an end
-  readonly property real _measured: ids.length * cellLength + Math.max(0, ids.length - 1) * spacing + (properties.wideActive && ids.indexOf(activeId) >= 0 ? cellLength : 0)
+  readonly property real _measured: _layout.total
   implicitWidth: isVertical ? cells.implicitWidth : _measured
   implicitHeight: isVertical ? _measured : cells.implicitHeight
   clip: true
@@ -64,10 +70,6 @@ Item {
   // BarsConfig.cellColors for a workspace's cell, active or at rest
   function _look(id, active) {
     return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id));
-  }
-
-  function _length(active) {
-    return root.cellLength * (active && root.properties.wideActive ? 2 : 1);
   }
 
   Grid {
@@ -89,8 +91,8 @@ Item {
         lit: wsId === root.hoveredId
         look: root._look(wsId, isActive && !indicator.slides)
         thickness: root.cell
-        restLength: root.cellLength
-        length: root._length(isActive)
+        restLength: root._lengths[index] ?? root.cellLength
+        length: root._layout.lengths[index] ?? root.cellLength
         radius: root.cellRadius
         hoverColor: root.hoverColor
       }
@@ -101,10 +103,10 @@ Item {
     id: indicator
     barConfig: root.barConfig
     look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active")
-    index: root.ids.indexOf(root.activeId)
+    index: root._activeIndex
     thickness: root.cell
-    restLength: root.cellLength
-    activeLength: root._length(true)
+    lengths: root._lengths
+    extra: root.properties.wideActive ? root.cellLength : 0
     spacing: root.spacing
     radius: root.cellRadius
   }
@@ -133,8 +135,8 @@ Item {
         isActive: wsId === root.activeId
         look: root._look(wsId, isActive)
         thickness: root.cell
-        restLength: root.cellLength
-        length: root._length(isActive)
+        restLength: root._lengths[index] ?? root.cellLength
+        length: root._layout.lengths[index] ?? root.cellLength
         radius: root.cellRadius
         hoverColor: root.hoverColor
         labels: root.properties.labels

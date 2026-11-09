@@ -1,6 +1,6 @@
 # Workspaces (layout, navigation, the bar widget)
 
-> **Files:** `qml/config/WorkspacesConfig.qml`, `qml/services/compositor/CompositorManager.qml`, `qml/services/compositor/WorkspaceRemap.qml`, `qml/services/compositor/HyprlandManager.qml`, `qml/components/methods/WorkspaceGeometry.qml`, `qml/components/bar/widgets/Workspaces/Workspaces.qml`, `qml/components/bar/widgets/Workspaces/`, `qml/components/surfaces/workspaces/`, `qml/components/views/Settings/WorkspacesStatus.qml`
+> **Files:** `qml/config/WorkspacesConfig.qml`, `qml/services/compositor/CompositorManager.qml`, `qml/services/compositor/WorkspaceRemap.qml`, `qml/services/compositor/HyprlandManager.qml`, `qml/components/methods/WorkspaceGeometry.qml`, `qml/components/methods/WorkspaceCells.qml`, `qml/components/bar/widgets/Workspaces/Workspaces.qml`, `qml/components/bar/widgets/Workspaces/`, `qml/components/surfaces/workspaces/`, `qml/components/views/Settings/WorkspacesStatus.qml`
 > **Config:** `Workspaces.*` (`layout`, `count`, `columns`, `rows`, …)
 > **Related:** [Workspace strips](workspace-strips.md), [Keybinds](keybinds.md), [Bar composition](../bar/composition.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
@@ -79,12 +79,14 @@ One workspace layout serves everything that shows workspaces or moves between th
   - standard: `workspaces/WorkspaceStrip`
   - grid (`CompositorManager.workspaceGrid`): `workspaces/WorkspaceGridStrip`, showing the active row (or column, on a vertical bar).
 - **Which cells.** Without `showEmpty` (off by default; hidden with dynamic workspaces, which always leave empty ones out, the compositor's empty last one too) a strip shows the workspaces with windows and the active one; the grid strip does so within its row (`WorkspaceGridStrip.lineIds`). Down to one on a strip monitor, the strip shows alone ([workspace strips](workspace-strips.md)).
-- With `wideActive`, both strips make the active `WorkspaceCell` twice as long.
+- With `wideActive`, the active `WorkspaceCell` grows by one normal cell's length (not twice its own: a long one grows by as much as a short one). The extra length is equal room on both sides of what it shows; its content stays packed together (a dot stretches into a pill).
 - **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`.
   - It holds every shown workspace, or one grid row.
   - `glyphOf` gives the grid's position arrow.
+  - Cells may differ in length. Where each sits, and the row's whole length, come from the pure `methods/WorkspaceCells` (`layout(lengths, spacing, active, extra)`, `startOf`), which the row and its `ActiveCellIndicator` both read.
   - It's measured from its cells' target lengths, never their gliding ones ([composition › Bar motion](../bar/composition.md#bar-motion-drawn-not-measured)), and clips them while one glides.
 - **Active cell.** The active cell's box is one `workspaces/ActiveCellIndicator` sliding along the row.
+  - It sits where the active cell starts at rest (`WorkspaceCells.startOf`: only cells after the active one move when it widens) and is as long as that cell widened, gliding to a new length as it moves.
   - It is drawn between the cells' two parts (`WorkspaceCell`'s `part`): the boxes at rest are under it, the labels and icons over it.
   - A step past an end (`CompositorManager.workspaceWrapped`, or the strip's own wheel wrap) sends it out of that end and in at the other.
 - **Cross-fades.**
