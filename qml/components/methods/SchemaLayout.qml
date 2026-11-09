@@ -187,6 +187,29 @@ QtObject {
     return typeof map[value] === "string" ? map[value] : "";
   }
 
+  // `keys` (an object's, in order) with each one marked `x-placeUnder:
+  // <sibling>` (`properties`: the object's) moved directly under that
+  // sibling's row: after it, the rows beside it (`x-beside`) and those
+  // placed under it before. One naming a key not in `keys`, or one placed
+  // itself, stays where it is
+  function placedUnder(keys, properties) {
+    const under = key => {
+      const target = properties?.[key]?.["x-placeUnder"];
+      return typeof target === "string" && target !== key && keys.includes(target) && typeof properties[target]?.["x-placeUnder"] !== "string" ? target : null;
+    };
+    const result = keys.filter(key => under(key) === null);
+    for (const key of keys) {
+      const target = under(key);
+      if (target === null)
+        continue;
+      let at = result.indexOf(target) + 1;
+      while (at < result.length && (properties[result[at]]?.["x-beside"] === true || under(result[at]) === target))
+        at++;
+      result.splice(at, 0, key);
+    }
+    return result;
+  }
+
   // Whether a setting waits for the user's own Save or card instead of
   // going live or being set from the launcher: `x-applyOnSave` (Hyprland's
   // mode) or `x-takeover` (the locker, idle, polkit, the greeter), whose

@@ -216,6 +216,11 @@ Item {
             owned[group.title] = BarManager.ownsStyle(BarManager.selectedBarIndex, group.keys);
             return owned;
           }, {})
+          // Owned, but not every key: some still follow the shared style
+          partlyOwned: BarsConfig.styleGroups.reduce((partly, group) => {
+            partly[group.title] = block.owned[group.title] === true && !BarManager.ownsAllStyle(BarManager.selectedBarIndex, group.keys);
+            return partly;
+          }, {})
           // A field's path: [key], or the shadow's ["shadow", part]
           changedAt: path => BarManager.styleFieldChanged(path[0], path[1])
           onEdited: (path, value) => {
@@ -228,6 +233,8 @@ Item {
           }
           onDiscardAt: path => BarManager.discardStyleField(path[0], path[1])
           onOwnToggled: (group, value) => BarManager.setStyleOwned(BarsConfig.styleGroups.find(entry => entry.title === group)?.keys ?? [], value)
+          // (Its keys already set keep their values)
+          onOwnAllRequested: group => BarManager.setStyleOwned(BarsConfig.styleGroups.find(entry => entry.title === group)?.keys ?? [], true)
           // A preset: the bar owns each section it touches
           onPresetPicked: values => BarManager.setStyleOwned([].concat(...BarsConfig.styleGroups.filter(group => group.keys.some(key => key in values) && !block.owned[group.title]).map(group => group.keys)), true, values)
         }

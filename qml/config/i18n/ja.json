@@ -4204,7 +4204,6 @@
     "The line round each merged run. Widget colors show on their icons instead.": "",
     "A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.": "",
     "Bar style": "",
-    "Not used by this style": "",
     "Colors": "",
     "Accents": "",
     "{0} options": "",
@@ -4216,6 +4215,9 @@
     "Match shape": "",
     "Set a whole look at once; what it leaves out stays as it is": "",
     "Minimal": "",
-    "Tabs": ""
+    "Tabs": "",
+    "Doesn't apply here": "",
+    "Some of these follow the shared style.": "",
+    "Make all this bar's own": ""
   }
 }

@@ -199,6 +199,7 @@ properties:
       powerline: Tabs hang from the edge and a badge has no box, so neither can chain
   tabCorners:
     x-group: Look
+    x-placeUnder: widgetShape
     type: string
     title: Tab sides
     default: square
@@ -210,6 +211,7 @@ properties:
     x-link: {page: 'BarEditor:widgetGap'}
   widgetEnds:
     x-group: Look
+    x-placeUnder: widgetShape
     type: string
     title: Ends
     default: shaped

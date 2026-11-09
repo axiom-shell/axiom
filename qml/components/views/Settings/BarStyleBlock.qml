@@ -13,8 +13,8 @@ import qs.components.reusable
 // bar's own widgets, live, in the look being edited. Then its sections, by
 // the schema's `x-group`s: Look full width, its rows marked
 // `x-keepsPlace` (the style, then the shape and grouping beside it) kept
-// in place, greyed with why while they don't apply, and under them what
-// depends on the shape (tab sides, ends); then the chosen style's own
+// in place, greyed with why while they don't apply, and under them the
+// rows placed there (`x-placeUnder`: tab sides, ends); then the chosen style's own
 // options in one panel (Look's other fields). Every other row shows only
 // while its `x-showIf` holds. Then Colors and Accents,
 // Size and Shadow, side by side from Widget.px(720) wide, else stacked.
@@ -25,7 +25,9 @@ import qs.components.reusable
 // `presetPicked`; on the settings page (given `row` and `form`) they go
 // through the settings draft as the page's own rows' do. In the bar
 // editor (`owned`) each section is the bar's own or shared: shared, it
-// shows only its heading and a link to where it's set.
+// shows only its heading and a link to where it's set; owned with some
+// keys still shared (`partlyOwned`), a line saying so and a button to own
+// them all.
 ColumnLayout {
   id: root
 
@@ -44,6 +46,10 @@ ColumnLayout {
   // Per section title, whether the bar has its own (a "This bar's own"
   // switch on each section's heading), or null for none (the settings page)
   property var owned: null
+  // Per section title, whether the bar owns it but some of its keys still
+  // follow the shared style (one saved before the sections were these),
+  // or null for none
+  property var partlyOwned: null
   // The sections shown, by title (all of them unless set)
   property var sections: ["Look", "Colors", "Accents", "Size", "Shadow"]
   // The bar whose widgets the strip shows and whose spacing the tiles take
@@ -56,6 +62,8 @@ ColumnLayout {
   signal discardAt(var path)
   // A section's "This bar's own" switch (with `owned`)
   signal ownToggled(string group, bool value)
+  // A partly owned section's "Make all this bar's own" (with `partlyOwned`)
+  signal ownAllRequested(string group)
   // A preset picked: its values ({ key: value }, its shadow's parts as an
   // object), to set at once, keys it doesn't name kept
   signal presetPicked(var values)
@@ -94,11 +102,12 @@ ColumnLayout {
   // labels English
   readonly property var _presets: root.schema?.["x-presets"] ?? []
   // Look's rows kept in place (`x-keepsPlace`, in x-order: the style, the
-  // shape, the grouping), the rows under them (those whose `x-showIf`
-  // reads the shape: its second), and the rest: the style's own options
+  // shape, the grouping), its top rows (those and the rows placed under
+  // one of them, `x-placeUnder`: tab sides and ends under the shape), and
+  // the rest: the style's own options
   readonly property var _kept: root._keysOf("Look").filter(key => root._properties[key]?.["x-keepsPlace"] === true)
-  readonly property var _byShape: root._keysOf("Look").filter(key => !root._kept.includes(key) && JSON.stringify(root._properties[key]?.["x-showIf"] ?? {}).includes(JSON.stringify(root._kept[1] ?? "") + ":"))
-  readonly property var _options: root._keysOf("Look").filter(key => !root._kept.includes(key) && !root._byShape.includes(key))
+  readonly property var _top: SchemaLayout.placedUnder(root._keysOf("Look").filter(key => root._kept.includes(key) || root._kept.includes(root._properties[key]?.["x-placeUnder"])), root._properties)
+  readonly property var _options: root._keysOf("Look").filter(key => !root._top.includes(key))
   function _valueOf(key) {
     return root.values[key] ?? root._properties[key]?.default;
   }
@@ -209,6 +218,26 @@ ColumnLayout {
       }
     }
 
+    // Owned, but some of its keys still shared: they can all be the bar's
+    RowLayout {
+      visible: !section.shared && section.heading === "" && root.partlyOwned?.[section.title] === true
+      Layout.fillWidth: true
+      spacing: Widget.spacing
+
+      StyledText {
+        Layout.fillWidth: true
+        text: I18n.tr("Some of these follow the shared style.")
+        textColor: Theme.foreground
+        opacity: 0.7
+        wrapMode: Text.WordWrap
+      }
+
+      StyledTextButton {
+        text: I18n.tr("Make all this bar's own")
+        onClicked: root.ownAllRequested(section.title)
+      }
+    }
+
     // Where the shared values are set: the settings page's Bar style card
     RowLayout {
       visible: section.shared && section.heading === ""
@@ -254,7 +283,7 @@ ColumnLayout {
 
   Section {
     title: "Look"
-    keys: root._kept.concat(root._byShape)
+    keys: root._top
   }
 
   // The chosen style's own options, those that apply

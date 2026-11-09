@@ -162,7 +162,7 @@ Loader {
     if (!root.placeKept)
       return "";
     const own = SchemaLayout.tileHint(fieldSchema);
-    return own !== "" ? I18n.tr(own) : I18n.tr("Not used by this style");
+    return own !== "" ? I18n.tr(own) : I18n.tr("Doesn't apply here");
   }
 
   // `x-enabledIf` (as x-showIf), or a shown `x-hintedIf`: while it doesn't
@@ -457,7 +457,7 @@ Loader {
         options: SchemaLayout.tileOptions(root.fieldSchema, root._allOptions, root._valueOf).map(option => ({
               "value": option.value,
               "label": root.optionLabels[option.value] ?? String(option.value),
-              "disabledReason": option.hint === null ? "" : option.hint !== "" ? I18n.tr(option.hint) : I18n.tr("Not used by this style")
+              "disabledReason": option.hint === null ? "" : option.hint !== "" ? I18n.tr(option.hint) : I18n.tr("Doesn't apply here")
             }))
         preview: root._tilePreview?.component ?? null
         previewProperties: root._tilePreview?.properties ?? ({})

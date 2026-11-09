@@ -267,6 +267,40 @@ TestCase {
     verify(SchemaLayout.compositorAllows(resolved, ["Bars", "style", "textScale"], key => undefined), "the bar style passes compositorAllows");
   }
 
+  // `x-placeUnder`: a row moves under the sibling it names, past the rows
+  // beside it and those placed under it before; one naming a key not
+  // there, or a placed one, stays put
+  function test_placedUnder() {
+    const properties = {
+      "style": {},
+      "shape": {},
+      "grouping": {
+        "x-beside": true
+      },
+      "options": {},
+      "sides": {
+        "x-placeUnder": "shape"
+      },
+      "ends": {
+        "x-placeUnder": "shape"
+      },
+      "lost": {
+        "x-placeUnder": "missing"
+      },
+      "chained": {
+        "x-placeUnder": "sides"
+      }
+    };
+    compare(SchemaLayout.placedUnder(["style", "shape", "grouping", "options", "sides", "ends"], properties), ["style", "shape", "grouping", "sides", "ends", "options"]);
+    compare(SchemaLayout.placedUnder(["sides", "style", "shape", "options"], properties), ["style", "shape", "sides", "options"], "from above it too");
+    compare(SchemaLayout.placedUnder(["lost", "style", "sides"], properties), ["lost", "style", "sides"], "its sibling isn't there");
+    compare(SchemaLayout.placedUnder(["shape", "options", "sides", "chained"], properties), ["shape", "sides", "options", "chained"], "under a placed row");
+    compare(SchemaLayout.placedUnder([], properties), []);
+    const bar = schema.definitions.BarStyle.properties;
+    const look = ["widgetStyle", "widgetShape", "widgetGrouping", "tabCorners", "widgetEnds"];
+    compare(SchemaLayout.placedUnder(look, bar), look, "BarStyle's tab sides and ends under the shape and grouping");
+  }
+
   // `x-control: tiles`: every option, one whose `x-enumShowIf` fails (the
   // chosen one too) with its `x-tileHint`, "" without one; a string hint
   // is the whole field's
