@@ -40,6 +40,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Popouts and edge menus
 
+### Menus rework
+- **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml` (`mode`), `qml/config/EdgeMenusConfig.qml` (`isSubmenu`, `popoutMenuOf`), `qml/components/surfaces/edgemenu/EdgeMenu.qml`
+- **What:** An edge menu's `mode` (`floating | integrated | submenu`) mixes where a menu lives with what opens it: a `submenu` menu is named after one of its openers, a menu wanted only as a widget popout still needs an edge, a screen and hover settings, and `popoutMenuOf` can never open a submenu menu. The plan: [plans/menus-rework.md](plans/menus-rework.md) (a `placement` of `edge | strip | free`, free menus with their own window, transparent menus, creation shortcuts, the rename to `Menus`).
+- **Size:** needs a plan
+- **Found:** 2026-11-09, while planning the menus rework
+
 ### EdgePlacement logs a binding loop on _layout
 - **Where:** `qml/components/hosts/popout/EdgePlacement.qml` (`_layout`), `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`
 - **What:** The live shell logged `Binding loop detected for property "_layout"` (`@components/hosts/popout/BarPopouts.qml[215:3]` and `@components/hosts/popout/EdgePopout.qml[314:3]`) several times after a reload on 2026-11-06, running the markets branch, which changes none of these files. The cycle isn't traced: PLAUSIBLE, settled by finding which of `_layout`'s inputs (`frame`, `_params`) reads a value derived from `_layout` itself.
