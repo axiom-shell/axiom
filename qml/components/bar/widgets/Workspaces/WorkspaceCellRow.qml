@@ -37,10 +37,8 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real spacing: barConfig.innerGap
-  // App icons on occupied cells: always where the compositor makes the
-  // workspaces (niri's show only the occupied ones, so a bare number says
-  // little)
-  readonly property bool appIcons: properties.showAppIcons || CompositorManager.dynamicWorkspaces
+  // App icons on occupied cells
+  readonly property bool appIcons: properties.showAppIcons
   // The workspace whose cell is hovered, which its box (drawn apart from
   // it) shows
   property int hoveredId: -1

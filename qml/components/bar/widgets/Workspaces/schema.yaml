@@ -36,10 +36,13 @@ settings:
     type: string
     title: Labels
     x-control: toggle
-    enum: [numbers, dots]
-    x-enumLabels: {numbers: Numbers, dots: Dots}
+    enum: [numbers, dots, none]
+    x-enumLabels: {numbers: Numbers, dots: Dots, none: None}
+    # None on a bar whose cells have neither box nor line would leave
+    # nothing to see (it shows dots there)
+    x-enumShowIf: {none: {$bar.widgetStyle: [filled, tinted, outline, underline]}}
     default: numbers
-    description: Workspace numbers.
+    description: 'What each workspace shows. None: just its box or line.'
   relativeNumbers:
     type: boolean
     title: Relative numbers
@@ -54,8 +57,7 @@ settings:
     type: boolean
     title: App icons
     default: false
-    x-showIf: {/$supports.dynamicWorkspaces: false}
-    description: Show the largest window's icon on occupied workspaces.
+    description: Workspaces with windows show their largest window's icon instead.
   wideActive:
     type: boolean
     title: Wide active
@@ -113,7 +115,12 @@ settings:
     x-options: colors
     default: base00
     description: Numbers and the grid's active arrow.
-    x-showIf: {$bar.widgetStyle: filled, $bar.widgetTextColor: ''}
+    x-showIf:
+      $bar.widgetStyle: filled
+      $bar.widgetTextColor: ''
+      anyOf:
+        - {labels: numbers}
+        - {showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
   hoverColor:
     type: string
     title: Hover

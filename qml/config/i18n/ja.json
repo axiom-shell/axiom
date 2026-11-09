@@ -3387,7 +3387,6 @@
     "Auto shows names only when every tile fits its name.": "",
     "Open an edge menu while the button is hovered, as other widgets' popouts do.": "",
     "Held on the keyboard view.": "",
-    "Workspace numbers.": "",
     "Replaced by the label command's output when set.": "",
     "Empty does nothing.": "",
     "The note's name, note list and new note button.": "",
@@ -3452,7 +3451,6 @@
     "Set its look on the Custom widgets page.": "",
     "Typed shows no name until one is typed.": "",
     "The edge menu a click opens and closes.": "",
-    "Show the largest window's icon on occupied workspaces.": "",
     "Stacked puts the count over the AUR's share.": "",
     "An arrow on the active workspace pointing to the shown grid row.": "",
     "The binds by section, or a keyboard showing what each key does.": "",
@@ -4146,6 +4144,8 @@
     "A screen's part of the screenshot never arrived.": "",
     "Caffeine is keeping the screen on: the steps below wait until it's turned off.": "",
     "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
-    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": ""
+    "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
+    "What each workspace shows. None: just its box or line.": "",
+    "Workspaces with windows show their largest window's icon instead.": ""
   }
 }

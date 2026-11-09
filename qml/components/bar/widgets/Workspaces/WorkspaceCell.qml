@@ -6,9 +6,9 @@ import qs.components.reusable
 
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
-// widgets have no boxes, its number (or a dot) straight on the bar, under a
-// line of its color for underline. Shows an app icon or a glyph instead of
-// the label when given one. A row with a sliding ActiveCellIndicator draws
+// widgets have no boxes, straight on the bar, under a line of its color for
+// underline. Its label (`labels`) is its number, a dot or nothing; an app
+// icon or a glyph shows instead when given one. A row with a sliding ActiveCellIndicator draws
 // its cells twice, the boxes (`part: "background"`) under the indicator and
 // the labels (`"content"`) over it.
 Item {
@@ -23,8 +23,11 @@ Item {
   required property real length
   property real restLength: length
   property real radius: 0
-  // "numbers" or "dots"
+  // "numbers", "dots" or "none" (dots where a cell would have neither box
+  // nor line to show: `none`'s option is hidden there, but the bar's style
+  // can change after)
   property string labels: "numbers"
+  readonly property bool _dot: labels === "dots" || labels === "none" && !boxed && barConfig.widgetStyle !== "underline"
   property string label: ""
   property string iconPath: ""
   property string glyph: ""
@@ -89,13 +92,13 @@ Item {
     }
   }
 
-  // A dot (a pill when widened) for a cell with no box of its own to show
+  // A dot (a pill when widened), smaller inside a box
   Rectangle {
-    readonly property real size: Math.max(4, Math.round(root.thickness * 0.35))
+    readonly property real size: Math.max(4, Math.round(root.thickness * (root.boxed ? 0.28 : 0.35)))
     readonly property real along: size + root.length - root.restLength
 
     anchors.centerIn: parent
-    visible: root._drawsContent && !root.boxed && root.labels === "dots" && root.iconPath === "" && root.glyph === ""
+    visible: root._drawsContent && root._dot && root.iconPath === "" && root.glyph === ""
     width: root.isVertical ? size : along
     height: root.isVertical ? along : size
     radius: size / 2

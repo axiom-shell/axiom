@@ -77,8 +77,9 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Its cells (`workspaces/WorkspaceCell`) are inset by `innerGap` inside that box.
 - A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
 - Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
-  - **Filled, tinted or outlined** styles draw boxes.
-  - **Styles with no box** (underline, colored icons, plain) draw the cell's number or a dot straight on the bar. The dot becomes a pill when wide, with the cells narrowed to fit.
+  - **Filled, tinted or outlined** styles draw boxes, with the cell's label (`labels`: its number, a small dot, or nothing) inside.
+  - **Styles with no box** (underline, colored icons, plain) draw the cell's number or a dot straight on the bar, or for `labels: none` only underline's line (colored icons and plain, with no line, draw a dot; the option is hidden there). The dot becomes a pill when wide, with the cells narrowed to fit (for `none` too).
+  - `showAppIcons` puts the largest window's icon in place of the label on occupied cells, under every compositor.
     - For underline, each cell is underlined itself and the widget's own line is off.
     - An empty cell's content is the bar text, faded.
     - Plain tells the states apart by fading alone.
