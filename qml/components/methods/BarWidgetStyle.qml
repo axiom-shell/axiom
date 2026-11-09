@@ -121,7 +121,7 @@ QtObject {
     if (style.run && graded && style.fill === "split")
       // A split run's strip of the gradient is its labels' tint, under
       // icon parts each in their own slice of it
-      return root._make(Qt.alpha(accent, style.tint), none, none, text(own), text(own));
+      return root._make(root.faded(accent, style.tint), none, none, text(own), text(own));
     if (style.group) {
       // The run draws the background: the icon keeps the state, the label
       // reads on the run (or on the bar, through a tint or outline). A
@@ -148,10 +148,10 @@ QtObject {
         const label = style.splitIcon === "badge" ? "none" : style.labelFill;
         if (label === "color")
           return root._make(style.labelColor, none, none, text(root.readableOn(style.labelColor, style.barText)), text(own), accent);
-        return root._make(label === "tint" ? Qt.alpha(accent, style.tint) : none, none, none, text(accent), text(own), accent);
+        return root._make(label === "tint" ? root.faded(accent, style.tint) : none, none, none, text(accent), text(own), accent);
       }
     case "tinted":
-      return root._make(Qt.alpha(accent, style.tint), none, none, text(accent), text(accent));
+      return root._make(root.faded(accent, style.tint), none, none, text(accent), text(accent));
     case "outline":
       return root._make(unfilled, accent, none, text(accent), text(accent));
     case "underline":
@@ -214,7 +214,7 @@ QtObject {
       // A cell has no label apart: filled
       return root._makeCell(color, none, none, text(own));
     case "tinted":
-      return root._makeCell(Qt.alpha(color, style.tint), none, none, onBar(color));
+      return root._makeCell(root.faded(color, style.tint), none, none, onBar(color));
     case "outline":
       return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, color, none, onBar(color));
     case "underline":
@@ -277,7 +277,7 @@ QtObject {
   // A value widget's pill (its background filled to its value) in its
   // `colors` (colors())
   function levelColor(colors) {
-    return Qt.alpha(colors.icon, 0.35);
+    return root.faded(colors.icon, 0.35);
   }
 
   // Whether a value widget with "Colour the text by state" on (its
@@ -286,6 +286,14 @@ QtObject {
   // read on it)
   function textByState(colors, appearance) {
     return appearance.colorText && colors.fill.a < 1;
+  }
+
+  // `color` at `alpha` of its own opacity: a clear color (a widget with no
+  // color of its own, Workspaces' box with its background off) stays
+  // clear, where Qt.alpha would make it black at that opacity
+  function faded(color, alpha) {
+    const c = Qt.color(color);
+    return Qt.alpha(c, c.a * alpha);
   }
 
   // `preferred` if it contrasts with `background`, else black or white

@@ -35,6 +35,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, widget)`, which gives `{ fill, stroke, indicator, text, icon, iconFill, gradient }`. `widget` is what of the widget itself its look depends on: `splits` (Split), `hovered` (Fill on hover), `spot` and `auto` (the bar gradient); `BarsConfig._widgetStyle` puts them in the `style` the helper reads, so `BarWidgetStyle.colors(style, accent, own)` and `cell(style, color, own, state)` take one shape.
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, split, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
+  - A tint (tinted, split's label, a tinted cell) and a level fade the color from its own opacity (`BarWidgetStyle.faded`), so a clear one (a widget with no color of its own: Workspaces' box with its background off) stays clear; `Qt.alpha` on it would draw black.
   - An outline is drawn in the bar's `outlineStroke` ([Shapes and runs](widget-shapes-runs.md#outline-strokes)).
   - The styles' own options, and how they combine with the shapes, runs and the bar gradient: [Split](#split), [Fill on hover](#fill-on-hover), [Bar gradient](#bar-gradient), [Combinations](#combinations); their shapes (split's parts, tabs, outline strokes): [Shapes and runs](widget-shapes-runs.md).
 - Colors that are content rather than a background stay the widget's own: workspace cells, separators, badges, the DND icon.

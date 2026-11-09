@@ -44,6 +44,28 @@ TestCase {
     same(c.icon, accent, "icon");
   }
 
+  // A widget with no color of its own (a clear one) tints nothing,
+  // rather than black at the tint's opacity
+  function test_a_clear_color_stays_clear_where_faded() {
+    const clear = c => BarWidgetStyle.colors({
+        "fill": c,
+        "barText": barText,
+        "override": null,
+        "tint": 0.25,
+        "splits": true,
+        "splitIcon": "joined",
+        "labelFill": "tint",
+        "group": null
+      }, "transparent", own);
+    compare(Qt.color(clear("tinted").fill).a, 0, "tinted");
+    compare(Qt.color(clear("split").fill).a, 0, "split's label tint");
+    fuzzyCompare(Qt.color(cell("tinted", "active").fill).a, 0.25, 0.01, "a color's tint keeps its strength");
+    fuzzyCompare(Qt.color(BarWidgetStyle.faded("#80ff0000", 0.5)).a, 0.25, 0.01, "a part-clear color fades from its own");
+    compare(Qt.color(BarWidgetStyle.levelColor({
+      "icon": "transparent"
+    })).a, 0, "a level in a clear color");
+  }
+
   function test_outline_strokes_in_the_accent() {
     const c = styled("outline");
     same(c.fill, "transparent", "fill");
