@@ -78,6 +78,8 @@ type Options struct {
 	DataDirs []string
 	// Skip are folders never indexed ($XDG_RUNTIME_DIR, the thumbnails)
 	Skip []string
+	// Mountinfo is the mount table read (default /proc/self/mountinfo)
+	Mountinfo string
 	// MaxEntries caps the index (default DefaultMaxEntries)
 	MaxEntries int
 	// WatchBudget is how many folders to watch (0: a quarter of the
@@ -113,6 +115,9 @@ type Options struct {
 func (o *Options) defaults() {
 	if o.Exe == "" {
 		o.Exe = "/proc/self/exe"
+	}
+	if o.Mountinfo == "" {
+		o.Mountinfo = mountinfo
 	}
 	if o.MaxEntries <= 0 {
 		o.MaxEntries = DefaultMaxEntries
@@ -474,6 +479,7 @@ func (l *loop) configure(st Settings) {
 		return
 	}
 	l.f = newFilter(st.Roots, st.Excludes, l.s.o.Skip, st.Hidden)
+	l.refreshMounts()
 	l.phase = PhaseWaiting
 	if started {
 		// Other roots or excludes: the cache is another index's
@@ -608,6 +614,7 @@ func (l *loop) watchAll() {
 	if l.w == nil || ix == nil {
 		return
 	}
+	l.refreshMounts()
 	type dir struct {
 		d    uint32
 		path string
@@ -822,15 +829,37 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 	}
 	if watch {
 		// Changed between the read and the watch: the watch missed it
-		if st, err := os.Lstat(path); err == nil && st.ModTime().UnixNano() != mtime {
-			l.changedDir(path)
-		}
+		l.recheck(path, mtime)
 	}
+}
+
+// recheck reads path again when its time is no longer mtime, the time
+// it was read at (a root that is a link through the link, as it's read).
+func (l *loop) recheck(path string, mtime int64) {
+	stat := os.Lstat
+	if l.f.rootOf(path) == path {
+		stat = os.Stat
+	}
+	if st, err := stat(path); err == nil && st.ModTime().UnixNano() != mtime {
+		l.changedDir(path)
+	}
+}
+
+// refreshMounts reads the mount table again (a disk or share mounted
+// since): read before the loop reads or watches folders itself.
+func (l *loop) refreshMounts() {
+	l.f.setMounts(readMounts(l.s.o.Mountinfo))
 }
 
 // watch adds a watch on path within the budget; the path it was watched
 // under until now is no longer marked watched (left to the stat pass).
+// A network root's folders are never watched (adding a watch looks the
+// path up, which blocks while its server is gone): the stat pass, in
+// the idle child, keeps them current.
 func (l *loop) watch(path string) bool {
+	if l.f.onNetwork(path) {
+		return false
+	}
 	ok, stolen := l.w.add(path, slices.Contains(l.cur.Roots, path))
 	if ix := l.ix(); stolen != "" && ix != nil {
 		if d, found := ix.Lookup(stolen); found {
@@ -870,6 +899,7 @@ func (l *loop) flush() {
 		clear(l.written)
 		return
 	}
+	l.refreshMounts()
 	// Folders read again: their files' times are set
 	reread := map[string]bool{}
 	for len(l.changed) > 0 {
@@ -881,7 +911,8 @@ func (l *loop) flush() {
 		slices.SortFunc(paths, func(a, b string) int { return len(a) - len(b) })
 		for _, p := range paths {
 			root := l.f.rootOf(p)
-			if root == "" {
+			// A network root's: left to the stat pass, in the idle child
+			if root == "" || l.f.netRoots[root] {
 				continue
 			}
 			if _, ok := ix.Lookup(p); !ok {

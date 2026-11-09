@@ -214,7 +214,16 @@ func (l *loop) childMsg(m childMsg) {
 			l.truncated = true
 			break
 		}
+		watched := false
+		if d, ok := ix.Lookup(m.path); ok {
+			watched = ix.Watched(d)
+		}
 		l.applyDir(m.path, m.mtime, m.kids, l.child.stat)
+		if watched && l.child.stat {
+			// A stat pass's read of a watched folder (after a lost queue)
+			// may land after a newer one the watch made: read it again
+			l.recheck(m.path, m.mtime)
+		}
 	case m.kind == msgGone:
 		if l.f.rootOf(m.path) == m.path {
 			l.applyDir(m.path, 0, nil, false)

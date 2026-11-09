@@ -24,6 +24,27 @@ type filter struct {
 	skip     []string
 	hidden   bool
 	devs     map[string]uint64 // a root's device, as its last read found it
+	// The mount table (mounts.go), and the roots on a network filesystem
+	mounts   mounts
+	netRoots map[string]bool
+}
+
+// setMounts takes the mount table as it is now.
+func (f *filter) setMounts(m mounts) {
+	f.mounts = m
+	f.netRoots = map[string]bool{}
+	for _, r := range f.roots {
+		if m.networkRoot(r) {
+			f.netRoots[r] = true
+		}
+	}
+}
+
+// onNetwork says whether path's root is on a network filesystem, whose
+// folders the daemon never reads or watches itself (only the idle child
+// does): a server gone away blocks every look at them.
+func (f *filter) onNetwork(path string) bool {
+	return f.netRoots[f.rootOf(path)]
 }
 
 func newFilter(roots, excludes, skip []string, hidden bool) *filter {
@@ -136,7 +157,10 @@ func (f *filter) read(root, path string) (folder, error) {
 	}
 	out := folder{mtime: statTime(&st), kids: make([]filesearch.Child, 0, len(names))}
 	for _, name := range names {
-		if !f.keep(root, join(path, name), name) {
+		kidPath := join(path, name)
+		if !f.keep(root, kidPath, name) || f.mounts.foreign(kidPath, dev) {
+			// (a mount point of another device: never stat-ed, as one
+			// whose server is gone blocks)
 			continue
 		}
 		var cst unix.Stat_t

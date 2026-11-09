@@ -1,4 +1,4 @@
-# Launcher providers: calculator, clipboard, emoji
+# Launcher providers: calculator, clipboard, emoji, files
 
 > **Files:** `qml/services/apps/CalculatorManager.qml`, `qml/services/system/ClipboardManager.qml`, `backend/internal/clipboard/`, `backend/internal/wayland/datacontrol/`, `backend/internal/daemon/clipboard.go`, `qml/services/apps/EmojiManager.qml`, `qml/config/json/emoji.json`, `scripts/generate_emoji.py`, `qml/components/methods/Search.qml`, `qml/services/apps/FileSearchManager.qml`, `qml/components/content/Calculator/Calculator.qml`, `qml/components/content/ClipboardHistory/ClipboardHistory.qml`, `qml/components/content/EmojiPicker/EmojiPicker.qml`
 > **Config:** `Launcher.providers.clipboard.enabled`, `Launcher.providers.clipboard.maxEntries`, `Launcher.providers.emoji`, `Launcher.providers.files.*` (reader `LauncherConfig`)

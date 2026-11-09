@@ -901,3 +901,39 @@ func TestLeftOutRefillWaitsForRoom(t *testing.T) {
 		}
 	}
 }
+
+// A stat pass's read of a watched folder (after a lost queue) that lands
+// after a newer read the watch made is read again, not kept
+func TestStaleStatPassReadOfAWatchedFolder(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a")
+	now := time.Now()
+	l := loopOn(t, root, &now)
+	ix := l.ix()
+	d, _ := ix.Lookup(root)
+	ix.SetWatched(d, true)
+	old, err := l.f.read(root, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A file lands after the pass's read; the watch reads it first
+	if err := os.WriteFile(root+"/b", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stamp := time.Unix(0, old.mtime).Add(time.Second)
+	if err := os.Chtimes(root, stamp, stamp); err != nil {
+		t.Fatal(err)
+	}
+	l.readDir(t, root)
+	n := ix.Len()
+	l.child = &child{stat: true}
+	l.childMsg(childMsg{kind: msgDir, path: root, mtime: old.mtime, kids: old.kids})
+	l.child = nil
+	if !l.changed[root] {
+		t.Fatalf("the stale read wasn't read again: %v", l.changed)
+	}
+	l.flush()
+	if ix.Len() != n {
+		t.Errorf("after reading it again: %d entries, want %d", ix.Len(), n)
+	}
+}

@@ -60,10 +60,13 @@ QtObject {
   }
 
   // Asks again on the next read: the launcher closed (it opens to fresh
-  // results)
+  // results). "~" mode keeps its rows until the answer lands (it often
+  // opens on the same text, the recent files); the main search's are
+  // dropped, as they were another text's
   function forget() {
     root._mode.text = null;
     root._mainQ = "";
+    root._mainItems = [];
   }
 
   // --- "~" mode ---

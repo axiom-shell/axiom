@@ -69,6 +69,7 @@ func Serve(ctx context.Context, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 	f := newFilter(cleanRoots(req.Roots), req.Excludes, req.Skip, req.Hidden)
+	f.setMounts(readMounts(mountinfo))
 	w := &frameWriter{w: bufio.NewWriterSize(stdout, 64<<10)}
 	pause := time.Duration(req.Pause) * time.Millisecond
 	c := &crawler{f: f, w: w, pause: pause}
