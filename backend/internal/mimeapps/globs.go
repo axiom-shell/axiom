@@ -110,15 +110,16 @@ func (g *Globs) Canonical(mime string) string {
 
 // Lineage is the types to look an app up by for a type, nearest first
 // (the MIME Applications spec: with no app for a type, its parents'):
-// the type itself (an alias as its type), each followed by its aliases
-// (lists and entries may name either), then its parents level by level
-// (mime/subclasses, and text/plain for every other text/*), each once,
-// so a cycle in the files ends. "" has none.
-func (g *Globs) Lineage(mime string) []string {
+// the type itself (an alias as its type), then its parents level by
+// level (mime/subclasses, and text/plain for every other text/*), each
+// once, so a cycle in the files ends. Each is given with its aliases
+// after it, one type under every name lists and entries may use. ""
+// has none.
+func (g *Globs) Lineage(mime string) [][]string {
 	if mime == "" {
 		return nil
 	}
-	var out []string
+	var out [][]string
 	seen := map[string]bool{}
 	queue := []string{g.Canonical(mime)}
 	for len(queue) > 0 {
@@ -128,13 +129,7 @@ func (g *Globs) Lineage(mime string) []string {
 			continue
 		}
 		seen[t] = true
-		out = append(out, t)
-		for _, a := range g.aliases[t] {
-			if !seen[a] {
-				seen[a] = true
-				out = append(out, a)
-			}
-		}
+		out = append(out, append([]string{t}, g.aliases[t]...))
 		for _, p := range g.parents[t] {
 			queue = append(queue, g.Canonical(p))
 		}

@@ -292,7 +292,7 @@ func TestParentTypes(t *testing.T) {
 	// application/x-loop and application/x-ts are kinds of each other
 	tr.write(filepath.Join(tr.sysData, "mime/subclasses"), "text/javascript application/x-ts\napplication/x-ts application/x-loop\napplication/x-loop application/x-ts\n")
 	a := tr.load()
-	if got, want := a.mimeDB().Lineage("application/javascript"), []string{"text/javascript", "application/javascript", "application/x-ts", "text/plain", "application/x-loop"}; !reflect.DeepEqual(got, want) {
+	if got, want := a.mimeDB().Lineage("application/javascript"), [][]string{{"text/javascript", "application/javascript"}, {"application/x-ts"}, {"text/plain"}, {"application/x-loop"}}; !reflect.DeepEqual(got, want) {
 		t.Errorf("Lineage = %q, want %q", got, want)
 	}
 	for _, c := range []struct {
@@ -321,5 +321,12 @@ func TestParentTypes(t *testing.T) {
 	a = tr.load()
 	if got, err := a.Command("app.js", nil, Overrides{"textEditor": "zed"}); err != nil || strings.Join(got, " ") != "chromium app.js" {
 		t.Errorf("an explicit default: %q, %v", got, err)
+	}
+	// ... and over an app declaring only its other name: a type's names
+	// are one type, its explicit default before any handler
+	tr.app("jsedit.desktop", "Name=A JS Editor\nExec=jsedit %f\nMimeType=text/javascript;\n")
+	a = tr.load()
+	if got := a.Default("text/javascript"); got != "chromium.desktop" {
+		t.Errorf("Default(text/javascript) = %q, want the alias's explicit default", got)
 	}
 }

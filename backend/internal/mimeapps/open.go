@@ -37,16 +37,18 @@ func (a *Apps) Command(target string, args []string, ov Overrides) ([]string, er
 	}
 	withTarget := append([]string{target}, args...)
 	mime := a.typeOf(target)
-	for _, t := range a.lineage(mime) {
-		if r, ok := roleOfType(t); ok {
-			// A web or mail link follows its role's app (https as http),
-			// as does a file of the role's main type, and any of the
-			// role's types when the role has a command set
-			if ov[r.ID] != "" || t == r.Types[0] || strings.HasPrefix(t, "x-scheme-handler/") {
-				return a.roleCommand(r, withTarget, ov)
+	for _, names := range a.lineage(mime) {
+		for _, t := range names {
+			if r, ok := roleOfType(t); ok {
+				// A web or mail link follows its role's app (https as
+				// http), as does a file of the role's main type, and any
+				// of the role's types when the role has a command set
+				if ov[r.ID] != "" || t == r.Types[0] || strings.HasPrefix(t, "x-scheme-handler/") {
+					return a.roleCommand(r, withTarget, ov)
+				}
 			}
 		}
-		if id := a.ownDefault(t); id != "" {
+		if id := a.ownDefault(names); id != "" {
 			return a.entryCommand(a.entries[id], withTarget, ov)
 		}
 	}

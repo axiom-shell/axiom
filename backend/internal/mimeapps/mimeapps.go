@@ -157,52 +157,62 @@ func (a *Apps) Entry(id string) (Entry, bool) {
 	return e, ok
 }
 
-// Default is the desktop entry that opens a type: its own (ownDefault),
-// else the nearest of its aliases' and parent types' (Globs.Lineage: a
-// script with no app of its own opens in text/plain's).
+// Default is the desktop entry that opens a type: its own (ownDefault,
+// under any of its names), else the nearest parent type's
+// (Globs.Lineage: a script with no app of its own opens in text/plain's).
 func (a *Apps) Default(mime string) string {
-	for _, t := range a.lineage(mime) {
-		if id := a.ownDefault(t); id != "" {
+	for _, names := range a.lineage(mime) {
+		if id := a.ownDefault(names); id != "" {
 			return id
 		}
 	}
 	return ""
 }
 
-// lineage is the types an app for mime is looked up by, nearest first
-// (Globs.Lineage; just mime when it's not a known type).
-func (a *Apps) lineage(mime string) []string {
+// lineage is the types an app for mime is looked up by, nearest first,
+// each with its aliases (Globs.Lineage; just mime when it's not a known
+// type).
+func (a *Apps) lineage(mime string) [][]string {
 	if mime == "" {
 		return nil
 	}
 	return a.mimeDB().Lineage(mime)
 }
 
-// ownDefault is the desktop entry that opens a type itself: the first
-// installed one a Default Applications line lists (not removed by a more
+// ownDefault is the desktop entry that opens one type, given by its
+// names (the type and its aliases): the first installed one a Default
+// Applications line for any of them lists (not removed by a more
 // important list), else defaults.list's, else the first one associated
 // with it.
-func (a *Apps) ownDefault(mime string) string {
+func (a *Apps) ownDefault(names []string) string {
 	removed := map[string]bool{}
 	for _, l := range a.lists {
-		for _, id := range l[groupDefault][mime] {
-			if _, ok := a.entries[id]; ok && !removed[id] {
-				return id
+		for _, mime := range names {
+			for _, id := range l[groupDefault][mime] {
+				if _, ok := a.entries[id]; ok && !removed[id] {
+					return id
+				}
 			}
 		}
-		for _, id := range l[groupRemoved][mime] {
-			removed[id] = true
+		for _, mime := range names {
+			for _, id := range l[groupRemoved][mime] {
+				removed[id] = true
+			}
 		}
 	}
 	for _, l := range a.legacy {
-		for _, id := range l[groupDefault][mime] {
-			if _, ok := a.entries[id]; ok && !removed[id] {
-				return id
+		for _, mime := range names {
+			for _, id := range l[groupDefault][mime] {
+				if _, ok := a.entries[id]; ok && !removed[id] {
+					return id
+				}
 			}
 		}
 	}
-	if handlers := a.Handlers(mime); len(handlers) > 0 {
-		return handlers[0].ID
+	for _, mime := range names {
+		if handlers := a.Handlers(mime); len(handlers) > 0 {
+			return handlers[0].ID
+		}
 	}
 	return ""
 }
