@@ -184,7 +184,12 @@ QtObject {
   // content takes its color. `showsHover`: hovered, it's filled
   // (fillsOnHover), so the cell draws no hover box of its own. An Auto
   // color (`style.auto`) gives way to the bar gradient's where the cell
-  // sits (style.gradient), as a widget's does.
+  // sits (style.gradient), as a widget's does. In a merged run
+  // (`style.group`) the run draws the background, as for a widget: a
+  // filled, tinted or outlined cell draws no box, its color moving to its
+  // content (an empty one's faded, reading on the run); a solid cell
+  // stays a filled box, and a split one fills its box, a tab in the row
+  // as a widget that doesn't split.
   function cell(style, color, own, state) {
     if ((style.gradient ?? null) !== null && style.auto === true) {
       own = root.readableOn(style.gradient, own);
@@ -193,9 +198,15 @@ QtObject {
     const none = "transparent";
     const text = c => style.override ?? c;
     if (style.hovered === true && root.fillsOnHover(style))
-      return root._makeCell(color, style.fill === "outline" ? color : none, none, text(own), true);
-    const faded = Qt.alpha(text(style.barText), 0.4);
+      return root._makeCell(color, style.fill === "outline" && !style.group ? color : none, none, text(own), true);
+    const merged = !!style.group && ["filled", "tinted", "outline"].includes(style.fill);
+    // What the content sits on: the run's color where it's filled, else
+    // the bar (through a tint or an outline)
+    const under = merged && style.fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText;
+    const faded = Qt.alpha(text(under), 0.4);
     const onBar = c => state === "empty" ? faded : text(c);
+    if (merged)
+      return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, none, none, onBar(color));
     switch (style.fill) {
     case "solid":
       return root._makeCell(color, color, color, text(own));

@@ -96,7 +96,8 @@ Item {
       return root._activeLook(index, lit);
     const content = root._contents[index];
     return BarsConfig.workspaceCellColors(root.barConfig, root, false, content?.occupied ?? false, content?.urgent ?? false, {
-      "hovered": lit === true
+      "hovered": lit === true,
+      "onBar": root.hitArea !== null
     });
   }
 
@@ -108,7 +109,8 @@ Item {
     const spot = root.barSpotOf && index >= 0 ? root.barSpotOf(root, middle) : -1;
     return BarsConfig.workspaceCellColors(root.barConfig, root, true, false, false, {
       "hovered": lit === true,
-      "spot": spot
+      "spot": spot,
+      "onBar": root.hitArea !== null
     });
   }
 

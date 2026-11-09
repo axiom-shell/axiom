@@ -61,7 +61,8 @@ Item {
     barConfig: root.barConfig
     isActive: false
     look: BarsConfig.cellColors(root.barConfig, root.occupiedColor, root.textColor, "occupied", {
-      "solid": root.solid
+      "solid": root.solid,
+      "onBar": root.hitArea !== null
     })
     solid: root.solid
     thickness: root.thickness

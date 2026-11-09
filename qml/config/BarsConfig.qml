@@ -270,10 +270,11 @@ QtObject {
   // active/occupied/urgent/empty, `cell` what of the cell its look depends
   // on (_widgetStyle's hovered and spot: where the middle of a cell whose
   // color is Auto sits along the bar, for the bar's gradient to take its
-  // place; and `solid`: a filled box whatever the bar's style, Workspaces'
-  // `solidBoxes`)
+  // place; `solid`: a filled box whatever the bar's style, Workspaces'
+  // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
+  // popout, so in a merged run on a merged bar)
   function cellColors(barConfig, color, own, state, cell) {
-    const style = BarsConfig._widgetStyle(barConfig, false, Object.assign({
+    const style = BarsConfig._widgetStyle(barConfig, cell?.onBar === true && barConfig.widgetGrouping === "merged", Object.assign({
       "auto": (cell?.spot ?? -1) >= 0
     }, cell));
     if (cell?.solid === true)

@@ -154,6 +154,43 @@ TestCase {
     same(cell("plain", "active", custom).content, custom, "override");
   }
 
+  function mergedCell(fill, state, group, hovered = false) {
+    return BarWidgetStyle.cell({
+      "fill": fill,
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "hoverFill": true,
+      "hovered": hovered,
+      "group": group
+    }, accent, own, state);
+  }
+
+  // In a merged run the run draws the background, as for a widget: a
+  // cell's color moves to its content
+  function test_merged_cells_carry_their_color_in_their_content() {
+    const light = "#eeeeee";
+    ["filled", "tinted", "outline"].forEach(fill => {
+      const c = mergedCell(fill, "active", light);
+      compare(Qt.color(c.fill).a, 0, fill + " no box");
+      same(c.stroke, "transparent", fill + " no border");
+      same(c.content, accent, fill + " content in its color");
+      same(mergedCell(fill, "occupied", light).content, accent, fill + " occupied");
+    });
+    // An empty one faded, reading on what it sits on: a filled run's color,
+    // else the bar through the tint or outline
+    same(mergedCell("filled", "empty", light).content, Qt.alpha("#000000", 0.4), "filled empty on a light run");
+    same(mergedCell("outline", "empty", light).content, Qt.alpha(barText, 0.4), "outline empty on the bar");
+    // Solid boxes stay boxes; split's fill theirs, as a widget that doesn't split
+    same(mergedCell("solid", "active", light).fill, accent, "solid");
+    same(mergedCell("split", "active", light).fill, accent, "split");
+    // Filled on hover in its own part, no border of its own
+    const hovered = mergedCell("outline", "active", light, true);
+    same(hovered.fill, accent, "hovered fills");
+    same(hovered.stroke, "transparent", "hovered draws no border");
+    same(mergedCell("outline", "active", light).fill, Qt.alpha(accent, 0), "fades in from its own color");
+  }
+
   function hovering(fill, hovered, hoverFill = true, group = null) {
     return BarWidgetStyle.colors({
       "fill": fill,

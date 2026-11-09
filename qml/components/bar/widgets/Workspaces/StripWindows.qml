@@ -62,7 +62,8 @@ Grid {
       isActive: address === root.focused
       look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied", {
         "hovered": windowCell.lit,
-        "solid": root.solid
+        "solid": root.solid,
+        "onBar": root.hitArea !== null
       })
       solid: root.solid
       thickness: root.thickness
