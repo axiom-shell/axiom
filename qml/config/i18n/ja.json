@@ -1241,7 +1241,6 @@
     "Toasts": "トースト",
     "Shown on its tab here. Empty names it by its edge.": "ここのタブに表示される名前。空欄なら画面端の名前になります。",
     "Turn the screens off after": "画面をオフにするまで",
-    "Integrated": "統合",
     "Dim by": "減光量",
     "Light and dark by time": "時間でライトとダークを切り替え",
     "Bars": "バー",
@@ -3565,7 +3564,6 @@
     "Around every bar, the screen border, popouts, menus and docks.": "",
     "Length along the bar; 0 picks one.": "",
     "Where the status icons go when shown with the bars.": "",
-    "Floating opens over windows. Integrated pushes the bars and windows inwards. Submenu opens beside a floating menu.": "",
     "Floating windows blur only the wallpaper. Cheaper.": "",
     "Shifts the menu's grid along its edge (px). Set on the layouts editor's grid.": "",
     "Commands it runs; {value} is filled in.": "",
@@ -4267,6 +4265,7 @@
     "Doesn't apply here": "",
     "Some of these follow the shared style.": "",
     "Make all this bar's own": "",
-    "{0} network folders don't answer": ""
+    "{0} network folders don't answer": "",
+    "Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens beside an edge menu from its Submenu module.": ""
   }
 }

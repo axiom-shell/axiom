@@ -12,7 +12,7 @@ properties:
     x-group: General
     title: Monitor
     description: Empty uses the primary monitor.
-    x-showIf: {mode: {not: submenu}}
+    x-showIf: {placement: {not: free}}
     x-properties:
       mode:
         x-scope: look
@@ -42,22 +42,22 @@ properties:
         maximum: 2000
         x-unit: ms
         x-showIf: {onHover: true}
-    x-showIf: {mode: {not: submenu}}
+    x-showIf: {placement: {not: free}}
   edge:
     x-group: Placement
     type: string
     title: Edge
     default: left
     enum: [top, bottom, left, right]
-    x-showIf: {mode: {not: submenu}}
-  mode:
+    x-showIf: {placement: {not: free}}
+  placement:
     x-group: Placement
     type: string
-    title: Mode
-    default: floating
-    enum: [floating, integrated, submenu]
-    x-enumLabels: {floating: Floating, integrated: Integrated, submenu: Submenu}
-    description: Floating opens over windows. Integrated pushes the bars and windows inwards. Submenu opens beside a floating menu.
+    title: Placement
+    default: edge
+    enum: [edge, strip, free]
+    x-enumLabels: {edge: Edge, strip: Strip, free: Free}
+    description: Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens beside an edge menu from its Submenu module.
   offset:
     x-settings: false
     type: integer
@@ -82,14 +82,14 @@ properties:
     enum: [content, edge]
     x-enumLabels: {content: Fit its modules, edge: Whole edge}
     description: Whole edge stretches the menu along its edge.
-    x-showIf: {mode: floating}
+    x-showIf: {placement: edge}
   popoutAtWidget:
     x-group: Placement
     type: boolean
     title: Popout at its widget
     default: false
     description: Opened as a bar widget's popout, it opens at that widget.
-    x-showIf: {mode: floating, length: content}
+    x-showIf: {placement: edge, length: content}
   layout:
     $ref: '#/definitions/Layout'
     x-properties:
@@ -117,7 +117,7 @@ properties:
     title: Detach from edge
     default: false
     description: A separate box held off the edge, instead of growing out of it.
-    x-showIf: {mode: floating}
+    x-showIf: {placement: edge}
   distance:
     x-group: Placement
     type: integer
@@ -127,39 +127,39 @@ properties:
     minimum: 0
     maximum: 50
     description: 0 lines it up with your window border, 50 centres it.
-    x-showIf: {mode: floating, detached: true}
+    x-showIf: {placement: edge, detached: true}
   animation:
     $ref: '#/definitions/DetachedAnimation'
     x-group: Placement
-    x-showIf: {mode: floating, detached: true}
+    x-showIf: {placement: edge, detached: true}
   frame:
     x-group: Style
     type: boolean
     title: Frame
     default: true
     description: A rounded box along the whole edge around the modules.
-    x-showIf: {mode: integrated}
+    x-showIf: {placement: strip}
   pinButton:
     x-group: Style
     type: boolean
     title: Pin button
     default: false
     description: A pinned menu stays open until unpinned.
-    x-showIf: {mode: {not: submenu}}
+    x-showIf: {placement: {not: free}}
   backgroundColor:
     x-group: Style
     type: string
     title: Background
     x-options: colors
     default: base00
-    x-showIf: {mode: {not: submenu}}
+    x-showIf: {placement: {not: free}}
   borderColor:
     x-group: Style
     type: string
     title: Border
     x-options: colors
     default: base05
-    x-showIf: {mode: {not: submenu}}
+    x-showIf: {placement: {not: free}}
   close:
     type: object
     title: Closing
@@ -171,7 +171,7 @@ properties:
         title: Close when the pointer leaves
         default: true
         description: A pinned menu stays open.
-        x-showIf: {../mode: {not: submenu}}
+        x-showIf: {../placement: {not: free}}
       delay:
         x-group: Closing
         type: integer
@@ -180,10 +180,10 @@ properties:
         minimum: 0
         maximum: 5000
         x-unit: ms
-        x-showIf: {../mode: {not: submenu}, onLeave: true}
+        x-showIf: {../placement: {not: free}, onLeave: true}
       onOutsideClick:
         x-group: Closing
         type: boolean
         title: Close on outside click
         default: false
-        x-showIf: {../mode: floating}
+        x-showIf: {../placement: edge}
