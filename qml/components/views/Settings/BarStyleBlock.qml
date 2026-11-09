@@ -25,7 +25,7 @@ import qs.components.reusable
 // `presetPicked`; on the settings page (given `row` and `form`) they go
 // through the settings draft as the page's own rows' do. In the bar
 // editor (`owned`) each section is the bar's own or shared: shared, it
-// shows the shared values greyed, with a link to where they're set.
+// shows only its heading and a link to where it's set.
 ColumnLayout {
   id: root
 
@@ -182,7 +182,8 @@ ColumnLayout {
     // The heading's text, else the title's
     property string heading: ""
     property var keys: []
-    // The bar editor's section the bar doesn't own: greyed, not editable
+    // The bar editor's section the bar doesn't own: its heading and where
+    // it's set, no form
     readonly property bool shared: root.owned !== null && root.owned[section.title] !== true
 
     visible: root.sections.includes(section.title)
@@ -228,24 +229,26 @@ ColumnLayout {
       }
     }
 
-    SchemaPropertiesForm {
+    // Built only while the section is edited here
+    Loader {
       Layout.fillWidth: true
-      enabled: !section.shared
-      opacity: section.shared ? 0.5 : 1
-      propertiesSchema: section.keys.reduce((schema, key) => {
-        schema[key] = root._properties[key];
-        return schema;
-      }, {})
-      order: section.keys
-      // Side by side only as wide as the two columns (not the bar
-      // editor's panel): the tiles keep their room
-      pairs: root.width >= Widget.px(720)
-      keepsPlace: true
-      values: root.values
-      changedAt: root.changedAt
-      tilePreview: root._tilePreview
-      onEdited: (path, value) => root.edited(path, value)
-      onDiscardAt: path => root.discardAt(path)
+      active: !section.shared
+      sourceComponent: SchemaPropertiesForm {
+        propertiesSchema: section.keys.reduce((schema, key) => {
+          schema[key] = root._properties[key];
+          return schema;
+        }, {})
+        order: section.keys
+        // Side by side only as wide as the two columns (not the bar
+        // editor's panel): the tiles keep their room
+        pairs: root.width >= Widget.px(720)
+        keepsPlace: true
+        values: root.values
+        changedAt: root.changedAt
+        tilePreview: root._tilePreview
+        onEdited: (path, value) => root.edited(path, value)
+        onDiscardAt: path => root.discardAt(path)
+      }
     }
   }
 
@@ -256,7 +259,7 @@ ColumnLayout {
 
   // The chosen style's own options, those that apply
   Section {
-    visible: root._hasOptions && root.sections.includes("Look")
+    visible: root._hasOptions && root.sections.includes("Look") && root.owned?.Look !== false
     title: "Look"
     heading: I18n.tr("{0} options", root._styleLabel)
     keys: root._options
