@@ -561,9 +561,9 @@ QtObject {
       return BarBoxes.fromOptions(spec.options, p);
     switch (spec.source) {
     case "marketSymbols":
-      return (p.showPortfolio && MarketsConfig.symbols.some(item => item.quantity > 0) ? ["portfolio"] : []).concat(MarketMath.pick(MarketsConfig.symbols, p.symbols).map(item => item.id));
+      return MarketMath.entries(MarketsConfig.symbols, p.symbols, p.showPortfolio).map(e => e.portfolio ? "portfolio" : e.item.id);
     case "claudeAccounts":
-      return ClaudeUsageConfig.accounts.map(account => account.configDir);
+      return ClaudeUsageConfig.accounts.map(account => account.id);
     default:
       console.warn(`BarsConfig: ${entry.type}'s x-boxItems names no source "${spec.source}"`);
       return [];

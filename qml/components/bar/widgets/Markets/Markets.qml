@@ -22,14 +22,7 @@ ValueStyleWidget {
 
   // What it shows, from config only: { item } per symbol, a { portfolio }
   // first when asked
-  readonly property var items: MarketMath.pick(MarketsConfig.symbols, root.properties.symbols)
-  readonly property var _all: (root.properties.showPortfolio && MarketsConfig.symbols.some(item => item.quantity > 0) ? [
-      {
-        "portfolio": true
-      }
-    ] : []).concat(root.items.map(item => ({
-        "item": item
-      })))
+  readonly property var _all: MarketMath.entries(MarketsConfig.symbols, root.properties.symbols, root.properties.showPortfolio)
   // Its one entry in a box of its own
   readonly property var entries: root.box === "" ? root._all : root._all.filter(entry => root.box === "portfolio" ? entry.portfolio === true : entry.item?.id === root.box)
   readonly property bool cycles: root.properties.rotate && root.style !== "ticker" && root.entries.length > 1

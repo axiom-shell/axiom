@@ -354,7 +354,6 @@ Rectangle {
   // `box`, all with its configIndex.
   function widgetModel(widgetConfigArray) {
     return BarBoxes.expand((widgetConfigArray || []).map((widgetConf, i) => ({
-          "id": widgetConf.id,
           "type": widgetConf.type,
           "properties": widgetConf.properties || {},
           // Its Auto color fields' roles (BarsConfig.withAutoColors)

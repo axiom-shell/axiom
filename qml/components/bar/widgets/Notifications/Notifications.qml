@@ -47,7 +47,7 @@ BarIconWidget {
   CountBadge {
     parent: root.parent
     shown: root.properties.showCount && root.labelKind !== "count" && NotificationManager.count > 0
-    x: Math.round((root.width + root.iconLength) / 2 - width / 2)
+    x: Math.round(root.iconRect.x + root.iconRect.width - width / 2)
     y: 1
     color: Theme.resolveColor(root.properties.badgeColor)
     text: NotificationManager.countLabel

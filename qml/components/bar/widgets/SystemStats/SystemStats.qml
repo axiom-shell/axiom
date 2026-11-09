@@ -176,8 +176,9 @@ BarWidget {
   readonly property real _singleStart: root._single ? Math.round(((root.isVertical ? root.height : root.width) - (root.isVertical ? root._single.height : root._single.width)) / 2) : 0
   readonly property real _singleAcross: root._single ? Math.round(((root.isVertical ? root.width : root.height) - (root.isVertical ? root._single.width : root._single.height)) / 2) : 0
   splits: root._single?.splits ?? false
-  splitAt: root.splits ? root._singleStart + root._single.splitAt : -1
-  splitPart: root.splits ? (root.isVertical ? Qt.rect(root._singleAcross + root._single.splitPart.x, root._singleStart + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height) : Qt.rect(root._singleStart + root._single.splitPart.x, root._singleAcross + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height)) : Qt.rect(0, 0, 0, 0)
+  // `_single` itself tested: it goes null before `splits` follows
+  splitAt: root._single?.splits ? root._singleStart + root._single.splitAt : -1
+  splitPart: root._single?.splits ? (root.isVertical ? Qt.rect(root._singleAcross + root._single.splitPart.x, root._singleStart + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height) : Qt.rect(root._singleStart + root._single.splitPart.x, root._singleAcross + root._single.splitPart.y, root._single.splitPart.width, root._single.splitPart.height)) : Qt.rect(0, 0, 0, 0)
 
   // Ask only for what's shown; re-acquiring replaces the old request
   readonly property var statsRequest: ({

@@ -14,14 +14,14 @@ import qs.components.bar.widgets.base
 // again, left click runs the click command. Its display style draws the
 // fullest account's percent (the first's with Accounts shown: first).
 // Drawn one box per account (Boxes: One per item), each box is this
-// widget showing its one account (`box`, its config folder), its name
+// widget showing its one account (`box`, its id), its name
 // before its percent.
 ValueStyleWidget {
   id: root
 
   // One state per configured account, in the configured order, labelled as
   // configured
-  readonly property var rows: ClaudeUsageConfig.accounts.filter(a => root.box === "" || a.configDir === root.box).map(a => Object.assign({}, ClaudeUsageManager.stateFor(a.configDir) ?? {
+  readonly property var rows: ClaudeUsageConfig.accounts.filter(a => root.box === "" || a.id === root.box).map(a => Object.assign({}, ClaudeUsageManager.stateFor(a.configDir) ?? {
       "status": "pending"
     }, {
       "label": a.label || a.configDir

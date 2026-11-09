@@ -38,7 +38,7 @@ TestCase {
       }
     ];
     const out = BarBoxes.expand(entries, e => e.type === "SystemStats" ? ["cpu", "mem"] : []);
-    compare(out.map(e => e.id), ["clock", "stats:cpu", "stats:mem"]);
+    compare(out.map(e => e.type), ["Time", "SystemStats", "SystemStats"]);
     compare(out.map(e => e.box ?? ""), ["", "cpu", "mem"]);
     // Still one widget to the bar editor
     compare(out.map(e => e.configIndex), [0, 1, 1]);

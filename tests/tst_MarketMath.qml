@@ -83,6 +83,13 @@ TestCase {
     compare(MarketMath.pick(items, ["gone"]).map(i => i.id), ["aapl", "btc"], "none left: all");
   }
 
+  function test_entries() {
+    const ids = list => list.map(e => e.portfolio ? "portfolio" : e.item.id);
+    compare(ids(MarketMath.entries(items, [], true)), ["portfolio", "aapl", "btc"], "the portfolio first");
+    compare(ids(MarketMath.entries(items, ["btc"], false)), ["btc"], "no portfolio unless asked");
+    compare(ids(MarketMath.entries([items[1]], [], true)), ["btc"], "no holdings, no portfolio");
+  }
+
   function test_formatting_data() {
     return [
       {
