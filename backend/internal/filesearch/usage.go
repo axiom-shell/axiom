@@ -10,7 +10,7 @@ type Use struct {
 }
 
 // Frecency is a use record's weight at now (ms): its count, faded with
-// age. The Go twin of Search.frecency.
+// age, as Search.frecency weighs an app's.
 func Frecency(u Use, now int64) float64 {
 	if u.Count <= 0 {
 		return 0
@@ -29,7 +29,7 @@ func Frecency(u Use, now int64) float64 {
 }
 
 // UseBonus is the ranking bonus for a frecency: up to 25, growing with
-// its log. The Go twin of Search.useBonus.
+// its log, as Search.useBonus.
 func UseBonus(frecency float64) float64 {
 	return math.Min(25, 8*math.Log2(1+frecency))
 }

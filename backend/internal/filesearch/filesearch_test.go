@@ -243,6 +243,11 @@ func TestReplaceDir(t *testing.T) {
 	if ix.Mtime(x) != 7e9 || ix.Mtime(a) != 5e9 {
 		t.Errorf("times %d %d", ix.Mtime(x), ix.Mtime(a))
 	}
+	// Many at once: files, a folder, missing ones
+	found := ix.FindAll([]string{"/r/a/x.txt", "/r/a", "/r/a/nope", "/elsewhere/x"})
+	if len(found) != 2 || found["/r/a/x.txt"] != x || found["/r/a"] != a {
+		t.Errorf("FindAll %v", found)
+	}
 	n, _ := ix.Lookup("/r/a/new")
 	if ix.Mtime(n) != 0 {
 		t.Error("a new folder has a time before it's read")
@@ -423,7 +428,7 @@ func TestXBEL(t *testing.T) {
 </xbel>`)
 	got := ParseXBEL(data)
 	want := []Recent{
-		{Path: "/home/u/a b.txt", Time: time.Date(2026, 1, 2, 10, 0, 0, 0, time.UTC).UnixMilli(), Mime: "text/plain"},
+		{Path: "/home/u/a b.txt", Time: time.Date(2026, 1, 2, 10, 0, 0, 0, time.UTC).UnixMilli()},
 		{Path: "/home/u/c.png"},
 	}
 	if !slices.Equal(got, want) {

@@ -77,16 +77,6 @@ QtObject {
     return "~/" + up.concat(to.slice(same)).join("/") + tail;
   }
 
-  // Whether `path` is one of `roots` (absolute) or below one: the index
-  // holds it (unless excluded)
-  function under(path, roots) {
-    const target = root.join(path, "");
-    return (roots ?? []).some(r => {
-      const base = root.join(r, "");
-      return base === "/" || target === base || target.startsWith(base + "/");
-    });
-  }
-
   // The folder holding `path` ("/" for the root's entries)
   function parentOf(path) {
     return root.join(path, "..");

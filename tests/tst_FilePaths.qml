@@ -74,14 +74,6 @@ TestCase {
     compare(FilePaths.parse(FilePaths.completion("/mnt/data", home, true), home).dir, "/mnt/data");
   }
 
-  function test_under() {
-    verify(FilePaths.under("/home/u/a", ["/home/u"]));
-    verify(FilePaths.under("/home/u", ["/home/u/"]), "a root itself");
-    verify(!FilePaths.under("/home/u2", ["/home/u"]), "not a prefix of the name");
-    verify(FilePaths.under("/etc", ["/srv", "/"]), "the root holds everything");
-    verify(!FilePaths.under("/home/u", []));
-  }
-
   function test_parentOf() {
     compare(FilePaths.parentOf("/home/u/a.txt"), "/home/u");
     compare(FilePaths.parentOf("/a"), "/");

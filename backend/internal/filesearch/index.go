@@ -216,28 +216,48 @@ func (ix *Index) Lookup(path string) (uint32, bool) {
 
 // Find is the entry at path, file or folder.
 func (ix *Index) Find(path string) (uint32, bool) {
-	if i, ok := ix.Lookup(path); ok {
-		return i, true
+	i, ok := ix.FindAll([]string{path})[path]
+	return i, ok
+}
+
+// FindAll is Find for many paths at once, those found by path: each
+// folder's entries are walked once, however many of its names are asked
+// (a walk per path would cost the folder's size each).
+func (ix *Index) FindAll(paths []string) map[string]uint32 {
+	out := make(map[string]uint32, len(paths))
+	byDir := map[string]map[string]string{}
+	for _, p := range paths {
+		if i, ok := ix.Lookup(p); ok {
+			out[p] = i
+			continue
+		}
+		cut := strings.LastIndexByte(p, '/')
+		if cut < 0 {
+			continue
+		}
+		dir := p[:cut]
+		if dir == "" {
+			dir = "/"
+		}
+		if byDir[dir] == nil {
+			byDir[dir] = map[string]string{}
+		}
+		byDir[dir][p[cut+1:]] = p
 	}
-	cut := strings.LastIndexByte(path, '/')
-	if cut < 0 {
-		return NoEntry, false
-	}
-	dir := path[:cut]
-	if dir == "" {
-		dir = "/"
-	}
-	d, ok := ix.Lookup(dir)
-	if !ok {
-		return NoEntry, false
-	}
-	name := path[cut+1:]
-	for c := ix.at(d).child; c != NoEntry; c = ix.at(c).next {
-		if string(ix.name(ix.at(c))) == name {
-			return c, true
+	for dir, names := range byDir {
+		d, ok := ix.Lookup(dir)
+		if !ok {
+			continue
+		}
+		for c := ix.at(d).child; c != NoEntry && len(names) > 0; c = ix.at(c).next {
+			name := ix.name(ix.at(c))
+			if p, ok := names[string(name)]; ok {
+				out[p] = c
+				delete(names, string(name))
+			}
 		}
 	}
-	return NoEntry, false
+	return out
 }
 
 // Children are a folder's entries.

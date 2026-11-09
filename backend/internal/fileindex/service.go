@@ -13,6 +13,7 @@ import (
 	"encoding/binary"
 	"hash/fnv"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -211,10 +212,9 @@ func (s *Service) State() State {
 
 // Query is one search.
 type Query struct {
-	Text   string
-	Dir    string // only below this folder ("": every root)
-	Limit  int
-	Hidden bool
+	Text  string
+	Dir   string // only below this folder ("": every root)
+	Limit int
 	// Stale says a newer query replaced this one
 	Stale func() bool
 }
@@ -235,6 +235,7 @@ func (s *Service) Query(q Query) Result {
 	signal(s.demandCh)
 	signal(s.freshCh)
 	out := Result{Items: []Item{}}
+	hidden := s.currentSettings().Hidden
 	s.mu.RLock()
 	ix := s.ix
 	if ix == nil {
@@ -252,22 +253,17 @@ func (s *Service) Query(q Query) Result {
 	now := s.o.Now()
 	bonus := s.useBonus(ix, now)
 	hits, stale := ix.Search(filesearch.Query{
-		Pattern: filesearch.ParsePattern(q.Text), Under: under, Hidden: q.Hidden, Limit: q.Limit,
+		Pattern: filesearch.ParsePattern(q.Text), Under: under, Hidden: hidden, Limit: q.Limit,
 		Now: now.UnixNano(), Bonus: bonus, Stale: q.Stale, Shards: runtime.GOMAXPROCS(0),
 	})
-	type found struct {
-		path  string
-		score float64
-	}
-	paths := make([]found, len(hits))
+	paths := make([]string, len(hits))
 	for k, h := range hits {
-		paths[k] = found{ix.Path(h.Entry), h.Score}
+		paths[k] = ix.Path(h.Entry)
 	}
 	s.mu.RUnlock()
 	out.Indexed, out.Stale = true, stale
-	for _, f := range paths {
-		if it, ok := s.meta.item(f.path); ok {
-			it.Score = f.score
+	for _, p := range paths {
+		if it, ok := s.meta.item(p); ok {
 			out.Items = append(out.Items, it)
 		}
 	}
@@ -296,10 +292,8 @@ func (s *Service) useBonus(ix *filesearch.Index, now time.Time) map[uint32]float
 		return b.byEntry
 	}
 	byEntry := make(map[uint32]float64, len(uses))
-	for p, u := range uses {
-		if i, ok := ix.Find(p); ok {
-			byEntry[i] = filesearch.UseBonus(filesearch.Frecency(u, now.UnixMilli()))
-		}
+	for p, i := range ix.FindAll(slices.Collect(maps.Keys(uses))) {
+		byEntry[i] = filesearch.UseBonus(filesearch.Frecency(uses[p], now.UnixMilli()))
 	}
 	*b = bonusCache{ix: ix, version: version, at: now, byEntry: byEntry}
 	return byEntry
@@ -422,6 +416,7 @@ type loop struct {
 	errText    string
 	pushTimer  *time.Timer
 	lastPush   time.Time
+	pushed     State // the state last pushed
 	wg         sync.WaitGroup
 }
 
@@ -546,10 +541,9 @@ func (l *loop) newWatcher() {
 // build crawls the roots into a new index.
 func (l *loop) build() {
 	ix := filesearch.New()
+	// Every root, one missing too: the stat pass reads it once it's there
 	for _, r := range l.cur.Roots {
-		if _, ok := l.f.rootDev(r); ok {
-			ix.AddRoot(r)
-		}
+		ix.AddRoot(r)
 	}
 	l.setIndex(ix)
 	l.newWatcher()
@@ -604,24 +598,31 @@ func (l *loop) watchAll() {
 	if l.w == nil || ix == nil {
 		return
 	}
-	var watched []uint32
+	type dir struct {
+		d    uint32
+		path string
+	}
+	var watched []dir
 	ix.EachDir(func(d uint32) {
 		mtime := ix.Mtime(d)
 		if ix.Watched(d) || mtime == 0 || len(l.w.byPath) >= l.w.budget {
 			return
 		}
 		path := ix.Path(d)
-		if !l.w.add(path) {
+		if !l.watch(path) {
 			return
 		}
-		watched = append(watched, d)
+		watched = append(watched, dir{d, path})
 		if st, err := os.Lstat(path); err == nil && st.ModTime().UnixNano() != mtime {
 			l.changedDir(path)
 		}
 	})
 	l.s.mu.Lock()
-	for _, d := range watched {
-		ix.SetWatched(d, true)
+	for _, w := range watched {
+		// Unless a later one took its watch (a root linked into another)
+		if _, ok := l.w.byPath[w.path]; ok {
+			ix.SetWatched(w.d, true)
+		}
 	}
 	l.s.mu.Unlock()
 	l.publish(false)
@@ -641,6 +642,11 @@ func (l *loop) next() {
 		if ix.Len() >= l.s.o.MaxEntries {
 			l.pendingStart = nil
 			l.truncated = true
+			// Nothing left to crawl: built
+			if l.phase == PhaseCrawling {
+				l.phase = PhaseReady
+				l.publish(true)
+			}
 			return
 		}
 		req.Start, l.pendingStart = l.pendingStart, nil
@@ -729,7 +735,7 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 	if !ok {
 		return
 	}
-	watch := l.w != nil && !ix.Watched(d) && l.w.add(path)
+	watch := l.w != nil && !ix.Watched(d) && l.watch(path)
 	l.s.mu.Lock()
 	ch := ix.ReplaceDir(d, path, mtime, kids, l.s.o.MaxEntries)
 	if watch {
@@ -758,6 +764,20 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 	}
 }
 
+// watch adds a watch on path within the budget; the path it was watched
+// under until now is no longer marked watched (left to the stat pass).
+func (l *loop) watch(path string) bool {
+	ok, stolen := l.w.add(path)
+	if ix := l.ix(); stolen != "" && ix != nil {
+		if d, found := ix.Lookup(stolen); found {
+			l.s.mu.Lock()
+			ix.SetWatched(d, false)
+			l.s.mu.Unlock()
+		}
+	}
+	return ok
+}
+
 // changedDir queues a folder to read again, debounced.
 func (l *loop) changedDir(path string) {
 	l.changed[path] = true
@@ -777,8 +797,6 @@ func (l *loop) arm() {
 	}
 }
 
-func parentOf(path string) string { return filepath.Dir(path) }
-
 // flush reads the changed folders again (in the daemon: one folder each,
 // small) and updates the written files' times.
 func (l *loop) flush() {
@@ -788,6 +806,8 @@ func (l *loop) flush() {
 		clear(l.written)
 		return
 	}
+	// Folders read again: their files' times are set
+	reread := map[string]bool{}
 	for len(l.changed) > 0 {
 		paths := make([]string, 0, len(l.changed))
 		for p := range l.changed {
@@ -807,21 +827,29 @@ func (l *loop) flush() {
 			switch {
 			case err == nil:
 				l.applyDir(p, fo.mtime, fo.kids, true)
+				reread[p] = true
 			case p == root:
 				l.applyDir(p, 0, nil, false)
 			default:
 				// Gone: its folder drops it
-				l.changed[parentOf(p)] = true
+				l.changed[filepath.Dir(p)] = true
 			}
 		}
 	}
+	var written []string
 	for p := range l.written {
-		if i, ok := ix.Find(p); ok && !ix.IsDir(i) {
-			if st, err := os.Lstat(p); err == nil {
-				l.s.mu.Lock()
-				ix.SetMtime(i, st.ModTime().UnixNano())
-				l.s.mu.Unlock()
-			}
+		if !reread[filepath.Dir(p)] {
+			written = append(written, p)
+		}
+	}
+	for p, i := range ix.FindAll(written) {
+		if ix.IsDir(i) {
+			continue
+		}
+		if st, err := os.Lstat(p); err == nil {
+			l.s.mu.Lock()
+			ix.SetMtime(i, st.ModTime().UnixNano())
+			l.s.mu.Unlock()
 		}
 	}
 	clear(l.written)

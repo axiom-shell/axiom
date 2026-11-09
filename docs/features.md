@@ -222,7 +222,7 @@ One config works on all three. Switch compositors and your bars, pages, theme an
 | :---: | :---: | :---: | :---: |
 | <img src="screenshots/launcher-apps.webp" alt="Launcher searching apps"> | <img src="screenshots/launcher-commands.webp" alt="Launcher command list"> | <img src="screenshots/launcher-calc.webp" alt="Launcher converting 12 USD to euros"> | <img src="screenshots/launcher-emoji.webp" alt="Launcher emoji search"> |
 
-- **Search:** apps (ranked by how often and how recently you use them), open windows, a calculator (math, units, currencies), the web, your clipboard history and emoji.
+- **Search:** apps (ranked by how often and how recently you use them), open windows, your files (`~`: a search, folders, recent files, thumbnails), a calculator (math, units, currencies), the web, your clipboard history and emoji.
 - **Commands:** it runs shell commands, asks your AI chat, and controls the whole shell with `/` commands. Commands that change something you can see (the theme, the volume, the wallpaper) keep the launcher open, so you can try several.
 - **Placement:** floating, centred or in the upper third, or attached to the top or bottom edge like the other edge popouts. The field can sit above or below the results.
 

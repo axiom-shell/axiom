@@ -89,7 +89,7 @@ func Run(ctx context.Context, o Options, argv []string, input *string) (Result, 
 	if input != nil {
 		cmd.Stdin = strings.NewReader(*input)
 	}
-	stdout, stderr := &capped{max: maxStdout}, &capped{max: maxStderr}
+	stdout, stderr := &Capped{Max: maxStdout}, &Capped{Max: maxStderr}
 	wait, err := start(cmd, o.Children, false, stdout, stderr)
 	if err != nil {
 		return Result{}, startError(argv[0], err)
@@ -175,17 +175,17 @@ func startError(name string, err error) error {
 	return axerr.Wrap(axerr.Unavailable, err, "starting %s", name)
 }
 
-// capped keeps the first max bytes written to it and drops the rest.
-type capped struct {
+// Capped keeps the first Max bytes written to it and drops the rest.
+type Capped struct {
 	buf bytes.Buffer
-	max int
+	Max int
 }
 
-func (c *capped) Write(p []byte) (int, error) {
-	if room := c.max - c.buf.Len(); room > 0 {
+func (c *Capped) Write(p []byte) (int, error) {
+	if room := c.Max - c.buf.Len(); room > 0 {
 		c.buf.Write(p[:min(len(p), room)])
 	}
 	return len(p), nil
 }
 
-func (c *capped) String() string { return c.buf.String() }
+func (c *Capped) String() string { return c.buf.String() }

@@ -308,6 +308,20 @@ func TestBudgetLeavesFoldersToTheStatPass(t *testing.T) {
 	}
 }
 
+// A root missing when the index is built is read once it's there
+func TestRootMadeLater(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a/x")
+	later := filepath.Join(t.TempDir(), "later")
+	r := start(t, Options{WatchBudget: 100, QuietSpell: time.Nanosecond}, Settings{Enabled: true, Roots: []string{root, later}})
+	r.finds(t, "x", root+"/a/x", true)
+	if err := os.MkdirAll(later+"/inside", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(later+"/inside/thing.txt", nil, 0o644)
+	r.finds(t, "thing", later+"/inside/thing.txt", true)
+}
+
 // A cache loads at the next start, and a stat pass catches what changed
 // meanwhile; turning file search off removes it
 func TestCache(t *testing.T) {
@@ -389,7 +403,7 @@ func TestRecentAndUsed(t *testing.T) {
 
 func TestBrowse(t *testing.T) {
 	t.Parallel()
-	root := tree(t, "Zeta.txt", "alpha.txt", "beta/", ".hid", "report.pdf")
+	root := tree(t, "Zeta.txt", "alpha.txt", "beta/", ".hid", "report.pdf", "not-utf8-\xff")
 	os.Symlink(root+"/beta", root+"/link")
 	s := New(Options{})
 	for _, c := range []struct {
@@ -415,7 +429,7 @@ func TestBrowse(t *testing.T) {
 		}
 	}
 	res, _ := s.Browse(root, "", 2, false)
-	if len(res.Items) != 2 || res.Total != 5 || !res.Items[1].Dir || !res.Items[1].Link {
+	if len(res.Items) != 2 || res.Total != 5 || !res.Items[1].Dir || res.Items[1].Name != "link" {
 		t.Errorf("limit: %+v", res)
 	}
 	if _, err := s.Browse("relative", "", 2, false); err == nil {
@@ -521,4 +535,64 @@ func TestCacheSaves(t *testing.T) {
 	if info, _ := os.Stat(l.s.o.CacheFile); info.Mode().Perm() != 0o600 {
 		t.Errorf("cache mode %v", info.Mode())
 	}
+}
+
+// The cap reached with folders still queued (a watch's, during the
+// build) ends the build: it's ready, so it saves and runs stat passes
+func TestCapWithFoldersQueued(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a.txt", "b.txt", "sub/c.txt")
+	now := time.Now()
+	s := New(Options{CacheFile: filepath.Join(t.TempDir(), "c.bin"), MaxEntries: 4, Now: func() time.Time { return now }})
+	st := Settings{Enabled: true, Roots: []string{root}}
+	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}, cur: st, active: true, phase: PhaseCrawling,
+		f: newFilter(st.Roots, nil, nil, false)}
+	ix := filesearch.New()
+	ix.AddRoot(root)
+	l.setIndex(ix)
+	l.readDir(t, root)
+	l.pendingStart = []string{root + "/sub"}
+	l.child = &child{cmd: &exec.Cmd{}, msgs: make(chan childMsg), stop: make(chan struct{}), build: true}
+	l.childMsg(childMsg{done: true})
+	if l.phase != PhaseReady || !l.truncated || l.child != nil {
+		t.Errorf("phase %s, truncated %v, a child %v", l.phase, l.truncated, l.child != nil)
+	}
+}
+
+// A change held for the push timer is pushed when it fires
+func TestHeldStateIsPushed(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	var pushed []State
+	s := New(Options{PushEvery: time.Hour, Now: func() time.Time { return now }, OnState: func(st State) { pushed = append(pushed, st) }})
+	l := &loop{s: s, phase: PhaseReady}
+	l.publish(true)
+	l.unreadable = 5
+	l.publish(false)
+	if l.pushTimer == nil || len(pushed) != 1 {
+		t.Fatalf("held: timer %v, pushes %d", l.pushTimer != nil, len(pushed))
+	}
+	l.pushTimer.Stop()
+	l.pushTimer = nil
+	l.publish(true) // the timer fired (Run)
+	if len(pushed) != 2 || pushed[1].Unreadable != 5 {
+		t.Errorf("pushes %+v", pushed)
+	}
+}
+
+// A root linked into another reaches the same folders: the one whose
+// watch the other took is left to the stat pass, and still follows
+func TestLinkedRoots(t *testing.T) {
+	t.Parallel()
+	target := tree(t, "sub/a.txt")
+	link := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	r := start(t, Options{WatchBudget: 100, QuietSpell: time.Nanosecond}, Settings{Enabled: true, Roots: []string{target, link}})
+	r.finds(t, "a.txt", target+"/sub/a.txt", true)
+	r.finds(t, "a.txt", link+"/sub/a.txt", true)
+	os.WriteFile(target+"/sub/b.txt", nil, 0o644)
+	r.finds(t, "b.txt", target+"/sub/b.txt", true)
+	r.finds(t, "b.txt", link+"/sub/b.txt", true)
 }

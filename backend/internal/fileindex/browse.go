@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/filesearch"
@@ -34,7 +35,7 @@ func (s *Service) Browse(path, query string, limit int, hidden bool) (BrowseResu
 		if os.IsNotExist(err) {
 			return BrowseResult{}, axerr.Wrap(axerr.NotFound, err, "no folder there")
 		}
-		return BrowseResult{}, axerr.Wrap(axerr.Unavailable, err, "the folder can't be read")
+		return BrowseResult{}, axerr.Wrap(axerr.Failed, err, "the folder can't be read")
 	}
 	pattern := filesearch.ParsePattern(query)
 	hidden = hidden || strings.HasPrefix(strings.TrimSpace(query), ".")
@@ -46,7 +47,8 @@ func (s *Service) Browse(path, query string, limit int, hidden bool) (BrowseResu
 	var cands []cand
 	for _, e := range entries {
 		name := e.Name()
-		if !hidden && name[0] == '.' {
+		// A name that isn't UTF-8: JSON would carry another path
+		if !hidden && name[0] == '.' || !utf8.ValidString(name) {
 			continue
 		}
 		c := cand{e: e, dir: e.IsDir()}
@@ -86,9 +88,7 @@ func (s *Service) Browse(path, query string, limit int, hidden bool) (BrowseResu
 		if err != nil {
 			continue
 		}
-		it := s.meta.fromInfo(filepath.Join(path, c.e.Name()), info)
-		it.Score = c.score
-		out.Items = append(out.Items, it)
+		out.Items = append(out.Items, s.meta.fromInfo(filepath.Join(path, c.e.Name()), info))
 	}
 	return out, nil
 }

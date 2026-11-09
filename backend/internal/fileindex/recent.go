@@ -108,7 +108,7 @@ func recent(xbel string, uses map[string]filesearch.Use) []filesearch.Recent {
 	}
 	for p, u := range uses {
 		if r := last[p]; u.Last > r.Time {
-			last[p] = filesearch.Recent{Path: p, Time: u.Last, Mime: r.Mime}
+			last[p] = filesearch.Recent{Path: p, Time: u.Last}
 		}
 	}
 	out := make([]filesearch.Recent, 0, len(last))

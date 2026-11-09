@@ -255,6 +255,8 @@ func TestGlobs(t *testing.T) {
 		"p.png":     "image/x-mine", // heavier
 		"nothing":   "",
 		".hidden":   "",
+		// Lower case shorter than the name (the Kelvin sign is "k")
+		"\u212a\u212a\u212a.txt": "text/plain",
 	} {
 		if got := g.TypeOfName(name); got != want {
 			t.Errorf("TypeOfName(%q) = %q, want %q", name, got, want)

@@ -133,15 +133,20 @@ func (g *Globs) TypeOfName(name string) string {
 	consider(g.literal[lower], g.literal[lower].mime != "")
 	consider(g.litCased[name], g.litCased[name].mime != "")
 	// Every extension the name ends in: "a.tar.gz" is *.tar.gz and *.gz
+	// (the dots found in each: a lower case may be shorter, as the Kelvin
+	// sign's "k")
+	for i := 0; i < len(lower); i++ {
+		if lower[i] == '.' {
+			if gl, ok := g.ext[lower[i+1:]]; ok {
+				consider(gl, true)
+			}
+		}
+	}
 	for i := 0; i < len(name); i++ {
-		if name[i] != '.' {
-			continue
-		}
-		if gl, ok := g.ext[lower[i+1:]]; ok {
-			consider(gl, true)
-		}
-		if gl, ok := g.extCased[name[i+1:]]; ok {
-			consider(gl, true)
+		if name[i] == '.' {
+			if gl, ok := g.extCased[name[i+1:]]; ok {
+				consider(gl, true)
+			}
 		}
 	}
 	for _, gl := range g.other {

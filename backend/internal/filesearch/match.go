@@ -135,11 +135,11 @@ func lowerInto(buf, name []byte) []byte {
 
 // Score is how well text matches q, both already in the case they're
 // compared in: 100 exact, 80 prefix, 65 at a word start, 50 inside, 5-30
-// for the letters in order (closer is higher), 0 for no match. It is the
-// Go twin of Search.score (qml/components/methods/Search.qml): keep the
-// two the same, so file rows rank against apps fairly. (It counts bytes
-// where the JS counts UTF-16 units: only a fuzzy span over non-ASCII
-// names differs.)
+// for the letters in order (closer is higher), 0 for no match: the rules
+// of Search.score (qml/components/methods/Search.qml), so a match reads
+// the same in files as in apps. Files are never ranked against apps, so
+// the two needn't stay equal. (It counts bytes where the JS counts UTF-16
+// units.)
 func Score(text, q []byte) int {
 	if len(text) == 0 || len(q) == 0 {
 		return 0

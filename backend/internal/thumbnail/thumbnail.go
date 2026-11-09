@@ -191,8 +191,6 @@ func (s *Service) run(ctx context.Context, c *call, req Request, fail string) {
 	cmd.Env = []string{"GOMAXPROCS=2"}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdin = bytes.NewReader(data)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() == nil && cmd.ProcessState != nil && cmd.ProcessState.ExitCode() == exitUnreadable {
 			WriteFail(fail, req)

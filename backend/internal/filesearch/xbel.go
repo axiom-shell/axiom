@@ -11,7 +11,6 @@ import (
 type Recent struct {
 	Path string
 	Time int64 // ms: its last visit, change or addition
-	Mime string
 }
 
 type xbelFile struct {
@@ -20,9 +19,6 @@ type xbelFile struct {
 		Added    string `xml:"added,attr"`
 		Modified string `xml:"modified,attr"`
 		Visited  string `xml:"visited,attr"`
-		Mime     struct {
-			Type string `xml:"type,attr"`
-		} `xml:"info>metadata>mime-type"`
 	} `xml:"bookmark"`
 }
 
@@ -47,7 +43,7 @@ func ParseXBEL(data []byte) []Recent {
 				last = max(last, t.UnixMilli())
 			}
 		}
-		out = append(out, Recent{Path: path, Time: last, Mime: b.Mime.Type})
+		out = append(out, Recent{Path: path, Time: last})
 	}
 	return out
 }

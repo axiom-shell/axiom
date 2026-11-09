@@ -13,14 +13,12 @@ type Item struct {
 	Path string `json:"path"`
 	Name string `json:"name"`
 	Dir  bool   `json:"dir"` // a folder, or a link to one
-	Link bool   `json:"link"`
 	Mime string `json:"mime"`
 	// Icons are its type's icon names, most specific first
 	// (FileSearchManager falls back from them to a generic icon)
 	Icons []string `json:"icons"`
 	Size  int64    `json:"size"`
 	Mtime int64    `json:"mtime"` // ms
-	Score float64  `json:"score"` // 0 for a listing or the recent files
 }
 
 // meta fills in an item from the disk: its type (by name, through
@@ -45,9 +43,8 @@ func (m *meta) item(path string) (Item, bool) {
 
 func (m *meta) fromInfo(path string, info os.FileInfo) Item {
 	it := Item{Path: path, Name: filepath.Base(path), Size: info.Size(), Mtime: info.ModTime().UnixMilli()}
-	it.Link = info.Mode()&os.ModeSymlink != 0
 	it.Dir = info.IsDir()
-	if it.Link {
+	if info.Mode()&os.ModeSymlink != 0 {
 		if t, err := os.Stat(path); err == nil && t.IsDir() {
 			it.Dir = true
 		}

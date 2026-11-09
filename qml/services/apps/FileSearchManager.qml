@@ -13,8 +13,8 @@ import qs.services.system
  * inotify) and reads those settings itself. This asks it and nothing
  * else: no polling, one call per search, thumbnails only for rows shown.
  *
- * An item is { path, name, dir, link, mime, icons, size, mtime (ms),
- * score }; `dir` is a folder or a link to one. `state` is the index's
+ * An item is { path, name, dir, mime, icons, size, mtime (ms) }; `dir`
+ * is a folder or a link to one. `state` is the index's
  * { phase: off | waiting | loading | crawling | ready, entries, watched,
  * unwatched, unreadable, truncated, error }, pushed as it changes.
  *
@@ -25,7 +25,6 @@ import qs.services.system
 QtObject {
   id: root
 
-  readonly property bool enabled: LauncherConfig.files
   property var state: ({
       "phase": "off",
       "entries": 0,
@@ -48,8 +47,7 @@ QtObject {
       "id": id,
       "query": query,
       "dir": dir ?? "",
-      "limit": limit,
-      "hidden": LauncherConfig.fileShowHidden || /(^|[\s/])\./.test(query)
+      "limit": limit
     }, (error, result) => {
       if (id !== root._seq || error?.kind === "unavailable")
         return;

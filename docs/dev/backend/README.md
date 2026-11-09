@@ -91,7 +91,7 @@ Code handling sockets, locks, runtime directories, atomic writes, the child's en
 - The runtime directory must be a real directory owned by the user with mode 0700; `$XDG_RUNTIME_DIR` is required, never replaced by `/tmp`.
 - A lock is taken before anything it guards is touched (a stale socket is removed only while holding the instance lock).
 - Every socket connection's peer must be the same user (`SO_PEERCRED`), and a hello as `"shell"` must come from the pid of the shell the daemon runs (`Conn.PeerPID`): only it reports the lock and registers IPC targets.
-- Writes are atomic (temp file, fsync, rename, fsync the directory) and never follow a planted symlink.
+- Writes are atomic (temp file, fsync, rename, fsync the directory) and never follow a planted symlink; a cache that checks itself as it loads skips both fsyncs (`fsx.WriteCache`: the file index's, thumbnails).
 - Nothing unlocks the lock screen but PAM: no RPC, CLI or IPC path exists for it.
 - Descriptors received over a socket (D-Bus, and Wayland as it gains them) are close-on-exec on arrival and closed when nothing takes them (`internal/unixmsg`), so no child inherits one.
 - A command the shell asks for (`exec.run`, `exec.spawn`, a watched one through `exec.watch`; `internal/command`) gets the shell's environment and only stdio; what it reads as a secret comes on stdin, never argv or the log, a spawn starts in a session of its own (in its `cwd`, when given: a desktop entry's `Path=`), never the daemon's child, and a streamed watch runs in a process group of its own, killed whole when it stops.

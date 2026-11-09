@@ -65,25 +65,27 @@ func newWatcher(budget int) (*watcher, error) {
 		events: make(chan []event, 16), stop: make(chan struct{})}, nil
 }
 
-// add watches the folder at path, unless the budget is spent.
-func (w *watcher) add(path string) bool {
+// add watches the folder at path, unless the budget is spent; stolen is
+// the path the folder was watched under until now (it moved here, or
+// another root reaches it through a link), "" for none.
+func (w *watcher) add(path string) (ok bool, stolen string) {
 	if _, ok := w.byPath[path]; ok {
-		return true
+		return true, ""
 	}
 	if len(w.byPath) >= w.budget {
-		return false
+		return false, ""
 	}
 	wd, err := unix.InotifyAddWatch(w.fd, path, watchMask)
 	if err != nil {
-		return false
+		return false, ""
 	}
-	// A folder moved here may already be watched under its old path
 	if old, ok := w.byWd[int32(wd)]; ok {
 		delete(w.byPath, old)
+		stolen = old
 	}
 	w.byWd[int32(wd)] = path
 	w.byPath[path] = int32(wd)
-	return true
+	return true, stolen
 }
 
 // remove stops watching path.

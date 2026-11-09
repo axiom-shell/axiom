@@ -5,10 +5,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/filesearch"
 	"golang.org/x/sys/unix"
 )
@@ -33,16 +35,6 @@ type childMsg struct {
 	err   error
 }
 
-// stderrTail keeps the start of what the child said on stderr.
-type stderrTail struct{ buf bytes.Buffer }
-
-func (s *stderrTail) Write(p []byte) (int, error) {
-	if room := 4096 - s.buf.Len(); room > 0 {
-		s.buf.Write(p[:min(room, len(p))])
-	}
-	return len(p), nil
-}
-
 // startChild runs `axiom index-crawl` on req: in a process group of its
 // own (killed whole), with nothing of the daemon's environment, one P and
 // a small heap (it lowers its own priority before it reads anything).
@@ -55,7 +47,8 @@ func (l *loop) startChild(req CrawlRequest) {
 	cmd.Env = []string{"GOMAXPROCS=1", "GOGC=20"}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdin = bytes.NewReader(data)
-	stderr := &stderrTail{}
+	// The start of what it says
+	stderr := &command.Capped{Max: 4096}
 	cmd.Stderr = stderr
 	stdout, err := cmd.StdoutPipe()
 	if err == nil {
@@ -117,7 +110,7 @@ func (l *loop) startChild(req CrawlRequest) {
 			err = readErr
 		}
 		if err != nil {
-			if first, _, _ := strings.Cut(strings.TrimSpace(stderr.buf.String()), "\n"); first != "" {
+			if first, _, _ := strings.Cut(strings.TrimSpace(stderr.String()), "\n"); first != "" {
 				err = &childError{err: err, said: first}
 			}
 		}
@@ -215,7 +208,7 @@ func (l *loop) childMsg(m childMsg) {
 		if l.f.rootOf(m.path) == m.path {
 			l.applyDir(m.path, 0, nil, false)
 		} else {
-			l.changedDir(parentOf(m.path))
+			l.changedDir(filepath.Dir(m.path))
 		}
 	case m.kind == msgUnreadable:
 		l.unreadable++
@@ -262,7 +255,7 @@ func (l *loop) watchEvents(evs []event) {
 			if l.f.rootOf(dir) == dir {
 				l.changedDir(dir)
 			} else {
-				l.changedDir(parentOf(dir))
+				l.changedDir(filepath.Dir(dir))
 			}
 		case ev.mask&unix.IN_CLOSE_WRITE != 0:
 			if ev.name != "" {
@@ -287,10 +280,10 @@ func (l *loop) publish(urgent bool) {
 		st.Unwatched = max(0, ix.Folders()-st.Watched)
 	}
 	l.s.stateMu.Lock()
-	changed := st != l.s.state
 	l.s.state = st
 	l.s.stateMu.Unlock()
-	if !changed {
+	// Against the last pushed: a change held for the timer is pushed then
+	if st == l.pushed {
 		return
 	}
 	now := l.s.o.Now()
@@ -299,7 +292,7 @@ func (l *loop) publish(urgent bool) {
 			l.pushTimer.Stop()
 			l.pushTimer = nil
 		}
-		l.lastPush = now
+		l.lastPush, l.pushed = now, st
 		l.s.o.OnState(st)
 		return
 	}

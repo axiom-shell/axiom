@@ -41,25 +41,21 @@ QtObject {
   function mainRows(q) {
     if (!LauncherConfig.files || LauncherConfig.filesInSearch === 0 || q.length < 2) {
       root._mainQ = "";
-      root._main = {
-        "q": "",
-        "items": []
-      };
+      root._mainItems = [];
       return [];
     }
     if (q !== root._mainQ) {
       root._mainQ = q;
+      // One id sequence: this drops "~" mode's answer in flight
+      root._mode.text = null;
       FileSearchManager.search(q, "", LauncherConfig.filesInSearch, answer => {
         if (q !== root._mainQ)
           return;
-        root._main = {
-          "q": q,
-          "items": answer.items
-        };
+        root._mainItems = answer.items;
         root.updated();
       });
     }
-    return root._main.items.map(item => root._row(item, true));
+    return root._mainItems.map(item => root._row(item, true));
   }
 
   // Asks again on the next read: the launcher closed (it opens to fresh
@@ -80,6 +76,8 @@ QtObject {
     })
 
   function _ask(text) {
+    // One id sequence: this drops the main search's answer in flight
+    root._mainQ = "";
     const request = FilePaths.parse(text, root._home);
     const phase = FileSearchManager.state.phase;
     const land = answer => {
@@ -109,8 +107,9 @@ QtObject {
       browse();
     else
     // Below a folder the index holds once it's built; else (outside the
-    // folders searched, while it builds) the folder's own entries
-    if (request.dir === "" || phase === "ready" && FilePaths.under(request.dir, LauncherConfig.fileRoots))
+    // folders searched: the index answers not indexed; while it builds)
+    // the folder's own entries
+    if (request.dir === "" || phase === "ready")
       FileSearchManager.search(request.query, request.dir, root._limit, answer => {
         if (answer.indexed || request.dir === "")
           land(answer);
@@ -149,12 +148,9 @@ QtObject {
 
   // --- The main search ---
 
-  // The query asked for, and the newest answer { q, items }
+  // The query asked for, and the newest answer's items
   property string _mainQ: ""
-  property var _main: ({
-      "q": "",
-      "items": []
-    })
+  property var _mainItems: []
 
   // --- Rows ---
 

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/axiom-shell/axiom/backend/internal/filesearch"
 	"golang.org/x/sys/unix"
@@ -52,8 +53,9 @@ func (f *filter) rootOf(path string) string {
 }
 
 // keep says whether the entry at path (under root) goes in the index.
+// A name that isn't UTF-8 never does: JSON would carry another path.
 func (f *filter) keep(root, path, name string) bool {
-	if !f.hidden && name[0] == '.' {
+	if !f.hidden && name[0] == '.' || !utf8.ValidString(name) {
 		return false
 	}
 	for _, s := range f.skip {

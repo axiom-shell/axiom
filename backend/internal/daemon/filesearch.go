@@ -131,11 +131,10 @@ func (d *Daemon) fileSearchPart() part {
 // queries (a newer id makes an older query answer stale), dir keeps the
 // results below a folder.
 type fileQueryParams struct {
-	ID     int64  `json:"id"`
-	Query  string `json:"query"`
-	Dir    string `json:"dir,omitempty"`
-	Limit  int    `json:"limit"`
-	Hidden bool   `json:"hidden,omitempty"`
+	ID    int64  `json:"id"`
+	Query string `json:"query"`
+	Dir   string `json:"dir,omitempty"`
+	Limit int    `json:"limit"`
 }
 
 // fileQueryResult: the query's id, its results best first, stale when a
@@ -203,7 +202,7 @@ func (d *Daemon) fileSearchMethods(reg *rpc.Registry) {
 		}
 		stale := func() bool { return latest.Load() != p.ID || ctx.Err() != nil }
 		res := d.fileSearch.index.Query(fileindex.Query{Text: p.Query, Dir: p.Dir, Limit: clampLimit(p.Limit, defaultFileLimit, maxFileLimit),
-			Hidden: p.Hidden, Stale: stale})
+			Stale: stale})
 		if res.Stale {
 			res.Items = []fileindex.Item{}
 		}
