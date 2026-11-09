@@ -3441,7 +3441,6 @@
     "Default follows Date & time settings.": "",
     "Show only while a removable drive is plugged in.": "",
     "Hidden items stay in the note.": "",
-    "Numbers and the grid's active arrow.": "",
     "The title, open count and Clear completed.": "",
     "A Qt time format, e.g. HH:mm. Empty uses the language's.": "",
     "Shown in the page navigator: a Material Symbols name. Empty shows the default.": "",
@@ -4146,6 +4145,7 @@
     "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
     "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
     "What each workspace shows. None: just its box or line.": "",
-    "Workspaces with windows show their largest window's icon instead.": ""
+    "Workspaces with windows show their largest window's icon instead.": "",
+    "Numbers, dots in boxes and the grid's active arrow.": ""
   }
 }

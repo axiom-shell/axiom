@@ -114,12 +114,12 @@ settings:
     title: Text color
     x-options: colors
     default: base00
-    description: Numbers and the grid's active arrow.
+    description: Numbers, dots in boxes and the grid's active arrow.
     x-showIf:
       $bar.widgetStyle: filled
       $bar.widgetTextColor: ''
       anyOf:
-        - {labels: numbers}
+        - {labels: [numbers, dots]}
         - {showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
   hoverColor:
     type: string
