@@ -11,8 +11,10 @@ import qs.components.reusable
 // integrations) the IntegrationHookup panel, drawn as a FormRow (the
 // divider above it, the rail, the fold as its `x-showIf` flips). A field
 // with `x-row` is drawn by settings/<Name>.qml instead (given `row` and
-// `form`), and the rows its `x-rowDraws` names hide; an object with `x-fold` is a fold header, its rows shown only
-// while it's open (SettingsManager.isFoldOpen), and always in a search
+// `form`), and the rows its `x-rowDraws` names hide (an object with
+// `x-row`: every row under it); an object with `x-fold` is a fold header,
+// its rows shown only while it's open (SettingsManager.isFoldOpen), and
+// always in a search
 FormRow {
   id: root
 
