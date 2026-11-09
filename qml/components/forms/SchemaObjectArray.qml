@@ -74,7 +74,7 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: Widget.spacing
 
-            StyledText {
+            StyledLabel {
               text: "#" + (entry.index + 1)
               textColor: Theme.accent
               textSize: Appearance.fontSizeBy(-1)
@@ -144,7 +144,7 @@ ColumnLayout {
     Layout.preferredHeight: Widget.height * 3 - Widget.padding
     backgroundColor: Theme.background
 
-    StyledText {
+    StyledLabel {
       anchors.centerIn: parent
       text: I18n.tr("No items - click + to add")
       opacity: 0.5

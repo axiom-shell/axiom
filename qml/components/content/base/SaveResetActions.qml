@@ -98,7 +98,7 @@ RowLayout {
         Layout.alignment: Qt.AlignVCenter
       }
 
-      StyledText {
+      StyledLabel {
         id: buttonText
         visible: !root.compact
         text: button.label

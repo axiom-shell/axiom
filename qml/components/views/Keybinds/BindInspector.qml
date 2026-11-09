@@ -165,7 +165,7 @@ ColumnLayout {
 
       // The section the action files it under, unless the label names its
       // own ("Section: Label")
-      StyledText {
+      StyledLabel {
         visible: !BindActions.hasOwnSection(label.input.text)
         text: I18n.tr(BindActions.sectionFor(KeybindManager.actionTable, root.bind.action)) + "  ›"
         opacity: 0.5
@@ -255,7 +255,7 @@ ColumnLayout {
         spacing: Widget.spacing
         Layout.fillWidth: true
 
-        StyledText {
+        StyledLabel {
           text: part.modelData.title
           Layout.fillWidth: true
         }

@@ -34,7 +34,7 @@ ColumnLayout {
       text: !root.definition?.command ? I18n.tr("No command") : root.output === null ? I18n.tr("Waiting") : root.output.blocked ? I18n.tr("Not run") : root.output.error ? I18n.tr("Failed") : I18n.tr("Running")
       color: !root.definition?.command || root.output?.blocked ? Theme.foregroundAlt : root.output?.error ? Theme.error : root.output === null ? Theme.warning : Theme.success
     }
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: root.output?.error ? root.output.error : root.output?.at ? I18n.tr("Last output {0}", I18n.formatDate(new Date(root.output.at), I18n.dateTimeFormat())) : ""
       elide: Text.ElideRight
@@ -83,14 +83,14 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Widget.spacing
 
-        StyledText {
+        StyledLabel {
           Layout.preferredWidth: Appearance.fontSize * 12
           text: pathRow.entry.path ?? ""
           textFamily: "monospace"
           textSize: Appearance.fontSizeBy(-1)
           elide: Text.ElideMiddle
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: pathRow.entry.type === "array" ? I18n.tr("a list of {0}", pathRow.entry.value) : pathRow.entry.type === "object" ? "{…}" : CustomWidgetData.asText(pathRow.entry.value)
           elide: Text.ElideRight

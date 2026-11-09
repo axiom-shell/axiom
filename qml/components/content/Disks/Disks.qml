@@ -92,14 +92,14 @@ Card {
 
             RowLayout {
               Layout.fillWidth: true
-              StyledText {
+              StyledLabel {
                 Layout.fillWidth: true
                 elide: Text.ElideMiddle
                 text: disk.modelData
                 font.bold: true
               }
               // Narrow: the used size only, then nothing beside the path
-              StyledText {
+              StyledLabel {
                 readonly property bool narrow: disk.width < Appearance.fontSize * 12
                 visible: disk.width >= Appearance.fontSize * 7
                 text: !disk.usage ? "…" : narrow ? Utils.formatSize(disk.usage.used) : Utils.formatSize(disk.usage.used) + " / " + Utils.formatSize(disk.usage.total)

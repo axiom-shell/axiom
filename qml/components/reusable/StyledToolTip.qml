@@ -69,7 +69,7 @@ PopupWindow {
 
     Glide on opacity {}
 
-    StyledText {
+    StyledLabel {
       id: label
       anchors.centerIn: parent
       // Wrapped at `maxWidth`, when set

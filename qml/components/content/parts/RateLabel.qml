@@ -23,7 +23,7 @@ Row {
     textColor: root.textColor
     textSize: root.textSize
   }
-  StyledText {
+  StyledLabel {
     anchors.verticalCenter: parent.verticalCenter
     text: Utils.formatRate(root.rate)
     textColor: root.textColor

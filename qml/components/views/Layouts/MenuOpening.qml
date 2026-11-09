@@ -84,7 +84,7 @@ ColumnLayout {
           text: reference.ref.kind === "bind" ? "keyboard" : reference.ref.kind === "submenu" ? "menu_open" : "toolbar"
           textColor: Theme.accent
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: reference.ref.label ?? ""
           font.underline: referenceArea.containsMouse

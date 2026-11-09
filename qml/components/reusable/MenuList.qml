@@ -135,7 +135,7 @@ FocusScope {
           text: "arrow_back"
           textColor: Theme.accent
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: root._parentItem?.text ?? ""
           font.weight: Font.Medium
@@ -196,13 +196,13 @@ FocusScope {
               textColor: row.lit && row.danger ? Theme.background : Theme.accent
               Layout.preferredWidth: Appearance.fontSizeBy(4)
             }
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               text: row.modelData?.text ?? ""
               textColor: row.lit && row.danger ? Theme.background : Theme.foreground
               elide: Text.ElideRight
             }
-            StyledText {
+            StyledLabel {
               visible: text !== ""
               text: row.modelData?.shortcut ?? ""
               textColor: Theme.foregroundInactive

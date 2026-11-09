@@ -30,7 +30,7 @@ Rectangle {
   radius: height / 2
   color: root.current ? Theme.accent : Qt.alpha(Theme.background, 0.75)
 
-  StyledText {
+  StyledLabel {
     id: label
     anchors.centerIn: parent
     text: root.number

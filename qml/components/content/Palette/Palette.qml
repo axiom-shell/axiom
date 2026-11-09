@@ -63,13 +63,13 @@ Card {
       Layout.topMargin: 2
       spacing: Widget.spacing / 2
 
-      StyledText {
+      StyledLabel {
         text: chip.modelData
         textSize: Appearance.fontSizeBy(-2)
         font.bold: true
       }
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: chip.value.toString().toUpperCase()
         textSize: Appearance.fontSizeBy(-3)

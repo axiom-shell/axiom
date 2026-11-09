@@ -97,13 +97,13 @@ Panel {
         Layout.fillWidth: true
         spacing: Widget.padding
 
-        StyledText {
+        StyledLabel {
           text: row.modelData.name
           Layout.fillWidth: true
           Layout.minimumWidth: Appearance.fontSize * 4
           elide: Text.ElideRight
         }
-        StyledText {
+        StyledLabel {
           visible: !section.namesOnly
           Layout.maximumWidth: root.embedded ? root.sectionWidth * 0.45 : Number.POSITIVE_INFINITY
           elide: Text.ElideLeft

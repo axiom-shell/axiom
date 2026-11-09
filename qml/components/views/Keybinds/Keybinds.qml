@@ -178,7 +178,7 @@ BaseView {
             onClicked: KeybindManager.page.setRefGlyphs(!KeybindManager.page.refGlyphs)
           }
 
-          StyledText {
+          StyledLabel {
             visible: !root.editing && !root.keyboard
             text: root.narrowed ? I18n.tr("{0} of {1} binds", root.shownCount, root.totalCount) : I18n.tr("{0} binds", root.totalCount)
             opacity: 0.6

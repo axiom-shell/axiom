@@ -529,6 +529,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Tooling, tests and CI
 
+### qml_modules.py builds its tree in a folder named after a flag
+- **Where:** `scripts/qml_modules.py` (`main`)
+- **What:** any one argument but `--pure` is taken as the output folder, so `scripts/qml_modules.py --help` empties and fills `./--help` with a copy of `qml/` (one was committed on `fix/text-centering` and removed again). Fix: print the usage for an argument starting with `-` that isn't `--pure`.
+- **Size:** trivial
+- **Found:** 2026-11-09, while centring labels outside the bar on their letters
+
 ### guard.py judges daemon calls and the radio only by argv
 - **Where:** `.claude/hooks/guard.py` (`check_bluetooth`, `scratch_system_bus`, `axiom_live_display`)
 - **What:** every daemon-RPC rule matches the method name in the command's arguments, so a request fed from stdin or a file (`socat - UNIX-CONNECT:… < req.json`, `nc -U`) or sent by another program (`node`) passes; a write straight to `/dev/rfkill` isn't judged; and `scratch_system_bus` takes `unix:path=/run/dbus/../dbus/system_bus_socket` for a scratch bus (it compares the string, not the resolved path). Neither are an axiom binary run under another name (`go run ./cmd/axiom bluetooth off`, a copy named `axiom.new`), a raw `ipc.call` written as JSON in `printf`'s arguments (judged by method, not target: `lockscreen` too), nor a `python3 -c` calling BlueZ, timedate1 or hostname1 through python-dbus or Gio. Fix: resolve the bus path before comparing; refuse writes to `/dev/rfkill`; judge a redirect or pipe into a socket client by its input file where it's one.

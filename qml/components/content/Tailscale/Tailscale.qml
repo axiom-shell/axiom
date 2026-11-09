@@ -217,11 +217,11 @@ Panel {
         text: fold.icon
         textColor: foldRow.hovered && fold.foldable ? Theme.accent : Theme.foregroundAlt
       }
-      StyledText {
+      StyledLabel {
         text: fold.label
         textSize: Appearance.fontSizeBy(-1)
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight
         text: fold.value
@@ -279,14 +279,14 @@ Panel {
         id: choiceColumn
         Layout.fillWidth: true
         spacing: 0
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: choice.title
           elide: Text.ElideRight
           textSize: Appearance.fontSizeBy(-1)
           textColor: choice.chosen ? Theme.accent : Theme.foreground
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           visible: choice.subtitle !== ""
           text: choice.subtitle
@@ -325,7 +325,7 @@ Panel {
       }
     }
 
-    StyledText {
+    StyledLabel {
       Layout.fillWidth: true
       text: pref.label
       elide: Text.ElideRight
@@ -403,11 +403,11 @@ Panel {
     RowLayout {
       Layout.fillWidth: true
       spacing: Widget.spacing
-      StyledText {
+      StyledLabel {
         text: TailscaleManager.hostName
         font.bold: true
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: TailscaleManager.dnsName
         elide: Text.ElideRight

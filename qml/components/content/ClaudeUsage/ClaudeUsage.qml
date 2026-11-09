@@ -59,12 +59,12 @@ Panel {
 
     RowLayout {
       Layout.fillWidth: true
-      StyledText {
+      StyledLabel {
         text: meter.title
         Layout.fillWidth: true
         elide: Text.ElideRight
       }
-      StyledText {
+      StyledLabel {
         text: `${meter.usage?.percent ?? 0}%`
         font.bold: true
       }
@@ -104,19 +104,19 @@ Panel {
         Layout.fillWidth: true
         spacing: Widget.padding
 
-        StyledText {
+        StyledLabel {
           text: account.row.label
           font.bold: true
           textColor: Theme.accent
         }
-        StyledText {
+        StyledLabel {
           text: [account.row.org, account.row.plan].filter(s => s).join(" · ")
           textColor: Theme.foregroundAlt
           textSize: Appearance.fontSizeBy(-2)
           elide: Text.ElideRight
           Layout.fillWidth: true
         }
-        StyledText {
+        StyledLabel {
           // I18n.tr("token expired") I18n.tr("fetch failed") I18n.tr("not logged in") I18n.tr("loading…")
           readonly property var labels: ({
               "expired": "token expired",

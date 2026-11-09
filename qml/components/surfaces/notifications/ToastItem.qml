@@ -343,7 +343,7 @@ Item {
         Layout.fillWidth: true
         spacing: 2
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: root.notification?.appName || ""
           textColor: Theme.foregroundAlt

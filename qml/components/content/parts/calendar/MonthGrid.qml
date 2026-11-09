@@ -128,7 +128,7 @@ Item {
       Layout.preferredHeight: root.headerHeight
       spacing: Widget.spacing / 2
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         Layout.leftMargin: Widget.spacing / 2
         text: I18n.formatDate(new Date(root.year, root.month, 1), I18n.dateFormat("monthYear"))
@@ -164,7 +164,7 @@ Item {
 
       Repeater {
         model: 7
-        StyledText {
+        StyledLabel {
           required property int index
           Layout.fillWidth: true
           Layout.preferredHeight: root.weekdayHeight
@@ -245,7 +245,7 @@ Item {
               radius: height / 2
               color: root.titles && cell.modelData.isToday ? Theme.accent : "transparent"
 
-              StyledText {
+              StyledLabel {
                 id: numberText
                 anchors.centerIn: parent
                 text: cell.modelData.day
@@ -307,7 +307,7 @@ Item {
                     radius: 1.5
                     color: chip.calendarColor
                   }
-                  StyledText {
+                  StyledLabel {
                     anchors.verticalCenter: parent.verticalCenter
                     x: Widget.px(chip.event?.allDay ? 4 : 8)
                     width: parent.width - x - 2

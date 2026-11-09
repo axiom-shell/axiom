@@ -165,7 +165,7 @@ Rectangle {
     radius: height / 2
     color: Theme.accent
 
-    StyledText {
+    StyledLabel {
       id: sizeText
       anchors.centerIn: parent
       readonly property var place: root.dragLayer?.landingPlace ?? root.place

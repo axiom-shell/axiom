@@ -168,7 +168,7 @@ DropdownSurface {
                   textColor: crumb.last ? Theme.foreground : Theme.foregroundAlt
                   textSize: Appearance.fontSizeBy(1)
                 }
-                StyledText {
+                StyledLabel {
                   id: crumbName
                   visible: crumb.index > 0
                   anchors.centerIn: parent
@@ -302,7 +302,7 @@ DropdownSurface {
             Layout.fillWidth: true
             spacing: 0
 
-            StyledText {
+            StyledLabel {
               Layout.fillWidth: true
               text: root.highlighted(hit.result.title)
               textFormat: Text.StyledText
@@ -310,7 +310,7 @@ DropdownSurface {
               textSize: Appearance.fontSizeBy(-1)
               elide: Text.ElideRight
             }
-            StyledText {
+            StyledLabel {
               visible: text !== ""
               Layout.fillWidth: true
               text: hit.byName ? hit.result.snippet : root.highlighted(hit.result.snippet)
@@ -320,7 +320,7 @@ DropdownSurface {
               elide: Text.ElideRight
             }
           }
-          StyledText {
+          StyledLabel {
             visible: !hit.byName
             Layout.alignment: Qt.AlignTop
             text: I18n.tr("line {0}", hit.result.line + 1)
@@ -387,7 +387,7 @@ DropdownSurface {
             textSize: Appearance.fontSizeBy(1)
           }
 
-          StyledText {
+          StyledLabel {
             visible: !row.editing
             Layout.fillWidth: true
             text: row.confirming ? (NotesManager.canTrash ? I18n.tr("Move {0} to the trash?", row.fileName) : I18n.tr("Delete {0} for good?", row.fileName)) : row.fileIsDir ? row.fileName : NotesManager.titleOf(row.fileName)

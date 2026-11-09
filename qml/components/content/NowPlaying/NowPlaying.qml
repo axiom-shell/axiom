@@ -105,7 +105,7 @@ Panel {
           visible: root.stacked
           Layout.fillWidth: true
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           Layout.maximumWidth: Math.ceil(implicitWidth)
           elide: Text.ElideRight
@@ -192,7 +192,7 @@ Panel {
     RowLayout {
       visible: !root.short
       Layout.fillWidth: true
-      StyledText {
+      StyledLabel {
         text: MediaManager.formatTime(seek.pressed ? seek.position * MediaManager.length : MediaManager.position)
         textSize: root.large ? Appearance.fontSizeBy(-1) : Appearance.fontSizeBy(-3)
         opacity: 0.6
@@ -200,7 +200,7 @@ Panel {
       Item {
         Layout.fillWidth: true
       }
-      StyledText {
+      StyledLabel {
         text: MediaManager.formatTime(MediaManager.length)
         textSize: root.large ? Appearance.fontSizeBy(-1) : Appearance.fontSizeBy(-3)
         opacity: 0.6

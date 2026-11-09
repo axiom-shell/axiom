@@ -37,7 +37,7 @@ Rectangle {
     anchors.fill: parent
     spacing: Widget.spacing
 
-    StyledText {
+    StyledLabel {
       id: titleText
       Layout.fillWidth: true
       // Shrinks to elide, but doesn't push the extras away from it. In

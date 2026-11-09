@@ -149,11 +149,11 @@ FoldingCard {
           text: match.found.kind === "crypto" ? I18n.tr("Crypto") : match.found.kind === "etf" ? I18n.tr("ETF") : match.found.kind === "index" ? I18n.tr("Index") : match.found.kind === "fx" ? I18n.tr("Currency") : match.found.kind === "future" ? I18n.tr("Future") : match.found.kind === "fund" ? I18n.tr("Fund") : I18n.tr("Stock")
           color: match.found.kind === "crypto" ? Theme.warning : Theme.accent
         }
-        StyledText {
+        StyledLabel {
           text: match.found.display
           font.weight: Font.DemiBold
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: match.found.exchange ? I18n.tr("{0} · {1}", match.found.name, match.found.exchange) : match.found.name
           textColor: Theme.foregroundAlt
@@ -203,7 +203,7 @@ FoldingCard {
         onClicked: root.openId = entry.open ? "" : entry.item.id
         badges: Row {
           spacing: Widget.spacing
-          StyledText {
+          StyledLabel {
             visible: !!entry.quote
             textSize: Appearance.fontSizeBy(-1)
             textColor: entry.quote?.error ? Theme.error : MarketsManager.trendColor(MarketMath.trend(entry.quote?.change ?? 0))

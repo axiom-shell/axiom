@@ -183,7 +183,7 @@ Item {
       }
     }
 
-    StyledText {
+    StyledLabel {
       text: root.showPercent ? Math.round(root.volumeLevel * 100) + "%" : ""
       textSize: Appearance.fontSizeBy(-2)
       horizontalAlignment: Text.AlignHCenter

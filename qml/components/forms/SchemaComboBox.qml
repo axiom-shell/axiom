@@ -66,7 +66,7 @@ GridLayout {
       anchors.rightMargin: Widget.padding
       spacing: 0
 
-      StyledText {
+      StyledLabel {
         text: root.swatchLabel(root.currentValue)
         textColor: root._currentTextColor
         Layout.fillWidth: true
@@ -133,7 +133,7 @@ GridLayout {
         border.width: root.swatches && (delegateArea.containsMouse || modelData === root.currentValue) ? Appearance.borderWidth * 2 : 0
         border.color: Utils.getContrastColor(swatchColor)
 
-        StyledText {
+        StyledLabel {
           anchors.fill: parent
           anchors.leftMargin: Widget.padding
           anchors.rightMargin: Widget.padding

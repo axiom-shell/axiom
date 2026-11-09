@@ -126,12 +126,12 @@ Card {
               anchors.rightMargin: Widget.spacing / 2
               spacing: Widget.spacing
 
-              StyledText {
+              StyledLabel {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
                 text: row.proc.command
               }
-              StyledText {
+              StyledLabel {
                 visible: !root.narrow || root.sortBy === "cpu"
                 Layout.preferredWidth: numberMetrics.advanceWidth
                 horizontalAlignment: Text.AlignRight
@@ -139,7 +139,7 @@ Card {
                 textColor: root.sortBy === "cpu" ? Theme.accent : Theme.foreground
                 textSize: Appearance.fontSizeBy(-1)
               }
-              StyledText {
+              StyledLabel {
                 visible: !root.narrow || root.sortBy === "mem"
                 Layout.preferredWidth: numberMetrics.advanceWidth
                 horizontalAlignment: Text.AlignRight

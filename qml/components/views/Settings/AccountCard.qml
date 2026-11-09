@@ -164,7 +164,7 @@ FieldGroup {
       Layout.alignment: Qt.AlignVCenter
       spacing: Widget.spacing / 2
 
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         text: root.shownName
         textSize: Appearance.fontSizeBy(8)
@@ -175,7 +175,7 @@ FieldGroup {
       RowLayout {
         spacing: Widget.spacing
 
-        StyledText {
+        StyledLabel {
           visible: AccountManager.login !== root.shownName
           text: AccountManager.login
           textFamily: "monospace"
@@ -189,7 +189,7 @@ FieldGroup {
         }
       }
 
-      StyledText {
+      StyledLabel {
         visible: AccountManager.realName !== "" && AccountManager.realName !== root.shownName
         text: I18n.tr("Real name: {0}", AccountManager.realName)
         textColor: Theme.foregroundAlt

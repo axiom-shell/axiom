@@ -216,7 +216,7 @@ ColumnLayout {
             Layout.fillWidth: true
           }
 
-          StyledText {
+          StyledLabel {
             text: I18n.tr("Flipped")
             font.weight: Font.Medium
           }
@@ -306,7 +306,7 @@ ColumnLayout {
             textColor: Theme.accent
           }
 
-          StyledText {
+          StyledLabel {
             text: I18n.tr("Advanced")
             font.bold: true
             Layout.fillWidth: true

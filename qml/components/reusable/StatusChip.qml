@@ -18,7 +18,7 @@ PopInRectangle {
     duration: Appearance.animNormal
   }
 
-  StyledText {
+  StyledLabel {
     id: label
     anchors.centerIn: parent
     text: root.text

@@ -447,7 +447,7 @@ PanelWindow {
           Layout.fillWidth: true
           spacing: 0
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: I18n.tr("Share your screen")
             textSize: Appearance.fontSizeLarge
@@ -455,7 +455,7 @@ PanelWindow {
             elide: Text.ElideRight
           }
 
-          StyledText {
+          StyledLabel {
             Layout.fillWidth: true
             text: root.request?.appId ? I18n.tr("{0} asks what to share", root.request.appId) : I18n.tr("Pick what to share")
             textColor: Theme.foregroundInactive
@@ -518,7 +518,7 @@ PanelWindow {
           delegate: tileDelegate
         }
 
-        StyledText {
+        StyledLabel {
           anchors.centerIn: parent
           visible: (root.tab === "screen" && root.outputs.length === 0) || (root.tab === "window" && grid.count === 0)
           text: root.tab === "screen" ? I18n.tr("No screen to share") : I18n.tr("No window to share")

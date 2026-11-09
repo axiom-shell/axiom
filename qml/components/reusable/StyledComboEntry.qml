@@ -411,7 +411,7 @@ Item {
           asynchronous: true
         }
 
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           elide: Text.ElideRight
           text: option.modelData.label

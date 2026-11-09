@@ -24,7 +24,7 @@ RowLayout {
   Layout.fillHeight: false
   spacing: Widget.spacing
 
-  StyledText {
+  StyledLabel {
     Layout.fillWidth: true
     text: root.title
     elide: Text.ElideRight

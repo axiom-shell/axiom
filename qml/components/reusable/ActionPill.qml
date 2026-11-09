@@ -98,7 +98,7 @@ Rectangle {
       Layout.alignment: Qt.AlignVCenter
       spacing: 0
 
-      StyledText {
+      StyledLabel {
         id: nameText
         Layout.fillWidth: true
         text: root.label
@@ -109,7 +109,7 @@ Rectangle {
         textColor: root.contentColor
         textSize: Appearance.fontSizeBy(-1)
       }
-      StyledText {
+      StyledLabel {
         id: statusText
         Layout.fillWidth: true
         visible: root._statusShown
