@@ -32,7 +32,10 @@ BarIconWidget {
   property color stateColor: root.accentColor
   property bool hasState: true
 
-  readonly property string style: graphic.resolvedStyle(root.appearance.style, root.isVertical, root.history !== null, root.ratio)
+  readonly property string style: ValueGraphics.resolvedStyle(root.appearance.style, root.isVertical, root.history !== null, root.ratio)
+  // Its icon's or label's line, or its graphic where that reaches further
+  // across (a ring, a sparkline, stacked's two lines)
+  contentAcross: Math.max(root.barConfig.fontSize * Math.max(1, root.iconScale), graphic.across)
 
   showText: root.labelShown && !["icon", "ticker", "stacked"].includes(root.style)
   leadLength: graphic.drawn ? graphic.length : 0

@@ -38,6 +38,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** trivial
 - **Found:** 2026-11-09, while refactoring the bar's widget styles (stage 6)
 
+### Stacked's two lines fit the whole thickness, over a box's outline across the bar
+- **Where:** `qml/components/methods/ValueGraphics.qml` (`stackedFit`), `qml/components/bar/widgets/base/ValueGraphic.qml` (its `stacked` Column)
+- **What:** Stacked's value and caption shrink to fit across the bar's whole thickness (`crossSize`), not the room inside the widget's box: at thickness 26 with a 2 px solid outline, innerPadding 2, a SystemStats widget in the stacked style draws its caption ("CPU") over the box's bottom stroke (seen in a nested niri, an outline capsule bar). The room at a run's ends now keeps clear of it; across the bar nothing does. Fitting the lines to the thickness less the outline's stroke band (or the padding) would.
+- **Size:** small
+- **Found:** 2026-11-09, while keeping a run's end clear of the display styles' graphics (the bar style rework)
+
 ## Popouts and edge menus
 
 ### EdgePlacement logs a binding loop on _layout

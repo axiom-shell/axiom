@@ -1,6 +1,6 @@
 # Display styles
 
-> **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
+> **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/components/methods/ValueGraphics.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
 > **Config:** a bar widget's `properties.appearance` (`style`, `segments`, `width`, `colorText`); a custom widget's `bar`
 > **Related:** [Widget base classes](widget-style.md), [Custom widgets](../features/custom-widgets.md) › The bar widget, [Config v2](../core/config-v2.md)
 
@@ -35,7 +35,9 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 - `labelShown` in place of `showText` (the widget's own "show the value" setting; the style hides the label where it's the graphic);
 - `stateColor` / `hasState`, for `colorText` (default the accent colour; a custom widget's only when its script gives a state).
 
-`style` is the style it draws now, after those fallbacks (`ValueGraphic.resolvedStyle`, which SystemStats' segments read too). The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
+`style` is the style it draws now, after those fallbacks (`ValueGraphics.resolvedStyle`, which SystemStats' segments read too). The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
+
+How far its graphic reaches across the bar is `ValueGraphic.across` (`ValueGraphics.across`, from the style, the bar's thickness and font, never measured): the ring 0.62 of the thickness, the sparkline 0.6 of it on a horizontal bar (inset 0.2 either side) and the whole of it on a vertical one (its inset is along the bar there), stacked its two lines (1.2 × (0.8 + 0.6) of the font, at the fit that shrinks them on a thin bar, `ValueGraphics.stackedFit`); fill, segments and the ticker no more than a line. `ValueStyleWidget` declares the larger of that and its icon's line as its `contentAcross`, SystemStats the largest over its shown metrics' styles, so a run's capsule or arrow end keeps clear of the graphic ([Shapes and runs](widget-shapes-runs.md#backgrounds-and-shapes)).
 
 ### Which widget draws what
 | Widget | Value | Stacked caption |

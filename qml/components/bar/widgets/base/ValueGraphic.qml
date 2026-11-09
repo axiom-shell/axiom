@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 import qs.components.reusable
 import qs.components.content.parts
 
@@ -46,23 +47,14 @@ Item {
   property real middle: -1
   readonly property color trackColor: Qt.alpha(root.textColor, 0.2)
 
-  // The style a widget's `style` draws as where it can't draw it: stacked
-  // on a vertical bar is a label, a sparkline with no history a fill, and
-  // a value style with no value (`ratio` below 0) a label
-  function resolvedStyle(style, vertical, hasHistory, ratio) {
-    if (style === "stacked" && vertical)
-      return "label";
-    if (style === "sparkline" && !hasHistory)
-      style = "fill";
-    if (["ring", "fill", "segments", "pill"].includes(style) && ratio < 0)
-      return "label";
-    return style;
-  }
-
   // Whether this style draws anything here
   readonly property bool drawn: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)
   // Ticker and stacked sit where a label would, after the icon
   readonly property bool afterIcon: ["ticker", "stacked"].includes(root.style)
+  // How far across the bar it reaches (px), from config and its style,
+  // never measured: the ring, the sparkline and stacked's two lines; 0 for
+  // one no taller than a line (ValueGraphics.across)
+  readonly property real across: ValueGraphics.across(root.style, root.vertical, root.crossSize, root.fontSize)
   readonly property real length: {
     switch (root.style) {
     case "ring":
@@ -259,7 +251,7 @@ Item {
         // Its two lines (about 1.4 of the font, each a line high) shrink
         // to fit across a bar the text is large for (a text scale past
         // 100%)
-        readonly property real fit: root.fontSize > 0 && root.crossSize > 0 ? Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize)) : 1
+        readonly property real fit: ValueGraphics.stackedFit(root.crossSize, root.fontSize)
         anchors.centerIn: parent
         spacing: 0
 
