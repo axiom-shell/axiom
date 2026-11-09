@@ -153,7 +153,7 @@ QtObject {
     if (!answer.indexed || state.phase === "loading" || state.phase === "crawling" || state.phase === "waiting")
       rows.push(root._info(I18n.tr("Indexing… {0} files", state.entries), I18n.tr("Results grow as it goes"), "manage_search"));
     else if (rows.length === 0)
-      rows.push(root._info(I18n.tr("No matches"), state.error ? I18n.tr("The file index couldn't be built") : state.truncated ? I18n.tr("Only the first {0} files are indexed", state.entries) : I18n.tr("{0} files indexed", state.entries), "search_off"));
+      rows.push(root._info(I18n.tr("No matches"), state.error ? I18n.tr("The file index couldn't be built") : state.unreachable > 0 ? I18n.tr("{0} network folders don't answer", state.unreachable) : state.truncated ? I18n.tr("Only the first {0} files are indexed", state.entries) : I18n.tr("{0} files indexed", state.entries), "search_off"));
     return rows;
   }
 

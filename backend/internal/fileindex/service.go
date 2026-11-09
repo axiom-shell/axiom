@@ -48,11 +48,14 @@ type State struct {
 	Entries int    `json:"entries"`
 	// Watched folders follow changes at once; Unwatched ones (past the
 	// watch budget) are checked by a stat pass
-	Watched    int    `json:"watched"`
-	Unwatched  int    `json:"unwatched"`
-	Unreadable int    `json:"unreadable"` // folders the crawl couldn't read
-	Truncated  bool   `json:"truncated"`  // the cap left entries out
-	Error      string `json:"error"`
+	Watched    int  `json:"watched"`
+	Unwatched  int  `json:"unwatched"`
+	Unreadable int  `json:"unreadable"` // folders the crawl couldn't read
+	Truncated  bool `json:"truncated"`  // the cap left entries out
+	// Unreachable are the network roots whose crawl got stuck (their
+	// server doesn't answer): tried again later, their entries kept
+	Unreachable int    `json:"unreachable"`
+	Error       string `json:"error"`
 }
 
 // The cap on entries: MaxEntries' default and its hard limit
@@ -106,10 +109,21 @@ type Options struct {
 	Debounce time.Duration
 	// Tick is the housekeeping's period: saves, stat passes, compaction
 	// (1 min)
-	Tick    time.Duration
-	Now     func() time.Time
-	OnState func(State)
-	Log     *slog.Logger
+	Tick time.Duration
+	// StuckAfter: a network root's child that sent nothing this long
+	// (60 s), with no thread runnable and none woken since the last
+	// check, is stuck: killed, its root tried again after RetryAfter
+	// (1 min), doubling up to an hour
+	StuckAfter time.Duration
+	RetryAfter time.Duration
+	// Threads reads a process's threads (default: /proc/<pid>/task/*'s)
+	Threads func(pid int) Threads
+	// BrowseDeadline: a listing of a network root's folder answers that
+	// it can't be read after this long (3 s)
+	BrowseDeadline time.Duration
+	Now            func() time.Time
+	OnState        func(State)
+	Log            *slog.Logger
 }
 
 func (o *Options) defaults() {
@@ -139,6 +153,12 @@ func (o *Options) defaults() {
 	set(&o.PushEvery, 500*time.Millisecond)
 	set(&o.Debounce, 50*time.Millisecond)
 	set(&o.Tick, time.Minute)
+	set(&o.StuckAfter, time.Minute)
+	set(&o.RetryAfter, time.Minute)
+	set(&o.BrowseDeadline, 3*time.Second)
+	if o.Threads == nil {
+		o.Threads = readThreads
+	}
 	if o.Now == nil {
 		o.Now = time.Now
 	}
@@ -172,6 +192,15 @@ type Service struct {
 	cfgCh    chan struct{}
 	demandCh chan struct{}
 	freshCh  chan struct{}
+
+	// The network roots (the loop's, for the RPCs, which never look at
+	// their files on the disk)
+	netMu    sync.Mutex
+	netRoots []string
+	// browsing: a network root's listing in flight (netBrowse)
+	browseMu sync.Mutex
+	browsing map[string]*netBrowse
+	readDir  func(string) ([]os.DirEntry, error) // os.ReadDir (tests block it)
 }
 
 // New is a service with file search off until Configure.
@@ -185,6 +214,8 @@ func New(o Options) *Service {
 		cfgCh:    make(chan struct{}, 1),
 		demandCh: make(chan struct{}, 1),
 		freshCh:  make(chan struct{}, 1),
+		browsing: map[string]*netBrowse{},
+		readDir:  os.ReadDir,
 	}
 }
 
@@ -261,14 +292,23 @@ func (s *Service) Query(q Query) Result {
 		Pattern: filesearch.ParsePattern(q.Text), Under: under, Limit: q.Limit,
 		Now: now.UnixNano(), Bonus: bonus, Stale: q.Stale, Shards: runtime.GOMAXPROCS(0),
 	})
+	net := s.networkRoots()
 	paths := make([]string, len(hits))
+	// A network root's items as the index has them: a look at the disk
+	// blocks while its server is gone
+	fromIndex := map[int]Item{}
 	for k, h := range hits {
 		paths[k] = ix.Path(h.Entry)
+		if belowAny(paths[k], net) {
+			fromIndex[k] = s.meta.fromIndex(paths[k], ix.IsDir(h.Entry), ix.Mtime(h.Entry))
+		}
 	}
 	s.mu.RUnlock()
 	out.Indexed, out.Stale = true, stale
-	for _, p := range paths {
-		if it, ok := s.meta.item(p); ok {
+	for k, p := range paths {
+		if it, ok := fromIndex[k]; ok {
+			out.Items = append(out.Items, it)
+		} else if it, ok := s.meta.item(p); ok {
 			out.Items = append(out.Items, it)
 		}
 	}
@@ -309,6 +349,7 @@ func (s *Service) useBonus(ix *filesearch.Index, now time.Time) map[uint32]float
 func (s *Service) Recent(limit int) []Item {
 	out := []Item{}
 	uses, _ := s.hist.snapshot()
+	net := s.networkRoots()
 	for _, r := range recent(s.o.XBEL, uses) {
 		if len(out) >= limit {
 			break
@@ -317,11 +358,44 @@ func (s *Service) Recent(limit int) []Item {
 		if !utf8.ValidString(r.Path) {
 			continue
 		}
-		if it, ok := s.meta.item(r.Path); ok {
+		var it Item
+		ok := false
+		if belowAny(r.Path, net) {
+			it, ok = s.indexItem(r.Path)
+		} else {
+			it, ok = s.meta.item(r.Path)
+		}
+		if ok {
 			out = append(out, it)
 		}
 	}
 	return out
+}
+
+// indexItem is path's item as the index has it (ok false when it holds
+// none).
+func (s *Service) indexItem(path string) (Item, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.ix == nil {
+		return Item{}, false
+	}
+	for _, i := range s.ix.FindAll([]string{path}) {
+		return s.meta.fromIndex(path, s.ix.IsDir(i), s.ix.Mtime(i)), true
+	}
+	return Item{}, false
+}
+
+// networkRoots are the roots on a network filesystem now.
+func (s *Service) networkRoots() []string {
+	s.netMu.Lock()
+	defer s.netMu.Unlock()
+	return s.netRoots
+}
+
+// belowAny says whether path is one of roots or below one.
+func belowAny(path string, roots []string) bool {
+	return slices.ContainsFunc(roots, func(r string) bool { return within(path, r) })
 }
 
 // Used records that the launcher opened path.
@@ -350,7 +424,7 @@ func settingsKey(st Settings, max int) uint64 {
 
 // Run keeps the index until ctx ends.
 func (s *Service) Run(ctx context.Context) error {
-	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}}
+	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}, reaped: make(chan struct{}, 1)}
 	defer l.shutdown()
 	tick := time.NewTicker(s.o.Tick)
 	defer tick.Stop()
@@ -368,8 +442,16 @@ func (s *Service) Run(ctx context.Context) error {
 		case <-timerC(l.loadTimer):
 			l.loadTimer = nil
 			l.load()
-		case m := <-l.childC():
-			l.childMsg(m)
+		case m := <-l.childC(l.child):
+			l.childMsg(l.child, m)
+		case m := <-l.childC(l.netChild):
+			l.childMsg(l.netChild, m)
+		case <-timerC(l.netTimer):
+			l.netTimer = nil
+			l.checkStuck()
+			l.next()
+		case <-l.reaped:
+			l.next()
 		case evs := <-l.eventsC():
 			l.watchEvents(evs)
 		case <-timerC(l.debounce):
@@ -400,14 +482,22 @@ type loop struct {
 	f      *filter
 	phase  string
 	w      *watcher
-	child  *child
-	// Work waiting for the child: folders to crawl, stat passes
-	pendingStart  []string
-	statAll       bool
-	statUnwatched bool
-	// refill: entries were removed, so a full index may have room for
-	// what it left out (refillPass)
-	refill bool
+	// The local lane: one child for the roots not on the network, and
+	// the work waiting for it
+	child *child
+	work
+	// The network lane (lanes.go): a child per network root, one at a
+	// time, apart from the local lane's, so a dead server stalls only
+	// its own root
+	netChild *child
+	net      map[string]*netLane
+	netTimer *time.Timer
+	netAt    time.Time
+	// reaping: a network root's killed child not yet reaped (one may
+	// never be: a process blocked on a dead NFS server ignores SIGKILL);
+	// its root starts no other meanwhile. reaped is signalled when one is
+	reaping map[string]*child
+	reaped  chan struct{}
 	// watchLoaded: a loaded index's folders are watched once nothing is
 	// left for the child (watchAll)
 	watchLoaded bool
@@ -474,6 +564,7 @@ func (l *loop) configure(st Settings) {
 		// Off: the index goes, its cache with it (also one an earlier
 		// run left)
 		l.phase = PhaseOff
+		l.s.setNetworkRoots(nil)
 		os.Remove(l.s.o.CacheFile)
 		l.publish(true)
 		return
@@ -504,7 +595,10 @@ func (l *loop) reset() {
 		}
 	}
 	l.setIndex(nil)
-	l.pendingStart, l.statAll, l.statUnwatched, l.watchLoaded, l.refill = nil, false, false, false, false
+	l.work, l.watchLoaded = work{}, false
+	for _, nl := range l.net {
+		nl.work = work{}
+	}
 	clear(l.changed)
 	clear(l.written)
 	l.dirty, l.truncated, l.unreadable, l.errText = false, false, 0, ""
@@ -532,7 +626,7 @@ func (l *loop) freshen() {
 	if l.phase != PhaseReady || l.s.o.Now().Sub(l.lastStat) < l.s.o.QuietSpell {
 		return
 	}
-	l.statUnwatched = true
+	l.askAll(func(w *work) { w.statUnwatched = true })
 	l.next()
 }
 
@@ -562,7 +656,10 @@ func (l *loop) build() {
 	l.newWatcher()
 	l.phase = PhaseCrawling
 	l.truncated, l.unreadable = false, 0
-	l.pendingStart = slices.Clone(l.cur.Roots)
+	for _, r := range l.cur.Roots {
+		w := l.lane(l.laneOf(r))
+		w.start = append(w.start, r)
+	}
 	l.publish(true)
 	l.next()
 }
@@ -597,7 +694,7 @@ func (l *loop) load() {
 	// read by the stat pass below)
 	l.truncated = ix.LeftOut() > 0
 	l.s.o.Log.Info("file search: loaded the index", "entries", ix.Len())
-	l.statAll = true
+	l.askAll(func(w *work) { w.statAll = true })
 	l.watchLoaded = true
 	l.publish(true)
 	l.next()
@@ -645,64 +742,86 @@ func (l *loop) watchAll() {
 	l.publish(false)
 }
 
-// next starts the child's next job when none runs: folders to crawl,
-// then a stat pass; with nothing to do, saves the cache when due.
+// next starts each lane's next job where none runs: folders to crawl,
+// then a stat pass, then a refill; with nothing left for the local lane,
+// watches a loaded index and saves the cache when due.
 func (l *loop) next() {
-	if l.child != nil || !l.active || l.ix() == nil {
+	if !l.active || l.ix() == nil {
 		return
 	}
 	ix := l.ix()
-	req := CrawlRequest{Roots: l.cur.Roots, Excludes: l.cur.Excludes, Skip: l.s.o.Skip, Hidden: l.cur.Hidden,
-		Max: max(1, l.s.o.MaxEntries-ix.Len()), Pause: int(l.s.o.Pause / time.Millisecond)}
-	if len(l.pendingStart) > 0 && ix.Len() >= l.s.o.MaxEntries {
-		l.pendingStart = nil
+	l.sortLanes()
+	if ix.Len() >= l.s.o.MaxEntries && l.anyStart() {
+		l.start = nil
+		for _, nl := range l.net {
+			nl.start = nil
+		}
 		l.truncated = true
 		// Nothing left to crawl: built (saved below as a crawl's end is)
-		if l.phase == PhaseCrawling {
-			l.phase = PhaseReady
-			l.publish(true)
+		l.built()
+	}
+	if l.child == nil {
+		req := l.request(l.localRoots())
+		switch start, refill, idle := l.take(&l.work, &req, ""); {
+		case start:
+			l.startChild(req, "", refill)
+		case idle:
+			if l.watchLoaded {
+				l.watchLoaded = false
+				l.watchAll()
+			}
+			l.maybeSave()
 		}
 	}
+	if l.netChild == nil {
+		l.nextNet()
+	}
+	l.armNet()
+}
+
+// request is a child's request for roots, its work not yet in.
+func (l *loop) request(roots []string) CrawlRequest {
+	return CrawlRequest{Roots: roots, Excludes: l.cur.Excludes, Skip: l.s.o.Skip, Hidden: l.cur.Hidden,
+		Max: max(1, l.s.o.MaxEntries-l.ix().Len()), Pause: int(l.s.o.Pause / time.Millisecond)}
+}
+
+// take moves a lane's work (lane: "" the local one, else its network
+// root) into req: folders to crawl, then a stat pass, then a refill.
+// start: a child is to run it; idle: the lane had nothing to do.
+func (l *loop) take(w *work, req *CrawlRequest, lane string) (start, refill, idle bool) {
+	ix := l.ix()
 	switch {
-	case len(l.pendingStart) > 0:
-		req.Start, l.pendingStart = l.pendingStart, nil
-		l.startChild(req)
-	case l.statAll || l.statUnwatched:
-		all := l.statAll
-		l.statAll, l.statUnwatched = false, false
+	case len(w.start) > 0:
+		req.Start, w.start = w.start, nil
+		return true, false, false
+	case w.statAll || w.statUnwatched:
+		all := w.statAll
+		w.statAll, w.statUnwatched = false, false
 		ix.EachDir(func(d uint32) {
 			if all || !ix.Watched(d) {
-				req.Stat = append(req.Stat, StatDir{Path: ix.Path(d), Mtime: ix.Mtime(d)})
+				if p := ix.Path(d); l.inLane(p, lane) {
+					req.Stat = append(req.Stat, StatDir{Path: p, Mtime: ix.Mtime(d)})
+				}
 			}
 		})
 		l.lastStat = l.s.o.Now()
-		if len(req.Stat) > 0 {
-			l.startChild(req)
-		}
-	case l.refill && l.refillPass(&req):
-		l.startChild(req)
-		if l.child != nil {
-			l.child.refill = true
-		}
-	default:
-		if l.watchLoaded {
-			l.watchLoaded = false
-			l.watchAll()
-		}
-		l.maybeSave()
+		return len(req.Stat) > 0, false, false
+	case w.refill && l.refillPass(req, lane):
+		return true, true, false
 	}
+	return false, false, true
 }
 
 // refillPass fills req with a stat pass of what the index left out at
-// the cap, once removals made room (more than a hundredth of the cap):
-// the folders marked left out (their time as 0, so each is read again)
-// and those never read. A full index, or one that left nothing out, asks
-// for nothing (false). The folders read mark themselves again if the cap
-// still leaves entries out, and their new folders are crawled after, so
-// truncated is set again by whatever is still left out; once the index is
-// full again the pass's other folders are passed over (childMsg).
-func (l *loop) refillPass(req *CrawlRequest) bool {
-	l.refill = false
+// the cap in a lane, once removals made room (more than a hundredth of
+// the cap): the folders marked left out (their time as 0, so each is read
+// again) and those never read. A full index, or one that left nothing
+// out, asks for nothing (false). The folders read mark themselves again if
+// the cap still leaves entries out, and their new folders are crawled
+// after, so truncated is set again by whatever is still left out; once the
+// index is full again the pass's other folders are passed over (childMsg).
+func (l *loop) refillPass(req *CrawlRequest, lane string) bool {
+	l.lane(lane).refill = false
 	ix := l.ix()
 	// The marks outlive a pass that didn't finish; files removed one at a
 	// time from a full index don't each re-read every folder left out
@@ -712,10 +831,17 @@ func (l *loop) refillPass(req *CrawlRequest) bool {
 	}
 	ix.EachDir(func(d uint32) {
 		if ix.LeftOutDir(d) || ix.Mtime(d) == 0 && !ix.IsRoot(d) {
-			req.Stat = append(req.Stat, StatDir{Path: ix.Path(d)})
+			if p := ix.Path(d); l.inLane(p, lane) {
+				req.Stat = append(req.Stat, StatDir{Path: p})
+			}
 		}
 	})
-	l.truncated = false
+	// truncated also stands for the folders never read: it stays until
+	// every lane asked has had its pass, or the next lane's would see
+	// nothing left out
+	if !l.refillWaits() {
+		l.truncated = false
+	}
 	l.publish(false)
 	return len(req.Stat) > 0
 }
@@ -735,7 +861,7 @@ func (l *loop) maybeSave() {
 // entries), never fsynced.
 func (l *loop) save() {
 	ix := l.ix()
-	if !l.dirty || l.child != nil || ix == nil || l.phase != PhaseReady {
+	if !l.dirty || l.child != nil || l.netChild != nil || ix == nil || l.phase != PhaseReady {
 		return
 	}
 	if err := os.MkdirAll(filepath.Dir(l.s.o.CacheFile), 0o700); err != nil {
@@ -764,7 +890,7 @@ func (l *loop) housekeep() {
 	l.refreshMounts()
 	l.relink()
 	if l.phase == PhaseReady && l.s.o.Now().Sub(l.lastStat) >= l.s.o.StatEvery {
-		l.statUnwatched = true
+		l.askAll(func(w *work) { w.statUnwatched = true })
 	}
 	l.next()
 }
@@ -818,9 +944,10 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 			l.w.remove(ix.Path(g))
 		}
 	}
-	if crawlNew {
+	if crawlNew && len(ch.NewDirs) > 0 {
+		w := l.lane(l.laneOf(path))
 		for _, nd := range ch.NewDirs {
-			l.pendingStart = append(l.pendingStart, ix.Path(nd))
+			w.start = append(w.start, ix.Path(nd))
 		}
 	}
 	l.truncated = l.truncated || ch.Truncated
@@ -828,7 +955,7 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 		l.dirty = true
 	}
 	if ch.Removed > 0 {
-		l.refill = true
+		l.askAll(func(w *work) { w.refill = true })
 	}
 	if watch {
 		// Changed between the read and the watch: the watch missed it
@@ -857,14 +984,17 @@ func (l *loop) recheck(path string, mtime int64) {
 func (l *loop) refreshMounts() {
 	was := l.f.netRoots
 	l.f.setMounts(readMounts(l.s.o.Mountinfo))
+	l.s.setNetworkRoots(slices.Sorted(maps.Keys(l.f.netRoots)))
 	ix := l.ix()
 	if l.w == nil || ix == nil {
 		return
 	}
 	var drop []string
+	asked := map[string]bool{}
 	for path := range l.w.byPath {
 		if r := l.f.rootOf(path); l.f.netRoots[r] && !was[r] {
 			drop = append(drop, path)
+			asked[r] = true
 		}
 	}
 	for _, path := range drop {
@@ -875,8 +1005,8 @@ func (l *loop) refreshMounts() {
 			l.s.mu.Unlock()
 		}
 	}
-	if len(drop) > 0 {
-		l.statUnwatched = true
+	for r := range asked {
+		l.lane(r).statUnwatched = true
 	}
 }
 

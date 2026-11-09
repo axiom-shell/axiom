@@ -72,7 +72,7 @@ func Serve(ctx context.Context, stdin io.Reader, stdout io.Writer) error {
 	f.setMounts(readMounts(mountinfo))
 	w := &frameWriter{w: bufio.NewWriterSize(stdout, 64<<10)}
 	pause := time.Duration(req.Pause) * time.Millisecond
-	c := &crawler{f: f, w: w, pause: pause}
+	c := &crawler{f: f, w: w, pause: pause, progressed: time.Now()}
 	var err error
 	if len(req.Stat) > 0 {
 		err = c.stat(ctx, req.Stat)
@@ -101,7 +101,13 @@ type crawler struct {
 	sent  int
 	pause time.Duration
 	read  int
+	// The last progress frame (msgProgress)
+	progressed time.Time
 }
+
+// progressEvery: the walker says it's going at most this often, so the
+// daemon tells a child starved of CPU from one stuck in the kernel
+const progressEvery = time.Second
 
 // errCapped: the cap was reached
 var errCapped = errors.New("fileindex: the cap")
@@ -141,9 +147,21 @@ func (c *crawler) simple(kind byte, path string) error {
 	return c.w.end()
 }
 
-// paced sleeps every n steps, sending what it has first.
+// paced sleeps every n steps, sending what it has first; at most every
+// progressEvery it sends a progress frame (from the walking goroutine
+// itself: one blocked in a read sends none).
 func (c *crawler) paced(ctx context.Context, every int) error {
 	c.read++
+	if now := time.Now(); now.Sub(c.progressed) >= progressEvery {
+		c.progressed = now
+		c.w.begin(msgProgress)
+		if err := c.w.end(); err != nil {
+			return err
+		}
+		if err := c.w.w.Flush(); err != nil {
+			return err
+		}
+	}
 	if c.pause <= 0 || c.read%every != 0 {
 		return ctx.Err()
 	}

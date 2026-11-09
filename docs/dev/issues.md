@@ -439,12 +439,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-09, while reviewing the launcher's file search
 
-### A dead network root stalls the crawl child, and every later pass with it
-- **Where:** `backend/internal/fileindex/child.go` (`startChild`), `backend/internal/fileindex/service.go` (`next`)
-- **What:** The daemon itself never stats a mount point nor reads or watches a folder of a root on a network filesystem (`filter.setMounts`, `loop.watch`), but the idle crawl child still reads such a root's folders. When its server is gone (a stale sshfs or a hard NFS mount among `Launcher.providers.files.roots`), the child blocks in the kernel and never ends, and `loop.next` starts no other child while one runs: no crawl or stat pass runs again for any root until the daemon restarts (watched folders stay current). Open for the maintainer: a child that sends no frame for some minutes is killed and its roots set aside until the mount answers again (a process blocked uninterruptibly on NFS isn't freed by SIGKILL either), or one child per network root apart from the rest.
-- **Size:** small
-- **Found:** 2026-11-09, while reviewing the launcher's file search
-
 ## Lock screen and greeter
 
 ### The lock screen has no settings for allowing or viewing notifications

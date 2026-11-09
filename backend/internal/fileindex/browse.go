@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -30,7 +31,79 @@ func (s *Service) Browse(path, query string, limit int, hidden bool) (BrowseResu
 		return BrowseResult{}, axerr.New(axerr.BadRequest, "browse an absolute path")
 	}
 	path = filepath.Clean(path)
-	entries, err := os.ReadDir(path)
+	for _, r := range s.networkRoots() {
+		if within(path, r) {
+			return s.browseNet(r, path, query, limit, hidden)
+		}
+	}
+	return s.browse(path, query, limit, hidden)
+}
+
+// netBrowse is a network root's listing in flight: one at a time, and
+// none while one is stuck (its server gone).
+type netBrowse struct {
+	sem chan struct{}
+	// running: a listing is in flight; stuck: one passed its deadline
+	// and still is
+	running, stuck bool
+}
+
+var errUnreadable = axerr.New(axerr.Failed, "the folder can't be read")
+
+// browseNet lists a folder of a network root within BrowseDeadline,
+// which answers as an unreadable folder does when it passes. The listing
+// then goes on in a goroutine nothing waits on (blocked on a dead server,
+// it may never end), and the root's other listings answer at once until
+// it does, so they never pile up.
+func (s *Service) browseNet(root, path, query string, limit int, hidden bool) (BrowseResult, error) {
+	s.browseMu.Lock()
+	nb := s.browsing[root]
+	if nb == nil {
+		nb = &netBrowse{sem: make(chan struct{}, 1)}
+		s.browsing[root] = nb
+	}
+	stuck := nb.stuck
+	s.browseMu.Unlock()
+	if stuck {
+		return BrowseResult{}, errUnreadable
+	}
+	deadline := time.NewTimer(s.o.BrowseDeadline)
+	defer deadline.Stop()
+	select {
+	case nb.sem <- struct{}{}:
+	case <-deadline.C:
+		return BrowseResult{}, errUnreadable
+	}
+	s.browseMu.Lock()
+	nb.running = true
+	s.browseMu.Unlock()
+	type answer struct {
+		res BrowseResult
+		err error
+	}
+	done := make(chan answer, 1)
+	go func() {
+		res, err := s.browse(path, query, limit, hidden)
+		s.browseMu.Lock()
+		nb.running, nb.stuck = false, false
+		s.browseMu.Unlock()
+		<-nb.sem
+		done <- answer{res, err}
+	}()
+	select {
+	case a := <-done:
+		return a.res, a.err
+	case <-deadline.C:
+		s.browseMu.Lock()
+		nb.stuck = nb.running
+		s.browseMu.Unlock()
+		return BrowseResult{}, errUnreadable
+	}
+}
+
+// browse lists the folder at path (absolute and clean) from the disk.
+func (s *Service) browse(path, query string, limit int, hidden bool) (BrowseResult, error) {
+	entries, err := s.readDir(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return BrowseResult{}, axerr.Wrap(axerr.NotFound, err, "no folder there")

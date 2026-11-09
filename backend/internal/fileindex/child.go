@@ -25,6 +25,16 @@ type child struct {
 	// folders are crawled next, where a crawl reads them itself); refill:
 	// a stat pass of what the index left out (loop.refillPass)
 	build, stat, refill bool
+	// lane: "" the local lane's, else the network root it reads
+	lane string
+	// lastFrame: when its last message came; switches: its threads'
+	// context switches at the last stuck check (sampled once there was
+	// one)
+	lastFrame time.Time
+	switches  uint64
+	sampled   bool
+	// exited is closed once it's reaped
+	exited chan struct{}
 }
 
 type childMsg struct {
@@ -36,10 +46,13 @@ type childMsg struct {
 	err   error
 }
 
-// startChild runs `axiom index-crawl` on req: in a process group of its
-// own (killed whole), with nothing of the daemon's environment, one P and
-// a small heap (it lowers its own priority before it reads anything).
-func (l *loop) startChild(req CrawlRequest) {
+// startChild runs `axiom index-crawl` on req in a lane: in a process
+// group of its own (killed whole), with nothing of the daemon's
+// environment, one P and a small heap (it lowers its own priority before
+// it reads anything). A network root's child is read and reaped by
+// goroutines nothing waits on: blocked on a dead server, it may never
+// end, and neither a reset nor the daemon's shutdown may wait for it.
+func (l *loop) startChild(req CrawlRequest, lane string, refill bool) {
 	data, err := json.Marshal(req)
 	if err != nil {
 		return
@@ -64,9 +77,16 @@ func (l *loop) startChild(req CrawlRequest) {
 		l.publish(true)
 		return
 	}
-	c := &child{cmd: cmd, msgs: make(chan childMsg, 64), stop: make(chan struct{}), build: l.phase == PhaseCrawling, stat: len(req.Stat) > 0}
-	l.child = c
-	l.wg.Go(func() {
+	c := &child{cmd: cmd, msgs: make(chan childMsg, 64), stop: make(chan struct{}), build: l.phase == PhaseCrawling,
+		stat: len(req.Stat) > 0, refill: refill, lane: lane, lastFrame: l.s.o.Now(), exited: make(chan struct{})}
+	goFn, reaped := l.wg.Go, l.reaped
+	if lane == "" {
+		l.child = c
+	} else {
+		l.netChild = c
+		goFn = func(f func()) { go f() }
+	}
+	goFn(func() {
 		r := &frameReader{r: bufio.NewReaderSize(stdout, 64<<10)}
 		send := func(m childMsg) bool {
 			select {
@@ -98,7 +118,7 @@ func (l *loop) startChild(req CrawlRequest) {
 		}
 		// Drain, so the child never blocks on a full pipe before the
 		// kill or its exit
-		l.wg.Go(func() {
+		goFn(func() {
 			buf := make([]byte, 32<<10)
 			for {
 				if _, err := stdout.Read(buf); err != nil {
@@ -107,6 +127,8 @@ func (l *loop) startChild(req CrawlRequest) {
 			}
 		})
 		err := cmd.Wait()
+		close(c.exited)
+		signal(reaped)
 		if readErr != nil && err == nil {
 			err = readErr
 		}
@@ -151,42 +173,48 @@ func decodeMsg(kind byte, payload []byte) (childMsg, bool) {
 		}
 	case msgGone:
 		m.path = string(c.bytes())
-	case msgUnreadable, msgTruncated, msgEnd:
+	case msgUnreadable, msgTruncated, msgEnd, msgProgress:
 	default:
 		return m, false
 	}
 	return m, !c.bad
 }
 
-func (l *loop) childC() <-chan childMsg {
-	if l.child == nil {
+func (l *loop) childC(c *child) <-chan childMsg {
+	if c == nil {
 		return nil
 	}
-	return l.child.msgs
+	return c.msgs
 }
 
-// stopChild kills the child's process group and lets its reader go.
+// stopChild stops both lanes' children.
 func (l *loop) stopChild() {
-	if l.child == nil {
-		return
+	if l.child != nil {
+		l.kill(l.child)
+		l.child = nil
 	}
-	if p := l.child.cmd.Process; p != nil {
-		unix.Kill(-p.Pid, unix.SIGKILL)
-	}
-	close(l.child.stop)
-	l.child = nil
+	l.stopNet()
 }
 
-// childMsg applies one of the child's messages.
-func (l *loop) childMsg(m childMsg) {
-	if l.child == nil {
+// childMsg applies one of a child's messages.
+func (l *loop) childMsg(c *child, m childMsg) {
+	if c == nil {
 		return
 	}
+	c.lastFrame = l.s.o.Now()
 	ix := l.ix()
 	switch {
 	case m.done:
-		build := l.child.build
-		l.child = nil
+		build := c.build
+		if c == l.child {
+			l.child = nil
+		} else {
+			l.netChild = nil
+			if nl := l.net[c.lane]; nl != nil && m.err == nil {
+				// It answers again
+				nl.unreachable, nl.backoff = false, 0
+			}
+		}
 		if m.err != nil {
 			// The state's error is a build's (the shell says the index
 			// couldn't be built); a later run's only logged
@@ -200,15 +228,13 @@ func (l *loop) childMsg(m childMsg) {
 		if build {
 			l.s.o.Log.Info("file search: indexed", "entries", ix.Len(), "unreadable", l.unreadable, "truncated", l.truncated)
 		}
-		if l.phase == PhaseCrawling && len(l.pendingStart) == 0 {
-			l.phase = PhaseReady
-		}
+		l.built()
 		l.compact()
 		l.publish(true)
 		l.next()
 		return
 	case m.kind == msgDir:
-		if l.child.refill && ix.Len() >= l.s.o.MaxEntries {
+		if c.refill && ix.Len() >= l.s.o.MaxEntries {
 			// Full again: the rest stays left out (still marked, or
 			// never read), not replaced under the lock for nothing
 			l.truncated = true
@@ -218,8 +244,8 @@ func (l *loop) childMsg(m childMsg) {
 		if d, ok := ix.Lookup(m.path); ok {
 			watched = ix.Watched(d)
 		}
-		l.applyDir(m.path, m.mtime, m.kids, l.child.stat)
-		if watched && l.child.stat {
+		l.applyDir(m.path, m.mtime, m.kids, c.stat)
+		if watched && c.stat {
 			// A stat pass's read of a watched folder (after a lost queue)
 			// may land after a newer one the watch made: read it again
 			l.recheck(m.path, m.mtime)
@@ -254,7 +280,7 @@ func (l *loop) watchEvents(evs []event) {
 	for _, ev := range evs {
 		if ev.mask&unix.IN_Q_OVERFLOW != 0 {
 			// Events were lost: every folder is checked
-			l.statAll = true
+			l.askAll(func(w *work) { w.statAll = true })
 			l.arm()
 			continue
 		}
@@ -298,7 +324,7 @@ func (l *loop) watchEvents(evs []event) {
 // publish sets the state; pushed at once when urgent (a phase changed),
 // else at most every PushEvery.
 func (l *loop) publish(urgent bool) {
-	st := State{Phase: l.phase, Unreadable: l.unreadable, Truncated: l.truncated, Error: l.errText}
+	st := State{Phase: l.phase, Unreadable: l.unreadable, Truncated: l.truncated, Unreachable: l.unreachable(), Error: l.errText}
 	if ix := l.ix(); ix != nil {
 		st.Entries = ix.Len()
 		if l.w != nil {

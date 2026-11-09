@@ -22,10 +22,19 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// The test binary is its own crawl child: `<test binary> index-crawl`
+// The test binary is its own crawl child: `<test binary> index-crawl`.
+// Asked for one root next to which a file "<root>.hang" is, it hangs
+// without a word, as one blocked on a dead server does.
 func TestMain(m *testing.M) {
 	if len(os.Args) > 1 && os.Args[1] == ChildCommand {
-		if err := RunChild(context.Background(), os.Stdin, os.Stdout); err != nil {
+		data, _ := io.ReadAll(os.Stdin)
+		var req CrawlRequest
+		if json.Unmarshal(data, &req) == nil && len(req.Roots) == 1 {
+			if _, err := os.Stat(req.Roots[0] + ".hang"); err == nil {
+				time.Sleep(time.Hour)
+			}
+		}
+		if err := RunChild(context.Background(), bytes.NewReader(data), os.Stdout); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -557,9 +566,9 @@ func TestCapWithFoldersQueued(t *testing.T) {
 	ix.AddRoot(root)
 	l.setIndex(ix)
 	l.readDir(t, root)
-	l.pendingStart = []string{root + "/sub"}
+	l.start = []string{root + "/sub"}
 	l.child = &child{cmd: &exec.Cmd{}, msgs: make(chan childMsg), stop: make(chan struct{}), build: true}
-	l.childMsg(childMsg{done: true})
+	l.childMsg(l.child, childMsg{done: true})
 	if l.phase != PhaseReady || !l.truncated || l.child != nil {
 		t.Errorf("phase %s, truncated %v, a child %v", l.phase, l.truncated, l.child != nil)
 	}
@@ -577,13 +586,13 @@ func TestOnlyABuildFailsTheState(t *testing.T) {
 	now := time.Now()
 	l := loopOn(t, root, &now)
 	l.child = &child{cmd: &exec.Cmd{}, msgs: make(chan childMsg), stop: make(chan struct{}), stat: true}
-	l.childMsg(childMsg{done: true, err: errors.New("killed")})
+	l.childMsg(l.child, childMsg{done: true, err: errors.New("killed")})
 	if l.errText != "" {
 		t.Errorf("a stat pass's error: %q", l.errText)
 	}
 	l.phase = PhaseCrawling
 	l.child = &child{cmd: &exec.Cmd{}, msgs: make(chan childMsg), stop: make(chan struct{}), build: true}
-	l.childMsg(childMsg{done: true, err: errors.New("killed")})
+	l.childMsg(l.child, childMsg{done: true, err: errors.New("killed")})
 	if l.errText == "" {
 		t.Error("a build's error is missing")
 	}
@@ -821,19 +830,19 @@ func TestLeftOutNoExtraReads(t *testing.T) {
 	}
 	l.refill = true
 	var req CrawlRequest
-	if l.refillPass(&req) || len(req.Stat) > 0 || !l.truncated {
+	if l.refillPass(&req, "") || len(req.Stat) > 0 || !l.truncated {
 		t.Errorf("a full index refilled: %+v", req.Stat)
 	}
 	// Room made: b is asked for whatever its time, and read whole
 	os.Remove(root + "/a/x1")
 	os.Remove(root + "/a/x2")
 	l.readDir(t, root+"/a")
-	if !l.refill || !l.refillPass(&req) || !slices.Equal(req.Stat, []StatDir{{Path: root + "/b"}}) || l.truncated {
+	if !l.refill || !l.refillPass(&req, "") || !slices.Equal(req.Stat, []StatDir{{Path: root + "/b"}}) || l.truncated {
 		t.Fatalf("refill %+v, truncated %v", req.Stat, l.truncated)
 	}
 	// A pass that didn't finish (its child failed) is asked again
 	var again CrawlRequest
-	if !l.refillPass(&again) || !slices.Equal(again.Stat, req.Stat) {
+	if !l.refillPass(&again, "") || !slices.Equal(again.Stat, req.Stat) {
 		t.Errorf("after a lost pass: %+v", again.Stat)
 	}
 	dirs, _ := serve(t, CrawlRequest{Roots: st.Roots, Stat: req.Stat})
@@ -854,11 +863,11 @@ func TestLeftOutNoExtraReads(t *testing.T) {
 	l.child = &child{stat: true, refill: true}
 	n := ix.Len()
 	l.truncated = false
-	l.childMsg(childMsg{kind: msgDir, path: root + "/a", kids: []filesearch.Child{{Name: []byte("new")}}})
+	l.childMsg(l.child, childMsg{kind: msgDir, path: root + "/a", kids: []filesearch.Child{{Name: []byte("new")}}})
 	if ix.Len() != n || !l.truncated {
 		t.Errorf("a full index replaced a refill's folder: %d entries, truncated %v", ix.Len(), l.truncated)
 	}
-	l.childMsg(childMsg{kind: msgGone, path: root + "/b"})
+	l.childMsg(l.child, childMsg{kind: msgGone, path: root + "/b"})
 	l.child = nil
 	if ix.LeftOut() != 0 {
 		t.Errorf("an unreadable folder still marked: %d", ix.LeftOut())
@@ -895,7 +904,7 @@ func TestLeftOutRefillWaitsForRoom(t *testing.T) {
 		os.Remove(fmt.Sprintf("%s/z/f%d", root, i))
 		l.readDir(t, root+"/z")
 		var req CrawlRequest
-		refilled := l.refillPass(&req)
+		refilled := l.refillPass(&req, "")
 		if want := i == 3; refilled != want {
 			t.Errorf("%d removed: refilled %v, want %v", i+1, refilled, want)
 		}
@@ -927,7 +936,7 @@ func TestStaleStatPassReadOfAWatchedFolder(t *testing.T) {
 	l.readDir(t, root)
 	n := ix.Len()
 	l.child = &child{stat: true}
-	l.childMsg(childMsg{kind: msgDir, path: root, mtime: old.mtime, kids: old.kids})
+	l.childMsg(l.child, childMsg{kind: msgDir, path: root, mtime: old.mtime, kids: old.kids})
 	l.child = nil
 	if !l.changed[root] {
 		t.Fatalf("the stale read wasn't read again: %v", l.changed)

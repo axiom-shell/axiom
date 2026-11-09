@@ -176,8 +176,8 @@ func TestShareMountedOverAWatchedRoot(t *testing.T) {
 	}
 	l.s.o.Mountinfo = fakeMounts(t, true, root)
 	l.refreshMounts()
-	if len(w.byPath) != 0 || !l.statUnwatched {
-		t.Errorf("watches %v, stat pass asked %v", w.byPath, l.statUnwatched)
+	if len(w.byPath) != 0 || !l.lane(root).statUnwatched {
+		t.Errorf("watches %v, stat pass asked %v", w.byPath, l.lane(root).statUnwatched)
 	}
 	ix := l.ix()
 	if d, ok := ix.Lookup(root + "/a"); !ok || ix.Watched(d) {

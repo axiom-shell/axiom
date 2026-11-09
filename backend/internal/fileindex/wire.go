@@ -16,6 +16,9 @@ const (
 	msgUnreadable = 'U' // one more folder couldn't be read
 	msgTruncated  = 'T' // the cap was reached: the rest was left out
 	msgEnd        = 'E' // done
+	// The walker is still going: sent by the walking goroutine itself at
+	// most every progressEvery, so a child blocked in the kernel sends none
+	msgProgress = 'P'
 )
 
 // Kinds of an entry in a msgDir

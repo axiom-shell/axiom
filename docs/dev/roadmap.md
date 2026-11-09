@@ -180,7 +180,6 @@ Found along the way:
 - [The daemon's other own commands still start outside command.Children](issues.md#the-daemons-other-own-commands-still-start-outside-commandchildren) (moving the daemon's own commands to command.Run)
 - [A daemon re-exec during a crawl leaves the crawl child a zombie](issues.md#a-daemon-re-exec-during-a-crawl-leaves-the-crawl-child-a-zombie) (building the launcher's file search)
 - [A watched folder that keeps changing is read again in the daemon every 500 ms](issues.md#a-watched-folder-that-keeps-changing-is-read-again-in-the-daemon-every-500-ms) (reviewing the launcher's file search)
-- [A dead network root stalls the crawl child, and every later pass with it](issues.md#a-dead-network-root-stalls-the-crawl-child-and-every-later-pass-with-it) (reviewing the launcher's file search)
 - [axiom config validate checks the install's config with the binary's schema under dev mode](issues.md#axiom-config-validate-checks-the-installs-config-with-the-binarys-schema-under-dev-mode) (fixing the daemon's config watch)
 - [A hover-opened held edge menu closes before the pointer crosses from its edge to its box](issues.md#a-hover-opened-held-edge-menu-closes-before-the-pointer-crosses-from-its-edge-to-its-box) (reviewing the dock gaps batch)
 - [rpc.md doesn't mark the drives methods shell only](issues.md#rpcmd-doesnt-mark-the-drives-methods-shell-only) (moving Bluetooth to the daemon)

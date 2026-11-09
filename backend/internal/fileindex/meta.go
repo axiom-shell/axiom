@@ -49,6 +49,18 @@ func (m *meta) fromInfo(path string, info os.FileInfo) Item {
 			it.Dir = true
 		}
 	}
+	return m.typed(it)
+}
+
+// fromIndex is the item of a network root's entry as the index has it
+// (its time in ns; no size): a look at the disk blocks while the server
+// is gone. A link is described by its name alone.
+func (m *meta) fromIndex(path string, dir bool, mtime int64) Item {
+	return m.typed(Item{Path: path, Name: filepath.Base(path), Dir: dir, Mtime: mtime / 1e6})
+}
+
+// typed fills in an item's type and icons.
+func (m *meta) typed(it Item) Item {
 	if it.Dir {
 		it.Mime, it.Size = "inode/directory", 0
 	} else {

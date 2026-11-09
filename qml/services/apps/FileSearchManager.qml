@@ -16,7 +16,8 @@ import qs.services.system
  * An item is { path, name, dir, mime, icons, size, mtime (ms) }; `dir`
  * is a folder or a link to one. `state` is the index's
  * { phase: off | waiting | loading | crawling | ready, entries, watched,
- * unwatched, unreadable, truncated, error }, pushed as it changes.
+ * unwatched, unreadable, truncated, unreachable, error }, pushed as it
+ * changes (unreachable: network roots whose server doesn't answer).
  *
  * Searches, listings and the recent files share one sequence: an answer
  * to anything older than the newest asked is dropped, and the daemon
@@ -32,6 +33,7 @@ QtObject {
       "unwatched": 0,
       "unreadable": 0,
       "truncated": false,
+      "unreachable": 0,
       "error": ""
     })
 
