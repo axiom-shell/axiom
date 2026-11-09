@@ -134,14 +134,24 @@ QtObject {
   }
 
   // The label of one's own for the workspace numbered `number` (the
-  // widget's `workspaceLabels`: [{ workspace, label, asText }]): { text
-  // ("" with none), asText (drawn as text, never as an icon) }
+  // widget's `workspaceLabels`: [{ workspace, show, icon, text }]): {
+  // icon, text (each "" where its `show` leaves it out: Icon shows the
+  // icon, Text the text, Both both), show }. An entry counts where what
+  // it shows isn't empty; with none, both are ""
   function labelFor(entries, number) {
-    const entry = (entries ?? []).find(e => e.workspace === number && (e.label ?? "") !== "");
-    return {
-      "text": entry ? entry.label : "",
-      "asText": entry?.asText === true
+    const parts = e => {
+      const show = e?.show ?? "icon";
+      return {
+        "icon": show !== "text" ? (e?.icon ?? "") : "",
+        "text": show !== "icon" ? (e?.text ?? "") : "",
+        "show": show
+      };
     };
+    const entry = (entries ?? []).find(e => {
+      const shown = parts(e);
+      return e.workspace === number && (shown.icon !== "" || shown.text !== "");
+    });
+    return parts(entry ?? null);
   }
 
   // A workspace's compositor `name` where it says more than its id or the

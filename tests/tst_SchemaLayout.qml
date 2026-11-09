@@ -151,24 +151,36 @@ TestCase {
     compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["S.kb:", "S.kb.sources:", "S.kb.method:", "S.kb.method.enabled:S.kb.sources", "S.kb.method.other:"]);
   }
 
-  // An icon field's `x-textSwitch` draws its sibling boolean: that row is
-  // `drawnBy` it, and drawnKeys names it
-  function test_rows_text_switch() {
-    const label = {
+  // An icon field's `x-iconText` draws its mode and text siblings: their
+  // rows are `drawnBy` it, and drawnKeys names them
+  function test_rows_icon_text() {
+    const icon = {
       "type": "string",
       "x-control": "icon",
-      "x-textSwitch": "asText"
+      "x-iconText": {
+        "mode": "show",
+        "text": "text"
+      }
     };
     const rows = SchemaLayout.rows({
+      "x-order": ["show", "icon", "text"],
       "properties": {
-        "label": label,
-        "asText": {
-          "type": "boolean"
+        "icon": icon,
+        "show": {
+          "type": "string",
+          "enum": ["icon", "text", "both"]
+        },
+        "text": {
+          "type": "string"
         }
       }
     }, []);
-    compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["label:", "asText:label"]);
-    compare(SchemaLayout.drawnKeys(label), ["asText"]);
+    compare(rows.map(r => r.path.join(".") + ":" + (r.drawnBy ?? "")), ["show:icon", "icon:", "text:icon"]);
+    compare(SchemaLayout.drawnKeys(icon), ["show", "text"]);
+    compare(SchemaLayout.iconTextKeys(icon), ["show", "text"]);
+    compare(SchemaLayout.iconTextKeys({
+      "x-rowDraws": ["a.b"]
+    }), [], "an x-row's keys aren't an icon field's");
     compare(SchemaLayout.drawnKeys({
       "x-rowDraws": ["a.b"]
     }), ["a.b"]);

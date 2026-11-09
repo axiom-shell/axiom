@@ -166,29 +166,58 @@ TestCase {
     const entries = [
       {
         "workspace": 2,
-        "label": "web"
+        "show": "icon",
+        "icon": "web",
+        "text": "ignored"
       },
       {
         "workspace": 3,
-        "label": ""
+        "show": "icon",
+        "icon": "",
+        "text": "hidden"
       },
       {
         "workspace": 5,
-        "label": "mail",
-        "asText": true
+        "show": "text",
+        "icon": "mail",
+        "text": "mail"
+      },
+      {
+        "workspace": 6,
+        "show": "both",
+        "icon": "terminal",
+        "text": "dev"
+      },
+      {
+        "workspace": 7,
+        "show": "both",
+        "icon": "",
+        "text": "notes"
+      },
+      {
+        "workspace": 8,
+        "show": "text",
+        "icon": "chat",
+        "text": ""
+      },
+      {
+        "workspace": 8,
+        "icon": "chat"
       }
     ];
-    compare(WorkspaceCells.labelFor(entries, 2), {
-      "text": "web",
-      "asText": false
-    });
-    compare(WorkspaceCells.labelFor(entries, 5), {
-      "text": "mail",
-      "asText": true
-    }, "Text: drawn as written");
-    compare(WorkspaceCells.labelFor(entries, 3).text, "", "an empty label is none");
-    compare(WorkspaceCells.labelFor(entries, 4).text, "");
-    compare(WorkspaceCells.labelFor(undefined, 1).text, "");
+    const label = (icon, text, show) => ({
+          "icon": icon,
+          "text": text,
+          "show": show
+        });
+    compare(WorkspaceCells.labelFor(entries, 2), label("web", "", "icon"), "Icon: the icon alone");
+    compare(WorkspaceCells.labelFor(entries, 5), label("", "mail", "text"), "Text: the text alone");
+    compare(WorkspaceCells.labelFor(entries, 6), label("terminal", "dev", "both"), "Both: the icon, then the text");
+    compare(WorkspaceCells.labelFor(entries, 7), label("", "notes", "both"), "Both with no icon: the text");
+    compare(WorkspaceCells.labelFor(entries, 8), label("chat", "", "icon"), "an entry showing nothing is skipped; no show is Icon");
+    compare(WorkspaceCells.labelFor(entries, 3), label("", "", "icon"), "an empty icon is none, whatever its text");
+    compare(WorkspaceCells.labelFor(entries, 4), label("", "", "icon"));
+    compare(WorkspaceCells.labelFor(undefined, 1), label("", "", "icon"));
   }
 
   function test_nameShown() {

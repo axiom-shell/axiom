@@ -14,12 +14,17 @@ QtObject {
   id: root
 
   // The keys of its object a field draws itself, so their own rows hide:
-  // its `x-rowDraws`, and an icon field's `x-textSwitch`
+  // its `x-rowDraws`, and an icon field's `x-iconText` siblings
   function drawnKeys(fieldSchema) {
     const keys = Array.isArray(fieldSchema?.["x-rowDraws"]) ? fieldSchema["x-rowDraws"].slice() : [];
-    if (typeof fieldSchema?.["x-textSwitch"] === "string")
-      keys.push(fieldSchema["x-textSwitch"]);
-    return keys;
+    return keys.concat(root.iconTextKeys(fieldSchema));
+  }
+
+  // The sibling keys an icon field's `x-iconText` ({ mode, text }) draws
+  // in its row: its mode's, then its text's, each where given
+  function iconTextKeys(fieldSchema) {
+    const iconText = fieldSchema?.["x-iconText"];
+    return [iconText?.mode, iconText?.text].filter(key => typeof key === "string" && key !== "");
   }
 
   // Flattens an object schema into form rows:
@@ -89,7 +94,7 @@ QtObject {
     }
     // A field that also draws other keys of its object (drawnKeys: an
     // `x-row`'s `x-rowDraws`, dotted paths under it, or an icon field's
-    // `x-textSwitch`) marks their rows `drawnBy` its dotted path: on the
+    // `x-iconText`) marks their rows `drawnBy` its dotted path: on the
     // settings page they're drawn inside it
     for (const row of result.filter(r => r.kind !== "group" && root.drawnKeys(r.schema).length > 0)) {
       const drawn = root.drawnKeys(row.schema).map(key => path.concat(key.split(".")).join("."));

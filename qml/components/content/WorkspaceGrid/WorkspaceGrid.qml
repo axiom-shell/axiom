@@ -69,6 +69,8 @@ WorkspacePopoutPanel {
         label: shows.number
         text: shows.kind === "text" || shows.kind === "name" ? shows.text : ""
         textPlain: shows.plain
+        leadIcon: shows.kind === "text" ? shows.lead : ""
+        leadPlain: shows.leadPlain
         iconPaths: shows.icons
         iconLayout: contents.iconLayout
         iconSlots: contents.iconSlots

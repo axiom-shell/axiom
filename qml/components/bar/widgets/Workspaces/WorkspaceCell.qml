@@ -9,8 +9,9 @@ import qs.components.methods
 // filled, tinted or outlined box inside the widget's own; on a bar whose
 // widgets have no boxes, straight on the bar, under a line of its color for
 // underline. Its label (`labels`) is its number, a dot or nothing; a
-// glyph, text (a label of one's own or a name: a Material Symbols name
-// draws as that icon, anything else as text) or app icons show instead
+// glyph, text (a label of one's own, an icon, text or the icon before
+// the text, or a name: a Material Symbols name the font has draws as that
+// icon, anything else as text) or app icons show instead
 // when given, in that order (CellContents picks one). An urgent one fades
 // in and out (`pulse`), with a dot at its corner where an app icon would
 // otherwise hide it. A row with a sliding ActiveCellIndicator draws its
@@ -39,6 +40,10 @@ Item {
   // text font
   property string text: ""
   property bool textPlain: false
+  // An icon before `text` (a label showing both), and whether it's drawn
+  // in the text font (CellContents.leadPlain)
+  property string leadIcon: ""
+  property bool leadPlain: false
   property string iconPath: ""
   // App icons' paths (`iconPath` alone by default), laid out as
   // `iconLayout` says: "largest" (the first alone), "row" (side by side
@@ -159,23 +164,49 @@ Item {
     }
 
     // A label of one's own or a name: an icon at the glyph's size, text at
-    // the number's (turned along a vertical bar when wider than the cell is
-    // thick)
-    StyledIcon {
-      id: textLabel
+    // the number's, with a label's icon before it (`leadIcon`); the two
+    // turned along a vertical bar when wider than the cell is thick (the
+    // icon then below the text, where it starts)
+    Row {
+      id: textRow
       anchors.centerIn: parent
       visible: root._shows === "text"
-      readonly property bool symbol: textLabel.isSymbol && !root.textPlain
+      spacing: WorkspaceCells.iconGap(root.thickness)
+      rotation: root.isVertical && !textLabel.symbol && textRow.implicitWidth > root.thickness * 0.8 ? -90 : 0
 
-      text: root.text
-      textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
-      textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
-      textColor: root.look.content
-      font.bold: !textLabel.symbol && root.isActive && !root.boxed
-      isVertical: root.isVertical && !textLabel.symbol && textLabel.implicitWidth > root.thickness * 0.8
+      StyledIcon {
+        id: leadLabel
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.leadIcon !== ""
+        readonly property bool symbol: leadLabel.isSymbol && !root.leadPlain
 
-      ColorGlide on color {
-        enabled: root.animated
+        // An icon stays upright as the text turns
+        rotation: leadLabel.symbol && textRow.rotation !== 0 ? 90 : 0
+        text: root.leadIcon
+        textFamily: leadLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
+        textSize: leadLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+        textColor: root.look.content
+        font.bold: !leadLabel.symbol && root.isActive && !root.boxed
+
+        ColorGlide on color {
+          enabled: root.animated
+        }
+      }
+
+      StyledIcon {
+        id: textLabel
+        anchors.verticalCenter: parent.verticalCenter
+        readonly property bool symbol: textLabel.isSymbol && !root.textPlain
+
+        text: root.text
+        textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
+        textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+        textColor: root.look.content
+        font.bold: !textLabel.symbol && root.isActive && !root.boxed
+
+        ColorGlide on color {
+          enabled: root.animated
+        }
       }
     }
 

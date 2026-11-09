@@ -35,6 +35,7 @@ x-hookup: how the integration hooks into its app (targets, place, text).
 x-hookupNote: a note shown with it.
 x-hosts: '`overlay`, `edgeMenu`, `lockscreen`, `greeter`, `desktop`.'
 x-icon: a Material Symbols name on bar widget, overlay module and view definitions.
+x-iconText: 'on an icon field (`x-control: icon`): `{ mode, text }`, the keys of two siblings it draws in its own row: `mode` a string of `icon`, `text` or `both` that an Icon / Text / Both switch at the row''s right sets, `text` a string typed in a box beside the icon''s (each box shown while the mode shows its part); the siblings'' own rows hide.'
 x-inherit: 'a setting that may be null, and is by default, meaning the value at that dotted path (a bar''s style from `Bars.style`, `Interface.radius` from `Appearance.shape.radius`).'
 x-intro: puts `views/Settings/<Name>.qml` at the top of the section's own card, above its fields (NightLight's `NightLightStatus`).
 x-keyboard: the module takes typing.
@@ -64,7 +65,6 @@ x-slots: a custom widget element's bindings, in order (keys of its `bind`; `Cust
 x-snapshot: 'a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on.'
 x-suggestions: chips under a text field (`SettingsManager.suggestionsFor`).
 x-takeover: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter).
-x-textSwitch: 'on an icon field (`x-control: icon`): the key of a sibling boolean that an Icon / Text switch at the field''s right sets (true: the value is drawn as text, never as an icon); the sibling''s own row hides.'
 x-tool: the navigator's tool group.
 x-unit: the unit shown after a number (`px`, `%`, `ms`, …), and how the command line reads a value given with one.
 x-wide: the settings card the field lands on spans both columns (`SchemaLayout.groups`' `wide`).

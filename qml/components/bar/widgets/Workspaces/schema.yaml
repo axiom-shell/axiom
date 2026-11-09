@@ -61,11 +61,11 @@ settings:
     type: array
     title: Workspace labels
     default: []
-    description: 'Your own label for a workspace, by the number its cell shows: an icon or text. It wins over app icons and names.'
+    description: 'Your own label for a workspace, by the number its cell shows: an icon, text or both. It wins over app icons and names.'
     items:
       type: object
       additionalProperties: false
-      x-order: [workspace, label, asText]
+      x-order: [workspace, show, icon, text]
       properties:
         id: {$ref: '#/definitions/ItemId'}
         workspace:
@@ -74,17 +74,23 @@ settings:
           default: 1
           minimum: 1
           maximum: 30
-        label:
+        show:
+          type: string
+          title: Show
+          enum: [icon, text, both]
+          x-enumLabels: {icon: Icon, text: Text, both: Both}
+          default: icon
+        icon:
           type: string
           x-control: icon
-          x-textSwitch: asText
+          x-iconText: {mode: show, text: text}
           title: Label
           default: ''
-          description: 'Icon: a Material Symbols name or a pasted glyph. Text: drawn as written.'
-        asText:
-          type: boolean
-          title: Show as text
-          default: false
+          description: 'An icon (a Material Symbols name or a pasted glyph), text drawn as written, or both: the icon, then the text.'
+        text:
+          type: string
+          title: Text
+          default: ''
   useNames:
     type: boolean
     title: Use workspace names

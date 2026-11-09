@@ -4174,8 +4174,7 @@
     "Largest: the biggest window's icon. Row: side by side, the cell growing to fit. Square: up to four in a block the size of a cell.": "",
     "Count": "",
     "Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.": "",
-    "Icon: a Material Symbols name or a pasted glyph. Text: drawn as written.": "",
-    "Your own label for a workspace, by the number its cell shows: an icon or text. It wins over app icons and names.": "",
-    "Show as text": ""
+    "An icon (a Material Symbols name or a pasted glyph), text drawn as written, or both: the icon, then the text.": "",
+    "Your own label for a workspace, by the number its cell shows: an icon, text or both. It wins over app icons and names.": ""
   }
 }

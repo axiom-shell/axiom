@@ -170,6 +170,8 @@ Item {
         glyph: _content?.kind === "glyph" ? _content.text : ""
         text: _content?.kind === "text" || _content?.kind === "name" ? _content.text : ""
         textPlain: _content ? _content.plain : false
+        leadIcon: _content?.kind === "text" ? _content.lead : ""
+        leadPlain: _content ? _content.leadPlain : false
         iconPaths: _content ? _content.icons : []
         iconLayout: contents.iconLayout
         iconSlots: contents.iconSlots
