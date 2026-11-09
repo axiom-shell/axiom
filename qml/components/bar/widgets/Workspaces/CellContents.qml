@@ -67,13 +67,14 @@ QtObject {
   readonly property int iconSlots: root.iconLayout === "row" ? (root.properties.appIconsMax ?? 3) : root.iconLayout === "square" ? 4 : 1
 
   // The app icons a workspace with windows shows: its largest window's, or
-  // in a row or square its apps' (each once, by its biggest window), the
+  // in a row or square its apps' (each once, by its biggest window) or
+  // with `appIconsCount: windows` its windows', the
   // biggest up to the slots, in the order they sit on screen
   // (WorkspaceCells.chosen): on a strip monitor strip order, else left to
   // right, then top to bottom
   function _icons(wsId) {
     const bySize = CompositorManager.windowsBySize(wsId);
-    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, false, root._onScreen(wsId, bySize));
+    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, root.properties.appIconsCount === "windows", root._onScreen(wsId, bySize));
     return windows.map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
   }
 

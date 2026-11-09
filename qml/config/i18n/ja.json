@@ -4158,7 +4158,6 @@
     "Row": "",
     "Icons in a row": "",
     "Largest": "",
-    "Largest: the biggest window's icon. Row: each app once, side by side, the cell growing to fit. Square: up to four in a block the size of a cell.": "",
     "Numbers, dots and labels in boxes, and the grid's active arrow.": "",
     "Solid boxes": "",
     "Every workspace a box filled with its state's color, whatever the bar's widget style.": "",
@@ -4174,6 +4173,9 @@
     "Active workspace icons": "",
     "Hide while strip windows show": "",
     "Hide: while its windows show after the cells, the active workspace shows its number, dot or label instead of app icons. The others keep theirs.": "",
-    "The most icons a workspace shows, for its biggest windows, in their order on screen.": ""
+    "The most icons a workspace shows, for its biggest windows, in their order on screen.": "",
+    "Apps: each app once. Windows: an icon per window, so three terminals show three.": "",
+    "Largest: the biggest window's icon. Row: side by side, the cell growing to fit. Square: up to four in a block the size of a cell.": "",
+    "Count": ""
   }
 }

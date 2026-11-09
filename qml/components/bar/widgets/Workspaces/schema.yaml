@@ -98,7 +98,16 @@ settings:
     x-enumLabels: {largest: Largest, row: Row, square: Square}
     default: largest
     x-showIf: {showAppIcons: true}
-    description: 'Largest: the biggest window''s icon. Row: each app once, side by side, the cell growing to fit. Square: up to four in a block the size of a cell.'
+    description: 'Largest: the biggest window''s icon. Row: side by side, the cell growing to fit. Square: up to four in a block the size of a cell.'
+  appIconsCount:
+    type: string
+    title: Count
+    x-control: toggle
+    enum: [apps, windows]
+    x-enumLabels: {apps: Apps, windows: Windows}
+    default: apps
+    x-showIf: {showAppIcons: true, appIconsLayout: [row, square]}
+    description: 'Apps: each app once. Windows: an icon per window, so three terminals show three.'
   appIconsMax:
     type: integer
     title: Icons in a row
