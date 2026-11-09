@@ -125,6 +125,31 @@ QtObject {
   }
 
   /**
+   * How far in from a bar's window's outer edge its accent line (its
+   * look's accentLine: { side, width }, or null) starts across it, inside
+   * whatever stroke is there. Along the outer edge: a floating bar's
+   * inside its island's stroke; a pill bar's past the frame it reaches
+   * back over (stripCover) and the stroke it overlaps; a bar inside the
+   * border inside the border's stroke; else at the edge. Along the inner
+   * edge, its width back from it: a pill bar's from its pills' far stroke
+   * (pillDepth), a solid or floating bar's from its own stroke there, a
+   * transparent bar's from its extent. `bar`: an enriched bar (with
+   * placeStack's stripCover).
+   */
+  function accentInset(bar, borderWidth) {
+    const line = bar.look.accentLine;
+    const width = line?.width ?? 0;
+    if (line?.side === "outer") {
+      if (bar.island)
+        return bar.islandStart + borderWidth;
+      return bar.pills ? bar.stripCover + bar.overlap : bar.insideBorder ? borderWidth : 0;
+    }
+    if (bar.pills)
+      return bar.pillDepth - borderWidth - width;
+    return bar.extent - width - (bar.solid || bar.island ? borderWidth : 0);
+  }
+
+  /**
    * What bounds tabs along a bar (BarTabs.tabLimits), from its start:
    * where a corner's curve takes a tab's outer corner at its end. A
    * floating bar's islands (`islands`, [{ start, length }] along the

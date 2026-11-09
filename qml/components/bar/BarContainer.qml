@@ -964,95 +964,11 @@ Rectangle {
     }
   }
 
-  // A line along the bar's inner or outer edge, from its color fading
-  // into another along the bar. Inline components can't see this file's
-  // ids, hence `bar`. Where an outer bar's popout lies over it
-  // (coveredSpans) it gives way, as the islands and sections do: on a pill
-  // bar not, its pills merging with the popout.
-  component AccentLine: Rectangle {
-    id: line
-    required property Item bar
-    opacity: !line.bar.pills && line.bar.covers(line.start, line.start + line.length) ? 0 : 1
-    Behavior on opacity {
-      NumberAnimation {
-        duration: Appearance.animFast
-        easing.type: Appearance.easing
-      }
-    }
-    // Along the bar, and in from its outer edge
-    required property real start
-    required property real length
-    required property real inset
-
-    readonly property bool vertical: bar.isVertical
-    readonly property real thickness: bar.accentLine?.width ?? 0
-    readonly property bool far: bar.barConfig.right || bar.barConfig.bottom
-    readonly property real across: far ? (vertical ? bar.width : bar.height) - inset - thickness : inset
-    readonly property color from: bar.accentLine ? Theme.resolveColor(bar.accentLine.color) : "transparent"
-
-    x: vertical ? across : start
-    y: vertical ? start : across
-    width: vertical ? thickness : length
-    height: vertical ? length : thickness
-    gradient: Gradient {
-      orientation: line.vertical ? Gradient.Vertical : Gradient.Horizontal
-      GradientStop {
-        position: 0
-        color: line.from
-      }
-      GradientStop {
-        position: 1
-        color: line.bar.accentLine?.fade ? Theme.resolveColor(line.bar.accentLine.fade) : line.from
-      }
-    }
-  }
-
-  // The accent line along its edge (the look's: { side, color, fade,
-  // width }), or null for none
-  readonly property var accentLine: root.barConfig.look.accentLine
-  // How far in from the outer edge the accent line sits: inside whatever
-  // stroke is there (the border strip's or the bar's own on a solid bar's
-  // inner edge, the border's under a floating bar's outer edge)
-  readonly property real _accentInset: {
-    const width = root.accentLine?.width ?? 0;
-    if (root.accentLine?.side === "outer") {
-      if (root.islands)
-        return root.barConfig.islandStart + Appearance.borderWidth;
-      return root.pills ? root.barConfig.stripCover + root.barConfig.overlap : root.barConfig.insideBorder ? Appearance.borderWidth : 0;
-    }
-    if (root.pills)
-      return root.barConfig.pillDepth - Appearance.borderWidth - width;
-    return root.barConfig.extent - width - (root.barConfig.solid || root.islands ? Appearance.borderWidth : 0);
-  }
-
-  // Along a plain bar: its whole length, or clear of the border's sides
-  // inside the border and of a bar it makes way for
-  AccentLine {
-    visible: root.accentLine !== null && !root.pills && !root.islands
+  // The accent line along its inner or outer edge, along the bar or each
+  // pill or island (the look's accentLine)
+  AccentLines {
+    anchors.fill: parent
     bar: root
-    start: root.barConfig.insideBorder || root.ends.start.held ? root.endMargins[0] : 0
-    length: root.length - start - (root.barConfig.insideBorder || root.ends.end.held ? root.endMargins[1] : 0)
-    inset: root._accentInset
-  }
-
-  // Along each pill, clear of its rounded corners on the inner side
-  Repeater {
-    model: root.accentLine !== null && (root.pills || root.islands) ? root.pillRects.length : 0
-
-    AccentLine {
-      required property int index
-      readonly property var rect: root.pillRects[index] ?? {
-        "start": 0,
-        "length": 0
-      }
-      // Pills only round their inner side; islands both
-      readonly property real corner: root.islands ? Appearance.borderRadius : root.accentLine.side === "inner" ? root.pillRadii.corner : 0
-
-      bar: root
-      start: rect.start + (rect.joinStart ? 0 : corner)
-      length: Math.max(0, rect.length - (rect.joinStart ? 0 : corner) - (rect.joinEnd ? 0 : corner))
-      inset: root._accentInset
-    }
   }
 
   Section {
