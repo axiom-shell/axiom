@@ -47,10 +47,11 @@ WorkspacePopoutPanel {
         spacing: root.cellSpacing
 
         WorkspaceCell {
+          id: stripCell
           barConfig: root.barConfig
           isActive: line.isActive
           // Every workspace shown has windows or is the active one
-          look: BarsConfig.workspaceCellColors(root.barConfig, root, line.isActive, true)
+          look: BarsConfig.workspaceCellColors(root.barConfig, root, line.isActive, true, stripCell.lit)
           thickness: root.cellSize
           length: root.cellLength
           radius: root.radius

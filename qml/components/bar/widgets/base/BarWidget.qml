@@ -26,10 +26,15 @@ Item {
 
   property bool hasBackground: false
   property color accentColor: "transparent"
+  // Filled while its hit area is hovered, with the bar's "Fill on hover"
+  // (off for a widget whose parts fill instead: Workspaces' cells)
+  property bool fillsOnHover: true
   // A level (0-1) its WidgetGroup fills its background's shape to, along
   // the bar (up a vertical one), in backgroundLevelColor; -1 for none (a custom
   // widget's pill style)
   property real backgroundLevel: -1
   property color backgroundLevelColor: "transparent"
-  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)
+  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor, {
+    "hovered": fillsOnHover && (hitArea?.hovered ?? false)
+  })
 }

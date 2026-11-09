@@ -63,9 +63,10 @@ Item {
     return (CompositorManager.workspaces.find(ws => ws.id === id)?.windowCount ?? 0) > 0;
   }
 
-  // BarsConfig.cellColors for a workspace's cell, active or at rest
-  function _look(id, active) {
-    return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id));
+  // BarsConfig.cellColors for a workspace's cell, active or at rest, and
+  // lit (the pointer over it)
+  function _look(id, active, lit) {
+    return BarsConfig.workspaceCellColors(root.barConfig, root, active, root._occupied(id), lit);
   }
 
   function _length(active) {
@@ -81,6 +82,7 @@ Item {
       model: root.ids.length
 
       WorkspaceCell {
+        id: backgroundCell
         required property int index
         readonly property int wsId: root.ids[index] ?? 0
 
@@ -89,7 +91,7 @@ Item {
         isActive: wsId === root.activeId
         indicated: indicator.slides
         lit: wsId === root.hoveredId
-        look: root._look(wsId, isActive && !indicator.slides)
+        look: root._look(wsId, isActive && !indicator.slides, backgroundCell.lit)
         thickness: root.cell
         restLength: root.cellLength
         length: root._length(isActive)
@@ -102,7 +104,9 @@ Item {
   ActiveCellIndicator {
     id: indicator
     barConfig: root.barConfig
-    look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active")
+    look: BarsConfig.cellColors(root.barConfig, root.activeColor, root.textColor, "active", {
+      "hovered": root.hoveredId !== -1 && root.hoveredId === root.activeId
+    })
     index: root.ids.indexOf(root.activeId)
     thickness: root.cell
     restLength: root.cellLength
@@ -124,6 +128,7 @@ Item {
       model: root.ids.length
 
       WorkspaceCell {
+        id: contentCell
         required property int index
         readonly property int wsId: root.ids[index] ?? 0
         readonly property string _glyph: root.glyphOf(wsId, isActive)
@@ -133,7 +138,7 @@ Item {
         hitArea: root.hitArea
         barConfig: root.barConfig
         isActive: wsId === root.activeId
-        look: root._look(wsId, isActive)
+        look: root._look(wsId, isActive, contentCell.lit)
         thickness: root.cell
         restLength: root.cellLength
         length: root._length(isActive)

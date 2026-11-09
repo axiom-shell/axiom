@@ -137,6 +137,109 @@ TestCase {
     same(cell("plain", "active", custom).content, custom, "override");
   }
 
+  function hovering(fill, hovered, hoverFill = true, group = null) {
+    return BarWidgetStyle.colors({
+      "fill": fill,
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "hoverFill": hoverFill,
+      "hovered": hovered,
+      "group": group
+    }, accent, own);
+  }
+
+  // "Fill on hover": a tinted or outlined widget under the pointer draws as
+  // filled, its text and icon reading on the fill
+  function test_hover_fills_tinted_and_outline() {
+    ["tinted", "outline"].forEach(fill => {
+      const c = hovering(fill, true);
+      same(c.fill, accent, fill + " fill");
+      same(c.text, own, fill + " text");
+      same(c.icon, own, fill + " icon");
+    });
+    // The outline keeps its stroke under the fill
+    same(hovering("outline", true).stroke, accent, "outline stroke");
+    same(hovering("tinted", true).stroke, "transparent", "tinted stroke");
+  }
+
+  function test_hover_fill_leaves_the_rest_alone() {
+    // Not hovered, or the option off: as ever
+    same(hovering("tinted", false).fill, Qt.alpha(accent, 0.25), "tinted at rest");
+    same(hovering("tinted", true, false).fill, Qt.alpha(accent, 0.25), "option off");
+    same(hovering("outline", true, false).text, accent, "outline, option off");
+    // Styles with no box to fill, or filled already
+    ["filled", "underline", "accentText", "plain"].forEach(fill => {
+      const hovered = hovering(fill, true), rest = hovering(fill, false);
+      same(hovered.fill, rest.fill, fill + " fill");
+      same(hovered.text, rest.text, fill + " text");
+    });
+    verify(!BarWidgetStyle.fillsOnHover({
+      "fill": "filled",
+      "hoverFill": true
+    }), "filled");
+    verify(BarWidgetStyle.fillsOnHover({
+      "fill": "outline",
+      "hoverFill": true
+    }), "outline");
+  }
+
+  function test_hover_fill_fades_in_from_its_own_color() {
+    // At rest an outline's fill is its color cleared, not black cleared
+    const rest = hovering("outline", false);
+    compare(Qt.color(rest.fill).a, 0, "clear");
+    same(Qt.alpha(rest.fill, 1), accent, "its own color");
+    same(hovering("outline", false, false).fill, "transparent", "option off");
+  }
+
+  function test_hover_fills_a_merged_widgets_own_part() {
+    const light = "#eeeeee";
+    const c = hovering("tinted", true, true, light);
+    same(c.fill, accent, "its own part fills");
+    same(c.stroke, "transparent", "no outline of its own in a run");
+    same(c.text, own, "text");
+    same(c.icon, own, "icon");
+    compare(Qt.color(hovering("outline", false, true, light).fill).a, 0, "clear at rest");
+  }
+
+  function hoveredCell(fill, state, hovered, hoverFill = true) {
+    return BarWidgetStyle.cell({
+      "fill": fill,
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "hoverFill": hoverFill,
+      "hovered": hovered,
+      "group": null
+    }, accent, own, state);
+  }
+
+  function test_split_never_fills_on_hover() {
+    const c = split("tint", {
+      "hoverFill": true,
+      "hovered": true
+    });
+    same(c.fill, Qt.alpha(accent, 0.25), "the label keeps its tint");
+    same(c.iconFill, accent, "the icon part its fill");
+  }
+
+  function test_hovered_cells_fill() {
+    ["tinted", "outline"].forEach(fill => {
+      ["active", "occupied", "empty"].forEach(state => {
+        const c = hoveredCell(fill, state, true);
+        same(c.fill, accent, fill + " " + state + " fill");
+        same(c.content, own, fill + " " + state + " content");
+        verify(c.showsHover, fill + " " + state + " shows the hover");
+      });
+    });
+    const rest = hoveredCell("tinted", "active", false);
+    same(rest.fill, Qt.alpha(accent, 0.25), "at rest");
+    verify(!rest.showsHover, "at rest the cell lights itself");
+    verify(!hoveredCell("tinted", "active", true, false).showsHover, "option off");
+    verify(!hoveredCell("filled", "active", true).showsHover, "filled");
+    verify(!cell("outline", "active").showsHover, "no hover given");
+  }
+
   function test_level_color_is_the_icon_faded() {
     const c = styled("filled");
     same(BarWidgetStyle.levelColor(c), Qt.alpha(c.icon, 0.35), "level");

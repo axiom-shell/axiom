@@ -134,6 +134,8 @@ QtObject {
       "outlineWidth": look.outlineWidth,
       // solid, dashed, dotted, double or ends (WidgetBackground, cells)
       "outlineStroke": look.outlineStroke,
+      // A tinted or outlined widget fills while hovered (BarWidgetStyle)
+      "hoverFill": look.hoverFill,
       "lineWidth": look.lineWidth,
       "lineSide": look.lineSide,
       "widgetTextColor": look.widgetTextColor,
@@ -250,23 +252,27 @@ QtObject {
   // What a bar widget draws in on its bar ({ fill, stroke, indicator,
   // text, icon, iconFill }, see BarWidgetStyle): `accent` is its color for
   // its state, `foregroundName` the text color it's configured with,
-  // `splits` whether it shows an icon part and a label apart (a split bar
-  // draws it filled otherwise; left out, it doesn't)
-  function widgetColors(barConfig, accent, foregroundName, splits) {
-    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged", splits === true), accent, Theme.resolveColor(foregroundName));
+  // `widget` what of the widget itself the style depends on ({ splits,
+  // hovered }, each left out false; _widgetStyle)
+  function widgetColors(barConfig, accent, foregroundName, widget) {
+    return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, barConfig.widgetGrouping === "merged", widget), accent, Theme.resolveColor(foregroundName));
   }
 
   // What a cell inside a widget (a workspace) draws in on its bar ({ fill,
-  // stroke, indicator, content }, see BarWidgetStyle.cell): `color` is its
-  // state color, `own` what reads on it filled, `state` active/occupied/empty
-  function cellColors(barConfig, color, own, state) {
-    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false), color, own, state);
+  // stroke, indicator, content, showsHover }, see BarWidgetStyle.cell):
+  // `color` is its state color, `own` what reads on it filled, `state`
+  // active/occupied/empty, `cell` what of the cell the style depends on
+  // ({ hovered }: the pointer over it; _widgetStyle)
+  function cellColors(barConfig, color, own, state, cell) {
+    return BarWidgetStyle.cell(BarsConfig._widgetStyle(barConfig, false, cell), color, own, state);
   }
 
   // A Workspaces cell's colors (cellColors) by its state, in the widget's
   // `colors` ({ activeColor, occupiedColor, emptyColor, textColor })
-  function workspaceCellColors(barConfig, colors, active, occupied) {
-    return BarsConfig.cellColors(barConfig, active ? colors.activeColor : occupied ? colors.occupiedColor : colors.emptyColor, active || occupied ? colors.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty");
+  function workspaceCellColors(barConfig, colors, active, occupied, hovered) {
+    return BarsConfig.cellColors(barConfig, active ? colors.activeColor : occupied ? colors.occupiedColor : colors.emptyColor, active || occupied ? colors.textColor : Theme.foreground, active ? "active" : occupied ? "occupied" : "empty", {
+      "hovered": hovered === true
+    });
   }
 
   // The corners of a Workspaces cell `cell` thick, inset by `inset` in its
@@ -355,17 +361,20 @@ QtObject {
   }, {})
 
   // BarWidgetStyle's `style` for a bar, its colors resolved, for a widget
-  // that `splits` (an icon part and a label apart)
-  function _widgetStyle(barConfig, merged, splits) {
+  // (or cell) `widget`: { splits: an icon part and a label apart, hovered:
+  // the pointer over it }, each left out false
+  function _widgetStyle(barConfig, merged, widget) {
     return {
       "fill": barConfig.widgetStyle,
-      "splits": splits === true,
+      "splits": widget?.splits === true,
+      "hovered": widget?.hovered === true,
       "splitIcon": barConfig.splitIcon,
       "labelFill": barConfig.splitLabelFill,
       "labelColor": Theme.resolveColor(barConfig.splitLabelColor),
       "barText": Theme.foreground,
       "override": barConfig.widgetTextColor ? Theme.resolveColor(barConfig.widgetTextColor) : null,
       "tint": barConfig.tintOpacity,
+      "hoverFill": barConfig.hoverFill,
       "group": merged ? Theme.resolveColor(barConfig.groupColor) : null
     };
   }

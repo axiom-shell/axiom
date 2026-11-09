@@ -109,6 +109,13 @@ properties:
     x-beside: true
     x-showIf: {widgetStyle: outline}
     description: 'Double: two lines, each the outline width. Ends only: a mark at each end, in the widget shape.'
+  hoverFill:
+    x-group: Bar widgets
+    type: boolean
+    title: Fill on hover
+    default: false
+    x-showIf: {widgetStyle: [tinted, outline]}
+    description: A widget under the pointer fills with its color.
   lineWidth:
     x-group: Bar widgets
     type: integer

@@ -38,8 +38,9 @@ Item {
   // "all", or only its box and underline ("background") or its label, dot
   // or icon and pointer area ("content")
   property string part: "all"
-  // Its box in the hover color: when hovered, or for a background layer,
-  // when its content layer is
+  // Its box in the hover color (or, with "Fill on hover", filled: its
+  // `look` passes it to BarsConfig.cellColors): when hovered, or for a
+  // background layer, when its content layer is
   property bool lit: hovered
   // Its box while lit (BarsConfig.cellHoverColor)
   property color hoverColor: Theme.backgroundHighlight
@@ -62,11 +63,13 @@ Item {
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
+  // Lit, in the hover color, unless its look is filled for the hover
+  // already ("Fill on hover": BarWidgetStyle.cell's showsHover)
   CellBox {
     visible: root._drawsBox
     barConfig: root.barConfig
     radius: root.radius
-    fillColor: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    fillColor: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
     strokeColor: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
     animated: root.animated
   }

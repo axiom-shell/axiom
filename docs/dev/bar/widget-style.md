@@ -32,16 +32,20 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Widgets don't draw their own backgrounds. Each reports two things:
   - `hasBackground`: on by default for `BarIconWidget`, opt-in on `BarWidget`.
   - `accentColor`: its color for its current state, e.g. a critical battery or a muted mic. This used to be the background.
-- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, splits)`, which gives `{ fill, stroke, indicator, text, icon, iconFill }`.
+- They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, widget)`, which gives `{ fill, stroke, indicator, text, icon, iconFill }`.
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, split, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
   - An outline is drawn in the bar's `outlineStroke` ([Shapes and runs](widget-shapes-runs.md#outline-strokes)).
+- **Fill on hover** (`hoverFill`, shown for tinted and outline: the boxed styles that aren't filled already) fills a widget under the pointer with its color, its text and icon turning to its own text color (`own`), as if filled.
+  - The decision is `BarWidgetStyle.fillsOnHover`; `colors()` reads `style.hovered` (`BarsConfig.widgetColors`' `widget` holds it), and the widget passes its hit area's `hovered` (`BarIconWidget`, `BarWidget`), so the background, text and icon all follow one output. With the option on, an unfilled outline's fill is its color cleared, so the fill fades in (`ColorGlide`, `animFast`) from nothing rather than through black.
+  - In a merged run only the hovered widget's own part fills, in the caps it has alone (`levelStartCap` / `levelEndCap`, as a level), its outline left to the run; a press tints that part on top.
+  - A `BarWidget` opts out with `fillsOnHover: false`: Workspaces, whose cells fill instead.
 - Colors that are content rather than a background stay the widget's own: workspace cells, separators, badges, the DND icon.
 - **Split** sets a widget's icon part apart from its label (`BarWidgetStyle.colors`' `split` case):
   - The icon part (the icon, and a lead graphic: a display style's ring, sparkline or ticker) is filled with the widget's color (`iconFill`), its icon in `own`.
   - `splitIcon` joined: one box round the whole widget, cut at the icon part's end by `splitDivider` ([Shapes and runs](widget-shapes-runs.md#split)). The label's part (`splitLabelFill`) is a tint of the color (`tintOpacity`), a color of its own (`splitLabelColor`, its text reading on it) or none (the bar's); its text is the widget's color on a tint or none. `widgetTextColor` overrides both texts.
   - `splitIcon` badge: no box; a small shape behind the icon part, the label on the bar in the widget's color.
-  - Only an `IconTextWidget` showing an icon (or a lead graphic) and a label splits (`IconTextWidget.splits`, which `BarIconWidget` hands `widgetColors` as `splits`). Icon-only and text-only widgets, and every `BarWidget` (Workspaces, the tray, Media, …: `widgetColors` called without `splits`), draw as filled (`BarWidgetStyle.drawnFill`), and so do Workspaces' cells (`cell`'s `split` case).
+  - Only an `IconTextWidget` showing an icon (or a lead graphic) and a label splits (`IconTextWidget.splits`, which `BarIconWidget` hands `widgetColors` in `widget`). Icon-only and text-only widgets, and every `BarWidget` (Workspaces, the tray, Media, …: `widgetColors` called without `splits`), draw as filled (`BarWidgetStyle.drawnFill`), and so do Workspaces' cells (`cell`'s `split` case).
   - A split bar's widgets keep `BarsConfig.enrichBarConfig`'s `splitRoom` between the two parts instead of `spacing` (`BarShapes.splitRoom`: joined, the padding either side of the divider and its depth; a badge, its reach `badgePad` plus the spacing).
 - `backgroundLevel` (0–1, -1 for none) with `backgroundLevelColor`: a level its WidgetGroup fills the background's shape to (the custom widget's pill), in the background's caps with a rounded leading edge ([Shapes and runs](widget-shapes-runs.md)). A graphic a widget draws itself reads in `colors.icon`, which contrasts with a filled background.
 
@@ -83,8 +87,9 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Workspaces sits on a background like the rest (`backgroundColor`). Its box is Auto (`neutral`).
 - Its cells (`workspaces/WorkspaceCell`) are inset by `innerGap` inside that box.
 - A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
-- Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
+- Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content, showsHover }` from the cell's state color.
   - **Filled, tinted or outlined** styles draw boxes (`workspaces/CellBox`, the cell's and the sliding active box's), an outline in the bar's `outlineStroke`; split draws them filled.
+  - **Fill on hover:** a lit cell (`lit`, handed to `cellColors` as `{ hovered }`) fills with its state color, its content in its own text color, and `showsHover` tells the cell to draw no `hoverColor` box of its own. The sliding active box takes the hover while the active cell is lit.
   - **Styles with no box** (underline, colored icons, plain) draw the cell's number or a dot straight on the bar. The dot becomes a pill when wide, with the cells narrowed to fit.
     - For underline, each cell is underlined itself and the widget's own line is off.
     - An empty cell's content is the bar text, faded.

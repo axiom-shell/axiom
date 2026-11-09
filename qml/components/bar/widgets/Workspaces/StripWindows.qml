@@ -49,13 +49,16 @@ Grid {
     model: root.addresses.length
 
     WorkspaceCell {
+      id: windowCell
       required property int index
       readonly property string address: root.addresses[index] ?? ""
       readonly property var window: root.windows.find(w => w.id === address) ?? null
 
       barConfig: root.barConfig
       isActive: address === root.focused
-      look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied")
+      look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied", {
+        "hovered": windowCell.lit
+      })
       thickness: root.thickness
       length: root.cellLength
       radius: root.radius

@@ -60,6 +60,9 @@ Item {
   readonly property bool _boxed: barConfig.widgetBoxed
   // A tab's shape (BarShapes.tab), or null
   readonly property var _tab: barConfig.widgetShape === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, barConfig.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
+  // A merged run's widget filling its own part (on hover), in the caps it
+  // has alone: a press tints that, not the run's square middle
+  readonly property bool _ownFill: barConfig.widgetGrouping === "merged" && colors !== null && Qt.color(colors.fill).a > 0
 
   // The shape in one fill and stroke: a Rectangle when both ends are
   // alike and rounded (or square), else a path; a stroke other than solid
@@ -165,8 +168,11 @@ Item {
     visible: root._boxed && root.colors !== null
     bar: root.barConfig
     tab: root._tab
-    startCap: root.startCap
-    endCap: root.endCap
+    // The level's caps: the widget's own, but in a merged run the ones it
+    // has alone, where only a widget filled on hover draws anything (the
+    // run draws the rest)
+    startCap: root.levelStartCap
+    endCap: root.levelEndCap
     seamStart: root.seamStart
     seamEnd: root.seamEnd
     fillColor: root.colors?.fill ?? "transparent"
@@ -303,8 +309,8 @@ Item {
     visible: root._boxed && fillColor.a > 0
     bar: root.barConfig
     tab: root._tab
-    startCap: root.shownStart
-    endCap: root.endCap
+    startCap: root._ownFill ? root.levelStartCap : root.shownStart
+    endCap: root._ownFill ? root.levelEndCap : root.endCap
     fillColor: Qt.alpha(root.colors?.text ?? Theme.foreground, root.pressed && root.colors !== null ? 0.2 : 0)
 
     ColorGlide on fillColor {}

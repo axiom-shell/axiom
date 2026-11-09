@@ -17,6 +17,9 @@ import QtQuick
 //   splitIcon split's icon part: joined (one box cut in two) or badge
 //   labelFill split's label part: tint, color or none
 //   labelColor that color
+//   hoverFill the bar's "Fill on hover"
+//   hovered   the pointer is over the widget (its hit area): a tinted or
+//             outlined widget then draws as filled (fillsOnHover)
 // `iconFill` is split's icon part (its icon or badge), else transparent.
 QtObject {
   id: root
@@ -25,13 +28,22 @@ QtObject {
     const none = "transparent";
     const text = c => style.override ?? c;
     const fill = root.drawnFill(style);
+    const fills = root.fillsOnHover(style);
+    // No fill, as its own color cleared where it fills on hover, so the
+    // fill fades in from nothing rather than through black
+    const unfilled = fills ? Qt.alpha(accent, 0) : none;
+    if (style.hovered === true && fills)
+      // Filled in its own color, its text and icon reading on it; an
+      // outline keeps its stroke (unseen on the fill) so it doesn't fade
+      // out and back. In a merged run, the widget's own part alone
+      return root._make(accent, fill === "outline" && !style.group ? accent : none, none, text(own), text(own));
     if (style.group) {
       // The run draws the background: the icon keeps the state, the label
       // reads on the run (or on the bar, through a tint or outline). A
       // split icon part keeps its own fill on the run.
       if (fill === "split")
         return root._make(none, none, none, text(root.readableOn(style.group, style.barText)), text(own), accent);
-      return root._make(none, none, none, text(fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText), accent);
+      return root._make(unfilled, none, none, text(fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText), accent);
     }
     switch (fill) {
     case "split":
@@ -46,7 +58,7 @@ QtObject {
     case "tinted":
       return root._make(Qt.alpha(accent, style.tint), none, none, text(accent), text(accent));
     case "outline":
-      return root._make(none, accent, none, text(accent), text(accent));
+      return root._make(unfilled, accent, none, text(accent), text(accent));
     case "underline":
       return root._make(none, none, accent, text(style.barText), text(style.barText));
     case "accentText":
@@ -59,15 +71,25 @@ QtObject {
     }
   }
 
+  // Whether a widget (or a cell) in `style` fills while hovered: "Fill on
+  // hover" on a style with a box that isn't filled already
+  function fillsOnHover(style) {
+    return style.hoverFill === true && (style.fill === "tinted" || style.fill === "outline");
+  }
+
   // A cell inside a widget (a workspace) in the same style: { fill, stroke,
-  // indicator, content }. `color` is the cell's color for its state, `own`
-  // what reads on it filled, `state` "active" | "occupied" | "empty". Where
-  // the content sits on the bar rather than on the cell's color, an empty
-  // cell's is the bar's text faded (its own color is meant to barely show),
-  // and plain text tells the states apart by fading alone.
+  // indicator, content, showsHover }. `color` is the cell's color for its
+  // state, `own` what reads on it filled, `state` "active" | "occupied" |
+  // "empty"; `style.hovered` the pointer over it. Where the content sits on the
+  // bar rather than on the cell's color, an empty cell's is the bar's text
+  // faded (its own color is meant to barely show), and plain text tells
+  // the states apart by fading alone. `showsHover`: hovered, it's filled
+  // (fillsOnHover), so the cell draws no hover box of its own.
   function cell(style, color, own, state) {
     const none = "transparent";
     const text = c => style.override ?? c;
+    if (style.hovered === true && root.fillsOnHover(style))
+      return root._makeCell(color, style.fill === "outline" ? color : none, none, text(own), true);
     const faded = Qt.alpha(text(style.barText), 0.4);
     const onBar = c => state === "empty" ? faded : text(c);
     switch (style.fill) {
@@ -77,7 +99,7 @@ QtObject {
     case "tinted":
       return root._makeCell(Qt.alpha(color, style.tint), none, none, onBar(color));
     case "outline":
-      return root._makeCell(none, color, none, onBar(color));
+      return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, color, none, onBar(color));
     case "underline":
       return root._makeCell(none, none, color, onBar(style.barText));
     case "accentText":
@@ -154,12 +176,13 @@ QtObject {
     return Utils.isColorDark(background) !== Utils.isColorDark(preferred) ? preferred : Utils.getContrastColor(background);
   }
 
-  function _makeCell(fill, stroke, indicator, content) {
+  function _makeCell(fill, stroke, indicator, content, showsHover) {
     return {
       "fill": fill,
       "stroke": stroke,
       "indicator": indicator,
-      "content": content
+      "content": content,
+      "showsHover": showsHover === true
     };
   }
 

@@ -4168,6 +4168,8 @@
     "Outline stroke": "",
     "Dashed": "",
     "Ends only": "",
-    "Dotted": ""
+    "Dotted": "",
+    "A widget under the pointer fills with its color.": "",
+    "Fill on hover": ""
   }
 }

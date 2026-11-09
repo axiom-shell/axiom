@@ -26,6 +26,8 @@ BarWidget {
   // Its cells stay put while the strip after them comes and goes
   pinStart: true
   hasBackground: true
+  // Its cells fill on hover, each on its own
+  fillsOnHover: false
   // Its box; an underline is each cell's own
   accentColor: boxed ? Theme.resolveColor(properties.backgroundColor) : "transparent"
 
