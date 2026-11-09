@@ -139,7 +139,8 @@ QtObject {
       "lineWidth": look.lineWidth,
       "lineSide": look.lineSide,
       "widgetTextColor": look.widgetTextColor,
-      "widgetShape": boxed ? look.widgetShape : "rounded",
+      // As drawn (BarWidgetStyle.shape)
+      "widgetShape": boxed ? BarWidgetStyle.shape(look) : "rounded",
       "widgetEnds": look.widgetEnds,
       // A tab's sides where they meet the edge it hangs from: square or
       // flared (BarShapes.tab)
@@ -521,10 +522,11 @@ QtObject {
   }
 
   // The look a bar's widgets draw in, as `$bar.<key>` for their options'
-  // `x-showIf`: lookOf's BarStyle keys, with grouping as drawn (groupingOf,
-  // as enrichBarConfig)
+  // `x-showIf`: lookOf's BarStyle keys, with shape and grouping as drawn
+  // (BarWidgetStyle.shape, groupingOf, as enrichBarConfig)
   function lookContext(barConfig) {
     const look = BarsConfig.lookOf(barConfig ?? {});
+    look.widgetShape = BarWidgetStyle.shape(look);
     look.widgetGrouping = BarsConfig.groupingOf(look);
     return Object.keys(BarStyle.values).reduce((context, key) => {
       context["$bar." + key] = look[key];

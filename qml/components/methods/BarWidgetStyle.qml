@@ -245,6 +245,15 @@ QtObject {
     return unchained ? "separate" : "powerline";
   }
 
+  // A boxed look's shape as drawn (`look` as grouping's): a separate split
+  // badge has no box to hang from the edge, so a tab saved with it draws
+  // rounded (the option is hidden there); a merged run of badges is one
+  // tab still
+  function shape(look) {
+    const badge = look.widgetStyle === "split" && look.splitIcon === "badge" && look.widgetGrouping !== "merged";
+    return badge && look.widgetShape === "tab" ? "rounded" : look.widgetShape;
+  }
+
   // Whether a powerline segment's fill hides what's under it, so the next
   // can start square beneath its end cap: filled, and split's joined label
   // on a color of its own

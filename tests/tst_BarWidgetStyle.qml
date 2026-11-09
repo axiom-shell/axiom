@@ -641,6 +641,16 @@ TestCase {
     };
   }
 
+  // A separate badge has no box to hang: a saved tab draws rounded
+  function test_a_separate_badge_is_no_tab() {
+    compare(BarWidgetStyle.shape(look("split", "badge", "tab", "separate")), "rounded");
+    compare(BarWidgetStyle.shape(look("split", "badge", "tab", "powerline")), "rounded");
+    compare(BarWidgetStyle.shape(look("split", "badge", "tab", "merged")), "tab");
+    compare(BarWidgetStyle.shape(look("split", "joined", "tab", "separate")), "tab");
+    compare(BarWidgetStyle.shape(look("filled", "badge", "tab", "separate")), "tab");
+    compare(BarWidgetStyle.shape(look("split", "badge", "capsule", "separate")), "capsule");
+  }
+
   function test_badge_and_tab_have_no_powerline() {
     compare(BarWidgetStyle.grouping(look("split", "badge", "rounded", "powerline")), "separate");
     compare(BarWidgetStyle.grouping(look("split", "badge", "rounded", "merged")), "merged");
