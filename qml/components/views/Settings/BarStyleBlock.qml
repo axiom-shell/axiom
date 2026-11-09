@@ -9,9 +9,8 @@ import qs.components.forms
 import qs.components.reusable
 
 // The Bar style block: every BarStyle setting in one place (the settings
-// page's Bar style card, Bars.style's `x-row`). On top, a strip of the
-// bar's own widgets, live, in the look being edited. Then its sections, by
-// the schema's `x-group`s: Look full width, its rows marked
+// page's Bar style card, Bars.style's `x-row`). Its sections, by the
+// schema's `x-group`s: Look full width, its rows marked
 // `x-keepsPlace` (the style, then the shape and grouping beside it) kept
 // in place, greyed with why while they don't apply, and under them the
 // rows placed there (`x-placeUnder`: tab sides, ends); then the chosen style's own
@@ -52,7 +51,7 @@ ColumnLayout {
   property var partlyOwned: null
   // The sections shown, by title (all of them unless set)
   property var sections: ["Look", "Colors", "Accents", "Size", "Shadow"]
-  // The bar whose widgets the strip shows and whose spacing the tiles take
+  // The bar whose spacing the tiles take
   // (an entry of Bars.items): the first bar, else a new one's defaults
   property var bar: BarsConfig.savedBars[0] ?? SchemaValidation.newItem(ConfigManager.configSchema.definitions.Bar, [], ConfigManager.configSchema)
 
@@ -166,21 +165,6 @@ ColumnLayout {
           "text": I18n.tr(preset.label)
         }))
     onTriggered: id => root.presetPicked(root._presets[Number(id)].values)
-  }
-
-  // The bar's widgets as the look draws them
-  StreamedLoader {
-    Layout.fillWidth: true
-    label: "bar style strip"
-    wanted: root.bar !== null
-    sourceComponent: BarLookSample {
-      value: null
-      values: root.values
-      bar: root.bar
-      liveConfig: BarManager.previewConfigOf(Object.assign({}, root.bar, {
-        "style": root.values
-      }))
-    }
   }
 
   // One section: its heading (with the bar's own switch) and its form

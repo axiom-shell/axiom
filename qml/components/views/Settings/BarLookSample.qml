@@ -3,21 +3,20 @@ import QtQuick
 import qs.config
 import qs.components.methods
 import qs.components.reusable
-import qs.components.bar
-import qs.components.bar.widgets.base
+import qs.components.bar.look
 
 // What the Bar style block draws of bars, the one file of it that draws
-// them (so when the bar's drawing code moves, only this changes). A tile's
-// picture (a ChoiceTiles preview): three fixed sample widgets (an icon, an
-// icon with a short label, a label), each its own accent from the theme,
-// on a strip of bar, drawn by the bar's own pieces in a bar style (a
-// BarStyle's values) with one key set to the tile's value: their
-// backgrounds and caps as WidgetGroup gives them, a merged run's one
-// background, a tab reaching to the strip's top edge, separators between,
-// the bar's gradient along the three. Nothing in it is live: no services,
-// no widget types. With `liveConfig` it draws instead that bar's own
-// widgets, live, as the bar editor's chips do but each in the shape's
-// caps (the block's strip).
+// them (so when the bar's drawing code moves, only this changes): a tile's
+// picture (a ChoiceTiles preview). Three boxes (an icon, an icon with a
+// short label, a label), each its own accent from the theme, on a strip
+// of bar, in a bar style (a BarStyle's values) with one key set to the
+// tile's value, in the look that resolves to (barConfig.look,
+// BarLook.resolve): their caps and room as WidgetDecorations places them
+// (BarRuns), a merged run's one background, a tab reaching to the strip's
+// top edge, separators between, the bar's gradient along the three. Plain
+// shapes from the drawing kit, no bar widgets: made once per tile, its
+// properties set in place on an edit. It reads the look's traits and
+// resolved fields, never its style's name.
 Item {
   id: root
 
@@ -28,287 +27,247 @@ Item {
   property var values: ({})
   // The bar entry (Bars.items) whose spacing the samples take, or null
   property var bar: null
-  // A bar's preview config (BarManager.previewConfigOf): its widgets drawn
-  // live in place of the samples, wrapping, or null
-  property var liveConfig: null
 
-  // The look drawn: the bar's (lookOf) in the values with the tile's key
-  // set, its shape as drawn, as enrichBarConfig works it out (only boxed
-  // styles have one)
+  // The style drawn: the values with the tile's key set
   readonly property var _style: Object.assign({}, root.values, root.key !== "" ? {
     [root.key]: root.value
   } : {})
-  readonly property var _look: BarsConfig.lookOf(Object.assign({}, root.bar ?? {}, {
+  // The boxes' thickness, as a bar's
+  readonly property real _thickness: Math.round(Widget.px(22))
+  // The sample bar: `bar` along a top edge with no widgets of its own,
+  // in the style drawn
+  readonly property var _barConfig: BarsConfig.enrichBarConfig(Object.assign({}, root.bar ?? {}, {
+    "location": "top",
+    "thickness": root._thickness,
+    "widgets": {},
     "style": root._style
-  }))
-  readonly property string _shape: BarsConfig.boxedStyles.includes(root._look.widgetStyle) ? BarWidgetStyle.shape(root._look) : "rounded"
+  }), {}, {})
+  // Its look, resolved (shape and grouping as drawn, its traits), and
+  // what of it the runs read (BarRuns.context)
+  readonly property var _look: root._barConfig.look
+  readonly property var _ctx: BarRuns.context(root._barConfig)
 
-  implicitHeight: root.liveConfig ? liveLoader.implicitHeight : Widget.px(36)
+  // The three samples' places in their one run (BarRuns.segmentAt, clear
+  // of their content as a bar widget's: a line of text), and their boxes
+  // along the strip ({ x, lead, length, back }), the bar's spacing apart
+  readonly property var _samples: [first, second, third]
+  readonly property var _segments: [0, 1, 2].map(index => BarRuns.segmentAt(root._ctx, {
+      "index": index,
+      "count": 3
+    }, root._barConfig.fontSize))
+  readonly property var _boxes: {
+    const out = [];
+    let x = 0;
+    for (let index = 0; index < 3; index++) {
+      const segment = root._segments[index];
+      const length = segment.lead + Math.ceil(root._samples[index].implicitWidth) + segment.trail;
+      out.push({
+        "x": x,
+        "lead": segment.lead,
+        "length": length,
+        "back": segment.back
+      });
+      x += length + root._barConfig.groupSpacing;
+    }
+    return out;
+  }
+  readonly property real _length: root._boxes[2].x + root._boxes[2].length
+  // Across: the boxes centred on the strip, a tab reaching from them to
+  // its top edge, its content moved to the tab's middle
+  readonly property real _rowTop: Math.round((root.height - root._thickness) / 2)
+  readonly property real _reach: root._look.shape.name === "tab" ? root._rowTop : 0
+  readonly property real _shift: BarTabs.tabShift(root._reach, false)
 
-  // The bar the widgets sit on
+  implicitHeight: Widget.px(36)
+
+  // A sample's content: an icon and a label, either left out, in the
+  // colors its box gives them (WidgetLook: Auto, so the bar's gradient
+  // takes its place), apart on a split bar
+  component Sample: Item {
+    id: sample
+
+    required property int index
+    property string icon: ""
+    property string text: ""
+    // Its accent (a theme color name)
+    property string color: ""
+
+    readonly property var box: root._boxes[sample.index]
+    readonly property real padding: root._barConfig.innerPadding
+    readonly property bool both: sample.icon !== "" && sample.text !== ""
+    // An icon part and a label apart (a split look)
+    readonly property bool splits: root._barConfig.splitRoom >= 0 && sample.both
+    readonly property real gap: sample.splits ? root._barConfig.splitRoom : sample.both ? root._barConfig.innerGap * 1.5 : 0
+    // Measured from the fonts, not the drawn items (their colors follow
+    // where the box sits, which follows its length)
+    readonly property real iconLength: sample.icon !== "" ? Math.ceil(iconMetrics.advanceWidth) : 0
+    // Its colors, where it sits along the strip
+    readonly property var colors: look.colors
+    // Along it, the middle of the gap between its parts, and what the
+    // icon part holds (as a split bar widget's)
+    readonly property real splitAt: sample.splits ? sample.padding + sample.iconLength + sample.gap / 2 : -1
+    readonly property rect splitPart: sample.splits ? Qt.rect(sample.padding, (root._thickness - root._barConfig.fontSize) / 2, sample.iconLength, root._barConfig.fontSize) : Qt.rect(0, 0, 0, 0)
+
+    implicitWidth: sample.padding * 2 + sample.iconLength + sample.gap + (sample.text !== "" ? Math.ceil(textMetrics.advanceWidth) : 0)
+    width: sample.implicitWidth
+    height: root._thickness
+    x: sample.box.x + sample.box.lead
+    y: root._rowTop + root._shift
+
+    readonly property WidgetLook _look: WidgetLook {
+      id: look
+      barConfig: root._barConfig
+      properties: ({
+          "backgroundColor": sample.color,
+          "foregroundColor": "base00"
+        })
+      accentField: "backgroundColor"
+      autoColors: ({
+          "backgroundColor": "accent"
+        })
+      length: sample.implicitWidth
+      barOffset: sample.box.x + sample.box.lead
+      barLength: root._length
+      splits: sample.splits
+    }
+
+    TextMetrics {
+      id: iconMetrics
+      font: iconItem.font
+      text: sample.icon
+    }
+
+    TextMetrics {
+      id: textMetrics
+      font: textItem.font
+      text: sample.text
+    }
+
+    StyledIcon {
+      id: iconItem
+      visible: sample.icon !== ""
+      text: sample.icon
+      textSize: root._barConfig.fontSize
+      textColor: sample.colors.icon
+      x: sample.padding
+      anchors.verticalCenter: parent.verticalCenter
+    }
+
+    StyledText {
+      id: textItem
+      visible: sample.text !== ""
+      text: sample.text
+      textSize: root._barConfig.fontSize
+      textColor: sample.colors.text
+      x: sample.padding + sample.iconLength + sample.gap
+      anchors.verticalCenter: parent.verticalCenter
+    }
+  }
+
+  // The bar the boxes sit on
   Rectangle {
     anchors.fill: parent
     radius: Widget.radius
     color: Theme.background
   }
 
-  // The three samples, shrunk to fit a narrow tile
-  Loader {
-    anchors.fill: parent
-    active: !root.liveConfig
-    sourceComponent: Item {
-      id: samples
+  // The strip, shrunk to fit a narrow tile
+  Item {
+    width: root._length
+    height: root.height
+    anchors.centerIn: parent
+    scale: Math.min(1, (root.width - Widget.smallPadding * 2) / Math.max(1, root._length))
+    enabled: false
 
-      // The widgets' thickness, as a bar's
-      readonly property real thickness: Math.round(Widget.px(22))
-      // The sample bar: `bar` along a top edge with no widgets of its own,
-      // in the look drawn
-      readonly property var barConfig: BarsConfig.enrichBarConfig(Object.assign({}, root.bar ?? {}, {
-        "location": "top",
-        "thickness": samples.thickness,
-        "widgets": {},
-        "style": root._style
-      }), {}, {})
-      readonly property var look: root._look
-      readonly property string shape: root._shape
-      // Its grouping as drawn (only boxed styles group)
-      readonly property string grouping: BarsConfig.groupingOf(samples.look)
-      readonly property bool opaque: BarWidgetStyle.opaque(samples.look.widgetStyle, samples.look.splitIcon, samples.look.splitLabelFill)
-      // A powerline's widgets touch, leaving no gap to divide
-      readonly property bool separators: samples.grouping !== "powerline" && samples.look.separatorStyle !== "none"
+    // A merged run's one background, under the boxes
+    WidgetBackground {
+      visible: root._look.grouping === "merged"
+      z: -2
+      barConfig: root._barConfig
+      colors: BarsConfig.groupColors(root._barConfig, 0.5)
+      gradientStart: 0
+      gradientEnd: 1
+      startCap: root._segments[0].startCap
+      endCap: root._segments[2].endCap
+      width: root._length
+      height: root._thickness + root._reach
+      y: root._rowTop - root._reach
+    }
 
-      // Their places in their run (BarShapes.segment), and their boxes along
-      // the strip ({ x, lead, length, back }), the bar's spacing apart
-      readonly property var widgets: [first, second, third]
-      readonly property var segments: [0, 1, 2].map(index => BarShapes.segment(samples.shape, samples.look.widgetEnds, samples.grouping, samples.opaque, index, 3, samples.thickness))
-      readonly property var boxes: {
-        const out = [];
-        let x = 0;
-        for (let index = 0; index < 3; index++) {
-          const segment = samples.segments[index];
-          const length = segment.lead + Math.ceil(samples.widgets[index].implicitWidth) + segment.trail;
-          out.push({
-            "x": x,
-            "lead": segment.lead,
-            "length": length,
-            "back": segment.back
-          });
-          x += length + samples.barConfig.groupSpacing;
-        }
-        return out;
-      }
-      readonly property real length: samples.boxes[2].x + samples.boxes[2].length
-      // Across: the widgets centred on the strip, a tab reaching from them
-      // to its top edge, its content moved to the tab's middle
-      readonly property real rowTop: Math.round((samples.height - samples.thickness) / 2)
-      readonly property real reach: samples.shape === "tab" ? samples.rowTop : 0
-      readonly property real shift: BarShapes.tabShift(samples.reach, false)
+    // Each box, a powerline segment reaching back under the one before
+    // (so drawn under it)
+    Repeater {
+      model: 3
 
-      Item {
-        width: samples.length
-        height: samples.height
-        anchors.centerIn: parent
-        scale: Math.min(1, (samples.width - Widget.smallPadding * 2) / Math.max(1, samples.length))
-        enabled: false
+      delegate: WidgetBackground {
+        id: background
+        required property int index
+        readonly property var box: root._boxes[background.index]
+        readonly property var segment: root._segments[background.index]
+        readonly property Sample sample: root._samples[background.index]
 
-        // A merged run's one background, under the widgets'
-        WidgetBackground {
-          visible: samples.grouping === "merged"
-          z: -2
-          barConfig: samples.barConfig
-          colors: BarsConfig.groupColors(samples.barConfig, 0.5)
-          gradientStart: 0
-          gradientEnd: 1
-          startCap: samples.segments[0].startCap
-          endCap: samples.segments[2].endCap
-          width: samples.length
-          height: samples.thickness + samples.reach
-          y: samples.rowTop - samples.reach
-          tabLimits: [null, null]
-        }
-
-        // Each widget's background, a powerline segment reaching back under
-        // the one before (so drawn under it)
-        Repeater {
-          model: 3
-
-          delegate: WidgetBackground {
-            id: background
-            required property int index
-            readonly property var box: samples.boxes[background.index]
-            readonly property var segment: samples.segments[background.index]
-            readonly property BarIconWidget widget: samples.widgets[background.index]
-
-            z: -1 - background.index / 3
-            barConfig: samples.barConfig
-            colors: background.widget.colors
-            startCap: background.segment.startCap
-            endCap: background.segment.endCap
-            seamStart: background.segment.seamStart
-            seamEnd: background.segment.seamEnd
-            shownStart: background.segment.shownStart
-            levelStartCap: background.segment.levelStartCap
-            levelEndCap: background.segment.levelEndCap
-            gradientStart: (background.box.x - background.box.back) / samples.length
-            gradientEnd: (background.box.x + background.box.length) / samples.length
-            // A split widget's parts, from the background's start (back
-            // under the one before, and across from the tab's outer edge)
-            splitAt: background.widget.splits ? background.box.back + background.box.lead + background.widget.splitAt : -1
-            splitPart: background.widget.splits ? Qt.rect(background.box.back + background.box.lead + background.widget.splitPart.x, samples.reach + samples.shift + background.widget.splitPart.y, background.widget.splitPart.width, background.widget.splitPart.height) : Qt.rect(0, 0, 0, 0)
-            x: background.box.x - background.box.back
-            y: samples.rowTop - samples.reach
-            width: background.box.length + background.box.back
-            height: samples.thickness + samples.reach
-          }
-        }
-
-        Repeater {
-          model: samples.separators ? 2 : 0
-
-          delegate: SeparatorMark {
-            id: mark
-            required property int index
-            readonly property real center: samples.boxes[mark.index].x + samples.boxes[mark.index].length + samples.barConfig.groupSpacing / 2
-
-            style: samples.look.separatorStyle
-            color: Theme.resolveColor(samples.look.separatorColor)
-            thickness: samples.look.separatorThickness
-            length: BarLayout.dividerLength(mark.style, samples.thickness)
-            x: mark.center - width / 2
-            y: samples.rowTop + Math.round((samples.thickness - height) / 2) + samples.shift
-          }
-        }
-
-        // The widgets: fixed content, each color Auto, so the bar's
-        // gradient takes its place
-        BarIconWidget {
-          id: first
-          readonly property var box: samples.boxes[0]
-          icon: "wifi"
-          showText: false
-          properties: ({
-              "backgroundColor": "base0D",
-              "foregroundColor": "base00"
-            })
-          barConfig: samples.barConfig
-          autoColors: ({
-              "backgroundColor": "accent"
-            })
-          barOffset: first.box.x + first.box.lead
-          barLength: samples.length
-          x: first.box.x + first.box.lead
-          y: samples.rowTop + samples.shift
-        }
-
-        BarIconWidget {
-          id: second
-          readonly property var box: samples.boxes[1]
-          icon: "volume_up"
-          text: "42%"
-          properties: ({
-              "backgroundColor": "base0B",
-              "foregroundColor": "base00"
-            })
-          barConfig: samples.barConfig
-          autoColors: ({
-              "backgroundColor": "accent"
-            })
-          barOffset: second.box.x + second.box.lead
-          barLength: samples.length
-          x: second.box.x + second.box.lead
-          y: samples.rowTop + samples.shift
-        }
-
-        BarIconWidget {
-          id: third
-          readonly property var box: samples.boxes[2]
-          text: "12:30"
-          properties: ({
-              "backgroundColor": "base0E",
-              "foregroundColor": "base00"
-            })
-          barConfig: samples.barConfig
-          autoColors: ({
-              "backgroundColor": "accent"
-            })
-          barOffset: third.box.x + third.box.lead
-          barLength: samples.length
-          x: third.box.x + third.box.lead
-          y: samples.rowTop + samples.shift
-        }
+        z: -1 - background.index / 3
+        barConfig: root._barConfig
+        colors: background.sample?.colors ?? null
+        startCap: background.segment.startCap
+        endCap: background.segment.endCap
+        seamStart: background.segment.seamStart
+        seamEnd: background.segment.seamEnd
+        shownStart: background.segment.shownStart
+        levelStartCap: background.segment.levelStartCap
+        levelEndCap: background.segment.levelEndCap
+        gradientStart: (background.box.x - background.box.back) / root._length
+        gradientEnd: (background.box.x + background.box.length) / root._length
+        // A split box's parts, from the background's start (back under the
+        // one before, and across from the tab's outer edge)
+        splitAt: background.sample?.splits ? background.box.back + background.box.lead + background.sample.splitAt : -1
+        splitPart: background.sample?.splits ? Qt.rect(background.box.back + background.box.lead + background.sample.splitPart.x, root._reach + root._shift + background.sample.splitPart.y, background.sample.splitPart.width, background.sample.splitPart.height) : Qt.rect(0, 0, 0, 0)
+        x: background.box.x - background.box.back
+        y: root._rowTop - root._reach
+        width: background.box.length + background.box.back
+        height: root._thickness + root._reach
       }
     }
-  }
 
-  // The bar's own widgets, live, each on its background as the bar
-  // editor's chips draw them (WidgetChip) but in the shape's caps, wrapping
-  Loader {
-    id: liveLoader
-    width: parent.width
-    active: root.liveConfig !== null
-    sourceComponent: Flow {
-      id: live
+    // A separator in each gap (none in a powerline, whose boxes touch)
+    Repeater {
+      model: 2
 
-      readonly property var widgets: [].concat(...BarsConfig.sectionNames.map(section => root.liveConfig?.widgets?.[section] ?? [])).filter(widget => widget.visible !== false)
+      delegate: SeparatorMark {
+        id: mark
+        required property int index
+        readonly property real center: root._boxes[mark.index].x + root._boxes[mark.index].length + root._barConfig.groupSpacing / 2
 
-      // Each widget alone, in the shape's caps (BarShapes.segment): merged,
-      // a run of one, on the run's background
-      readonly property var segment: BarShapes.segment(root._shape, root._look.widgetEnds, "separate", false, 0, 1, root.liveConfig.thickness)
-      readonly property bool merged: BarsConfig.groupingOf(root._look) === "merged"
-
-      padding: Widget.smallPadding
-      spacing: Widget.spacing
-
-      Repeater {
-        // By count: an edit's new config reaches each widget in place
-        model: live.widgets.length
-
-        delegate: Item {
-          id: chip
-          required property int index
-
-          implicitWidth: Math.min(host.width, Widget.px(260))
-          implicitHeight: host.height
-          width: chip.implicitWidth
-          height: chip.implicitHeight
-          clip: true
-          enabled: false
-
-          WidgetBackground {
-            visible: live.merged && host.hasBackground
-            anchors.fill: host
-            barConfig: root.liveConfig
-            colors: BarsConfig.groupColors(root.liveConfig)
-            startCap: live.segment.startCap
-            endCap: live.segment.endCap
-          }
-
-          WidgetBackground {
-            visible: host.hasBackground
-            anchors.fill: host
-            barConfig: root.liveConfig
-            colors: host.background
-            startCap: live.segment.startCap
-            endCap: live.segment.endCap
-            // A split widget's parts
-            splitAt: host.split?.at ?? -1
-            splitPart: host.split?.part ?? Qt.rect(0, 0, 0, 0)
-            backgroundLevel: host.backgroundLevel
-            backgroundLevelColor: host.backgroundLevelColor
-          }
-
-          BarWidgetHost {
-            id: host
-            preview: true
-            panel: null
-            screen: null
-            barConfig: root.liveConfig
-            widget: live.widgets[chip.index] ?? ({})
-            leadInset: host.hasBackground ? root.liveConfig.innerPadding + live.segment.lead : 0
-            trailInset: host.hasBackground ? root.liveConfig.innerPadding + live.segment.trail : 0
-          }
-        }
+        visible: root._look.separators.style !== "none"
+        style: root._look.separators.style
+        color: Theme.resolveColor(root._look.separators.color)
+        thickness: root._look.separators.thickness
+        length: BarLayout.dividerLength(mark.style, root._thickness)
+        x: mark.center - width / 2
+        y: root._rowTop + Math.round((root._thickness - height) / 2) + root._shift
       }
+    }
+
+    Sample {
+      id: first
+      index: 0
+      icon: "wifi"
+      color: "base0D"
+    }
+
+    Sample {
+      id: second
+      index: 1
+      icon: "volume_up"
+      text: "42%"
+      color: "base0B"
+    }
+
+    Sample {
+      id: third
+      index: 2
+      text: "12:30"
+      color: "base0E"
     }
   }
 }

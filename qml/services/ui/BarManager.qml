@@ -60,15 +60,11 @@ QtObject {
     root.selectPanelTab(BarsConfig.editorTabOf(key));
   }
 
-  // The selected bar as the board's live chips draw its widgets
-  // (previewConfigOf the draft bar)
-  readonly property var previewConfig: root.previewConfigOf(root.selectedBar())
-
-  // A bar (an entry of Bars.items) as live previews of its widgets draw
-  // it (the board's chips, the Bar style block's strip): enriched at a
-  // fixed thickness, along a top edge (chips are rows) whatever its own,
-  // standing alone (no ends meet it). null for none
-  function previewConfigOf(bar) {
+  // The selected bar as the board's live chips draw its widgets: the
+  // draft bar enriched at a fixed thickness, along a top edge (chips are
+  // rows) whatever its own, standing alone (no ends meet it)
+  readonly property var previewConfig: {
+    const bar = root.selectedBar();
     if (!bar)
       return null;
     const config = BarsConfig.enrichBarConfig(Object.assign({}, bar, {
