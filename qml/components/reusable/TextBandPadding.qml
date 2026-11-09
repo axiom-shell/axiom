@@ -25,7 +25,7 @@ QtObject {
   // Off: no padding (a Text that's drawn as an icon at times)
   property bool enabled: true
 
-  readonly property var _padding: TextBand.padding(root._line.ascent, root._line.height, TextBand.height(root.bandText, _x.tightBoundingRect.height, _figure.tightBoundingRect.height))
+  readonly property var _padding: TextBand.padding(root._line.ascent, root._line.height, TextBand.height(root.bandText, root._line.xHeight, root._line.figureHeight))
   readonly property real top: root.enabled && root.text !== "" ? root._padding.top : 0
   readonly property real bottom: root.enabled && root.text !== "" ? root._padding.bottom : 0
   // How far the band's middle is left below the box's (under half a pixel:
@@ -33,27 +33,32 @@ QtObject {
   readonly property real offset: root.enabled && root.text !== "" ? root._padding.offset : 0
 
   // The label's first line's ascent as laid out (TextBand.lineAscent: a
-  // fallback font's taller one moves its baseline down) and one line's
-  // height, read off it once each layout is done. Not bound: its
-  // baselineOffset holds the padding this sets, so a binding through it
-  // loops, and nor are they read in its layout's signals, which come
-  // while it lays out (its contentHeight not yet new) and again inside
-  // the padding's own write. Both are set at once, only when one changes,
-  // so the padding moves once, and the layout that causes sets nothing
+  // fallback font's taller one moves its baseline down), one line's height
+  // and the font's two bands, read off it when it's complete and then once
+  // each layout is done. Not bound: its baselineOffset holds the padding
+  // this sets, so a binding through it loops, and nor are they read in its
+  // layout's signals, which come while it lays out (its contentHeight not
+  // yet new) and again inside the padding's own write. All are set at
+  // once, only when one changes, so the padding moves once (a new font's
+  // bands never meet the old font's line), and the layout that causes sets
+  // nothing
   property var _line: ({
       "ascent": 0,
-      "height": 0
+      "height": 0,
+      "xHeight": 0,
+      "figureHeight": 0
     })
 
   function _measure() {
     const label = root.label;
-    const ascent = TextBand.lineAscent(label.baselineOffset, label.topPadding, label.bottomPadding, label.height, label.contentHeight, label.verticalAlignment);
-    const height = label.contentHeight / Math.max(1, label.lineCount);
-    if (ascent !== root._line.ascent || height !== root._line.height)
-      root._line = {
-        "ascent": ascent,
-        "height": height
-      };
+    const line = {
+      "ascent": TextBand.lineAscent(label.baselineOffset, label.topPadding, label.bottomPadding, label.height, label.contentHeight, label.verticalAlignment),
+      "height": label.contentHeight / Math.max(1, label.lineCount),
+      "xHeight": root._x.tightBoundingRect.height,
+      "figureHeight": root._figure.tightBoundingRect.height
+    };
+    if (line.ascent !== root._line.ascent || line.height !== root._line.height || line.xHeight !== root._line.xHeight || line.figureHeight !== root._line.figureHeight)
+      root._line = line;
   }
 
   readonly property Connections _layout: Connections {
@@ -74,6 +79,9 @@ QtObject {
     function onVerticalAlignmentChanged() {
       Qt.callLater(root._measure);
     }
+    function onFontChanged() {
+      Qt.callLater(root._measure);
+    }
   }
 
   // The bands as drawn at this size (hinted, whole pixels)
@@ -86,5 +94,7 @@ QtObject {
     text: "0"
   }
 
-  Component.onCompleted: Qt.callLater(root._measure)
+  // Complete, the label is laid out: read at once, so it never shows
+  // unpadded until the next event
+  Component.onCompleted: root._measure()
 }

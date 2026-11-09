@@ -181,9 +181,10 @@ BaseWidget {
         bottomPadding: _band.bottom
         // Along the bar, centred in its room (wider than the text when its
         // minimum or its zeros measure wider), on a whole pixel; given less,
-        // it fills the room and elides
+        // it fills the room and elides. Turned, its x is across the bar
+        // (its lines' down is the bar's right), less its band's offset too
         readonly property real _alongRoom: root._turned ? textSlot.height : textSlot.width
-        x: root._turned ? (textSlot.width - width) / 2 : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
+        x: root._turned ? (textSlot.width - width) / 2 - _band.offset : root.isVertical ? 0 : Math.round((textSlot.width - width) / 2)
         y: root._turned ? (textSlot.height - height) / 2 : root.isVertical ? 0 : Math.round(root.iconMiddle - height / 2 - _band.offset)
         width: root.isVertical && root.uprightLabel ? textSlot.width : Math.min(Math.ceil(implicitWidth), _alongRoom)
         rotation: root._turned ? -90 : 0

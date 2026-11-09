@@ -48,7 +48,9 @@ QtObject {
   // (one side the other's negative), for lines `lineHeight` high (one
   // line's height, padding left out) with their baseline `ascent` below
   // their top and the band `band` high above the baseline. Over several
-  // lines the first line's band top to the last's baseline is centred.
+  // lines the first line's band top to the last's baseline is centred,
+  // the lines taken as one height (TextBandPadding passes their average,
+  // so a fallback font's taller line leaves it a little off).
   // The lines move by whole pixels, as a baseline is drawn on one (moved
   // by a fraction, it would round either way with where the box is):
   // `offset` is what that leaves, how far the band's middle is then below
