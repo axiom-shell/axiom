@@ -120,11 +120,24 @@ Item {
   // Joined to the next section's run (chainStart/chainEnd), a run at
   // that end carries on past it. A merged widget keeps its cap room as
   // if alone; a powerline segment's insets are those of one mid-chain.
-  readonly property var _insetFlags: root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null)
+  // The flags pass through a string key (_flagsKey), as `_idsKey`s do, so
+  // the places and all that's built from them (insets, shapes, a segmented
+  // widget's cells) change only when the flags do: any widget's new size
+  // re-reads them, mostly to the same values.
+  readonly property string _insetKey: root._flagsKey(root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null))
+  readonly property var _insetFlags: root._flagsOf(root._insetKey)
   readonly property bool _chainInsets: root.grouping === "powerline"
   readonly property var _insetPlaces: BarLayout.runPlaces(root._insetFlags, root._chainInsets && root.chainStart, root._chainInsets && root.chainEnd)
-  readonly property var _drawn: root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null)
+  readonly property string _drawnKey: root._flagsKey(root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null))
+  readonly property var _drawn: root._flagsOf(root._drawnKey)
   readonly property var _drawPlaces: BarLayout.runPlaces(root._drawn, root.chainStart, root.chainEnd)
+  // Run flags (true, false, null) as a string and back
+  function _flagsKey(flags) {
+    return flags.map(f => f === null ? "-" : f ? "1" : "0").join("");
+  }
+  function _flagsOf(key) {
+    return key.split("").map(c => c === "-" ? null : c === "1");
+  }
   // Whether its first and last widgets with something to show have
   // backgrounds (from content, as the insets): a joined boundary carries a
   // run on only between two such (BarContainer.sectionJoins)
@@ -389,12 +402,15 @@ Item {
       // Its place in the run, for its parts to take as segments of it:
       // their room from what's shown, their shapes from where they're
       // drawn, a tab's ends bounded as its own background's would be
-      // (from where it's laid out, never as it glides)
-      runPlace: module.segments ? {
+      // (from where it's laid out, never as it glides). Through a string
+      // key, so a neighbour's new size (moving it, the places re-read)
+      // rebuilds its parts only when the place changes.
+      readonly property string _runKey: module.segments ? JSON.stringify({
         "sized": module._place,
         "drawn": module._drawnPlace,
         "tabLimits": root.tabLimitsOf(module._offset, module.mainSize)
-      } : null
+      }) : ""
+      runPlace: module._runKey !== "" ? JSON.parse(module._runKey) : null
       // Its tab's reach past its outer side (a tab hangs only from a background)
       tabReach: module.hasBackground ? root._reach : 0
 

@@ -486,9 +486,11 @@ TestCase {
         "gap": 5,
         "radius": 8
       },
+      null], "an end as far from its bound as the curve reaches isn't held");
+    compare(BarShapes.tabLimits(10, 95, bounds), [null,
       {
-        "gap": 100,
-        "radius": 0
+        "gap": 5,
+        "radius": 8
       }
     ]);
     compare(BarShapes.tabLimits(110, 140, bounds), [null, null]);

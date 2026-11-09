@@ -402,22 +402,19 @@ QtObject {
   // the inner side of the surface it hangs from, from `bounds` [{ start,
   // end, startRadius, endRadius }] (the curves of its corners at each of
   // its ends: an island's, the rounded border's), as tab's `limits`:
-  // [{ gap, radius }, …], or null where none holds it
+  // [{ gap, radius }, …], or null where none holds it, an end no nearer
+  // its bound than the curve's radius included (tab draws it as with
+  // none), so the limits only change where they change the tab
   function tabLimits(start, end, bounds) {
     const middle = (start + end) / 2;
     const bound = (bounds ?? []).find(b => b.start <= middle && middle <= b.end) ?? null;
     if (!bound)
       return [null, null];
-    return [
-      {
-        "gap": start - bound.start,
-        "radius": bound.startRadius
-      },
-      {
-        "gap": bound.end - end,
-        "radius": bound.endRadius
-      }
-    ];
+    const limit = (gap, radius) => gap < radius ? {
+        "gap": gap,
+        "radius": radius
+      } : null;
+    return [limit(start - bound.start, bound.startRadius), limit(bound.end - end, bound.endRadius)];
   }
 
   // A side of a tab that isn't a tab's (a merged run's flat middle,
