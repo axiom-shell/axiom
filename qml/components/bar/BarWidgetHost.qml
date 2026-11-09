@@ -110,7 +110,7 @@ Item {
   property real tabReach: 0
   readonly property bool _outerFar: barConfig.right || barConfig.bottom
   // The module's shift across to the tab's middle
-  readonly property real _tabShift: Math.round(tabReach / 2) * (_outerFar ? 1 : -1)
+  readonly property real _tabShift: BarShapes.tabShift(tabReach, _outerFar)
   // The hit area below, by a name its menu anchor (whose own `hitArea`
   // would shadow the id) can read
   readonly property Item _hitArea: hitArea

@@ -505,6 +505,14 @@ TestCase {
     compare(starts[1][starts[1].length - 1], [93 - 26 / 4, 29]);
   }
 
+  // Content and separator marks move half the reach toward the outer edge
+  function test_tab_shift_centres_in_the_tab() {
+    compare(BarShapes.tabShift(10, false), -5);
+    compare(BarShapes.tabShift(10, true), 5);
+    compare(BarShapes.tabShift(5, false), -3);
+    compare(BarShapes.tabShift(0, true), 0);
+  }
+
   function test_tab_hits_reach_its_outer_edge() {
     verify(BarShapes.contains(1, 1, 100, 30, "tab", "tab"));
     verify(BarShapes.contains(99, 29, 100, 30, "tab", "tab"));

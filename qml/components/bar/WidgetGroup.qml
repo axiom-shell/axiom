@@ -283,8 +283,10 @@ Item {
       thickness: root.barConfig.separatorThickness
       length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root.isVertical
-      x: root.isVertical ? Math.round((root.width - width) / 2) : mark.center - width / 2
-      y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2)
+      // Across, centred as the tabs' content is (BarShapes.tabShift)
+      readonly property real _shift: BarShapes.tabShift(root._reach, root._outerFar)
+      x: root.isVertical ? Math.round((root.width - width) / 2) + _shift : mark.center - width / 2
+      y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2) + _shift
     }
   }
 

@@ -37,7 +37,7 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 - **A corner's curve** (`BarEnds.tabBounds`, `BarShapes.tabLimits`): a tab's end nearer an island's (or, on a transparent bar, the rounded border's) corner than its radius takes that corner's curve on its outer corner instead of a fillet.
 - An outline's stroke is left open along the outer edge (`BarShapes.path`'s `open`), as are the hover outline's and the editor highlight's.
 - Merged runs are one tab, with fillets at the run's ends only. Tabs never chain as a powerline (`BarWidgetStyle.grouping` draws a saved powerline as separate; the option is hidden).
-- The host's hit area reaches out with the tab, and its content is centred in the tab (`BarWidgetHost.tabReach`).
+- The host's hit area reaches out with the tab, and its content is centred in the tab (`BarWidgetHost.tabReach`, moved across by `BarShapes.tabShift`: half the reach, toward the outer edge, in whole pixels). Separator marks between tabs move with it, so they stay level with the tabs' content.
 - **Split on a tab:** the icon part reaches the edge too (it's drawn by the same tab path, its end the divider: `_tabPath` draws a side that isn't a tab's as `_cap` has it, the right way up on either side). A badge has no box, so a separate badge isn't offered the tab shape (`x-enumShowIf`).
 
 ### Outline strokes

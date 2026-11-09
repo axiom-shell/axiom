@@ -250,6 +250,14 @@ QtObject {
     };
   }
 
+  // How far across a tab's content (and the separator marks between tabs)
+  // moves to sit centred in the tab: half its `reach` past the widget,
+  // toward the edge it hangs from (`outerFar`: past the far side, a bottom
+  // or right bar), whole pixels
+  function tabShift(reach, outerFar) {
+    return Math.round(reach / 2) * (outerFar ? 1 : -1);
+  }
+
   // What bounds a tab running `start` to `end` along the bar at each end:
   // the inner side of the surface it hangs from, from `bounds` [{ start,
   // end, startRadius, endRadius }] (the curves of its corners at each of
