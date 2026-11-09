@@ -3,14 +3,13 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.bar
-import qs.components.bar.look
 import qs.components.reusable
 
 // One bar widget in the editor, as a pill (`payload`: what dragging it
 // carries, { kind, zone, index, type }). Given its `widget` and the bar's
-// `previewConfig` it shows the widget itself, live (a BarWidgetHost in
-// preview, on its background, taking no input, streamed in a moment after
-// the board); a widget showing nothing (a spacer, no updates) and a chip
+// `previewConfig` it shows the widget itself, live (alone in a WidgetGroup
+// in preview, on its background, taking no input, streamed in a moment
+// after the board); a widget showing nothing (a spacer, no updates) and a chip
 // with no widget (the drag's ghost) show its type's icon and label, the
 // first greyed. A right click asks for its menu (DragChip's
 // `menuRequested`).
@@ -52,38 +51,31 @@ DragChip {
 
   readonly property color _markInk: root.showsLabel ? root.ink : Theme.foreground
 
-  // The widget as the bar draws it
+  // The widget as the bar draws it alone in a section: a section of its
+  // own (WidgetGroup), so its background takes the look as the bar's do
+  // (its caps and their room, split's icon part, a merged run's
+  // background, a segmented widget's cells). With no place on a bar it
+  // takes no part of the bar's gradient: its Auto color shows.
   component LivePreview: Item {
-    readonly property alias host: widgetHost
-    implicitWidth: Math.min(widgetHost.width, root.maxPreviewWidth)
-    implicitHeight: widgetHost.height
+    readonly property alias group: widgetGroup
+    implicitWidth: Math.min(widgetGroup.implicitWidth, root.maxPreviewWidth)
+    implicitHeight: widgetGroup.implicitHeight
     enabled: false
 
-    WidgetBackground {
-      visible: widgetHost.hasBackground
-      anchors.fill: widgetHost
-      barConfig: root.previewConfig
-      colors: widgetHost.background
-      backgroundLevel: widgetHost.backgroundLevel
-      backgroundLevelColor: widgetHost.backgroundLevelColor
-    }
-
-    BarWidgetHost {
-      id: widgetHost
+    WidgetGroup {
+      id: widgetGroup
       preview: true
       panel: null
       screen: null
       barConfig: root.previewConfig
-      widget: root.widget ?? ({})
-      leadInset: widgetHost.hasBackground ? root.previewConfig.innerPadding : 0
-      trailInset: widgetHost.hasBackground ? root.previewConfig.innerPadding : 0
+      widgets: [root.widget ?? ({})]
     }
   }
 
   StreamedLoader {
     id: previewLoader
     readonly property LivePreview shownItem: previewLoader.item as LivePreview
-    readonly property real naturalSize: shownItem?.host.naturalSize ?? 0
+    readonly property real naturalSize: shownItem?.group.hasContent ? shownItem.group.implicitWidth : 0
     wanted: root.live
     label: "bar editor chip"
     Layout.preferredWidth: root.empty ? 0 : (shownItem?.implicitWidth ?? 0)
