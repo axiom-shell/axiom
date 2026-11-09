@@ -32,8 +32,8 @@ Item {
   readonly property var styleGroups: BarsConfig.styleGroups.filter(group => root._tab.styles.includes(group.title))
 
   // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
-  // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Bar widgets")
-  // I18n.tr("Bar gradient") I18n.tr("Bar accents") I18n.tr("Surface shadow")
+  // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Look") I18n.tr("Colors")
+  // I18n.tr("Accents") I18n.tr("Shadow")
   TitledCard {
     title: I18n.tr("Bar Editor")
     scrollKey: "BarEditor"

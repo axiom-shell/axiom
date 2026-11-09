@@ -178,12 +178,13 @@ QtObject {
   // `x-tileHint`: why an option (`value`) of a field doesn't apply, from
   // its map ({ value: reason }); with no `value`, why the whole field
   // doesn't (its `x-showIf` failing in a form that keeps its place), from
-  // a string. English, "" for none
+  // a string, or the map's "*" beside its options'. English, "" for none
   function tileHint(fieldSchema, value) {
     const hint = fieldSchema?.["x-tileHint"];
+    const map = hint !== null && typeof hint === "object" ? hint : {};
     if (value === undefined)
-      return typeof hint === "string" ? hint : "";
-    return hint !== null && typeof hint === "object" && typeof hint[value] === "string" ? hint[value] : "";
+      return typeof hint === "string" ? hint : typeof map["*"] === "string" ? map["*"] : "";
+    return typeof map[value] === "string" ? map[value] : "";
   }
 
   // Whether a setting waits for the user's own Save or card instead of

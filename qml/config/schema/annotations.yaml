@@ -65,7 +65,7 @@ x-slots: a custom widget element's bindings, in order (keys of its `bind`; `Cust
 x-snapshot: 'a machine setting a saved snapshot carries too (the wallpaper setup: wallpapers, folder, mode, rotation, light/dark wallpapers, theme schedule), since a snapshot restores on the PC it was saved on.'
 x-suggestions: chips under a text field (`SettingsManager.suggestionsFor`).
 x-takeover: a setting that takes something over on this PC (Hyprland mode, locker, idle, polkit, greeter).
-x-tileHint: 'why an option of an `x-control: tiles` field doesn''t apply (`{ value: reason }`), or, a string, why the whole field doesn''t, greyed in a form that keeps its place (`keepsPlace`); English, translated; without one, a generic "Not used by this style".'
+x-tileHint: 'why an option of an `x-control: tiles` field doesn''t apply (`{ value: reason }`); a string, or that map''s `"*"`, why the whole field doesn''t, greyed in a form that keeps its place (`keepsPlace`); English, translated; without one, a generic "Not used by this style".'
 x-tool: the navigator's tool group.
 x-unit: the unit shown after a number (`px`, `%`, `ms`, …), and how the command line reads a value given with one.
 x-wide: the settings card the field (or an `x-row` object) lands on spans both columns (`SchemaLayout.groups`' `wide`).

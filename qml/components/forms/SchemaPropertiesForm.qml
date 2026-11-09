@@ -29,10 +29,16 @@ ColumnLayout {
   // Puts a field marked `x-beside` beside the one before it, each half wide,
   // while both are shown; off, every field takes the whole width
   property bool pairs: false
-  // Keeps every field in its place: one whose `x-showIf` fails is greyed,
-  // saying why on hover (its `x-tileHint`), instead of hidden, so nothing
-  // moves under the pointer (SchemaField.placeKept; the Bar style block)
+  // Keeps its tiles in place: a tiles field (`x-control: tiles`) whose
+  // `x-showIf` fails is greyed, saying why on hover (its `x-tileHint`),
+  // instead of hidden, so no row of tiles moves under the pointer
+  // (SchemaField.placeKept; the Bar style block). Other fields hide
   property bool keepsPlace: false
+  // A hook giving a tiles field's previews: given its path ([key]),
+  // { component, properties }, each tile's preview made from `component`
+  // with the option's `value` and `properties` (ChoiceTiles.preview,
+  // previewProperties), or null for none (the Bar style block's samples)
+  property var tilePreview: null
   // Gives each field its change marks (FieldChangeMarks: reset to the
   // default, and a dot while it has an unsaved edit) when set: a hook
   // telling whether the field at a path ([key]) has one. null: no marks

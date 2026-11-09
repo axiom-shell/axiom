@@ -15,8 +15,8 @@ import qs.components.reusable
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
 // One row of a schema-driven form: picks the control for the row's schema
 // type (or a list editor for an array of objects), hidden while its
-// `x-showIf` doesn't hold (greyed instead, saying why on hover, in a form
-// with `keepsPlace`). `form` provides valueAt(path) and edit(path, value)
+// `x-showIf` doesn't hold (a tiles field greyed instead, saying why on
+// hover, in a form with `keepsPlace`). `form` provides valueAt(path) and edit(path, value)
 // (SchemaPropertiesForm, SettingRows, or the settings page's
 // SettingsContent).
 Loader {
@@ -152,11 +152,12 @@ Loader {
   readonly property bool shown: (root._conditionsHold || root.placeKept) && !SchemaLayout.hintedHides(fieldSchema["x-hintedIf"], root._valueOf, capability => CompositorManager.unsupportedHint(capability))
   readonly property bool _conditionsHold: SchemaLayout.showIfHolds(row.kind === "group" ? row.showIf : fieldSchema["x-showIf"], root._valueOf) && (row.groupShowIf ?? []).every(outer => SchemaLayout.showIfHolds(outer.condition, key => root._valueFrom(outer.path, key)))
 
-  // In a form keeping every field in its place (`keepsPlace`: the Bar
-  // style block, so nothing moves under the pointer), a field whose
-  // `x-showIf` fails is greyed and not editable instead of hidden, saying
-  // why on hover: its `x-tileHint` string, else generically
-  readonly property bool placeKept: root.form?.keepsPlace === true && row.kind !== "group" && !root._conditionsHold
+  // In a form keeping its tiles in place (`keepsPlace`: the Bar style
+  // block, so no row of tiles moves under the pointer), a tiles field
+  // (`x-control: tiles`) whose `x-showIf` fails is greyed and not editable
+  // instead of hidden, saying why on hover: its `x-tileHint` (a string, or
+  // its map's "*"), else generically. Any other field hides as anywhere
+  readonly property bool placeKept: root.form?.keepsPlace === true && row.kind !== "group" && fieldSchema["x-control"] === "tiles" && !root._conditionsHold
   readonly property string placeKeptReason: {
     if (!root.placeKept)
       return "";
@@ -435,8 +436,13 @@ Loader {
 
   // An enum as tiles (`x-control: "tiles"`): every option, one whose
   // `x-enumShowIf` fails greyed and saying why on hover (its `x-tileHint`,
-  // else generically)
+  // else generically), each drawn over the preview the form gives this
+  // field (its `tilePreview` hook: { component, properties }), if any
   readonly property var _allOptions: SettingsManager.optionsFor(fieldSchema)
+  readonly property var _tilePreview: {
+    const hook = root.form?.tilePreview ?? null;
+    return hook ? hook(root.row.path) : null;
+  }
   Component {
     id: tilesField
     ColumnLayout {
@@ -453,6 +459,8 @@ Loader {
               "label": root.optionLabels[option.value] ?? String(option.value),
               "disabledReason": option.hint === null ? "" : option.hint !== "" ? I18n.tr(option.hint) : I18n.tr("Not used by this style")
             }))
+        preview: root._tilePreview?.component ?? null
+        previewProperties: root._tilePreview?.properties ?? ({})
         // (An inheriting one shows the value it follows)
         value: root.current ?? SettingsManager.inheritedValue(root.fieldSchema) ?? ""
         onPicked: value => root.commit(value)

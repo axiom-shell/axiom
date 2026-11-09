@@ -581,12 +581,12 @@ QtObject {
     {
       "label": I18n.tr("Surface"),
       "fields": ["Surface"],
-      "styles": ["Bar accents", "Surface shadow"]
+      "styles": ["Accents", "Shadow"]
     },
     {
       "label": I18n.tr("Widgets"),
       "fields": [],
-      "styles": ["Bar widgets", "Bar gradient"]
+      "styles": ["Look", "Size", "Colors"]
     },
     {
       "label": I18n.tr("Behaviour"),

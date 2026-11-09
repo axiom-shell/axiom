@@ -13,12 +13,15 @@ TileFlow {
 
   // [{ value, label, preview, disabledReason }]: `preview` (optional) a
   // Component drawn over the label, its root declaring `required property
-  // var value` (handed the option's); a non-empty `disabledReason` greys
-  // the tile and is its tooltip
+  // var value` (handed the option's) and any previewProperties; a
+  // non-empty `disabledReason` greys the tile and is its tooltip
   property var options: []
   property var value
   // Every tile's preview, for options without their own
   property Component preview: null
+  // More properties every preview is made with, beside its `value`, and
+  // kept up to date in place (the Bar style block's look)
+  property var previewProperties: ({})
   // The preview's height, on every tile while any tile has one
   property real previewHeight: Widget.px(36)
 
@@ -110,16 +113,31 @@ TileFlow {
           function _make() {
             if (slot._made)
               slot._made.destroy();
-            slot._made = slot.component ? slot.component.createObject(slot, {
+            slot._made = slot.component ? slot.component.createObject(slot, Object.assign({}, root.previewProperties, {
               "value": slot.optionValue
-            }) : null;
+            })) : null;
             if (slot._made)
               slot._made.anchors.fill = slot;
+          }
+
+          // New properties go to the preview made, not a new one
+          function _update() {
+            if (!slot._made)
+              return;
+            for (const key in root.previewProperties)
+              slot._made[key] = root.previewProperties[key];
           }
 
           onComponentChanged: slot._make()
           onOptionValueChanged: slot._make()
           Component.onCompleted: slot._make()
+
+          Connections {
+            target: root
+            function onPreviewPropertiesChanged() {
+              slot._update();
+            }
+          }
         }
 
         StyledLabel {
