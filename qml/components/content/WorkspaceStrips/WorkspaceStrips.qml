@@ -53,7 +53,7 @@ WorkspacePopoutPanel {
         // What its cell shows, as on the bar, less app icons: its windows
         // follow it
         readonly property var shows: contents.of(wsId, "", false)
-        readonly property bool _text: shows.kind === "text"
+        readonly property bool _text: shows.kind === "text" || shows.kind === "name"
 
         rows: root.vertical ? 2 : 1
         columns: root.vertical ? 1 : 2
@@ -74,6 +74,7 @@ WorkspacePopoutPanel {
           labels: root.properties.labels
           label: line.shows.number
           text: line._text ? line.shows.text : ""
+          textPlain: line.shows.kind === "name"
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
           onClicked: CompositorManager.goToWorkspace(line.wsId, "go", root.output)

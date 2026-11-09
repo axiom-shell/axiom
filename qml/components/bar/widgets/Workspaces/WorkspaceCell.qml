@@ -34,8 +34,10 @@ Item {
   property string labels: "numbers"
   readonly property bool _dot: labels === "dots" || labels === "none" && !_framed
   property string label: ""
-  // A label of one's own or the compositor's name
+  // A label of one's own or the compositor's name, the name (`textPlain`)
+  // always in the text font
   property string text: ""
+  property bool textPlain: false
   property string iconPath: ""
   // App icons' paths (`iconPath` alone by default), laid out as
   // `iconLayout` says: "largest" (the first alone), "row" (side by side
@@ -162,11 +164,14 @@ Item {
       id: textLabel
       anchors.centerIn: parent
       visible: root._shows === "text"
+      readonly property bool symbol: textLabel.isSymbol && !root.textPlain
+
       text: root.text
-      textSize: textLabel.isSymbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+      textFamily: textLabel.symbol ? Appearance.iconFamily : Appearance.fontFamily
+      textSize: textLabel.symbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
       textColor: root.look.content
-      font.bold: !textLabel.isSymbol && root.isActive && !root.boxed
-      isVertical: root.isVertical && !textLabel.isSymbol && textLabel.implicitWidth > root.thickness * 0.8
+      font.bold: !textLabel.symbol && root.isActive && !root.boxed
+      isVertical: root.isVertical && !textLabel.symbol && textLabel.implicitWidth > root.thickness * 0.8
 
       ColorGlide on color {
         enabled: root.animated

@@ -78,7 +78,7 @@ QtObject {
   function _length(shown, icons) {
     if (shown.kind === "icons" && root.iconLayout === "row")
       return WorkspaceCells.rowLength(icons.length, root.thickness, root.restLength);
-    if (shown.kind !== "text" || WorkspaceCells.isSymbol(shown.text))
+    if (shown.kind !== "name" && (shown.kind !== "text" || WorkspaceCells.isSymbol(shown.text)))
       return root.restLength;
     // The size read, so a binding calling this measures again when it changes
     if (root._metrics.font.pixelSize <= 0)

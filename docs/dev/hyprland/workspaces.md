@@ -84,7 +84,7 @@ One workspace layout serves everything that shows workspaces or moves between th
   1. the grid's active arrow (`glyphOf`)
   2. a label of one's own (`workspaceLabels`: `{ workspace, label }` entries, the label an icon field's value). An entry matches the number the cell would show: its id, counted from the monitor's first with `relativeNumbers`, and where the compositor makes the workspaces itself (`CompositorManager.dynamicWorkspaces`) always its place on its monitor. A Material Symbols name draws as that icon, anything else in the text font (`StyledIcon`'s own rule, `WorkspaceCells.isSymbol`)
   3. app icons, on a workspace with windows (`showAppIcons`, in its `appIconsLayout`: [widget style](../bar/widget-style.md) › Workspaces cells)
-  4. with `useNames`, the compositor's name (the workspace shape's `name`) where it says more than the id or the number shown (`WorkspaceCells.nameShown`: not Hyprland's default `"3"`, nor niri's unnamed `""`)
+  4. with `useNames`, the compositor's name (the workspace shape's `name`) where it says more than the id or the number shown (`WorkspaceCells.nameShown`: not Hyprland's default `"3"`, nor niri's unnamed `""`), always in the text font (a workspace named `mail` isn't drawn as the mail icon)
   5. its number, dot or nothing (`labels`).
   - Only text and a Row of icons make a cell longer. Text (not an icon name) longer than a number makes its cell longer: measured with a `FontMetrics` at the cell's text size, bold, plus half a cell's thickness of room (`CellContents._length`). On a vertical bar such text is turned along the bar.
   - The strip popout's number cells show the same, less app icons (each line's windows follow it).

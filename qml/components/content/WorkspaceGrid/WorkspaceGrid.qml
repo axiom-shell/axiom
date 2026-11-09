@@ -67,7 +67,8 @@ WorkspacePopoutPanel {
         hoverColor: root.hoverColor
         labels: root.properties.labels
         label: shows.number
-        text: shows.kind === "text" ? shows.text : ""
+        text: shows.kind === "text" || shows.kind === "name" ? shows.text : ""
+        textPlain: shows.kind === "name"
         iconPaths: shows.icons
         iconLayout: contents.iconLayout
         iconSlots: contents.iconSlots

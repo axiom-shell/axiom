@@ -128,9 +128,9 @@ TestCase {
     }, "a label of one's own before app icons");
     compare(WorkspaceCells.pick("", "", ["a"], "mail").kind, "icons", "app icons before the name");
     compare(WorkspaceCells.pick("", "", [], "mail"), {
-      "kind": "text",
+      "kind": "name",
       "text": "mail"
-    });
+    }, "a name, drawn as words even where it's an icon's name");
     compare(WorkspaceCells.pick("", "", [], "").kind, "labels");
   }
 }

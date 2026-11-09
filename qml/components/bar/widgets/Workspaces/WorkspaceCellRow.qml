@@ -164,7 +164,8 @@ Item {
         labels: root.properties.labels
         label: _content ? _content.number : ""
         glyph: _content?.kind === "glyph" ? _content.text : ""
-        text: _content?.kind === "text" ? _content.text : ""
+        text: _content?.kind === "text" || _content?.kind === "name" ? _content.text : ""
+        textPlain: _content?.kind === "name"
         iconPaths: _content ? _content.icons : []
         iconLayout: contents.iconLayout
         iconSlots: contents.iconSlots
