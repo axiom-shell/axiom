@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
+import qs.components.bar.look
+
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.
 // Modules override accentColor for their states; how it shows (a
@@ -66,6 +68,12 @@ IconTextWidget {
   // in its shape while it's hovered
   property bool hasBackground: !hidden
   property bool hoverOutline: false
+  // Its content's extent across the bar (px), which its background's caps
+  // keep clear of (BarWidgetHost.contentAcross): from config, never
+  // measured. Its icon at the bar's font size, at its scale where its type
+  // draws it larger (iconScale), else its label's line (on a vertical bar
+  // the label is turned along it: one line across too).
+  property real contentAcross: barConfig.fontSize * Math.max(1, iconScale)
   // A level (0-1) its WidgetGroup fills its background's shape to, along
   // the bar (up a vertical one), in backgroundLevelColor; -1 for none (a custom
   // widget's pill style)

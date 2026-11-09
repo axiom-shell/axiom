@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 import qs.components.methods
+import qs.components.bar.look
 
 // The active workspace's box (or underline) in a bar switcher's row of
 // cells, drawn once over their boxes and under their labels (the row draws
@@ -20,7 +21,9 @@ Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for the active state
+  // How its widget's cells draw on this bar
+  required property CellLook cellLook
+  // BarsConfig.cellColors for the active state (CellLook.workspaceColorsOf)
   required property var look
   // The active cell's index in the row, or -1 when none shows
   required property int index
@@ -32,20 +35,19 @@ Item {
   // The active cell's length
   readonly property real activeLength: (lengths[index] ?? 0) + extra
   required property real spacing
-  property real radius: 0
-  // `solidBoxes`: a filled box on every bar style (`look` is the solid one)
-  property bool solid: false
+  property real radius: cellLook.radius
   // The active cell's shape as a segment of the bar's run
-  // (BarShapes.cellShape), or null
+  // (BarCells.cellShape), or null
   property var shape: null
   // Its slice of the bar's gradient where it rests, for the part of its
   // box `look.gradient` names, or null
   property var slice: null
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.widgetBoxed || solid
+  // A box (a solid one on every bar style), whatever the run
+  readonly property bool boxed: cellLook.boxes
   // Whether there's anything to slide: a box, or an underline
-  readonly property bool slides: boxed || barConfig.widgetStyle === "underline"
+  readonly property bool slides: cellLook.slides
   readonly property real _along: _alongAt(index)
   readonly property real _rowLength: isVertical ? height : width
 
@@ -103,7 +105,7 @@ Item {
   // glides from the one it left (`fromLength`) meanwhile
   function _wrap(fromAlong, toAlong, fromLength) {
     const forward = root._wrapForward;
-    // Out past an end with all it draws past its box (BarShapes.cellShape)
+    // Out past an end with all it draws past its box (BarCells.cellShape)
     const pastEnd = root._rowLength + root.spacing + (root.shape?.drawStart ?? 0);
     const beforeStart = -Math.max(root.activeLength, fromLength) - root.spacing - (root.shape?.drawEnd ?? 0);
     wrapAnimation.stop();
@@ -149,7 +151,7 @@ Item {
   // tab's fillets past its ends, which the box passing out would paint
   // over the cap or fillet there. Across it still reaches a tab's edge.
   MarginClip {
-    readonly property var _margins: BarShapes.cellMargins(root.shape, root.shape, root.isVertical)
+    readonly property var _margins: BarCells.cellMargins(root.shape, root.shape, root.isVertical)
 
     anchors.fill: parent
     clipped: wrapAnimation.running
@@ -183,21 +185,21 @@ Item {
         duration: Appearance.animNormal
       }
 
-      CellBox {
-        visible: root.boxed
-        barConfig: root.barConfig
-        radius: root.radius
-        shape: root.shape
-        fillColor: root.look.fill
-        strokeColor: root.look.stroke
+      // The active cell's box (BarCells.cellBox) and the look's line
+      LookBox {
+        readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
+        bar: root.barConfig
+        boxed: root.boxed
+        outline: _box.outline
+        reach: _box.reach
+        strokeWidth: _box.strokeWidth
+        strokeStyle: _box.strokeStyle
+        fill: root.look.fill
+        stroke: root.look.stroke
+        line: root.look.indicator
         fillSlice: root.look.gradient?.part === "fill" ? root.slice : null
         strokeSlice: root.look.gradient?.part === "stroke" ? root.slice : null
-        animated: true
-      }
-
-      CellUnderline {
-        barConfig: root.barConfig
-        color: root.look.indicator
       }
     }
   }

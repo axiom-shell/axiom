@@ -858,6 +858,54 @@ TestCase {
     }, 2), 14);
   }
 
+  // The accent line sits inside whatever stroke is at its edge: per bar
+  // kind, along the outer edge and the inner one (a 3 px line, 2 px
+  // strokes)
+  function test_accent_inset() {
+    const inset = (bar, side) => BarEnds.accentInset(Object.assign({
+        "look": {
+          "accentLine": side ? {
+            "side": side,
+            "width": 3
+          } : null
+        },
+        "pills": false,
+        "island": false,
+        "solid": false,
+        "insideBorder": false,
+        "stripCover": 0,
+        "overlap": 0,
+        "extent": 30
+      }, bar), 2);
+    const solid = {
+      "solid": true
+    };
+    compare([inset(solid, "outer"), inset(solid, "inner")], [0, 25], "solid: the screen edge; inside its own inner stroke");
+    compare(inset(Object.assign({}, solid, {
+      "insideBorder": true
+    }), "outer"), 2, "solid inside the border: inside its stroke");
+    const transparent = {
+      "insideBorder": true
+    };
+    compare([inset(transparent, "outer"), inset(transparent, "inner")], [2, 27], "transparent inside the border: its stroke; its extent, no stroke");
+    compare(inset({}, "outer"), 0, "transparent, border off: the screen edge");
+    const pills = {
+      "pills": true,
+      "insideBorder": true,
+      "stripCover": 6,
+      "overlap": 2,
+      "pillDepth": 40
+    };
+    compare([inset(pills, "outer"), inset(pills, "inner")], [8, 35], "pills: past the frame they reach back over and its stroke; inside their far stroke");
+    const floating = {
+      "island": true,
+      "insideBorder": true,
+      "islandStart": 12
+    };
+    compare([inset(floating, "outer"), inset(floating, "inner")], [14, 25], "floating: inside its island's stroke at both");
+    compare(inset(solid, null), 28, "no line: no width");
+  }
+
   function test_tab_bounds() {
     const opts = {
       "border": true,

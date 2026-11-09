@@ -119,11 +119,16 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Bar pieces (`bar/`)
 - `bar/widgets/base/BaseWidget`: the sizing wrapper a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
-- `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
-- `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
+- **The drawing kit** (`bar/look/`): what draws a bar's look, from paint (`BarWidgetStyle`) and shape (`BarShapes` and its kin), deciding nothing a methods helper decides.
+  - `ShapedBox`: a box in the widget shape, from an outline spec and a paint; `OutlineStroke` (a stroke other than solid), `ShapeSlice` / `RectSlice` (a slice of the bar's gradient).
+  - `LookBox`: what the look draws for a box (its box and stroke, and its line: `StyleLine`), a widget's background and a Workspaces cell alike.
+  - `SplitPart` (split's icon part or badge), `LevelFill` (a widget's level), `ShapeOverlay` (a press, the editor highlight, the hover outline).
+  - `WidgetBackground`: a widget's or merged run's background, composed of them. `WidgetLook`: the colors a widget draws in.
+  - `CellLook`: how a Workspaces widget's cells draw on its bar or popout (boxed, framed, sizes, shapes as segments, colors), one per switcher or popout.
+- `methods/BarShapes` (caps, segments, box rects), `methods/BarTabs` (tabs), `methods/BarOutlines` (SVG outlines from one outline spec), `methods/BarCells` (a widget's parts as cells), `methods/BarRuns` (a section's run backgrounds, separator marks and widget room), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors), `methods/ValueGraphics` (the style a display style draws as, and its graphic's extent across the bar).
 
 ### Workspace pieces
-- **Active workspace** (`bar/widgets/Workspaces/ActiveCellIndicator`): the active cell's box or underline (`CellUnderline`, shared with `WorkspaceCell`), drawn once under a switcher's row of cells and sliding between them.
+- **Active workspace** (`bar/widgets/Workspaces/ActiveCellIndicator`): the active cell's box or underline (`bar/look/LookBox`, shared with `WorkspaceCell` and the widgets' backgrounds), drawn once under a switcher's row of cells and sliding between them.
   - Lives in `WorkspaceCellRow`; cells it stands in for set `indicated`.
   - Dots-only bars keep the cells' own recolour.
 - **Strip windows** (`bar/widgets/Workspaces/StripWindows`): a workspace's windows in strip order as bar `WorkspaceCell`s (app icons, the last focused active, click focuses). Used by `ActiveStrip` (both switchers: a `Loader` that loads only on a strip monitor with `stripWindows` on, shows only with windows, and says when the strip shows alone, `stripOnly`; with `stripWindows: one` it shows `StripWindowsBox` instead, every window's icon in one cell) and the `WorkspaceStrips` popout.

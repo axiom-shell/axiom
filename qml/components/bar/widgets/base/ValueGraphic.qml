@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 import qs.components.reusable
 import qs.components.content.parts
 
@@ -38,6 +39,9 @@ Item {
   property real preferredLength: 0
   property bool vertical: false
   property real crossSize: 0
+  // The room across inside the widget's box (ValueGraphics.boxRoom), which
+  // stacked's two lines fit in; the whole crossSize by default
+  property real room: crossSize
   property int fontSize: 0
   property color color: "white"
   property color textColor: "white"
@@ -46,27 +50,18 @@ Item {
   property real middle: -1
   readonly property color trackColor: Qt.alpha(root.textColor, 0.2)
 
-  // The style a widget's `style` draws as where it can't draw it: stacked
-  // on a vertical bar is a label, a sparkline with no history a fill, and
-  // a value style with no value (`ratio` below 0) a label
-  function resolvedStyle(style, vertical, hasHistory, ratio) {
-    if (style === "stacked" && vertical)
-      return "label";
-    if (style === "sparkline" && !hasHistory)
-      style = "fill";
-    if (["ring", "fill", "segments", "pill"].includes(style) && ratio < 0)
-      return "label";
-    return style;
-  }
-
   // Whether this style draws anything here
   readonly property bool drawn: ["ring", "fill", "segments", "sparkline", "ticker", "stacked"].includes(root.style)
   // Ticker and stacked sit where a label would, after the icon
   readonly property bool afterIcon: ["ticker", "stacked"].includes(root.style)
+  // How far across the bar it reaches (px), from config and its style,
+  // never measured: the ring, the sparkline and stacked's two lines; 0 for
+  // one no taller than a line (ValueGraphics.across)
+  readonly property real across: ValueGraphics.across(root.style, root.vertical, root.crossSize, root.fontSize, root.room)
   readonly property real length: {
     switch (root.style) {
     case "ring":
-      return root.crossSize * 0.62;
+      return root.crossSize * ValueGraphics.ringScale;
     case "fill":
     case "segments":
     case "sparkline":
@@ -151,8 +146,8 @@ Item {
     Item {
       Sparkline {
         anchors.fill: parent
-        anchors.topMargin: root.crossSize * 0.2
-        anchors.bottomMargin: root.crossSize * 0.2
+        anchors.topMargin: root.crossSize * ValueGraphics.sparklineInset
+        anchors.bottomMargin: root.crossSize * ValueGraphics.sparklineInset
         values: root.history
         minValue: root.graphMin
         maxValue: root.graphMax
@@ -257,9 +252,9 @@ Item {
       Column {
         id: stack
         // Its two lines (about 1.4 of the font, each a line high) shrink
-        // to fit across a bar the text is large for (a text scale past
-        // 100%)
-        readonly property real fit: root.fontSize > 0 && root.crossSize > 0 ? Math.min(1, root.crossSize / (1.2 * 1.4 * root.fontSize)) : 1
+        // to fit inside the box's outline across a bar the text is large
+        // for (a thin bar, a text scale past 100%)
+        readonly property real fit: ValueGraphics.stackedFit(root.room, root.fontSize)
         anchors.centerIn: parent
         spacing: 0
 
@@ -270,7 +265,7 @@ Item {
           textFormat: root.textFormat
           color: root.textColor
           font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.8 * stack.fit
+          font.pixelSize: root.fontSize * ValueGraphics.stackedValueScale * stack.fit
           font.bold: true
           font.features: {
             "tnum": 1
@@ -283,7 +278,7 @@ Item {
           textFormat: root.textFormat
           color: Qt.alpha(root.textColor, 0.7)
           font.family: Appearance.fontFamily
-          font.pixelSize: root.fontSize * 0.6 * stack.fit
+          font.pixelSize: root.fontSize * ValueGraphics.stackedCaptionScale * stack.fit
         }
       }
     }

@@ -58,6 +58,12 @@ TestCase {
     compare(WorkspaceCells.iconSize(26), 16);
   }
 
+  function test_contentSize() {
+    compare(WorkspaceCells.contentSize(26, 14, false), 17, "a symbol label, 1.2 × the text");
+    compare(WorkspaceCells.contentSize(30, 14, true), 20, "an app icon taller than the label");
+    compare(WorkspaceCells.contentSize(20, 14, true), 17, "a label taller than the app icon");
+  }
+
   function test_rowLength() {
     compare(WorkspaceCells.rowLength(1, 20, 20), 20, "one icon: a normal cell");
     // 3 × 12 + 2 × 2 + 8
