@@ -46,6 +46,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 ### Pin
 - `pinButton` puts a pin on the menu, and QuickActions has a `pin` action. Both toggle `EdgeMenuManager.pinned[id]`.
 - While pinned, a menu ignores `closeOnLeave` and outside clicks.
+- A pinned edge or strip menu still gives way when covered and comes back. Only a pinned free menu stays visible under the popouts opened over it, closing none of them ([Free menus](free-menus.md) › Its claim).
 
 ### Hosts seen by modules
 - Modules learn where they're shown from `host`: `{ kind: "overlay" }` or `{ kind: "edgeMenu", id, bare }`, on `Card` / `Panel`, passed down `ModuleGrid` → `OverlaySlot`.

@@ -1,6 +1,6 @@
 # Free menus
 
-> **Files:** `qml/components/surfaces/edgemenu/FreeMenu.qml`, `qml/components/methods/FreeMenuPlace.qml`, `tests/tst_FreeMenuPlace.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/bar/BarWidgetHost.qml`
+> **Files:** `qml/components/surfaces/edgemenu/FreeMenu.qml`, `qml/components/methods/PopoutGeometry.qml`, `qml/components/methods/FreeMenuPlace.qml`, `tests/tst_FreeMenuPlace.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/bar/BarWidgetHost.qml`
 > **Config:** `EdgeMenus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `freeAnimation` (`fade` | `scale` | `slide`), `screen`, `pinButton`, `backgroundColor` / `borderColor`, `open.delay`, `close.*`
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Popout registry](../popouts/registry.md), [Popout submenus](../popouts/submenus.md), [Layer arrangement](../compositor/layer-arrangement.md), [Plan](../plans/menus-rework.md)
 
@@ -46,9 +46,17 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 ### Its claim
 - A `PopoutClaim` keyed `menu:<id>`, with edge `""` and the box's footprint on the screen.
 - Its kind is the opener's (`EdgeMenuManager.claimKinds`): `bar` for a widget's popout, else `menu`.
-- Pinned, it ranks lowest. Pinned or held by the editor, it is `resident`: it gives way and comes back.
+- Held by the editor (previewing), it is `resident`: it gives way and comes back.
 - Asked for again while open (`engageRequested`), or under the pointer, it ranks as its kind (as `EdgePopout.engage`).
-- Staying visible under popouts while pinned, and dragging it, are later work ([plan](../plans/menus-rework.md), items 3–4).
+- **Pinned, it is an `underlay`** (`PopoutGeometry.isUnderlay`): it never collides, so it never closes anything and nothing opening over it closes it or makes it give way. Its submenu neither. The overlay opening leaves it too (`PopoutGeometry.closedByOverlay`); the overlay draws over it. Only free menus do this: every edge menu, detached ones included, still gives way when covered and comes back ([Popout registry](../popouts/registry.md) › Underlays).
+- **What draws on top is the layer, not the rank.** Its window is on Top under every popout: bar and edge popouts are on the Overlay layer, or on Top in namespaces ordered over `axiom-menu` (`tst_LayerStack`'s `test_free_menu_order`).
+- **Clicks.** It is no grab partner of the other popouts: a click on it closes an open bar or edge popout, as any outside click does. It takes the keyboard only when clicked (`OnDemand`).
+
+### Pinning
+- `EdgeMenuManager.canPin` takes a free menu in its own window (its `EdgeMenuBody` isn't a submenu's), so the `pinButton` and QuickActions' `pin` work on it. Shown in another menu's submenu it has no pin.
+- Pins are saved in `ui/edgemenus.json`, as for every menu, and a pinned free menu opens again when qs starts (at its `freeAnchor`).
+- On Top, a pinned one hides under a fullscreen window and comes back after it (the compositor's doing; a live check).
+- Dragging a pinned one to move it is later work ([plan](../plans/menus-rework.md)).
 
 ### Sharing with the edge hosts
 - **`EdgeMenuSync`.** It follows `EdgeMenuManager` and reports a self-close. Its `triggerWindow` is optional: a free menu has no hover strip. It reports no frame (`placementOf` is null for a free menu).
@@ -56,9 +64,10 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - **Layer stack.** `axiom-menu` has order 7, beside the integrated menus (the two never meet), under the popouts that slide out from under the bars, and below the Overlay layer (popouts, the overlay). It is in `blurBacked` and `blurChrome`.
 
 ### Testing
-- `tst_FreeMenuPlace`, the `test_free` row of `tst_SurfaceContext`, `tst_LayerStack` (`test_free_menu_order`, `test_sequence_free_menu_held`) and `tst_LayerArrange` (`test_full_screen_ignore`).
+- `tst_PopoutGeometry` (`test_underlay`, `test_free_not_underlay`, `test_closed_by_overlay`), `tst_FreeMenuPlace`, the `test_free` row of `tst_SurfaceContext`, `tst_LayerStack` (`test_free_menu_order`, `test_sequence_free_menu_held`) and `tst_LayerArrange` (`test_full_screen_ignore`).
 - On screen: a nested niri (`scripts/dev/nested.sh niri`) with a free menu in its config.
   - Open it by IPC (`edgeMenu open <id>`).
   - Open it as a widget's popout through a temporary IPC hook that calls `EdgeMenuManager.open(id, anchor, "bar")` with the widget's `PopoutAnchor`.
+  - Pinned (`edgeMenu pin <id>`), open another popout over it and check `popouts list` shows both `open`, the menu `underlay`.
   - Screenshot with `WAYLAND_DISPLAY=<nested> grim`.
 - Fullscreen hiding and the blur on each compositor are live checks ([live-checks](../live-checks.md)).
