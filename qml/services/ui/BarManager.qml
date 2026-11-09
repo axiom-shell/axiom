@@ -451,9 +451,18 @@ QtObject {
     return keys.some(key => key === "shadow" ? Object.values(style.shadow ?? {}).some(value => value !== null) : (style[key] ?? null) !== null);
   }
 
-  // Gives the selected bar its own `keys`, starting from what it inherits,
-  // or (`owned` false) hands them back to the shared style
-  function setStyleOwned(keys, owned) {
+  // Whether the bar at `index` sets every one of `keys` (each shadow part)
+  function ownsAllStyle(index, keys) {
+    const style = root.localConfig?.[index]?.style ?? {};
+    return keys.every(key => key === "shadow" ? Object.values(style.shadow ?? {}).every(value => value !== null) : (style[key] ?? null) !== null);
+  }
+
+  // Gives the selected bar its own `keys`, starting from what it inherits
+  // (a key it already sets keeps its value), or (`owned` false) hands them
+  // back to the shared style; then sets
+  // `values` (BarStyle values, a preset's; its shadow's parts merged in)
+  // as its own too, all one undo step
+  function setStyleOwned(keys, owned, values) {
     const bar = selectedBar();
     if (!bar)
       return;
@@ -463,13 +472,15 @@ QtObject {
       if (key === "shadow") {
         const shared = root.localStyle.shadow;
         style.shadow = Object.keys(style.shadow).reduce((out, part) => {
-          out[part] = owned ? shared[part] : null;
+          out[part] = owned ? (style.shadow[part] ?? shared[part]) : null;
           return out;
         }, {});
       } else {
-        style[key] = owned ? root._inherited(key) : null;
+        style[key] = owned ? (style[key] ?? root._inherited(key)) : null;
       }
     }
+    for (const key in values ?? {})
+      style[key] = key === "shadow" ? Object.assign(style.shadow, values.shadow) : Utils.clone(values[key]);
     applyChanges();
   }
 

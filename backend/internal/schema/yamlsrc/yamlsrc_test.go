@@ -426,3 +426,78 @@ func anys(s []string) []any {
 	}
 	return out
 }
+
+// An object's presets (`x-presets`) are values it takes: a key it doesn't
+// have, a value its enum or bounds refuse, a nested part it lacks, a label
+// used twice or a preset missing its label or values fails the build.
+func TestCheckRefusesBadPresets(t *testing.T) {
+	t.Parallel()
+	definition := `type: object
+additionalProperties: false
+x-presets:
+  - {label: Good, values: {style: filled, size: 3, shadow: {lit: true}}}
+  - {label: Renamed, values: {styel: filled}}
+  - {label: Outside, values: {style: glass, size: 9}}
+  - {label: Nested, values: {shadow: {blur: 2}}}
+  - {label: Good, values: {size: 2}}
+  - {label: Empty, values: {}}
+  - {values: {size: 2}}
+properties:
+  style: {type: string, default: filled, enum: [filled, plain]}
+  size: {type: integer, default: 2, minimum: 1, maximum: 4}
+  shadow:
+    type: object
+    additionalProperties: false
+    properties:
+      lit: {type: boolean, default: false}
+`
+	fsys := fstest.MapFS{
+		IndexFile:                      {Data: []byte("type: object\nproperties: {}\nsections: [A]\n")},
+		AnnotationsFile:                {Data: []byte("x-presets: \"\"\n")},
+		SectionsDir + "/A.yaml":        {Data: []byte("type: object\n")},
+		DefinitionsDir + "/Style.yaml": {Data: []byte(definition)},
+	}
+	_, err := Assemble(fsys)
+	if err == nil {
+		t.Fatal("accepted")
+	}
+	for _, want := range []string{
+		`x-presets[1] "Renamed": styel: additional property not allowed`,
+		`x-presets[2] "Outside": style: value "glass" not in allowed values [filled, plain]`,
+		`x-presets[2] "Outside": size: value 9 is greater than maximum 4`,
+		`x-presets[3] "Nested": shadow.blur: additional property not allowed`,
+		`x-presets[4]: the label "Good" is taken`,
+		`x-presets[5] must be { label, values }`,
+		`x-presets[6] must be { label, values }`,
+	} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("missing %q in:\n%v", want, err)
+		}
+	}
+	if strings.Contains(err.Error(), `x-presets[0]`) {
+		t.Errorf("refused the good preset:\n%v", err)
+	}
+}
+
+// The repo's bar style presets (BarStyle's `x-presets`, the Bar style
+// block's Presets menu) are there, each valid BarStyle values (Check
+// refuses the build otherwise; this names them).
+func TestRepoBarStylePresets(t *testing.T) {
+	t.Parallel()
+	root, err := Assemble(os.DirFS(filepath.Join(testkit.RepoRoot(), "qml")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	style := root.Value("definitions").(*jsonx.Object).Value("BarStyle").(*jsonx.Object)
+	presets, _ := style.Value("x-presets").(*jsonx.Array)
+	if presets == nil {
+		t.Fatal("BarStyle has no x-presets")
+	}
+	var labels []string
+	for _, preset := range presets.Items {
+		labels = append(labels, preset.(*jsonx.Object).Value("label").(string))
+	}
+	if got := strings.Join(labels, ","); got != "Pills,Powerline,Tabs,Outline,Underline,Minimal,Gradient" {
+		t.Errorf("presets = %s", got)
+	}
+}

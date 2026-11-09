@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/axiom-shell/axiom/backend/internal/config"
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 	"github.com/axiom-shell/axiom/backend/internal/schema"
 )
@@ -24,7 +25,8 @@ var types = map[string]bool{"object": true, "array": true, "string": true, "inte
 
 // Check walks an assembled root schema: every key of a schema node is a
 // known keyword (with a value of the right kind) or a registered x-*
-// annotation, every $ref names a definition, every pattern compiles.
+// annotation, every $ref names a definition, every pattern compiles, every
+// preset (`x-presets`) is valid values of its node.
 func Check(root *jsonx.Object, annotations map[string]bool, pos Positions) Errors {
 	c := &checker{root: root, annotations: annotations, pos: pos}
 	if root == nil {
@@ -65,6 +67,9 @@ func (c *checker) node(v any, where string, isRoot bool) {
 		if strings.HasPrefix(key, "x-") {
 			if !c.annotations[key] {
 				c.fail(obj, key, where, "unknown annotation %s (add it to %s, and to docs/dev/core/schema-annotations.md)", key, AnnotationsFile)
+			}
+			if key == "x-presets" {
+				c.presets(obj, where, val)
 			}
 			continue
 		}
@@ -209,6 +214,40 @@ func (c *checker) resolve(v any) *jsonx.Object {
 		obj = merged
 	}
 	return nil
+}
+
+// presets checks an object's `x-presets` ([{ label, values }]): each a
+// label, once, and values the object itself takes (config.ValidationErrors:
+// its keys, their types, enums and bounds), so a renamed key or a value
+// out of its enum fails the build
+func (c *checker) presets(obj *jsonx.Object, where string, val any) {
+	list, ok := val.(*jsonx.Array)
+	if !ok || len(list.Items) == 0 {
+		c.fail(obj, "x-presets", where, "x-presets must be a list of { label, values }")
+		return
+	}
+	labels := map[string]bool{}
+	for i, item := range list.Items {
+		at := fmt.Sprintf("x-presets[%d]", i)
+		preset, _ := item.(*jsonx.Object)
+		var label string
+		var values *jsonx.Object
+		if preset != nil {
+			label, _ = preset.Value("label").(string)
+			values, _ = preset.Value("values").(*jsonx.Object)
+		}
+		if preset == nil || preset.Len() != 2 || label == "" || values == nil || values.Len() == 0 {
+			c.fail(obj, "x-presets", where, "%s must be { label, values }: a label and the values it sets", at)
+			continue
+		}
+		if labels[label] {
+			c.fail(obj, "x-presets", where, "%s: the label %q is taken", at, label)
+		}
+		labels[label] = true
+		for _, msg := range config.ValidationErrors(schema.New(c.root), values, obj) {
+			c.fail(obj, "x-presets", where, "%s %q: %s", at, label, strings.TrimPrefix(msg, "."))
+		}
+	}
 }
 
 // pattern checks that a pattern compiles as the validators read it

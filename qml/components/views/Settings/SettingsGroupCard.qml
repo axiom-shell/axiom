@@ -51,7 +51,8 @@ FoldingCard {
     iconText: "undo"
     onClicked: {
       EditsManager.discardTypingIn(root);
-      SettingsManager.discard(root.group.rows.filter(row => row.kind !== "group").map(row => row.path));
+      // (An `x-row` object's own row: its fields' rows are there too)
+      SettingsManager.discard(root.group.rows.filter(row => row.kind !== "group" && row.kind !== "object").map(row => row.path));
     }
   }
 
