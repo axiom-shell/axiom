@@ -85,7 +85,7 @@
     "A bar beside a tabbed column, a segment per tab.": "",
     "A bar button or keybind that opens the overlay on this page.": "",
     "A bind's description sets its label, and a \"Section: Label\" prefix picks its section.": "",
-    "A box around the workspaces. Off, they sit on the bar.": "",
+    "A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.": "",
     "A box each": "",
     "A calendar of an account.": "",
     "A caption under the clock.": "",

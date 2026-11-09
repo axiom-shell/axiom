@@ -194,7 +194,7 @@ settings:
     type: boolean
     title: Background
     default: true
-    description: A box around the workspaces. Off, they sit on the bar.
+    description: A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.
     x-showIf: {$bar.widgetStyle: [filled, tinted, outline, split]}
   backgroundColor:
     type: string

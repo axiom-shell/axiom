@@ -73,6 +73,18 @@ How widget backgrounds are drawn: their shapes (split's two parts, tabs, outline
     - At the section's end there is no spacing; the gap to the next section stands in, as on any bar.
   - A widget showing nothing (hidden) is passed over: `runs` flags it null.
 
+### Parts as segments
+- A widget can lay its own parts out as segments of the bar's run (`BarWidget.segmented`): Workspaces with its Background off, whose cells are the segments. It still counts as a run member (`hasBackground`), so its neighbours chain to it, merge with it and give it a place, but:
+  - its `WidgetBackground` is `bare` (no box of its own; the press, hover outline and editor highlight still draw);
+  - its host keeps no cap room for it (`leadInset`/`trailInset` 0): each part keeps its own;
+  - `WidgetGroup` hands its host `runPlace`: `sized` and `drawn` (its place in the run from what's shown, as for the insets, and as laid out, as for the shapes) and `tabLimits` (from where it's laid out). `BarWidgetHost` adds how far its parts reach past the module across, `reachStart`/`reachEnd` (a tab's out to its edge, after the content's `tabShift`), and gives it to the module as `BarWidget.runPlace`.
+- The module chains its parts as one run of `cells` (Workspaces: its workspaces, then its strip's windows) inside its place, through `BarShapes`:
+  - **`cellSegment`** (`cellShape` from the look and `runPlace.drawn`, `cellRoom` from `runPlace.sized`): separate, each cell alone in the shape's ends; powerline, the cells continue the bar's chain (index `place.index + cell` of `place.count + cells - 1`), so the first takes the cap the segment before expects and the last ends as the widget would. The module draws over the bar's backgrounds, so its first cell always fits against the cap before it (never starts square beneath it); a later one starts square beneath the cell before where the cells' boxes are opaque (`BarWidgetStyle.cellOpaque`: filled, split, solid boxes), the cells drawn earlier over later (`z: -index`, the row over the strip). Merged, the run's background lies under the cells: a cell keeps the room of the run's end where it has one, and one drawing a box of its own there (`BarWidgetStyle.cellBoxedInRun`: solid boxes, split's fill) takes the caps it has alone, and their room, as a merged widget's level does.
+  - **`cellGap`**: no gap between cells in a powerline, else their own spacing.
+  - **`cellTab`**: a tab cell takes the bar's `tabFillet` at the widget's two ends, which the widget's `tabLimits` bound, and between cells no more than half the gap between them, so neighbours' fillets never cross.
+  - A cell's length is what it shows plus its room (`WorkspaceCells.roomed`), its content centred clear of its caps.
+- Each part is drawn in the shared `bar/widgets/base/ShapedBox` (the `WidgetBackground`'s own box: every cap, tab, open end and outline stroke, a gradient slice), reaching back under the cell before (`back`) and out to a tab's edge. What it draws past its own bounds is clipped only by `reusable/MarginClip`s, the host's while it resizes and the module's own clips grown by the same margins.
+
 ### Background states
 - The background follows a widget's `dim`, not its press fade. A press fade would show a powerline neighbour's square start through it.
 - It draws the following, each in the widget's shape as it shows and inset all round:
