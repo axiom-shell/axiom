@@ -41,8 +41,8 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 ## Popouts and edge menus
 
 ### Menus rework
-- **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml` (`mode`), `qml/config/EdgeMenusConfig.qml` (`isSubmenu`, `popoutMenuOf`), `qml/components/surfaces/edgemenu/EdgeMenu.qml`
-- **What:** An edge menu's `mode` (`floating | integrated | submenu`) mixes where a menu lives with what opens it: a `submenu` menu is named after one of its openers, a menu wanted only as a widget popout still needs an edge, a screen and hover settings, and `popoutMenuOf` can never open a submenu menu. The plan: [plans/menus-rework.md](plans/menus-rework.md) (a `placement` of `edge | strip | free`, free menus with their own window, transparent menus, creation shortcuts, the rename to `Menus`).
+- **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml` (`placement`), `qml/config/EdgeMenusConfig.qml` (`isFree`, `popoutMenuOf`), `qml/components/surfaces/edgemenu/EdgeMenu.qml`
+- **What:** An edge menu's mode (`floating | integrated | submenu`) mixed where a menu lives with what opens it: a `submenu` menu was named after one of its openers, a menu wanted only as a widget popout still needs an edge, a screen and hover settings, and `popoutMenuOf` can never open a menu with no edge. Stage 1 split out `placement` (`edge | strip | free`, config v103); a `free` menu still behaves as a submenu menu did. The plan: [plans/menus-rework.md](plans/menus-rework.md) (a `placement` of `edge | strip | free`, free menus with their own window, transparent menus, creation shortcuts, the rename to `Menus`).
 - **Size:** needs a plan
 - **Found:** 2026-11-09, while planning the menus rework
 

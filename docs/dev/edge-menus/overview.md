@@ -4,7 +4,7 @@
 > **Config:** `EdgeMenus.items[]` (→ `definitions.EdgeMenu` in the schema)
 > **Related:** [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Pages and grid](../overlay/pages-and-grid.md), [Popout registry](../popouts/registry.md), [Held off an edge](../popouts/held-off-edge.md)
 
-Menus that pop out of a screen edge, holding overlay modules. This doc lists an entry's fields, the open/pinned state in `EdgeMenuManager`, pinning and how modules learn their host. How the two host modes draw is in [Hosts](hosts.md); editing in [Editing and submenus](editing-submenus.md).
+Menus that pop out of a screen edge, holding overlay modules. This doc lists an entry's fields, the open/pinned state in `EdgeMenuManager`, pinning and how modules learn their host. How the two hosts (placements `edge` and `strip`) draw is in [Hosts](hosts.md); editing in [Editing and submenus](editing-submenus.md).
 
 ### The section
 - `EdgeMenus` is an array like `Bars`.
@@ -12,9 +12,9 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 - Escape closes a focused menu (`EdgeMenuBody`), and the `edgeMenu` bind action toggles one by id.
 
 ### An entry's fields
-- `id`, `name`, `monitor`, `edge`, `mode`.
+- `id`, `name`, `monitor`, `edge`, `placement` (`edge` | `strip` | `free`; until config v103 `mode`: `floating` | `integrated` | `submenu`).
 - `offset` / `gridOffset`: where the modules sit along the edge (see [Hosts](hosts.md)).
-- `length` (floating menus only: an integrated menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {mode: floating}`):
+- `length` (`edge` menus only: a `strip` menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {placement: edge}`):
   - `content`: as long as its modules;
   - `edge`: fitted to the whole edge. Its rows (columns on a top/bottom edge) grow or shrink evenly to take exactly the room (`GridPlacement.trackSizes` with `fit`, down to half a unit, scrolling only past that; `menuOnScreen` draws it the same in the editor). Modules go compact below their minimum.
 - `moduleScale`: % of the card size on its screen (`OverlayConfig.cardUnitOn`, from `Widget.cardSize`; the overlay's own Module size doesn't apply), shrunk where the menu would be deeper than its screen (`EdgeMenusConfig.scaleOf`).

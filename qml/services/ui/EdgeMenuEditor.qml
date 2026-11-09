@@ -22,7 +22,7 @@ QtObject {
   // before it).
   function placementOf(menu, bounds) {
     const screen = EdgeMenusConfig.screenFor(menu);
-    if (!menu || !screen || EdgeMenusConfig.isSubmenu(menu))
+    if (!menu || !screen || EdgeMenusConfig.isFree(menu))
       return null;
     const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), EdgeMenusConfig.cardUnitOf(menu), EdgeMenuManager.frameOf(menu), screen.width, screen.height, EdgeMenusConfig.gapOf(menu));
     place.screen = screen;
@@ -125,8 +125,8 @@ QtObject {
     host: "edgeMenu"
     sizeScale: root.localMenus?.[root.selectedMenuIndex]?.layout?.grid?.fine ? 2 : 1
     modulesOf: () => root.selectedMenu()?.layout.modules ?? null
-    // A submenu has no edge: just its grid
-    readonly property var _onEdge: EdgeMenusConfig.isSubmenu(root.selectedMenu()) ? null : root.selectedMenu()
+    // A free menu has no edge: just its grid
+    readonly property var _onEdge: EdgeMenusConfig.isFree(root.selectedMenu()) ? null : root.selectedMenu()
     edge: _onEdge?.edge ?? ""
     screenBox: _onEdge ? root.screenBoxOf(_onEdge) : null
     shifted: (shift, boundsBefore) => root._keepPlace(root.selectedMenu(), shift, boundsBefore)
@@ -165,18 +165,18 @@ QtObject {
   }
 
   // The menu the editor holds open to try edits on ("" for none). A
-  // submenu menu (EdgeMenusConfig.isSubmenu) shows beside the first
-  // floating menu with a Submenu module opening it (`previewParent`, held
+  // free menu (EdgeMenusConfig.isFree) shows beside the first edge-placed
+  // menu with a Submenu module opening it (`previewParent`, held
   // open too), whose module opens it and holds it (content/Submenu)
   readonly property string previewing: root._previewing
   property string _previewing: ""
   readonly property string previewParent: root._previewParent
   property string _previewParent: ""
 
-  // The first enabled floating menu (in the draft, else saved) with a
+  // The first enabled edge-placed menu (in the draft, else saved) with a
   // Submenu module opening menu `id`, else null
   function submenuParentOf(id) {
-    return (root.localMenus ?? EdgeMenusConfig.menus).find(menu => menu.id !== id && menu.enabled && menu.mode === "floating" && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id)) ?? null;
+    return (root.localMenus ?? EdgeMenusConfig.menus).find(menu => menu.id !== id && menu.enabled && menu.placement === "edge" && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id)) ?? null;
   }
 
   // Why the draft can't be saved as is (empty = savable)
@@ -471,7 +471,7 @@ QtObject {
   function canPreview(menu) {
     if (!menu?.id || menu.enabled === false)
       return false;
-    return !EdgeMenusConfig.isSubmenu(menu) || root.submenuParentOf(menu.id) !== null;
+    return !EdgeMenusConfig.isFree(menu) || root.submenuParentOf(menu.id) !== null;
   }
 
   function startPreviewing() {
@@ -500,7 +500,7 @@ QtObject {
 
   function _showPreview(id) {
     const menu = id !== "" ? EdgeMenusConfig.menuById(id) ?? root.localMenus?.find(m => m.id === id) : null;
-    const parentId = menu && EdgeMenusConfig.isSubmenu(menu) ? (root.submenuParentOf(id)?.id ?? "") : "";
+    const parentId = menu && EdgeMenusConfig.isFree(menu) ? (root.submenuParentOf(id)?.id ?? "") : "";
     if (root.previewing === id && root.previewParent === parentId)
       return;
     // What was shown closes: a submenu with the menu it opened from

@@ -876,7 +876,7 @@ QtObject {
   // (`length` "edge"), and an integrated one always, as its strip spans
   // the edge
   function menuFillsEdge(menu) {
-    return menu.length === "edge" || menu.mode === "integrated";
+    return menu.length === "edge" || menu.placement === "strip";
   }
 
   // Whether a gap before a menu's modules along its edge is kept: a
@@ -884,7 +884,7 @@ QtObject {
   // holds it). An integrated menu's modules start at its edge's start
   // (menuModules)
   function menuKeepsLead(menu) {
-    return menu.length === "edge" && menu.mode !== "integrated";
+    return menu.length === "edge" && menu.placement !== "strip";
   }
 
   // A menu's `modules` (its own by default) as it lays them out: one

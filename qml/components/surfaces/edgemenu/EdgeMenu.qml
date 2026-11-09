@@ -4,7 +4,7 @@ import Quickshell
 
 import qs.config
 
-// One edge menu from EdgeMenusConfig, on its screen, in its mode. Only the
+// One edge menu from EdgeMenusConfig, on its screen, at its placement. Only the
 // host in use is created.
 Scope {
   id: root
@@ -20,9 +20,9 @@ Scope {
   on_LiveChanged: root._follow()
   Component.onCompleted: root._follow()
   readonly property ShellScreen screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
-  readonly property bool integrated: root.menu?.mode === "integrated"
-  // A submenu menu has no host of its own (EdgeMenusConfig.isSubmenu)
-  readonly property bool floating: root.menu?.mode === "floating"
+  readonly property bool integrated: root.menu?.placement === "strip"
+  // A free menu has no host of its own (EdgeMenusConfig.isFree)
+  readonly property bool floating: root.menu?.placement === "edge"
 
   LazyLoader {
     active: !!root._live && !!root.screen && root.floating

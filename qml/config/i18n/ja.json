@@ -1917,9 +1917,6 @@
     "No modules in this menu yet": "このメニューにはまだモジュールがありません",
     "This menu is gone": "このメニューは削除されました",
     "Holds it open beside the menu it opens from while you edit it, showing unsaved changes.": "編集中は開き元のメニューの横に開いたままにし、未保存の変更を表示します。",
-    "Add a Submenu module opening it to an enabled floating menu to show it.": "表示するには、有効なフローティングメニューにこれを開くサブメニューモジュールを追加してください。",
-    "Nothing yet: add a Submenu module to a floating menu and pick this one.": "まだありません: フローティングメニューにサブメニューモジュールを追加し、このメニューを選んでください。",
-    "Opens beside a floating menu, from its Submenu module": "フローティングメニューの横に、そのサブメニューモジュールから開きます",
     "{0}: a Submenu module opens the menu it's in": "{0}: サブメニューモジュールが自身のあるメニューを開いています",
     "Submenu module in {0}": "{0} のサブメニューモジュール",
     "Submenu": "サブメニュー",
@@ -4266,6 +4263,9 @@
     "Some of these follow the shared style.": "",
     "Make all this bar's own": "",
     "{0} network folders don't answer": "",
-    "Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens beside an edge menu from its Submenu module.": ""
+    "Edge opens over windows from its edge. Strip pushes the bars and windows inwards. Free has no edge, and opens beside an edge menu from its Submenu module.": "",
+    "Opens beside a menu placed on an edge, from its Submenu module": "",
+    "Add a Submenu module opening it to an enabled menu placed on an edge to show it.": "",
+    "Nothing yet: add a Submenu module to a menu placed on an edge and pick this one.": ""
   }
 }

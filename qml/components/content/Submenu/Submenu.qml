@@ -11,8 +11,8 @@ import qs.components.hosts.popout
 // A row that opens another edge menu (`menu`) beside the one it's in, in
 // that menu's submenu (EdgePopout.submenu, content/Submenu/MenuSubmenu): on
 // hover, or on a click with openOnHover off. In a submenu it replaces
-// that submenu in place (one level deep). Only a floating menu has a
-// submenu: elsewhere (an integrated menu) the row is dimmed and inert.
+// that submenu in place (one level deep). Only a menu placed on an edge
+// has a submenu: elsewhere (a strip menu) the row is dimmed and inert.
 // properties: { menu, label, icon, openOnHover }
 Card {
   id: root

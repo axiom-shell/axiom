@@ -1,7 +1,7 @@
 # Edge menus: editing and submenus
 
 > **Files:** `qml/services/ui/EdgeMenuEditor.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
-> **Config:** `EdgeMenus.items[]` (`mode: "submenu"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
+> **Config:** `EdgeMenus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 
 How edge menus are edited on the Layouts page (draft, field groups, previewing, openers, moving along the edge), and how one menu opens another as a submenu.
@@ -47,11 +47,11 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 - In an integrated menu (no `SubPopout`) the row is dimmed and inert.
 - How the `SubPopout` itself is placed and joined: see [Popout submenus](../popouts/submenus.md).
 
-### Submenus: `mode: "submenu"` menus
-- `EdgeMenusConfig.isSubmenu`. It has no host of its own (`EdgeMenu` loads none) and no place on an edge.
+### Submenus: `placement: "free"` menus
+- `EdgeMenusConfig.isFree`. It has no host of its own (`EdgeMenu` loads none) and no place on an edge.
 - Its edge, placement, style colours, opening and closing fields hide (`x-showIf`), and `placementOf` is null.
 - The layouts editor draws just its grid (`MenuTarget`).
 - Any other menu can be opened as a submenu too.
 - `references(id)` lists the Submenu modules opening a menu; one opening the menu it's in is a problem.
-- "Show on screen" on a submenu menu opens the first enabled floating menu with a Submenu module opening it (`submenuParentOf`, `previewParent`, held as the preview is). That menu's first such row opens it and holds it (`content/Submenu.previewed`).
-- A bar widget's `popout.menu` never opens a submenu menu (`popoutMenuOf`).
+- "Show on screen" on a free menu opens the first enabled `edge` menu with a Submenu module opening it (`submenuParentOf`, `previewParent`, held as the preview is). That menu's first such row opens it and holds it (`content/Submenu.previewed`).
+- A bar widget's `popout.menu` never opens a free menu (`popoutMenuOf`).

@@ -14,8 +14,8 @@ ColumnLayout {
   required property var menu
   readonly property bool previewingThis: !!root.menu && OverlayManager.menus.previewing !== "" && OverlayManager.menus.previewing === root.menu.id
   readonly property var references: OverlayManager.menus.references(root.menu?.id ?? "")
-  // A submenu menu opens only from Submenu modules
-  readonly property bool submenu: EdgeMenusConfig.isSubmenu(root.menu)
+  // A free menu opens only from Submenu modules
+  readonly property bool free: EdgeMenusConfig.isFree(root.menu)
 
   Layout.fillWidth: true
   spacing: Widget.spacing
@@ -51,8 +51,8 @@ ColumnLayout {
     Layout.fillWidth: true
     wrapMode: Text.WordWrap
     text: {
-      if (root.submenu)
-        return OverlayManager.menus.canPreview(root.menu) ? I18n.tr("Holds it open beside the menu it opens from while you edit it, showing unsaved changes.") : I18n.tr("Add a Submenu module opening it to an enabled floating menu to show it.");
+      if (root.free)
+        return OverlayManager.menus.canPreview(root.menu) ? I18n.tr("Holds it open beside the menu it opens from while you edit it, showing unsaved changes.") : I18n.tr("Add a Submenu module opening it to an enabled menu placed on an edge to show it.");
       return OverlayManager.menus.canPreview(root.menu) ? I18n.tr("Holds the menu open on its screen while you edit it, showing unsaved changes.") : I18n.tr("Enable the menu to show it.");
     }
     textSize: Appearance.fontSizeBy(-2)
@@ -112,15 +112,15 @@ ColumnLayout {
     visible: root.references.length === 0
     Layout.fillWidth: true
     wrapMode: Text.WordWrap
-    readonly property bool opensAnyway: !root.submenu && (root.menu?.open?.onHover ?? false)
-    text: root.submenu ? I18n.tr("Nothing yet: add a Submenu module to a floating menu and pick this one.") : nothingYet.opensAnyway ? I18n.tr("Nothing else yet: it opens when the pointer rests on its edge.") : I18n.tr("Nothing yet: turn on Open on hover, or add a bar button or keybind.")
+    readonly property bool opensAnyway: !root.free && (root.menu?.open?.onHover ?? false)
+    text: root.free ? I18n.tr("Nothing yet: add a Submenu module to a menu placed on an edge and pick this one.") : nothingYet.opensAnyway ? I18n.tr("Nothing else yet: it opens when the pointer rests on its edge.") : I18n.tr("Nothing yet: turn on Open on hover, or add a bar button or keybind.")
     textSize: Appearance.fontSizeBy(-2)
     textColor: nothingYet.opensAnyway ? Theme.foreground : Theme.warning
     opacity: nothingYet.opensAnyway ? 0.7 : 1
   }
 
   OpenerButtons {
-    visible: !root.submenu
+    visible: !root.free
     saved: OverlayManager.menus.isSaved(root.menu)
     unsavedHint: I18n.tr("Save the menu to add a bar button or keybind for it.")
     onBarButtonRequested: barIndex => OverlayManager.menus.addBarButton(barIndex, "right")
