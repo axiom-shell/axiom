@@ -13,18 +13,6 @@ import QtQuick
 QtObject {
   id: root
 
-  // Flattens an object schema into form rows:
-  //   { kind: "group", title, path, showIf } for a nested object
-  //   { kind: "field", title, path, schema }  for an editable value
-  //   { kind: "array", title, path, schema }  for an array of objects
-  // A nested object's `x-showIf` goes on its group row and, as
-  // `groupShowIf` ([{ condition, path }], path: the object's parent), on
-  // every row inside it. A nested object marked `x-fold` folds its rows
-  // behind its title: its group row has `fold: true`, and each row inside
-  // it `foldedBy`, the dotted path of the innermost such object. A row
-  // another field's `x-row` draws (its `x-rowDraws`) has `drawnBy`, that
-  // field's dotted path. Keys go in
-  // their object's `x-order` first (the schema reaches QML as a map)
   // The keys of its object a field draws itself, so their own rows hide:
   // its `x-rowDraws`, and an icon field's `x-textSwitch`
   function drawnKeys(fieldSchema) {
@@ -34,6 +22,18 @@ QtObject {
     return keys;
   }
 
+  // Flattens an object schema into form rows:
+  //   { kind: "group", title, path, showIf } for a nested object
+  //   { kind: "field", title, path, schema }  for an editable value
+  //   { kind: "array", title, path, schema }  for an array of objects
+  // A nested object's `x-showIf` goes on its group row and, as
+  // `groupShowIf` ([{ condition, path }], path: the object's parent), on
+  // every row inside it. A nested object marked `x-fold` folds its rows
+  // behind its title: its group row has `fold: true`, and each row inside
+  // it `foldedBy`, the dotted path of the innermost such object. A row
+  // another field draws (drawnKeys) has `drawnBy`, that field's dotted
+  // path. Keys go in
+  // their object's `x-order` first (the schema reaches QML as a map)
   function rows(objectSchema, path) {
     const result = [];
     const order = objectSchema["x-order"] ?? [];
@@ -87,9 +87,10 @@ QtObject {
         });
       }
     }
-    // A field whose `x-row` also draws other keys of its object
-    // (`x-rowDraws`, dotted paths under it) marks their rows `drawnBy`
-    // its dotted path: on the settings page they're drawn inside it
+    // A field that also draws other keys of its object (drawnKeys: an
+    // `x-row`'s `x-rowDraws`, dotted paths under it, or an icon field's
+    // `x-textSwitch`) marks their rows `drawnBy` its dotted path: on the
+    // settings page they're drawn inside it
     for (const row of result.filter(r => r.kind !== "group" && root.drawnKeys(r.schema).length > 0)) {
       const drawn = root.drawnKeys(row.schema).map(key => path.concat(key.split(".")).join("."));
       result.filter(r => r.kind !== "group" && drawn.includes(r.path.join("."))).forEach(r => r.drawnBy = row.path.join("."));

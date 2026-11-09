@@ -40,8 +40,10 @@ ColumnLayout {
   // A field's unsaved-edit dot was clicked (with `changedAt`)
   signal discardAt(var path)
 
-  // Keys another field draws itself (SchemaLayout.drawnKeys): no rows
-  readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).reduce((keys, prop) => keys.concat(SchemaLayout.drawnKeys(prop)), [])
+  // Keys an icon field's Icon / Text switch draws (`x-textSwitch`): no
+  // rows. Not `x-rowDraws`: an `x-row` is drawn only on the settings page,
+  // so here the keys it names keep their own rows
+  readonly property var _drawn: Object.values(root.propertiesSchema ?? {}).map(prop => prop?.["x-textSwitch"]).filter(key => typeof key === "string")
   // Depends on the schema only, so edits update the rows in place
   readonly property var rows: Object.keys(root.propertiesSchema ?? {}).filter(key => !root._drawn.includes(key)).sort((a, b) => {
     const rank = key => {
