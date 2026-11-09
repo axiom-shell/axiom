@@ -17,6 +17,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
 	"github.com/axiom-shell/axiom/backend/internal/buildinfo"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/fileindex"
 	"github.com/axiom-shell/axiom/backend/internal/fsx"
 	"github.com/axiom-shell/axiom/backend/internal/ipcroute"
 	"github.com/axiom-shell/axiom/backend/internal/migrate/steps"
@@ -37,6 +38,9 @@ type testDaemon struct {
 	registered func(*rpc.Registry)
 	// goBin is the go dev mode builds with ("": go)
 	goBin string
+	// The file search's settings and tuning ("": the config's)
+	fileSearch        *fileindex.Settings
+	fileSearchOptions func(*fileindex.Options)
 }
 
 func (td *testDaemon) getenv(k string) string { return td.env[k] }
@@ -122,7 +126,8 @@ func (td *testDaemon) start(t *testing.T, isShell func(int) bool, sources ...top
 }
 
 func (td *testDaemon) options(isShell func(int) bool, sources ...topics.Source) Options {
-	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered, Go: td.goBin}
+	return Options{Tree: testkit.RepoRoot(), NoShell: true, Getenv: td.getenv, isShell: isShell, topics: sources, registered: td.registered, Go: td.goBin,
+		fileSearch: td.fileSearch, fileSearchOptions: td.fileSearchOptions}
 }
 
 // connect dials the daemon and says hello as client; the connection's

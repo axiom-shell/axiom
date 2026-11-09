@@ -1,12 +1,10 @@
 package mimeapps
 
 import (
-	"bufio"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/axiom-shell/axiom/backend/internal/axerr"
@@ -30,22 +28,29 @@ var schemePattern = regexp.MustCompile(`^([a-zA-Z][a-zA-Z0-9+.-]+):`)
 //
 // An override for the role (Overrides) runs instead of its app, args
 // after its words (the terminal's command after -e). With no app for a
-// URL or file, xdg-open gets it, when installed.
+// URL or file of its own, its parent types' are tried, nearest first
+// (Globs.Lineage: a script no app claims opens as text/plain, so in the
+// text editor role's app); with none, xdg-open gets it, when installed.
 func (a *Apps) Command(target string, args []string, ov Overrides) ([]string, error) {
 	if r, ok := RoleOf(target); ok {
 		return a.roleCommand(r, args, ov)
 	}
-	mime, role := a.typeOf(target)
-	if role != "" {
-		r, _ := RoleOf(role)
-		// A web or mail link follows its role's app (https as http), as
-		// does a file of the role's main type
-		if ov[role] != "" || mime == r.Types[0] || strings.HasPrefix(mime, "x-scheme-handler/") {
-			return a.roleCommand(r, append([]string{target}, args...), ov)
+	withTarget := append([]string{target}, args...)
+	mime := a.typeOf(target)
+	for _, names := range a.lineage(mime) {
+		for _, t := range names {
+			if r, ok := roleOfType(t); ok {
+				// A web or mail link follows its role's app (https as
+				// http), as does a file of the role's main type, and any
+				// of the role's types when the role has a command set
+				if ov[r.ID] != "" || t == r.Types[0] || strings.HasPrefix(t, "x-scheme-handler/") {
+					return a.roleCommand(r, withTarget, ov)
+				}
+			}
 		}
-	}
-	if id := a.Default(mime); id != "" && mime != "" {
-		return a.entryCommand(a.entries[id], append([]string{target}, args...), ov)
+		if id := a.ownDefault(names); id != "" {
+			return a.entryCommand(a.entries[id], withTarget, ov)
+		}
 	}
 	if _, err := exec.LookPath("xdg-open"); err == nil {
 		return []string{"xdg-open", target}, nil
@@ -111,93 +116,38 @@ func (a *Apps) terminalCommand(argv []string, ov Overrides) ([]string, error) {
 	return nil, axerr.New(axerr.NotFound, "no terminal is installed")
 }
 
-// typeOf is what a URL or path is: its MIME type, and the role that type
-// is the main one of ("" for none).
-func (a *Apps) typeOf(target string) (mime, role string) {
+// typeOf is the MIME type of a URL (its scheme's handler type) or a path
+// (a folder's, else the type its name says), "" for none.
+func (a *Apps) typeOf(target string) string {
 	if m := schemePattern.FindStringSubmatch(target); m != nil && !strings.HasPrefix(target, "/") {
 		scheme := strings.ToLower(m[1])
 		if scheme != "file" {
-			mime = "x-scheme-handler/" + scheme
-			switch scheme {
-			case "http", "https":
-				return mime, "browser"
-			case "mailto":
-				return mime, "mail"
-			}
-			return mime, ""
+			return "x-scheme-handler/" + scheme
 		}
 		target = strings.TrimPrefix(strings.TrimPrefix(target, "file://"), "file:")
 	}
-	st, err := os.Stat(target)
-	if err == nil && st.IsDir() {
-		return "inode/directory", "fileManager"
+	if st, err := os.Stat(target); err == nil && st.IsDir() {
+		return "inode/directory"
 	}
-	mime = a.mimeOfName(filepath.Base(target))
+	return a.mimeDB().TypeOfName(filepath.Base(target))
+}
+
+// roleOfType is the role a type is one of, ok false for none.
+func roleOfType(mime string) (Role, bool) {
 	for _, r := range Roles {
-		if len(r.Types) > 0 && contains(r.Types, mime) {
-			return mime, r.ID
+		if contains(r.Types, mime) {
+			return r, true
 		}
 	}
-	return mime, ""
+	return Role{}, false
 }
 
-// glob is one of shared-mime-info's globs2 lines
-type glob struct {
-	weight  int
-	mime    string
-	pattern string
-	cased   bool // matched as written ("cs")
-}
-
-// mimeOfName is the type a file's name says it is (shared-mime-info's
-// globs2, the heaviest then longest pattern matching), "" when none does.
-func (a *Apps) mimeOfName(name string) string {
-	best, bestWeight, bestLen := "", -1, -1
-	for _, g := range a.globs() {
-		subject, pattern := name, g.pattern
-		if !g.cased {
-			subject, pattern = strings.ToLower(name), strings.ToLower(pattern)
-		}
-		if ok, _ := filepath.Match(pattern, subject); !ok {
-			continue
-		}
-		if g.weight > bestWeight || g.weight == bestWeight && len(g.pattern) > bestLen {
-			best, bestWeight, bestLen = g.mime, g.weight, len(g.pattern)
-		}
+// mimeDB is shared-mime-info's database, read when first asked.
+func (a *Apps) mimeDB() *Globs {
+	if a.globs == nil {
+		a.globs = LoadGlobs(append([]string{a.o.DataHome}, a.o.DataDirs...))
 	}
-	return best
-}
-
-// globs reads the first globs2 each data folder's mime/ has, once.
-func (a *Apps) globs() []glob {
-	if a.globList != nil {
-		return a.globList
-	}
-	a.globList = []glob{}
-	for _, d := range append([]string{a.o.DataHome}, a.o.DataDirs...) {
-		f, err := os.Open(filepath.Join(d, "mime", "globs2"))
-		if err != nil {
-			continue
-		}
-		sc := bufio.NewScanner(f)
-		for sc.Scan() {
-			line := sc.Text()
-			if line == "" || line[0] == '#' {
-				continue
-			}
-			parts := strings.SplitN(line, ":", 4)
-			if len(parts) < 3 {
-				continue
-			}
-			w, err := strconv.Atoi(parts[0])
-			if err != nil {
-				continue
-			}
-			a.globList = append(a.globList, glob{weight: w, mime: parts[1], pattern: parts[2], cased: len(parts) == 4 && strings.Contains(parts[3], "cs")})
-		}
-		f.Close()
-	}
-	return a.globList
+	return a.globs
 }
 
 // OverridesFrom reads the config's Apps.commands, a command per role

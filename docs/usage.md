@@ -9,7 +9,7 @@ Keybinds are edited on the overlay's **Keybinds** page: the binds by section on 
 **All binds** is the quick reference: every bind your compositor has, axiom's and your own, by section and grouped under their modifiers (click a group to fold it), with direction and number sets folded into one row. Press a combo in **Look up a combo** to see what it does, or bind it if nothing does. **Keyboard** shows the same binds on a keyboard under the modifiers you pick. Click one of axiom's binds in either to edit it. The Cheatsheet module shows the reference on any page, as a list or a keyboard.
 
 A bind can run:
-- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light, do not disturb, the microphone), **Tools** (clipboard history, emoji, calculator, notes, calendar, chat, pomodoro, stopwatch and timers), media keys, switching the audio output and the next or previous input source
+- any IPC action below, picked from a list: axiom's surfaces, **System** toggles (Wi-Fi, Bluetooth, VPN, dark mode, caffeine, night light, do not disturb, the microphone), **Tools** (clipboard history, emoji, calculator, file search, notes, calendar, chat, pomodoro, stopwatch and timers), media keys, switching the audio output and the next or previous input source
 - a window action (focus, move, resize, close, fullscreen, floating, special workspaces, mouse drag)
 - a raw command in the compositor's own language: a Hyprland dispatcher as Lua (`hl.dsp.layout("swapsplit")`), a sway command or a niri action. It's kept for the compositor it was written for, and skipped (with a warning) on the others
 - a command
@@ -50,7 +50,7 @@ axiom ipc <target> <function> [args]
 | `edgeMenu` | `open <id>`, `close <id>`, `toggle <id>`, `pin <id>`, `unpin <id>`, `list`, `edit` |
 | `dock` | `open <id>`, `close <id>`, `toggle <id>` (no id: every dock) |
 | `bar` | `reveal <id>` (shows an auto-hiding bar for its Shown for time), `toggle <id>` (pins it shown, reserving its space, or unpins it), `hide <id>` (unpins and hides it now); `<id>` is a bar's id, or `focused` (or `""`) for the auto-hiding bars on the focused monitor. Bindable as the **Auto-hiding bar** keybind action (Pin or unpin, Show, Hide) |
-| `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator` (opens on that history or picker) |
+| `appLauncher` | `open`, `close`, `toggle`, `search <text>`, `clipboard`, `emoji`, `calculator`, `files` (opens on that history, picker or the recent files) |
 | `powermenu` | `open`, `close`, `toggle` |
 | `osd` | `show <id>` (messages: `axiom message`) |
 | `workspaceOverlay` | `open`, `hide`, `toggle` |
@@ -137,7 +137,7 @@ axiom markets hold BTC-USD +0.01
 
 ## Launcher
 
-Plain text searches apps and open windows. When the text is math, the result shows first, and a web search comes last. A prefix picks one kind of search:
+Plain text searches apps and open windows. When the text is math, the result shows first; the three best matching files follow the apps (Settings → Launcher → Files in the main search, 0 to leave them out), and a web search comes last. A prefix picks one kind of search:
 
 | Prefix | Does |
 | --- | --- |
@@ -148,6 +148,7 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | `@` | Asks the overlay's chat, in a new conversation |
 | `:` | Clipboard history. Shift+Enter removes an entry |
 | `;` | Emoji, searched by name and keyword. Enter copies one, Shift+Enter also types it into the focused window |
+| `~` | Files. `~` alone lists your recent files, `~report` searches every folder searched (`doc/rep` finds `Documents/report.pdf`; each word must match), `~/Documents/` lists a folder (a leading `.` shows hidden entries) and `~/Documents/rep` searches below it. Enter opens a file with its default app, Shift+Enter shows it in its folder, <kbd>Ctrl</kbd>+<kbd>C</kbd> copies its path and <kbd>Tab</kbd> types it (a folder's lists it) |
 
 | Apps | Commands | Calculator | Emoji |
 | :---: | :---: | :---: | :---: |
@@ -163,7 +164,7 @@ Plain text searches apps and open windows. When the text is math, the result sho
 | **Audio and media** | `/volume <n\|+n\|-n>` `/mute` `/mic` `/output <device>` `/input <device>` `/play` `/next` `/prev` |
 | **Connectivity** | `/wifi [on\|off]` `/bluetooth [on\|off]` `/airplane [on\|off]` `/connect <device>` `/vpn [name]` `/eject [drive]` |
 | **Calendar and notes** | `/event <when> <title>` `/notes [text]` `/todo [text]` `/pomodoro [start\|pause\|skip\|stop]` `/timer <duration> [label]` `/stopwatch [start\|pause\|lap\|reset]` |
-| **Searches** | `/calc` `/run` `/web` `/clipboard` `/emoji` `/chat [conversation]` |
+| **Searches** | `/calc` `/run` `/web` `/clipboard` `/emoji` `/files` `/chat [conversation]` |
 | **Shell** | `/config <setting> <value>` `/config save <name>` `/config restore <name>` `/config example <name>` `/update` `/welcome` `/reload` `/help` |
 | **Other** | `/dnd [on\|off]` `/clear` `/caffeine [on\|off\|30m]` `/powersaver [on\|off]` `/dev [on\|off\|rebuild\|set <path>]` `/ws <n>` `/screenshot <region\|window\|screen>` `/record` |
 

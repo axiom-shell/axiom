@@ -219,10 +219,132 @@ func TestCommand(t *testing.T) {
 			t.Errorf("Command(%q, %q, %v) = %q, %v; want %q", c.target, c.args, c.ov, got, err, c.want)
 		}
 	}
-	if got := a.mimeOfName("README"); got != "text/x-readme" {
+	if got := a.mimeDB().TypeOfName("README"); got != "text/x-readme" {
 		t.Errorf("a literal name: %q", got)
 	}
-	if got := a.mimeOfName("x.c"); got != "" {
+	if got := a.mimeDB().TypeOfName("x.c"); got != "" {
 		t.Errorf("a case-sensitive glob matched another case: %q", got)
+	}
+}
+
+func TestGlobs(t *testing.T) {
+	t.Parallel()
+	home, sys := t.TempDir(), t.TempDir()
+	write := func(path, text string) {
+		os.MkdirAll(filepath.Dir(path), 0o755)
+		if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(filepath.Join(sys, "mime/globs2"), "50:text/plain:*.txt\n50:application/gzip:*.gz\n50:application/x-compressed-tar:*.tar.gz\n"+
+		"55:text/x-readme:README\n50:text/x-c:*.C:cs\n50:text/x-csrc:*.c\n10:text/x-log:*.log.[0-9]\n50:image/png:*.png\n")
+	write(filepath.Join(home, "mime/globs2"), "60:image/x-mine:*.png\n")
+	write(filepath.Join(sys, "mime/generic-icons"), "application/gzip:package-x-generic\n")
+	write(filepath.Join(sys, "mime/icons"), "text/x-readme:text-x-readme-special\n")
+	g := LoadGlobs([]string{home, sys})
+	for name, want := range map[string]string{
+		"a.txt":     "text/plain",
+		"A.TXT":     "text/plain",
+		"x.tar.gz":  "application/x-compressed-tar",
+		"x.gz":      "application/gzip",
+		"README":    "text/x-readme",
+		"readme":    "text/x-readme",
+		"m.C":       "text/x-c",
+		"m.c":       "text/x-csrc",
+		"sys.log.1": "text/x-log",
+		"p.png":     "image/x-mine", // heavier
+		"nothing":   "",
+		".hidden":   "",
+		// Lower case shorter than the name (the Kelvin sign is "k")
+		"\u212a\u212a\u212a.txt": "text/plain",
+	} {
+		if got := g.TypeOfName(name); got != want {
+			t.Errorf("TypeOfName(%q) = %q, want %q", name, got, want)
+		}
+	}
+	for mime, want := range map[string]string{
+		"application/gzip": "application-gzip package-x-generic",
+		"text/x-readme":    "text-x-readme-special text-x-generic",
+		"image/png":        "image-png image-x-generic",
+		"inode/directory":  "folder",
+		"":                 "",
+	} {
+		if got := strings.Join(g.IconOf(mime), " "); got != want {
+			t.Errorf("IconOf(%q) = %q, want %q", mime, got, want)
+		}
+	}
+}
+
+// A type no app claims opens in its parent's (MIME Applications spec):
+// aliases resolved, subclasses followed, every text/* a text/plain, each
+// type once however the files loop.
+func TestParentTypes(t *testing.T) {
+	t.Parallel()
+	tr := newTree(t)
+	tr.standard()
+	tr.app("gedit.desktop", "Name=Text Editor\nExec=gedit %U\nMimeType=text/plain;\n")
+	tr.app("mail-viewer.desktop", "Name=Mail Viewer\nExec=mailview %f\nMimeType=application/x-old-mail;\n")
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Default Applications]\ntext/plain=gedit.desktop;\n")
+	tr.write(filepath.Join(tr.sysData, "mime/globs2"), "50:text/plain:*.txt\n50:text/javascript:*.js\n50:application/x-ts:*.ts\n"+
+		"50:application/x-loop:*.loop\n50:message/x-new-mail:*.eml\n")
+	tr.write(filepath.Join(tr.sysData, "mime/aliases"), "application/javascript text/javascript\napplication/x-old-mail message/x-new-mail\n")
+	// text/javascript is a kind of application/x-ts (nobody opens either);
+	// application/x-loop and application/x-ts are kinds of each other
+	tr.write(filepath.Join(tr.sysData, "mime/subclasses"), "text/javascript application/x-ts\napplication/x-ts application/x-loop\napplication/x-loop application/x-ts\n")
+	a := tr.load()
+	if got, want := a.mimeDB().Lineage("application/javascript"), [][]string{{"text/javascript", "application/javascript"}, {"application/x-ts"}, {"text/plain"}, {"application/x-loop"}}; !reflect.DeepEqual(got, want) {
+		t.Errorf("Lineage = %q, want %q", got, want)
+	}
+	for _, c := range []struct {
+		target string
+		ov     Overrides
+		want   string
+	}{
+		{"app.js", nil, "gedit app.js"},                           // as text/plain
+		{"app.js", Overrides{"textEditor": "zed"}, "zed app.js"},  // through the role, its command too
+		{"letter.eml", nil, "mailview letter.eml"},                // an entry naming the type's alias
+		{"x.loop", nil, "xdg-open x.loop"},                        // a cycle ends, nothing found
+		{"x.ts", Overrides{"textEditor": "zed"}, "xdg-open x.ts"}, // not text
+	} {
+		got, err := a.Command(c.target, nil, c.ov)
+		// Nothing found is xdg-open, or an error where it isn't installed
+		fallback := strings.HasPrefix(c.want, "xdg-open") && err != nil
+		if !fallback && (err != nil || strings.Join(got, " ") != c.want) {
+			t.Errorf("Command(%q, %v) = %q, %v; want %q", c.target, c.ov, got, err, c.want)
+		}
+	}
+	if got := a.Default("text/javascript"); got != "gedit.desktop" {
+		t.Errorf("Default(text/javascript) = %q, want text/plain's", got)
+	}
+	// The script's own default wins over its parent's, set by its alias
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Default Applications]\ntext/plain=gedit.desktop;\napplication/javascript=chromium.desktop;\n")
+	a = tr.load()
+	if got, err := a.Command("app.js", nil, Overrides{"textEditor": "zed"}); err != nil || strings.Join(got, " ") != "chromium app.js" {
+		t.Errorf("an explicit default: %q, %v", got, err)
+	}
+	// ... and over an app declaring only its other name: a type's names
+	// are one type, its explicit default before any handler
+	tr.app("jsedit.desktop", "Name=A JS Editor\nExec=jsedit %f\nMimeType=text/javascript;\n")
+	a = tr.load()
+	if got := a.Default("text/javascript"); got != "chromium.desktop" {
+		t.Errorf("Default(text/javascript) = %q, want the alias's explicit default", got)
+	}
+	// Added and Removed Associations under an alias count for the type
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Added Associations]\napplication/javascript=chromium.desktop;\n")
+	if got := tr.load().Default("text/javascript"); got != "chromium.desktop" {
+		t.Errorf("an Added Association under the alias: %q", got)
+	}
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Removed Associations]\napplication/javascript=jsedit.desktop;\n")
+	if a = tr.load(); a.Default("text/javascript") != a.Default("text/plain") {
+		t.Errorf("a Removed Association under the alias: %q", a.Default("text/javascript"))
+	}
+	// A default picked under an alias is written under the type's own
+	// name, so an older line for that name doesn't beat it
+	tr.write(filepath.Join(tr.config, "mimeapps.list"), "[Default Applications]\ntext/javascript=jsedit.desktop;\n")
+	if err := tr.load().SetTypes([]string{"application/javascript"}, "chromium.desktop"); err != nil {
+		t.Fatal(err)
+	}
+	if got := tr.load().Default("application/javascript"); got != "chromium.desktop" {
+		t.Errorf("after SetTypes under the alias: %q", got)
 	}
 }

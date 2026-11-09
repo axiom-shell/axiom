@@ -88,6 +88,7 @@ properties:
       - clipboard
       - emoji
       - calculator
+      - fileSearch
       - notes
       - calendar
       - calendarNewEvent
@@ -186,6 +187,7 @@ properties:
       clipboard: Clipboard history
       emoji: Emoji picker
       calculator: Calculator
+      fileSearch: File search
       notes: Notes
       calendar: Calendar
       calendarNewEvent: New calendar event

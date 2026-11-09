@@ -81,7 +81,7 @@ A grid per monitor or scrolling strips, and everything follows along.
 
 ### A launcher that does everything
 
-Apps, math, emoji, the clipboard, AI chat, and commands for the whole shell.
+Apps, files, math, emoji, the clipboard, AI chat, and commands for the whole shell.
 
 <img src="docs/screenshots/launcher.webp" alt="The launcher finding Firefox, listing /theme commands, converting 12 USD to euros and searching emoji">
 
@@ -138,7 +138,7 @@ One repository and one config for the whole desktop:
 - **Your compositor, set from the UI:** keybinds, monitors, input, the window look (borders, gaps, rounding, blur, shadows), and optionally the whole config file.
 - **Calendar** from CalDAV accounts, `.ics` feeds and calendars kept on your computer, with an editor, reminders and quick add (`/event fri 3pm Dentist`).
 - **Theming:** 42 base16 themes or ones generated from your wallpaper, applied to 22 other apps, with a light/dark schedule.
-- **Launcher** for apps, windows, math, the clipboard, emoji and `/` commands for the whole shell.
+- **Launcher** for apps, windows, files, math, the clipboard, emoji and `/` commands for the whole shell.
 - **Docks** on any edge with pinning and magnification, **OSDs**, notifications, a **polkit** prompt and a power menu.
 - **AI chat** (Claude, OpenAI, Gemini or Ollama) in a page, a menu or the launcher.
 - **The `axiom` command:** the shell's parent, which restarts it if it crashes and owns your config, and a command line for scripts and keybinds (`axiom launcher toggle`, `axiom lock`, `axiom config set …`).

@@ -13,6 +13,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/chat"
 	"github.com/axiom-shell/axiom/backend/internal/command"
 	"github.com/axiom-shell/axiom/backend/internal/config"
+	"github.com/axiom-shell/axiom/backend/internal/fileindex"
 	"github.com/axiom-shell/axiom/backend/internal/files"
 	"github.com/axiom-shell/axiom/backend/internal/idle"
 	"github.com/axiom-shell/axiom/backend/internal/inputmethod"
@@ -49,6 +50,8 @@ const (
 	topicScreenShare = "screenshare"
 	// inputMethod.state
 	topicInputMethod = "inputMethod"
+	// filesearch.state
+	topicFileSearch = "fileSearch"
 )
 
 // Pushes, each declared once with the type of its params and sent to the
@@ -94,6 +97,10 @@ var (
 	pushInputMethodState = rpc.Push[inputmethod.State]{Method: "inputMethod.state", Latest: true}
 
 	pushCameraState = rpc.Push[camera.State]{Method: "camera.state", Latest: true}
+
+	// The file index's phase and counts, at most every 500 ms while it
+	// changes
+	pushFileSearchState = rpc.Push[fileindex.State]{Method: "filesearch.state", Latest: true}
 
 	pushScreenShareRequest = rpc.Push[screenshare.Request]{Method: "screenshare.request"}
 	pushScreenShareDone    = rpc.Push[screenShareDone]{Method: "screenshare.done"}
@@ -224,10 +231,10 @@ func (p HelloParams) topics() (all bool, topics map[string]bool, err error) {
 	topics = map[string]bool{}
 	for _, t := range list {
 		switch t {
-		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare:
+		case topicConfig, topicSaved, topicDaemon, topicCompositor, topicIdle, topicWayland, topicClipboard, topicVPN, topicDrives, topicBluetooth, topicInputMethod, topicCamera, topicScreenShare, topicFileSearch:
 			topics[t] = true
 		default:
-			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare)", t)
+			return false, nil, axerr.New(axerr.BadRequest, "no topic %q (config, saved, daemon, compositor, idle, wayland, clipboard, vpn, drives, bluetooth, inputMethod, camera, screenshare, fileSearch)", t)
 		}
 	}
 	return false, topics, nil

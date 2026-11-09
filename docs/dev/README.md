@@ -193,7 +193,8 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [custom-widgets](features/custom-widgets.md): Waybar-style scripts as bar widgets, popouts and modules; definitions, fields, running.
 - [hot-corners](features/hot-corners.md): axiom's own hot corners, their actions, windows and layer.
 - [launcher](features/launcher.md): rows, placement, routing, `/` commands, `/config`, IPC.
-- [launcher-providers](features/launcher-providers.md): calculator, clipboard history, emoji.
+- [launcher-providers](features/launcher-providers.md): calculator, clipboard history, emoji, the files' service.
+- [file-search](features/file-search.md): the launcher's files (`~`): the daemon's index, its idle-priority crawl child, watches, stat pass and cache, thumbnails, the rows.
 - [lockscreen](features/lockscreen.md): lock modes, the module layout, password, editing and preview.
 - [greeter-install](features/greeter-install.md): installing/updating the greetd login screen, status.
 - [greeter-runtime](features/greeter-runtime.md): the bundle, session script, greeter mode, `GreetdManager`.

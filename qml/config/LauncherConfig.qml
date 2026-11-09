@@ -49,4 +49,12 @@ QtObject {
   readonly property bool emoji: _p.emoji
   // With {} where the terms go
   readonly property string searchEngine: _p.web.engine
+  // "~" searches files (FileSearchManager: the daemon's index, which reads
+  // roots, excludes and showHidden itself)
+  readonly property bool files: _p.files.enabled
+  readonly property bool fileShowHidden: _p.files.showHidden
+  // Files shown below the apps in the main search (0: only after ~)
+  readonly property int filesInSearch: _p.files.inSearch
+  // Pictures' rows show their thumbnails
+  readonly property bool fileThumbnails: _p.files.thumbnails
 }

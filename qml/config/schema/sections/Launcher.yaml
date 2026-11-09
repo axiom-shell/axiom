@@ -208,3 +208,49 @@ properties:
         title: Emoji (;)
         default: true
         description: Type ; to search emoji. Enter copies one, Shift+Enter types it.
+      files:
+        type: object
+        title: Files
+        additionalProperties: false
+        properties:
+          enabled:
+            type: boolean
+            title: 'Files (~)'
+            default: true
+            description: 'Type ~ to search your files, ~/ to browse folders. axiom keeps its own index of the folders below, built in the background at idle priority.'
+          inSearch:
+            type: integer
+            x-control: stepper
+            title: Files in the main search
+            default: 3
+            minimum: 0
+            maximum: 5
+            description: The best matching files shown below the apps. 0 shows them only after ~.
+            x-showIf: {enabled: true}
+          thumbnails:
+            type: boolean
+            title: Image thumbnails
+            default: true
+            description: Show pictures as thumbnails, shared with your file manager's.
+            x-showIf: {enabled: true}
+          showHidden:
+            type: boolean
+            title: Hidden files
+            default: false
+            description: Index files and folders whose name starts with a dot. Typing a dot finds them either way while browsing.
+            x-showIf: {enabled: true}
+          roots:
+            x-scope: machine
+            type: array
+            title: Folders searched
+            default: ['~']
+            items: {type: string}
+            description: Folders indexed with everything below them, comma-separated.
+            x-showIf: {enabled: true}
+          excludes:
+            type: array
+            title: Skipped names
+            default: [.git, node_modules, .cache, __pycache__, .venv, venv, target, build, dist, .gradle, .npm, .cargo, .rustup, go/pkg, .local/share/Trash, .local/share/Steam, .steam, .var/app, '*.o', '*.pyc']
+            items: {type: string}
+            description: 'Names or paths below a folder searched, comma-separated; * matches any text.'
+            x-showIf: {enabled: true}

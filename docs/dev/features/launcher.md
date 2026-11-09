@@ -1,10 +1,10 @@
 # Launcher
 
-> **Files:** `qml/services/ui/LauncherManager.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/services/ui/LauncherConfigBrowser.qml`, `qml/components/surfaces/launcher/Launcher.qml`, `qml/components/surfaces/launcher/LauncherPanel.qml`, `qml/components/surfaces/launcher/LauncherRow.qml`, `qml/components/views/Settings/LauncherPlace.qml`
+> **Files:** `qml/services/ui/LauncherManager.qml`, `qml/services/ui/LauncherCommands.qml`, `qml/services/ui/LauncherConfigBrowser.qml`, `qml/services/ui/LauncherFiles.qml`, `qml/components/surfaces/launcher/Launcher.qml`, `qml/components/surfaces/launcher/LauncherPanel.qml`, `qml/components/surfaces/launcher/LauncherRow.qml`, `qml/components/views/Settings/LauncherPlace.qml`
 > **Config:** `Launcher.*` (reader `LauncherConfig`)
-> **Related:** [Launcher providers](launcher-providers.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
+> **Related:** [Launcher providers](launcher-providers.md), [File search](file-search.md), [Saved configs](../core/saved-configs-sharing.md), [Edge attach](../popouts/edge-attach.md), [Dock](dock.md), [OSD](osd.md)
 
-This doc covers the app launcher: how search text becomes rows, how the window is placed, how input is routed to providers, and how `/` commands and `/config` work. The providers (calculator, clipboard, emoji) are in [launcher-providers.md](launcher-providers.md).
+This doc covers the app launcher: how search text becomes rows, how the window is placed, how input is routed to providers, and how `/` commands and `/config` work. The providers (calculator, clipboard, emoji) are in [launcher-providers.md](launcher-providers.md), the files (`~`) in [file-search.md](file-search.md).
 
 ### Model and UI
 - `LauncherManager` turns the search text into rows. The UI only draws them.
@@ -27,10 +27,14 @@ This doc covers the app launcher: how search text becomes rows, how the window i
 
 ### Row shape
 Every provider returns the same row shape:
-`{ kind, image, glyph, title, usage, subtitle, hint, complete, run(shift) }`
+`{ kind, image, glyph, title, usage, subtitle, hint, complete, run(shift), crop, copy(), key }`
+- `crop`: `image` is a picture that fills its tile (an option's wallpaper or setup thumbnail, a copied image); an icon keeps its shape.
+- `copy()`, when a row has one: <kbd>Ctrl</kbd>+<kbd>C</kbd> with nothing selected in the field runs it and closes the launcher (`LauncherManager.copy`; a file's path). Otherwise Ctrl+C copies the field's selection as usual.
+- `key`, when a row has one, names what it shows (a file row's path): rows rebuilt for the same text keep the row of the selected key selected wherever it moved (`LauncherPanel._syncRows`); a row without one, or one gone, keeps the selection's place (clamped), whose row's key it then follows. New text starts at the top.
+- A file row also has `thumb` (the file) and `mtime`: `LauncherRow` asks `FileSearchManager` for its thumbnail while it shows the row and draws it cropped in place of the type's icon once it lands.
 - What `run` returns decides what happens next:
   - true closes the launcher;
-  - false keeps it open, and the rows are rebuilt with the selection kept;
+  - false keeps it open, and the rows are rebuilt with the selection kept (by `key`, else by place);
   - a string is searched for instead.
 - Tab puts `complete` into the field.
 
@@ -46,11 +50,12 @@ The first character picks the provider:
 | `@` | chat |
 | `:` | clipboard history (ClipboardManager) |
 | `;` | emoji (EmojiManager) |
+| `~` | files (`LauncherFiles`, FileSearchManager; [file search](file-search.md)) |
 
 - **No prefix:** the text searches apps and windows.
   - Apps are scored, plus frecency from `usage` `{id: {count, last}}` in `state/launcher.json`, as `Search.useBonus` (the one bonus apps, commands and emoji add).
   - Windows come from `CompositorManager.windows`.
-- **Extra rows:** a calculator row is added when the text is plain math, and a web row goes last.
+- **Extra rows:** a calculator row is added when the text is plain math, the best `Launcher.providers.files.inSearch` files (from two characters; `LauncherFiles.mainRows`) follow the apps and windows, and a web row goes last. The files land after the rest: `LauncherManager` keeps the calculator, app and window rows of the text (`_mainRows`) and only adds the files and the web row again when they do (`_setMain`), so a keystroke searches the apps once.
 - **Toggles:** each provider has a `Launcher` config toggle (`LauncherConfig`).
 
 ### Commands
@@ -74,7 +79,8 @@ The first character picks the provider:
 - Once a setting is typed, its last row is **Show in settings** (while a settings card shows it) (`{ show: key }`): it opens the settings page on that setting (`SettingsManager.openSetting`) after the launcher closes.
 
 ### IPC and pages
-- **IPC target** `appLauncher`: `open` / `close` / `toggle` / `search <text>`, and `clipboard` / `emoji` / `calculator` (opened on `:`, `;`, `=`; the keybind actions of those names).
+- **IPC target** `appLauncher`: `open` / `close` / `toggle` / `search <text>`, and `clipboard` / `emoji` / `calculator` (opened on `:`, `;`, `=`; the keybind actions of those names) and `files` (opened on `~`, the recent files; the keybind action `fileSearch`).
+- **Open or closed:** each `Launcher` sets `LauncherManager.shown` (the instances open and close together). File results follow the index only while it's shown, and closing it forgets the last answers, so it opens to fresh ones.
 - **Opening a page:** `ShellManager.openOverlayPage(type)` opens the target overlay on a page. It takes a view type or a view's name.
 
 ### Testing

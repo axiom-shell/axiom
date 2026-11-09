@@ -17,8 +17,11 @@ FocusScope {
   property bool reversed: LauncherConfig.reverse
   // Blinks the cursor only while shown
   property bool shown: true
-  // The row kept selected when the rows are rebuilt for the same text
+  // The row kept selected when the rows are rebuilt for the same text: by
+  // its key (a row's `key`, its file's path) while the new rows hold it,
+  // else by its place
   property int selected: 0
+  property string _selectedKey: ""
   // Whether the pointer picks rows. Typing and keys turn it off, and only a
   // real move turns it back on: rows rebuilt under a still pointer get a
   // synthetic hover, which would otherwise select and highlight them
@@ -54,6 +57,7 @@ FocusScope {
     if (LauncherManager.text !== input.text)
       LauncherManager.query(input.text);
     root.selected = 0;
+    root._selectedKey = "";
     list.currentIndex = 0;
     root.pointerActive = false;
     root._pointer = Qt.point(-1, -1);
@@ -80,20 +84,36 @@ FocusScope {
     if (!moved)
       return;
     root.pointerActive = true;
+    root._choose(index);
+  }
+
+  // Selects row index, remembering its key
+  function _choose(index) {
     root.selected = index;
+    root._selectedKey = LauncherManager.results[index]?.key ?? "";
     list.currentIndex = index;
   }
 
   function _syncRows() {
     const count = LauncherManager.results.length;
+    // A rebuild for the same text (a command that keeps the launcher open,
+    // a file search answered again as the index grows) keeps the selection:
+    // the same row when it's still there, else the same place (whose row
+    // it then follows)
+    const results = LauncherManager.results;
+    if (root._selectedKey !== "") {
+      const kept = results.findIndex(row => row.key === root._selectedKey);
+      if (kept >= 0)
+        root.selected = kept;
+      else
+        root._selectedKey = results[Math.min(root.selected, count - 1)]?.key ?? "";
+    }
     if (rowModel.count > count)
       rowModel.remove(count, rowModel.count - count);
     while (rowModel.count < count)
       rowModel.append({
         row: 0
       });
-    // A rebuild for the same text (a command that keeps the launcher open)
-    // keeps the selection
     list.currentIndex = Math.max(0, Math.min(root.selected, count - 1));
   }
 
@@ -116,8 +136,7 @@ FocusScope {
     root.pointerActive = false;
     if (list.count === 0)
       return;
-    root.selected = (index + list.count) % list.count;
-    list.currentIndex = root.selected;
+    root._choose((index + list.count) % list.count);
   }
 
   function activate(shift) {
@@ -169,7 +188,8 @@ FocusScope {
           web: "web",
           chat: "forum",
           clipboard: "content_paste",
-          emoji: "mood"
+          emoji: "mood",
+          files: "folder_open"
         })
       text: glyphs[LauncherManager.mode] ?? glyphs.apps
       textColor: Theme.accent
@@ -193,6 +213,7 @@ FocusScope {
 
       onTextChanged: {
         root.selected = 0;
+        root._selectedKey = "";
         root.pointerActive = false;
         if (text !== LauncherManager.text)
           LauncherManager.query(text);
@@ -216,6 +237,9 @@ FocusScope {
           root.complete();
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
           root.activate(event.modifiers & Qt.ShiftModifier);
+        } else if (ctrl && event.key === Qt.Key_C && input.selectedText === "" && LauncherManager.copy(list.currentIndex)) {
+          // Nothing selected in the field: the row's (a file's path)
+          root.closeRequested();
         } else {
           return;
         }
@@ -250,7 +274,8 @@ FocusScope {
           web: I18n.tr("Web"),
           chat: I18n.tr("Chat"),
           clipboard: I18n.tr("Clipboard"),
-          emoji: I18n.tr("Emoji")
+          emoji: I18n.tr("Emoji"),
+          files: I18n.tr("Files")
         })
       visible: modeLabel.text !== ""
       implicitWidth: modeLabel.implicitWidth + Widget.spacing * 4
@@ -423,8 +448,8 @@ FocusScope {
       Repeater {
         // I18n.tr("commands") I18n.tr("calculate") I18n.tr("run") I18n.tr("web")
         // I18n.tr("complete") I18n.tr("open") I18n.tr("ask") I18n.tr("clipboard")
-        // I18n.tr("emoji")
-        model: [[LauncherConfig.commands, "/", "commands"], [LauncherConfig.calculator, "=", "calculate"], [LauncherConfig.runCommands, ">", "run"], [LauncherConfig.webSearch, "?", "web"], [LauncherConfig.chat, "@", "ask"], [LauncherConfig.clipboard, ":", "clipboard"], [LauncherConfig.emoji, ";", "emoji"], [true, "Tab", "complete"], [true, "↵", "open"]].filter(hint => hint[0])
+        // I18n.tr("emoji") I18n.tr("files")
+        model: [[LauncherConfig.commands, "/", "commands"], [LauncherConfig.calculator, "=", "calculate"], [LauncherConfig.runCommands, ">", "run"], [LauncherConfig.webSearch, "?", "web"], [LauncherConfig.chat, "@", "ask"], [LauncherConfig.clipboard, ":", "clipboard"], [LauncherConfig.emoji, ";", "emoji"], [LauncherConfig.files, "~", "files"], [true, "Tab", "complete"], [true, "↵", "open"]].filter(hint => hint[0])
 
         KeyHint {
           required property var modelData
