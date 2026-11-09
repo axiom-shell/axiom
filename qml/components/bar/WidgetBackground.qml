@@ -1,16 +1,20 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Shapes
 import Quickshell.Widgets
 
 import qs.config
 import qs.components.methods
 import qs.components.reusable
+import qs.components.bar.widgets.base
 
 // What a bar widget sits on, in its bar's widget style (widgetStyle,
 // widgetShape): a fill or outline shaped by its caps (BarShapes), or for
-// underline a line along one side. Its hover outline and the bar editor's
-// highlight take the same shape. WidgetGroup draws one under each widget
+// underline a line along one side, an outline in the bar's outlineStroke.
+// Split fills its icon part over the label's (joined, cut by the divider)
+// or draws a badge behind the icon. Its hover outline and the bar editor's
+// highlight take the same shape. A tab (widgetShape tab) is set reaching
+// out to the edge it hangs from by its WidgetGroup, which hands it what
+// bounds its ends (`tabLimits`). WidgetGroup draws one under each widget
 // with a background, and one under each merged run.
 Item {
   id: root
@@ -27,6 +31,10 @@ Item {
   // Ends that meet a powerline neighbour edge to edge (BarShapes.segment)
   property bool seamStart: false
   property bool seamEnd: false
+  // Ends a merged run carries on past into the next section's, drawn
+  // apart (WidgetGroup): no line across them (BarShapes.path's open ends)
+  property bool openStart: false
+  property bool openEnd: false
   // A clickable widget under the pointer (its hoverOutline)
   property bool hovered: false
   // A clickable widget being pressed: a tint in its shape
@@ -41,92 +49,134 @@ Item {
   // levelEndCap): in a merged run the widget's own, not the run's
   property string levelStartCap: startCap
   property string levelEndCap: endCap
+  // Where it starts and ends along its bar (0-1), for the bar's gradient,
+  // or -1 for none (WidgetGroup, from where it's laid out)
+  property real gradientStart: -1
+  property real gradientEnd: -1
+
+  // A split widget's parts (BarWidgetHost.split): along it, the middle of
+  // the gap between its icon part and its label, -1 when it doesn't split;
+  // what the icon part holds, in its coordinates
+  property real splitAt: -1
+  property rect splitPart: Qt.rect(0, 0, 0, 0)
+
+  // What bounds a tab's ends along the bar (BarShapes.tabLimits)
+  property var tabLimits: [null, null]
+
+  // Its widget draws its own parts as segments of the run (BarWidget's
+  // `segmented`: Workspaces' cells with its Background off): no box of its
+  // own, only its states (the press, the hover outline, the highlight)
+  property bool bare: false
 
   readonly property string _fill: barConfig.widgetStyle
-  readonly property bool _boxed: ["filled", "tinted", "outline"].includes(_fill)
-
-  // The shape in one fill and stroke: a Rectangle when both ends are
-  // alike and rounded (or square), else a path
-  component ShapedBox: Item {
-    id: box
-
-    required property var bar
-    required property string startCap
-    required property string endCap
-    property bool seamStart: false
-    property bool seamEnd: false
-    property color fillColor: "transparent"
-    property color strokeColor: "transparent"
-    property real strokeWidth: 0
-
-    readonly property bool vertical: bar.vertical
-    readonly property real across: vertical ? width : height
-    readonly property real length: vertical ? height : width
-    readonly property real rectRadius: {
-      if (startCap !== endCap || seamStart || seamEnd)
-        return -1;
-      switch (startCap) {
-      case "round":
-        return box.bar.radius;
-      case "capsule":
-        return across / 2;
-      case "flat":
-        return 0;
-      default:
-        return -1;
-      }
-    }
-
-    anchors.fill: parent
-
-    Rectangle {
-      anchors.fill: parent
-      visible: box.rectRadius >= 0
-      radius: Math.max(0, box.rectRadius)
-      color: box.fillColor
-      border.color: box.strokeColor
-      border.width: box.strokeWidth
-    }
-
-    Loader {
-      anchors.fill: parent
-      active: box.visible && box.rectRadius < 0 && box.width > 0 && box.height > 0
-      sourceComponent: Shape {
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-          fillColor: box.fillColor
-          strokeColor: box.strokeWidth > 0 ? box.strokeColor : "transparent"
-          strokeWidth: box.strokeWidth
-          joinStyle: ShapePath.MiterJoin
-
-          // Inset by half the stroke, which is centred on the path
-          PathSvg {
-            path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box.strokeWidth / 2, box.seamStart, box.seamEnd)
-          }
-        }
-      }
-    }
+  readonly property bool _boxed: barConfig.widgetBoxed
+  // A tab's shape (BarShapes.tab), or null
+  readonly property var _tab: barConfig.widgetShape === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, barConfig.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
+  // A merged run's widget filling its own part (on hover), in the caps it
+  // has alone: a press tints that, not the run's square middle
+  readonly property bool _ownFill: barConfig.widgetGrouping === "merged" && colors !== null && Qt.color(colors.fill).a > 0
+  // What of it draws the bar's gradient (its colors' `gradient`: its fill,
+  // stroke, line or split's icon part), and the slice of it from `from`
+  // to `to` along it (0-1), else null
+  readonly property string _gradientPart: root.gradientStart >= 0 ? (root.colors?.gradient?.part ?? "") : ""
+  function _sliceOf(from, to) {
+    const stops = BarsConfig.gradientStops(root.barConfig);
+    if (root._gradientPart === "" || stops === null)
+      return null;
+    const span = root.gradientEnd - root.gradientStart;
+    return BarWidgetStyle.gradientSlice(stops, root.gradientStart + span * from, root.gradientStart + span * to, root.colors.gradient.alpha);
+  }
+  readonly property var _slice: root._sliceOf(0, 1)
+  readonly property real _along: barConfig.vertical ? height : width
+  // Split's icon part's own slice, along it from `start` for `length`
+  function _partSlice(start, length) {
+    return root._gradientPart === "iconFill" && root._along > 0 ? root._sliceOf(start / root._along, (start + length) / root._along) : null;
   }
 
   ShapedBox {
-    visible: root._boxed && root.colors !== null
+    visible: root._boxed && root.colors !== null && !root.bare
     bar: root.barConfig
-    startCap: root.startCap
-    endCap: root.endCap
+    tab: root._tab
+    // The level's caps: the widget's own, but in a merged run the ones it
+    // has alone, where only a widget filled on hover draws anything (the
+    // run draws the rest)
+    startCap: root.levelStartCap
+    endCap: root.levelEndCap
     seamStart: root.seamStart
     seamEnd: root.seamEnd
+    openStart: root.openStart
+    openEnd: root.openEnd
     fillColor: root.colors?.fill ?? "transparent"
     strokeColor: root.colors?.stroke ?? "transparent"
     strokeWidth: root._fill === "outline" ? root.barConfig.outlineWidth : 0
+    stroke: root._fill === "outline" ? root.barConfig.outlineStroke : "solid"
+    fillSlice: root._gradientPart === "fill" ? root._slice : null
+    strokeSlice: root._gradientPart === "stroke" ? root._slice : null
 
     // State changes (mute, a warning level) recolour smoothly
     ColorGlide on fillColor {}
     ColorGlide on strokeColor {}
   }
 
+  // Split's icon part, joined: the shape from its start to the divider
+  // (the bar's splitCap) centred in the gap to the label
+  ShapedBox {
+    id: iconPart
+    readonly property real _length: root.splitAt + BarShapes.depth(root.barConfig.splitCap, root.barConfig.thickness) / 2
+
+    visible: root.barConfig.splitIcon === "joined" && root.splitAt >= 0 && root.colors !== null
+    anchors.fill: undefined
+    width: root.barConfig.vertical ? root.width : _length
+    height: root.barConfig.vertical ? _length : root.height
+    bar: root.barConfig
+    tab: root._tab
+    startCap: root.startCap
+    endCap: root.barConfig.splitCap
+    fillColor: root.colors?.iconFill ?? "transparent"
+    fillSlice: root._partSlice(0, iconPart._length)
+
+    ColorGlide on fillColor {}
+  }
+
+  // Split's badge: the icon part's content with badgePad round it, at
+  // least as long as it's thick (a circle for one icon under capsule), a
+  // rounded square otherwise, its radius the widgets' scaled to its size
+  Rectangle {
+    id: badge
+    readonly property bool vertical: root.barConfig.vertical
+    readonly property real thickness: root.barConfig.thickness
+    readonly property real pad: root.barConfig.badgePad
+    readonly property real partAlong: vertical ? root.splitPart.height : root.splitPart.width
+    readonly property real partAcross: vertical ? root.splitPart.width : root.splitPart.height
+    readonly property real across: Math.min(thickness, partAcross + pad * 2)
+    readonly property real along: Math.max(partAlong + pad * 2, across)
+    readonly property real alongMiddle: vertical ? root.splitPart.y + partAlong / 2 : root.splitPart.x + partAlong / 2
+    readonly property real acrossMiddle: vertical ? root.splitPart.x + partAcross / 2 : root.splitPart.y + partAcross / 2
+    // Within the background across (a tab's reaches past the bar's thickness)
+    readonly property real acrossStart: Math.max(0, Math.min((vertical ? root.width : root.height) - across, acrossMiddle - across / 2))
+
+    visible: root.barConfig.splitIcon === "badge" && root.splitAt >= 0 && root.colors !== null
+    x: vertical ? acrossStart : alongMiddle - along / 2
+    y: vertical ? alongMiddle - along / 2 : acrossStart
+    width: vertical ? across : along
+    height: vertical ? along : across
+    radius: root.barConfig.widgetShape === "capsule" ? across / 2 : Math.min(across / 2, root.barConfig.radius * across / thickness)
+    color: root.colors?.iconFill ?? "transparent"
+    // Its slice of the bar's gradient
+    gradient: badgeGradient.slice !== null ? badgeGradient : null
+
+    ColorGlide on color {}
+
+    RectSlice {
+      id: badgeGradient
+      slice: root._partSlice(badge.alongMiddle - badge.along / 2, badge.along)
+      vertical: badge.vertical
+    }
+  }
+
   // Along the side toward the windows (inner) or the screen edge (outer)
   Rectangle {
+    id: line
     readonly property real thickness: root.barConfig.lineWidth
     readonly property bool vertical: root.barConfig.vertical
     // The side further from the bar's outer edge, in item coordinates
@@ -134,6 +184,8 @@ Item {
 
     visible: root._fill === "underline" && root.colors !== null
     color: root.colors?.indicator ?? "transparent"
+    // A slice of the bar's gradient, along it
+    gradient: root._gradientPart === "indicator" ? lineGradient : null
     radius: thickness / 2
     x: vertical && farSide ? root.width - thickness : 0
     y: !vertical && farSide ? root.height - thickness : 0
@@ -141,6 +193,12 @@ Item {
     height: vertical ? root.height : thickness
 
     ColorGlide on color {}
+
+    RectSlice {
+      id: lineGradient
+      slice: root._slice
+      vertical: line.vertical
+    }
   }
 
   // The level: the background's own shape (in a merged run, the one the
@@ -188,6 +246,7 @@ Item {
       width: root.width
       height: root.height
       bar: root.barConfig
+      tab: root._tab
       startCap: root.levelStartCap
       endCap: root.levelEndCap
       seamStart: root.seamStart
@@ -202,8 +261,9 @@ Item {
     // Built only while it shows, fading out included
     visible: root._boxed && fillColor.a > 0
     bar: root.barConfig
-    startCap: root.shownStart
-    endCap: root.endCap
+    tab: root._tab
+    startCap: root._ownFill ? root.levelStartCap : root.shownStart
+    endCap: root._ownFill ? root.levelEndCap : root.endCap
     fillColor: Qt.alpha(root.colors?.text ?? Theme.foreground, root.pressed && root.colors !== null ? 0.2 : 0)
 
     ColorGlide on fillColor {}
@@ -212,6 +272,7 @@ Item {
   ShapedBox {
     visible: root.highlighted
     bar: root.barConfig
+    tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
     fillColor: Qt.alpha(Theme.accent, 0.15)
@@ -223,6 +284,7 @@ Item {
     // Built only while it shows, fading out included
     visible: strokeColor.a > 0
     bar: root.barConfig
+    tab: root._tab
     startCap: root.shownStart
     endCap: root.endCap
     strokeColor: root.hovered ? Theme.border : Qt.alpha(Theme.border, 0)

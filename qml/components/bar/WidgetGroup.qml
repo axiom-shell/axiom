@@ -39,6 +39,28 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
 
+  // Tabs (widgetShape tab): backgrounds reach `tabReach` past the
+  // widgets' outer side, out to the edge they hang from, their ends
+  // bounded by `tabBounds` (BarShapes.tabLimits; along it, in its own
+  // coordinates). Both set by BarContainer.
+  property real tabReach: 0
+  property var tabBounds: []
+  readonly property real _reach: root.barConfig.widgetShape === "tab" ? root.tabReach : 0
+  // The outer edge is past the far side of the widgets (a bottom or right bar)
+  readonly property bool _outerFar: root.barConfig.right || root.barConfig.bottom
+  // What bounds a tab drawn from `start` for `length` along the group
+  function tabLimitsOf(start, length) {
+    return root.barConfig.widgetShape === "tab" ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
+  }
+
+  // The bar's gradient (barConfig.gradientColors) runs along the whole
+  // bar, `barLength` long (0 with none), each widget showing its slice:
+  // where the group starts along the bar as laid out. Laid-out places,
+  // never gliding ones, so nothing re-reads them each frame of a glide.
+  property real barStart: 0
+  property real barLength: 0
+  readonly property bool _graded: root.barLength > 0 && root.barConfig.gradientColors !== null
+
   property var _modules: []
 
   readonly property var measures: root._modules.map(m => ({
@@ -98,11 +120,24 @@ Item {
   // Joined to the next section's run (chainStart/chainEnd), a run at
   // that end carries on past it. A merged widget keeps its cap room as
   // if alone; a powerline segment's insets are those of one mid-chain.
-  readonly property var _insetFlags: root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null)
+  // The flags pass through a string key (_flagsKey), as `_idsKey`s do, so
+  // the places and all that's built from them (insets, shapes, a segmented
+  // widget's cells) change only when the flags do: any widget's new size
+  // re-reads them, mostly to the same values.
+  readonly property string _insetKey: root._flagsKey(root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null))
+  readonly property var _insetFlags: root._flagsOf(root._insetKey)
   readonly property bool _chainInsets: root.grouping === "powerline"
   readonly property var _insetPlaces: BarLayout.runPlaces(root._insetFlags, root._chainInsets && root.chainStart, root._chainInsets && root.chainEnd)
-  readonly property var _drawn: root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null)
+  readonly property string _drawnKey: root._flagsKey(root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null))
+  readonly property var _drawn: root._flagsOf(root._drawnKey)
   readonly property var _drawPlaces: BarLayout.runPlaces(root._drawn, root.chainStart, root.chainEnd)
+  // Run flags (true, false, null) as a string and back
+  function _flagsKey(flags) {
+    return flags.map(f => f === null ? "-" : f ? "1" : "0").join("");
+  }
+  function _flagsOf(key) {
+    return key.split("").map(c => c === "-" ? null : c === "1");
+  }
   // Whether its first and last widgets with something to show have
   // backgrounds (from content, as the insets): a joined boundary carries a
   // run on only between two such (BarContainer.sectionJoins)
@@ -111,7 +146,7 @@ Item {
   readonly property var _drawRuns: BarLayout.runs(root._drawn)
   // Opaque fills hide what's under them: a powerline segment can then
   // start square beneath the one before
-  readonly property bool _opaque: root.barConfig.widgetStyle === "filled"
+  readonly property bool _opaque: BarWidgetStyle.opaque(root.barConfig.widgetStyle, root.barConfig.splitIcon, root.barConfig.splitLabelFill)
   // A widget with no background in a powerline (a Separator) splits the
   // chain, keeping the bar's spacing to the widgets beside it in the
   // section as between separate widgets. At the section's end the gap to
@@ -188,6 +223,11 @@ Item {
     return place !== null && place.index < place.count - 1 && root.chainEnd ? root.joinEndReach : 0;
   }
 
+  // Where `along` (in the group, as laid out) sits along the bar (0-1)
+  function _barSpot(along) {
+    return (root.barStart + along) / root.barLength;
+  }
+
   // The caps and insets at `place` in a run (BarShapes.segment)
   function segmentAt(place) {
     return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
@@ -212,18 +252,30 @@ Item {
       // Joined across a section's end to the next section's run (its
       // places carry on there): no cap there, the background running on
       // over the gap between them
+      readonly property var _firstPlace: root._drawPlaces[run.members[0]] ?? null
       readonly property var _lastPlace: root._drawPlaces[run.members[run.count - 1]] ?? null
       readonly property real _reach: root._reachOf(_lastPlace)
+      // Along the group as laid out, for the bar's gradient: one strip of
+      // it from the run's start to its end
+      readonly property real _from: root.allocation.offsets[run.members[0]] ?? 0
+      readonly property real _to: (root.allocation.offsets[run.members[run.count - 1]] ?? 0) + (root.allocation.sizes[run.members[run.count - 1]] ?? 0) + _reach
 
       z: -2
       barConfig: root.barConfig
-      colors: BarsConfig.groupColors(root.barConfig)
-      startCap: root.segmentAt(root._drawPlaces[run.members[0]] ?? null).startCap
+      colors: BarsConfig.groupColors(root.barConfig, root._graded ? root._barSpot((_from + _to) / 2) : -1)
+      gradientStart: root._graded ? root._barSpot(_from) : -1
+      gradientEnd: root._graded ? root._barSpot(_to) : -1
+      startCap: root.segmentAt(_firstPlace).startCap
       endCap: root.segmentAt(_lastPlace).endCap
-      x: first?.x ?? 0
-      y: first?.y ?? 0
-      width: root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - x + _reach
-      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - y + _reach : (first?.height ?? 0)
+      // Carried on from the section before, and on into the next: its
+      // stroke left open there, so no divider shows at the join
+      openStart: (_firstPlace?.index ?? 0) > 0
+      openEnd: _lastPlace !== null && _lastPlace.index < _lastPlace.count - 1
+      x: (first?.x ?? 0) - (root.isVertical && !root._outerFar ? root._reach : 0)
+      y: (first?.y ?? 0) - (!root.isVertical && !root._outerFar ? root._reach : 0)
+      width: root.isVertical ? (first?.width ?? 0) + root._reach : (last?.x ?? 0) + (last?.width ?? 0) - (first?.x ?? 0) + _reach
+      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - (first?.y ?? 0) + _reach : (first?.height ?? 0) + root._reach
+      tabLimits: root.tabLimitsOf(root.isVertical ? (first?.y ?? 0) : (first?.x ?? 0), root.isVertical ? height : width)
     }
   }
 
@@ -249,8 +301,10 @@ Item {
       thickness: root.barConfig.separatorThickness
       length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root.isVertical
-      x: root.isVertical ? Math.round((root.width - width) / 2) : mark.center - width / 2
-      y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2)
+      // Across, centred as the tabs' content is (BarShapes.tabShift)
+      readonly property real _shift: BarShapes.tabShift(root._reach, root._outerFar)
+      x: root.isVertical ? Math.round((root.width - width) / 2) + _shift : mark.center - width / 2
+      y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2) + _shift
     }
   }
 
@@ -278,6 +332,8 @@ Item {
         _last = _shown
       readonly property var place: _shown?.place ?? null
       readonly property var segment: root.segmentAt(place)
+      // Along the group as laid out, back under a powerline neighbour too
+      readonly property real _from: (root.allocation.offsets[index] ?? 0) - segment.back
 
       z: -1 - index / Math.max(1, root.widgets.length)
       barConfig: root.barConfig
@@ -293,13 +349,26 @@ Item {
       backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
       levelStartCap: segment.levelStartCap
       levelEndCap: segment.levelEndCap
+      gradientStart: root._graded ? root._barSpot(_from) : -1
+      gradientEnd: root._graded ? root._barSpot((root.allocation.offsets[index] ?? 0) + (root.allocation.sizes[index] ?? 0)) : -1
       highlighted: host?.editorOutlined ?? false
+      // Its widget draws its parts itself (BarWidgetHost.segments)
+      bare: host?.segments ?? false
+      // Its split parts, from the host's start to its own (back under the
+      // one before)
+      readonly property var _split: host?.split ?? null
+      splitAt: _split ? _split.at + segment.back : -1
+      // (and across, past a tab's reach on the near side)
+      readonly property real _nearReach: root._outerFar ? 0 : root._reach
+      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? _nearReach : segment.back), _split.part.y + (root.isVertical ? segment.back : _nearReach), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
-      x: (host?.x ?? 0) - (root.isVertical ? 0 : segment.back)
-      y: (host?.y ?? 0) - (root.isVertical ? segment.back : 0)
-      width: (host?.width ?? 0) + (root.isVertical ? 0 : segment.back)
-      height: (host?.height ?? 0) + (root.isVertical ? segment.back : 0)
+      // A tab reaches out past the widget (tabReach)
+      x: (host?.x ?? 0) - (root.isVertical ? (root._outerFar ? 0 : root._reach) : segment.back)
+      y: (host?.y ?? 0) - (root.isVertical ? segment.back : (root._outerFar ? 0 : root._reach))
+      width: (host?.width ?? 0) + (root.isVertical ? root._reach : segment.back)
+      height: (host?.height ?? 0) + (root.isVertical ? segment.back : root._reach)
+      tabLimits: root.tabLimitsOf(root.isVertical ? y : x, root.isVertical ? height : width)
     }
   }
 
@@ -321,16 +390,33 @@ Item {
       required property int index
       readonly property var modelData: root.widgets[index] ?? {}
 
-      // Clear of its caps; a widget with no background sits loose
+      // Clear of its caps; a widget with no background sits loose, and
+      // one laying its parts out as segments keeps their room itself
       readonly property var _place: root._insetPlaces[module.index] ?? null
       readonly property var _segment: root.segmentAt(_place)
-      leadInset: module.hasBackground ? module._segment.lead : ((module.index > root._firstContent || root.joinStart) && !module.fills ? root._looseGap : 0)
+      leadInset: module.segments ? 0 : module.hasBackground ? module._segment.lead : ((module.index > root._firstContent || root.joinStart) && !module.fills ? root._looseGap : 0)
       // Hovered and clicked in its background's shape as drawn
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
       hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
-      trailInset: module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
+      trailInset: module.segments ? 0 : module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
+      // Its place in the run, for its parts to take as segments of it:
+      // their room from what's shown, their shapes from where they're
+      // drawn, a tab's ends bounded as its own background's would be
+      // (from where it's laid out, never as it glides). Through a string
+      // key, so a neighbour's new size (moving it, the places re-read)
+      // rebuilds its parts only when the place changes.
+      readonly property string _runKey: module.segments ? JSON.stringify({
+        "sized": module._place,
+        "drawn": module._drawnPlace,
+        "tabLimits": root.tabLimitsOf(module._offset, module.mainSize)
+      }) : ""
+      runPlace: module._runKey !== "" ? JSON.parse(module._runKey) : null
+      // Its tab's reach past its outer side (a tab hangs only from a background)
+      tabReach: module.hasBackground ? root._reach : 0
 
       barConfig: root.barConfig
+      barStart: root._graded ? root.barStart + module._offset : 0
+      barLength: root._graded ? root.barLength : 0
       widget: module.modelData
       highlighted: BarManager.isSelectedWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)
       hoverHighlighted: BarManager.isHoveredWidget(root.barConfig.sourceId, root.zone, module.modelData.configIndex ?? -1)

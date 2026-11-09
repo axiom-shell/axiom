@@ -832,7 +832,7 @@ TestCase {
     const bar = SchemaLayout.objectGroups(schema.definitions.Bar, ["widgets", "style"]);
     compare(bar.map(g => g.title), ["Placement", "Size", "Surface", "Behaviour"]);
     const style = SchemaLayout.objectGroups(schema.definitions.BarStyle, []);
-    compare(style.map(g => g.title), ["Bar widgets", "Bar accents", "Surface shadow"]);
+    compare(style.map(g => g.title), ["Bar widgets", "Bar gradient", "Bar accents", "Surface shadow"]);
     const menu = SchemaLayout.objectGroups(schema.definitions.EdgeMenu, ["layout.modules"]);
     compare(menu.map(g => g.title), ["General", "Opening", "Placement", "Style", "Closing"]);
     const osd = SchemaLayout.objectGroups(schema.definitions.OSDEntry, ["systems", "barLayout"]);
@@ -1327,7 +1327,9 @@ TestCase {
     const views = schema.definitions.OverlayView.oneOf.map(option => schema.definitions[option.$ref.replace("#/definitions/", "")].properties.type.const);
     const pageOk = link => {
       const parts = link.split(":");
-      return (parts[0] === "Layouts" || views.includes(parts[0])) && (parts.length === 1 || (parts[0] === "Layouts" && ["lockscreen", "greeter", "desktop"].includes(parts[1])));
+      // Layouts:<what it edits>, BarEditor:<a bar's own setting>
+      const inside = parts[0] === "Layouts" ? ["lockscreen", "greeter", "desktop"].includes(parts[1]) : parts[0] === "BarEditor" && schema.definitions.Bar.properties[parts[1]] !== undefined;
+      return (parts[0] === "Layouts" || views.includes(parts[0])) && (parts.length === 1 || inside);
     };
     const bad = [];
     const visit = (node, where) => {

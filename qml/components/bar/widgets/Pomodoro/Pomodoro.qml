@@ -26,7 +26,7 @@ ValueStyleWidget {
   // Idle, stacked shows no time either, as the label doesn't
   styleText: PomodoroManager.idle ? "" : root.text
   subtext: PomodoroManager.idle ? "" : PomodoroManager.isBreak ? I18n.tr("Break") : I18n.tr("Focus")
-  accentColor: Theme.resolveColor(PomodoroManager.idle ? properties.idleColor : PomodoroManager.isBreak ? properties.breakColor : properties.workColor)
+  accentField: PomodoroManager.idle ? "idleColor" : PomodoroManager.isBreak ? "breakColor" : "workColor"
   // Paused part way: faded
   dim: !PomodoroManager.running && !PomodoroManager.idle ? 0.6 : 1
 

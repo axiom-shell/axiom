@@ -53,6 +53,7 @@ ValueStyleWidget {
   hidden: root.fields?.hidden ?? false
   icon: root.bar.icon === "material" ? (root.fields?.icon || root.definition?.icon || "widgets") : ""
   text: !root.definition ? I18n.tr("Pick a custom widget") : root.fields === null ? "…" : root.fields.plain
+  accentField: root.fields?.color ? "" : "backgroundColor"
   accentColor: root.fields?.color ? root.stateColor : Theme.resolveColor(properties.backgroundColor)
 
   // Urgent: a slow pulse (as Battery's charging one), back to full when

@@ -30,15 +30,36 @@ properties:
     type: string
     title: Widget style
     default: filled
-    enum: [filled, tinted, outline, underline, accentText, plain]
+    enum: [filled, tinted, outline, split, underline, accentText, plain]
     x-enumLabels:
       filled: Filled
       tinted: Tinted
       outline: Outline
+      split: Split
       underline: Underline
       accentText: Colored icons
       plain: Plain text
     description: How each widget shows its color.
+  splitIcon:
+    x-group: Bar widgets
+    type: string
+    title: Icon part
+    default: joined
+    x-control: toggle
+    enum: [joined, badge]
+    x-enumLabels: {joined: Joined, badge: Badge}
+    x-showIf: {widgetStyle: split}
+    description: 'Joined: one box cut in two. Badge: a small shape behind the icon, the label on the bar.'
+  splitLabelFill:
+    x-group: Bar widgets
+    type: string
+    title: Label background
+    default: tint
+    x-control: toggle
+    enum: [tint, color, none]
+    x-enumLabels: {tint: Tint, color: Color, none: None}
+    x-showIf: {widgetStyle: split, splitIcon: joined, widgetGrouping: {not: merged}}
+    description: 'Tint: the widget''s color, faded. None: the bar shows through.'
   tintOpacity:
     x-group: Bar widgets
     type: integer
@@ -48,7 +69,27 @@ properties:
     minimum: 5
     maximum: 100
     x-unit: '%'
-    x-showIf: {widgetStyle: tinted}
+    x-showIf:
+      anyOf:
+        - {widgetStyle: tinted}
+        - {widgetStyle: split, splitIcon: joined, splitLabelFill: tint, widgetGrouping: {not: merged}}
+        - {widgetStyle: split, widgetGrouping: merged, gradient: true}
+  splitLabelColor:
+    x-group: Bar widgets
+    type: string
+    title: Label color
+    x-options: colors
+    default: backgroundAlt
+    x-showIf: {widgetStyle: split, splitIcon: joined, splitLabelFill: color, widgetGrouping: {not: merged}}
+  splitDivider:
+    x-group: Bar widgets
+    type: string
+    title: Divider
+    default: match
+    enum: [match, straight, slant, arrow, curve]
+    x-enumLabels: {match: Match the shape, straight: Straight, slant: Slanted, arrow: Arrow, curve: Curve}
+    x-showIf: {widgetStyle: split, splitIcon: joined}
+    description: Where the icon's part meets the label's. Match is slanted or an arrow for those shapes, else straight.
   outlineWidth:
     x-group: Bar widgets
     type: integer
@@ -59,6 +100,23 @@ properties:
     maximum: 6
     x-unit: px
     x-showIf: {widgetStyle: outline}
+  outlineStroke:
+    x-group: Bar widgets
+    type: string
+    title: Outline stroke
+    default: solid
+    enum: [solid, dashed, dotted, double, ends]
+    x-enumLabels: {solid: Solid, dashed: Dashed, dotted: Dotted, double: Double, ends: Ends only}
+    x-beside: true
+    x-showIf: {widgetStyle: outline}
+    description: 'Double: two lines, each the outline width. Ends only: a mark at each end, in the widget shape.'
+  hoverFill:
+    x-group: Bar widgets
+    type: boolean
+    title: Fill on hover
+    default: false
+    x-showIf: {widgetStyle: [tinted, outline]}
+    description: A widget under the pointer fills with its color.
   lineWidth:
     x-group: Bar widgets
     type: integer
@@ -83,10 +141,16 @@ properties:
     type: string
     title: Shape
     default: rounded
-    enum: [rounded, capsule, slant, arrow]
-    x-enumLabels: {rounded: Rounded, capsule: Capsule, slant: Slanted, arrow: Arrow}
-    x-showIf: {widgetStyle: [filled, tinted, outline]}
-    description: Rounded follows the corner radius. Capsule always has round ends.
+    enum: [rounded, capsule, slant, arrow, tab]
+    x-enumLabels: {rounded: Rounded, capsule: Capsule, slant: Slanted, arrow: Arrow, tab: Tab}
+    x-showIf: {widgetStyle: [filled, tinted, outline, split]}
+    x-enumShowIf:
+      tab:
+        anyOf:
+          - {widgetStyle: {not: split}}
+          - {splitIcon: joined}
+          - {widgetGrouping: merged}
+    description: Rounded follows the corner radius. Capsule always has round ends. Tab reaches out to the bar's outer edge.
   widgetGrouping:
     x-group: Bar widgets
     type: string
@@ -95,8 +159,25 @@ properties:
     enum: [separate, merged, powerline]
     x-enumLabels: {separate: Separate, merged: Merged, powerline: Powerline}
     x-beside: true
-    x-showIf: {widgetStyle: [filled, tinted, outline]}
+    x-showIf: {widgetStyle: [filled, tinted, outline, split]}
+    x-enumShowIf:
+      powerline:
+        widgetShape: {not: tab}
+        anyOf:
+          - {widgetStyle: {not: split}}
+          - {splitIcon: joined}
     description: 'Merged: neighbours share one background. Powerline: each runs into the next.'
+  tabCorners:
+    x-group: Bar widgets
+    type: string
+    title: Tab sides
+    default: square
+    x-control: toggle
+    enum: [square, flared]
+    x-enumLabels: {square: Square, flared: Flared}
+    x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetShape: tab}
+    description: Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.
+    x-link: {page: 'BarEditor:widgetGap'}
   widgetEnds:
     x-group: Bar widgets
     type: string
@@ -105,7 +186,13 @@ properties:
     x-control: toggle
     enum: [shaped, pointed, rounded]
     x-enumLabels: {shaped: Shaped, pointed: Pointed, rounded: Rounded}
-    x-showIf: {widgetStyle: [filled, tinted, outline], widgetShape: [slant, arrow]}
+    x-showIf:
+      widgetStyle: [filled, tinted, outline, split]
+      widgetShape: [slant, arrow]
+      anyOf:
+        - {widgetStyle: {not: split}}
+        - {splitIcon: joined}
+        - {widgetGrouping: merged}
     x-enumShowIf: {pointed: {widgetShape: arrow}}
     description: The ends of a slanted or arrow widget, or a run of them.
   groupColor:
@@ -114,8 +201,16 @@ properties:
     title: Merged background
     x-options: colors
     default: backgroundAlt
-    x-showIf: {widgetStyle: [filled, tinted, outline], widgetGrouping: merged}
+    x-showIf: {widgetStyle: [filled, tinted, split], widgetGrouping: merged, gradient: false}
     description: Widget colors show on their icons instead.
+  groupStrokeColor:
+    x-group: Bar widgets
+    type: string
+    title: Merged outline
+    x-options: colors
+    default: accent
+    x-showIf: {widgetStyle: outline, widgetGrouping: merged, gradient: false}
+    description: The line round each merged run. Widget colors show on their icons instead.
   widgetTextColor:
     x-group: Bar widgets
     type: string
@@ -124,6 +219,37 @@ properties:
     x-emptyLabel: Auto
     default: ''
     description: One color for every widget's text and icons. Auto picks one per widget.
+  gradient:
+    x-group: Bar gradient
+    type: boolean
+    title: Gradient
+    default: false
+    x-showIf: {widgetStyle: {not: plain}}
+    description: One gradient along the whole bar, each widget showing its part. It takes the place of Auto widget colors; a color set on a widget, and state colors, stay.
+  gradientFrom:
+    x-group: Bar gradient
+    type: string
+    title: From
+    x-options: colors
+    default: accent
+    x-showIf: {widgetStyle: {not: plain}, gradient: true}
+  gradientTo:
+    x-group: Bar gradient
+    type: string
+    title: To
+    x-options: colors
+    default: accentAlt
+    x-beside: true
+    x-showIf: {widgetStyle: {not: plain}, gradient: true}
+  gradientVia:
+    x-group: Bar gradient
+    type: string
+    title: Through
+    x-options: colors
+    x-emptyLabel: None
+    default: ''
+    x-showIf: {widgetStyle: {not: plain}, gradient: true}
+    description: A color it passes through halfway along the bar.
   separatorStyle:
     x-group: Bar accents
     type: string
@@ -136,6 +262,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
   separatorColor:
     x-group: Bar accents
     type: string
@@ -146,6 +273,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
       separatorStyle: {not: none}
   separatorThickness:
     x-group: Bar accents
@@ -160,6 +288,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
       separatorStyle: {not: none}
   separatorGap:
     x-group: Bar accents
@@ -175,6 +304,7 @@ properties:
       anyOf:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
+        - {widgetShape: tab}
       separatorStyle: {not: none}
   accentLine:
     x-group: Bar accents

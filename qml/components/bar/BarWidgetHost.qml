@@ -41,6 +41,11 @@ Item {
   required property var widget
   readonly property var properties: root.widget.properties ?? {}
   readonly property var layoutOverrides: root.widget.layout ?? {}
+  // Where it starts along its bar as laid out (never as it glides), and the
+  // bar's length, which the bar's gradient spans: 0 for no gradient (set by
+  // WidgetGroup). Its module reads its slice of the gradient from them.
+  property real barStart: 0
+  property real barLength: 0
   // The bar editor's selected widget: outlined, and its sizing reported
   property bool highlighted: false
   // The widget hovered in the bar editor: outlined as the selected one
@@ -61,6 +66,21 @@ Item {
   // (BarsConfig.widgetColors), or null when it has no background
   readonly property bool hasBackground: _item?.hasBackground ?? false
   readonly property var background: hasBackground ? _item.colors : null
+  // It draws its own parts as segments of the bar's run (BarWidget's
+  // `segmented`), and its place there (set by WidgetGroup: { sized, drawn,
+  // tabLimits }), which its module gets with how far its parts reach past
+  // it across (BarWidget.runPlace)
+  readonly property bool segments: hasBackground && (_item?.segmented ?? false)
+  property var runPlace: null
+  // A tab's reach as the module sees it, moved across by _tabShift: from
+  // the background's near side (in from the outer edge, or the host's) to
+  // its far one
+  readonly property real _reachNear: _tabShift - (_outerFar ? 0 : -tabReach)
+  readonly property real _reachFar: (_outerFar ? tabReach : 0) - _tabShift
+  readonly property var _moduleRun: segments && runPlace ? Object.assign({}, runPlace, {
+    "reachStart": _reachNear,
+    "reachEnd": _reachFar
+  }) : null
   // The module's own fade, which its background follows: its `dim` when
   // it has one (a press fades only its content; the background shows it
   // by `pressed`, as a fade would let a powerline neighbour's square start
@@ -70,6 +90,19 @@ Item {
   // A level filling its background's shape (the module's `backgroundLevel`), -1 none
   readonly property real backgroundLevel: _item?.backgroundLevel ?? -1
   readonly property color backgroundLevelColor: _item?.backgroundLevelColor ?? "transparent"
+  // A split bar's widget showing its icon part and label apart
+  // (IconTextWidget.splits): along it, the middle of the gap between them
+  // (`at`), and what the icon part holds (`part`), in its own coordinates;
+  // null otherwise
+  readonly property var split: {
+    if (!(_item?.splits ?? false))
+      return null;
+    const part = _item.splitPart;
+    return {
+      "at": (isVertical ? contentLoader.y : contentLoader.x) + _item.splitAt,
+      "part": Qt.rect(contentLoader.x + part.x, contentLoader.y + part.y, part.width, part.height)
+    };
+  }
   // A divider of its own (Separator): the group draws none beside it
   readonly property bool divides: _item?.divides ?? false
   // Room that takes the free space on its side of the bar (Spacer): it
@@ -86,6 +119,13 @@ Item {
   // powerline neighbour, and not in a slant's or arrow's cut-off corners.
   // Null (no background) leaves the module's own bounds.
   property var hitShape: null
+  // How far its background reaches past its outer side as a tab
+  // (widgetShape tab, set by WidgetGroup): hovered and clicked out to
+  // there, its content centred in the tab
+  property real tabReach: 0
+  readonly property bool _outerFar: barConfig.right || barConfig.bottom
+  // The module's shift across to the tab's middle
+  readonly property real _tabShift: BarShapes.tabShift(tabReach, _outerFar)
   // The hit area below, by a name its menu anchor (whose own `hitArea`
   // would shadow the id) can read
   readonly property Item _hitArea: hitArea
@@ -187,14 +227,17 @@ Item {
       "barConfig": root.barConfig,
       "panel": root.panel,
       "screen": root.screen,
-      "properties": root.widget.properties ?? {}
+      "properties": root.widget.properties ?? {},
+      "autoColors": root.widget.autoColors ?? {}
     });
   }
   onWidgetChanged: {
     if ((root.widget.type ?? "") !== root._type)
       root._load();
-    else if (root._item)
+    else if (root._item) {
       root._item.properties = root.widget.properties ?? {};
+      root._item.autoColors = root.widget.autoColors ?? {};
+    }
   }
 
   // Where the module's pointer areas go (BarWidget.hitArea), over the
@@ -226,10 +269,10 @@ Item {
     }
 
     z: 1
-    x: root.isVertical ? 0 : -back
-    y: root.isVertical ? -back : 0
-    width: root.width + (root.isVertical ? 0 : back)
-    height: root.height + (root.isVertical ? back : 0)
+    x: root.isVertical ? (root._outerFar ? 0 : -root.tabReach) : -back
+    y: root.isVertical ? -back : (root._outerFar ? 0 : -root.tabReach)
+    width: root.width + (root.isVertical ? root.tabReach : back)
+    height: root.height + (root.isVertical ? back : root.tabReach)
     containmentMask: mask
 
     HoverHandler {
@@ -252,16 +295,28 @@ Item {
   // start, with `pinStart`): it never re-fits (eliding its label)
   // mid-animation, and shows through the drawn size, clipped, while that
   // catches up
-  Item {
+  // A module drawing its parts as segments draws them back under a
+  // powerline neighbour, a flared tab's fillets past its ends
+  // (BarShapes.runDraws) and out to a tab's edge: kept while it resizes
+  MarginClip {
     anchors.fill: parent
-    clip: root._resizing
+    clipped: root._resizing
+    readonly property real _near: root.segments && !root._outerFar ? root.tabReach : 0
+    readonly property real _far: root.segments && root._outerFar ? root.tabReach : 0
+    readonly property var _draws: root._moduleRun ? BarShapes.runDraws(root.barConfig, root._moduleRun) : null
+    readonly property real _start: _draws?.start ?? 0
+    readonly property real _end: _draws?.end ?? 0
+    leftMargin: root.isVertical ? _near : _start
+    topMargin: root.isVertical ? _start : _near
+    rightMargin: root.isVertical ? _far : _end
+    bottomMargin: root.isVertical ? _end : _far
 
     Loader {
       id: contentLoader
       readonly property real length: Math.max(0, root.mainSize - root.leadInset - root.trailInset)
       readonly property real start: (root._item?.pinStart ? 0 : Math.round((root._drawnMain - root.mainSize) / 2)) + root.leadInset
-      x: root.isVertical ? 0 : start
-      y: root.isVertical ? start : 0
+      x: root.isVertical ? root._tabShift : start
+      y: root.isVertical ? start : root._tabShift
       width: root.isVertical ? root.width : length
       height: root.isVertical ? length : root.height
       onLoaded: {
@@ -269,8 +324,14 @@ Item {
           item.barConfig = Qt.binding(() => root.barConfig);
           item.panel = Qt.binding(() => root.panel);
           item.screen = Qt.binding(() => root.screen);
+          // Where it sits along the bar, for the bar's gradient: its
+          // module starts past its lead inset (at rest)
+          root._item.barOffset = Qt.binding(() => root.barStart + root.leadInset);
+          root._item.barLength = Qt.binding(() => root.barLength);
           if ("hitArea" in item)
             item.hitArea = Qt.binding(() => root.hitShape ? hitArea : null);
+          if ("runPlace" in item)
+            root._item.runPlace = Qt.binding(() => root._moduleRun);
         }
       }
     }

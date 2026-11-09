@@ -120,7 +120,7 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			defaults.(*jsonx.Object).Delete(k)
 		}
 	}
-	for _, path := range addedSinceV1 {
+	for _, path := range append(addedSinceV1, prefixed("Bars.style.", barStyleKeysAddedSinceV1)...) {
 		parts := strings.Split(path, ".")
 		parent, _ := defaults.(*jsonx.Object)
 		for _, k := range parts[:len(parts)-1] {
@@ -135,7 +135,9 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 			bar.(*jsonx.Object).Delete(key)
 		}
 		if style, ok := bar.(*jsonx.Object).Value("style").(*jsonx.Object); ok {
-			style.Delete("textScale")
+			for _, key := range barStyleKeysAddedSinceV1 {
+				style.Delete(key)
+			}
 		}
 		sections, _ := bar.(*jsonx.Object).Value("widgets").(*jsonx.Object)
 		for _, side := range sections.Keys() {
@@ -168,9 +170,25 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 	}
 }
 
+// Keys a BarStyle (the Bars section's style and each bar's own) gained
+// after format 1 was frozen: textScale (in place of a font size of null,
+// the default) and the widget styles' (split, tab, outline strokes, fill
+// on hover, the bar gradient)
+var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners", "outlineStroke", "hoverFill", "groupStrokeColor", "gradient", "gradientFrom", "gradientVia", "gradientTo"}
+
 // Keys added to a format-1 section after format 1 was frozen: no format-1
-// config has them, so they come from their default at load
-var addedSinceV1 = []string{"Bars.style.textScale", "Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method"}
+// config has them, so they come from their default at load (the Bars
+// section's style's: barStyleKeysAddedSinceV1)
+var addedSinceV1 = []string{"Compositor.sway.specialWorkspaces", "Compositor.niri.tabIndicator", "WorkspaceOverlay.compositorOverview", "WindowSwitcher.compositorSwitcher", "WindowSwitcher.edge", "WindowSwitcher.position", "WindowSwitcher.detached", "WindowSwitcher.distance", "WindowSwitcher.animation", "Launcher.animation", "WindowSwitcher.order", "Overlay.moduleBorders", "Notifications.clickFocuses", "Notifications.motion", "Notifications.gap", "Notifications.dnd", "Notifications.apps", "Notifications.lowUrgency", "Notifications.quiet", "Notifications.devNotifications", "Apps.networkEditor", "Apps.commands", "Idle.caffeineWarning", "Appearance.wallpaper.collection", "Appearance.wallpaper.subfolders", "Appearance.wallpaper.transition", "Appearance.wallpaper.fill", "Appearance.wallpaper.parallax", "Appearance.wallpaper.rotation.pause", "OSD.onScreenChanges", "OSD.cardsToHistory", "Monitors.notify", "Screenshots.notify", "Input.touchpad.accel", "Input.touchpad.sensitivity", "Input.touchpad.leftHanded", "ThemeIntegrations.fcitx5", "Input.keyboard.method"}
+
+// prefixed puts prefix before each of keys
+func prefixed(prefix string, keys []string) []string {
+	out := make([]string, len(keys))
+	for i, k := range keys {
+		out[i] = prefix + k
+	}
+	return out
+}
 
 // detachedPlaceFields drops what an OSD and a dock gained since format 1
 // in place of their `gap` (v97 drops it): `distance` and `animation`,
@@ -290,12 +308,11 @@ func dropModuleKeys(v any) {
 	}
 }
 
-// A bar's settings added since (v93: its auto-hide), and its style's
-// textScale (in place of a font size of null, the default)
 // bindKeysAddedSinceV1 are a keybind's settings added since format 1 (its
 // "Only when"), which the default binds get from their defaults at load
 var bindKeysAddedSinceV1 = []string{"whenCompositors", "whenLayout", "whenMonitors"}
 
+// A bar's settings added since (v93: its auto-hide)
 var barKeysAddedSinceV1 = []string{"autoHide", "revealOnWorkspace", "revealOnActivity", "revealFor", "timing", "trigger"}
 
 // Every frozen corpus config (each past schema version's defaults, the

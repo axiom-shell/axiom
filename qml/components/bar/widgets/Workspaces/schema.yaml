@@ -43,7 +43,7 @@ settings:
     x-enumShowIf:
       none:
         anyOf:
-          - {$bar.widgetStyle: [filled, tinted, outline, underline]}
+          - {$bar.widgetStyle: [filled, tinted, outline, split, underline]}
           - {solidBoxes: true}
     default: numbers
     description: 'What each workspace shows. None: just its box or line.'
@@ -194,8 +194,8 @@ settings:
     type: boolean
     title: Background
     default: true
-    description: A box around the workspaces. Off, they sit on the bar.
-    x-showIf: {$bar.widgetStyle: [filled, tinted, outline]}
+    description: A box around the workspaces. Off, each workspace takes the bar's widget shape, a segment of the bar's run like a widget.
+    x-showIf: {$bar.widgetStyle: [filled, tinted, outline, split]}
   backgroundColor:
     type: string
     title: Background color
@@ -205,7 +205,7 @@ settings:
     x-autoColor: neutral
     x-showIf:
       showBackground: true
-      $bar.widgetStyle: [filled, tinted, outline]
+      $bar.widgetStyle: [filled, tinted, outline, split]
       $bar.widgetGrouping: {not: merged}
   solidBoxes:
     type: boolean
@@ -246,7 +246,7 @@ settings:
     default: base01
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: [filled, tinted, outline, underline]}
+        - {$bar.widgetStyle: [filled, tinted, outline, split, underline]}
         - {solidBoxes: true}
   textColor:
     type: string
@@ -258,10 +258,10 @@ settings:
       $bar.widgetTextColor: ''
       anyOf:
         - {solidBoxes: true}
-        - {$bar.widgetStyle: filled, labels: [numbers, dots]}
-        - {$bar.widgetStyle: filled, workspaceLabels: {notEmpty: true}}
-        - {$bar.widgetStyle: filled, useNames: true}
-        - {$bar.widgetStyle: filled, showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
+        - {$bar.widgetStyle: [filled, split], labels: [numbers, dots]}
+        - {$bar.widgetStyle: [filled, split], workspaceLabels: {notEmpty: true}}
+        - {$bar.widgetStyle: [filled, split], useNames: true}
+        - {$bar.widgetStyle: [filled, split], showActiveIcon: true, /Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
   hoverColor:
     type: string
     title: Hover

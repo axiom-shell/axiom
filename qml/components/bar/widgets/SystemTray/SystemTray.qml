@@ -21,7 +21,7 @@ BarWidget {
   readonly property bool hidden: items.implicitWidth <= 0
 
   hasBackground: !hidden
-  accentColor: Theme.resolveColor(properties.backgroundColor)
+  accentField: "backgroundColor"
 
   implicitWidth: isVertical ? barConfig.thickness : hidden ? 0 : items.implicitWidth + padding * 2
   implicitHeight: isVertical ? (hidden ? 0 : items.implicitHeight + padding * 2) : barConfig.thickness

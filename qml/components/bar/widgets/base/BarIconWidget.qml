@@ -2,8 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-import qs.config
-
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.
 // Modules override accentColor for their states; how it shows (a
@@ -49,9 +47,21 @@ IconTextWidget {
   // The icon's gap to its label (6 px at the default inner spacing of 4)
   spacing: barConfig.innerGap * 1.5
   iconSpacing: barConfig.innerGap
-  // Its color for its state, and what it draws in on this bar
-  property color accentColor: Theme.resolveColor(properties.backgroundColor)
-  readonly property var colors: BarsConfig.widgetColors(barConfig, accentColor, properties.foregroundColor)
+  // Its color field ("backgroundColor" unless a state names another, ""
+  // for a color of its own: a failure's error) and color for its state,
+  // its Auto fields' roles and place along the bar, and the colors it
+  // draws in (WidgetLook's; filled while its hit area is hovered, with the
+  // bar's "Fill on hover")
+  property alias accentField: look.accentField
+  property alias accentColor: look.accentColor
+  property alias autoColors: look.autoColors
+  property alias barOffset: look.barOffset
+  property alias barLength: look.barLength
+  readonly property alias accentAuto: look.accentAuto
+  readonly property alias barSpot: look.barSpot
+  readonly property alias colors: look.colors
+  // On a split bar, its icon part and label set apart (BarShapes.splitRoom)
+  splitRoom: barConfig.splitRoom
   // Whether its WidgetGroup draws a background under it, and an outline
   // in its shape while it's hovered
   property bool hasBackground: !hidden
@@ -65,6 +75,16 @@ IconTextWidget {
   foregroundColor: colors.text
   iconColor: colors.icon
   opacity: (root.pressed ? 0.8 : 1) * root.dim
+
+  readonly property WidgetLook _look: WidgetLook {
+    id: look
+    barConfig: root.barConfig
+    properties: root.properties
+    accentField: "backgroundColor"
+    length: root.isVertical ? root.height : root.width
+    splits: root.splits
+    hovered: root.hitArea?.hovered ?? false
+  }
 
   HoverHandler {
     id: hover

@@ -34,20 +34,10 @@ ValueStyleWidget {
   ratio: percentage / 100
   subtext: timeRemaining
 
-  accentColor: getBatteryColor()
+  accentField: isCharging ? "chargingColor" : root.level === "critical" ? "criticalColor" : root.level === "low" ? "lowColor" : "backgroundColor"
 
   iconScale: 1.1
   textScale: 0.9
-
-  function getBatteryColor() {
-    if (isCharging)
-      return Theme.resolveColor(properties.chargingColor);
-    if (root.level === "critical")
-      return Theme.resolveColor(properties.criticalColor);
-    if (root.level === "low")
-      return Theme.resolveColor(properties.lowColor);
-    return Theme.resolveColor(properties.backgroundColor);
-  }
 
   function getBatteryStatus() {
     const lines = [];

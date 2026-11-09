@@ -86,6 +86,18 @@ Rectangle {
   // (on the stroke it covers, at least)
   readonly property real _pillJoinReach: Math.max(root.barConfig.overlap, ...[root.ends.start, root.ends.end].map((end, i) => end.held ? 0 : root.endMargins[i] - root.barConfig.pillGap)) + 0.5
 
+  // Tabs (widgetShape tab) reach out to the outer edge of what the
+  // widgets sit on, this far in from the window's outer edge
+  // (BarEnds.tabEdge), an end by an island's or the rounded border's
+  // corner taking its curve (BarEnds.tabBounds)
+  readonly property bool tabs: root.barConfig.widgetShape === "tab"
+  readonly property real tabEdge: BarEnds.tabEdge(root.barConfig, Appearance.borderWidth)
+  readonly property var tabBounds: root.tabs ? BarEnds.tabBounds(root.barConfig, root.length, root.islands ? root.pillShapes : [], {
+    "border": Appearance.screenBorder,
+    "borderWidth": Appearance.borderWidth,
+    "radius": Appearance.borderRadius
+  }) : []
+
   // One { start, length, joinStart, joinEnd } per pill along the bar: one
   // per joined group (BarLayout.joinGroups, pillRects): grown by the pill
   // gap, those reaching an end stretched onto it and joining it. On a
@@ -342,6 +354,8 @@ Rectangle {
     return (widgetConfigArray || []).map((widgetConf, i) => ({
           "type": widgetConf.type,
           "properties": widgetConf.properties || {},
+          // Its Auto color fields' roles (BarsConfig.withAutoColors)
+          "autoColors": widgetConf.autoColors || {},
           "layout": widgetConf.layout || {},
           "configIndex": i,
           "visible": widgetConf.visible !== false
@@ -408,6 +422,10 @@ Rectangle {
     chainEnd: section.bar.sectionJoins[section.slotIndex].chainEnd
     joinEndReach: section.bar.sectionReaches[section.slotIndex]
     readonly property real mainPos: Math.round(section.slot.offset + (section.slot.extent - section.usedLength) * section.align)
+    // The bar's gradient runs along its whole length, wherever widgets are,
+    // so a widget coming or going never shifts its colors
+    barStart: section.mainPos
+    barLength: section.barConfig.gradientColors !== null ? section.bar.length : 0
 
     barConfig: section.bar.barConfig
     panel: section.bar.panel
@@ -423,6 +441,15 @@ Rectangle {
       const farSide = section.barConfig.right || section.barConfig.bottom;
       return farSide ? across - start - size : start;
     }
+    // Tabs reach from the widgets out to the bar's tabEdge, their ends
+    // bounded as the bar's, in the section's own coordinates
+    tabReach: section.bar.tabs ? Math.max(0, Math.round(section.barConfig.crossStart) - section.bar.tabEdge) : 0
+    tabBounds: section.bar.tabBounds.map(b => ({
+          "start": b.start - section.drawnPos,
+          "end": b.end - section.drawnPos,
+          "startRadius": b.startRadius,
+          "endRadius": b.endRadius
+        }))
 
     // Where it's drawn along the bar, and how long: gliding to the layout's
     // (as its widgets do, BarWidgetHost), which pills follow. Off until

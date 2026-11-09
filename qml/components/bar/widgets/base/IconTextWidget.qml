@@ -75,8 +75,30 @@ BaseWidget {
   // Where the icon is drawn, in the widget's coordinates (for a badge on
   // it); empty with no icon
   readonly property rect iconRect: _hasIcon ? Qt.rect(run.x + iconLabel.x, run.y + iconLabel.y, iconLabel.width, iconLabel.height) : Qt.rect(0, 0, 0, 0)
+  // The gap between its icon part (the lead graphic and the icon) and its
+  // label when they're set apart (a split bar's widget), instead of
+  // `spacing`; -1 for none
+  property real splitRoom: -1
+  // It shows an icon part and a label apart: it has a splitRoom, an icon
+  // or a lead graphic, and a label
+  readonly property bool splits: splitRoom >= 0 && _hasText && (_hasIcon || _leadRoom > 0)
+  readonly property real _splitExtra: splits ? splitRoom - spacing : 0
+  // Where the middle of the gap between the two parts is along the bar,
+  // in the widget's coordinates (-1 when it doesn't split)
+  readonly property real splitAt: splits ? (isVertical ? run.y : run.x) + textSlot.start - splitRoom / 2 : -1
+  // What the icon part holds (the lead graphic and the icon) in the
+  // widget's coordinates: along the bar from its start to the gap, across
+  // it the icon's size round its middle (the run's, with none)
+  readonly property rect splitPart: {
+    if (!splits)
+      return Qt.rect(0, 0, 0, 0);
+    const along = textSlot.start - splitRoom;
+    const size = fontSize * iconScale;
+    const middle = _hasIcon ? (isVertical ? iconLabel.x + iconLabel.width / 2 : iconLabel.y + iconLabel.height / 2) : (isVertical ? run.width : run.height) / 2;
+    return isVertical ? Qt.rect(run.x + middle - size / 2, run.y, size, along) : Qt.rect(run.x, run.y + middle - size / 2, along, size);
+  }
   readonly property real _textLength: isVertical && uprightLabel ? textLabel.implicitHeight : Math.ceil(Math.max(textLabel.implicitWidth, steadyMetrics.advanceWidth, minimumMetrics.advanceWidth))
-  readonly property real _naturalLength: _leadRoom + iconLength + _gap + (_hasText ? _textLength : 0)
+  readonly property real _naturalLength: _leadRoom + iconLength + _gap + _splitExtra + (_hasText ? _textLength : 0)
 
   readonly property real _padding: hidden ? 0 : padding
   // Down to its icon, with a lead graphic drawn before it: the least an
@@ -137,7 +159,7 @@ BaseWidget {
     Item {
       id: textSlot
       visible: root._hasText
-      readonly property real start: root._leadRoom + root.iconLength + root._gap
+      readonly property real start: root._leadRoom + root.iconLength + root._gap + root._splitExtra
       x: root.isVertical ? 0 : start
       y: root.isVertical ? start : 0
       width: root.isVertical ? run.width : Math.max(0, run.length - start)

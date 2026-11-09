@@ -39,7 +39,7 @@ BarIconWidget {
   icon: glyphs.join("\n")
   showText: false
 
-  accentColor: Theme.resolveColor(properties.activeColor)
+  accentField: "activeColor"
 
   clickable: true
   onClicked: {

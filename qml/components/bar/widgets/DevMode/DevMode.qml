@@ -24,6 +24,7 @@ BarIconWidget {
   leadLength: DevManager.building ? (root.isVertical ? spinner.implicitHeight : spinner.implicitWidth) : 0
   text: DevManager.checkout !== "" ? I18n.tr("DEV · {0}", DevManager.checkout) : I18n.tr("DEV")
 
+  accentField: DevManager.buildFailed ? "" : "backgroundColor"
   accentColor: DevManager.buildFailed ? Theme.error : Theme.resolveColor(properties.backgroundColor)
 
   clickable: true

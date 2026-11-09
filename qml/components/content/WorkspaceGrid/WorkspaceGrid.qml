@@ -56,7 +56,9 @@ WorkspacePopoutPanel {
 
         barConfig: root.barConfig
         isActive: wsId === root.activeId
-        look: BarsConfig.workspaceCellColors(root.barConfig, root, isActive, hasWindows, shows.urgent)
+        look: BarsConfig.workspaceCellColors(root.barConfig, root, isActive, hasWindows, shows.urgent, {
+          "hovered": wsCell.lit
+        })
         urgent: shows.urgent
         solid: root.solidBoxes
         pulse: root.pulse.value

@@ -25,6 +25,7 @@ settings:
     x-options: colors
     default: base00
     x-showIf:
-      $bar.widgetStyle: filled
-      $bar.widgetGrouping: {not: merged}
+      anyOf:
+        - {$bar.widgetStyle: filled, $bar.widgetGrouping: {not: merged}}
+        - {$bar.widgetStyle: split}
       $bar.widgetTextColor: ''

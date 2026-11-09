@@ -55,7 +55,7 @@ ValueStyleWidget {
   ratio: shownPercent < 0 ? -1 : shownPercent / 100
   subtext: properties.metric === "weekly" ? I18n.tr("Weekly") : I18n.tr("Session")
 
-  accentColor: Theme.resolveColor(maxPercent >= properties.criticalThreshold ? properties.criticalColor : maxPercent >= properties.warnThreshold ? properties.warnColor : properties.backgroundColor)
+  accentField: maxPercent >= properties.criticalThreshold ? "criticalColor" : maxPercent >= properties.warnThreshold ? "warnColor" : "backgroundColor"
   dim: stale ? 0.6 : 1
 
   // Re-acquiring replaces the old request

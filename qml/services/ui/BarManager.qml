@@ -54,6 +54,12 @@ QtObject {
     root.panelTab = index;
   }
 
+  // Shows the tab holding a Bar field (`key`, a Bar definition key: a
+  // page link's "BarEditor:<key>", OverlayManager.followPageLink)
+  function showBarField(key) {
+    root.selectPanelTab(BarsConfig.editorTabOf(key));
+  }
+
   // The selected bar as the board's live chips draw its widgets: the
   // draft bar enriched at a fixed thickness, along a top edge (chips are
   // rows) whatever its own, standing alone (no ends meet it)

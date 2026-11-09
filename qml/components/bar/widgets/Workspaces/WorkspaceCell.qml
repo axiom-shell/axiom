@@ -16,7 +16,9 @@ import qs.components.methods
 // in and out (`pulse`), with a dot at its corner where an app icon would
 // otherwise hide it. A row with a sliding ActiveCellIndicator draws its
 // cells twice, the boxes (`part: "background"`) under the indicator and
-// the labels (`"content"`) over it.
+// the labels (`"content"`) over it. As a segment of the bar's run (the
+// widget's Background off) its box takes the bar's widget shape (`shape`)
+// and its content keeps clear of its caps (`room`).
 Item {
   id: root
 
@@ -29,6 +31,12 @@ Item {
   required property real length
   property real restLength: length
   property real radius: 0
+  // Its shape as a segment of the bar's run (BarShapes.cellShape), or
+  // null: a box filling it, rounded by `radius`
+  property var shape: null
+  // The room its content keeps clear of its caps along it (BarShapes.cellRoom:
+  // { lead, trail }), or null
+  property var room: null
   // "numbers", "dots" or "none" (dots where a cell would have neither box
   // nor line to show: `none`'s option is hidden there, but the bar's style
   // can change after)
@@ -73,8 +81,9 @@ Item {
   // "all", or only its box and underline ("background") or its label, dot
   // or icon and pointer area ("content")
   property string part: "all"
-  // Its box in the hover color: when hovered, or for a background layer,
-  // when its content layer is
+  // Its box in the hover color (or, with "Fill on hover", filled: its
+  // `look` passes it to BarsConfig.cellColors): when hovered, or for a
+  // background layer, when its content layer is
   property bool lit: hovered
   // Its box while lit (BarsConfig.cellHoverColor)
   property color hoverColor: Theme.backgroundHighlight
@@ -90,33 +99,33 @@ Item {
   // `solidBoxes`: a filled box whatever the bar's style (`look` is the
   // solid one)
   property bool solid: false
-  readonly property bool boxed: barConfig.widgetBoxed || solid
+  // A segment of a merged run, which draws its box (BarsConfig.cellColors'
+  // group): boxed only where it still draws one of its own
+  property bool inRun: false
+  readonly property bool boxed: inRun ? BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid) : barConfig.widgetBoxed || solid
   // Its state shows in a box or a line; without either, in its content
   readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
-  // cells and takes the hover, so it's asked; elsewhere (a popout), the
-  // cell's own pointer area
+  // cells and takes the hover, so it's asked whether the pointer is in
+  // the cell's pointer area (its box as drawn); elsewhere (a popout), that
+  // area itself
   property var hitArea: null
-  readonly property bool hovered: hitArea ? hitArea.hovers(root) : cellArea.containsMouse
+  readonly property bool hovered: hitArea ? hitArea.hovers(cellArea) : cellArea.containsMouse
 
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
-  Rectangle {
-    anchors.fill: parent
+  // Lit, in the hover color, unless its look is filled for the hover
+  // already ("Fill on hover": BarWidgetStyle.cell's showsHover)
+  CellBox {
     visible: root._drawsBox
+    barConfig: root.barConfig
     radius: root.radius
+    shape: root.shape
     opacity: root._pulse
-    color: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    border.color: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
-    border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
-    ColorGlide on border.color {
-      enabled: root.animated
-    }
+    fillColor: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    strokeColor: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    animated: root.animated
   }
 
   // Underline: along the side the bar's widget lines take
@@ -132,9 +141,16 @@ Item {
   }
 
   // What it shows, fading with an urgent one's pulse where nothing else
-  // carries its state
+  // carries its state, centred clear of its caps
   Item {
+    readonly property real _lead: root.room?.lead ?? 0
+    readonly property real _trail: root.room?.trail ?? 0
+
     anchors.fill: parent
+    anchors.leftMargin: root.isVertical ? 0 : _lead
+    anchors.rightMargin: root.isVertical ? 0 : _trail
+    anchors.topMargin: root.isVertical ? _lead : 0
+    anchors.bottomMargin: root.isVertical ? _trail : 0
     visible: root._drawsContent
     opacity: root._framed ? 1 : root._pulse
 
@@ -320,9 +336,12 @@ Item {
     }
   }
 
-  MouseArea {
+  // In its box as drawn: as a segment, back under the cell before and out
+  // to a tab's edge
+  CellHitArea {
     id: cellArea
-    anchors.fill: parent
+    shape: root.shape
+    vertical: root.isVertical
     enabled: root.clickable && root._drawsContent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor

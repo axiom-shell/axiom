@@ -24,30 +24,8 @@ Item {
   readonly property bool copied: BarManager.copiedStyle !== null
   readonly property bool copiedHere: BarManager.copiedStyle?.index === BarManager.selectedBarIndex
 
-  // The tabs, by the schema groups (`x-group` titles) each shows: a Bar
-  // group no tab names goes on the first
-  readonly property var tabs: [
-    {
-      "label": I18n.tr("Layout"),
-      "fields": ["Placement", "Size"],
-      "styles": []
-    },
-    {
-      "label": I18n.tr("Surface"),
-      "fields": ["Surface"],
-      "styles": ["Bar accents", "Surface shadow"]
-    },
-    {
-      "label": I18n.tr("Widgets"),
-      "fields": [],
-      "styles": ["Bar widgets"]
-    },
-    {
-      "label": I18n.tr("Behaviour"),
-      "fields": ["Behaviour"],
-      "styles": []
-    }
-  ]
+  // The tabs (BarsConfig.editorTabs)
+  readonly property var tabs: BarsConfig.editorTabs
   readonly property var _tab: root.tabs[BarManager.panelTab] ?? root.tabs[0]
   readonly property var _named: [].concat(...root.tabs.map(tab => tab.fields))
   readonly property var fieldGroups: BarsConfig.fieldGroups.filter(group => root._tab.fields.includes(group.title) || (root._tab === root.tabs[0] && !root._named.includes(group.title)))
@@ -55,7 +33,7 @@ Item {
 
   // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
   // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Bar widgets")
-  // I18n.tr("Bar accents") I18n.tr("Surface shadow")
+  // I18n.tr("Bar gradient") I18n.tr("Bar accents") I18n.tr("Surface shadow")
   TitledCard {
     title: I18n.tr("Bar Editor")
     scrollKey: "BarEditor"
