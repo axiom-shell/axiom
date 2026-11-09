@@ -168,6 +168,82 @@ TestCase {
     compare([b.minX, b.maxX, b.minY, b.maxY], [0, 99, 1, 29]);
   }
 
+  function test_offset_path_shrinks_square_to_each_edge() {
+    // Flat ends: the inset all round, or at a seam the end's own
+    const b = bounds(BarShapes.offsetPath(100, 30, 0, "flat", "flat", false, 3, 3, 3));
+    compare([b.minX, b.maxX, b.minY, b.maxY], [3, 97, 3, 27]);
+    const seam = bounds(BarShapes.offsetPath(100, 30, 0, "flat", "flat", false, 3, 3, 0));
+    compare([seam.minX, seam.maxX], [3, 100]);
+    // A round corner keeps its centre: its radius less the inset
+    verify(BarShapes.offsetPath(100, 30, 8, "round", "round", false, 3, 3, 3).includes("A 5 5 0 0 1"));
+    compare(BarShapes.offsetPath(100, 30, 2, "round", "round", false, 3, 3, 3), BarShapes.offsetPath(100, 30, 0, "flat", "flat", false, 3, 3, 3));
+    // A capsule's half circle shrinks about its centre
+    verify(BarShapes.offsetPath(100, 30, 0, "capsule", "capsule", false, 3, 3, 3).includes("A 12 12 0 0 1"));
+    compare(BarShapes.offsetPath(100, 30, 0, "flat", "flat", false, 15, 15, 15), "", "no room");
+  }
+
+  // The distance from point p to the line through a and b
+  function distance(p, a, b) {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    return Math.abs(dy * (p[0] - a[0]) - dx * (p[1] - a[1])) / Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function test_offset_path_keeps_slants_and_arrows_parallel_data() {
+    return [
+      {
+        "tag": "slant",
+        "cap": "slant"
+      },
+      {
+        "tag": "arrowOut",
+        "cap": "arrowOut"
+      },
+      {
+        "tag": "arrowIn",
+        "cap": "arrowIn"
+      }
+    ];
+  }
+  function test_offset_path_keeps_slants_and_arrows_parallel(data) {
+    // The end cap's points, outer and moved 4 in: each inner point lies 4
+    // from the outer cap's line beside it
+    const outer = points(BarShapes.offsetPath(100, 30, 0, "flat", data.cap, false, 0, 0, 0)).filter(p => p[0] > 50);
+    const inner = points(BarShapes.offsetPath(100, 30, 0, "flat", data.cap, false, 4, 0, 4)).filter(p => p[0] > 50);
+    compare(outer.length, inner.length);
+    for (let k = 0; k + 1 < outer.length; k++)
+      fuzzyCompare(distance(inner[k], outer[k], outer[k + 1]), 4, 0.001, data.cap + " point " + k);
+  }
+
+  function test_offset_path_bows_round_joins_about_their_centre() {
+    // A powerline's half circles: out shrinks, in grows, both about the
+    // circle the seam lies on
+    verify(BarShapes.offsetPath(100, 30, 0, "flat", "roundOut", false, 3, 0, 3).includes("A 12 12 0 0 1"));
+    verify(BarShapes.offsetPath(100, 30, 0, "roundIn", "flat", false, 3, 3, 0).includes("A 18 18"));
+  }
+
+  function test_marks_are_the_ends_alone() {
+    // Two open paths: no close, one move per end
+    const both = BarShapes.marks(100, 30, 0, "round", "round", false, 1, false, false);
+    verify(!both.includes("Z"));
+    compare(both.split("M").length - 1, 2);
+    // A square end's mark is a bracket: arms a quarter of the thickness
+    const pts = points(both);
+    compare(pts.slice(0, 4), [[8.5, 1], [1, 1], [1, 29], [8.5, 29]]);
+    compare(pts.slice(4), [[91.5, 1], [99, 1], [99, 29], [91.5, 29]]);
+    // A shaped end is its line alone: an arrow's point
+    compare(points(BarShapes.marks(100, 30, 0, "flat", "arrowOut", false, 0, false, false)).slice(4), [[85, 0], [100, 15], [85, 30]]);
+    // A capsule's half circle
+    verify(BarShapes.marks(100, 30, 0, "capsule", "capsule", false, 1, false, false).includes("A 14 14"));
+  }
+
+  function test_marks_one_per_seam() {
+    // A powerline segment's start at a seam is the one before's end mark
+    const mid = BarShapes.marks(100, 30, 0, "arrowIn", "arrowOut", false, 1, true, true);
+    compare(mid.split("M").length - 1, 1);
+    // ...which lies on the seam
+    verify(points(mid).some(p => p[0] === 100 && p[1] === 15));
+  }
+
   function test_shown_start_follows_the_cap_before() {
     compare(BarShapes.segment("slant", "shaped", "powerline", true, 1, 2, 30).shownStart, "slant");
     compare(BarShapes.segment("arrow", "shaped", "powerline", true, 1, 2, 30).shownStart, "arrowIn");
@@ -378,6 +454,54 @@ TestCase {
       // Its corners in by its depth (the arc reaches the end)
       compare(bounds(curve).maxX, 100 - 26 / 4);
     }
+  }
+
+  function sweeps(path) {
+    return (path.match(/A \S+ \S+ 0 0 (\d)/g) ?? []).map(a => a.slice(-1));
+  }
+
+  // The end side mirrors the start side, drawn back out: each of its arcs
+  // turns as the start's, in reverse order, on every side of the bar
+  function test_tab_end_side_mirrors_the_start() {
+    const t = outerStart => BarShapes.tab(6, 26, 6, outerStart, [null, null]);
+    for (const outerStart of [true, false])
+      for (const vertical of [false, true]) {
+        const sw = sweeps(BarShapes.path(100, 30, 0, "tab", "tab", vertical, 1, false, false, t(outerStart), true));
+        compare(sw.length, 4);
+        compare(sw, sw.slice().reverse());
+      }
+  }
+
+  // Outline strokes on a tab: open along the edge it hangs from
+  function test_tab_double_lines_both_reach_the_edge() {
+    const t = BarShapes.tab(6, 26, 6, true, [null, null]);
+    const outer = BarShapes.offsetPath(100, 30, 6, "tab", "tab", false, 1, 1, 1, t);
+    const inner = BarShapes.offsetPath(100, 30, 6, "tab", "tab", false, 5, 5, 5, t);
+    for (const line of [outer, inner]) {
+      verify(!line.includes("Z"), line);
+      const pts = points(line);
+      compare([pts[0][1], pts[pts.length - 1][1]], [0, 0]);
+    }
+    compare(bounds(outer).maxY, 29);
+    compare(bounds(inner).maxY, 25);
+    // The inner corners keep their centre: the radius less the inset
+    verify(inner.includes("A 1 1 "), inner);
+    verify(outer.includes("A 5 5 "), outer);
+    // A fillet's circle widens by it, crossing the edge further in
+    verify(inner.includes("A 11 11 0 0 1 5 6"), inner);
+  }
+
+  function test_tab_ends_marks_its_two_sides() {
+    const t = BarShapes.tab(6, 26, 0, true, [null, null]);
+    const marks = BarShapes.marks(100, 30, 6, "tab", "tab", false, 1, false, false, t);
+    verify(!marks.includes("Z"), marks);
+    const starts = marks.split("M ").filter(m => m.length > 0).map(m => points("M " + m));
+    compare(starts.length, 2);
+    // Each from the outer edge in, round its corner, an arm along
+    compare(starts[0][0], [1, 0]);
+    compare(starts[0][starts[0].length - 1], [7 + 26 / 4, 29]);
+    compare(starts[1][0], [99, 0]);
+    compare(starts[1][starts[1].length - 1], [93 - 26 / 4, 29]);
   }
 
   function test_tab_hits_reach_its_outer_edge() {

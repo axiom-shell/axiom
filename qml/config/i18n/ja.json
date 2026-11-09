@@ -4162,6 +4162,12 @@
     "Rounded follows the corner radius. Capsule always has round ends. Tab reaches out to the bar's outer edge.": "",
     "Flared": "",
     "Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.": "",
-    "Tab": ""
+    "Tab": "",
+    "Double: two lines, each the outline width. Ends only: a mark at each end, in the widget shape.": "",
+    "Double": "",
+    "Outline stroke": "",
+    "Dashed": "",
+    "Ends only": "",
+    "Dotted": ""
   }
 }

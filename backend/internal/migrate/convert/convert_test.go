@@ -172,7 +172,7 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 
 // Keys a BarStyle (the Bars section's style and each bar's own) gained
 // after format 1 was frozen
-var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners"}
+var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners", "outlineStroke"}
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load (the Bars

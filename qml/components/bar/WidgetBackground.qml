@@ -6,15 +6,16 @@ import Quickshell.Widgets
 import qs.config
 import qs.components.methods
 import qs.components.reusable
+import qs.components.bar.widgets.base
 
 // What a bar widget sits on, in its bar's widget style (widgetStyle,
 // widgetShape): a fill or outline shaped by its caps (BarShapes), or for
-// underline a line along one side. Split fills its icon part over the
-// label's (joined, cut by the divider) or draws a badge behind the icon.
-// Its hover outline and the bar editor's highlight take the same shape. A
-// tab (widgetShape tab) is set reaching out to the edge it hangs from by
-// its WidgetGroup, which hands it what bounds its ends (`tabLimits`).
-// WidgetGroup draws one under each widget
+// underline a line along one side, an outline in the bar's outlineStroke.
+// Split fills its icon part over the label's (joined, cut by the divider)
+// or draws a badge behind the icon. Its hover outline and the bar editor's
+// highlight take the same shape. A tab (widgetShape tab) is set reaching
+// out to the edge it hangs from by its WidgetGroup, which hands it what
+// bounds its ends (`tabLimits`). WidgetGroup draws one under each widget
 // with a background, and one under each merged run.
 Item {
   id: root
@@ -61,7 +62,8 @@ Item {
   readonly property var _tab: barConfig.widgetShape === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, barConfig.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
 
   // The shape in one fill and stroke: a Rectangle when both ends are
-  // alike and rounded (or square), else a path
+  // alike and rounded (or square), else a path; a stroke other than solid
+  // over it (OutlineStroke)
   component ShapedBox: Item {
     id: box
 
@@ -76,8 +78,13 @@ Item {
     // A tab's shape (BarShapes.tab): its stroke is left open along the
     // edge it hangs from
     property var tab: null
+    // solid, or the outline's own (OutlineStroke)
+    property string stroke: "solid"
 
     readonly property bool vertical: bar.vertical
+    readonly property bool solid: stroke === "solid"
+    // The fill's and a solid stroke's (one centred on the path)
+    readonly property real _solidWidth: solid ? strokeWidth : 0
     readonly property real across: vertical ? width : height
     readonly property real length: vertical ? height : width
     readonly property real rectRadius: {
@@ -103,7 +110,7 @@ Item {
       radius: Math.max(0, box.rectRadius)
       color: box.fillColor
       border.color: box.strokeColor
-      border.width: box.strokeWidth
+      border.width: box._solidWidth
     }
 
     Loader {
@@ -114,28 +121,43 @@ Item {
 
         ShapePath {
           fillColor: box.fillColor
-          strokeColor: box.strokeWidth > 0 && !box.tab ? box.strokeColor : "transparent"
-          strokeWidth: box.strokeWidth
+          strokeColor: box._solidWidth > 0 && !box.tab ? box.strokeColor : "transparent"
+          strokeWidth: box._solidWidth
           joinStyle: ShapePath.MiterJoin
 
           // Inset by half the stroke, which is centred on the path
           PathSvg {
-            path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box.strokeWidth / 2, box.seamStart, box.seamEnd, box.tab)
+            path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, box.seamStart, box.seamEnd, box.tab)
           }
         }
 
         // A tab's stroke, open along its outer edge
         ShapePath {
           fillColor: "transparent"
-          strokeColor: box.strokeWidth > 0 && box.tab ? box.strokeColor : "transparent"
-          strokeWidth: box.strokeWidth
+          strokeColor: box._solidWidth > 0 && box.tab ? box.strokeColor : "transparent"
+          strokeWidth: box._solidWidth
           joinStyle: ShapePath.MiterJoin
 
           PathSvg {
-            path: box.tab ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box.strokeWidth / 2, false, false, box.tab, true) : ""
+            path: box.tab ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, false, false, box.tab, true) : ""
           }
         }
       }
+    }
+
+    OutlineStroke {
+      anchors.fill: parent
+      visible: !box.solid && box.strokeWidth > 0 && box.strokeColor.a > 0
+      stroke: box.stroke
+      vertical: box.vertical
+      radius: box.bar.radius
+      startCap: box.startCap
+      endCap: box.endCap
+      seamStart: box.seamStart
+      seamEnd: box.seamEnd
+      tab: box.tab
+      color: box.strokeColor
+      lineWidth: box.strokeWidth
     }
   }
 
@@ -150,6 +172,7 @@ Item {
     fillColor: root.colors?.fill ?? "transparent"
     strokeColor: root.colors?.stroke ?? "transparent"
     strokeWidth: root._fill === "outline" ? root.barConfig.outlineWidth : 0
+    stroke: root._fill === "outline" ? root.barConfig.outlineStroke : "solid"
 
     // State changes (mute, a warning level) recolour smoothly
     ColorGlide on fillColor {}

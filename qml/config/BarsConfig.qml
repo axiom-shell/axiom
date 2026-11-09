@@ -132,6 +132,8 @@ QtObject {
       "widgetBoxed": boxed,
       "tintOpacity": look.tintOpacity / 100,
       "outlineWidth": look.outlineWidth,
+      // solid, dashed, dotted, double or ends (WidgetBackground, cells)
+      "outlineStroke": look.outlineStroke,
       "lineWidth": look.lineWidth,
       "lineSide": look.lineSide,
       "widgetTextColor": look.widgetTextColor,

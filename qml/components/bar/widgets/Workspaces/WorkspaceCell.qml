@@ -62,20 +62,13 @@ Item {
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
-  Rectangle {
-    anchors.fill: parent
+  CellBox {
     visible: root._drawsBox
+    barConfig: root.barConfig
     radius: root.radius
-    color: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    border.color: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
-    border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
-    ColorGlide on border.color {
-      enabled: root.animated
-    }
+    fillColor: root.lit && !root.isActive ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    strokeColor: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    animated: root.animated
   }
 
   // Underline: along the side the bar's widget lines take

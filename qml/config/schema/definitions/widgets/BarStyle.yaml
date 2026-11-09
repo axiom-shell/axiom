@@ -99,6 +99,16 @@ properties:
     maximum: 6
     x-unit: px
     x-showIf: {widgetStyle: outline}
+  outlineStroke:
+    x-group: Bar widgets
+    type: string
+    title: Outline stroke
+    default: solid
+    enum: [solid, dashed, dotted, double, ends]
+    x-enumLabels: {solid: Solid, dashed: Dashed, dotted: Dotted, double: Double, ends: Ends only}
+    x-beside: true
+    x-showIf: {widgetStyle: outline}
+    description: 'Double: two lines, each the outline width. Ends only: a mark at each end, in the widget shape.'
   lineWidth:
     x-group: Bar widgets
     type: integer

@@ -142,13 +142,13 @@ Item {
       duration: Appearance.animNormal
     }
 
-    Rectangle {
-      anchors.fill: parent
+    CellBox {
       visible: root.boxed
+      barConfig: root.barConfig
       radius: root.radius
-      color: root.look.fill
-      border.color: root.look.stroke
-      border.width: root.barConfig.widgetStyle === "outline" ? root.barConfig.outlineWidth : 0
+      fillColor: root.look.fill
+      strokeColor: root.look.stroke
+      animated: true
     }
 
     CellUnderline {

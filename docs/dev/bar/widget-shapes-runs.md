@@ -1,7 +1,7 @@
 # Bar widget shapes, runs, separators and accents
 
-> **Files:** `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetBackground.qml`, `qml/components/methods/BarShapes.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/reusable/SeparatorMark.qml`, `qml/components/bar/BarContainer.qml` (inline `AccentLine`), `qml/components/bar/BarWidgetHost.qml`
-> **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `tabCorners`, `widgetEnds`, `widgetGrouping`, `splitIcon`, `splitDivider`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach`, `tabFillet` are derived `barConfig` values.)
+> **Files:** `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetBackground.qml`, `qml/components/bar/widgets/base/OutlineStroke.qml`, `qml/components/methods/BarShapes.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/methods/BarWidgetStyle.qml`, `qml/components/reusable/SeparatorMark.qml`, `qml/components/bar/BarContainer.qml` (inline `AccentLine`), `qml/components/bar/BarWidgetHost.qml`
+> **Config:** `BarStyle` (or a bar overriding it): `widgetShape`, `tabCorners`, `widgetEnds`, `widgetGrouping`, `splitIcon`, `splitDivider`, `outlineStroke`, `separatorStyle`, `shadow`, `accentLine`, `accentLineFade`. (`groupSpacing`, `shadowReach`, `tabFillet` are derived `barConfig` values.)
 > **Related:** [Widget style](widget-style.md), [Bar composition](composition.md), [Layering and corners](layering-and-corners.md) (the border's shadow window), [Popout shadows](../popouts/shadows.md)
 
 How widget backgrounds are drawn: their shapes, merged and powerline runs, hit testing in the drawn shape, separators at section ends, separator marks, the bar's shadow and the accent line.
@@ -39,6 +39,13 @@ How widget backgrounds are drawn: their shapes, merged and powerline runs, hit t
 - Merged runs are one tab, with fillets at the run's ends only. Tabs never chain as a powerline (`BarWidgetStyle.grouping` draws a saved powerline as separate; the option is hidden).
 - The host's hit area reaches out with the tab, and its content is centred in the tab (`BarWidgetHost.tabReach`).
 - **Split on a tab:** the icon part reaches the edge too (it's drawn by the same tab path, its end the divider: `_tabPath` draws a side that isn't a tab's as `_cap` has it, the right way up on either side). A badge has no box, so a separate badge isn't offered the tab shape (`x-enumShowIf`).
+
+### Outline strokes
+- An outlined widget's stroke (`outlineStroke`, shown for outline) is solid, dashed, dotted, double or ends only. Solid is the Rectangle's border or the path's stroke, as ever; any other is a `bar/widgets/base/OutlineStroke` over the box (a Rectangle can't dash), so rounded and capsule draw as a path then too. Workspace cells take the same stroke (`CellBox`), a double one in half-width lines (at least 1 px) so the inner line keeps clear of the label.
+  - **Dashed / dotted:** the outline path (`BarShapes.path`, half a line in) with a dash pattern in line widths: dashes three long two apart, dots square, one and a half apart (the curve renderer draws no zero-length dash, so dots can't be round caps).
+  - **Double:** two lines of `outlineWidth`, `outlineWidth` apart (`BarShapes.offsetPath`): each moved in square to every edge, so a slant's or arrow's sides stay parallel to the shape's and a round corner keeps its centre (its radius less the inset); a capsule's or a powerline's half circle shrinks (or, bowed in, grows) about its own. At a powerline seam the outer line lies on the seam, as a solid outline does, and the inner one two widths in from it. A line with no room left (a thin bar, a wide outline) isn't drawn.
+  - **Ends only** (`BarShapes.marks`): the outline at its ends alone, open paths in the shape: a rounded (or square) end's line with arms a quarter of the thickness along the bar `[ ]`, a capsule's half circle `( )`, a slant's line `/ /`, an arrow's point or notch `> >`. A merged run has a mark at its two ends only (its widgets have no stroke of their own); a powerline one per seam, the earlier segment's end cap (a segment's start at a seam, `seamStart`, draws none).
+  - **On a tab** every stroke is open along the edge it hangs from: dashed and dotted follow the open outline, double's two lines both run out to that edge (`offsetPath` with `tab`: the inner corners and fillets keep their centres), and ends only marks the tab's two sides, each from the edge in, round its inner corner and an arm a quarter of the thickness along the inner side (`BarShapes._tabMarks`).
 
 ### Runs: merged and powerline
 - Neighbouring widgets with backgrounds form runs (`BarLayout.runs`/`runPlaces`).

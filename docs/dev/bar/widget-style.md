@@ -35,6 +35,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - They draw in `colors` = `BarsConfig.widgetColors(barConfig, accent, foregroundName, splits)`, which gives `{ fill, stroke, indicator, text, icon, iconFill }`.
   - The pure `methods/BarWidgetStyle` works these out from the bar's `widgetStyle`: filled, tinted, outline, split, underline, colored icons or plain.
   - `widgetTextColor` overrides the automatic text color.
+  - An outline is drawn in the bar's `outlineStroke` ([Shapes and runs](widget-shapes-runs.md#outline-strokes)).
 - Colors that are content rather than a background stay the widget's own: workspace cells, separators, badges, the DND icon.
 - **Split** sets a widget's icon part apart from its label (`BarWidgetStyle.colors`' `split` case):
   - The icon part (the icon, and a lead graphic: a display style's ring, sparkline or ticker) is filled with the widget's color (`iconFill`), its icon in `own`.
@@ -83,7 +84,7 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - Its cells (`workspaces/WorkspaceCell`) are inset by `innerGap` inside that box.
 - A hovered cell's box is `hoverColor` (`BarsConfig.cellHoverColor`; Auto is `Theme.backgroundHighlight`). On the bar, a cell reads hover from the widget's hit area (`hitArea.hovers(cell)`), which lies over the cells: their own `MouseArea` misses the leave after a click and stays lit. In a popout it uses its own.
 - Cells draw in the same style through `BarsConfig.cellColors` → `BarWidgetStyle.cell`, which gives `{ fill, stroke, indicator, content }` from the cell's state color.
-  - **Filled, tinted or outlined** styles draw boxes; split draws them filled.
+  - **Filled, tinted or outlined** styles draw boxes (`workspaces/CellBox`, the cell's and the sliding active box's), an outline in the bar's `outlineStroke`; split draws them filled.
   - **Styles with no box** (underline, colored icons, plain) draw the cell's number or a dot straight on the bar. The dot becomes a pill when wide, with the cells narrowed to fit.
     - For underline, each cell is underlined itself and the widget's own line is off.
     - An empty cell's content is the bar text, faded.
