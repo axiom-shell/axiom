@@ -70,8 +70,9 @@ Item {
   // the sliding active box, drawn over them all, always fits against it
   readonly property var _shapes: run ? ids.map((_, j) => BarShapes.cellShape(barConfig, run, _boxedInRun, BarWidgetStyle.cellOpaque(barConfig.widgetStyle, solidBoxes), spacing, chainFirst + j, chainCount)) : null
   readonly property var _rooms: run ? ids.map((_, j) => BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst + j, chainCount)) : null
-  // In a merged run, the run draws their box (BarsConfig.cellColors' group)
-  readonly property bool _inGroup: run !== null && barConfig.widgetGrouping === "merged"
+  // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
+  // onBar)
+  readonly property bool _inGroup: hitArea !== null && barConfig.widgetGrouping === "merged"
   // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
   readonly property bool solidBoxes: properties.solidBoxes
   // The workspace whose cell is hovered, which its box (drawn apart from
@@ -121,7 +122,7 @@ Item {
     const content = root._contents[index];
     return BarsConfig.workspaceCellColors(root.barConfig, root, false, content?.occupied ?? false, content?.urgent ?? false, {
       "hovered": lit === true,
-      "group": root._inGroup
+      "onBar": root.hitArea !== null
     });
   }
 
@@ -134,7 +135,7 @@ Item {
     return BarsConfig.workspaceCellColors(root.barConfig, root, true, false, false, {
       "hovered": lit === true,
       "spot": spot,
-      "group": root._inGroup
+      "onBar": root.hitArea !== null
     });
   }
 

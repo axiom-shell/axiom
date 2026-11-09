@@ -239,6 +239,7 @@ Item {
       // Joined across a section's end to the next section's run (its
       // places carry on there): no cap there, the background running on
       // over the gap between them
+      readonly property var _firstPlace: root._drawPlaces[run.members[0]] ?? null
       readonly property var _lastPlace: root._drawPlaces[run.members[run.count - 1]] ?? null
       readonly property real _reach: root._reachOf(_lastPlace)
       // Along the group as laid out, for the bar's gradient: one strip of
@@ -251,8 +252,12 @@ Item {
       colors: BarsConfig.groupColors(root.barConfig, root._graded ? root._barSpot((_from + _to) / 2) : -1)
       gradientStart: root._graded ? root._barSpot(_from) : -1
       gradientEnd: root._graded ? root._barSpot(_to) : -1
-      startCap: root.segmentAt(root._drawPlaces[run.members[0]] ?? null).startCap
+      startCap: root.segmentAt(_firstPlace).startCap
       endCap: root.segmentAt(_lastPlace).endCap
+      // Carried on from the section before, and on into the next: its
+      // stroke left open there, so no divider shows at the join
+      openStart: (_firstPlace?.index ?? 0) > 0
+      openEnd: _lastPlace !== null && _lastPlace.index < _lastPlace.count - 1
       x: (first?.x ?? 0) - (root.isVertical && !root._outerFar ? root._reach : 0)
       y: (first?.y ?? 0) - (!root.isVertical && !root._outerFar ? root._reach : 0)
       width: root.isVertical ? (first?.width ?? 0) + root._reach : (last?.x ?? 0) + (last?.width ?? 0) - (first?.x ?? 0) + _reach

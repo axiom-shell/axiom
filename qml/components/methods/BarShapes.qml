@@ -396,13 +396,15 @@ QtObject {
   // a pen putting them in item coordinates: drawn as if the outer edge
   // were at the top, then flipped across when it's at the far side, and
   // swapped on a vertical bar (each a reflection, which flips the arcs).
-  // The sides lie `inset` in, but the outer edge keeps none. `grow` moves
+  // The sides lie `inset` in, but the outer edge keeps none, nor an open
+  // end (`openStart`/`openEnd`: path's). `grow` moves
   // the lines that far in from the shape's own while round corners keep
   // their centres (a double outline's lines, offsetPath): the inner
   // corners' radius less it, a fillet's or a bound's curve's more or less.
-  function _tabSides(length, across, startCap, endCap, vertical, inset, tab, grow) {
+  function _tabSides(length, across, startCap, endCap, vertical, inset, tab, grow, openStart, openEnd) {
     const h = Math.max(0, across - inset);
-    const room = Math.max(0, length - 2 * inset);
+    const along0 = openStart ? 0 : inset, along1 = openEnd ? 0 : inset;
+    const room = Math.max(0, length - along0 - along1);
     const r = Math.max(0, Math.min(tab.radius - grow, room / 2, h / 2));
     const flip = !tab.outerStart;
     const p = (x, y, arc) => ({
@@ -450,15 +452,21 @@ QtObject {
       return out;
     };
     const pt = uv => vertical ? `${uv[1]} ${uv[0]}` : `${uv[0]} ${uv[1]}`;
+    const fillet = (cap, end) => cap === "tab" && !end.corner && end.flare > 0;
     return {
       "head": side(startCap, tab.start, true),
       "tail": side(endCap, tab.end, false),
-      "at": (q, atEnd) => pt([atEnd ? length - inset - q.x : inset + q.x, flip ? across - q.y : q.y]),
+      // A side begins in a flared fillet (its first two points), and how
+      // long the inner side is between the sides' insets
+      "headFillet": fillet(startCap, tab.start),
+      "tailFillet": fillet(endCap, tab.end),
+      "room": room,
+      "at": (q, atEnd) => pt([atEnd ? length - along1 - q.x : along0 + q.x, flip ? across - q.y : q.y]),
       // A step to a point, along `arc` (the side's own, into it) drawn
       // the way the side runs (`inward`: from the outer edge in) at its
       // start or end: convex corners turn one way, fillets the other
       "to": (q, atEnd, arc, inward) => {
-        const xy = pt([atEnd ? length - inset - q.x : inset + q.x, flip ? across - q.y : q.y]);
+        const xy = pt([atEnd ? length - along1 - q.x : along0 + q.x, flip ? across - q.y : q.y]);
         if (!arc)
           return `L ${xy} `;
         // A cap's own arc (_tabSideCap) keeps its sweep as drawn
@@ -477,24 +485,26 @@ QtObject {
   // then closed along the outer edge, or left open there (`open`, an
   // outline: a tab has no line along the edge it hangs from). Its outer
   // side keeps no inset, so a stroke runs right to that edge. `grow`:
-  // _tabSides'.
-  function _tabPath(length, across, startCap, endCap, vertical, inset, tab, open, grow) {
-    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, grow ?? 0);
+  // _tabSides'. Left open, an open end (`openStart`/`openEnd`, path's)
+  // has no side: the line runs along the inner side to it.
+  function _tabPath(length, across, startCap, endCap, vertical, inset, tab, open, grow, openStart, openEnd) {
+    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, grow ?? 0, openStart, openEnd);
     const head = t.head, tail = t.tail;
-    let d = `M ${t.at(head[0], false)} `;
-    for (let k = 1; k < head.length; k++)
+    const skipHead = open && openStart, skipTail = open && openEnd;
+    let d = `M ${t.at(head[skipHead ? head.length - 1 : 0], false)} `;
+    for (let k = 1; k < head.length && !skipHead; k++)
       d += t.to(head[k], false, head[k].arc, true);
     d += t.to(tail[tail.length - 1], true, null, false);
-    for (let k = tail.length - 2; k >= 0; k--)
+    for (let k = tail.length - 2; k >= 0 && !skipTail; k--)
       d += t.to(tail[k], true, tail[k + 1].arc, false);
     return open ? d.trim() : d + "Z";
   }
 
   // A tab's Ends only marks (marks with `tab`): each side from the outer
   // edge in, round its inner corner and an arm `arm` along the inner side
-  // (a `[ ]` open at the edge it hangs from)
-  function _tabMarks(length, across, startCap, endCap, vertical, inset, tab, arm) {
-    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, 0);
+  // (a `[ ]` open at the edge it hangs from), none at an open end
+  function _tabMarks(length, across, startCap, endCap, vertical, inset, tab, arm, openStart, openEnd) {
+    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, 0, openStart, openEnd);
     const mark = (pts, atEnd) => {
       const last = pts[pts.length - 1];
       let d = `M ${t.at(pts[0], atEnd)} `;
@@ -505,7 +515,79 @@ QtObject {
         "y": last.y
       }, atEnd, null, true);
     };
-    return mark(t.head, false) + mark(t.tail, true);
+    return (openStart ? "" : mark(t.head, false)) + (openEnd ? "" : mark(t.tail, true));
+  }
+
+  // A tab's dashed outline (dashPath with `tab`): each side from the
+  // middle of the inner side out, round its inner corner and up to the
+  // edge it hangs from, or to its fillet, which `fillets` draws solid
+  function _tabDashPath(length, across, startCap, endCap, vertical, inset, tab, openStart, openEnd) {
+    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, 0, openStart, openEnd);
+    const half = (pts, atEnd, open, fillet) => {
+      const last = pts.length - 1;
+      let d = `M ${t.at({
+        "x": t.room / 2,
+        "y": pts[last].y
+      }, false)} ` + t.to(pts[last], atEnd, null, false);
+      for (let k = last - 1; k >= (fillet ? 1 : 0) && !open; k--)
+        d += t.to(pts[k], atEnd, pts[k + 1].arc, false);
+      return d;
+    };
+    return (half(t.head, false, openStart, t.headFillet) + half(t.tail, true, openEnd, t.tailFillet)).trim();
+  }
+
+  // A flared tab's fillets alone (dashPath's other part), from the edge it
+  // hangs from in to each side, as open paths: "" with none (square, or
+  // an end held by a corner's curve or open)
+  function fillets(length, across, startCap, endCap, vertical, inset, tab, openStart, openEnd) {
+    if (!tab)
+      return "";
+    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, 0, openStart, openEnd);
+    const fillet = (pts, atEnd) => `M ${t.at(pts[0], atEnd)} ` + t.to(pts[1], atEnd, pts[1].arc, true);
+    return ((t.headFillet && !openStart ? fillet(t.head, false) : "") + (t.tailFillet && !openEnd ? fillet(t.tail, true) : "")).trim();
+  }
+
+  // An outline for a dash pattern to run along (path's, as open paths):
+  // halves mirroring each other, each from the middle of the long sides
+  // out round its own end, so a dash pattern started the same way on both
+  // (OutlineStroke centres a dash on their start) meets each end alike,
+  // wherever the outline would start. The start's half runs from the
+  // middle of the side at the top (in item coordinates; the left on a
+  // vertical bar) round the start cap to the middle of the other side,
+  // the end's likewise; at an open end, the two sides alone, each from
+  // its middle out. A tab's sides run from the middle of its inner side
+  // out to the edge it hangs from, a flared one's to its fillets, which
+  // are drawn solid apart (fillets): a dash pattern can't match on them.
+  function dashPath(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab, openStart, openEnd) {
+    if (tab)
+      return root._tabDashPath(length, across, startCap, endCap, vertical, inset, tab, openStart ?? false, openEnd ?? false);
+    const h = Math.max(0, across - inset * 2);
+    const r = Math.min(radius, h / 2);
+    const along0 = seamStart || openStart ? 0 : inset, along1 = seamEnd || openEnd ? 0 : inset;
+    const shift = along => q => Object.assign({}, q, {
+          "x": along + q.x,
+          "y": inset + q.y
+        });
+    const head = root._cap(startCap, true, h, root.depth(startCap, across), r).map(shift(along0));
+    const tail = root._cap(endCap, false, h, root.depth(endCap, across), r).map(shift(along1));
+    const pen = root._pen(length, vertical);
+    const top = [(head[0].x + length - tail[0].x) / 2, head[0].y];
+    const bottom = [(head[head.length - 1].x + length - tail[tail.length - 1].x) / 2, head[head.length - 1].y];
+    // Each end's half: down its cap's points (the start's arcs mirrored,
+    // as marks has them), or its two sides alone where it's open
+    const half = (pts, place, atStart, open) => {
+      if (open)
+        return `M ${pen.pt(top)} ` + pen.to(place(pts[0])) + `M ${pen.pt(bottom)} ` + pen.to(place(pts[pts.length - 1]));
+      let d = `M ${pen.pt(top)} ` + pen.to(place(pts[0]));
+      for (let k = 1; k < pts.length; k++) {
+        const arc = pts[k].arc && atStart ? Object.assign({}, pts[k].arc, {
+          "sweep": 1 - pts[k].arc.sweep
+        }) : pts[k].arc;
+        d += pen.to(place(pts[k]), arc);
+      }
+      return d + pen.to(bottom);
+    };
+    return (half(head, pen.atStart, true, openStart ?? false) + half(tail, pen.atEnd, false, openEnd ?? false)).trim();
   }
 
   // The outline of a background `length` along the bar and `across` it,
@@ -515,29 +597,47 @@ QtObject {
   // powerline neighbour and both strokes lie on the shared edge; caps keep
   // their depth for the full thickness, so neighbours' edges still meet.
   // A tab's (`tab`, from tab; null otherwise) is its own: see _tabPath.
-  function path(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab, open) {
+  // An open end (`openStart`/`openEnd`: a merged run carrying on into the
+  // next section's, drawn apart) keeps no inset there either, so the two
+  // meet; `open` (a stroke's path) leaves the line across it out, so no
+  // divider shows where they meet, and a tab's outer edge too.
+  function path(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab, open, openStart, openEnd) {
     if (tab)
-      return root._tabPath(length, across, startCap, endCap, vertical, inset, tab, open ?? false);
+      return root._tabPath(length, across, startCap, endCap, vertical, inset, tab, open ?? false, 0, openStart ?? false, openEnd ?? false);
     const h = Math.max(0, across - inset * 2);
     const r = Math.min(radius, h / 2);
-    const along0 = seamStart ? 0 : inset, along1 = seamEnd ? 0 : inset;
+    const along0 = seamStart || openStart ? 0 : inset, along1 = seamEnd || openEnd ? 0 : inset;
     const shift = along => q => Object.assign({}, q, {
           "x": along + q.x,
           "y": inset + q.y
         });
     const head = root._cap(startCap, true, h, root.depth(startCap, across), r).map(shift(along0));
     const tail = root._cap(endCap, false, h, root.depth(endCap, across), r).map(shift(along1));
-    return root._outline(length, head, tail, vertical);
+    return root._outline(length, head, tail, vertical, open && openStart, open && openEnd);
   }
 
   // A closed path from a start cap's and an end cap's points (_cap's, x
-  // in from their own end, y across the whole thickness)
-  function _outline(length, head, tail, vertical) {
+  // in from their own end, y across the whole thickness), or left open
+  // at its start or end (`openStart`/`openEnd`): no line across that end,
+  // only the long sides running to it
+  function _outline(length, head, tail, vertical, openStart, openEnd) {
     const pen = root._pen(length, vertical);
-    let d = `M ${pen.pt(pen.atStart(head[0]))} ` + pen.to(pen.atEnd(tail[0]));
+    const first = pen.pt(pen.atStart(head[0])), last = pen.pt(pen.atStart(head[head.length - 1]));
+    if (openStart && openEnd)
+      return `M ${first} ` + pen.to(pen.atEnd(tail[0])) + `M ${pen.pt(pen.atEnd(tail[tail.length - 1]))} ` + pen.to(pen.atStart(head[head.length - 1])).trim();
+    if (openEnd) {
+      // From the end's bottom corner, back up the start, to its top corner
+      let d = `M ${pen.pt(pen.atEnd(tail[tail.length - 1]))} ` + `L ${last} `;
+      for (let k = head.length - 2; k >= 0; k--)
+        d += pen.to(pen.atStart(head[k]), head[k + 1].arc);
+      return (d + pen.to(pen.atEnd(tail[0]))).trim();
+    }
+    let d = `M ${first} ` + pen.to(pen.atEnd(tail[0]));
     for (let k = 1; k < tail.length; k++)
       d += pen.to(pen.atEnd(tail[k]), tail[k].arc);
     d += pen.to(pen.atStart(head[head.length - 1]));
+    if (openStart)
+      return d.trim();
     // Back up the start: each step takes the arc that led into the point
     // it leaves (mirrored and reversed, so the sweep stays the same). A
     // straight last step back to the first point is the close's.
@@ -645,15 +745,17 @@ QtObject {
   // its centre. `alongStart`/`alongEnd` move the caps' lines by a
   // different amount (0 at a powerline seam, where the line lies on the
   // shared edge). Empty when the inset leaves no room.
-  // A tab's (`tab`) is open along its outer edge, as its outline is.
-  function offsetPath(length, across, radius, startCap, endCap, vertical, inset, alongStart, alongEnd, tab) {
+  // A tab's (`tab`) is open along its outer edge, as its outline is, and
+  // any at an open end (`openStart`/`openEnd`, path's), whose lines run
+  // right to it.
+  function offsetPath(length, across, radius, startCap, endCap, vertical, inset, alongStart, alongEnd, tab, openStart, openEnd) {
     if (tab)
-      return root._tabPath(length, across, startCap, endCap, vertical, inset, tab, true, inset);
+      return root._tabPath(length, across, startCap, endCap, vertical, inset, tab, true, inset, openStart ?? false, openEnd ?? false);
     if (across - inset * 2 <= 0)
       return "";
-    const head = root._offsetCap(startCap, true, across, radius, inset, alongStart);
-    const tail = root._offsetCap(endCap, false, across, radius, inset, alongEnd);
-    return root._outline(length, head, tail, vertical);
+    const head = root._offsetCap(startCap, true, across, radius, inset, openStart ? 0 : alongStart);
+    const tail = root._offsetCap(endCap, false, across, radius, inset, openEnd ? 0 : alongEnd);
+    return root._outline(length, head, tail, vertical, openStart ?? false, openEnd ?? false);
   }
 
   // An outline at its ends only (outlineStroke `ends`), as open SVG paths
@@ -664,10 +766,11 @@ QtObject {
   // the one mark (`seamStart` leaves the start out, and puts no inset on
   // the end there).
   // A tab's (`tab`): its two sides, open at the edge it hangs from
-  // (_tabMarks).
-  function marks(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab) {
+  // (_tabMarks). An open end (`openStart`/`openEnd`, path's) has no mark:
+  // the run carries on past it.
+  function marks(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab, openStart, openEnd) {
     if (tab)
-      return root._tabMarks(length, across, startCap, endCap, vertical, inset, tab, tab.thickness / 4);
+      return root._tabMarks(length, across, startCap, endCap, vertical, inset, tab, tab.thickness / 4, openStart ?? false, openEnd ?? false);
     const pen = root._pen(length, vertical);
     const arm = across / 4;
     // Brackets: every mark but a capsule's or a half circle's has arms
@@ -698,7 +801,7 @@ QtObject {
         }));
       return d;
     };
-    return (seamStart ? "" : mark(startCap, true, false)) + mark(endCap, false, seamEnd);
+    return (seamStart || openStart ? "" : mark(startCap, true, false)) + (openEnd ? "" : mark(endCap, false, seamEnd));
   }
 
   // How far in from its end a cap's edge lies at `v` across (0 to h)

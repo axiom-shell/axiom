@@ -44,6 +44,28 @@ TestCase {
     same(c.icon, accent, "icon");
   }
 
+  // A widget with no color of its own (a clear one) tints nothing,
+  // rather than black at the tint's opacity
+  function test_a_clear_color_stays_clear_where_faded() {
+    const clear = c => BarWidgetStyle.colors({
+        "fill": c,
+        "barText": barText,
+        "override": null,
+        "tint": 0.25,
+        "splits": true,
+        "splitIcon": "joined",
+        "labelFill": "tint",
+        "group": null
+      }, "transparent", own);
+    compare(Qt.color(clear("tinted").fill).a, 0, "tinted");
+    compare(Qt.color(clear("split").fill).a, 0, "split's label tint");
+    fuzzyCompare(Qt.color(cell("tinted", "active").fill).a, 0.25, 0.01, "a color's tint keeps its strength");
+    fuzzyCompare(Qt.color(BarWidgetStyle.faded("#80ff0000", 0.5)).a, 0.25, 0.01, "a part-clear color fades from its own");
+    compare(Qt.color(BarWidgetStyle.levelColor({
+      "icon": "transparent"
+    })).a, 0, "a level in a clear color");
+  }
+
   function test_outline_strokes_in_the_accent() {
     const c = styled("outline");
     same(c.fill, "transparent", "fill");
@@ -152,6 +174,43 @@ TestCase {
     same(cell("plain", "active").content, barText, "active");
     same(cell("plain", "occupied").content, Qt.alpha(barText, 0.7), "occupied");
     same(cell("plain", "active", custom).content, custom, "override");
+  }
+
+  function mergedCell(fill, state, group, hovered = false) {
+    return BarWidgetStyle.cell({
+      "fill": fill,
+      "barText": barText,
+      "override": null,
+      "tint": 0.25,
+      "hoverFill": true,
+      "hovered": hovered,
+      "group": group
+    }, accent, own, state);
+  }
+
+  // In a merged run the run draws the background, as for a widget: a
+  // cell's color moves to its content
+  function test_merged_cells_carry_their_color_in_their_content() {
+    const light = "#eeeeee";
+    ["filled", "tinted", "outline"].forEach(fill => {
+      const c = mergedCell(fill, "active", light);
+      compare(Qt.color(c.fill).a, 0, fill + " no box");
+      same(c.stroke, "transparent", fill + " no border");
+      same(c.content, accent, fill + " content in its color");
+      same(mergedCell(fill, "occupied", light).content, accent, fill + " occupied");
+    });
+    // An empty one faded, reading on what it sits on: a filled run's color,
+    // else the bar through the tint or outline
+    same(mergedCell("filled", "empty", light).content, Qt.alpha("#000000", 0.4), "filled empty on a light run");
+    same(mergedCell("outline", "empty", light).content, Qt.alpha(barText, 0.4), "outline empty on the bar");
+    // Solid boxes stay boxes; split's fill theirs, as a widget that doesn't split
+    same(mergedCell("solid", "active", light).fill, accent, "solid");
+    same(mergedCell("split", "active", light).fill, accent, "split");
+    // Filled on hover in its own part, no border of its own
+    const hovered = mergedCell("outline", "active", light, true);
+    same(hovered.fill, accent, "hovered fills");
+    same(hovered.stroke, "transparent", "hovered draws no border");
+    same(mergedCell("outline", "active", light).fill, Qt.alpha(accent, 0), "fades in from its own color");
   }
 
   function hovering(fill, hovered, hoverFill = true, group = null) {
@@ -597,6 +656,16 @@ TestCase {
     };
   }
 
+  // A separate badge has no box to hang: a saved tab draws rounded
+  function test_a_separate_badge_is_no_tab() {
+    compare(BarWidgetStyle.shape(look("split", "badge", "tab", "separate")), "rounded");
+    compare(BarWidgetStyle.shape(look("split", "badge", "tab", "powerline")), "rounded");
+    compare(BarWidgetStyle.shape(look("split", "badge", "tab", "merged")), "tab");
+    compare(BarWidgetStyle.shape(look("split", "joined", "tab", "separate")), "tab");
+    compare(BarWidgetStyle.shape(look("filled", "badge", "tab", "separate")), "tab");
+    compare(BarWidgetStyle.shape(look("split", "badge", "capsule", "separate")), "capsule");
+  }
+
   function test_badge_and_tab_have_no_powerline() {
     compare(BarWidgetStyle.grouping(look("split", "badge", "rounded", "powerline")), "separate");
     compare(BarWidgetStyle.grouping(look("split", "badge", "rounded", "merged")), "merged");
@@ -616,6 +685,11 @@ TestCase {
       "minContrast": 3
     });
     compare(BarWidgetStyle.autoContrast("tinted", "merged", "joined", "tint"), {
+      "onRun": false,
+      "minContrast": 3
+    });
+    // An outline run has no background: its widgets sit on the bar
+    compare(BarWidgetStyle.autoContrast("outline", "merged", "joined", "tint"), {
       "onRun": false,
       "minContrast": 3
     });

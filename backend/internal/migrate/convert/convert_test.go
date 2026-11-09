@@ -174,7 +174,7 @@ func TestDefaultsConvertToV2Defaults(t *testing.T) {
 // after format 1 was frozen: textScale (in place of a font size of null,
 // the default) and the widget styles' (split, tab, outline strokes, fill
 // on hover, the bar gradient)
-var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners", "outlineStroke", "hoverFill", "gradient", "gradientFrom", "gradientVia", "gradientTo"}
+var barStyleKeysAddedSinceV1 = []string{"textScale", "splitIcon", "splitLabelFill", "splitLabelColor", "splitDivider", "tabCorners", "outlineStroke", "hoverFill", "groupStrokeColor", "gradient", "gradientFrom", "gradientVia", "gradientTo"}
 
 // Keys added to a format-1 section after format 1 was frozen: no format-1
 // config has them, so they come from their default at load (the Bars

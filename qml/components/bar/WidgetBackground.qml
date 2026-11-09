@@ -31,6 +31,10 @@ Item {
   // Ends that meet a powerline neighbour edge to edge (BarShapes.segment)
   property bool seamStart: false
   property bool seamEnd: false
+  // Ends a merged run carries on past into the next section's, drawn
+  // apart (WidgetGroup): no line across them (BarShapes.path's open ends)
+  property bool openStart: false
+  property bool openEnd: false
   // A clickable widget under the pointer (its hoverOutline)
   property bool hovered: false
   // A clickable widget being pressed: a tint in its shape
@@ -100,6 +104,8 @@ Item {
     endCap: root.levelEndCap
     seamStart: root.seamStart
     seamEnd: root.seamEnd
+    openStart: root.openStart
+    openEnd: root.openEnd
     fillColor: root.colors?.fill ?? "transparent"
     strokeColor: root.colors?.stroke ?? "transparent"
     strokeWidth: root._fill === "outline" ? root.barConfig.outlineWidth : 0

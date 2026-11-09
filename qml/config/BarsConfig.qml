@@ -139,13 +139,16 @@ QtObject {
       "lineWidth": look.lineWidth,
       "lineSide": look.lineSide,
       "widgetTextColor": look.widgetTextColor,
-      "widgetShape": boxed ? look.widgetShape : "rounded",
+      // As drawn (BarWidgetStyle.shape)
+      "widgetShape": boxed ? BarWidgetStyle.shape(look) : "rounded",
       "widgetEnds": look.widgetEnds,
       // A tab's sides where they meet the edge it hangs from: square or
       // flared (BarShapes.tab)
       "tabCorners": look.tabCorners,
       "widgetGrouping": grouping,
       "groupColor": look.groupColor,
+      // The line round a merged outline run (groupColors)
+      "groupStrokeColor": look.groupStrokeColor,
       // Split's icon part (joined, badge), its label's background (tint,
       // color, none), that color (a name) and the cut between them (match,
       // straight, slant, arrow, curve)
@@ -269,10 +272,10 @@ QtObject {
   // on (_widgetStyle's hovered and spot: where the middle of a cell whose
   // color is Auto sits along the bar, for the bar's gradient to take its
   // place; `solid`: a filled box whatever the bar's style, Workspaces'
-  // `solidBoxes`; and `group`: a segment of a merged run, which draws its
-  // box, Workspaces' cells with its Background off)
+  // `solidBoxes`; and `onBar`: drawn in its widget on the bar, not a
+  // popout, so in a merged run on a merged bar)
   function cellColors(barConfig, color, own, state, cell) {
-    const style = BarsConfig._widgetStyle(barConfig, cell?.group === true, Object.assign({
+    const style = BarsConfig._widgetStyle(barConfig, cell?.onBar === true && barConfig.widgetGrouping === "merged", Object.assign({
       "auto": (cell?.spot ?? -1) >= 0
     }, cell));
     if (cell?.solid === true)
@@ -324,9 +327,10 @@ QtObject {
 
   // What a merged run of widgets draws its shared background in: with a
   // gradient on the bar, one strip of it (`spot`: the run's middle along
-  // the bar, 0-1), else groupColor
+  // the bar, 0-1), else groupColor, an outline run's line
+  // groupStrokeColor (it has no background of its own)
   function groupColors(barConfig, spot = -1) {
-    const group = Theme.resolveColor(barConfig.groupColor);
+    const group = Theme.resolveColor(barConfig.widgetStyle === "outline" ? barConfig.groupStrokeColor : barConfig.groupColor);
     return BarWidgetStyle.colors(BarsConfig._widgetStyle(barConfig, false, {
       "spot": spot,
       "auto": true,
@@ -518,10 +522,11 @@ QtObject {
   }
 
   // The look a bar's widgets draw in, as `$bar.<key>` for their options'
-  // `x-showIf`: lookOf's BarStyle keys, with grouping as drawn (groupingOf,
-  // as enrichBarConfig)
+  // `x-showIf`: lookOf's BarStyle keys, with shape and grouping as drawn
+  // (BarWidgetStyle.shape, groupingOf, as enrichBarConfig)
   function lookContext(barConfig) {
     const look = BarsConfig.lookOf(barConfig ?? {});
+    look.widgetShape = BarWidgetStyle.shape(look);
     look.widgetGrouping = BarsConfig.groupingOf(look);
     return Object.keys(BarStyle.values).reduce((context, key) => {
       context["$bar." + key] = look[key];

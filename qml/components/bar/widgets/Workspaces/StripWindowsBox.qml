@@ -49,8 +49,9 @@ Item {
   property int chainCount: 1
   // As segments of a merged run, a box of its own there only solid or
   // split (BarWidgetStyle.cell)
-  // In a merged run, the run draws their box (BarsConfig.cellColors' group)
-  readonly property bool _inGroup: run !== null && barConfig.widgetGrouping === "merged"
+  // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
+  // onBar)
+  readonly property bool _inGroup: hitArea !== null && barConfig.widgetGrouping === "merged"
   readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid)
   readonly property var _room: run ? BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
   readonly property real _lead: _room?.lead ?? 0
@@ -77,7 +78,7 @@ Item {
     isActive: false
     look: BarsConfig.cellColors(root.barConfig, root.occupiedColor, root.textColor, "occupied", {
       "solid": root.solid,
-      "group": root._inGroup
+      "onBar": root.hitArea !== null
     })
     solid: root.solid
     thickness: root.thickness

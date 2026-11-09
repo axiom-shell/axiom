@@ -20,6 +20,9 @@ Item {
   required property string endCap
   property bool seamStart: false
   property bool seamEnd: false
+  // Ends left open, where a merged run carries on (BarShapes.path)
+  property bool openStart: false
+  property bool openEnd: false
   property color fillColor: "transparent"
   property color strokeColor: "transparent"
   property real strokeWidth: 0
@@ -32,13 +35,16 @@ Item {
   property var strokeSlice: null
 
   readonly property bool vertical: bar.vertical
+  // Its stroke is a path of its own, left open somewhere (a tab's outer
+  // edge, an open end)
+  readonly property bool _openStroke: tab !== null || openStart || openEnd
   readonly property bool solid: stroke === "solid"
   // The fill's and a solid stroke's (one centred on the path)
   readonly property real _solidWidth: solid ? strokeWidth : 0
   readonly property real across: vertical ? width : height
   readonly property real length: vertical ? height : width
   readonly property real rectRadius: {
-    if (startCap !== endCap || seamStart || seamEnd || tab || box.fillSlice !== null || box.strokeSlice !== null)
+    if (startCap !== endCap || seamStart || seamEnd || _openStroke || box.fillSlice !== null || box.strokeSlice !== null)
       return -1;
     switch (startCap) {
     case "round":
@@ -72,27 +78,28 @@ Item {
       ShapePath {
         fillColor: box.fillColor
         fillGradient: box.fillSlice !== null ? fillPaint : null
-        strokeColor: box._solidWidth > 0 && !box.tab ? box.strokeColor : "transparent"
-        strokeGradient: box.strokeSlice !== null && box._solidWidth > 0 && !box.tab ? strokePaint : null
+        strokeColor: box._solidWidth > 0 && !box._openStroke ? box.strokeColor : "transparent"
+        strokeGradient: box.strokeSlice !== null && box._solidWidth > 0 && !box._openStroke ? strokePaint : null
         strokeWidth: box._solidWidth
         joinStyle: ShapePath.MiterJoin
 
         // Inset by half the stroke, which is centred on the path
         PathSvg {
-          path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, box.seamStart, box.seamEnd, box.tab)
+          path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, box.seamStart, box.seamEnd, box.tab, false, box.openStart, box.openEnd)
         }
       }
 
-      // A tab's stroke, open along its outer edge
+      // A stroke left open: a tab's along its outer edge, and at an
+      // open end
       ShapePath {
         fillColor: "transparent"
-        strokeColor: box._solidWidth > 0 && box.tab ? box.strokeColor : "transparent"
-        strokeGradient: box.strokeSlice !== null && box._solidWidth > 0 && box.tab ? strokePaint : null
+        strokeColor: box._solidWidth > 0 && box._openStroke ? box.strokeColor : "transparent"
+        strokeGradient: box.strokeSlice !== null && box._solidWidth > 0 && box._openStroke ? strokePaint : null
         strokeWidth: box._solidWidth
         joinStyle: ShapePath.MiterJoin
 
         PathSvg {
-          path: box.tab ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, false, false, box.tab, true) : ""
+          path: box._openStroke ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, box.seamStart, box.seamEnd, box.tab, true, box.openStart, box.openEnd) : ""
         }
       }
 
@@ -122,6 +129,8 @@ Item {
     endCap: box.endCap
     seamStart: box.seamStart
     seamEnd: box.seamEnd
+    openStart: box.openStart
+    openEnd: box.openEnd
     tab: box.tab
     slice: box.strokeSlice
     color: box.strokeColor

@@ -48,8 +48,9 @@ Grid {
   readonly property real _gap: run ? BarShapes.cellGap(barConfig.widgetGrouping, cellSpacing) : cellSpacing
   // As segments of a merged run, the cells draw a box of their own there
   // only solid or split (BarWidgetStyle.cell)
-  // In a merged run, the run draws their box (BarsConfig.cellColors' group)
-  readonly property bool _inGroup: run !== null && barConfig.widgetGrouping === "merged"
+  // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
+  // onBar)
+  readonly property bool _inGroup: hitArea !== null && barConfig.widgetGrouping === "merged"
   readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid)
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
@@ -80,7 +81,7 @@ Grid {
       look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied", {
         "hovered": windowCell.lit,
         "solid": root.solid,
-        "group": root._inGroup
+        "onBar": root.hitArea !== null
       })
       solid: root.solid
       thickness: root.thickness

@@ -121,7 +121,7 @@ QtObject {
     if (style.run && graded && style.fill === "split")
       // A split run's strip of the gradient is its labels' tint, under
       // icon parts each in their own slice of it
-      return root._make(Qt.alpha(accent, style.tint), none, none, text(own), text(own));
+      return root._make(root.faded(accent, style.tint), none, none, text(own), text(own));
     if (style.group) {
       // The run draws the background: the icon keeps the state, the label
       // reads on the run (or on the bar, through a tint or outline). A
@@ -148,10 +148,10 @@ QtObject {
         const label = style.splitIcon === "badge" ? "none" : style.labelFill;
         if (label === "color")
           return root._make(style.labelColor, none, none, text(root.readableOn(style.labelColor, style.barText)), text(own), accent);
-        return root._make(label === "tint" ? Qt.alpha(accent, style.tint) : none, none, none, text(accent), text(own), accent);
+        return root._make(label === "tint" ? root.faded(accent, style.tint) : none, none, none, text(accent), text(own), accent);
       }
     case "tinted":
-      return root._make(Qt.alpha(accent, style.tint), none, none, text(accent), text(accent));
+      return root._make(root.faded(accent, style.tint), none, none, text(accent), text(accent));
     case "outline":
       return root._make(unfilled, accent, none, text(accent), text(accent));
     case "underline":
@@ -186,13 +186,11 @@ QtObject {
   // color (`style.auto`) gives way to the bar gradient's where the cell
   // sits (style.gradient), as a widget's does; `gradient` then says what of
   // its box shows the gradient itself (as colors' does: { part, alpha }),
-  // else null.
-  // In a merged run whose segments the cells are (`style.group`:
-  // Workspaces with its Background off) the run draws the box: a cell
-  // draws none of its own, its content in its state's color (an empty
-  // one's faded), as a merged widget's color moves to its icon. A solid
-  // box, and split's fill (a row of tabs, as a merged split run's widgets
-  // that don't split), stay filled.
+  // else null. In a merged run (`style.group`) the run draws the
+  // background, as for a widget: a filled, tinted or outlined cell draws no
+  // box, its color moving to its content (an empty one's faded, reading on
+  // the run); a solid cell stays a filled box, and a split one fills its
+  // box, a tab in the row as a widget that doesn't split (cellBoxedInRun).
   function cell(style, color, own, state) {
     const graded = (style.gradient ?? null) !== null && style.auto === true;
     if (graded) {
@@ -227,7 +225,7 @@ QtObject {
 
   // A cell in a merged run that draws no box of its own (cell)
   function _groupCell(style) {
-    return (style.group ?? null) !== null && !root.cellBoxedInRun(style.fill, false);
+    return !!style.group && ["filled", "tinted", "outline"].includes(style.fill);
   }
 
   // Whether a cell as a segment of a merged run (cell's `group`) still
@@ -240,14 +238,15 @@ QtObject {
     const none = "transparent";
     const text = c => style.override ?? c;
     if (style.hovered === true && root.fillsOnHover(style))
-      return root._makeCell(color, style.fill === "outline" ? color : none, none, text(own), true);
-    if (root._groupCell(style)) {
-      // On a filled run, what reads on its color, faded for an empty one
-      const runText = style.fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText;
-      return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, none, none, state === "empty" ? Qt.alpha(text(runText), 0.4) : text(color));
-    }
-    const faded = Qt.alpha(text(style.barText), 0.4);
+      return root._makeCell(color, style.fill === "outline" && !style.group ? color : none, none, text(own), true);
+    const merged = root._groupCell(style);
+    // What the content sits on: the run's color where it's filled, else
+    // the bar (through a tint or an outline)
+    const under = merged && style.fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText;
+    const faded = Qt.alpha(text(under), 0.4);
     const onBar = c => state === "empty" ? faded : text(c);
+    if (merged)
+      return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, none, none, onBar(color));
     switch (style.fill) {
     case "solid":
       return root._makeCell(color, color, color, text(own));
@@ -255,7 +254,7 @@ QtObject {
       // A cell has no label apart: filled
       return root._makeCell(color, none, none, text(own));
     case "tinted":
-      return root._makeCell(Qt.alpha(color, style.tint), none, none, onBar(color));
+      return root._makeCell(root.faded(color, style.tint), none, none, onBar(color));
     case "outline":
       return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, color, none, onBar(color));
     case "underline":
@@ -293,6 +292,15 @@ QtObject {
     return solid || fill === "filled" || fill === "split";
   }
 
+  // A boxed look's shape as drawn (`look` as grouping's): a separate split
+  // badge has no box to hang from the edge, so a tab saved with it draws
+  // rounded (the option is hidden there); a merged run of badges is one
+  // tab still
+  function shape(look) {
+    const badge = look.widgetStyle === "split" && look.splitIcon === "badge" && look.widgetGrouping !== "merged";
+    return badge && look.widgetShape === "tab" ? "rounded" : look.widgetShape;
+  }
+
   // Whether a powerline segment's fill hides what's under it, so the next
   // can start square beneath its end cap: filled, and split's joined label
   // on a color of its own
@@ -325,7 +333,7 @@ QtObject {
   // A value widget's pill (its background filled to its value) in its
   // `colors` (colors())
   function levelColor(colors) {
-    return Qt.alpha(colors.icon, 0.35);
+    return root.faded(colors.icon, 0.35);
   }
 
   // Whether a value widget with "Colour the text by state" on (its
@@ -334,6 +342,14 @@ QtObject {
   // read on it)
   function textByState(colors, appearance) {
     return appearance.colorText && colors.fill.a < 1;
+  }
+
+  // `color` at `alpha` of its own opacity: a clear color (a widget with no
+  // color of its own, Workspaces' box with its background off) stays
+  // clear, where Qt.alpha would make it black at that opacity
+  function faded(color, alpha) {
+    const c = Qt.color(color);
+    return Qt.alpha(c, c.a * alpha);
   }
 
   // `preferred` if it contrasts with `background`, else black or white
