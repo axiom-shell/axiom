@@ -187,7 +187,8 @@ Item {
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !leadLabel.symbol
           font: leadLabel.font
-          text: textRow.words
+          text: root.leadIcon
+          bandText: textRow.words
           contentHeight: leadLabel.contentHeight
         }
         topPadding: _band.top
@@ -214,7 +215,8 @@ Item {
         readonly property TextBandPadding _band: TextBandPadding {
           enabled: !textLabel.symbol
           font: textLabel.font
-          text: textRow.words
+          text: root.text
+          bandText: textRow.words
           contentHeight: textLabel.contentHeight
         }
         topPadding: _band.top

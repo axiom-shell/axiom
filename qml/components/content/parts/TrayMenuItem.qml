@@ -83,7 +83,6 @@ Rectangle {
       Layout.fillWidth: true
       elide: Text.ElideRight
       wrapMode: Text.NoWrap
-      clip: true
       horizontalAlignment: root.openToLeft ? Text.AlignRight : Text.AlignLeft
     }
 

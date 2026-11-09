@@ -320,12 +320,12 @@ Panel {
         open: root.vpnOpen
         onToggled: VpnManager.setFolded(root.vpnOpen)
 
-        StyledText {
+        StyledLabel {
           text: I18n.tr("VPN")
           font.bold: true
           textColor: Theme.accent
         }
-        StyledText {
+        StyledLabel {
           Layout.fillWidth: true
           text: VpnManager.primary ? `${VpnManager.primary.name} · ${VpnManager.statusText(VpnManager.primary)}` : I18n.tr("Off · {0} saved", VpnManager.rows.length)
           elide: Text.ElideRight

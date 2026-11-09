@@ -41,7 +41,7 @@ QtObject {
   // the box's (at most half a pixel), for a host placing the Text itself
   // to take off its position
   function padding(ascent, lineHeight, band) {
-    // How far the band's middle is above the box's: the lines move up by
+    // How far the band's middle is below the box's: the lines move up by
     // that
     const shift = (2 * ascent - lineHeight - band) / 2;
     const whole = Math.round(shift);

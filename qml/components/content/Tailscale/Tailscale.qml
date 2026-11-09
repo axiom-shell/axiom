@@ -217,11 +217,11 @@ Panel {
         text: fold.icon
         textColor: foldRow.hovered && fold.foldable ? Theme.accent : Theme.foregroundAlt
       }
-      StyledText {
+      StyledLabel {
         text: fold.label
         textSize: Appearance.fontSizeBy(-1)
       }
-      StyledText {
+      StyledLabel {
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight
         text: fold.value
