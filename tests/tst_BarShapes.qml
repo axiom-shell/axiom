@@ -288,6 +288,69 @@ TestCase {
     compare(double.map(p => p[0]), [0, 100]);
   }
 
+  // The path's subpaths, each its points
+  function subpaths(path) {
+    return path.split("M").filter(part => part.trim() !== "").map(part => points("M" + part));
+  }
+
+  function mirrored(pts, length) {
+    return pts.map(p => [Math.round((length - p[0]) * 1000) / 1000, Math.round(p[1] * 1000) / 1000]);
+  }
+
+  function rounded(pts) {
+    return pts.map(p => [Math.round(p[0] * 1000) / 1000, Math.round(p[1] * 1000) / 1000]);
+  }
+
+  // A dash pattern runs along halves that mirror each other, from the
+  // middle of the sides out, so both ends dash alike
+  function test_dash_path_mirrors_its_halves_data() {
+    return ["round", "capsule", "flat", "arrowOut"].map(cap => ({
+          "tag": cap,
+          "cap": cap
+        }));
+  }
+  function test_dash_path_mirrors_its_halves(data) {
+    const parts = subpaths(BarShapes.dashPath(100, 30, 6, data.cap, data.cap, false, 1, false, false, null));
+    compare(parts.length, 2);
+    compare(parts[0][0], [50, 1], "starts at the middle");
+    compare(parts[1][0], [50, 1]);
+    compare(rounded(parts[1]), mirrored(parts[0], 100), "the end's half mirrors the start's");
+    compare(parts[0][parts[0].length - 1], [50, 29], "and ends at the other side's middle");
+  }
+
+  function test_dash_path_open_ends_run_out_from_the_middle() {
+    const parts = subpaths(BarShapes.dashPath(100, 30, 0, "round", "flat", false, 1, false, false, null, false, true));
+    compare(parts.length, 3);
+    // (the middle between the start's inset and the open end)
+    compare(parts[1], [[50.5, 1], [100, 1]]);
+    compare(parts[2], [[50.5, 29], [100, 29]]);
+  }
+
+  function test_dashed_tab_sides_mirror_its_fillets_apart() {
+    const t = BarShapes.tab(6, 26, 6, true, [null, null]);
+    const parts = subpaths(BarShapes.dashPath(100, 30, 6, "tab", "tab", false, 1, false, false, t));
+    compare(parts.length, 2);
+    // From the inner side's middle out round each inner corner
+    compare(parts[0][0], [50, 29]);
+    compare(rounded(parts[1]), mirrored(parts[0], 100));
+    // Up to the fillet, which isn't dashed
+    verify(!parts[0].some(p => p[1] === 0), "no dash on the fillet");
+    const fillets = subpaths(BarShapes.fillets(100, 30, "tab", "tab", false, 1, t));
+    compare(fillets.length, 2);
+    compare(fillets[0][0][1], 0, "a fillet starts on the outer edge");
+    compare(rounded(fillets[1]), mirrored(fillets[0], 100));
+    // Each fillet ends where the side's dashes stop
+    compare(rounded([fillets[0][1]]), rounded([parts[0][parts[0].length - 1]]));
+    // Square: the sides run to the edge, no fillets
+    const square = subpaths(BarShapes.dashPath(100, 30, 6, "tab", "tab", false, 1, false, false, BarShapes.tab(6, 26, 0, true, [null, null])));
+    compare(square[0][square[0].length - 1][1], 0);
+    compare(BarShapes.fillets(100, 30, "tab", "tab", false, 1, BarShapes.tab(6, 26, 0, true, [null, null])), "");
+    // An open end: the inner side to it alone, and no fillet
+    const open = subpaths(BarShapes.dashPath(100, 30, 6, "tab", "flat", false, 1, false, false, t, false, true));
+    compare(open[1], [[50.5, 29], [100, 29]]);
+    compare(subpaths(BarShapes.fillets(100, 30, "tab", "flat", false, 1, t, false, true)).length, 1);
+  }
+
   function test_marks_one_per_seam() {
     // A powerline segment's start at a seam is the one before's end mark
     const mid = BarShapes.marks(100, 30, 0, "arrowIn", "arrowOut", false, 1, true, true);

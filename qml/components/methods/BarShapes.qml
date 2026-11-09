@@ -367,9 +367,15 @@ QtObject {
       return out;
     };
     const pt = uv => vertical ? `${uv[1]} ${uv[0]}` : `${uv[0]} ${uv[1]}`;
+    const fillet = (cap, end) => cap === "tab" && !end.corner && end.flare > 0;
     return {
       "head": side(startCap, tab.start, true),
       "tail": side(endCap, tab.end, false),
+      // A side begins in a flared fillet (its first two points), and how
+      // long the inner side is between the sides' insets
+      "headFillet": fillet(startCap, tab.start),
+      "tailFillet": fillet(endCap, tab.end),
+      "room": room,
       "at": (q, atEnd) => pt([atEnd ? length - along1 - q.x : along0 + q.x, flip ? across - q.y : q.y]),
       // A step to a point, along `arc` (the side's own, into it) drawn
       // the way the side runs (`inward`: from the outer edge in) at its
@@ -425,6 +431,78 @@ QtObject {
       }, atEnd, null, true);
     };
     return (openStart ? "" : mark(t.head, false)) + (openEnd ? "" : mark(t.tail, true));
+  }
+
+  // A tab's dashed outline (dashPath with `tab`): each side from the
+  // middle of the inner side out, round its inner corner and up to the
+  // edge it hangs from, or to its fillet, which `fillets` draws solid
+  function _tabDashPath(length, across, startCap, endCap, vertical, inset, tab, openStart, openEnd) {
+    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, 0, openStart, openEnd);
+    const half = (pts, atEnd, open, fillet) => {
+      const last = pts.length - 1;
+      let d = `M ${t.at({
+        "x": t.room / 2,
+        "y": pts[last].y
+      }, false)} ` + t.to(pts[last], atEnd, null, false);
+      for (let k = last - 1; k >= (fillet ? 1 : 0) && !open; k--)
+        d += t.to(pts[k], atEnd, pts[k + 1].arc, false);
+      return d;
+    };
+    return (half(t.head, false, openStart, t.headFillet) + half(t.tail, true, openEnd, t.tailFillet)).trim();
+  }
+
+  // A flared tab's fillets alone (dashPath's other part), from the edge it
+  // hangs from in to each side, as open paths: "" with none (square, or
+  // an end held by a corner's curve or open)
+  function fillets(length, across, startCap, endCap, vertical, inset, tab, openStart, openEnd) {
+    if (!tab)
+      return "";
+    const t = root._tabSides(length, across, startCap, endCap, vertical, inset, tab, 0, openStart, openEnd);
+    const fillet = (pts, atEnd) => `M ${t.at(pts[0], atEnd)} ` + t.to(pts[1], atEnd, pts[1].arc, true);
+    return ((t.headFillet && !openStart ? fillet(t.head, false) : "") + (t.tailFillet && !openEnd ? fillet(t.tail, true) : "")).trim();
+  }
+
+  // An outline for a dash pattern to run along (path's, as open paths):
+  // halves mirroring each other, each from the middle of the long sides
+  // out round its own end, so a dash pattern started the same way on both
+  // (OutlineStroke centres a dash on their start) meets each end alike,
+  // wherever the outline would start. The start's half runs from the
+  // middle of the side at the top (in item coordinates; the left on a
+  // vertical bar) round the start cap to the middle of the other side,
+  // the end's likewise; at an open end, the two sides alone, each from
+  // its middle out. A tab's sides run from the middle of its inner side
+  // out to the edge it hangs from, a flared one's to its fillets, which
+  // are drawn solid apart (fillets): a dash pattern can't match on them.
+  function dashPath(length, across, radius, startCap, endCap, vertical, inset, seamStart, seamEnd, tab, openStart, openEnd) {
+    if (tab)
+      return root._tabDashPath(length, across, startCap, endCap, vertical, inset, tab, openStart ?? false, openEnd ?? false);
+    const h = Math.max(0, across - inset * 2);
+    const r = Math.min(radius, h / 2);
+    const along0 = seamStart || openStart ? 0 : inset, along1 = seamEnd || openEnd ? 0 : inset;
+    const shift = along => q => Object.assign({}, q, {
+          "x": along + q.x,
+          "y": inset + q.y
+        });
+    const head = root._cap(startCap, true, h, root.depth(startCap, across), r).map(shift(along0));
+    const tail = root._cap(endCap, false, h, root.depth(endCap, across), r).map(shift(along1));
+    const pen = root._pen(length, vertical);
+    const top = [(head[0].x + length - tail[0].x) / 2, head[0].y];
+    const bottom = [(head[head.length - 1].x + length - tail[tail.length - 1].x) / 2, head[head.length - 1].y];
+    // Each end's half: down its cap's points (the start's arcs mirrored,
+    // as marks has them), or its two sides alone where it's open
+    const half = (pts, place, atStart, open) => {
+      if (open)
+        return `M ${pen.pt(top)} ` + pen.to(place(pts[0])) + `M ${pen.pt(bottom)} ` + pen.to(place(pts[pts.length - 1]));
+      let d = `M ${pen.pt(top)} ` + pen.to(place(pts[0]));
+      for (let k = 1; k < pts.length; k++) {
+        const arc = pts[k].arc && atStart ? Object.assign({}, pts[k].arc, {
+          "sweep": 1 - pts[k].arc.sweep
+        }) : pts[k].arc;
+        d += pen.to(place(pts[k]), arc);
+      }
+      return d + pen.to(bottom);
+    };
+    return (half(head, pen.atStart, true, openStart ?? false) + half(tail, pen.atEnd, false, openEnd ?? false)).trim();
   }
 
   // The outline of a background `length` along the bar and `across` it,
