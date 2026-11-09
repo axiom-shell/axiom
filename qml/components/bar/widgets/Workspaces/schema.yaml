@@ -53,6 +53,34 @@ settings:
         - {/Workspaces.layout: [perMonitor, grid, scrolling]}
         - {/$supports.dynamicWorkspaces: true}
     description: Number each monitor's workspaces from 1.
+  workspaceLabels:
+    type: array
+    title: Workspace labels
+    default: []
+    description: 'Your own label for a workspace, by the number its cell shows: an icon name, a pasted glyph or text. It wins over app icons and names.'
+    items:
+      type: object
+      additionalProperties: false
+      x-order: [workspace, label]
+      properties:
+        id: {$ref: '#/definitions/ItemId'}
+        workspace:
+          type: integer
+          title: Workspace
+          default: 1
+          minimum: 1
+          maximum: 30
+        label:
+          type: string
+          x-control: icon
+          title: Label
+          default: ''
+          description: A Material Symbols name, a pasted glyph, or text.
+  useNames:
+    type: boolean
+    title: Use workspace names
+    default: false
+    description: Show a workspace's name from the compositor where it says more than its number.
   showAppIcons:
     type: boolean
     title: App icons

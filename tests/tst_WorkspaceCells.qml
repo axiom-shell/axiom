@@ -37,4 +37,49 @@ TestCase {
     compare(WorkspaceCells.startOf([20, 50, 20], 4, -1), 0, "none: the start");
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 3), 102, "past the end: where a next cell would start");
   }
+
+  function test_isSymbol() {
+    verify(WorkspaceCells.isSymbol("terminal"));
+    verify(!WorkspaceCells.isSymbol("Web"), "capitals: words");
+    verify(!WorkspaceCells.isSymbol(""), "a glyph");
+    verify(!WorkspaceCells.isSymbol(""));
+  }
+
+  function test_labelFor() {
+    const entries = [
+      {
+        "workspace": 2,
+        "label": "web"
+      },
+      {
+        "workspace": 3,
+        "label": ""
+      }
+    ];
+    compare(WorkspaceCells.labelFor(entries, 2), "web");
+    compare(WorkspaceCells.labelFor(entries, 3), "", "an empty label is none");
+    compare(WorkspaceCells.labelFor(entries, 4), "");
+    compare(WorkspaceCells.labelFor(undefined, 1), "");
+  }
+
+  function test_nameShown() {
+    compare(WorkspaceCells.nameShown("3", 3, 3), "", "Hyprland's default name is its id");
+    compare(WorkspaceCells.nameShown("1", 11, 1), "", "or the relative number shown");
+    compare(WorkspaceCells.nameShown("3:web", 3, 3), "3:web");
+    compare(WorkspaceCells.nameShown("", 3, 3), "", "niri's unnamed ones");
+  }
+
+  function test_pick_in_priority_order() {
+    compare(WorkspaceCells.pick("circle", "web", ["a"], "mail").kind, "glyph", "the grid's arrow first");
+    compare(WorkspaceCells.pick("", "web", ["a"], "mail"), {
+      "kind": "text",
+      "text": "web"
+    }, "a label of one's own before app icons");
+    compare(WorkspaceCells.pick("", "", ["a"], "mail").kind, "icons", "app icons before the name");
+    compare(WorkspaceCells.pick("", "", [], "mail"), {
+      "kind": "text",
+      "text": "mail"
+    });
+    compare(WorkspaceCells.pick("", "", [], "").kind, "labels");
+  }
 }

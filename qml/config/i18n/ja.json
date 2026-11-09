@@ -4146,6 +4146,11 @@
     "What each workspace shows. None: just its box or line.": "",
     "Workspaces with windows show their largest window's icon instead.": "",
     "Numbers, dots in boxes and the grid's active arrow.": "",
-    "Make the active workspace one cell longer.": ""
+    "Make the active workspace one cell longer.": "",
+    "A Material Symbols name, a pasted glyph, or text.": "",
+    "Show a workspace's name from the compositor where it says more than its number.": "",
+    "Workspace labels": "",
+    "Your own label for a workspace, by the number its cell shows: an icon name, a pasted glyph or text. It wins over app icons and names.": "",
+    "Use workspace names": ""
   }
 }

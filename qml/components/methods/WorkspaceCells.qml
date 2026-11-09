@@ -38,4 +38,45 @@ QtObject {
       along += lengths[i] + spacing;
     return along;
   }
+
+  // Whether `text` is a Material Symbols name (as StyledIcon reads it:
+  // drawn as that icon), not a glyph or words drawn in the text font
+  function isSymbol(text) {
+    return /^\s*[a-z][a-z0-9_]*(\s+[a-z][a-z0-9_]*)*\s*$/.test(text ?? "");
+  }
+
+  // The label of one's own for the workspace numbered `number` (the
+  // widget's `workspaceLabels`: [{ workspace, label }]), or "" with none
+  function labelFor(entries, number) {
+    const entry = (entries ?? []).find(e => e.workspace === number && (e.label ?? "") !== "");
+    return entry ? entry.label : "";
+  }
+
+  // A workspace's compositor `name` where it says more than its id or the
+  // number its cell shows, else ""
+  function nameShown(name, id, number) {
+    const text = (name ?? "").trim();
+    return text === "" || text === String(id) || text === String(number) ? "" : text;
+  }
+
+  // What a cell shows, highest first: the grid's arrow (`glyph`), a label
+  // of one's own (`label`), app icons (`icons`, given only for a workspace
+  // with windows), the compositor's name (`name`, given only with names
+  // on), else its number, dot or nothing: { kind: "glyph" | "text" |
+  // "icons" | "labels", text }
+  function pick(glyph, label, icons, name) {
+    const make = (kind, text) => ({
+          "kind": kind,
+          "text": text
+        });
+    if (glyph !== "")
+      return make("glyph", glyph);
+    if (label !== "")
+      return make("text", label);
+    if (icons.length > 0)
+      return make("icons", "");
+    if (name !== "")
+      return make("text", name);
+    return make("labels", "");
+  }
 }

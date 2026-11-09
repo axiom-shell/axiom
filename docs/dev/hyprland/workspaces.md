@@ -80,6 +80,14 @@ One workspace layout serves everything that shows workspaces or moves between th
   - grid (`CompositorManager.workspaceGrid`): `workspaces/WorkspaceGridStrip`, showing the active row (or column, on a vertical bar).
 - **Which cells.** Without `showEmpty` (off by default; hidden with dynamic workspaces, which always leave empty ones out, the compositor's empty last one too) a strip shows the workspaces with windows and the active one; the grid strip does so within its row (`WorkspaceGridStrip.lineIds`). Down to one on a strip monitor, the strip shows alone ([workspace strips](workspace-strips.md)).
 - With `wideActive`, the active `WorkspaceCell` grows by one normal cell's length (not twice its own: a long one grows by as much as a short one). The extra length is equal room on both sides of what it shows; its content stays packed together (a dot stretches into a pill).
+- **What a cell shows** (`workspaces/CellContents`, for the row and both popouts; the order is `WorkspaceCells.pick`'s), highest first:
+  1. the grid's active arrow (`glyphOf`)
+  2. a label of one's own (`workspaceLabels`: `{ workspace, label }` entries, the label an icon field's value). An entry matches the number the cell would show: its id, counted from the monitor's first with `relativeNumbers`, and where the compositor makes the workspaces itself (`CompositorManager.dynamicWorkspaces`) always its place on its monitor. A Material Symbols name draws as that icon, anything else in the text font (`StyledIcon`'s own rule, `WorkspaceCells.isSymbol`)
+  3. app icons, on a workspace with windows (`showAppIcons`)
+  4. with `useNames`, the compositor's name (the workspace shape's `name`) where it says more than the id or the number shown (`WorkspaceCells.nameShown`: not Hyprland's default `"3"`, nor niri's unnamed `""`)
+  5. its number, dot or nothing (`labels`).
+  - Text (not an icon name) longer than a number makes its cell longer: measured with a `FontMetrics` at the cell's text size, bold, plus half a cell's thickness of room (`CellContents._length`). On a vertical bar such text is turned along the bar.
+  - The strip popout's number cells show the same, less app icons (each line's windows follow it).
 - **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`.
   - It holds every shown workspace, or one grid row.
   - `glyphOf` gives the grid's position arrow.
@@ -98,6 +106,6 @@ One workspace layout serves everything that shows workspaces or moves between th
 - **Grid popout.** In a grid, the widget hands its `properties` and its bar's config to the `WorkspaceGrid` popout. Its cells are the strip's own `WorkspaceCell`s, with the same:
   - size, spacing and corners
   - widget style and colors
-  - labels (grid position) and app icons
+  - labels (grid position), labels of one's own, names and app icons
   - click to switch.
 - On strip monitors the widget also shows the active workspace's windows ([Workspace strips](workspace-strips.md)).

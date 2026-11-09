@@ -3,7 +3,6 @@ import QtQuick
 
 import qs.services.compositor
 import qs.config
-import qs.services.system
 import qs.components.methods
 
 // A bar switcher's row (a column on a vertical bar) of WorkspaceCells for
@@ -38,16 +37,16 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
   readonly property real spacing: barConfig.innerGap
-  // App icons on occupied cells
-  readonly property bool appIcons: properties.showAppIcons
   // The workspace whose cell is hovered, which its box (drawn apart from
   // it) shows
   property int hoveredId: -1
 
   // Each cell's length at rest, and where they sit with the active one
   // widened by one normal cell's length (`wideActive`: WorkspaceCells)
-  readonly property var _lengths: ids.map(() => root.cellLength)
   readonly property int _activeIndex: ids.indexOf(activeId)
+  // What each cell shows (CellContents.of), in `ids` order
+  readonly property var _contents: ids.map(id => contents.of(id, root.glyphOf(id, id === root.activeId), true))
+  readonly property var _lengths: _contents.map(c => c.length)
   readonly property var _layout: WorkspaceCells.layout(_lengths, spacing, _activeIndex, properties.wideActive ? cellLength : 0)
   // Measured from the cells' lengths to be, never their gliding ones
   // (composition.md › Bar motion), and clipped to it: a cell that left the
@@ -61,6 +60,15 @@ Item {
   // comes in at the other
   function expectWrap(forward) {
     indicator.expectWrap(forward);
+  }
+
+  CellContents {
+    id: contents
+    barConfig: root.barConfig
+    properties: root.properties
+    base: root.base
+    thickness: root.cell
+    restLength: root.cellLength
   }
 
   function _occupied(id) {
@@ -126,8 +134,7 @@ Item {
       WorkspaceCell {
         required property int index
         readonly property int wsId: root.ids[index] ?? 0
-        readonly property string _glyph: root.glyphOf(wsId, isActive)
-        readonly property var biggestWindow: root.appIcons && _glyph === "" && root._occupied(wsId) ? CompositorManager.biggestWindowForWorkspace(wsId) : null
+        readonly property var _content: root._contents[index] ?? null
 
         part: "content"
         hitArea: root.hitArea
@@ -140,11 +147,10 @@ Item {
         radius: root.cellRadius
         hoverColor: root.hoverColor
         labels: root.properties.labels
-        // The workspace id, or counted from the monitor's first (its place
-        // in the grid)
-        label: root.properties.relativeNumbers ? wsId - root.base + 1 : wsId
-        glyph: _glyph
-        iconPath: biggestWindow ? AppIconManager.resolveWindowIcon(biggestWindow.appId, biggestWindow.title) : ""
+        label: _content ? _content.number : ""
+        glyph: _content?.kind === "glyph" ? _content.text : ""
+        text: _content?.kind === "text" ? _content.text : ""
+        iconPaths: _content ? _content.icons : []
         clickable: root.properties.clickToSwitch
         onClicked: CompositorManager.goToWorkspace(wsId, "go", root.monitor?.name ?? "")
         // Also when the cell under the pointer comes to stand for another

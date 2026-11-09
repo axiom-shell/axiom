@@ -7,8 +7,10 @@ import qs.components.reusable
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
 // widgets have no boxes, straight on the bar, under a line of its color for
-// underline. Its label (`labels`) is its number, a dot or nothing; an app
-// icon or a glyph shows instead when given one. A row with a sliding ActiveCellIndicator draws
+// underline. Its label (`labels`) is its number, a dot or nothing; a
+// glyph, text (a label of one's own or a name: a Material Symbols name
+// draws as that icon, anything else as text) or app icons show instead
+// when given, in that order (CellContents picks one). A row with a sliding ActiveCellIndicator draws
 // its cells twice, the boxes (`part: "background"`) under the indicator and
 // the labels (`"content"`) over it.
 Item {
@@ -29,8 +31,14 @@ Item {
   property string labels: "numbers"
   readonly property bool _dot: labels === "dots" || labels === "none" && !boxed && barConfig.widgetStyle !== "underline"
   property string label: ""
+  // A label of one's own or the compositor's name
+  property string text: ""
   property string iconPath: ""
+  // App icons' paths (`iconPath` alone by default)
+  property var iconPaths: iconPath !== "" ? [iconPath] : []
   property string glyph: ""
+  // What it shows: "glyph", "text", "icons" or its "labels"
+  readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
   property bool clickable: true
   // Off until its inputs have settled (a popout's payload lands after
   // creation), so it doesn't animate from fallbacks
@@ -98,7 +106,7 @@ Item {
     readonly property real along: size + root.length - root.restLength
 
     anchors.centerIn: parent
-    visible: root._drawsContent && root._dot && root.iconPath === "" && root.glyph === ""
+    visible: root._drawsContent && root._dot && root._shows === "labels"
     width: root.isVertical ? size : along
     height: root.isVertical ? along : size
     radius: size / 2
@@ -111,10 +119,28 @@ Item {
 
   StyledIcon {
     anchors.centerIn: parent
-    visible: root._drawsContent && root.glyph !== ""
+    visible: root._drawsContent && root._shows === "glyph"
     text: root.glyph
     font.pixelSize: root.barConfig.fontSize * 1.2
     color: root.look.content
+  }
+
+  // A label of one's own or a name: an icon at the glyph's size, text at
+  // the number's (turned along a vertical bar when wider than the cell is
+  // thick)
+  StyledIcon {
+    id: textLabel
+    anchors.centerIn: parent
+    visible: root._drawsContent && root._shows === "text"
+    text: root.text
+    textSize: textLabel.isSymbol ? Math.round(root.barConfig.fontSize * 1.2) : root.barConfig.fontSize - 1
+    textColor: root.look.content
+    font.bold: !textLabel.isSymbol && root.isActive && !root.boxed
+    isVertical: root.isVertical && !textLabel.isSymbol && textLabel.implicitWidth > root.thickness * 0.8
+
+    ColorGlide on color {
+      enabled: root.animated
+    }
   }
 
   Image {
@@ -122,14 +148,14 @@ Item {
     width: root.thickness * 0.65
     height: width
     sourceSize: Qt.size(64, 64)
-    source: root.glyph === "" ? root.iconPath : ""
-    visible: root._drawsContent && root.glyph === "" && root.iconPath !== ""
+    source: root._shows === "icons" ? root.iconPaths[0] : ""
+    visible: root._drawsContent && root._shows === "icons"
     opacity: root.boxed || root.isActive ? 1 : 0.7
   }
 
   StyledText {
     anchors.centerIn: parent
-    visible: root._drawsContent && root.labels === "numbers" && root.glyph === "" && root.iconPath === ""
+    visible: root._drawsContent && root.labels === "numbers" && root._shows === "labels"
     text: root.label
     textColor: root.look.content
     textSize: root.barConfig.fontSize - 1
