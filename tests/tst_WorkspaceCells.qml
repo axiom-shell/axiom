@@ -31,6 +31,20 @@ TestCase {
     compare(WorkspaceCells.layout([], 4, -1, 0).total, 0);
   }
 
+  function test_roomed_adds_each_cells_cap_room() {
+    compare(WorkspaceCells.roomed([20, 30], [
+      {
+        "lead": 5,
+        "trail": 0
+      },
+      {
+        "lead": 0,
+        "trail": 7.5
+      }
+    ]), [25, 37.5]);
+    compare(WorkspaceCells.roomed([20, 30], null), [20, 30], "not segments: as they are");
+  }
+
   function test_startOf() {
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 0), 0);
     compare(WorkspaceCells.startOf([20, 50, 20], 4, 2), 78);

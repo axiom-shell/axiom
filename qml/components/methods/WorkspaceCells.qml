@@ -28,6 +28,13 @@ QtObject {
     };
   }
 
+  // Cells `lengths` long for what they show, each with the room it keeps
+  // clear of its caps as a segment of the bar's run (`rooms`, one {
+  // lead, trail } each, BarShapes.cellRoom; null: none): their lengths
+  function roomed(lengths, rooms) {
+    return lengths.map((length, i) => length + (rooms?.[i]?.lead ?? 0) + (rooms?.[i]?.trail ?? 0));
+  }
+
   // Where cell `index` starts along a row of cells `lengths` long at rest,
   // `spacing` apart: where the active box sits on it, as only cells after
   // the active one move when it widens (an index below 0 starts at 0, one

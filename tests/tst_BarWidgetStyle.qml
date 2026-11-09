@@ -565,6 +565,21 @@ TestCase {
     same(c.content, own, "content");
   }
 
+  function test_cell_boxed_in_run() {
+    verify(BarWidgetStyle.cellBoxedInRun("outline", true), "solid boxes");
+    verify(BarWidgetStyle.cellBoxedInRun("split", false), "split's fill");
+    verify(BarWidgetStyle.cellBoxedInRun("solid", false));
+    verify(!BarWidgetStyle.cellBoxedInRun("filled", false));
+  }
+
+  function test_cell_opaque() {
+    verify(BarWidgetStyle.cellOpaque("filled", false));
+    verify(BarWidgetStyle.cellOpaque("split", false), "split's cells are filled");
+    verify(BarWidgetStyle.cellOpaque("outline", true), "solid boxes");
+    verify(!BarWidgetStyle.cellOpaque("tinted", false));
+    verify(!BarWidgetStyle.cellOpaque("outline", false));
+  }
+
   function test_opaque_fills() {
     verify(BarWidgetStyle.opaque("filled", "joined", "tint"), "filled");
     verify(!BarWidgetStyle.opaque("tinted", "joined", "color"), "tinted");
@@ -612,5 +627,64 @@ TestCase {
       "onRun": true,
       "minContrast": 1.3
     });
+  }
+
+  // Cells as segments of a merged run (Workspaces with its Background
+  // off): the run draws the box, the content takes the state's color
+  function test_cells_in_a_merged_run_leave_the_box_to_it() {
+    const groupCell = (fill, state, extra) => BarWidgetStyle.cell(Object.assign({
+        "fill": fill,
+        "barText": barText,
+        "override": null,
+        "tint": 0.25,
+        "group": "#000000"
+      }, extra ?? {}), accent, own, state);
+    ["filled", "tinted", "outline"].forEach(fill => {
+      const c = groupCell(fill, "active");
+      same(c.fill, "transparent", fill + ": no fill");
+      same(c.stroke, "transparent", fill + ": no stroke");
+      same(c.content, accent, fill + ": its color in the content");
+    });
+    same(groupCell("outline", "occupied").content, accent, "occupied too");
+    same(groupCell("tinted", "empty").content, Qt.alpha(barText, 0.4), "empty: faded");
+    same(groupCell("filled", "empty", {
+      "group": "#ffffff"
+    }).content, Qt.alpha("#000000", 0.4), "faded, reading on a filled run");
+    same(groupCell("solid", "active").fill, accent, "a solid box stays filled");
+    same(groupCell("split", "active").fill, accent, "split's fill too");
+    same(groupCell("outline", "active", {
+      "hoverFill": true,
+      "hovered": true
+    }).fill, accent, "filled on hover, its own part");
+  }
+
+  // What of a cell's box takes the bar's gradient, under an Auto color
+  function test_cell_gradient_parts() {
+    const part = (fill, extra) => BarWidgetStyle.cell(Object.assign({
+        "fill": fill,
+        "barText": barText,
+        "override": null,
+        "tint": 0.25,
+        "group": null,
+        "gradient": graded,
+        "auto": true
+      }, extra ?? {}), accent, own, "active").gradient;
+    compare(part("filled"), {
+      "part": "fill",
+      "alpha": 1
+    });
+    compare(part("tinted"), {
+      "part": "fill",
+      "alpha": 0.25
+    });
+    compare(part("outline").part, "stroke");
+    compare(part("solid").part, "fill");
+    compare(part("plain"), null);
+    compare(part("outline", {
+      "group": "#000000"
+    }), null, "content only in a merged run");
+    compare(part("filled", {
+      "auto": false
+    }), null, "a set color: none");
   }
 }

@@ -184,16 +184,68 @@ QtObject {
   // content takes its color. `showsHover`: hovered, it's filled
   // (fillsOnHover), so the cell draws no hover box of its own. An Auto
   // color (`style.auto`) gives way to the bar gradient's where the cell
-  // sits (style.gradient), as a widget's does.
+  // sits (style.gradient), as a widget's does; `gradient` then says what of
+  // its box shows the gradient itself (as colors' does: { part, alpha }),
+  // else null.
+  // In a merged run whose segments the cells are (`style.group`:
+  // Workspaces with its Background off) the run draws the box: a cell
+  // draws none of its own, its content in its state's color (an empty
+  // one's faded), as a merged widget's color moves to its icon. A solid
+  // box, and split's fill (a row of tabs, as a merged split run's widgets
+  // that don't split), stay filled.
   function cell(style, color, own, state) {
-    if ((style.gradient ?? null) !== null && style.auto === true) {
+    const graded = (style.gradient ?? null) !== null && style.auto === true;
+    if (graded) {
       own = root.readableOn(style.gradient, own);
       color = style.gradient;
     }
+    const result = root._cell(style, color, own, state);
+    result.gradient = graded ? root._cellGradient(style, result) : null;
+    return result;
+  }
+
+  // What of a cell's box takes the bar's gradient (cell)
+  function _cellGradient(style, look) {
+    if (look.showsHover)
+      return root._part("fill", 1);
+    if (root._groupCell(style))
+      return null;
+    switch (style.fill) {
+    case "tinted":
+      return root._part("fill", style.tint);
+    case "outline":
+      return root._part("stroke", 1);
+    case "underline":
+      return root._part("indicator", 1);
+    case "accentText":
+    case "plain":
+      return null;
+    default:
+      return root._part("fill", 1);
+    }
+  }
+
+  // A cell in a merged run that draws no box of its own (cell)
+  function _groupCell(style) {
+    return (style.group ?? null) !== null && !root.cellBoxedInRun(style.fill, false);
+  }
+
+  // Whether a cell as a segment of a merged run (cell's `group`) still
+  // draws a box of its own there: a solid one, and split's fill
+  function cellBoxedInRun(fill, solid) {
+    return solid || fill === "solid" || fill === "split";
+  }
+
+  function _cell(style, color, own, state) {
     const none = "transparent";
     const text = c => style.override ?? c;
     if (style.hovered === true && root.fillsOnHover(style))
       return root._makeCell(color, style.fill === "outline" ? color : none, none, text(own), true);
+    if (root._groupCell(style)) {
+      // On a filled run, what reads on its color, faded for an empty one
+      const runText = style.fill === "filled" ? root.readableOn(style.group, style.barText) : style.barText;
+      return root._makeCell(root.fillsOnHover(style) ? Qt.alpha(color, 0) : none, none, none, state === "empty" ? Qt.alpha(text(runText), 0.4) : text(color));
+    }
     const faded = Qt.alpha(text(style.barText), 0.4);
     const onBar = c => state === "empty" ? faded : text(c);
     switch (style.fill) {
@@ -232,6 +284,13 @@ QtObject {
       return look.widgetGrouping;
     const unchained = (look.widgetStyle === "split" && look.splitIcon === "badge") || look.widgetShape === "tab";
     return unchained ? "separate" : "powerline";
+  }
+
+  // Whether a cell's box (cell) hides what's under it, so the next cell
+  // in a powerline of them can start square beneath it: filled, split's
+  // (filled) and solid boxes
+  function cellOpaque(fill, solid) {
+    return solid || fill === "filled" || fill === "split";
   }
 
   // Whether a powerline segment's fill hides what's under it, so the next

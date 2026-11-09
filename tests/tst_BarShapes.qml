@@ -517,4 +517,130 @@ TestCase {
     verify(BarShapes.contains(1, 1, 100, 30, "tab", "tab"));
     verify(BarShapes.contains(99, 29, 100, 30, "tab", "tab"));
   }
+
+  // Cells laid out as segments of the bar's run (Workspaces with its
+  // Background off): separate, each alone in the shape's ends
+  function test_separate_cells_are_each_alone() {
+    const s = BarShapes.cellSegment("arrow", "shaped", "separate", false, {
+      "index": 1,
+      "count": 3
+    }, 1, 3, 30);
+    compare([s.startCap, s.endCap, s.back, s.lead, s.trail], ["arrowIn", "arrowOut", 0, 15, 15]);
+    const r = BarShapes.cellSegment("rounded", "shaped", "separate", false, null, 0, 2, 30);
+    compare([r.startCap, r.endCap, r.lead, r.trail], ["round", "round", 0, 0]);
+    compare(BarShapes.cellSegment("tab", "shaped", "separate", false, null, 0, 2, 30).startCap, "tab");
+  }
+
+  // Powerline: the cells chain on in the bar's chain, as one run with the
+  // widget's neighbours
+  function test_powerline_cells_chain_in_the_bars_chain() {
+    // The widget second of three: its first cell fits against the cap
+    // before it, never starts square beneath it (drawn over the bar's
+    // backgrounds), and its cells end where the widget would
+    const place = {
+      "index": 1,
+      "count": 3
+    };
+    const first = BarShapes.cellSegment("arrow", "shaped", "powerline", true, place, 0, 2, 30);
+    const last = BarShapes.cellSegment("arrow", "shaped", "powerline", true, place, 1, 2, 30);
+    compare([first.startCap, first.endCap, first.back, first.lead, first.trail, first.seamStart], ["arrowIn", "arrowOut", 15, 0, 15, true]);
+    compare([last.startCap, last.endCap, last.back, last.lead, last.trail], ["arrowIn", "arrowOut", 15, 0, 15]);
+    // Alone, the first cell takes the run's start and the last its end
+    const a = BarShapes.cellSegment("slant", "shaped", "powerline", true, null, 0, 3, 30);
+    const z = BarShapes.cellSegment("slant", "shaped", "powerline", true, null, 2, 3, 30);
+    compare([a.startCap, a.back, a.lead], ["slant", 0, 5]);
+    compare([z.endCap, z.back, z.trail], ["slant", 10, 5 + 5]);
+    // The run's last widget: its last cell gives the run's end cap
+    const end = BarShapes.cellSegment("arrow", "pointed", "powerline", false, {
+      "index": 2,
+      "count": 3
+    }, 2, 3, 30);
+    compare([end.endCap, end.seamEnd], ["arrowOut", false]);
+    // Opaque cells: a later one starts square beneath the one before; the
+    // widget's first still fits against the cap before it
+    const opaque = cell => BarShapes.cellSegment("arrow", "shaped", "powerline", false, place, cell, 2, 30, true);
+    compare([opaque(0).startCap, opaque(0).seamStart], ["arrowIn", true]);
+    compare([opaque(1).startCap, opaque(1).back, opaque(1).seamStart], ["flat", 15, false]);
+  }
+
+  // Merged: the run draws the background, a cell keeps the run's end
+  // room; one drawing a box of its own takes the caps it has alone
+  function test_merged_cells_keep_the_runs_ends() {
+    const place = {
+      "index": 0,
+      "count": 2
+    };
+    const first = BarShapes.cellSegment("slant", "shaped", "merged", false, place, 0, 3, 30);
+    const middle = BarShapes.cellSegment("slant", "shaped", "merged", false, place, 1, 3, 30);
+    compare([first.lead, first.trail, first.back], [5, 0, 0]);
+    compare([middle.lead, middle.trail], [0, 0]);
+    compare([middle.startCap, middle.endCap], ["slant", "slant"], "a box of its own: the caps it has alone");
+    const boxed = BarShapes.cellSegment("slant", "shaped", "merged", true, place, 1, 3, 30);
+    compare([boxed.lead, boxed.trail, boxed.seamStart, boxed.seamEnd], [5, 5, false, false]);
+  }
+
+  function test_cell_gap() {
+    compare(BarShapes.cellGap("powerline", 4), 0);
+    compare(BarShapes.cellGap("separate", 4), 4);
+    compare(BarShapes.cellGap("merged", 4), 4);
+  }
+
+  // Tab cells: the bar's fillet at the widget's ends, between cells no
+  // more than half the gap, and the widget's bounds at its two ends
+  function test_cell_tab() {
+    const first = BarShapes.cellTab(6, 30, 5, 4, true, [null, null], 0, 3);
+    compare([first.start.flare, first.end.flare], [5, 2]);
+    const middle = BarShapes.cellTab(6, 30, 5, 4, true, [null, null], 1, 3);
+    compare([middle.start.flare, middle.end.flare], [2, 2]);
+    const bound = BarShapes.cellTab(6, 30, 5, 20, true, [
+      {
+        "gap": 2,
+        "radius": 10
+      },
+      {
+        "gap": 2,
+        "radius": 10
+      }
+    ], 2, 3);
+    compare(bound.start.corner, null, "the bound is the widget's start, not this cell's");
+    compare(bound.end.corner.radius, 10, "its end is the widget's");
+    compare(BarShapes.cellTab(6, 30, 5, 0, true, null, 1, 2).start.flare, 0, "no gap: square");
+  }
+
+  // A cell's shape and room on a bar's look, from where its widget is
+  // drawn and what it shows
+  function test_cell_shape_and_room() {
+    const look = {
+      "widgetShape": "arrow",
+      "widgetEnds": "shaped",
+      "widgetGrouping": "powerline",
+      "radius": 6,
+      "thickness": 30,
+      "tabFillet": 0,
+      "right": false,
+      "bottom": false
+    };
+    const run = {
+      "sized": {
+        "index": 0,
+        "count": 2
+      },
+      "drawn": {
+        "index": 1,
+        "count": 2
+      },
+      "reachStart": 1,
+      "reachEnd": 2,
+      "tabLimits": [null, null]
+    };
+    const shape = BarShapes.cellShape(look, run, false, false, 0, 0, 2);
+    compare([shape.segment.startCap, shape.segment.back, shape.tab, shape.reachStart, shape.reachEnd], ["arrowIn", 15, null, 1, 2]);
+    compare(BarShapes.cellRoom(look, run, false, 0, 2).lead, 15, "room from what's shown");
+    const tab = BarShapes.cellShape(Object.assign({}, look, {
+      "widgetShape": "tab",
+      "widgetGrouping": "separate",
+      "bottom": true
+    }), null, false, false, 4, 0, 1);
+    compare([tab.segment.startCap, tab.tab.outerStart, tab.reachStart], ["tab", false, 0]);
+  }
 }

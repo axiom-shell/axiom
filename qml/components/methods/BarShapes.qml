@@ -148,6 +148,91 @@ QtObject {
     };
   }
 
+  // Cell `cell` of `cells` a widget lays out as segments of the bar's run
+  // itself (Workspaces with its Background off: its workspaces, then its
+  // strip's windows), the widget at `place` in its run ({ index, count },
+  // BarLayout.runPlaces; null alone): segment's { startCap, endCap, back,
+  // lead, trail, seamStart, seamEnd }.
+  //   separate   each cell alone, in the shape's own ends
+  //   powerline  the cells chain on in the bar's chain: the widget's first
+  //              cell takes the cap the segment before it expects, its last
+  //              ends as the widget would. Drawn over the bar's backgrounds,
+  //              its first cell fits against the cap before it, never
+  //              starts square beneath it; a later one does where the
+  //              cells' fill hides what's under it (`opaque`, drawn under
+  //              the cell before).
+  //   merged     the run draws the background: a cell keeps the room of the
+  //              run's end where it has one; one drawing a box of its own
+  //              (`boxed`: solid boxes, split's fill) takes the caps it has
+  //              alone, and their room, as a merged widget's level does
+  function cellSegment(shape, widgetEnds, grouping, boxed, place, cell, cells, across, opaque) {
+    const lone = root.segment(shape, widgetEnds, "separate", false, 0, 1, across);
+    const pick = (s, startCap, endCap, lead, trail) => ({
+          "startCap": startCap,
+          "endCap": endCap,
+          "back": s.back,
+          "lead": lead,
+          "trail": trail,
+          "seamStart": s.seamStart,
+          "seamEnd": s.seamEnd
+        });
+    if (grouping !== "powerline" && grouping !== "merged")
+      return pick(lone, lone.startCap, lone.endCap, lone.lead, lone.trail);
+    const index = (place?.index ?? 0) + cell;
+    const count = (place?.count ?? 1) + Math.max(1, cells) - 1;
+    const s = root.segment(shape, widgetEnds, grouping, opaque === true && cell > 0, index, count, across);
+    if (grouping === "powerline")
+      return pick(s, s.startCap, s.endCap, s.lead, s.trail);
+    return pick(s, s.levelStartCap, s.levelEndCap, boxed ? lone.lead : s.lead, boxed ? lone.trail : s.trail);
+  }
+
+  // The gap between a widget's cells laid out as segments (cellSegment)
+  // for their own `spacing`: none in a powerline, where they chain
+  function cellGap(grouping, spacing) {
+    return grouping === "powerline" ? 0 : spacing;
+  }
+
+  // A tab cell's shape (tab), cell `cell` of `cells` (cellSegment): the
+  // bar's one fillet at the widget's two ends, where `limits` (tabLimits,
+  // the widget's) bound them, and between cells no more than half the
+  // `gap` between them, so neighbours' fillets never cross
+  function cellTab(radius, thickness, fillet, gap, outerStart, limits, cell, cells) {
+    const first = cell === 0, last = cell === cells - 1;
+    const t = root.tab(radius, thickness, fillet, outerStart, [first ? limits?.[0] ?? null : null, last ? limits?.[1] ?? null : null]);
+    const inner = Math.max(0, Math.min(fillet, gap / 2));
+    if (!first && !t.start.corner)
+      t.start.flare = inner;
+    if (!last && !t.end.corner)
+      t.end.flare = inner;
+    return t;
+  }
+
+  // Cell `cell` of `cells` on a bar `look` (an enriched barConfig) as a
+  // segment of its widget's `run` (BarWidget.runPlace), from where the
+  // widget is drawn (`run.drawn`): { segment (cellSegment), tab (cellTab,
+  // on a tab bar, else null), reachStart, reachEnd (how far its box
+  // reaches past it across, a tab's out to its edge) }. `boxed`, `opaque`
+  // and `gap`: cellSegment's and cellTab's.
+  function cellShape(look, run, boxed, opaque, gap, cell, cells) {
+    return {
+      "segment": root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.drawn ?? null, cell, cells, look.thickness, opaque),
+      "tab": look.widgetShape === "tab" ? root.cellTab(look.radius, look.thickness, look.tabFillet, gap, !(look.right || look.bottom), run?.tabLimits ?? null, cell, cells) : null,
+      "reachStart": run?.reachStart ?? 0,
+      "reachEnd": run?.reachEnd ?? 0
+    };
+  }
+
+  // The room cell `cell` of `cells` keeps clear of its caps along the bar
+  // (cellSegment's lead and trail), from what its widget shows (`run.sized`,
+  // never the room it's given, which this helps decide): { lead, trail }
+  function cellRoom(look, run, boxed, cell, cells) {
+    const s = root.cellSegment(look.widgetShape, look.widgetEnds, look.widgetGrouping, boxed, run?.sized ?? null, cell, cells, look.thickness);
+    return {
+      "lead": s.lead,
+      "trail": s.trail
+    };
+  }
+
   // A cap's points down one end, top to bottom: { x, y, arc } with x in
   // from that end and arc { r, sweep } (sweep as drawn at the far end of
   // a horizontal bar) on the way into the point. A slant is the one cap
