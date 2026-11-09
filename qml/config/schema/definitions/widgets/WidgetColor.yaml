@@ -6,5 +6,5 @@ x-options: colors
 default: ''
 x-emptyLabel: Auto
 x-autoColor: accent
-x-showIf: {$bar.widgetStyle: {not: plain}}
+x-showIf: {$bar.ownColorShows: true}
 x-inline: true

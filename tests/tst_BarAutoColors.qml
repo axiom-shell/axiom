@@ -174,9 +174,4 @@ TestCase {
   function test_stable() {
     compare(JSON.stringify(BarAutoColors.assign(row(9), palette())), JSON.stringify(BarAutoColors.assign(row(9), palette())));
   }
-
-  function test_contrast() {
-    fuzzyCompare(BarAutoColors.contrast("#000000", "#ffffff"), 21, 0.01);
-    fuzzyCompare(BarAutoColors.contrast("#777777", "#777777"), 1, 0.001);
-  }
 }

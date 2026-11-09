@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components.bar
+import qs.components.bar.look
 import qs.components.reusable
 
 // One bar widget in the editor, as a pill (`payload`: what dragging it

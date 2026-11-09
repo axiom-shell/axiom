@@ -1,6 +1,6 @@
 # Bar composition
 
-> **Files:** `qml/shell/Bar.qml`, `qml/components/bar/BarPanel.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/config/BarsConfig.qml`, `qml/services/ui/BarManager.qml`, `qml/services/ui/BarRevealManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
+> **Files:** `qml/shell/Bar.qml`, `qml/components/bar/BarPanel.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetDecorations.qml`, `qml/components/bar/AccentLines.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/config/BarsConfig.qml`, `qml/services/ui/BarManager.qml`, `qml/services/ui/BarRevealManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
@@ -16,7 +16,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Any other bar's monitor is resolved to a connected screen there.
 
 ### Widgets and their options
-- Bar contents are built from `qml/components/bar/{BarContainer,BarWidgetHost,WidgetGroup,BarPanel}.qml`. These compose widgets from `qml/components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
+- Bar contents are built from `qml/components/bar/{BarContainer,BarWidgetHost,WidgetGroup,WidgetDecorations,BarPanel}.qml` (a section's `WidgetGroup` measures, allocates and places its hosts; its `WidgetDecorations` draws the run backgrounds, separator marks and widget backgrounds under them, from `methods/BarRuns`; `AccentLines` draws the accent line along the bar or its pills). How widgets are styled, the bar's look and its layers: [Widget style](widget-style.md#the-style-system-in-five-layers). These compose widgets from `qml/components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
 - Each widget's options live under its `<Type>Widget.properties.properties` definition in the schema.
 - `SchemaValidation` picks the `BarWidget` oneOf option by `type`. Widget properties therefore get their defaults filled like the rest of the config, and widgets read `properties.<key>` directly.
 - Widget types come from `BarsConfig.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.

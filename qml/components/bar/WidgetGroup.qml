@@ -2,10 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-import qs.config
 import qs.services.ui
 import qs.components.methods
-import qs.components.reusable
 
 // One bar section: a row (or column, on a vertical bar) of BarWidgetHosts that
 // fits itself into `maxExtent` along the main axis by shrinking elastic
@@ -29,7 +27,7 @@ Item {
 
   // A powerline's widgets touch (BarsConfig.enrichBarConfig)
   readonly property int spacing: root.barConfig.groupSpacing
-  readonly property string grouping: root.barConfig.widgetGrouping
+  readonly property string grouping: root.barConfig.look.grouping
   // Room the bar's section layout gives this group along the main axis
   property real maxExtent: Infinity
   // Which way the group grows within its slot (0 start, 1 end, 0.5 center)
@@ -39,27 +37,30 @@ Item {
 
   readonly property bool isVertical: barConfig.vertical
 
-  // Tabs (widgetShape tab): backgrounds reach `tabReach` past the
+  // Tabs (the look's shape tab): backgrounds reach `tabReach` past the
   // widgets' outer side, out to the edge they hang from, their ends
-  // bounded by `tabBounds` (BarShapes.tabLimits; along it, in its own
+  // bounded by `tabBounds` (BarTabs.tabLimits; along it, in its own
   // coordinates). Both set by BarContainer.
   property real tabReach: 0
   property var tabBounds: []
-  readonly property real _reach: root.barConfig.widgetShape === "tab" ? root.tabReach : 0
-  // The outer edge is past the far side of the widgets (a bottom or right bar)
-  readonly property bool _outerFar: root.barConfig.right || root.barConfig.bottom
+  readonly property bool _tabs: root.barConfig.look.shape.name === "tab"
+  readonly property real _reach: root._tabs ? root.tabReach : 0
+  // A tab's reach across: before the widgets' near side (in from the
+  // outer edge) or past their far one (the outer edge past their far side:
+  // a bottom or right bar)
+  readonly property var _reachAcross: BarTabs.reachAcross(root._reach, root.barConfig.right || root.barConfig.bottom)
   // What bounds a tab drawn from `start` for `length` along the group
   function tabLimitsOf(start, length) {
-    return root.barConfig.widgetShape === "tab" ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
+    return root._tabs ? BarTabs.tabLimits(start, start + length, root.tabBounds) : [null, null];
   }
 
-  // The bar's gradient (barConfig.gradientColors) runs along the whole
+  // The bar's gradient (its look's `gradient`) runs along the whole
   // bar, `barLength` long (0 with none), each widget showing its slice:
   // where the group starts along the bar as laid out. Laid-out places,
   // never gliding ones, so nothing re-reads them each frame of a glide.
   property real barStart: 0
   property real barLength: 0
-  readonly property bool _graded: root.barLength > 0 && root.barConfig.gradientColors !== null
+  readonly property bool _graded: root.barLength > 0 && root.barConfig.look.gradient !== null
 
   property var _modules: []
 
@@ -120,43 +121,37 @@ Item {
   // Joined to the next section's run (chainStart/chainEnd), a run at
   // that end carries on past it. A merged widget keeps its cap room as
   // if alone; a powerline segment's insets are those of one mid-chain.
-  // The flags pass through a string key (_flagsKey), as `_idsKey`s do, so
-  // the places and all that's built from them (insets, shapes, a segmented
-  // widget's cells) change only when the flags do: any widget's new size
-  // re-reads them, mostly to the same values.
-  readonly property string _insetKey: root._flagsKey(root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null))
-  readonly property var _insetFlags: root._flagsOf(root._insetKey)
+  // The flags pass through a string key (BarRuns.flagsKey), as `_idsKey`s
+  // do, so the places and all that's built from them (insets, shapes, a
+  // segmented widget's cells) change only when the flags do: any widget's
+  // new size re-reads them, mostly to the same values.
+  readonly property string _insetKey: BarRuns.flagsKey(root._modules.map(m => m.naturalSize > 0 ? m.hasBackground : null))
+  readonly property var _insetFlags: BarRuns.flagsOf(root._insetKey)
   readonly property bool _chainInsets: root.grouping === "powerline"
   readonly property var _insetPlaces: BarLayout.runPlaces(root._insetFlags, root._chainInsets && root.chainStart, root._chainInsets && root.chainEnd)
-  readonly property string _drawnKey: root._flagsKey(root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null))
-  readonly property var _drawn: root._flagsOf(root._drawnKey)
+  readonly property string _drawnKey: BarRuns.flagsKey(root._modules.map((m, i) => (root.allocation.visible[i] ?? false) && (root.allocation.sizes[i] ?? 0) > 0 ? m.hasBackground : null))
+  readonly property var _drawn: BarRuns.flagsOf(root._drawnKey)
   readonly property var _drawPlaces: BarLayout.runPlaces(root._drawn, root.chainStart, root.chainEnd)
-  // Run flags (true, false, null) as a string and back
-  function _flagsKey(flags) {
-    return flags.map(f => f === null ? "-" : f ? "1" : "0").join("");
-  }
-  function _flagsOf(key) {
-    return key.split("").map(c => c === "-" ? null : c === "1");
-  }
   // Whether its first and last widgets with something to show have
   // backgrounds (from content, as the insets): a joined boundary carries a
   // run on only between two such (BarContainer.sectionJoins)
   readonly property bool startsInRun: root._insetFlags.find(f => f !== null) === true
   readonly property bool endsInRun: root._insetFlags.slice().reverse().find(f => f !== null) === true
   readonly property var _drawRuns: BarLayout.runs(root._drawn)
-  // Opaque fills hide what's under them: a powerline segment can then
-  // start square beneath the one before
-  readonly property bool _opaque: BarWidgetStyle.opaque(root.barConfig.widgetStyle, root.barConfig.splitIcon, root.barConfig.splitLabelFill)
-  // A widget with no background in a powerline (a Separator) splits the
-  // chain, keeping the bar's spacing to the widgets beside it in the
-  // section as between separate widgets. At the section's end the gap to
-  // the next section stands in, as on any other bar.
-  readonly property real _looseGap: root.grouping === "powerline" ? root.barConfig.widgetGap : 0
+  // What of the bar its runs read (its shape, grouping, opaque trait,
+  // sizes, and the loose gap a widget with no background keeps in a
+  // powerline: BarRuns.context)
+  readonly property var _ctx: BarRuns.context(root.barConfig)
   // The first and last widgets with something to show (from their
-  // content, never the room they're given)
+  // content, never the room they're given), and whether its ends join
+  // (for the insets: BarRuns.insets)
   readonly property var _hasContent: root._modules.map(m => m.naturalSize > 0)
-  readonly property int _firstContent: root._hasContent.indexOf(true)
-  readonly property int _lastContent: root._hasContent.lastIndexOf(true)
+  readonly property var _section: ({
+      "first": root._hasContent.indexOf(true),
+      "last": root._hasContent.lastIndexOf(true),
+      "joinStart": root.joinStart,
+      "joinEnd": root.joinEnd
+    })
 
   // Its groups of widgets as drawn, [{ start, end }] along it in its own
   // coordinates: the runs of shown widgets between its ends and its
@@ -199,177 +194,30 @@ Item {
   property bool chainStart: false
   property bool chainEnd: false
   property real joinEndReach: 0
-  // The last widget shown
-  readonly property int _lastShown: {
-    for (let i = root.allocation.sizes.length - 1; i >= 0; i--) {
-      if (root.allocation.sizes[i] > 0 && !root._fills[i])
-        return i;
-    }
-    return -1;
-  }
-
-  // The index of the next widget shown after `index`, or -1
-  function _nextShown(index) {
-    for (let k = index + 1; k < root.allocation.sizes.length; k++) {
-      if (root.allocation.sizes[k] > 0)
-        return k;
-    }
-    return -1;
-  }
-
-  // How far a run's last widget at `place` runs on past it into the next
-  // section's run it joins (chainEnd), else 0
-  function _reachOf(place) {
-    return place !== null && place.index < place.count - 1 && root.chainEnd ? root.joinEndReach : 0;
-  }
-
-  // Where `along` (in the group, as laid out) sits along the bar (0-1)
-  function _barSpot(along) {
-    return (root.barStart + along) / root.barLength;
-  }
-
-  // The caps and insets at `place` in a run (BarShapes.segment)
-  function segmentAt(place) {
-    return BarShapes.segment(root.barConfig.widgetShape, root.barConfig.widgetEnds, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
-  }
 
   implicitWidth: isVertical ? root.barConfig.thickness : usedLength
   implicitHeight: isVertical ? usedLength : root.barConfig.thickness
 
-  // Merged runs' shared backgrounds, under everything
-  Repeater {
-    model: root.grouping === "merged" ? root._drawRuns.length : 0
-
-    delegate: WidgetBackground {
-      required property int index
-      readonly property var run: root._drawRuns[index] ?? {
-        "start": 0,
-        "count": 1,
-        "members": [0]
-      }
-      readonly property var first: root._modules[run.members[0]] ?? null
-      readonly property var last: root._modules[run.members[run.count - 1]] ?? null
-      // Joined across a section's end to the next section's run (its
-      // places carry on there): no cap there, the background running on
-      // over the gap between them
-      readonly property var _firstPlace: root._drawPlaces[run.members[0]] ?? null
-      readonly property var _lastPlace: root._drawPlaces[run.members[run.count - 1]] ?? null
-      readonly property real _reach: root._reachOf(_lastPlace)
-      // Along the group as laid out, for the bar's gradient: one strip of
-      // it from the run's start to its end
-      readonly property real _from: root.allocation.offsets[run.members[0]] ?? 0
-      readonly property real _to: (root.allocation.offsets[run.members[run.count - 1]] ?? 0) + (root.allocation.sizes[run.members[run.count - 1]] ?? 0) + _reach
-
-      z: -2
-      barConfig: root.barConfig
-      colors: BarsConfig.groupColors(root.barConfig, root._graded ? root._barSpot((_from + _to) / 2) : -1)
-      gradientStart: root._graded ? root._barSpot(_from) : -1
-      gradientEnd: root._graded ? root._barSpot(_to) : -1
-      startCap: root.segmentAt(_firstPlace).startCap
-      endCap: root.segmentAt(_lastPlace).endCap
-      // Carried on from the section before, and on into the next: its
-      // stroke left open there, so no divider shows at the join
-      openStart: (_firstPlace?.index ?? 0) > 0
-      openEnd: _lastPlace !== null && _lastPlace.index < _lastPlace.count - 1
-      x: (first?.x ?? 0) - (root.isVertical && !root._outerFar ? root._reach : 0)
-      y: (first?.y ?? 0) - (!root.isVertical && !root._outerFar ? root._reach : 0)
-      width: root.isVertical ? (first?.width ?? 0) + root._reach : (last?.x ?? 0) + (last?.width ?? 0) - (first?.x ?? 0) + _reach
-      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - (first?.y ?? 0) + _reach : (first?.height ?? 0) + root._reach
-      tabLimits: root.tabLimitsOf(root.isVertical ? (first?.y ?? 0) : (first?.x ?? 0), root.isVertical ? height : width)
-    }
-  }
-
-  // A divider in each gap between shown widgets (Bars[].separatorStyle),
-  // and in the gap to the next section where it joins (joinEnd), except
-  // beside a Separator widget
-  Repeater {
-    model: root.barConfig.separatorStyle !== "none" ? root.widgets.length : 0
-
-    delegate: SeparatorMark {
-      id: mark
-      required property int index
-      readonly property int next: root._nextShown(index)
-      readonly property bool _joined: next < 0 && index === root._lastShown && root.joinEnd
-      readonly property bool between: (root.allocation.sizes[index] ?? 0) > 0 && (next >= 0 || _joined)
-      // From its widget as drawn, so it moves with it
-      readonly property var host: root._modules[index] ?? null
-      readonly property real center: (host ? (root.isVertical ? host.y + host.height : host.x + host.width) : 0) + (_joined ? root.joinEndReach : root.spacing) / 2
-
-      visible: between && !(root._modules[index]?.divides ?? false) && !(root._modules[next]?.divides ?? false)
-      style: root.barConfig.separatorStyle
-      color: Theme.resolveColor(root.barConfig.separatorColor)
-      thickness: root.barConfig.separatorThickness
-      length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
-      vertical: root.isVertical
-      // Across, centred as the tabs' content is (BarShapes.tabShift)
-      readonly property real _shift: BarShapes.tabShift(root._reach, root._outerFar)
-      x: root.isVertical ? Math.round((root.width - width) / 2) + _shift : mark.center - width / 2
-      y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2) + _shift
-    }
-  }
-
-  // Each widget's background, under it: a powerline segment reaches back
-  // under the one before, so earlier ones are drawn over later ones
-  Repeater {
-    model: root.widgets.length
-
-    delegate: WidgetBackground {
-      required property int index
-      readonly property var host: root._modules[index] ?? null
-      // A widget going (hidden, or out of room) keeps its last place and
-      // colors while its host is still fading or shrinking out, so it goes
-      // with it rather than vanishing; a host that stays (a reused
-      // delegate, a widget dropping its background) lets go once settled
-      readonly property var _place: root._drawPlaces[index] ?? null
-      readonly property var _colors: host?.background ?? null
-      property var _last: null
-      readonly property bool _drawn: (host?._drawnMain ?? 0) > 0.5 && (host?.opacity ?? 0) > 0 && (host.opacity < 1 || host._resizing)
-      readonly property var _shown: _place !== null && _colors !== null ? {
-        "place": _place,
-        "colors": _colors
-      } : _drawn ? _last : null
-      on_ShownChanged: if (_place !== null && _colors !== null)
-        _last = _shown
-      readonly property var place: _shown?.place ?? null
-      readonly property var segment: root.segmentAt(place)
-      // Along the group as laid out, back under a powerline neighbour too
-      readonly property real _from: (root.allocation.offsets[index] ?? 0) - segment.back
-
-      z: -1 - index / Math.max(1, root.widgets.length)
-      barConfig: root.barConfig
-      colors: _shown?.colors ?? null
-      startCap: segment.startCap
-      endCap: segment.endCap
-      seamStart: segment.seamStart
-      seamEnd: segment.seamEnd
-      shownStart: segment.shownStart
-      hovered: host?.outlined ?? false
-      pressed: host?.pressed ?? false
-      backgroundLevel: host?.backgroundLevel ?? -1
-      backgroundLevelColor: host?.backgroundLevelColor ?? "transparent"
-      levelStartCap: segment.levelStartCap
-      levelEndCap: segment.levelEndCap
-      gradientStart: root._graded ? root._barSpot(_from) : -1
-      gradientEnd: root._graded ? root._barSpot((root.allocation.offsets[index] ?? 0) + (root.allocation.sizes[index] ?? 0)) : -1
-      highlighted: host?.editorOutlined ?? false
-      // Its widget draws its parts itself (BarWidgetHost.segments)
-      bare: host?.segments ?? false
-      // Its split parts, from the host's start to its own (back under the
-      // one before)
-      readonly property var _split: host?.split ?? null
-      splitAt: _split ? _split.at + segment.back : -1
-      // (and across, past a tab's reach on the near side)
-      readonly property real _nearReach: root._outerFar ? 0 : root._reach
-      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? _nearReach : segment.back), _split.part.y + (root.isVertical ? segment.back : _nearReach), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
-      visible: place !== null
-      opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
-      // A tab reaches out past the widget (tabReach)
-      x: (host?.x ?? 0) - (root.isVertical ? (root._outerFar ? 0 : root._reach) : segment.back)
-      y: (host?.y ?? 0) - (root.isVertical ? segment.back : (root._outerFar ? 0 : root._reach))
-      width: (host?.width ?? 0) + (root.isVertical ? root._reach : segment.back)
-      height: (host?.height ?? 0) + (root.isVertical ? segment.back : root._reach)
-      tabLimits: root.tabLimitsOf(root.isVertical ? y : x, root.isVertical ? height : width)
-    }
+  // Under its widgets: the merged runs' backgrounds, the separator marks
+  // and each widget's background
+  WidgetDecorations {
+    barConfig: root.barConfig
+    ctx: root._ctx
+    hosts: root._modules
+    count: root.widgets.length
+    allocation: root.allocation
+    runs: root._drawRuns
+    places: root._drawPlaces
+    marks: BarRuns.marks(root.allocation.sizes, root._modules.map(m => m.divides), root._fills, root.joinEnd)
+    spacing: root.spacing
+    chainEnd: root.chainEnd
+    joinEndReach: root.joinEndReach
+    reachAcross: root._reachAcross
+    tabReach: root._reach
+    tabLimitsOf: root.tabLimitsOf
+    graded: root._graded
+    // Where `along` (in the group, as laid out) sits along the bar (0-1)
+    barSpot: along => BarGradient.spot(along, 0, root.barStart, root.barLength)
   }
 
   Repeater {
@@ -392,13 +240,19 @@ Item {
 
       // Clear of its caps; a widget with no background sits loose, and
       // one laying its parts out as segments keeps their room itself
+      // (BarRuns.insets)
       readonly property var _place: root._insetPlaces[module.index] ?? null
-      readonly property var _segment: root.segmentAt(_place)
-      leadInset: module.segments ? 0 : module.hasBackground ? module._segment.lead : ((module.index > root._firstContent || root.joinStart) && !module.fills ? root._looseGap : 0)
+      readonly property var _room: BarRuns.insets(root._ctx, module._place, {
+        "background": module.hasBackground,
+        "segments": module.segments,
+        "fills": module.fills,
+        "contentAcross": module.contentAcross
+      }, module.index, root._section)
+      leadInset: module._room.lead
+      trailInset: module._room.trail
       // Hovered and clicked in its background's shape as drawn
       readonly property var _drawnPlace: root._drawPlaces[module.index] ?? null
-      hitShape: module._drawnPlace !== null ? root.segmentAt(module._drawnPlace) : null
-      trailInset: module.segments ? 0 : module.hasBackground ? module._segment.trail : ((module.index < root._lastContent || root.joinEnd) && !module.fills ? root._looseGap : 0)
+      hitShape: module._drawnPlace !== null ? BarRuns.segmentAt(root._ctx, module._drawnPlace) : null
       // Its place in the run, for its parts to take as segments of it:
       // their room from what's shown, their shapes from where they're
       // drawn, a tab's ends bounded as its own background's would be

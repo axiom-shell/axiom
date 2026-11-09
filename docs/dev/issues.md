@@ -20,13 +20,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ## Bar and border
 
-### "Colour the text by state" does nothing on a bar whose widgets have no fill
-- **Where:** `qml/components/methods/BarWidgetStyle.qml` (`textByState`, `_make`); the same test in `qml/components/bar/widgets/Markets/Markets.qml` (`rich`: the change coloured inline, so on an unfilled bar it isn't, and on a tinted one it is)
-- **What:** `textByState` asks `colors.fill.a < 1`, but `colors()` gives an unfilled style (outline, underline, accentText, plain, and a merged run's widgets) the string `"transparent"` as its fill, whose `.a` is undefined (checked in qmltestrunner: `"transparent".a` is `undefined`, `Qt.color("transparent").a` is 0). So `appearance.colorText` takes effect only on a tinted bar, where display-styles.md says it colours the text wherever it isn't the background's fill. Fix: `Qt.color(colors.fill).a < 1`, with a test row; but a merged run on a filled bar then puts the state colour on the run's own fill (its widgets' fill is transparent, the run's isn't), so whether that counts as a fill is a look choice for the maintainer.
-  **Decided** (maintainer, 2026-11-06, on a) a merged run's fill counts as a fill (its text not coloured), b) colour the text in merged runs too; recommended a)): "defer"
-- **Size:** trivial
-- **Found:** 2026-11-06, while sharing SystemStats' text-by-state rule (row 20)
-
 ### A pill bar stacked inside another pill bar grows its pills out of nothing
 - **Where:** `qml/components/bar/BarContainer.qml` (`borderOpening`), `qml/components/methods/BarEnds.qml` (`placeStack`)
 - **What:** A pill bar's pills grow out of a stroke at its outer edge: the border's, which they cover and open. Stacked inside another pill bar (`offBorder`: pill bars are the first kind inside the border), there is no such stroke. Its outer edge lies on the far side of the bar outside it, which only that bar's pills stroke. Where an inner pill sits under an outer pill it joins that pill's far stroke and looks right; seen in a nested niri (two top pill bars, the inner one's end pills under the outer one's). Under a gap between the outer bar's pills, its outer side is open and its fillets curve into nothing. Since `offBorder`, it opens no border stroke (it used to cut the border's under the outer bar), and merged popouts on it open none either. Open for the plan: draw an inner pill bar's pills closed on their outer side (as islands), stretch the outer bar's pills over them, or leave pills inside the border's first bar to the user.
@@ -38,6 +31,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **What:** The border leaves its inner stroke open under a joined surface whenever `Appearance.translucent`, not only while the blur window backs it. In nested niri with a top and a left pill bar meeting at the top-left corner (translucency 80%, the look's blur off, so nothing is backed), the top frame's stroke row (y = 7) is bare wallpaper across the left frame's width (x 0–6): nothing fills it there, as the keepFill row was before compositor-20. Backed, the blur window fills it. Which opening takes that stretch (the left pill's `joinOpening` or the top pill's `borderOpening`) wasn't traced.
 - **Size:** small
 - **Found:** 2026-11-04, while fixing a keepFill opening's unfilled row (compositor-20)
+
+### The strip after a switcher's row warns that its Grid overflows as it loads
+- **Where:** `qml/components/bar/widgets/Workspaces/ActiveStrip.qml` (its Grid's `rows` / `columns`, `_divided`)
+- **What:** On a strip monitor a nested niri shell logged `Grid contains more visible items (2) than rows*columns (1)` (`@components/bar/widgets/Workspaces/ActiveStrip.qml`) twice as a config loaded, with the bar style rework's 3c commit and its last alike. The Grid sizes itself from `_divided` while its divider's `visible` reads it too; one appears to update before the other as the strip's windows arrive. Not traced further: PLAUSIBLE. Nothing wrong was seen drawn.
+- **Size:** trivial
+- **Found:** 2026-11-09, while refactoring the bar's widget styles (stage 6)
 
 ## Popouts and edge menus
 

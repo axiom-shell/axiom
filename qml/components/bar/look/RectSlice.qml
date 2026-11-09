@@ -1,16 +1,14 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Shapes
 
-// A shape's slice of the bar's gradient (BarWidgetStyle.gradientSlice's
-// three stops, null for none), along the bar: a ShapePath's fillGradient
-// or strokeGradient over an item `length` long (down a vertical bar)
-LinearGradient {
+// A Rectangle's slice of the bar's gradient (BarGradient.gradientSlice's
+// three stops, null for none), along the bar (down a vertical one): an
+// underline's line, a split badge
+Gradient {
   id: root
 
   property var slice: null
   property bool vertical: false
-  property real length: 0
 
   readonly property var _noStop: ({
       "position": 0,
@@ -18,10 +16,7 @@ LinearGradient {
     })
   readonly property var _stops: root.slice ?? [root._noStop, root._noStop, root._noStop]
 
-  x1: 0
-  y1: 0
-  x2: root.vertical ? 0 : root.length
-  y2: root.vertical ? root.length : 0
+  orientation: root.vertical ? Gradient.Vertical : Gradient.Horizontal
 
   GradientStop {
     position: root._stops[0].position

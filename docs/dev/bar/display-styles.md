@@ -1,6 +1,6 @@
 # Display styles
 
-> **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
+> **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/components/methods/ValueGraphics.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
 > **Config:** a bar widget's `properties.appearance` (`style`, `segments`, `width`, `colorText`); a custom widget's `bar`
 > **Related:** [Widget base classes](widget-style.md), [Custom widgets](../features/custom-widgets.md) › The bar widget, [Config v2](../core/config-v2.md)
 
@@ -10,10 +10,10 @@ How a bar widget with a value, a time or a long text draws it: one set of styles
 - `label`: the icon and its text (every widget's look before styles).
 - `icon`: the icon alone.
 - `ring` (`PercentageCircle`), `fill` (`LevelMeter`), `segments` (`SegmentMeter`, `segments` of them), `sparkline` (`Sparkline` over the widget's history): a graphic before the icon, in `IconTextWidget`'s `lead` slot; fill, segments and sparkline are `width` long (0: from the bar's font).
-- `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its WidgetGroup in the background's own shape).
+- `pill`: the widget's background filled to its value (`backgroundLevel`, drawn by its background's `LevelFill` in the background's own shape).
 - `ticker`: the text, up to `width` long, scrolling past that and centred in its room while it fits; `stacked`: the text over a caption. Both sit after the icon, where the label goes (`leadAfterIcon`); a vertical bar turns the ticker along it and draws stacked as a label.
 - The ring is drawn on whole pixels, centred exactly on the icon's middle beside it (`IconTextWidget.iconMiddle`, passed as `ValueGraphic.middle`), its side's parity following whether that's on a whole or a half pixel. IconTextWidget centres the label's letters on the same middle (`TextBandPadding`), so ring, icon and label line up; the ticker centres on its letters the same way.
-- `colorText` colours the text in the widget's state colour (its `accentColor`) where that isn't already the background's fill (`BarWidgetStyle.textByState`; the pill's colour is `BarWidgetStyle.levelColor`, both shared with SystemStats). The graphics draw in `colors.icon`, which reads on a filled background.
+- `colorText` colours the text in the widget's state colour (its `accentColor`) where its text doesn't sit on a fill it must read on (`BarWidgetStyle.textByState`, from `colors.textOnFill`: filled; a merged run on a filled or split bar, the run's fill counting; split's label on a color of its own; a widget filled on hover. Tinted, outline, underline, colored icons, plain and split's tint or none label colour it; the pill's colour is `BarWidgetStyle.levelColor`, both shared with SystemStats). The graphics draw in `colors.icon`, which reads on a filled background.
 
 ### The schema
 `BarDisplay` holds the four settings (an `x-inline` definition). A custom widget's `bar` extends it (`x-properties`: its icon and popout). A built-in widget picks WidgetBase's `appearance` part and names the styles it can draw (the default stays `label` unless it overrides `default` too):
@@ -35,7 +35,9 @@ The base (a `BarIconWidget`) for a widget drawing one value. It takes:
 - `labelShown` in place of `showText` (the widget's own "show the value" setting; the style hides the label where it's the graphic);
 - `stateColor` / `hasState`, for `colorText` (default the accent colour; a custom widget's only when its script gives a state).
 
-`style` is the style it draws now, after those fallbacks (`ValueGraphic.resolvedStyle`, which SystemStats' segments read too). The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
+`style` is the style it draws now, after those fallbacks (`ValueGraphics.resolvedStyle`, which SystemStats' segments read too). The graphic is a `ValueGraphic`, which a widget drawing several values places itself: SystemStats lays each metric out as an `IconTextWidget` (as every icon + label widget is; `uprightLabel` keeps its small upright values on a vertical bar) with one in its lead slot, pill only with one metric shown, and a disk's sparkline as a fill (SystemManager keeps no disk history).
+
+How far its graphic reaches across the bar is `ValueGraphic.across` (`ValueGraphics.across`, from the sizes ValueGraphic draws at, which it reads from the helper too; from the style, the bar's thickness and font, never measured): the ring 0.62 of the thickness, the sparkline 0.6 of it on a horizontal bar (inset 0.2 either side) and the whole of it on a vertical one (its inset is along the bar there), stacked its two lines (1.2 × (0.8 + 0.6) of the font, at the fit that shrinks them to the room inside the widget's box: `ValueGraphics.stackedFit` in `boxRoom`, the thickness less the look's outline stroke band either side, `BarShapes.strokeBand` (a tab's too: it's open along the edge it hangs from, but the lines are centred across the thickness, so clearing its inner stroke takes the same margin on both sides), or the whole thickness where no box is drawn); fill, segments and the ticker no more than a line. `ValueStyleWidget` declares the larger of that and its icon's line as its `contentAcross`, SystemStats the largest over its shown metrics' styles, so a run's capsule or arrow end keeps clear of the graphic ([Shapes and runs](widget-shapes-runs.md#backgrounds-and-shapes)).
 
 ### Which widget draws what
 | Widget | Value | Stacked caption |

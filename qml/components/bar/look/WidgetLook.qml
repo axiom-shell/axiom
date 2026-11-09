@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.config
+import qs.components.methods
 
 // What a bar widget draws in on its bar (BarsConfig.widgetColors): its
 // color for its state, whether that's its Auto own color, and where it
@@ -31,7 +32,7 @@ QtObject {
 
   readonly property bool accentAuto: root.autoColors[root.accentField] === "accent"
   // Where its middle sits along the bar (0-1), or -1 without a gradient
-  readonly property real barSpot: root.barLength > 0 ? (root.barOffset + root.length / 2) / root.barLength : -1
+  readonly property real barSpot: BarGradient.spot(0, root.length, root.barOffset, root.barLength)
   readonly property var colors: BarsConfig.widgetColors(root.barConfig, root.accentColor, root.properties?.foregroundColor, {
     "splits": root.splits,
     "hovered": root.hovered,

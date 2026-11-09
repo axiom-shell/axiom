@@ -91,6 +91,16 @@ BarWidget {
   // Pill fills the whole widget's background: only with one metric
   readonly property string style: appearance.style === "pill" && segments.length !== 1 ? "fill" : appearance.style
   readonly property bool pill: style === "pill"
+  // The style a metric's segment draws as: the disk keeps no history (a
+  // fill instead); every segment has a value
+  function segmentStyle(key) {
+    return ValueGraphics.resolvedStyle(root.style, root.isVertical, root._metrics.find(m => m.key === key).history !== "", 0);
+  }
+  // The room across inside its box, which stacked's lines fit in
+  readonly property real _boxRoom: ValueGraphics.boxRoom(root.barConfig.thickness, root.barConfig.look.shape)
+  // A line, or the graphic reaching furthest across the bar of those its
+  // shown metrics draw
+  contentAcross: Math.max(root.barConfig.fontSize, ...root.segments.map(key => ValueGraphics.across(root.segmentStyle(key), root.isVertical, root.barConfig.thickness, root.barConfig.fontSize, root._boxRoom)))
 
   // Live icon/value/level for one segment key
   function segmentData(key) {
@@ -201,9 +211,7 @@ BarWidget {
           required property var modelData
           readonly property var stat: root.segmentData(modelData)
           readonly property var metric: root._metrics.find(m => m.key === segment.modelData)
-          // The disk keeps no history (a fill instead); every segment
-          // has a value
-          readonly property string style: graphic.resolvedStyle(root.style, root.isVertical, segment.metric.history !== "", 0)
+          readonly property string style: root.segmentStyle(segment.modelData)
 
           isVertical: root.isVertical
           crossSize: root.barConfig.thickness
@@ -238,6 +246,7 @@ BarWidget {
             preferredLength: root.appearance.width
             vertical: root.isVertical
             crossSize: root.barConfig.thickness
+            room: root._boxRoom
             fontSize: root.barConfig.fontSize
             middle: segment.iconMiddle
             color: root.colors.icon

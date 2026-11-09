@@ -19,5 +19,5 @@ settings:
     x-autoColor: neutral
     x-showIf:
       anyOf:
-        - {$bar.widgetStyle: [filled, tinted, outline, split], $bar.widgetGrouping: {not: merged}}
-        - {$bar.widgetStyle: underline}
+        - {$bar.boxed: true, $bar.merged: false}
+        - {$bar.underlined: true}

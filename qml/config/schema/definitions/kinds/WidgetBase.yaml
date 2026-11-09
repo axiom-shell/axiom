@@ -58,12 +58,7 @@ x-parts:
         title: Text color
         x-options: colors
         default: base00
-        x-showIf:
-          anyOf:
-            - {$bar.widgetStyle: filled, $bar.widgetGrouping: {not: merged}}
-            - {$bar.widgetStyle: split}
-            - {$bar.widgetStyle: [tinted, outline], $bar.hoverFill: true}
-          $bar.widgetTextColor: ''
+        x-showIf: {$bar.textColorShows: true}
 properties:
   type: {}
   id: {$ref: '#/definitions/ItemId'}

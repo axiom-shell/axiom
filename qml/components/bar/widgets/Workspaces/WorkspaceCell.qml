@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 import qs.components.methods
+import qs.components.bar.look
 
 // One workspace on the bar, in the bar's widget style (BarsConfig.cellColors): a
 // filled, tinted or outlined box inside the widget's own; on a bar whose
@@ -23,18 +24,20 @@ Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for its state
+  // How its widget's cells draw on this bar or popout
+  required property CellLook cellLook
+  // BarsConfig.cellColors for its state (CellLook.colorsOf)
   required property var look
   required property bool isActive
   // Across the bar, and along it (`restLength` when not widened)
   required property real thickness
   required property real length
   property real restLength: length
-  property real radius: 0
-  // Its shape as a segment of the bar's run (BarShapes.cellShape), or
+  property real radius: cellLook.radius
+  // Its shape as a segment of the bar's run (BarCells.cellShape), or
   // null: a box filling it, rounded by `radius`
   property var shape: null
-  // The room its content keeps clear of its caps along it (BarShapes.cellRoom:
+  // The room its content keeps clear of its caps along it (BarCells.cellRoom:
   // { lead, trail }), or null
   property var room: null
   // "numbers", "dots" or "none" (dots where a cell would have neither box
@@ -85,26 +88,22 @@ Item {
   // `look` passes it to BarsConfig.cellColors): when hovered, or for a
   // background layer, when its content layer is
   property bool lit: hovered
-  // Its box while lit (BarsConfig.cellHoverColor)
-  property color hoverColor: Theme.backgroundHighlight
+  // Its box while lit
+  property color hoverColor: cellLook.hoverColor
   readonly property bool _drawsBox: part !== "content"
   readonly property bool _drawsContent: part !== "background"
   // Its box while the indicator stands for it stays at rest under the
   // indicator, unless its tint would show through
-  readonly property bool _clearActive: root.isActive && root.indicated && root.barConfig.widgetStyle === "tinted"
+  readonly property bool _clearActive: root.isActive && root.indicated && root.cellLook.clearsActive
 
   signal clicked
 
   readonly property bool isVertical: barConfig.vertical
-  // `solidBoxes`: a filled box whatever the bar's style (`look` is the
-  // solid one)
-  property bool solid: false
-  // A segment of a merged run, which draws its box (BarsConfig.cellColors'
-  // group): boxed only where it still draws one of its own
-  property bool inRun: false
-  readonly property bool boxed: inRun ? BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid) : barConfig.widgetBoxed || solid
-  // Its state shows in a box or a line; without either, in its content
-  readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
+  // A box of its own (in a merged run, which draws its box, only where it
+  // still draws one: CellLook.boxed); its state shows in a box or a line,
+  // without either in its content
+  readonly property bool boxed: cellLook.boxed
+  readonly property bool _framed: cellLook.framed
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
   // cells and takes the hover, so it's asked whether the pointer is in
   // the cell's pointer area (its box as drawn); elsewhere (a popout), that
@@ -115,29 +114,23 @@ Item {
   width: isVertical ? thickness : length
   height: isVertical ? length : thickness
 
-  // Lit, in the hover color, unless its look is filled for the hover
-  // already ("Fill on hover": BarWidgetStyle.cell's showsHover)
-  CellBox {
+  // Its box (BarCells.cellBox) and the look's line. Lit, in the hover
+  // color, unless its look is filled for the hover already ("Fill on
+  // hover": BarWidgetStyle.cell's showsHover)
+  LookBox {
+    readonly property var _box: BarCells.cellBox(root.barConfig.look, root.shape, root.radius)
+
     visible: root._drawsBox
-    barConfig: root.barConfig
-    radius: root.radius
-    shape: root.shape
+    bar: root.barConfig
+    outline: _box.outline
+    reach: _box.reach
+    strokeWidth: _box.strokeWidth
+    strokeStyle: _box.strokeStyle
     opacity: root._pulse
-    fillColor: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
-    strokeColor: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    fill: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
+    stroke: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
+    line: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
     animated: root.animated
-  }
-
-  // Underline: along the side the bar's widget lines take
-  CellUnderline {
-    barConfig: root.barConfig
-    visible: root._drawsBox && root.barConfig.widgetStyle === "underline"
-    opacity: root._pulse
-    color: root._clearActive ? Qt.alpha(root.look.indicator, 0) : root.look.indicator
-
-    ColorGlide on color {
-      enabled: root.animated
-    }
   }
 
   // What it shows, fading with an urgent one's pulse where nothing else
