@@ -295,12 +295,6 @@ Singleton {
     }, windows);
   }
 
-  // The largest window on a workspace (its icon stands for the workspace),
-  // or null
-  function biggestWindowForWorkspace(workspaceId) {
-    return root.windowsBySize(workspaceId)[0] ?? null;
-  }
-
   // A workspace's windows, the biggest (by area) first, ties in the
   // windows' order
   function windowsBySize(workspaceId) {

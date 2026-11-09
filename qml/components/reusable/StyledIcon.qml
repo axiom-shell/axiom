@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.components.methods
 
 // A Material Symbols icon: `text` is its name ("wifi"), or several names
 // separated by spaces or newlines. Anything else (a glyph or text a user
@@ -9,7 +10,7 @@ StyledText {
   id: root
 
   // -- Public API --
-  readonly property bool isSymbol: /^\s*[a-z][a-z0-9_]*(\s+[a-z][a-z0-9_]*)*\s*$/.test(text)
+  readonly property bool isSymbol: Utils.isSymbolName(text)
   // Material Symbols' variable axes
   property real fill: 0
   property int weight: 400

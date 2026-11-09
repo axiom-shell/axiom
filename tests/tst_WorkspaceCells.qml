@@ -89,13 +89,6 @@ TestCase {
     compare(WorkspaceCells.squareSlots(7).length, 4, "four or more: a 2×2 block");
   }
 
-  function test_isSymbol() {
-    verify(WorkspaceCells.isSymbol("terminal"));
-    verify(!WorkspaceCells.isSymbol("Web"), "capitals: words");
-    verify(!WorkspaceCells.isSymbol(""), "a glyph");
-    verify(!WorkspaceCells.isSymbol(""));
-  }
-
   function test_labelFor() {
     const entries = [
       {

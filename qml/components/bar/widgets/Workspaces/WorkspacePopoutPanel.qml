@@ -31,7 +31,7 @@ Panel {
 
   readonly property color activeColor: Theme.resolveColor(root.properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(root.properties.occupiedColor)
-  readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor ?? "base08")
+  readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(root.properties.textColor)
   readonly property color hoverColor: BarsConfig.cellHoverColor(root.properties)

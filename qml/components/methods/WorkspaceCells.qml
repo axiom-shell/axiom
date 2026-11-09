@@ -101,12 +101,6 @@ QtObject {
     return [slot(near, near, half), slot(far, near, half), slot(near, far, half), slot(far, far, half)];
   }
 
-  // Whether `text` is a Material Symbols name (as StyledIcon reads it:
-  // drawn as that icon), not a glyph or words drawn in the text font
-  function isSymbol(text) {
-    return /^\s*[a-z][a-z0-9_]*(\s+[a-z][a-z0-9_]*)*\s*$/.test(text ?? "");
-  }
-
   // The label of one's own for the workspace numbered `number` (the
   // widget's `workspaceLabels`: [{ workspace, label }]), or "" with none
   function labelFor(entries, number) {

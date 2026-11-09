@@ -324,4 +324,11 @@ TestCase {
     compare(Utils.firstFormRow(rows.length, i => rows[i]), 3, "skips missing, hidden and empty rows; unknown counts as shown");
     compare(Utils.firstFormRow(3, i => rows[i]), -1);
   }
+
+  function test_isSymbolName() {
+    verify(Utils.isSymbolName("terminal"));
+    verify(!Utils.isSymbolName("Web"), "capitals: words");
+    verify(!Utils.isSymbolName(""), "a glyph");
+    verify(!Utils.isSymbolName(""));
+  }
 }

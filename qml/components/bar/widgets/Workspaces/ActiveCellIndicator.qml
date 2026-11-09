@@ -72,7 +72,7 @@ Item {
       root._wrapPending = false;
       wrapTimeout.stop();
       if (root.index >= 0 && from >= 0 && (root._wrapForward ? root.index < from : root.index > from))
-        root._wrap(root._alongAt(from), root._alongAt(root.index));
+        root._wrap(root._alongAt(from), root._alongAt(root.index), (root.lengths[from] ?? 0) + root.extra);
     }
     if (root.index < 0)
       root._placed = false;
@@ -90,11 +90,13 @@ Item {
   }
 
   // From `fromAlong` out past the end it's leaving, then in from the other
-  // to `toAlong`, where the box now rests (`_shift` offsetting it)
-  function _wrap(fromAlong, toAlong) {
+  // to `toAlong`, where the box now rests (`_shift` offsetting it). Before
+  // the start means past the longer of the two cells: the box's length
+  // glides from the one it left (`fromLength`) meanwhile
+  function _wrap(fromAlong, toAlong, fromLength) {
     const forward = root._wrapForward;
     const pastEnd = root._rowLength + root.spacing;
-    const beforeStart = -root.activeLength - root.spacing;
+    const beforeStart = -Math.max(root.activeLength, fromLength) - root.spacing;
     wrapAnimation.stop();
     wrapOut.from = fromAlong - toAlong;
     wrapOut.to = (forward ? pastEnd : beforeStart) - toAlong;
