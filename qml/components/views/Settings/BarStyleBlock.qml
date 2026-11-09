@@ -18,10 +18,8 @@ import qs.components.reusable
 // while its `x-showIf` holds. Then Colors, Accents, Size and Shadow, one
 // under another; on the settings page each a fold, shut until opened.
 // Each look tile shows its look (BarLookSample). It holds no style rules:
-// what shows, greys and why is the schema's. Its header's Presets menu
-// sets the values of one of the schema's presets (BarStyle's
-// `x-presets`) in one edit. Edits leave through `edited` and
-// `presetPicked`; on the settings page (given `row` and `form`) they go
+// what shows, greys and why is the schema's. Edits leave through
+// `edited`; on the settings page (given `row` and `form`) they go
 // through the settings draft as the page's own rows' do. In the bar
 // editor (`owned`) each section is the bar's own or shared: shared, it
 // shows only its heading and a link to where it's set; owned with some
@@ -63,24 +61,10 @@ ColumnLayout {
   signal ownToggled(string group, bool value)
   // A partly owned section's "Make all this bar's own" (with `partlyOwned`)
   signal ownAllRequested(string group)
-  // A preset picked: its values ({ key: value }, its shadow's parts as an
-  // object), to set at once, keys it doesn't name kept
-  signal presetPicked(var values)
 
   onEdited: (path, value) => {
     if (root.form)
       root.form.edit(root.row.path.concat(path), value);
-  }
-  // Every key at once (SettingsManager.setValues), one Discard puts back;
-  // the shadow as its whole object, as the form edits it
-  onPresetPicked: values => {
-    if (!root.form)
-      return;
-    EditsManager.discardTypingIn(root);
-    SettingsManager.setValues(Object.keys(values).map(key => ({
-          "path": root.row.path.concat([key]),
-          "value": key === "shadow" ? Object.assign({}, root._valueOf("shadow"), values.shadow) : Utils.clone(values[key])
-        })));
   }
   onDiscardAt: path => {
     if (!root.row)
@@ -97,9 +81,6 @@ ColumnLayout {
     return root._groups.find(group => group.title === title)?.keys ?? [];
   }
   readonly property var _properties: root.schema?.properties ?? ({})
-  // The presets ([{ label, values }], the schema's `x-presets`), the
-  // labels English
-  readonly property var _presets: root.schema?.["x-presets"] ?? []
   // Look's rows kept in place (`x-keepsPlace`, in x-order: the style, the
   // shape, the grouping), its top rows (those and the rows placed under
   // one of them, `x-placeUnder`: tab sides and ends under the shape), and
@@ -142,36 +123,6 @@ ColumnLayout {
 
   // A jump made before it was built (a link from another category)
   Component.onCompleted: root._openFoldFor(SettingsManager.pendingJump)
-
-  // The header: the Presets menu, at its end
-  RowLayout {
-    visible: root._presets.length > 0
-    Layout.fillWidth: true
-    spacing: Widget.spacing
-
-    Item {
-      Layout.fillWidth: true
-    }
-
-    StyledTextButton {
-      id: presetsButton
-      text: I18n.tr("Presets")
-      iconText: "expand_more"
-      iconAfter: true
-      tooltipText: I18n.tr("Set a whole look at once; what it leaves out stays as it is")
-      // Under it, their right edges lined up
-      onClicked: presetsMenu.openAt(presetsButton, presetsButton.width - presetsMenu.width, presetsButton.height)
-    }
-  }
-
-  StyledContextMenu {
-    id: presetsMenu
-    items: root._presets.map((preset, index) => ({
-          "id": String(index),
-          "text": I18n.tr(preset.label)
-        }))
-    onTriggered: id => root.presetPicked(root._presets[Number(id)].values)
-  }
 
   // One section: its heading (with the bar's own switch) and its form;
   // with `folds`, a fold instead, its form built only while open

@@ -459,10 +459,8 @@ QtObject {
 
   // Gives the selected bar its own `keys`, starting from what it inherits
   // (a key it already sets keeps its value), or (`owned` false) hands them
-  // back to the shared style; then sets
-  // `values` (BarStyle values, a preset's; its shadow's parts merged in)
-  // as its own too, all one undo step
-  function setStyleOwned(keys, owned, values) {
+  // back to the shared style, as one undo step
+  function setStyleOwned(keys, owned) {
     const bar = selectedBar();
     if (!bar)
       return;
@@ -479,8 +477,6 @@ QtObject {
         style[key] = owned ? (style[key] ?? root._inherited(key)) : null;
       }
     }
-    for (const key in values ?? {})
-      style[key] = key === "shadow" ? Object.assign(style.shadow, values.shadow) : Utils.clone(values[key]);
     applyChanges();
   }
 
