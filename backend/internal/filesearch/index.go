@@ -45,6 +45,8 @@ const (
 	flagWatched
 	// flagLink: a symbolic link, indexed by its name and never followed
 	flagLink
+	// flagLeftOut: a folder whose last read left entries out at the cap
+	flagLeftOut
 )
 
 // entry is one file or folder: 32 bytes, no pointers.
@@ -78,7 +80,8 @@ type Change struct {
 	GoneWatched []uint32
 	Added       int
 	Removed     int
-	// Truncated: entries were left out at the index's cap
+	// Truncated: entries were left out at the index's cap (the folder
+	// is marked: LeftOut)
 	Truncated bool
 }
 
@@ -90,6 +93,7 @@ type Index struct {
 	n       uint32 // entries used, removed ones included
 	removed uint32
 	folders uint32 // folders not removed, roots included
+	leftOut uint32 // folders marked flagLeftOut, not removed
 	names   [][]byte
 	// The folders by their path's hash (no strings for the collector to
 	// scan); collide holds the rare path whose hash another took
@@ -124,6 +128,14 @@ func (ix *Index) Len() int { return int(ix.n - ix.removed) }
 // Folders is the number of folders, roots included (counted as they're
 // added and removed: the state reads it for every folder a crawl sends).
 func (ix *Index) Folders() int { return int(ix.folders) }
+
+// LeftOut is the number of folders whose last read left entries out at
+// the cap (LeftOutDir).
+func (ix *Index) LeftOut() int { return int(ix.leftOut) }
+
+// LeftOutDir says whether folder d's last read left entries out at the
+// cap: its time is the one read, so only a forced read finds them.
+func (ix *Index) LeftOutDir(d uint32) bool { return ix.at(d).flags&flagLeftOut != 0 }
 
 // Roots are the roots' entries, in the order added.
 func (ix *Index) Roots() []uint32 { return ix.roots }
@@ -283,6 +295,9 @@ func (ix *Index) add(name []byte, parent uint32, flags uint8, depth uint8, mtime
 		ix.dirList = append(ix.dirList, i)
 		ix.folders++
 	}
+	if flags&flagLeftOut != 0 {
+		ix.leftOut++
+	}
 	return i
 }
 
@@ -328,6 +343,8 @@ func (ix *Index) unregisterDir(i uint32, h uint64) {
 // are removed with what they hold, new ones added (while the index holds
 // fewer than max entries; 0 is no cap), files' times updated. A folder
 // already there keeps its contents and time: only reading it sets them.
+// A folder that left entries out is marked (LeftOutDir) until a read of
+// it fits.
 func (ix *Index) ReplaceDir(d uint32, path string, mtime int64, kids []Child, max int) Change {
 	var ch Change
 	de := ix.at(d)
@@ -375,8 +392,17 @@ func (ix *Index) ReplaceDir(d uint32, path string, mtime int64, kids []Child, ma
 	for ; oi < len(old); oi++ {
 		ix.removeTree(old[oi], dh, &ch)
 	}
-	// Relink the list, in name order
 	de = ix.at(d)
+	if was := de.flags&flagLeftOut != 0; was != ch.Truncated {
+		if ch.Truncated {
+			de.flags |= flagLeftOut
+			ix.leftOut++
+		} else {
+			de.flags &^= flagLeftOut
+			ix.leftOut--
+		}
+	}
+	// Relink the list, in name order
 	de.child = NoEntry
 	for k := len(keep) - 1; k >= 0; k-- {
 		ix.at(keep[k]).next = de.child
@@ -445,6 +471,9 @@ func (ix *Index) removeTree(i uint32, dh uint64, ch *Change) {
 			}
 			ix.unregisterDir(it.i, it.h)
 			ix.folders--
+			if e.flags&flagLeftOut != 0 {
+				ix.leftOut--
+			}
 		}
 		e.flags |= flagRemoved
 		ix.removed++
@@ -467,6 +496,10 @@ func (ix *Index) Compact() *Index {
 		path := ix.Path(r)
 		nr := out.AddRoot(path)
 		out.at(nr).flags |= ix.at(r).flags & flagWatched
+		if ix.LeftOutDir(r) {
+			out.at(nr).flags |= flagLeftOut
+			out.leftOut++
+		}
 		setMtime(out.at(nr), ix.Mtime(r))
 		remap[r] = nr
 		queue := []uint32{r}

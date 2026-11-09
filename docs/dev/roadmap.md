@@ -255,7 +255,6 @@ Needs a plan:
 - [Quick actions can't hold custom toggles or commands](issues.md#quick-actions-cant-hold-custom-toggles-or-commands) (set aside from the unified-actions branch, 2026-11-06)
 - [File search crawls what .gitignore leaves out](issues.md#file-search-crawls-what-gitignore-leaves-out) (file search, left out of v1)
 - [File search matches names only, not what files hold](issues.md#file-search-matches-names-only-not-what-files-hold) (file search: full-text search, deferred from v1)
-- [Files left out at the file index's cap never come back once there's room](issues.md#files-left-out-at-the-file-indexs-cap-never-come-back-once-theres-room) (reviewing the file search: which cost to take)
 
 Waiting for the maintainer (moved here 2026-10-29 so they don't block the row; the maintainer: "they may be vague and require testing. If so, mark it, push it to the end of the phase so it doesn't block and I will handle all the questions then"):
 - [Setting names that still confuse](issues.md#setting-names-that-still-confuse). *Needs the maintainer:* the note ("still confusing option names in settings") names no settings, so which ones read wrong is theirs to list.

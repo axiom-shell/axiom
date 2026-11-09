@@ -719,3 +719,113 @@ func TestRootRemounted(t *testing.T) {
 		t.Errorf("the remounted root's files are missing: %d entries", ix.Len())
 	}
 }
+
+// Files left out at the cap come back once removals make room: a folder
+// read when the index was full is read again, as is one never read
+func TestLeftOutComeBack(t *testing.T) {
+	t.Parallel()
+	var paths []string
+	for i := range 30 {
+		paths = append(paths, fmt.Sprintf("a/fa%02d", i), fmt.Sprintf("b/fb%02d", i), fmt.Sprintf("c/fc%02d", i))
+	}
+	root := tree(t, paths...)
+	r := start(t, Options{MaxEntries: 40, WatchBudget: 10}, Settings{Enabled: true, Roots: []string{root}})
+	// The files indexed in folder dir
+	count := func(dir string) int {
+		n := 0
+		for _, it := range r.Query(Query{Text: "f", Dir: root + "/" + dir, Limit: 100}).Items {
+			if filepath.Dir(it.Path) == root+"/"+dir {
+				n++
+			}
+		}
+		return n
+	}
+	r.Query(Query{Text: "f", Limit: 1})
+	// The folder read first whole, the next in part, the last never
+	// read (in the order the disk lists them)
+	if !testkit.Eventually(func() bool { s := r.State(); return s.Phase == PhaseReady && s.Truncated && s.Entries == 40 }) {
+		t.Fatalf("state %+v", r.State())
+	}
+	var whole string
+	rest := []string{}
+	for _, d := range []string{"a", "b", "c"} {
+		if count(d) == 30 {
+			whole = d
+		} else {
+			rest = append(rest, d)
+		}
+	}
+	if whole == "" || count(rest[0])+count(rest[1]) != 6 {
+		t.Fatalf("a %d, b %d, c %d", count("a"), count("b"), count("c"))
+	}
+	// Its room goes to the other two, the index full again
+	if err := os.RemoveAll(filepath.Join(root, whole)); err != nil {
+		t.Fatal(err)
+	}
+	if !testkit.Eventually(func() bool {
+		s := r.State()
+		return s.Truncated && s.Entries == 40 && count(rest[0]) > 0 && count(rest[1]) > 0 && count(rest[0])+count(rest[1]) == 37
+	}) {
+		t.Fatalf("after %s: state %+v, %s %d, %s %d", whole, r.State(), rest[0], count(rest[0]), rest[1], count(rest[1]))
+	}
+	// Room for all of the last
+	if err := os.RemoveAll(filepath.Join(root, rest[0])); err != nil {
+		t.Fatal(err)
+	}
+	if !testkit.Eventually(func() bool { s := r.State(); return !s.Truncated && s.Entries == 32 && count(rest[1]) == 30 }) {
+		t.Errorf("after %s: state %+v, %s %d", rest[0], r.State(), rest[1], count(rest[1]))
+	}
+}
+
+func TestLeftOutNoExtraReads(t *testing.T) {
+	t.Parallel()
+	root := tree(t, "a/x1", "a/x2", "b/y1", "b/y2", "b/y3")
+	now := time.Now()
+	s := New(Options{CacheFile: filepath.Join(t.TempDir(), "c.bin"), MaxEntries: 6, Now: func() time.Time { return now }})
+	st := Settings{Enabled: true, Roots: []string{root}}
+	l := &loop{s: s, changed: map[string]bool{}, written: map[string]bool{}, cur: st, active: true, phase: PhaseReady,
+		f: newFilter(st.Roots, nil, nil, false)}
+	ix := filesearch.New()
+	ix.AddRoot(root)
+	l.setIndex(ix)
+	for _, p := range []string{root, root + "/a", root + "/b"} {
+		l.readDir(t, p)
+	}
+	b, _ := ix.Lookup(root + "/b")
+	if !l.truncated || !ix.LeftOutDir(b) || ix.LeftOut() != 1 || ix.Len() != 6 {
+		t.Fatalf("truncated %v, b left out %v, %d entries", l.truncated, ix.LeftOutDir(b), ix.Len())
+	}
+	// The mark is kept by the cache
+	var buf bytes.Buffer
+	if err := ix.Encode(&buf, 1); err != nil {
+		t.Fatal(err)
+	}
+	if back, err := filesearch.Decode(buf.Bytes(), 1); err != nil || back.LeftOut() != 1 {
+		t.Errorf("decoded: %v", err)
+	}
+	// A stat pass of the full index doesn't read b, nor asks a refill
+	if dirs, _ := serve(t, CrawlRequest{Roots: st.Roots, Stat: []StatDir{{Path: root + "/b", Mtime: ix.Mtime(b)}}}); len(dirs) != 0 {
+		t.Errorf("b read again: %v", dirs)
+	}
+	l.refill = true
+	var req CrawlRequest
+	if l.refillPass(&req) || len(req.Stat) > 0 || !l.truncated {
+		t.Errorf("a full index refilled: %+v", req.Stat)
+	}
+	// Room made: b is asked for whatever its time, and read whole
+	os.Remove(root + "/a/x1")
+	os.Remove(root + "/a/x2")
+	l.readDir(t, root+"/a")
+	if !l.refill || !l.refillPass(&req) || !slices.Equal(req.Stat, []StatDir{{Path: root + "/b"}}) || l.truncated {
+		t.Fatalf("refill %+v, truncated %v", req.Stat, l.truncated)
+	}
+	dirs, _ := serve(t, CrawlRequest{Roots: st.Roots, Stat: req.Stat})
+	if len(dirs[root+"/b"]) != 3 {
+		t.Fatalf("b read as %v", dirs)
+	}
+	fo, _ := l.f.read(root, root+"/b")
+	l.applyDir(root+"/b", fo.mtime, fo.kids, true)
+	if ix.LeftOutDir(b) || ix.LeftOut() != 0 || ix.Len() != 6 || l.truncated {
+		t.Errorf("after the refill: left out %v, %d entries, truncated %v", ix.LeftOutDir(b), ix.Len(), l.truncated)
+	}
+}

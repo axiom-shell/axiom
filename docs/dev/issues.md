@@ -336,12 +336,6 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 - **Size:** small
 - **Found:** 2026-11-09, while building the launcher's file search (left out of v1)
 
-### Files left out at the file index's cap never come back once there's room
-- **Where:** `backend/internal/filesearch/index.go` (`Index.ReplaceDir`), `backend/internal/fileindex/service.go` (`loop.next`)
-- **What:** `ReplaceDir` stores a folder's read time even when it left children out at `MaxEntries` (`Change.Truncated`), and a folder the crawl never reached is stored the same way by the next stat pass. Once the user deletes enough to be under the cap again (a 100k-entry `node_modules` removed), the stat pass sees those folders' times unchanged and never reads them again, so their files stay missing (across restarts too, through the cache), and `truncated` stays set until the index is built again. Either fix has a cost to choose: store time 0 for a truncated folder (a still-full index then reads those folders on every pass), or queue a stat pass of the truncated folders when removals bring the index under the cap.
-- **Size:** needs a plan
-- **Found:** 2026-11-09, while reviewing the launcher's file search
-
 ### Rows re-ranked under the selection while the file index builds
 - **Where:** `qml/services/ui/LauncherFiles.qml` (`_index`, `onStateChanged`), `qml/components/surfaces/launcher/LauncherPanel.qml` (`_syncRows`)
 - **What:** During the first crawl a shown `~` search is asked again on each state push (up to twice a second) and its answer replaces the rows; the panel keeps the selection by index, not by row, so a user who moved down to a file can find another one there after the next push, and Enter or Ctrl+C acts on it. Only while the index is first built (the user sees the row change). A fix keeps the selected row by its path when rows are rebuilt for the same text, or stops asking again once the selection moved.

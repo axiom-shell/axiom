@@ -400,6 +400,9 @@ type loop struct {
 	pendingStart  []string
 	statAll       bool
 	statUnwatched bool
+	// refill: entries were removed, so a full index may have room for
+	// what it left out (refillPass)
+	refill bool
 	// watchLoaded: a loaded index's folders are watched once nothing is
 	// left for the child (watchAll)
 	watchLoaded bool
@@ -495,7 +498,7 @@ func (l *loop) reset() {
 		}
 	}
 	l.setIndex(nil)
-	l.pendingStart, l.statAll, l.statUnwatched, l.watchLoaded = nil, false, false, false
+	l.pendingStart, l.statAll, l.statUnwatched, l.watchLoaded, l.refill = nil, false, false, false, false
 	clear(l.changed)
 	clear(l.written)
 	l.dirty, l.truncated, l.unreadable, l.errText = false, false, 0, ""
@@ -584,6 +587,9 @@ func (l *loop) load() {
 	l.newWatcher()
 	l.lastSave = l.s.o.Now()
 	l.phase = PhaseReady
+	// Folders a run before left out at the cap (those never read are
+	// read by the stat pass below)
+	l.truncated = ix.LeftOut() > 0
 	l.s.o.Log.Info("file search: loaded the index", "entries", ix.Len())
 	l.statAll = true
 	l.watchLoaded = true
@@ -666,6 +672,8 @@ func (l *loop) next() {
 		if len(req.Stat) > 0 {
 			l.startChild(req)
 		}
+	case l.refill && l.refillPass(&req):
+		l.startChild(req)
 	default:
 		if l.watchLoaded {
 			l.watchLoaded = false
@@ -673,6 +681,29 @@ func (l *loop) next() {
 		}
 		l.maybeSave()
 	}
+}
+
+// refillPass fills req with a stat pass of what the index left out at
+// the cap, once removals made room: the folders marked left out (their
+// time as 0, so each is read again) and those never read. A full index,
+// or one that left nothing out, asks for nothing (false). The folders read
+// mark themselves again if the cap still leaves entries out, and their new
+// folders are crawled after, so truncated is set again by whatever is
+// still left out.
+func (l *loop) refillPass(req *CrawlRequest) bool {
+	l.refill = false
+	ix := l.ix()
+	if !l.truncated || ix.Len() >= l.s.o.MaxEntries {
+		return false
+	}
+	ix.EachDir(func(d uint32) {
+		if ix.LeftOutDir(d) || ix.Mtime(d) == 0 && !ix.IsRoot(d) {
+			req.Stat = append(req.Stat, StatDir{Path: ix.Path(d)})
+		}
+	})
+	l.truncated = false
+	l.publish(false)
+	return len(req.Stat) > 0
 }
 
 // maybeSave writes the cache when its entries changed and the last write
@@ -778,6 +809,9 @@ func (l *loop) applyDir(path string, mtime int64, kids []filesearch.Child, crawl
 	l.truncated = l.truncated || ch.Truncated
 	if ch.Added > 0 || ch.Removed > 0 {
 		l.dirty = true
+	}
+	if ch.Removed > 0 {
+		l.refill = true
 	}
 	if watch {
 		// Changed between the read and the watch: the watch missed it

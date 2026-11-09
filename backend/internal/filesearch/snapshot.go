@@ -25,8 +25,9 @@ var (
 	ErrOtherSettings = errors.New("filesearch: the cache was made for other roots or excludes")
 )
 
-// persisted flags (watching is the running daemon's)
-const savedFlags = flagDir | flagHidden | flagRoot | flagLink
+// persisted flags (watching is the running daemon's; a folder left out
+// at the cap is kept so a later run reads it again once there's room)
+const savedFlags = flagDir | flagHidden | flagRoot | flagLink | flagLeftOut
 
 // Encode writes the index as the cache keeps it, made for settings key,
 // to w through a small buffer: nothing the index's size is allocated.
