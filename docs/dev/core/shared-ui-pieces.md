@@ -118,7 +118,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 ### Bar pieces (`bar/`)
 - `bar/widgets/base/BaseWidget`: the sizing wrapper a bar widget sits in; `base/IconTextWidget`: an icon and a label along the bar's axis (rotated on a vertical bar), and a graphic of `leadLength` in `lead` before the icon (after it with `leadAfterIcon`); its label never resizes with its digits (equal-width figures, measured as zeros, never under `minimumText`).
 - `WidgetBackground`: a widget's or merged run's background in the bar's widget style and shape, with the hover outline and editor highlight.
-- `methods/BarShapes` (caps and SVG outlines), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
+- `methods/BarShapes` (caps, segments, box rects), `methods/BarTabs` (tabs), `methods/BarOutlines` (SVG outlines from one outline spec), `methods/BarCells` (a widget's parts as cells), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 
 ### Workspace pieces
 - **Active workspace** (`bar/widgets/Workspaces/ActiveCellIndicator`): the active cell's box or underline (`CellUnderline`, shared with `WorkspaceCell`), drawn once under a switcher's row of cells and sliding between them.

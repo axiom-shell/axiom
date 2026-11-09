@@ -125,7 +125,7 @@ Item {
   property real tabReach: 0
   readonly property bool _outerFar: barConfig.right || barConfig.bottom
   // The module's shift across to the tab's middle
-  readonly property real _tabShift: BarShapes.tabShift(tabReach, _outerFar)
+  readonly property real _tabShift: BarTabs.tabShift(tabReach, _outerFar)
   // The hit area below, by a name its menu anchor (whose own `hitArea`
   // would shadow the id) can read
   readonly property Item _hitArea: hitArea
@@ -268,11 +268,19 @@ Item {
       }
     }
 
+    // Back under the one before, out to a tab's edge
+    readonly property var _box: BarShapes.boxRect({
+      "x": 0,
+      "y": 0,
+      "width": root.width,
+      "height": root.height
+    }, back, root._outerFar ? 0 : root.tabReach, root._outerFar ? root.tabReach : 0, root.isVertical)
+
     z: 1
-    x: root.isVertical ? (root._outerFar ? 0 : -root.tabReach) : -back
-    y: root.isVertical ? -back : (root._outerFar ? 0 : -root.tabReach)
-    width: root.width + (root.isVertical ? root.tabReach : back)
-    height: root.height + (root.isVertical ? back : root.tabReach)
+    x: _box.x
+    y: _box.y
+    width: _box.width
+    height: _box.height
     containmentMask: mask
 
     HoverHandler {
@@ -297,19 +305,24 @@ Item {
   // catches up
   // A module drawing its parts as segments draws them back under a
   // powerline neighbour, a flared tab's fillets past its ends
-  // (BarShapes.runDraws) and out to a tab's edge: kept while it resizes
+  // (BarCells.runDraws) and out to a tab's edge: kept while it resizes
   MarginClip {
     anchors.fill: parent
     clipped: root._resizing
     readonly property real _near: root.segments && !root._outerFar ? root.tabReach : 0
     readonly property real _far: root.segments && root._outerFar ? root.tabReach : 0
-    readonly property var _draws: root._moduleRun ? BarShapes.runDraws(root.barConfig, root._moduleRun) : null
-    readonly property real _start: _draws?.start ?? 0
-    readonly property real _end: _draws?.end ?? 0
-    leftMargin: root.isVertical ? _near : _start
-    topMargin: root.isVertical ? _start : _near
-    rightMargin: root.isVertical ? _far : _end
-    bottomMargin: root.isVertical ? _end : _far
+    readonly property var _draws: root._moduleRun ? BarCells.runDraws(root.barConfig, root._moduleRun) : null
+    // What it draws past its own bounds, as a box round none
+    readonly property var _box: BarShapes.boxRect({
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    }, _draws?.start ?? 0, _near, _far, root.isVertical, _draws?.end ?? 0)
+    leftMargin: -_box.x
+    topMargin: -_box.y
+    rightMargin: _box.x + _box.width
+    bottomMargin: _box.y + _box.height
 
     Loader {
       id: contentLoader

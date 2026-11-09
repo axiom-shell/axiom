@@ -146,7 +146,7 @@ TestCase {
       "look": look,
       "splitRoom": look.split ? look.split.room : -1
     };
-    look.shape.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, geo.endRoom);
+    look.shape.tabFillet = BarTabs.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, geo.endRoom);
     return bar;
   }
 
@@ -229,45 +229,49 @@ TestCase {
   }
 
   function segment(shape, ends, grouping, opaque, index, count, across) {
-    return BarShapes.segment(shape, ends, grouping, opaque, index, count, across);
+    return BarShapes.segment({
+      "name": shape,
+      "ends": ends
+    }, grouping, opaque, index, count, across);
   }
 
   function cellShape(bar, run, boxed, opaque, gap, cell, cells) {
-    return BarShapes.cellShape(bar, run, boxed, opaque, gap, cell, cells);
+    return BarCells.cellShape(bar, run, boxed, opaque, gap, cell, cells);
   }
 
   function cellRoom(bar, run, boxed, cell, cells) {
-    return BarShapes.cellRoom(bar, run, boxed, cell, cells);
+    return BarCells.cellRoom(bar, run, boxed, cell, cells);
   }
 
   function runDraws(bar, run) {
-    return BarShapes.runDraws(bar, run);
+    return BarCells.runDraws(bar, run);
   }
 
   function cellMargins(first, last, vertical) {
-    return BarShapes.cellMargins(first, last, vertical);
+    return BarCells.cellMargins(first, last, vertical);
   }
 
   // The outline family for one outline `o` ({ length, across, radius,
   // startCap, endCap, vertical, seamStart, seamEnd, tab, openStart,
   // openEnd }) at `inset`
   function outlines(o, inset) {
+    const spec = BarShapes.outline(o);
     return {
-      "fill": BarShapes.path(o.length, o.across, o.radius, o.startCap, o.endCap, o.vertical, 0, o.seamStart, o.seamEnd, o.tab, false, o.openStart, o.openEnd),
-      "stroke": BarShapes.path(o.length, o.across, o.radius, o.startCap, o.endCap, o.vertical, inset, o.seamStart, o.seamEnd, o.tab, true, o.openStart, o.openEnd),
-      "offset": BarShapes.offsetPath(o.length, o.across, o.radius, o.startCap, o.endCap, o.vertical, inset * 3, o.seamStart ? 0 : inset * 3, o.seamEnd ? 0 : inset * 3, o.tab, o.openStart, o.openEnd),
-      "dash": BarShapes.dashPath(o.length, o.across, o.radius, o.startCap, o.endCap, o.vertical, inset, o.seamStart, o.seamEnd, o.tab, o.openStart, o.openEnd),
-      "marks": BarShapes.marks(o.length, o.across, o.radius, o.startCap, o.endCap, o.vertical, inset, o.seamStart, o.seamEnd, o.tab, o.openStart, o.openEnd),
-      "fillets": BarShapes.fillets(o.length, o.across, o.startCap, o.endCap, o.vertical, inset, o.tab, o.openStart, o.openEnd)
+      "fill": BarOutlines.path(spec, 0, false),
+      "stroke": BarOutlines.path(spec, inset, true),
+      "offset": BarOutlines.offsetPath(spec, inset * 3, o.seamStart ? 0 : inset * 3, o.seamEnd ? 0 : inset * 3),
+      "dash": BarOutlines.dashPath(spec, inset),
+      "marks": BarOutlines.marks(spec, inset),
+      "fillets": BarOutlines.fillets(spec, inset)
     };
   }
 
   function tab(radius, thickness, fillet, outerStart, limits) {
-    return BarShapes.tab(radius, thickness, fillet, outerStart, limits);
+    return BarTabs.tab(radius, thickness, fillet, outerStart, limits);
   }
 
   function tabLimits(start, end, bounds) {
-    return BarShapes.tabLimits(start, end, bounds);
+    return BarTabs.tabLimits(start, end, bounds);
   }
 
   function contains(u, v, length, across, startCap, endCap) {

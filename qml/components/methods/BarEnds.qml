@@ -125,7 +125,7 @@ QtObject {
   }
 
   /**
-   * What bounds tabs along a bar (BarShapes.tabLimits), from its start:
+   * What bounds tabs along a bar (BarTabs.tabLimits), from its start:
    * where a corner's curve takes a tab's outer corner at its end. A
    * floating bar's islands (`islands`, [{ start, length }] along the
    * bar), inside their stroke, their corners' curve inside it; on a
@@ -162,7 +162,7 @@ QtObject {
 
   /**
    * The room a flared tab's fillet has at a bar's ends, for the one
-   * fillet radius its tabs share (BarShapes.tabFillet), from config: a
+   * fillet radius its tabs share (BarTabs.tabFillet), from config: a
    * pill's free end its pill gap (padding and stroke) past the widgets; a
    * solid bar's end widgets the screen margin in (BarEnds.endInset; with
    * the border off, at least the padding); a transparent bar's the

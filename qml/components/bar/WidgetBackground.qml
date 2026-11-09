@@ -32,7 +32,7 @@ Item {
   property bool seamStart: false
   property bool seamEnd: false
   // Ends a merged run carries on past into the next section's, drawn
-  // apart (WidgetGroup): no line across them (BarShapes.path's open ends)
+  // apart (WidgetGroup): no line across them (BarOutlines.path's open ends)
   property bool openStart: false
   property bool openEnd: false
   // A clickable widget under the pointer (its hoverOutline)
@@ -60,7 +60,7 @@ Item {
   property real splitAt: -1
   property rect splitPart: Qt.rect(0, 0, 0, 0)
 
-  // What bounds a tab's ends along the bar (BarShapes.tabLimits)
+  // What bounds a tab's ends along the bar (BarTabs.tabLimits)
   property var tabLimits: [null, null]
 
   // Its widget draws its own parts as segments of the run (BarWidget's
@@ -75,8 +75,8 @@ Item {
   readonly property var _line: _look.line
   // Split's parts ({ icon, cap, badgePad, … }), or null
   readonly property var _splitLook: _look.split
-  // A tab's shape (BarShapes.tab), or null
-  readonly property var _tab: _look.shape.name === "tab" ? BarShapes.tab(barConfig.radius, barConfig.thickness, _look.shape.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
+  // A tab's shape (BarTabs.tab), or null
+  readonly property var _tab: _look.shape.name === "tab" ? BarTabs.tab(barConfig.radius, barConfig.thickness, _look.shape.tabFillet, !(barConfig.right || barConfig.bottom), tabLimits) : null
   // A merged run's widget filling its own part (on hover), in the caps it
   // has alone: a press tints that, not the run's square middle
   readonly property bool _ownFill: _look.grouping === "merged" && colors !== null && Qt.color(colors.fill).a > 0

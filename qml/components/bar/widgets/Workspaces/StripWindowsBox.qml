@@ -54,19 +54,19 @@ Item {
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solid)
   readonly property bool _boxedInRun: _traits.boxedInRun
-  readonly property var _room: run ? BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
+  readonly property var _room: run ? BarCells.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
   readonly property real _lead: _room?.lead ?? 0
-  // Its box's shape as a segment (BarShapes.cellShape), else null, and
-  // what it draws past its bounds (BarShapes.cellMargins)
-  readonly property var _shape: run ? BarShapes.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, cellSpacing, chainFirst, chainCount) : null
-  readonly property var _margins: BarShapes.cellMargins(_shape, _shape, isVertical)
+  // Its box's shape as a segment (BarCells.cellShape), else null, and
+  // what it draws past its bounds (BarCells.cellMargins)
+  readonly property var _shape: run ? BarCells.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, cellSpacing, chainFirst, chainCount) : null
+  readonly property var _margins: BarCells.cellMargins(_shape, _shape, isVertical)
   // How far icon `index`'s pointer area reaches past its room, sharing
   // the box: the first back to the box's start, the last on to its end,
   // the rest to the middle of the gaps beside them; across, as the box
   // does. None but the box's own off the bar's run.
   function _slotMargins(index) {
     if (!root._shape)
-      return BarShapes.cellMargins(null, null, root.isVertical);
+      return BarCells.cellMargins(null, null, root.isVertical);
     const half = root.cellSpacing / 2;
     const start = index === 0 ? root._lead + (root.isVertical ? root._margins.top : root._margins.left) : half;
     const end = index === root.addresses.length - 1 ? (root._room?.trail ?? 0) + (root.isVertical ? root._margins.bottom : root._margins.right) : half;

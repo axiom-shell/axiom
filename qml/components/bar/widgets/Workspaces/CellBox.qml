@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
+import qs.components.methods
 import qs.components.reusable
 import qs.components.bar.widgets.base
 
@@ -18,7 +19,7 @@ Item {
   property color fillColor: "transparent"
   property color strokeColor: "transparent"
   property real radius: 0
-  // Its shape as a segment of the bar's run (BarShapes.cellShape), or null
+  // Its shape as a segment of the bar's run (BarCells.cellShape), or null
   property var shape: null
   // Its slice of the bar's gradient (BarGradient.gradientSlice) for its
   // fill or stroke, else null
@@ -77,11 +78,18 @@ Item {
     readonly property real _near: root.shape?.reachStart ?? 0
     readonly property real _far: root.shape?.reachEnd ?? 0
 
+    readonly property var _box: BarShapes.boxRect({
+      "x": 0,
+      "y": 0,
+      "width": root.width,
+      "height": root.height
+    }, _back, _near, _far, root._vertical)
+
     active: root.shape !== null
-    x: root._vertical ? -_near : -_back
-    y: root._vertical ? -_back : -_near
-    width: root.width + (root._vertical ? _near + _far : _back)
-    height: root.height + (root._vertical ? _back : _near + _far)
+    x: _box.x
+    y: _box.y
+    width: _box.width
+    height: _box.height
 
     sourceComponent: ShapedBox {
       readonly property var _segment: root.shape?.segment ?? null

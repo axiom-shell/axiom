@@ -80,8 +80,8 @@ The base classes bar widgets extend, where their sizes come from, and how their 
 - With no place on a bar (the bar editor's chips and the custom widget preview) a widget shows its Auto color.
 
 ### Combinations
-How the four widget-style features meet (each decided in `BarWidgetStyle` or `BarShapes`, with test rows):
-- **Split + tab:** both parts reach the edge the tab hangs from; the divider keeps its shape (`BarShapes._tabSideCap`). A badge has no box: a separate badge isn't offered tab.
+How the four widget-style features meet (each decided in `BarLook`, `BarWidgetStyle` or the shape helpers, `BarShapes` and its kin, with test rows):
+- **Split + tab:** both parts reach the edge the tab hangs from; the divider keeps its shape (`BarTabs.sides`). A badge has no box: a separate badge isn't offered tab.
 - **Split + gradient:** the icon part (or badge) takes its slice; in a merged run see Bar gradient above. **Split + powerline:** each segment its own icon part (a badge draws as separate).
 - **Split + Fill on hover:** not offered (split is already filled where it shows its color).
 - **Tab + outline strokes:** every stroke is open along the edge (dashed, dotted, double, ends only: [Shapes and runs](widget-shapes-runs.md#outline-strokes)). **Tab + Fill on hover:** the hovered tab fills in its own shape, out to the edge. **Tab + gradient:** each tab its slice, fillets included. Tabs never chain as a powerline.

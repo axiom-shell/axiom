@@ -31,10 +31,10 @@ Item {
   required property real length
   property real restLength: length
   property real radius: 0
-  // Its shape as a segment of the bar's run (BarShapes.cellShape), or
+  // Its shape as a segment of the bar's run (BarCells.cellShape), or
   // null: a box filling it, rounded by `radius`
   property var shape: null
-  // The room its content keeps clear of its caps along it (BarShapes.cellRoom:
+  // The room its content keeps clear of its caps along it (BarCells.cellRoom:
   // { lead, trail }), or null
   property var room: null
   // "numbers", "dots" or "none" (dots where a cell would have neither box

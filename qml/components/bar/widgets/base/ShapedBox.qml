@@ -4,7 +4,7 @@ import QtQuick.Shapes
 
 import qs.components.methods
 
-// A box in a bar's widget shape (BarShapes), filling its parent: one fill
+// A box in a bar's widget shape (BarShapes, drawn as BarOutlines), filling its parent: one fill
 // and stroke between two caps, a Rectangle when both ends are alike and
 // rounded (or square), else a path, as also for a slice of the bar's
 // gradient (`fillSlice` or `strokeSlice`, BarGradient.gradientSlice); a
@@ -20,13 +20,13 @@ Item {
   required property string endCap
   property bool seamStart: false
   property bool seamEnd: false
-  // Ends left open, where a merged run carries on (BarShapes.path)
+  // Ends left open, where a merged run carries on (BarOutlines.path)
   property bool openStart: false
   property bool openEnd: false
   property color fillColor: "transparent"
   property color strokeColor: "transparent"
   property real strokeWidth: 0
-  // A tab's shape (BarShapes.tab): its stroke is left open along the
+  // A tab's shape (BarTabs.tab): its stroke is left open along the
   // edge it hangs from
   property var tab: null
   // solid, or the outline's own (OutlineStroke)
@@ -43,6 +43,20 @@ Item {
   readonly property real _solidWidth: solid ? strokeWidth : 0
   readonly property real across: vertical ? width : height
   readonly property real length: vertical ? height : width
+  // What it draws (BarShapes.outline)
+  readonly property var _outline: BarShapes.outline({
+    "length": box.length,
+    "across": box.across,
+    "radius": box.bar.radius,
+    "startCap": box.startCap,
+    "endCap": box.endCap,
+    "vertical": box.vertical,
+    "seamStart": box.seamStart,
+    "seamEnd": box.seamEnd,
+    "tab": box.tab,
+    "openStart": box.openStart,
+    "openEnd": box.openEnd
+  })
   readonly property real rectRadius: {
     if (startCap !== endCap || seamStart || seamEnd || _openStroke || box.fillSlice !== null || box.strokeSlice !== null)
       return -1;
@@ -85,7 +99,7 @@ Item {
 
         // Inset by half the stroke, which is centred on the path
         PathSvg {
-          path: BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, box.seamStart, box.seamEnd, box.tab, false, box.openStart, box.openEnd)
+          path: BarOutlines.path(box._outline, box._solidWidth / 2, false)
         }
       }
 
@@ -99,7 +113,7 @@ Item {
         joinStyle: ShapePath.MiterJoin
 
         PathSvg {
-          path: box._openStroke ? BarShapes.path(box.length, box.across, box.bar.radius, box.startCap, box.endCap, box.vertical, box._solidWidth / 2, box.seamStart, box.seamEnd, box.tab, true, box.openStart, box.openEnd) : ""
+          path: box._openStroke ? BarOutlines.path(box._outline, box._solidWidth / 2, true) : ""
         }
       }
 

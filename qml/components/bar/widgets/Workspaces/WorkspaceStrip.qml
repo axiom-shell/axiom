@@ -120,7 +120,7 @@ Item {
     rows: !root.isVertical && columns === -1 ? 1 : -1
     columns: root.isVertical && rows === -1 ? 1 : -1
     // A powerline's segments chain on into the strip
-    spacing: root.run ? BarShapes.cellGap(root.barConfig.look.grouping, root.barConfig.innerGap) : root.barConfig.innerGap
+    spacing: root.run ? BarCells.cellGap(root.barConfig.look.grouping, root.barConfig.innerGap) : root.barConfig.innerGap
 
     WorkspaceCellRow {
       id: cellRow

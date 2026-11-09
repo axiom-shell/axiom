@@ -176,9 +176,9 @@ QtObject {
     // it reserves there and what its ends meet depend on the other bars on
     // its screen: ScreenEdgeManager.bars adds them (BarEnds.withEnds).
     bar.trim = BarsConfig.reserveTrim(bar, gapsOut[edge] ?? 0);
-    // The one fillet radius its flared tabs share (BarShapes.tabFillet):
+    // The one fillet radius its flared tabs share (BarTabs.tabFillet):
     // within the gap between widgets and the room at its ends
-    look.shape.tabFillet = BarShapes.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, BarEnds.tabEndRoom(bar, Object.assign(BarsConfig.endsOptions(gapsOut, floatGaps), {
+    look.shape.tabFillet = BarTabs.tabFillet(bar.radius, thickness, look.shape.tabCorners, groupSpacing, BarEnds.tabEndRoom(bar, Object.assign(BarsConfig.endsOptions(gapsOut, floatGaps), {
       "radius": Appearance.borderRadius
     })));
     return bar;

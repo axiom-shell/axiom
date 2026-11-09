@@ -31,13 +31,13 @@ Item {
   // run (Workspaces' cells with its Background off): its background draws
   // no box, its host keeps no cap room for it, and it's told its place in
   // the run (`runPlace`, set by its host), from which its parts take their
-  // shapes (BarShapes.cellShape, cellRoom)
+  // shapes (BarCells.cellShape, cellRoom)
   property bool segmented: false
   // While `segmented`: { sized, drawn: its place in the bar's run ({ index,
   // count }, null alone), from what it shows (its parts' room) and as
   // laid out (their shapes); reachStart, reachEnd: how far its parts reach
   // past it across (a tab's out to its edge); tabLimits: what bounds a tab
-  // at its two ends (BarShapes.tabLimits) }; null otherwise, or with no
+  // at its two ends (BarTabs.tabLimits) }; null otherwise, or with no
   // place (a preview)
   property var runPlace: null
   // Its color field and color for its state, its Auto fields' roles and

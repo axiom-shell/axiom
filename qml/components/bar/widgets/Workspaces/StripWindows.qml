@@ -45,7 +45,7 @@ Grid {
   property int chainFirst: 0
   property int chainCount: addresses.length
   // Between its cells: chained in a powerline as segments
-  readonly property real _gap: run ? BarShapes.cellGap(barConfig.look.grouping, cellSpacing) : cellSpacing
+  readonly property real _gap: run ? BarCells.cellGap(barConfig.look.grouping, cellSpacing) : cellSpacing
   // As segments of a merged run, the cells draw a box of their own there
   // only solid or split (BarWidgetStyle.cell)
   // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
@@ -87,10 +87,10 @@ Grid {
       solid: root.solid
       thickness: root.thickness
       inRun: root._inGroup
-      // Drawn over the next, which may start beneath it (BarShapes.cellSegment)
+      // Drawn over the next, which may start beneath it (BarCells.cellSegment)
       z: -index
-      shape: root.run ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, root._traits.cellOpaque, root._gap, root.chainFirst + index, root.chainCount) : null
-      room: root.run ? BarShapes.cellRoom(root.barConfig, root.run, root._boxedInRun, root.chainFirst + index, root.chainCount) : null
+      shape: root.run ? BarCells.cellShape(root.barConfig, root.run, root._boxedInRun, root._traits.cellOpaque, root._gap, root.chainFirst + index, root.chainCount) : null
+      room: root.run ? BarCells.cellRoom(root.barConfig, root.run, root._boxedInRun, root.chainFirst + index, root.chainCount) : null
       length: root.cellLength + (windowCell.room ? windowCell.room.lead + windowCell.room.trail : 0)
       radius: root.radius
       hoverColor: root.hoverColor

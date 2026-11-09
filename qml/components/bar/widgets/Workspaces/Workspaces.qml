@@ -13,7 +13,7 @@ import qs.components.bar.widgets.base
 // box (filled, tinted or outlined). With `showBackground` off there's no
 // box: its cells are segments of the bar's run at the widgets' full size
 // (`segmented`), each in the bar's widget shape, chaining on in a powerline
-// and sitting in a merged run as widgets do (BarShapes.cellShape). Without
+// and sitting in a merged run as widgets do (BarCells.cellShape). Without
 // a box the cells sit straight on the bar, each underlined itself for
 // underline.
 BarWidget {

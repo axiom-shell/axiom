@@ -340,7 +340,7 @@ QtObject {
   //               outer edge, in item coordinates) }: underline's, or null
   //   shape       { name (as drawn: rounded for an unboxed style, and for
   //               a separate split badge saved as a tab), ends,
-  //               tabCorners, tabFillet (BarShapes.tabFillet: the bar
+  //               tabCorners, tabFillet (BarTabs.tabFillet: the bar
   //               fills it in, BarsConfig.enrichBarConfig; else 0) }
   //   grouping    as drawn: separate for unboxed styles, and a powerline
   //               of what can't chain (a badge, tabs)

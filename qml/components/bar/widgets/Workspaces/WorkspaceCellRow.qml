@@ -12,7 +12,7 @@ import qs.components.reusable
 // shown workspace in the standard layout (WorkspaceStrip), a row of the
 // grid in the grid layout (WorkspaceGridStrip). With the widget's
 // Background off its cells are segments of the bar's run (`run`): each in
-// the bar's widget shape and with room for its caps (BarShapes.cellShape,
+// the bar's widget shape and with room for its caps (BarCells.cellShape,
 // cellRoom), cells `chainFirst` on of the widget's `chainCount`.
 Item {
   id: root
@@ -58,19 +58,19 @@ Item {
   readonly property bool isVertical: barConfig.vertical
   // Between cells (`spacing`: BarsConfig.workspaceCellSpacing), chained in
   // a powerline as segments
-  readonly property real spacing: run ? BarShapes.cellGap(barConfig.look.grouping, _cellSpacing) : _cellSpacing
+  readonly property real spacing: run ? BarCells.cellGap(barConfig.look.grouping, _cellSpacing) : _cellSpacing
   readonly property real _cellSpacing: BarsConfig.workspaceCellSpacing(barConfig, properties.spacing)
   // As segments of a merged run, the cells that draw a box of their own
   // there: solid ones, and split's fill (BarWidgetStyle.cell)
   readonly property var _traits: BarLook.cellTraits(barConfig.look, solidBoxes)
   readonly property bool _boxedInRun: _traits.boxedInRun
   // Each cell's shape as a segment of the run and the room it keeps clear
-  // of its caps (BarShapes.cellShape, cellRoom), else null
+  // of its caps (BarCells.cellShape, cellRoom), else null
   // A cell after the widget's first starts square beneath the one before
   // where their boxes hide what's under them (drawn earlier over later);
   // the sliding active box, drawn over them all, always fits against it
-  readonly property var _shapes: run ? ids.map((_, j) => BarShapes.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, spacing, chainFirst + j, chainCount)) : null
-  readonly property var _rooms: run ? ids.map((_, j) => BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst + j, chainCount)) : null
+  readonly property var _shapes: run ? ids.map((_, j) => BarCells.cellShape(barConfig, run, _boxedInRun, _traits.cellOpaque, spacing, chainFirst + j, chainCount)) : null
+  readonly property var _rooms: run ? ids.map((_, j) => BarCells.cellRoom(barConfig, run, _boxedInRun, chainFirst + j, chainCount)) : null
   // On the bar in a merged run, the run draws their box (BarsConfig.cellColors'
   // onBar)
   readonly property bool _inGroup: hitArea !== null && barConfig.look.grouping === "merged"
@@ -154,10 +154,10 @@ Item {
 
   // Clipped (a cell that left the active state still shrinking, the active
   // box wrapping past an end), but for what its cells draw past it as
-  // segments (BarShapes.cellMargins): back under the one before, a flared
+  // segments (BarCells.cellMargins): back under the one before, a flared
   // tab's fillets past its ends, out to a tab's edge
   MarginClip {
-    readonly property var _margins: BarShapes.cellMargins(root._shapes?.[0] ?? null, root._shapes?.[root.ids.length - 1] ?? null, root.isVertical)
+    readonly property var _margins: BarCells.cellMargins(root._shapes?.[0] ?? null, root._shapes?.[root.ids.length - 1] ?? null, root.isVertical)
 
     anchors.fill: parent
     leftMargin: _margins.left
@@ -212,7 +212,7 @@ Item {
       extra: root.properties.wideActive ? root.cellLength : 0
       spacing: root.spacing
       radius: root.cellRadius
-      shape: root.run && indicator.index >= 0 ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, false, root.spacing, root.chainFirst + indicator.index, root.chainCount) : null
+      shape: root.run && indicator.index >= 0 ? BarCells.cellShape(root.barConfig, root.run, root._boxedInRun, false, root.spacing, root.chainFirst + indicator.index, root.chainCount) : null
       slice: root._activeSlice(indicator.look, indicator.index)
     }
 

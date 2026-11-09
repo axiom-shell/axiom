@@ -8,10 +8,10 @@ import qs.components.methods
 // solid (the bar's outlineStroke), over the box it outlines (a Rectangle
 // can only draw a solid one): dashed, dotted, double (two lines of `lineWidth`
 // a `lineWidth` apart) or ends (a mark at each end in its shape:
-// BarShapes.marks). Dashes and dots run along BarShapes.dashPath, halves
+// BarOutlines.marks). Dashes and dots run along BarOutlines.dashPath, halves
 // from the middle of each side out, a dash centred where they start, so
-// both ends match; a flared tab's fillets are solid (BarShapes.fillets). It lies inside the box but at a powerline seam, where
-// it lies on the shared edge, as a solid outline does (BarShapes.path).
+// both ends match; a flared tab's fillets are solid (BarOutlines.fillets). It lies inside the box but at a powerline seam, where
+// it lies on the shared edge, as a solid outline does (BarOutlines.path).
 Item {
   id: root
 
@@ -23,10 +23,10 @@ Item {
   property string endCap: "round"
   property bool seamStart: false
   property bool seamEnd: false
-  // Ends left open, where a merged run carries on (BarShapes.path)
+  // Ends left open, where a merged run carries on (BarOutlines.path)
   property bool openStart: false
   property bool openEnd: false
-  // A tab's shape (BarShapes.tab): every stroke is open along the edge it
+  // A tab's shape (BarTabs.tab): every stroke is open along the edge it
   // hangs from
   property var tab: null
   property color color: "transparent"
@@ -39,9 +39,23 @@ Item {
   readonly property real length: vertical ? height : width
   readonly property real _half: lineWidth / 2
   readonly property bool _dashed: stroke === "dashed" || stroke === "dotted"
+  // What it outlines (BarShapes.outline)
+  readonly property var _outline: BarShapes.outline({
+    "length": root.length,
+    "across": root.across,
+    "radius": root.radius,
+    "startCap": root.startCap,
+    "endCap": root.endCap,
+    "vertical": root.vertical,
+    "seamStart": root.seamStart,
+    "seamEnd": root.seamEnd,
+    "tab": root.tab,
+    "openStart": root.openStart,
+    "openEnd": root.openEnd
+  })
   // A line square to every edge `inset` in, the caps' at a seam on it
   function _offset(inset) {
-    return BarShapes.offsetPath(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, inset, root.seamStart ? inset - root._half : inset, root.seamEnd ? inset - root._half : inset, root.tab, root.openStart, root.openEnd);
+    return BarOutlines.offsetPath(root._outline, inset, root.seamStart ? inset - root._half : inset, root.seamEnd ? inset - root._half : inset);
   }
 
   Loader {
@@ -77,11 +91,11 @@ Item {
           path: {
             switch (root.stroke) {
             case "ends":
-              return BarShapes.marks(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, root._half, root.seamStart, root.seamEnd, root.tab, root.openStart, root.openEnd);
+              return BarOutlines.marks(root._outline, root._half);
             case "double":
               return root._offset(root._half);
             default:
-              return BarShapes.dashPath(root.length, root.across, root.radius, root.startCap, root.endCap, root.vertical, root._half, root.seamStart, root.seamEnd, root.tab, root.openStart, root.openEnd);
+              return BarOutlines.dashPath(root._outline, root._half);
             }
           }
         }
@@ -96,7 +110,7 @@ Item {
         capStyle: ShapePath.FlatCap
 
         PathSvg {
-          path: root._dashed && root.tab ? BarShapes.fillets(root.length, root.across, root.startCap, root.endCap, root.vertical, root._half, root.tab, root.openStart, root.openEnd) : ""
+          path: root._dashed && root.tab ? BarOutlines.fillets(root._outline, root._half) : ""
         }
       }
 

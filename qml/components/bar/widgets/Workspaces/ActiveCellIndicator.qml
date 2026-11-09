@@ -36,7 +36,7 @@ Item {
   // `solidBoxes`: a filled box on every bar style (`look` is the solid one)
   property bool solid: false
   // The active cell's shape as a segment of the bar's run
-  // (BarShapes.cellShape), or null
+  // (BarCells.cellShape), or null
   property var shape: null
   // Its slice of the bar's gradient where it rests, for the part of its
   // box `look.gradient` names, or null
@@ -103,7 +103,7 @@ Item {
   // glides from the one it left (`fromLength`) meanwhile
   function _wrap(fromAlong, toAlong, fromLength) {
     const forward = root._wrapForward;
-    // Out past an end with all it draws past its box (BarShapes.cellShape)
+    // Out past an end with all it draws past its box (BarCells.cellShape)
     const pastEnd = root._rowLength + root.spacing + (root.shape?.drawStart ?? 0);
     const beforeStart = -Math.max(root.activeLength, fromLength) - root.spacing - (root.shape?.drawEnd ?? 0);
     wrapAnimation.stop();
@@ -149,7 +149,7 @@ Item {
   // tab's fillets past its ends, which the box passing out would paint
   // over the cap or fillet there. Across it still reaches a tab's edge.
   MarginClip {
-    readonly property var _margins: BarShapes.cellMargins(root.shape, root.shape, root.isVertical)
+    readonly property var _margins: BarCells.cellMargins(root.shape, root.shape, root.isVertical)
 
     anchors.fill: parent
     clipped: wrapAnimation.running

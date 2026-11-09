@@ -41,7 +41,7 @@ Item {
 
   // Tabs (the look's shape tab): backgrounds reach `tabReach` past the
   // widgets' outer side, out to the edge they hang from, their ends
-  // bounded by `tabBounds` (BarShapes.tabLimits; along it, in its own
+  // bounded by `tabBounds` (BarTabs.tabLimits; along it, in its own
   // coordinates). Both set by BarContainer.
   property real tabReach: 0
   property var tabBounds: []
@@ -49,9 +49,13 @@ Item {
   readonly property real _reach: root._tabs ? root.tabReach : 0
   // The outer edge is past the far side of the widgets (a bottom or right bar)
   readonly property bool _outerFar: root.barConfig.right || root.barConfig.bottom
+  // A tab's reach across: before the widgets' near side (in from the
+  // outer edge) or past their far one
+  readonly property real _reachNear: root._outerFar ? 0 : root._reach
+  readonly property real _reachFar: root._outerFar ? root._reach : 0
   // What bounds a tab drawn from `start` for `length` along the group
   function tabLimitsOf(start, length) {
-    return root._tabs ? BarShapes.tabLimits(start, start + length, root.tabBounds) : [null, null];
+    return root._tabs ? BarTabs.tabLimits(start, start + length, root.tabBounds) : [null, null];
   }
 
   // The bar's gradient (its look's `gradient`) runs along the whole
@@ -231,7 +235,7 @@ Item {
 
   // The caps and insets at `place` in a run (BarShapes.segment)
   function segmentAt(place) {
-    return BarShapes.segment(root.barConfig.look.shape.name, root.barConfig.look.shape.ends, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
+    return BarShapes.segment(root.barConfig.look.shape, root.grouping, root._opaque, place?.index ?? 0, place?.count ?? 1, root.barConfig.thickness);
   }
 
   implicitWidth: isVertical ? root.barConfig.thickness : usedLength
@@ -272,10 +276,18 @@ Item {
       // stroke left open there, so no divider shows at the join
       openStart: (_firstPlace?.index ?? 0) > 0
       openEnd: _lastPlace !== null && _lastPlace.index < _lastPlace.count - 1
-      x: (first?.x ?? 0) - (root.isVertical && !root._outerFar ? root._reach : 0)
-      y: (first?.y ?? 0) - (!root.isVertical && !root._outerFar ? root._reach : 0)
-      width: root.isVertical ? (first?.width ?? 0) + root._reach : (last?.x ?? 0) + (last?.width ?? 0) - (first?.x ?? 0) + _reach
-      height: root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - (first?.y ?? 0) + _reach : (first?.height ?? 0) + root._reach
+      // From its first widget to its last, on past a joined end, and out
+      // to a tab's edge
+      readonly property var _box: BarShapes.boxRect({
+        "x": first?.x ?? 0,
+        "y": first?.y ?? 0,
+        "width": root.isVertical ? (first?.width ?? 0) : (last?.x ?? 0) + (last?.width ?? 0) - (first?.x ?? 0),
+        "height": root.isVertical ? (last?.y ?? 0) + (last?.height ?? 0) - (first?.y ?? 0) : (first?.height ?? 0)
+      }, 0, root._reachNear, root._reachFar, root.isVertical, _reach)
+      x: _box.x
+      y: _box.y
+      width: _box.width
+      height: _box.height
       tabLimits: root.tabLimitsOf(root.isVertical ? (first?.y ?? 0) : (first?.x ?? 0), root.isVertical ? height : width)
     }
   }
@@ -302,8 +314,8 @@ Item {
       thickness: root.barConfig.look.separators.thickness
       length: BarLayout.dividerLength(mark.style, root.barConfig.thickness)
       vertical: root.isVertical
-      // Across, centred as the tabs' content is (BarShapes.tabShift)
-      readonly property real _shift: BarShapes.tabShift(root._reach, root._outerFar)
+      // Across, centred as the tabs' content is (BarTabs.tabShift)
+      readonly property real _shift: BarTabs.tabShift(root._reach, root._outerFar)
       x: root.isVertical ? Math.round((root.width - width) / 2) + _shift : mark.center - width / 2
       y: root.isVertical ? mark.center - height / 2 : Math.round((root.height - height) / 2) + _shift
     }
@@ -360,15 +372,20 @@ Item {
       readonly property var _split: host?.split ?? null
       splitAt: _split ? _split.at + segment.back : -1
       // (and across, past a tab's reach on the near side)
-      readonly property real _nearReach: root._outerFar ? 0 : root._reach
-      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? _nearReach : segment.back), _split.part.y + (root.isVertical ? segment.back : _nearReach), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
+      splitPart: _split ? Qt.rect(_split.part.x + (root.isVertical ? root._reachNear : segment.back), _split.part.y + (root.isVertical ? segment.back : root._reachNear), _split.part.width, _split.part.height) : Qt.rect(0, 0, 0, 0)
       visible: place !== null
       opacity: (host?.contentOpacity ?? 1) * (host?.opacity ?? 1)
       // A tab reaches out past the widget (tabReach)
-      x: (host?.x ?? 0) - (root.isVertical ? (root._outerFar ? 0 : root._reach) : segment.back)
-      y: (host?.y ?? 0) - (root.isVertical ? segment.back : (root._outerFar ? 0 : root._reach))
-      width: (host?.width ?? 0) + (root.isVertical ? root._reach : segment.back)
-      height: (host?.height ?? 0) + (root.isVertical ? segment.back : root._reach)
+      readonly property var _box: BarShapes.boxRect({
+        "x": host?.x ?? 0,
+        "y": host?.y ?? 0,
+        "width": host?.width ?? 0,
+        "height": host?.height ?? 0
+      }, segment.back, root._reachNear, root._reachFar, root.isVertical)
+      x: _box.x
+      y: _box.y
+      width: _box.width
+      height: _box.height
       tabLimits: root.tabLimitsOf(root.isVertical ? y : x, root.isVertical ? height : width)
     }
   }

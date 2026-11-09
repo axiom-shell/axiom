@@ -30,7 +30,7 @@ QtObject {
 
   // Cells `lengths` long for what they show, each with the room it keeps
   // clear of its caps as a segment of the bar's run (`rooms`, one {
-  // lead, trail } each, BarShapes.cellRoom; null: none): their lengths
+  // lead, trail } each, BarCells.cellRoom; null: none): their lengths
   function roomed(lengths, rooms) {
     return lengths.map((length, i) => length + (rooms?.[i]?.lead ?? 0) + (rooms?.[i]?.trail ?? 0));
   }
