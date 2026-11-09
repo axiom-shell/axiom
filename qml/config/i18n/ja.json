@@ -4167,6 +4167,10 @@
     "The gap between workspaces. Tight: none. Bar: the bar's own gap between items. Wide: twice that.": "",
     "Spacing": "",
     "Scrolling down goes back instead of on, for workspaces and a strip's windows alike.": "",
-    "Reverse scrolling": ""
+    "Reverse scrolling": "",
+    "One box": "",
+    "On a strip monitor, the active workspace's windows after its cells. One box: every window's icon in one cell, the focused one marked. The popout shows a box each whatever this says.": "",
+    "A box each": "",
+    "Strip windows": ""
   }
 }

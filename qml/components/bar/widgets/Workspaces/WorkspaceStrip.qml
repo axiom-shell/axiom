@@ -138,6 +138,7 @@ Item {
       workspaceId: root.activeId
       stripDirection: root.stripDirection
       shownCount: root.ids.length
+      windows: root.properties.stripWindows
       cell: root.cell
       cellRadius: root.cellRadius
       activeColor: root.activeColor

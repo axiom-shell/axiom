@@ -1,6 +1,6 @@
 # Workspace strips (Hyprland scrolling layout)
 
-> **Files:** `qml/config/WorkspacesConfig.qml`, `qml/components/methods/DynamicWorkspaces.qml`, `backend/internal/compositor/render/hyprlua.go` (`StripsLua`, `StripsRuntimeLua`), `qml/services/compositor/HyprlandManager.qml` (`stripWindows`, `stepStrip`), `qml/components/methods/WorkspaceGeometry.qml`, `qml/components/bar/widgets/Workspaces/ActiveStrip.qml`, `qml/components/bar/widgets/Workspaces/StripWindows.qml`
+> **Files:** `qml/config/WorkspacesConfig.qml`, `qml/components/methods/DynamicWorkspaces.qml`, `backend/internal/compositor/render/hyprlua.go` (`StripsLua`, `StripsRuntimeLua`), `qml/services/compositor/HyprlandManager.qml` (`stripWindows`, `stepStrip`), `qml/components/methods/WorkspaceGeometry.qml`, `qml/components/bar/widgets/Workspaces/ActiveStrip.qml`, `qml/components/bar/widgets/Workspaces/StripWindows.qml`, `qml/components/bar/widgets/Workspaces/StripWindowsBox.qml`
 > **Config:** `Workspaces.strips`, `Workspaces.stripColumnWidth`, `Workspaces.stripFollowFocus`
 > **Related:** [Workspaces](workspaces.md), [Config modes](config-modes.md), [Keybinds](keybinds.md), [Onboarding](../features/onboarding.md)
 
@@ -47,7 +47,11 @@ Monitors on Hyprland's `scrolling` layout: how they're configured, how the Lua r
 - On a strip monitor, both workspace switchers follow their workspaces (all of them, or the shown grid row) with `workspaces/ActiveStrip`:
   - a divider: a `SeparatorMark` in the bar's `separatorStyle`, or a line when that's none
   - then the active workspace's windows, in strip order.
-- The windows are drawn by `workspaces/StripWindows`: bar cells with app icons sized to the cells, the last focused one active, and a click focuses. They follow the widget's `spacing` and `solidBoxes`, like its workspace cells.
+- How the windows show is the widget's `stripWindows` (shown only where strips exist: strips listed or the scrolling layout with `supports.strips`, or `supports.stripsAlways`):
+  - `each` (the default): `workspaces/StripWindows`, bar cells with app icons sized to the cells, the last focused one active, and a click focuses. They follow the widget's `spacing` and `solidBoxes`, like its workspace cells.
+  - `one`: `workspaces/StripWindowsBox`, one cell in the widget's style and occupied color holding every window's icon in strip order, no limit, along the bar. Each icon has a cell's room, `spacing` apart, so the box covers what a box each would. The last focused window (`CompositorManager.lastFocused`) is at full opacity with a short line in the active color under it (on a vertical bar, beside it toward the windows), the rest dimmed; a click on an icon focuses its window. `solidBoxes` fills the box.
+  - `off`: `ActiveStrip` doesn't load: no divider, no windows, and `stripOnly` never holds, so down to one workspace its own cell shows. The wheel still scrolls the strip.
+  - The popout (below) shows a box each whatever it says.
 - **Wheel.** The wheel (`NotchWheel`, a step per notch) scrolls the strip a column at a time (`CompositorManager.stepStrip`: `layout("move ±col")`).
   - It acts on the focused monitor only, since layout messages act on the focused workspace.
   - It needs windows on the workspace; Hyprland refuses it on an empty one.

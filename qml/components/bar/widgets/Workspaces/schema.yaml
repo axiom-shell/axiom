@@ -108,6 +108,19 @@ settings:
     x-control: stepper
     x-showIf: {showAppIcons: true, appIconsLayout: row}
     description: The most apps a workspace shows, the biggest windows first.
+  stripWindows:
+    type: string
+    title: Strip windows
+    x-control: toggle
+    enum: ['off', each, one]
+    x-enumLabels: {'off': 'Off', each: A box each, one: One box}
+    default: each
+    x-showIf:
+      anyOf:
+        - {/Workspaces.strips: {notEmpty: true}, /$supports.strips: true}
+        - {/Workspaces.layout: scrolling, /$supports.strips: true}
+        - {/$supports.stripsAlways: true}
+    description: 'On a strip monitor, the active workspace''s windows after its cells. One box: every window''s icon in one cell, the focused one marked. The popout shows a box each whatever this says.'
   spacing:
     type: string
     title: Spacing

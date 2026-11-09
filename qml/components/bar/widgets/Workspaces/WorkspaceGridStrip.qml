@@ -130,6 +130,7 @@ Item {
       workspaceId: root.activeId
       stripDirection: root.stripDirection
       shownCount: root.lineIds(root.activeLine, root.activeId).length
+      windows: root.properties.stripWindows
       cell: root.cell
       cellRadius: root.cellRadius
       activeColor: root.activeColor

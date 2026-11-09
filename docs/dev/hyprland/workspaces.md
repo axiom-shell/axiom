@@ -111,4 +111,4 @@ One workspace layout serves everything that shows workspaces or moves between th
   - widget style and colors
   - labels (grid position), labels of one's own, names and app icons
   - click to switch.
-- On strip monitors the widget also shows the active workspace's windows ([Workspace strips](workspace-strips.md)).
+- On strip monitors the widget also shows the active workspace's windows, a box each, all in one box or not at all (`stripWindows`: [Workspace strips](workspace-strips.md) › Bar).

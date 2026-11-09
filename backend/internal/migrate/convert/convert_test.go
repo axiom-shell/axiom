@@ -254,7 +254,7 @@ func osdItemFields(cfg *jsonx.Object) {
 // the Network widget's VPN lock and its popout's VPN section, the
 // Workspaces widget's labels, urgency, icon layouts, solid boxes, spacing
 // and reverse scrolling)
-var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse"}
+var widgetKeysAddedSinceV1 = []string{"appearance", "showVpn", "vpnColor", "popoutVpn", "showPeripherals", "workspaceLabels", "useNames", "urgentColor", "urgentPulse", "appIconsLayout", "appIconsMax", "solidBoxes", "spacing", "scrollReverse", "stripWindows"}
 
 // moduleKeysAddedSinceV1 are a module type's settings added since format
 // 1, which a default layout's modules get from their defaults at load

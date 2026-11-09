@@ -8,10 +8,11 @@ import qs.components.reusable
 // What a switcher shows after its workspaces on a strip monitor (loaded
 // only there, shown only while the workspace has windows: `hasWindows`):
 // a divider in the bar's separator style (a line when that's none), then
-// the active workspace's windows in strip order (StripWindows),
+// the active workspace's windows in strip order, a box each
+// (StripWindows) or all in one (StripWindowsBox) as `windows` says,
 // cross-fading to the next workspace's when it changes. Down to one
 // workspace shown (`stripOnly`), the windows show alone, without the
-// divider.
+// divider. With `windows` off nothing loads.
 Loader {
   id: root
 
@@ -21,6 +22,8 @@ Loader {
   required property string stripDirection
   // How many workspaces the switcher shows
   required property int shownCount
+  // The widget's `stripWindows`: "off", "each" or "one"
+  required property string windows
   required property real cell
   required property real cellRadius
   required property color activeColor
@@ -41,7 +44,7 @@ Loader {
   // (the switcher's cell stands in while it's empty)
   readonly property bool stripOnly: shownCount <= 1 && hasWindows
 
-  active: stripDirection !== ""
+  active: stripDirection !== "" && windows !== "off"
   visible: hasWindows
 
   sourceComponent: Grid {
@@ -65,24 +68,53 @@ Loader {
     CrossFade {
       clip: true
       value: root.workspaceId
-      delegate: StripWindows {
-        required property var value
-        barConfig: root.barConfig
-        workspaceId: value
-        stripVertical: root.stripVertical
-        isVertical: root.isVertical
-        thickness: root.cell
-        cellLength: root.cell
-        radius: root.cellRadius
-        activeColor: root.activeColor
-        occupiedColor: root.occupiedColor
-        textColor: root.textColor
-        hoverColor: root.hoverColor
-        cellSpacing: root.cellSpacing
-        solid: root.solid
-        clickable: root.clickable
-        hitArea: root.hitArea
-      }
+      delegate: root.windows === "one" ? oneBox : boxEach
+    }
+  }
+
+  Component {
+    id: boxEach
+
+    StripWindows {
+      required property var value
+      barConfig: root.barConfig
+      workspaceId: value
+      stripVertical: root.stripVertical
+      isVertical: root.isVertical
+      thickness: root.cell
+      cellLength: root.cell
+      radius: root.cellRadius
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      textColor: root.textColor
+      hoverColor: root.hoverColor
+      cellSpacing: root.cellSpacing
+      solid: root.solid
+      clickable: root.clickable
+      hitArea: root.hitArea
+    }
+  }
+
+  Component {
+    id: oneBox
+
+    StripWindowsBox {
+      required property var value
+      barConfig: root.barConfig
+      workspaceId: value
+      stripVertical: root.stripVertical
+      isVertical: root.isVertical
+      thickness: root.cell
+      cellLength: root.cell
+      radius: root.cellRadius
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      textColor: root.textColor
+      hoverColor: root.hoverColor
+      cellSpacing: root.cellSpacing
+      solid: root.solid
+      clickable: root.clickable
+      hitArea: root.hitArea
     }
   }
 }
