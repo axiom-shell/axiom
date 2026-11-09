@@ -113,7 +113,7 @@ settings:
     title: Icons in a row
     default: 3
     minimum: 2
-    maximum: 5
+    maximum: 8
     x-control: stepper
     x-showIf: {showAppIcons: true, appIconsLayout: row}
     description: The most icons a workspace shows, for its biggest windows, in their order on screen.
