@@ -21,7 +21,9 @@ import qs.components.reusable
 // Each look tile shows its look (BarLookSample). It holds no style rules:
 // what shows, greys and why is the schema's. Edits leave through `edited`;
 // on the settings page (given `row` and `form`) they go through the
-// settings draft as the page's own rows' do.
+// settings draft as the page's own rows' do. In the bar
+// editor (`owned`) each section is the bar's own or shared: shared, it
+// shows the shared values greyed, with a link to where they're set.
 ColumnLayout {
   id: root
 
@@ -40,6 +42,8 @@ ColumnLayout {
   // Per section title, whether the bar has its own (a "This bar's own"
   // switch on each section's heading), or null for none (the settings page)
   property var owned: null
+  // The sections shown, by title (all of them unless set)
+  property var sections: ["Look", "Colors", "Accents", "Size", "Shadow"]
   // The bar whose widgets the strip shows and whose spacing the tiles take
   // (an entry of Bars.items): the first bar, else a new one's defaults
   property var bar: BarsConfig.savedBars[0] ?? SchemaValidation.newItem(ConfigManager.configSchema.definitions.Bar, [], ConfigManager.configSchema)
@@ -129,7 +133,10 @@ ColumnLayout {
     // The heading's text, else the title's
     property string heading: ""
     property var keys: []
+    // The bar editor's section the bar doesn't own: greyed, not editable
+    readonly property bool shared: root.owned !== null && root.owned[section.title] !== true
 
+    visible: root.sections.includes(section.title)
     Layout.fillWidth: true
     Layout.alignment: Qt.AlignTop
     spacing: Widget.spacing
@@ -152,14 +159,38 @@ ColumnLayout {
       }
     }
 
+    // Where the shared values are set: the settings page's Bar style card
+    RowLayout {
+      visible: section.shared && section.heading === ""
+      Layout.fillWidth: true
+      spacing: Widget.spacing
+
+      StyledText {
+        text: I18n.tr("Shared with every bar.")
+        textColor: Theme.foreground
+        opacity: 0.7
+      }
+
+      SettingsLink {
+        id: sharedLink
+        Layout.fillWidth: true
+        setting: "Bars.style." + (section.keys[0] ?? "")
+        text: I18n.tr("{0} in {1}", I18n.tr(section.title), I18n.tr(sharedLink.target?.category ?? ""))
+      }
+    }
+
     SchemaPropertiesForm {
       Layout.fillWidth: true
+      enabled: !section.shared
+      opacity: section.shared ? 0.5 : 1
       propertiesSchema: section.keys.reduce((schema, key) => {
         schema[key] = root._properties[key];
         return schema;
       }, {})
       order: section.keys
-      pairs: true
+      // Side by side only as wide as the two columns (not the bar
+      // editor's panel): the tiles keep their room
+      pairs: root.width >= Widget.px(720)
       keepsPlace: true
       values: root.values
       changedAt: root.changedAt
@@ -176,7 +207,7 @@ ColumnLayout {
 
   // The chosen style's own options, those that apply
   Section {
-    visible: root._hasOptions
+    visible: root._hasOptions && root.sections.includes("Look")
     title: "Look"
     heading: I18n.tr("{0} options", root._styleLabel)
     keys: root._options

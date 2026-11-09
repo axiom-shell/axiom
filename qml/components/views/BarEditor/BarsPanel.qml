@@ -9,12 +9,14 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 import qs.components.content.base
+import qs.components.views.Settings
 
 // i18n: keys from the schema (titles, descriptions)
 // Bar editor, left: the bars, then the selected bar's settings under four
-// tabs (Layout, Surface, Widgets, Behaviour): its own groups, generated
-// from the schema's Bar definition, and its style's (BarStyle's groups),
-// shared or its own. Only the shown tab's groups are built.
+// tabs (Layout, Surface, Style, Behaviour): its own groups, generated
+// from the schema's Bar definition, and its style (the Bar style block,
+// BarStyle's groups, each shared or its own). Only the shown tab's groups
+// are built.
 Item {
   id: root
 
@@ -29,7 +31,6 @@ Item {
   readonly property var _tab: root.tabs[BarManager.panelTab] ?? root.tabs[0]
   readonly property var _named: [].concat(...root.tabs.map(tab => tab.fields))
   readonly property var fieldGroups: BarsConfig.fieldGroups.filter(group => root._tab.fields.includes(group.title) || (root._tab === root.tabs[0] && !root._named.includes(group.title)))
-  readonly property var styleGroups: BarsConfig.styleGroups.filter(group => root._tab.styles.includes(group.title))
 
   // Group titles: I18n.tr("Placement") I18n.tr("Size") I18n.tr("Surface")
   // I18n.tr("Behaviour") I18n.tr("Other") I18n.tr("Look") I18n.tr("Colors")
@@ -183,57 +184,50 @@ Item {
       }
     }
 
-    // The bar's style, by group: shared (Bars.style, on the settings
-    // page's Look & Feel) until the bar takes its own
-    Repeater {
-      model: root.hasBar ? root.styleGroups : []
+    // The bar's style (the tab's style sections, BarsConfig.editorTabs'
+    // `styles`): the Bar style block over its look, each section shared
+    // (Bars.style, on the settings page's Bar style card) until the bar
+    // takes its own
+    StreamedLoader {
+      Layout.fillWidth: true
+      label: "bar style block"
+      wanted: root.hasBar && root._tab.styles.length > 0
 
-      delegate: StreamedLoader {
-        id: styleLoader
-        required property var modelData
-        Layout.fillWidth: true
-        label: `bar style group ${styleLoader.modelData.title}`
+      sourceComponent: FieldGroup {
+        title: I18n.tr("Bar style")
 
-        sourceComponent: FieldGroup {
-          id: styleGroup
-          readonly property var modelData: styleLoader.modelData
-          readonly property bool owned: BarManager.ownsStyle(BarManager.selectedBarIndex, styleGroup.modelData.keys)
-          // The shadow is one object; the rest are the bar's flat look
-          readonly property bool isShadow: styleGroup.modelData.keys.includes("shadow")
+        BarStyleBlock {
+          id: block
+          // The bar's look, its shadow as its object again (lookOf
+          // flattens it)
           readonly property var look: BarsConfig.lookOf(root.bar ?? ({}), BarManager.localStyle)
-          title: I18n.tr(styleGroup.modelData.title)
 
-          SchemaSwitch {
-            label: I18n.tr("This bar's own")
-            description: styleGroup.owned ? "" : I18n.tr("Shared with every bar.")
-            checked: styleGroup.owned
-            onToggled: value => BarManager.setStyleOwned(styleGroup.modelData.keys, value)
+          sections: root._tab.styles
+          bar: root.bar
+          values: Object.keys(block.schema?.properties ?? {}).reduce((values, key) => {
+            values[key] = key === "shadow" ? {
+              "enabled": block.look.shadow,
+              "color": block.look.shadowColor,
+              "size": block.look.shadowSize
+            } : block.look[key];
+            return values;
+          }, {})
+          owned: BarsConfig.styleGroups.reduce((owned, group) => {
+            owned[group.title] = BarManager.ownsStyle(BarManager.selectedBarIndex, group.keys);
+            return owned;
+          }, {})
+          // A field's path: [key], or the shadow's ["shadow", part]
+          changedAt: path => BarManager.styleFieldChanged(path[0], path[1])
+          onEdited: (path, value) => {
+            if (path[0] !== "shadow") {
+              BarManager.updateStyleField(path[0], value);
+              return;
+            }
+            for (const part in value)
+              BarManager.updateStyleField("shadow", value[part], part);
           }
-
-          // Where the shared style is set: this group's card on the
-          // settings page
-          SettingsLink {
-            id: sharedLink
-            Layout.fillWidth: true
-            setting: "Bars.style." + styleGroup.modelData.keys[0]
-            text: I18n.tr("{0} in {1}", I18n.tr(styleGroup.modelData.title), I18n.tr(sharedLink.target?.category ?? ""))
-          }
-
-          SchemaPropertiesForm {
-            visible: styleGroup.owned
-            Layout.fillWidth: true
-            propertiesSchema: styleGroup.isShadow ? styleGroup.modelData.schema.shadow.properties : styleGroup.modelData.schema
-            order: styleGroup.isShadow ? Object.keys(styleGroup.modelData.schema.shadow.properties) : styleGroup.modelData.keys
-            numberMode: "stepper"
-            values: styleGroup.isShadow ? {
-              "enabled": styleGroup.look.shadow,
-              "color": styleGroup.look.shadowColor,
-              "size": styleGroup.look.shadowSize
-            } : styleGroup.look
-            changedAt: path => styleGroup.isShadow ? BarManager.styleFieldChanged("shadow", path[0]) : BarManager.styleFieldChanged(path[0])
-            onEdited: (path, value) => styleGroup.isShadow ? BarManager.updateStyleField("shadow", value, path[0]) : BarManager.updateStyleField(path[0], value)
-            onDiscardAt: path => styleGroup.isShadow ? BarManager.discardStyleField("shadow", path[0]) : BarManager.discardStyleField(path[0])
-          }
+          onDiscardAt: path => BarManager.discardStyleField(path[0], path[1])
+          onOwnToggled: (group, value) => BarManager.setStyleOwned(BarsConfig.styleGroups.find(entry => entry.title === group)?.keys ?? [], value)
         }
       }
     }
