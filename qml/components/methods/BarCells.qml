@@ -73,6 +73,56 @@ QtObject {
     };
   }
 
+  // How a Workspaces widget's cells show on a bar's `look` (null: none
+  // yet, all false), every cell a filled box (`solid`: solidBoxes), drawn
+  // in the widget on the bar (`onBar`, not a popout): { inGroup (in a
+  // merged run, which draws their box), boxedInRun, opaque (their cell
+  // traits, BarLook.cellTraits), boxes (a box of their own off a run: the
+  // sliding active box's), boxed (a box of their own where they are: in a
+  // merged run only boxedInRun's), drawsLine (the look's line), framed
+  // (their state shows in a box or a line, else in their content), slides
+  // (the active box has something to slide: a box or a line), clearsActive
+  // (the active cell clears its own box under the sliding one, which a
+  // tint would show through) }
+  function cellLook(look, solid, onBar) {
+    if (!look)
+      return {
+        "inGroup": false,
+        "boxedInRun": false,
+        "opaque": false,
+        "boxes": false,
+        "boxed": false,
+        "drawsLine": false,
+        "framed": false,
+        "slides": false,
+        "clearsActive": false
+      };
+    const traits = BarLook.cellTraits(look, solid);
+    const inGroup = onBar && look.grouping === "merged";
+    const boxes = look.traits.boxed || solid;
+    const boxed = inGroup ? traits.boxedInRun : boxes;
+    const line = look.traits.line;
+    return {
+      "inGroup": inGroup,
+      "boxedInRun": traits.boxedInRun,
+      "opaque": traits.cellOpaque,
+      "boxes": boxes,
+      "boxed": boxed,
+      "drawsLine": line,
+      "framed": boxed || line,
+      "slides": boxes || line,
+      "clearsActive": look.traits.tints
+    };
+  }
+
+  // A Workspaces cell's length along the bar at rest, `thickness` across,
+  // on `look`: square where it's boxed (`solid` too), shows numbers
+  // (`labels`) or app icons (`appIcons`), else narrower, for a dot or
+  // nothing straight on the bar
+  function cellLength(look, solid, labels, appIcons, thickness) {
+    return look.traits.boxed || solid || labels === "numbers" || appIcons ? thickness : Math.round(thickness * 0.6);
+  }
+
   // How a cell's box is drawn (LookBox) in `look` (the bar's), in its
   // `shape` as a segment of the bar's run (cellShape) or, with none, a box
   // filling it rounded by `radius`: { outline (ShapedBox's: the segment's

@@ -3,6 +3,7 @@ import QtQuick
 
 import qs.services.compositor
 import qs.components.bar.widgets.base
+import qs.components.bar.look
 
 // The workspace switcher, laid out as the Workspaces section says: a row of
 // 1..count (WorkspaceStrip), or the active row or column of this monitor's
@@ -38,6 +39,15 @@ BarWidget {
       "reachEnd": 0,
       "tabLimits": [null, null]
     }) : null
+  // How its cells draw on this bar, handed to its switcher, its rows and
+  // strips: inside its box, in its place in the bar's run
+  readonly property CellLook _cellLook: CellLook {
+    barConfig: root.barConfig
+    properties: root.properties
+    onBar: root.hitArea !== null
+    run: root._run
+    inset: root.inset
+  }
   // Its cells fill on hover, each on its own
   fillsOnHover: false
   // Its box; an underline is each cell's own
@@ -66,8 +76,7 @@ BarWidget {
       barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
-      inset: root.inset
-      run: root._run
+      cellLook: root._cellLook
     }
   }
 
@@ -79,8 +88,7 @@ BarWidget {
       barSpotOf: root._activeSpotOf
       barConfig: root.barConfig
       properties: root.properties
-      inset: root.inset
-      run: root._run
+      cellLook: root._cellLook
     }
   }
 }

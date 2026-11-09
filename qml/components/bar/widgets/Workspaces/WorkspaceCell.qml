@@ -24,14 +24,16 @@ Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for its state
+  // How its widget's cells draw on this bar or popout
+  required property CellLook cellLook
+  // BarsConfig.cellColors for its state (CellLook.colorsOf)
   required property var look
   required property bool isActive
   // Across the bar, and along it (`restLength` when not widened)
   required property real thickness
   required property real length
   property real restLength: length
-  property real radius: 0
+  property real radius: cellLook.radius
   // Its shape as a segment of the bar's run (BarCells.cellShape), or
   // null: a box filling it, rounded by `radius`
   property var shape: null
@@ -86,26 +88,22 @@ Item {
   // `look` passes it to BarsConfig.cellColors): when hovered, or for a
   // background layer, when its content layer is
   property bool lit: hovered
-  // Its box while lit (BarsConfig.cellHoverColor)
-  property color hoverColor: Theme.backgroundHighlight
+  // Its box while lit
+  property color hoverColor: cellLook.hoverColor
   readonly property bool _drawsBox: part !== "content"
   readonly property bool _drawsContent: part !== "background"
   // Its box while the indicator stands for it stays at rest under the
   // indicator, unless its tint would show through
-  readonly property bool _clearActive: root.isActive && root.indicated && root.barConfig.look.traits.tints
+  readonly property bool _clearActive: root.isActive && root.indicated && root.cellLook.clearsActive
 
   signal clicked
 
   readonly property bool isVertical: barConfig.vertical
-  // `solidBoxes`: a filled box whatever the bar's style (`look` is the
-  // solid one)
-  property bool solid: false
-  // A segment of a merged run, which draws its box (BarsConfig.cellColors'
-  // group): boxed only where it still draws one of its own
-  property bool inRun: false
-  readonly property bool boxed: inRun ? BarLook.cellTraits(barConfig.look, solid).boxedInRun : barConfig.look.traits.boxed || solid
-  // Its state shows in a box or a line; without either, in its content
-  readonly property bool _framed: boxed || barConfig.look.traits.line
+  // A box of its own (in a merged run, which draws its box, only where it
+  // still draws one: CellLook.boxed); its state shows in a box or a line,
+  // without either in its content
+  readonly property bool boxed: cellLook.boxed
+  readonly property bool _framed: cellLook.framed
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
   // cells and takes the hover, so it's asked whether the pointer is in
   // the cell's pointer area (its box as drawn); elsewhere (a popout), that

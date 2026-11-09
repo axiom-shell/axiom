@@ -21,7 +21,9 @@ Item {
   id: root
 
   required property var barConfig
-  // BarsConfig.cellColors for the active state
+  // How its widget's cells draw on this bar
+  required property CellLook cellLook
+  // BarsConfig.cellColors for the active state (CellLook.workspaceColorsOf)
   required property var look
   // The active cell's index in the row, or -1 when none shows
   required property int index
@@ -33,9 +35,7 @@ Item {
   // The active cell's length
   readonly property real activeLength: (lengths[index] ?? 0) + extra
   required property real spacing
-  property real radius: 0
-  // `solidBoxes`: a filled box on every bar style (`look` is the solid one)
-  property bool solid: false
+  property real radius: cellLook.radius
   // The active cell's shape as a segment of the bar's run
   // (BarCells.cellShape), or null
   property var shape: null
@@ -44,9 +44,10 @@ Item {
   property var slice: null
 
   readonly property bool isVertical: barConfig.vertical
-  readonly property bool boxed: barConfig.look.traits.boxed || solid
+  // A box (a solid one on every bar style), whatever the run
+  readonly property bool boxed: cellLook.boxes
   // Whether there's anything to slide: a box, or an underline
-  readonly property bool slides: boxed || barConfig.look.traits.line
+  readonly property bool slides: cellLook.slides
   readonly property real _along: _alongAt(index)
   readonly property real _rowLength: isVertical ? height : width
 

@@ -4,8 +4,8 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.reusable
-import qs.components.methods
 import qs.components.hosts.popout
+import qs.components.bar.look
 
 // The standard layout's switcher: workspaces 1..count in a row (horizontal
 // bar) or column (vertical bar), or the ones the compositor has where it
@@ -26,29 +26,21 @@ Item {
   property var barSpotOf: null
   property var barConfig
   property var properties
-  // Room kept to the widget's background across the bar
-  property real inset: 0
-  // Its place in the bar's run, its cells being segments of it (the
-  // widget's Background off: Workspaces' `_run`), else null
-  property var run: null
+  // How the widget's cells draw on this bar (Workspaces'): their size
+  // inside its box, corners, spacing, colors, and its place in the bar's
+  // run where they're segments of it
+  required property CellLook cellLook
   // The cells chained in it: the row's, then the strip's windows'
   readonly property int _rowCells: activeStrip.stripOnly ? 0 : root.ids.length
   readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0)
 
   readonly property bool isVertical: barConfig.vertical
-  // A cell's thickness across the bar, and its corners within the
-  // background's
-  readonly property real cell: barConfig.thickness - inset * 2
-  readonly property real cellRadius: BarsConfig.cellRadius(barConfig, cell, inset)
-  // Along the bar: square, or narrower for dots or nothing straight on the bar
-  readonly property real cellLength: barConfig.look.traits.boxed || properties.solidBoxes || properties.labels === "numbers" || properties.showAppIcons ? cell : Math.round(cell * 0.6)
 
   readonly property color activeColor: Theme.resolveColor(properties.activeColor)
   readonly property color occupiedColor: Theme.resolveColor(properties.occupiedColor)
   readonly property color urgentColor: Theme.resolveColor(properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(properties.textColor)
-  readonly property color hoverColor: BarsConfig.cellHoverColor(properties)
 
   readonly property var monitor: CompositorManager.outputFor(root.screen)
   readonly property string output: root.monitor?.name ?? ""
@@ -120,7 +112,7 @@ Item {
     rows: !root.isVertical && columns === -1 ? 1 : -1
     columns: root.isVertical && rows === -1 ? 1 : -1
     // A powerline's segments chain on into the strip
-    spacing: root.run ? BarCells.cellGap(root.barConfig.look.grouping, root.barConfig.innerGap) : root.barConfig.innerGap
+    spacing: root.cellLook.partGap
 
     WorkspaceCellRow {
       id: cellRow
@@ -129,13 +121,11 @@ Item {
       visible: !activeStrip.stripOnly
       barConfig: root.barConfig
       properties: root.properties
+      cellLook: root.cellLook
       monitor: root.monitor
       base: root.base
       ids: root.ids
       activeId: root.activeId
-      cell: root.cell
-      cellLength: root.cellLength
-      cellRadius: root.cellRadius
       activeColor: root.activeColor
       occupiedColor: root.occupiedColor
       urgentColor: root.urgentColor
@@ -143,30 +133,23 @@ Item {
       textColor: root.textColor
       hitArea: root.hitArea
       barSpotOf: root.barSpotOf
-      hoverColor: root.hoverColor
       activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
-      run: root.run
       chainCount: root._chainCells
     }
 
     ActiveStrip {
       id: activeStrip
       barConfig: root.barConfig
+      cellLook: root.cellLook
       workspaceId: root.activeId
       stripDirection: root.stripDirection
       shownCount: root.ids.length
       windows: root.properties.stripWindows
-      cell: root.cell
-      cellRadius: root.cellRadius
       activeColor: root.activeColor
       occupiedColor: root.occupiedColor
       textColor: root.textColor
-      hoverColor: root.hoverColor
       clickable: root.properties.clickToSwitch
-      cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing)
-      solid: root.properties.solidBoxes
       hitArea: root.hitArea
-      run: root.run
       chainFirst: root._rowCells
       chainCount: root._chainCells
     }
@@ -181,11 +164,11 @@ Item {
         vertical: root.isVertical,
         stripVertical: root.stripDirection === "vertical",
         // The cells' own size and corners, as on the bar
-        cellSize: root.cell,
-        cellLength: root.cellLength,
+        cellSize: root.cellLook.thickness,
+        cellLength: root.cellLook.length,
         barConfig: root.barConfig,
-        cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing),
-        radius: root.cellRadius,
+        cellSpacing: root.cellLook.spacing,
+        radius: root.cellLook.radius,
         properties: root.properties
       })
   }

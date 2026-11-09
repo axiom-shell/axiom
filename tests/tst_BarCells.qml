@@ -386,4 +386,61 @@ TestCase {
       "strokeStyle": "solid"
     });
   }
+
+  // A bar look for the cell rules: a style's traits as they matter here
+  function cellLookOf(grouping, traits) {
+    return {
+      "grouping": grouping,
+      "traits": Object.assign({
+        "boxed": true,
+        "line": false,
+        "tints": false,
+        "boxedInRun": false,
+        "cellOpaque": true
+      }, traits)
+    };
+  }
+
+  // How cells show: a box of their own off a run, in a merged run on the
+  // bar only where they still box themselves; framed by a box or a line
+  function test_cell_look() {
+    const flags = (look, solid, onBar) => {
+      const c = BarCells.cellLook(look, solid, onBar);
+      return [c.inGroup, c.boxedInRun, c.opaque, c.boxes, c.boxed, c.drawsLine, c.framed, c.slides, c.clearsActive];
+    };
+    const filled = cellLookOf("separate", {});
+    compare(flags(filled, false, true), [false, false, true, true, true, false, true, true, false]);
+    const merged = cellLookOf("merged", {});
+    compare(flags(merged, false, true), [true, false, true, true, false, false, false, true, false], "the run draws their box");
+    compare(flags(merged, false, false), [false, false, true, true, true, false, true, true, false], "a popout: not in a run");
+    compare(flags(merged, true, true), [true, true, true, true, true, false, true, true, false], "solid boxes box themselves in a run");
+    const underline = cellLookOf("separate", {
+      "boxed": false,
+      "line": true,
+      "cellOpaque": false
+    });
+    compare(flags(underline, false, true), [false, false, false, false, false, true, true, true, false], "framed by the line");
+    const plain = cellLookOf("separate", {
+      "boxed": false,
+      "cellOpaque": false
+    });
+    compare(flags(plain, false, true).slice(3), [false, false, false, false, false, false], "nothing frames them");
+    compare(BarCells.cellLook(cellLookOf("separate", {
+      "tints": true
+    }), false, true).clearsActive, true, "a tint shows through");
+    compare(flags(null, false, true), [false, false, false, false, false, false, false, false, false], "no look yet");
+  }
+
+  // A cell's length at rest: square boxed, with numbers or app icons;
+  // narrower for a dot or nothing straight on the bar
+  function test_cell_length() {
+    const bare = cellLookOf("separate", {
+      "boxed": false
+    });
+    compare(BarCells.cellLength(cellLookOf("separate", {}), false, "dots", false, 26), 26, "boxed");
+    compare(BarCells.cellLength(bare, true, "dots", false, 26), 26, "solid boxes");
+    compare(BarCells.cellLength(bare, false, "numbers", false, 26), 26, "numbers");
+    compare(BarCells.cellLength(bare, false, "dots", true, 26), 26, "app icons");
+    compare(BarCells.cellLength(bare, false, "dots", false, 26), 16, "a dot on the bar");
+  }
 }

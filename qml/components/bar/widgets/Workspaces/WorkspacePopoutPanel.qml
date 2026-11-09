@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.content.base
+import qs.components.bar.look
 
 // The root of the Workspaces widget's popouts (WorkspaceStrips,
 // WorkspaceGrid): the widget's payload and the colours its cells take, as
@@ -34,9 +35,14 @@ Panel {
   readonly property color urgentColor: Theme.resolveColor(root.properties.urgentColor)
   readonly property color emptyColor: Theme.resolveColor(root.properties.emptyColor)
   readonly property color textColor: Theme.resolveColor(root.properties.textColor)
-  readonly property color hoverColor: BarsConfig.cellHoverColor(root.properties)
-  // Every cell a filled box (`solidBoxes`; workspaceCellColors reads it)
-  readonly property bool solidBoxes: root.properties.solidBoxes ?? false
+  // How its cells draw: as the bar's row, off the bar (no run), at the
+  // bar's cell size and corners
+  readonly property CellLook cellLook: CellLook {
+    barConfig: root.barConfig
+    properties: root.properties
+    thickness: root.cellSize
+    radius: root.radius
+  }
   readonly property int base: CompositorManager.workspaceBase(root.output)
   readonly property int activeId: root.monitor?.activeWorkspaceId ?? -1
 
