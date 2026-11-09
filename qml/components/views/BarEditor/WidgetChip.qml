@@ -39,7 +39,7 @@ DragChip {
 
   readonly property bool live: root.widget !== null && root.previewConfig !== null
   // Live, but drawing nothing (or not built yet)
-  readonly property bool empty: previewLoader.naturalSize <= 0
+  readonly property bool empty: !previewLoader.hasContent
 
   hasMenu: true
   showsLabel: !root.live || root.empty
@@ -75,7 +75,7 @@ DragChip {
   StreamedLoader {
     id: previewLoader
     readonly property LivePreview shownItem: previewLoader.item as LivePreview
-    readonly property real naturalSize: shownItem?.group.hasContent ? shownItem.group.implicitWidth : 0
+    readonly property bool hasContent: shownItem?.group.hasContent ?? false
     wanted: root.live
     label: "bar editor chip"
     Layout.preferredWidth: root.empty ? 0 : (shownItem?.implicitWidth ?? 0)
