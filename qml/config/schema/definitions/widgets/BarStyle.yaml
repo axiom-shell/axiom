@@ -29,6 +29,7 @@ properties:
     x-group: Look
     type: string
     x-control: tiles
+    x-keepsPlace: true
     title: Widget style
     default: filled
     enum: [filled, tinted, outline, split, underline, accentText, plain]
@@ -51,7 +52,6 @@ properties:
     x-enumLabels: {joined: Joined, badge: Badge}
     x-showIf: {widgetStyle: split}
     description: 'Joined: one box cut in two. Badge: a small shape behind the icon, the label on the bar.'
-    x-tileHint: Only the Split style sets its icon apart
   splitLabelFill:
     x-group: Look
     type: string
@@ -90,10 +90,9 @@ properties:
     title: Divider
     default: match
     enum: [match, straight, slant, arrow, curve]
-    x-enumLabels: {match: Match the shape, straight: Straight, slant: Slanted, arrow: Arrow, curve: Curve}
+    x-enumLabels: {match: Match shape, straight: Straight, slant: Slanted, arrow: Arrow, curve: Curve}
     x-showIf: {widgetStyle: split, splitIcon: joined}
     description: Where the icon's part meets the label's. Match is slanted or an arrow for those shapes, else straight.
-    x-tileHint: Only a joined Split box is cut in two
   outlineWidth:
     x-group: Look
     type: integer
@@ -144,6 +143,7 @@ properties:
     x-group: Look
     type: string
     x-control: tiles
+    x-keepsPlace: true
     title: Shape
     default: rounded
     enum: [rounded, capsule, slant, arrow, tab]
@@ -163,6 +163,7 @@ properties:
     x-group: Look
     type: string
     x-control: tiles
+    x-keepsPlace: true
     title: Grouping
     default: separate
     enum: [separate, merged, powerline]
@@ -190,7 +191,6 @@ properties:
     x-showIf: {widgetStyle: [filled, tinted, outline, split], widgetShape: tab}
     description: Where a tab meets the edge it hangs from. Flared curves out into it, by at most half the gap between widgets.
     x-link: {page: 'BarEditor:widgetGap'}
-    x-tileHint: Only tabs meet the edge they hang from
   widgetEnds:
     x-group: Look
     type: string
@@ -208,9 +208,7 @@ properties:
         - {widgetGrouping: merged}
     x-enumShowIf: {pointed: {widgetShape: arrow}}
     description: The ends of a slanted or arrow widget, or a run of them.
-    x-tileHint:
-      '*': Only a slanted or arrow box, or a run of them, has shaped ends
-      pointed: Only an arrow comes to a point
+    x-tileHint: {pointed: Only an arrow comes to a point}
   groupColor:
     x-group: Colors
     type: string
@@ -280,7 +278,6 @@ properties:
         - {widgetGrouping: {not: powerline}}
         - {widgetStyle: [underline, accentText, plain]}
         - {widgetShape: tab}
-    x-tileHint: A powerline's widgets touch, leaving no gap to divide
   separatorColor:
     x-group: Accents
     type: string

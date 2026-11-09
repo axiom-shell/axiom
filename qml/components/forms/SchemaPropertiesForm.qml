@@ -29,9 +29,9 @@ ColumnLayout {
   // Puts a field marked `x-beside` beside the one before it, each half wide,
   // while both are shown; off, every field takes the whole width
   property bool pairs: false
-  // Keeps its tiles in place: a tiles field (`x-control: tiles`) whose
+  // Keeps its main rows in place: a field marked `x-keepsPlace` whose
   // `x-showIf` fails is greyed, saying why on hover (its `x-tileHint`),
-  // instead of hidden, so no row of tiles moves under the pointer
+  // instead of hidden, so they never move under the pointer
   // (SchemaField.placeKept; the Bar style block). Other fields hide
   property bool keepsPlace: false
   // A hook giving a tiles field's previews: given its path ([key]),

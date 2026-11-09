@@ -4138,7 +4138,6 @@
     "Caffeine is keeping the screen on: the steps below wait until it's turned off.": "",
     "Caffeine keeps your own idle daemon off only if it honours logind's idle inhibitors.": "",
     "axiom leaves idle to you: a daemon such as hypridle, if you run one. Caffeine holds off a daemon that honours logind's idle inhibitors, as hypridle does; swayidle and others that don't still act while it's on.": "",
-    "Match the shape": "",
     "Split": "",
     "Label color": "",
     "Label background": "",
@@ -4209,15 +4208,11 @@
     "Colors": "",
     "Accents": "",
     "{0} options": "",
-    "Only a joined Split box is cut in two": "",
     "Only an arrow comes to a point": "",
-    "A powerline's widgets touch, leaving no gap to divide": "",
     "This style draws no box to group": "",
     "Tabs hang from the edge and a badge has no box, so neither can chain": "",
-    "Only the Split style sets its icon apart": "",
     "This style draws no box to shape": "",
     "A badge on its own has no box to hang from the edge": "",
-    "Only tabs meet the edge they hang from": "",
-    "Only a slanted or arrow box, or a run of them, has shaped ends": ""
+    "Match shape": ""
   }
 }

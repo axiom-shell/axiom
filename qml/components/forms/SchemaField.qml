@@ -15,8 +15,8 @@ import qs.components.reusable
 // i18n: keys from callers and the schema (titles, descriptions, type labels)
 // One row of a schema-driven form: picks the control for the row's schema
 // type (or a list editor for an array of objects), hidden while its
-// `x-showIf` doesn't hold (a tiles field greyed instead, saying why on
-// hover, in a form with `keepsPlace`). `form` provides valueAt(path) and edit(path, value)
+// `x-showIf` doesn't hold (one marked `x-keepsPlace` greyed instead,
+// saying why on hover, in a form with `keepsPlace`). `form` provides valueAt(path) and edit(path, value)
 // (SchemaPropertiesForm, SettingRows, or the settings page's
 // SettingsContent).
 Loader {
@@ -152,12 +152,12 @@ Loader {
   readonly property bool shown: (root._conditionsHold || root.placeKept) && !SchemaLayout.hintedHides(fieldSchema["x-hintedIf"], root._valueOf, capability => CompositorManager.unsupportedHint(capability))
   readonly property bool _conditionsHold: SchemaLayout.showIfHolds(row.kind === "group" ? row.showIf : fieldSchema["x-showIf"], root._valueOf) && (row.groupShowIf ?? []).every(outer => SchemaLayout.showIfHolds(outer.condition, key => root._valueFrom(outer.path, key)))
 
-  // In a form keeping its tiles in place (`keepsPlace`: the Bar style
-  // block, so no row of tiles moves under the pointer), a tiles field
-  // (`x-control: tiles`) whose `x-showIf` fails is greyed and not editable
+  // In a form keeping its main rows in place (`keepsPlace`: the Bar style
+  // block, so they never move under the pointer), a field marked
+  // `x-keepsPlace` whose `x-showIf` fails is greyed and not editable
   // instead of hidden, saying why on hover: its `x-tileHint` (a string, or
   // its map's "*"), else generically. Any other field hides as anywhere
-  readonly property bool placeKept: root.form?.keepsPlace === true && row.kind !== "group" && fieldSchema["x-control"] === "tiles" && !root._conditionsHold
+  readonly property bool placeKept: root.form?.keepsPlace === true && row.kind !== "group" && fieldSchema["x-keepsPlace"] === true && !root._conditionsHold
   readonly property string placeKeptReason: {
     if (!root.placeKept)
       return "";

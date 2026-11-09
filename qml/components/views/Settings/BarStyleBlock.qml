@@ -11,10 +11,12 @@ import qs.components.reusable
 // The Bar style block: every BarStyle setting in one place (the settings
 // page's Bar style card, Bars.style's `x-row`). On top, a strip of the
 // bar's own widgets, live, in the look being edited. Then its sections, by
-// the schema's `x-group`s, each a form keeping its tiles in place (a tiles
-// field that doesn't apply greyed, saying why): Look full width, the
-// chosen style's own options under it in one panel (the Look fields that
-// aren't tiles, those whose `x-showIf` holds), then Colors and Accents,
+// the schema's `x-group`s: Look full width, its rows marked
+// `x-keepsPlace` (the style, then the shape and grouping beside it) kept
+// in place, greyed with why while they don't apply, and under them what
+// depends on the shape (tab sides, ends); then the chosen style's own
+// options in one panel (Look's other fields). Every other row shows only
+// while its `x-showIf` holds. Then Colors and Accents,
 // Size and Shadow, side by side from Widget.px(720) wide, else stacked.
 // Each look tile shows its look (BarLookSample). It holds no style rules:
 // what shows, greys and why is the schema's. Edits leave through `edited`;
@@ -68,18 +70,21 @@ ColumnLayout {
     return root._groups.find(group => group.title === title)?.keys ?? [];
   }
   readonly property var _properties: root.schema?.properties ?? ({})
-  // Look's tiles, and the rest of it: the styles' own options
-  readonly property var _tiles: root._keysOf("Look").filter(key => root._properties[key]?.["x-control"] === "tiles")
-  readonly property var _options: root._keysOf("Look").filter(key => !root._tiles.includes(key))
+  // Look's rows kept in place (`x-keepsPlace`, in x-order: the style, the
+  // shape, the grouping), the rows under them (those whose `x-showIf`
+  // reads the shape: its second), and the rest: the style's own options
+  readonly property var _kept: root._keysOf("Look").filter(key => root._properties[key]?.["x-keepsPlace"] === true)
+  readonly property var _byShape: root._keysOf("Look").filter(key => !root._kept.includes(key) && JSON.stringify(root._properties[key]?.["x-showIf"] ?? {}).includes(JSON.stringify(root._kept[1] ?? "") + ":"))
+  readonly property var _options: root._keysOf("Look").filter(key => !root._kept.includes(key) && !root._byShape.includes(key))
   function _valueOf(key) {
     return root.values[key] ?? root._properties[key]?.default;
   }
   // Whether any of the chosen style's options applies (its `x-showIf`)
   readonly property bool _hasOptions: root._options.some(key => SchemaLayout.showIfHolds(root._properties[key]?.["x-showIf"], root._valueOf))
-  // The chosen style's label: Look's first tiles field's (the style)
+  // The chosen style's label: Look's first kept field's (the style)
   readonly property string _styleLabel: {
-    const field = root._properties[root._tiles[0]] ?? {};
-    const value = root._valueOf(root._tiles[0]) ?? "";
+    const field = root._properties[root._kept[0]] ?? {};
+    const value = root._valueOf(root._kept[0]) ?? "";
     return I18n.tr(field["x-enumLabels"]?.[value] ?? Utils.enumLabel(value));
   }
 
@@ -166,7 +171,7 @@ ColumnLayout {
 
   Section {
     title: "Look"
-    keys: root._tiles
+    keys: root._kept.concat(root._byShape)
   }
 
   // The chosen style's own options, those that apply
