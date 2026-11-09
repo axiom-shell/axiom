@@ -188,4 +188,60 @@ TestCase {
     verify(PopoutGeometry.resolve([dock], toasts).allowed, "a dock and toasts never collide");
     compare(PopoutGeometry.resolve([toasts], dock).yield, []);
   }
+  // A pinned free menu (underlay: drawn under every popout) never
+  // collides: a bar popout opens over it and both stay; it never closes
+  // what it opens or grows over
+  function test_underlay() {
+    const free = entry("menu:tools", "menu", [rect(400, 300, 500, 400)], {
+      "pinned": true,
+      "resident": true,
+      "underlay": true
+    });
+    const bar = entry("bar:clock", "bar", [rect(600, 40, 400, 300)]);
+    const over = PopoutGeometry.resolve([free], bar);
+    verify(over.allowed, "a bar popout opens over it");
+    compare(over.evict, []);
+    compare(over.yield, [], "and it stays");
+    const under = PopoutGeometry.resolve([bar], Object.assign({}, free, {
+      "kind": "bar",
+      "pinned": false
+    }));
+    verify(under.allowed, "engaged, opened under a bar popout, it's granted too");
+    compare(under.evict, [], "and closes nothing");
+    const sub = entry("menu:tools/submenu", "submenu", [rect(900, 300, 300, 300)], {
+      "parentId": "menu:tools"
+    });
+    compare(PopoutGeometry.resolve([free, sub], entry("bar:net", "bar", [rect(950, 40, 300, 300)])).evict, [], "its submenu neither");
+    verify(PopoutGeometry.resolve([free, entry("osd:vol:DP-1", "osd", [rect(950, 300, 300, 60)])], sub).allowed);
+  }
+
+  // Unpinned, a free menu (a widget's popout, ranked bar) covered by
+  // another bar popout closes, as before; and pinned but no underlay (a
+  // floating edge menu) it yields
+  function test_free_not_underlay() {
+    const free = entry("menu:tools", "bar", [rect(400, 300, 500, 400)]);
+    compare(PopoutGeometry.resolve([free], entry("bar:clock", "bar", [rect(600, 40, 400, 300)])).evict, ["menu:tools"]);
+    const pinned = Object.assign({}, free, {
+      "pinned": true,
+      "resident": true
+    });
+    compare(PopoutGeometry.resolve([pinned], entry("bar:clock", "bar", [rect(600, 40, 400, 300)])).yield, ["menu:tools"]);
+  }
+
+  // The overlay opening closes the bar popouts and menus on its screen,
+  // pinned ones too, but not a pinned free menu, which it draws over
+  function test_closed_by_overlay() {
+    const entries = [entry("bar:clock", "bar", [rect(0, 0, 10, 10)]), entry("menu:edge", "menu", [rect(0, 0, 10, 10)], {
+        "pinned": true,
+        "resident": true,
+        "phase": "yielded"
+      }), entry("menu:free", "menu", [rect(0, 0, 10, 10)], {
+        "pinned": true,
+        "resident": true,
+        "underlay": true
+      }), entry("osd:vol:DP-1", "osd", [rect(0, 0, 10, 10)]), entry("bar:other", "bar", [rect(0, 0, 10, 10)], {
+        "screen": "HDMI-A-1"
+      })];
+    compare(PopoutGeometry.closedByOverlay(entries, "DP-1"), ["bar:clock", "menu:edge"]);
+  }
 }

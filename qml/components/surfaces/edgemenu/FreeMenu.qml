@@ -161,8 +161,10 @@ PopoutWrapperBase {
 
   // Its place among the popouts (PopoutManager), ranked as it was opened
   // (EdgeMenuManager.claimKinds): a widget's popout as a bar popout, else
-  // a menu; pinned, lowest; pinned or held by the editor, it gives way
-  // and comes back
+  // a menu; pinned, lowest; held by the editor, it gives way and comes
+  // back. Pinned, it's an underlay: drawn under the popouts on its Top
+  // layer, it never closes anything and nothing opening over it closes it
+  // (PopoutGeometry.isUnderlay)
   property PopoutClaim claim: PopoutClaim {
     key: "menu:" + root.menuId
     kind: root.currentData?.claimKind ?? "menu"
@@ -170,6 +172,7 @@ PopoutWrapperBase {
     edge: ""
     pinned: EdgeMenuManager.pinnedMenus[root.menuId] === true && !root.engaged
     resident: sync.held
+    underlay: EdgeMenuManager.isPinned(root.menuId)
     occupied: root.occupied
     closing: root.isClosing
     wanted: root.isOpen && root.contentItem !== null && placeOnScreen.settled && !root._locating
