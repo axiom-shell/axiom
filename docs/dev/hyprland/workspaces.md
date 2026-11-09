@@ -91,7 +91,7 @@ One workspace layout serves everything that shows workspaces or moves between th
 - **Urgent.** A workspace a window on it marks urgent (the shape's `urgent`) draws in `urgentColor`, pulsing with `urgentPulse` ([widget style](../bar/widget-style.md) › Workspaces cells), on the bar and in both popouts.
 - **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`.
   - It holds every shown workspace, or one grid row.
-  - Its cells are `spacing` apart (`BarsConfig.workspaceCellSpacing`: tight 0, bar the bar's `innerGap`, wide twice it), as are the popouts' cells (the payload's `cellSpacing`); the gap to the strip after them stays the bar's.
+  - Its cells are `spacing` apart (`BarsConfig.workspaceCellSpacing`: tight 0, bar the bar's `innerGap`, wide twice it), as are the popouts' cells (the payload's `cellSpacing`); the strip's window cells (`StripWindows`) take the same spacing and `solidBoxes`, but the gap between the row and the strip after it stays the bar's.
   - `glyphOf` gives the grid's position arrow.
   - Cells may differ in length. Where each sits, and the row's whole length, come from the pure `methods/WorkspaceCells` (`layout(lengths, spacing, active, extra)`, `startOf`), which the row and its `ActiveCellIndicator` both read.
   - It's measured from its cells' target lengths, never their gliding ones ([composition › Bar motion](../bar/composition.md#bar-motion-drawn-not-measured)), and clips them while one glides.

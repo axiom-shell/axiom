@@ -30,6 +30,10 @@ Grid {
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
   property bool animated: true
+  // Between its cells (the widget's `spacing`), and every cell a filled
+  // box (`solidBoxes`), as in the workspace row
+  property real cellSpacing: barConfig.innerGap
+  property bool solid: false
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the cells are only rebuilt when the windows or their
@@ -43,7 +47,7 @@ Grid {
   flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
   rows: root.isVertical ? Math.max(1, root.addresses.length) : 1
   columns: root.isVertical ? 1 : Math.max(1, root.addresses.length)
-  spacing: root.barConfig.innerGap
+  spacing: root.cellSpacing
 
   Repeater {
     model: root.addresses.length
@@ -55,7 +59,8 @@ Grid {
 
       barConfig: root.barConfig
       isActive: address === root.focused
-      look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied")
+      look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied", root.solid)
+      solid: root.solid
       thickness: root.thickness
       length: root.cellLength
       radius: root.radius

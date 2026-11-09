@@ -94,6 +94,8 @@ WorkspacePopoutPanel {
           textColor: root.textColor
           clickable: root.properties.clickToSwitch ?? false
           animated: root._settled
+          cellSpacing: root.cellSpacing
+          solid: root.solidBoxes
         }
       }
     }

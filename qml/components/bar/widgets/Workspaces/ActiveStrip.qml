@@ -28,6 +28,9 @@ Loader {
   required property color textColor
   required property color hoverColor
   property bool clickable: true
+  // The row's (StripWindows')
+  property real cellSpacing: barConfig.innerGap
+  property bool solid: false
   // The widget's (BarWidget.hitArea), which the cells read hover from
   property var hitArea: null
 
@@ -75,6 +78,8 @@ Loader {
         occupiedColor: root.occupiedColor
         textColor: root.textColor
         hoverColor: root.hoverColor
+        cellSpacing: root.cellSpacing
+        solid: root.solid
         clickable: root.clickable
         hitArea: root.hitArea
       }

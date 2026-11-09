@@ -137,6 +137,8 @@ Item {
       textColor: root.iconColor
       hoverColor: root.hoverColor
       clickable: root.properties.clickToSwitch
+      cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing)
+      solid: root.properties.solidBoxes
       hitArea: root.hitArea
     }
   }
