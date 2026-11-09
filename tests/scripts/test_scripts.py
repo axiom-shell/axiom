@@ -340,6 +340,17 @@ class ConfigUsage(unittest.TestCase):
                          [("WorkspaceOverlayConfig", "showHint", "exact")])
         self.assertTrue(self.ref.member_users[("WorkspaceOverlayConfig", "showHint")])
 
+    def test_bar_style_is_read_through_the_look(self):
+        # A BarStyle key reaches widgets in each bar's look (BarLook.resolve
+        # reads it from the merged values); the shadow stays flat on barConfig
+        def read(path):
+            return "\n".join(self.ref.leaf_line(path, {"type": "string"}, "leaf"))
+        for path in ("Bars.style.widgetStyle", "Bars.items[].style.tintOpacity"):
+            self.assertIn("`barConfig.look`", read(path), path)
+            self.assertIn("qml/components/methods/BarLook.qml", read(path), path)
+        self.assertIn("`barConfig.shadowColor`", read("Bars.style.shadow.color"))
+        self.assertIn("`barConfig.thickness`", read("Bars.items[].thickness"))
+
     def test_alias_of_a_section(self):
         # `_look: ConfigManager.live.WindowLook` stands for that section
         self.assertIn("WindowLook.surfaceBlur.throughWindows",
@@ -427,6 +438,10 @@ class CheckStructure(unittest.TestCase):
          "qml/shell/Toggle.qml:6: NotificationManager.toggleDnd: run the action through ActionsManager.run"),
         ("qml/shell/Corner.qml", qml('function f() { ShellManager.runAction("lock", "", "toggle") }'),
          "qml/shell/Corner.qml:6: ShellManager.runAction: run the action through ActionsManager.run"),
+        ("qml/shell/StyleName.qml", qml('property bool boxed: barConfig.look.style === "filled"'),
+         "qml/shell/StyleName.qml:6: reads `look.style`: a style is BarLook's alone"),
+        ("qml/shell/SavedStyle.qml", qml('property bool boxed: BarStyle.values.widgetStyle !== "plain"'),
+         "qml/shell/SavedStyle.qml:6: reads `widgetStyle`: a style is BarLook's alone"),
         ("qml/components/content/ColorSwatch/ColorSwatch.qml", qml('Component.onCompleted: CommandManager.run(["true"])'),
          "qml/components/content/ColorSwatch/ColorSwatch.qml:6: CommandManager.run on the lock screen"),
         ("qml/components/dupa/Dup.qml", qml(), None),

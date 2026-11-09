@@ -9,9 +9,9 @@ import qs.components.methods
 // (SplitPart), a level (LevelFill), and over them a press's tint, the bar
 // editor's highlight and the hover outline (ShapeOverlay), each in the
 // shape its caps give (BarShapes). A tab (the look's shape tab) is set
-// reaching out to the edge it hangs from by its WidgetGroup, which hands it
-// what bounds its ends (`tabLimits`). WidgetGroup draws one under each
-// widget with a background, and one under each merged run.
+// reaching out to the edge it hangs from by WidgetDecorations, which hands
+// it what bounds its ends (`tabLimits`). WidgetDecorations draws one under
+// each widget with a background, and one under each merged run.
 Item {
   id: root
 
