@@ -75,6 +75,16 @@ QtObject {
     return Math.round(reach / 2) * (outerFar ? 1 : -1);
   }
 
+  // A tab's `reach` past the widget across, toward the edge it hangs from
+  // (`outerFar`: past the far side): { near, far }, how far it reaches
+  // before the widget's near side and past its far one (BarShapes.boxRect's)
+  function reachAcross(reach, outerFar) {
+    return {
+      "near": outerFar ? 0 : reach,
+      "far": outerFar ? reach : 0
+    };
+  }
+
   // What bounds a tab running `start` to `end` along the bar at each end:
   // the inner side of the surface it hangs from, from `bounds` [{ start,
   // end, startRadius, endRadius }] (the curves of its corners at each of

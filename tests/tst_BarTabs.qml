@@ -105,4 +105,17 @@ TestCase {
       "bottom": true
     }), [null, null]).outerStart, false, "a bottom bar's outer edge is past its far side");
   }
+
+  // A tab's reach across: before the near side from a top or left bar,
+  // past the far side from a bottom or right one
+  function test_reach_across() {
+    compare(BarTabs.reachAcross(6, false), {
+      "near": 6,
+      "far": 0
+    });
+    compare(BarTabs.reachAcross(6, true), {
+      "near": 0,
+      "far": 6
+    });
+  }
 }

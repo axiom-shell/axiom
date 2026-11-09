@@ -122,7 +122,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
   - `LookBox`: what the look draws for a box (its box and stroke, and its line: `StyleLine`), a widget's background and a Workspaces cell alike.
   - `SplitPart` (split's icon part or badge), `LevelFill` (a widget's level), `ShapeOverlay` (a press, the editor highlight, the hover outline).
   - `WidgetBackground`: a widget's or merged run's background, composed of them. `WidgetLook`: the colors a widget draws in.
-- `methods/BarShapes` (caps, segments, box rects), `methods/BarTabs` (tabs), `methods/BarOutlines` (SVG outlines from one outline spec), `methods/BarCells` (a widget's parts as cells), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
+- `methods/BarShapes` (caps, segments, box rects), `methods/BarTabs` (tabs), `methods/BarOutlines` (SVG outlines from one outline spec), `methods/BarCells` (a widget's parts as cells), `methods/BarRuns` (a section's run backgrounds, separator marks and widget room), `methods/BarWidgetStyle` (colors per widget style), `methods/BarAutoColors` (Auto widget colors).
 
 ### Workspace pieces
 - **Active workspace** (`bar/widgets/Workspaces/ActiveCellIndicator`): the active cell's box or underline (`bar/look/LookBox`, shared with `WorkspaceCell` and the widgets' backgrounds), drawn once under a switcher's row of cells and sliding between them.

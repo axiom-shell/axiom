@@ -16,7 +16,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Any other bar's monitor is resolved to a connected screen there.
 
 ### Widgets and their options
-- Bar contents are built from `qml/components/bar/{BarContainer,BarWidgetHost,WidgetGroup,BarPanel}.qml`. These compose widgets from `qml/components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
+- Bar contents are built from `qml/components/bar/{BarContainer,BarWidgetHost,WidgetGroup,WidgetDecorations,BarPanel}.qml` (a section's `WidgetGroup` measures, allocates and places its hosts; its `WidgetDecorations` draws the run backgrounds, separator marks and widget backgrounds under them, from `methods/BarRuns`). These compose widgets from `qml/components/bar/widgets/<type>/<type>.qml` (Time, Battery, Network, Workspaces, Media, SystemTray, Notifications, etc.).
 - Each widget's options live under its `<Type>Widget.properties.properties` definition in the schema.
 - `SchemaValidation` picks the `BarWidget` oneOf option by `type`. Widget properties therefore get their defaults filled like the rest of the config, and widgets read `properties.<key>` directly.
 - Widget types come from `BarsConfig.availableWidgetTypes`, the `BarWidget` oneOf. Each type's label comes from its description and its icon from its `x-icon`.
