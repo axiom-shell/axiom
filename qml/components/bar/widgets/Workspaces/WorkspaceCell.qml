@@ -16,7 +16,9 @@ import qs.components.methods
 // in and out (`pulse`), with a dot at its corner where an app icon would
 // otherwise hide it. A row with a sliding ActiveCellIndicator draws its
 // cells twice, the boxes (`part: "background"`) under the indicator and
-// the labels (`"content"`) over it.
+// the labels (`"content"`) over it. As a segment of the bar's run (the
+// widget's Background off) its box takes the bar's widget shape (`shape`)
+// and its content keeps clear of its caps (`room`).
 Item {
   id: root
 
@@ -29,6 +31,12 @@ Item {
   required property real length
   property real restLength: length
   property real radius: 0
+  // Its shape as a segment of the bar's run (BarShapes.cellShape), or
+  // null: a box filling it, rounded by `radius`
+  property var shape: null
+  // The room its content keeps clear of its caps along it (BarShapes.cellRoom:
+  // { lead, trail }), or null
+  property var room: null
   // "numbers", "dots" or "none" (dots where a cell would have neither box
   // nor line to show: `none`'s option is hidden there, but the bar's style
   // can change after)
@@ -91,7 +99,10 @@ Item {
   // `solidBoxes`: a filled box whatever the bar's style (`look` is the
   // solid one)
   property bool solid: false
-  readonly property bool boxed: barConfig.widgetBoxed || solid
+  // A segment of a merged run, which draws its box (BarsConfig.cellColors'
+  // group): boxed only where it still draws one of its own
+  property bool inRun: false
+  readonly property bool boxed: inRun ? BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid) : barConfig.widgetBoxed || solid
   // Its state shows in a box or a line; without either, in its content
   readonly property bool _framed: boxed || barConfig.widgetStyle === "underline"
   // On the bar, the widget's hit area (BarWidget.hitArea) sits over the
@@ -109,6 +120,7 @@ Item {
     visible: root._drawsBox
     barConfig: root.barConfig
     radius: root.radius
+    shape: root.shape
     opacity: root._pulse
     fillColor: root.lit && !root.isActive && !root.look.showsHover ? root.hoverColor : root._clearActive ? Qt.alpha(root.look.fill, 0) : root.look.fill
     strokeColor: root._clearActive ? Qt.alpha(root.look.stroke, 0) : root.look.stroke
@@ -128,9 +140,16 @@ Item {
   }
 
   // What it shows, fading with an urgent one's pulse where nothing else
-  // carries its state
+  // carries its state, centred clear of its caps
   Item {
+    readonly property real _lead: root.room?.lead ?? 0
+    readonly property real _trail: root.room?.trail ?? 0
+
     anchors.fill: parent
+    anchors.leftMargin: root.isVertical ? 0 : _lead
+    anchors.rightMargin: root.isVertical ? 0 : _trail
+    anchors.topMargin: root.isVertical ? _lead : 0
+    anchors.bottomMargin: root.isVertical ? _trail : 0
     visible: root._drawsContent
     opacity: root._framed ? 1 : root._pulse
 

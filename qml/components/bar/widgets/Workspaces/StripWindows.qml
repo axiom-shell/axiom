@@ -4,12 +4,16 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.services.system
+import qs.components.methods
 
 // A strip workspace's windows as bar cells (WorkspaceCell), in strip order
 // (CompositorManager.stripWindows), each showing its app icon: the one
 // focused last in the active look, the rest as occupied. Click one to focus
 // it. Laid out along the bar; the strip switchers put it after the active
-// workspace's cell, the strip popout after every workspace's.
+// workspace's cell, the strip popout after every workspace's. As segments
+// of the bar's run (`run`: the widget's Background off) each takes the
+// bar's widget shape and room for its caps, cells `chainFirst` on of the
+// widget's `chainCount`.
 Grid {
   id: root
 
@@ -34,6 +38,19 @@ Grid {
   // box (`solidBoxes`), as in the workspace row
   property real cellSpacing: barConfig.innerGap
   property bool solid: false
+  // The widget's place in the bar's run, its cells being segments of it
+  // (Workspaces' `_run`), else null; where its cells start among the
+  // widget's chained ones, and how many those are
+  property var run: null
+  property int chainFirst: 0
+  property int chainCount: addresses.length
+  // Between its cells: chained in a powerline as segments
+  readonly property real _gap: run ? BarShapes.cellGap(barConfig.widgetGrouping, cellSpacing) : cellSpacing
+  // As segments of a merged run, the cells draw a box of their own there
+  // only solid or split (BarWidgetStyle.cell)
+  // In a merged run, the run draws their box (BarsConfig.cellColors' group)
+  readonly property bool _inGroup: run !== null && barConfig.widgetGrouping === "merged"
+  readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid)
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the cells are only rebuilt when the windows or their
@@ -47,7 +64,7 @@ Grid {
   flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
   rows: root.isVertical ? Math.max(1, root.addresses.length) : 1
   columns: root.isVertical ? 1 : Math.max(1, root.addresses.length)
-  spacing: root.cellSpacing
+  spacing: root._gap
 
   Repeater {
     model: root.addresses.length
@@ -62,11 +79,17 @@ Grid {
       isActive: address === root.focused
       look: BarsConfig.cellColors(root.barConfig, isActive ? root.activeColor : root.occupiedColor, root.textColor, isActive ? "active" : "occupied", {
         "hovered": windowCell.lit,
-        "solid": root.solid
+        "solid": root.solid,
+        "group": root._inGroup
       })
       solid: root.solid
       thickness: root.thickness
-      length: root.cellLength
+      inRun: root._inGroup
+      // Drawn over the next, which may start beneath it (BarShapes.cellSegment)
+      z: -index
+      shape: root.run ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, BarWidgetStyle.cellOpaque(root.barConfig.widgetStyle, root.solid), root._gap, root.chainFirst + index, root.chainCount) : null
+      room: root.run ? BarShapes.cellRoom(root.barConfig, root.run, root._boxedInRun, root.chainFirst + index, root.chainCount) : null
+      length: root.cellLength + (windowCell.room ? windowCell.room.lead + windowCell.room.trail : 0)
       radius: root.radius
       hoverColor: root.hoverColor
       iconPath: window ? AppIconManager.resolveWindowIcon(window.appId, window.title) : ""

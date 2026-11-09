@@ -14,7 +14,9 @@ import qs.components.methods
 // with a short line in the active color under it (toward the windows on a
 // vertical bar), the rest dimmed. Each icon lights its own room in the
 // hover color under the pointer (the box itself never lights); click one
-// to focus its window.
+// to focus its window. As a segment of the bar's run (`run`: the widget's
+// Background off) the box takes the bar's widget shape, its icons kept
+// clear of its caps, cell `chainFirst` of the widget's `chainCount`.
 Item {
   id: root
 
@@ -39,6 +41,19 @@ Item {
   // filled one (`solidBoxes`)
   property real cellSpacing: barConfig.innerGap
   property bool solid: false
+  // The widget's place in the bar's run, its cells being segments of it
+  // (Workspaces' `_run`), else null; where its box sits among the widget's
+  // chained cells, and how many those are
+  property var run: null
+  property int chainFirst: 0
+  property int chainCount: 1
+  // As segments of a merged run, a box of its own there only solid or
+  // split (BarWidgetStyle.cell)
+  // In a merged run, the run draws their box (BarsConfig.cellColors' group)
+  readonly property bool _inGroup: run !== null && barConfig.widgetGrouping === "merged"
+  readonly property bool _boxedInRun: BarWidgetStyle.cellBoxedInRun(barConfig.widgetStyle, solid)
+  readonly property var _room: run ? BarShapes.cellRoom(barConfig, run, _boxedInRun, chainFirst, chainCount) : null
+  readonly property real _lead: _room?.lead ?? 0
 
   readonly property var windows: CompositorManager.stripWindows(root.workspaceId, root.stripVertical)
   // A string, so the icons are only rebuilt when the windows or their
@@ -46,7 +61,7 @@ Item {
   readonly property string _key: root.windows.map(w => w.id).join(",")
   readonly property var addresses: root._key === "" ? [] : root._key.split(",")
   readonly property string focused: CompositorManager.lastFocused(root.windows)?.id ?? ""
-  readonly property real _along: root.addresses.length > 0 ? root.addresses.length * root.cellLength + (root.addresses.length - 1) * root.cellSpacing : 0
+  readonly property real _along: root.addresses.length > 0 ? root.addresses.length * root.cellLength + (root.addresses.length - 1) * root.cellSpacing + root._lead + (root._room?.trail ?? 0) : 0
 
   // Nothing (not even a gap beside it) on an empty workspace
   visible: root.addresses.length > 0
@@ -61,18 +76,24 @@ Item {
     barConfig: root.barConfig
     isActive: false
     look: BarsConfig.cellColors(root.barConfig, root.occupiedColor, root.textColor, "occupied", {
-      "solid": root.solid
+      "solid": root.solid,
+      "group": root._inGroup
     })
     solid: root.solid
     thickness: root.thickness
     length: root._along
+    inRun: root._inGroup
+    shape: root.run ? BarShapes.cellShape(root.barConfig, root.run, root._boxedInRun, false, root.cellSpacing, root.chainFirst, root.chainCount) : null
     radius: root.radius
     hoverColor: root.hoverColor
     hitArea: root.hitArea
     animated: root.animated
   }
 
+  // Clear of its caps
   Grid {
+    x: root.isVertical ? 0 : root._lead
+    y: root.isVertical ? root._lead : 0
     flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
     rows: root.isVertical ? Math.max(1, root.addresses.length) : 1
     columns: root.isVertical ? 1 : Math.max(1, root.addresses.length)

@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 import qs.components.hosts.popout
 
 // The standard layout's switcher: workspaces 1..count in a row (horizontal
@@ -27,6 +28,12 @@ Item {
   property var properties
   // Room kept to the widget's background across the bar
   property real inset: 0
+  // Its place in the bar's run, its cells being segments of it (the
+  // widget's Background off: Workspaces' `_run`), else null
+  property var run: null
+  // The cells chained in it: the row's, then the strip's windows'
+  readonly property int _rowCells: activeStrip.stripOnly ? 0 : root.ids.length
+  readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0)
 
   readonly property bool isVertical: barConfig.vertical
   // A cell's thickness across the bar, and its corners within the
@@ -112,10 +119,13 @@ Item {
     // it 1 by 1
     rows: !root.isVertical && columns === -1 ? 1 : -1
     columns: root.isVertical && rows === -1 ? 1 : -1
-    spacing: root.barConfig.innerGap
+    // A powerline's segments chain on into the strip
+    spacing: root.run ? BarShapes.cellGap(root.barConfig.widgetGrouping, root.barConfig.innerGap) : root.barConfig.innerGap
 
     WorkspaceCellRow {
       id: cellRow
+      // Over the strip, whose first segment may start beneath its last
+      z: 1
       visible: !activeStrip.stripOnly
       barConfig: root.barConfig
       properties: root.properties
@@ -135,6 +145,8 @@ Item {
       barSpotOf: root.barSpotOf
       hoverColor: root.hoverColor
       activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      run: root.run
+      chainCount: root._chainCells
     }
 
     ActiveStrip {
@@ -154,6 +166,9 @@ Item {
       cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing)
       solid: root.properties.solidBoxes
       hitArea: root.hitArea
+      run: root.run
+      chainFirst: root._rowCells
+      chainCount: root._chainCells
     }
   }
 

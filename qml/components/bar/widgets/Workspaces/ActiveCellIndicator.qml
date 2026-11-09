@@ -13,7 +13,9 @@ import qs.components.methods
 // length (WorkspaceCells.startOf), and as long as that cell widened. It
 // fills the row, which clips it: a step
 // past one end (`expectWrap`) leaves that end and comes in at the other
-// rather than sliding back across.
+// rather than sliding back across. As a segment of the bar's run (the
+// widget's Background off) it takes the active cell's shape (`shape`), and
+// an Auto color its slice of the bar's gradient (`slice`).
 Item {
   id: root
 
@@ -33,6 +35,12 @@ Item {
   property real radius: 0
   // `solidBoxes`: a filled box on every bar style (`look` is the solid one)
   property bool solid: false
+  // The active cell's shape as a segment of the bar's run
+  // (BarShapes.cellShape), or null
+  property var shape: null
+  // Its slice of the bar's gradient where it rests, for the part of its
+  // box `look.gradient` names, or null
+  property var slice: null
 
   readonly property bool isVertical: barConfig.vertical
   readonly property bool boxed: barConfig.widgetBoxed || solid
@@ -164,8 +172,11 @@ Item {
       visible: root.boxed
       barConfig: root.barConfig
       radius: root.radius
+      shape: root.shape
       fillColor: root.look.fill
       strokeColor: root.look.stroke
+      fillSlice: root.look.gradient?.part === "fill" ? root.slice : null
+      strokeSlice: root.look.gradient?.part === "stroke" ? root.slice : null
       animated: true
     }
 

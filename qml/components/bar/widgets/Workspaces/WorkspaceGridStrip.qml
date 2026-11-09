@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 import qs.components.hosts.popout
 
 // The grid layout's switcher: this monitor's columns × rows workspaces, of
@@ -27,6 +28,11 @@ Item {
   property var properties
   // Room kept to the widget's background across the bar
   property real inset: 0
+  // Its place in the bar's run, its cells being segments of it (the
+  // widget's Background off: Workspaces' `_run`), else null
+  property var run: null
+  // The strip's windows chained after a row's cells
+  readonly property int _stripCells: activeStrip.visible ? activeStrip.cells : 0
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -60,8 +66,9 @@ Item {
   // within the background's
   readonly property real cell: root.barConfig.thickness - root.inset * 2
   readonly property real cellRadius: BarsConfig.cellRadius(root.barConfig, root.cell, root.inset)
-  // Between the row and the strip after it
-  readonly property real spacing: root.barConfig.innerGap
+  // Between the row and the strip after it (a powerline's segments chain
+  // on into it)
+  readonly property real spacing: root.run ? BarShapes.cellGap(root.barConfig.widgetGrouping, root.barConfig.innerGap) : root.barConfig.innerGap
   // Along the bar: square, or narrower for dots or nothing straight on the bar
   readonly property real cellLength: root.barConfig.widgetBoxed || root.properties.solidBoxes || root.properties.labels === "numbers" || root.properties.showAppIcons ? root.cell : Math.round(root.cell * 0.6)
   // Cells the bar shows: a row, or a column on a vertical bar
@@ -120,8 +127,10 @@ Item {
     columns: root.isVertical ? 1 : shown
     spacing: root.spacing
 
-    // The active row (or column) of the grid
+    // The active row (or column) of the grid, over the strip, whose first
+    // segment may start beneath its last
     CrossFade {
+      z: 1
       visible: !activeStrip.stripOnly
       value: root.activeLine
       delegate: shownLine
@@ -144,6 +153,9 @@ Item {
       cellSpacing: BarsConfig.workspaceCellSpacing(root.barConfig, root.properties.spacing)
       solid: root.properties.solidBoxes
       hitArea: root.hitArea
+      run: root.run
+      chainFirst: activeStrip.stripOnly ? 0 : root.lineIds(root.activeLine, root.activeId).length
+      chainCount: chainFirst + root._stripCells
     }
   }
 
@@ -186,6 +198,8 @@ Item {
       barSpotOf: root.barSpotOf
       hoverColor: root.hoverColor
       activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
+      run: root.run
+      chainCount: line.ids.length + root._stripCells
       // The active arrow takes the active cell's place
       glyphOf: (id, active) => active && root.properties.showActiveIcon ? root.positionGlyph(line.value, root.isVertical ? root.columns : root.rows) : ""
 
