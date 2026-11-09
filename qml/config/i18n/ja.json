@@ -4212,6 +4212,12 @@
     "App icon": "",
     "The focused window's app icon in place of the icon.": "",
     "Beside the bell. The count as the label hides the badge.": "",
-    "Last app": ""
+    "Last app": "",
+    "Head icon": "",
+    "Head": "",
+    "Drawn before the time; a split bar sets it apart as the icon part.": "",
+    "Drawn before the items; a split bar sets it apart as the icon part. Empty shows none.": "",
+    "Active workspace": "",
+    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part.": ""
   }
 }

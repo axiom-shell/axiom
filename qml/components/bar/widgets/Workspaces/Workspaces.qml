@@ -16,7 +16,9 @@ import qs.components.bar.look
 // (`segmented`), each in the bar's widget shape, chaining on in a powerline
 // and sitting in a merged run as widgets do (BarCells.cellShape). Without
 // a box the cells sit straight on the bar, each underlined itself for
-// underline.
+// underline. A head (`lead`: an icon, or the active workspace's label as
+// its cell shows it) before the cells, in their box, is its icon part on a
+// split bar (SplitLead); with no box (`segmented`) it has none.
 BarWidget {
   id: root
 
@@ -56,12 +58,47 @@ BarWidget {
   // Its box; an underline is each cell's own
   accentField: boxed ? "backgroundColor" : ""
 
-  implicitWidth: loader.implicitWidth + (isVertical ? 0 : inset * 2)
-  implicitHeight: loader.implicitHeight + (isVertical ? inset * 2 : 0)
+  // The head's room before the cells: in from the box's edge by the bar's
+  // padding, as an icon is, rather than the cells' inset
+  readonly property real _leadRoom: lead.shown ? barConfig.innerPadding - inset + lead.length : 0
+  readonly property real _cellsLength: isVertical ? loader.implicitHeight : loader.implicitWidth
+  // Where the cells' room starts (the inset before them), centred in the
+  // widget with the head's
+  readonly property real _start: Math.round(((isVertical ? height : width) - _leadRoom - _cellsLength) / 2)
+
+  implicitWidth: loader.implicitWidth + (isVertical ? 0 : inset * 2 + _leadRoom)
+  implicitHeight: loader.implicitHeight + (isVertical ? inset * 2 + _leadRoom : 0)
+
+  splits: lead.splits
+  splitAt: lead.splitAt
+  splitPart: lead.splitPart
+
+  // The monitor's active workspace, as its cell shows it (no app icons):
+  // a label's icon or text, the compositor's name, else its number
+  readonly property var _monitor: CompositorManager.outputFor(root.screen)
+  readonly property var _active: root.properties.lead === "active" ? activeContents.of(root._monitor?.activeWorkspaceId ?? -1, "", false) : null
+  CellContents {
+    id: activeContents
+    barConfig: root.barConfig
+    properties: root.properties
+    base: CompositorManager.workspaceBase(root._monitor?.name ?? "")
+    thickness: root.barConfig.thickness
+    restLength: root.barConfig.thickness
+  }
+
+  SplitLead {
+    id: lead
+    barConfig: root.barConfig
+    start: root._start - root.inset + root.barConfig.innerPadding
+    icon: root.segmented ? "" : root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
+    text: root.segmented || !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
+    iconColor: root.colors.icon
+  }
 
   Loader {
     id: loader
-    anchors.centerIn: parent
+    x: root.isVertical ? Math.round((root.width - width) / 2) : root._start + root._leadRoom
+    y: root.isVertical ? root._start + root._leadRoom : Math.round((root.height - height) / 2)
     sourceComponent: CompositorManager.workspaceGrid ? gridStrip : strip
   }
 

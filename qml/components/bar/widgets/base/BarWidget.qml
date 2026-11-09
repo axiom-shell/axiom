@@ -74,12 +74,19 @@ Item {
   // widget's pill style)
   property real backgroundLevel: -1
   property color backgroundLevelColor: "transparent"
+  // On a split bar, a head (SplitLead) set apart from the rest as its icon
+  // part, and where (IconTextWidget's splits, splitAt, splitPart, which
+  // its host reads): its SplitLead's, passed on
+  property bool splits: false
+  property real splitAt: -1
+  property rect splitPart: Qt.rect(0, 0, 0, 0)
 
   readonly property WidgetLook _look: WidgetLook {
     id: look
     barConfig: root.barConfig
     properties: root.properties
     length: root.isVertical ? root.height : root.width
+    splits: root.splits
     hovered: root.fillsOnHover && (root.hitArea?.hovered ?? false)
   }
 }

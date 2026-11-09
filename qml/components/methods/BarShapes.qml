@@ -62,6 +62,17 @@ QtObject {
     return icon === "badge" ? spacing + badgePad : padding * 2 + root.depth(cap, across);
   }
 
+  // A split widget's icon part, `head` long from `start` along it, and
+  // the gap of `room` after it: { at: the gap's middle along the bar,
+  // part: what the icon part holds, `size` across round `middle` }, in the
+  // widget's coordinates (BarWidgetHost.split)
+  function splitPart(vertical, start, head, room, middle, size) {
+    return {
+      "at": start + head + room / 2,
+      "part": vertical ? Qt.rect(middle - size / 2, start, size, head) : Qt.rect(start, middle - size / 2, head, size)
+    };
+  }
+
   // A run's own ends by `shape` (the look's: its name, and a slant's or
   // arrow's `ends`: shaped, pointed (an arrow's alone), rounded), [start,
   // end] (a lone widget's in separate)

@@ -4,6 +4,7 @@ import QtQuick
 
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 
 // An icon followed by a label, laid along the bar's main axis (the label is
 // rotated on a vertical bar, or upright under the icon with uprightLabel).
@@ -86,20 +87,22 @@ BaseWidget {
   // or a lead graphic, and a label
   readonly property bool splits: splitRoom >= 0 && _hasText && (_hasIcon || _leadRoom > 0)
   readonly property real _splitExtra: splits ? splitRoom - spacing : 0
-  // Where the middle of the gap between the two parts is along the bar,
-  // in the widget's coordinates (-1 when it doesn't split)
-  readonly property real splitAt: splits ? (isVertical ? run.y : run.x) + textSlot.start - splitRoom / 2 : -1
+  // Where the middle of the gap between the two parts is along the bar
+  // (splitAt, -1 when it doesn't split), and what the icon part holds
+  // (splitPart), in the widget's coordinates (BarShapes.splitPart)
+  readonly property var _splitPlace: {
+    if (!splits)
+      return null;
+    // Across, the icon's middle (the run's, with none), in the run's
+    // coordinates
+    const middle = _hasIcon ? (isVertical ? iconLabel.x + iconLabel.width / 2 : iconLabel.y + iconLabel.height / 2) : (isVertical ? run.width : run.height) / 2;
+    return BarShapes.splitPart(isVertical, isVertical ? run.y : run.x, textSlot.start - splitRoom, splitRoom, (isVertical ? run.x : run.y) + middle, fontSize * iconScale);
+  }
+  readonly property real splitAt: _splitPlace?.at ?? -1
   // What the icon part holds (the lead graphic and the icon) in the
   // widget's coordinates: along the bar from its start to the gap, across
   // it the icon's size round its middle (the run's, with none)
-  readonly property rect splitPart: {
-    if (!splits)
-      return Qt.rect(0, 0, 0, 0);
-    const along = textSlot.start - splitRoom;
-    const size = fontSize * iconScale;
-    const middle = _hasIcon ? (isVertical ? iconLabel.x + iconLabel.width / 2 : iconLabel.y + iconLabel.height / 2) : (isVertical ? run.width : run.height) / 2;
-    return isVertical ? Qt.rect(run.x + middle - size / 2, run.y, size, along) : Qt.rect(run.x, run.y + middle - size / 2, along, size);
-  }
+  readonly property rect splitPart: _splitPlace?.part ?? Qt.rect(0, 0, 0, 0)
   readonly property real _textLength: isVertical && uprightLabel ? textLabel.implicitHeight : Math.ceil(Math.max(textLabel.implicitWidth, steadyMetrics.advanceWidth, minimumMetrics.advanceWidth))
   readonly property real _naturalLength: _leadRoom + iconLength + _gap + _splitExtra + (_hasText ? _textLength : 0)
 
