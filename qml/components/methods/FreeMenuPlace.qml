@@ -94,10 +94,11 @@ QtObject {
   //                { screen, x, y, anchor }), or null
   //   screen       its screen's name
   //   anchor       its freeAnchor
+  //   draggable    its `draggable`
   // A drag wins, then a pop-out. Opened by a widget it goes to the
-  // widget. Else its session spot, while it's on its screen (dropped once
-  // that screen is gone or the menu moved) and its anchor is still the
-  // one it was dragged from (a changed freeAnchor drops it).
+  // widget. Else its session spot, while it's draggable, on its screen
+  // (dropped once that screen is gone or the menu moved) and its anchor
+  // is still the one it was dragged from (a changed freeAnchor drops it).
   function spot(p) {
     if (p.dragged)
       return {
@@ -112,7 +113,7 @@ QtObject {
     if (p.fromWidget)
       return null;
     const session = p.session ?? null;
-    if (!session || session.screen !== p.screen || session.anchor !== root.anchorKey(p.anchor))
+    if (!session || !p.draggable || session.screen !== p.screen || session.anchor !== root.anchorKey(p.anchor))
       return null;
     return {
       "x": session.x,

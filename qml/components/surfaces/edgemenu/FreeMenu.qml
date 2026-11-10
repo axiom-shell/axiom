@@ -7,6 +7,7 @@ import qs.config
 import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
+import qs.components.reusable
 import qs.components.hosts.popout
 
 // A free menu (placement `free`): a box of its own on no edge, in a
@@ -19,6 +20,10 @@ import qs.components.hosts.popout
 // EdgeSurface (SurfaceContext.free), with a submenu (SubmenuHost) for its
 // Submenu rows. Like the edge hosts it follows EdgeMenuManager
 // (EdgeMenuSync) and holds a PopoutClaim, ranked as it was opened.
+// With `draggable` on its box moves while dragged by its top padding (its
+// header); dropped, opened on its own, that spot is its session spot
+// (EdgeMenuManager.positions), where a bind or IPC opens it again until
+// logout. A right click there offers Reset position.
 //
 // Open/close and hover-loss dismissal are PopoutWrapperBase's, as for the
 // popouts.
@@ -65,10 +70,18 @@ PopoutWrapperBase {
   property var _opener: null
   property var _cursor: null
   property bool _locating: false
+  // Opened by a bar widget (its popout, a Button): it goes to the widget,
+  // and a drag of it is for the moment (FreeMenuPlace.keepsDrag)
+  property bool _fromWidget: false
+  // Where it was dragged to since it opened ({ x, y }, its box's top-left
+  // on the screen), else null
+  property var _dragged: null
   onCurrentDataChanged: {
     const data = root.currentData;
     if (!data)
       return;
+    root._dragged = null;
+    root._fromWidget = !!data.anchorItem;
     const rect = data.anchorItem?.screenRect?.() ?? null;
     root._opener = rect && rect.screen?.name === root.screen?.name ? {
       "x": rect.x,
@@ -78,7 +91,7 @@ PopoutWrapperBase {
       "edge": ScreenEdge.name(rect.edge)
     } : null;
     root._cursor = null;
-    root._locating = !root._opener && root.menu.freeAnchor.at === "cursor";
+    root._locating = !root._opener && !root.spot && root.menu.freeAnchor.at === "cursor";
     if (!root._locating)
       return;
     CompositorManager.withCursorPos(pos => {
@@ -92,6 +105,19 @@ PopoutWrapperBase {
     });
   }
 
+  // The spot it takes over its anchor: where it was dragged, else its
+  // session spot when opened on its own (FreeMenuPlace.spot)
+  readonly property var spot: FreeMenuPlace.spot({
+    "dragged": root._dragged,
+    "popOut": null,
+    "fromWidget": root._fromWidget,
+    "session": EdgeMenuManager.positions[root.menuId] ?? null,
+    "screen": root.screen?.name ?? "",
+    "anchor": root.menu.freeAnchor,
+    "draggable": root.menu.draggable
+  })
+  readonly property bool canDrag: FreeMenuPlace.canDrag(root.menu, false)
+
   // Where its box goes on the screen, and the edge it slides in from
   readonly property var place: FreeMenuPlace.place({
     "width": root.screen?.width ?? 0,
@@ -103,7 +129,8 @@ PopoutWrapperBase {
     },
     "opener": root._opener,
     "anchor": root.menu.freeAnchor,
-    "cursor": root._cursor
+    "cursor": root._cursor,
+    "spot": root.spot
   })
   // ...that edge, kept once shown: its box growing past its middle
   // mustn't turn its shape round
@@ -251,9 +278,14 @@ PopoutWrapperBase {
     // StyledComboEntry opens its list inline (BarPopouts' room is a number)
     readonly property var popoutRoom: null
 
-    // Input on the box alone, once it's granted its place
+    // Input on the box alone, once it's granted its place (and its
+    // header's menu while that's open)
     mask: Region {
       item: root.claimed && !menuSlot.idle ? boxArea : null
+      regions: [panel.headerMenuArea]
+    }
+    property Region headerMenuArea: Region {
+      item: headerMenu.visible ? headerMenu.background : null
     }
 
     // The box, in the window (as drawn, a submenu's stretch included)
@@ -263,6 +295,17 @@ PopoutWrapperBase {
       y: surface.y + surface.boxRect.y
       width: surface.boxRect.width
       height: surface.boxRect.height
+    }
+
+    StyledContextMenu {
+      id: headerMenu
+      parent: boxArea
+      onTriggered: id => {
+        if (id !== "reset")
+          return;
+        EdgeMenuManager.resetPosition(root.menuId);
+        root._dragged = null;
+      }
     }
 
     // Unpinned with close.onOutsideClick: a click outside it (and its
@@ -320,6 +363,68 @@ PopoutWrapperBase {
         origin.y: surface.boxRect.y + surface.boxRect.height / 2
         xScale: root._scale
         yScale: root._scale
+      }
+
+      // Its header, the box's top padding: dragged (`draggable`), it moves
+      // the box; dropped, a free menu opened on its own keeps the spot for
+      // the session (EdgeMenuManager.storePosition). Nothing is previewed
+      // meanwhile: the box just moves (clamped, FreeMenuPlace)
+      DragArea {
+        id: header
+        // In the surface, so hovering it is hovering the box (keepAlive)
+        z: 3
+        y: root._stretchTop
+        width: root.boxWidth
+        height: root.contentPadding
+        visible: root.canDrag && root.claimed && root.isOpen
+        threshold: 2
+        // The box's place and the pointer in the window (the screen) as
+        // the drag began
+        property point _from
+        property point _press
+        onDragStarted: (x, y) => {
+          header._from = Qt.point(root.place.x, root.place.y);
+          header._press = header.mapToItem(null, x, y);
+        }
+        onDragMoved: (x, y) => {
+          const at = header.mapToItem(null, x, y);
+          root._dragged = {
+            "x": header._from.x + at.x - header._press.x,
+            "y": header._from.y + at.y - header._press.y
+          };
+        }
+        onDropped: {
+          if (FreeMenuPlace.keepsDrag({
+            "free": EdgeMenusConfig.isFree(root.menu),
+            "poppedOut": false,
+            "fromWidget": root._fromWidget
+          }))
+            EdgeMenuManager.storePosition(root.menuId, {
+              "screen": root.screen?.name ?? "",
+              "x": root.place.x,
+              "y": root.place.y
+            });
+        }
+      }
+
+      // A right click on the header: back to its freeAnchor (a free menu's
+      // session spot forgotten)
+      MouseArea {
+        z: 2
+        anchors.fill: header
+        visible: header.visible && EdgeMenusConfig.isFree(root.menu)
+        acceptedButtons: Qt.RightButton
+        onClicked: mouse => {
+          headerMenu.items = [
+            {
+              "id": "reset",
+              "text": I18n.tr("Reset position"),
+              "icon": "restart_alt",
+              "enabled": EdgeMenuManager.positions[root.menuId] !== undefined || root._dragged !== null
+            }
+          ];
+          headerMenu.openAt(header, mouse.x, mouse.y);
+        }
       }
 
       Loader {

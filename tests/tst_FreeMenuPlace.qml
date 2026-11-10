@@ -221,7 +221,8 @@ TestCase {
         "at": "centre",
         "x": 50,
         "y": 50
-      }
+      },
+      "draggable": true
     }, extra);
   }
 
@@ -288,6 +289,10 @@ TestCase {
         "y": 50
       }
     })), null, "its freeAnchor changed");
+    compare(FreeMenuPlace.spot(spotParams({
+      "session": session({}),
+      "draggable": false
+    })), null, "no longer draggable");
   }
 
   function test_keepsDrag() {

@@ -95,6 +95,48 @@ Singleton {
 
   readonly property var _state: StateManager.createStateHandler("edgemenus")
 
+  // Where each free menu was dragged to, for this login session: { id:
+  // { screen, x, y (its box's top-left in px on that screen), anchor (the
+  // freeAnchor it was dragged from, FreeMenuPlace.anchorKey) } }. A bind,
+  // IPC or a pin reopening opens it there instead of at its freeAnchor
+  // (FreeMenuPlace.spot), until its freeAnchor changes, its screen goes,
+  // or it's reset. Kept in $XDG_RUNTIME_DIR (StateManager's session
+  // handler): through qs reloads and restarts, gone at logout; never in
+  // config.
+  property var positions: ({})
+  readonly property var _session: StateManager.createSessionHandler("menu-positions")
+  Component.onCompleted: {
+    const saved = root._session.load({}).positions;
+    root.positions = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  }
+
+  // A free menu's box was dropped at `spot` ({ screen, x, y }), opened on
+  // its own (FreeMenuPlace.keepsDrag): it opens there this session
+  function storePosition(id, spot) {
+    const menu = EdgeMenusConfig.menuById(id);
+    if (!EdgeMenusConfig.isFree(menu) || !spot)
+      return;
+    root._savePositions(Utils.withEntry(root.positions, id, {
+      "screen": spot.screen,
+      "x": Math.round(spot.x),
+      "y": Math.round(spot.y),
+      "anchor": FreeMenuPlace.anchorKey(menu.freeAnchor)
+    }));
+  }
+
+  // Back to its freeAnchor (the menu's Reset position, IPC resetPosition)
+  function resetPosition(id) {
+    if (root.positions[id] !== undefined)
+      root._savePositions(Utils.withEntry(root.positions, id, undefined));
+  }
+
+  function _savePositions(positions) {
+    root.positions = positions;
+    root._session.save({
+      "positions": positions
+    });
+  }
+
   function _parse(json) {
     try {
       return JSON.parse(json).reduce((map, id) => {
@@ -235,6 +277,12 @@ Singleton {
         root.close(id);
       else
         ipc.open(id);
+    }
+
+    // A free menu opened by a bind or a script goes back to its freeAnchor
+    // (it was dragged elsewhere this session)
+    function resetPosition(id: string): void {
+      root.resetPosition(id);
     }
 
     function pin(id: string): void {
