@@ -332,7 +332,7 @@ FieldGroup {
   // Puts the button's label back a moment after a copy (one shot)
   Timer {
     id: copiedReset
-    interval: 2000 // behaviour timing: how long "Copied" shows
+    interval: 2000 // how long "Copied" shows
     onTriggered: root.copied = false
   }
 }

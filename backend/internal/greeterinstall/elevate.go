@@ -110,8 +110,7 @@ func watchAuthorized(pid int, pkexec string, authorized func(), done <-chan stru
 
 // firstProgram is what pkexec runs before root has a helper of its own
 // (or, for main, while its helper is older than main's builds): a binary
-// root owns, or one checked against its release's SHA256SUMS (maintainer,
-// 2026-10-27: "root owned checksum verified binary"). A package's is
+// root owns, or one checked against its release's SHA256SUMS. A package's is
 // root's own; local reuses req.Binary, the one this user's daemon runs,
 // unchecked. git's is the channel's official build (the newest release's,
 // or main's newest, the edge prerelease's: "Allow via CI build

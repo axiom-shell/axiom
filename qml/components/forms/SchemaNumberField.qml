@@ -5,7 +5,6 @@ import qs.config
 import qs.services.ui
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
 // An integer setting: a slider with a value box when the range is a
 // comfortable drag (7 to 200 steps), otherwise a compact stepper beside the
 // label, with ±10 buttons when the range is wide. The value box takes typed

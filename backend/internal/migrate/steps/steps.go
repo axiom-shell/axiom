@@ -27,8 +27,8 @@ type Step struct {
 // all are the steps in order, the first at convert.Version + 1. The
 // schema's `version` default (config/schema/index.yaml) is the last one's.
 var all = []Step{
-	// v77: the clipboard history is the daemon's own, images included
-	// (roadmap stage 2): cliphist is no longer a source to pick
+	// v77: the clipboard history is the daemon's own, images included:
+	// cliphist is no longer a source to pick
 	{Version: 77, Run: func(cfg *jsonx.Object) []string {
 		clip := object(cfg, "Launcher", "providers", "clipboard")
 		if clip == nil {
@@ -40,7 +40,7 @@ var all = []Step{
 		clip.Delete("source")
 		return []string{"Launcher.providers.clipboard.source removed: axiom keeps the clipboard history itself, images included"}
 	}},
-	// v78: idle is the daemon's (roadmap stage 2): the managed autostart's
+	// v78: idle is the daemon's: the managed autostart's
 	// default hypridle entry goes, as it left the default
 	{Version: 78, Run: func(cfg *jsonx.Object) []string {
 		session := object(cfg, "Session")

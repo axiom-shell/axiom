@@ -163,7 +163,7 @@ var (
 
 // hostnames is the static hostname a name the user typed becomes, and the
 // pretty one to keep beside it ("" when the static one says it all):
-// "Travis's Laptop" → "traviss-laptop", "Travis's Laptop".
+// "Alex's Laptop" → "alexs-laptop", "Alex's Laptop".
 func hostnames(name string) (static, pretty string, err error) {
 	name = strings.TrimSpace(name)
 	if name == "" {

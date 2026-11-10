@@ -387,8 +387,8 @@ PopoutWrapperBase {
     readonly property real alongShift: (root.barConfig.vertical ? barOrigin.y - windowOrigin.y : barOrigin.x - windowOrigin.x)
 
     // Content dimensions
-    readonly property int contentWidth: root.currentItem?.implicitWidth ?? 200 // fixed px: a placeholder until content loads
-    readonly property int contentHeight: root.currentItem?.implicitHeight ?? 100 // fixed px: a placeholder until content loads
+    readonly property int contentWidth: root.currentItem?.implicitWidth ?? 200 // a placeholder until content loads
+    readonly property int contentHeight: root.currentItem?.implicitHeight ?? 100 // a placeholder until content loads
 
     // Along the bar, in bar-window coordinates: the box centred on the
     // anchor (on a vertical bar, as it opened: see Growing while open),

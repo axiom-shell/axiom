@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.methods
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
 // Shared "pick a type to add" popup (bar widgets, an OSD's systems, ...),
 // with a search field: typing filters the types as the editors' libraries
 // do (LibraryOrder.filtered: by label, type, group heading or keyword),

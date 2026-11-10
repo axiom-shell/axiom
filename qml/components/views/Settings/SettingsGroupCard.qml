@@ -6,7 +6,6 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 
-// i18n: keys from the schema (titles, descriptions)
 // One group of settings (a section's own fields, or one nested object) as
 // a card: title, help text, then its rows. Clicking the header folds it
 // (remembered by SettingsManager); search results are always unfolded.

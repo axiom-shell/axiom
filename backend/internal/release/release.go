@@ -12,7 +12,7 @@ import (
 
 // Official is where the official binaries are downloaded from
 // (<Official>/<tag>/<file>): the official repository's releases, whatever
-// remote a clone follows (maintainer, 2026-10-27: "pin official repo"), so
+// remote a clone follows, so
 // the sums prove a binary is an official build.
 const Official = "https://github.com/axiom-shell/axiom/releases/download"
 

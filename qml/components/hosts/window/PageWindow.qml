@@ -30,8 +30,8 @@ FloatingWindow {
 
   title: PageWindowManager.titleOf(root.type)
   color: Theme.background
-  implicitWidth: root._kept ? root._kept[0] : Math.round(Math.min((root.screen?.width ?? 1920) * 0.75, pageGrid.drawnUnit * 4.2 + root._padding * 2)) // fixed px: a stand-in screen until it has one
-  implicitHeight: root._kept ? root._kept[1] : Math.round(Math.min((root.screen?.height ?? 1080) * 0.85, pageGrid.drawnUnit * 2 + pageGrid.gap + root._headerHeight + root._padding * 3)) // fixed px: a stand-in screen until it has one
+  implicitWidth: root._kept ? root._kept[0] : Math.round(Math.min((root.screen?.width ?? 1920) * 0.75, pageGrid.drawnUnit * 4.2 + root._padding * 2)) // a stand-in screen until it has one
+  implicitHeight: root._kept ? root._kept[1] : Math.round(Math.min((root.screen?.height ?? 1080) * 0.85, pageGrid.drawnUnit * 2 + pageGrid.gap + root._headerHeight + root._padding * 3)) // a stand-in screen until it has one
   minimumSize: Qt.size(Math.round(pageGrid.drawnUnit * 1.6), Math.round(pageGrid.drawnUnit + root._headerHeight + root._padding * 3))
 
   onWidthChanged: root._keep()

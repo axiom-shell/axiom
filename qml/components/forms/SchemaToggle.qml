@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
 // A setting of two or three values (`x-control: toggle`): its label and
 // description, a StyledToggle with the options at the row's right end,
 // centred on them; with two, a click anywhere on the row flips it

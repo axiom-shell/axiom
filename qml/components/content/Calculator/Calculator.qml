@@ -129,7 +129,7 @@ Panel {
     Layout.fillHeight: true
     Layout.columnSpan: modelData.span ?? 1
     Layout.preferredWidth: (modelData.span ?? 1) * 10
-    Layout.preferredHeight: 10 // fixed px: a layout weight, not a size
+    Layout.preferredHeight: 10 // a layout weight, not a size
     radius: Widget.radius
     color: key.kind === "equals" ? (key.hot ? Qt.lighter(Theme.accent, 1.1) : Theme.accent) : key.kind === "op" ? Qt.alpha(Theme.accent, key.hot ? 0.3 : 0.16) : key.hot ? Theme.backgroundHighlight : Theme.backgroundAlt
     scale: tap.pressed ? 0.94 : 1
@@ -336,7 +336,7 @@ Panel {
         StyledTextEntry {
           id: field
           Layout.fillWidth: true
-          Layout.preferredWidth: root.strip ? 3 : 1 // fixed px: layout weights, not sizes
+          Layout.preferredWidth: root.strip ? 3 : 1 // layout weights, not sizes
           Layout.preferredHeight: Widget.height
           placeholderText: I18n.tr("e.g. 5 km to mi")
           input.wrapMode: Text.NoWrap

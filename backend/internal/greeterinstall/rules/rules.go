@@ -34,8 +34,8 @@ const Session = "/usr/share/axiom-greeter/data/greeter/greeter-session.sh"
 const PackagePath = "/usr/share/axiom-shell"
 
 // Repository is the official repository, the git source's code: root
-// fetches only it, never the clone's remote (maintainer, 2026-10-27:
-// "Pin mirror too"; forks use the local source), and its releases'
+// fetches only it, never the clone's remote (forks use the
+// local source), and its releases'
 // binaries (release.Official).
 const Repository = "https://github.com/axiom-shell/axiom.git"
 

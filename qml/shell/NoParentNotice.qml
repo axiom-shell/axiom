@@ -41,8 +41,8 @@ Scope {
       margins {
         top: 24
       }
-      implicitWidth: Math.min(modelData.width - 48, column.implicitWidth + 48) // fixed px: no config to size by without axiom
-      implicitHeight: column.implicitHeight + 32 // fixed px: no config to size by without axiom
+      implicitWidth: Math.min(modelData.width - 48, column.implicitWidth + 48) // no config to size by without axiom
+      implicitHeight: column.implicitHeight + 32 // no config to size by without axiom
       color: "transparent"
       exclusionMode: ExclusionMode.Ignore
       WlrLayershell.namespace: "axiom-notice"
@@ -50,7 +50,7 @@ Scope {
 
       Rectangle {
         anchors.fill: parent
-        radius: 8 // fixed px: no config to size by without axiom
+        radius: 8 // no config to size by without axiom
         color: "#282828"
         border.width: 1
         border.color: "#fb4934"
@@ -58,23 +58,23 @@ Scope {
         Column {
           id: column
           anchors.centerIn: parent
-          spacing: 8 // fixed px: no config to size by without axiom
+          spacing: 8 // no config to size by without axiom
 
           Text {
             color: "#ebdbb2"
-            font.pixelSize: 16 // fixed px: no config to size by without axiom
+            font.pixelSize: 16 // no config to size by without axiom
             font.bold: true
             text: root.reason ? "This axiom binary was built for other shell files" : "axiom isn't running this shell"
           }
           Text {
             color: "#d5c4a1"
-            font.pixelSize: 14 // fixed px: no config to size by without axiom
+            font.pixelSize: 14 // no config to size by without axiom
             text: root.reason ? root.reason + "\nUpdate axiom (or run the binary built from this checkout)." : "The shell is started by the axiom binary. Start it with:"
           }
           Text {
             visible: !root.reason
             color: "#fabd2f"
-            font.pixelSize: 14 // fixed px: no config to size by without axiom
+            font.pixelSize: 14 // no config to size by without axiom
             font.family: "monospace"
             text: root._line
           }

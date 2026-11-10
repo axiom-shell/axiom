@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (titles, descriptions)
 // A form field's label with its description right under it, read as one
 // unit above (or beside) the field's control
 ColumnLayout {

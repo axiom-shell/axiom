@@ -12,7 +12,7 @@ import (
 )
 
 // Pipeline is what the config store does to a file it reads and to a
-// config it is asked to write: format 2 (docs/dev/core/config-v2.md),
+// config it is asked to write: format 2 (docs/dev/core/config-manager.md),
 // against the tree's schema. It reads format 1 too: such a file goes
 // through the frozen migrations to version 75 (against the frozen v75
 // schema), is converted, then loads as format 2 (Loaded.FromFormat1). A

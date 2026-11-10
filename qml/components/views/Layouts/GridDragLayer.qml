@@ -6,7 +6,6 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 
-// i18n: keys from the schema (module and view labels)
 // The layouts editor's whole area: a DragLayer whose ghost is drawn above
 // every panel, so a module can be carried from the library onto the
 // canvas, a page or menu up or down its list.

@@ -163,7 +163,7 @@ Singleton {
 
   // A resize drag reports every step: written once it settles
   property Timer _saveSizes: Timer {
-    interval: 1000 // behaviour timing: a resize settling
+    interval: 1000 // a resize settling
     onTriggered: root._state.save({
       "sizes": root._sizes
     })

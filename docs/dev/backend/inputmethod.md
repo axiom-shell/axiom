@@ -45,4 +45,4 @@ The service remembers the list it pushed last and the framework it went to (in m
 
 ### Testing
 - `inputmethod_test.go` runs a fake fcitx5 (Controller1 and its item on a second connection, which, like a real 5.1, tells of a group edit only through its menu's `LayoutUpdated`; a tray watcher listing it, for the poll's fallback) and a fake ibus-daemon (on a second `dbustest` bus) through the service.
-- Never push a list or `SetConfig` to the live fcitx5 or ibus: it rewrites the user's profile. Reading is safe (`busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 FullInputMethodGroupInfo s Default`).
+- Pushing a list or `SetConfig` to your live fcitx5 or ibus rewrites your profile, so try it on a scratch D-Bus session. Reading is safe (`busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 FullInputMethodGroupInfo s Default`).

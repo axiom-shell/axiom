@@ -38,8 +38,7 @@ jobs:
         run: pacman -Syu --noconfirm --needed git python go
 
       # The org only allows its own SHA-pinned actions, so check out with plain
-      # git. Whole history (a few MB): the doc drift counts commits since each
-      # doc changed. The workspace is mounted from the runner, owned by
+      # git. The workspace is mounted from the runner, owned by
       # another user than the container's root, which git refuses without
       # safe.directory
       - name: Checkout
@@ -50,7 +49,7 @@ jobs:
           git init -q .
           git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
           auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
-          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q origin "$GITHUB_SHA"
+          git -c http.extraheader="AUTHORIZATION: basic $auth" fetch -q --depth=1 origin "$GITHUB_SHA"
           git checkout -q FETCH_HEAD
           python3 --version
           echo "GO_VERSION=$(go env GOVERSION)" >> "$GITHUB_ENV"
@@ -80,21 +79,6 @@ jobs:
       # each job runs its part of scripts/check_all.sh, the one list of checks
       - name: Checks (scripts/check_all.sh checks)
         run: scripts/check_all.sh --ci checks
-
-      # The job's summary page: each check's result and findings as tables,
-      # the docs describing what a pull request changes, and doc drift.
-      # Runs whatever failed above; reports only (the steps fail)
-      - name: Summary
-        if: ${{ !cancelled() }}
-        env:
-          EVENT: ${{ github.event_name }}
-        run: |
-          if [ "$EVENT" = pull_request ]; then
-            # A pull request's HEAD is its merge commit: HEAD^1 is the base
-            python3 scripts/ci_summary.py --changed-from HEAD^1 >> "$GITHUB_STEP_SUMMARY"
-          else
-            python3 scripts/ci_summary.py >> "$GITHUB_STEP_SUMMARY"
-          fi
 
   # Qt tooling, on Arch so qmllint and the tests see the same Qt and
   # Quickshell (with its type info) as the shell does. A container image is
@@ -235,6 +219,6 @@ jobs:
 
       # The generated files the script tests read, shellcheck, the script
       # tests (themes, the Neovim module, the dev scripts) and the agent
-      # guard's tests (.claude/hooks/guard.py, AGENTS.md's "Never" rules)
+      # guard's tests (.claude/hooks/guard.py, CLAUDE.md's "Never" rules)
       - name: Checks (scripts/check_all.sh scripts)
         run: scripts/check_all.sh --ci scripts

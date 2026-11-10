@@ -5,7 +5,6 @@ import qs.config
 import qs.services.ui
 import qs.components.reusable
 
-// i18n: keys from the schema (titles, categories) and view labels
 // A link to where something else is set: a setting on the settings page
 // (`setting`, a key path: opens its card and outlines its row), another
 // overlay page (`page`, a view type, or "Layouts:lockscreen": see

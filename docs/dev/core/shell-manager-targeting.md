@@ -1,10 +1,10 @@
 # ShellManager, screen targeting and the surface registry
 
 > **Files:** `qml/services/ui/ShellManager.qml`, `qml/services/ui/SurfaceManager.qml`, `qml/config/General.qml`, `qml/components/reusable/SurfaceGroup.qml`, `qml/components/hosts/overlay/ReservedAreaWindow.qml`
-> **Config:** `General.screen`, `General.primaryMonitor`; each surface's own `screen` (a `ScreenTarget`: OSD, overlay, launcher, notifications, power menu, docks, bars, edge menus)
+> **Config:** `General.screen`, `General.primaryMonitor`; each surface's own `screen` (a `ScreenTarget`: OSD, overlay, launcher, notifications, power menu, docks, bars, menus)
 > **Related:** [Popout registry](../popouts/registry.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md), [Polkit](../features/polkit.md), [Screenshots and recording](../features/screenshots-recording.md)
 
-`ShellManager` holds the shell's signals (power menu, launcher, overlays, the OSD's Show and messages, with the `osd` IPC target that sends them) that modules connect to instead of calling each other directly, link navigation, and which screen answers a shortcut. (Rule: AGENTS.md › UI conventions, "Screen targeting".) Which surfaces are up, and which windows focus grabs let through, is `SurfaceManager`: [The surface registry](#the-surface-registry).
+`ShellManager` holds the shell's signals (power menu, launcher, overlays, the OSD's Show and messages, with the `osd` IPC target that sends them) that modules connect to instead of calling each other directly, link navigation, and which screen answers a shortcut. Which surfaces are up, and which windows focus grabs let through, is `SurfaceManager`: [The surface registry](#the-surface-registry).
 
 ### Screen targets
 - Every surface placed on monitors has a `screen`: a `ScreenTarget`, `{ mode, names }`. `mode` is `"inherit"` (General's) | `"primary"` | `"focused"` | `"all"` | `"named"` (the monitors in `names`, else the primary one). A use may narrow the enum (General's own has no `inherit`).
@@ -27,7 +27,7 @@
 ### Other placement notes
 - The workspace overview is built on every screen and opens on the one under the cursor (`CompositorManager.withHoveredScreen`, a cursor position lookup).
 - Wallpapers are per monitor (`ThemeManager.wallpaperFor(monitor)`; picked ones are `Appearance.wallpaper.perScreen[monitor]`, set from the overlay's Themes page); the primary monitor's is also `Appearance.wallpaper.file`, the fallback for the others. See [Wallpaper and schedules](../theming/wallpaper-and-schedules.md).
-- `openModule(types)` opens the overlay page with the biggest module of the first type any page has, else reveals an edge menu with one (false with neither): what a notification click or a service's "show me" uses (Chat, Pomodoro, Stopwatch).
+- `openModule(types)` opens the overlay page with the biggest module of the first type any page has, else reveals a menu with one (false with neither): what a notification click or a service's "show me" uses (Chat, Pomodoro, Stopwatch).
 - `runAction(action, argument, call)` runs an axiom action by its keybind name with its call (toggle, open or close; the daemon's table's `ipcActions`, `BindActions.ipcCall` making the call) in place (`BackendManager.callLocal`, the same checks as `axiom ipc`), as its bind would; `exec` runs a command. The UI reaches it only through `ActionsManager.run` (`docs/dev/core/actions.md`). `message(icon, text, detail)` puts a message card on the OSD (`osdMessage`), as `axiom message` does; `refuse(icon, title, detail)` the same on the warning colour, for an action that can't run here.
 - Which popouts give way to which is PopoutManager's: see [Popout registry](../popouts/registry.md). An integrated edge menu holds no popout claim and takes no part (its exclusive zone pushes the others inwards instead).
 

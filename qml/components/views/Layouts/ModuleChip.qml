@@ -3,7 +3,6 @@ import QtQuick
 import qs.config
 import qs.components.reusable
 
-// i18n: keys from the schema (module labels)
 // A module type in the library: its icon and name.
 // Dragging it carries a new module at its default size; a click is
 // `clicked`.

@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (option labels, group names)
 // An array of enum strings whose order counts (`x-ordered`): the chosen
 // options above, in their order, dragged into place or clicked away; the
 // others below (by `x-enumGroups`, when given), a click adding one at the

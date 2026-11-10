@@ -2,7 +2,7 @@
 
 > **Files:** `qml/config/CustomWidgetsConfig.qml`, `qml/services/apps/CustomWidgetsManager.qml`, `qml/services/apps/CustomWidgetsEditor.qml`, `qml/components/views/CustomWidgets/`, `qml/components/methods/CustomWidgetData.qml`, `qml/components/content/CustomWidget/CustomWidget.qml`, `qml/components/content/parts/custom/` (the elements in `elements/<Type>/`), `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`, `qml/config/schema/sections/CustomWidgets.yaml`, `qml/config/schema/definitions/custom/`, `qml/config/schema/definitions/kinds/CustomElementBase.yaml`
 > **Config:** `CustomWidgets.items` (reader `CustomWidgetsConfig`)
-> **Related:** [Services pattern](../core/services-pattern.md), [Protocol](../backend/protocol.md) (`exec.watch`), [the plan](../plans/custom-json-widgets.md)
+> **Related:** [Services pattern](../core/services-pattern.md), [Protocol](../backend/protocol.md) (`exec.watch`)
 
 A custom widget is a script drawn as a bar widget, that widget's popout and a module (overlay, desktop, edge menu and, when allowed, the lock screen), all from one definition in `CustomWidgets.items`, so the script runs once for all of them. Its output is read as Waybar reads a `custom/*` module's, so Waybar scripts run unchanged.
 

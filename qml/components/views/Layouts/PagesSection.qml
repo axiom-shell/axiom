@@ -6,7 +6,6 @@ import qs.services.session
 import qs.services.ui
 import qs.components.reusable
 
-// i18n: keys from the schema (view labels)
 // Layouts editor, left: the overlay's pages as the navigator shows them,
 // your own pages (duplicate, remove, New page) then the tool pages (only
 // hidden, never removed), each group dragged to reorder within itself

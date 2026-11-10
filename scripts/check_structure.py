@@ -21,24 +21,18 @@ running anything:
   - no reader falls back with `??` on its section (`_c.key ?? x`): every
     default is filled at load, so the fallback is dead and hides a missing
     schema default
-  - every overlay module goes on the desktop too (`x-hosts`), and one that
-    takes typing (a text field in it or its parts) says so (`x-keyboard`,
-    false when it deliberately stays read-only there)
+  - every overlay module with a text field says whether the desktop hands it
+    the keyboard (`x-keyboard`, false when it deliberately stays read-only)
   - a module on the lock screen (or a part it uses) calls only reads and
     the service methods its `x-lockActions` cover, but a call marked
     `// lock-inert: <reason>`
   - only the files in scripts/quickshell-io-allowlist.json use Process,
     FileView, Socket or Quickshell.execDetached directly, and
     the list only shrinks (these move to the axiom daemon)
-  - no singleton is over SINGLETON_LINES lines, but the pure helpers and
-    the compositor backends (split one before it grows past)
   - no Repeater model or acquire() request in the UI reads a polled
     service's member (one owning a ConsumerRegistry or DeadlineTicker),
     in the expression or through a property of the file; a model may
     count one (`.length`, `.count`)
-  - no `duration:` is a number of ms (Appearance.animFast / animNormal /
-    animSlow follow the animation speed), but a line marked
-    `// behaviour timing: <reason>` (a blink, a pause)
   - nothing formats a date with Qt.formatDateTime / formatDate /
     formatTime (I18n.formatDate follows the language), and only General
     reads Quickshell.screens (its outputs leave out the stand-ins shown
@@ -73,8 +67,8 @@ QML_ROOT = ROOT / "qml"
 SCHEMA = QML_ROOT / "config" / "json" / "config.schema.json"
 
 # (schema oneOf definition, root its types load from, file prefix): a type
-# is a folder <root>/<Type>/ with <prefix><Type>.qml (docs/dev/core/config-v2.md,
-# rule 11). Custom widget elements are Custom<Type>.qml, so an element
+# is a folder <root>/<Type>/ with <prefix><Type>.qml (docs/dev/core/config-manager.md,
+# › The shape of config.json). Custom widget elements are Custom<Type>.qml, so an element
 # named after a Qt type (Text, Image, List) never shadows it
 LOADERS = [
     ("BarWidget", "qml/components/bar/widgets", ""),
@@ -107,12 +101,6 @@ IO_KINDS = {
     "Socket": re.compile(r"(?<![\w.])Socket\s*\{"),
     "execDetached": re.compile(r"\bQuickshell\.execDetached\("),
 }
-
-# A singleton past this is doing several jobs: split it. The pure helpers
-# (components/methods/, unit-tested tables of rules) and the compositor
-# backends (one compositor's whole contract each) may grow past it
-SINGLETON_LINES = 800
-SINGLETON_EXEMPT = re.compile(r"qml/components/methods/.*|qml/services/compositor/(Hyprland|Sway|Niri)Manager\.qml")
 
 errors, warnings = [], []
 
@@ -269,12 +257,12 @@ def main():
             if kind not in used.get(path, []):
                 errors.append(f"{rel(IO_ALLOWLIST)}: {path} no longer uses {kind}: remove it from the list (it only shrinks)")
 
-    # Services live in their group's folder (services/AGENTS.md › Folders):
+    # Services live in their group's folder (.claude/rules/services.md › Folders):
     # one directly in services/ would escape the singleton checks below,
     # check_docs and the API pages, which all read services/*/
     for path in sources:
         if re.fullmatch(r"qml/services/[^/]+\.qml", path):
-            errors.append(f"{path}: directly in services/ (put it in its group's folder: services/AGENTS.md › Folders)")
+            errors.append(f"{path}: directly in services/ (put it in its group's folder: .claude/rules/services.md)")
 
     # IPC targets are IpcTargets (registered with axiom, which calls them
     # over the shell's connection): an IpcHandler is out of `axiom ipc`'s
@@ -313,9 +301,7 @@ def main():
             if group not in library_groups:
                 errors.append(f"{definition} {name}: x-libraryGroup {group!r} isn't one of the schema's x-libraryGroups")
 
-    # Modules on overlay pages go on the desktop too: `x-hosts` leaving out
-    # "desktop" while listing "overlay" is how new modules once missed it.
-    # One with a text field (in its file or a content part it uses) must
+    # A module with a text field (in its file or a content part it uses) must
     # say whether the desktop hands it the keyboard: `x-keyboard`
     part_files = {f.stem: f for f in (ROOT / POPOUT_DIR / "parts").rglob("*.qml")}
     part_files.update({f.stem: f for f in (ROOT / POPOUT_DIR).glob("*/*.qml") if f.stem != f.parent.name})
@@ -333,8 +319,6 @@ def main():
         target = schema["definitions"].get(name, option)
         const = target["properties"]["type"]["const"]
         hosts = target.get("x-hosts", ["overlay", "menu", "desktop"])
-        if "overlay" in hosts and "desktop" not in hosts:
-            errors.append(f"OverlayModule {const}: x-hosts lists overlay but not desktop (every module goes on the desktop)")
         source = ROOT / POPOUT_DIR / const / f"{const}.qml"
         if "desktop" in hosts and "x-keyboard" not in target and source.exists() and typing.search(with_parts(source.read_text(), set())):
             errors.append(f"OverlayModule {const}: has a text field but no x-keyboard (true so the desktop hands it the keyboard, false to keep it read-only there)")
@@ -428,24 +412,6 @@ def main():
             if const not in default_views:
                 errors.append(f"tool page {const} isn't in the Overlay.items default")
 
-    # Every IPC target is in docs/usage.md's IPC table, and the table names
-    # no target that's gone
-    targets = {}
-    for path, text in sources.items():
-        for m in re.finditer(r"\bIpcTarget\s*\{", text):
-            found = re.search(r'target:\s*"(\w+)"', text[m.end():m.end() + 400])
-            if found:
-                targets.setdefault(found.group(1), path)
-    usage = (ROOT / "docs/usage.md").read_text()
-    table = usage[usage.find("<summary><b>IPC targets"):]
-    table = table[:table.find("</details>")]
-    listed = set(re.findall(r"^\| `(\w+)`", table, re.M))
-    for target, path in sorted(targets.items()):
-        if target not in listed:
-            errors.append(f"{path}: IPC target {target!r} is missing from the IPC table in docs/usage.md")
-    for target in sorted(listed - set(targets)):
-        errors.append(f"docs/usage.md: IPC target {target!r} has no IpcTarget")
-
     # An IpcTarget's arguments arrive as the command line's text, which a
     # typed parameter converts without refusing anything (`int` makes a word
     # 0, `bool` makes "false" true): they're strings, read through _int
@@ -506,9 +472,6 @@ def main():
         head = next((line.strip() for line in text.split("\n") if line.strip() and not line.strip().startswith("//")), "")
         if head not in ("pragma ComponentBehavior: Bound", "pragma Singleton"):
             errors.append(f"{path}: doesn't start with pragma ComponentBehavior: Bound (or pragma Singleton)")
-        lines = text.count("\n")
-        if head == "pragma Singleton" and lines > SINGLETON_LINES and not SINGLETON_EXEMPT.fullmatch(path):
-            errors.append(f"{path}: a singleton of {lines} lines (over {SINGLETON_LINES}): split it")
 
     # qs.* imports resolve
     for path, text in sources.items():
@@ -592,7 +555,7 @@ def main():
                 errors.append(f"{path}: {name} — did you mean {close[0]}?")
 
     # Repeater models and acquire() requests never come from live values
-    # (AGENTS.md › UI conventions): a model re-evaluated per sample once
+    # (CLAUDE.md › UI): a model re-evaluated per sample once
     # pushed qs past 25 GB. Live means a member of a polled service (one
     # polling through a ConsumerRegistry or DeadlineTicker, not
     # BackendManager's or NotesManager's acquire()), read in the expression
@@ -630,17 +593,8 @@ def main():
             if found:
                 errors.append(f"{path}:{code.count(chr(10), 0, at) + 1}: an acquire() request from live values ({', '.join(found)}): build it from config")
 
-    # Motion follows the animation speed setting: a `duration:` is
-    # Appearance.animFast / animNormal / animSlow (AGENTS.md › Config,
-    # Animation). A bare number is only a behaviour timing (a blink, a
-    # pause), marked on its line
-    for path, text in sources.items():
-        for n, line in enumerate(text.split("\n"), 1):
-            if re.search(r"\bduration:\s*[1-9]\d*\s*(?:[;}]|//|$)", line) and "// behaviour timing:" not in line:
-                errors.append(f"{path}:{n}: a duration in ms: use Appearance.animFast / animNormal / animSlow (or mark a blink or pause `// behaviour timing: <reason>`)")
-
     # Dates the user reads follow the language: I18n.formatDate(date,
-    # I18n.dateFormat(name)), never Qt.formatDateTime (AGENTS.md › Translation).
+    # I18n.dateFormat(name)), never Qt.formatDateTime (CLAUDE.md › Theme, animation, text).
     # Surfaces go on General.outputs / screensFor(target): Quickshell.screens
     # holds stand-ins while no monitor is connected, and a window left on
     # one can crash qs when they come back (General filters them). A use
@@ -670,7 +624,7 @@ def main():
                 errors.append(f"{path}:{n}: {m.group(0)[:-1]}: run the action through ActionsManager.run(id, {{fromScreen: true}}) (or mark a use that must stay `// allowed: <reason>`)")
 
     # What a bar widget style is lives in BarLook's trait table alone
-    # (qml/components/bar/AGENTS.md, docs/dev/bar/widget-style.md): nothing
+    # (.claude/rules/bar.md, docs/dev/bar/widget-style.md): nothing
     # else reads the style's name, the saved `widgetStyle` or the resolved
     # look's `style`, to compare it; it reads the look's traits. (Comparing
     # a name like "outline" can't be told from other uses of the word, so

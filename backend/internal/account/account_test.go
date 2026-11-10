@@ -38,12 +38,12 @@ func ctx(t *testing.T) context.Context {
 func TestFromFiles(t *testing.T) {
 	t.Parallel()
 	root, home := t.TempDir(), t.TempDir()
-	write(t, filepath.Join(root, "etc/passwd"), "root:x:0:0::/root:/bin/bash\nme:x:1000:1000:Travis Monkey,,,:/home/me:/bin/zsh\n")
+	write(t, filepath.Join(root, "etc/passwd"), "root:x:0:0::/root:/bin/bash\nme:x:1000:1000:Alex Doe,,,:/home/me:/bin/zsh\n")
 	write(t, filepath.Join(root, "etc/group"), "root:x:0:\nwheel:x:998:me,other\naudio:x:995:me\n")
 	write(t, filepath.Join(home, ".face"), "png")
 	a := New(Options{UID: 1000, Login: "me", Home: home, Root: root})
 	got := a.Get(ctx(t))
-	want := Account{Login: "me", RealName: "Travis Monkey", Icon: filepath.Join(home, ".face"), Admin: true}
+	want := Account{Login: "me", RealName: "Alex Doe", Icon: filepath.Join(home, ".face"), Admin: true}
 	if got != want {
 		t.Errorf("Get = %+v, want %+v", got, want)
 	}
@@ -67,7 +67,7 @@ func newFakeAccounts(t *testing.T, bus *dbustest.Bus) *fakeAccounts {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	f := &fakeAccounts{props: map[string]any{"RealName": "Travis", "AccountType": int32(1), "IconFile": ""}}
+	f := &fakeAccounts{props: map[string]any{"RealName": "Alex", "AccountType": int32(1), "IconFile": ""}}
 	user := dbus.ObjectPath("/org/freedesktop/Accounts/User1000")
 	if _, err := conn.Export(accountsPath, dbus.Interface{Name: accountsIface, Methods: map[string]dbus.Method{
 		"FindUserById": {In: "x", Out: "o", Fn: func(_ context.Context, m *dbus.Message) ([]any, error) {
@@ -123,7 +123,7 @@ func TestAccountsService(t *testing.T) {
 	a := New(Options{UID: 1000, Login: "me", Home: home, Root: t.TempDir(), SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
 		return dbus.Dial(ctx, bus.Address, dbus.Options{})
 	}})
-	if got, want := a.Get(ctx(t)), (Account{Login: "me", RealName: "Travis", Admin: true, Accounts: true}); got != want {
+	if got, want := a.Get(ctx(t)), (Account{Login: "me", RealName: "Alex", Admin: true, Accounts: true}); got != want {
 		t.Fatalf("Get = %+v, want %+v", got, want)
 	}
 	// A wide picture: its middle square, scaled down
@@ -160,7 +160,7 @@ func TestAccountsService(t *testing.T) {
 	if r, _, _, _ := decoded.At(pictureSize/2, pictureSize/2).RGBA(); r>>8 != 255 {
 		t.Error("~/.face isn't the picture's middle")
 	}
-	if _, err := a.SetRealName(ctx(t), "Travis M"); err != nil {
+	if _, err := a.SetRealName(ctx(t), "Alex M"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := a.SetRealName(ctx(t), "a:b"); axerr.KindOf(err) != axerr.BadRequest {
@@ -177,7 +177,7 @@ func TestAccountsService(t *testing.T) {
 	f.mu.Lock()
 	calls := strings.Join(f.calls, "\n")
 	f.mu.Unlock()
-	if want := "SetIconFile " + face + "\nSetRealName Travis M"; calls != want {
+	if want := "SetIconFile " + face + "\nSetRealName Alex M"; calls != want {
 		t.Errorf("calls:\n%s\nwant:\n%s", calls, want)
 	}
 }

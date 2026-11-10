@@ -6,7 +6,6 @@ import qs.services.ui
 import qs.services.apps
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
 // A typed value: the box under its label, or with `beside` (a short
 // value, a number) beside it on a wide form (Widget.fieldInlineFrom), as
 // a dropdown is

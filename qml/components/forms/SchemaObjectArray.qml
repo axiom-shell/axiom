@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
+// An editable list of schema objects: a header with an add button, a delegate per item, moving and removal
 ColumnLayout {
   id: root
   required property string label

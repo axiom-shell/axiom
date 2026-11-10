@@ -3,7 +3,7 @@
 > **Files:** `backend/internal/wayland/wire/`, `backend/internal/wayland/client/`, `backend/internal/wayland/vkbd/`, `backend/internal/wayland/ctm/`, `backend/internal/wayland/gamma/`, `backend/internal/wayland/datacontrol/`, `qml/services/core/WaylandManager.qml`, `backend/internal/wayland/outputs/`, `backend/internal/wayland/seat/`, `backend/internal/wayland/idlenotify/`, `backend/internal/wayland/keyhold/`, `backend/internal/daemon/switcher.go`, `backend/internal/daemon/daemon.go`, `backend/internal/daemon/wayland.go`, `tests/fixtures/wayland/`
 > **Related:** [The axiom binary](README.md), [Compositor contract](../compositor/contract.md)
 
-The daemon's own Wayland connection, and what each compositor offers for what it does over it next (roadmap stage 2: idle, gamma, clipboard, typing).
+The daemon's own Wayland connection, and what each compositor offers for what it does over it next (idle, gamma, clipboard, typing).
 
 ### The connection
 - `wire.Conn` (pure Go, no libwayland): object ids from 2 up, reused after the compositor's `delete_id`; each object's events go to its handler on the goroutine running `Run`; `Registry`, `Bind`, `Sync`. A `wl_display.error` ends it with the compositor's message.

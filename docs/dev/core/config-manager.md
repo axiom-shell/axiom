@@ -1,10 +1,10 @@
 # ConfigManager, drafts and previews
 
-> **Files:** `qml/services/core/ConfigManager.qml`, `qml/services/core/ConfigDraft.qml`, `qml/services/core/BackendManager.qml`, `qml/components/methods/DataDirs.qml`, `qml/components/methods/SchemaValidation.qml`, `qml/services/ui/SettingsManager.qml`, `backend/internal/store/store.go`, `backend/internal/config/load.go`
+> **Files:** `qml/config/schema/`, `backend/internal/schema/yamlsrc/`, `backend/internal/migrate/legacy/`, `qml/services/core/ConfigManager.qml`, `qml/services/core/ConfigDraft.qml`, `qml/services/core/BackendManager.qml`, `qml/components/methods/DataDirs.qml`, `qml/components/methods/SchemaValidation.qml`, `qml/services/ui/SettingsManager.qml`, `backend/internal/store/store.go`, `backend/internal/config/load.go`
 > **Config:** all of `~/.config/axiom/config.json`
 > **Related:** [Config readers](config-readers.md), [Schema annotations](schema-annotations.md), [Editors pattern](editors-pattern.md), [Saved configs and sharing](saved-configs-sharing.md), [Secrets](secrets.md)
 
-The owner of the runtime config: how it is loaded, written, drafted and previewed. Read before writing config from anywhere.
+The owner of the runtime config: how it is loaded, written, drafted and previewed.
 
 ### Owned by axiom
 The binary is the shell's parent (`axiom run`) and owns config.json ([The axiom binary](../backend/README.md)); the shell never reads or writes the file.
@@ -49,14 +49,29 @@ In axiom (`config.Pipeline.Load`), for config.json, saved configs and imports al
 
 `axiom config validate [FILE]` runs the same, read-only.
 
+### The shape of config.json (format 2)
+One set of rules the schema follows everywhere it fits:
+- **One definition per concept.** A concept used in two places is one `definitions/` entry (`ScreenTarget`, `Blur`, `Shadow`, `Timing`, `ItemId`, …), reused by `$ref`, with sibling overrides where one use differs.
+- **Related keys are an object, not a prefix:** `blur: { size, passes, … }`, with a family's on/off switch as its `enabled`; a bar widget's `popout: { enabled, menu }`.
+- **Collections are `<Section>.items`.** Every list of user-made things sits beside its section's settings, and every item (also every bar widget and module) has a required, stable `id`, unique in its list. Ids are what editors, path ops (`{id}` selectors), previews and import matching use; position never identifies anything.
+- **One way to inherit.** A value an item may take from its section is `null` by default (inherit); the key is still filled, and readers resolve it in one place (`item.style.x ?? section.style.x`).
+- **One unit per kind.** Durations are integer milliseconds; `x-unit` is the unit a form shows and types in, and the form and CLI convert. No key names its unit. Enum values are lowerCamel.
+- **One screen-targeting shape,** `ScreenTarget` (`{ mode: inherit | primary | focused | all | named, names }`), for everything that picks monitors. `names` is `machine` scope, `mode` is look.
+- **No UI or fetched state in config.** What the user didn't choose (a calendar's server name or colour) lives in state files.
+- **Annotations are grouped by subject:** `x-compositor: { hyprland, sway, niri }`, `x-card: { file, title, wide, folds, perField }`, and one condition grammar for `x-showIf`, `x-enabledIf`, `x-enumShowIf` and `x-scopeIf`, implemented once in Go (`schema.Holds`) and once in `SchemaLayout` (`showIfHolds`), with shared fixtures ([Schema annotations](schema-annotations.md)).
+- **The envelope** is `{ "$schema", "format": 2, "version": N, … }`. `version` is the only migration counter (it continues from 76); `format` names the file's grammar, so a reader refuses a format it doesn't know instead of guessing from a number. Saved and exported files add `meta: { title, description, source }`.
+
+**Types live in folders.** A bar widget, overlay module or view type is a folder `<root>/<Type>/` holding `<Type>.qml` (its root object), `schema.yaml` (its definition) and its private parts. The roots are `qml/components/bar/widgets`, `qml/components/content` and `qml/components/views`; shared bases (`BarIconWidget`, `BaseView`, …) sit in a `base/` folder beside them. The folder name is the type const, the one place a type's name is written; `Paths.widgetUrl` / `contentUrl` / `viewUrl` build the paths. Popout-only content has no `schema.yaml`. A feature's shared settings (`Weather.location`, used by the widget, module and popout) stay a section in `qml/config/schema/sections/`: a type folder never declares a section.
+
+**What the builder supplies.** `axiom schema build` finds every `schema.yaml` under the three roots (`index.yaml` lists no type definitions) and expands it over its kind's base in `qml/config/schema/definitions/kinds/` (`WidgetBase`, `ModuleBase`, `ViewBase`, …), which adds `type: object`, `additionalProperties: false`, `required`, the type const and `id`, and the kind's common keys (a widget's `visible`, `layout`, `popout` and colour fields; a module's `place` and hosts). A `schema.yaml` writes only what is particular to its type (`label`, `icon`, `group`, `settings`, and the base's parts switched on by name such as `popout`, `colors`, `appearance`); the recipes show the files: [bar widget](../../recipes/bar-widget.md), [overlay module](../../recipes/overlay-module.md), [overlay view](../../recipes/overlay-view.md). Format 1 files are converted once by `migrate/convert` ([migration recipe](../../recipes/migration.md)).
+
 ### New entries
 Editors create new entries at their definition's defaults with `withDefaults(value, "Bar" | "BarWidget" | "Menu" | "OverlayView" | "OverlayModule")`.
 
 ### Writes
-(Rule: AGENTS.md › Services, "Config writes".)
-- All writes go through `setTheme()` / `setWallpaper(s)()` / `commit(object)`, or `SettingsManager.setValue(path, value)` from settings UI.
+- Config is only written through `setTheme()` / `setWallpaper(s)()` / `commit(object)`, or `SettingsManager.setValue(path, value)` from settings UI.
 - `commit(object)` (the draft services) fills defaults and returns false, changing nothing, only while saves can't be made (`savesBlocked`, the greeter, no axiom), so drafts stay dirty; it doesn't validate (axiom does, above). A save sends `takeover` only from a takeover setting's own control: `commit(object, takeover)` defaults to false, so axiom keeps the `x-takeover` settings as it has them, and `SettingsManager`'s `commitValues` and `saveChanges` pass true only when they write one (`_takesOver`); `commitValue` (the launcher's `/config`) refuses one. So a save made from a config predating a takeover write of axiom's can't put the stale value back.
-- Never mutate `ConfigManager.config` fields from UI code and expect persistence.
+- Mutating `ConfigManager.config` fields from UI code never persists.
 
 ### ConfigDraft
 - The editor services each hold a `ConfigDraft` (`qml/services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager (and its `MenuEditor`), KeybindManager (its `KeybindEditor`), MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.

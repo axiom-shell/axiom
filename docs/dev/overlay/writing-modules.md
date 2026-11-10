@@ -4,13 +4,11 @@
 > **Config:** `Overlay.items[].layout.modules[]`, `Menus.items[].layout.modules[]` (`{ type, place, properties }`)
 > **Related:** [Content roots](content-roots.md), [Pages and grid](pages-and-grid.md), [Growing and expanding](grow-expand.md), [Utility modules](utility-modules.md), [Shared UI pieces](../core/shared-ui-pieces.md)
 
-How a module adapts to any size, the shared parts in `content/parts/`, where data comes from, and how to try a new module safely on the live shell.
+How a module adapts to any size, the shared parts in `content/parts/`, where data comes from, and how to try a new module safely.
 
 ### Adding a module type
-- The file `content/<type>/<type>.qml` plus an `…OverlayModule` definition in `OverlayModule.oneOf`, with a `"place": { "$ref": "#/definitions/GridPlace" }` property like the others.
-- Every module takes every size, from one unit up.
-  - `x-defaultSize` is only the size it's added at (left out, a card: `OverlayConfig.defaultSize`).
-  - `x-minSize` is only how far a drop into a gap shrinks it.
+A module is a folder `content/<Type>/` with `<Type>.qml` and a `schema.yaml` beside it (the build expands it over `definitions/kinds/ModuleBase.yaml`, which adds the `place` property and the hosts; see [Config manager](../core/config-manager.md) › The shape of config.json). The steps: [overlay-module recipe](../../recipes/overlay-module.md).
+- Every module takes every size, from one unit up. `defaultSize` in its `schema.yaml` is only the size it is added at (left out, a card: `OverlayConfig.defaultSize`); `minSize` is only how far a drop into a gap shrinks it.
 - Helpers used only by content go in `content/parts/` (subfolders for groups, e.g. `parts/settings/`).
 - New types show up in the pickers automatically (see [Layouts editor](layouts-editor.md), module and view pickers).
 
@@ -20,7 +18,7 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
   - `cols` / `rows` (grid units, four to a card)
   - `shape`: `square` while the longer side is under 1.5× the shorter, else `horizontal` / `vertical` (`GridPlacement.slotShape`)
   - `compact`, plus `pad`.
-- A unit is 25 to 140 px depending on the screen or menu (`OverlayGrid`; an edge menu uses its screen's overlay's), and text doesn't scale with it.
+- A unit is 25 to 140 px depending on the screen or menu (`OverlayGrid`; a menu uses its screen's overlay's), and text doesn't scale with it.
   - So a module sets `fullMinWidth` / `fullMinHeight`, the px its full layout needs inside its padding (as `innerWidth` / `innerHeight` measure).
   - `compact` is a quarter card or less (`cols <= 2 && rows <= 2`) or, once laid out, its room inside the full layout's padding (`SlotContext.fullPad`) is smaller than those.
 - Compact shows the key figure: a `compactContent`, usually a `CompactFigure`, on Card, Panel or TitledCard.
@@ -59,17 +57,15 @@ How a module adapts to any size, the shared parts in `content/parts/`, where dat
 - Weather comes from `WeatherManager` (`acquire(owner)`, read `weather`, `current`, `condition`, `place`, …).
   - Fetched by axiom (the `weather` topic, `backend/internal/weather`) for the Weather settings' location, units and refresh interval (`WeatherConfig`), shared by every bar widget, module and forecast popout; the greeter's axiom serves the topic too.
   - It fetches only while acquired and keeps its last data when released or when a fetch fails.
-- Acquire in `Component.onCompleted`, release in `onDestruction`: modules only exist while their page is shown. (Rule: AGENTS.md › Services, polled data.)
+- Acquire in `Component.onCompleted`, release in `onDestruction`: modules only exist while their page is shown.
 
 ### Repeater models
-(Rule: AGENTS.md › UI conventions.)
 - For a derived set, use `model: rows.length` with the delegate reading `rows[index] ?? fallback`.
 - An `int` / `string` only notifies when it actually changes, so delegates (and Canvases) survive each sample or keystroke.
 - `check_structure` refuses a model reading a polled service's member (one polling through a `ConsumerRegistry` or `DeadlineTicker`), directly or through a property of the same file, unless it counts it (`.length`, `.count`); and an `acquire()` request reading one at all.
 
 ### Testing
-Testing a module safely on the running shell:
-- The running shell only picks up schema changes on a QML reload, and a reload only fires when a file it has *loaded* changes. A new module file doesn't count until something uses it.
-- A config checked against a stale schema fails validation, and the whole shell falls back to defaults until it's fixed.
-- So confirm the schema was reloaded after your edit before putting a new module into `config.json`.
+Trying a module on the running shell:
+- A new module file only loads once something uses it, and the schema entry (its `schema.yaml`) is only known to the daemon after it rebuilds the schema: in dev mode that happens on a YAML edit, otherwise only when axiom restarts ([testing](../testing.md) › Reloads and logs, "A schema change and the live shell"). A config naming a module the running schema doesn't know fails validation, and the shell falls back to defaults until it's fixed.
+- So confirm the daemon has the new schema before putting a new module into `config.json`, or try it in a nested shell first.
 - Add modules one at a time and watch `qs`'s RSS.

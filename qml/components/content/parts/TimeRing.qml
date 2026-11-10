@@ -46,7 +46,7 @@ Item {
     id: sweep
     target: root
     property: "_shown"
-    duration: root.tick // behaviour timing: spans one progress step, so the ring never stops
+    duration: root.tick // spans one progress step, so the ring never stops
   }
 
   Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter

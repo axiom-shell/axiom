@@ -4,7 +4,7 @@
 > **Config:** none
 > **Related:** [Editors pattern](editors-pattern.md), [Content roots](../overlay/content-roots.md), [Writing modules](../overlay/writing-modules.md), [Popout surface context](../popouts/surface-context.md), [Translucency and blur](../theming/translucency-blur.md)
 
-An index of reusable pieces. Reach for one of these before drawing your own; when a pattern appears a second time, it becomes one of these. (Rule: AGENTS.md › UI conventions, "Reuse before building".) Every file in `reusable/`, `forms/` and `content/parts/` is named here or in the docs it links to (`scripts/check_docs.py` checks): add a line when you add a piece.
+An index of reusable pieces. Reach for one of these before drawing your own; when a pattern appears a second time, it becomes one of these. Every file in `reusable/`, `forms/` and `content/parts/` is named here or in the docs it links to (`scripts/check_docs.py` checks): add a line when you add a piece.
 
 ### Sizes
 Everything outside the bars follows the Interface scale and Density through `Widget` (`qml/config/Widget.qml`); a size written as a number doesn't, and `scripts/check_sizes.py` fails on one of 3 px or more, set alone or added, subtracted or chosen in a size's expression (`Widget.height - 4` is `Widget.height - Widget.px(4)`; factors like `* 2` and grid units like `span(8)` are fine).
@@ -63,7 +63,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 
 ### Controls (`reusable/`)
 - `StyledTextButton`, `StyledIconButton`, `SquareIconButton`, `FlatIconButton`, `StyledRectButton` (icon, hover and press colors). `StyledIconButton` is a square of side `size` that doesn't stretch in a layout; `FlatIconButton` is one with a dimmer icon.
-- `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`; `rich` draws rich text (line breaks as `<br>`); a bar widget's is a `BarToolTip`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it (AGENTS.md › Layout).
+- `StyledToolTip`: a hover tooltip in a popup window of its own, so the small layer windows buttons live in don't clip it. Buttons take `tooltipText`; `rich` draws rich text (line breaks as `<br>`); a bar widget's is a `BarToolTip`. It stays in `reusable/` though it reads services (blur, capture freeze): the buttons here use it.
 - `StyledSlider`: trough, accent fill and a round handle (`handleSize`); `moved` while dragged, `released` at the end (still `pressed`, so a value pushed in from it shows without a snap back). `value` is only pushed in (a drag never writes it, so bind it) and animates when it changes; `position` is what it shows (the drag's place while `pressed`).
 - `StyledVolumeBar`: a volume bar with its icon, mute and optional percentage (drag, click or scroll; its trough clips the fill, so a low level keeps to its rounded ends); muted, its icon (the base one) is a `SlashedIcon`; with `iconClickable` the icon is a button (`iconClicked`, hover highlight, `iconTip`); the OSD's bars are one (`surfaces/osd/design/OSDLevelBar`; Audio's `systems/Audio/design/VolumeBar` binds one to a Pipewire stream, the system volume or the microphone).
 - `PercentageCircle`: a ring gauge with an icon in the middle; `sweep` below 360 opens it at the bottom (a gauge).
@@ -148,7 +148,6 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `MarginClip`: clips its children (`clipped`) to its bounds grown by `leftMargin` / `topMargin` / `rightMargin` / `bottomMargin`, for content drawn past its box on purpose (a bar widget's parts as segments of the bar's run reaching back under a powerline neighbour or out to a tab's edge: `BarWidgetHost`, the Workspaces cells).
 - Everything else animates with Behaviors on `Appearance.animFast` / `animNormal` / `animSlow` and `Appearance.easing`. A `duration:` in ms fails `check_structure` unless its line says why it's a behaviour timing (`// behaviour timing: the cursor blink`).
   - Gate it with a `_settled` / `_placed` flag (`Qt.callLater` from `Component.onCompleted`) where a first layout would otherwise fly in from 0. Hand `callLater` a method of the item (`Qt.callLater(root._settle)`), not a closure: a method's call is dropped if the item is destroyed first (a bar rebuilt), a closure's runs and throws on its null `root`.
-- (Rule: AGENTS.md › Config, "Animation".)
 
 ### Small helpers
 - **Cover art** (`reusable/CoverArt`): a track's cover (`source`, `MediaManager.artSource`), rounded, a new one fading in over the old (`CrossFade`), decoded at most 640 px across, a note while there's none. The Now Playing module's and the OSD's now playing card's.

@@ -462,7 +462,7 @@ func (c *call) forget() { os.Remove(filepath.Join(c.Dir, recordName)) }
 
 // setAsideNow is what release gives back: as the record names it (each
 // only while it's still there); nothing without one (a claim from before
-// records: the maintainer, 2026-11-01, "drop")
+// records is dropped)
 func (c *call) setAsideNow() (previous, backup string) {
 	data, _ := os.ReadFile(filepath.Join(c.Dir, recordName))
 	for _, line := range splitLines(string(data)) {

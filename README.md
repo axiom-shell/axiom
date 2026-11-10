@@ -220,7 +220,6 @@ Contributions are welcome. [Open an issue](https://github.com/axiom-shell/axiom/
 - **More styles** for bars, widgets and menus
 - **More translations**
 - **Performance Improvements**
-- **Fewer dependencies**: the `axiom` binary taking over what helper tools and scripts do today (clipboard history, idle, night light, typing, the Python scripts)
 - **Installing without Go**: the installer and updates using each release's prebuilt `axiom` binary
 - **Community Config Library and Showcase**
 - **Packages**: `axiom-shell` and `axiom-shell-git` for the AUR and COPR, and Nix. The AUR packages are ready but wait on AUR account registration reopening ([#76](https://github.com/axiom-shell/axiom/issues/76))
@@ -241,7 +240,7 @@ And thanks to the Hyprland desktops that inspired it: [illogical-impulse](https:
 
 Axiom is developed with AI assistance. I design the architecture and systems, and AI-written code is reviewed before it lands, held to the same standards as every other contribution, and checked by CI using the same linting, structural checks, and unit tests.
 
-The repository contains extensive shared engineering instructions, subsystem documentation, development safeguards, and automated checks and tests. These rules are documented openly in AGENTS.md.
+The repository contains extensive shared engineering instructions, subsystem documentation, development safeguards, and automated checks and tests. These rules are documented openly in CLAUDE.md, with per-area rules in `.claude/rules/`.
 
 AI assistance is part of my development workflow, not a substitute for architectural decisions, verification, or responsibility for the project.
 

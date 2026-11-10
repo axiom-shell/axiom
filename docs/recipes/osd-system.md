@@ -1,104 +1,44 @@
-# Recipe: a new OSD system
+# Adding an OSD system
 
-> **Use when:** the OSD should show something new: a status icon (tile), a level bar or a card for a feature it doesn't cover yet (it shows up in an OSD's Add picker).
-> **Copy from:** `qml/components/surfaces/osd/systems/Caffeine/` (a toggle: one tile, a four-line watcher), `systems/Privacy/` (a set of members: its card made by the engine from `roles`, `groups`, "still" cards), `systems/Drives/` (events: `model: "event"`, `pulse()`, a clickable card handed to its watcher); their rows in `tests/osd/Caffeine.js`, `Privacy.js`, `Drives.js`.
-> **Docs:** [OSD](../dev/features/osd.md) (its Engine section is the contract), rules in `qml/components/surfaces/osd/AGENTS.md`; generated: [config/OSDSystems](../dev/config/OSDSystems.md).
+An OSD system is one feature's contribution to the on-screen display: a status icon (tile), a level bar, a card saying what changed, or a mix. Users add it to an OSD from the Add picker in Settings. At the end you have a folder with a pure definition of what each change shows, a watcher that feeds it from services, and timeline tests that pin the behaviour down.
 
-## Files to touch
-1. `qml/components/surfaces/osd/systems/<Type>/<Type>.qml`: the **definition**, an `OSDSystem`, pure. The folder's name is the type.
-2. `qml/components/surfaces/osd/systems/<Type>/<Type>Watch.qml`: the **watcher**, an `OSDWatch`, the only file that reads services.
-3. `qml/components/surfaces/osd/systems/<Type>/schema.yaml`: its item in an OSD's `systems` list. The build finds it (`index.yaml`'s `kinds`), expands it over `definitions/kinds/OSDSystemBase.yaml` and adds it to `OSDSystem`'s `oneOf`: nothing else to list.
-4. `tests/osd/<Type>.js`: its timeline rows, and its line in `tests/osd/index.js` (the `.import` and the `files` entry). Rows across systems go in `tests/osd/Cross.js`.
-5. Optionally `systems/<Type>/design/<File>.qml`: a view only it uses (a bar or card of its own), named by an `exposes` entry's `design`.
-6. If a tile's click runs something new: its action ([Actions](../dev/core/actions.md) › Adding an action), then `action` on its `exposes` entry.
-7. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys.
+**Copy from:** `qml/components/surfaces/osd/systems/Caffeine/` (a toggle: one tile and a four-line watcher) with its rows in `tests/osd/Caffeine.js`; `systems/Privacy/` (a set of members, its card built by the engine from `roles` and `groups`); `systems/Drives/` (events: `model: "event"`, `pulse()`, a clickable card handled in the watcher).
+**Background:** [OSD](../dev/features/osd.md) (its **Engine** section is the contract), [actions](../dev/core/actions.md); generated: [config/OSDSystems](../dev/config/OSDSystems.md)
 
-## Skeleton
-```qml
-pragma ComponentBehavior: Bound
-import QtQuick
-import qs.components.surfaces.osd.engine
+## Files
+1. `qml/components/surfaces/osd/systems/<Type>/<Type>.qml`: the **definition**, an `OSDSystem`. It is pure, and the folder name is the type.
+2. `qml/components/surfaces/osd/systems/<Type>/<Type>Watch.qml`: the **watcher**, an `OSDWatch`. It is the only file that reads services.
+3. `qml/components/surfaces/osd/systems/<Type>/schema.yaml`: the system's item in an OSD's `systems` list. The build expands it over `qml/config/schema/definitions/kinds/OSDSystemBase.yaml` (which adds `quiet` and the optional `tile` and `card` switches) and registers it; nothing else to list.
+4. `tests/osd/<Type>.js` and its `.import` plus `files` entry in `tests/osd/index.js`. Rows that span systems go in `tests/osd/Cross.js`.
+5. Optionally `systems/<Type>/design/<File>.qml`: a view only this system uses, named by `design` on an `exposes` entry.
+6. If clicking a tile should run something new, add the action first ([actions](../dev/core/actions.md) › Adding an action), then name it in `action` on the `exposes` entry.
 
-// Foo on the OSD: one tile, lit and unusual while on; either way its icon
-// (FooWatch reads FooManager)
-OSDSystem {
-  // I18n.tr("Foo")
-  exposes: [
-    {
-      "key": "foo",
-      "part": "tile",
-      "icon": "toggle_on",
-      "label": "Foo",
-      "action": "foo"
-    }
-  ]
-  // No tile(): the default lights a toggle (`value` true) and marks it
-  // unusual
-}
-```
-```qml
-pragma ComponentBehavior: Bound
-import QtQuick
-import qs.services.system
-import qs.components.surfaces.osd.engine
-
-// Foo's state for the OSD: whether it's on
-OSDWatch {
-  state: ({
-      "foo": {
-        "value": FooManager.enabled
-      }
-    })
-}
-```
-```yaml
-label: Foo
-icon: toggle_on
-group: Power        # one of the OSD groups in index.yaml's x-libraryGroups
-tile: standard      # its tiles or bars: the item's `tile` switch, labelled "Icon"; a system with bars names it:
-#   tile: {variant: standard, tile: {title: Bar, description: Its bar in the OSD.}}  (as Brightness and Audio do)
-# barNames: {bar: foo}  # it shows bars: where the settings' Bars part finds them and how they're keyed, which tst_OSDSystems checks against exposes ({bar: <its key>}: it is one bar; {from: <list setting>, by, named, repeats, keys, barOnly}: each entry of that list is one, an ItemId `id` on each, keyed by its kind, `keys` naming one that differs, a kind it repeats <kind>:<its id>)
-# card: standard    # cards beside its tiles: the item's `card` switch (a card-only system names no part)
-# settings:         # its own keys, each with a default; one only its tile uses: x-showIf: {tile: true}
-```
-```js
-.pragma library
-// Foo's timelines: a toggle, its icon either way
-var rows = [
-  { "name": "turned on: its icon, lit and unusual",
-    "steps": [
-      { "at": 0, "state": { "foo": { "value": false } } },
-      { "at": 3000, "state": { "foo": { "value": true } },
-        "expect": { "key": "foo", "show": "tile", "kind": "add", "tile": { "on": true, "notable": true }, "host": "ring", "opens": true } } ] }
-];
-```
+Translation files need nothing: the pre-commit hook adds new strings to every language.
 
 ## Steps
-1. **Decide what each change shows, by the card rule:** a card when the icon alone can't say what changed (something new that needs details: a device's name, a network joined; an unexpected or partial departure: a VPN dropping by itself, one app of several stopping); just the icon for an expected departure and a plain toggle. Write it down as rows first.
-2. Pick the model: `scalar` (`{ value }`: a toggle, a device), `set` (`{ members: [{ id, … }] }`: apps, VPNs) or `event` (`{ event, seq }` through the watcher's `pulse()`: something that happens, not a state). A bar is `{ level, muted }` whatever the model.
-3. Write the rows in `tests/osd/<Type>.js` and list the file in `index.js`: the first reading (nothing shows; `tiles` checks the tile), each change, a change made on screen (`byUser: true` → `opens: false`), `quiet`, and every guard (unavailable, a reload, a gap). Cross-system ones (a knock-on of airplane mode, a card that takes another's in) in `Cross.js`.
-4. Write `schema.yaml` (`label`, `icon`, `group`, its parts, its `settings`).
-5. Write the definition: `exposes` (a binding over `options` where its settings pick what it shows), the model and policies (`onAdd`, `onChange`, `onUpdate`, `onRemove`, `onUnexpectedRemove`, `onEvent`), the declarations it needs (osd.md › Engine › The definition: `anyone`, `settledKinds`, `resetBy`, `countsWithin`, `ignoreWithin`, `keepThroughGap`, `memberState`, `carriesEvents`, `alertKinds`, `ownerField` + `groups`, `roles`, `takesIn`, `retractsCardWhenOff`, `yieldsCard`, `knockOnOf`, `userWindow`, …), `tile()`, and `card()` for what its card reads. English strings, declared in a comment as `I18n.tr("…")` calls.
-6. Write the watcher: `state` by exposed key, bound to its services; `holds` for a polled service; `settled()` if a service settles after it changes (or, for a change that counts only just after the user's own set, its time in the state and the definition's `countsWithin`); `available: false` while there's nothing to judge; `activate(change)` for a click on a `clickable` card.
-7. Run `scripts/run_tests.sh OSDSystems` until its rows pass, then add it to an OSD in Settings and look in a nested shell.
+1. Decide what each change shows, by the card rule. A card when the icon alone can't say what changed (something new with details, such as a device's name, or an unexpected or partial departure, such as a VPN dropping by itself). Just the icon for an expected departure and for a plain toggle. Write this down as timeline rows first.
+2. Pick the model: `scalar` (`{ value }`: a toggle, a device), `set` (`{ members: [{ id, … }] }`: apps, VPNs) or `event` (`{ event, seq }` through the watcher's `pulse()`: something that happens rather than a state). A bar's state is `{ level, muted }` whatever the model.
+3. Write the rows in `tests/osd/<Type>.js` and list the file in `index.js`. Cover the first reading (nothing shows), each change, a change made on screen (`byUser: true` gives `opens: false`), `quiet`, and every guard (unavailable, a reload, a gap). The row format is in osd.md › Engine › Timelines.
+4. Write `schema.yaml`: `label`, `icon`, `group` (one of the OSD groups at the end of `x-libraryGroups` in `qml/config/schema/index.yaml`), `tile: standard` and/or `card: standard`, and `settings` for the system's own keys. A system with bars also writes `barNames`, which `tst_OSDSystems` checks against `exposes` (see the Audio and Brightness schemas). A card-only system names no part.
+5. Write the definition: `exposes` (a binding over `options` when settings choose what shows), the model, the policies (`onAdd`, `onChange`, `onUpdate`, `onRemove`, `onUnexpectedRemove`, `onEvent`), the declarations it needs (osd.md › Engine › The definition lists them all), `tile()`, and `card()` for what its card reads. English strings are declared in a comment as `I18n.tr("…")` calls.
+6. Write the watcher: `state` keyed by exposed key and bound to its services. Add `holds` for a polled service, `settled()` if a service settles after it changes, `available: false` while there is nothing to judge, and `activate(change)` for a click on a clickable card.
+7. Run `scripts/run_tests.sh OSDSystems` until the rows pass, then add the system to an OSD in Settings in a nested shell and make it change.
 
-## Gotchas
-- **No `judge()` without a reason.** Every shipped system is declarations; a behaviour the engine lacks is a new generic declaration in `OSDEngine` (with a `tst_OSDEngine` case and an osd.md › Engine line), never a type name in the engine or `OSDHost`. A `judge()` that's truly one-off says why above it.
-- The definition imports only `QtQuick`, `qs.components.methods` and `qs.components.surfaces.osd.engine` (`check_structure`); anything reading a service goes in the watcher.
-- No file of the folder names another (`check_structure`): they're loaded by URL. A design file is named by `design` on its `exposes` entry, not imported.
-- Keys are unique in `exposes` and are the on-screen marks by default: a widget or module that changes it calls `ActionsManager.run(id, { fromScreen: true })` (its action's `osdKind`) or `ShellManager.onScreen(<key>)`, so a change made there doesn't open a shut OSD. A connection settling takes longer: raise `userWindow`.
-- The watcher's first 1.5 s only moves the state on (services settling), but for an `event` model's events and a key declaring `countsWithin` (it gates itself), which show at once: don't count on a state change at the start being seen.
-- An event model's state needs its `seq` (`pulse()` counts it), so the same event twice shows twice and the state read again with another field changed isn't a new one.
-- A card-only system (Monitors, Screenshot, Message, Media) names no part in its schema: its item has no switches, only `quiet`.
-- An event that's a notification where no OSD shows its card: its service says it through `NotificationManager.announce(system, key, notify, …)`, naming the system and its key (`"Drives", "drive"`), so `OSDConfig.routeOf` (`OSDEngine.cardRoute`) picks the OSD or a notification ([OSD](../dev/features/osd.md) › Where events go). The service sets its event only when the route is the OSD.
+## Watch out for
+- **No `judge()` without a reason.** Every shipped system is declarations. A behaviour the engine lacks becomes a new generic declaration in `OSDEngine` (with a `tst_OSDEngine` case and a line in osd.md › Engine), never a system's name in the engine or in `OSDHost`. A one-off `judge()` says why above it.
+- The definition imports only `QtQuick`, `qs.components.methods` and `qs.components.surfaces.osd.engine` (`check_structure`), so the test can load it; anything that reads a service goes in the watcher.
+- No file of the folder names another (`check_structure`), because they are loaded by URL. A design file is named by `design`, not imported.
+- Keys in `exposes` are unique and are the marks for changes made on screen. A widget or module that changes the value calls `ActionsManager.run(id, { fromScreen: true })` (the action's `osdKind`) or `ShellManager.onScreen(<key>)`, so a change made there doesn't open a shut OSD. A connection that settles slowly needs a longer `userWindow`.
+- The watcher's first 1.5 seconds only move its state on, while services settle. Event models and keys declaring `countsWithin` are the exceptions and show at once, so don't expect a state change at the start to be seen.
+- An event model's state needs its `seq` (`pulse()` counts it), so the same event twice shows twice, and a re-read with another field changed isn't a new event.
+- An event that becomes a notification where no OSD shows its card goes through `NotificationManager.announce(system, key, notify, …)`, which picks the OSD or a notification by `OSDConfig.routeOf` (`OSDEngine.cardRoute`; see osd.md › Where events go). The service sets its event only when the route is the OSD, as `DrivesManager` does.
 - Repeater models and `holds` come from config only, never live values.
 
-## Verify
-- `scripts/run_tests.sh OSDSystems` (the timelines) and `scripts/run_tests.sh OSDEngine` if the engine changed.
-- `scripts/dev/verify.sh` (`check_structure` checks the folder; `tst_Config` the schema's defaults).
-- In a nested shell (`scripts/dev/nested.sh`), add it to an OSD in Settings → OSD and make it change; `scripts/log.sh` stays clean.
+## Check it
+- `scripts/run_tests.sh OSDSystems` for the timelines, and `scripts/run_tests.sh OSDEngine` if the engine changed.
+- `scripts/dev/verify.sh` (`check_structure` checks the folder, `tst_Config` the schema defaults).
+- In `scripts/dev/nested.sh`, add the system under Settings › OSD, make it change, and check `scripts/log.sh` stays clean.
 
 ## Docs to update
-- [OSD](../dev/features/osd.md) › Systems: a short section for it (its key, what each change shows, its declarations and anything custom).
-- Its feature's own doc, a line linking the OSD.
-- `docs/dev/live-checks.md`, for what only the real machine shows.
+- [OSD](../dev/features/osd.md) › Systems: a short section for the system (its key, what each change shows, its declarations and anything custom).
+- The doc of the feature the system shows, with a line linking the OSD.

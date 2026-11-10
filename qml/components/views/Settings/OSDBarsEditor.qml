@@ -9,7 +9,6 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.views.Layouts
 
-// i18n: keys from the schema (bar kinds, system labels, titles)
 // An OSD's bars in its settings tab (OSDListCard), folding under "Bars":
 // every bar it shows, in its order (its `barOrder`, as the host shows
 // them: OSDConfig.orderedBarRows), whichever system it's a setting of

@@ -23,8 +23,7 @@ import (
 // selfupdate; never the dev tree, which dev mode may run meanwhile), and
 // after one the installed axiom binary replaced to match it and re-exec'd
 // into, so the daemon's embedded schema is the tree's: the official build
-// of the commit checked out when there is one (maintainer, 2026-10-27:
-// "Download, build fallback (Recommended)"), else built from the tree. An
+// of the commit checked out when there is one, else built from the tree. An
 // active dev image keeps running: dev off goes back to the new install.
 func (d *Daemon) selfUpdatePart() part {
 	return part{name: "self-update", methods: d.selfUpdateMethods}

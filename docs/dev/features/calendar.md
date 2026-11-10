@@ -101,7 +101,7 @@ CalDAV accounts, read-only .ics feeds and local calendars: synced and edited thr
   - the CalendarPage view;
   - else the page with a Calendar module;
   - else Settings, and no request is kept.
-- The request is taken once (`takeRequest`) by the CalendarPage view when `page` is `"CalendarPage"`, else by a Calendar module on that Custom page (its `host.page`), never by one on the desktop or in an edge menu.
+- The request is taken once (`takeRequest`) by the CalendarPage view when `page` is `"CalendarPage"`, else by a Calendar module on that Custom page (its `host.page`), never by one on the desktop or in a menu.
 
 ### The page's state (`CalendarManager.page`)
 - The Calendar page pops out into a window of its own ([page windows](../overlay/page-windows.md)), and a move builds a new view, so the page keeps nothing itself: `CalendarPageState` holds the selected day (`selectedKey`), the month shown (`year`, `month`, which the page's `MonthGrid` binds) and the open event (`draft`, an `EventDraft` its `DayPane` edits).
@@ -149,4 +149,4 @@ Drafts, and everything about days, spans, dots, what's next, reminders due and q
 ### Testing
 - The Go tests in `backend/internal/calendar` (a fake CalDAV server and feeds on `httptest`, local calendars in a temp dir) and `calendar/ical` (the expansion's hard cases, the edits read back, Windows zones).
 - By hand, against a scratch Radicale (`pip install radicale`).
-- Never add a test account to the live config without removing it again.
+- A test account added to your live config should be removed again afterwards.

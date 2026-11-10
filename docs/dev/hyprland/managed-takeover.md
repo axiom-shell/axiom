@@ -37,7 +37,7 @@ How `managed` mode takes `~/.config/hypr/hyprland.lua` over (`claim`), and how l
 - **Released files.** A file that `release` wrote (`releasedLua()`, unedited apart from the include lines) is reported as `released` by `check`. It is only replaced, not kept.
 - **Writing.** `claim` leaves hyprland.lua in place, for the managed write to replace atomically. Hyprland reloads when the file changes, and must never find it missing.
 - **Re-claiming.** Claiming the same file again before the managed write came reuses its copies (making the edits to the adopted copy again, which change nothing twice), but only as the claim's record (`.axiom-claimed`) names them: a config released unchanged has the newest backup's bytes too, and is copied anew.
-- **The record.** Each claim notes what it set aside in `.axiom-claimed` beside the config (`previous=`, `backup=`), so release gives back that, never an older claim's dated backup still lying there. A claim from before records gives back nothing (the maintainer, 2026-11-01: "drop"): release writes the released file, and the old copies stay where they are.
+- **The record.** Each claim notes what it set aside in `.axiom-claimed` beside the config (`previous=`, `backup=`), so release gives back that, never an older claim's dated backup still lying there. A claim from before records gives back nothing: release writes the released file, and the old copies stay where they are.
 - **Binds.** Only the adopted file's binds are merged straight away (`mergeUserBinds(name)`, `extract --only`), so managed mode starts with no conflicts. The rest of `user/` waits for the Merge button ([Bind merge](bind-merge.md)).
 
 ### Release
@@ -49,5 +49,5 @@ How `managed` mode takes `~/.config/hypr/hyprland.lua` over (`claim`), and how l
 - A symlinked or git-tracked file is refused, as `claim` refuses it.
 
 ### Testing
-- Never switch the real config into or out of `managed`.
-- Test the takeover on scratch dirs, as `backend/internal/compositor/takeover/takeover_test.go` does (`axiom compositor claim|release` on a live config dir is refused by the guard).
+- Switching the real config into or out of `managed` takes over or releases the user's compositor config.
+- Test the takeover on scratch dirs, as `backend/internal/compositor/takeover/takeover_test.go` does (`axiom compositor claim|release` on a live config dir would do it for real).

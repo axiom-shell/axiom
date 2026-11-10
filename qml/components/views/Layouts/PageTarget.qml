@@ -6,7 +6,6 @@ import qs.services.ui
 // The layouts editor on an overlay page (OverlayManager's selected view):
 // a Custom page's modules, with how they fit each monitor's overlay. A
 // tool page has nothing to edit.
-// i18n: keys from the schema (view labels)
 EditTarget {
   id: root
 

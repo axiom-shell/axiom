@@ -88,8 +88,7 @@ func TestNiriOwnSwitcher(t *testing.T) {
 }
 
 // Managed mode always writes niri's switcher binds, so niri's default keys
-// are gone (the maintainer: "Binds are exactly representative of what there
-// is"): empty with the setting on and no switcher bind of axiom's niri's
+// are gone (its binds are exactly axiom's): empty with the setting on and no switcher bind of axiom's niri's
 // switcher takes, or with the setting off; included writes none then and
 // leaves niri's defaults.
 func TestNiriManagedSwitcherBindsAreAxioms(t *testing.T) {

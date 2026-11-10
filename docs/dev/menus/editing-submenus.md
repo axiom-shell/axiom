@@ -4,7 +4,7 @@
 > **Config:** `Menus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 
-How edge menus are edited on the Layouts page (draft, field groups, previewing, openers, moving along the edge), and how one menu opens another as a submenu.
+How menus are edited on the Layouts page (draft, field groups, previewing, openers, moving along the edge), and how one menu opens another as a submenu.
 
 ### Draft
 - Editing happens on the Layouts page (see [Layouts editor](../overlay/layouts-editor.md)).
@@ -12,7 +12,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 - While dirty it shows live on the running menus through its `Menus` preview (`ConfigManager.setPreview`), as the bar editor's does.
 
 ### Field groups
-- The menu's fields come in `x-group`s: General, Opening, Placement, Style, Behaviour, Closing, Advanced (the read-only `id`), in the order their first field comes in the schema (`SchemaLayout.objectGroups`). Behaviour holds what the menu's buttons and header do (decided 2026-11-10, review round 2): `pinButton`, `closeButton`, `popOutButton` and `draggable`, so `draggable` sits beside the `popOutButton` it shows with.
+- The menu's fields come in `x-group`s: General, Opening, Placement, Style, Behaviour, Closing, Advanced (the read-only `id`), in the order their first field comes in the schema (`SchemaLayout.objectGroups`). Behaviour holds what the menu's buttons and header do: `pinButton`, `closeButton`, `popOutButton` and `draggable`, so `draggable` sits beside the `popOutButton` it shows with.
 - The Opening group leads with `MenuOpening`:
   - **"Show on screen"**: sets `previewing` to the selected menu (following the selection and id renames) and opens it.
     - `isHeld(id)` (pinned or previewing) makes a menu ignore `closeOnLeave` and outside clicks.
@@ -35,15 +35,15 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   | `popout` | `placement: free`, `animation: fade`, `closeButton: true` |
   | `submenu` | `placement: free`, `animation: fade`, `closeButton: true` |
   | `free` | `placement: free`, `animation: fade`, `closeButton: true`, `freeAnchor.at: centre`, `close.onLeave: false`, `close.onOutsideClick: false` (opened by a bind with the pointer elsewhere, it stays until its close button, Escape or its bind closes it, and never holds the keyboard) |
-- **Free menus start with a close button and without Close on outside click** (decided 2026-11-10: "go ahead with the default change. No option 1, it can take the keyboard immediatly"): `close.onOutsideClick` holds the keyboard while the menu is open (its `FocusGrab`, [Free menus](free-menus.md) › The window), so the windows behind couldn't be typed in. Only the seeds changed: the schema defaults (both off) and existing menus are as they were, and an edge menu's outside click closes it as before.
+- **Free menus start with a close button and without Close on outside click**: `close.onOutsideClick` holds the keyboard while the menu is open (its `FocusGrab`, [Free menus](free-menus.md) › The window), so the windows behind couldn't be typed in. Only the seeds changed: the schema defaults (both off) and existing menus are as they were, and an edge menu's outside click closes it as before.
 - **Layouts' New menu** (`MenusSection`) opens a `StyledContextMenu` of the four purposes, then `addMenu(purpose)`.
-  - Each adds the menu to the draft, unsaved. `free` (Free, a floating menu) replaced "Opened by a keybind" (decided 2026-11-10: "opened by a keybind option needs to be replaced by free when adding new menus"): no keybind is recorded; once saved, a bind is added from its Opening section as for any menu.
+  - Each adds the menu to the draft, unsaved. `free` (Free, a floating menu) replaced "Opened by a keybind": no keybind is recorded; once saved, a bind is added from its Opening section as for any menu.
 - **A Submenu module's New submenu…** (a link under its `menu` field in `EditorInspector`, through `OptionsGroup.fieldAction`): `addSubmenu(moduleIndex)` adds a free menu to the same draft, sets the module's `menu` to it, then selects it and holds it open beside its parent (selecting it clears the parent's undo history, as any change of menu does: the `GridEditor`'s `scopeKey`). Everything stays in one draft, so nothing points at an unsaved menu from another editor.
-- **The bar editor's New menu…** (a link under each edge menu picker in `WidgetInspector`: a widget's `popout.menu`, a Button's click `menu`): `OverlayManager.newMenuFor(zone, index, path)`.
+- **The bar editor's New menu…** (a link under each menu picker in `WidgetInspector`: a widget's `popout.menu`, a Button's click `menu`): `OverlayManager.newMenuFor(zone, index, path)`.
   - It saves a new `popout` menu at once (`addSavedMenu` → `_commitNew`: the saved config plus that one item, through `ConfigManager.commit`). The menu draft takes it as saved (`ConfigDraft.adopt`), so it doesn't show as unsaved and a later save of the draft keeps it once.
   - It sets the field in the bar draft (`BarManager.updateWidgetProperty`, undoable; a nested field as its whole object), then opens the menu in Layouts as `editOpenedBy` does (`followLink`).
   - So the bar draft never points at an unsaved menu.
-- **The pickers** (`x-options: menus`: a widget's `popout.menu`, a Button's click `menu`, a Submenu module's `menu`) label each menu by its name and placement ("Tools · Free", `SchemaField.optionLabels` with `MenusConfig.placementLabels`); the stored value is the id (decided 2026-11-10, review round 2: "Label + omit unusable").
+- **The pickers** (`x-options: menus`: a widget's `popout.menu`, a Button's click `menu`, a Submenu module's `menu`) label each menu by its name and placement ("Tools · Free", `SchemaField.optionLabels` with `MenusConfig.placementLabels`); the stored value is the id.
   - A widget's `popout.menu` offers only `edge` and `free` menus (`x-menuPlacements: [edge, free]`, `MenusConfig.offeredIn`): a strip pushes the bars and windows inwards, so opened by hovering a widget it moves the bars as the pointer rests ("Bars must not move/redraw when making an action", review round 1), and on its edge takes the widget from under the pointer (`popoutMenuOf` would still open one). A menu it already names stays listed.
   - A Button's click `menu` offers every placement: a click toggles a strip as a bind does. A Submenu module's `menu` too: it shows any menu's modules in its submenu.
 - The links are `SettingsLink`s with a `run` function; a form draws one under a field when its `fieldAction` hook (`SchemaPropertiesForm`) gives one.

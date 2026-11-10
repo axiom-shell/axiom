@@ -9,7 +9,6 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.views.Layouts
 
-// i18n: keys from the schema (system labels, group names, titles)
 // An OSD's systems in its settings tab (OSDListCard), folding: the list in
 // order (its icons' and bars' order), each row its system's icon and label,
 // dragged to reorder, clicked to select, removed by its X; Add opens a

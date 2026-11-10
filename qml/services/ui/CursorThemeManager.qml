@@ -60,7 +60,7 @@ Singleton {
   }
 
   function _resolve() {
-    // The greeter writes nothing (services/AGENTS.md)
+    // The greeter writes nothing (.claude/rules/services.md)
     const theme = root._wanted;
     if (theme === "" || Paths.greeter)
       return;

@@ -11,7 +11,6 @@ import qs.components.forms
 import qs.components.content.base
 import qs.components.views.Settings
 
-// i18n: keys from the schema (titles, descriptions)
 // Bar editor, left: the bars, then the selected bar's settings under four
 // tabs (Layout, Surface, Style, Behaviour): its own groups, generated
 // from the schema's Bar definition, and its style (the Bar style block,

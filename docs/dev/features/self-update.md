@@ -30,7 +30,7 @@ The report:
 - `ahead`, `behind`
 - `blocked`: `dirty` | `diverged` | `branch` | `nogit`
 - `notes`, `error`
-- `rebuilt`, `binarySource`, `buildError`: after an `apply`, whether the installed axiom binary (the one the daemon came from) was replaced to match the updated clone, so its embedded schema is the tree's, and from where (maintainer, 2026-10-27: "Download, build fallback (Recommended)"):
+- `rebuilt`, `binarySource`, `buildError`: after an `apply`, whether the installed axiom binary (the one the daemon came from) was replaced to match the updated clone, so its embedded schema is the tree's, and from where:
   - `release` / `edge`: the official build of the commit now checked out, downloaded and checked against its `SHA256SUMS` (`release/fetch`): the tag's release on `tags`; on `main`, main's newest build, only when its `COMMIT` is the clone's head. Written beside the binary, checked to run (`version`) and swapped in.
   - `built`: else (no build for this machine or commit, offline, a sum that doesn't match, which is logged), built from the tree: `go generate ./internal/assets`, then `go build -trimpath` beside it, checked to run and swapped in (dev mode's `buildAxiom`). Without `go`, `buildError` says so.
   - Only a binary this user can replace (install.sh's in `~/.local/bin`); a failed build leaves the old one and says why (the compiler's first line), the update itself staying in.
@@ -69,4 +69,4 @@ What it will and won't do:
 
 ### Testing
 - `go test ./internal/selfupdate` runs on scratch clones (upstream and clone in a temp dir); `TestReplaceInstalled` (daemon) on a served release and a fake go.
-- Never `selfupdate.apply` (or IPC `selfUpdate update`) on the live daemon: it updates the live repo. (Rule: AGENTS.md › Never, while testing; the guard refuses it.)
+- `selfupdate.apply` (or IPC `selfUpdate update`) on the live daemon updates your live repo; the Go tests use scratch clones instead.

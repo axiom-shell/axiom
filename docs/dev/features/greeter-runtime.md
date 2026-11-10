@@ -57,7 +57,7 @@ This doc covers what runs at the login screen and the data it reads: the bundle 
 - **State:** `Paths.statePath` / `userStatePath` point at the greeter's `state/`.
 - **Startup:** singletons are lazy, so nothing else from the session starts.
 - **No config layer:** the daemon does axiom's compositor layer, and the greeter has none; `CompositorConfigManager.enabled` is false in greeter mode too, so nothing writes or sends axiom's layer (binds, look, rules) to the greeter's compositor, or, from a greeter run in a session, to the session's.
-- (Rule: in greeter mode nothing writes config, generates or runs integrations; AGENTS.md › UI conventions.)
+-
 
 ### GreetdManager
 Built on `Quickshell.Services.Greetd`.
@@ -90,7 +90,7 @@ Built on `Quickshell.Services.Greetd`.
     - In a slot shorter than one field, they shrink to fit.
   - `Session`: in a slot shorter than its card, just the field, with no card.
   - `Power`: suspend, hibernate (only where logind's `CanHibernate` says it can: `SessionManager.canHibernate`), restart and shut down, in the order set; restart and shut down ask twice. It is also on the lock screen.
-  - `KeyboardLayout` (also on the lock screen and in the overlay, edge menus and the desktop): the compositor's layouts alone here, a click or the wheel switching ([input sources](input-sources.md)).
+  - `KeyboardLayout` (also on the lock screen and in the overlay, menus and the desktop): the compositor's layouts alone here, a click or the wheel switching ([input sources](input-sources.md)).
 - **Solid:** in greeter mode `Appearance.compositorBlurs` is false (`CompositorManager`), so every surface is opaque and nothing frosts; `GreeterSurface` also sets `frost: false`, so the layouts editor's preview isn't frosted either, though its cards keep the session's translucency (`Appearance.fill` is global). The wallpaper still follows `Greeter.layout.backdrop.blur` (Qt's own blur, needing nothing of the compositor).
 - **Display modules** that list `greeter` in `x-hosts`: ClockCalendar, Greeting, Weather, Battery, Network, Palette, ColorSwatch.
 - **Inert outside the greeter:** every greeter module is inert unless `host.kind === "greeter" && !host.preview && Paths.greeter`, so the user's session never talks to greetd.
@@ -102,4 +102,4 @@ Built on `Quickshell.Services.Greetd`.
 
 ### Testing
 - Look at the greeter in a window: `AXIOM_GREETER_WINDOWED=1 AXIOM_COMPOSITOR=none axiom greeter --tree "$PWD" --dir <scratch>`, with a scratch `XDG_RUNTIME_DIR` (short: the socket's path must fit 108 bytes) and `WAYLAND_DISPLAY` as an absolute path. qs started without it has no axiom and runs no command.
-- Stop only that instance: SIGTERM to its `axiom greeter`, which stops its qs. Never restart greetd: it ends the session.
+- Stop only that instance: SIGTERM to its `axiom greeter`, which stops its qs. Restarting greetd ends your session, so don't.

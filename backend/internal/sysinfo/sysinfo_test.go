@@ -50,7 +50,7 @@ func TestRead(t *testing.T) {
 		"proc/sys/kernel/hostname":  "box\n",
 		"proc/sys/kernel/osrelease": "7.2.14-arch1-1\n",
 		"arch":                      "x86_64\n",
-		"etc/machine-info":          "PRETTY_HOSTNAME=\"Travis's Box\"\nCHASSIS=desktop\n",
+		"etc/machine-info":          "PRETTY_HOSTNAME=\"Alex's Box\"\nCHASSIS=desktop\n",
 		"usr/lib/os-release":        "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nLOGO=archlinux-logo\nHOME_URL=\"https://archlinux.org/\"\n",
 		"proc/cpuinfo":              "processor\t: 0\nmodel name\t: AMD Ryzen 9 7950X 16-Core Processor\n\nprocessor\t: 1\nmodel name\t: AMD Ryzen 9 7950X 16-Core Processor\n",
 		"proc/meminfo":              "MemTotal:       65536000 kB\nMemFree: 1 kB\n",
@@ -69,7 +69,7 @@ func TestRead(t *testing.T) {
 	}
 	info.DiskTotal, info.DiskFree = 0, 0
 	want := Info{
-		Hostname: "box", PrettyHostname: "Travis's Box", Chassis: "desktop",
+		Hostname: "box", PrettyHostname: "Alex's Box", Chassis: "desktop",
 		OS: "Arch Linux", OSID: "arch", Logo: "archlinux-logo", OSURL: "https://archlinux.org/",
 		Kernel: "7.2.14-arch1-1", Arch: "x86_64", CPU: "AMD Ryzen 9 7950X", Cores: 2,
 		GPUs:        []string{"AMD Radeon RX 7900 XT/7900 XTX", "Intel (device 0xffff)", "NVIDIA GeForce RTX 4090"},
@@ -116,7 +116,7 @@ func TestHostnames(t *testing.T) {
 	t.Parallel()
 	for _, c := range []struct{ in, static, pretty string }{
 		{"box", "box", ""},
-		{"  Travis's Laptop ", "traviss-laptop", "Travis's Laptop"},
+		{"  Alex's Laptop ", "alexs-laptop", "Alex's Laptop"},
 		{"Work PC #2", "work-pc-2", "Work PC #2"},
 		{"my-box", "my-box", ""},
 	} {
@@ -165,12 +165,12 @@ func TestRename(t *testing.T) {
 	r := New(Options{SystemBus: func(ctx context.Context) (*dbus.Conn, error) {
 		return dbus.Dial(ctx, bus.Address, dbus.Options{})
 	}})
-	if err := r.Rename(ctx, "Travis's Laptop"); err != nil {
+	if err := r.Rename(ctx, "Alex's Laptop"); err != nil {
 		t.Fatal(err)
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	if want := []string{"SetStaticHostname traviss-laptop", "SetPrettyHostname Travis's Laptop"}; !reflect.DeepEqual(calls, want) {
+	if want := []string{"SetStaticHostname alexs-laptop", "SetPrettyHostname Alex's Laptop"}; !reflect.DeepEqual(calls, want) {
 		t.Errorf("calls %q, want %q", calls, want)
 	}
 }

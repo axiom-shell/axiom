@@ -138,7 +138,7 @@ Singleton {
   // noAnim); the screenshot picker freezes the screen once the compositor
   // has drawn a frame without them, never their blurred dim
   property Timer _regionDelay: Timer {
-    interval: 100 // behaviour timing: the compositor redrawing the screens without the picker
+    interval: 100 // the compositor redrawing the screens without the picker
     onTriggered: root._dragRegion()
   }
 

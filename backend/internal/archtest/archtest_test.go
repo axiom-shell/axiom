@@ -1,4 +1,4 @@
-// Package archtest checks the structure rules of backend/AGENTS.md on the
+// Package archtest checks the structure rules of .claude/rules/backend.md on the
 // source. Every package is classified into a tier, and imports only point
 // down the tiers: the pure packages (the Go side of components/methods/) do
 // no I/O and import only each other, the edge packages do the I/O, and only
@@ -24,7 +24,7 @@ const module = "github.com/axiom-shell/axiom/backend/"
 // The tiers, lowest first: a package imports only packages of its own tier
 // or a lower one
 const (
-	tierPure   = iota // no I/O (backend/AGENTS.md › Rules)
+	tierPure   = iota // no I/O (.claude/rules/backend.md › Rules)
 	tierEdge          // files, sockets, processes, buses, compositors
 	tierDaemon        // the daemon, wiring the edge packages together
 	tierCLI           // the command line, which also starts the daemon

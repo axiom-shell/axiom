@@ -5,9 +5,11 @@
 # run picks from the same checks by what changed, so a new check gets a
 # trigger there too). Needs Qt 6's tools, go, shellcheck, luac and jq.
 #
-#   scripts/check_all.sh [--ci] [checks|qt|go|scripts …]   no job: all four
+#   scripts/check_all.sh [-v] [--ci] [checks|qt|go|scripts …]   no job: all four
 #   --ci   also govulncheck (check_go.sh --ci); under GitHub Actions each
 #          check's output folds into a group
+#   -v, --verbose   every check's whole output (default: one `✓ name` line
+#          per passing check, the output of a failing one)
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,9 +19,10 @@ ci=() jobs=()
 for arg in "$@"; do
   case "$arg" in
   --ci) ci=(--ci) ;;
+  -v | --verbose) export AXIOM_VERBOSE=1 ;;
   checks | qt | go | scripts) jobs+=("$arg") ;;
   *)
-    sed -n '2,10p' "$0" >&2
+    sed -n '2,12p' "$0" >&2
     exit 2
     ;;
   esac
@@ -27,18 +30,11 @@ done
 [[ ${#jobs[@]} -eq 0 ]] && jobs=(checks qt go scripts)
 
 failed=()
-step() {
-  local name="$1"
-  shift
-  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-    echo "::group::$name"
-    "$@" || failed+=("$name")
-    echo "::endgroup::"
-  else
-    echo "── $name"
-    "$@" || failed+=("$name")
-  fi
-}
+# The unit tests print only failures, unless the whole output is wanted
+quiet=(-q)
+[[ -n "${AXIOM_VERBOSE:-}${GITHUB_ACTIONS:-}" ]] && quiet=()
+# shellcheck source=lib/steps.sh
+source "$root/scripts/lib/steps.sh"
 
 # The generated files the checks read (the schema, for the checks job the
 # reference docs, for the qt job the shared fixtures), built once per run;
@@ -71,7 +67,7 @@ for job in "${jobs[@]}"; do
   qt)
     step "qmlformat" scripts/check_qmlformat.sh
     step "qmllint" python3 scripts/check_qmllint.py
-    step "unit tests" scripts/run_tests.sh
+    step "unit tests" scripts/run_tests.sh "${quiet[@]}"
     ;;
   go)
     step "go" scripts/check_go.sh "${ci[@]}"

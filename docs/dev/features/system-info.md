@@ -16,7 +16,7 @@ Settings › System opens on this machine and this axiom: what a user (or a bug 
 - The install line comes from the shell: a package (`Paths.packaged`, its version), the dev tree (`DevManager.active`), a git clone, or a copy that is neither (`SelfUpdateManager.managed`).
 
 ### Renaming (`system.setHostname`)
-- Only the shell's connection may (`fromShell`). The typed name becomes the static hostname (lowercased, apostrophes dropped, other runs of characters a dash: "Travis's Laptop" → `traviss-laptop`) and, when that changes it, the pretty hostname keeps it as typed. A name with nothing left is `bad_request`.
+- Only the shell's connection may (`fromShell`). The typed name becomes the static hostname (lowercased, apostrophes dropped, other runs of characters a dash: "Alex's Laptop" → `alexs-laptop`) and, when that changes it, the pretty hostname keeps it as typed. A name with nothing left is `bad_request`.
 - Both go to hostnamed with `FlagAllowInteractiveAuthorization` (`dbus.Conn.CallInteractive`), so polkit asks the user through axiom's agent; a cancelled or refused prompt is `refused` (`SystemInfoManager.errorText` says so under the name).
 
 ### Optional packages

@@ -1,88 +1,48 @@
-# Recipe: a new bar widget
+# Adding a bar widget
 
-> **Use when:** adding a widget type users can put on a bar (it shows up in the bar editor's library).
-> **Copy from:** `qml/components/bar/widgets/IdleInhibitor/IdleInhibitor.qml` (service toggle, no popout), `qml/components/bar/widgets/Weather/Weather.qml` (polled data + its own popout), `qml/components/bar/widgets/Updates/Updates.qml` (an `acquire` request from settings, both buttons, `extraData`); schema `qml/components/bar/widgets/IdleInhibitor/schema.yaml`.
-> **Docs:** [bar/composition](../dev/bar/composition.md), [bar/widget-style](../dev/bar/widget-style.md), rules in `qml/components/bar/widgets/AGENTS.md`; generated: [config/BarWidgets](../dev/config/BarWidgets.md).
+A bar widget is a type users add to a bar from the bar editor's library: a clock, a battery, a toggle. At the end you have a QML file, a `schema.yaml` beside it that declares its settings and library entry, and (if it needs one) a popout on hover.
 
-## Files to touch
-1. `qml/components/bar/widgets/<Type>/<Type>.qml`: the widget. The file name is the type const.
-2. `qml/components/bar/widgets/<Type>/schema.yaml`: the type's schema, beside it. The build finds it (index.yaml's `kinds`), expands it over `definitions/kinds/WidgetBase.yaml` into `<Type>Widget` and adds it to `BarWidget`'s `oneOf`: nothing else to list.
-3. `qml/config/i18n/*.json`: nothing to do: the pre-commit hook adds the new keys, empty, to every language and the template (the title, descriptions and the type's `description`, which is its library label, are keys).
-4. If it opens a popout of its own: `qml/components/content/<Name>/<Name>.qml` ([bar-popout](bar-popout.md)).
-5. If it needs data that's polled: the service's `acquire`/`release` ([service](service.md)).
+**Copy from:** `qml/components/bar/widgets/Bluetooth/Bluetooth.qml` (an icon and a label, a click that runs an action, middle click, a popout), `qml/components/bar/widgets/IdleInhibitor/IdleInhibitor.qml` (state from a service, a popout with `extraData`), `qml/components/bar/widgets/Weather/Weather.qml` (polled data), `qml/components/bar/widgets/Updates/Updates.qml` (a poll request built from settings, two mouse buttons), `qml/components/bar/widgets/LockKeys/LockKeys.qml` (one box per item). Their schemas are the `schema.yaml` beside each.
+**Background:** [bar/composition](../dev/bar/composition.md), [bar/widget-style](../dev/bar/widget-style.md), [bar/display-styles](../dev/bar/display-styles.md), [config/BarWidgets](../dev/config/BarWidgets.md) (generated)
 
-## Skeleton
-```qml
-pragma ComponentBehavior: Bound
-import QtQuick
+## Files
+1. `qml/components/bar/widgets/<Type>/<Type>.qml`: the widget. The file name is the type name, and a purpose comment sits above the root object.
+2. `qml/components/bar/widgets/<Type>/schema.yaml`: its schema. The build finds it and expands it over `qml/config/schema/definitions/kinds/WidgetBase.yaml` into `<Type>Widget` in `BarWidget`'s `oneOf`; nothing else lists it.
+3. If it opens a popout of its own: `qml/components/content/<Name>/<Name>.qml` ([bar-popout](bar-popout.md)).
+4. If it shows polled data: the service it acquires ([service](service.md)).
 
-import qs.config
-import qs.services.<group>  // FooManager's folder: core, compositor, session, system, ui or apps
-import qs.components.hosts.popout
-
-// <One sentence: what it shows and what clicking does.>
-BarIconWidget {
-  id: root
-
-  icon: FooManager.active ? "toggle_on" : "toggle_off"
-  text: I18n.tr(FooManager.active ? "On" : "Off")
-  showText: properties.showLabel
-  accentColor: Theme.resolveColor(FooManager.active ? properties.activeColor : properties.inactiveColor)
-
-  clickable: true
-  onClicked: FooManager.toggle()
-
-  // Only with a popout of its own (content/FooDetails.qml)
-  PopoutAnchor {
-    hitArea: root.hitArea
-    popoutName: "FooDetails"
-    active: MenusConfig.opensOwnPopout(root.properties)
-  }
-}
-```
-Schema (`schema.yaml` beside `Foo.qml`): only what's particular to the type. `label` is its library label (the `type` const's description), `settings` its `properties`; every other key becomes the annotation `x-<key>` (`group` is `x-libraryGroup`).
-```yaml
-label: Foo
-icon: toggle_on
-group: System
-popout: own        # or menu (no popout of its own: it opens a menu), plain
-colors: standard   # backgroundColor + foregroundColor, if it draws a box
-settings:
-  showLabel: {type: boolean, title: Show label, default: false}
-  activeColor: {$ref: '#/definitions/WidgetColor', title: Active color}
-  inactiveColor: {$ref: '#/definitions/WidgetColor', title: Inactive color, x-autoColor: 'off'}
-```
-- `popout` and `colors` pick parts of `WidgetBase`'s `x-parts`: `popout: own` adds `popout: { enabled, menu }` with "Its own popout"; `menu` the same as "Menu popout", off by default; `plain` only `enabled`. A part's key can be overridden (`popout: {variant: own, enabled: {default: false}}`).
-- A widget with a value, a time or a long text picks the `appearance` part and names the display styles it draws (`appearance: {variant: value, style: {enum: [label, icon, ring, …]}}`), and extends `ValueStyleWidget` (`ratio`, `subtext`, `labelShown` in place of `showText`): [Display styles](../dev/bar/display-styles.md).
-- `WidgetColor` is the Auto color field (`default: ''`, `x-emptyLabel: Auto`, `x-autoColor: accent`, shown unless the bar's style is plain); override its title and role.
-- A section of the type's own name (`Battery`) is linked from the inspector automatically (`x-link`), unless the type says `link`.
-- `label` is one short name, the same in the library, on the board and in the inspector; other words it should be found by go in `keywords` (`x-keywords`). `priority: N` keeps it longer than the default 0 when the bar is crowded (`x-priority`). A widget that shrinks when crowded says `elastic: true` (`x-elastic`), the one place it's stated: its host sizes it elastic (down to its QML's `minimumSize`, capped at `preferredSize`) and the editor offers the layout's minimum and maximum: [schema-annotations › Types](../dev/core/schema-annotations.md#types-bar-widgets-overlay-modules-views-custom-widget-elements).
+New translation keys (titles, descriptions, the library label) are added to the language files by the pre-commit hook.
 
 ## Steps
-1. Write `schema.yaml` first. Pick `group` from the root's `x-libraryGroups` (`Desktop`, `Time & weather`, `Media & audio`, `Network & devices`, `System`, `Tools`, `Look & layout`, `Session`).
-2. Write `qml/components/bar/widgets/<Type>/<Type>.qml` with its purpose comment above the root.
-3. Read every setting as `properties.<key>` (always present: defaults are filled at load).
-4. Polled data: a request built from `properties` only (copy `Updates.qml`'s `updatesRequest`), acquired in `Component.onCompleted` and on its change, released in `onDestruction`.
-5. Verify.
+1. Write `schema.yaml` first. Start from `IdleInhibitor/schema.yaml` or `Bluetooth/schema.yaml`:
+   - `label` is the library label and is also used on the board and in the inspector, so keep it one short name; other words it should be found by go in `keywords`.
+   - `group` is one of the root's `x-libraryGroups` (`qml/config/schema/index.yaml`).
+   - `settings` are the widget's own properties; any other top-level key becomes an `x-<key>` annotation (`group` is `x-libraryGroup`). `priority`, `elastic`, `link`: [schema-annotations › Types](../dev/core/schema-annotations.md#types-bar-widgets-overlay-modules-views-custom-widget-elements).
+   - Parts of `WidgetBase` are switched on by name: `popout` (`own`, `menu` or `plain`), `colors: standard` (background and text color), `appearance` (`variant: value`, with the display styles it can draw), `boxes` (`variant: each`, see below). A part's key can be overridden.
+2. Write the QML. Settings are `properties.<key>`, always present because defaults are filled at load. Extend `ValueStyleWidget` for a widget with a value, a time or a long text (it gives you `ratio`, `subtext` and `labelShown`, and the user's display style), `BarIconWidget` for a plain icon and label, or `BarWidget` for something that draws its own content.
+3. A click on something one-tap (a toggle, a session action) runs through `ActionsManager.run("<id>", { "fromScreen": true })`, not the service's own toggle. `Bluetooth.qml` and `IdleInhibitor.qml` show it; the ids are the rows of the keybind table ([actions](../dev/core/actions.md)).
+4. Polled data: build the request from `properties` only, acquire it in `Component.onCompleted` and again when it changes, release it in `Component.onDestruction` (`Updates.qml`'s `updatesRequest`).
+5. A popout of its own: a `PopoutAnchor` as in `Bluetooth.qml`, gated by `MenusConfig.opensOwnPopout(root.properties)` and, if the widget can hide, `!root.hidden`.
+6. Several items (metrics, keys, accounts)? Add `boxes: {variant: each, boxes: {x-boxItems: …}}` to the schema, as `LockKeys/schema.yaml` does. The user can then draw one box per item; the host hands the widget its item as `box` ([widget-style › Boxes: one per item](../dev/bar/widget-style.md#boxes-one-per-item)).
+7. Want it to split on a split-style bar? It needs an icon part and a label. A label that would otherwise make it too wide is an opt-in setting that defaults to off (Volume's `showDevice`, Notifications' `label`), so bars that don't split look as before. A `BarWidget` drawing its own content gets a head from `SplitLead` (Time, the tray). See [widget-style › Split](../dev/bar/widget-style.md#split).
 
-## Gotchas
-- `BarWidgetHost` handles `popout.menu` itself (a menu instead of the popout): the widget's own `PopoutAnchor` is gated by `MenusConfig.opensOwnPopout(root.properties)`, never by `properties.popout.enabled` alone.
-- Every widget but Button, Separator, Spacer and the tray has a `popout` part, even without a popout of its own (`menu`: they open a menu).
-- A label's digits are always of equal width and measured as zeros, so a ticking time doesn't resize the bar. A value that gains or drops digits (a percent, a count) sets `minimumText` on its `BarIconWidget` to its widest (`"100%"`, as `Battery.qml` does).
-- Sizes come from the bar (`barConfig.thickness`, `barConfig` innerPadding/innerGap/fontSize/radius), never `Widget.*`. `BarIconWidget` already does this; a widget drawing more must too.
-- A widget drawing content taller across the bar than one line at the bar's `fontSize` (two lines, a graphic, cells) declares its own `contentAcross`, from config, never measured, so a capsule's or arrow's end keeps clear of it (`ValueStyleWidget` and `SystemStats` take their graphic's `ValueGraphics.across`, `Workspaces` its cells': [Shapes and runs](../dev/bar/widget-shapes-runs.md#backgrounds-and-shapes)).
-- A color field the bar should pick when empty is a `WidgetColor` (`default: ''`, `x-emptyLabel: Auto`) with an `x-autoColor` role (`accent`, `alt`, `warning`, `critical`, `off`, `neutral`). `tst_Config` checks these.
-- Color fields show only in the bar looks they do something in (`$bar.<key>` conditions; the rules are in [bar/widget-style](../dev/bar/widget-style.md#which-color-fields-show)): the state colors that feed `accentColor` hide under Plain text (`$bar.ownColorShows: true`, as the `WidgetColor` definition has it), and a `foregroundColor` of its own shows as the standard one does (`$bar.textColorShows: true`). A widget without an icon shows its color only boxed and not merged, or underlined (`TimeWidget`: `$bar.boxed`, `$bar.merged`, `$bar.underlined`). Never list styles (`$bar.widgetStyle`): ask for the trait ([schema annotations](../dev/core/schema-annotations.md) › Bar look).
-- A widget never asks which style its bar has: it draws in its `colors` (`WidgetLook`) and, where it draws its own parts, reads the look's traits and resolved fields (`barConfig.look.traits`, `look.shape`, `look.grouping`). `check_structure` fails a read of `widgetStyle` or `look.style` outside `BarLook` ([bar/widget-style](../dev/bar/widget-style.md#the-style-system-in-five-layers)).
-- The type const must not match a `qml/components/content/` file another file sees alongside it (e.g. a `Battery` widget and `Battery` content): `check_structure.py` errors.
-- `hidden: true` hides the widget and disables its clicks; use it for "hide when empty" settings.
-- `onClicked` gets the button when `acceptedButtons` lists more than one (`Updates.qml`).
+## Watch out for
+- **The popout gate.** The host opens a menu itself when `popout.menu` is set, so the anchor's `active` goes through `MenusConfig.opensOwnPopout`, never `properties.popout.enabled` alone.
+- **Which widgets have a `popout` part.** Every type except Separator and Spacer. A widget with no popout of its own (Button) uses `variant: menu`; the tray uses `plain`.
+- **Resizing.** Digits are equal width and measured as zeros, so a ticking clock never moves the bar. A value that gains or loses digits (a percent, a count) sets `minimumText` to its widest usual form with two digits (`"00%"` in `Battery.qml`; 100% may widen it).
+- **Sizes come from the bar** (`barConfig.thickness`, `innerPadding`, `innerGap`, `fontSize`, `radius`), never `Widget.*`, so the widget scales with the bar. The base classes already do this.
+- **Content taller than one line** (two lines, a graphic, cells) declares `contentAcross` from config, never measured, so a capsule's end keeps clear of it ([widget shapes and runs](../dev/bar/widget-shapes-runs.md#backgrounds-and-shapes)).
+- **Colors.** A color the bar should pick when empty is a `WidgetColor` with an `x-autoColor` role (`tst_Config` checks them). Show a color field only in the looks it does something in, with `$bar.<trait>` conditions in `x-showIf`, never a list of widget styles ([which color fields show](../dev/bar/widget-style.md#which-color-fields-show)).
+- **Never ask which style the bar has.** Draw in `colors` (`WidgetLook`) and read the look's traits; `check_structure` fails a read of `widgetStyle` or `look.style` outside `BarLook`.
+- **Name clash.** The type name must not match a file in `qml/components/content/` (a `Battery` widget and `Battery` content): `check_structure` errors, because both would resolve in the same scope.
+- **`hidden: true`** hides the widget and disables its clicks; use it for "hide when empty" settings.
+- **Several mouse buttons.** `onClicked` receives the button when `acceptedButtons` lists more than one (`Bluetooth.qml`, `Updates.qml`).
 
-## Verify
+## Check it
 - `scripts/dev/verify.sh`
-- `scripts/run_tests.sh Config` (every default is valid; auto colors)
-- Add it to a bar in the bar editor and look: `scripts/dev/shot.sh page BarEditor`.
+- `scripts/run_tests.sh Config`: every default is valid and the auto colors resolve.
+- Add the widget to a bar in the bar editor and look: `scripts/dev/shot.sh page BarEditor`. Hovering can't be simulated, so for a popout read the anchor's `active` and the log.
 
 ## Docs to update
-- [bar/widget-style](../dev/bar/widget-style.md) only if it introduces a new base or color rule (a style rule is a trait in `BarLook`'s table: its Adding a widget style).
-- `docs/features.md` bar widget list, if it lists widgets.
+- [bar/widget-style](../dev/bar/widget-style.md), only if the widget introduces a new base class or color rule.
+- `docs/features.md`, if it lists bar widgets.

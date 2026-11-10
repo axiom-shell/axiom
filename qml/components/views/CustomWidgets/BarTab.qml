@@ -10,7 +10,6 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.bar.look
 
-// i18n: keys from the schema (titles, descriptions)
 // Custom widgets page, Bar tab: the widget as it's drawn on a bar across
 // and on one down the side (the real bar widget, on the first bar's
 // look), then its bar style, its text (Waybar's format, icons and

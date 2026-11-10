@@ -157,7 +157,6 @@ Rectangle {
         active: preset.hovered
         StyledToolTip {
           target: preset
-          // i18n: keys from the presets (the callers')
           text: I18n.tr(preset.modelData.label)
         }
       }

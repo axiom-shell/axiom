@@ -148,7 +148,7 @@ QtObject {
   // have moved an unplugged output's workspaces and the windows to have
   // been read again
   property Timer _rehomeTimer: Timer {
-    // behaviour timing: the grace period an output gets to come back
+    // the grace period an output gets to come back
     interval: 3000
     onTriggered: root._rehome()
   }

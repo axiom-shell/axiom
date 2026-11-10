@@ -24,7 +24,7 @@ Wi-Fi and wired state, built on Quickshell's Networking module, and Bluetooth, w
   - The one exception is the IPv4 address, which Quickshell.Networking lacks. It comes from axiom (`net.addresses`, the interface's addresses read in Go; the greeter's `axiom greeter` answers it too) whenever the connection changes, or on `refreshIp()`; an answer for a lookup since replaced is dropped.
 - **Scanning:** the scanner runs only while something holds `acquireScan(owner)`.
 - **Connection notes:** with `Notifications.quiet.connectivity`, the primary connection coming and going (by its name), and in BluetoothManager each device connecting and disconnecting (by address), are noted silently through a `ConnectionNotes` child ([Notifications](notifications.md) › What the shell sends).
-- Not named `Networking`, which is Quickshell's singleton. (Rule: AGENTS.md › Services.)
+- Not named `Networking`, which is Quickshell's singleton.
 
 ### nmnet (axiom)
 What the Wi-Fi menu asks NetworkManager beyond Quickshell.Networking, over the system bus (a new connection per call; nothing here is followed):
@@ -73,7 +73,7 @@ BlueZ on the system bus (`backend/internal/bluez`, wired in `daemon/bluetooth.go
 - **Room:** the rename field grows its row inside the list, which never passes `visibleRows` (it scrolls), so `list.growRoom` already covers it: the window never grows while shown.
 
 ### Peripheral batteries
-`BatteryManager.peripherals`: the connected Bluetooth devices reporting a battery (`BluetoothManager.connectedDevices` with `batteryAvailable`), by name, as `{address, name, glyph, percentage, level}` (`level`: `DeviceBatteries.level` at `Bluetooth.lowBattery` / `criticalBattery`); `lowestPeripheral` the one lowest. Only BlueZ's `Battery1` is read: a peripheral only UPower sees isn't listed (issues.md).
+`BatteryManager.peripherals`: the connected Bluetooth devices reporting a battery (`BluetoothManager.connectedDevices` with `batteryAvailable`), by name, as `{address, name, glyph, percentage, level}` (`level`: `DeviceBatteries.level` at `Bluetooth.lowBattery` / `criticalBattery`); `lowestPeripheral` the one lowest. Only BlueZ's `Battery1` is read: a peripheral only UPower sees isn't listed.
 - **The Battery module** (`showPeripherals`, default on) lists them under the laptop's battery, a line each: the device's glyph and name, a `LevelMeter` and the percent, coloured by level. With no laptop battery it shows only them (its "On AC power" state only when there are none); compact, the lowest one's figure. The circle part is hidden by its height, not `visible` (a Layout misses a child shown while hidden).
 - **The Battery widget** (`showPeripherals`, default on; it has no popout of its own) lists them in its tooltip (with its menu popout off) and in its click's status toast. With no laptop battery it shows the lowest one (its glyph, percent and level colours) instead of hiding, and hides only when there are none either; laptops are unchanged.
 
@@ -91,6 +91,6 @@ BlueZ runs a `Device1.Pair` against the calling connection's agent, so the agent
 - **Codes shown:** `DisplayPinCode` and `DisplayPasskey` push a `display` request, and the same id again as `DisplayPasskey` counts the digits typed (`entered`). It ends when the device's `Paired` turns true, the daemon's `Pair` call returns or `cancelPair` runs.
 - **Ending:** `Cancel` and `Release` end every open request (those waiting answer `org.bluez.Error.Canceled`), as does BlueZ going away; each ended or answered one pushes `bluetooth.agentDone {id}`.
 - **Nobody to ask:** with no shell connected (subscribed to `bluetooth`) a request is rejected at once, so the pairing fails fast instead of timing out; the last shell leaving rejects those held (`RejectAgents`, from the daemon's `lastShellGone`), as a shell that comes back isn't asked them again.
-- **`AXIOM_BLUETOOTH_AGENT=off`** keeps a daemon's agent off whatever the setting: a scratch daemon on the machine's system bus would otherwise be a second agent beside the live one's (the guard refuses a scratch `axiom run` without it or a scratch bus).
+- **`AXIOM_BLUETOOTH_AGENT=off`** keeps a daemon's agent off whatever the setting: a scratch daemon on the machine's system bus would otherwise be a second agent beside the live one's.
 - Only BlueZ (the bus name's owner) may call it: anything else is rejected.
-- **Testing:** never against the live BlueZ (AGENTS.md › Never): the fake in `bluez_test.go` exports `AgentManager1`, and `agent_test.go` calls each method as BlueZ would. The daemon's tests point `DBUS_SYSTEM_BUS_ADDRESS` at nothing, so they never reach the machine's BlueZ.
+- **Testing:** not against the live BlueZ (pairing, forgetting or disconnecting a real device can drop your mouse or keyboard): the fake in `bluez_test.go` exports `AgentManager1`, and `agent_test.go` calls each method as BlueZ would. The daemon's tests point `DBUS_SYSTEM_BUS_ADDRESS` at nothing, so they never reach the machine's BlueZ.
