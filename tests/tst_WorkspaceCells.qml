@@ -76,7 +76,7 @@ TestCase {
   // the start; a lone icon: 2 each side): the ink sits the padding in from
   // the start, and the end padding mirrors it
   function test_splitShiftInk() {
-    for (const [box, start, end, what] of [[34, 2, 0, "an icon, then text"], [17, 2, 2, "a lone icon"], [40, 0, 0, "text only"]]) {
+    for (const [box, start, end, what] of [[34, 2, 0, "an icon, then text"], [17, 2, 2, "a lone icon"], [40, 0, 0, "text only"], [40, 1, 1, "text with ink margins at both ends"], [36, 2, 1, "an icon, then text ending in a margin"]]) {
       const ink = box - start - end;
       const pad = WorkspaceCells.splitPad(28);
       const length = WorkspaceCells.splitLength(ink, 1, 28, 1);

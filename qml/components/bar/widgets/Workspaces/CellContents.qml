@@ -173,16 +173,18 @@ QtObject {
     font.pixelSize: root.barConfig ? Math.round(root.barConfig.fontSize * 1.2) : Appearance.fontSize
   }
 
-  // How far the ink of the icon `name` is in from its box's start and end
-  // along a horizontal bar (a vertical bar's glyph isn't turned: 0)
-  function _inkInset(name) {
-    if (root.barConfig.vertical || root._iconMetrics.font.pixelSize <= 0)
+  // How far the ink of `name` is in from its box's start and end along a
+  // horizontal bar (a vertical bar's isn't measured: 0): an icon in the icon
+  // font, or words (`plain`) in the text font
+  function _inkInset(name, plain) {
+    const metrics = plain ? root._metrics : root._iconMetrics;
+    if (root.barConfig.vertical || metrics.font.pixelSize <= 0 || name === "")
       return {
         "start": 0,
         "end": 0
       };
-    const ink = root._iconMetrics.tightBoundingRect(name);
-    const advance = root._iconMetrics.advanceWidth(name);
+    const ink = metrics.tightBoundingRect(name);
+    const advance = metrics.advanceWidth(name);
     return {
       "start": Math.max(0, Math.round(ink.x)),
       "end": Math.max(0, Math.round(advance - ink.x - ink.width))
@@ -191,36 +193,26 @@ QtObject {
 
   // A split cell's label along the bar: { length, start, end }, `length` the
   // box drawn (an icon at the size a cell draws it, or words measured; with
-  // its leading icon and a gap) less `start` and `end`, the margins of an
-  // icon at either end of it, so the ink is what the cell's padding and gaps
-  // are measured to. A label that doesn't turn on a vertical bar is as tall
-  // as it is.
+  // its leading icon and a gap) less `start` and `end`, the margins of the
+  // glyphs at either end of it, so the ink is what the cell's padding and
+  // gaps are measured to. A label that doesn't turn on a vertical bar is as
+  // tall as it is.
   function _labelLength(shown) {
     const size = Math.round(root.barConfig.fontSize * 1.2);
     const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
-    const leadInk = shown.lead !== "" && root._drawsIcon(shown.lead) ? root._inkInset(shown.lead) : {
-      "start": 0,
-      "end": 0
-    };
-    let box = 0;
-    let start = 0;
-    let end = 0;
-    if (!root._plain(shown)) {
-      const ink = root._inkInset(shown.text);
-      box = size + lead;
-      start = shown.lead !== "" ? leadInk.start : ink.start;
-      end = ink.end;
-    } else if (root._metrics.font.pixelSize <= 0) {
-      box = size + lead;
-    } else {
+    const plain = root._plain(shown);
+    const own = root._inkInset(shown.text, plain);
+    const leadInk = root._inkInset(shown.lead, !root._drawsIcon(shown.lead));
+    let box = size + lead;
+    if (plain && root._metrics.font.pixelSize > 0) {
       const words = Math.ceil(root._metrics.advanceWidth(shown.text) + lead);
       box = root.barConfig.vertical && words <= root.thickness * 0.8 ? Math.ceil(root._metrics.height) : words;
-      start = leadInk.start;
     }
+    const start = shown.lead !== "" ? leadInk.start : own.start;
     return {
-      "length": box - start - end,
+      "length": box - start - own.end,
       "start": start,
-      "end": end
+      "end": own.end
     };
   }
 
