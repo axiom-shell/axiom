@@ -4,7 +4,7 @@
 
 Everything below is one shell and one config, and everything is set from inside the shell. The screenshots come from the [example setups](configuration.md#example-setups), each built entirely with axiom's editors, so the look changes from one to the next.
 
-**On this page:** [Bar](#bar) · [Bar styles](#bar-styles) · [Overlay](#overlay) · [Layouts editor](#the-layouts-editor) · [Edge menus](#edge-menus) · [Workspaces](#workspaces) · [Window switcher](#window-switcher-alttab) · [Your compositor](#your-compositor) · [Calendar](#calendar) · [Launcher](#launcher) · [Dock and OSD](#dock-and-osd) · [Lock screen, login screen and polkit](#lock-screen-login-screen-and-polkit) · [Theming](#theming) · [The rest](#the-rest)
+**On this page:** [Bar](#bar) · [Bar styles](#bar-styles) · [Overlay](#overlay) · [Layouts editor](#the-layouts-editor) · [Menus](#menus) · [Workspaces](#workspaces) · [Window switcher](#window-switcher-alttab) · [Your compositor](#your-compositor) · [Calendar](#calendar) · [Launcher](#launcher) · [Dock and OSD](#dock-and-osd) · [Lock screen, login screen and polkit](#lock-screen-login-screen-and-polkit) · [Theming](#theming) · [The rest](#the-rest)
 
 ## Bar
 
@@ -16,7 +16,7 @@ Everything below is one shell and one config, and everything is set from inside 
   - Volume, Microphone, Network, Bluetooth, Battery, SystemStats, SystemTray, Notifications
   - Updates, Weather, Markets (stock and crypto prices: one at a time, a ticker or a sparkline, a popout with charts), Tailscale (with a popout of this machine, the tailnet's devices, Connect / Disconnect, account switching, the exit node and its options), Vpn, Drives (removable drives: hidden with none, a popout to open, eject or unlock one, middle click ejects them all), KeyboardLayout, LockKeys (Caps Lock, Num Lock and Scroll Lock, shown while on or always), IdleInhibitor, Privacy
   - ScreenRecord (shown while recording; click to stop), DevMode (shown while dev mode is on: the dev tree's branch, a build running or failed, a popout to rebuild or turn it off), Claude usage (your Claude Code plan limits, for one or more logins), Todo (open count), Pomodoro (the time left), Timer & stopwatch
-  - Button (runs any command, opens a page or toggles an edge menu) and Separator
+  - Button (runs any command, opens a page or toggles a menu) and Separator
 - **Popouts** grow out of the bar, or out of the screen border, with filleted corners. Widgets open theirs on hover, and Buttons can run their action on hover too.
 - **The bar editor** draws each bar's sections the way the bar lays them out, on the side of the page matching the bar's edge:
   - Drag widgets in from the library, click one to edit it, and drop one on the trash can to remove it.
@@ -110,9 +110,9 @@ Set a style once under **Settings → Look & Feel → Bar style**, and give any 
 
 ## The Layouts editor
 
-One editor, one grid, for everything made of modules: your **overlay pages**, your **edge menus**, the **desktop**, the **lock screen** and the **login screen**.
+One editor, one grid, for everything made of modules: your **overlay pages**, your **menus**, the **desktop**, the **lock screen** and the **login screen**.
 
-| A page | An edge menu |
+| A page | A menu |
 | :---: | :---: |
 | <img src="screenshots/overlay-editor.webp" alt="The Layouts editor on the Home page"> | <img src="screenshots/edge-menu-editor.webp" alt="The Layouts editor on the left edge menu, drawn against its screen edge"> |
 | **The lock screen** | **The login screen** |
@@ -122,20 +122,21 @@ One editor, one grid, for everything made of modules: your **overlay pages**, yo
 - Drag a box (or Shift/Ctrl+click) to select several modules and move them together, or drop them on the trash can to remove them.
 - Undo and redo every edit (buttons, or Ctrl+Z / Ctrl+Shift+Z), and move or resize the selected module with the arrow keys (Shift to resize).
 - Click a module to edit its options in the inspector, which also has steppers for its exact size.
-- Edge menus are drawn against their screen edge. The desktop and the lock and login screens are fitted to each monitor: every screen gets as many grid units as fit at your card size, and modules keep to their nearest edge, so a corner stays a corner on a wider or turned screen. Each has its own Module size and an optional double grid for finer placement.
+- Menus on an edge are drawn against their screen edge. The desktop and the lock and login screens are fitted to each monitor: every screen gets as many grid units as fit at your card size, and modules keep to their nearest edge, so a corner stays a corner on a wider or turned screen. Each has its own Module size and an optional double grid for finer placement.
 - **Desktop widgets:** modules on your desktop, under your windows, fitted inside the bars and border so they line up with your tiled windows. They sit straight on the wallpaper (or in frosted cards) and take clicks, while the empty desktop is clicked through. One layout can cover all monitors, the primary monitor, or a monitor of its own (by name, so a laptop's screen keeps its layout when you dock and undock).
 - Every change shows live on your desktop (or on screen, for the lock and login screens, with **Show on screen**). **Save** keeps it, **Discard** throws it away.
 - Each page and menu lists what opens it, and adds a bar button or a keybind for it.
 
-## Edge menus
+## Menus
 
-Edge menus are the overlay's other half. Every overlay module fits in them, placed on the same grid, but a menu slides out of a screen edge and leaves the rest of your desktop in view. Use them for what you want one hover away.
+Menus are the overlay's other half. Every overlay module fits in them, placed on the same grid, but a menu slides out of a screen edge, or floats on its own, and leaves the rest of your desktop in view. Use them for what you want one hover away.
 
 <p align="center"><img src="screenshots/demo-menus.webp" alt="The right menu opening beside the bar while the windows retile to make room, then a floating menu on the left" width="900"></p>
 
 - **Edge** menus open over your windows. They grow out of the screen border or a solid bar like the popouts, or sit apart as a box.
 - **Strip** menus open outside the border and bars. They push the bars and your windows inwards, like a sidebar, and give the space back when they close.
-- **Opening a menu.** Rest the pointer on its edge, or use a bar **Button**, a keybind, or IPC (`edgeMenu toggle <id>`).
+- **Free** menus float in a window of their own: at the bar widget that opens them as its popout, beside another menu as its submenu, or where a keybind puts them. Pinned, they stay under the popouts you open over them.
+- **Opening a menu.** Rest the pointer on its edge, or use a bar **Button**, a keybind, or IPC (`menu toggle <id>`).
 - **Closing it.** A menu can close when the pointer leaves or when you click outside it. Its pin button, or the pin quick action, keeps it open.
 - **Per-menu settings.** Each menu has its own:
   - edge, monitor and position along the edge

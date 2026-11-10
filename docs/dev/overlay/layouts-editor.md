@@ -1,8 +1,8 @@
 # Layouts editor
 
-> **Files:** `qml/components/views/Layouts/Layouts.qml`, `qml/components/views/Layouts/` (`LayoutsPanel`, `PagesSection`, `MenusSection`, `EditTarget`, `PageTarget`, `MenuTarget`, `ScreenLayoutTarget`, `DesktopTarget`, `LockscreenTarget`, `GreeterTarget`, `LayoutsEditorLayout`, `EditorInspector`), `qml/components/hosts/overlay/OverlayPages.qml`, `qml/services/ui/OverlayManager.qml`, `qml/services/ui/EdgeMenuEditor.qml`, `qml/config/OverlayConfig.qml`, `qml/components/reusable/TypePickerPopup.qml`
-> **Config:** `Overlay.items`, `EdgeMenus`, `Desktop`, `Lockscreen.layout`, `Greeter.layout`
-> **Related:** [Grid canvas](grid-canvas.md), [Editors pattern](../core/editors-pattern.md), [Edge menu editing](../edge-menus/editing-submenus.md), [Desktop](../features/desktop.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md)
+> **Files:** `qml/components/views/Layouts/Layouts.qml`, `qml/components/views/Layouts/` (`LayoutsPanel`, `PagesSection`, `MenusSection`, `EditTarget`, `PageTarget`, `MenuTarget`, `ScreenLayoutTarget`, `DesktopTarget`, `LockscreenTarget`, `GreeterTarget`, `LayoutsEditorLayout`, `EditorInspector`), `qml/components/hosts/overlay/OverlayPages.qml`, `qml/services/ui/OverlayManager.qml`, `qml/services/ui/MenuEditor.qml`, `qml/config/OverlayConfig.qml`, `qml/components/reusable/TypePickerPopup.qml`
+> **Config:** `Overlay.items`, `Menus`, `Desktop`, `Lockscreen.layout`, `Greeter.layout`
+> **Related:** [Grid canvas](grid-canvas.md), [Editors pattern](../core/editors-pattern.md), [Menu editing](../menus/editing-submenus.md), [Desktop](../features/desktop.md), [Lockscreen](../features/lockscreen.md), [Greeter runtime](../features/greeter-runtime.md)
 
 One page that edits overlay pages, edge menus, the desktop, the lock screen and the login screen. This doc covers the page itself, its edit targets and its left panel; the canvas, drag and `GridEditor` are in [Grid canvas](grid-canvas.md).
 
@@ -17,7 +17,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 | Target | What it edits | Draft |
 |---|---|---|
 | `"page"` | `OverlayManager.selectedViewIndex` | its draft of `Overlay.items` |
-| `"menu"` | `OverlayManager.menus.selectedMenuIndex` | its draft of `EdgeMenus` (`menus`: an `EdgeMenuEditor`, not a singleton) |
+| `"menu"` | `OverlayManager.menus.selectedMenuIndex` | its draft of `Menus` (`menus`: an `MenuEditor`, not a singleton) |
 | `"desktop"` | `DesktopManager.editor` | its draft of `Desktop` |
 | `"lockscreen"` | `LockManager.editor` | its draft of `Lockscreen.layout` |
 | `"greeter"` | `GreeterManager.editor` | of `Greeter.layout` |
@@ -25,7 +25,7 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
 - Switched by `editPage(i)` / `editMenu(i)` / `editDesktop()` / `editLockscreen()` / `editGreeter()` / `editPages()` / `editMenus()`.
 - The lock screen's row shows only while `Lockscreen.mode` is `quickshell` (`lockscreenEditable`), and the login screen's only while `Greeter.enabled` (`greeterEditable`).
 - `editTarget` falls back to `"page"` when its row hides.
-- Entry points: the launcher's `/layouts` and `/menus`, `axiom ipc edgeMenu edit`.
+- Entry points: the launcher's `/layouts` and `/menus`, `axiom ipc menu edit`.
 - Each target is an `EditTarget`: `PageTarget`, `MenuTarget`, and `DesktopTarget` / `LockscreenTarget` / `GreeterTarget` on `ScreenLayoutTarget` (all in `views/Layouts/`). It carries the editor, modules, title, icon, screen box, fit line, …, and `Layouts.qml` binds the canvas and inspector to it.
   - `fitLink` (an `x-link`) puts a `SettingsLink` beside the fit line: a shrunk page to `Overlay.moduleScale`, a shrunk screen layout to `Widget.cardSize`, an outdated login screen to its settings card, the lock screen under another locker to `Lockscreen.mode`.
 - Links out (followed as links, so the navigator offers the way back): a Custom page's group to the page switcher's settings, a tool page's to the page itself, each module type's `x-link` in the inspector, and an edge menu's "Also opened by" rows to the bar widget, keybind or menu that opens it (`OverlayManager.menus.goToReference`). Settings' Lock screen and Login screen links open this editor on them (`OverlayManager.followPageLink("Layouts:lockscreen")`).
@@ -41,12 +41,12 @@ One page that edits overlay pages, edge menus, the desktop, the lock screen and 
   - Then the tool pages as a dimmed group with only show/hide. Every tool page is always in config (a migration put back any that were removed, hidden).
   - Each group is dragged to reorder within itself.
   - Then the Desktop, Lock screen and Login screen rows (not pages, not dragged).
-- **`MenusSection`**: the edge menus, dragged to reorder, duplicate/remove, New menu (a `StyledContextMenu` of what it's for: [editing and submenus](../edge-menus/editing-submenus.md) › Creating a menu from what opens it).
+- **`MenusSection`**: the edge menus, dragged to reorder, duplicate/remove, New menu (a `StyledContextMenu` of what it's for: [editing and submenus](../menus/editing-submenus.md) › Creating a menu from what opens it).
 - Then the selection's fields:
   - A page's name, icon and Double grid.
   - A tool page's Show in the navigator.
   - For any page, buttons adding a bar Button or keybind that opens it (`OverlayManager.addBarButton` / `addKeybind`). They use the `overlayPage` action on its `OverlayConfig.pageKey`: a Custom page's name, else its type. Only for a saved page, so an unnamed Custom page has none.
-  - A menu's field groups (see [Edge menu editing](../edge-menus/editing-submenus.md)).
+  - A menu's field groups (see [Menu editing](../menus/editing-submenus.md)).
   - A screen layout's (`LayoutsPanel.screenTarget`):
     - the desktop's monitor picker and switches (see [Desktop](../features/desktop.md));
     - Show on screen (`canPreview`: not for a draft that already shows live, the desktop's);

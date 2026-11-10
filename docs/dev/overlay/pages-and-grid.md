@@ -2,7 +2,7 @@
 
 > **Files:** `qml/shell/Overlay.qml`, `qml/components/hosts/overlay/OverlayPanel.qml`, `qml/components/hosts/overlay/OverlayPages.qml`, `qml/components/hosts/overlay/OverlayGrid.qml`, `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/overlay/OverlayPageNavigator.qml`, `qml/components/views/base/BaseView.qml`, `qml/components/views/Custom/Custom.qml`, `qml/components/methods/GridPlacement.qml`, `qml/config/OverlayConfig.qml`
 > **Config:** `Overlay.items`, `Overlay.moduleScale`, `Widget.cardSize`, `Widget.scale`, `Overlay.navigator`, `Overlay.navigatorLabels`, `Overlay.animation`, `Overlay.showBackdrop`, `Overlay.backdrop`
-> **Related:** [Streamed building](../core/streamed-building.md), [Content roots](content-roots.md), [Writing modules](writing-modules.md), [Layouts editor](layouts-editor.md), [Edge menus](../edge-menus/overview.md)
+> **Related:** [Streamed building](../core/streamed-building.md), [Content roots](content-roots.md), [Writing modules](writing-modules.md), [Layouts editor](layouts-editor.md), [Menus](../menus/overview.md)
 
 How the overlay turns `Overlay.items` into pages, and a page's modules into a grid of slots: views, the pure grid maths in `GridPlacement`, per-screen card sizing and what is loaded when. Read this before touching a view, the grid or overlay loading.
 
@@ -39,7 +39,7 @@ Pure, tested by `tst_GridPlacement`.
 - `trackSizes(bounds, unit, stretch)`: one unit's width and height and the grid's size, growing either axis evenly into `stretch` room (never shrinking). Units may be fractional; the grid's size is rounded to whole px.
 - `rectPx(place, sizes)`: places a module, each edge rounded to a whole px (not its size, so neighbours keep their gap). Each slot clips its module, and a clip on a fractional edge shaves the pixel a module draws its stroke in (a borderless Chat's composer in an edge menu).
 - `fitScale`: how much an overlay's room shrinks a page.
-- Edge menu geometry (see [Edge menu hosts](../edge-menus/hosts.md)):
+- Edge menu geometry (see [Menu hosts](../menus/hosts.md)):
   - `menuLattice` / `latticeOf`: the cells a menu sits on along its edge. As many as fit between the frame's pads, centred there, moved `gridOffset` px.
   - `menuCell` / `alongStart` / `menuAlong`: where its modules start (centred on the lattice, `offset` cells on, kept on it).
   - `offsetFor` / `offsetRange`: the offset for a cell, and those that keep it on the lattice.
@@ -73,7 +73,7 @@ Cards follow the screen; text and controls don't. A monitor's cards are its card
 - Views receive it as `grid` (`BaseView`) and size everything from `grid.unit` / `grid.span(n)` / `grid.sizes(bounds, stretch)`, passing plain numbers down to content. Text and widget sizes stay the shell's px tokens; the zoom scales them with the cards.
 - `OverlayPages` draws the current page at `contentZoom` (`zoom × fitScale`, Item.scale on the views' container); its box is sized in drawn px, so its border and radius stay crisp.
   - The container scales from its top left, placed on a whole px, and the grid knows what it's drawn at (`OverlayGrid.drawnZoom`, which `PageWindow` sets too), so `GridPlacement.rectPx` puts every slot's edges on whole drawn px: each card's border falls on the screen's pixels alike, never smeared over two at some zooms.
-  - Edge menus, the desktop, the lock screen and the greeter zoom each module's content instead (`ModuleGrid.zoom`), keeping their grid in drawn px with its gaps scaled to its cards (`OverlayGrid.gap`, `GridPlacement.gapOf`), so the grid is the overlay's scaled: see [Edge menu hosts](../edge-menus/hosts.md).
+  - Edge menus, the desktop, the lock screen and the greeter zoom each module's content instead (`ModuleGrid.zoom`), keeping their grid in drawn px with its gaps scaled to its cards (`OverlayGrid.gap`, `GridPlacement.gapOf`), so the grid is the overlay's scaled: see [Menu hosts](../menus/hosts.md).
   - `StyledIcon` finds the `contentZoom`s up its parents (multiplied) and, scaled, draws unfilled symbols with the distance-field renderer (a native glyph blurs when scaled; a filled one stays native, as distance fields blot its contours).
 - A page that still doesn't fit (wider than the screen, higher than two cards) is shrunk as a whole by `OverlayPages.fitScale`.
 - The panel reports its room before shrinking, in layout px, and its `unit` to `OverlayManager.reportArea`: the layouts editor's "fits" line (`fitOf`), which the layouts editor's page fits read. Edge menus, the desktop, the lock screen and the greeter don't use it: they start from `OverlayConfig.cardUnitOn` (the card size without the overlay's own Module size, and without bars), so they look the same whether an overlay is open or not, and their cards match the overlay's at the same Module size wherever the overlay isn't capped by its height.

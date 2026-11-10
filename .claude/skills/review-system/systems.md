@@ -65,7 +65,7 @@ Checks:
 - Every popout holds a `PopoutClaim`; an open popout never moves.
 - Shadows only through `OutsideShadow`.
 - Each `SurfaceContext` rule has a `tst_SurfaceContext` row.
-Seams: bar widgets (`PopoutAnchor`), edge menus, OSD, dock, launcher.
+Seams: bar widgets (`PopoutAnchor`), menus, OSD, dock, launcher.
 
 ## bar
 Scope: the bar window, container, sections, pills, ends and corners, bar editor.
@@ -85,7 +85,7 @@ Extra: qml/components/bar/widgets/*/*.qml
 Checks:
 - Sized from `barConfig`, never `Widget.*`; a changing number never resizes a label (`minimumText` for one whose digit count changes).
 - Polled data: request from `properties` only, acquire/release paired.
-- Popout through `PopoutAnchor` with `EdgeMenusConfig.opensOwnPopout`.
+- Popout through `PopoutAnchor` with `MenusConfig.opensOwnPopout`.
 - Each has its schema `oneOf` entry with the required fields; color fields shown only where they apply.
 - Odd ones out: a widget doing what a base class or shared piece already does.
 Seams: BarContainer, the schema.
@@ -98,7 +98,7 @@ Checks:
 - Placement only from `GridPlacement`; the editor edits a `ConfigDraft` with selection through `select*()`.
 - Only the current page and its neighbours exist, only while the overlay is open.
 - Repeater models from config or counts, never live values.
-Seams: modules, views, edge menus, desktop.
+Seams: modules, views, menus, desktop.
 
 ## modules
 Scope: every overlay module (content type), against the module rules.
@@ -108,10 +108,10 @@ Extra: qml/components/content/*/*.qml
 Checks:
 - Root is `Card` or `Panel`; min sizes set and `compactContent` below them.
 - Acquire in `onCompleted`, release in `onDestruction`; lasting state in a service.
-- `x-hosts` lists overlay, edgeMenu, desktop; `lockscreen` only for modules that launch, dispatch and write nothing and show nothing private; greeter modules inert outside the real greeter.
+- `x-hosts` lists overlay, menu, desktop; `lockscreen` only for modules that launch, dispatch and write nothing and show nothing private; greeter modules inert outside the real greeter.
 - Text fields set `x-keyboard`.
 - Odd ones out: a module drawing what a part in `content/parts/` or `reusable/` already draws.
-Seams: overlay pages, edge menus, desktop, lockscreen, greeter, bar popouts.
+Seams: overlay pages, menus, desktop, lockscreen, greeter, bar popouts.
 
 ## custom-widgets
 Scope: custom JSON widgets: definitions, the data helper, the service, the bar widget, the module and its elements, the editor page.
@@ -125,9 +125,9 @@ Checks:
 - The module editor reuses the layouts editor's canvas (`GridCanvas`, `GridDragLayer`, `GridEditor`) rather than growing its own.
 Seams: CommandManager and exec streams, the bar editor and module libraries (`CustomWidget:<id>` keys), the layouts editor's canvas, popouts.
 
-## edge-menus
-Scope: edge menus, their hosts, editing and submenus.
-Docs: edge-menus/*.md
+## menus
+Scope: menus (edge, strip and free), their hosts, editing and submenus.
+Docs: menus/*.md
 Checks:
 - Placement and claims go through the popout system, not their own rules.
 - The editor follows the editors pattern.

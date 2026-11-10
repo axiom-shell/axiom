@@ -129,7 +129,7 @@ See **[all the features](docs/features.md)**, with screenshots of every surface.
 
 One repository and one config for the whole desktop:
 
-- **Edge menus** built from 41 modules (media, mixer, system graphs, weather, calendar, notes, todos, AI chat, clipboard, quick actions and more), sliding out of any edge, over your windows or beside them. Build anything with them: a sidebar, a control center, a dynamic island.
+- **Menus** built from 41 modules (media, mixer, system graphs, weather, calendar, notes, todos, AI chat, clipboard, quick actions and more), sliding out of any edge, over your windows or beside them, or floating on their own. Build anything with them: a sidebar, a control center, a dynamic island.
 - **Overlay** pages from the same modules, full screen.
 - **Desktop widgets** from the same modules, under your windows, per monitor.
 - **Lock screen** and **login screen** (greetd), laid out from the same modules too.

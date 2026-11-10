@@ -2,7 +2,7 @@
 
 > **Files:** `qml/shell/Bar.qml`, `qml/components/bar/BarPanel.qml`, `qml/components/bar/BarContainer.qml`, `qml/components/bar/WidgetGroup.qml`, `qml/components/bar/WidgetDecorations.qml`, `qml/components/bar/AccentLines.qml`, `qml/components/bar/BarWidgetHost.qml`, `qml/components/methods/BarLayout.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/PopoutAnchor.qml`, `qml/config/BarsConfig.qml`, `qml/services/ui/BarManager.qml`, `qml/services/ui/BarRevealManager.qml`, `qml/services/ui/ScreenEdgeManager.qml`
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
-> **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Edge menus](../edge-menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
+> **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Menus](../menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
 How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and edge menus, the icon rules, auto-hide, and why bar motion animates what is drawn rather than what is measured.
 
@@ -46,14 +46,14 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - See [Popout hosts](../popouts/hosts-and-switching.md).
 
 ### Menu popouts
-- Every widget except Separator has a `popout`: `enabled` and `menu`, an edge menu id (`x-options: edgeMenus`) shown under the switch. Button's is a menu only (its click action is separate).
+- Every widget except Separator has a `popout`: `enabled` and `menu`, an edge menu id (`x-options: menus`) shown under the switch. Button's is a menu only (its click action is separate).
   - A widget with a popout of its own opens that menu in its place. A widget without one gets a "Menu popout" switch.
 - `BarWidgetHost` holds the one anchor for the menu:
   - It is a `PopoutAnchor` with `menu`, hovered through the host's `hitArea` but sized to the module (not the hit area's powerline reach back), so a menu opened at its widget (`popoutAtWidget`) centres on it.
-  - It calls `EdgeMenuManager.open(id, anchor)` on hover.
+  - It calls `MenuManager.open(id, anchor)` on hover.
   - The anchor keeps a floating menu open while it is hovered.
-- Meanwhile the widgets' own anchors stand down (`active: EdgeMenusConfig.opensOwnPopout(properties) && …`).
-- A menu that is gone or disabled leaves the widget its own popout (`EdgeMenusConfig.popoutMenuOf`).
+- Meanwhile the widgets' own anchors stand down (`active: MenusConfig.opensOwnPopout(properties) && …`).
+- A menu that is gone or disabled leaves the widget its own popout (`MenusConfig.popoutMenuOf`).
 
 ### Icons
 - Icons are Material Symbols names drawn by `reusable/StyledIcon` in `Appearance.iconFamily`, the font axiom bundles ([icons.md](../core/icons.md)).
@@ -66,7 +66,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - `autoHide`: `never` (default), `always`, or `whenCovered` (hidden only while a window covers its slot, or a fullscreen window is on its screen: `CompositorManager.windowsCover` over its whole edge, `hasFullscreen`).
 - **Shown** (`BarRevealManager.shownOf(bar)`, per running bar id): `never`, or pinned, or hovered, or held, or revealed for a moment, or (`whenCovered`) not covered. One one-shot Timer runs to the earliest deadline (a moment's end, a hover waiting on its delay).
   - **Hover:** the bar's `HoverHandler`; hidden, its window's mask is only a `ScreenEdge.triggerSize` strip at its outer edge (`edgeStrip`). Entering a hidden bar shows it after `timing.openDelay`; leaving hides it after `timing.closeDelay`. Revealed, the mask is the bar where it rests (`barSlot`), so the pointer holds it while it slides in.
-  - **Holds** (`hold(id, key, on)`, reported by `BarPanel`): its popouts open (`BarPopouts.occupied`), an edge menu opened from a widget on it (`EdgeMenuManager.anchors`), the bar editor open with it selected. Let go, it stays one close delay longer.
+  - **Holds** (`hold(id, key, on)`, reported by `BarPanel`): its popouts open (`BarPopouts.occupied`), an edge menu opened from a widget on it (`MenuManager.anchors`), the bar editor open with it selected. Let go, it stays one close delay longer.
   - **Moments** (`reveal(id, ms)`): a workspace change on its monitor (`revealOnWorkspace`, from `CompositorManager.outputs`' active and special workspace; the first look only records them), a widget's news (`attention(id)`, with `revealOnActivity`; ignored in the bar's first 2 s, its widgets' startup; below) and the IPC `reveal`, each for `revealFor`.
   - **Pinned** (`setPinned`; the IPC `toggle`): shown until unpinned, and reserving its space (below). `hideNow` unpins and drops hover and moments.
   - **IPC** (`IpcTarget` `bar`, [usage](../../usage.md)): `reveal <id>` (a moment), `toggle <id>` (pin or unpin; all pinned when any isn't), `hide <id>` (`hideNow`), where `<id>` is a bar's config id (its instance on every monitor) or `focused` / `""` (the auto-hiding bars on the focused monitor); an unknown id is `not_found`. The keybind action `bar` calls them (toggle, open → `reveal`, close → `hide`; its argument defaults to `focused`, `KeybindManager.argumentOptions` lists the auto-hiding bars).

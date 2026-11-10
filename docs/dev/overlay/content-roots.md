@@ -1,7 +1,7 @@
 # Content: roots and hosts
 
 > **Files:** `qml/components/content/base/Card.qml`, `qml/components/content/base/Panel.qml`, `qml/components/content/base/TitledCard.qml`, `qml/components/content/base/SlotContext.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/hosts/popout/BarPopouts.qml`
-> **Config:** `Overlay.items[].layout.modules`, `EdgeMenus.items[].layout.modules` (module `type`), bar widget `popoutName`
+> **Config:** `Overlay.items[].layout.modules`, `Menus.items[].layout.modules` (module `type`), bar widget `popoutName`
 > **Related:** [Writing modules](writing-modules.md), [Pages and grid](pages-and-grid.md), [Popout hosts](../popouts/hosts-and-switching.md), [Submenus](../popouts/submenus.md)
 
 `qml/components/content/<Name>/<Name>.qml` holds every loadable panel: overlay modules and bar popouts. This doc covers the two root types (`Card`, `Panel`), what each host passes in, and when one file serves both roles.
@@ -35,8 +35,8 @@
 - **`hosts/overlay/OverlaySlot`** (card): passes `properties`, `slotRect`, `embedded: true`. Also used by edge menus, the lock screen, the greeter and the desktop.
 - **`hosts/popout/BarPopouts`** (popout): passes `wrapper`, then, once loaded, copies the anchor's payload keys onto matching properties. Popouts declare what they take rather than reading `wrapper.currentData`.
 - The tray's menu (`content/SystemTray`) is the one popout-only content rooted in a plain Item. It opens its submenus (`content/parts/TraySubmenu`) in `wrapper.submenu`.
-- `content/parts/MenuSubmenu` (an edge menu's modules, opened by a `Submenu` module) is the other submenu content: see [Edge menu submenus](../edge-menus/editing-submenus.md).
-- Modules learn where they're shown from `host` (see [Edge menus overview](../edge-menus/overview.md)).
+- `content/parts/MenuSubmenu` (an edge menu's modules, opened by a `Submenu` module) is the other submenu content: see [Menu submenus](../menus/editing-submenus.md).
+- Modules learn where they're shown from `host` (see [Menus overview](../menus/overview.md)).
 
 ### Paired files
 Pairs that look different by design stay separate files:

@@ -204,7 +204,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - BarContainer._withEntry rebuilds Utils.withEntry
   - enrichBarConfig hands out two fields nothing reads and keeps three dead fallbacks
   - BaseWidget's background box and panel-size defaults are dead
-  - IntegratedEdgeMenu's empty engage exists only for EdgeMenuSync's call
+  - IntegratedEdgeMenu's empty engage exists only for MenuSync's call
 - **overlay-modules-01** (6, done): After compositor-02, which also edits OverlayPageNavigator (the wheel notch).
   - GridEditor's canAdd and canMove have no caller
   - ScreenLayoutEditor.savedLayout is dead, and DesktopTarget forwards the editor's room
@@ -442,7 +442,7 @@ Size gate (~800 lines): none is estimated over it. bar-popouts-04 (seven entries
   - Both tray menu lists override the same width cap
   - The tray menu draws its own separator
   - The dock's footprint assumes fillets at both ends
-  - MenuSubmenu repeats EdgeMenuBody's module grid
+  - MenuSubmenu repeats MenuBody's module grid
 - **bar-popouts-09** (5, done):
   - WindowLookConfig rebuilds BarStyle.look
   - SystemStats works out ValueStyleWidget's style fallbacks again (the style rules; its pill colour and text-by-state rule were shared later, in `BarWidgetStyle`, by row 20's bar cluster)

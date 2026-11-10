@@ -2,7 +2,7 @@
 
 > **Files:** `qml/components/hosts/popout/SubPopout.qml`, `qml/components/hosts/popout/SubmenuHost.qml`, `qml/components/hosts/popout/SubmenuSide.qml`, `qml/components/hosts/popout/BarPopouts.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/AttachedSurface.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/components/content/SystemTray/SystemTray.qml`
 > **Config:** none
-> **Related:** [Hosts and switching](hosts-and-switching.md), [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Registry](registry.md), [Edge menu submenus](../edge-menus/editing-submenus.md)
+> **Related:** [Hosts and switching](hosts-and-switching.md), [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Registry](registry.md), [Menu submenus](../menus/editing-submenus.md)
 
 Every popout host can open one submenu beside its box. This doc covers how the submenu is placed, how it joins the parent's side, and what it hands back to the parent to draw.
 

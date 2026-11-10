@@ -36,7 +36,7 @@ BarIconWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "FooDetails"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: MenusConfig.opensOwnPopout(root.properties)
   }
 }
 ```
@@ -45,7 +45,7 @@ Schema (`schema.yaml` beside `Foo.qml`): only what's particular to the type. `la
 label: Foo
 icon: toggle_on
 group: System
-popout: own        # or menu (no popout of its own: it opens an edge menu), plain
+popout: own        # or menu (no popout of its own: it opens a menu), plain
 colors: standard   # backgroundColor + foregroundColor, if it draws a box
 settings:
   showLabel: {type: boolean, title: Show label, default: false}
@@ -66,8 +66,8 @@ settings:
 5. Verify.
 
 ## Gotchas
-- `BarWidgetHost` handles `popout.menu` itself (an edge menu instead of the popout): the widget's own `PopoutAnchor` is gated by `EdgeMenusConfig.opensOwnPopout(root.properties)`, never by `properties.popout.enabled` alone.
-- Every widget but Button, Separator, Spacer and the tray has a `popout` part, even without a popout of its own (`menu`: they open an edge menu).
+- `BarWidgetHost` handles `popout.menu` itself (a menu instead of the popout): the widget's own `PopoutAnchor` is gated by `MenusConfig.opensOwnPopout(root.properties)`, never by `properties.popout.enabled` alone.
+- Every widget but Button, Separator, Spacer and the tray has a `popout` part, even without a popout of its own (`menu`: they open a menu).
 - A label's digits are always of equal width and measured as zeros, so a ticking time doesn't resize the bar. A value that gains or drops digits (a percent, a count) sets `minimumText` on its `BarIconWidget` to its widest (`"100%"`, as `Battery.qml` does).
 - Sizes come from the bar (`barConfig.thickness`, `barConfig` innerPadding/innerGap/fontSize/radius), never `Widget.*`. `BarIconWidget` already does this; a widget drawing more must too.
 - A widget drawing content taller across the bar than one line at the bar's `fontSize` (two lines, a graphic, cells) declares its own `contentAcross`, from config, never measured, so a capsule's or arrow's end keeps clear of it (`ValueStyleWidget` and `SystemStats` take their graphic's `ValueGraphics.across`, `Workspaces` its cells': [Shapes and runs](../dev/bar/widget-shapes-runs.md#backgrounds-and-shapes)).

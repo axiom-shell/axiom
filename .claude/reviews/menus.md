@@ -1,4 +1,4 @@
-# edge-menus
+# menus
 reviewed: b519ddd 2026-10-31  (full)
 
 A compact system whose sharing holds: one body and one sync for both hosts, placement through the popout system and `GridPlacement`, the editor on a `ConfigDraft` with previews. Open: the integrated host's exclusive zone isn't moved when the menu changes edge or screen and grows with its modules while open, and the hover strip's length and the editor's "fits its edge" are worked out from config where the running host or the placement helper already knows.

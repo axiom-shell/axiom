@@ -1,15 +1,15 @@
-# Edge menus: editing and submenus
+# Menus: editing and submenus
 
-> **Files:** `qml/services/ui/EdgeMenuEditor.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/views/Layouts/MenusSection.qml`, `qml/components/methods/MenuSeeds.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
-> **Config:** `EdgeMenus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
+> **Files:** `qml/services/ui/MenuEditor.qml`, `qml/services/ui/MenuManager.qml`, `qml/config/MenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/views/Layouts/MenusSection.qml`, `qml/components/methods/MenuSeeds.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
+> **Config:** `Menus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 
 How edge menus are edited on the Layouts page (draft, field groups, previewing, openers, moving along the edge), and how one menu opens another as a submenu.
 
 ### Draft
 - Editing happens on the Layouts page (see [Layouts editor](../overlay/layouts-editor.md)).
-- The draft lives in `EdgeMenuEditor`, which `OverlayManager` holds as `menus` (not a singleton; `EdgeMenuManager` keeps only the running menus' state): `ConfigDraft { path: ["EdgeMenus"] }`, plus `layout`, the selected menu's `GridEditor` with host `edgeMenu`.
-- While dirty it shows live on the running menus through its `EdgeMenus` preview (`ConfigManager.setPreview`), as the bar editor's does.
+- The draft lives in `MenuEditor`, which `OverlayManager` holds as `menus` (not a singleton; `MenuManager` keeps only the running menus' state): `ConfigDraft { path: ["Menus"] }`, plus `layout`, the selected menu's `GridEditor` with host `menu`.
+- While dirty it shows live on the running menus through its `Menus` preview (`ConfigManager.setPreview`), as the bar editor's does.
 
 ### Field groups
 - The menu's fields come in `x-group`s: General, Opening, Placement, Style, Behaviour, Closing, Advanced (the read-only `id`), in the order their first field comes in the schema (`SchemaLayout.objectGroups`). Behaviour holds what the menu's buttons and header do (decided 2026-11-10, review round 2): `pinButton`, `closeButton`, `popOutButton` and `draggable`, so `draggable` sits beside the `popOutButton` it shows with.
@@ -18,7 +18,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
     - `isHeld(id)` (pinned or previewing) makes a menu ignore `closeOnLeave` and outside clicks.
     - The page's `onDestruction` stops it.
   - **What else opens the menu** (`OverlayManager.menus.references(id)`):
-    - bar Buttons and widgets opening it as their menu popout (`EdgeMenusConfig.menusOpenedBy`, which the bar inspector's link to the layouts editor reads too, `OverlayManager.openedBy`: a Button's click action first, then its menu popout, passing over one that's gone), in the bar editor's draft or saved bars;
+    - bar Buttons and widgets opening it as their menu popout (`MenusConfig.menusOpenedBy`, which the bar inspector's link to the layouts editor reads too, `OverlayManager.openedBy`: a Button's click action first, then its menu popout, passing over one that's gone), in the bar editor's draft or saved bars;
     - binds in the keybind editor's draft or `KeybindsConfig.binds`.
   - **Buttons that add an opener**, drawn by `OpenerButtons` (shared with the page's Opening group):
     - a bar Button: `addBarButton` → `BarManager.addWidgetTo`, into the bar editor's draft, then the bar editor on that bar;
@@ -27,7 +27,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 - Beside "Show on screen", "Show other menus" draws the others on the grid.
 
 ### Creating a menu from what opens it
-- **What it starts as** is `MenuSeeds.seed(purpose, id, name)` (pure, `tst_MenuSeeds`), over the `EdgeMenu` schema's defaults (`ConfigManager.withDefaults`):
+- **What it starts as** is `MenuSeeds.seed(purpose, id, name)` (pure, `tst_MenuSeeds`), over the `Menu` schema's defaults (`ConfigManager.withDefaults`):
 
   | Purpose | Seed |
   |---|---|
@@ -42,8 +42,8 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   - It saves a new `popout` menu at once (`addSavedMenu` → `_commitNew`: the saved config plus that one item, through `ConfigManager.commit`). The menu draft takes it as saved (`ConfigDraft.adopt`), so it doesn't show as unsaved and a later save of the draft keeps it once.
   - It sets the field in the bar draft (`BarManager.updateWidgetProperty`, undoable; a nested field as its whole object), then opens the menu in Layouts as `editOpenedBy` does (`followLink`).
   - So the bar draft never points at an unsaved menu.
-- **The pickers** (`x-options: edgeMenus`: a widget's `popout.menu`, a Button's click `menu`, a Submenu module's `menu`) label each menu by its name and placement ("Tools · Free", `SchemaField.optionLabels` with `EdgeMenusConfig.placementLabels`); the stored value is the id (decided 2026-11-10, review round 2: "Label + omit unusable").
-  - A widget's `popout.menu` offers only `edge` and `free` menus (`x-menuPlacements: [edge, free]`, `EdgeMenusConfig.offeredIn`): a strip pushes the bars and windows inwards, so opened by hovering a widget it moves the bars as the pointer rests ("Bars must not move/redraw when making an action", review round 1), and on its edge takes the widget from under the pointer (`popoutMenuOf` would still open one). A menu it already names stays listed.
+- **The pickers** (`x-options: menus`: a widget's `popout.menu`, a Button's click `menu`, a Submenu module's `menu`) label each menu by its name and placement ("Tools · Free", `SchemaField.optionLabels` with `MenusConfig.placementLabels`); the stored value is the id (decided 2026-11-10, review round 2: "Label + omit unusable").
+  - A widget's `popout.menu` offers only `edge` and `free` menus (`x-menuPlacements: [edge, free]`, `MenusConfig.offeredIn`): a strip pushes the bars and windows inwards, so opened by hovering a widget it moves the bars as the pointer rests ("Bars must not move/redraw when making an action", review round 1), and on its edge takes the widget from under the pointer (`popoutMenuOf` would still open one). A menu it already names stays listed.
   - A Button's click `menu` offers every placement: a click toggles a strip as a bind does. A Submenu module's `menu` too: it shows any menu's modules in its submenu.
 - The links are `SettingsLink`s with a `run` function; a form draws one under a field when its `fieldAction` hook (`SchemaPropertiesForm`) gives one.
 
@@ -63,13 +63,13 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 ### Submenus: the Submenu module
 - `content/Submenu`: icon, label, an arrow pointing where it opens; `openOnHover`, else a click.
 - In a floating menu it opens another menu (`menu`) in the menu's `SubPopout` beside it, as `content/Submenu/MenuSubmenu`:
-  - that menu's `EdgeMenuBody` (`submenu` set): its modules on a grid at the card size of the opening menu's screen and its own `moduleScale`;
+  - that menu's `MenuBody` (`submenu` set): its modules on a grid at the card size of the opening menu's screen and its own `moduleScale`;
   - their `host` is that menu's with `submenu: true` (no pin).
 - In an integrated menu (no `SubPopout`) the row is dimmed and inert.
 - How the `SubPopout` itself is placed and joined: see [Popout submenus](../popouts/submenus.md).
 
 ### Submenus: `placement: "free"` menus
-- `EdgeMenusConfig.isFree`. It has no place on an edge; its own window is `FreeMenu` ([Free menus](free-menus.md)).
+- `MenusConfig.isFree`. It has no place on an edge; its own window is `FreeMenu` ([Free menus](free-menus.md)).
 - Its edge, length, offsets and hover opening hide (`x-showIf`); its monitor (unless it opens at the cursor), pin and close buttons, colours, closing, `freeAnchor` and `freeAnimation` show. `placementOf` is null.
 - The layouts editor draws just its grid (`MenuTarget`).
 - Any other menu can be opened as a submenu too.
