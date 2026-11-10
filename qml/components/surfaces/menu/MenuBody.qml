@@ -7,7 +7,7 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.hosts.overlay
 
-// An edge menu's modules on a grid of quarter cards, as on a Custom overlay
+// A menu's modules on a grid of quarter cards, as on a Custom overlay
 // page, with its screen's overlay cards (MenusConfig.cardUnitOf). Taking
 // its whole edge (`length: "edge"`, and an integrated menu always:
 // GridPlacement.menuFillsEdge) the grid fits the edge exactly, its rows

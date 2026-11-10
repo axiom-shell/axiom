@@ -4,7 +4,7 @@
 > **Config:** `Notes.*` (reader `NotesConfig`)
 > **Related:** [Launcher](launcher.md), [Menus](../menus/overview.md), [Writing modules](../overlay/writing-modules.md)
 
-Notes are Markdown files edited in place by the Notes overlay / edge-menu module, with shared documents, a block editor, a file browser and search.
+Notes are Markdown files edited in place by the Notes overlay / menu module, with shared documents, a block editor, a file browser and search.
 
 ### Storage
 - Notes are Markdown files in `NotesConfig.directory` (the `Notes.directory` setting).

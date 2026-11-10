@@ -9,7 +9,7 @@ import qs.components.content.base
 
 // i18n: keys from the schema (titles, descriptions)
 // Layouts editor, left: the overlay pages, the desktop, the lock screen
-// and the edge menus, then what's selected: a page's name and icon and
+// and the menus, then what's selected: a page's name and icon and
 // what opens it, a menu's settings in groups (from the schema's Menu
 // definition, its Opening group led by how to try and open it), the
 // desktop's (led by which monitor's layout is edited), or the lock

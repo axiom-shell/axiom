@@ -7,7 +7,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 
-// One edge menu from MenusConfig, on its screen, at its placement. Only the
+// One menu from MenusConfig, on its screen, at its placement. Only the
 // host in use is created (FreeMenuPlace.hosts): a popped-out edge menu
 // shows in the free host, its edge host kept until the free one has
 // shown, so the box hands over with no gap. The free host is one per

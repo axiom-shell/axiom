@@ -5,7 +5,7 @@ import qs.config
 import qs.components.reusable
 import qs.components.surfaces.menu
 
-// An edge menu's modules in another menu's submenu (SubPopout, loaded as
+// A menu's modules in another menu's submenu (SubPopout, loaded as
 // "Submenu/MenuSubmenu" by a Submenu module): its MenuBody, at the card
 // size of the menu it opens from, scaled by this one's moduleScale. Its
 // modules' host is this menu's, marked `submenu`.

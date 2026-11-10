@@ -4,7 +4,7 @@ import qs.config
 import qs.services.ui
 import qs.components.methods
 
-// The layouts editor on an edge menu (OverlayManager.menus' selected menu):
+// The layouts editor on a menu (OverlayManager.menus' selected menu):
 // its modules against its screen, where the menu really sits on it, with
 // the band along its edge and, on request, the other menus.
 EditTarget {

@@ -6,7 +6,7 @@ import qs.services.ui
 import qs.components.methods
 import qs.components.reusable
 
-// Layouts editor, left: the edge menus (drag to reorder, click to edit),
+// Layouts editor, left: the menus (drag to reorder, click to edit),
 // and New menu, asking what the menu is for
 ColumnLayout {
   id: root

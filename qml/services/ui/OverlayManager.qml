@@ -43,7 +43,7 @@ QtObject {
   // The login screen's, only once it's set up
   readonly property bool greeterEditable: GreeterConfig.enabled
 
-  // The edge menus' working copy (editTarget "menu")
+  // The menus' working copy (editTarget "menu")
   property MenuEditor menus: MenuEditor {}
 
   property GridEditor layout: GridEditor {
@@ -64,7 +64,7 @@ QtObject {
     return out;
   }
 
-  // The layouts editor's drafts: the pages, the edge menus and the
+  // The layouts editor's drafts: the pages, the menus and the
   // desktop's, lock screen's and login screen's layouts. Each has
   // isDirty, problems, ensureLoaded(), saveChanges() and resetChanges();
   // the page's Save and Reset and EditsManager's Save all and Discard all

@@ -8,7 +8,7 @@ import qs.components.reusable
 import qs.components.content.base
 import qs.components.hosts.popout
 
-// A row that opens another edge menu (`menu`) beside the one it's in, in
+// A row that opens another menu (`menu`) beside the one it's in, in
 // that menu's submenu (EdgePopout.submenu, content/Submenu/MenuSubmenu): on
 // hover, or on a click with openOnHover off. In a submenu it replaces
 // that submenu in place (one level deep). Only a menu placed on an edge

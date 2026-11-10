@@ -15,7 +15,7 @@ QtObject {
   // close }
   readonly property var menus: ConfigManager.live.Menus.items
   readonly property var enabledMenus: root.menus.filter(menu => menu.enabled && menu.id)
-  // A menu's own fields in groups (`x-group`), for the edge menu editor
+  // A menu's own fields in groups (`x-group`), for the menu editor
   readonly property var fieldGroups: SchemaLayout.objectGroups(ConfigManager.configSchema.definitions.Menu, ["layout.modules"])
 
   // A menu with no edge of its own (`placement` free): it opens in a window
