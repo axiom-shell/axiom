@@ -114,8 +114,8 @@ func (w *niriWriter) outputs(in Inputs, path string) any {
 
 // parts are what every file holds (mode: the Compositor.mode it's for).
 // With WindowSwitcher.compositorSwitcher, the switch windows keys are niri's
-// own switcher's in the included and managed files; detached keeps axiom's
-// (the maintainer, 2026-10-29). Managed writes niri's switcher binds even
+// own switcher's in the included and managed files; detached keeps axiom's.
+// Managed writes niri's switcher binds even
 // with none of them, empty, so niri's default keys are gone: its binds are
 // exactly axiom's.
 func (w *niriWriter) parts(in Inputs, spec any, path string, mode string) *jsonx.Object {

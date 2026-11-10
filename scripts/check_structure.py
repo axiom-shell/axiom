@@ -68,7 +68,7 @@ SCHEMA = QML_ROOT / "config" / "json" / "config.schema.json"
 
 # (schema oneOf definition, root its types load from, file prefix): a type
 # is a folder <root>/<Type>/ with <prefix><Type>.qml (docs/dev/core/config-manager.md,
-# rule 11). Custom widget elements are Custom<Type>.qml, so an element
+# › The shape of config.json). Custom widget elements are Custom<Type>.qml, so an element
 # named after a Qt type (Text, Image, List) never shadows it
 LOADERS = [
     ("BarWidget", "qml/components/bar/widgets", ""),
