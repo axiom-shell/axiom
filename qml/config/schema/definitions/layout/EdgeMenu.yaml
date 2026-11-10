@@ -33,19 +33,6 @@ properties:
         default: false
         description: Open when the pointer rests on the screen edge.
         x-showIf: {../placement: {not: free}}
-      delay:
-        x-group: Opening
-        type: integer
-        title: Open delay
-        default: 10
-        minimum: 0
-        maximum: 2000
-        x-unit: ms
-        description: How long the pointer rests on its edge before it opens, or, for a free menu, on the bar widget that opens it.
-        x-showIf:
-          anyOf:
-            - {onHover: true, ../placement: {not: free}}
-            - {../placement: free}
   edge:
     x-group: Placement
     type: string

@@ -211,7 +211,8 @@ var all = []Step{
 	// keyed by it and an OSD's barOrder can name it (v102.go)
 	{Version: 102, Run: v102},
 	// v103: an edge menu's `mode` became `placement` (floating → edge,
-	// integrated → strip, submenu → free) (v103.go)
+	// integrated → strip, submenu → free), and its `open.delay` dropped
+	// (v103.go)
 	{Version: 103, Run: v103},
 }
 

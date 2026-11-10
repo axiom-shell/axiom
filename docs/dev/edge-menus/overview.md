@@ -30,7 +30,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
   - `backgroundColor` / `borderColor`, read through `EdgeMenusConfig.colorsOf` (a tiled menu has no border: the setting hides);
   - floating: `detached` / `distance` / `animation` (see [Held off an edge](../popouts/held-off-edge.md)), read through `EdgeMenusConfig.detachedOf`: a tiled edge menu is always held off its edge, so `detached` hides and `distance` and `animation` show;
   - integrated: `frame`.
-- Opening: `open.onHover`, `open.delay`. The hover strip is `ScreenEdge.triggerSize` deep and as long as the menu, worked out from config alone so it's the same open or closed (`EdgeMenuSync.triggerLength`, the whole room along the edge for a whole-edge menu).
+- Opening: `open.onHover`, after the popouts' open delay (`Popouts.timing.openDelay`; a menu's own `open.delay` went in config v103). The hover strip is `ScreenEdge.triggerSize` deep and as long as the menu, worked out from config alone so it's the same open or closed (`EdgeMenuSync.triggerLength`, the whole room along the edge for a whole-edge menu).
 - Closing: `closeOnLeave`, `closeDelay`, `closeOnOutsideClick`.
 - `modules`: placed as on a Custom page.
 

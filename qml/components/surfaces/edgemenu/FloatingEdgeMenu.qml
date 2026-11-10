@@ -102,7 +102,6 @@ EdgePopout {
   fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
   strokeColor: EdgeMenusConfig.colorsOf(root.menu).stroke
   triggerEnabled: root.menu.open.onHover
-  hoverDelay: root.menu.open.delay
   triggerLength: sync.triggerLength(root.vertical, root.contentPadding, root.screenLength - root.startPad - root.endPad + root.contentPadding * 2)
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')

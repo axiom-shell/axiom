@@ -1,13 +1,13 @@
 # Free menus
 
 > **Files:** `qml/components/surfaces/edgemenu/FreeMenu.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/services/core/StateManager.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/methods/PopoutGeometry.qml`, `qml/components/methods/FreeMenuPlace.qml`, `tests/tst_FreeMenuPlace.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/bar/BarWidgetHost.qml`
-> **Config:** `EdgeMenus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `freeAnimation` (`fade` | `scale` | `slide`), `draggable`, `background`, `screen`, `pinButton`, `backgroundColor` / `borderColor`, `open.delay`, `close.*`
+> **Config:** `EdgeMenus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `freeAnimation` (`fade` | `scale` | `slide`), `draggable`, `background`, `screen`, `pinButton`, `backgroundColor` / `borderColor`, `close.*`
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Popout registry](../popouts/registry.md), [Popout submenus](../popouts/submenus.md), [Layer arrangement](../compositor/layer-arrangement.md), [Plan](../plans/menus-rework.md)
 
 A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own, `FreeMenu`, at the bar widget that opened it, or at its `freeAnchor` (or where it was dragged this session). Submenu rows can also open it beside another menu, in that menu's submenu (unchanged, see [Editing and submenus](editing-submenus.md)). The same window also shows a popped-out edge menu (below).
 
 ### Opening it
-- **As a bar widget's popout.** A widget's `popout.menu` can name a free menu (`EdgeMenusConfig.popoutMenuOf`). Its `PopoutAnchor` opens the menu after the menu's own `open.delay` (`EdgeMenusConfig.popoutDelayOf`; a free menu has no edge to hover). The menu ranks as a bar popout (claim kind `bar`).
+- **As a bar widget's popout.** A widget's `popout.menu` can name a free menu (`EdgeMenusConfig.popoutMenuOf`). Its `PopoutAnchor` opens the menu after the popouts' open delay (`Popouts.timing.openDelay`), as for every menu. The menu ranks as a bar popout (claim kind `bar`).
 - **By a bind, IPC, the launcher or a bar Button.** `EdgeMenuManager.open` / `toggle` / `reveal`, as for every menu. It opens at its `freeAnchor` on its `screen`, or at its session spot (Dragging). A bar Button passes itself as the anchor, so it opens at the Button. A reveal warps the cursor into its box.
 - **The layouts editor's "Show on screen".** If an `edge` menu has a Submenu row opening the free menu, the editor opens it there, beside that menu. Otherwise it opens the free menu on its own (`EdgeMenuEditor.canPreview`).
 

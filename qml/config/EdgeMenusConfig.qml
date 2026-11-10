@@ -40,14 +40,6 @@ QtObject {
     return id !== "" && root.enabledMenus.some(menu => menu.id === id) ? id : "";
   }
 
-  // How long a bar widget's pointer rests before it opens menu `id` as its
-  // popout: a free menu's own `open.delay` (it has no edge to hover), else
-  // the popouts' (Popouts.timing.openDelay)
-  function popoutDelayOf(id) {
-    const menu = root.menuById(id);
-    return root.isFree(menu) ? menu.open.delay : PopoutsConfig.openDelay;
-  }
-
   // The ids of the menus a bar widget entry opens, as configured (gone or
   // disabled alike): its menu popout, then a Button's click menu
   function menusOpenedBy(widget) {

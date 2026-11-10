@@ -17,5 +17,9 @@ func TestV103MovesModeToPlacement(t *testing.T) {
 		{"items not a list", `{"EdgeMenus":{"items":3}}`, `{"EdgeMenus":{"items":3}}`, false},
 		{"the section not an object", `{"EdgeMenus":[]}`, `{"EdgeMenus":[]}`, false},
 		{"no section", `{"General":{}}`, `{"General":{}}`, false},
+		{"open.delay dropped",
+			`{"EdgeMenus":{"items":[{"id":"a","mode":"floating","open":{"onHover":true,"delay":200}},{"id":"b","placement":"free","open":{"delay":10}}]}}`,
+			`{"EdgeMenus":{"items":[{"id":"a","open":{"onHover":true},"placement":"edge"},{"id":"b","placement":"free","open":{}}]}}`, true},
+		{"open not an object", `{"EdgeMenus":{"items":[{"id":"a","placement":"edge","open":3}]}}`, `{"EdgeMenus":{"items":[{"id":"a","placement":"edge","open":3}]}}`, false},
 	})
 }

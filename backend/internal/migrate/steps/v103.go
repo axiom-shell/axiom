@@ -10,7 +10,9 @@ import (
 // `placement` (edge | strip | free): where the menu lives, apart from
 // what opens it. A menu without a mode is left to the default (edge); one
 // with a mode that isn't a known string, or with a placement already, is
-// left alone (the mode is pruned as an unknown key).
+// left alone (the mode is pruned as an unknown key). And an edge menu's
+// own `open.delay` is dropped: every menu waits the popouts' open delay
+// (Popouts.timing.openDelay), on its edge or at a bar widget.
 func v103(cfg *jsonx.Object) []string {
 	menus := object(cfg, "EdgeMenus")
 	if menus == nil {
@@ -21,10 +23,16 @@ func v103(cfg *jsonx.Object) []string {
 		return nil
 	}
 	placements := map[string]string{"floating": "edge", "integrated": "strip", "submenu": "free"}
-	moved := 0
+	moved, delays := 0, 0
 	for _, item := range items.Items {
 		entry, _ := item.(*jsonx.Object)
-		if entry == nil || entry.Has("placement") {
+		if entry == nil {
+			continue
+		}
+		if open, _ := entry.Value("open").(*jsonx.Object); open != nil && open.Delete("delay") {
+			delays++
+		}
+		if entry.Has("placement") {
 			continue
 		}
 		mode, _ := entry.Value("mode").(string)
@@ -36,8 +44,12 @@ func v103(cfg *jsonx.Object) []string {
 		entry.Delete("mode")
 		moved++
 	}
-	if moved == 0 {
-		return nil
+	var changes []string
+	if moved > 0 {
+		changes = append(changes, fmt.Sprintf("%d edge menu(s): mode became placement (floating → edge, integrated → strip, submenu → free)", moved))
 	}
-	return []string{fmt.Sprintf("%d edge menu(s): mode became placement (floating → edge, integrated → strip, submenu → free)", moved)}
+	if delays > 0 {
+		changes = append(changes, fmt.Sprintf("%d edge menu(s): open.delay dropped (menus wait the popouts' open delay, Popouts.timing.openDelay)", delays))
+	}
+	return changes
 }
