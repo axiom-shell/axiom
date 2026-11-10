@@ -209,6 +209,7 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `methods/ScreenRegion`: rects across monitors in global logical pixels (the screenshot picker's shared selection): `between(a, b)`, `intersect`, `isEmpty`, `local(global, screen)` (a screen's part, from its top left), `toGlobal`, `covered(rect, screens)`, `contains`, `boxAt(boxes, x, y, output)` (the topmost box under a point, the point's own screen's first).
 - `methods/TextBand`: where a line of text centres (`TextBandPadding`): `onXHeight(text)`, `height(text, xHeight, figureHeight)`, `lineAscent(baselineOffset, topPadding, bottomPadding, height, contentHeight, verticalAlignment)` (a Text's first line's ascent as laid out), `padding(ascent, lineHeight, band)` (`{ top, bottom, offset }`: the whole-pixel padding moving the lines, the size kept, and the part of a pixel left).
 - `methods/ChipRows.split(count, fit)`: a set of equal chips spread evenly over as few rows as `fit` allows (5 at 3 a row: 3 + 2), so each row can fill its width; `starts(sizes)`.
+- `methods/GridPosition`: the workspace grid's shown row or column: `line(activeId, base, columns, rows, vertical)` (`{ line, count }`), `glyph(position, count, vertical)`, `head(count, active, vertical, across, fontSize)` (the position head's dots, or the arrow).
 - `methods/ColorTemperature.color(kelvin)`: light's color at a temperature (the night light's button).
 - `KeybindFilter.columns(sections, count)`: the masonry split of the Keybinds page and the Cheatsheet module.
 - **Utils** (`methods/Utils`):

@@ -2,6 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.compositor
+import qs.config
+import qs.components.methods
 import qs.components.bar.widgets.base
 import qs.components.bar.look
 
@@ -17,7 +19,7 @@ import qs.components.bar.look
 // and sitting in a merged run as widgets do (BarCells.cellShape). Without
 // a box the cells sit straight on the bar, each underlined itself for
 // underline. A head (`lead`: an icon, or the active workspace's label as
-// its cell shows it) before the cells, in their box, is its icon part on a
+// its cell shows it, or in the grid its row's dots: GridPositionHead) before the cells, in their box, is its icon part on a
 // split bar (SplitLead); with no box (`segmented`) it has none.
 BarWidget {
   id: root
@@ -93,6 +95,25 @@ BarWidget {
     icon: root.segmented ? "" : root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
     text: root.segmented || !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
     iconColor: root.colors.icon
+    ownHead: root._positionHead && root._positionHead.kind !== "none" ? positionHead : null
+  }
+
+  // The grid's position head (`lead: position`): dots for the shown row
+  // (column on a vertical bar), else an arrow
+  readonly property bool _positionLead: properties.lead === "position" && CompositorManager.workspaceGrid && !segmented
+  readonly property var _position: GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical)
+  readonly property var _positionHead: _positionLead ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
+  GridPositionHead {
+    id: positionHead
+    barConfig: root.barConfig
+    properties: root.properties
+    color: root.colors.icon
+    vertical: root.isVertical
+    line: root._position.line
+    count: root._position.count
+    head: root._positionHead ?? ({
+        "kind": "none"
+      })
   }
 
   Loader {

@@ -4226,7 +4226,6 @@
     "Drawn before the time; a split bar sets it apart as the icon part.": "",
     "Drawn before the items; a split bar sets it apart as the icon part. Empty shows none.": "",
     "Active workspace": "",
-    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part.": "",
     "Caps": "",
     "Num": "",
     "Scroll": "",
@@ -4293,6 +4292,8 @@
     "Add a Notes module to an overlay page or a menu.": "",
     "Add a Chat module to an overlay page or a menu.": "",
     "Slide comes in from off the screen, or for a free menu from the bar widget that opened it or the nearest screen edge. Fade fades in place; Scale, for a free menu, grows in place.": "",
-    "While the menu is open, it holds the keyboard, so the windows behind can't be typed in.": ""
+    "While the menu is open, it holds the keyboard, so the windows behind can't be typed in.": "",
+    "Grid position": "",
+    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position - which row (column on a vertical bar) is shown, a dot each.": ""
   }
 }
