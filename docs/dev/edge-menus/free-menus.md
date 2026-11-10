@@ -20,7 +20,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
   - opened by a bar widget (its popout, a Button): the widget's screen (`PopoutAnchor.screenRect`);
   - `freeAnchor.at: cursor`: the screen under the cursor (`CompositorManager.withCursorPos`, asked for first; no host shows it until the answer);
   - else (`centre`, `point`, or the cursor unknown or off every screen) its `screen` setting. The settings hide `screen` for a free menu opening at the cursor (`x-showIf`).
-- **An open menu never moves to another screen** ("An open menu moving to another screen is out of scope (i.e. set it differently, or pop at a different widget)"): asked for again while open, it stays; the screen is forgotten once it closes. A drag stays clamped to its screen.
+- **An open menu never moves to another screen** ("An open menu moving to another screen is out of scope (i.e. set it differently, or pop at a different widget)"): asked for again while open, it stays; the screen is forgotten once it closes. One on its `screen` setting (no widget, not at the cursor) follows that setting when it's set differently, as in Layouts' preview. A drag stays clamped to its screen.
 - **Where it shows** (`FreeMenuPlace.shownOn`): a popped-out edge menu on the screen it popped out on; a free menu on the one it opened on; either unplugged, its configured screen.
 
 ### Where it goes (`FreeMenuPlace`)

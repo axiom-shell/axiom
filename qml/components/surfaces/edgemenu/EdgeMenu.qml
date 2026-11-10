@@ -33,6 +33,13 @@ Scope {
       root._locate();
   }
   readonly property ShellScreen screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
+  // An open free menu that went to its `screen` setting (no widget, not
+  // at the cursor) follows it: set differently (Layouts' preview), it
+  // shows there
+  onScreenChanged: {
+    if (root._placing && !EdgeMenuManager.anchors[root.menuId] && root.menu.freeAnchor.at !== "cursor")
+      root._locate();
+  }
   // Popped out (EdgeMenuManager.popOut), and once the free host has shown
   // it (kept until it docks: a fullscreen window hiding the free host
   // never brings the edge one back)
