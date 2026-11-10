@@ -332,19 +332,26 @@ PopoutWrapperBase {
     }
 
     // Unpinned with close.onOutsideClick: a click outside it (and its
-    // submenu) closes it
+    // submenu) closes it. Its header's menu takes it too while open, so a
+    // click elsewhere closes that menu (only) on a held one, and Escape
+    // reaches it
+    readonly property bool closesOnOutsideClick: root.menu.close.onOutsideClick && !sync.held
     FocusGrab {
       id: focusGrab
       windows: [panel, slot.submenu.popupWindow].concat(SurfaceManager.modalWindows)
-      active: panel.visible && root.isOpen && root.claimed && root.menu.close.onOutsideClick && !sync.held
+      active: panel.visible && root.isOpen && root.claimed && (panel.closesOnOutsideClick || headerMenu.visible)
 
       onActiveChanged: {
-        if (active)
+        if (active && !headerMenu.visible)
           root.contentItem?.forceActiveFocus();
       }
 
       // Only a real click, never another surface's grab starting
-      onDismissed: root.hide()
+      onDismissed: {
+        headerMenu.close();
+        if (panel.closesOnOutsideClick)
+          root.hide();
+      }
     }
 
     // Where the window is on screen (its whole screen): the blur window

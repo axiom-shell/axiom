@@ -69,7 +69,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - Nothing is previewed while dragging. The box goes where the drag puts it (`_dragged`, the spot), clamped as any spot is. Its claim's footprint follows, so it closes what it now covers below it.
 - **On release**, `FreeMenuPlace.keepsDrag` says whether the spot is kept: only for a free menu opened on its own (a bind, IPC, a pin reopening). A copy a widget opened, and a popped-out edge menu, move for the moment only. Kept, `EdgeMenuManager.storePosition` stores it with the `freeAnchor` it was dragged from.
 - **The session spot.** `EdgeMenuManager.positions`, kept in `$XDG_RUNTIME_DIR/axiom/state/menu-positions.json` through `StateManager.createSessionHandler`: read at each load, so it survives qs reloads and restarts, and gone at logout (the runtime folder is). It is never written to config.
-- **Reset.** A right click on the header offers Reset position (a `StyledContextMenu`; the window's mask takes its box while it's open). IPC `edgeMenu resetPosition <id>` does the same. Both call `EdgeMenuManager.resetPosition`, and the open menu goes back to its anchor.
+- **Reset.** A right click on the header offers Reset position (a `StyledContextMenu`; while it's open the window's mask takes its box and the focus grab is on, so a click elsewhere closes it). IPC `edgeMenu resetPosition <id>` does the same. Both call `EdgeMenuManager.resetPosition`, and the open menu goes back to its anchor, even dragged since it opened (`positionReset`).
 - A pin still reopens it when qs starts. After a logout that is at its `freeAnchor`.
 
 ### A popped-out edge menu
