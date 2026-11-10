@@ -107,7 +107,7 @@ EdgePopout {
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
   triggerCentre: GridPlacement.menuFillsEdge(root.menu) ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2
-  dismissDelay: EdgeMenusConfig.closeDelayOf(root.menu)
+  dismissDelay: root.menu.close.delay
   keyboardOnDemand: true
   closeOnClickOutside: root.menu.close.onOutsideClick && !sync.held
   // Over the overlay its grab (which lets input through to the menu) is
@@ -125,20 +125,15 @@ EdgePopout {
     frame: root.frame
     onWarpRequested: {
       const box = root.boxInWindow;
-      const at = root.contentInWindow;
-      // Tiled, the card nearest the box's centre (MenuTiles.aim)
-      const card = root.tiled ? MenuTiles.aim(cardMask.rects, Qt.point(box.x + box.width / 2 - at.x, box.y + box.height / 2 - at.y)) : null;
-      const x = card ? at.x + card.x : box.x + box.width / 2;
-      const y = card ? at.y + card.y : box.y + box.height / 2;
-      CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, x, y);
+      CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, box.x + box.width / 2, box.y + box.height / 2);
     }
   }
 
   // No box (`background: none`): its cards are tiles, held off its edge
-  // (detachedOf), input on them alone (CardMask), a crossing between two
-  // given the close delay's floor
+  // (detachedOf); its input is still the whole box, so the gaps between
+  // the cards are the menu's (hovering one keeps it open, a click there
+  // is inside it)
   readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
-  maskRegions: root.tiled ? cardMask : null
   hollow: root.tiled
   // How its cards' tiles are drawn (EdgeMenuBody.tiles): by the blur
   // window as its box would be, from where its content is on the screen
@@ -154,13 +149,6 @@ EdgePopout {
       "opacity": root.surfaceItem.shownOpacity,
       "look": root.surfaceItem.shadowLook
     }) : null
-  CardMask {
-    id: cardMask
-    rects: root._body?.maskRects ?? []
-    offset: root.contentInWindow
-    box: root.boxItem
-  }
-
   // Asked for again while open (EdgeMenuManager.engageRequested): it comes
   // forward (EdgePopout.engage). The integrated host holds no popout
   // claim, so it has no rank to raise. Asked to pop out, it hands its spot

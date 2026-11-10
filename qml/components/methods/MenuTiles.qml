@@ -2,16 +2,11 @@ pragma Singleton
 import QtQuick
 
 // A menu drawn as tiles (`background: none`): no box of its own, only its
-// cards, each a tile with its own shadow and blur, input on the cards
-// alone (hosts/popout/CardMask). Pure: which menus are tiled, which are
-// held off their edge, how long a crossing between two cards may take,
-// and the rects its input mask is built from.
+// cards, each a tile with its own shadow and blur (its input is still its
+// whole box, gaps included). Pure: which menus are tiled, which are held
+// off their edge, and where each card's tile shows in its scrolled view.
 QtObject {
   id: root
-
-  // The least a tiled menu waits before closing once the pointer leaves
-  // a card (ms): crossing a gap leaves one card before it enters the next
-  readonly property int closeFloor: 150
 
   // Whether `menu` is drawn as tiles: `background: none` on an edge or a
   // free menu (a strip always draws its frame)
@@ -23,12 +18,6 @@ QtObject {
   // tile can't grow out of the edge)
   function detached(menu) {
     return menu?.placement === "edge" && (!!menu.detached || root.tiled(menu));
-  }
-
-  // The close delay a menu waits once the pointer leaves it: its own
-  // (`close.delay`), at least closeFloor when tiled
-  function closeDelay(delay, tiled) {
-    return tiled ? Math.max(delay, root.closeFloor) : delay;
   }
 
   // The cards as shown, in the scrolling view's coordinates: each of
@@ -50,39 +39,5 @@ QtObject {
         "height": y1 - y0
       } : null;
     });
-  }
-
-  // The rects an input mask is the union of: `rects` without the empty
-  // ones (null, no area) and those inside another (the first of equal
-  // ones kept)
-  function union(rects) {
-    const some = (rects ?? []).filter(r => r && r.width > 0 && r.height > 0);
-    const inside = (a, b) => a.x >= b.x && a.y >= b.y && a.x + a.width <= b.x + b.width && a.y + a.height <= b.y + b.height;
-    return some.filter((r, i) => !some.some((other, j) => j !== i && inside(r, other) && (!inside(other, r) || j < i))).map(r => ({
-          "x": r.x,
-          "y": r.y,
-          "width": r.width,
-          "height": r.height
-        }));
-  }
-
-  // Where to move the pointer into a tiled menu ({ x, y }): the centre of
-  // the rect nearest `at` (the one holding it, else the one whose centre
-  // is closest), or null with none
-  function aim(rects, at) {
-    let best = null, bestDistance = Infinity;
-    for (const r of root.union(rects)) {
-      const cx = r.x + r.width / 2, cy = r.y + r.height / 2;
-      const holds = at.x >= r.x && at.x < r.x + r.width && at.y >= r.y && at.y < r.y + r.height;
-      const distance = holds ? -1 : Math.hypot(cx - at.x, cy - at.y);
-      if (distance < bestDistance) {
-        best = {
-          "x": cx,
-          "y": cy
-        };
-        bestDistance = distance;
-      }
-    }
-    return best;
   }
 }

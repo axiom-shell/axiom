@@ -227,7 +227,7 @@ properties:
     enum: [panel, none]
     x-control: toggle
     x-enumLabels: {panel: Panel, none: None}
-    description: None leaves out the menu's box, so its cards float as tiles of their own and clicks between them reach what's behind. An edge menu is then held off its edge.
+    description: None leaves out the menu's box, so its cards float as tiles of their own. An edge menu is then held off its edge.
     x-showIf: {placement: [edge, free]}
   backgroundColor:
     x-group: Style

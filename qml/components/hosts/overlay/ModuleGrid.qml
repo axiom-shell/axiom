@@ -149,7 +149,7 @@ Item {
 
   // Each module's card where it's going ({ x, y, width, height } px in
   // the grid, its place grown; null for one with no place): what a tiled
-  // menu takes input on and draws its tiles under (MenuTiles)
+  // menu draws its tiles under (MenuTile)
   readonly property var cardRects: root.places.map(place => place ? GridPlacement.rectPx(place, root.sizes, root.grid.drawnZoom) : null)
 
   implicitWidth: root.sizes.width

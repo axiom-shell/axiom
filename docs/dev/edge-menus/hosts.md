@@ -22,7 +22,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - Submenus (`MenuSubmenu`) are an `EdgeMenuBody` too, with `submenu` set and `screen` that of their parent menu: the same grid and zoom on its screen, only capped (never stretched), with no pin or Escape of its own.
 - Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
 - Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.
-- Tiled (`background: none`, [Overview](overview.md) › Tiles) it draws a `MenuTile` under each card from its host's `tiles`, and reports what takes input (`maskRects`: its cards as shown and its buttons) for the host's `CardMask`.
+- Tiled (`background: none`, [Overview](overview.md) › Tiles) it draws a `MenuTile` under each card from its host's `tiles`.
 - With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`), after the pop-out toggle of an edge menu with `popOutButton` and before the close a popped-out one has. In the free host (`EdgeMenuBody.free`) or a submenu it has no edge (`edge` is `""`): the buttons are at the top right and growing modules grow downward.
 
 ### The lattice along the edge
@@ -49,7 +49,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
 - It's `detached` (a plain box) when:
   - held (`EdgeMenusConfig.detachedOf`: `detached`, or tiled; `distance` across the free screen from its edge, at its automatic gaps at both ends, sliding or fading in, through `EdgePopout.held` / `distance` / `fade`; see [Held off an edge](../popouts/held-off-edge.md)); or
   - its edge has a transparent bar.
-- Tiled, its surface is `hollow` (`EdgePopout.hollow`), it hands its body the `tiles` from `EdgePopout.surfaceItem` and `contentInWindow`, and its input goes on the cards (`CardMask` as `EdgePopout.maskRegions`).
+- Tiled, its surface is `hollow` (`EdgePopout.hollow`), it hands its body the `tiles` from `EdgePopout.surfaceItem` and `contentInWindow`. Its input is still its box, the gaps between cards included.
 - Otherwise it's attached to the border or solid bar, or meets a pill or floating bar as a bar popout does (`EdgePopout.followsBar`; see [Pill and floating bars](../popouts/pill-and-floating-bars.md)).
 - Its window sits inside what's reserved on each screen edge, `ScreenEdgeManager.reservedWithMenusOn(screen, location)`:
   - `ScreenEdgeManager.barReservedOn`: the border's `screenMargin` and what each bar on the edge takes (`BarEnds.placeStack`: its zone, less the `-borderWidth` margin Hyprland counts in for a bar inside the border);

@@ -4285,7 +4285,6 @@
     "Dock: close it back onto its edge": "",
     "Pop out: keep it open off its edge": "",
     "Panel": "",
-    "None leaves out the menu's box, so its cards float as tiles of their own and clicks between them reach what's behind. An edge menu is then held off its edge.": "",
     "The menu's box, or with Box set to None, the tile under each card.": "",
     "Box": "",
     "On a screen edge": "",
@@ -4293,6 +4292,7 @@
     "A submenu": "",
     "Opened by a keybind": "",
     "New submenu…": "",
-    "New menu…": ""
+    "New menu…": "",
+    "None leaves out the menu's box, so its cards float as tiles of their own. An edge menu is then held off its edge.": ""
   }
 }

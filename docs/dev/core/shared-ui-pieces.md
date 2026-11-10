@@ -166,7 +166,6 @@ Bars size their own widgets (`BarsConfig.enrichBarConfig`) and never use these: 
 - `reusable/CornerPiece`: a concave "inverted corner" filled up to a quarter circle, with its two edges stroked.
 - `reusable/HoledItem`: its children with rects cut out (a stroke left open where something joined to it carries on).
 - `hosts/popout/BlurShape` + `LayerOrigin`: a chrome surface's shape for the blur window, and where its layer window is on screen (worked out by `LayerManager`, on every compositor). `LayerSlot`: a window with a fixed place in the stack maps through it, in `LayerStack` order.
-- `hosts/popout/CardMask`: a window's input mask on a tiled menu's cards alone (`background: none`, `methods/MenuTiles`): the union of rects moved into the window, a host's own regions joined, and the whole box while a Popup is open in the window. `FreeMenu` and `FloatingEdgeMenu` (through `EdgePopout.maskRegions`). See [Overview](../edge-menus/overview.md) › Tiles.
 - `reusable/BlurRegion` / `reusable/BoxBlurRegion`: a window's blur region where the compositor blurs only what a window asks (`supports.blurRegion`, niri): from region pieces (`SurfaceOutline.blurRegion`/`placeRegion`), or one box mapped into its window, following a `moving` value (a slide), a scale and a fade (`opacity`; nothing while its fill's `alpha` × `opacity` is under `threshold`, as Hyprland's `ignore_alpha`).
 - See [Translucency and blur](../theming/translucency-blur.md).
 

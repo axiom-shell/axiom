@@ -74,8 +74,8 @@ PopoutWrapperBase {
   readonly property Item contentItem: loader.item as Item
   // Read through a var: EdgeMenuBody's members, on an Item
   readonly property var _body: root.contentItem
-  // No box (`background: none`): its cards are tiles, input on them alone
-  // (CardMask), a crossing between two given the close delay's floor
+  // No box (`background: none`): its cards are tiles; its input is still
+  // the whole box, so the gaps between them are the menu's
   readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
   readonly property real boxWidth: Math.ceil(root.contentItem?.implicitWidth ?? 0) + root.contentPadding * 2
   readonly property real boxHeight: Math.ceil(root.contentItem?.implicitHeight ?? 0) + root.contentPadding * 2
@@ -217,7 +217,7 @@ PopoutWrapperBase {
   readonly property bool claimed: root.claim.held
 
   autoDismiss: sync.autoDismiss
-  dismissDelay: EdgeMenusConfig.closeDelayOf(root.menu)
+  dismissDelay: root.menu.close.delay
   keepAlive: surface.hovered
   currentItem: root.contentItem
   window: panel
@@ -228,10 +228,7 @@ PopoutWrapperBase {
     menu: root.menu
     screen: root.screen
     window: panel
-    onWarpRequested: {
-      const at = panel.aim();
-      CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, at.x, at.y);
-    }
+    onWarpRequested: CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2)
   }
 
   // What its box meets (SurfaceContext.free), as an EdgeSurface and its
@@ -311,34 +308,18 @@ PopoutWrapperBase {
     // StyledComboEntry opens its list inline (BarPopouts' room is a number)
     readonly property var popoutRoom: null
 
-    // Input on the box alone, once it's granted its place (and its
-    // header's menu while that's open); tiled, on its cards, its buttons
-    // and its header alone (CardMask), so a click between two cards
-    // reaches what's behind
+    // Input on the box alone (tiled, the gaps between its cards too),
+    // once it's granted its place, and its header's menu while that's open
     readonly property bool takesInput: root.claimed && !menuSlot.idle
     mask: Region {
-      item: panel.takesInput && !root.tiled ? boxArea : null
-      regions: [panel.headerMenuArea].concat(panel.takesInput && root.tiled ? [cardMask] : [])
+      item: panel.takesInput ? boxArea : null
+      regions: [panel.headerMenuArea]
     }
     property Region headerMenuArea: Region {
       item: headerMenu.visible ? headerMenu.background : null
     }
     // Its content's top-left in the window (EdgeMenuBody's coordinates)
     readonly property point contentAt: Qt.point(boxArea.x + root.contentPadding, boxArea.y + root._stretchTop + root.contentPadding)
-    property CardMask cards: CardMask {
-      id: cardMask
-      // (its header: the box's top padding, over the content)
-      rects: (root._body?.maskRects ?? []).concat(header.visible ? [
-        {
-          "x": -root.contentPadding,
-          "y": -root.contentPadding,
-          "width": root.boxWidth,
-          "height": root.contentPadding
-        }
-      ] : [])
-      offset: panel.contentAt
-      box: boxArea
-    }
     // Tiled, how its cards' tiles are drawn (EdgeMenuBody.tiles): by the
     // blur window as the box would be, from where its content is on the
     // screen as drawn
@@ -353,14 +334,6 @@ PopoutWrapperBase {
         "opacity": surface.shownOpacity,
         "look": shape.shadowLook
       })
-
-    // Where a reveal moves the pointer: the box's centre, or tiled, the
-    // card nearest it (MenuTiles.aim)
-    function aim() {
-      const centre = Qt.point(boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2);
-      const card = root.tiled ? MenuTiles.aim(cardMask.rects, Qt.point(centre.x - panel.contentAt.x, centre.y - panel.contentAt.y)) : null;
-      return card ? Qt.point(panel.contentAt.x + card.x, panel.contentAt.y + card.y) : centre;
-    }
 
     // The box, in the window (as drawn, a submenu's stretch included)
     Item {

@@ -89,7 +89,7 @@ QtObject {
 
   // Whether a menu is drawn as tiles (`background: none` on an edge or
   // free menu, MenuTiles.tiled): no box of its own, its cards each a tile
-  // with its own shadow and blur, input on the cards alone
+  // with its own shadow and blur
   function tiledOf(menu) {
     return MenuTiles.tiled(menu);
   }
@@ -99,13 +99,6 @@ QtObject {
   // through here
   function detachedOf(menu) {
     return MenuTiles.detached(menu);
-  }
-
-  // The close delay once the pointer leaves it: `close.delay`, floored
-  // for tiles, so crossing the gap between two cards never closes it
-  // (MenuTiles.closeDelay)
-  function closeDelayOf(menu) {
-    return MenuTiles.closeDelay(menu.close.delay, root.tiledOf(menu));
   }
 
   // The menu's box colours

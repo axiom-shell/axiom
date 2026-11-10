@@ -34,7 +34,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 
 ### The window
 - **Its own full-screen window.** A `PanelWindow` on layer Top, namespace `axiom-menu`, anchored to every side, with `ExclusionMode.Ignore`.
-  - It never resizes: its input mask is the box alone, and that only once the claim is granted. Tiled (`background: none`), it's the cards, its buttons and its header band alone (`CardMask`, [Overview](overview.md) › Tiles).
+  - It never resizes: its input mask is the box alone (tiled, the gaps between its cards too), and that only once the claim is granted.
   - This follows the toasts' detached window, and avoids the growth glitch of a layer window resizing while shown.
 - **Its place in the stack.** A `LayerSlot`, `held`. Where layers stack by map order, it is mapped from the start and draws and takes nothing while closed (`idle`), so opening it never puts it after the bars. With layer rules it maps only while open. On Top, the compositor hides it under a fullscreen window.
 - **Keyboard.** `OnDemand`: it takes the keyboard when clicked. Escape closes it (`EdgeMenuBody`).

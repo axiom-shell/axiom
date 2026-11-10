@@ -148,30 +148,6 @@ Item {
     }
   }
 
-  // Its cards as shown, in its own coordinates (MenuTiles.shown: scrolled,
-  // cut to the view, null out of sight), and what a tiled menu takes
-  // input on: those and its buttons, and the whole view while a detail
-  // is expanded over the cards (a click beside it collapses it)
-  // (MenuTiles.union; CardMask)
-  readonly property var cardRects: MenuTiles.shown(moduleGrid.cardRects, {
-    "x": view.contentX,
-    "y": view.contentY
-  }, {
-    "width": root.width,
-    "height": root.height
-  })
-  readonly property var maskRects: MenuTiles.union(root.cardRects.concat([buttons.visible ? {
-      "x": buttons.x,
-      "y": buttons.y,
-      "width": buttons.width,
-      "height": buttons.height
-    } : null, moduleGrid.expanded !== null ? {
-      "x": 0,
-      "y": 0,
-      "width": root.width,
-      "height": root.height
-    } : null]))
-
   // The menu's buttons: in the corner away from its edge, at the end,
   // over the modules' corner (with no edge, the top right)
   readonly property bool pinned: EdgeMenuManager.isPinned(root.menu.id)
