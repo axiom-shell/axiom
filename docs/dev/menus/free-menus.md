@@ -1,7 +1,7 @@
 # Free menus
 
 > **Files:** `qml/components/surfaces/menu/FreeMenu.qml`, `qml/services/ui/MenuManager.qml`, `qml/services/core/StateManager.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/methods/PopoutGeometry.qml`, `qml/components/methods/FreeMenuPlace.qml`, `tests/tst_FreeMenuPlace.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/surfaces/menu/MenuHosts.qml`, `qml/components/surfaces/menu/MenuSync.qml`, `qml/components/surfaces/menu/MenuBody.qml`, `qml/config/MenusConfig.qml`, `qml/components/bar/BarWidgetHost.qml`
-> **Config:** `Menus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `freeAnimation` (`fade` | `scale` | `slide`), `draggable`, `background`, `screen`, `pinButton`, `closeButton`, `backgroundColor` / `borderColor`, `close.*`
+> **Config:** `Menus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `animation` (`slide` | `fade` | `scale`; the edge menus' setting, `scale` offered only here), `draggable`, `background`, `screen`, `pinButton`, `closeButton`, `backgroundColor` / `borderColor`, `close.*`
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Popout registry](../popouts/registry.md), [Popout submenus](../popouts/submenus.md), [Layer arrangement](../compositor/layer-arrangement.md), [Plan](../plans/menus-rework.md)
 
 A menu with no edge (`MenusConfig.isFree`). It opens in a window of its own, `FreeMenu`, at the bar widget that opened it, or at its `freeAnchor` (or where it was dragged this session). Submenu rows can also open it beside another menu, in that menu's submenu (unchanged, see [Editing and submenus](editing-submenus.md)). The same window also shows a popped-out edge menu (below).
@@ -54,7 +54,7 @@ A menu with no edge (`MenusConfig.isFree`). It opens in a window of its own, `Fr
   - Review round 1 had it close through focus alone, with no grab (`FocusLeave`'s window focus, so the click reached its window); round 2 brought the grab back, so outside clicks behave as on an edge menu.
 - **The box.** A detached `EdgeSurface`. What it meets comes from `SurfaceContext.free()`: nothing (no joins, no flush ends, never straight off an edge). With no bar, its shadow is BarStyle's. A small `shape` object hands that to the surface and the `SubmenuHost`, in the shape an `EdgePlacement` would.
 - **Its fill.** The blur window draws it where it backs Top surfaces on the menu's screen, except while it scales: the blur window's copy doesn't scale. Tiled, the box is `hollow` and the tiles are drawn the same way (`tiles`, from `shape.backed` and the content's place on the screen).
-- **Animation (`freeAnimation`).**
+- **Animation (`animation`, one setting with the edge menus' since config v104, which made a free menu's `freeAnimation` its `animation`; New menu's free menus start at `fade`, `MenuSeeds`).**
   - `fade`: `AttachedSurface.fade`.
   - `scale`: from 90 %, fading as it scales (`Appearance.animNormal`, `Appearance.easing`).
   - `slide`: in from its slide edge, clipped there, as any detached box slides.

@@ -215,7 +215,8 @@ var all = []Step{
 	// (v103.go)
 	{Version: 103, Run: v103},
 	// v104: EdgeMenus became Menus, and the edgeMenu action (keybinds, hot
-	// corners, Button widgets) menu (v104.go)
+	// corners, Button widgets) menu; a free menu's freeAnimation became its
+	// animation (v104.go)
 	{Version: 104, Run: v104},
 }
 

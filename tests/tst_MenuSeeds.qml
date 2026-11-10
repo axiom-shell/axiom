@@ -24,6 +24,7 @@ TestCase {
     for (const purpose of ["popout", "submenu"]) {
       const menu = MenuSeeds.seed(purpose, "menu-2", "Menu 2");
       compare(menu.placement, "free", purpose);
+      compare(menu.animation, "fade", purpose + " fades in, as free menus did before one animation setting");
       compare(menu.open, undefined, purpose + " leaves opening at the defaults");
       compare(menu.freeAnchor, undefined, purpose + " opens where its opener puts it");
       compare(menu.close, undefined, purpose + " closes as the defaults say");
@@ -33,6 +34,7 @@ TestCase {
   function test_floating() {
     const menu = MenuSeeds.seed("free", "menu-3", "Menu 3");
     compare(menu.placement, "free");
+    compare(menu.animation, "fade");
     compare(menu.freeAnchor, {
       "at": "centre"
     }, "a floating one opens at the screen's centre");

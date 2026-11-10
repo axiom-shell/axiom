@@ -1,7 +1,7 @@
 # Surfaces held off an edge
 
 > **Files:** `qml/components/hosts/popout/EdgePlacement.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/hosts/popout/ClosedLatch.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/services/ui/ScreenEdgeManager.qml`
-> **Config:** `detached`, `distance` and `animation` on floating edge menus (`Menus.items[]`), docks (`Dock.items[]`), OSDs (`OSD.items[]`), the launcher (`Launcher`) and the window switcher (`WindowSwitcher`)
+> **Config:** `detached`, `distance` and `animation` on floating edge menus (`Menus.items[]`, the menus' own `animation`, which adds Scale for free menus), docks (`Dock.items[]`), OSDs (`OSD.items[]`), the launcher (`Launcher`) and the window switcher (`WindowSwitcher`)
 > **Related:** [Edge attach](edge-attach.md), [Surface context](surface-context.md), [Pill and floating bars](pill-and-floating-bars.md), [Dock](../features/dock.md), [OSD](../features/osd.md), [Menu hosts](../menus/hosts.md)
 
 Floating edge menus, docks, OSDs, the launcher and the window switcher with `detached` set are held off their edge as islands, all placed and drawn the same way (the launcher and switcher are `EdgePopout`s as the OSD is; the dock takes the same `EdgePlacement`). Edge popouts are also held over a fullscreen window. A new surface held off an edge uses these rules rather than distances of its own.

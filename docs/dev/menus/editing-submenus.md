@@ -70,7 +70,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 
 ### Submenus: `placement: "free"` menus
 - `MenusConfig.isFree`. It has no place on an edge; its own window is `FreeMenu` ([Free menus](free-menus.md)).
-- Its edge, length, offsets and hover opening hide (`x-showIf`); its monitor (unless it opens at the cursor), pin and close buttons, colours, closing, `freeAnchor` and `freeAnimation` show. `placementOf` is null.
+- Its edge, length, offsets and hover opening hide (`x-showIf`); its monitor (unless it opens at the cursor), pin and close buttons, colours, closing, `freeAnchor` and `animation` (with Scale) show. `placementOf` is null.
 - The layouts editor draws just its grid (`MenuTarget`).
 - Any other menu can be opened as a submenu too.
 - `references(id)` lists the Submenu modules opening a menu; one opening the menu it's in is a problem.

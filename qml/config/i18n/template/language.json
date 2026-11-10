@@ -3051,7 +3051,7 @@
     "Sleep": "",
     "Slide": "",
     "Slide between workspaces in the direction you move.": "",
-    "Slide comes in from the bar widget that opened it, or from the nearest screen edge.": "",
+    "Slide comes in from off the screen, or for a free menu from the bar widget that opened it or the nearest screen edge. Fade fades in place; Scale, for a free menu, grows in place.": "",
     "Slide from": "",
     "Slide from the bottom": "",
     "Slide from the top": "",

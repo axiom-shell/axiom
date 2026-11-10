@@ -25,7 +25,7 @@ EdgePopout {
   // (EdgePlacement.gaps)
   held: MenusConfig.detachedOf(root.menu)
   distance: root.menu.distance / 100
-  fade: root.menu.animation === "fade"
+  fade: root.menu.animation !== "slide"
 
   // Closes what it covers below it (PopoutManager); pinned, it ranks
   // lowest, and pinned or previewing it gives way and comes back

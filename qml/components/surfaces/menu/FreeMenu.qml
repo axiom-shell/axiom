@@ -15,7 +15,7 @@ import qs.components.hosts.popout
 // masked to the box. It opens where FreeMenuPlace puts it: at the bar
 // widget that opened it as its popout, else at its `freeAnchor` (the
 // free area's centre, the cursor, or a point), clamped clear of the bars;
-// and comes in as `freeAnimation` says (a fade, a scale, or a slide from
+// and comes in as its `animation` says (a fade, a scale, or a slide from
 // its widget's side or the nearest screen edge). The box is a detached
 // EdgeSurface (SurfaceContext.free), with a submenu (SubmenuHost) for its
 // Submenu rows. Like the edge hosts it follows MenuManager
@@ -63,7 +63,7 @@ PopoutWrapperBase {
   readonly property var colors: MenusConfig.colorsOf(root.menu)
   // fade | scale | slide; popped out, it appears at once where its edge
   // box was (an instant fade)
-  readonly property string animation: root.popped ? "fade" : root.menu.freeAnimation
+  readonly property string animation: root.popped ? "fade" : root.menu.animation
   // Its window is on Top, under the Overlay layer (SubPopout reads it)
   readonly property bool onOverlayLayer: false
 

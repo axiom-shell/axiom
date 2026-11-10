@@ -12,9 +12,17 @@ import (
 // saved presets, the hot corners, and every Button widget, wherever it
 // sits (matched by type). A config with both sections keeps the old one's
 // menus (a `Menus` before this version is an unknown key).
+// And a menu's two animations became one `animation` (slide | fade |
+// scale, default slide): a free menu's `freeAnimation` is its `animation`
+// (fade when it had none, its old default), and every menu's
+// `freeAnimation` is dropped; an edge or strip menu keeps its `animation`.
+// Only as the old section moves, so a second run changes nothing.
 func v104(cfg *jsonx.Object) []string {
 	var changes []string
 	if cfg.Has("EdgeMenus") {
+		if n := mergeMenuAnimations(object(cfg, "EdgeMenus")); n > 0 {
+			changes = append(changes, fmt.Sprintf("%d menu(s): freeAnimation merged into animation (a free menu's became its animation)", n))
+		}
 		moved := jsonx.NewObject()
 		for _, k := range cfg.Keys() {
 			v, _ := cfg.Get(k)
@@ -96,4 +104,37 @@ func renameMenuAction(v any) bool {
 	}
 	o.Set("action", "menu")
 	return true
+}
+
+// mergeMenuAnimations moves each free menu's `freeAnimation` (or its old
+// default, fade) to its `animation` and drops every menu's
+// `freeAnimation`; how many menus it changed.
+func mergeMenuAnimations(menus *jsonx.Object) int {
+	if menus == nil {
+		return 0
+	}
+	items, _ := menus.Value("items").(*jsonx.Array)
+	if items == nil {
+		return 0
+	}
+	changed := 0
+	for _, item := range items.Items {
+		entry, _ := item.(*jsonx.Object)
+		if entry == nil {
+			continue
+		}
+		animation, ok := entry.Value("freeAnimation").(string)
+		if !ok {
+			animation = "fade"
+		}
+		dropped := entry.Delete("freeAnimation")
+		set := entry.Value("placement") == "free" && entry.Value("animation") != animation
+		if set {
+			entry.Set("animation", animation)
+		}
+		if dropped || set {
+			changed++
+		}
+	}
+	return changed
 }

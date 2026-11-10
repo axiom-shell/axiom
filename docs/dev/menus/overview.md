@@ -14,7 +14,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
 ### An entry's fields
 - `id`, `name`, `monitor`, `edge`, `placement` (`edge` | `strip` | `free`; until config v103 `mode`: `floating` | `integrated` | `submenu`).
 - `screen` (a `ScreenTarget`, the primary monitor by default): where an edge or strip menu lives. A free menu opens there only at `centre` or a `point`; opened by a bar widget it opens on the widget's monitor, and at the cursor on the cursor's (the setting is hidden then); [Free menus](free-menus.md) › Which screen.
-- Free menus: `freeAnchor`, `freeAnimation` and `draggable` ([Free menus](free-menus.md)); their edge, length, offsets and hover opening hide.
+- Free menus: `freeAnchor`, `animation` (with Scale, which only they offer: `x-enumShowIf`) and `draggable` ([Free menus](free-menus.md)); their edge, length, offsets and hover opening hide.
 - `popOutButton` (`edge` menus only) and, with it on, `draggable`: a pop-out toggle beside the pin ([Free menus](free-menus.md) › A popped-out edge menu).
 - `offset` / `gridOffset`: where the modules sit along the edge (see [Hosts](hosts.md)).
 - `length` (`edge` menus only: a `strip` menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {placement: edge}`):
@@ -29,7 +29,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
   - `moduleBorders`, `pinButton` (the padding is `Popouts.padding`), and a free menu's `closeButton` (closes it, unpinned: [Free menus](free-menus.md) › Pinning);
   - `background` (`panel` | `none`; `edge` and `free` menus only, never a strip): `none` draws the menu as tiles (Tiles, below);
   - `backgroundColor` / `borderColor`, read through `MenusConfig.colorsOf` (a tiled menu has no border: the setting hides);
-  - floating: `detached` / `distance` / `animation` (see [Held off an edge](../popouts/held-off-edge.md)), read through `MenusConfig.detachedOf`: a tiled edge menu is always held off its edge, so `detached` hides and `distance` and `animation` show;
+  - floating: `detached` / `distance` / `animation` (Slide or Fade; a Scale left from a free menu fades) (see [Held off an edge](../popouts/held-off-edge.md)), read through `MenusConfig.detachedOf`: a tiled edge menu is always held off its edge, so `detached` hides and `distance` and `animation` show;
   - integrated: `frame`.
 - Opening: `open.onHover`, after the popouts' open delay (`Popouts.timing.openDelay`; a menu's own `open.delay` went in config v103). The hover strip is `ScreenEdge.triggerSize` deep and as long as the menu, worked out from config alone so it's the same open or closed (`MenuSync.triggerLength`, the whole room along the edge for a whole-edge menu).
 - Closing: `closeOnLeave`, `closeDelay`, `closeOnOutsideClick`.
