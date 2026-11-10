@@ -5,7 +5,8 @@ import QtQuick
 // and the side its slide comes in from. Pure: the host passes the screen,
 // what's kept clear at each edge, the box, what opened it and its anchor.
 // Also which spot it takes over its anchor (a drag, a pop-out, the
-// session's), whether a drag is kept, and which host a menu shows in.
+// session's), whether a drag is kept, which host a menu shows in, and
+// on which screen (openedOn, shownOn).
 QtObject {
   id: root
 
