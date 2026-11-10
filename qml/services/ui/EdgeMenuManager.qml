@@ -142,10 +142,14 @@ Singleton {
     }));
   }
 
-  // Back to its freeAnchor (the menu's Reset position, IPC resetPosition)
+  // Back to its freeAnchor (the menu's Reset position, IPC resetPosition):
+  // its session spot forgotten, and an open one dragged since it opened
+  // goes back too (positionReset)
+  signal positionReset(string id)
   function resetPosition(id) {
     if (root.positions[id] !== undefined)
       root._savePositions(Utils.withEntry(root.positions, id, undefined));
+    root.positionReset(id);
   }
 
   function _savePositions(positions) {

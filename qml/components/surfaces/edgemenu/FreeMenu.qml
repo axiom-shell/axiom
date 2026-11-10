@@ -133,6 +133,15 @@ PopoutWrapperBase {
     "draggable": root.menu.draggable
   })
   readonly property bool canDrag: FreeMenuPlace.canDrag(root.menu, root.popped)
+  // Reset (its header's menu, IPC resetPosition): back to its anchor, or
+  // its widget, even dragged since it opened
+  Connections {
+    target: EdgeMenuManager
+    function onPositionReset(id) {
+      if (id === root.menuId)
+        root._dragged = null;
+    }
+  }
 
   // Where its box goes on the screen, and the edge it slides in from
   readonly property var place: FreeMenuPlace.place({
@@ -317,10 +326,8 @@ PopoutWrapperBase {
       id: headerMenu
       parent: boxArea
       onTriggered: id => {
-        if (id !== "reset")
-          return;
-        EdgeMenuManager.resetPosition(root.menuId);
-        root._dragged = null;
+        if (id === "reset")
+          EdgeMenuManager.resetPosition(root.menuId);
       }
     }
 
