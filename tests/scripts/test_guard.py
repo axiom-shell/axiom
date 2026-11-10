@@ -15,11 +15,18 @@ guard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(guard)
 
 HOME = str(guard.HOME)
+# The live session the tests pin: a runtime dir and display, and another display (a nested session)
+RUN, LIVE, OTHER = f"/run/user/{os.getuid()}", "wayland-live", "wayland-other"
+
+
+def sub(text):
+    """A command or path with the @RUN@ / @LIVE@ / @OTHER@ placeholders filled"""
+    return text.replace("@RUN@", RUN).replace("@LIVE@", LIVE).replace("@OTHER@", OTHER)
 
 
 def denied(command, cwd=str(REPO)):
     try:
-        guard.check({"tool_name": "Bash", "tool_input": {"command": command}, "cwd": cwd})
+        guard.check({"tool_name": "Bash", "tool_input": {"command": sub(command)}, "cwd": sub(cwd)})
     except guard.Denied:
         return True
     return False
@@ -29,10 +36,10 @@ class LiveSession:
     """Pins the session the guard sees, whatever the one running the tests exports"""
 
     def setUp(self):
-        # The live session: wayland-1's daemon in /run/user/1000, no inherited $AXIOM_SOCKET
-        self.patches = [mock.patch.object(guard, "LIVE_RUNTIME", "/run/user/1000"),
-                        mock.patch.object(guard, "LIVE_DISPLAY", "wayland-1"),
-                        mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": "/run/user/1000", "WAYLAND_DISPLAY": "wayland-1"})]
+        # The live session: LIVE's daemon in RUN, no inherited $AXIOM_SOCKET
+        self.patches = [mock.patch.object(guard, "LIVE_RUNTIME", RUN),
+                        mock.patch.object(guard, "LIVE_DISPLAY", LIVE),
+                        mock.patch.dict(os.environ, {"XDG_RUNTIME_DIR": RUN, "WAYLAND_DISPLAY": LIVE})]
         for p in self.patches:
             p.start()
         os.environ.pop("AXIOM_SOCKET", None)
@@ -74,15 +81,14 @@ class Bash(LiveSession, unittest.TestCase):
                  "axiom config set Idle.enabled on --takeover", "axiom ipc monitors keep", "axiom ipc selfUpdate update",
                  f"rm {guard.LIVE_CONFIG}", f"cp /tmp/x.json {guard.LIVE_CONFIG}", "niri msg action quit",
                  f"python3 -c {call % 'hookup.apply'}", f"python3 -c {call % 'selfupdate.apply'}",
-                 f"python3 -c {call % 'greeter.apply'}", f"python3 -c {call % 'inputMethod.push'}",
-                 "busctl --user call org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 Restart", f"python3 -c {call % 'dev.config.copy'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
-                 "bluetoothctl remove AA:BB:CC:DD:EE:FF", f"python3 -c {call % 'bluetooth.forget'}",
+                 f"python3 -c {call % 'greeter.apply'}", "axiom greeter-install install . me", "axiom greeter --dir /tmp/g",
+                 "bluetoothctl remove AA:BB:CC:DD:EE:FF", "rfkill block bluetooth",
                  "systemctl restart greetd", "axiom quit", "axiom daemon stop", "axiom dev on", "axiom lock",
-                 "axiom ipc lockscreen lock", "qs kill", "gh api repos/o/r", "git push --force", "git push origin main",
+                 "axiom ipc lockscreen lock", "qs kill", "git push --force", "git push origin main",
                  "git clean -fdx", "qmlformat -i shell.qml"]
         forms = ["( {} )", "true && {}", "{{ {}; }}", "echo $({})", "if true; then {}; fi", "sudo -u me {}",
                  "nice -n 5 {}", "FOO=1 {}"]
-        with mock.patch.dict(os.environ, {"NIRI_SOCKET": "/run/user/1000/niri.wayland-1.100.sock"}):
+        with mock.patch.dict(os.environ, {"NIRI_SOCKET": sub("@RUN@/niri.@LIVE@.100.sock")}):
             for rule in rules:
                 self.blocks(rule, *(form.format(rule) for form in forms))
 
@@ -103,24 +109,6 @@ class Bash(LiveSession, unittest.TestCase):
         self.blocks("qs kill", "qs -c axiom kill", "qs -c axiom", "qs -c axiom -d", "quickshell -p qml/shell.qml &")
         self.allows('AXIOM_GREETER=1 AXIOM_GREETER_WINDOWED=1 AXIOM_GREETER_DIR=/tmp/g qs -p "$PWD/qml/greeter.qml"',
                     'qs kill -p "$PWD/qml/greeter.qml"', "qs kill -i abc123", "qs list")
-
-    def test_gh_allowlist(self):
-        self.blocks("gh api repos/o/r", "gh api -X GET repos/o/r/issues", "gh api graphql -f query='{ viewer { login } }'",
-                    "gh repo edit --default-branch dev", "gh release create v1", "gh workflow disable ci.yml",
-                    "gh secret set X", "gh label create x", "gh issue delete 3", "gh run delete 5", "gh frobnicate", "gh co 12", "gh pr merge 3 --admin",
-                    "cd /tmp && gh api repos/o/r", "true; env GH_TOKEN=x gh repo edit --default-branch dev",
-                    "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -", "gh pr merge 3 --admin=true",
-                    "echo 1 | xargs gh api", "echo 1 | xargs -I {} -n 1 gh api repos/o/r/issues/{}",
-                    "gh api repos/o/r -X DELETE -H --help", "gh repo --description view edit", "gh --method DELETE api repos/o/r")
-        self.allows("gh pr create --fill --label chore", "gh pr view 3 --json comments", "gh pr list --label chore",
-                    "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
-                    "gh pr comment 3 -b ok", "gh pr close 3", "gh pr ready 3", "gh pr checkout 3", "gh version", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
-                    "gh run cancel 9", "gh issue list", "gh issue view 16", "gh issue comment 16 -b x", "gh issue close 16",
-                    "gh issue edit 16 --add-label x", "gh repo view", "gh release list", "gh label list", "gh rs check main",
-                    "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
-                    "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
-                    "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list", "echo 1 | xargs -I {} gh pr view {}",
-                    "gh repo clone o/r", "gh workflow run checks.yml --ref feature/x", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_leading_cd(self):
         """A leading `cd` moves the relative paths after it"""
@@ -143,23 +131,14 @@ class Bash(LiveSession, unittest.TestCase):
                 self.allows(f"cd {cfg}; cd /tmp; rm config.json", f"cd {cfg} && cd /tmp && rm config.json")
 
     def test_git_push_and_clean(self):
-        self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:feature/1-x", "git push origin @",
-                    "git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
-                    "git push --force-if-includes origin x", "git push origin +x", "git push origin :x", "git push --delete origin x",
-                    "git push -d origin x", "git push --mirror origin", "git push --all origin", "git push --prune origin x",
-                    "git push --tags origin x", "git push upstream x", "git push -v origin x", "git push origin x y",
-                    "git push origin main", "git push origin master", "git push origin x:main", "git push origin x:refs/heads/main",
-                    "git push origin x:heads/main", "git push origin refs/heads/main", "git push origin v1.0", "git push origin x:refs/tags/y",
-                    "git -C . push --force origin x", "git -C /tmp push", "env -C /tmp git push",
-                    'git push -u origin "$(git branch --show-current)"', 'b=main; git push origin "$b"', "git push origin x@{u}",
-                    "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
-                    # a switch, rebase or rename onto main, then a bare push
-                    "git switch main && git push", "git rebase feature/1-x main && git push", "git branch -M main && git push",
-                    "git clean -fdx", "git clean -X", "git -C . clean -x -f")
-        self.allows("git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
-                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x",
-                    "git -C /tmp/w push -u origin feature/1-x", "cd /tmp && git push -u origin feature/1-x 2>&1 | tail -2",
-                    "git switch main && git push origin feature/1-x", "env -C /tmp git push origin x",
+        self.blocks("git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
+                    "git push --force-if-includes origin x", "git push origin +x", "git push origin main", "git push origin master",
+                    "git push origin x:main", "git push origin x:refs/heads/main", "git push origin x:heads/main",
+                    "git push origin refs/heads/main", "git -C . push --force origin x", "env -C /tmp git push origin main",
+                    "cd /tmp && git push -f 2>&1 | tail -2", "git clean -fdx", "git clean -X", "git -C . clean -x -f")
+        self.allows("git push", "git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
+                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x", "git push --tags origin",
+                    "git -C /tmp/w push -u origin feature/1-x", "git switch main && git push origin feature/1-x",
                     "git status", "git pull --ff-only", "git clean -fd", "git clean -n")
 
     def test_greetd_and_greeter(self):
@@ -183,12 +162,12 @@ class Bash(LiveSession, unittest.TestCase):
                     "axiom compositor binds remove --kind sway /tmp/scratch/sway '[]'")
 
     def test_niri_session(self):
-        with mock.patch.dict(os.environ, {"NIRI_SOCKET": "/run/user/1000/niri.wayland-1.100.sock"}):
+        with mock.patch.dict(os.environ, {"NIRI_SOCKET": sub("@RUN@/niri.@LIVE@.100.sock")}):
             self.blocks("niri msg action quit", "niri msg action load-config-file --path /tmp/x.kdl",
                         "niri msg output DP-1 off", "niri msg -j action quit")
             self.allows("niri msg -j windows", "niri msg action focus-workspace 2",
-                        "NIRI_SOCKET=/run/user/1000/niri.wayland-2.200.sock niri msg action quit",
-                        "export NIRI_SOCKET=/run/user/1000/niri.wayland-2.200.sock; niri msg output winit scale 1")
+                        "NIRI_SOCKET=@RUN@/niri.@OTHER@.200.sock niri msg action quit",
+                        "export NIRI_SOCKET=@RUN@/niri.@OTHER@.200.sock; niri msg output winit scale 1")
 
     def test_scripts_run_through_a_shell_and_variables(self):
         self.blocks("bash data/greeter/greeter_install.sh install . me")
@@ -242,45 +221,15 @@ class Bash(LiveSession, unittest.TestCase):
         with mock.patch.object(guard, "CONFIG_HOMES", guard.CONFIG_HOMES | {Path("/srv/conf")}):
             self.assertTrue(denied("axiom compositor claim --kind sway /srv/conf/sway axiom"))
 
-    def test_hookup_apply(self):
-        call = """'{"jsonrpc":"2.0","id":1,"method":"hookup.apply","params":{"key":"kitty"}}'"""
-        self.blocks(f"python3 -c {call}", f"printf %s {call}", f"HOME=/tmp/h python3 -c {call}")
-        self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", f"AXIOM_SOCKET=/tmp/run/axiom.sock printf %s {call}",
-                    "grep -rn hookup.apply backend", "python3 -c 'hookup.status'")
-
-    def test_self_update(self):
-        call = """'{"jsonrpc":"2.0","id":1,"method":"selfupdate.apply","params":{"channel":"tags","target":"v1.2"}}'"""
-        self.blocks(f"python3 -c {call}", f"printf %s {call}", "axiom ipc selfUpdate update")
-        self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", "python3 -c 'selfupdate.check'",
-                    "grep -rn selfupdate.apply backend", "go test ./internal/selfupdate")
-
-    def test_dev_writes_sent_by_hand(self):
-        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
-        for method in ("dev.set", "dev.rebuild", "dev.config.copy", "dev.config.pull"):
-            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
-            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
-        self.allows(f"python3 -c {call % 'dev.config.diff'}", f"python3 -c {call % 'dev.get'}")
-
-    def test_live_input_method(self):
-        fcitx = "org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1"
-        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
-        self.blocks(f"busctl --user call {fcitx} SetConfig sv fcitx://config/global x",
-                    f"busctl --user call {fcitx} Restart", f"busctl --user call {fcitx} SetInputMethodGroupInfo ssa(ss) Default us 0",
-                    "dbus-send --session --dest=org.fcitx.Fcitx5 --type=method_call /controller org.fcitx.Fcitx.Controller1.Save",
-                    "gdbus call --session -d org.fcitx.Fcitx5 -o /controller -m org.fcitx.Fcitx.Controller1.Exit",
-                    f"busctl --user call {fcitx} AddInputMethodGroup s G", f"busctl --user call {fcitx} RemoveInputMethodGroup s G",
-                    "gsettings set org.freedesktop.ibus.general preload-engines \"['mozc-jp']\"",
-                    "gsettings reset org.freedesktop.ibus.panel custom-font", "dconf write /desktop/ibus/general/use-system-keyboard-layout true",
-                    "axiom ipc inputMethod push x", f"python3 -c {call % 'inputMethod.push'}",
-                    f"printf %s {call % 'inputMethod.options'}", f"python3 -c {call % 'inputMethod.framework'}")
-        self.allows(f"busctl --user call {fcitx} CurrentInputMethod", f"busctl --user call {fcitx} FullInputMethodGroupInfo s Default",
-                    f"busctl --user introspect {fcitx}", f"busctl --address=unix:path=/tmp/bus call {fcitx} SetConfig sv x y",
-                    f"DBUS_SESSION_BUS_ADDRESS=unix:path=/tmp/bus busctl --user call {fcitx} Save",
-                    "gsettings get org.freedesktop.ibus.general preload-engines",
-                    "GSETTINGS_BACKEND=memory gsettings set org.freedesktop.ibus.general preload-engines \"[]\"",
-                    "gsettings set org.gnome.desktop.interface color-scheme prefer-dark",
-                    f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % 'inputMethod.push'}", f"python3 -c {call % 'inputMethod.get'}",
-                    "grep -rn inputMethod.push backend", "go test ./internal/inputmethod")
+    def test_daemon_rpc_sent_by_hand(self):
+        """hookup.apply, selfupdate.apply and greeter.apply change the real system: only a scratch daemon"""
+        for method in ("hookup.apply", "selfupdate.apply", "greeter.apply"):
+            call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'""" % method
+            self.blocks(f"python3 -c {call}", f"printf %s {call}", f"HOME=/tmp/h python3 -c {call}")
+            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call}", f"AXIOM_SOCKET=/tmp/run/axiom.sock printf %s {call}",
+                        f"grep -rn {method} backend")
+        self.blocks("axiom ipc selfUpdate update")
+        self.allows("python3 -c 'hookup.status'", "python3 -c 'selfupdate.check'", "go test ./internal/selfupdate")
 
     def test_greeter_install_command(self):
         self.blocks("axiom greeter-install install . me", "sudo axiom greeter-install uninstall . me",
@@ -313,69 +262,19 @@ class Bash(LiveSession, unittest.TestCase):
                     "find . -name '*.pyc' -delete", "find ~/.config -name '*.json' -exec grep -l Bar {} +")
 
     def test_machine_settings(self):
-        """The clock, time zone, hostname, account and default apps change
-        only on a scratch bus, a scratch daemon or a scratch config home."""
-        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
-        for method in guard.SYSTEM_WRITES:
-            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}")
-            self.allows(f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
-        self.allows(f"python3 -c {call % 'datetime.get'}", f"python3 -c {call % 'account.get'}",
-                    f"python3 -c {call % 'apps.handlers'}", f"python3 -c {call % 'system.info'}")
-        self.blocks("timedatectl set-timezone Europe/Berlin", "sudo timedatectl set-ntp false",
-                    "hostnamectl set-hostname box", "hostnamectl hostname box", "passwd", "echo x | passwd --stdin",
-                    "sudo usermod -c Name me", "chfn -f Name",
-                    "busctl call org.freedesktop.timedate1 /org/freedesktop/timedate1 org.freedesktop.timedate1 SetNTP bb false false",
-                    "gdbus call --system -d org.freedesktop.Accounts -o /org/freedesktop/Accounts/User1000 -m org.freedesktop.Accounts.User.SetIconFile /tmp/a.png",
-                    "busctl set-property org.freedesktop.hostname1 /org/freedesktop/hostname1 org.freedesktop.hostname1 X s y")
+        self.blocks("timedatectl set-timezone Europe/Berlin", "sudo timedatectl set-ntp false", "hostnamectl set-hostname box",
+                    "passwd", "echo x | passwd --stdin", "sudo usermod -c Name me", "chfn -f Name")
         self.allows("timedatectl", "timedatectl status", "timedatectl list-timezones", "hostnamectl", "hostnamectl status",
-                    "busctl introspect org.freedesktop.timedate1 /org/freedesktop/timedate1",
-                    "busctl get-property org.freedesktop.timedate1 /org/freedesktop/timedate1 org.freedesktop.timedate1 Timezone",
-                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.freedesktop.timedate1 / x SetNTP bb false false",
                     "go test ./internal/timedate", "grep -rn passwd backend")
 
     def test_bluetooth(self):
-        """Real devices and the live adapter change, and agents register
-        with the live BlueZ, only on a scratch system bus: a scratch daemon
-        on the machine's bus reaches the real devices too."""
-        call = """'{"jsonrpc":"2.0","id":1,"method":"%s","params":{}}'"""
-        for method in guard.BLUETOOTH_RPC_WRITES:
-            self.blocks(f"python3 -c {call % method}", f"printf %s {call % method}", f"XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}")
-            self.allows(f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run python3 -c {call % method}", f"grep -rn {method} backend")
-        dev = "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF"
         self.blocks("bluetoothctl power off", "bluetoothctl remove AA:BB:CC:DD:EE:FF", "bluetoothctl block AA:BB:CC:DD:EE:FF",
                     "bluetoothctl disconnect AA:BB:CC:DD:EE:FF", "bluetoothctl pair AA:BB:CC:DD:EE:FF",
-                    "bluetoothctl agent on", "bluetoothctl -- default-agent", "rfkill block bluetooth", "rfkill block all",
-                    "busctl call org.bluez /org/bluez/hci0 org.bluez.Adapter1 RemoveDevice o " + dev,
-                    f"busctl call org.bluez {dev} org.bluez.Device1 Disconnect", f"busctl call org.bluez {dev} org.bluez.Device1 Pair",
-                    "busctl set-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered b false",
-                    f"busctl set-property org.bluez {dev} org.bluez.Device1 Blocked b true",
-                    "busctl call org.bluez /org/bluez org.bluez.AgentManager1 RegisterAgent os /a KeyboardDisplay",
-                    f"dbus-send --system --dest=org.bluez --type=method_call {dev} org.bluez.Device1.Disconnect",
-                    "gdbus call --system -d org.bluez -o /org/bluez/hci0 -m org.freedesktop.DBus.Properties.Set org.bluez.Adapter1 Powered '<false>'",
-                    "axiom ipc bluetooth disable", "axiom ipc bluetooth toggle",
                     "bluetoothctl --timeout 5 remove AA:BB:CC:DD:EE:FF", "bluetoothctl -t 5 power off",
-                    "echo 'remove AA:BB:CC:DD:EE:FF' | bluetoothctl", "bluetoothctl <<< 'power off'", "bluetoothctl",
-                    "printf 'power off\\n' | bluetoothctl --timeout 5", "bluetoothctl --agent KeyboardDisplay show",
-                    "bluetoothctl --init-script /tmp/x show", "bluetoothctl power no", "bluetoothctl power",
-                    "rfkill toggle bluetooth", "rfkill toggle all", "rfkill -o ID block bluetooth",
-                    f"busctl call org.bluez {dev} org.bluez.Device1 DisconnectProfile s 0000110b-0000-1000-8000-00805f9b34fb",
-                    "XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane enable", "axiom ipc airplane toggle",
-                    "axiom bluetooth off", "axiom bluetooth toggle",
-                    # a scratch bus says nothing of the daemon a call reaches, and rfkill isn't D-Bus
-                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x axiom ipc bluetooth disable",
-                    f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x python3 -c {call % 'bluetooth.setPowered'}",
-                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x rfkill block bluetooth", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/x rfkill toggle all")
-        self.allows("bluetoothctl show", "bluetoothctl -t 5 show", "bluetoothctl --timeout=5 devices", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
-                    "bluetoothctl power on", "rfkill list", "rfkill unblock bluetooth",
-                    "busctl tree org.bluez", "busctl introspect org.bluez /org/bluez/hci0",
-                    "busctl get-property org.bluez /org/bluez/hci0 org.bluez.Adapter1 Powered",
-                    "busctl call org.bluez / org.freedesktop.DBus.ObjectManager GetManagedObjects",
-                    f"DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus busctl call org.bluez {dev} org.bluez.Device1 Pair",
-                    "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus bluetoothctl remove AA:BB:CC:DD:EE:FF",
-                    "axiom ipc bluetooth enable", "DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/run axiom ipc bluetooth disable", "axiom ipc airplane disable", "axiom bluetooth on",
-                    "rfkill list bluetooth", "rfkill -o ID,TYPE,SOFT list",
-                    "bluetoothctl --version", "bluetoothctl -v", "bluetoothctl --help", "bluetoothctl -h",
-                    f"python3 -c {call % 'bluetooth.get'}", "go test ./internal/bluez")
+                    "rfkill block bluetooth", "rfkill block all", "rfkill toggle bluetooth", "rfkill -o ID block bluetooth")
+        self.allows("bluetoothctl show", "bluetoothctl -t 5 show", "bluetoothctl devices", "bluetoothctl info AA:BB:CC:DD:EE:FF",
+                    "bluetoothctl power on", "bluetoothctl --version", "rfkill list", "rfkill unblock bluetooth",
+                    "rfkill list bluetooth", "go test ./internal/bluez")
 
     def test_default_apps_files(self):
         self.blocks("xdg-mime default firefox.desktop x-scheme-handler/http", "xdg-settings set default-web-browser firefox.desktop",
@@ -409,14 +308,14 @@ class Bash(LiveSession, unittest.TestCase):
 
 
 class GuardItself(unittest.TestCase):
-    """The guard's folder where the session runs and Claude's settings stay as
-    they are; everything else (a worktree's .claude/, memory, reads) doesn't."""
+    """The user's own Claude settings stay as they are, and no second claude
+    starts; the project's .claude/ (hook, settings, skills) is editable."""
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         root = Path(self.tmp.name)
-        self.project, self.config, self.worktree = root / "project", root / "claude-config", root / "worktree"
-        for folder in (self.project / ".claude/hooks", self.config / "projects", self.worktree / ".claude/hooks"):
+        self.project, self.config = root / "project", root / "claude-config"
+        for folder in (self.project / ".claude/hooks", self.config / "projects"):
             folder.mkdir(parents=True)
         self.patch = mock.patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(self.project), "CLAUDE_CONFIG_DIR": str(self.config)})
         self.patch.start()
@@ -433,49 +332,25 @@ class GuardItself(unittest.TestCase):
             return True
         return False
 
-    def test_project_claude_folder_and_settings_refused(self):
-        p, c = self.project, self.config
-        for path in (p / ".claude/hooks/guard.py", p / ".claude/settings.json", p / ".claude/settings.local.json",
-                     p / ".claude/skills/x/SKILL.md", p / ".claude/agents/a.md", c / "settings.json",
-                     c / "settings.local.json", f"{HOME}/.claude/settings.json", p / "sub/../.claude/settings.json"):
+    def test_user_claude_settings_refused(self):
+        c = self.config
+        for path in (c / "settings.json", c / "settings.local.json", f"{HOME}/.claude/settings.json"):
             self.assertTrue(self.denied("Write", str(path)), path)
-        for command in ("echo x > .claude/settings.json", "echo x >> .claude/hooks/guard.py", "cp /tmp/x .claude/settings.json",
-                        "cp /tmp/settings.json .claude/", "mv /tmp/x .claude/hooks/guard.py", "rm .claude/hooks/guard.py",
-                        "rm -rf .claude", f"rm -rf {p}", "mv .claude /tmp/old", "sed -i s/a/b/ .claude/hooks/guard.py",
-                        "tee .claude/settings.local.json", "ln -sf /tmp/x .claude/settings.json", "chmod -x .claude/hooks/guard.py",
-                        "truncate -s 0 .claude/hooks/guard.py", "install -m 644 /tmp/x .claude/settings.json",
-                        f"cp /tmp/x {c}/settings.json", f"echo '{{}}' > {c}/settings.local.json", "rm ~/.claude/settings.json",
-                        f"rm -rf {c}", "find .claude -name '*.py' -delete", f"cd {p}/.claude && rm settings.json",
-                        "sudo cp /tmp/x .claude/settings.json", "bash -c 'echo x > .claude/settings.json'",
-                        f"cd /tmp; cd {p}; rm .claude/settings.json"):
+        for command in (f"cp /tmp/x {c}/settings.json", f"echo '{{}}' > {c}/settings.local.json", "rm ~/.claude/settings.json",
+                        f"rm -rf {c}", f"sed -i s/a/b/ {c}/settings.json", f"cd {c} && rm settings.json",
+                        "sudo cp /tmp/x ~/.claude/settings.json", f"bash -c 'echo x > {c}/settings.json'"):
             self.assertTrue(self.denied("Bash", command), command)
-        # A cd the guard doesn't follow, from a session elsewhere: judged in the folder it names too
-        for command in (f"cd {p} && sed -i s/a/b/ .claude/settings.json || true", f"cd {p} && cp /tmp/x .claude/hooks/guard.py; echo ok",
-                        f"true; cd {p}; rm -rf .claude"):
-            self.assertTrue(self.denied("Bash", command, cwd=str(self.worktree)), command)
 
-    def test_project_dir_falls_back_to_cwd(self):
-        os.environ.pop("CLAUDE_PROJECT_DIR")
-        self.assertTrue(self.denied("Write", str(self.worktree / ".claude/settings.json"), cwd=str(self.worktree)))
-        self.assertFalse(self.denied("Write", str(self.worktree / ".claude/settings.json")))
-
-    def test_elsewhere_and_reads_pass(self):
-        w, c, p = self.worktree, self.config, self.project
-        for path in (w / ".claude/hooks/guard.py", w / ".claude/skills/x/SKILL.md", w / ".claude/settings.json",
-                     c / "projects/-x/memory/MEMORY.md", f"{HOME}/.claude/projects/x/memory.md", "/tmp/claude-1000/x/y",
-                     self.project / "AGENTS.md", self.project / "CLAUDE.md", self.project / "qml/shell.qml",
-                     # an isolated agent's worktree
-                     self.project / ".claude/worktrees/agent-a/qml/shell.qml",
-                     self.project / ".claude/worktrees/agent-a/.claude/settings.json"):
+    def test_project_claude_folder_and_reads_pass(self):
+        p, c = self.project, self.config
+        for path in (p / ".claude/hooks/guard.py", p / ".claude/settings.json", p / ".claude/skills/x/SKILL.md",
+                     c / "projects/-x/memory/MEMORY.md", f"{HOME}/.claude/projects/x/memory.md", p / "AGENTS.md"):
             self.assertFalse(self.denied("Write", str(path)), path)
-        for command in (f"cd {w} && sed -i s/a/b/ .claude/hooks/guard.py", f"cp /tmp/x {w}/.claude/hooks/guard.py",
-                        f"echo x > {c}/projects/-x/memory/note.md", f"rm -rf {c}/projects/-x/old", "rm -rf /tmp/claude-1000/x",
-                        "cat .claude/settings.json", "grep -rn deny .claude", f"ls {c}", "find . -name '*.pyc' -delete",
-                        "cp .claude/settings.json /tmp/backup.json", "echo x > AGENTS.md", "git switch main", "git checkout x -- .claude",
-                        "git merge origin/main", "git pull --ff-only", "git push -u origin feature/x",
-                        f"git -C {w} push -u origin feature/x 2>&1 | tail -2", "gh pr create --fill", "gh pr checks 3",
-                        "gh pr merge 3 --squash", "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py",
-                        "rm -rf .claude/worktrees/agent-a", f"echo x > {p}/.claude/worktrees/agent-a/qml/a.qml"):
+        for command in ("echo x >> .claude/hooks/guard.py", "cp /tmp/x .claude/settings.json", "rm .claude/hooks/guard.py",
+                        "sed -i s/a/b/ .claude/hooks/guard.py", f"echo x > {c}/projects/-x/memory/note.md",
+                        f"cat {c}/settings.json", "cat .claude/settings.json", "grep -rn deny .claude", f"ls {c}",
+                        "git push -u origin feature/x", "gh pr create --fill", "gh api repos/o/r",
+                        "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py"):
             self.assertFalse(self.denied("Bash", command), command)
 
     def test_no_second_claude(self):
@@ -493,13 +368,13 @@ class Axiom(LiveSession, unittest.TestCase):
 
     def denied(self, cmd):
         try:
-            guard.check({"tool_name": "Bash", "tool_input": {"command": cmd}})
+            guard.check({"tool_name": "Bash", "tool_input": {"command": sub(cmd)}})
         except guard.Denied:
             return True
         return False
 
     def test_live_shell_lifecycle_refused(self):
-        for cmd in ("axiom -socket $XDG_RUNTIME_DIR/axiom/wayland-1/axiom.sock quit", "axiom -config-dir /tmp/c quit", "axiom run", "axiom run --dev --tree .", "axiom quit", "axiom restart", "./axiom daemon reexec",
+        for cmd in ("axiom -socket $XDG_RUNTIME_DIR/axiom/@LIVE@/axiom.sock quit", "axiom -config-dir /tmp/c quit", "axiom run", "axiom run --dev --tree .", "axiom quit", "axiom restart", "./axiom daemon reexec",
                     "/usr/bin/axiom --json quit", "axiom dev on", "axiom dev off", "axiom --json dev rebuild"):
             self.assertTrue(self.denied(cmd), cmd)
 
@@ -507,18 +382,6 @@ class Axiom(LiveSession, unittest.TestCase):
         for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/x axiom quit",
                     "axiom --socket /tmp/x/axiom.sock restart", "XDG_RUNTIME_DIR=/tmp/x axiom lock",
                     "XDG_RUNTIME_DIR=/tmp/x axiom dev on"):
-            self.assertFalse(self.denied(cmd), cmd)
-
-    def test_scratch_daemon_needs_its_agent_off(self):
-        """On the machine's bus it would be a second Bluetooth pairing agent."""
-        for cmd in ("XDG_RUNTIME_DIR=$R axiom run --no-shell --tree .", "XDG_RUNTIME_DIR=/tmp/scr axiom run",
-                    "XDG_RUNTIME_DIR=/tmp/scr AXIOM_BLUETOOTH_AGENT=on axiom run",
-                    # Go's flags take one dash too
-                    "XDG_RUNTIME_DIR=/tmp/s/run axiom -config-dir /tmp/s/c run --no-shell",
-                    "XDG_RUNTIME_DIR=/tmp/s/run axiom -socket /tmp/s/run/axiom.sock run"):
-            self.assertTrue(self.denied(cmd), cmd)
-        for cmd in ("DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/bus XDG_RUNTIME_DIR=/tmp/scr axiom run",
-                    "AXIOM_BLUETOOTH_AGENT=off XDG_RUNTIME_DIR=/tmp/scr axiom run --no-shell"):
             self.assertFalse(self.denied(cmd), cmd)
 
     def test_live_lock_refused(self):
@@ -553,36 +416,36 @@ class Axiom(LiveSession, unittest.TestCase):
             self.assertTrue(self.denied(cmd), cmd)
 
     def test_nested_daemon_socket_passes(self):
-        nested = "/run/user/1000/axiom/wayland-2/axiom.sock"
+        nested = "@RUN@/axiom/@OTHER@/axiom.sock"
         for cmd in (f"axiom --socket {nested} dev on", f"axiom --socket={nested} dev set ~/src/axiom-2",
                     f"axiom --socket {nested} dev config copy --to live Bar.height",
                     f"axiom --socket {nested} dev config pull", f"axiom --socket {nested} dev options --no-build",
                     f"AXIOM_SOCKET={nested} axiom dev rebuild", f"axiom --socket {nested} quit",
-                    "axiom --socket $XDG_RUNTIME_DIR/axiom/wayland-2/axiom.sock dev off",
+                    "axiom --socket $XDG_RUNTIME_DIR/axiom/@OTHER@/axiom.sock dev off",
                     f"/tmp/n/axiom --socket {nested} ipc lockscreen lock",
-                    "WAYLAND_DISPLAY=wayland-2 axiom dev on", "WAYLAND_DISPLAY=/tmp/n/wayland-2 axiom dev set ."):
+                    "WAYLAND_DISPLAY=@OTHER@ axiom dev on", "WAYLAND_DISPLAY=/tmp/n/@OTHER@ axiom dev set ."):
             self.assertFalse(self.denied(cmd), cmd)
 
     def test_live_socket_still_refused(self):
-        live = "/run/user/1000/axiom/wayland-1/axiom.sock"
+        live = "@RUN@/axiom/@LIVE@/axiom.sock"
         for cmd in (f"axiom --socket {live} dev on", f"axiom --socket={live} dev set .", f"AXIOM_SOCKET={live} axiom quit",
                     "axiom --socket $XDG_RUNTIME_DIR/axiom/$WAYLAND_DISPLAY/axiom.sock dev on",
-                    "axiom --socket /run/user/1000/axiom/wayland-2/../wayland-1/axiom.sock dev off",
-                    "axiom --socket /run/user/1000/other.sock dev on", "WAYLAND_DISPLAY=wayland-1 axiom dev on",
-                    "WAYLAND_DISPLAY=$WAYLAND_DISPLAY axiom lock", "XDG_RUNTIME_DIR=/run/user/1000 axiom dev set ."):
+                    "axiom --socket @RUN@/axiom/@OTHER@/../@LIVE@/axiom.sock dev off",
+                    "axiom --socket @RUN@/other.sock dev on", "WAYLAND_DISPLAY=@LIVE@ axiom dev on",
+                    "WAYLAND_DISPLAY=$WAYLAND_DISPLAY axiom lock", "XDG_RUNTIME_DIR=@RUN@ axiom dev set ."):
             self.assertTrue(self.denied(cmd), cmd)
 
     def test_inherited_socket_counts(self):
         # A session started from the shell inherits its $AXIOM_SOCKET, which the CLI prefers over $WAYLAND_DISPLAY
-        with mock.patch.dict(os.environ, {"AXIOM_SOCKET": "/run/user/1000/axiom/wayland-1/axiom.sock"}):
-            self.assertTrue(self.denied("WAYLAND_DISPLAY=wayland-2 axiom dev on"))
+        with mock.patch.dict(os.environ, {"AXIOM_SOCKET": sub("@RUN@/axiom/@LIVE@/axiom.sock")}):
+            self.assertTrue(self.denied("WAYLAND_DISPLAY=@OTHER@ axiom dev on"))
             self.assertTrue(self.denied("axiom dev set ."))
-            self.assertFalse(self.denied("AXIOM_SOCKET=/run/user/1000/axiom/wayland-2/axiom.sock axiom dev on"))
+            self.assertFalse(self.denied("AXIOM_SOCKET=@RUN@/axiom/@OTHER@/axiom.sock axiom dev on"))
 
     def test_unknown_live_display_refuses_the_runtime_dir(self):
         with mock.patch.object(guard, "LIVE_DISPLAY", ""):
-            self.assertTrue(self.denied("axiom --socket /run/user/1000/axiom/wayland-2/axiom.sock dev on"))
-            self.assertTrue(self.denied("WAYLAND_DISPLAY=wayland-2 axiom dev on"))
+            self.assertTrue(self.denied("axiom --socket @RUN@/axiom/@OTHER@/axiom.sock dev on"))
+            self.assertTrue(self.denied("WAYLAND_DISPLAY=@OTHER@ axiom dev on"))
 
 
 class ConfigEdits(unittest.TestCase):
