@@ -106,7 +106,7 @@ FoldingCard {
   // Searching a moment after the typing stops
   Timer {
     id: debounce
-    interval: 350 // behaviour timing: the search waits for a pause in typing
+    interval: 350 // the search waits for a pause in typing
     onTriggered: root.search()
   }
 

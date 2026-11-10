@@ -9,7 +9,6 @@ import qs.components.methods
 import qs.components.forms
 import qs.components.content.base
 
-// i18n: keys from the schema (titles, descriptions, module labels)
 // Layouts editor, below the canvas: the selected module's options, with
 // its size beside them; a group selected together, its count and Remove;
 // with nothing selected, the library of modules to add.

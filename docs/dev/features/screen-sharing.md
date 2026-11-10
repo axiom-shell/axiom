@@ -36,4 +36,4 @@ axiom's picker for what an app shares (a call, a stream), on every compositor, i
 ### Testing
 - Go: the broker (`screenshare_test.go`), the xdph and xdpw formats (`backends_test.go`), the niri portal on `dbustest` with a fake niri and a fake xdg-desktop-portal-gnome (`portal_test.go`), the command and its fallback (`cli/screensharepick_test.go`), `portal-wait`.
 - The picker: `axiom ipc screenshare test` (live is fine: nothing is shared), or in a nested shell (`scripts/dev/nested.sh`) end to end: with `ScreenSharing.enabled` on in its scratch config, run its `axiom` with `AXIOM_SOCKET=<nested socket>` and `XDPH_OUTPUT_SHARING_LIST='<len>:<name>:0:0:<w>:<h>;'` and answer with `axiom --socket <nested socket> ipc screenshare share`.
-- Never apply the hookup to the real portal configs or restart the live portal while testing (`.claude/hooks/guard.py`): a share running stops.
+- Applying the hookup to the real portal configs or restarting the live portal stops any share running, so only the card's Apply and Restart do it, on a click; test on scratch folders.

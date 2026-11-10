@@ -4,7 +4,6 @@ import QtQuick.Layouts
 import qs.config
 import qs.components.reusable
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
 // A boolean setting: its label and description, the switch at the row's
 // right end, centred on them; a click anywhere on the row toggles it
 Item {

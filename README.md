@@ -240,7 +240,7 @@ And thanks to the Hyprland desktops that inspired it: [illogical-impulse](https:
 
 Axiom is developed with AI assistance. I design the architecture and systems, and AI-written code is reviewed before it lands, held to the same standards as every other contribution, and checked by CI using the same linting, structural checks, and unit tests.
 
-The repository contains extensive shared engineering instructions, subsystem documentation, development safeguards, and automated checks and tests. These rules are documented openly in AGENTS.md.
+The repository contains extensive shared engineering instructions, subsystem documentation, development safeguards, and automated checks and tests. These rules are documented openly in CLAUDE.md, with per-area rules in `.claude/rules/`.
 
 AI assistance is part of my development workflow, not a substitute for architectural decisions, verification, or responsibility for the project.
 

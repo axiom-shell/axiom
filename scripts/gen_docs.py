@@ -16,9 +16,7 @@
                         the daemon lacks; exit 1 after writing when a
                         section's setting (not a bar widget, module or view
                         type's) has no reader or use, or a reader member no
-                        user, that scripts/config-usage-baseline.json doesn't
-                        list (or it lists one that's gone: the baseline only
-                        shrinks), or a read of a reader member that doesn't
+                        user, or a read of a reader member that doesn't
                         exist
 
 Usages are file level (no line numbers) and found by name, so they're a map
@@ -1382,22 +1380,10 @@ def generate():
     pages.update(api_pages(readers))
     unused = sorted(f"{r}.{n}" for (r, n), users in ref.member_users.items()
                     if not users and (r, n) not in ref.inside and readers[r]["members"][n]["kind"] != "signal")
-    usage_problems = (ratchet_problems(ref.unread, BASELINE["settings"], "a setting with no reader or use")
-                      + ratchet_problems(unused, BASELINE["members"], "a reader member with no user")
+    usage_problems = ([f"a setting with no reader or use (use or delete it): {x}" for x in sorted(ref.unread)]
+                      + [f"a reader member with no user (use or delete it): {x}" for x in unused]
                       + [f"a read of a reader member that doesn't exist: {x}" for x in usage.missing(readers)])
     return pages, usage_problems, rpc_problems
-
-
-BASELINE_PATH = ROOT / "scripts/config-usage-baseline.json"
-BASELINE = json.loads(BASELINE_PATH.read_text())
-
-
-def ratchet_problems(found, baseline, what):
-    """A baseline only shrinks: a new entry fails, and so does a listed one
-    that's gone."""
-    found, baseline = set(found), set(baseline)
-    return ([f"{what} (use or delete it): {x}" for x in sorted(found - baseline)]
-            + [f"{what} no longer (drop it from {rel(BASELINE_PATH)}): {x}" for x in sorted(baseline - found)])
 
 
 def main():

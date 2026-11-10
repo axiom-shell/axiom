@@ -45,7 +45,7 @@ A Quickshell desktop for Hyprland, niri and sway: `qml/` (run by `qs`, no build 
 
 ### Theme, animation, text
 - Colors: `Theme.base00`–`base0F` or semantic names; config names via `Theme.resolveColor`.
-- A `duration:` is `Appearance.animFast`/`animNormal`/`animSlow`, or marked `// behaviour timing: <reason>`; loops gate `running` on `Appearance.animations`.
+- A `duration:` is `Appearance.animFast`/`animNormal`/`animSlow` with `Appearance.easing`, unless a behaviour needs a fixed time (a blink, a pause); loops gate `running` on `Appearance.animations`.
 - `I18n.tr("{0} updates", count)`, never a built sentence; runtime keys listed in a comment. Dates via `I18n.formatDate`. Logs stay English.
 
 ### UI

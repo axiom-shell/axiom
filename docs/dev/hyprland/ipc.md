@@ -7,14 +7,14 @@
 How the shell reads from and acts on Hyprland, without running `hyprctl`.
 
 ### Two routes
-- **Quickshell's `Quickshell.Hyprland`** covers monitors, workspaces, toplevels, the event stream (`rawEvent`) and `Hyprland.dispatch()`. Use it whenever it has what's needed, from the `Hyprland*` services only (Rules).
+- **Quickshell's `Quickshell.Hyprland`** covers monitors, workspaces, toplevels, the event stream (`rawEvent`) and `Hyprland.dispatch()`. It is the first choice whenever it has what's needed, from the `Hyprland*` services only ([How it is arranged](#how-it-is-arranged)).
   - `dispatch()` gives no reply, and sends the string as is: it must be Lua (`hl.dsp.*`).
   - A monitor's or toplevel's `lastIpcObject` only updates after a `refresh*()`; `refreshToplevels()` never removes a closed window.
 - **Hyprland's request socket, through axiom**: what Quickshell doesn't cover goes as hyprctl sends it, without a process each, to the daemon's `hypr.request` (`{ command }` → `{ reply }`, shell only; `ipc.Hypr.Request` in Go). `HyprlandManager`'s private `_request(command, cb)`, `_json("clients", cb)`, `_jsonBatch(["getoption …", "animations"], cb)` and `_evalLua(lua, cb)` (`"ok"` or the error) wrap it.
 
-### Rules
+### How it is arranged
 - **`HyprlandManager` is `CompositorManager`'s backend on Hyprland** ([The compositor](../compositor/README.md)). The rest of the shell asks `CompositorManager`, which hands out [neutral shapes](../compositor/contract.md#shapes) (`HyprState` converts Hyprland's replies). Only `CompositorManager` uses `HyprlandManager` directly (its version reaches the onboarding through `CompositorManager.withSetupCheck`), besides `WindowSwitcherManager` (`leaveSwitcher`, `switcherKey`) and `CompositorConfigManager` (`layerApplied`), which reach it as the backend.
-- **Only the `Hyprland*` services send anything to Hyprland** (`hypr.request`, `Hyprland.dispatch()`) **or import `Quickshell.Hyprland`.** `check_structure` enforces both the import and who may name `HyprlandManager`.
+- Only the `Hyprland*` services send anything to Hyprland (`hypr.request`, `Hyprland.dispatch()`) or import `Quickshell.Hyprland`, so the rest of the shell never depends on Hyprland's own shapes; `check_structure` enforces both the import and who may name `HyprlandManager`.
 - Events become signals, never `rawEvent` names (`_announce` maps them): `layersChanged`, `outputsHotplugged`, `configReloaded`, `keyboardLayoutChanged`, `windowFocused(appId)`, `switcherKey(verb, argument)`.
 - Hyprland's focus grab is `HyprlandGrab`, which only `FocusGrab` creates.
 - `_eval(lua, callback)` queues Lua chunks and runs them one at a time, in order, calling back with Hyprland's reply (`"ok"` or the error). Once the queue drains, it refetches the window list and, if asked meanwhile, the options (`layerApplied`).

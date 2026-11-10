@@ -3,7 +3,7 @@
 A migration step rewrites config that users already have: it renames, moves, reshapes or re-defaults a key. Every config of an older version runs it on load (config.json, saved configs, imports, the examples). At the end you have a Go step, its test, the new `version`, and readers that expect only the new shape. A purely additive key needs no migration, only a schema default ([setting](setting.md)).
 
 **Copy from:** `backend/internal/migrate/steps/v104.go` + `v104_test.go` (a section rename plus reshaped values, in its own file), the inline `Version: 83` and `Version: 80` steps in `steps.go` (the small cases), `backend/internal/migrate/steps/v83_test.go` for the `runStepCases` helper.
-**Background:** [the axiom binary](../dev/backend/README.md), [config manager](../dev/core/config-manager.md) (the load pipeline), [config v2](../dev/core/config-v2.md)
+**Background:** [the axiom binary](../dev/backend/README.md), [config manager](../dev/core/config-manager.md) (the load pipeline), [config.json format 2](../dev/core/config-manager.md#the-shape-of-configjson-format-2)
 
 Format 1 is frozen: its migrations (versions 1 to 75, `backend/internal/migrate/legacy/legacy.js`, hash-checked together with `schema-v75.json`) and its conversion to format 2 (version 76, `backend/internal/migrate/convert`) never change. Every new reshape is a **format-2 step**, and a format-1 file runs it after being converted.
 

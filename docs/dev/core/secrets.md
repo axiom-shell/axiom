@@ -4,7 +4,7 @@
 > **Config:** none (secrets never go in config.json); a provider's `keyEnv`
 > **Related:** [Chat](../features/chat.md), [Calendar](../features/calendar.md), [Protocol](../backend/protocol.md)
 
-Where API keys and passwords live. (Rule: CLAUDE.md › Services, "Secrets".) axiom keeps and reads them (package `secrets`); no secret is ever read back into QML. The only secret QML holds is what the user types into a key or password field, sent once to `secrets.set`.
+Where API keys and passwords live. axiom keeps and reads them (package `secrets`); no secret is ever read back into QML. The only secret QML holds is what the user types into a key or password field, sent once to `secrets.set`.
 
 ### Scopes
 - `provider`: chat API keys.

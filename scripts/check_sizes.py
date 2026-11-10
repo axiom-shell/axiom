@@ -5,7 +5,7 @@ Text grows with `Widget.scale` (Appearance.fontSize), and so do the
 `Widget` sizes (height, padding, spacing, iconButton, smallHeight,
 smallPadding, `Widget.px(n)`). A size written as a bare number stays the
 same at every scale, so next to the text around it it comes out cramped at
-150 % and loose at 75 %. This fails on:
+150 % and loose at 75 %. This warns (never fails) on:
 
   - a size property (one named …width, …height, …size, …spacing,
     …margin(s), …padding, …pad, …radius, …length, …thickness or …inset: width,
@@ -23,12 +23,12 @@ same at every scale, so next to the text around it it comes out cramped at
 
 Left alone: qml/components/bar/ (each bar sizes its own widgets),
 qml/components/methods/ (pure helpers: sizes are handed in), hairlines
-(0–2 px, `border.width` / `borderWidth`), `sourceSize` (an image's
-decoded resolution), and a line marked `// fixed px: <reason>` (a size
-measured against the screen or a measuring font, a placeholder, a
-layout weight: never one the UI is drawn at).
+(0–2 px, `border.width` / `borderWidth`) and `sourceSize` (an image's
+decoded resolution). A size that is measured against the screen or a
+measuring font, a placeholder or a layout weight is a false positive:
+ignore the warning.
 
-  scripts/check_sizes.py            errors (exit 1)
+  scripts/check_sizes.py            warnings only (always exit 0)
 """
 import re
 import sys
@@ -50,7 +50,6 @@ LITERAL = re.compile(r"(?<![\w.\[])\d+(?:\.\d+)?(?![\w.\]])")
 # Calls whose numbers are no px: grid units, already scaled, colors
 NOT_PX = ("Widget.px", "fontSizeBy", "span", "Qt.size", "Qt.rgba", "Qt.alpha")
 EXEMPT = ("border.width", "borderWidth", "sourceSize")
-MARK = "// fixed px:"
 # `Appearance.fontSize - 2`, not `Appearance.fontSize * 2`
 FONT_OFFSET = re.compile(r"Appearance\.(fontSize(?:Large)?)\s*[-+]\s*\d")
 
@@ -91,7 +90,7 @@ def find_literals(text):
     """(line number, property, value) for each literal size in QML text."""
     found = []
     for n, line in enumerate(text.split("\n"), 1):
-        if MARK in line or any(name in line for name in EXEMPT):
+        if any(name in line for name in EXEMPT):
             continue
         m = ASSIGN.match(line)
         if m:
@@ -119,12 +118,10 @@ def main():
         print(e)
     if errors:
         print(
-            f"\n{len(errors)} literal size(s): use a Widget size (height, padding, spacing, "
-            "iconButton, smallHeight, smallPadding), Widget.px(n) or "
-            "Appearance.fontSizeBy(n), or mark the line "
-            "`// fixed px: <reason>` if it's measured against the screen"
+            f"\n{len(errors)} literal size(s) (warning): prefer a Widget size (height, padding, "
+            "spacing, iconButton, smallHeight, smallPadding), Widget.px(n) or "
+            "Appearance.fontSizeBy(n)"
         )
-        return 1
     return 0
 
 

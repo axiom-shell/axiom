@@ -11,6 +11,8 @@
 #   scripts/check_go.sh --fix     rewrite instead of failing: go generate, gofmt -w
 #   scripts/check_go.sh --ci      also govulncheck (the release cross-builds
 #                                 are release.yml's)
+#   scripts/check_go.sh -v        every step's whole output (default: a line
+#                                 per passing step, the output of a failing one)
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -21,8 +23,9 @@ for arg in "$@"; do
   case "$arg" in
   --fix) fix=1 ;;
   --ci) ci=1 ;;
+  -v | --verbose) export AXIOM_VERBOSE=1 ;;
   *)
-    sed -n '2,13p' "$0" >&2
+    sed -n '2,15p' "$0" >&2
     exit 2
     ;;
   esac
@@ -34,12 +37,8 @@ if ! command -v go >/dev/null; then
 fi
 
 failed=()
-step() {
-  local name="$1"
-  shift
-  echo "── go: $name"
-  "$@" || failed+=("go $name")
-}
+# shellcheck source=lib/steps.sh
+source "$root/scripts/lib/steps.sh"
 
 generated() {
   "$root/scripts/generate.sh" --fixtures || return 1
@@ -68,27 +67,39 @@ formatted() {
   return 1
 }
 
+# Without -v go prints a line per package: only the failures matter
+go_test() {
+  local out status=0
+  out="$(go test "$@" -count=1 ./... 2>&1)" || status=$?
+  if [[ -n "${AXIOM_VERBOSE:-}${GITHUB_ACTIONS:-}" ]]; then
+    echo "$out"
+  else
+    grep -Ev '^ok |no test files' <<<"$out" || true
+  fi
+  return $status
+}
+
 tests() {
   # -race needs cgo and a C compiler; without them run the plain tests
   if CGO_ENABLED=1 go env CC >/dev/null 2>&1 && command -v "$(go env CC)" >/dev/null; then
-    CGO_ENABLED=1 go test -race -count=1 ./...
+    go_test -race
   else
-    go test -count=1 ./...
+    go_test
   fi
 }
 
-step "generated files" generated
-step "gofmt" formatted
-step "vet" go vet ./...
-step "staticcheck" go tool staticcheck ./...
+step "go: generated files" generated
+step "go: gofmt" formatted
+step "go: vet" go vet ./...
+step "go: staticcheck" go tool staticcheck ./...
 tidy() {
   if [[ $fix -eq 1 ]]; then go mod tidy; else go mod tidy -diff; fi
 }
-step "mod tidy" tidy
-step "tests" tests
-step "schema built from qml/config/schema/" go run ./cmd/axiom schema check --tree ..
+step "go: mod tidy" tidy
+step "go: tests" tests
+step "go: schema built from qml/config/schema/" go run ./cmd/axiom schema check --tree ..
 if [[ $ci -eq 1 ]]; then
-  step "govulncheck" go tool govulncheck ./...
+  step "go: govulncheck" go tool govulncheck ./...
 fi
 
 if [[ ${#failed[@]} -gt 0 ]]; then

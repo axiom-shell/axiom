@@ -20,7 +20,7 @@ Item {
   readonly property int itemHeight: Widget.height
   readonly property int itemPadding: Widget.padding
   property real minWidth: Widget.height * 4
-  property real maxWidth: (_window?.screen?.width ?? 2000) * 0.3 // fixed px: a stand-in screen width
+  property real maxWidth: (_window?.screen?.width ?? 2000) * 0.3 // a stand-in screen width
   // 0: unbounded (a submenu passes SubPopout.maxContentHeight)
   property real maxHeight: 0
 

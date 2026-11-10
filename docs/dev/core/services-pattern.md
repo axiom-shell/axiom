@@ -7,12 +7,10 @@
 How `qml/services/` is built: one singleton per domain, owning state and side effects, and the shared acquire/release pattern for anything polled. Read this before adding or changing a service.
 
 ### Shape
-- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders, `.claude/rules/services.md`). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, …) are listed in `.claude/rules/services.md` › Folders.
-- (Rule: CLAUDE.md › Services, for naming and singleton shadowing.)
+- Every service is `pragma Singleton QtObject`: one global instance per name, imported by its group's module: `qs.services.core`, `.compositor`, `.session`, `.system`, `.ui` or `.apps` (the folders). The non-singleton parts beside them (`ConfigDraft`, `ConsumerRegistry`, `IpcTarget`, …) are named for what they are.
 - A service with an IPC target that nothing else references is created from `qml/shell.qml`'s `_services` (e.g. BatteryManager, CompositorConfigManager).
 
 ### Polled data: acquire / release
-(Rule: CLAUDE.md › Services, "Anything polled".)
 - **SystemManager**: CPU/memory/temp/GPU/disk stats, sampled by axiom (the `system` topic, `backend/internal/sysmon`, at the shortest interval asked; the setting's schema minimum is the only floor).
   - Reference-counted through a `ConsumerRegistry` (shared with UpdatesManager; identical re-registrations are no-ops).
   - Consumers call `acquire(owner, {interval, metrics, diskPaths, history})` / `release(owner)`.

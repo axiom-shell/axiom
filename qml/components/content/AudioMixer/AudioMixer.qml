@@ -45,11 +45,11 @@ Panel {
   // A popout's list is as high as its rows, from one (also when empty) to
   // four, then it scrolls: the popout grows away from its controls, which
   // stay by the bar (Panel.growth: growing up, they go below the list)
-  readonly property real rowGap: 2 // fixed px: the list's spacing
+  readonly property real rowGap: 2 // the list's spacing
   function rowsHeight(rows) {
     return defaultRow.implicitHeight * rows + root.rowGap * (rows - 1);
   }
-  readonly property real listHeight: root.rowsHeight(4) // fixed px: a row count, not a size
+  readonly property real listHeight: root.rowsHeight(4) // a row count, not a size
   // Set by the tabs and list while built (not in a short card): the
   // list's view height, and how much more its rows want
   property real viewHeight: 0

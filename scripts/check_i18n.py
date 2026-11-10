@@ -204,7 +204,7 @@ def untranslated():
     for f, rel in qml_files():
         text = f.read_text()
         lines = text.splitlines()
-        declared = bool(re.search(r'//.*(I18n\.tr\("|i18n: keys from)', text))
+        declared = bool(re.search(r'//.*I18n\.tr\("', text))
         for line_no, line in enumerate(lines, 1):
             code = line.split("//")[0] if "://" not in line else line
             if not code.strip() or "console." in code:
@@ -223,8 +223,7 @@ def untranslated():
                 if not re.search(r"[A-Za-z_]", re.sub(r"[?:()\s]", "", rest)):
                     continue
                 # Keys chosen at runtime: declared in a comment in the file
-                # (// I18n.tr("key") ...), or the file says its keys come
-                # from callers/the schema (// i18n: keys from callers)
+                # (// I18n.tr("key") ...)
                 if not declared:
                     yield f"{rel}:{line_no}: dynamic tr() without declared keys: {code.strip()[:90]}"
 

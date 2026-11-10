@@ -27,7 +27,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 - Made later (a search narrowing a list, a tab switch, a selection), it builds at once like a plain Loader, so the page doesn't fade parts of itself in again while it's being used.
 - `always: true` streams whenever it's made: the settings cards (a category switch builds a whole category, a one-letter search most of the page).
   - While it fills in (`streamsInside`, until the queue drains), the loaders inside it stream too: a settings card's form fields, and the fields of each row of its lists. Without this, a card switched to built all its fields in the frame it arrived: switching to Dock & OSD (then one category: two `EntryListCard`s, the OSD's bars a list of full forms) froze for 300-400 ms, now ~40 ms a frame.
-- With no `BaseView` above it (a bar popout, an edge menu), it always streams.
+- With no `BaseView` above it (a bar popout, a menu), it always streams.
 - `stream: false`: never.
 
 ### Overlay pages
@@ -45,12 +45,12 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 ### Editors reopening
 - Pages are rebuilt on every open, so each editor's `ensureLoaded()` used to reload its draft every time: a clone of its config section, then every binding on it evaluated again.
 - `ConfigDraft.loadIfStale()` reloads only when the draft has no unsaved edits and is empty or the config isn't the object it was loaded from (`ConfigManager` makes a new config object on every change). Settings and Keybinds use it.
-- Editors that also clear their selection or history on reopening (layouts, edge menus, screen layouts) still `load()`.
+- Editors that also clear their selection or history on reopening (layouts, menus, screen layouts) still `load()`.
 
 ### What made pages slow (keep these out)
 - **Content built hidden.** A `visible: false` item is still built. Gate it with a Loader (`wanted`, `active`) or a `StreamedLoader`. A compact `Card`/`Panel` still builds its full layout under its `compactContent`.
 - **Unbounded lists in a Repeater.** Wi-Fi saw 52 networks, and a row each (with a password field) took 1.8 s. Use a ListView, which builds only the rows in view (`DeviceList`; modelled by a `CountModel`, so a new count keeps the view's place), and build a row's expansion only while expanded (Wi-Fi's password field).
-- **Repeater models of whole objects.** Key by count and read the object by index (`model: list.length`), as CLAUDE.md says: an object model is copied for every delegate, and rebuilds them on any change.
+- **Repeater models of whole objects.** Key by count and read the object by index (`model: list.length`): an object model is copied for every delegate, and rebuilds them on any change.
 - **Data reloaded on open.** See Editors reopening.
 
 ### Measuring

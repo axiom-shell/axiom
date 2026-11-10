@@ -14,7 +14,7 @@ Translation files need nothing: the pre-commit hook adds new strings to every la
 
 ## Steps
 1. Write `schema.yaml`. `label` is the name in the library; `icon`, `group` (one of the `x-libraryGroups` in `qml/config/schema/index.yaml`) and the other keys become `x-<key>` annotations (`group` becomes `x-libraryGroup`); `settings` become the module's `properties`, each with a `default`. Add `defaultSize: [w, h]` (grid units, four to a card) if one card is the wrong starting size, and `minSize` if it can't shrink to half of that.
-2. Decide the hosts. Overlay pages, menus and the desktop are the default and every module is on all three (`check_structure` fails a module that lists `overlay` but not `desktop`). Add `hosts: [lockscreen, greeter]` only under the rules in the next section.
+2. Decide the hosts. Overlay pages, menus and the desktop are the default and every module is on all three. Add `hosts: [lockscreen, greeter]` only under the rules in the next section.
 3. If the module has a text field, in its file or in a part it uses, set `keyboard: true`, so the desktop gives it the keyboard on a click. Use `false` only to keep it read-only there on purpose (ClockCalendar). `check_structure` fails a text field with neither.
 4. Write the module on `Card` (free-form) or `Panel` (a column that can also be a bar popout). Read its settings as `root.properties.<key>`.
 5. Make it work at any size: set `fullMinWidth` and `fullMinHeight` in pixels (from `Appearance.fontSize` when they depend on text), give it a `compactContent` for below that, and let the layout follow `shape` and `compact`.

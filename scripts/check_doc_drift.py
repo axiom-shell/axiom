@@ -13,15 +13,11 @@ doc probably describes an older version of them: reread it against the code
                                               of F but which aren't among F
                                               themselves (verify.sh: what you
                                               changed is described there)
-  --markdown (with any of the above)          Markdown tables instead, for
-                                              CI's job summary; docs link to
-                                              the commit when GITHUB_* is set
 
 Warnings only: always exits 0. check_docs.py checks that cited paths exist;
 this checks that the doc was read since they last changed. Commits are
 counted with --no-merges; a directory in Files counts commits under it.
 """
-import os
 import re
 import subprocess
 import sys
@@ -64,30 +60,18 @@ def drift(doc, files):
     return len(commits), subject
 
 
-def link(doc):
-    """doc as a Markdown link to it at this commit, on CI; else as code"""
-    server, repo, sha = (os.environ.get(k) for k in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_SHA"))
-    return f"[`{doc}`]({server}/{repo}/blob/{sha}/{doc})" if server and repo and sha else f"`{doc}`"
-
-
-def cell(text):
-    return text.replace("|", "\\|")
-
-
 def covers(cited, path):
     return any(path == c or path.startswith(c + "/") for c in cited)
 
 
 def main(argv):
-    minimum, show_all, changed, markdown = 5, False, None, False
+    minimum, show_all, changed = 5, False, None
     args = iter(argv)
     for arg in args:
         if arg == "--min":
             minimum = int(next(args))
         elif arg == "--all":
             show_all = True
-        elif arg == "--markdown":
-            markdown = True
         elif arg == "--changed":
             changed = list(args)
         else:
@@ -103,20 +87,7 @@ def main(argv):
             touched = [f for f in changed if covers(cited, f)]
             if touched:
                 hits[doc] = touched
-        if markdown:
-            print("### Docs describing what this changes\n")
-            if not hits:
-                print("No doc lists the changed files.\n")
-                return 0
-            print("Not changed here: reread them if behaviour changed.\n")
-            print("| Doc | Changed files it lists | Commits behind |\n|---|---|--:|")
-            for doc, touched in sorted(hits.items()):
-                count, _ = drift(doc, table[doc])
-                print(f"| {link(doc)} | {', '.join(f'`{t}`' for t in touched)} | {count} |")
-            print()
-            return 0
         if not hits:
-            print("no doc lists the changed files")
             return 0
         print("docs describing what changed (update them if behaviour changed):")
         for doc, touched in sorted(hits.items()):
@@ -127,18 +98,6 @@ def main(argv):
 
     rows = sorted(((*drift(doc, cited), doc) for doc, cited in table.items()), reverse=True)
     shown = [r for r in rows if show_all or r[0] >= minimum]
-    if markdown:
-        print("### Doc drift\n")
-        if not shown:
-            print(f"No doc's files changed in {minimum}+ commits since the doc did.\n")
-            return 0
-        print(f"Docs whose files changed in {minimum}+ commits since the doc did: reread one against the code, "
-              "then fix or touch it to reset its count. Warnings only.\n")
-        print("| Commits | Doc | Latest |\n|--:|---|---|")
-        for count, subject, doc in shown:
-            print(f"| {count} | {link(doc)} | {cell(subject)} |")
-        print()
-        return 0
     if not shown:
         print(f"doc drift ok (no doc's files changed in {minimum}+ commits since it did)")
         return 0

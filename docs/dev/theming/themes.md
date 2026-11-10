@@ -46,7 +46,7 @@ How the active theme is loaded, how themes are grouped into dark/light families,
   - candidates are scored as Material scores seeds (hue share and chroma); the best becomes the seed, in `base0F` as `accent`;
   - the palette is built in OKLCH from targets measured off the hand-made themes: a tinted neutral ramp, and accents that keep their slot's hue cell (red stays red) but lean toward the wallpaper's colours there, or else rotate toward the seed;
   - every accent is pushed to 3:1 contrast against `base00`.
-- Moved from the Python script generate_theme.py (numpy, Pillow) to Go, on purpose not bit-for-bit (maintainer: "ensure the go implementation is as good as it can be and faithful to go - color drift is okay and go is the forever home so changes now are better"). What differs from the Python:
+- Moved from the Python script generate_theme.py (numpy, Pillow) to Go, on purpose not bit-for-bit. What differs from the Python:
   - clustering is deterministic: pixels are binned in OKLab, and each k-means start is the bin with the most to gain (weight × squared distance to the nearest start), k-means++'s choice without the random draw, so a stray pixel weighs little and an image always gives the same colors;
   - the thumbnail is a plain area average (up to 8×8 samples a pixel), not Pillow's bicubic with JPEG draft decoding;
   - an accent taking the wallpaper's colour takes the weighted mean of the candidates in its cell, not the heaviest one alone, so a small change to the image moves it slightly instead of jumping between candidates.

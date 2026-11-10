@@ -6,7 +6,6 @@ import qs.services.system
 import qs.services.ui
 import qs.components.reusable
 
-// i18n: keys from the schema (x-hookup `where`, x-hookupNote)
 // Hooking a theme integration up to its app (its schema `x-hookup`): per
 // config file, the text that loads axiom's file, to copy, and what Apply
 // does to that file (back it up, then add the text where it's read last

@@ -44,8 +44,8 @@ Item {
 
   required property int edge
   property bool active: false
-  property real boxWidth: 100 // fixed px: a placeholder, always set
-  property real boxHeight: 100 // fixed px: a placeholder, always set
+  property real boxWidth: 100 // a placeholder, always set
+  property real boxHeight: 100 // a placeholder, always set
   property int connectorGap: Appearance.connectorGap
   property int animationDuration: Appearance.animNormal
 

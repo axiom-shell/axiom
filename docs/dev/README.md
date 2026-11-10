@@ -1,14 +1,10 @@
 # Developer docs
 
-How every service and surface of axiom works. The rules are in [CLAUDE.md](../../CLAUDE.md); these docs hold the mechanics. Each doc opens with the files it covers, the config it reads and related docs, so you can jump to the code or stop reading early. `grep -n '^###' <doc>` gives its outline.
-
-Rules for an area are in `.claude/rules/` (one file per area, scoped by path).
-
-Read the doc for a feature before changing it, and update it when you change how the feature works. One fact has one home: link to it rather than restating it.
+How every service and surface of axiom works. Each doc opens with the files it covers, the config it reads and related docs, so you can jump to the code or stop reading early; `grep -n '^###' <doc>` gives a doc's outline. Read a feature's doc before changing it and update it when you change how the feature works. One fact has one home: docs link to it rather than restate it. Coding agents: [CLAUDE.md](../../CLAUDE.md).
 
 ## Layering
 
-Dependencies point one way, methods → data owners → readers → services → UI: [CLAUDE.md › Layering](../../CLAUDE.md).
+Dependencies point one way: pure helpers (`qml/components/methods/`) at the bottom, then the data owners (`ConfigManager`, `ThemeManager`, `I18n`), the config readers, the services (which own every side effect: processes, dispatches, file writes, polling), and the UI on top. A lower layer never reads a higher one; [services-pattern](core/services-pattern.md) and [config-readers](core/config-readers.md) have the detail. Side effects are moving into the Go daemon: the shell's services run commands, read files and keep state through `CommandManager`, `FileManager` and `StateManager`, which ask the `axiom` binary ([backend](backend/README.md)).
 
 ## Where to look
 
@@ -55,11 +51,11 @@ qml/              the QML tree quickshell runs (`qs -p <tree>/qml`); `qs.` impor
     views/        overlay pages by view type
     bar/          the bar; widgets/ = bar widget types
     surfaces/     standalone windows (launcher, lockscreen, toasts, dock, onboarding, …)
-  services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ (`.claude/rules/services.md`)
+  services/       pragma Singleton managers: state and side effects; core/ compositor/ session/ system/ ui/ apps/ 
   config/         reader singletons; schema/ (the schema's YAML), json/ (the built schema, theme defaults), themes/, i18n/
   assets/         fonts/, icons/
 data/             runtime files that aren't QML: greeter/ (session scripts, polkit policy), templates/ (theme integrations), examples/ (example setups)
-backend/          the axiom binary (Go): rules in .claude/rules/backend.md
+backend/          the axiom binary (Go)
 scripts/          dev tooling only: the checks, generators, scripts/dev/
 tests/            qmltestrunner tests, fixtures, tests/scripts/
 docs/             user docs; dev/ developer docs, recipes/, screenshots/
@@ -67,16 +63,16 @@ packaging/        the AUR packages (install.sh stays at the root)
 ```
 
 - Imports use the `qs.` namespace (`import qs.services.core`); no qmldir files. Every file starts with `pragma ComponentBehavior: Bound` or `pragma Singleton` (`check_structure`).
-- Types are loaded by name (under `qml/components/`): `bar/widgets/<type>/<type>.qml`, `content/<Name>/<Name>.qml`, `views/<type>/<type>.qml`; a new one is the file plus its `schema.yaml` beside it (their `.claude/rules/` files).
+- Types are loaded by name (under `qml/components/`): `bar/widgets/<type>/<type>.qml`, `content/<Name>/<Name>.qml`, `views/<type>/<type>.qml`; a new one is the file plus its `schema.yaml` beside it ([config-manager](core/config-manager.md) › The shape of config.json).
 - Naming: services `*Manager`, the non-singleton parts beside them named for what they are (`ConfigDraft`, `ConsumerRegistry`, `DeadlineTicker`); readers per section, `Config`-suffixed where the name is a type (`OSDConfig`), and one exposing the saved config says so (`BarsConfig.savedBars`); hosts say what they host (`BarWidgetHost`, `OverlaySlot`); content by module type or popout name; Qt control stand-ins `Styled*`; composites named for what they are. A surface window gets a `Window` suffix when its shell entry shares the name (`qml/shell/PowerMenu` → `PowerMenuWindow`). Root ids are `root`. Bar widget and content names may overlap, but no file may see both.
 
 ## Index
 
 ### Recipes
-- [../recipes/](../recipes/): step-by-step for each recurring change (files to touch, file to copy, gotchas, checks). Wrapped as skills in `.claude/skills/`.
+- [../recipes/](../recipes/): step-by-step for each recurring change (files to touch, file to copy, gotchas, checks).
 
 ### Generated references (`scripts/gen_docs.py`, run by `scripts/generate.sh`; built, never committed)
-- [config/](config/README.md): every setting per section: type, default, annotations, description, reader member, files that use it (the daemon's too: `x-compositor`, or its Go reading the key by name). Plus one page per bar widget, overlay module and view type. A section's setting nobody reads (not a bar widget, module or view type's), or a reader member with no user, fails the script unless `scripts/config-usage-baseline.json` lists it; that list only shrinks (an entry gone fails too).
+- [config/](config/README.md): every setting per section: type, default, annotations, description, reader member, files that use it (the daemon's too: `x-compositor`, or its Go reading the key by name). Plus one page per bar widget, overlay module and view type. A setting nobody reads, or a reader member with no user, fails `gen_docs.py`.
 - [generated/api.md](generated/api.md): public members of every service and config reader, one page each.
 - [generated/files.md](generated/files.md): every QML file with its purpose comment. Long: grep it.
 - [generated/ipc.md](generated/ipc.md): every IPC target and its functions.
@@ -92,11 +88,13 @@ packaging/        the AUR packages (install.sh stays at the root)
 ### backend/: the axiom binary
 - [backend](backend/README.md): the Go binary (parent of the shell, owner of the config, the command line): what exists so far, building and checking it, its security rules, and the shared fixtures both sides replay.
 - [inputmethod](backend/inputmethod.md): the input method framework (fcitx5, ibus) from the daemon: finding it, following and switching its input method, pushing axiom's list, its options, outside edits, the `inputMethod` topic and `supports.inputMethod`.
+- [dbus](backend/dbus.md): the daemon's own D-Bus client (pure Go): connection, calls and signals, descriptors, what uses it.
+- [wayland](backend/wayland.md): the daemon's own Wayland connection and what each compositor offers for idle, gamma, clipboard and typing.
 - [protocol](backend/protocol.md): how the shell and the binary talk: the environment, runtime files, the socket's calls and pushes, a session, topics, guards, and when to bump the protocol (every method and push: [generated/rpc.md](generated/rpc.md)).
 
 ### core/: config, services, schema, shared UI
 - [services-pattern](core/services-pattern.md): one singleton per domain, acquire/release for anything polled, CommandManager, the other domain services.
-- [config-manager](core/config-manager.md): load pipeline, write API, `ConfigDraft`, previews.
+- [config-manager](core/config-manager.md): load pipeline, the shape of config.json (format 2, type folders, what the schema builder supplies), write API, `ConfigDraft`, previews.
 - [config-readers](core/config-readers.md): the reader singletons, `General.outputs`, `Paths`, `Theme`.
 - [schema-annotations](core/schema-annotations.md): the schema as source of truth and the complete list of `x-*` annotations.
 - [settings-page](core/settings-page.md): how the schema becomes the settings page (layout, cards, folding, sidebar, search).
@@ -110,7 +108,7 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [i18n](core/i18n.md): translation mechanics, language files, `check_i18n.py`.
 - [shared-ui-pieces](core/shared-ui-pieces.md): index of reusable widgets and helpers. Check it before drawing anything.
 - [streamed-building](core/streamed-building.md): how pages show at once and fill in over frames (`BuildQueueManager`, `StreamedLoader`), what made them slow, and measuring it (`bench_overlay.sh`).
-- [memory](core/memory.md): reading the shell's memory (`mem.sh`, `bench_overlay.sh --mem`) in a nested session, and the baseline Phase 12 is judged against.
+- [memory](core/memory.md): reading the shell's memory (`mem.sh`, `bench_overlay.sh --mem`) in a nested session, and a recorded baseline.
 - [qml-pitfalls](core/qml-pitfalls.md): traps of QML, its JS engine and URL-loaded files that have each bitten. Read it before writing QML.
 
 ### bar/

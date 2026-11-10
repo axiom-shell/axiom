@@ -2,7 +2,7 @@
 # (sections/<Name>.yaml, in the order `sections` lists them, after `properties`)
 # and the definitions (definitions/**/<Name>.yaml, then each kind's type
 # folders, <root>/<Type>/schema.yaml expanded into the kind's base) into
-# config/json/config.schema.json (docs/dev/core/config-v2.md).
+# config/json/config.schema.json (docs/dev/core/config-manager.md).
 
 $schema: 'http://json-schema.org/draft-07/schema#'
 title: Axiom Configuration Schema

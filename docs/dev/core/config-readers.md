@@ -4,7 +4,7 @@
 > **Config:** one reader per section
 > **Related:** [Config manager](config-manager.md), [Schema annotations](schema-annotations.md), [Themes](../theming/themes.md)
 
-Typed, read-only views of config sections. (Rule: CLAUDE.md › Config, no `??` fallbacks; › Layering. Reader naming: [README](../README.md) › Layout.)
+Typed, read-only views of config sections. Readers use no `??` fallbacks, because every default is filled at load. Reader naming: [README](../README.md) › Layout.
 
 ### What a reader is
 - `pragma Singleton`, but a reader, not an owner: one per config section, exposing `readonly property` values from `ConfigManager.live` (the config with editors' unsaved previews over it, [Previews](config-manager.md#previews)).
@@ -38,7 +38,7 @@ Typed, read-only views of config sections. (Rule: CLAUDE.md › Config, no `??` 
 - **`Screenshots`**: the screenshot and recording folders, `~` expanded, empty for `ScreenshotManager`'s defaults ([Screenshots and screen recording](../features/screenshots-recording.md)).
 - **`NotificationsConfig`**: the toasts' corner and gaps; see [Notifications](../features/notifications.md).
 - **`OverlayConfig`**: views and card-grid constants.
-- **`MenusConfig`**: edge menus.
+- **`MenusConfig`**: menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
 - **`MarketsConfig`**: the watchlist (`symbols`, each with its holding and alerts) every markets widget and module shows, the poll `interval`, `pauseWhenClosed`, `baseCurrency`, `alerts`, `redForGains`, `holdingsOnLockscreen`.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.

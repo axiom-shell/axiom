@@ -2,7 +2,7 @@
 
 > **Files:** `qml/components/bar/widgets/base/ValueStyleWidget.qml`, `qml/components/bar/widgets/base/ValueGraphic.qml`, `qml/components/methods/ValueGraphics.qml`, `qml/config/schema/definitions/widgets/BarDisplay.yaml`, `qml/config/schema/definitions/kinds/WidgetBase.yaml`, `qml/components/bar/widgets/SystemStats/SystemStats.qml`, `qml/components/bar/widgets/CustomWidget/CustomWidget.qml`
 > **Config:** a bar widget's `properties.appearance` (`style`, `segments`, `width`, `colorText`); a custom widget's `bar`
-> **Related:** [Widget base classes](widget-style.md), [Custom widgets](../features/custom-widgets.md) › The bar widget, [Config v2](../core/config-v2.md)
+> **Related:** [Widget base classes](widget-style.md), [Custom widgets](../features/custom-widgets.md) › The bar widget, [Config manager](../core/config-manager.md#the-shape-of-configjson-format-2)
 
 How a bar widget with a value, a time or a long text draws it: one set of styles shared by the built-in widgets and custom widgets, drawn by the same code.
 

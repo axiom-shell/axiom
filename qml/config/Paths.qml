@@ -112,7 +112,7 @@ QtObject {
     return (prefixed[1] === "generated" ? root.generatedThemesPath : root.communityThemesPath) + prefixed[2] + ".json";
   }
 
-  // The file a type is loaded from (docs/dev/core/config-v2.md, rule 11):
+  // The file a type is loaded from (docs/dev/core/config-manager.md › The shape of config.json):
   // a type is a folder <root>/<Type>/ with <Type>.qml. A content name with
   // a slash names another file in a type's folder ("Submenu/MenuSubmenu").
   function widgetUrl(type) {

@@ -4,11 +4,11 @@
 > **Config:** whichever path the editor drafts; layout prefs in `~/.local/state/axiom/ui/editors.json`
 > **Related:** [Config manager](config-manager.md), [Bar editor](../bar/bar-editor.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Monitors](../hyprland/monitors.md), [Keybinds](../hyprland/keybinds.md), [Shared UI pieces](shared-ui-pieces.md)
 
-The settings, bar, layouts, keybinds and monitors editors share one shape; a new editor follows it. (Rule: CLAUDE.md › Services, "Editors".)
+The settings, bar, layouts, keybinds and monitors editors share one shape; a new editor follows it.
 
 ### Draft
 - The manager owns a `ConfigDraft` of its config path.
-  - An editor that is one part of a page's manager is a non-singleton the manager holds, named `*Editor`: the layouts editor's edge menus are `OverlayManager.menus` (`MenuEditor`), the Keybinds page's binds `KeybindManager.editor` (`KeybindEditor`, beside the page's view state `KeybindManager.page`), its screen layouts `ScreenLayoutEditor`s (`DesktopManager.editor`, …).
+  - An editor that is one part of a page's manager is a non-singleton the manager holds, named `*Editor`: the layouts editor's menus are `OverlayManager.menus` (`MenuEditor`), the Keybinds page's binds `KeybindManager.editor` (`KeybindEditor`, beside the page's view state `KeybindManager.page`), its screen layouts `ScreenLayoutEditor`s (`DesktopManager.editor`, …).
 - Mutate `draft.local` in place, then `changed()`. It re-clones next tick so bindings see it; `isDirty` compares the data whatever its key order (`Utils.deepEqual`).
 - Editors (the settings page too) show unsaved edits live through `ConfigManager.setPreview`, never by changing `ConfigManager.config`.
 - Save merges onto the latest config (`commit`, which may refuse: the draft stays dirty; a save axiom refuses later makes it dirty again through `ConfigManager.saveRefused`, and its `refused` signal has the editor preview the edits again). Discard (shown only while dirty) reloads.
@@ -33,7 +33,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - Save/Discard are page-wide, so they sit top-right like Settings: on the right-hand top card (`SectionsBoard`'s header, or `GridCanvas`'s through `LayoutsEditorLayout`). The left panel has `showActions: false`.
 
 ### Unsaved reminders (`EditsManager`)
-- Drafts survive leaving a page or closing the overlay (bar and edge menu edits stay live through previews), so nothing blocks closing.
+- Drafts survive leaving a page or closing the overlay (bar and menu edits stay live through previews), so nothing blocks closing.
 - `EditsManager.unsaved` lists the pages (view types) with dirty drafts.
   - The navigator dots their tabs.
   - While another page has some, it shows Save all / Discard all after its arrows (`saveAll()` / `discardAll()`).

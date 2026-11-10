@@ -124,7 +124,7 @@ ValueStyleWidget {
     running: root.cycles && Appearance.animations
     loops: Animation.Infinite
     PauseAnimation {
-      duration: root.properties.rotateInterval // behaviour timing: how long each symbol shows (a setting)
+      duration: root.properties.rotateInterval // how long each symbol shows (a setting)
     }
     ScriptAction {
       script: root._index = (root._index + 1) % Math.max(1, root.entries.length)

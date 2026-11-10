@@ -147,7 +147,7 @@ Seams: every reader user; every editor.
 
 ## config-pipeline
 Scope: the Go config pipeline's pure core: the ordered JSON tree, the schema (built from YAML, validation), config ops and formats, migrations (format-1 legacy, conversion, format-2 steps).
-Docs: core/config-v2.md
+Docs: core/config-manager.md
 Extra: backend/internal/jsonx/ backend/internal/schema/ backend/internal/config/ backend/internal/migrate/convert/ backend/internal/migrate/steps/ backend/internal/share/movedkeys.go
 Checks:
 - The tree keeps key order, unknown keys and old shapes, and its bytes match the JS reference (`jsonx`, the shared fixtures).
@@ -271,7 +271,7 @@ Seams: idle, night light, clipboard, polkit and every feature using them; the da
 ## guardrails
 Scope: the checks, the tests' runners, CI and the agent rules: what stops a bad change before it merges.
 Docs: testing.md
-Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/ci_summary.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md */AGENTS.md qml/*/AGENTS.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
+Extra: scripts/check_*.py scripts/check_*.sh scripts/check_all.sh scripts/generate.sh scripts/gen_docs.py scripts/qml_modules.py scripts/run_tests.sh scripts/lib/qt_paths.sh scripts/dev/*.sh scripts/dev/*.py scripts/qmllint-baseline.json scripts/quickshell-io-allowlist.json .github/workflows/checks.yml .githooks/pre-commit .claude/hooks/guard.py .claude/settings.json tests/scripts/*.py tests/RepoFiles.qml tests/Shared.qml CLAUDE.md AGENTS.md .claude/rules/*.md .claude/agents/*.md .claude/skills/*/*.md docs/recipes/*.md
 Checks:
 - Every check in `docs/dev/testing.md` › The checks runs in CI (`checks.yml`) and in `check_all.sh`, with the same arguments; the order lives in one place.
 - Each check fails on what its doc says it catches (try a bad input against it), and a check that can't fail is a finding.

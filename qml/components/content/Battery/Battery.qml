@@ -147,7 +147,7 @@ Card {
             fillColor: root.peripheralColor(line.peripheral?.level ?? "none")
           }
           StyledLabel {
-            Layout.preferredWidth: percentMetrics.advanceWidth("100%") // fixed px: a measuring string, the widest percent
+            Layout.preferredWidth: percentMetrics.advanceWidth("100%") // a measuring string, the widest percent
             horizontalAlignment: Text.AlignRight
             text: (line.peripheral?.percentage ?? 0) + "%"
             textSize: Appearance.fontSizeBy(-2)

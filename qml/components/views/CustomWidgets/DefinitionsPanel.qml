@@ -9,7 +9,6 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.content.base
 
-// i18n: keys from the schema (titles, descriptions)
 // Custom widgets page, left: the definitions (add, duplicate, remove), then
 // the selected one's script: what runs and how, picked from a file or
 // typed, with the head of the script when it's a file.

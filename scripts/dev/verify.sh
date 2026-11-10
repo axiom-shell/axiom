@@ -15,12 +15,16 @@
 #      validity, the unit tests the change touches (QML, and the
 #      test_scripts.py classes of a changed script), the Go checks (backend/:
 #      go generate, gofmt, vet, staticcheck, tests), shellcheck, i18n
-#   3. the shell's log since its last reload
+#   3. the shell's warnings and errors since its last reload
 #   4. warnings: the docs describing the changed files (check_doc_drift.py),
 #      and a missing pre-commit hook
 #
+# Quiet: a passing check prints `✓ name`, a failing one `✗ name` and its
+# output, the shell log only its warnings and errors (identical ones counted).
+#
 #   scripts/dev/verify.sh             what changed since HEAD
 #   scripts/dev/verify.sh --all       every check on everything (check_all.sh)
+#   scripts/dev/verify.sh -v          every check's whole output (also with --all)
 set -uo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -28,17 +32,21 @@ cd "$root" || exit 1
 # shellcheck source=../lib/qt_paths.sh
 source "$root/scripts/lib/qt_paths.sh"
 
-all=0
+all=0 verbose=()
 for arg in "$@"; do
   case "$arg" in
   --all) all=1 ;;
+  -v | --verbose)
+    verbose=(-v)
+    export AXIOM_VERBOSE=1
+    ;;
   *)
-    sed -n '2,24p' "$0" >&2
+    sed -n '2,28p' "$0" >&2
     exit 2
     ;;
   esac
 done
-[[ $all -eq 1 ]] && exec scripts/check_all.sh
+[[ $all -eq 1 ]] && exec scripts/check_all.sh "${verbose[@]}"
 
 # Deleted files included, a rename's old path too (--no-renames): they
 # trigger the checks too (a step reading a file skips the gone ones)
@@ -53,12 +61,13 @@ if [[ ${#changed[@]} -eq 0 ]]; then
 fi
 
 failed=()
-step() {
-  local name="$1"
-  shift
-  echo "── $name"
-  "$@" || failed+=("$name")
-}
+# shellcheck source=../lib/steps.sh
+source "$root/scripts/lib/steps.sh"
+# The unit tests print only failures, unless the whole output is wanted
+quiet=(-q)
+[[ -n "${AXIOM_VERBOSE:-}" ]] && quiet=()
+# say: a line only the verbose run prints
+say() { [[ -z "${AXIOM_VERBOSE:-}" ]] || echo "$@"; }
 
 qml=() tests=() shells=() script_tests=() schema=0 go=0 fixtures=0 lint=0 i18n=0 qmlformat=0 shaders=0
 for f in "${changed[@]}"; do
@@ -110,7 +119,7 @@ for f in "${changed[@]}"; do
   scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
   scripts/check_shaders.py) script_tests+=(CheckShaders) ;;
-  scripts/gen_docs.py | scripts/config-usage-baseline.json) script_tests+=(RpcShapes ConfigUsage) ;;
+  scripts/gen_docs.py) script_tests+=(RpcShapes ConfigUsage) ;;
   tests/scripts/test_scripts.py) script_tests+=(all) ;;
   esac
 done
@@ -121,7 +130,7 @@ reloads_before=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configura
 # 1. Format in place (cat > keeps the inode; -i would replace the file)
 formatted=0
 if [[ ${#qml[@]} -gt 0 ]]; then
-  echo "── qmlformat (${#qml[@]} changed QML files)"
+  say "── qmlformat (${#qml[@]} changed QML files)"
   for f in "${qml[@]}"; do
     [[ -f "$f" ]] || continue
     out="$("$qt_bin/qmlformat" "$f")" || {
@@ -134,7 +143,7 @@ if [[ ${#qml[@]} -gt 0 ]]; then
       formatted=1
     fi
   done
-  [[ $formatted -eq 0 ]] && echo "already formatted"
+  [[ $formatted -eq 0 ]] && say "already formatted"
 fi
 
 # 2. Checks (the generated files built first: the docs and checks read
@@ -150,6 +159,10 @@ if [[ $qmlformat -eq 1 ]]; then
 fi
 step "structure" python3 scripts/check_structure.py
 step "sizes" python3 scripts/check_sizes.py
+# Warnings only (they never fail): show those in the files you changed
+if [[ -z "${AXIOM_VERBOSE:-}" && ${#qml[@]} -gt 0 ]]; then
+  python3 scripts/check_sizes.py | grep -F -f <(printf '%s:\n' "${qml[@]}") | sort -u | head -n 10 | sed 's/^/  size warning: /' || true
+fi
 step "icon names" python3 scripts/check_icons.py
 step "doc citations" python3 scripts/check_docs.py
 step "package lists" python3 scripts/check_packages.py
@@ -165,7 +178,7 @@ if [[ ${#jsons[@]} -gt 0 ]]; then
 fi
 if [[ ${#tests[@]} -gt 0 ]]; then
   mapfile -t tests < <(printf '%s\n' "${tests[@]}" | sort -u)
-  step "unit tests (${tests[*]})" bash -c 'scripts/run_tests.sh "$@" 2>&1 | grep -E "^(FAIL|Totals|XPASS)|error" ; exit "${PIPESTATUS[0]}"' _ "${tests[@]}"
+  step "unit tests (${tests[*]})" scripts/run_tests.sh "${quiet[@]}" "${tests[@]}"
 fi
 if [[ ${#script_tests[@]} -gt 0 ]]; then
   if printf '%s\n' "${script_tests[@]}" | grep -qx all; then
@@ -187,14 +200,17 @@ fi
 if [[ $i18n -eq 1 ]]; then
   # Warnings only: a new key is absent from qml/config/i18n/ until the
   # pre-commit hook adds it (check_all.sh fails on that)
-  echo "── translations (warnings only)"
-  python3 scripts/check_i18n.py 2>&1 | tail -n 15 || true
+  if out="$(python3 scripts/check_i18n.py 2>&1)"; then
+    echo "✓ translations"
+  else
+    echo "! translations (the pre-commit hook fills these in; warning only)"
+    tail -n 15 <<<"$out"
+  fi
 fi
 
 # 3. The live shell: wait briefly for the reload the formatting triggered
 # (a save's came before this script started), then show what it logged
 if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]] && command -v qs >/dev/null; then
-  echo "── shell log since the last reload"
   for _ in 1 2 3 4 5 6; do
     [[ $formatted -eq 1 ]] || break
     now=$(scripts/log.sh --all 2>/dev/null | grep -c "Reloading configuration" || true)
@@ -202,13 +218,18 @@ if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]] && command -v qs >/dev/null; then
     sleep 0.5
   done
   sleep 1
-  scripts/log.sh || true
-  echo "(no new reload since this script started is normal when the shell already reloaded on save;"
-  echo " if the log looks stale, see docs/dev/testing.md › Reloads and logs)"
+  if [[ -n "${AXIOM_VERBOSE:-}" ]]; then
+    echo "── shell log since the last reload"
+    scripts/log.sh || true
+  elif problems="$(scripts/log.sh --problems 2>/dev/null)" && [[ -n "$problems" ]]; then
+    echo "! shell log since the last reload (warnings and errors; if it looks stale, see docs/dev/testing.md › Reloads and logs)"
+    echo "$problems"
+  else
+    echo "✓ shell log"
+  fi
 fi
 
 # 4. Warnings, never failures
-echo "── docs"
 python3 scripts/check_doc_drift.py --changed "${changed[@]}"
 if [[ "$(git config core.hooksPath)" != ".githooks" ]]; then
   echo "warning: the pre-commit hook isn't set up, so commits can carry stale translation files and theme template:"

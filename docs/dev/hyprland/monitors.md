@@ -66,8 +66,8 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - **An unplug never leaves every monitor dark.** `render.MatchProfile` counts only the outputs on, unless none is (a "Dock" profile turned the laptop's panel off, then its monitor was unplugged): then it counts every connected one, so the profile turning one on ("Laptop") is picked. With none on and no profile turning one on, `render.SavedRules` lights one as the compositor would (the laptop's panel, `eDP`/`LVDS`/`DSI`, else the first: `{ output }`, its preferred mode). Hyprland's headless `FALLBACK`, which it makes while no monitor is on, isn't an output here (`ipc.Hypr.Outputs` leaves it out; with it counted on, nothing would ever light the panel again). Hyprland sets its monitors again only as one draws a frame, which none does while only `FALLBACK` is left, so an eval'd `hl.monitor` waits forever: after applying with none on, the switch reloads Hyprland's config once for that set of outputs (`Outputs.Relight`, `profileSwitch.relit`), which sets them at once (the switch evaluates its rules again after the reload; a config that keeps them dark isn't reloaded again). All checked on a nested Hyprland 0.57 (2026-11-07).
 - **Included / managed:** `M.monitors()` in the module (or the managed config) holds only those calls (`buildInputs`' `monitorCalls`, which an output only turned off leaves alone), rewritten on each switch, so a Hyprland reload keeps the profile. A reload after which the file isn't loaded (the include line taken out) evaluates it as in detached mode. Until the daemon has read the outputs, the file keeps the calls it has (`render.HyprFileMonitorCalls`).
 - **Detached:** nothing is written. The switch still runs on every hotplug, and its eval is the only copy: Hyprland keeps the evaluated rules, the agreed ones for monitors the match leaves out too, until a reload drops them, after which the switch evaluates them again. So detached mode modesets once where the profiles agree as well.
-- **Included:** the user's own `hl.monitor` lines after the module win over its rules (their doing, as decided).
-- Without axiom running, Hyprland keeps the layout last written and switches no more (decided: the user's doing).
+- **Included:** the user's own `hl.monitor` lines after the module win over its rules.
+- Without axiom running, Hyprland keeps the layout last written and switches no more.
 - **Greeter:** the greeter's axiom runs the same watch for the greeter's lifetime (`greeterProfiles`).
 
 ### IPC and launcher
@@ -75,7 +75,7 @@ Monitor layouts saved per set of connected monitors, edited on the Monitors page
 - Launcher: `/monitors`.
 
 ### Testing
-- Never Keep a layout while testing. (Rule: CLAUDE.md › Never.)
+- Keep confirms a layout on your real monitors; test Apply with Revert, or in a nested session.
 - Test the profile picker through `render`'s `TestProfiles` (and Hyprland's rules, `TestHyprlandRules`) and the switch through `manager`'s `TestHotplugsApplyTheSavedProfile`.
 - Hotplugs on a nested Hyprland (`scripts/dev/nested.sh hyprland`, its own `HYPRLAND_INSTANCE_SIGNATURE`): `hyprctl output create headless <name>` plugs a monitor in, `hyprctl output remove <name>` unplugs it; the nested daemon's `axiom --socket <its socket> config set --value-json Monitors.items '[…]'` sets the profiles. An undock: a profile turning `<laptop>` off and `<external>` on, another turning `<laptop>` on; plug `<external>`, then unplug it.
 - Use only harmless evals: re-applying the current settings, or moving a lone monitor's origin and back.

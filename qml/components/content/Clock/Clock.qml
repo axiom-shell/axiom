@@ -59,7 +59,7 @@ Card {
   // Measured at 100 px, then scaled to the room
   component Metrics: TextMetrics {
     font.family: Appearance.fontFamily
-    font.pixelSize: 100 // fixed px: a measuring font, scaled to the room
+    font.pixelSize: 100 // a measuring font, scaled to the room
     font.bold: true
     font.features: {
       "tnum": 1
@@ -92,7 +92,7 @@ Card {
     id: capLine
     property alias text: capDigits.text
     property alias color: capDigits.color
-    property real size: 10 // fixed px: a placeholder, always set from the room
+    property real size: 10 // a placeholder, always set from the room
     property real pad: 0.12
     readonly property real cap: capLine.size * root.capRatio
     implicitWidth: capDigits.implicitWidth

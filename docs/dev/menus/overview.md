@@ -64,7 +64,7 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
   - Drawn outside the body's scrolling view, so its shadow isn't cut there: scrolled and cut to the view (`MenuTiles.shown`), its growing eased as the card's slot is.
   - Backed by the blur window (the host's `tiles.backed`), it's a `BlurShape` (`kind: "rect"`) at its place on the screen, which fills it, blurs behind it and casts its shadow (on niri, one blur region piece per card). Otherwise it fills itself, with an `OutsideShadow`.
   - The host hands the body `tiles`: whether it's backed or solid, its screen, the body's top-left on the screen as drawn (slid: `AttachedSurface.slideX` / `slideY`), its window on the screen, its layer, how far it has faded in and the shadow's look.
-- **The gaps are the menu's** (decided 2026-11-10: "It should just reserve the mouse"). Its input is its whole box, as with a panel: the pointer over a gap is over the menu (it keeps it open, `close.delay` as set), and a click there is inside it, never an outside click and never reaching what's behind. The tiles are drawing only.
+- **The gaps are the menu's**. Its input is its whole box, as with a panel: the pointer over a gap is over the menu (it keeps it open, `close.delay` as set), and a click there is inside it, never an outside click and never reaching what's behind. The tiles are drawing only.
 - Tests: `tst_MenuTiles`.
 
 ### Hosts seen by modules

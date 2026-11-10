@@ -123,7 +123,7 @@ QtObject {
   onStateChanged: Qt.callLater(root._check)
 
   readonly property Timer _settle: Timer {
-    // behaviour timing: how long services take to report their state
+    // how long services take to report their state
     interval: 1500
     running: true
     onTriggered: root._armed = true

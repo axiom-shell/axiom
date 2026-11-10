@@ -12,7 +12,7 @@ Package `udisks` (`backend/internal/udisks/`, wired in `daemon/drives.go`) reads
 - **Volumes** are filesystems and LUKS containers; partition tables, extended partitions and swap are left out, and an unlocked LUKS volume reports its cleartext's filesystem and mount points.
 - **`drives.event`** comes only from signals after the sync: `added` once a volume is known or after 500 ms, `removed` only for drives that were announced.
 - **Writes** are shell-only. Mounting a mounted volume answers its mount point; unmount, lock and unlock are idempotent. An unlocked container's volume is found by its own id or its cleartext's, and an unlock answers only once the state shows the cleartext (at most 2 s), so a mount right after finds it.
-- **Testing:** `scripts/dev/drive-fixtures.sh up|down` sets up loop devices (`udisksctl --no-user-interaction`; LUKS passphrase `axiom-test`) for a scratch daemon run with `AXIOM_DRIVES_INCLUDE_LOOP=1` (on the machine's system bus, where UDisks is, so with `AXIOM_BLUETOOTH_AGENT=off`: the guard refuses it otherwise); the Go side is tested against a fake UDisks2 on `dbustest`.
+- **Testing:** `scripts/dev/drive-fixtures.sh up|down` sets up loop devices (`udisksctl --no-user-interaction`; LUKS passphrase `axiom-test`) for a scratch daemon run with `AXIOM_DRIVES_INCLUDE_LOOP=1` (on the machine's system bus, where UDisks is, so with `AXIOM_BLUETOOTH_AGENT=off`: on the machine's bus it would be a second Bluetooth agent otherwise); the Go side is tested against a fake UDisks2 on `dbustest`.
 
 ### The service
 `DrivesManager` (`qml/services/system/`) holds the daemon's state and every action.

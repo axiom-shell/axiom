@@ -31,7 +31,7 @@ One workspace layout serves everything that shows workspaces or moves between th
   - `stepWorkspace(direction, mode)`
   - `nthWorkspace(n, mode)`
   - `focusWindow`, for focusing a window on another workspace (used by the overview, dock, launcher and notifications).
-- Never dispatch `hl.dsp.focus({ workspace })` or `{ window }` directly. (Rule: CLAUDE.md › Services.)
+- Workspace switches and window focus go only through `CompositorManager` (`goToWorkspace`, `focusWindow`, …), never a direct `hl.dsp.focus({ workspace })` or `{ window }`, so every compositor behaves the same.
 - `CompositorManager` works out the legs (`{ id, axis }`) and hands them to the backend's `travel`; a backend without `workspaceSlide` just goes to the last one ([contract](../compositor/contract.md)).
 - `mode` is `go`, `move` or `moveSilent`.
 - Surfaces on a monitor pass their output's name; the focused one is the default. In a grid, an id outside that monitor's block is refused.

@@ -6,7 +6,6 @@ import qs.components.methods
 import qs.components.reusable
 import qs.components.forms
 
-// i18n: keys from the schema (WidgetLayout titles, descriptions)
 // One optional sizing override of a bar widget (a WidgetLayout key). Unset
 // it leaves the widget's own sizing, so it shows an "Override" button
 // rather than a number that would read as a real value.

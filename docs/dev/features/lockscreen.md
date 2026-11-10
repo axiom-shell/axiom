@@ -4,7 +4,7 @@
 > **Config:** `Lockscreen.mode`, `Lockscreen.lockCommand`, `Lockscreen.layout` (reader `LockscreenConfig`)
 > **Related:** [Idle](idle.md), [Greeter runtime](greeter-runtime.md), [Desktop](desktop.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Themes](../theming/themes.md), [Shell targeting](../core/shell-manager-targeting.md)
 
-This doc covers the three lock modes, how the built-in lock screen's layout of modules works (grid, hosts, password, background), and how it is edited and previewed. (Rule: `.claude/rules/services.md`, Locking; never lock the session while testing.)
+This doc covers the three lock modes, how the built-in lock screen's layout of modules works (grid, hosts, password, background), and how it is edited and previewed.
 
 ### Locking
 - `LockManager.lock()` is the one way to lock.
@@ -74,7 +74,7 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 #### Hosts
 - Modules get `host: { kind: "lockscreen", target, preview, key, bare, passwordBorder, greetingBorder }`.
 - **`bare`** is `!moduleBorders`: no card box.
-  - Unlike a bare edge menu module, it keeps its padding (`SlotContext.pad`), since nothing else pads it.
+  - Unlike a bare menu module, it keeps its padding (`SlotContext.pad`), since nothing else pads it.
 - **`Password` and `Greeting`** ignore `bare` here. Their boxes follow the layout's own `passwordBorder` / `greetingBorder` (off by default).
 - **Which modules may go here:** only module types whose `x-hosts` list `lockscreen`, showing nothing private. What each may do there is its `x-lockActions` ([Schema annotations](../core/schema-annotations.md)); with none it only shows. `check_structure` fails any `XManager.method(` call in such a type or a part it uses that is neither a read (its allowlist) nor one of its actions' methods, but one marked `// lock-inert: <reason>` (a call that gates itself off there).
   - Power's `session` restarts and shuts down asking twice, and never logs out.
@@ -135,4 +135,4 @@ Run by `axiom run`, the binary makes locking dependable (`backend/internal/locks
 ### Testing
 - Look at the lock screen through `LockManager.editor.startPreview()` (a `ScreenLayoutEditor`), called from a temporary `IpcTarget` in `qml/shell.qml`; revert the handler afterwards.
 - Put demo layouts on the draft only, then `resetChanges`.
-- Test `LockSurface` in a hidden window, never by locking for real: only the user can type the password.
+- Test `LockSurface` in a hidden window rather than locking for real: only you can type the password to get back in.

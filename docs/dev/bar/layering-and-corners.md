@@ -6,7 +6,7 @@
 
 How bars and the screen border share an edge through layer-shell ordering. Covers solid bars, bars inside the border, bars stacked on one edge, which bar gets a shared corner, transparent bars, the border being off, and the border's inward shadow window. Bar ends and pills are in [Bar ends and pills](bar-ends-pills.md).
 
-(Rule: `.claude/rules/bar.md`, Layer ordering. The order lives in `LayerStack.layers`, listed in [layer stacking](../generated/layers.md).)
+(The order lives in `LayerStack.layers`, listed in [layer stacking](../generated/layers.md).)
 
 ### The border
 - `Appearance.screenBorder` turns the border off.

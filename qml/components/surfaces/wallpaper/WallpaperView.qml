@@ -158,7 +158,7 @@ Item {
     property: "progress"
     from: 0
     to: 1
-    // behaviour timing: the user's transition length (Appearance.wallpaper.transition.duration)
+    // the user's transition length (Appearance.wallpaper.transition.duration)
     duration: Appearance.wallpaperTransitionDuration
     easing.type: WallpaperTransitions.easing(Appearance.wallpaperTransitionEasing)
     onFinished: root._rest()

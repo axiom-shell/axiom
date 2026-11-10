@@ -1,6 +1,6 @@
 // Package convert turns a format-1 config at its last version (75, as the
 // legacy migrations leave it) into format 2 at version 76: the unified
-// shape of docs/dev/core/config-v2.md. It runs once per file; the format-2
+// shape of docs/dev/core/config-manager.md. It runs once per file; the format-2
 // pipeline (defaults, pruning, validation) follows it. Pure: no I/O.
 package convert
 

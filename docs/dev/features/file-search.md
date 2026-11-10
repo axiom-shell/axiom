@@ -4,7 +4,7 @@
 > **Config:** `Launcher.providers.files.*` (reader `LauncherConfig`: `files`, `fileShowHidden`, `filesInSearch`, `fileThumbnails`)
 > **Related:** [Launcher](launcher.md), [Launcher providers](launcher-providers.md), [Default apps](default-apps.md), [protocol](../backend/protocol.md)
 
-The launcher's files: `~` (or `/files`) searches them, `~/` browses folders, `~` alone lists the recent files, and the main search shows the best few below the apps. The axiom daemon keeps its own index of the folders searched, current through inotify, so a search is a scan of memory, not of the disk. One rule shapes all of it: **building and keeping the index never slows anything down** (the maintainer, 2026-11-08: "The only concern I have is that building the index cannot slow anything down").
+The launcher's files: `~` (or `/files`) searches them, `~/` browses folders, `~` alone lists the recent files, and the main search shows the best few below the apps. The axiom daemon keeps its own index of the folders searched, current through inotify, so a search is a scan of memory, not of the disk. One rule shapes all of it: **building and keeping the index never slows anything down**.
 
 ### What the user gets
 - `~report` searches every folder searched; `~/Documents/` lists a folder from the disk; `~/Documents/rep` searches below it; `~` alone, the recent files (`recently-used.xbel` and what the launcher opened).

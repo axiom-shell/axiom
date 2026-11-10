@@ -13,7 +13,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 
 ### The facade
 - **Everything outside the backends goes through `CompositorManager`**: the window, output and workspace lists, focus, workspace switching, the keyboard layout, the cursor, the gaps, the blur, logging out. `check_structure.py` refuses `HyprlandManager.` anywhere else, and `SwayManager.`, `SwayIpcManager.`, `swaymsg` and `Quickshell.I3` outside the `Sway*` services, and `NiriManager.`, `NIRI_SOCKET` and a `niri` process outside the `Niri*` services. A backend's text and state helpers (`HyprState`, `SwayState`, `NiriState`) are refused outside its own services and helpers too.
-- The state comes in [neutral shapes](contract.md#shapes): plain snapshots rebuilt on events, the same from every backend. Never hand a compositor's own objects (`lastIpcObject`, `HyprlandMonitor`) past the backend.
+- The state comes in [neutral shapes](contract.md#shapes): plain snapshots rebuilt on events, the same from every backend. A compositor's own objects (`lastIpcObject`, `HyprlandMonitor`) past the backend.
 - Logic that doesn't depend on the compositor lives in `CompositorManager`, so each backend only has primitives:
   - the workspace layout: `goToWorkspace`, `stepWorkspace`, `nthWorkspace`, `workspaceBase`, `workspaceIds`, `stepStrip`
   - the remap on a layout change (`WorkspaceGeometry.remapWorkspaces`)

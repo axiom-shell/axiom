@@ -21,11 +21,11 @@ Rectangle {
     onStopped: root.opacity = 1
     PropertyAnimation {
       to: 1
-      duration: 500 // behaviour timing: the cursor blink
+      duration: 500 // the cursor blink
     }
     PropertyAnimation {
       to: 0
-      duration: 500 // behaviour timing: the cursor blink
+      duration: 500 // the cursor blink
     }
   }
 }

@@ -8,7 +8,6 @@ import qs.components.reusable
 import qs.components.forms
 import qs.components.content.base
 
-// i18n: keys from the schema (titles, descriptions, type labels)
 // Bar editor, beside the board: the selected widget's options and sizing
 // (as the running bars report it) and the library of widget types to drag
 // onto the bar, side by side (inspector about 55%), or one over the other

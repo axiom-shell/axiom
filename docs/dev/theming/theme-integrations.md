@@ -4,7 +4,7 @@
 > **Config:** `ThemeIntegrations.*`
 > **Related:** [Themes](themes.md), [Schema annotations](../core/schema-annotations.md), [Hyprland config modes](../hyprland/config-modes.md)
 
-How axiom themes other apps: the daemon writes each app's own `axiom.*` file, and the hookup makes the app load it. (Rule: CLAUDE.md › Theme, animation, text.)
+How axiom themes other apps: the daemon writes each app's own `axiom.*` file, and the hookup makes the app load it.
 
 ### Running the integrations (ThemeManager)
 - `themeIntegrations()` asks the daemon's `theme.integrate` (`{ theme, keys }`: the theme file, the switched-on `ThemeIntegrations` keys to run) and logs each integration's `error` or `warnings` as a warning.
@@ -35,7 +35,7 @@ How axiom themes other apps: the daemon writes each app's own `axiom.*` file, an
 - foot: the template is foot 1.20's `[colors]`; a foot accepting `[colors-dark]`/`[colors-light]` (1.28 rejects `[colors]`) gets the theme in both, an older one its cursor in `[cursor]` (asked of the installed foot with `--check-config`).
 
 ### Changes from the scripts (2026-10)
-The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (maintainer, for stage 4: "ensure the go implementation is as good as it can be and faithful to go - color drift is okay and go is the forever home so changes now are better"). On purpose:
+The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go. On purpose:
 - Contrast flooring keeps the most chroma that fits in sRGB at each lightness (the jq version shrank chroma by steps of 5%), so a floored color comes out a little more saturated: terminal colors on light themes shift slightly. Colors that already passed are unchanged (Catppuccin Mocha's files came out byte for byte the same).
 - An app that isn't installed no longer fails its integration: the file is written anyway (an app installed later finds it), and only the reload needs the app.
 - JSON files (VS Code, Zed, Neovim) are rendered from templates or Go, so their whitespace and key order differ (Neovim's maps are sorted); their content is the same.
@@ -129,13 +129,11 @@ The `theme_*.sh` scripts and their shared `theme_env.sh` were ported to Go (main
 - Only Apply, on the user's click, edits a user's config.
 
 ### Adding an integration
-- An entry in `integrations.Table` (`backend/internal/theme/integrations/table.go`), usually a template in its `templates/`; anything it does beyond writing the file (a reload) is an entry in `effects` (`backend/internal/theme/effects.go`). Recipe: `docs/recipes/theme-integration.md`.
-- A schema boolean under `ThemeIntegrations` with its `x-hookup` (and `x-hookupNote` if needed; `x-commands` if the app's binary isn't named `<key>`). `ThemeManager.integrations` picks it up from the schema; a Go test fails when the table and the schema's switches differ.
-- A property in `qml/config/ThemeIntegrations.qml` (ThemeManager reads `ThemeIntegrations[key]`).
+An integration is an entry in `integrations.Table` (usually with a template), a switch under `ThemeIntegrations` in the schema with its `x-hookup`, and a reader property; a Go test fails when the table and the schema's switches differ. The steps and gotchas: [theme-integration recipe](../../recipes/theme-integration.md).
 
 ### Testing
 - `backend/internal/theme/integrations`: every file of every integration for a dark and a light theme against goldens (`go test ./internal/theme/integrations -update` rewrites them; read the diff), every shipped theme rendered through every integration (JSON and plist parse, colors well-formed), the terminal palette's contrast, and the merges (ncspot, kdeglobals, foot).
 - `backend/internal/theme`: the writer in a scratch home (only axiom's files and the missing main configs written, links written through, kdeglobals kept in step only once chosen, the missing-target errors, runs joining one going).
 - `backend/internal/hookup`: each place's edit, done/skipped/conflict decisions, resolving (candidates, shells, profiles). `backend/internal/compositor/edit` (`hookup_test.go`): every schema hookup applied to empty configs in a scratch home, links followed and backed up, read-only links skipped or wrapped, profiles, kdeglobals' two targets, conflicts, `requires`, copies, the compositor's given targets.
 - `tests/scripts/test_scripts.py` checks the Neovim module (`NvimModule`).
-- Never apply a hookup to the real configs: the Go tests run in a scratch home; `hookup.apply` goes only to a scratch daemon (CLAUDE.md › Never; `guard.py` refuses it by hand against the live one).
+- A hookup's Apply edits the user's real app configs: the Go tests run in a scratch home, and `hookup.apply` goes only to a scratch daemon.

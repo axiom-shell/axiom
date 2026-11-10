@@ -6,7 +6,6 @@ import qs.config
 import qs.components.reusable
 import qs.components.methods
 
-// i18n: keys from callers and the schema (titles, descriptions, type labels)
 // A choice from a list: the box beside its label on a wide form
 // (Widget.fieldInlineFrom), under it on a narrow one
 GridLayout {

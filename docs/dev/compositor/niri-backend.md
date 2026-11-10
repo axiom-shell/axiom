@@ -11,7 +11,7 @@
 - Nested, niri's `Mod` is Alt (`mod-key-nested`); axiom writes `Super`, never `Mod`.
 - Keep the nested window visible: while it isn't shown on the host (another workspace), niri's winit backend stops its event loop, its IPC times out and the axiom in it hangs on it, so an `axiom ipc` call into it never returns. It carries on once shown again. That's niri's behaviour, not axiom's; `nested.sh` says so as it starts niri.
 - axiom's Restart shell and its one-per-display check end only the axioms on their own display: the nested and the live one never end each other ([services pattern](../core/services-pattern.md) › One axiom per display).
-- Commands to the nested niri take its socket: `NIRI_SOCKET=$XDG_RUNTIME_DIR/niri.wayland-N.PID.sock niri msg …`. The guard refuses `output`, `quit` and `load-config-file` on the session's own niri (CLAUDE.md › Never).
+- Commands to the nested niri take its socket: `NIRI_SOCKET=$XDG_RUNTIME_DIR/niri.wayland-N.PID.sock niri msg …`. `output`, `quit` and `load-config-file` on the session's own niri change or end your real session, so only send them to a nested one.
 
 ### IPC (through axiom)
 - Quickshell has no niri module: the daemon talks to `$NIRI_SOCKET` for `NiriManager` (`daemon/compositorsocket.go`, shell only), never a process.

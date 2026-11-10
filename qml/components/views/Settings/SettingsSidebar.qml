@@ -6,7 +6,6 @@ import qs.services.ui
 import qs.components.reusable
 import qs.components.content.base
 
-// i18n: keys from the schema (category names, card titles)
 // Settings page, left: search and the category list; the selected
 // category also lists its cards, and clicking one scrolls the page to it.
 // The selection and search text live in SettingsManager, so they survive

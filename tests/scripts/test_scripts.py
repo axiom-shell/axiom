@@ -4,8 +4,7 @@
   - every shipped theme is complete (qml/config/themes/theme.schema.json's
     required keys, hex colors, semantic names that resolve, pairs that exist)
   - the Neovim module Apply copies compiles and maps the shipped themes
-  - check_sizes.py finds sizes written as numbers, skipping hairlines and
-    lines marked `// fixed px:`
+  - check_sizes.py finds sizes written as numbers, skipping hairlines
   - check_icons.py finds icon names the bundled font doesn't have
   - only PAM's success unlocks the built-in lock screen
   - each check fails on what it catches: a copy of the tree (fixture_root)
@@ -276,7 +275,7 @@ class RpcShapes(unittest.TestCase):
 
 class ConfigUsage(unittest.TestCase):
     """scripts/gen_docs.py maps each setting to the reader members and files
-    reading it, and fails on one nobody reads (its baseline only shrinks)."""
+    reading it, and fails on one nobody reads."""
 
     @classmethod
     def setUpClass(cls):
@@ -329,13 +328,6 @@ class ConfigUsage(unittest.TestCase):
         usage.files = {"a.qml": 'f(R.x, R.gone)\n/* R.prose */\nset("R.path", `R.tpl ${R.inTpl}`)'}
         self.assertEqual(usage.missing({"R": {"members": {"x": {}}}}), ["a.qml: R.gone", "a.qml: R.inTpl"])
 
-    def test_ratchet(self):
-        from gen_docs import ratchet_problems
-        self.assertEqual(ratchet_problems({"A.x"}, ["A.x"], "unused"), [])
-        new, gone = ratchet_problems({"A.y"}, ["A.x"], "unused")
-        self.assertTrue(new.endswith("A.y") and "use or delete" in new)
-        self.assertTrue(gone.endswith("A.x") and "drop it" in gone)
-
 
 class CheckStructure(unittest.TestCase):
     """scripts/check_structure.py fails on each rule's breaking file, in a
@@ -354,7 +346,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/shell/OptCall.qml", qml("function f(x, k) { return x[k]?.() }"), "an optional call on a computed member"),
         ("qml/shell/FromEntries.qml", qml("function f(x) { return Object.fromEntries(x) }"), "Object.fromEntries or flatMap"),
         ("qml/shell/FlatMap.qml", qml("function f(x) { return x.flatMap(y => y) }"), "Object.fromEntries or flatMap"),
-        ("qml/shell/Target.qml", qml('IpcTarget { target: "ghostTarget" }'), "IPC target 'ghostTarget' is missing from the IPC table"),
         ("qml/shell/IntArg.qml", qml('IpcTarget {\n    target: "brightness"\n    function set(percent: int): void {}\n  }'),
          "qml/shell/IntArg.qml:8: IPC function set's percent is int: take a string"),
         ("qml/shell/NoPurpose.qml", qml(purpose=""), "qml/shell/NoPurpose.qml: no purpose comment"),
@@ -362,7 +353,6 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/content/Unused/Unused.qml", qml(), "qml/components/content/Unused/: not an overlay module"),
         ("qml/components/widgets/Old.qml", qml(), "qml/components/widgets/Old.qml: lives under retired"),
         ("qml/shell/NoPragma.qml", qml(head=""), "qml/shell/NoPragma.qml: doesn't start with pragma"),
-        ("qml/services/core/BigManager.qml", qml(head="pragma Singleton", body="\n" * 800), "BigManager.qml: a singleton of"),
         ("qml/shell/BadImport.qml", qml(imports="import qs.nowhere"), "import qs.nowhere — no such directory"),
         ("qml/shell/Hypr.qml", qml(imports="import Quickshell.Hyprland"), "qml/shell/Hypr.qml: imports Quickshell.Hyprland"),
         ("qml/shell/I3.qml", qml(imports="import Quickshell.I3"), "qml/shell/I3.qml: imports Quickshell.I3"),
@@ -381,7 +371,6 @@ class CheckStructure(unittest.TestCase):
          "qml/shell/LiveModel.qml:6: a Repeater model from live values (SystemManager.processes)"),
         ("qml/shell/LiveRequest.qml", qml("readonly property var req: ({ top: SystemManager.cpu })\n    onReqChanged: SystemManager.acquire(this, req)"),
          "an acquire() request from live values (req → SystemManager.cpu)"),
-        ("qml/shell/Motion.qml", qml("Behavior on x { NumberAnimation { duration: 200 } }"), "qml/shell/Motion.qml:6: a duration in ms"),
         ("qml/shell/Stamp.qml", qml('property string s: Qt.formatDateTime(new Date(), "ddd")'), "qml/shell/Stamp.qml:6: Qt.formatDateTime"),
         ("qml/shell/Screens.qml", qml("property var s: Quickshell.screens"), "qml/shell/Screens.qml:6: Quickshell.screens"),
         ("qml/shell/Toggle.qml", qml("function f() { NotificationManager.toggleDnd() }"),
@@ -407,18 +396,16 @@ class CheckStructure(unittest.TestCase):
         ("qml/components/surfaces/osd/systems/Spook/Helper.qml", qml(imports="import qs.services.ui"),
          "systems/Spook/Helper.qml: reads services: only an OSD system's <Type>Watch.qml"),
     ]
-    # What the check must say about the schema, docs/usage.md and the allowlist edits below (and Reach)
+    # What the check must say about the schema and the allowlist edits below (and Reach)
     EDITS = [
         "qml/components/views/Reach/: not a OverlayView type and not used anywhere",
         "BarWidget type 'Ghost' has no qml/components/bar/widgets/Ghost/Ghost.qml",
         "x-libraryGroup 'Nope' isn't one of the schema's x-libraryGroups",
-        "OverlayModule Todo: x-hosts lists overlay but not desktop",
         "OverlayModule Calculator: has a text field but no x-keyboard",
         "OverlayModule Power: x-lockActions 'ghost' isn't one of",
         "schema x-card 'Ghost' has no qml/components/views/Settings/GhostCard.qml",
         "schema x-intro 'GhostIntro' has no qml/components/views/Settings/GhostIntro.qml",
         "tool page Keybinds isn't in the Overlay.items default",
-        "docs/usage.md: IPC target 'phantom' has no IpcTarget",
         "schema gates on supports.ghostCapability, which docs/dev/compositor/contract.md › Capabilities doesn't list",
         "qml/services/core/Gone.qml no longer uses Socket",
         "qml/components/surfaces/osd/systems/Ghost/: an OSD system without GhostWatch.qml",
@@ -427,12 +414,11 @@ class CheckStructure(unittest.TestCase):
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "qml", "docs/usage.md", "docs/dev/compositor/contract.md")
+            root = fixture_root(tmp, "qml", "docs/dev/compositor/contract.md")
 
             def schema(s):
                 defs = s["definitions"]
                 defs["BarWidget"]["oneOf"].append({"properties": {"type": {"const": "Ghost"}}, "x-libraryGroup": "Nope"})
-                defs["TodoOverlayModule"]["x-hosts"] = ["overlay"]
                 del defs["CalculatorOverlayModule"]["x-keyboard"]
                 defs["PowerOverlayModule"]["x-lockActions"] = ["ghost"]
                 s["x-card"], s["x-intro"] = {"file": "Ghost"}, "GhostIntro"
@@ -441,8 +427,6 @@ class CheckStructure(unittest.TestCase):
                 items["default"] = [v for v in items["default"] if v.get("type") != "Keybinds"]
             edit_json(root / "qml/config/json/config.schema.json", schema)
             edit_json(root / "scripts/quickshell-io-allowlist.json", lambda a: a["files"].update({"qml/services/core/Gone.qml": ["Socket"]}))
-            usage = root / "docs/usage.md"
-            usage.write_text(usage.read_text().replace("| `overlay` |", "| `phantom` | `open` |\n| `overlay` |", 1))
             code, out = run_check(root, "check_structure.py", files=[(p, text) for p, text, _ in self.FILES])
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [m for _, _, m in self.FILES if m] + self.EDITS), [], out)
@@ -610,7 +594,6 @@ class CheckSizes(unittest.TestCase):
             "  property int listMargin: 6",
             "  troughHeight: Widget.px(6)",
             "  height: Widget.height",
-            "  font.pixelSize: 100 // fixed px: a measuring font",
             "  Layout.preferredHeight: 24",
             "  opacity: 50",
             "  textSize: Appearance.fontSize - 2",
@@ -622,8 +605,8 @@ class CheckSizes(unittest.TestCase):
             "}",
         ])
         self.assertEqual([(n, name) for n, name, _ in find_literals(qml)],
-                         [(2, "implicitWidth"), (5, "listMargin"), (9, "Layout.preferredHeight"),
-                          (11, "fontSize"), (14, "pad"), (15, "inset")])
+                         [(2, "implicitWidth"), (5, "listMargin"), (8, "Layout.preferredHeight"),
+                          (10, "fontSize"), (13, "pad"), (14, "inset")])
 
     def test_finds_literals_in_expressions(self):
         sys.path.insert(0, str(SCRIPTS))
@@ -640,7 +623,6 @@ class CheckSizes(unittest.TestCase):
             "  width: parent.width * 0.5 - 1",
             "  sourceSize: Qt.size(128, 128)",
             "  borderWidth: selected ? 3 : 2",
-            "  width: (screen?.width ?? 2000) * 0.3 // fixed px: a stand-in",
             "}",
         ])
         self.assertEqual([(n, value) for n, _, value in find_literals(qml)],

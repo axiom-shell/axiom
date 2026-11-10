@@ -4,7 +4,7 @@
 > **Config:** `Bars` (`Bar`, `BarWidget` definitions)
 > **Related:** [Widget style](widget-style.md), [Widget shapes and runs](widget-shapes-runs.md), [Layering and corners](layering-and-corners.md), [Bar editor](bar-editor.md), [Menus](../menus/overview.md), [Popout hosts](../popouts/hosts-and-switching.md)
 
-How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and edge menus, the icon rules, auto-hide, and why bar motion animates what is drawn rather than what is measured.
+How a bar is built from config: the panel per bar, the widget hosts, the layout math, how widgets open popouts and menus, the icon rules, auto-hide, and why bar motion animates what is drawn rather than what is measured.
 
 ### Bars from config
 - `qml/shell/Bar.qml` renders one `BarPanel` per entry in `ScreenEdgeManager.bars` (a `Variants`/model). Multi-monitor and multi-panel bars therefore come from config data, not from hardcoded code.
@@ -46,7 +46,7 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - See [Popout hosts](../popouts/hosts-and-switching.md).
 
 ### Menu popouts
-- Every widget except Separator has a `popout`: `enabled` and `menu`, an edge menu id (`x-options: menus`) shown under the switch. Button's is a menu only (its click action is separate).
+- Every widget except Separator has a `popout`: `enabled` and `menu`, a menu id (`x-options: menus`) shown under the switch. Button's is a menu only (its click action is separate).
   - A widget with a popout of its own opens that menu in its place. A widget without one gets a "Menu popout" switch.
 - `BarWidgetHost` holds the one anchor for the menu:
   - It is a `PopoutAnchor` with `menu`, hovered through the host's `hitArea` but sized to the module (not the hit area's powerline reach back), so a menu opened at its widget (`popoutAtWidget`) centres on it.
@@ -60,13 +60,12 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - `StyledIcon` draws anything that isn't a name (a glyph, or text typed into an icon field) in the text font.
 - Services, schema defaults (`x-icon`, icon fields) and launcher `glyph`s hold names.
 - `DependencyManager` warns once when the font is missing.
-- (Rule: CLAUDE.md › UI, Icons.)
 
 ### Auto-hide (`autoHide`, `BarRevealManager`)
 - `autoHide`: `never` (default), `always`, or `whenCovered` (hidden only while a window covers its slot, or a fullscreen window is on its screen: `CompositorManager.windowsCover` over its whole edge, `hasFullscreen`).
 - **Shown** (`BarRevealManager.shownOf(bar)`, per running bar id): `never`, or pinned, or hovered, or held, or revealed for a moment, or (`whenCovered`) not covered. One one-shot Timer runs to the earliest deadline (a moment's end, a hover waiting on its delay).
   - **Hover:** the bar's `HoverHandler`; hidden, its window's mask is only a `ScreenEdge.triggerSize` strip at its outer edge (`edgeStrip`). Entering a hidden bar shows it after `timing.openDelay`; leaving hides it after `timing.closeDelay`. Revealed, the mask is the bar where it rests (`barSlot`), so the pointer holds it while it slides in.
-  - **Holds** (`hold(id, key, on)`, reported by `BarPanel`): its popouts open (`BarPopouts.occupied`), an edge menu opened from a widget on it (`MenuManager.anchors`), the bar editor open with it selected. Let go, it stays one close delay longer.
+  - **Holds** (`hold(id, key, on)`, reported by `BarPanel`): its popouts open (`BarPopouts.occupied`), a menu opened from a widget on it (`MenuManager.anchors`), the bar editor open with it selected. Let go, it stays one close delay longer.
   - **Moments** (`reveal(id, ms)`): a workspace change on its monitor (`revealOnWorkspace`, from `CompositorManager.outputs`' active and special workspace; the first look only records them), a widget's news (`attention(id)`, with `revealOnActivity`; ignored in the bar's first 2 s, its widgets' startup; below) and the IPC `reveal`, each for `revealFor`.
   - **Pinned** (`setPinned`; the IPC `toggle`): shown until unpinned, and reserving its space (below). `hideNow` unpins and drops hover and moments.
   - **IPC** (`IpcTarget` `bar`, [usage](../../usage.md)): `reveal <id>` (a moment), `toggle <id>` (pin or unpin; all pinned when any isn't), `hide <id>` (`hideNow`), where `<id>` is a bar's config id (its instance on every monitor) or `focused` / `""` (the auto-hiding bars on the focused monitor); an unknown id is `not_found`. The keybind action `bar` calls them (toggle, open → `reveal`, close → `hide`; its argument defaults to `focused`, `KeybindManager.argumentOptions` lists the auto-hiding bars).
@@ -85,4 +84,3 @@ How a bar is built from config: the panel per bar, the widget hosts, the layout 
 - Backgrounds and separator marks follow the hosts as drawn.
 - A widget that is going keeps its last place and colors while its host still fades or shrinks out, going with it. A host that stays drawn (a delegate reused for another widget, a widget dropping its background) lets go once its size settles.
 - Colors (`WidgetBackground`, `IconTextWidget`) fade with ColorAnimations. The tray's icons grow in (Grid `add`/`move`).
-- (Rule: CLAUDE.md › Theme, animation, text.)
