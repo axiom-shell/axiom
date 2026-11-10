@@ -317,8 +317,9 @@ QtObject {
   }
 
   // A new free menu for the selected menu's Submenu module at
-  // `moduleIndex` to open: added to the draft, set as the module's `menu`
-  // (undoable there), then selected and held open beside it
+  // `moduleIndex` to open: added to the draft, set as the module's `menu`,
+  // then selected and held open beside it (selecting it clears the
+  // parent's undo history, as any change of menu does: scopeKey)
   function addSubmenu(moduleIndex) {
     if (!root.layout.module(moduleIndex))
       return;

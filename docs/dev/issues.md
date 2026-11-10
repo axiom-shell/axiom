@@ -118,7 +118,7 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ### An edge menu picker shows a blank for no menu
 - **Where:** `qml/components/forms/SchemaField.qml` (`optionLabels`), `qml/config/schema/definitions/kinds/WidgetBase.yaml` (`popout.menu`)
-- **What:** A field with `x-options: edgeMenus` (a widget's `popout.menu`, a Button's `menu`, a Submenu module's `menu`) lists "" first (`SettingsManager.optionsFor`), but `optionLabels` builds its labels from `EdgeMenusConfig.menus` alone, so the field's `x-emptyLabel` ("Its own popout", "None") is never used and the combo shows an empty box for no menu (seen in the bar editor's Clock inspector, Open instead, 2026-11-10). The other list sources (`regions`, `calendars`) add their `x-emptyLabel` under "".
+- **What:** A field with `x-options: edgeMenus` (a widget's `popout.menu`, a Button's `menu`, a Submenu module's `menu`) lists "" first (`SettingsManager.optionsFor`), but `optionLabels` builds its labels from `EdgeMenusConfig.menus` alone, so the field's `x-emptyLabel` ("Its own popout", "None") is never used and the combo shows an empty box for no menu (seen in the bar editor's Clock inspector, Open instead, 2026-11-10). A Button's `menu` (`qml/components/bar/widgets/Button/schema.yaml`) has no `x-emptyLabel` at all, so it needs one too. The other list sources (`regions`, `calendars`, `screens`) add their `x-emptyLabel` under "".
 - **Size:** trivial
 - **Found:** 2026-11-10, while building the menus rework's creation shortcuts
 
