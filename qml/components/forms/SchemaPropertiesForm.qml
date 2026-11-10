@@ -175,12 +175,18 @@ ColumnLayout {
             links: cell.modelData.schema?.["x-link"]
           }
 
-          SettingsLink {
+          // Made only for a field with an action, not under every field
+          Loader {
+            id: actionLink
             readonly property var action: root.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
             Layout.fillWidth: true
-            text: action?.text ?? ""
-            icon: action?.icon ?? ""
-            run: action?.run ?? null
+            active: actionLink.action !== null
+            visible: active
+            sourceComponent: SettingsLink {
+              text: actionLink.action.text
+              icon: actionLink.action.icon ?? ""
+              run: actionLink.action.run
+            }
           }
         }
       }
