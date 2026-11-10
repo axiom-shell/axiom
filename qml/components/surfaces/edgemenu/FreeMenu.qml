@@ -72,6 +72,11 @@ PopoutWrapperBase {
 
   // The box at its content's size (a submenu's stretch drawn round it)
   readonly property Item contentItem: loader.item as Item
+  // Read through a var: EdgeMenuBody's members, on an Item
+  readonly property var _body: root.contentItem
+  // No box (`background: none`): its cards are tiles, input on them alone
+  // (CardMask), a crossing between two given the close delay's floor
+  readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
   readonly property real boxWidth: Math.ceil(root.contentItem?.implicitWidth ?? 0) + root.contentPadding * 2
   readonly property real boxHeight: Math.ceil(root.contentItem?.implicitHeight ?? 0) + root.contentPadding * 2
   // Room for the modules down the free area (across it, laid out as a
@@ -223,7 +228,10 @@ PopoutWrapperBase {
     menu: root.menu
     screen: root.screen
     window: panel
-    onWarpRequested: CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2)
+    onWarpRequested: {
+      const at = panel.aim();
+      CompositorManager.warpCursorToLayer("axiom-menu", root.screen?.name ?? "", panel.width, panel.height, at.x, at.y);
+    }
   }
 
   // What its box meets (SurfaceContext.free), as an EdgeSurface and its
@@ -304,13 +312,39 @@ PopoutWrapperBase {
     readonly property var popoutRoom: null
 
     // Input on the box alone, once it's granted its place (and its
-    // header's menu while that's open)
+    // header's menu while that's open); tiled, on its cards, its buttons
+    // and its header alone (CardMask), so a click between two cards
+    // reaches what's behind
+    readonly property bool takesInput: root.claimed && !menuSlot.idle
     mask: Region {
-      item: root.claimed && !menuSlot.idle ? boxArea : null
-      regions: [panel.headerMenuArea]
+      item: panel.takesInput && !root.tiled ? boxArea : null
+      regions: [panel.headerMenuArea].concat(panel.takesInput && root.tiled ? [cardMask] : [])
     }
     property Region headerMenuArea: Region {
       item: headerMenu.visible ? headerMenu.background : null
+    }
+    // Its content's top-left in the window (EdgeMenuBody's coordinates)
+    readonly property point contentAt: Qt.point(boxArea.x + root.contentPadding, boxArea.y + root._stretchTop + root.contentPadding)
+    property CardMask cards: CardMask {
+      id: cardMask
+      // (its header: the box's top padding, over the content)
+      rects: (root._body?.maskRects ?? []).concat(header.visible ? [
+        {
+          "x": -root.contentPadding,
+          "y": -root.contentPadding,
+          "width": root.boxWidth,
+          "height": root.contentPadding
+        }
+      ] : [])
+      offset: panel.contentAt
+      box: boxArea
+    }
+    // Where a reveal moves the pointer: the box's centre, or tiled, the
+    // card nearest it (MenuTiles.aim)
+    function aim() {
+      const centre = Qt.point(boxArea.x + boxArea.width / 2, boxArea.y + boxArea.height / 2);
+      const card = root.tiled ? MenuTiles.aim(cardMask.rects, Qt.point(centre.x - panel.contentAt.x, centre.y - panel.contentAt.y)) : null;
+      return card ? Qt.point(panel.contentAt.x + card.x, panel.contentAt.y + card.y) : centre;
     }
 
     // The box, in the window (as drawn, a submenu's stretch included)

@@ -125,8 +125,25 @@ EdgePopout {
     frame: root.frame
     onWarpRequested: {
       const box = root.boxInWindow;
-      CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, box.x + box.width / 2, box.y + box.height / 2);
+      const at = root.contentInWindow;
+      // Tiled, the card nearest the box's centre (MenuTiles.aim)
+      const card = root.tiled ? MenuTiles.aim(cardMask.rects, Qt.point(box.x + box.width / 2 - at.x, box.y + box.height / 2 - at.y)) : null;
+      const x = card ? at.x + card.x : box.x + box.width / 2;
+      const y = card ? at.y + card.y : box.y + box.height / 2;
+      CompositorManager.warpCursorToLayer(root.layerNamespace, root.screen?.name ?? "", root.window.width, root.window.height, x, y);
     }
+  }
+
+  // No box (`background: none`): its cards are tiles, held off its edge
+  // (detachedOf), input on them alone (CardMask), a crossing between two
+  // given the close delay's floor
+  readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
+  maskRegions: root.tiled ? cardMask : null
+  CardMask {
+    id: cardMask
+    rects: root._body?.maskRects ?? []
+    offset: root.contentInWindow
+    box: root.boxItem
   }
 
   // Asked for again while open (EdgeMenuManager.engageRequested): it comes

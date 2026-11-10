@@ -95,6 +95,7 @@ Item {
   implicitHeight: root.vertical ? root.length : moduleGrid.implicitHeight
 
   Flickable {
+    id: view
     anchors.fill: parent
     contentWidth: moduleGrid.implicitWidth
     contentHeight: moduleGrid.implicitHeight
@@ -115,11 +116,29 @@ Item {
     }
   }
 
+  // Its cards as shown, in its own coordinates (MenuTiles.shown: scrolled,
+  // cut to the view, null out of sight), and what a tiled menu takes
+  // input on: those and its buttons (MenuTiles.union; CardMask)
+  readonly property var cardRects: MenuTiles.shown(moduleGrid.cardRects, {
+    "x": view.contentX,
+    "y": view.contentY
+  }, {
+    "width": root.width,
+    "height": root.height
+  })
+  readonly property var maskRects: MenuTiles.union(root.cardRects.concat([buttons.visible ? {
+      "x": buttons.x,
+      "y": buttons.y,
+      "width": buttons.width,
+      "height": buttons.height
+    } : null]))
+
   // The menu's buttons: in the corner away from its edge, at the end,
   // over the modules' corner (with no edge, the top right)
   readonly property bool pinned: EdgeMenuManager.isPinned(root.menu.id)
   readonly property bool poppedOut: EdgeMenuManager.isPoppedOut(root.menu.id)
   Row {
+    id: buttons
     z: 2
     spacing: Widget.spacing / 4
     anchors.top: root.edge === "top" ? undefined : parent.top

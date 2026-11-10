@@ -126,6 +126,13 @@ PopoutWrapperBase {
   readonly property var triggerWindow: trigger
   readonly property string layerNamespace: root.slidesUnder ? "axiom-popout-under" : root.overNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
+  // ...the box as an item (a CardMask's `box`), and its content's top-left
+  // in the window where it rests
+  readonly property Item boxItem: boxArea
+  readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
+  // Input on these regions instead of its box (in the window's
+  // coordinates: a tiled edge menu's cards, CardMask), null for the box
+  property var maskRegions: null
   // Its content's top-left on the screen as it's drawn now (a submenu's
   // stretch above it left out): where a popped-out edge menu's free box
   // puts its content (EdgeMenuManager.popOut)
@@ -498,10 +505,11 @@ PopoutWrapperBase {
 
     // A detached one takes input on its box alone: its surface reaches
     // back over the bars (and the strip it slides through), which keep
-    // their own; none until it's granted its place, or while it's given
-    // it up
+    // their own; with `maskRegions`, on those alone; none until it's
+    // granted its place, or while it's given it up
     mask: Region {
-      item: !root.claimed ? null : placement.detached ? boxArea : surface
+      item: !root.claimed || root.maskRegions !== null ? null : placement.detached ? boxArea : surface
+      regions: root.claimed && root.maskRegions !== null ? [root.maskRegions] : []
     }
 
     Item {
