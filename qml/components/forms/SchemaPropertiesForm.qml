@@ -43,6 +43,11 @@ ColumnLayout {
   // default, and a dot while it has an unsaved edit) when set: a hook
   // telling whether the field at a path ([key]) has one. null: no marks
   property var changedAt: null
+  // A hook giving a field an action, drawn as a link under it
+  // (SettingsLink's `run`): given its path ([key], or [key, field] in a
+  // nested object) and schema, { text, icon, run } or null for none (the
+  // edge menu pickers' New menu…)
+  property var fieldAction: null
 
   // Emitted with the key ([key]) of the edited field and its value: a
   // nested object's field as the whole object
@@ -168,6 +173,14 @@ ColumnLayout {
           FieldLinks {
             Layout.fillWidth: true
             links: cell.modelData.schema?.["x-link"]
+          }
+
+          SettingsLink {
+            readonly property var action: root.fieldAction ? root.fieldAction(cell.modelData.path, cell.modelData.schema) : null
+            Layout.fillWidth: true
+            text: action?.text ?? ""
+            icon: action?.icon ?? ""
+            run: action?.run ?? null
           }
         }
       }

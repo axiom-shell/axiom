@@ -21,6 +21,8 @@ FieldGroup {
   property bool pairs: false
   // Each field's change marks (SchemaPropertiesForm.changedAt)
   property var changedAt: null
+  // Each field's action (SchemaPropertiesForm.fieldAction)
+  property var fieldAction: null
   property string problem
   property string emptyText
 
@@ -47,6 +49,7 @@ FieldGroup {
     numberMode: root.numberMode
     pairs: root.pairs
     changedAt: root.changedAt
+    fieldAction: root.fieldAction
     onEdited: (path, value) => root.edited(path, value)
     onDiscardAt: path => root.discardAt(path)
   }

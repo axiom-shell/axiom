@@ -316,6 +316,19 @@ QtObject {
     return menu;
   }
 
+  // A new free menu for the selected menu's Submenu module at
+  // `moduleIndex` to open: added to the draft, set as the module's `menu`
+  // (undoable there), then selected and held open beside it
+  function addSubmenu(moduleIndex) {
+    if (!root.layout.module(moduleIndex))
+      return;
+    const menu = root._newMenu("submenu");
+    root.layout.updateModuleProperty(moduleIndex, "menu", menu.id);
+    root.localMenus.push(menu);
+    root.applyChanges();
+    root._selectNew();
+  }
+
   function duplicateMenu(index) {
     const menu = root.localMenus?.[index];
     if (!menu)
