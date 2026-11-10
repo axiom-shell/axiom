@@ -80,6 +80,63 @@ QtObject {
     return Math.max(rest, Math.ceil(along));
   }
 
+  // A split cell (a scratchpad with `scratchpadSplit`) along the bar is
+  // [pad][label ink][pad] divider [pad][icons ink][pad]: the divider splits
+  // it into two compartments, each content centred in its own, the same pad
+  // on all four sides. `label` is the label's ink length, `count` the app
+  // icons, `along` the divider's (dividerAlong). The functions below give
+  // each part; WorkspaceCell and CellContents only read them.
+
+  // The padding round each content of a split cell, its ends and either
+  // side of the divider (the gap between several icons stays iconGap)
+  function splitPad(thickness) {
+    return Math.round(thickness * 0.25);
+  }
+
+  // How far the divider reaches across the bar in a cell `thickness` thick
+  // (a chevron's is shorter than a line's for its slant): the strip's
+  // divider (StripDivider) too
+  function dividerLength(style, thickness) {
+    return thickness * (style === "chevron" ? 0.6 : 0.5);
+  }
+
+  // The divider's size along the bar, of the bar's separator `style` and
+  // `sepThickness` (look.separators; none draws a line): a line or dot's
+  // own, a slash's with its lean, a chevron's glyph
+  function dividerAlong(thickness, style, sepThickness) {
+    const across = root.dividerLength(style, thickness);
+    switch (style) {
+    case "dot":
+      return Math.ceil(sepThickness * 2);
+    case "slash":
+      return Math.ceil(sepThickness + across * 0.35);
+    case "chevron":
+      return Math.ceil(across);
+    }
+    return Math.ceil(sepThickness);
+  }
+
+  // What follows the label: a pad, the divider, a pad, then `count` app
+  // icons side by side. 0 for none.
+  function splitTail(count, thickness, along) {
+    if (count <= 0)
+      return 0;
+    return 2 * root.splitPad(thickness) + along + count * root.iconSize(thickness) + (count - 1) * root.iconGap(thickness);
+  }
+
+  // A split cell's whole length along the bar
+  function splitLength(label, count, thickness, along) {
+    return 2 * root.splitPad(thickness) + label + root.splitTail(count, thickness, along);
+  }
+
+  // Where the label's box centre sits from the cell's centre along the bar
+  // (negative: towards the start). `label` in splitLength is its ink (the box
+  // less `start` and `end`, the margins its icons have), whose centre is the
+  // tail's half before the cell's.
+  function splitShift(count, thickness, along, start, end) {
+    return -root.splitTail(count, thickness, along) / 2 + ((end ?? 0) - (start ?? 0)) / 2;
+  }
+
   // Of `windows` (biggest first), one per app (by app id, a window without
   // one its own), at most `max`: the apps a cell shows
   function distinctApps(windows, max) {
@@ -176,6 +233,16 @@ QtObject {
   function nameShown(name, id, number) {
     const text = (name ?? "").trim();
     return text === "" || text === String(id) || text === String(number) ? "" : text;
+  }
+
+  // `windows` (the contract's), the biggest (by area) first, ties in their
+  // order
+  function bySize(windows) {
+    const area = w => (w?.w ?? 0) * (w?.h ?? 0);
+    return windows.map((w, i) => ({
+          "w": w,
+          "i": i
+        })).sort((a, b) => area(b.w) - area(a.w) || a.i - b.i).map(e => e.w);
   }
 
   // What a cell shows, highest first: the grid's arrow (`glyph`), a label

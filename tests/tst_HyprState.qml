@@ -45,6 +45,66 @@ TestCase {
     compare(HyprState.keyboard(null), null);
   }
 
+  function test_specials() {
+    const workspaces = [
+      {
+        "id": -98,
+        "name": "special:magic",
+        "urgent": false
+      },
+      {
+        "id": -99,
+        "name": "special:term"
+      },
+      {
+        "id": -1337,
+        "name": "web"
+      },
+      {
+        "id": 1,
+        "name": "1"
+      }
+    ];
+    const outputs = [
+      {
+        "name": "DP-1",
+        "specialWorkspaceId": -98,
+        "specialWorkspaceName": "special:magic"
+      },
+      {
+        "name": "DP-2",
+        "specialWorkspaceId": 0,
+        "specialWorkspaceName": ""
+      }
+    ];
+    const windows = [
+      {
+        "id": "a",
+        "workspaceId": -98,
+        "workspaceName": "special:magic"
+      },
+      {
+        "id": "b",
+        "workspaceId": -98,
+        "workspaceName": "special:magic"
+      },
+      {
+        "id": "c",
+        "workspaceId": 1,
+        "workspaceName": "1"
+      }
+    ];
+    const result = HyprState.specials(workspaces, outputs, windows);
+    compare(result.map(s => s.name), ["magic", "term"], "named workspaces are left out");
+    const magic = result[0];
+    compare(magic.id, -98);
+    compare(magic.open, true);
+    compare(magic.output, "DP-1");
+    compare(magic.windowCount, 2);
+    compare(result[1].open, false);
+    compare(result[1].output, "");
+  }
+
   function test_gapSides_data() {
     return [
       {
@@ -179,7 +239,8 @@ TestCase {
         "transform": 0,
         "reserved": [0, 30, 0, 0],
         "specialWorkspace": {
-          "id": -98
+          "id": -98,
+          "name": "special:magic"
         }
       }
     }, true), {
@@ -193,6 +254,7 @@ TestCase {
       "focused": true,
       "activeWorkspaceId": 4,
       "specialWorkspaceId": -98,
+      "specialWorkspaceName": "special:magic",
       "reserved": {
         "left": 0,
         "top": 30,

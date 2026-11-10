@@ -85,8 +85,48 @@ QtObject {
   // right, then top to bottom
   function _icons(wsId) {
     const bySize = CompositorManager.windowsBySize(wsId);
-    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, root.properties.appIconsCount === "windows", root._onScreen(wsId, bySize));
+    return root._iconsFrom(bySize, root._onScreen(wsId, bySize));
+  }
+
+  // The icons of windows `bySize` (the biggest first), `onScreen` being
+  // the same windows in the order they sit on screen
+  function _iconsFrom(bySize, onScreen) {
+    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, root.properties.appIconsCount === "windows", onScreen);
     return windows.map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
+  }
+
+  // What the cell of scratchpad `special` (CompositorManager.specials) shows,
+  // `entry` being its Workspaces.scratchpads entry or null: the fields of
+  // of(), with app icons only in icon mode (`scratchpadLabel`) or, with
+  // `scratchpadSplit`, after the label and a divider (`tail`: their paths,
+  // `tailLength` how much longer they make the cell)
+  function ofScratchpad(special, entry) {
+    const mode = root.properties.scratchpadLabel;
+    const split = root.properties.scratchpadSplit === true;
+    const icons = (mode === "icon" || split) && root.properties.showAppIcons && special.windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(special.windows), WorkspaceCells.byPosition(special.windows)) : [];
+    const shown = Scratchpads.content(entry, special.name, mode, icons.length > 0, split);
+    shown.written = mode !== "icon" && shown.kind === "text";
+    const tail = shown.tail ? icons : [];
+    const sep = root.barConfig.look.separators;
+    const along = WorkspaceCells.dividerAlong(root.thickness, sep.style, sep.thickness);
+    const label = tail.length > 0 ? root._labelLength(shown) : null;
+    return {
+      "kind": shown.kind,
+      "text": shown.text,
+      "plain": root._plain(shown),
+      "lead": shown.lead,
+      "leadPlain": !root._drawsIcon(shown.lead),
+      "icons": shown.kind === "icons" ? icons : [],
+      "tail": tail,
+      "tailLength": WorkspaceCells.splitTail(tail.length, root.thickness, along),
+      "tailEdge": WorkspaceCells.splitPad(root.thickness),
+      "tailShift": WorkspaceCells.splitShift(tail.length, root.thickness, along, label?.start ?? 0, label?.end ?? 0),
+      "dividerAlong": along,
+      "number": "",
+      "length": tail.length > 0 ? WorkspaceCells.splitLength(label.length, tail.length, root.thickness, along) : root._length(shown, icons),
+      "occupied": special.windowCount > 0,
+      "urgent": special.urgent === true
+    };
   }
 
   // A workspace's windows (`windows`) in the order they sit on screen: on
@@ -123,6 +163,63 @@ QtObject {
       return root.restLength;
     const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
     return Math.max(root.restLength, Math.ceil(root._metrics.advanceWidth(shown.text) + lead) + Math.round(root.thickness * 0.5));
+  }
+
+  // The same, not bold (a boxed cell's words are never bold: its ink's margins)
+  readonly property FontMetrics _inkMetrics: FontMetrics {
+    font.family: Appearance.fontFamily
+    font.pixelSize: root.barConfig ? root.barConfig.fontSize - 1 : Appearance.fontSize
+  }
+
+  // The icon font at a symbol label's size, to find how far its ink sits in
+  // from the box it's drawn in (a Material Symbols glyph has a margin of
+  // about a seventh of its size each side)
+  readonly property FontMetrics _iconMetrics: FontMetrics {
+    font.family: Appearance.iconFamily
+    font.pixelSize: root.barConfig ? Math.round(root.barConfig.fontSize * 1.2) : Appearance.fontSize
+  }
+
+  // How far the ink of `name` is in from its box's start and end along a
+  // horizontal bar (a vertical bar's isn't measured: 0): an icon in the icon
+  // font, or words (`plain`) in the text font
+  function _inkInset(name, plain) {
+    const metrics = plain ? root._inkMetrics : root._iconMetrics;
+    if (root.barConfig.vertical || metrics.font.pixelSize <= 0 || name === "")
+      return {
+        "start": 0,
+        "end": 0
+      };
+    const ink = metrics.tightBoundingRect(name);
+    const advance = metrics.advanceWidth(name);
+    return {
+      "start": Math.max(0, ink.x),
+      "end": Math.max(0, advance - ink.x - ink.width)
+    };
+  }
+
+  // A split cell's label along the bar: { length, start, end }, `length` the
+  // box drawn (an icon at the size a cell draws it, or words measured; with
+  // its leading icon and a gap) less `start` and `end`, the margins of the
+  // glyphs at either end of it, so the ink is what the cell's padding and
+  // gaps are measured to. A label that doesn't turn on a vertical bar is as
+  // tall as it is.
+  function _labelLength(shown) {
+    const size = Math.round(root.barConfig.fontSize * 1.2);
+    const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
+    const plain = root._plain(shown);
+    const own = root._inkInset(shown.text, plain);
+    const leadInk = root._inkInset(shown.lead, !root._drawsIcon(shown.lead));
+    let box = size + lead;
+    if (plain && root._metrics.font.pixelSize > 0) {
+      const words = Math.ceil(root._metrics.advanceWidth(shown.text) + lead);
+      box = root.barConfig.vertical && words <= root.thickness * 0.8 ? Math.ceil(root._metrics.height) : words;
+    }
+    const start = shown.lead !== "" ? leadInk.start : own.start;
+    return {
+      "length": box - start - own.end,
+      "start": start,
+      "end": own.end
+    };
   }
 
   // A label's leading icon along the bar: an icon at the size a cell

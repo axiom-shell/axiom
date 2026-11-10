@@ -87,6 +87,7 @@ QtObject {
       "focused": focused === true,
       "activeWorkspaceId": monitor?.activeWorkspace?.id ?? -1,
       "specialWorkspaceId": ipc.specialWorkspace?.id ?? 0,
+      "specialWorkspaceName": ipc.specialWorkspace?.name ?? "",
       "reserved": {
         "left": reserved[0],
         "top": reserved[1],
@@ -107,6 +108,27 @@ QtObject {
       "focused": ws?.focused === true,
       "urgent": ws?.urgent === true
     };
+  }
+
+  // The special workspaces (contract.md › Shapes, Special) among
+  // `workspaces` (workspace() shapes), with `outputs` (output() shapes) and
+  // `windows` (the contract's). Matched by name, never id: named workspaces
+  // have negative ids too, and Hyprland 0.57 gives a special workspace no id
+  // at all (Quickshell reads -1 for it, its monitor's `specialWorkspace` 0).
+  function specials(workspaces, outputs, windows) {
+    return (workspaces ?? []).filter(ws => String(ws.name).startsWith("special:")).map(ws => {
+      const shown = (outputs ?? []).find(o => o.specialWorkspaceName === ws.name);
+      const own = (windows ?? []).filter(win => win.workspaceName === ws.name);
+      return {
+        "name": String(ws.name).slice("special:".length),
+        "id": ws.id,
+        "open": shown !== undefined,
+        "output": shown?.name ?? "",
+        "windowCount": own.length,
+        "urgent": ws.urgent === true,
+        "windows": own
+      };
+    });
   }
 
   // Each monitor's logical size and the layer surfaces on it, from j/monitors

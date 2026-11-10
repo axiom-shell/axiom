@@ -55,7 +55,7 @@ axiom ipc <target> <function> [args]
 | `powermenu` | `open`, `close`, `toggle` |
 | `osd` | `show <id>` (messages: `axiom message`) |
 | `workspaceOverlay` | `open`, `hide`, `toggle` |
-| `workspaces` | `go <id>`, `move <id>`, `moveSilent <id>`, `left`, `right`, `up`, `down`, `step <direction> <mode>`, `scroll <direction>`, `nth <n> <mode>`, `reconcile` |
+| `workspaces` | `go <id>`, `move <id>`, `moveSilent <id>`, `left`, `right`, `up`, `down`, `step <direction> <mode>`, `scroll <direction>`, `nth <n> <mode>`, `reconcile`, `special <toggle\|move> <name>` |
 | `windowSwitcher` | `next`, `previous`, `commit`, `cancel` (for scripts: the Alt+Tab bind doesn't need them) |
 | `idleInhibit` | `enable`, `disable`, `toggle`, `timer <duration>`, `status` |
 | `nightLight` | `enable`, `disable`, `toggle`, `status` |

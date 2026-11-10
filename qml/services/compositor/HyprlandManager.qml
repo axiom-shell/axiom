@@ -28,10 +28,12 @@ Singleton {
   // The workspaces (HyprState.workspace). Under the scrolling layout,
   // niri's: each output's from its first id, with an empty one after the
   // last (DynamicWorkspaces.workspaces), kept so by _compaction
-  readonly property var workspaces: {
-    const real = Hyprland.workspaces.values.map(ws => HyprState.workspace(ws));
-    return root.dynamicByLayout ? DynamicWorkspaces.workspaces(real, root._bases, root.blockSize) : real;
-  }
+  readonly property var workspaces: root.dynamicByLayout ? DynamicWorkspaces.workspaces(root._realWorkspaces, root._bases, root.blockSize) : root._realWorkspaces
+  // Every workspace Hyprland lists, specials too (the scrolling layout's
+  // list above drops them)
+  readonly property var _realWorkspaces: Hyprland.workspaces.values.map(ws => HyprState.workspace(ws))
+  // The special workspaces (HyprState.specials)
+  readonly property var specials: HyprState.specials(root._realWorkspaces, root.outputs, root.windows)
   // The focused monitor's name, or "" while Hyprland has none
   readonly property string focusedOutput: Hyprland.focusedMonitor?.name ?? ""
   // The focused window's id (its "0x…" address), or ""
@@ -465,6 +467,23 @@ hl.dispatch(hl.dsp.submap("${_captureSubmap}"))`
   // Focuses output `name` (a dynamic workspaces' left or right step)
   function focusOutput(name) {
     root._dispatch(`hl.dsp.focus({ monitor = ${JSON.stringify(name)} })`);
+  }
+
+  // Toggles special workspace `name` on `output` (the focused one when ""
+  // or already focused). On another output one chunk focuses it first: two
+  // dispatches aren't ordered.
+  function toggleSpecial(name, output) {
+    const toggle = `hl.dsp.workspace.toggle_special(${JSON.stringify(name)})`;
+    if (!output || output === root.focusedOutput)
+      root._dispatch(toggle);
+    else
+      root._eval(`hl.dispatch(hl.dsp.focus({ monitor = ${JSON.stringify(output)} }))\nhl.dispatch(${toggle})`);
+  }
+
+  // Moves the focused window to special workspace `name` (what the
+  // generated binds send, render/hyprconfig.go)
+  function moveToSpecial(name) {
+    root._dispatch(`hl.dsp.window.move({ workspace = ${JSON.stringify("special:" + name)} })`);
   }
 
   // Moves the focused window to the workspace output `name` shows, going

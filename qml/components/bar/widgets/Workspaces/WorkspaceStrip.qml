@@ -32,7 +32,7 @@ Item {
   required property CellLook cellLook
   // The cells chained in it: the row's, then the strip's windows'
   readonly property int _rowCells: activeStrip.stripOnly ? 0 : root.ids.length
-  readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0)
+  readonly property int _chainCells: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0) + (scratchpads.visible ? scratchpads.cells : 0)
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -151,6 +151,22 @@ Item {
       clickable: root.properties.clickToSwitch
       hitArea: root.hitArea
       chainFirst: root._rowCells
+      chainCount: root._chainCells
+    }
+
+    ScratchpadCells {
+      id: scratchpads
+      barConfig: root.barConfig
+      properties: root.properties
+      cellLook: root.cellLook
+      monitorName: root.output
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      urgentColor: root.urgentColor
+      emptyColor: root.emptyColor
+      textColor: root.textColor
+      hitArea: root.hitArea
+      chainFirst: root._rowCells + (activeStrip.visible ? activeStrip.cells : 0)
       chainCount: root._chainCells
     }
   }

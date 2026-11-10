@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 import qs.services.compositor
-import qs.config
 import qs.components.reusable
 import qs.components.methods
 import qs.components.bar.look
@@ -66,15 +65,10 @@ Loader {
     columns: !root.isVertical && root._divided ? 2 : 1
     spacing: root.barConfig.innerGap
 
-    SeparatorMark {
+    StripDivider {
       visible: root._divided
-      style: root.barConfig.look.separators.style === "none" ? "line" : root.barConfig.look.separators.style
-      color: Theme.resolveColor(root.barConfig.look.separators.color)
-      thickness: root.barConfig.look.separators.thickness
-      length: root.cell * (style === "chevron" ? 0.6 : 0.5)
-      vertical: root.isVertical
-      width: root.isVertical ? root.cell : implicitWidth
-      height: root.isVertical ? implicitHeight : root.cell
+      barConfig: root.barConfig
+      cell: root.cell
     }
 
     // Clipped: a longer strip fading out is held to the new one's length,
@@ -82,7 +76,7 @@ Loader {
     // back under the one before, a flared tab's fillets past its ends, out
     // to a tab's edge)
     MarginClip {
-      readonly property var _margins: BarCells.cellMargins(root._shapeOf(root.chainFirst), root._shapeOf(root.chainCount - 1), root.isVertical)
+      readonly property var _margins: BarCells.cellMargins(root._shapeOf(root.chainFirst), root._shapeOf(root.chainFirst + root.cells - 1), root.isVertical)
 
       implicitWidth: fade.implicitWidth
       implicitHeight: fade.implicitHeight

@@ -64,6 +64,66 @@ TestCase {
     compare(WorkspaceCells.contentSize(20, 14, true), 17, "a label taller than the app icon");
   }
 
+  function test_splitTail() {
+    // thickness 20: pad 5, gap 2, icon 12; a line divider 1 along
+    compare(WorkspaceCells.splitTail(0, 20, 1), 0, "no icons, no divider");
+    compare(WorkspaceCells.splitTail(1, 20, 1), 23, "pad 5, divider, pad 5, one icon");
+    compare(WorkspaceCells.splitTail(2, 20, 1), 37, "a gap between icons");
+    compare(WorkspaceCells.splitTail(1, 20, 4), 26, "a wider divider");
+  }
+
+  // A label whose box has margins at its ends (an icon before text: 2 at
+  // the start; a lone icon: 2 each side): the ink sits the padding in from
+  // the start, and the end padding mirrors it
+  function test_splitShiftInk() {
+    for (const [box, start, end, what] of [[34, 2, 0, "an icon, then text"], [17, 2, 2, "a lone icon"], [40, 0, 0, "text only"], [40, 1, 1, "text with ink margins at both ends"], [36, 2, 1, "an icon, then text ending in a margin"]]) {
+      const ink = box - start - end;
+      const pad = WorkspaceCells.splitPad(28);
+      const length = WorkspaceCells.splitLength(ink, 1, 28, 1);
+      const boxStart = length / 2 + WorkspaceCells.splitShift(1, 28, 1, start, end) - box / 2;
+      compare(boxStart + start, pad, what + ": the ink starts at the padding");
+      const inkEnd = boxStart + box - end;
+      const iconsEnd = inkEnd + 2 * pad + 1 + WorkspaceCells.iconSize(28);
+      compare(length - iconsEnd, pad, what + ": the end mirrors it");
+    }
+  }
+
+  function test_dividerAlong() {
+    compare(WorkspaceCells.dividerAlong(28, "line", 1), 1);
+    compare(WorkspaceCells.dividerAlong(28, "none", 2), 2, "none draws a line");
+    compare(WorkspaceCells.dividerAlong(28, "dot", 2), 4);
+    compare(WorkspaceCells.dividerAlong(28, "slash", 2), 7, "its lean: 14 across at 0.35");
+    compare(WorkspaceCells.dividerAlong(28, "chevron", 2), 17, "the glyph, 0.6 of the cell");
+    compare(WorkspaceCells.dividerLength("line", 28), 14);
+    compare(WorkspaceCells.dividerLength("chevron", 20), 12);
+  }
+
+  // [pad][label][pad] divider [pad][icons][pad]: the label side of the
+  // divider as far from it as the icons' side, the ends alike
+  function test_splitGeometry() {
+    // [label length, icons, thickness, divider along, what]; the helper is the
+    // same along either axis (the vertical bar's text and glyph lengths are
+    // CellContents' own), so a vertical bar's rows are the same sums
+    const rows = [[17, 1, 28, 1, "a glyph label, horizontal bar"], [40, 2, 28, 2, "a text label, horizontal bar"], [17, 1, 28, 1, "a glyph label, vertical bar"], [31, 3, 20, 4, "a text label, vertical bar"]];
+    for (const [label, count, thickness, along, what] of rows) {
+      const pad = WorkspaceCells.splitPad(thickness);
+      const gap = WorkspaceCells.iconGap(thickness);
+      const icons = count * WorkspaceCells.iconSize(thickness) + (count - 1) * gap;
+      const length = WorkspaceCells.splitLength(label, count, thickness, along);
+      compare(length, 4 * pad + label + along + icons, what + ": the whole");
+      // Where each part sits, from the cell's start: the label centred by the shift
+      const labelStart = length / 2 + WorkspaceCells.splitShift(count, thickness, along, 0, 0) - label / 2;
+      compare(labelStart, pad, what + ": the label starts after the padding");
+      const dividerStart = labelStart + label + pad;
+      compare(dividerStart - (labelStart + label), pad, what + ": a pad before the divider");
+      // The tail the cell draws ends the icons a pad before the cell's end
+      compare(length - pad - WorkspaceCells.splitTail(count, thickness, along) + pad, dividerStart, what + ": the divider starts a pad after the label");
+      const iconsStart = dividerStart + along + pad;
+      compare(iconsStart - (dividerStart + along), pad, what + ": a pad after the divider");
+      compare(length - (iconsStart + icons), pad, what + ": the end padding mirrors the start");
+    }
+  }
+
   function test_rowLength() {
     compare(WorkspaceCells.rowLength(1, 20, 20), 20, "one icon: a normal cell");
     // 3 × 12 + 2 × 2 + 8
@@ -245,6 +305,32 @@ TestCase {
     compare(WorkspaceCells.nameShown("1", 11, 1), "", "or the relative number shown");
     compare(WorkspaceCells.nameShown("3:web", 3, 3), "3:web");
     compare(WorkspaceCells.nameShown("", 3, 3), "", "niri's unnamed ones");
+  }
+
+  function test_bySize_biggest_first_ties_in_order() {
+    const wins = [
+      {
+        "id": "a",
+        "w": 10,
+        "h": 10
+      },
+      {
+        "id": "b",
+        "w": 20,
+        "h": 20
+      },
+      {
+        "id": "c",
+        "w": 10,
+        "h": 10
+      },
+      {
+        "id": "d",
+        "w": 20,
+        "h": 20
+      }
+    ];
+    compare(WorkspaceCells.bySize(wins).map(w => w.id), ["b", "d", "a", "c"]);
   }
 
   function test_pick_in_priority_order() {

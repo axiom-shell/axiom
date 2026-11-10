@@ -25,6 +25,8 @@ QtObject {
   // The widget's place in the bar's run, its cells being segments of it
   // (Workspaces' `_run`), else null
   property var run: null
+  // The bar's inner side, where its cells' tooltips show
+  readonly property int innerEdges: BarCells.innerEdges(barConfig)
   // Room kept to the widget's box across, and a cell's thickness inside it
   property real inset: 0
   property real thickness: barConfig ? barConfig.thickness - inset * 2 : 0

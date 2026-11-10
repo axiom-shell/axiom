@@ -64,6 +64,18 @@ Item {
   property string iconLayout: "largest"
   property int iconSlots: 1
   property string glyph: ""
+  // App icons after a short divider at the end of a glyph or text label (a
+  // scratchpad with `scratchpadSplit`), `tailLength` along the bar of
+  // `length` (WorkspaceCells.splitTail); `tailEdge` the padding after it,
+  // `tailShift` how far the label sits off the centre, `dividerAlong` the
+  // divider's size along the bar (all CellContents.ofScratchpad's)
+  property var tailPaths: []
+  property real tailLength: 0
+  property real tailEdge: 0
+  property real tailShift: 0
+  property real dividerAlong: 0
+  readonly property bool _tailed: tailPaths.length > 0 && (_shows === "glyph" || _shows === "text")
+  readonly property real _shift: _tailed ? tailShift : 0
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
   // A window on it asks for attention (its `look` is the urgent one)
@@ -166,6 +178,8 @@ Item {
 
     StyledIcon {
       anchors.centerIn: parent
+      anchors.horizontalCenterOffset: root.isVertical ? 0 : root._shift
+      anchors.verticalCenterOffset: root.isVertical ? root._shift : 0
       visible: root._shows === "glyph"
       text: root.glyph
       font.pixelSize: root.barConfig.fontSize * 1.2
@@ -179,6 +193,8 @@ Item {
     Row {
       id: textRow
       anchors.centerIn: parent
+      anchors.horizontalCenterOffset: root.isVertical ? 0 : root._shift
+      anchors.verticalCenterOffset: root.isVertical ? root._shift : 0
       visible: root._shows === "text"
       spacing: WorkspaceCells.iconGap(root.thickness)
       rotation: root.isVertical && !textLabel.symbol && textRow.implicitWidth > root.thickness * 0.8 ? -90 : 0
@@ -237,6 +253,64 @@ Item {
 
         ColorGlide on color {
           enabled: root.animated
+        }
+      }
+    }
+
+    // The bar's divider, then the app icons, ending the content before its
+    // padding (`tailPaths`). Everything centres on the cell's thickness
+    Item {
+      id: tail
+
+      visible: root._tailed
+      x: root.isVertical ? 0 : parent.width - root.tailEdge - width
+      y: root.isVertical ? parent.height - root.tailEdge - height : 0
+      width: root.isVertical ? root.thickness : root.tailLength
+      height: root.isVertical ? root.tailLength : root.thickness
+
+      Grid {
+        anchors.right: root.isVertical ? undefined : parent.right
+        anchors.bottom: root.isVertical ? parent.bottom : undefined
+        flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
+        rows: root.isVertical ? -1 : 1
+        columns: root.isVertical ? 1 : -1
+        spacing: WorkspaceCells.iconGap(root.thickness)
+        verticalItemAlignment: Grid.AlignVCenter
+        horizontalItemAlignment: Grid.AlignHCenter
+
+        // A box the cell's whole thickness across the bar, the divider's
+        // size along it at its start and the pad after it (less the Grid's
+        // spacing, which comes next)
+        Item {
+          readonly property real _along: root.dividerAlong + root.tailEdge - WorkspaceCells.iconGap(root.thickness)
+          width: root.isVertical ? root.thickness : _along
+          height: root.isVertical ? _along : root.thickness
+
+          Item {
+            width: root.isVertical ? root.thickness : root.dividerAlong
+            height: root.isVertical ? root.dividerAlong : root.thickness
+
+            StripDivider {
+              anchors.centerIn: parent
+              barConfig: root.barConfig
+              cell: root.thickness
+            }
+          }
+        }
+
+        Repeater {
+          // The most icons a cell shows (appIconsMax's top), each while it has one
+          model: 8
+
+          Image {
+            required property int index
+            visible: index < root.tailPaths.length
+            width: WorkspaceCells.iconSize(root.thickness)
+            height: width
+            sourceSize: Qt.size(64, 64)
+            source: root.tailPaths[index] ?? ""
+            opacity: root.boxed || root.isActive ? 1 : 0.7
+          }
         }
       }
     }

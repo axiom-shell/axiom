@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
 
 import qs.components.bar.look
+import qs.components.methods
 
 // Base for icon + label bar modules: the inputs every module gets from
 // BarWidgetHost, orientation from the bar, and the configured colors.
@@ -39,7 +39,7 @@ IconTextWidget {
   // hit area's hover, else its own bounds'
   readonly property bool hovered: clickArea.enabled ? clickArea.containsMouse : root.hitArea ? root.hitArea.hovered : hover.hovered
   // The bar's inner side, where its tooltip opens
-  readonly property int innerEdges: barConfig.top ? Edges.Bottom : barConfig.bottom ? Edges.Top : barConfig.left ? Edges.Right : Edges.Left
+  readonly property int innerEdges: BarCells.innerEdges(barConfig)
 
   signal clicked(int button)
   signal scrolled(real steps)

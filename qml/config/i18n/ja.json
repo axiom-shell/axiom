@@ -3428,7 +3428,6 @@
     "Set its look on the Custom widgets page.": "",
     "Typed shows no name until one is typed.": "",
     "Stacked puts the count over the AUR's share.": "",
-    "An arrow on the active workspace pointing to the shown grid row.": "",
     "The binds by section, or a keyboard showing what each key does.": "",
     "This machine, the tailnet and its devices on hover.": "",
     "Dots on days with events, and the day's events where they fit.": "",
@@ -4293,7 +4292,18 @@
     "Add a Chat module to an overlay page or a menu.": "",
     "Slide comes in from off the screen, or for a free menu from the bar widget that opened it or the nearest screen edge. Fade fades in place; Scale, for a free menu, grows in place.": "",
     "While the menu is open, it holds the keyboard, so the windows behind can't be typed in.": "",
+    "Scratchpad labels": "",
+    "Your own icon and label for a special workspace (scratchpad), by its name. The workspace switcher finds them by itself; this only changes how they look, and adds one to its All list.": "",
+    "Scratchpads": "",
+    "With windows": "",
+    "Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.": "",
     "Grid position": "",
-    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position - which row (column on a vertical bar) is shown, a dot each.": ""
+    "Icon: its icon from the Workspaces settings, else its apps' icons (with App icons on), else a star. Name: its label from there, else its name. Both: its icon (or a star) before its label (or name). Hovering one shows its name.": "",
+    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position (the default) - in a grid layout, which row (column on a vertical bar) is shown, a dot each; other layouts show no head. While it shows, the active cell's arrow is hidden.": "",
+    "An arrow on the active workspace pointing to the shown grid row. Hidden while the Head is Grid position, which shows it instead.": "",
+    "Divide labels from apps": "",
+    "In each scratchpad: its label, a short divider, then its windows' app icons. The label never falls back to the apps' icons.": "",
+    "The name its bind uses: magic for Super + V. Lists the scratchpads that exist now and those your binds name.": "",
+    "An icon (a Material Symbols name or a pasted glyph) and a text; which of them the cell shows is the scratchpad label setting.": ""
   }
 }

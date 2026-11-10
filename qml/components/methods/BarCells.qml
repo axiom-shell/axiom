@@ -11,6 +11,13 @@ import QtQuick
 QtObject {
   id: root
 
+  // The side of the bar a widget's tooltips and cell tooltips show on: the
+  // inner one, away from the screen edge `barConfig` (top, bottom, left)
+  // sits on, as a Qt edge (the same value as Quickshell's Edges)
+  function innerEdges(barConfig) {
+    return barConfig?.top ? Qt.BottomEdge : barConfig?.bottom ? Qt.TopEdge : barConfig?.left ? Qt.RightEdge : Qt.LeftEdge;
+  }
+
   // Cell `cell` of `cells` a widget lays out as segments of the bar's run
   // itself (Workspaces with its Background off: its workspaces, then its
   // strip's windows), the widget at `place` in its run ({ index, count },

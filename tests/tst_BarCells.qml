@@ -431,6 +431,21 @@ TestCase {
     compare(flags(null, false, true), [false, false, false, false, false, false, false], "no look yet");
   }
 
+  // The inner side is away from the bar's own screen edge
+  function test_inner_edges() {
+    compare(BarCells.innerEdges({
+      "top": true
+    }), Qt.BottomEdge);
+    compare(BarCells.innerEdges({
+      "bottom": true
+    }), Qt.TopEdge);
+    compare(BarCells.innerEdges({
+      "left": true
+    }), Qt.RightEdge);
+    compare(BarCells.innerEdges({}), Qt.LeftEdge);
+    compare(BarCells.innerEdges(null), Qt.LeftEdge);
+  }
+
   // A cell's length at rest: square boxed, with numbers or app icons;
   // narrower for a dot or nothing straight on the bar
   function test_cell_length() {
