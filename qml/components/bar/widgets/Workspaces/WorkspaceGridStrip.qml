@@ -4,6 +4,7 @@ import QtQuick
 import qs.services.compositor
 import qs.config
 import qs.components.reusable
+import qs.components.methods
 import qs.components.hosts.popout
 import qs.components.bar.look
 
@@ -51,16 +52,10 @@ Item {
   readonly property int activeId: root.monitor?.activeWorkspaceId ?? -1
   // "horizontal" | "vertical" on a strip monitor, else ""
   readonly property string stripDirection: CompositorManager.stripDirection(root.screen?.name ?? "")
-  // The active workspace's place in the grid (the first cell when the
-  // monitor is on a workspace outside it)
-  readonly property int activeIndex: {
-    const index = root.activeId - root.base;
-    return index >= 0 && index < root.columns * root.rows ? index : 0;
-  }
-  readonly property int activeRow: Math.floor(root.activeIndex / root.columns)
-  readonly property int activeColumn: root.activeIndex % root.columns
-  // The row (column on a vertical bar) the bar shows
-  readonly property int activeLine: root.isVertical ? root.activeColumn : root.activeRow
+  // The row (column on a vertical bar) the bar shows: the active
+  // workspace's, the first when the monitor is outside the grid
+  readonly property var _position: GridPosition.line(root.activeId, root.base, root.columns, root.rows, root.isVertical)
+  readonly property int activeLine: root._position.line
 
   // Between the row and the strip after it (a powerline's segments chain
   // on into it)
@@ -88,17 +83,6 @@ Item {
   function placeOf(id) {
     const place = id - root.base;
     return place >= 0 && place < root.columns * root.rows ? place : -1;
-  }
-
-  // Where the shown row (or column) sits among `count`: double arrows at the
-  // ends, single ones between, a dot in the middle
-  function positionGlyph(position, count) {
-    const middle = (count - 1) / 2;
-    if (position === middle)
-      return "circle";
-    if (root.isVertical)
-      return position === 0 ? "keyboard_double_arrow_left" : position === count - 1 ? "keyboard_double_arrow_right" : position < middle ? "keyboard_arrow_left" : "keyboard_arrow_right";
-    return position === 0 ? "keyboard_double_arrow_up" : position === count - 1 ? "keyboard_double_arrow_down" : position < middle ? "keyboard_arrow_up" : "keyboard_arrow_down";
   }
 
   // `scrollReverse` turns the wheel's direction round, for the strip too
@@ -202,7 +186,7 @@ Item {
       activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
       chainCount: line.ids.length + root._stripCells + root._scratchCells
       // The active arrow takes the active cell's place
-      glyphOf: (id, active) => active && root.properties.showActiveIcon ? root.positionGlyph(line.value, root.isVertical ? root.columns : root.rows) : ""
+      glyphOf: (id, active) => active && root.properties.showActiveIcon ? GridPosition.glyph(line.value, root.isVertical ? root.columns : root.rows, root.isVertical) : ""
 
       Connections {
         target: CompositorManager

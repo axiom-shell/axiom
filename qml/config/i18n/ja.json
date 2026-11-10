@@ -4226,7 +4226,6 @@
     "Drawn before the time; a split bar sets it apart as the icon part.": "",
     "Drawn before the items; a split bar sets it apart as the icon part. Empty shows none.": "",
     "Active workspace": "",
-    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part.": "",
     "Caps": "",
     "Num": "",
     "Scroll": "",
@@ -4300,6 +4299,8 @@
     "Scratchpads": "",
     "The name its bind uses: magic for Super + V.": "",
     "With windows": "",
-    "Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.": ""
+    "Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any, or shown. All: also every one your Toggle special workspace binds or the Workspaces settings name.": "",
+    "Grid position": "",
+    "Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position - which row (column on a vertical bar) is shown, a dot each.": ""
   }
 }

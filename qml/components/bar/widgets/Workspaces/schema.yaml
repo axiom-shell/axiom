@@ -218,10 +218,12 @@ settings:
   lead:
     type: string
     title: Head
-    enum: [none, icon, active]
-    x-enumLabels: {none: None, icon: Icon, active: Active workspace}
+    enum: [none, icon, active, position]
+    x-enumLabels: {none: None, icon: Icon, active: Active workspace, position: Grid position}
+    x-enumShowIf:
+      position: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
     default: none
-    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part.
+    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position - which row (column on a vertical bar) is shown, a dot each.
     x-showIf:
       anyOf:
         - {$bar.boxed: false}
