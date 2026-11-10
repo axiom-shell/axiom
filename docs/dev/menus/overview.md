@@ -26,13 +26,13 @@ Menus of overlay modules (the `Menus` section, `EdgeMenus` before config v104): 
   - The editor's `GridEditor.sizeScale` doubles default sizes.
   - `updateMenuField` rescales the places (`GridPlacement.scalePlace`) and `offset` so modules stay put, as the lock screen's does.
 - Style:
-  - `moduleBorders`, `pinButton` (the padding is `Popouts.padding`), and a free menu's `closeButton` (closes it, unpinned: [Free menus](free-menus.md) › Pinning);
+  - `moduleBorders`, `pinButton` (the padding is `Popouts.padding`), and `closeButton` (any placement, last after the pin; closes it, unpinned, and hides while it's popped out: [Free menus](free-menus.md) › Pinning);
   - `background` (`panel` | `none`; `edge` and `free` menus only, never a strip): `none` draws the menu as tiles (Tiles, below);
   - `backgroundColor` / `borderColor`, read through `MenusConfig.colorsOf` (a tiled menu has no border: the setting hides);
   - floating: `detached` / `distance` / `animation` (Slide or Fade; a Scale left from a free menu fades) (see [Held off an edge](../popouts/held-off-edge.md)), read through `MenusConfig.detachedOf`: a tiled edge menu is always held off its edge, so `detached` hides and `distance` and `animation` show;
   - integrated: `frame`.
 - Opening: `open.onHover`, after the popouts' open delay (`Popouts.timing.openDelay`; a menu's own `open.delay` went in config v103). The hover strip is `ScreenEdge.triggerSize` deep and as long as the menu, worked out from config alone so it's the same open or closed (`MenuSync.triggerLength`, the whole room along the edge for a whole-edge menu).
-- Closing: `closeOnLeave`, `closeDelay`, `closeOnOutsideClick`.
+- Closing: `closeOnLeave`, `closeDelay`, `closeOnOutsideClick`. An outside click needs a `FocusGrab`, which holds the keyboard while the menu is open and unpinned, so the windows behind can't be typed in (the setting's description says so); new free menus start with it off and a close button ([Editing and submenus](editing-submenus.md) › Creating a menu from what opens it).
 - `modules`: placed as on a Custom page.
 
 ### State (`MenuManager`)

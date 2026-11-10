@@ -32,9 +32,10 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   | Purpose | Seed |
   |---|---|
   | `edge` (the default: `addMenu()`) | `placement: edge`, `open.onHover: true` |
-  | `popout` | `placement: free` |
-  | `submenu` | `placement: free` |
-  | `free` | `placement: free`, `freeAnchor.at: centre`, `close.onLeave: false`, `close.onOutsideClick: true` (opened by a bind with the pointer elsewhere, it stays until a click outside or Escape) |
+  | `popout` | `placement: free`, `animation: fade`, `closeButton: true` |
+  | `submenu` | `placement: free`, `animation: fade`, `closeButton: true` |
+  | `free` | `placement: free`, `animation: fade`, `closeButton: true`, `freeAnchor.at: centre`, `close.onLeave: false`, `close.onOutsideClick: false` (opened by a bind with the pointer elsewhere, it stays until its close button, Escape or its bind closes it, and never holds the keyboard) |
+- **Free menus start with a close button and without Close on outside click** (decided 2026-11-10: "go ahead with the default change. No option 1, it can take the keyboard immediatly"): `close.onOutsideClick` holds the keyboard while the menu is open (its `FocusGrab`, [Free menus](free-menus.md) › The window), so the windows behind couldn't be typed in. Only the seeds changed: the schema defaults (both off) and existing menus are as they were, and an edge menu's outside click closes it as before.
 - **Layouts' New menu** (`MenusSection`) opens a `StyledContextMenu` of the four purposes, then `addMenu(purpose)`.
   - Each adds the menu to the draft, unsaved. `free` (Free, a floating menu) replaced "Opened by a keybind" (decided 2026-11-10: "opened by a keybind option needs to be replaced by free when adding new menus"): no keybind is recorded; once saved, a bind is added from its Opening section as for any menu.
 - **A Submenu module's New submenu…** (a link under its `menu` field in `EditorInspector`, through `OptionsGroup.fieldAction`): `addSubmenu(moduleIndex)` adds a free menu to the same draft, sets the module's `menu` to it, then selects it and holds it open beside its parent (selecting it clears the parent's undo history, as any change of menu does: the `GridEditor`'s `scopeKey`). Everything stays in one draft, so nothing points at an unsaved menu from another editor.
