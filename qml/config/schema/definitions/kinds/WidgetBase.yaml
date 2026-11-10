@@ -17,10 +17,10 @@ x-parts:
             type: string
             title: Open instead
             default: ''
-            x-options: edgeMenus
+            x-options: menus
             x-menuPlacements: [edge, free]
             x-emptyLabel: Its own popout
-            description: An edge menu to open in place of the popout.
+            description: A menu to open in place of the popout.
             x-showIf: {enabled: true}
     menu:
       popout:
@@ -32,12 +32,12 @@ x-parts:
             type: boolean
             title: Menu popout
             default: false
-            description: Open an edge menu when hovered.
+            description: Open a menu when hovered.
           menu:
             type: string
             title: Menu
             default: ''
-            x-options: edgeMenus
+            x-options: menus
             x-menuPlacements: [edge, free]
             x-emptyLabel: None
             x-showIf: {enabled: true}

@@ -1,4 +1,4 @@
-# The EdgeMenu definition (#/definitions/EdgeMenu).
+# The Menu definition (#/definitions/Menu): one menu of the Menus section.
 
 type: object
 required: [id]
@@ -90,16 +90,6 @@ properties:
         description: Its centre, from the screen's top edge.
         x-showIf: {at: point}
         x-beside: true
-  freeAnimation:
-    x-group: Placement
-    type: string
-    title: Animation
-    default: fade
-    enum: [fade, scale, slide]
-    x-control: toggle
-    x-enumLabels: {fade: Fade, scale: Scale, slide: Slide}
-    description: Slide comes in from the bar widget that opened it, or from the nearest screen edge.
-    x-showIf: {placement: free}
   offset:
     x-settings: false
     type: integer
@@ -174,10 +164,18 @@ properties:
         - {placement: edge, detached: true}
         - {placement: edge, background: none}
   animation:
-    $ref: '#/definitions/DetachedAnimation'
     x-group: Placement
+    type: string
+    title: Animation
+    default: slide
+    enum: [slide, fade, scale]
+    x-control: toggle
+    x-enumLabels: {slide: Slide, fade: Fade, scale: Scale}
+    x-enumShowIf: {scale: {placement: free}}
+    description: Slide comes in from off the screen, or for a free menu from the bar widget that opened it or the nearest screen edge. Fade fades in place; Scale, for a free menu, grows in place.
     x-showIf:
       anyOf:
+        - {placement: free}
         - {placement: edge, detached: true}
         - {placement: edge, background: none}
   frame:
@@ -199,7 +197,6 @@ properties:
     title: Close button
     default: false
     description: Closes the menu, unpinning it if it's pinned.
-    x-showIf: {placement: free}
   popOutButton:
     x-group: Behaviour
     type: boolean
@@ -269,4 +266,5 @@ properties:
         type: boolean
         title: Close on outside click
         default: false
+        description: While the menu is open, it holds the keyboard, so the windows behind can't be typed in.
         x-showIf: {../placement: [edge, free]}

@@ -158,7 +158,7 @@ Item {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "WorkspaceStrips"
-    active: root.stripDirection !== "" && (CompositorManager.dynamicWorkspaces ? root.ids.length > 1 : WorkspacesConfig.size > 1) && EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: root.stripDirection !== "" && (CompositorManager.dynamicWorkspaces ? root.ids.length > 1 : WorkspacesConfig.size > 1) && MenusConfig.opensOwnPopout(root.properties)
     extraData: ({
         output: root.output,
         vertical: root.isVertical,

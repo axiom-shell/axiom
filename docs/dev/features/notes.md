@@ -2,9 +2,9 @@
 
 > **Files:** `qml/services/apps/NotesManager.qml`, `qml/config/NotesConfig.qml`, `qml/components/content/Notes/Notes.qml`, `qml/components/content/parts/notes/NoteEditor.qml`, `qml/components/content/parts/notes/NoteBlock.qml`, `qml/components/content/parts/notes/NoteBrowser.qml`, `qml/components/methods/NoteMarkdown.qml`
 > **Config:** `Notes.*` (reader `NotesConfig`)
-> **Related:** [Launcher](launcher.md), [Edge menus](../edge-menus/overview.md), [Writing modules](../overlay/writing-modules.md)
+> **Related:** [Launcher](launcher.md), [Menus](../menus/overview.md), [Writing modules](../overlay/writing-modules.md)
 
-Notes are Markdown files edited in place by the Notes overlay / edge-menu module, with shared documents, a block editor, a file browser and search.
+Notes are Markdown files edited in place by the Notes overlay / menu module, with shared documents, a block editor, a file browser and search.
 
 ### Storage
 - Notes are Markdown files in `NotesConfig.directory` (the `Notes.directory` setting).
@@ -69,7 +69,7 @@ Notes are Markdown files edited in place by the Notes overlay / edge-menu module
 - The module whose `placeKey` matches shows it: `openRequested`, or `takeReveal` if the module loads within 5 s.
 
 ### Per-module state
-- The last note per place (`overlay`, `edgeMenu:<id>`, `desktop:<screen>`) is kept in `~/.local/state/axiom/ui/notes-modules.json`.
+- The last note per place (`overlay`, `menu:<id>`, `desktop:<screen>`) is kept in `~/.local/state/axiom/ui/notes-modules.json`.
 - `lockNote` pins a module to its `note`.
 
 ### Lifecycle

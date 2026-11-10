@@ -20,7 +20,7 @@ properties:
       - launcherSearch
       - overlay
       - overlayPage
-      - edgeMenu
+      - menu
       - dock
       - bar
       - workspaceOverview
@@ -119,7 +119,7 @@ properties:
       launcherSearch: Launcher with text
       overlay: Overlay
       overlayPage: Overlay page
-      edgeMenu: Edge menu
+      menu: Menu
       dock: Dock
       bar: Auto-hiding bar
       workspaceOverview: Workspace overview
@@ -223,7 +223,7 @@ properties:
       action:
         - launcherSearch
         - overlayPage
-        - edgeMenu
+        - menu
         - dock
         - bar
         - workspaceStep
@@ -255,7 +255,7 @@ properties:
       action:
         - launcher
         - overlay
-        - edgeMenu
+        - menu
         - dock
         - bar
         - workspaceOverview

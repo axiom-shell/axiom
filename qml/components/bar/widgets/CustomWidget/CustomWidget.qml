@@ -92,7 +92,7 @@ ValueStyleWidget {
   onScrolled: steps => CustomWidgetsManager.act(root.widgetId, steps > 0 ? "scrollUp" : "scrollDown")
 
   // Whether hovering opens its module; the tooltip shows only when not
-  readonly property bool popoutOpens: EdgeMenusConfig.opensOwnPopout(root.properties) && root.bar.popout && root.fields !== null
+  readonly property bool popoutOpens: MenusConfig.opensOwnPopout(root.properties) && root.bar.popout && root.fields !== null
 
   PopoutAnchor {
     hitArea: root.hitArea

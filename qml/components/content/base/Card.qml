@@ -16,7 +16,7 @@ Rectangle {
   // The slot this module fills, in grid units (four to a card): [col, row,
   // colSpan, rowSpan]
   property var slotRect: [0, 0, 4, 4]
-  // Where the card is shown: { kind: "overlay" } or { kind: "edgeMenu", id,
+  // Where the card is shown: { kind: "overlay" } or { kind: "menu", id,
   // bare }
   property var host: ({
       "kind": "overlay"

@@ -27,7 +27,7 @@ Item {
 
   property string popoutName: ""
   // An edge menu's id to open instead of a popout (a widget's menu popout,
-  // EdgeMenusConfig.popoutMenuOf): opened with this as its anchor, so a
+  // MenusConfig.popoutMenuOf): opened with this as its anchor, so a
   // floating one stays open while this is hovered
   property string menu: ""
   // The window it's in, and the popouts host showing what it opens there
@@ -60,7 +60,7 @@ Item {
   readonly property bool popoutOpen: {
     // Covered by a popout over it, it's brought forward
     if (root.menu !== "")
-      return EdgeMenuManager.isOpen(root.menu) && !EdgeMenuManager.covered(root.menu);
+      return MenuManager.isOpen(root.menu) && !MenuManager.covered(root.menu);
     const popouts = root.popouts;
     if (!popouts)
       return false;
@@ -73,7 +73,7 @@ Item {
     if (!root.active || root.popoutOpen)
       return;
     if (root.menu !== "") {
-      EdgeMenuManager.open(root.menu, root, "bar");
+      MenuManager.open(root.menu, root, "bar");
       return;
     }
     if (!root.popouts || !root.panel)

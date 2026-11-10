@@ -9,7 +9,7 @@ import qs.components.methods
 QtObject {
   // [col, row, colSpan, rowSpan] in grid units, four to a card
   property var slotRect: [0, 0, 4, 4]
-  // { kind: "overlay" } or { kind: "edgeMenu", id, bare }
+  // { kind: "overlay" } or { kind: "menu", id, bare }
   property var host: ({
       "kind": "overlay"
     })

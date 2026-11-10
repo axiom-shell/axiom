@@ -4,13 +4,13 @@ group: Look & layout
 defaultSize: [4, 1]
 minSize: [2, 1]
 canvasDetail: label
-hosts: {only: [edgeMenu]}
+hosts: {only: [menu]}
 settings:
   menu:
     type: string
     title: Menu
     default: ''
-    x-options: edgeMenus
+    x-options: menus
     x-emptyLabel: None
     description: The menu that opens beside this one.
   label: {type: string, title: Label, default: '', description: Empty shows none.}

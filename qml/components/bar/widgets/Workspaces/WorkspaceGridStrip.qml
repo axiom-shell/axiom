@@ -199,7 +199,7 @@ Item {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "WorkspaceGrid"
-    active: WorkspacesConfig.size > 1 && EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: WorkspacesConfig.size > 1 && MenusConfig.opensOwnPopout(root.properties)
     extraData: ({
         output: root.output,
         vertical: root.isVertical,

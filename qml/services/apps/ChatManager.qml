@@ -217,7 +217,7 @@ Singleton {
   function openPage() {
     if (ShellManager.openModule(["Chat"]))
       return true;
-    ShellManager.refuse("smart_toy", I18n.tr("No chat module"), I18n.tr("Add a Chat module to an overlay page or an edge menu."));
+    ShellManager.refuse("smart_toy", I18n.tr("No chat module"), I18n.tr("Add a Chat module to an overlay page or a menu."));
     return false;
   }
 

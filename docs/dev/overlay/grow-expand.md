@@ -2,7 +2,7 @@
 
 > **Files:** `qml/components/hosts/overlay/ModuleGrid.qml`, `qml/components/hosts/overlay/ExpandedModule.qml`, `qml/components/hosts/overlay/OverlaySlot.qml`, `qml/components/content/base/Card.qml`, `qml/components/content/base/Panel.qml`, `qml/components/content/parts/ExpandButton.qml`, `qml/components/methods/GridPlacement.qml`
 > **Config:** module `properties.grow` (Notifications, Agenda, WifiNetworks, BluetoothDevices, AudioMixer)
-> **Related:** [Writing modules](writing-modules.md), [Pages and grid](pages-and-grid.md), [Grid canvas](grid-canvas.md), [Edge menu hosts](../edge-menus/hosts.md), [Popout edge attach](../popouts/edge-attach.md)
+> **Related:** [Writing modules](writing-modules.md), [Pages and grid](pages-and-grid.md), [Grid canvas](grid-canvas.md), [Menu hosts](../menus/hosts.md), [Popout edge attach](../popouts/edge-attach.md)
 
 Two runtime ways a module gets more room than its `place`: **growing** (taking extra rows while its content wants them) and **expanding** (a detail view over the whole grid, like Android's quick settings). Neither changes the config.
 
@@ -34,7 +34,7 @@ Two runtime ways a module gets more room than its `place`: **growing** (taking e
 - Growth is runtime only: the config keeps `place`.
 - The layouts canvas draws the most a module can take alone as a dashed outline round it (`GridPlacement.growthAround` → `CanvasModule.growth`).
 - Not on a bounded grid (the lock screen, the greeter).
-- A floating top or bottom menu keeps room for its deepest (`EdgeMenuBody.maxGrownHeight` → `EdgePopout.maxContentDepth`).
+- A floating top or bottom menu keeps room for its deepest (`MenuBody.maxGrownHeight` → `EdgePopout.maxContentDepth`).
 - An integrated menu's zone follows it, so windows move.
 
 ### Expanding: API

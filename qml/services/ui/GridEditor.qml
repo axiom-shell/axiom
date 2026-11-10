@@ -7,7 +7,7 @@ import qs.services.core
 
 /* Editing of one grid of modules (each with a `place` { x, y, w, h } in
  * quarter cards), shared by the layouts editor's overlay pages and edge
- * menus. Not a singleton: OverlayManager and its EdgeMenuEditor each own one,
+ * menus. Not a singleton: OverlayManager and its MenuEditor each own one,
  * point `modulesOf` at the live modules array in their draft and run their
  * draft's changed() on `edited`.
  *
@@ -29,7 +29,7 @@ QtObject {
 
   // Returns the modules array being edited (mutated in place), or null
   property var modulesOf: () => null
-  // Where the modules are shown: "overlay", "edgeMenu" or "lockscreen"
+  // Where the modules are shown: "overlay", "menu" or "lockscreen"
   // (x-hosts)
   property string host: "overlay"
   // A bounded grid ({ cols, rows }): modules stay inside it where they
@@ -88,10 +88,10 @@ QtObject {
   function problemsFor(modules, name, area) {
     const out = [];
     const bounds = area ?? root.area;
-    // I18n.tr("an overlay page") I18n.tr("an edge menu") I18n.tr("the lock screen") I18n.tr("the login screen") I18n.tr("the desktop")
+    // I18n.tr("an overlay page") I18n.tr("a menu") I18n.tr("the lock screen") I18n.tr("the login screen") I18n.tr("the desktop")
     const hostName = I18n.tr(({
         "overlay": "an overlay page",
-        "edgeMenu": "an edge menu",
+        "menu": "a menu",
         "lockscreen": "the lock screen",
         "greeter": "the login screen",
         "desktop": "the desktop"

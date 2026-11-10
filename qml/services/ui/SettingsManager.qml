@@ -420,8 +420,8 @@ QtObject {
     case "regions":
       // Empty: the language's
       return ["", ...DateFormats.regions];
-    case "edgeMenus":
-      return ["", ...EdgeMenusConfig.menus.map(menu => menu.id)];
+    case "menus":
+      return ["", ...MenusConfig.menus.map(menu => menu.id)];
     case "customWidgets":
       return CustomWidgetsConfig.items.map(item => item.id);
     case "marketSymbols":
@@ -465,7 +465,7 @@ QtObject {
 
   // Never offered, whatever the schema says: the bar and overlay editors
   // own these
-  readonly property var _blockedPrefixes: ["Bars.items", "Overlay.items", "EdgeMenus"]
+  readonly property var _blockedPrefixes: ["Bars.items", "Overlay.items", "Menus"]
 
   // Every value the settings page shows, as { path, key, schema, openOnly },
   // with key the dotted path. A takeover setting (SchemaLayout.waitsForUser)

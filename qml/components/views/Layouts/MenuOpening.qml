@@ -15,8 +15,8 @@ ColumnLayout {
   readonly property bool previewingThis: !!root.menu && OverlayManager.menus.previewing !== "" && OverlayManager.menus.previewing === root.menu.id
   readonly property var references: OverlayManager.menus.references(root.menu?.id ?? "")
   // A free menu has no edge to hover: shown beside a menu opening it from
-  // a Submenu module, else on its own (EdgeMenuEditor.canPreview)
-  readonly property bool free: EdgeMenusConfig.isFree(root.menu)
+  // a Submenu module, else on its own (MenuEditor.canPreview)
+  readonly property bool free: MenusConfig.isFree(root.menu)
   readonly property bool besideParent: root.free && OverlayManager.menus.submenuParentOf(root.menu?.id ?? "") !== null
 
   Layout.fillWidth: true

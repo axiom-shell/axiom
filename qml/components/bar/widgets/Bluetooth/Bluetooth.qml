@@ -53,6 +53,6 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "BluetoothDevices"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden && BluetoothManager.available
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden && BluetoothManager.available
   }
 }

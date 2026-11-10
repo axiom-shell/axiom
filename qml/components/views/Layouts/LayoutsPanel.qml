@@ -9,8 +9,8 @@ import qs.components.content.base
 
 // i18n: keys from the schema (titles, descriptions)
 // Layouts editor, left: the overlay pages, the desktop, the lock screen
-// and the edge menus, then what's selected: a page's name and icon and
-// what opens it, a menu's settings in groups (from the schema's EdgeMenu
+// and the menus, then what's selected: a page's name and icon and
+// what opens it, a menu's settings in groups (from the schema's Menu
 // definition, its Opening group led by how to try and open it), the
 // desktop's (led by which monitor's layout is edited), or the lock
 // screen's (led by its preview), and anything that blocks saving
@@ -150,7 +150,7 @@ Item {
     // draft edit: the condition keeps the model the same while one is
     // selected
     Repeater {
-      model: root.menu !== null ? EdgeMenusConfig.fieldGroups : []
+      model: root.menu !== null ? MenusConfig.fieldGroups : []
 
       delegate: FieldGroup {
         id: group

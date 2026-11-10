@@ -71,6 +71,6 @@ ValueStyleWidget {
     hitArea: root.hitArea
     popoutName: "Calendar"
     openDelay: 150
-    active: EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: MenusConfig.opensOwnPopout(root.properties)
   }
 }

@@ -332,7 +332,7 @@ def main():
         name = option.get("$ref", "").split("/")[-1]
         target = schema["definitions"].get(name, option)
         const = target["properties"]["type"]["const"]
-        hosts = target.get("x-hosts", ["overlay", "edgeMenu", "desktop"])
+        hosts = target.get("x-hosts", ["overlay", "menu", "desktop"])
         if "overlay" in hosts and "desktop" not in hosts:
             errors.append(f"OverlayModule {const}: x-hosts lists overlay but not desktop (every module goes on the desktop)")
         source = ROOT / POPOUT_DIR / const / f"{const}.qml"

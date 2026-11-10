@@ -55,12 +55,12 @@ TestCase {
     compare(filled.type, data.type);
   }
 
-  // A new edge menu (EdgeMenuEditor) fills the same way
+  // A new edge menu (MenuEditor) fills the same way
   function test_edge_menu_default_fills() {
     const filled = shared.applyDefaults({
       "id": "test"
     }, {
-      "$ref": "#/definitions/EdgeMenu"
+      "$ref": "#/definitions/Menu"
     }, schema);
     compare(filled.id, "test");
   }

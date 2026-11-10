@@ -43,6 +43,6 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "Tailscale"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: MenusConfig.opensOwnPopout(root.properties)
   }
 }

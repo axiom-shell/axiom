@@ -36,6 +36,6 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "Drives"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
   }
 }

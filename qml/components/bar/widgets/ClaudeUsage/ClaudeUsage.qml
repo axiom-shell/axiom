@@ -85,7 +85,7 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "ClaudeUsage"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: MenusConfig.opensOwnPopout(root.properties)
     extraData: ({
         "accounts": ClaudeUsageConfig.accounts,
         "warnThreshold": root.properties.warnThreshold,

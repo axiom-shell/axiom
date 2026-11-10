@@ -29,33 +29,33 @@ PopoutWrapperBase {
   required property var menu
   required property ShellScreen screen
 
-  readonly property int edge: EdgeMenusConfig.edgeOf(root.menu)
+  readonly property int edge: MenusConfig.edgeOf(root.menu)
   readonly property bool vertical: root.edge === ScreenEdge.Left || root.edge === ScreenEdge.Right
 
   readonly property bool framed: root.menu.frame
   readonly property int padding: PopoutsConfig.padding
-  readonly property var colors: EdgeMenusConfig.colorsOf(root.menu)
+  readonly property var colors: MenusConfig.colorsOf(root.menu)
   // The frame's inset from the strip's edges (0 without one): the screen
   // margin reaches its stroke's inner edge, as the screen border's does, so
   // the two strokes line up
-  readonly property int frameInset: EdgeMenusConfig.frameInsetOf(root.menu)
+  readonly property int frameInset: MenusConfig.frameInsetOf(root.menu)
   // From the strip's edges to the cards: the frame and its stroke, then
   // the padding
-  readonly property int pad: EdgeMenusConfig.outerPadOf(root.menu) + root.padding
+  readonly property int pad: MenusConfig.outerPadOf(root.menu) + root.padding
   // With the screen border off, the strip's own inner stroke (with it on,
   // the border's strip inside this one draws it)
-  readonly property int innerStroke: EdgeMenusConfig.innerStroke
+  readonly property int innerStroke: MenusConfig.innerStroke
   readonly property real edgeLength: root.vertical ? root.screen?.height ?? 0 : root.screen?.width ?? 0
   readonly property real bodyDepth: root.vertical ? (loader.item?.implicitWidth ?? 0) : (loader.item?.implicitHeight ?? 0)
   readonly property int depth: Math.ceil(root.bodyDepth + root.pad * 2 + root.innerStroke)
-  // Its card size (EdgeMenusConfig.cardUnitOf)
-  readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)
-  readonly property real cardGap: EdgeMenusConfig.gapOf(root.menu)
+  // Its card size (MenusConfig.cardUnitOf)
+  readonly property int unit: MenusConfig.cardUnitOf(root.menu)
+  readonly property real cardGap: MenusConfig.gapOf(root.menu)
   // Where the modules start along the edge: its start, as it always takes
   // the whole edge (GridPlacement.menuFillsEdge), stretched along it
   readonly property real alongPos: GridPlacement.menuAlong(root.menu, root.edgeLength, root.unit, root.pad, root.pad, root.cardGap)
 
-  // Where the modules can sit, for the layouts editor (EdgeMenuManager.frames)
+  // Where the modules can sit, for the layouts editor (MenuManager.frames)
   readonly property var frame: ({
       "screen": root.screen?.name ?? "",
       "startPad": root.pad,
@@ -71,7 +71,7 @@ PopoutWrapperBase {
   keepAlive: panelHover.hovered || trigger.containsMouse
   window: panel
 
-  EdgeMenuSync {
+  MenuSync {
     id: sync
     host: root
     menu: root.menu
@@ -227,7 +227,7 @@ PopoutWrapperBase {
           x: root.vertical ? across : root.alongPos
           y: root.vertical ? root.alongPos : across
 
-          sourceComponent: EdgeMenuBody {
+          sourceComponent: MenuBody {
             menu: root.menu
             vertical: root.vertical
             maxLength: root.edgeLength - root.pad * 2

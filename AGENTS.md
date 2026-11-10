@@ -102,7 +102,7 @@ How they're built: `docs/dev/core/services-pattern.md`.
 ## UI conventions
 
 - **Reuse before building** (`docs/dev/core/shared-ui-pieces.md`); a second copy of a pattern becomes a shared piece.
-- **Data-driven surfaces**: bars, pages, edge menus, docks, OSDs are config arrays, built by `Variants`/Repeaters keyed by stable ids; types load by name (file + schema `oneOf` entry).
+- **Data-driven surfaces**: bars, pages, menus, docks, OSDs are config arrays, built by `Variants`/Repeaters keyed by stable ids; types load by name (file + schema `oneOf` entry).
 - **Pages show at once and fill in** (`docs/dev/core/streamed-building.md`): panels and anything long are `StreamedLoader`s, nothing is built hidden, unbounded lists are ListViews.
 - **Repeater models and `acquire()` requests come from config and tool availability only, never live values** (`check_structure`): one re-evaluated per sample once pushed qs past 25 GB.
 - **Sizes** outside the bars from `Widget`, `Widget.px(n)` and `Appearance.fontSize(By)` (`scripts/check_sizes.py`); `Appearance.borderRadius` only for outer edges, `Widget.radius` inside; rounded clipping is `ClippingRectangle`; icons are `StyledIcon`, never in a Text with a label.

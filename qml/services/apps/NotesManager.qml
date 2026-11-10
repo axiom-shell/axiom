@@ -179,7 +179,7 @@ QtObject {
   // --- Opening a note elsewhere (the launcher) ---
 
   // A note (and 0-based line, or -1) to show in the Notes module at a
-  // place ("overlay", "edgeMenu:<id>" or "desktop:<screen>", a module's
+  // place ("overlay", "menu:<id>" or "desktop:<screen>", a module's
   // placeKey): one loaded there shows it at once (openRequested); one
   // loaded in the next few seconds takes it with takeReveal(place)
   signal openRequested(string path, int line, string place)
@@ -190,15 +190,15 @@ QtObject {
   // /notes, the notes keybind action)
   function openNotes(path, line) {
     const page = OverlayConfig.pageWithModule("Notes");
-    const menu = page === "" ? EdgeMenusConfig.menuWithModule("Notes") : null;
+    const menu = page === "" ? MenusConfig.menuWithModule("Notes") : null;
     if (page === "" && !menu) {
-      ShellManager.refuse("sticky_note_2", I18n.tr("No notes module"), I18n.tr("Add a Notes module to an overlay page or an edge menu."));
+      ShellManager.refuse("sticky_note_2", I18n.tr("No notes module"), I18n.tr("Add a Notes module to an overlay page or a menu."));
       return;
     }
     if (path)
-      root.requestOpen(path, line, menu ? "edgeMenu:" + menu.id : "overlay");
+      root.requestOpen(path, line, menu ? "menu:" + menu.id : "overlay");
     if (menu)
-      EdgeMenuManager.reveal(menu.id);
+      MenuManager.reveal(menu.id);
     else
       ShellManager.openOverlayPage(page);
   }

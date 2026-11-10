@@ -37,14 +37,9 @@ var namedCommands = []named{
 		{"close", "close", "", 0, "Close it"},
 		{"page", "page", "TYPE", 1, "Open it on a page of TYPE"},
 	}},
-	{"edge-menu", "Open, close or pin an edge menu", "edgeMenu", []verb{
-		{"toggle", "toggle", "ID", 1, "Open it, or close it when open"},
-		{"open", "open", "ID", 1, "Open it"},
-		{"close", "close", "ID", 1, "Close it"},
-		{"pin", "pin", "ID", 1, "Keep it open"},
-		{"unpin", "unpin", "ID", 1, "Let it close again"},
-		{"list", "list", "", 0, "List the edge menus"},
-	}},
+	{"menu", "Open, close or pin a menu", "menu", menuVerbs},
+	// The command's old name (edge menus became menus, v104), hidden
+	{"edge-menu", "Open, close or pin a menu (old name of menu)", "menu", menuVerbs},
 	{"dock", "Show or hide a dock", "dock", []verb{
 		{"toggle", "toggle", "ID", 1, "Show it, or hide it when shown"},
 		{"open", "open", "ID", 1, "Show it"},
@@ -156,11 +151,24 @@ var namedCommands = []named{
 	}},
 }
 
+var menuVerbs = []verb{
+	{"toggle", "toggle", "ID", 1, "Open it, or close it when open"},
+	{"open", "open", "ID", 1, "Open it"},
+	{"close", "close", "ID", 1, "Close it"},
+	{"pin", "pin", "ID", 1, "Keep it open"},
+	{"unpin", "unpin", "ID", 1, "Let it close again"},
+	{"list", "list", "", 0, "List the menus"},
+}
+
+// The commands kept under an old name: they work, but help and
+// completions leave them out
+var hiddenNamed = map[string]bool{"edge-menu": true}
+
 // namedCommandList builds the commands of the table.
 func namedCommandList() []*Command {
 	var out []*Command
 	for _, n := range namedCommands {
-		cmd := &Command{Name: n.name, Summary: n.summary}
+		cmd := &Command{Name: n.name, Summary: n.summary, Hidden: hiddenNamed[n.name]}
 		for _, v := range n.verbs {
 			v, target := v, n.target
 			cmd.Subs = append(cmd.Subs, &Command{

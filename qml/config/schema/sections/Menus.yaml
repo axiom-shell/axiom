@@ -1,0 +1,10 @@
+# The Menus section of the config (config.json's "Menus"): menus of
+# modules on a screen edge, in a strip or in a window of their own.
+
+type: object
+x-scope: look
+x-settings: false
+title: Menus
+additionalProperties: false
+properties:
+  items: {type: array, x-settings: false, default: [], items: {$ref: '#/definitions/Menu'}}

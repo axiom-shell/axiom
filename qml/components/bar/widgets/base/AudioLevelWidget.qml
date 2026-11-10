@@ -61,7 +61,7 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "AudioMixer"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
     extraData: ({
         "mode": root.mode,
         "maxVolume": root.maxVolume

@@ -11,7 +11,7 @@ Thanks for wanting to help. Bug reports, ideas, translations and code are all we
 | **Bug report** | Something broken or behaving wrongly |
 | **New feature or component** | Something big: a new surface, page type, editor or subsystem |
 | **Small feature or improvement** | A change to something that exists, a new setting or launcher command, or a small feature that stands on its own |
-| **Bar widget or module** | Something new for the bar, or a module for overlay pages, edge menus, the desktop, the lock screen or the login screen |
+| **Bar widget or module** | Something new for the bar, or a module for overlay pages, menus, the desktop, the lock screen or the login screen |
 | **App theme request** | Another app that should follow axiom's theme |
 | **Compositor or distribution support** | Running on another compositor, or installing on another distribution. Needs someone who runs it to test it |
 | **Translation** | A new language, or wrong or untranslated text |
@@ -105,7 +105,7 @@ Read [AGENTS.md](AGENTS.md) before your first change: it holds the project's rul
 | --- | --- |
 | Add a bar widget, overlay module, setting, launcher command, theme integration, … | Its recipe in [docs/recipes/](docs/recipes/): files to touch and one to copy |
 | Change a bar widget or the bar's look | [docs/dev/bar/](docs/dev/bar/) |
-| Change edge menus, overlay pages or modules | [docs/dev/edge-menus/](docs/dev/edge-menus/), [docs/dev/overlay/](docs/dev/overlay/) |
+| Change menus, overlay pages or modules | [docs/dev/menus/](docs/dev/menus/), [docs/dev/overlay/](docs/dev/overlay/) |
 | Change a popout | [docs/dev/popouts/surface-context.md](docs/dev/popouts/surface-context.md) |
 | Change a feature (launcher, lock screen, dock, notifications, …) | `docs/dev/features/<feature>.md` |
 | Change something about settings or the config | [config-manager](docs/dev/core/config-manager.md), [schema-annotations](docs/dev/core/schema-annotations.md) |

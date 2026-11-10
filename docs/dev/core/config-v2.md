@@ -37,11 +37,11 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 | Definition | Shape | Replaces |
 |---|---|---|
 | `ScreenTarget` | `{ mode: "inherit" \| "primary" \| "focused" \| "all" \| "named", names: [] }`. `names` is `machine` scope (with `x-monitorRef`); `mode` is look (personal in `Workspaces.strips`, as the whole section is). A use narrows `mode`'s enum with a sibling override. | General's `monitors` + `primaryMonitor` (kept as `General.primaryMonitor`); `Launcher/PowerMenu/Notifications/Overlay.monitors`; `Dock/OSD` `monitors` + `monitor`; `Bars[].monitor` and `EdgeMenus[].monitor` (`""` primary, `*` all); `Greeter.monitor`; `Desktop.*.monitor`; `Workspaces.strips[].monitor` |
-| `Layout` | `{ grid: { columns, rows, fine }, moduleScale, moduleBorders, modules: [Module] }` | `DesktopLayout`, `ScreenLayout`'s grid half, `EdgeMenu`'s grid keys, the Custom page's modules |
+| `Layout` | `{ grid: { columns, rows, fine }, moduleScale, moduleBorders, modules: [Module] }` | `DesktopLayout`, `ScreenLayout`'s grid half, `Menu`'s grid keys, the Custom page's modules |
 | `ScreenLayout` | `Layout` + `backdrop: { source: "wallpaper" \| "color", blur, color, dim }`, `otherScreens`, `borders: { password, greeting }` | `ScreenLayout` (lock screen, greeter) |
 | `Blur` | `{ enabled, size, passes, … }` | `WindowLook.blur*` |
 | `Shadow` | `{ enabled, size, color, strength, … }` | `WindowLook.shadow*`, `BarStyle.shadow*`, a bar's `overrideShadow` + `shadow*` |
-| `Timing` | `{ openDelay, closeDelay }` (ms) | `Popouts.openDelay/dismissDelay`, Dock / EdgeMenu `openDelay` / `closeDelay` |
+| `Timing` | `{ openDelay, closeDelay }` (ms) | `Popouts.openDelay/dismissDelay`, Dock / Menu `openDelay` / `closeDelay` |
 
 ## Sections
 
@@ -50,7 +50,7 @@ It covers two things: the **shape of config.json** (rules 1 to 10, then [Shared 
 |---|---|
 | `Bars: [Bar]` (top level) + `BarStyle` (section) | `Bars: { style: BarStyle, items: [Bar] }`. A bar's `style` is a `BarStyle` whose keys are `null` (inherit) unless set. Gone: `overrideWidgetStyle`, `overrideAccents`, `overrideShadow`, `overrideFontSize`, `overrideRadius`. |
 | `Bars[].widgets.{left,leftCenter,center,rightCenter,right}: [Widget]` | the same five lists; each widget gets an `id` |
-| `EdgeMenus: [EdgeMenu]` (top level) | `EdgeMenus: { items: [EdgeMenu] }`. An edge menu's grid is a `Layout`; `open: { onHover, delay }`, `close: { onLeave, delay, onOutsideClick }`, `trigger: Trigger` |
+| `EdgeMenus: [EdgeMenu]` (top level) | `EdgeMenus: { items: [EdgeMenu] }` (`Menus: { items: [Menu] }` since v104). A menu's grid is a `Layout`; `open: { onHover, delay }`, `close: { onLeave, delay, onOutsideClick }`, `trigger: Trigger` |
 | `Dock.docks` | `Dock.items` |
 | `OSD.osds` (+ `scrollToChange`, `scrollStep`) | `OSD.items` (the two settings stay) |
 | `Overlay.views` | `Overlay.items` (pages; each with an `id`) |
@@ -88,7 +88,7 @@ Sections that are already one concept with plain keys stay as they are, apart fr
 |---|---|---|
 | every kind | `type: object`, `additionalProperties: false`, `required`, `type: {const: <Type>}` with its label, `id` | `icon`, `group` (the library group), `settings` (flat: the builder nests them as `properties.properties`, so config.json's shape doesn't change) |
 | bar widget | `visible`, `layout`, `popout: { enabled, menu }`, the color fields with their `$bar.*` show rules | `popout: own \| menu \| none` (which title and default `popout` gets), `colors: [<autoColor role>, …]`, `appearance: {variant: value, style: {enum: […]}}` (its display styles, [Display styles](../bar/display-styles.md)) |
-| overlay module | `place`, `x-hosts: [overlay, edgeMenu, desktop]` | only the extra hosts (`hosts: [lockscreen, greeter]`), `size` / `minSize` |
+| overlay module | `place`, `x-hosts: [overlay, menu, desktop]` | only the extra hosts (`hosts: [lockscreen, greeter]`), `size` / `minSize` |
 | overlay view | the page's common keys (`OverlayView`) | `needs` |
 
 The builder also links a type to the section of the same name when there is one (`x-link: {setting: Weather}` today), unless the type says otherwise.
@@ -123,7 +123,7 @@ Nothing in v2's shape depends on these; rule 11's folders are where they would g
 ## What it costs, and where
 - **Readers keep their public names** (`BarsConfig.savedBars`, `DockConfig.docks`, `Widget.px`, …). Only reader internals change, so the components above them don't.
 - **What changes in QML:**
-  - the editors that write shape directly (BarManager, EdgeMenuEditor, OverlayManager, DockManager, ScreenLayoutEditor, MonitorManager, KeybindEditor, the settings cards);
+  - the editors that write shape directly (BarManager, MenuEditor, OverlayManager, DockManager, ScreenLayoutEditor, MonitorManager, KeybindEditor, the settings cards);
   - the compositor config writers (the daemon's `render`, which reads the annotations);
   - the condition evaluator (`SchemaLayout`);
   - the form controls (duration units).

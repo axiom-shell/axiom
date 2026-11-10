@@ -50,7 +50,7 @@ In axiom (`config.Pipeline.Load`), for config.json, saved configs and imports al
 `axiom config validate [FILE]` runs the same, read-only.
 
 ### New entries
-Editors create new entries at their definition's defaults with `withDefaults(value, "Bar" | "BarWidget" | "EdgeMenu" | "OverlayView" | "OverlayModule")`.
+Editors create new entries at their definition's defaults with `withDefaults(value, "Bar" | "BarWidget" | "Menu" | "OverlayView" | "OverlayModule")`.
 
 ### Writes
 (Rule: AGENTS.md › Services, "Config writes".)
@@ -59,7 +59,7 @@ Editors create new entries at their definition's defaults with `withDefaults(val
 - Never mutate `ConfigManager.config` fields from UI code and expect persistence.
 
 ### ConfigDraft
-- The editor services each hold a `ConfigDraft` (`qml/services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager (and its `EdgeMenuEditor`), KeybindManager (its `KeybindEditor`), MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
+- The editor services each hold a `ConfigDraft` (`qml/services/core/ConfigDraft.qml`): SettingsManager, BarManager, OverlayManager (and its `MenuEditor`), KeybindManager (its `KeybindEditor`), MonitorManager, plus the `ScreenLayoutEditor` drafts of the desktop, lock screen and greeter layouts.
 - A draft is a working copy of one config path:
   - `changed()` after in-place edits
   - `save()` merges onto the latest config via `commit`.

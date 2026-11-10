@@ -44,7 +44,7 @@ BarIconWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "DevModeMenu"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
   }
 
   // With its popout off: the dev tree and the last build

@@ -20,7 +20,7 @@ Item {
   // The slot's [x, y, w, h] in grid units (its place); passed on
   // as the module's `slotRect`, from which Card derives its shape
   property var rect: [0, 0, 4, 4]
-  // Where the module is shown: { kind: "overlay" } or { kind: "edgeMenu",
+  // Where the module is shown: { kind: "overlay" } or { kind: "menu",
   // id }, passed on as its `host`
   property var host: ({
       "kind": "overlay"

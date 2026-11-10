@@ -6,12 +6,12 @@ import qs.components.methods
 import qs.services.core
 import qs.services.compositor
 
-// The layouts editor's working copy of EdgeMenus (the pinned Layouts
+// The layouts editor's working copy of Menus (the pinned Layouts
 // overlay page), as BarManager is the bar editor's. Not a singleton:
 // OverlayManager holds one as `menus`, beside its own GridEditor. Edits
 // show live on the running menus (ConfigManager.previews) until saved or
 // reset, and `previewing` holds one menu open to try them on
-// (EdgeMenuManager opens and closes it). The selected menu's modules are
+// (MenuManager opens and closes it). The selected menu's modules are
 // edited through `layout` (GridEditor).
 QtObject {
   id: root
@@ -21,10 +21,10 @@ QtObject {
   // screen. With `bounds`, for modules reaching that far (an edit's,
   // before it).
   function placementOf(menu, bounds) {
-    const screen = EdgeMenusConfig.screenFor(menu);
-    if (!menu || !screen || EdgeMenusConfig.isFree(menu))
+    const screen = MenusConfig.screenFor(menu);
+    if (!menu || !screen || MenusConfig.isFree(menu))
       return null;
-    const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), EdgeMenusConfig.cardUnitOf(menu), EdgeMenuManager.frameOf(menu), screen.width, screen.height, EdgeMenusConfig.gapOf(menu));
+    const place = GridPlacement.menuPlacement(menu, bounds ?? GridPlacement.bounds(menu.layout.modules), MenusConfig.cardUnitOf(menu), MenuManager.frameOf(menu), screen.width, screen.height, MenusConfig.gapOf(menu));
     place.screen = screen;
     return place;
   }
@@ -36,7 +36,7 @@ QtObject {
     const place = root.placementOf(menu);
     if (!place)
       return null;
-    const onScreen = GridPlacement.menuOnScreen(menu, place, EdgeMenusConfig.cardUnitOf(menu), EdgeMenusConfig.gapOf(menu));
+    const onScreen = GridPlacement.menuOnScreen(menu, place, MenusConfig.cardUnitOf(menu), MenusConfig.gapOf(menu));
     onScreen.name = root.menuLabel(menu, index);
     return onScreen;
   }
@@ -47,16 +47,16 @@ QtObject {
     const place = root.placementOf(menu);
     if (!place)
       return null;
-    return GridPlacement.screenBox(place.screenWidth, place.screenHeight, EdgeMenusConfig.cardUnitOf(menu), GridPlacement.bounds(menu.layout.modules), menu.edge, place.along, place.across, EdgeMenusConfig.gapOf(menu));
+    return GridPlacement.screenBox(place.screenWidth, place.screenHeight, MenusConfig.cardUnitOf(menu), GridPlacement.bounds(menu.layout.modules), menu.edge, place.along, place.across, MenusConfig.gapOf(menu));
   }
 
   // The draft's other enabled menus on the screen of the one at `index`,
   // as they sit on it (screenRectsOf)
   function othersOn(index) {
-    const screenName = EdgeMenusConfig.screenFor(root.localMenus?.[index])?.name;
+    const screenName = MenusConfig.screenFor(root.localMenus?.[index])?.name;
     if (!screenName)
       return [];
-    return (root.localMenus ?? []).map((other, i) => i !== index && other.enabled && EdgeMenusConfig.screenFor(other)?.name === screenName ? root.screenRectsOf(other, i) : null).filter(other => other !== null);
+    return (root.localMenus ?? []).map((other, i) => i !== index && other.enabled && MenusConfig.screenFor(other)?.name === screenName ? root.screenRectsOf(other, i) : null).filter(other => other !== null);
   }
 
   // Moves the selected menu `step` cells along its lattice (negative:
@@ -79,7 +79,7 @@ QtObject {
   // How far a menu's lattice can be moved, in px either way: half a cell,
   // as a whole one is what the arrows do
   function gridOffsetLimit(menu) {
-    return menu ? Math.floor(GridPlacement.stepOf(EdgeMenusConfig.cardUnitOf(menu), EdgeMenusConfig.gapOf(menu)) / 2) : 0;
+    return menu ? Math.floor(GridPlacement.stepOf(MenusConfig.cardUnitOf(menu), MenusConfig.gapOf(menu)) / 2) : 0;
   }
 
   function setGridOffset(px) {
@@ -112,7 +112,7 @@ QtObject {
 
   property ConfigDraft _draft: ConfigDraft {
     id: draft
-    path: ["EdgeMenus", "items"]
+    path: ["Menus", "items"]
     onRefused: root.applyChanges()
   }
   readonly property alias localMenus: draft.local
@@ -122,11 +122,11 @@ QtObject {
 
   // The selected menu's modules (see GridEditor)
   property GridEditor layout: GridEditor {
-    host: "edgeMenu"
+    host: "menu"
     sizeScale: root.localMenus?.[root.selectedMenuIndex]?.layout?.grid?.fine ? 2 : 1
     modulesOf: () => root.selectedMenu()?.layout.modules ?? null
     // A free menu has no edge: just its grid
-    readonly property var _onEdge: EdgeMenusConfig.isFree(root.selectedMenu()) ? null : root.selectedMenu()
+    readonly property var _onEdge: MenusConfig.isFree(root.selectedMenu()) ? null : root.selectedMenu()
     edge: _onEdge?.edge ?? ""
     screenBox: _onEdge ? root.screenBoxOf(_onEdge) : null
     shifted: (shift, boundsBefore) => root._keepPlace(root.selectedMenu(), shift, boundsBefore)
@@ -165,7 +165,7 @@ QtObject {
   }
 
   // The menu the editor holds open to try edits on ("" for none). A
-  // free menu (EdgeMenusConfig.isFree) shows beside the first edge-placed
+  // free menu (MenusConfig.isFree) shows beside the first edge-placed
   // menu with a Submenu module opening it (`previewParent`, held
   // open too), whose module opens it and holds it (content/Submenu);
   // with none, on its own, at its freeAnchor (FreeMenu)
@@ -177,7 +177,7 @@ QtObject {
   // The first enabled edge-placed menu (in the draft, else saved) with a
   // Submenu module opening menu `id`, else null
   function submenuParentOf(id) {
-    return (root.localMenus ?? EdgeMenusConfig.menus).find(menu => menu.id !== id && menu.enabled && menu.placement === "edge" && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id)) ?? null;
+    return (root.localMenus ?? MenusConfig.menus).find(menu => menu.id !== id && menu.enabled && menu.placement === "edge" && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id)) ?? null;
   }
 
   // Why the draft can't be saved as is (empty = savable)
@@ -204,7 +204,7 @@ QtObject {
   // Keeps the selected menu where it still exists
   function loadConfig() {
     draft.load();
-    ConfigManager.clearPreview("EdgeMenus");
+    ConfigManager.clearPreview("Menus");
     root.selectedMenuIndex = Math.max(0, Math.min(root.selectedMenuIndex, (root.localMenus?.length ?? 1) - 1));
     root.layout.clearSelection();
     root.layout.clearHistory();
@@ -223,11 +223,11 @@ QtObject {
   function applyChanges() {
     draft.changed();
     if (draft.isDirty)
-      ConfigManager.setPreview("EdgeMenus", {
+      ConfigManager.setPreview("Menus", {
         "items": draft.local
       });
     else
-      ConfigManager.clearPreview("EdgeMenus");
+      ConfigManager.clearPreview("Menus");
   }
 
   // Whether a menu differs from its saved version (matched by id)
@@ -267,7 +267,7 @@ QtObject {
   // A new menu for `purpose` (MenuSeeds.purposes), at the schema defaults
   function _newMenu(purpose) {
     const id = root._uniqueId("menu");
-    return ConfigManager.withDefaults(MenuSeeds.seed(purpose, id, I18n.tr("Menu {0}", id.split("-").pop())), "EdgeMenu");
+    return ConfigManager.withDefaults(MenuSeeds.seed(purpose, id, I18n.tr("Menu {0}", id.split("-").pop())), "Menu");
   }
 
   // Selects the last menu and holds it open on screen, so edits show as
@@ -282,7 +282,7 @@ QtObject {
   // (ConfigDraft.adopt). False if the save is refused
   function _commitNew(menu) {
     const next = Utils.clone(ConfigManager.config);
-    next.EdgeMenus.items.push(Utils.clone(menu));
+    next.Menus.items.push(Utils.clone(menu));
     if (!ConfigManager.commit(next))
       return false;
     draft.adopt(menu);
@@ -417,7 +417,7 @@ QtObject {
       return [];
     const out = [];
     (BarManager.localConfig ?? BarsConfig.savedBars).forEach((bar, b) => Object.keys(bar?.widgets ?? {}).forEach(zone => (bar.widgets[zone] ?? []).forEach(widget => {
-          if (!EdgeMenusConfig.menusOpenedBy(widget).includes(id))
+          if (!MenusConfig.menusOpenedBy(widget).includes(id))
             return;
           const barLabel = bar.id || I18n.tr("Bar {0}", b + 1);
           const type = BarsConfig.availableWidgetTypes.find(t => t?.type === widget.type);
@@ -429,7 +429,7 @@ QtObject {
             "index": bar.widgets[zone].indexOf(widget)
           });
         })));
-    (root.localMenus ?? EdgeMenusConfig.menus).forEach((menu, m) => {
+    (root.localMenus ?? MenusConfig.menus).forEach((menu, m) => {
       if (menu.id !== id && (menu.layout.modules ?? []).some(module => module?.type === "Submenu" && module.properties?.menu === id))
         out.push({
           "kind": "submenu",
@@ -438,7 +438,7 @@ QtObject {
         });
     });
     (KeybindManager.editor.isDirty ? KeybindManager.editor.binds : KeybindsConfig.binds).forEach((bind, i) => {
-      if (bind?.action === "edgeMenu" && bind.argument === id)
+      if (bind?.action === "menu" && bind.argument === id)
         out.push({
           "kind": "bind",
           "label": bind.key ? I18n.tr("Keybind {0}", KeybindManager.displayKey(bind.key)) : I18n.tr("Keybind (no key yet)"),
@@ -482,7 +482,7 @@ QtObject {
     BarManager.addWidgetTo(barIndex, zone, {
       "type": "Button",
       "properties": {
-        "action": "edgeMenu",
+        "action": "menu",
         "menu": menu.id,
         "icon": Utils.edgeArrow(menu.edge),
         "tooltip": menu.name || menu.id
@@ -498,7 +498,7 @@ QtObject {
     if (!root.isSaved(menu))
       return;
     KeybindManager.editor.addAndRecord({
-      "action": "edgeMenu",
+      "action": "menu",
       "argument": menu.id,
       "call": "toggle"
     });
@@ -539,21 +539,21 @@ QtObject {
   }
 
   function _showPreview(id) {
-    const menu = id !== "" ? EdgeMenusConfig.menuById(id) ?? root.localMenus?.find(m => m.id === id) : null;
-    const parentId = menu && EdgeMenusConfig.isFree(menu) ? (root.submenuParentOf(id)?.id ?? "") : "";
+    const menu = id !== "" ? MenusConfig.menuById(id) ?? root.localMenus?.find(m => m.id === id) : null;
+    const parentId = menu && MenusConfig.isFree(menu) ? (root.submenuParentOf(id)?.id ?? "") : "";
     if (root.previewing === id && root.previewParent === parentId)
       return;
     // What was shown closes: a submenu with the menu it opened from
     const shown = root.previewParent !== "" ? root.previewParent : root.previewing;
     if (shown !== "" && shown !== (parentId || id))
-      EdgeMenuManager.close(shown);
+      MenuManager.close(shown);
     root._previewing = id;
     root._previewParent = parentId;
-    // After the preview reaches EdgeMenusConfig, so a new menu exists
+    // After the preview reaches MenusConfig, so a new menu exists
     if (id !== "")
       Qt.callLater(() => {
         if (root.previewing === id)
-          EdgeMenuManager.open(root.previewParent || id, null);
+          MenuManager.open(root.previewParent || id, null);
       });
   }
 
@@ -562,7 +562,7 @@ QtObject {
       return false;
     if (!draft.save())
       return false;
-    ConfigManager.clearPreview("EdgeMenus");
+    ConfigManager.clearPreview("Menus");
     return true;
   }
 

@@ -71,7 +71,7 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "Updates"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
   }
 
   // With its popout off, the tooltip says why the check failed

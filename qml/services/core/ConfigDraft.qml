@@ -75,7 +75,7 @@ QtObject {
   }
 
   // An item saved to this draft's list section outside it (an editor's
-  // shortcut committing one new item: EdgeMenuEditor's new menus): added
+  // shortcut committing one new item: MenuEditor's new menus): added
   // to what the draft holds as saved and to its edits, so it shows saved
   // and a later save keeps it once
   function adopt(item) {

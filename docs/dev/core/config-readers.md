@@ -38,7 +38,7 @@ Typed, read-only views of config sections. (Rule: AGENTS.md › Config, no `??` 
 - **`Screenshots`**: the screenshot and recording folders, `~` expanded, empty for `ScreenshotManager`'s defaults ([Screenshots and screen recording](../features/screenshots-recording.md)).
 - **`NotificationsConfig`**: the toasts' corner and gaps; see [Notifications](../features/notifications.md).
 - **`OverlayConfig`**: views and card-grid constants.
-- **`EdgeMenusConfig`**: edge menus.
+- **`MenusConfig`**: edge menus.
 - **`IconsConfig`**, **`ChatConfig`**, **`ThemeIntegrations`**.
 - **`MarketsConfig`**: the watchlist (`symbols`, each with its holding and alerts) every markets widget and module shows, the poll `interval`, `pauseWhenClosed`, `baseCurrency`, `alerts`, `redForGains`, `holdingsOnLockscreen`.
 - **`TailscaleConfig`**: what every Tailscale widget and module shares: the poll `interval`, `showOffline` peers, the Connect/Disconnect `actions`.

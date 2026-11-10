@@ -1,6 +1,6 @@
 # Recipe: a new overlay module
 
-> **Use when:** adding a card type for overlay pages (also usable in edge menus and on the desktop, and on the lock screen or greeter when it opts in).
+> **Use when:** adding a card type for overlay pages (also usable in menus and on the desktop, and on the lock screen or greeter when it opts in).
 > **Copy from:** `qml/components/content/Battery/Battery.qml` (`Card`, `fullMinWidth`/`fullMinHeight`, `compactContent: CompactFigure`, `shape`), `qml/components/content/ColorSwatch/ColorSwatch.qml` (driven by `properties`); schema `qml/components/content/Battery/schema.yaml` (with `hosts`) or `qml/components/content/Calculator/schema.yaml` (with `settings`).
 > **Docs:** [overlay/writing-modules](../dev/overlay/writing-modules.md), [overlay/content-roots](../dev/overlay/content-roots.md), [overlay/grow-expand](../dev/overlay/grow-expand.md), rules in `qml/components/content/AGENTS.md`; generated: [config/OverlayModules](../dev/config/OverlayModules.md).
 
@@ -66,7 +66,7 @@ settings:
 
 ## Steps
 1. Schema first. `defaultSize: [w, h]` in grid units (four to a card) if one card is the wrong starting size; `minSize` if it can't shrink that far.
-2. Hosts: the base lists `overlay`, `edgeMenu` and `desktop` (**every module goes on the desktop**); a type's `hosts` adds to them, `lockscreen` and `greeter` only under their rules (below).
+2. Hosts: the base lists `overlay`, `menu` and `desktop` (**every module goes on the desktop**); a type's `hosts` adds to them, `lockscreen` and `greeter` only under their rules (below).
 3. Typing: a module with a text field (in its file or a part it uses) sets `keyboard: true`, so the desktop hands it the keyboard on a click; `false` only to keep it read-only there on purpose (ClockCalendar). `check_structure` fails a text field with neither.
 4. Write the module: `Card` for free-form, `Panel` for a column that can also be a bar popout. Read settings as `root.properties.<key>`.
 5. Make it work at any size: `fullMinWidth`/`fullMinHeight` plus `compactContent`, and a layout that adapts to `shape` (`"horizontal"`, …) and `compact`.

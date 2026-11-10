@@ -23,7 +23,7 @@ Item {
   // ([col, row, colSpan, rowSpan] in grid units, see Card)
   property var properties: ({})
   property var slotRect: [0, 0, 4, 4]
-  // Card only: where it's shown, { kind: "overlay" } or { kind: "edgeMenu",
+  // Card only: where it's shown, { kind: "overlay" } or { kind: "menu",
   // id, bare }
   property var host: ({
       "kind": "overlay"

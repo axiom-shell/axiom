@@ -34,7 +34,7 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "Caffeine"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties) && !root.hidden
+    active: MenusConfig.opensOwnPopout(root.properties) && !root.hidden
     extraData: ({
         "presets": root.properties.presets
       })

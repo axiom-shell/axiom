@@ -15,19 +15,19 @@ import qs.components.hosts.popout
 // masked to the box. It opens where FreeMenuPlace puts it: at the bar
 // widget that opened it as its popout, else at its `freeAnchor` (the
 // free area's centre, the cursor, or a point), clamped clear of the bars;
-// and comes in as `freeAnimation` says (a fade, a scale, or a slide from
+// and comes in as its `animation` says (a fade, a scale, or a slide from
 // its widget's side or the nearest screen edge). The box is a detached
 // EdgeSurface (SurfaceContext.free), with a submenu (SubmenuHost) for its
-// Submenu rows. Like the edge hosts it follows EdgeMenuManager
-// (EdgeMenuSync) and holds a PopoutClaim, ranked as it was opened. There
-// is one on every screen (EdgeMenu); only the one on the screen the menu
+// Submenu rows. Like the edge hosts it follows MenuManager
+// (MenuSync) and holds a PopoutClaim, ranked as it was opened. There
+// is one on every screen (MenuHosts); only the one on the screen the menu
 // opened on shows it (`shows`).
 // With `draggable` on its box moves while dragged by its top padding (its
 // header); dropped, opened on its own, that spot is its session spot
-// (EdgeMenuManager.positions), where a bind or IPC opens it again until
+// (MenuManager.positions), where a bind or IPC opens it again until
 // logout. A right click there offers Reset position.
 //
-// It also shows a popped-out edge menu (EdgeMenuManager.popOut): at the
+// It also shows a popped-out edge menu (MenuManager.popOut): at the
 // spot its edge box was, appearing at once, held open as if pinned
 // (ranked as a pinned menu: it gives way to a popout over it and comes
 // back), with its edge's layout; dragged, it moves for the moment
@@ -40,30 +40,30 @@ PopoutWrapperBase {
 
   required property var menu
   required property ShellScreen screen
-  // This screen's host shows the menu: the one it opened on (EdgeMenu
+  // This screen's host shows the menu: the one it opened on (MenuHosts
   // keeps a free host on every screen, FreeMenuPlace.shownOn)
   property bool shows: true
   // The cursor in global px as the menu opened (`freeAnchor.at: cursor`,
-  // asked for by EdgeMenu before it picks the screen), else null
+  // asked for by MenuHosts before it picks the screen), else null
   property var cursorAt: null
   readonly property string menuId: root.menu.id
   // A popped-out edge menu's spot as it popped out ({ screen, x, y }),
   // else null (a free menu)
-  readonly property var poppedOut: EdgeMenuManager.poppedOut[root.menuId] ?? null
-  readonly property bool popped: root.poppedOut !== null && !EdgeMenusConfig.isFree(root.menu)
+  readonly property var poppedOut: MenuManager.poppedOut[root.menuId] ?? null
+  readonly property bool popped: root.poppedOut !== null && !MenusConfig.isFree(root.menu)
   // Laid out as on its edge while popped out (a top or bottom menu's
   // modules along a row), else down a column
   readonly property bool vertical: !root.popped || root.menu.edge === "left" || root.menu.edge === "right"
-  // Its box drawn: a popped-out menu's edge host can go (EdgeMenu)
+  // Its box drawn: a popped-out menu's edge host can go (MenuHosts)
   readonly property bool boxShown: surface.active
 
   // Its box's frame: a box floating free of the edges
   readonly property var _free: SurfaceContext.free()
   readonly property real contentPadding: Appearance.borderWidth + PopoutsConfig.padding
-  readonly property var colors: EdgeMenusConfig.colorsOf(root.menu)
+  readonly property var colors: MenusConfig.colorsOf(root.menu)
   // fade | scale | slide; popped out, it appears at once where its edge
   // box was (an instant fade)
-  readonly property string animation: root.popped ? "fade" : root.menu.freeAnimation
+  readonly property string animation: root.popped ? "fade" : root.menu.animation
   // Its window is on Top, under the Overlay layer (SubPopout reads it)
   readonly property bool onOverlayLayer: false
 
@@ -81,11 +81,11 @@ PopoutWrapperBase {
 
   // The box at its content's size (a submenu's stretch drawn round it)
   readonly property Item contentItem: loader.item as Item
-  // Read through a var: EdgeMenuBody's members, on an Item
+  // Read through a var: MenuBody's members, on an Item
   readonly property var _body: root.contentItem
   // No box (`background: none`): its cards are tiles; its input is still
   // the whole box, so the gaps between them are the menu's
-  readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
+  readonly property bool tiled: MenusConfig.tiledOf(root.menu)
   readonly property real boxWidth: Math.ceil(root.contentItem?.implicitWidth ?? 0) + root.contentPadding * 2
   readonly property real boxHeight: Math.ceil(root.contentItem?.implicitHeight ?? 0) + root.contentPadding * 2
   // Room for the modules down the free area (across it, laid out as a
@@ -129,7 +129,7 @@ PopoutWrapperBase {
     "dragged": root._dragged,
     "popOut": root.poppedOut,
     "fromWidget": root._fromWidget,
-    "session": EdgeMenuManager.positions[root.menuId] ?? null,
+    "session": MenuManager.positions[root.menuId] ?? null,
     "screen": root.screen?.name ?? "",
     "anchor": root.menu.freeAnchor,
     "draggable": root.menu.draggable
@@ -138,7 +138,7 @@ PopoutWrapperBase {
   // Reset (its header's menu, IPC resetPosition): back to its anchor, or
   // its widget, even dragged since it opened
   Connections {
-    target: EdgeMenuManager
+    target: MenuManager
     function onPositionReset(id) {
       if (id === root.menuId)
         root._dragged = null;
@@ -215,7 +215,7 @@ PopoutWrapperBase {
   }
 
   // Its place among the popouts (PopoutManager), ranked as it was opened
-  // (EdgeMenuManager.claimKinds): a widget's popout as a bar popout, else
+  // (MenuManager.claimKinds): a widget's popout as a bar popout, else
   // a menu, so a higher popout over it closes it and a lower one it
   // covers doesn't open. Pinned or popped out (FreeMenuPlace.ranksPinned),
   // it ranks lowest once let go, and gives way to a popout over it and
@@ -225,7 +225,7 @@ PopoutWrapperBase {
     kind: root.currentData?.claimKind ?? "menu"
     screen: root.screen?.name ?? ""
     edge: ""
-    pinned: FreeMenuPlace.ranksPinned(EdgeMenuManager.isPinned(root.menuId), root.popped) && !root.engaged
+    pinned: FreeMenuPlace.ranksPinned(MenuManager.isPinned(root.menuId), root.popped) && !root.engaged
     resident: sync.held
     occupied: root.occupied
     closing: root.isClosing
@@ -243,10 +243,10 @@ PopoutWrapperBase {
   currentItem: root.contentItem
   window: panel
 
-  // Asked for again while open (EdgeMenuManager.engageRequested): it
+  // Asked for again while open (MenuManager.engageRequested): it
   // comes forward
   Connections {
-    target: EdgeMenuManager
+    target: MenuManager
 
     function onEngageRequested(id) {
       if (id === root.menuId)
@@ -254,7 +254,7 @@ PopoutWrapperBase {
     }
   }
 
-  EdgeMenuSync {
+  MenuSync {
     id: sync
     host: root
     menu: root.menu
@@ -353,9 +353,9 @@ PopoutWrapperBase {
     property Region headerMenuArea: Region {
       item: headerMenu.visible ? headerMenu.background : null
     }
-    // Its content's top-left in the window (EdgeMenuBody's coordinates)
+    // Its content's top-left in the window (MenuBody's coordinates)
     readonly property point contentAt: Qt.point(boxArea.x + root.contentPadding, boxArea.y + root._stretchTop + root.contentPadding)
-    // Tiled, how its cards' tiles are drawn (EdgeMenuBody.tiles): by the
+    // Tiled, how its cards' tiles are drawn (MenuBody.tiles): by the
     // blur window as the box would be, from where its content is on the
     // screen as drawn
     readonly property var origin: placeOnScreen.origin
@@ -384,7 +384,7 @@ PopoutWrapperBase {
       parent: boxArea
       onTriggered: id => {
         if (id === "reset")
-          EdgeMenuManager.resetPosition(root.menuId);
+          MenuManager.resetPosition(root.menuId);
       }
     }
 
@@ -460,7 +460,7 @@ PopoutWrapperBase {
 
       // Its header, the box's top padding: dragged (`draggable`), it moves
       // the box; dropped, a free menu opened on its own keeps the spot for
-      // the session (EdgeMenuManager.storePosition). Nothing is previewed
+      // the session (MenuManager.storePosition). Nothing is previewed
       // meanwhile: the box just moves (clamped, FreeMenuPlace)
       DragArea {
         id: header
@@ -488,11 +488,11 @@ PopoutWrapperBase {
         }
         onDropped: {
           if (FreeMenuPlace.keepsDrag({
-            "free": EdgeMenusConfig.isFree(root.menu),
+            "free": MenusConfig.isFree(root.menu),
             "poppedOut": root.popped,
             "fromWidget": root._fromWidget
           }))
-            EdgeMenuManager.storePosition(root.menuId, {
+            MenuManager.storePosition(root.menuId, {
               "screen": root.screen?.name ?? "",
               "x": root.place.x,
               "y": root.place.y
@@ -505,7 +505,7 @@ PopoutWrapperBase {
       MouseArea {
         z: 2
         anchors.fill: header
-        visible: header.visible && EdgeMenusConfig.isFree(root.menu)
+        visible: header.visible && MenusConfig.isFree(root.menu)
         acceptedButtons: Qt.RightButton
         onClicked: mouse => {
           headerMenu.items = [
@@ -513,7 +513,7 @@ PopoutWrapperBase {
               "id": "reset",
               "text": I18n.tr("Reset position"),
               "icon": "restart_alt",
-              "enabled": EdgeMenuManager.positions[root.menuId] !== undefined || root._dragged !== null
+              "enabled": MenuManager.positions[root.menuId] !== undefined || root._dragged !== null
             }
           ];
           headerMenu.openAt(header, mouse.x, mouse.y);
@@ -529,7 +529,7 @@ PopoutWrapperBase {
         active: root.occupied
         asynchronous: false
 
-        sourceComponent: EdgeMenuBody {
+        sourceComponent: MenuBody {
           menu: root.menu
           screen: root.screen
           tiles: root.tiled ? panel.tiles : null

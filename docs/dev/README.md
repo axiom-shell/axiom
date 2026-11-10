@@ -22,7 +22,7 @@ Dependencies point one way, methods → data owners → readers → services →
 | Settings page, saved configs, import/export | `docs/dev/core/settings-page.md`, `saved-configs-sharing.md` |
 | A new editor (draft, selection, inspector) | `docs/dev/core/editors-pattern.md` |
 | Before drawing any card, row, chip, drag | `docs/dev/core/shared-ui-pieces.md` |
-| Bar / popouts, edge surfaces / overlay / edge menus | `docs/dev/bar/`, `popouts/` (start at `surface-context.md`), `overlay/`, `edge-menus/` |
+| Bar / popouts, edge surfaces / overlay / menus | `docs/dev/bar/`, `popouts/` (start at `surface-context.md`), `overlay/`, `menus/` |
 | Compositor: windows, outputs, workspaces, capabilities, sway/niri | `docs/dev/compositor/` |
 | Config modes (detached / included / managed), the config writer | `docs/dev/compositor/config-modes.md` |
 | Moving a service's side effects into the axiom binary (the staged plan) | `docs/dev/backend/roadmap.md`; what's left: `scripts/quickshell-io-allowlist.json` |
@@ -156,11 +156,11 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [layouts-editor](overlay/layouts-editor.md): the Layouts page and its edit targets (pages, menus, desktop, lock screen, greeter).
 - [grid-canvas](overlay/grid-canvas.md): `GridCanvas`, `GridDragLayer`, `GridEditor` plans and undo.
 
-### edge-menus/
-- [overview](edge-menus/overview.md): entry fields, open/pinned state, pin, module hosts.
-- [hosts](edge-menus/hosts.md): floating and integrated hosts, the lattice, sync.
-- [editing-submenus](edge-menus/editing-submenus.md): editing on the Layouts page, Submenu modules.
-- [free-menus](edge-menus/free-menus.md): free menus' own window, where it opens, its claim and layer.
+### menus/
+- [overview](menus/overview.md): entry fields, open/pinned state, pin, module hosts.
+- [hosts](menus/hosts.md): the edge and strip hosts, the lattice, sync.
+- [editing-submenus](menus/editing-submenus.md): editing on the Layouts page, Submenu modules.
+- [free-menus](menus/free-menus.md): free menus' own window, where it opens, its claim and layer.
 
 ### compositor/
 - [README](compositor/README.md): `CompositorManager`, detection, capabilities, gating what a compositor can't do, `FocusGrab`.

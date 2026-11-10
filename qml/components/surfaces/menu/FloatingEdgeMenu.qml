@@ -23,20 +23,20 @@ EdgePopout {
 
   // Held off the edge, `distance` across the free screen from it
   // (EdgePlacement.gaps)
-  held: EdgeMenusConfig.detachedOf(root.menu)
+  held: MenusConfig.detachedOf(root.menu)
   distance: root.menu.distance / 100
-  fade: root.menu.animation === "fade"
+  fade: root.menu.animation !== "slide"
 
   // Closes what it covers below it (PopoutManager); pinned, it ranks
   // lowest, and pinned or previewing it gives way and comes back
   claimKey: "menu:" + root.menuId
-  // As it was opened (EdgeMenuManager.claimKinds): a widget's menu popout
+  // As it was opened (MenuManager.claimKinds): a widget's menu popout
   // (opened on hover, by its PopoutAnchor: a Button's popout.menu too)
   // ranks as that widget's bar popout, so a neighbour's popout replaces
   // it as bar popouts replace each other; opened any other way (a keybind, its edge, a bar Button's
   // click) it ranks as a menu
   claimKind: root.currentData?.claimKind ?? "menu"
-  pinned: EdgeMenuManager.pinnedMenus[root.menuId] === true
+  pinned: MenuManager.pinnedMenus[root.menuId] === true
   resident: sync.held
 
   // Along the edge, on the menu's lattice (GridPlacement.menuAlong),
@@ -50,13 +50,13 @@ EdgePopout {
   readonly property real startPad: root.alongOrigin + root.startInset + root.contentPadding
   readonly property real endPad: (root.bare ? 0 : ScreenEdgeManager.reservedWithMenusOn(root.screen, root.endSide)) + root.endInset + root.contentPadding
   // From config, so the hover strip lines up before the body has loaded
-  // Its card size (EdgeMenusConfig.cardUnitOf)
-  readonly property int unit: EdgeMenusConfig.cardUnitOf(root.menu)
-  readonly property real cardGap: EdgeMenusConfig.gapOf(root.menu)
-  readonly property real gridLength: EdgeMenusConfig.gridLengthOf(root.menu, root.vertical, root.unit, root.cardGap)
+  // Its card size (MenusConfig.cardUnitOf)
+  readonly property int unit: MenusConfig.cardUnitOf(root.menu)
+  readonly property real cardGap: MenusConfig.gapOf(root.menu)
+  readonly property real gridLength: MenusConfig.gridLengthOf(root.menu, root.vertical, root.unit, root.cardGap)
   readonly property real modulesStart: GridPlacement.menuAlong(root.menu, root.screenLength, root.unit, root.startPad, root.endPad, root.cardGap)
 
-  // Where the modules can sit, for the layouts editor (EdgeMenuManager.frames)
+  // Where the modules can sit, for the layouts editor (MenuManager.frames)
   readonly property var frame: ({
       "screen": root.screen?.name ?? "",
       "startPad": root.startPad,
@@ -67,7 +67,7 @@ EdgePopout {
       "reserves": false
     })
 
-  edge: EdgeMenusConfig.edgeOf(root.menu)
+  edge: MenusConfig.edgeOf(root.menu)
   // The box's centre, so it starts where the modules should, less its
   // padding. From its natural length (the joins at the ends depend on
   // where it is); one filling its edge joins both and needs none. Opened
@@ -96,11 +96,11 @@ EdgePopout {
   // Room for its submenus' stretch from the start (EdgePopout.roomForSubmenus):
   // from config, as the body loads with the window
   roomForSubmenus: root.menu.layout.modules.some(module => module?.type === "Submenu")
-  // Read through a var: EdgeMenuBody's members, on EdgePopout's Item
+  // Read through a var: MenuBody's members, on EdgePopout's Item
   readonly property var _body: root.contentItem
   contentPadding: Appearance.borderWidth + PopoutsConfig.padding
-  fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
-  strokeColor: EdgeMenusConfig.colorsOf(root.menu).stroke
+  fillColor: MenusConfig.colorsOf(root.menu).fill
+  strokeColor: MenusConfig.colorsOf(root.menu).stroke
   triggerEnabled: root.menu.open.onHover
   triggerLength: sync.triggerLength(root.vertical, root.contentPadding, root.screenLength - root.startPad - root.endPad + root.contentPadding * 2)
   // On the modules, in screen px (the box's own position is in this
@@ -114,7 +114,7 @@ EdgePopout {
   grabEnabled: !root.overlayOpen
   autoDismiss: sync.autoDismiss
 
-  EdgeMenuSync {
+  MenuSync {
     id: sync
     host: root
     menu: root.menu
@@ -132,9 +132,9 @@ EdgePopout {
   // (detachedOf); its input is still the whole box, so the gaps between
   // the cards are the menu's (hovering one keeps it open, a click there
   // is inside it)
-  readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
+  readonly property bool tiled: MenusConfig.tiledOf(root.menu)
   hollow: root.tiled
-  // How its cards' tiles are drawn (EdgeMenuBody.tiles): by the blur
+  // How its cards' tiles are drawn (MenuBody.tiles): by the blur
   // window as its box would be, from where its content is on the screen
   // as drawn
   readonly property var _origin: root.window?.screenOrigin ?? null
@@ -148,12 +148,12 @@ EdgePopout {
       "opacity": root.surfaceItem.shownOpacity,
       "look": root.surfaceItem.shadowLook
     }) : null
-  // Asked for again while open (EdgeMenuManager.engageRequested): it comes
+  // Asked for again while open (MenuManager.engageRequested): it comes
   // forward (EdgePopout.engage). The integrated host holds no popout
   // claim, so it has no rank to raise. Asked to pop out, it hands its spot
-  // to the free host (EdgeMenuManager.popOut)
+  // to the free host (MenuManager.popOut)
   Connections {
-    target: EdgeMenuManager
+    target: MenuManager
 
     function onEngageRequested(id) {
       if (id === root.menuId)
@@ -166,7 +166,7 @@ EdgePopout {
       if (id !== root.menuId || !root.isOpen)
         return;
       const at = root.contentOnScreen();
-      EdgeMenuManager.popOut(id, {
+      MenuManager.popOut(id, {
         "screen": root.screen?.name ?? "",
         "x": at.x - root.contentPadding,
         "y": at.y - root.contentPadding
@@ -175,7 +175,7 @@ EdgePopout {
   }
 
   content: Component {
-    EdgeMenuBody {
+    MenuBody {
       menu: root.menu
       tiles: root._tiles
       vertical: root.vertical

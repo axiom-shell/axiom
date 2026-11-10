@@ -69,10 +69,10 @@ QtObject {
         "icon": def["x-icon"] ?? "extension",
         // Its group in the module library (`x-libraryGroup`)
         "group": def["x-libraryGroup"] ?? "",
-        // Where a module may be placed (`x-hosts`): "overlay", "edgeMenu",
+        // Where a module may be placed (`x-hosts`): "overlay", "menu",
         // "desktop" when left out; "lockscreen" and "greeter" only for
         // modules that list them
-        "hosts": def["x-hosts"] ?? ["overlay", "edgeMenu", "desktop"],
+        "hosts": def["x-hosts"] ?? ["overlay", "menu", "desktop"],
         // Part of every grid on its hosts (`x-required`): never removed,
         // duplicated or offered in the library
         "required": def["x-required"] === true,
@@ -109,7 +109,7 @@ QtObject {
     });
   })
   // The module types a host's library offers: "overlay" pages,
-  // "edgeMenu"s or the "lockscreen" (required ones are always there); the
+  // "menu"s or the "lockscreen" (required ones are always there); the
   // custom widgets one by one rather than the CustomWidget type
   function modulesFor(host) {
     return availableModuleTypes.filter(t => t.hosts.includes(host) && !t.required && t.type !== "CustomWidget").concat(customModuleTypes.filter(t => t.hosts.includes(host)));

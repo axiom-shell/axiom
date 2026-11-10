@@ -37,6 +37,9 @@ import (
 //     its editor by it); every action with a {0} in its IPC call or label
 //     has one
 //   - argumentDefaults: the argument an action starts with when picked
+//   - ipcAliases: an older IPC call, in ipcActions' form, by the action it
+//     still is (`axiom ipc edgeMenu …` in a compositor config written
+//     before the target became `menu`)
 //
 //go:embed table.json
 var JSON []byte
@@ -86,12 +89,7 @@ func parse() (*Table, error) {
 	}
 	t := &Table{Repeating: map[string]bool{}}
 	ipc, _ := tables.Value("ipcActions").(*jsonx.Object)
-	for _, action := range ipc.Keys() {
-		entry, _ := ipc.Value(action).(*jsonx.Array)
-		if entry == nil || len(entry.Items) == 0 {
-			return nil, fmt.Errorf("the bind actions: %s has no IPC call", action)
-		}
-		call, _ := entry.Items[0].(string)
+	add := func(action, call string) error {
 		pattern := regexp.QuoteMeta(call)
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{call}"), `(?P<call>`+callNames+`)`)
 		// An argument is one word, or quoted with spaces (ShellWord's form,
@@ -99,9 +97,32 @@ func parse() (*Table, error) {
 		pattern = strings.ReplaceAll(pattern, regexp.QuoteMeta("{0}"), `(?P<arg>'(?:[^']|'\\'')*'|"[^"]*"|\S+)`)
 		re, err := regexp.Compile("^" + pattern + "$")
 		if err != nil {
-			return nil, fmt.Errorf("the bind actions: %s: %w", action, err)
+			return fmt.Errorf("the bind actions: %s: %w", action, err)
 		}
 		t.ipc = append(t.ipc, ipcPattern{action, re})
+		return nil
+	}
+	for _, action := range ipc.Keys() {
+		entry, _ := ipc.Value(action).(*jsonx.Array)
+		if entry == nil || len(entry.Items) == 0 {
+			return nil, fmt.Errorf("the bind actions: %s has no IPC call", action)
+		}
+		call, _ := entry.Items[0].(string)
+		if err := add(action, call); err != nil {
+			return nil, err
+		}
+	}
+	aliases, _ := tables.Value("ipcAliases").(*jsonx.Object)
+	if aliases != nil {
+		for _, call := range aliases.Keys() {
+			action, _ := aliases.Value(call).(string)
+			if !ipc.Has(action) {
+				return nil, fmt.Errorf("the bind actions: the alias %q is for %q, which isn't an IPC action", call, action)
+			}
+			if err := add(action, call); err != nil {
+				return nil, err
+			}
+		}
 	}
 	flags, _ := tables.Value("actionFlags").(*jsonx.Object)
 	for _, action := range flags.Keys() {

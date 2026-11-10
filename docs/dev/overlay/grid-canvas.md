@@ -1,8 +1,8 @@
 # Grid canvas, drag layer and GridEditor
 
 > **Files:** `qml/components/views/Layouts/GridCanvas.qml`, `qml/components/views/Layouts/CanvasModule.qml`, `qml/components/views/Layouts/GridDragLayer.qml`, `qml/components/views/Layouts/EntryListTarget.qml`, `qml/components/views/Layouts/EntryListRow.qml`, `qml/components/views/Layouts/EditorInspector.qml`, `qml/components/views/Layouts/ModuleLibrary.qml`, `qml/components/views/Layouts/ModuleChip.qml`, `qml/services/ui/GridEditor.qml`, `qml/components/methods/GridPlacement.qml`
-> **Config:** whatever the edit target's draft holds (`Overlay.items[].layout.modules`, `EdgeMenus.items[].layout.modules`, screen layouts' `modules`)
-> **Related:** [Layouts editor](layouts-editor.md), [Pages and grid](pages-and-grid.md), [Edge menu editing](../edge-menus/editing-submenus.md), [Growing and expanding](grow-expand.md)
+> **Config:** whatever the edit target's draft holds (`Overlay.items[].layout.modules`, `Menus.items[].layout.modules`, screen layouts' `modules`)
+> **Related:** [Layouts editor](layouts-editor.md), [Pages and grid](pages-and-grid.md), [Menu editing](../menus/editing-submenus.md), [Growing and expanding](grow-expand.md)
 
 The right side of the layouts editor: `GridCanvas` draws the selected page, menu or screen layout; `GridDragLayer` carries modules and list rows; `qml/services/ui/GridEditor` turns drops, moves and resizes into plans and edits, with undo.
 
@@ -17,7 +17,7 @@ The right side of the layouts editor: `GridCanvas` draws the selected page, menu
 - With "Show other menus" (`OverlayManager.menus.showingOthers`), the other enabled menus on that screen are drawn dimmed where they sit.
   - `ghosts`: `OverlayManager.menus.othersOn`, in screen px through `pxScale`, since their module size can differ.
   - They are not drop targets.
-- A header with undo/redo at its left, the module count, a menu's arrows moving it along its edge (see [Edge menu editing](../edge-menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu).
+- A header with undo/redo at its left, the module count, a menu's arrows moving it along its edge (see [Menu editing](../menus/editing-submenus.md)) and how it fits (per monitor for a page, along the edge for a menu).
 
 ### GridCanvas: alignment guides
 Always on; all their geometry is `GridPlacement`'s (tested in `tst_GridPlacement`).
@@ -85,7 +85,7 @@ The canvas pieces name no service: they edit through `dragLayer.editor`.
   - Cleared when the scope changes and by the owners' load/reset (`clearHistory`).
 - Each edit keeps the selection on its module (or group) and normalizes the grid, so a place left of or above it makes room there.
   - On a `hold` axis a gap before the modules stays and only negative places are shifted back. That is a whole-edge menu's axis along its edge, since it starts at the edge's start whatever its modules reach.
-  - `shifted(shift, boundsBefore)` tells the owner; EdgeMenuEditor uses it to keep a menu's modules on their cells.
+  - `shifted(shift, boundsBefore)` tells the owner; MenuEditor uses it to keep a menu's modules on their cells.
 - With an `area` `{ cols, rows }` the grid is bounded instead:
   - places stay inside it, absolute (unless `shiftsBack`);
   - new modules go to `GridPlacement.firstFreeIn`;

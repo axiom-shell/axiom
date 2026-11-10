@@ -3,7 +3,7 @@
 type: object
 required: [type, id]
 additionalProperties: false
-x-hosts: [overlay, edgeMenu, desktop]
+x-hosts: [overlay, menu, desktop]
 x-settingsAt: /properties/properties/properties
 properties:
   type: {}

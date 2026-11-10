@@ -2,7 +2,7 @@
 
 > **Files:** `qml/services/ui/PopoutManager.qml`, `qml/components/hosts/popout/PopoutClaim.qml`, `qml/components/methods/PopoutGeometry.qml`, `tests/tst_PopoutGeometry.qml`, `qml/components/methods/SurfaceOutline.qml`, `qml/components/hosts/popout/LayerOrigin.qml`, `qml/components/bar/BarPanel.qml`
 > **Config:** none
-> **Related:** [Surface context](surface-context.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Edge menu hosts](../edge-menus/hosts.md)
+> **Related:** [Surface context](surface-context.md), [Hosts and switching](hosts-and-switching.md), [Submenus](submenus.md), [Menu hosts](../menus/hosts.md)
 
 `qml/services/ui/PopoutManager` knows every popout that is showing, and where. A popout opening closes only what it overlaps, decided by rank. Read this before adding a popout kind or changing which one wins. (Rule: `qml/components/hosts/popout/AGENTS.md`.)
 
@@ -36,7 +36,7 @@ A submenu ranks as its parent. A floating menu opened as a bar widget's popout (
 
 **Engaged.** An `EdgePopout` is engaged in these cases:
 - **Opening:** from the moment it starts opening.
-- **Asked for again while open:** via `EdgeMenuManager.engageRequested`. A keybind or bar Button that toggles a covered menu brings it forward rather than closing it.
+- **Asked for again while open:** via `MenuManager.engageRequested`. A keybind or bar Button that toggles a covered menu brings it forward rather than closing it.
 - **Grace period:** it stays engaged until a grace period passes without the pointer reaching it.
 - **Hovered:** while the pointer is on it, on its hover strip, or on what opened it.
 
@@ -59,7 +59,7 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
 - **Footprint changes:** if a claim's footprint changes while it shows (a resize, a switch in place, its window's real place arriving), it re-resolves as a claim does: it closes anything below it that it now covers, and gives way itself (refused, or yielded if resident) to anything above it. A popout never stays open over a higher one.
 
 ### Free menus
-- A free menu ([Free menus](../edge-menus/free-menus.md) › Its claim) takes part like any popout, so a bar never moves or redraws for one (decided 2026-11-10, review round 1). Unpinned it ranks as its opener's kind: a higher popout over it (the launcher) closes it, and a lower one it covers is refused. Pinned, or a popped-out edge menu, it ranks as a pinned menu (`FreeMenuPlace.ranksPinned`): it gives way to a popout over it and comes back. Rows: `tst_PopoutGeometry`'s `test_free_menu`.
+- A free menu ([Free menus](../menus/free-menus.md) › Its claim) takes part like any popout, so a bar never moves or redraws for one (decided 2026-11-10, review round 1). Unpinned it ranks as its opener's kind: a higher popout over it (the launcher) closes it, and a lower one it covers is refused. Pinned, or a popped-out edge menu, it ranks as a pinned menu (`FreeMenuPlace.ranksPinned`): it gives way to a popout over it and comes back. Rows: `tst_PopoutGeometry`'s `test_free_menu`.
 
 ### An open popout never moves
 - A bar popout keeps the anchor rect it opened at; a widget moving or growing meanwhile doesn't drag it.

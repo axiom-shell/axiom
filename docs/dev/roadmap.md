@@ -124,7 +124,7 @@ One line each (row, outcome, PRs where recorded); the full record is in git hist
 - **Phase 0: decisions and quick wins** (row 2): generated docs no longer committed, topics fed by a setting floored at 1 ms (`topics.MinInterval`), `TailscaleManager` moved to `apps/`; the takeover fix and idle went to backend stages 7 and 2. Left to the maintainer: `git gc` locally.
 - **Phase 1: integrity** (row 3, the last with backend stage 7): every entry fixed; the hand-fix gap with no takeovers kept is [Deferred](#deferred).
 - **Phase 2: finish stage 2** (row 1): backend stage 2, with the hypridle autostart default dropped (step v78) and the D-Bus match rules' escaping.
-- **Phase 3: QML structure** (row 5): services' folders reworded, feature pieces moved out of `reusable/`, `ShellManager` and `EdgeMenuManager` split, `LauncherConfigBrowser`, `ScreenEdgeManager` and `DeadlineTicker` extracted; the `KeybindManager` split went with backend stage 7.
+- **Phase 3: QML structure** (row 5): services' folders reworded, feature pieces moved out of `reusable/`, `ShellManager` and `MenuManager` split, `LauncherConfigBrowser`, `ScreenEdgeManager` and `DeadlineTicker` extracted; the `KeybindManager` split went with backend stage 7.
 - **Phase 4: backend structure and contract** (row 4): `archtest`, one floor for interval topics, the shell–daemon contract check, strict param decoding, clearer package names.
 - **Phase 5: the allowlist** (rows 5–12): backend stages 3–7 plus the `execDetached` quick wins; `SchemaValidation` trimmed to previews and the QML compositor renderers deleted.
 - **Phase 6: compositor parity** (row 13): every sway, SwayFX, Hyprland and all-compositor entry fixed; niri's entries [deferred](#deferred) (maintainer, 2026-10-29).

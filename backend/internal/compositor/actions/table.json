@@ -4,7 +4,7 @@
     "launcherSearch": ["appLauncher search {0}", "Launcher: {0}", "Axiom"],
     "overlay": ["overlay {call}", "Overlay", "Axiom"],
     "overlayPage": ["overlay page {0}", "Overlay: {0}", "Axiom"],
-    "edgeMenu": ["edgeMenu {call} {0}", "Edge menu: {0}", "Axiom"],
+    "menu": ["menu {call} {0}", "Menu: {0}", "Axiom"],
     "dock": ["dock {call} {0}", "Dock: {0}", "Axiom"],
     "bar": ["bar {call} {0}", "Bar: {0}", "Axiom"],
     "workspaceOverview": ["workspaceOverlay {call}", "Workspace overview", "Workspace"],
@@ -100,10 +100,13 @@
     "fileManager": ["File manager", "Apps"],
     "browser": ["Browser", "Apps"]
   },
+  "ipcAliases": {
+    "edgeMenu {call} {0}": "menu"
+  },
   "calls": {
     "launcher": {"open": "open", "close": "close"},
     "overlay": {"open": "open", "close": "close"},
-    "edgeMenu": {"open": "open", "close": "close"},
+    "menu": {"open": "open", "close": "close"},
     "dock": {"open": "open", "close": "close"},
     "bar": {"open": "reveal", "close": "hide"},
     "powerMenu": {"open": "open", "close": "close"},
@@ -165,7 +168,7 @@
     "exec": "text",
     "raw": "raw",
     "overlayPage": "view",
-    "edgeMenu": "edgeMenu",
+    "menu": "menu",
     "dock": "dock",
     "bar": "bar",
     "workspaceStep": "direction",
@@ -197,7 +200,7 @@
     "launcherSearch": "search",
     "overlay": "dashboard",
     "overlayPage": "web_stories",
-    "edgeMenu": "side_navigation",
+    "menu": "side_navigation",
     "dock": "dock_to_bottom",
     "bar": "toolbar",
     "workspaceOverview": "grid_view",

@@ -7,7 +7,7 @@ import qs.services.compositor
 import qs.services.ui
 import qs.components.methods
 
-// One edge menu from EdgeMenusConfig, on its screen, at its placement. Only the
+// One menu from MenusConfig, on its screen, at its placement. Only the
 // host in use is created (FreeMenuPlace.hosts): a popped-out edge menu
 // shows in the free host, its edge host kept until the free one has
 // shown, so the box hands over with no gap. The free host is one per
@@ -19,7 +19,7 @@ Scope {
   id: root
 
   required property string menuId
-  readonly property var _live: EdgeMenusConfig.menuById(root.menuId)
+  readonly property var _live: MenusConfig.menuById(root.menuId)
   // The last entry seen, so the hosts never see it null while they go
   property var menu: null
   function _follow() {
@@ -32,18 +32,18 @@ Scope {
     if (root._placing)
       root._locate();
   }
-  readonly property ShellScreen screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
+  readonly property ShellScreen screen: root.menu ? MenusConfig.screenFor(root.menu) : null
   // An open free menu that went to its `screen` setting (no widget, not
   // at the cursor) follows it: set differently (Layouts' preview), it
   // shows there
   onScreenChanged: {
-    if (root._placing && !EdgeMenuManager.anchors[root.menuId] && root.menu.freeAnchor.at !== "cursor")
+    if (root._placing && !MenuManager.anchors[root.menuId] && root.menu.freeAnchor.at !== "cursor")
       root._locate();
   }
-  // Popped out (EdgeMenuManager.popOut), and once the free host has shown
+  // Popped out (MenuManager.popOut), and once the free host has shown
   // it (kept until it docks: a fullscreen window hiding the free host
   // never brings the edge one back)
-  readonly property bool poppedOut: EdgeMenuManager.isPoppedOut(root.menuId)
+  readonly property bool poppedOut: MenuManager.isPoppedOut(root.menuId)
   property bool _handedOver: false
   onPoppedOutChanged: {
     if (!root.poppedOut)
@@ -66,7 +66,7 @@ Scope {
   property var _cursor: null
   // Open and free: also a menu turned free while open (its placement
   // changed in Layouts while previewed), which no free host showed yet
-  readonly property bool _placing: EdgeMenuManager.isOpen(root.menuId) && EdgeMenusConfig.isFree(root.menu)
+  readonly property bool _placing: MenuManager.isOpen(root.menuId) && MenusConfig.isFree(root.menu)
   on_PlacingChanged: {
     if (root._placing)
       root._locate();
@@ -77,7 +77,7 @@ Scope {
   // (PopoutAnchor.screenRect), else the cursor's (asked for first), else
   // its configured one
   function _locate() {
-    const rect = EdgeMenuManager.anchors[root.menuId]?.screenRect?.() ?? null;
+    const rect = MenuManager.anchors[root.menuId]?.screenRect?.() ?? null;
     const decide = cursor => {
       root._cursor = cursor;
       root._openedOn = FreeMenuPlace.openedOn({
@@ -106,7 +106,7 @@ Scope {
   }
   // The screen whose free host shows it, "" for none yet
   readonly property string freeScreen: FreeMenuPlace.shownOn({
-    "popOut": EdgeMenuManager.poppedOut[root.menuId] ?? null,
+    "popOut": MenuManager.poppedOut[root.menuId] ?? null,
     "opened": root._openedOn,
     "screens": General.outputs.map(s => s.name),
     "configured": root.screen?.name ?? ""

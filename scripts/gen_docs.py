@@ -652,7 +652,7 @@ class ConfigReference:
                         r"(?:" + read_as + r")\??\." + re.escape(top) + r"\b", self.usage.files[f])]
                     if not hits:
                         # Read generically (e.g. showPopout through
-                        # EdgeMenusConfig.opensOwnPopout), outside any type file
+                        # MenusConfig.opensOwnPopout), outside any type file
                         type_paths = {f"{d}/{n}/{x}{n}.qml" for _, _, d, _, _, x in UNIONS for n in all_types}
                         anywhere = [f for f in self.usage.of(r"\??\." + re.escape(top) + r"\b") if f not in type_paths]
                         if 0 < len(anywhere) <= 6:

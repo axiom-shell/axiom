@@ -99,7 +99,7 @@
     "unqualified: unknown grouped property scope margins.": 1,
     "unresolved-type: Type margins is used but it is not resolved": 1
   },
-  "components/surfaces/edgemenu/IntegratedEdgeMenu.qml": {
+  "components/surfaces/menu/IntegratedEdgeMenu.qml": {
     "missing-property: Member \"implicitHeight\" not found on type \"QObject\"": 1,
     "missing-property: Member \"implicitWidth\" not found on type \"QObject\"": 1
   },

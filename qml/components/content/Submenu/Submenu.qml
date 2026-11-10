@@ -8,7 +8,7 @@ import qs.components.reusable
 import qs.components.content.base
 import qs.components.hosts.popout
 
-// A row that opens another edge menu (`menu`) beside the one it's in, in
+// A row that opens another menu (`menu`) beside the one it's in, in
 // that menu's submenu (EdgePopout.submenu, content/Submenu/MenuSubmenu): on
 // hover, or on a click with openOnHover off. In a submenu it replaces
 // that submenu in place (one level deep). Only a menu placed on an edge
@@ -18,7 +18,7 @@ Card {
   id: root
 
   readonly property string menuId: root.properties.menu
-  readonly property var menu: root.menuId !== "" ? EdgeMenusConfig.menuById(root.menuId) : null
+  readonly property var menu: root.menuId !== "" ? MenusConfig.menuById(root.menuId) : null
   // A menu that's gone, disabled, or this one (it'd open itself) opens
   // nothing
   readonly property bool opens: root.menu !== null && root.menu.enabled && root.menuId !== (root.host?.id ?? "") && anchor.popouts !== null
@@ -35,7 +35,7 @@ Card {
   // alike open it alike)
   readonly property bool previewed: root.menuId !== "" && OverlayManager.menus.previewing === root.menuId && OverlayManager.menus.previewParent !== "" && OverlayManager.menus.previewParent === (root.host?.id ?? "") && !root.host?.submenu && root._firstOpener
   readonly property bool _firstOpener: {
-    const first = (EdgeMenusConfig.menuById(root.host?.id ?? "")?.layout?.modules ?? []).find(module => module?.type === "Submenu" && module.properties?.menu === root.menuId);
+    const first = (MenusConfig.menuById(root.host?.id ?? "")?.layout?.modules ?? []).find(module => module?.type === "Submenu" && module.properties?.menu === root.menuId);
     return JSON.stringify(first?.properties ?? null) === JSON.stringify(root.properties);
   }
   onPreviewedChanged: {

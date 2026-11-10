@@ -31,7 +31,7 @@ To back up your setup or keep it in a dotfiles repo, `~/.config/axiom/` is the f
 
 ### Saved configurations
 
-Your whole setup (bars, overlay pages, edge menus, docks, the lock and login screens, every setting) is one file, so it can be kept and swapped as a whole:
+Your whole setup (bars, overlay pages, menus, docks, the lock and login screens, every setting) is one file, so it can be kept and swapped as a whole:
 
 - **Settings → System → Saved configurations** saves the current config under a name, and restores or deletes saved ones. Restoring replaces the current config.
 - The launcher does the same: `/config save <name>` and `/config restore <name>`.
@@ -41,7 +41,7 @@ Your whole setup (bars, overlay pages, edge menus, docks, the lock and login scr
 
 axiom ships the setups from the README in `data/examples/`. Apply one from **Settings → System → Example setups**, or with `/config example <name>` in the launcher.
 
-- An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, edge menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
+- An example holds only the look and the layout: the theme, font and shape, the bars and their style, overlay pages, menus, docks, OSDs, popouts, the lock screen layout, workspaces, notifications' placement, the power menu and the window switcher.
 - Everything else stays as it is: wallpapers, monitors, apps, keybinds, calendars, chat providers, compositor settings, idle and the login screen.
 - One saved config is always the current one (marked Current, with a dot once you change something): at first it's `My setup`, which axiom saves for you. Changes you made to it are saved into it first, so nothing is lost and nothing is added. Confirming says where they go. **Revert** on the current one discards its changes. To delete it, switch to another first.
 - An applied example is saved as `example-<name>` (the defaults as `defaults`), the current one. If you don't change it, it's deleted once you apply or restore something else, since the example applies it again; once your changes are saved into it, it's yours, and applying the example again saves it as `example-<name> 2`.

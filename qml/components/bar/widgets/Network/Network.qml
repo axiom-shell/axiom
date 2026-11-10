@@ -95,7 +95,7 @@ ValueStyleWidget {
   PopoutAnchor {
     hitArea: root.hitArea
     popoutName: "WifiNetworks"
-    active: EdgeMenusConfig.opensOwnPopout(root.properties)
+    active: MenusConfig.opensOwnPopout(root.properties)
     extraData: ({
         "vpnShown": root.properties.popoutVpn
       })

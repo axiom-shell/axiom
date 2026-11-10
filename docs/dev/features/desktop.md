@@ -2,7 +2,7 @@
 
 > **Files:** `qml/services/ui/DesktopManager.qml`, `qml/config/DesktopConfig.qml`, `qml/shell/Desktop.qml`, `qml/components/surfaces/desktop/DesktopWindow.qml`, `qml/components/surfaces/screenlayout/ScreenLayoutView.qml`, `qml/services/ui/ScreenLayoutEditor.qml`, `qml/components/views/Layouts/DesktopTarget.qml`
 > **Config:** `Desktop.all`, `Desktop.primary`, `Desktop.monitors[]` (reader `DesktopConfig`)
-> **Related:** [Lockscreen](lockscreen.md), [Layouts editor](../overlay/layouts-editor.md), [Clock and time zones](clock-timezones.md), [Saved configs](../core/saved-configs-sharing.md), [Edge menus hosts](../edge-menus/hosts.md), [Dock](dock.md)
+> **Related:** [Lockscreen](lockscreen.md), [Layouts editor](../overlay/layouts-editor.md), [Clock and time zones](clock-timezones.md), [Saved configs](../core/saved-configs-sharing.md), [Menu hosts](../menus/hosts.md), [Dock](dock.md)
 
 Overlay modules drawn on the desktop, under the windows. Read this doc for desktop layouts, the desktop window, which modules may go on it, and how the Layouts page edits it.
 
