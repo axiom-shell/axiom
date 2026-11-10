@@ -29,7 +29,7 @@ Scope {
   on_LiveChanged: root._follow()
   Component.onCompleted: {
     root._follow();
-    if (root._wanted)
+    if (root._placing)
       root._locate();
   }
   readonly property ShellScreen screen: root.menu ? EdgeMenusConfig.screenFor(root.menu) : null
@@ -57,9 +57,11 @@ Scope {
   // cursor`), for the box's place
   property string _openedOn: ""
   property var _cursor: null
-  readonly property bool _wanted: EdgeMenuManager.isOpen(root.menuId)
-  on_WantedChanged: {
-    if (root._wanted)
+  // Open and free: also a menu turned free while open (its placement
+  // changed in Layouts while previewed), which no free host showed yet
+  readonly property bool _placing: EdgeMenuManager.isOpen(root.menuId) && EdgeMenusConfig.isFree(root.menu)
+  on_PlacingChanged: {
+    if (root._placing)
       root._locate();
     else
       root._openedOn = "";
@@ -68,8 +70,6 @@ Scope {
   // (PopoutAnchor.screenRect), else the cursor's (asked for first), else
   // its configured one
   function _locate() {
-    if (!EdgeMenusConfig.isFree(root.menu))
-      return;
     const rect = EdgeMenuManager.anchors[root.menuId]?.screenRect?.() ?? null;
     const decide = cursor => {
       root._cursor = cursor;
@@ -93,7 +93,7 @@ Scope {
       return;
     }
     CompositorManager.withCursorPos(pos => {
-      if (root._wanted && root._openedOn === "")
+      if (root._placing && root._openedOn === "")
         decide(pos ?? null);
     });
   }

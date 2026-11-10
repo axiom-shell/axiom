@@ -16,7 +16,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 
 ### Which screen (decided 2026-11-10, review round 2)
 - `EdgeMenu` builds a free host on every screen (`General.outputs`, a `Variants`; each window's `LayerSlot` is held from the start, as before). Only the one on the menu's screen shows it (`FreeMenu.shows`, `EdgeMenuSync.shows`: the others' `wanted` stays false).
-- **Decided as it opens** (`FreeMenuPlace.openedOn`, when `EdgeMenuManager` turns it open), first that applies:
+- **Decided as it opens** (`FreeMenuPlace.openedOn`, when `EdgeMenuManager` turns it open, or when a menu open in Layouts' preview turns free), first that applies:
   - opened by a bar widget (its popout, a Button): the widget's screen (`PopoutAnchor.screenRect`);
   - `freeAnchor.at: cursor`: the screen under the cursor (`CompositorManager.withCursorPos`, asked for first; no host shows it until the answer);
   - else (`centre`, `point`, or the cursor unknown or off every screen) its `screen` setting. The settings hide `screen` for a free menu opening at the cursor (`x-showIf`).
