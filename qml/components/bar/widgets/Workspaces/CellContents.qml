@@ -109,6 +109,7 @@ QtObject {
     const tail = shown.tail ? icons : [];
     const sep = root.barConfig.look.separators;
     const along = WorkspaceCells.dividerAlong(root.thickness, sep.style, sep.thickness);
+    const label = tail.length > 0 ? root._labelLength(shown) : null;
     return {
       "kind": shown.kind,
       "text": shown.text,
@@ -119,10 +120,10 @@ QtObject {
       "tail": tail,
       "tailLength": WorkspaceCells.splitTail(tail.length, root.thickness, along),
       "tailEdge": WorkspaceCells.splitPad(root.thickness),
-      "tailShift": WorkspaceCells.splitShift(tail.length, root.thickness, along),
+      "tailShift": WorkspaceCells.splitShift(tail.length, root.thickness, along, label?.start ?? 0, label?.end ?? 0),
       "dividerAlong": along,
       "number": "",
-      "length": tail.length > 0 ? WorkspaceCells.splitLength(root._labelLength(shown), tail.length, root.thickness, along) : root._length(shown, icons),
+      "length": tail.length > 0 ? WorkspaceCells.splitLength(label.length, tail.length, root.thickness, along) : root._length(shown, icons),
       "occupied": special.windowCount > 0,
       "urgent": special.urgent === true
     };
@@ -164,19 +165,63 @@ QtObject {
     return Math.max(root.restLength, Math.ceil(root._metrics.advanceWidth(shown.text) + lead) + Math.round(root.thickness * 0.5));
   }
 
-  // A label's own length along the bar, no room around it (a split cell's
-  // label): an icon at the size a cell draws it, or words measured; with its
-  // leading icon and a gap. A label that doesn't turn on a vertical bar is
-  // as tall as it is.
+  // The icon font at a symbol label's size, to find how far its ink sits in
+  // from the box it's drawn in (a Material Symbols glyph has a margin of
+  // about a seventh of its size each side)
+  readonly property FontMetrics _iconMetrics: FontMetrics {
+    font.family: Appearance.iconFamily
+    font.pixelSize: root.barConfig ? Math.round(root.barConfig.fontSize * 1.2) : Appearance.fontSize
+  }
+
+  // How far the ink of the icon `name` is in from its box's start and end
+  // along a horizontal bar (a vertical bar's glyph isn't turned: 0)
+  function _inkInset(name) {
+    if (root.barConfig.vertical || root._iconMetrics.font.pixelSize <= 0)
+      return {
+        "start": 0,
+        "end": 0
+      };
+    const ink = root._iconMetrics.tightBoundingRect(name);
+    const advance = root._iconMetrics.advanceWidth(name);
+    return {
+      "start": Math.max(0, Math.round(ink.x)),
+      "end": Math.max(0, Math.round(advance - ink.x - ink.width))
+    };
+  }
+
+  // A split cell's label along the bar: { length, start, end }, `length` the
+  // box drawn (an icon at the size a cell draws it, or words measured; with
+  // its leading icon and a gap) less `start` and `end`, the margins of an
+  // icon at either end of it, so the ink is what the cell's padding and gaps
+  // are measured to. A label that doesn't turn on a vertical bar is as tall
+  // as it is.
   function _labelLength(shown) {
     const size = Math.round(root.barConfig.fontSize * 1.2);
     const lead = shown.lead === "" ? 0 : root._leadLength(shown.lead) + WorkspaceCells.iconGap(root.thickness);
-    if (!root._plain(shown))
-      return size + lead;
-    if (root._metrics.font.pixelSize <= 0)
-      return size + lead;
-    const words = Math.ceil(root._metrics.advanceWidth(shown.text) + lead);
-    return root.barConfig.vertical && words <= root.thickness * 0.8 ? Math.ceil(root._metrics.height) : words;
+    const leadInk = shown.lead !== "" && root._drawsIcon(shown.lead) ? root._inkInset(shown.lead) : {
+      "start": 0,
+      "end": 0
+    };
+    let box = 0;
+    let start = 0;
+    let end = 0;
+    if (!root._plain(shown)) {
+      const ink = root._inkInset(shown.text);
+      box = size + lead;
+      start = shown.lead !== "" ? leadInk.start : ink.start;
+      end = ink.end;
+    } else if (root._metrics.font.pixelSize <= 0) {
+      box = size + lead;
+    } else {
+      const words = Math.ceil(root._metrics.advanceWidth(shown.text) + lead);
+      box = root.barConfig.vertical && words <= root.thickness * 0.8 ? Math.ceil(root._metrics.height) : words;
+      start = leadInk.start;
+    }
+    return {
+      "length": box - start - end,
+      "start": start,
+      "end": end
+    };
   }
 
   // A label's leading icon along the bar: an icon at the size a cell

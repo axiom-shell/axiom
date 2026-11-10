@@ -72,6 +72,22 @@ TestCase {
     compare(WorkspaceCells.splitTail(1, 20, 4), 20, "a wider divider");
   }
 
+  // A label whose box has margins at its ends (an icon before text: 2 at
+  // the start; a lone icon: 2 each side): the ink sits the padding in from
+  // the start, and the end padding mirrors it
+  function test_splitShiftInk() {
+    for (const [box, start, end, what] of [[34, 2, 0, "an icon, then text"], [17, 2, 2, "a lone icon"], [40, 0, 0, "text only"]]) {
+      const ink = box - start - end;
+      const pad = WorkspaceCells.splitPad(28);
+      const length = WorkspaceCells.splitLength(ink, 1, 28, 1);
+      const boxStart = length / 2 + WorkspaceCells.splitShift(1, 28, 1, start, end) - box / 2;
+      compare(boxStart + start, pad, what + ": the ink starts at the padding");
+      const inkEnd = boxStart + box - end;
+      const iconsEnd = inkEnd + WorkspaceCells.iconGap(28) + 1 + WorkspaceCells.iconGap(28) + WorkspaceCells.iconSize(28);
+      compare(length - iconsEnd, pad, what + ": the end mirrors it");
+    }
+  }
+
   function test_dividerAlong() {
     compare(WorkspaceCells.dividerAlong(28, "line", 1), 1);
     compare(WorkspaceCells.dividerAlong(28, "none", 2), 2, "none draws a line");
@@ -96,7 +112,7 @@ TestCase {
       const length = WorkspaceCells.splitLength(label, count, thickness, along);
       compare(length, 2 * pad + label + 2 * gap + along + icons, what + ": the whole");
       // Where each part sits, from the cell's start: the label centred by the shift
-      const labelStart = length / 2 + WorkspaceCells.splitShift(count, thickness, along) - label / 2;
+      const labelStart = length / 2 + WorkspaceCells.splitShift(count, thickness, along, 0, 0) - label / 2;
       compare(labelStart, pad, what + ": the label starts after the padding");
       const dividerStart = labelStart + label + gap;
       const iconsEnd = dividerStart + along + gap + icons;

@@ -83,7 +83,7 @@ QtObject {
   // A split cell (a scratchpad with `scratchpadSplit`) along the bar is
   // [pad][label][gap][divider][gap][icons][pad]: the same gap each side of
   // the divider, and the end padding mirroring the start's. `label` is the
-  // label's own length, `count` the app icons, `along` the divider's
+  // label's ink length, `count` the app icons, `along` the divider's
   // (dividerAlong). The functions below give each part; WorkspaceCell and
   // CellContents only read them.
 
@@ -129,11 +129,12 @@ QtObject {
     return 2 * root.splitPad(thickness) + label + root.splitTail(count, thickness, along);
   }
 
-  // Where the label's centre sits from the cell's centre along the bar
-  // (negative: towards the start): the tail's half, as the label's padding
-  // is the end's
-  function splitShift(count, thickness, along) {
-    return -root.splitTail(count, thickness, along) / 2;
+  // Where the label's box centre sits from the cell's centre along the bar
+  // (negative: towards the start). `label` in splitLength is its ink (the box
+  // less `start` and `end`, the margins its icons have), whose centre is the
+  // tail's half before the cell's.
+  function splitShift(count, thickness, along, start, end) {
+    return -root.splitTail(count, thickness, along) / 2 + ((end ?? 0) - (start ?? 0)) / 2;
   }
 
   // Of `windows` (biggest first), one per app (by app id, a window without
