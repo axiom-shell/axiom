@@ -188,27 +188,27 @@ properties:
     description: A rounded box along the whole edge around the modules.
     x-showIf: {placement: strip}
   pinButton:
-    x-group: Style
+    x-group: Behaviour
     type: boolean
     title: Pin button
     default: false
     description: A pinned menu stays open until unpinned.
   closeButton:
-    x-group: Style
+    x-group: Behaviour
     type: boolean
     title: Close button
     default: false
     description: Closes the menu, unpinning it if it's pinned.
     x-showIf: {placement: free}
   popOutButton:
-    x-group: Style
+    x-group: Behaviour
     type: boolean
     title: Pop-out button
     default: false
     description: Lifts the open menu off its edge where it is, staying open like a pinned one. Closed, it's back on its edge.
     x-showIf: {placement: edge}
   draggable:
-    x-group: Placement
+    x-group: Behaviour
     type: boolean
     title: Draggable
     default: true

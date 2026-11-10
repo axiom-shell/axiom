@@ -52,7 +52,8 @@ Item {
   Component.onCompleted: root.syncName(true)
 
   // Group titles: I18n.tr("General") I18n.tr("Opening") I18n.tr("Placement")
-  // I18n.tr("Style") I18n.tr("Closing") I18n.tr("Advanced") I18n.tr("Other")
+  // I18n.tr("Style") I18n.tr("Behaviour") I18n.tr("Closing") I18n.tr("Advanced")
+  // I18n.tr("Other")
   // I18n.tr("Grid") I18n.tr("Background")
   TitledCard {
     title: I18n.tr("Layouts")

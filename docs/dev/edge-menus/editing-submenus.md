@@ -12,7 +12,7 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
 - While dirty it shows live on the running menus through its `EdgeMenus` preview (`ConfigManager.setPreview`), as the bar editor's does.
 
 ### Field groups
-- The menu's fields come in `x-group`s: General, Opening, Placement, Style, Closing, Advanced (the read-only `id`).
+- The menu's fields come in `x-group`s: General, Opening, Placement, Style, Behaviour, Closing, Advanced (the read-only `id`), in the order their first field comes in the schema (`SchemaLayout.objectGroups`). Behaviour holds what the menu's buttons and header do (decided 2026-11-10, review round 2): `pinButton`, `closeButton`, `popOutButton` and `draggable`, so `draggable` sits beside the `popOutButton` it shows with.
 - The Opening group leads with `MenuOpening`:
   - **"Show on screen"**: sets `previewing` to the selected menu (following the selection and id renames) and opens it.
     - `isHeld(id)` (pinned or previewing) makes a menu ignore `closeOnLeave` and outside clicks.
