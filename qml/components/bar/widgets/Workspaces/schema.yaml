@@ -230,20 +230,12 @@ settings:
       position: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
     default: position
     description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position (the default) - in a grid layout, which row (column on a vertical bar) is shown, a dot each; other layouts show no head. While it shows, the active cell's arrow is hidden.
-    x-showIf:
-      anyOf:
-        - {$bar.boxed: false}
-        - {showBackground: true}
   leadIcon:
     type: string
     x-control: icon
     title: Head icon
     default: grid_view
-    x-showIf:
-      lead: icon
-      anyOf:
-        - {$bar.boxed: false}
-        - {showBackground: true}
+    x-showIf: {lead: icon}
   backgroundColor:
     type: string
     title: Background color

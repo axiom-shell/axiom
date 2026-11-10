@@ -21,7 +21,7 @@ import qs.components.bar.look
 // underline. A head (`lead`: an icon, or the active workspace's label as
 // its cell shows it, or in the grid its row's dots: GridPositionHead)
 // before the cells, in their box, is its icon part on a split bar
-// (SplitLead); with no box (`segmented`) it has none.
+// (SplitLead); with no box (`segmented`) it sits on the bar all the same.
 BarWidget {
   id: root
 
@@ -93,15 +93,15 @@ BarWidget {
     id: lead
     barConfig: root.barConfig
     start: root._start - root.inset + root.barConfig.innerPadding
-    icon: root.segmented ? "" : root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
-    text: root.segmented || !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
+    icon: root.properties.lead === "icon" ? root.properties.leadIcon : root._active && root._active.kind === "text" && !root._active.plain ? root._active.text : ""
+    text: !root._active || icon !== "" ? "" : root._active.kind === "labels" ? String(root._active.number) : root._active.text
     iconColor: root.colors.icon
     ownHead: positionHead.active ? positionHead : null
   }
 
   // The grid's position head (`lead: position`): dots for the shown row
   // (column on a vertical bar), else an arrow
-  readonly property bool _positionLead: properties.lead === "position" && CompositorManager.workspaceGrid && !segmented
+  readonly property bool _positionLead: properties.lead === "position" && CompositorManager.workspaceGrid
   readonly property var _position: _positionLead ? GridPosition.line(_monitor?.activeWorkspaceId ?? -1, CompositorManager.workspaceBase(_monitor?.name ?? ""), WorkspacesConfig.columns, WorkspacesConfig.rows, isVertical) : null
   readonly property var _positionHead: _positionLead ? GridPosition.head(_position.count, _position.line, isVertical, _cellLook.thickness, barConfig.fontSize) : null
   Loader {
