@@ -56,10 +56,7 @@ Item {
   readonly property string _modulesKey: JSON.stringify(GridPlacement.menuModules(root.menu))
   property var modules: []
   on_ModulesKeyChanged: root.modules = JSON.parse(root._modulesKey)
-  Component.onCompleted: {
-    root.modules = JSON.parse(root._modulesKey);
-    Qt.callLater(() => root._tilesSettled = true);
-  }
+  Component.onCompleted: root.modules = JSON.parse(root._modulesKey)
 
   // `bare`: the menu hides its modules' card boxes (moduleBorders off)
   readonly property var host: ({
@@ -113,8 +110,6 @@ Item {
   // Under each card, its tile: tiled, with card boxes (moduleBorders; a
   // bare module has none to sit on), never in another menu's submenu
   readonly property bool _tiled: EdgeMenusConfig.tiledOf(root.menu) && root.menu.layout.moduleBorders && !root.submenu
-  // Set a tick after it's built: tiles ease their growing from then on
-  property bool _tilesSettled: false
   Repeater {
     model: root._tiled ? root.modules.length : 0
 
@@ -127,7 +122,7 @@ Item {
       fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
       // At the card's drawn size (ModuleGrid.zoom)
       radius: Widget.radius * moduleGrid.zoom
-      animate: root._tilesSettled
+      animate: moduleGrid.settled
     }
   }
 
@@ -155,7 +150,9 @@ Item {
 
   // Its cards as shown, in its own coordinates (MenuTiles.shown: scrolled,
   // cut to the view, null out of sight), and what a tiled menu takes
-  // input on: those and its buttons (MenuTiles.union; CardMask)
+  // input on: those and its buttons, and the whole view while a detail
+  // is expanded over the cards (a click beside it collapses it)
+  // (MenuTiles.union; CardMask)
   readonly property var cardRects: MenuTiles.shown(moduleGrid.cardRects, {
     "x": view.contentX,
     "y": view.contentY
@@ -168,6 +165,11 @@ Item {
       "y": buttons.y,
       "width": buttons.width,
       "height": buttons.height
+    } : null, moduleGrid.expanded !== null ? {
+      "x": 0,
+      "y": 0,
+      "width": root.width,
+      "height": root.height
     } : null]))
 
   // The menu's buttons: in the corner away from its edge, at the end,

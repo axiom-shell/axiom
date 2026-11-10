@@ -87,8 +87,9 @@ Item {
       root.growth = next;
   }
 
-  // Slots glide to new places once first laid out
-  property bool _settled: false
+  // Slots glide to new places once first laid out (a tiled menu's tiles
+  // with them)
+  property bool settled: false
 
   // Streaming: the modules are built over the frames after the grid is,
   // a job each in BuildQueueManager's queue, top left to bottom right
@@ -147,17 +148,9 @@ Item {
   }
 
   // Each module's card where it's going ({ x, y, width, height } px in
-  // the grid, its place grown; null for one with no place), or while a
-  // detail is expanded over them the whole grid alone: what a tiled menu
-  // takes input on and draws its tiles under (MenuTiles)
-  readonly property var cardRects: root.expanded !== null ? [
-    {
-      "x": 0,
-      "y": 0,
-      "width": root.implicitWidth,
-      "height": root.implicitHeight
-    }
-  ] : root.places.map(place => place ? GridPlacement.rectPx(place, root.sizes, root.grid.drawnZoom) : null)
+  // the grid, its place grown; null for one with no place): what a tiled
+  // menu takes input on and draws its tiles under (MenuTiles)
+  readonly property var cardRects: root.places.map(place => place ? GridPlacement.rectPx(place, root.sizes, root.grid.drawnZoom) : null)
 
   implicitWidth: root.sizes.width
   implicitHeight: root.sizes.height
@@ -168,7 +161,10 @@ Item {
   Component.onCompleted: {
     root._queueModules();
     root._check();
-    Qt.callLater(() => root._settled = true);
+    Qt.callLater(root._settle);
+  }
+  function _settle() {
+    root.settled = true;
   }
   function _check() {
     const modules = root.modules ?? [];
@@ -232,11 +228,11 @@ Item {
         }
 
         Glide on y {
-          enabled: root._settled
+          enabled: root.settled
           duration: Appearance.animNormal
         }
         Glide on height {
-          enabled: root._settled
+          enabled: root.settled
           duration: Appearance.animNormal
         }
 
