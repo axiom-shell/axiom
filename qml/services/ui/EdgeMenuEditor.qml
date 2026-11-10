@@ -249,8 +249,10 @@ QtObject {
     root._followPreview();
   }
 
+  // Unique among the draft's menus and the saved ones (a new menu may be
+  // saved at once: _commitNew)
   function _uniqueId(base) {
-    const taken = (root.localMenus ?? []).map(menu => menu.id);
+    const taken = [...(root.localMenus ?? []), ...(root.savedMenus ?? [])].map(menu => menu.id);
     let n = 1;
     while (taken.includes(`${base}-${n}`))
       n++;
@@ -262,24 +264,56 @@ QtObject {
     return key.split(".").reduce((value, part) => value?.[part], menu);
   }
 
-  // A new menu at the schema defaults, opening on hover, and held open on
-  // screen so edits show as they're made
-  function addMenu() {
+  // A new menu for `purpose` (MenuSeeds.purposes), at the schema defaults
+  function _newMenu(purpose) {
     const id = root._uniqueId("menu");
-    const menu = ConfigManager.withDefaults({
-      "id": id,
-      "name": I18n.tr("Menu {0}", id.split("-").pop()),
-      "open": {
-        "onHover": true
-      },
-      "layout": {
-        "modules": []
-      }
-    }, "EdgeMenu");
-    root.localMenus.push(menu);
-    root.applyChanges();
+    return ConfigManager.withDefaults(MenuSeeds.seed(purpose, id, I18n.tr("Menu {0}", id.split("-").pop())), "EdgeMenu");
+  }
+
+  // Selects the last menu and holds it open on screen, so edits show as
+  // they're made
+  function _selectNew() {
     root.selectMenu(root.localMenus.length - 1);
     root.startPreviewing();
+  }
+
+  // Saves new menu `menu` at once: the config as saved plus it (the
+  // draft's other edits stay unsaved), and holds it in the draft as saved
+  // (ConfigDraft.adopt). False if the save is refused
+  function _commitNew(menu) {
+    const next = Utils.clone(ConfigManager.config);
+    next.EdgeMenus.items.push(Utils.clone(menu));
+    if (!ConfigManager.commit(next))
+      return false;
+    draft.adopt(menu);
+    root.applyChanges();
+    return true;
+  }
+
+  // A new menu (MenuSeeds.seed) for `purpose`: "edge" (the default),
+  // "popout", "submenu" or "key", selected and held open. A keybind's is
+  // saved at once (a keybind may only open a saved menu: isSaved), then
+  // the keybinds page records its key (addKeybind)
+  function addMenu(purpose = "edge") {
+    if (purpose === "key") {
+      if (root.addSavedMenu("key"))
+        root.addKeybind();
+      return;
+    }
+    root.localMenus.push(root._newMenu(purpose));
+    root.applyChanges();
+    root._selectNew();
+  }
+
+  // A new menu for `purpose`, saved at once (_commitNew), selected and
+  // held open: for an opener another editor saves (a bar widget, a
+  // keybind). Returns it, or null if the save was refused
+  function addSavedMenu(purpose) {
+    const menu = root._newMenu(purpose);
+    if (!root._commitNew(menu))
+      return null;
+    root._selectNew();
+    return menu;
   }
 
   function duplicateMenu(index) {

@@ -74,6 +74,20 @@ QtObject {
     Qt.callLater(() => root.local = Utils.clone(root.local));
   }
 
+  // An item saved to this draft's list section outside it (an editor's
+  // shortcut committing one new item: EdgeMenuEditor's new menus): added
+  // to what the draft holds as saved and to its edits, so it shows saved
+  // and a later save keeps it once
+  function adopt(item) {
+    const wasDirty = root.isDirty;
+    root.saved.push(Utils.clone(item));
+    root.local.push(Utils.clone(item));
+    // Unedited, it holds the current config again
+    if (!wasDirty)
+      root._loadedFrom = _read();
+    root.changed();
+  }
+
   // Merges `local` onto the LATEST config (so settings edited elsewhere
   // meanwhile survive) and commits it. Returns false, staying dirty, if
   // ConfigManager rejects it. A save axiom refuses later makes it dirty
