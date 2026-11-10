@@ -197,7 +197,6 @@ properties:
     title: Close button
     default: false
     description: Closes the menu, unpinning it if it's pinned.
-    x-showIf: {placement: free}
   popOutButton:
     x-group: Behaviour
     type: boolean

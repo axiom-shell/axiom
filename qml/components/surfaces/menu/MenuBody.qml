@@ -19,8 +19,8 @@ import qs.components.hosts.overlay
 // top right, growing modules growing downward (a popped-out edge menu's
 // buttons stay in its edge's corner, so its pop-out toggle doesn't move).
 // Its buttons: the pop-out toggle (an edge menu's `popOutButton`, which
-// docks it again), the pin (`pinButton`) and, last, a free menu's close
-// (`closeButton`).
+// docks it again), the pin (`pinButton`) and, last, the close
+// (`closeButton`; not while popped out, when the toggle closes it).
 Item {
   id: root
 
@@ -169,7 +169,7 @@ Item {
 
     // Pop out (MenuManager.togglePoppedOut): off its edge where it
     // is, held open until it closes; on again, it docks, closed (the only
-    // button a popped-out menu adds)
+    // button a popped-out menu adds; its close button hides)
     StyledIconButton {
       visible: MenusConfig.canPopOut(root.menu)
       size: Widget.height
@@ -194,9 +194,10 @@ Item {
       onClicked: MenuManager.togglePinned(root.menu.id)
     }
 
-    // A free menu's `closeButton`: closes it, unpinned
+    // `closeButton`: closes it, unpinned. A popped-out menu has only its
+    // toggle, which docks it, closed
     StyledIconButton {
-      visible: MenusConfig.isFree(root.menu) && root.menu.closeButton
+      visible: root.menu.closeButton && !root.poppedOut
       size: Widget.height
       iconText: "close"
       backgroundColor: Qt.alpha(Theme.background, 0.85)
