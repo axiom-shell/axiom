@@ -109,7 +109,7 @@ settings:
 ```
 
 ### Duplicated information removed
-- `index.yaml`'s root `description`, a hand-kept copy of `annotations.yaml` that has already drifted from it (see [issues](../issues.md)): generated from `annotations.yaml`, or dropped.
+- `index.yaml`'s root `description`, a hand-kept copy of `annotations.yaml` that has already drifted from it: generated from `annotations.yaml`, or dropped.
 - `index.yaml`'s `definitions` list and the `listedExactly` check that keeps it in step with the files.
 - Per type: the header comment repeating the file name, the `description` repeating the type const, `x-hosts` repeating the default (47 of 48 modules list it, and AGENTS.md requires it), `x-link` to the section of the same name.
 - In the recipes and skills (`bar-widget`, `overlay-module`, `overlay-view`, `bar-popout`): the copied popout and color blocks and their gotchas, which become the builder's job.

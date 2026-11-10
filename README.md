@@ -220,7 +220,6 @@ Contributions are welcome. [Open an issue](https://github.com/axiom-shell/axiom/
 - **More styles** for bars, widgets and menus
 - **More translations**
 - **Performance Improvements**
-- **Fewer dependencies**: the `axiom` binary taking over what helper tools and scripts do today (clipboard history, idle, night light, typing, the Python scripts)
 - **Installing without Go**: the installer and updates using each release's prebuilt `axiom` binary
 - **Community Config Library and Showcase**
 - **Packages**: `axiom-shell` and `axiom-shell-git` for the AUR and COPR, and Nix. The AUR packages are ready but wait on AUR account registration reopening ([#76](https://github.com/axiom-shell/axiom/issues/76))

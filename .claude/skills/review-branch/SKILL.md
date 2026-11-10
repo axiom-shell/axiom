@@ -24,11 +24,11 @@ Work in `$SCRATCH/review/` (`$SCRATCH` = this session's scratchpad). An earlier 
 
 1. `mb=$(git merge-base <base> HEAD)`. The review covers `git diff $mb` (committed and uncommitted) plus untracked files (`git ls-files -o --exclude-standard`). Nothing changed: say so and stop.
 2. `git log --format='%h %s%n%b' $mb..HEAD` and `git diff --stat $mb`; rank the changed files by risk: logic in services, methods, geometry, compositor backends, the daemon, schema, migrations and scripts first; UI wiring next; docs, tests and renames last.
-3. Write `brief.md` (about ten lines): the **intent** (arguments and commits; where they disagree, say so); the **claims** (every "fix X", "support Y", `issues.md` entry added or removed); the **compositors** touched and `supports` keys read or added; the **docs** for the changed files (`grep -rln '<path>' docs/dev --include='*.md' | grep -v generated/`, and the touched folders' `AGENTS.md`).
+3. Write `brief.md` (about ten lines): the **intent** (arguments and commits; where they disagree, say so); the **claims** (every "fix X", "support Y"); the **compositors** touched and `supports` keys read or added; the **docs** for the changed files (`grep -rln '<path>' docs/dev --include='*.md' | grep -v generated/`, and the touched folders' `AGENTS.md`).
 
 ## Phase 1: checks (background)
 
-`git status --porcelain > status.before`, then one background Bash: `{ scripts/check_all.sh; python3 scripts/check_doc_drift.py; } > checks.log 2>&1`. When done, read `grep -nE 'failed|FAIL|error|Error|stale|drift' checks.log | head -40` and `tail -5 checks.log`, and compare `git status --porcelain` with `status.before` (a check that rewrote a file is a finding). `scripts/log.sh > log.txt`; read `grep -v known log.txt | tail -30`: a warning naming a changed file, or one the change could cause, is a finding (the live shell may not run this branch: say so rather than guess). A failing check is a Blocker (`lenses.md` › Severity).
+`git status --porcelain > status.before`, then one background Bash: `{ scripts/check_all.sh; python3 scripts/check_doc_drift.py; } > checks.log 2>&1`. When done, read `grep -nE 'failed|FAIL|error|Error|stale|drift' checks.log | head -40` and `tail -5 checks.log`, and compare `git status --porcelain` with `status.before` (a check that rewrote a file is a finding). `scripts/log.sh > log.txt`; read `tail -30 log.txt`: a warning naming a changed file, or one the change could cause, is a finding (the live shell may not run this branch: say so rather than guess). A failing check is a Blocker (`lenses.md` › Severity).
 
 ## Phase 2: review
 
@@ -53,11 +53,11 @@ Write `findings.md` and print it:
 
 ## Checked and fine
 ## Questions for the author   (only where the answer changes a finding)
-## Pre-existing               (added to docs/dev/issues.md, listed by title)
+## Pre-existing               (problems outside the branch, listed by title)
 ```
 
-Problems outside the branch go into `docs/dev/issues.md` (format at its top; search its titles first, as `lenses.md` › Proving it says, never file one twice), each linked from the roadmap phase that will fix it (`AGENTS.md` › Found a problem outside the task), then `python3 scripts/check_docs.py` until `docs ok`. That is the only edit a review makes without `--fix`; say that you made it.
+Problems outside the branch are only listed under Pre-existing (`AGENTS.md` › Found a problem outside the task). Without `--fix` a review changes no files.
 
 ## Phase 4: fix (only with `--fix`)
 
-Fix **every** finding, Minor included, at its cause (the producer, not one caller over), with the smallest change that removes it, following the repo rules (recipes, shared pieces, docs and tests updated with the code). One whose fix needs the maintainer (a migration, a changed default, a behaviour trade-off) isn't applied: file it in `docs/dev/issues.md` as Phase 3 files a problem outside the branch, and list it under Questions. Then `scripts/dev/verify.sh` until `verify ok`, reading the log section and the docs it lists. Don't commit unless your caller asked. Report what changed per finding, and anything that turned out different once you were in the code.
+Fix **every** finding, Minor included, at its cause (the producer, not one caller over), with the smallest change that removes it, following the repo rules (recipes, shared pieces, docs and tests updated with the code). One whose fix needs the maintainer (a migration, a changed default, a behaviour trade-off) isn't applied: list it under Questions. Then `scripts/dev/verify.sh` until `verify ok`, reading the log section and the docs it lists. Don't commit unless your caller asked. Report what changed per finding, and anything that turned out different once you were in the code.

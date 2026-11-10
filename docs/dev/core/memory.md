@@ -2,9 +2,9 @@
 
 > **Files:** `scripts/dev/mem.sh`, `scripts/dev/bench_overlay.sh`, `scripts/dev/nested.sh`, `backend/internal/supervise/supervise.go`
 > **Config:** none
-> **Related:** [Streamed building](streamed-building.md) (timing the same cycles), [Testing](../testing.md), [roadmap](../roadmap.md) › Phase 12
+> **Related:** [Streamed building](streamed-building.md) (timing the same cycles), [Testing](../testing.md)
 
-How to read the shell's memory, and the baseline every [Phase 12](../roadmap.md#phase-12-memory-footprint) entry is judged against. Almost all of qs's memory is C++ heap and per-window renderer state, not JS: measure before changing anything, and compare against the table below.
+How to read the shell's memory, and the baseline a memory change is judged against. Almost all of qs's memory is C++ heap and per-window renderer state, not JS: measure before changing anything, and compare against the table below.
 
 ### Reading it
 - `scripts/dev/mem.sh [-H] PID` prints one line, in MB: `rss`, `dirty` (Private_Dirty), `anon` (Anonymous) and `huge` (AnonHugePages) from `/proc/PID/smaps_rollup`; `js` and `js_live`, the JS heap at the last GC (the managed chunks it held, and what was still live after the collection); `thr`, the threads, and `render`, the `QSGRenderThread`s among them (one per window that has drawn). `-H` adds the column names.

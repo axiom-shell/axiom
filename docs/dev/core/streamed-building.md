@@ -48,7 +48,7 @@ A Loader that queues its own build, then fades in. Use it for a page's panels, c
 - Editors that also clear their selection or history on reopening (layouts, edge menus, screen layouts) still `load()`.
 
 ### What made pages slow (keep these out)
-- **Content built hidden.** A `visible: false` item is still built. Gate it with a Loader (`wanted`, `active`) or a `StreamedLoader`. A compact `Card`/`Panel` still builds its full layout under its `compactContent`: see [issues.md](../issues.md).
+- **Content built hidden.** A `visible: false` item is still built. Gate it with a Loader (`wanted`, `active`) or a `StreamedLoader`. A compact `Card`/`Panel` still builds its full layout under its `compactContent`.
 - **Unbounded lists in a Repeater.** Wi-Fi saw 52 networks, and a row each (with a password field) took 1.8 s. Use a ListView, which builds only the rows in view (`DeviceList`; modelled by a `CountModel`, so a new count keeps the view's place), and build a row's expansion only while expanded (Wi-Fi's password field).
 - **Repeater models of whole objects.** Key by count and read the object by index (`model: list.length`), as AGENTS.md says: an object model is copied for every delegate, and rebuilds them on any change.
 - **Data reloaded on open.** See Editors reopening.

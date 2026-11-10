@@ -10,11 +10,10 @@ This file holds only rules; **how everything works is in `docs/dev/`** (index: `
 
 ## Where to look
 
-- **The next step / the roadmap:** `docs/dev/roadmap.md` › Taking the next step (skill `next-step`; unattended: skill `roadmap-autopilot`).
 - **Something of a known kind** (a bar widget, module, page, setting, service, …): its recipe in `docs/recipes/` (also a skill).
-- **Any area:** `docs/dev/README.md` › Where to look. Always: `docs/dev/core/qml-pitfalls.md` before writing QML, `docs/dev/core/shared-ui-pieces.md` before drawing anything, `docs/dev/issues.md` before working in an area; `grep -n '<word>' docs/dev/generated/files.md` finds the file that does X.
+- **Any area:** `docs/dev/README.md` › Where to look. Always: `docs/dev/core/qml-pitfalls.md` before writing QML, `docs/dev/core/shared-ui-pieces.md` before drawing anything; `grep -n '<word>' docs/dev/generated/files.md` finds the file that does X.
 
-**Found a problem outside the task?** Don't fix it unasked and don't only mention it: add an entry to `docs/dev/issues.md` (format at its top), link it from the phase of `docs/dev/roadmap.md` that will fix it, and tell the user. Quote a log warning's message in backticks under **What** so `verify.sh` marks it `(known: …)`. Remove the entry in the change that fixes it. Never open a GitHub issue; the maintainer moves entries there.
+**Found a problem outside the task?** Don't fix it unasked: tell the user.
 
 ## Running / reloading
 

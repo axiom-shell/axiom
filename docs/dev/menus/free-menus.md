@@ -2,7 +2,7 @@
 
 > **Files:** `qml/components/surfaces/menu/FreeMenu.qml`, `qml/services/ui/MenuManager.qml`, `qml/services/core/StateManager.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/methods/PopoutGeometry.qml`, `qml/components/methods/FreeMenuPlace.qml`, `tests/tst_FreeMenuPlace.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/surfaces/menu/MenuHosts.qml`, `qml/components/surfaces/menu/MenuSync.qml`, `qml/components/surfaces/menu/MenuBody.qml`, `qml/config/MenusConfig.qml`, `qml/components/bar/BarWidgetHost.qml`
 > **Config:** `Menus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `animation` (`slide` | `fade` | `scale`; the edge menus' setting, `scale` offered only here), `draggable`, `background`, `screen`, `pinButton`, `closeButton`, `backgroundColor` / `borderColor`, `close.*`
-> **Related:** [Overview](overview.md), [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Popout registry](../popouts/registry.md), [Popout submenus](../popouts/submenus.md), [Layer arrangement](../compositor/layer-arrangement.md), [Plan](../plans/menus-rework.md)
+> **Related:** [Overview](overview.md), [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Popout registry](../popouts/registry.md), [Popout submenus](../popouts/submenus.md), [Layer arrangement](../compositor/layer-arrangement.md)
 
 A menu with no edge (`MenusConfig.isFree`). It opens in a window of its own, `FreeMenu`, at the bar widget that opened it, or at its `freeAnchor` (or where it was dragged this session). Submenu rows can also open it beside another menu, in that menu's submenu (unchanged, see [Editing and submenus](editing-submenus.md)). The same window also shows a popped-out edge menu (below).
 
@@ -116,4 +116,4 @@ A menu with no edge (`MenusConfig.isFree`). It opens in a window of its own, `Fr
   - Run the nested shell with a scratch `XDG_RUNTIME_DIR` (its socket path must stay under 108 characters), so its session spots aren't the live shell's.
   - Session spots: a temporary IPC hook calling `storePosition` stands in for a drop (no simulated pointer). Reopen by IPC, reload, change the `freeAnchor`, and `resetPosition`; `popouts list` shows where the box went.
   - Pop-out: a temporary IPC hook calling `togglePoppedOut`. Then `menu open` (nothing changes), `close` and `toggle` (docked, closed), and a reload while it's out (docked, closed).
-- Fullscreen hiding and the blur on each compositor are live checks ([live-checks](../live-checks.md)).
+- Fullscreen hiding and the blur on each compositor are only checked in a live session.

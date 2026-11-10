@@ -15,12 +15,9 @@
       "Bash(python3 scripts/check_*.py *)",
       "Bash(python3 scripts/gen_docs.py)",
       "Bash(python3 scripts/gen_docs.py *)",
-      "Bash(hyprctl monitors *)",
-      "Bash(hyprctl layers *)",
       "Bash(python3 scripts/check_doc_drift.py)",
       "Bash(python3 scripts/check_doc_drift.py *)",
-      "Bash(python3 tests/scripts/test_guard.py)",
-      "Bash(gh pr merge *)"
+      "Bash(python3 tests/scripts/test_guard.py)"
     ],
     "deny": [
       "Bash(loginctl lock-session*)",

@@ -25,7 +25,6 @@ Dependencies point one way, methods → data owners → readers → services →
 | Bar / popouts, edge surfaces / overlay / menus | `docs/dev/bar/`, `popouts/` (start at `surface-context.md`), `overlay/`, `menus/` |
 | Compositor: windows, outputs, workspaces, capabilities, sway/niri | `docs/dev/compositor/` |
 | Config modes (detached / included / managed), the config writer | `docs/dev/compositor/config-modes.md` |
-| Moving a service's side effects into the axiom binary (the staged plan) | `docs/dev/backend/roadmap.md`; what's left: `scripts/quickshell-io-allowlist.json` |
 | Where the tree is found and installed; dev mode, dev trees, the dev config | `docs/dev/backend/README.md` (What exists now, Dev mode), `docs/dev/packaging.md` |
 | The shell ↔ axiom binary connection (env, socket, methods, pushes) | `docs/dev/backend/protocol.md`; every method and push: `docs/dev/generated/rpc.md` (generated) |
 | Hyprland's writer, binds, monitors, workspaces | `docs/dev/hyprland/` |
@@ -34,8 +33,6 @@ Dependencies point one way, methods → data owners → readers → services →
 | Looking at or debugging the live shell; what each check catches | `docs/dev/testing.md` |
 | A page or panel slow to open, streaming (`StreamedLoader`), measuring it | `docs/dev/core/streamed-building.md` |
 | install.sh, AUR packages, packaged installs | `docs/dev/packaging.md` |
-| Known unfixed problems (check before working in an area) | `docs/dev/issues.md` |
-| What to clean up next, phased (each issue's phase) | `docs/dev/roadmap.md` |
 | A setting: meaning, default, readers | `docs/dev/config/<Section>.md` (generated; `grep -rn 'Section.key' docs/dev/config/`) |
 | A bar widget / overlay module / view type's settings | `docs/dev/config/{BarWidgets,OverlayModules,OverlayViews}/<Type>.md` (generated) |
 | A service's or reader's public API | `docs/dev/generated/api/<Name>.md` (generated) |
@@ -86,15 +83,6 @@ packaging/        the AUR packages (install.sh stays at the root)
 - [generated/rpc.md](generated/rpc.md): every method, push and call between the shell and the axiom daemon, with their fields and the files on each side.
 - [generated/layers.md](generated/layers.md): every layer namespace's `order` and why, from `LayerStack.layers`.
 
-### Roadmaps
-- [roadmap](roadmap.md): the phased cleanup plan (correctness, structure, parity, fit, a clean log, docs), every [issues.md](issues.md) entry linked from the phase that fixes it.
-- [plans/](plans/README.md): the designs of "needs a plan" entries while they're decided and built.
-- [backend/roadmap](backend/roadmap.md): the staged move of the services' side effects into the axiom binary, which the cleanup roadmap aligns with.
-
-### Known issues
-- [live-checks.md](live-checks.md): every check waiting for the maintainer's own session, and code tested only against fakes by the hardware it needs (Bluetooth devices).
-- [issues.md](issues.md): coding agents' working list of problems found in the code but not fixed yet (add one when you find something out of scope; remove it with the fix). Not where people report or look up problems: that's GitHub issues, which agents never open.
-
 ### Installing
 - [packaging.md](packaging.md): install.sh (distributions, compositors, `--dry-run`), the AUR packages, what a packaged shell does differently, and `check_packages.py`.
 
@@ -103,7 +91,6 @@ packaging/        the AUR packages (install.sh stays at the root)
 
 ### backend/: the axiom binary
 - [backend](backend/README.md): the Go binary (parent of the shell, owner of the config, the command line): what exists so far, building and checking it, its security rules, and the shared fixtures both sides replay.
-- [roadmap](backend/roadmap.md): the staged plan for moving the services' side effects (processes, files, sockets, HTTP, polling) into the binary: the end state, the rules for each move, and each stage's status.
 - [inputmethod](backend/inputmethod.md): the input method framework (fcitx5, ibus) from the daemon: finding it, following and switching its input method, pushing axiom's list, its options, outside edits, the `inputMethod` topic and `supports.inputMethod`.
 - [protocol](backend/protocol.md): how the shell and the binary talk: the environment, runtime files, the socket's calls and pushes, a session, topics, guards, and when to bump the protocol (every method and push: [generated/rpc.md](generated/rpc.md)).
 

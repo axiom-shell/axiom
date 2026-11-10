@@ -38,12 +38,12 @@ func ctx(t *testing.T) context.Context {
 func TestFromFiles(t *testing.T) {
 	t.Parallel()
 	root, home := t.TempDir(), t.TempDir()
-	write(t, filepath.Join(root, "etc/passwd"), "root:x:0:0::/root:/bin/bash\nme:x:1000:1000:Travis Monkey,,,:/home/me:/bin/zsh\n")
+	write(t, filepath.Join(root, "etc/passwd"), "root:x:0:0::/root:/bin/bash\nme:x:1000:1000:Alex Doe,,,:/home/me:/bin/zsh\n")
 	write(t, filepath.Join(root, "etc/group"), "root:x:0:\nwheel:x:998:me,other\naudio:x:995:me\n")
 	write(t, filepath.Join(home, ".face"), "png")
 	a := New(Options{UID: 1000, Login: "me", Home: home, Root: root})
 	got := a.Get(ctx(t))
-	want := Account{Login: "me", RealName: "Travis Monkey", Icon: filepath.Join(home, ".face"), Admin: true}
+	want := Account{Login: "me", RealName: "Alex Doe", Icon: filepath.Join(home, ".face"), Admin: true}
 	if got != want {
 		t.Errorf("Get = %+v, want %+v", got, want)
 	}

@@ -8,8 +8,7 @@ import (
 	"github.com/axiom-shell/axiom/backend/internal/jsonx"
 )
 
-// v81: the CommandOutput module folds into custom widgets (Phase 10 of the
-// cleanup roadmap): each one, wherever a module grid holds it (pages, edge
+// v81: the CommandOutput module folds into custom widgets: each one, wherever a module grid holds it (pages, edge
 // menus, the desktop, the lock screen), becomes a CustomWidgets definition
 // running its command every interval as plain text, drawn by a Text block
 // filling the module (monospace when it was), its click command the

@@ -12,3 +12,5 @@ backend/internal/assets/data/
 tests/fixtures/shared/
 docs/dev/config/
 docs/dev/generated/
+.pytest_cache/
+CLAUDE.local.md

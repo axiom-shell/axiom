@@ -8,8 +8,6 @@
     lines marked `// fixed px:`
   - check_icons.py finds icon names the bundled font doesn't have
   - only PAM's success unlocks the built-in lock screen
-  - the review skills' scope.py resolves doc headers and files audits'
-    findings once
   - each check fails on what it catches: a copy of the tree (fixture_root)
     with one breaking file or edit per rule, and the message it must print
 
@@ -162,54 +160,6 @@ class NvimModule(unittest.TestCase):
         self.assertEqual(mapped - shipped, set(), "map entries without a theme")
         self.assertEqual(shipped - mapped - {"submarine-sonar", "submarine-sonar-light", "nord-light", "alucard"},
                          set(), "themes without a map entry")
-
-
-class KnownIssues(unittest.TestCase):
-    """scripts/dev/known_issues.py marks log lines an issues.md entry covers."""
-
-    def test_marks(self):
-        tmp = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, tmp)
-        issues = tmp / "issues.md"
-        issues.write_text("""# Known issues
-
-```
-### <Short title>
-- **Where:** `path/File.qml`
-- **What:** quote its category too, `quickshell.I3.ipc`
-```
-
-### A file's warning
-- **Where:** `qml/services/Thing.qml`
-- **What:** logs `Cannot read property` at its binding, and warns `the connection closed`
-- **Size:** trivial
-- **Found:** 2026-10-16, while testing
-
-### Qt's own warning
-- **Where:** `services/compositor/SwayManager.qml`
-- **What:** every reload logs `I3 event socket disconnected` (category `quickshell.I3.ipc`)
-- **Size:** trivial
-- **Found:** 2026-10-16, while testing
-""")
-        log = "\n".join([
-            "  WARN qml: @services/Thing.qml[3:5]: TypeError: Cannot read property 'x' of null",
-            "  WARN qml: @services/Other.qml[3:5]: TypeError: Cannot read property 'x' of null",
-            "  WARN quickshell.I3.ipc: I3 event socket disconnected.",
-            "  WARN quickshell.other: I3 event socket disconnected.",
-            "  WARN quickshell.I3.ipc: a new failure",
-            "  WARN qml: [Thing] Failed to fetch: the connection closed",
-            "  WARN qml: [Other] Failed to fetch: the connection closed",
-        ]) + "\n"
-        done = subprocess.run([sys.executable, str(SCRIPTS / "dev" / "known_issues.py")], input=log, capture_output=True,
-                              text=True, timeout=30, env={**os.environ, "AXIOM_ISSUES": str(issues)})
-        lines = done.stdout.splitlines()
-        self.assertTrue(lines[0].endswith("(known: issues.md › A file's warning)"))
-        self.assertNotIn("known", lines[1])
-        self.assertTrue(lines[2].endswith("(known: issues.md › Qt's own warning)"))
-        self.assertNotIn("known", lines[3])
-        self.assertNotIn("known", lines[4], "the category alone isn't the warning")
-        self.assertTrue(lines[5].endswith("(known: issues.md › A file's warning)"), "a [Tag] names its file")
-        self.assertNotIn("known", lines[6])
 
 
 class RpcShapes(unittest.TestCase):
@@ -713,22 +663,16 @@ class CheckDocs(unittest.TestCase):
         self.assertEqual(retired_name("Bar.lookOf(bar)", configs), "Bar")
         self.assertIsNone(retired_name("BarsConfig.lookOf", configs))
 
-    SKILL = "---\nname: {0}\ndescription: x\n---\n{1}\n"
     FILES = [
         ("docs/dev/ghost.md", "[a](nowhere.md)\n`services/core/GhostlyManager.qml`\n`AudioManager.noSuchMember`\n"
-                              "`IconConfig.x`\n[b](issues.md#no-such-entry)\n"),
+                              "`IconConfig.x`\n"),
         ("qml/components/reusable/GhostPiece.qml", qml()),
-        ("docs/recipes/ghost.md", "# Ghost\n"),
-        (".claude/skills/bar-widget/SKILL.md", SKILL.format("bar-widget", "Read the docs.")),
-        (".claude/skills/setting/SKILL.md", SKILL.format("setting", "Read `docs/recipes/setting.md`.\nThen this.\nAnd that.")),
     ]
 
     def test_each_rule_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs", ".claude/skills", "qml", "AGENTS.md", "README.md", "CONTRIBUTING.md")
+            root = fixture_root(tmp, "docs", "qml", "AGENTS.md", "README.md", "CONTRIBUTING.md")
             edit_json(root / "qml/config/json/config.schema.json", lambda s: s.update({"x-ghost": True}))
-            with open(root / "docs/dev/issues.md", "a") as issues:
-                issues.write("\n### Ghost entry\n- **Where:** nowhere\n")
             code, out = run_check(root, "check_docs.py", files=self.FILES)
         self.assertEqual(code, 1)
         self.assertEqual(missed(out, [
@@ -736,96 +680,9 @@ class CheckDocs(unittest.TestCase):
             "docs/dev/ghost.md:2: `services/core/GhostlyManager.qml` doesn't exist",
             "docs/dev/ghost.md:3: `AudioManager.noSuchMember`: AudioManager has no member noSuchMember",
             "docs/dev/ghost.md:4: `IconConfig.x`: IconConfig was renamed to IconsConfig",
-            "docs/dev/ghost.md:5: link to a missing issues.md entry #no-such-entry",
-            "docs/dev/issues.md: 'Ghost entry': fields ['Where'], expected",
-            "docs/dev/issues.md: 'Ghost entry' isn't linked from docs/dev/roadmap.md",
             "qml/components/reusable/GhostPiece.qml: not in docs/dev/core/shared-ui-pieces.md",
-            "docs/recipes/ghost.md: no skill .claude/skills/ghost/SKILL.md",
-            ".claude/skills/bar-widget/SKILL.md: doesn't point at docs/recipes/bar-widget.md",
-            ".claude/skills/setting/SKILL.md: 3 lines; a recipe skill only points at its recipe",
             "`x-ghost` isn't in docs/dev/core/schema-annotations.md",
         ]), [], out)
-
-
-class ReviewScope(unittest.TestCase):
-    """.claude/skills/review-system/scope.py: a doc header's folders and
-    {a,b} name their files, a path matching nothing is reported, --orphans
-    sees files at any depth; --apply
-    files each title once (across reports and re-runs), links it from the
-    roadmap, flags a symbol two entries name and copies the reviews file."""
-
-    SCOPE = ".claude/skills/review-system/scope.py"
-
-    @staticmethod
-    def entry(title, where, system):
-        return (f"### {title}\n- **Where:** {where}\n- **What:** x. Fix: y.\n- **Size:** small\n"
-                f"- **Found:** 2026-10-30, while reviewing the {system} system\n")
-
-    def run_scope(self, root, *args):
-        done = subprocess.run([sys.executable, str(root / self.SCOPE), *args], cwd=root, capture_output=True, text=True)
-        return done.returncode, done.stdout + done.stderr
-
-    def test_header_paths(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs/dev/issues.md", ".claude/skills/review-system", "qml/services/compositor",
-                                "qml/shell.qml")
-            (root / "docs/dev/ghost.md").write_text(
-                "> **Files:** `qml/services/compositor/{NiriManager,SwayManager}.qml`, `qml/services/compositor/`,"
-                " `qml/services/gone.qml`, `qml/shell.qml`, `LayoutsPanel`, `qml/components/content/<Type>/<Type>.qml`\n")
-            _, out = self.run_scope(root, "doc:docs/dev/ghost.md")
-            (root / "backend/internal/pkg/sub").mkdir(parents=True)
-            (root / "backend/internal/pkg/sub/deep.go").write_text("package sub\n")
-            _, orphans = self.run_scope(root, "--orphans")
-        self.assertIn("  backend/internal/pkg/sub/deep.go\n", orphans)
-        self.assertIn("NOT FOUND (a moved file or a bad pattern: its code is missing below): "
-                      "qml/services/gone.qml (docs/dev/ghost.md)\n", out)
-        self.assertEqual(out.count("qml/services/compositor/NiriManager.qml"), 1, out)
-        self.assertIn("qml/services/compositor/CompositorManager.qml", out)
-        self.assertIn("  qml/shell.qml\n", out)
-
-    def test_apply(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = fixture_root(tmp, "docs", ".claude/skills", ".claude/reviews", "qml",
-                                "AGENTS.md", "README.md", "CONTRIBUTING.md")
-            niri, comp = Path(tmp) / "out/niri", Path(tmp) / "out/compositor"
-            where = "`qml/services/compositor/NiriManager.qml:10` (`queueAction`)"
-            shared = self.entry("Both audits saw it", "`qml/services/compositor/CompositorManager.qml`", "niri")
-            for d, report in (
-                (niri, "## Major\n" + self.entry("The `niri` writer: drops binds", where, "niri")
-                 + "\n## Minor\n" + self.entry("A minor one", where, "niri")
-                 + "\n## Outside the system\n" + shared),
-                (comp, "## Cleanups\n" + shared + "\n" + self.entry("Another on queueAction", where, "compositor")),
-            ):
-                d.mkdir(parents=True)
-                (d / "findings.md").write_text("# System review\n\n**Verdict:** x\n\n" + report)
-            (niri / "review.md").write_text("# niri\nreviewed: abc 2026-10-30\n")
-            _, out = self.run_scope(root, "--apply", str(niri), str(comp))
-            issues = (root / "docs/dev/issues.md").read_text()
-            roadmap = (root / "docs/dev/roadmap.md").read_text()
-            review = (root / ".claude/reviews/niri.md").read_text()
-            _, out2 = self.run_scope(root, "--apply", str(niri), str(comp))
-            unchanged = (root / "docs/dev/issues.md").read_text() == issues
-            gone, out3 = self.run_scope(root, "--apply", str(Path(tmp) / "out/none"))
-        self.assertEqual(missed(out, [
-            "title already taken, skipped (merge it by hand if it differs): Both audits saw it",
-            "same symbol, one cause or one fix? Another on queueAction / The `niri` writer: drops binds: "
-            "qml/services/compositor/NiriManager.qml (queueAction)",
-            "3 entries filed",
-        ]), [], out)
-        # check_docs ran on the result (the fixture lacks the rest of the tree: only the new entries count)
-        self.assertEqual([l for l in out.splitlines() if l.startswith(("error", "warning"))
-                          and re.search(r"drops binds|Both audits|queueAction|drops-binds|both-audits", l)], [])
-        for title in ("The `niri` writer: drops binds", "Both audits saw it", "Another on queueAction"):
-            self.assertEqual(issues.count(f"\n### {title}\n"), 1, title)
-        self.assertNotIn("A minor one", issues)
-        self.assertIn("Found by the audits:\n", roadmap)
-        self.assertIn("- [The `niri` writer: drops binds](issues.md#the-niri-writer-drops-binds)\n"
-                      "- [Both audits saw it](issues.md#both-audits-saw-it)\n"
-                      "- [Another on queueAction](issues.md#another-on-queueaction)\n", roadmap)
-        self.assertEqual(review, "# niri\nreviewed: abc 2026-10-30\n")
-        self.assertIn("0 entries filed", out2)
-        self.assertTrue(unchanged)
-        self.assertEqual(gone, 2, out3)
 
 
 def block_end(text, open_at):

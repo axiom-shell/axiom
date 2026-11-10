@@ -101,4 +101,3 @@ var rows = [
 ## Docs to update
 - [OSD](../dev/features/osd.md) › Systems: a short section for it (its key, what each change shows, its declarations and anything custom).
 - Its feature's own doc, a line linking the OSD.
-- `docs/dev/live-checks.md`, for what only the real machine shows.

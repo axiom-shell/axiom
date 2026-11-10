@@ -112,7 +112,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "git status && gh api -X DELETE repos/a/b/branches/main/protection", "echo x | gh api graphql --input -", "gh pr merge 3 --admin=true",
                     "echo 1 | xargs gh api", "echo 1 | xargs -I {} -n 1 gh api repos/o/r/issues/{}",
                     "gh api repos/o/r -X DELETE -H --help", "gh repo --description view edit", "gh --method DELETE api repos/o/r")
-        self.allows("gh pr create --fill --label roadmap", "gh pr view 3 --json comments", "gh pr list --label roadmap",
+        self.allows("gh pr create --fill --label chore", "gh pr view 3 --json comments", "gh pr list --label chore",
                     "gh pr checks 1 --watch | tail -3", "gh pr merge 3 --squash --delete-branch", "gh pr edit 3 --add-label x",
                     "gh pr comment 3 -b ok", "gh pr close 3", "gh pr ready 3", "gh pr checkout 3", "gh version", "gh run view --log-failed | tail -60", "gh run rerun 9 --failed",
                     "gh run cancel 9", "gh issue list", "gh issue view 16", "gh issue comment 16 -b x", "gh issue close 16",
@@ -120,7 +120,7 @@ class Bash(LiveSession, unittest.TestCase):
                     "gh ruleset view 42", "gh search prs x", "gh status", "gh auth status", "gh variable get X",
                     "gh issue create --title x --body y", "gh -R a/b issue create -t x -b y", "gh -R x/y pr view 1", "gh pr view 1 --repo x/y", "gh --repo=x/y run list",
                     "cd /tmp && gh pr view 1", "env GH_TOKEN=x gh pr list", "echo 1 | xargs -I {} gh pr view {}",
-                    "gh repo clone o/r", "gh workflow run checks.yml --ref roadmap/x", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
+                    "gh repo clone o/r", "gh workflow run checks.yml --ref feature/x", "gh", "gh help repo edit", "gh repo edit --help", "gh api -h", "gh api --help")
 
     def test_leading_cd(self):
         """A leading `cd` moves the relative paths after it"""
@@ -143,7 +143,7 @@ class Bash(LiveSession, unittest.TestCase):
                 self.allows(f"cd {cfg}; cd /tmp; rm config.json", f"cd {cfg} && cd /tmp && rm config.json")
 
     def test_git_push_and_clean(self):
-        self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:roadmap/1-x", "git push origin @",
+        self.blocks("git push", "git push origin", "git push -u origin HEAD", "git push origin HEAD:feature/1-x", "git push origin @",
                     "git push --force", "git push -f origin x", "git push -uf origin x", "git push --force-with-lease origin x",
                     "git push --force-if-includes origin x", "git push origin +x", "git push origin :x", "git push --delete origin x",
                     "git push -d origin x", "git push --mirror origin", "git push --all origin", "git push --prune origin x",
@@ -154,12 +154,12 @@ class Bash(LiveSession, unittest.TestCase):
                     'git push -u origin "$(git branch --show-current)"', 'b=main; git push origin "$b"', "git push origin x@{u}",
                     "cd /tmp && git push -u origin HEAD 2>&1 | tail -2",
                     # a switch, rebase or rename onto main, then a bare push
-                    "git switch main && git push", "git rebase roadmap/1-x main && git push", "git branch -M main && git push",
+                    "git switch main && git push", "git rebase feature/1-x main && git push", "git branch -M main && git push",
                     "git clean -fdx", "git clean -X", "git -C . clean -x -f")
-        self.allows("git push -u origin roadmap/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
-                    "git push --dry-run origin x", "git push origin x:roadmap/1-x", "git push origin main:x",
-                    "git -C /tmp/w push -u origin roadmap/1-x", "cd /tmp && git push -u origin roadmap/1-x 2>&1 | tail -2",
-                    "git switch main && git push origin roadmap/1-x", "env -C /tmp git push origin x",
+        self.allows("git push -u origin feature/1-x", "git push --set-upstream origin x", "git push -q -n origin x",
+                    "git push --dry-run origin x", "git push origin x:feature/1-x", "git push origin main:x",
+                    "git -C /tmp/w push -u origin feature/1-x", "cd /tmp && git push -u origin feature/1-x 2>&1 | tail -2",
+                    "git switch main && git push origin feature/1-x", "env -C /tmp git push origin x",
                     "git status", "git pull --ff-only", "git clean -fd", "git clean -n")
 
     def test_greetd_and_greeter(self):
@@ -464,16 +464,16 @@ class GuardItself(unittest.TestCase):
         for path in (w / ".claude/hooks/guard.py", w / ".claude/skills/x/SKILL.md", w / ".claude/settings.json",
                      c / "projects/-x/memory/MEMORY.md", f"{HOME}/.claude/projects/x/memory.md", "/tmp/claude-1000/x/y",
                      self.project / "AGENTS.md", self.project / "CLAUDE.md", self.project / "qml/shell.qml",
-                     # an isolated agent's worktree, review-system's notes
+                     # an isolated agent's worktree
                      self.project / ".claude/worktrees/agent-a/qml/shell.qml",
-                     self.project / ".claude/worktrees/agent-a/.claude/settings.json", self.project / ".claude/reviews/bar.md"):
+                     self.project / ".claude/worktrees/agent-a/.claude/settings.json"):
             self.assertFalse(self.denied("Write", str(path)), path)
         for command in (f"cd {w} && sed -i s/a/b/ .claude/hooks/guard.py", f"cp /tmp/x {w}/.claude/hooks/guard.py",
                         f"echo x > {c}/projects/-x/memory/note.md", f"rm -rf {c}/projects/-x/old", "rm -rf /tmp/claude-1000/x",
                         "cat .claude/settings.json", "grep -rn deny .claude", f"ls {c}", "find . -name '*.pyc' -delete",
                         "cp .claude/settings.json /tmp/backup.json", "echo x > AGENTS.md", "git switch main", "git checkout x -- .claude",
-                        "git merge origin/main", "git pull --ff-only", "git push -u origin roadmap/x",
-                        f"git -C {w} push -u origin roadmap/x 2>&1 | tail -2", "gh pr create --fill", "gh pr checks 3",
+                        "git merge origin/main", "git pull --ff-only", "git push -u origin feature/x",
+                        f"git -C {w} push -u origin feature/x 2>&1 | tail -2", "gh pr create --fill", "gh pr checks 3",
                         "gh pr merge 3 --squash", "scripts/dev/verify.sh", "python3 tests/scripts/test_guard.py",
                         "rm -rf .claude/worktrees/agent-a", f"echo x > {p}/.claude/worktrees/agent-a/qml/a.qml"):
             self.assertFalse(self.denied("Bash", command), command)

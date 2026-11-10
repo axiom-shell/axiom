@@ -15,13 +15,8 @@ Docs drift silently; this catches the drift a reader would trip on:
 - every shared piece (a file in qml/components/reusable, forms or content/parts)
   is named in the shared-ui-pieces index or the docs it defers to, so the
   index agents check before building stays whole
-- every recipe in docs/recipes has a skill in .claude/skills of its name,
-  and each such skill only points at its recipe (a rule restated in a skill
-  drifts from the recipe, which is the one copy)
 - every `x-*` annotation the config schema uses is named in
   docs/dev/core/schema-annotations.md, so that list stays complete
-- every link to an issues.md entry names one that's there; an entry the
-  cleanup roadmap (docs/dev/roadmap.md) doesn't link is a warning
 
 Covers docs/**/*.md (not the generated docs/dev/config and docs/dev/generated),
 every AGENTS.md, README.md and CONTRIBUTING.md, and .claude/skills. Fenced
@@ -127,75 +122,6 @@ def strip_fences(text):
     return re.sub(r"(?ms)^```.*?^```", "", text)
 
 
-ISSUE_FIELDS = ["Where", "What", "Size", "Found"]
-SIZES = {"trivial", "small", "needs a plan"}
-
-
-def issue_entries(text):
-    """issues.md's entries: everything after its first ## (area) heading,
-    past the format's example at the top."""
-    return text.split("\n## ", 1)[1] if "\n## " in text else ""
-
-
-def check_issues():
-    """docs/dev/issues.md: every entry (everything after the first ## area
-    heading) is a ### heading with the four fields, in order, a known size
-    and a dated Found."""
-    path = ROOT / "docs/dev/issues.md"
-    if not path.exists():
-        return [f"{path.relative_to(ROOT)}: missing"]
-    text = path.read_text()
-    errors = []
-    body = issue_entries(text)
-    for entry in re.split(r"(?m)^### ", body)[1:]:
-        title = entry.splitlines()[0]
-        fields = re.findall(r"(?m)^- \*\*(\w+):\*\* (.+)$", entry)
-        names = [name for name, _ in fields]
-        if names != ISSUE_FIELDS:
-            errors.append(f"docs/dev/issues.md: '{title}': fields {names}, expected {ISSUE_FIELDS}")
-            continue
-        values = dict(fields)
-        if values["Size"].strip() not in SIZES:
-            errors.append(f"docs/dev/issues.md: '{title}': Size must be one of {sorted(SIZES)}")
-        if not re.match(r"\d{4}-\d{2}-\d{2}, while ", values["Found"]):
-            errors.append(f"docs/dev/issues.md: '{title}': Found must be 'YYYY-MM-DD, while <task>'")
-    return errors
-
-
-ISSUES = "docs/dev/issues.md"
-ROADMAP = "docs/dev/roadmap.md"
-
-
-def heading_slug(title):
-    """GitHub's anchor for a heading: lowercase, punctuation dropped, spaces
-    to hyphens."""
-    return re.sub(r"[^\w\- ]", "", title.strip().lower()).replace(" ", "-")
-
-
-def check_issue_links(paths):
-    """Every link to an issues.md entry (`issues.md#<anchor>`) names an
-    entry that's there, so fixing one (and removing it) can't leave a dead
-    link in the cleanup roadmap. Returns (errors, warnings): an entry the
-    roadmap doesn't link is only a warning."""
-    issues = ROOT / ISSUES
-    anchors = {heading_slug(line[4:]) for line in issues.read_text().splitlines() if line.startswith("### ")}
-    errors, linked = [], set()
-    for doc in paths:
-        text = strip_fences(doc.read_text())
-        for n, line in enumerate(text.splitlines(), 1):
-            for target, anchor in re.findall(r"\]\(([^)\s#]*)#([^)\s]+)\)", line):
-                if (doc.parent / (target or doc.name)).resolve() != issues.resolve():
-                    continue
-                if anchor not in anchors:
-                    errors.append(f"{doc.relative_to(ROOT)}:{n}: link to a missing issues.md entry #{anchor}")
-                elif doc.relative_to(ROOT).as_posix() == ROADMAP:
-                    linked.add(anchor)
-    body = issue_entries(issues.read_text())
-    warnings = [f"{ISSUES}: '{line[4:]}' isn't linked from {ROADMAP} (add it to the phase that fixes it)"
-                for line in body.splitlines() if line.startswith("### ") and heading_slug(line[4:]) not in linked]
-    return errors, warnings
-
-
 # Folders of shared pieces -> the docs that must name each of their files
 PIECE_INDEX = {
     "qml/components/reusable": ["docs/dev/core/shared-ui-pieces.md"],
@@ -212,27 +138,6 @@ def check_piece_index():
         for path in sorted((ROOT / folder).glob("*.qml")):
             if not re.search(rf"\b{re.escape(path.stem)}\b", text):
                 errors.append(f"{folder}/{path.name}: not in {index[0]} (add a line for it)")
-    return errors
-
-
-# A recipe skill's body: this many lines at most, naming its recipe
-SKILL_LINES = 2
-
-
-def check_skills():
-    errors = []
-    recipes = {p.stem for p in (ROOT / "docs/recipes").glob("*.md")}
-    skills = {p.parent.name: p for p in (ROOT / ".claude/skills").glob("*/SKILL.md")}
-    for name in sorted(recipes - skills.keys()):
-        errors.append(f"docs/recipes/{name}.md: no skill .claude/skills/{name}/SKILL.md")
-    for name in sorted(recipes & skills.keys()):
-        rel = skills[name].relative_to(ROOT)
-        body = [line for line in skills[name].read_text().split("---", 2)[-1].splitlines() if line.strip()]
-        if not any(f"docs/recipes/{name}.md" in line for line in body):
-            errors.append(f"{rel}: doesn't point at docs/recipes/{name}.md")
-        elif len(body) > SKILL_LINES:
-            errors.append(f"{rel}: {len(body)} lines; a recipe skill only points at its recipe "
-                          f"(move rules into docs/recipes/{name}.md)")
     return errors
 
 
@@ -289,14 +194,8 @@ def main():
                         and m.group(2) not in ("qml", "json", "md", "sh", "py") and span.split("(")[0] not in configs:
                     if m.group(2) not in members[m.group(1)]:
                         errors.append(f"{where}: `{span}`: {m.group(1)} has no member {m.group(2)}")
-    errors += check_issues()
-    link_errors, warnings = check_issue_links(docs())
-    errors += link_errors
-    errors += check_skills()
     errors += check_piece_index()
     errors += check_annotations()
-    for w in warnings:
-        print(f"warning  {w}")
     for e in errors:
         print(f"error    {e}")
     print("docs ok" if not errors else f"{len(errors)} doc errors")

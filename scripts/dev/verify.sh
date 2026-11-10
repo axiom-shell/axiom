@@ -15,8 +15,7 @@
 #      validity, the unit tests the change touches (QML, and the
 #      test_scripts.py classes of a changed script), the Go checks (backend/:
 #      go generate, gofmt, vet, staticcheck, tests), shellcheck, i18n
-#   3. the shell's log since its last reload, lines issues.md already
-#      covers marked (known: …)
+#   3. the shell's log since its last reload
 #   4. warnings: the docs describing the changed files (check_doc_drift.py),
 #      and a missing pre-commit hook
 #
@@ -103,12 +102,10 @@ for f in "${changed[@]}"; do
   qml/config/themes/* | qml/config/json/theme-defaults.json | scripts/gen_theme_template.py) script_tests+=(Themes) ;;
   data/templates/nvim/*) script_tests+=(NvimModule) ;;
   data/greeter/*) script_tests+=(GreeterShim GreeterSession) ;;
-  scripts/dev/known_issues.py) script_tests+=(KnownIssues) ;;
   scripts/check_sizes.py) script_tests+=(CheckSizes) ;;
   scripts/check_icons.py) script_tests+=(CheckIcons) ;;
   scripts/check_structure.py | scripts/qml_modules.py | scripts/quickshell-io-allowlist.json) script_tests+=(CheckStructure) ;;
   scripts/check_docs.py) script_tests+=(CheckDocs) ;;
-  .claude/skills/review-system/scope.py) script_tests+=(ReviewScope) ;;
   scripts/check_i18n.py) script_tests+=(CheckI18n) ;;
   scripts/check_qmllint.py) script_tests+=(CheckQmllint) ;;
   scripts/check_packages.py) script_tests+=(CheckPackages) ;;
@@ -205,7 +202,7 @@ if [[ ${#qml[@]} -gt 0 || $schema -eq 1 ]] && command -v qs >/dev/null; then
     sleep 0.5
   done
   sleep 1
-  scripts/log.sh | scripts/dev/known_issues.py || true
+  scripts/log.sh || true
   echo "(no new reload since this script started is normal when the shell already reloaded on save;"
   echo " if the log looks stale, see docs/dev/testing.md › Reloads and logs)"
 fi

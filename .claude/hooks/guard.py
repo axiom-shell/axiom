@@ -391,9 +391,7 @@ def check_axiom(env, args, cwd):
             deny("Never, while testing", "`--takeover` changes a setting that takes something over on this PC (compositor mode, locker, idle, polkit, greeter); ask the user.")
 
 
-# The gh commands an agent may run (maintainer, 2026-11-06: "allow only
-# issue management, re running actions, and merging prs ... Full read scope",
-# "and gh api", "allow starting workflows"): every read, and these writes. Anything else is refused,
+# The gh commands an agent may run: every read, and these writes. Anything else is refused,
 # `gh api` in every form. A group named alone allows all its subcommands.
 GH_ALLOWED = {
     # Reads (not `browse`, which opens a browser)
@@ -410,7 +408,7 @@ GH_ALLOWED = {
     "issue create", "issue edit", "issue comment", "issue close", "issue reopen", "issue lock", "issue unlock",
     # Re-running and starting actions
     "run rerun", "run cancel", "workflow run",
-    # PRs: merging (not `--admin`, past main's protection), and what the roadmap autopilot opens and labels
+    # PRs: merging (not `--admin`, past main's protection), opening and labelling
     "pr merge", "pr create", "pr comment", "pr edit", "pr close", "pr ready", "pr checkout",
 }
 
@@ -452,7 +450,7 @@ def push_allowed(args):
 
 def check_git(args):
     """`git push` beyond PUSH_OPTS' shape: every change reaches main through a
-    reviewed PR (docs/dev/roadmap.md › Running it unattended). `git clean -x`,
+    reviewed PR. `git clean -x`,
     which deletes the ignored files."""
     i = 0
     while i < len(args) and args[i].startswith("-"):
@@ -708,8 +706,8 @@ def touched_paths(name, args, cwd, env):
 
 
 # Under .claude/ but not the guard's: the worktrees Claude Code makes for
-# isolated agents, and review-system's notes
-UNGUARDED = ("worktrees", "reviews")
+# isolated agents
+UNGUARDED = ("worktrees",)
 
 
 def claude_guarded(cwd):

@@ -36,7 +36,7 @@ Name clash: `KeybindManager.editor.startRecording(index)` is the key recorder on
 
 ### The frame from grim (niri)
 - **When:** `ScreenshotManager.grimFrames`, on wherever the backend leaves out `CompositorManager.supports.outputCapture` (niri; sway and Hyprland keep the `ScreencopyView`).
-- **Why:** niri 26.04 has only wlr-screencopy, and Quickshell's capture through it binds a `wl_output` of its own that Qt takes for a screen. The shell then crashes the next time a surface leaves or enters an output, at once with a popout open (it unmaps as the picker opens). The upstream bug and its trace are in [issues](../issues.md) › *Quickshell's wlr screencopy crashes the shell on niri*.
+- **Why:** niri 26.04 has only wlr-screencopy, and Quickshell's capture through it binds a `wl_output` of its own that Qt takes for a screen. The shell then crashes the next time a surface leaves or enters an output, at once with a popout open (it unmaps as the picker opens). It is an upstream Quickshell bug.
 - **How:**
   - `_grabFrames` runs grim before the picker opens: one picture per screen the picker shows (only the captured one for `screen`), `grim -t ppm -s <devicePixelRatio> -o <screen>`, into `Paths.runtimePath`. The picker opens once grim exits; `busy` covers the wait.
   - Each picker shows its screen's picture (`ScreenshotManager.frames`) as an `Image`; `frozen`, the crop and `frameArrived()` work as with the `ScreencopyView`, whose `captureSource` stays null. A picture it can't read (`Image.Error`) fails the shot at once. `_onFrame` runs on `onFrozenChanged`, never on the Image's or view's own change signal, which fire before `frozen` updates (so the frame was missed and the watchdog failed a picker in use).

@@ -75,7 +75,7 @@ Each is a folder of `qml/components/surfaces/osd/systems/` (Engine › A system'
 `airplane`: lit and unusual while on, either way its icon; a click toggles it; `userWindow` 8 s. Wi-Fi and Bluetooth switching just after it are its knock-on (their `knockOnOf`): its ring stays.
 
 #### Vpn
-`vpn`: whether a VPN is up (`VpnManager.rows`; the watcher `holds` VpnManager, which polls Tailscale while held: [the issue](../issues.md#tailscales-state-is-polled-where-it-could-be-pushed)); lit and unusual while up, hidden with no VPN; a click brings the VPN last used up or down (`vpn`). Every change counts, the user's or not (`anyone`: a drop, an autoconnect).
+`vpn`: whether a VPN is up (`VpnManager.rows`; the watcher `holds` VpnManager, which polls Tailscale while held: Tailscale's state is polled, not pushed); lit and unusual while up, hidden with no VPN; a click brings the VPN last used up or down (`vpn`). Every change counts, the user's or not (`anyone`: a drop, an autoconnect).
 - One coming up is its card (`onAdd: "card"`: their names, Connected, the first one's address).
 - One taken down on screen is the unlit icon (`onRemove: "icon"`); the last one going down that nobody took down on screen is a "Disconnected" card (`onUnexpectedRemove: "last"`; another still up: the icon, the other half of a switch). "On screen" is the mark within `userWindow` (15 s): a VPN taken down by a keybind or IPC gets the card (it has no other feedback), one from the OSD's own tile the icon.
 - Each VPN is judged by its last settled state (`memberState: { field: "state", on: "on", off: "off" }`), so up and down are judged across `connecting` / `disconnecting`, and a row appearing (Tailscale's first status) or going isn't a change.

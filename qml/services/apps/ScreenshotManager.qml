@@ -89,7 +89,7 @@ QtObject {
   // compositor has no capture Quickshell does safely (CompositorManager.
   // supports.outputCapture). niri has only wlr-screencopy, and Quickshell's
   // capture through it crashes the shell once a surface then unmaps
-  // (docs/dev/issues.md).
+  // (a known limit).
   readonly property bool grimFrames: CompositorManager.supports.outputCapture !== true
   // { screen name: picture path } while picking with grimFrames
   readonly property var frames: root._frames

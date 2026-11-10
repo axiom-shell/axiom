@@ -1,6 +1,6 @@
 # Systems
 
-The systems `/review-system` knows. `scope.py` reads this file: each `## <name>` entry's **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member). **Checks** are what's most worth verifying here, beyond the lenses. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
+The systems `/review-system` knows. Each `## <name>` entry's **Docs** (under `docs/dev/`, globs allowed) give the code through their `> **Files:**` headers; **Extra** adds files no doc lists (globs allowed; a folder `dir/` means the files directly in it, as in a header); **Mode** is `files` (default), `collection` (many files of one kind: compare them against their rules and each other, read the odd ones out) or `parity` (compare the backends member by member). **Checks** are what's most worth verifying here, beyond the lenses. Anything not listed: `feature:<name>` (`docs/dev/features/<name>.md`), `doc:<path>`, `files:<glob>`.
 
 ## compositor
 Scope: the neutral compositor layer: the contract, `supports`, layers and their order, config modes, window look.
