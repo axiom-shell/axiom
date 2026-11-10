@@ -256,10 +256,15 @@ Singleton {
   }
 
   // `kind`: how it ranks (claimKinds), "menu" when left out
-  // A popped-out menu stays as it is: no second copy
+  // A popped-out menu stays where it is (no second copy), only brought
+  // forward if a popout covered it
   function open(id, anchor, kind) {
-    if (!root._exists(id) || root.isPoppedOut(id))
+    if (!root._exists(id))
       return;
+    if (root.isPoppedOut(id)) {
+      root.engageRequested(id);
+      return;
+    }
     const anchors = Object.assign({}, root.anchors);
     anchors[id] = anchor ?? null;
     root.anchors = anchors;

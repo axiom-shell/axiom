@@ -339,10 +339,10 @@ TestCase {
     }, true), "never a strip");
   }
 
-  function test_underlay() {
-    verify(FreeMenuPlace.underlay(true, false), "pinned");
-    verify(FreeMenuPlace.underlay(false, true), "popped out holds an underlay claim");
-    verify(!FreeMenuPlace.underlay(false, false));
+  function test_ranks_pinned() {
+    verify(FreeMenuPlace.ranksPinned(true, false), "pinned");
+    verify(FreeMenuPlace.ranksPinned(false, true), "popped out ranks as a pinned menu");
+    verify(!FreeMenuPlace.ranksPinned(false, false), "else as its opener's kind");
   }
 
   function test_hosts() {

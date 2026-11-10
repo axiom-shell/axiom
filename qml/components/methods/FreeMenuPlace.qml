@@ -141,9 +141,10 @@ QtObject {
     return menu.placement === "free" || (menu.placement === "edge" && !!menu.popOutButton && !!poppedOut);
   }
 
-  // Drawn under the popouts, never colliding (PopoutClaim.underlay): a
-  // free menu pinned, or popped out (held as if pinned)
-  function underlay(pinned, poppedOut) {
+  // Whether its claim ranks as pinned (lowest, giving way to a popout
+  // over it and coming back, as a pinned edge menu's) while not engaged:
+  // a free menu pinned, or a popped-out edge menu (held as if pinned)
+  function ranksPinned(pinned, poppedOut) {
     return !!pinned || !!poppedOut;
   }
 

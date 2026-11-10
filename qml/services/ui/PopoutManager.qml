@@ -19,7 +19,7 @@ import qs.services.core
  *
  * `entries` is the location report: one plain object per registered
  * popout, { id, kind, screen, edge, barId, parentId, pinned, resident,
- * underlay, phase ("open" | "yielded"), footprint }.
+ * phase ("open" | "yielded"), footprint }.
  */
 QtObject {
   id: root
@@ -42,7 +42,6 @@ QtObject {
       "parentId": c.parentKey,
       "pinned": c.pinned,
       "resident": c.resident,
-      "underlay": c.underlay,
       "phase": phase,
       "footprint": c.footprint
     };
@@ -168,13 +167,12 @@ QtObject {
 
   // Closes the bar popouts and floating edge menus on a screen, pinned
   // ones too (their submenus close with them): the overlay opening there
-  // would cover them (PopoutGeometry.closedByOverlay). Docks, OSDs, the
-  // launcher and a pinned free menu (an underlay) stay; integrated menus
+  // would cover them. Docks, OSDs and the launcher stay; integrated menus
   // hold no claim
   function closeOn(screenName) {
     root._apply({
       "yield": [],
-      "evict": PopoutGeometry.closedByOverlay(root.entries, screenName)
+      "evict": root.entries.filter(e => e.screen === screenName && (e.kind === "bar" || e.kind === "menu")).map(e => e.id)
     });
     root._resume();
   }
@@ -189,7 +187,7 @@ QtObject {
         const fp = e.footprint ?? [];
         const x0 = Math.min(...fp.map(r => r.x)), y0 = Math.min(...fp.map(r => r.y));
         const x1 = Math.max(...fp.map(r => r.x + r.width)), y1 = Math.max(...fp.map(r => r.y + r.height));
-        return `${e.id} ${e.kind} ${e.phase}${e.pinned ? " pinned" : ""}${e.resident ? " resident" : ""}${e.underlay ? " underlay" : ""} ${e.screen} ${Math.round(x0)},${Math.round(y0)} ${Math.round(x1 - x0)}x${Math.round(y1 - y0)}`;
+        return `${e.id} ${e.kind} ${e.phase}${e.pinned ? " pinned" : ""}${e.resident ? " resident" : ""} ${e.screen} ${Math.round(x0)},${Math.round(y0)} ${Math.round(x1 - x0)}x${Math.round(y1 - y0)}`;
       }).join("\n");
     }
   }

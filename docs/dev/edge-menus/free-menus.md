@@ -54,8 +54,9 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - A `PopoutClaim` keyed `menu:<id>`, with edge `""` and the box's footprint on the screen.
 - Its kind is the opener's (`EdgeMenuManager.claimKinds`): `bar` for a widget's popout, else `menu`.
 - Held by the editor (previewing), it is `resident`: it gives way and comes back.
-- **Pinned (or a popped-out edge menu), it is an `underlay`** (`FreeMenuPlace.underlay`, `PopoutGeometry.isUnderlay`): it never collides, so it never closes anything and nothing opening over it closes it or makes it give way. Its submenu neither. The overlay opening leaves it too (`PopoutGeometry.closedByOverlay`); the overlay draws over it. Only the free host does this: every edge menu on its edge, detached ones included, still gives way when covered and comes back ([Popout registry](../popouts/registry.md) › Underlays).
-- **What draws on top is the layer, not the rank.** Its window is on Top under every popout: bar and edge popouts are on the Overlay layer, or on Top in namespaces ordered over `axiom-menu` (`tst_LayerStack`'s `test_free_menu_order`).
+- **It ranks as any popout** (decided 2026-11-10: "Bars must not move/redraw when making an action"). Unpinned, as its kind: a higher popout over it (the launcher) closes it, and a lower one it covers (a bar popout over a `menu`-kind one) doesn't open.
+- **Pinned (or a popped-out edge menu), it ranks as a pinned menu** (`FreeMenuPlace.ranksPinned`): lowest, `resident`, so it gives way (hides) while a popout covers it and comes back after ("Menu hides, comes back"), as a pinned edge menu does. Hovered, just opened or asked for again (`engageRequested`, also for a popped-out one opened again) it is `engaged` and ranks as its kind meanwhile, as `EdgePopout.engaged`. The overlay opening closes it, as it closes a pinned edge menu ([Popout registry](../popouts/registry.md) › Free menus).
+- **Its layer.** Its window is on Top under every popout (`tst_LayerStack`'s `test_free_menu_order`), so a popout opening over it draws on top while its box goes.
 - **Clicks.** It is no grab partner of the other popouts: a click on it closes an open bar or edge popout, as any outside click does. It takes the keyboard only when clicked (`OnDemand`).
 
 ### Pinning
@@ -79,7 +80,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
   - The free box comes up with no animation (`animationDuration` 0) at that spot, clamped into the free area. So a box attached to its edge moves inwards by the edge's gap.
   - Both hosts' claims are keyed `menu:<id>`. The free one's replaces the edge one's entry, and `PopoutManager.update` ignores the edge one from then on.
   - It keeps its edge's layout: a top or bottom menu's modules along a row (`vertical`), its whole-edge stretch along that axis.
-- **While out**, it is held as if pinned (`EdgeMenuManager.isHeld`): it doesn't close on leave or on an outside click, and its claim is an underlay (`FreeMenuPlace.underlay`). A close button shows beside the pin. Dragged, it moves for the moment only.
+- **While out**, it is held as if pinned (`EdgeMenuManager.isHeld`): it doesn't close on leave or on an outside click, and its claim ranks as a pinned menu's (`FreeMenuPlace.ranksPinned`). A close button shows beside the pin. Dragged, it moves for the moment only.
 - `EdgeMenuManager.open` and `reveal` do nothing to it (no second copy), and its edge host, with its hover strip, isn't loaded.
 - **Closed = docked.** `EdgeMenuManager.close` docks a popped-out menu (`dock`), closed: the close button, the pop-out toggle, a bind or bar Button toggle, `edgeMenu close`, Escape. The next open is on its edge.
 - **Nothing is kept.** `poppedOut` is in the `PersistentProperties` only so a reload can dock it, closed (`_run.onLoaded`). It is never in `ui/edgemenus.json`.
@@ -91,11 +92,11 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - **Layer stack.** `axiom-menu` has order 7, beside the integrated menus (the two never meet), under the popouts that slide out from under the bars, and below the Overlay layer (popouts, the overlay). It is in `blurBacked` and `blurChrome`.
 
 ### Testing
-- `tst_PopoutGeometry` (`test_underlay`, `test_popped_out_underlay`, `test_free_not_underlay`, `test_closed_by_overlay`), `tst_FreeMenuPlace` (the place, `spot`, `keepsDrag`, `canDrag`, `underlay`, `hosts`), the `test_free` row of `tst_SurfaceContext`, `tst_LayerStack` (`test_free_menu_order`, `test_sequence_free_menu_held`) and `tst_LayerArrange` (`test_full_screen_ignore`).
+- `tst_PopoutGeometry` (`test_free_menu`), `tst_FreeMenuPlace` (the place, `spot`, `keepsDrag`, `canDrag`, `ranksPinned`, `hosts`), the `test_free` row of `tst_SurfaceContext`, `tst_LayerStack` (`test_free_menu_order`, `test_sequence_free_menu_held`) and `tst_LayerArrange` (`test_full_screen_ignore`).
 - On screen: a nested niri (`scripts/dev/nested.sh niri`) with a free menu in its config.
   - Open it by IPC (`edgeMenu open <id>`).
   - Open it as a widget's popout through a temporary IPC hook that calls `EdgeMenuManager.open(id, anchor, "bar")` with the widget's `PopoutAnchor`.
-  - Pinned (`edgeMenu pin <id>`), open another popout over it and check `popouts list` shows both `open`, the menu `underlay`.
+  - Pinned (`edgeMenu pin <id>`), open an overlapping popout and check `popouts list` shows the menu `yielded` (`pinned resident`), then `open` again once the popout closes. Unpinned, an overlapping lower popout isn't listed (refused), and the launcher closes the menu.
   - Screenshot with `WAYLAND_DISPLAY=<nested> grim`.
   - Run the nested shell with a scratch `XDG_RUNTIME_DIR` (its socket path must stay under 108 characters), so its session spots aren't the live shell's.
   - Session spots: a temporary IPC hook calling `storePosition` stands in for a drop (no simulated pointer). Reopen by IPC, reload, change the `freeAnchor`, and `resetPosition`; `popouts list` shows where the box went.

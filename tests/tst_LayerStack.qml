@@ -67,8 +67,9 @@ TestCase {
     const menu = order("menu");
     for (const ns of ["blur-backing", "shadows"])
       verify(order(ns) > menu, "over " + ns);
-    // Every popout on Top draws over it (a pinned one stays under them:
-    // PopoutGeometry.isUnderlay)
+    // Every popout on Top draws over it (one opening over it closes it,
+    // or it gives way, pinned: PopoutManager; meanwhile, as its box
+    // slides away, the popout is on top)
     for (const ns of ["popout-under", "dock", "popout", "edge-popout", "dock-preview", "osd"])
       verify(menu > order(ns), "under " + ns);
     verify(LayerStack.blurBacked.includes("menu") && LayerStack.blurChrome.includes("menu"));

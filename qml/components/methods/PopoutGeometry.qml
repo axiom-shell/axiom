@@ -6,16 +6,13 @@ import QtQuick
 // included), and one opening closes only what it actually covers, by rank.
 // No files, services or config.
 //
-// An entry is { id, kind, pinned, resident, underlay, screen, parentId,
-// phase, footprint }:
+// An entry is { id, kind, pinned, resident, screen, parentId, phase,
+// footprint }:
 // - kind: "toast" | "dock" | "osd" | "bar" | "menu" | "launcher" |
 //   "submenu"
 // - pinned: held open by the user; ranks lowest whatever its kind
 // - resident: gives way and comes back (the dock, pinned popouts, a menu
 //   previewing from its editor) rather than closing for good
-// - underlay: drawn under every popout (a pinned free menu, on Top under
-//   them): never collides, so it never closes anything and nothing
-//   opening over it closes it; its submenu neither
 // - phase: "open" | "yielded", as PopoutManager registers them; "opening"
 //   (one `resumable` brings back) collides as "open" does
 QtObject {
@@ -34,14 +31,6 @@ QtObject {
     if (entry.pinned)
       return 0;
     return Math.max(0, ranks.indexOf(entry.kind));
-  }
-
-  // Whether an entry never collides (`underlay`, or a submenu of one),
-  // `parent` its parent's entry for a submenu
-  function isUnderlay(entry, parent) {
-    if (entry.kind === "submenu")
-      return !!parent?.underlay;
-    return !!entry.underlay;
   }
 
   // Whether two rects ({ x, y, width, height }) overlap by more than half a
@@ -72,7 +61,6 @@ QtObject {
   // { allowed, evict: [ids], yield: [ids], blockedBy: id | "" }
   // - entries on other screens, yielded ones, the claim itself,
   //   and its own parent or submenu never collide with it
-  // - an underlay (isUnderlay) collides with nothing, either way
   // - one ranked above it that it overlaps refuses it (`blockedBy`)
   // - else every one ranked at or below it that it overlaps goes: a
   //   resident yields, any other is evicted
@@ -86,13 +74,6 @@ QtObject {
     const rank = rankOf(claim, byId[claim.parentId]);
     const evict = [];
     const yields = [];
-    if (isUnderlay(claim, byId[claim.parentId]))
-      return {
-        "allowed": true,
-        "evict": [],
-        "yield": [],
-        "blockedBy": ""
-      };
     for (const e of entries) {
       if (e.id === claim.id || e.screen !== claim.screen)
         continue;
@@ -103,9 +84,6 @@ QtObject {
       // Toasts and docks never collide: an always-shown dock would hide a
       // stack over it for good
       if ((e.kind === "toast" && claim.kind === "dock") || (e.kind === "dock" && claim.kind === "toast"))
-        continue;
-      // An underlay is drawn under the popouts opening over it
-      if (isUnderlay(e, byId[e.parentId]))
         continue;
       if (!intersects(e.footprint, claim.footprint))
         continue;
@@ -129,13 +107,6 @@ QtObject {
       "yield": unique(yields),
       "blockedBy": ""
     };
-  }
-
-  // What the overlay opening on `screen` closes (PopoutManager.closeOn):
-  // the bar popouts and menus there, pinned or yielded ones too (they'd
-  // be latched under it), but not an underlay, which it draws over
-  function closedByOverlay(entries, screen) {
-    return entries.filter(e => e.screen === screen && (e.kind === "bar" || e.kind === "menu") && !isUnderlay(e, null)).map(e => e.id);
   }
 
   // Yielded residents that may come back now (highest rank first, each

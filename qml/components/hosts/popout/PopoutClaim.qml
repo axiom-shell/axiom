@@ -25,9 +25,6 @@ QtObject {
   property bool pinned: false
   // Gives way and comes back rather than closing
   property bool resident: false
-  // Drawn under every popout (a pinned free menu): never collides
-  // (PopoutGeometry.isUnderlay)
-  property bool underlay: false
   // Placed and wanting to show
   property bool wanted: false
   property var footprint: []
@@ -72,7 +69,7 @@ QtObject {
       PopoutManager.release(root);
   }
   // Moved, resized, pinned or let go while registered
-  readonly property var _shape: [root.footprint, root.pinned, root.resident, root.underlay, root.screen]
+  readonly property var _shape: [root.footprint, root.pinned, root.resident, root.screen]
   on_ShapeChanged: {
     if (root._ready && root._state !== "")
       PopoutManager.update(root);

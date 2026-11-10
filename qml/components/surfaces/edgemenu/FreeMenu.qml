@@ -26,8 +26,9 @@ import qs.components.hosts.popout
 // logout. A right click there offers Reset position.
 //
 // It also shows a popped-out edge menu (EdgeMenuManager.popOut): at the
-// spot its edge box was, appearing at once, held open as if pinned (an
-// underlay), with its edge's layout; dragged, it moves for the moment
+// spot its edge box was, appearing at once, held open as if pinned
+// (ranked as a pinned menu: it gives way to a popout over it and comes
+// back), with its edge's layout; dragged, it moves for the moment
 // only. Its close docks it.
 //
 // Open/close and hover-loss dismissal are PopoutWrapperBase's, as for the
@@ -193,19 +194,43 @@ PopoutWrapperBase {
   }
   readonly property bool scaling: root._scale < 1
 
+  // In use: the pointer on it or what opened it, or just opened or asked
+  // for again (engage()) and not let go since. Pinned (or popped out), it
+  // ranks as its kind meanwhile, as a pinned edge menu does
+  // (EdgePopout.engaged)
+  readonly property bool engaged: surface.hovered || root.anchorHovered || root._grace
+  property bool _grace: false
+  function engage() {
+    root._grace = true;
+    graceTimer.restart();
+  }
+  property Timer graceTimer: Timer {
+    interval: Math.max(root.dismissDelay, 2500)
+    onTriggered: root._grace = false
+  }
+  readonly property bool _pointerIn: surface.hovered
+  on_PointerInChanged: {
+    if (!root._pointerIn)
+      root._grace = false;
+  }
+  onIsOpenChanged: {
+    if (root.isOpen)
+      root.engage();
+  }
+
   // Its place among the popouts (PopoutManager), ranked as it was opened
   // (EdgeMenuManager.claimKinds): a widget's popout as a bar popout, else
-  // a menu; held by the editor, it gives way and comes back. Pinned or
-  // popped out, it's an underlay (FreeMenuPlace.underlay): drawn under the
-  // popouts on its Top layer, it never closes anything and nothing opening
-  // over it closes it (PopoutGeometry.isUnderlay)
+  // a menu, so a higher popout over it closes it and a lower one it
+  // covers doesn't open. Pinned or popped out (FreeMenuPlace.ranksPinned),
+  // it ranks lowest once let go, and gives way to a popout over it and
+  // comes back, as a pinned edge menu does; held by the editor too
   property PopoutClaim claim: PopoutClaim {
     key: "menu:" + root.menuId
     kind: root.currentData?.claimKind ?? "menu"
     screen: root.screen?.name ?? ""
     edge: ""
+    pinned: FreeMenuPlace.ranksPinned(EdgeMenuManager.isPinned(root.menuId), root.popped) && !root.engaged
     resident: sync.held
-    underlay: FreeMenuPlace.underlay(EdgeMenuManager.isPinned(root.menuId), root.popped)
     occupied: root.occupied
     closing: root.isClosing
     wanted: root.isOpen && root.contentItem !== null && placeOnScreen.settled && !root._locating
@@ -221,6 +246,17 @@ PopoutWrapperBase {
   keepAlive: surface.hovered
   currentItem: root.contentItem
   window: panel
+
+  // Asked for again while open (EdgeMenuManager.engageRequested): it
+  // comes forward
+  Connections {
+    target: EdgeMenuManager
+
+    function onEngageRequested(id) {
+      if (id === root.menuId)
+        root.engage();
+    }
+  }
 
   EdgeMenuSync {
     id: sync
