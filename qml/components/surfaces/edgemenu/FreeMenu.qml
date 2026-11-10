@@ -339,6 +339,21 @@ PopoutWrapperBase {
       offset: panel.contentAt
       box: boxArea
     }
+    // Tiled, how its cards' tiles are drawn (EdgeMenuBody.tiles): by the
+    // blur window as the box would be, from where its content is on the
+    // screen as drawn
+    readonly property var origin: placeOnScreen.origin
+    readonly property var tiles: ({
+        "backed": shape.backed,
+        "opaque": shape.opaque,
+        "screen": root.screen?.name ?? "",
+        "origin": panel.origin ? Qt.point(panel.origin.x + panel.contentAt.x + surface.slideX, panel.origin.y + panel.contentAt.y + surface.slideY) : null,
+        "clip": panel.origin ? Qt.rect(panel.origin.x, panel.origin.y, panel.width, panel.height) : null,
+        "overlayLayer": root.onOverlayLayer,
+        "opacity": surface.shownOpacity,
+        "look": shape.shadowLook
+      })
+
     // Where a reveal moves the pointer: the box's centre, or tiled, the
     // card nearest it (MenuTiles.aim)
     function aim() {
@@ -422,6 +437,8 @@ PopoutWrapperBase {
       boxHeight: root.boxHeight + root._stretchTop + root._stretchBottom
       fillColor: root.colors.fill
       strokeColor: root.colors.stroke
+      // Tiled, no box: its cards draw their tiles (MenuTile)
+      hollow: root.tiled
 
       transform: Scale {
         origin.x: surface.boxRect.x + surface.boxRect.width / 2
@@ -503,6 +520,7 @@ PopoutWrapperBase {
 
         sourceComponent: EdgeMenuBody {
           menu: root.menu
+          tiles: root.tiled ? panel.tiles : null
           free: true
           vertical: root.vertical
           maxLength: root.maxLength

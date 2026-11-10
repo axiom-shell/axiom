@@ -32,6 +32,19 @@ Item {
   // The screen its cards are sized on (EdgeMenusConfig.cardUnitOf): a
   // submenu's, that of the menu it opens from; null for the menu's own
   property var screen: null
+  // Tiled (`background: none`), how its host draws the tiles under its
+  // cards (MenuTile), else null: {
+  //   backed        the blur window draws them (fill, blur and shadow)
+  //   opaque        filled solid (blur paused for a fullscreen window)
+  //   screen        its screen's name
+  //   origin        this body's top-left on the screen as drawn (slid),
+  //                 or null while unknown
+  //   clip          its window on the screen (BlurShape.clipRect)
+  //   overlayLayer  its window is on the Overlay layer
+  //   opacity       how far it has faded in
+  //   look          the shadow's look
+  // }
+  property var tiles: null
 
   // The menu's edge as it lays out ("" with none: a submenu's or a free
   // menu's kept `edge` is hidden)
@@ -43,7 +56,10 @@ Item {
   readonly property string _modulesKey: JSON.stringify(GridPlacement.menuModules(root.menu))
   property var modules: []
   on_ModulesKeyChanged: root.modules = JSON.parse(root._modulesKey)
-  Component.onCompleted: root.modules = JSON.parse(root._modulesKey)
+  Component.onCompleted: {
+    root.modules = JSON.parse(root._modulesKey);
+    Qt.callLater(() => root._tilesSettled = true);
+  }
 
   // `bare`: the menu hides its modules' card boxes (moduleBorders off)
   readonly property var host: ({
@@ -93,6 +109,27 @@ Item {
 
   implicitWidth: root.vertical ? moduleGrid.implicitWidth : root.length
   implicitHeight: root.vertical ? root.length : moduleGrid.implicitHeight
+
+  // Under each card, its tile: tiled, with card boxes (moduleBorders; a
+  // bare module has none to sit on), never in another menu's submenu
+  readonly property bool _tiled: EdgeMenusConfig.tiledOf(root.menu) && root.menu.layout.moduleBorders && !root.submenu
+  // Set a tick after it's built: tiles ease their growing from then on
+  property bool _tilesSettled: false
+  Repeater {
+    model: root._tiled ? root.modules.length : 0
+
+    MenuTile {
+      required property int index
+      card: moduleGrid.cardRects[index] ?? null
+      tiles: root.tiles
+      scroll: Qt.point(view.contentX, view.contentY)
+      viewSize: Qt.size(root.width, root.height)
+      fillColor: EdgeMenusConfig.colorsOf(root.menu).fill
+      // At the card's drawn size (ModuleGrid.zoom)
+      radius: Widget.radius * moduleGrid.zoom
+      animate: root._tilesSettled
+    }
+  }
 
   Flickable {
     id: view

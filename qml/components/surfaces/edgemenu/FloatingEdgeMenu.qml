@@ -139,6 +139,21 @@ EdgePopout {
   // given the close delay's floor
   readonly property bool tiled: EdgeMenusConfig.tiledOf(root.menu)
   maskRegions: root.tiled ? cardMask : null
+  hollow: root.tiled
+  // How its cards' tiles are drawn (EdgeMenuBody.tiles): by the blur
+  // window as its box would be, from where its content is on the screen
+  // as drawn
+  readonly property var _origin: root.window?.screenOrigin ?? null
+  readonly property var _tiles: root.tiled ? ({
+      "backed": root.surfaceItem.backed,
+      "opaque": root.surfaceItem.opaque,
+      "screen": root.screen?.name ?? "",
+      "origin": root._origin ? Qt.point(root._origin.x + root.contentInWindow.x + root.surfaceItem.slideX, root._origin.y + root.contentInWindow.y + root.surfaceItem.slideY) : null,
+      "clip": root._origin ? Qt.rect(root._origin.x, root._origin.y, root.window.width, root.window.height) : null,
+      "overlayLayer": root.onOverlayLayer,
+      "opacity": root.surfaceItem.shownOpacity,
+      "look": root.surfaceItem.shadowLook
+    }) : null
   CardMask {
     id: cardMask
     rects: root._body?.maskRects ?? []
@@ -175,6 +190,7 @@ EdgePopout {
   content: Component {
     EdgeMenuBody {
       menu: root.menu
+      tiles: root._tiles
       vertical: root.vertical
       maxLength: root.maxBoxLength - root.contentPadding * 2
     }

@@ -114,6 +114,9 @@ PopoutWrapperBase {
   readonly property bool onOverlayLayer: root.windowLayer === WlrLayer.Overlay
   property color fillColor: Theme.background
   property color strokeColor: Theme.foreground
+  // No box of its own drawn, only its content (AttachedSurface.hollow: a
+  // tiled edge menu, whose cards draw their own tiles)
+  property bool hollow: false
   // Off leaves the focus grab to another window (see SurfaceGroup)
   property bool grabEnabled: true
   // Other windows the grab lets input through to
@@ -130,6 +133,9 @@ PopoutWrapperBase {
   // in the window where it rests
   readonly property Item boxItem: boxArea
   readonly property point contentInWindow: Qt.point(surface.x + surface.boxRect.x + loader.x, surface.y + surface.boxRect.y + loader.y)
+  // Its surface (where it slides, how far it has faded in, whether the
+  // blur window backs it): what a tiled edge menu's tiles follow
+  readonly property AttachedSurface surfaceItem: surface
   // Input on these regions instead of its box (in the window's
   // coordinates: a tiled edge menu's cards, CardMask), null for the box
   property var maskRegions: null
@@ -571,6 +577,7 @@ PopoutWrapperBase {
       boxHeight: root.vertical ? root.boxLength : root._contentAcross + root.attachExtra + slot.shownStretchAcross
       fillColor: root.fillColor
       strokeColor: root.strokeColor
+      hollow: root.hollow
 
       Loader {
         id: loader
