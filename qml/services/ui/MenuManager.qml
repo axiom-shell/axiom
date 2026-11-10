@@ -18,7 +18,7 @@ import qs.services.core
 // The layouts editor's working copy of Menus is OverlayManager.menus
 // (MenuEditor).
 //
-//   axiom ipc menu toggle <id>
+//   axiom ipc menu toggle <id>   (edgeMenu: its old name, still answered)
 Singleton {
   id: root
 
@@ -393,6 +393,44 @@ Singleton {
 
     function list(): string {
       return MenusConfig.menus.map(menu => `${menu.id}${root.isOpen(menu.id) ? " (open)" : ""}${root.isPinned(menu.id) ? " (pinned)" : ""}${root.isPoppedOut(menu.id) ? " (popped out)" : ""}`).join("\n");
+    }
+  }
+
+  // The target's old name (edge menus became menus, v104), for binds and
+  // scripts written before: each call is the menu target's
+  property IpcTarget _oldIpc: IpcTarget {
+    target: "edgeMenu"
+
+    function open(id: string): void {
+      ipc.open(id);
+    }
+
+    function close(id: string): void {
+      ipc.close(id);
+    }
+
+    function toggle(id: string): void {
+      ipc.toggle(id);
+    }
+
+    function resetPosition(id: string): void {
+      ipc.resetPosition(id);
+    }
+
+    function pin(id: string): void {
+      ipc.pin(id);
+    }
+
+    function unpin(id: string): void {
+      ipc.unpin(id);
+    }
+
+    function edit(): void {
+      ipc.edit();
+    }
+
+    function list(): string {
+      return ipc.list();
     }
   }
 }

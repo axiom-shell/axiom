@@ -26,6 +26,7 @@ func TestIPCAction(t *testing.T) {
 		"axiom ipc overlay hide":                  `{"action":"overlay","call":"close"}`,
 		"axiom ipc workspaces nth 3 go":           `{"action":"workspaceNth","argument":"3"}`,
 		"axiom ipc menu show 'left'":              `{"action":"menu","call":"open","argument":"left"}`,
+		"axiom ipc edgeMenu toggle left":          `{"action":"menu","call":"toggle","argument":"left"}`,
 		"qs -c axiom ipc call appLauncher toggle": "null",
 		"axiom lock":                                   `{"action":"lock"}`,
 		"axiom ipc lockscreen lock":                    `{"action":"lock"}`,
@@ -39,6 +40,7 @@ func TestIPCAction(t *testing.T) {
 		"axiom ipc stopwatch timer 10m":                `{"action":"timerStart","argument":"10m"}`,
 		"axiom ipc appLauncher clipboard":              `{"action":"clipboard"}`,
 		"axiom ipc menu pin left":                      "null",
+		"axiom ipc edgeMenu pin left":                  "null",
 		"axiom ipc nightLight status":                  "null",
 		"axiom ipc stopwatch timer '10m tea'":          `{"action":"timerStart","argument":"10m tea"}`,
 		`axiom ipc appLauncher search "foo bar"`:       `{"action":"launcherSearch","argument":"foo bar"}`,
@@ -64,7 +66,7 @@ func TestCommandAction(t *testing.T) {
 	t.Parallel()
 	tab := table(t)
 	cases := map[string]string{
-		"axiom ipc menu show 'left'":                `{"action":"menu","call":"open","argument":"left"}`,
+		"axiom ipc edgeMenu show 'left'":            `{"action":"menu","call":"open","argument":"left"}`,
 		"wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+": `{"action":"volumeUp"}`,
 		"foot": "null",
 	}

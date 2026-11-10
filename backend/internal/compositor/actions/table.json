@@ -100,6 +100,9 @@
     "fileManager": ["File manager", "Apps"],
     "browser": ["Browser", "Apps"]
   },
+  "ipcAliases": {
+    "edgeMenu {call} {0}": "menu"
+  },
   "calls": {
     "launcher": {"open": "open", "close": "close"},
     "overlay": {"open": "open", "close": "close"},
