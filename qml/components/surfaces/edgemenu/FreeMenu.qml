@@ -389,27 +389,29 @@ PopoutWrapperBase {
       }
     }
 
-    // Unpinned with close.onOutsideClick: a click outside it (and its
-    // submenu) closes it. Its header's menu takes it too while open, so a
-    // click elsewhere closes that menu (only) on a held one, and Escape
-    // reaches it
+    // Unpinned with close.onOutsideClick: a click elsewhere closes it and
+    // still reaches what it lands on (decided 2026-11-10: "Close + reach
+    // window"), so it holds no grab and the windows behind stay usable and
+    // focusable. It closes once the compositor focuses a window (a click
+    // on one), or once it had the keyboard (clicked) and lost it
+    // (FocusLeave). With focus following the mouse, pointing at another
+    // window focuses it, so that closes it too; a click on a bar or the
+    // wallpaper, which focuses nothing, doesn't
     readonly property bool closesOnOutsideClick: root.menu.close.onOutsideClick && !sync.held
+    FocusLeave {
+      windows: [panel, slot.submenu.popupWindow]
+      windowFocus: true
+      active: panel.visible && root.isOpen && root.claimed && panel.closesOnOutsideClick
+      onLeft: root.hide()
+    }
+
+    // Its header's menu alone takes a grab, while open: a click elsewhere
+    // closes that menu (only), and Escape reaches it
     FocusGrab {
       id: focusGrab
       windows: [panel, slot.submenu.popupWindow].concat(SurfaceManager.modalWindows)
-      active: panel.visible && root.isOpen && root.claimed && (panel.closesOnOutsideClick || headerMenu.visible)
-
-      onActiveChanged: {
-        if (active && !headerMenu.visible)
-          root.contentItem?.forceActiveFocus();
-      }
-
-      // Only a real click, never another surface's grab starting
-      onDismissed: {
-        headerMenu.close();
-        if (panel.closesOnOutsideClick)
-          root.hide();
-      }
+      active: panel.visible && root.isOpen && root.claimed && headerMenu.visible
+      onDismissed: headerMenu.close()
     }
 
     // Where the window is on screen (its whole screen): the blur window
