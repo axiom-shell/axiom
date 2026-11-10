@@ -57,16 +57,19 @@ Item {
   width: root._shown?.width ?? 0
   height: root._shown?.height ?? 0
 
-  // Its shadow, filled itself
+  // Its shadow, filled itself, from a copy of its shape (hidden: drawn
+  // for the shadow alone, and not at all without one)
   OutsideShadow {
+    id: ownShadow
     target: shape
     hideTarget: true
-    active: !root.backed && root.visible
+    active: !root.backed
     look: root.tiles?.look ?? BarStyle.look
   }
   Rectangle {
     id: shape
     anchors.fill: parent
+    visible: ownShadow.active
     radius: root.radius
     color: "black"
   }
