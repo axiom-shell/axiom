@@ -196,6 +196,23 @@ properties:
     title: Pin button
     default: false
     description: A pinned menu stays open until unpinned.
+  popOutButton:
+    x-group: Style
+    type: boolean
+    title: Pop-out button
+    default: false
+    description: Lifts the open menu off its edge where it is, staying open like a pinned one. Closed, it's back on its edge.
+    x-showIf: {placement: edge}
+  draggable:
+    x-group: Placement
+    type: boolean
+    title: Draggable
+    default: true
+    description: Drag it by its top to move it. A free menu then opens there again when a bind or a script opens it, until you log out.
+    x-showIf:
+      anyOf:
+        - {placement: free}
+        - {placement: edge, popOutButton: true}
   backgroundColor:
     x-group: Style
     type: string
