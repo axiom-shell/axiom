@@ -10,7 +10,9 @@ import qs.services.core
 // menus themselves (shell/Menus) follow this and report back when they
 // close on their own. Kept across QML reloads, so a reload doesn't close an
 // integrated menu and reflow the windows. Pins are also saved to
-// $XDG_STATE_HOME/axiom/ui/edgemenus.json, and a pinned menu opens again when qs starts.
+// $XDG_STATE_HOME/axiom/ui/menus.json (read from its old name,
+// edgemenus.json, while it isn't there), and a pinned menu opens again
+// when qs starts.
 // An edge menu with `popOutButton` can pop out (popOut): it shows in the
 // free host where its box was, held open as if pinned, until it closes,
 // which docks it (dock); nothing of it is kept, and a reload docks it
@@ -102,7 +104,7 @@ Singleton {
       if (_run.started)
         return;
       _run.started = true;
-      const pinned = root._state.load({}).pinned;
+      const pinned = root._loadPins();
       if (!Array.isArray(pinned))
         return;
       const ids = pinned.filter(id => MenusConfig.menuById(id));
@@ -111,7 +113,24 @@ Singleton {
     }
   }
 
-  readonly property var _state: StateManager.createStateHandler("edgemenus")
+  readonly property var _state: StateManager.createStateHandler("menus")
+  // The file's name before edge menus became menus (v104)
+  readonly property var _oldState: StateManager.createStateHandler("edgemenus")
+
+  // The saved pins: menus.json's, else (once: it's written at once) the
+  // old file's
+  function _loadPins() {
+    const saved = root._state.load(null);
+    if (saved)
+      return saved.pinned;
+    const old = root._oldState.load(null);
+    if (!old)
+      return undefined;
+    root._state.save({
+      "pinned": Array.isArray(old.pinned) ? old.pinned : []
+    });
+    return old.pinned;
+  }
 
   // Where each free menu was dragged to, for this login session: { id:
   // { screen, x, y (its box's top-left in px on that screen), anchor (the
