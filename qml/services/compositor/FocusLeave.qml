@@ -2,35 +2,18 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 
-// Focus leaving a surface, seen without taking anything: while `active`,
-// `left` once keyboard focus has left every one of `windows` after one of
-// them held it (a click on a window or another surface takes it), and,
-// with `windowFocus`, once the compositor focuses a window
-// (CompositorManager.activeWindowId changing to one: a click on a window
-// focuses it, wherever the keyboard was). It holds no grab, so the click
-// reaches what it lands on. FocusGrab watches the keyboard through it
-// where the compositor has no grab of its own; a free menu closes on an
-// outside click through it (FreeMenu). Not a singleton: each surface
-// makes its own.
+// Keyboard focus leaving a surface, seen without taking anything: while
+// `active`, `left` once keyboard focus has left every one of `windows`
+// after one of them held it (a click on a window or another surface
+// takes it). It holds no grab. FocusGrab watches the keyboard through it
+// where the compositor has no grab of its own. Not a singleton: each
+// FocusGrab makes its own.
 Scope {
   id: root
 
   property var windows: []
   property bool active: false
-  // Also left when the compositor focuses a window
-  property bool windowFocus: false
   signal left
-
-  // The compositor focusing a window (not its focus going to none: a
-  // layer surface taking the keyboard, one of `windows` included)
-  property Connections _windowFocus: Connections {
-    target: CompositorManager
-    enabled: root.active && root.windowFocus
-    function onActiveWindowIdChanged() {
-      if (CompositorManager.activeWindowId !== "")
-        root.left();
-    }
-  }
 
   // Each window's keyboard focus: its content's `Window.active` (attached,
   // which follows the item into whichever backing window it's in). Not

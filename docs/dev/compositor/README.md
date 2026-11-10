@@ -39,7 +39,7 @@ How axiom reaches the compositor it runs under. Read this before anything that r
 - **Onboarding.** The Hyprland and Monitors pages need `configModes`.
 
 ### Focus grab
-- Surfaces that close on an outside click use `FocusGrab` (`windows`, `active`, `cleared`), never `HyprlandGrab`. One that must leave the windows behind it usable (the click closing it and reaching the window, a free menu) uses `FocusLeave` instead: no grab, `left` once the compositor focuses a window or keyboard focus leaves its `windows` after holding them (what `FocusGrab` watches where there's no native grab).
+- Surfaces that close on an outside click use `FocusGrab` (`windows`, `active`, `cleared`), never `HyprlandGrab`.
   - With `supports.focusGrab` it loads Hyprland's grab.
   - Otherwise it clears once keyboard focus (each window's content `Window.active`) has left every one of its windows for 100 ms, or a click lands outside them. While such a grab is active:
     - `FocusGrab.exclusive` is true on the newest such grab (`BackdropManager.newestGrab`), and its surface asks for `WlrKeyboardFocus.Exclusive` instead of `OnDemand` (an on-demand layer surface gets the keyboard only once clicked, where no grab hands it over). Only the newest, and not while `SurfaceManager.modalShown` (the modal asks for it too): of two exclusive surfaces on one layer niri keeps the older, so a popout with a text field over the overlay would never get the keyboard. Grabs stay in that order while a modal is up, so the newest one gets the keyboard back after it;
