@@ -34,10 +34,9 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   | `edge` (the default: `addMenu()`) | `placement: edge`, `open.onHover: true` |
   | `popout` | `placement: free` |
   | `submenu` | `placement: free` |
-  | `key` | `placement: free`, `freeAnchor.at: centre` |
+  | `free` | `placement: free`, `freeAnchor.at: centre` |
 - **Layouts' New menu** (`MenusSection`) opens a `StyledContextMenu` of the four purposes, then `addMenu(purpose)`.
-  - `edge`, `popout` and `submenu` add the menu to the draft, unsaved.
-  - `key` saves it at once (`addSavedMenu`), since a keybind may only open a saved menu (`isSaved`), then runs `addKeybind` (the Keybinds page recording its key).
+  - Each adds the menu to the draft, unsaved. `free` (Free, a floating menu) replaced "Opened by a keybind" (decided 2026-11-10: "opened by a keybind option needs to be replaced by free when adding new menus"): no keybind is recorded; once saved, a bind is added from its Opening section as for any menu.
 - **A Submenu module's New submenu…** (a link under its `menu` field in `EditorInspector`, through `OptionsGroup.fieldAction`): `addSubmenu(moduleIndex)` adds a free menu to the same draft, sets the module's `menu` to it, then selects it and holds it open beside its parent (selecting it clears the parent's undo history, as any change of menu does: the `GridEditor`'s `scopeKey`). Everything stays in one draft, so nothing points at an unsaved menu from another editor.
 - **The bar editor's New menu…** (a link under each edge menu picker in `WidgetInspector`: a widget's `popout.menu`, a Button's click `menu`): `OverlayManager.newMenuFor(zone, index, path)`.
   - It saves a new `popout` menu at once (`addSavedMenu` → `_commitNew`: the saved config plus that one item, through `ConfigManager.commit`). The menu draft takes it as saved (`ConfigDraft.adopt`), so it doesn't show as unsaved and a later save of the draft keeps it once.

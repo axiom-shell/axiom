@@ -9,13 +9,13 @@ QtObject {
   id: root
 
   // What a menu can be made for, in the order New menu offers them
-  readonly property var purposes: ["edge", "popout", "submenu", "key"]
+  readonly property var purposes: ["edge", "popout", "submenu", "free"]
 
   // A new menu's own fields for `purpose` (one of `purposes`; anything
   // else is "edge"), with its `id` and `name` and no modules yet: an edge
   // menu opens on hovering its edge; a bar widget's popout, a submenu and a
-  // keybind's menu are free (no edge), a keybind's opening at the screen's
-  // centre
+  // floating menu are free (no edge), a floating one opening at the
+  // screen's centre
   function seed(purpose, id, name) {
     const menu = {
       "id": id,
@@ -32,7 +32,7 @@ QtObject {
       return menu;
     }
     menu.placement = "free";
-    if (purpose === "key")
+    if (purpose === "free")
       menu.freeAnchor = {
         "at": "centre"
       };

@@ -291,23 +291,16 @@ QtObject {
   }
 
   // A new menu (MenuSeeds.seed) for `purpose`: "edge" (the default),
-  // "popout", "submenu" or "key", selected and held open. A keybind's is
-  // saved at once (a keybind may only open a saved menu: isSaved), then
-  // the keybinds page records its key (addKeybind)
+  // "popout", "submenu" or "free", selected and held open, in the draft
   function addMenu(purpose = "edge") {
-    if (purpose === "key") {
-      if (root.addSavedMenu("key"))
-        root.addKeybind();
-      return;
-    }
     root.localMenus.push(root._newMenu(purpose));
     root.applyChanges();
     root._selectNew();
   }
 
   // A new menu for `purpose`, saved at once (_commitNew), selected and
-  // held open: for an opener another editor saves (a bar widget, a
-  // keybind). Returns it, or null if the save was refused
+  // held open: for an opener another editor saves (a bar widget).
+  // Returns it, or null if the save was refused
   function addSavedMenu(purpose) {
     const menu = root._newMenu(purpose);
     if (!root._commitNew(menu))

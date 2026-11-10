@@ -29,12 +29,13 @@ TestCase {
     }
   }
 
-  function test_key() {
-    const menu = MenuSeeds.seed("key", "menu-3", "Menu 3");
+  function test_floating() {
+    const menu = MenuSeeds.seed("free", "menu-3", "Menu 3");
     compare(menu.placement, "free");
     compare(menu.freeAnchor, {
       "at": "centre"
-    }, "a keybind's opens at the screen's centre");
+    }, "a floating one opens at the screen's centre");
+    compare(MenuSeeds.seed("key", "m", "M").placement, "edge", "no keybind purpose any more");
   }
 
   function test_unknown() {

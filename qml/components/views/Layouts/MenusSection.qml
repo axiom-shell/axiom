@@ -96,9 +96,9 @@ ColumnLayout {
         "text": I18n.tr("A submenu")
       },
       {
-        "id": "key",
-        "icon": "keyboard",
-        "text": I18n.tr("Opened by a keybind")
+        "id": "free",
+        "icon": "picture_in_picture",
+        "text": I18n.tr("Free")
       }
     ]
     onTriggered: id => {
