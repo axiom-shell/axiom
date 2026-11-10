@@ -64,6 +64,16 @@ TestCase {
     compare(WorkspaceCells.contentSize(20, 14, true), 17, "a label taller than the app icon");
   }
 
+  function test_splitTail() {
+    compare(WorkspaceCells.splitTail(0, 20), 0, "no icons, no divider");
+    compare(WorkspaceCells.splitTail(1, 20), 17, "gap, divider, gap, one icon");
+    compare(WorkspaceCells.splitTail(2, 20), 31, "a gap between icons");
+    compare(WorkspaceCells.splitDivider(20), {
+      "thickness": 1,
+      "length": 10
+    });
+  }
+
   function test_rowLength() {
     compare(WorkspaceCells.rowLength(1, 20, 20), 20, "one icon: a normal cell");
     // 3 × 12 + 2 × 2 + 8

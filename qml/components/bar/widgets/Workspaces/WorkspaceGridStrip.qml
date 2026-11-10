@@ -186,7 +186,7 @@ Item {
       activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
       chainCount: line.ids.length + root._stripCells + root._scratchCells
       // The active arrow takes the active cell's place
-      glyphOf: (id, active) => active && root.properties.showActiveIcon ? GridPosition.glyph(line.value, root.isVertical ? root.columns : root.rows, root.isVertical) : ""
+      glyphOf: (id, active) => active && root.properties.showActiveIcon && root.properties.lead !== "position" ? GridPosition.glyph(line.value, root.isVertical ? root.columns : root.rows, root.isVertical) : ""
 
       Connections {
         target: CompositorManager

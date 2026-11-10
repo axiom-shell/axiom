@@ -97,21 +97,27 @@ QtObject {
 
   // What the cell of scratchpad `special` (CompositorManager.specials) shows,
   // `entry` being its Workspaces.scratchpads entry or null: the fields of
-  // of(), with app icons only in icon mode (`scratchpadLabel`)
+  // of(), with app icons only in icon mode (`scratchpadLabel`) or, with
+  // `scratchpadSplit`, after the label and a divider (`tail`: their paths,
+  // `tailLength` how much longer they make the cell)
   function ofScratchpad(special, entry) {
-    const icons = root.properties.scratchpadLabel === "icon" && root.properties.showAppIcons && special.windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(special.windows), WorkspaceCells.byPosition(special.windows)) : [];
-    const shown = Scratchpads.content(entry, special.name, root.properties.scratchpadLabel, icons.length > 0);
-    shown.written = root.properties.scratchpadLabel === "name" && shown.kind === "text";
-    shown.lead = "";
+    const mode = root.properties.scratchpadLabel;
+    const split = root.properties.scratchpadSplit === true;
+    const icons = (mode === "icon" || split) && root.properties.showAppIcons && special.windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(special.windows), WorkspaceCells.byPosition(special.windows)) : [];
+    const shown = Scratchpads.content(entry, special.name, mode, icons.length > 0, split);
+    shown.written = mode !== "icon" && shown.kind === "text";
+    const tail = shown.tail ? icons : [];
     return {
       "kind": shown.kind,
       "text": shown.text,
       "plain": root._plain(shown),
-      "lead": "",
-      "leadPlain": false,
+      "lead": shown.lead,
+      "leadPlain": !root._drawsIcon(shown.lead),
       "icons": shown.kind === "icons" ? icons : [],
+      "tail": tail,
+      "tailLength": WorkspaceCells.splitTail(tail.length, root.thickness),
       "number": "",
-      "length": root._length(shown, icons),
+      "length": root._length(shown, icons) + WorkspaceCells.splitTail(tail.length, root.thickness),
       "occupied": special.windowCount > 0,
       "urgent": special.urgent === true
     };

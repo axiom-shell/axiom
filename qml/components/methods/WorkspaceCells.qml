@@ -80,6 +80,25 @@ QtObject {
     return Math.max(rest, Math.ceil(along));
   }
 
+  // How much longer a cell is for a divider and `count` app icons after its
+  // label (a scratchpad's `scratchpadSplit`): a gap, the divider, a gap, then
+  // the icons side by side. 0 for none.
+  function splitTail(count, thickness) {
+    if (count <= 0)
+      return 0;
+    const gap = root.iconGap(thickness);
+    return 2 * gap + root.splitDivider(thickness).thickness + count * root.iconSize(thickness) + (count - 1) * gap;
+  }
+
+  // The divider's size { thickness, length }: a hairline across the cell,
+  // short of its full thickness
+  function splitDivider(thickness) {
+    return {
+      "thickness": Math.max(1, Math.round(thickness / 14)),
+      "length": Math.round(thickness * 0.5)
+    };
+  }
+
   // Of `windows` (biggest first), one per app (by app id, a window without
   // one its own), at most `max`: the apps a cell shows
   function distinctApps(windows, max) {

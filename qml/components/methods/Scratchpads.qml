@@ -60,22 +60,30 @@ QtObject {
     return (listed ?? []).find(entry => String(entry?.name ?? "").trim() === name) ?? null;
   }
 
-  // What a cell shows, as { kind, text } in WorkspaceCells.pick's kinds.
-  // Mode "icon": the entry's icon, else the apps' icons (`hasIcons`), else a
-  // star (the toggleSpecial action's icon). Mode "name": the entry's
-  // label, else the name.
-  function content(entry, name, mode, hasIcons) {
-    const make = (kind, text) => ({
+  // What a cell shows, as { kind, text, lead, tail } in WorkspaceCells.pick's
+  // kinds. Mode "icon": the entry's icon, else the apps' icons (`hasIcons`),
+  // else a star (the toggleSpecial action's icon). Mode "name": the entry's
+  // label, else the name. Mode "both": the icon (the entry's, else a star)
+  // as `lead` before the text (the entry's label, else the name); app icons
+  // only after a divider. With `split` the label is never the app icons: the
+  // cell shows it, a short divider, then the apps' icons (`tail`, true only
+  // with `hasIcons`).
+  function content(entry, name, mode, hasIcons, split) {
+    const tail = split === true && hasIcons;
+    const make = (kind, text, lead) => ({
           "kind": kind,
-          "text": text
+          "text": text,
+          "lead": lead ?? "",
+          "tail": tail
         });
-    if (mode === "name") {
-      const label = entry?.text ?? "";
+    const label = entry?.text ?? "";
+    if (mode === "name")
       return label !== "" ? make("text", label) : make("name", name);
-    }
     const icon = entry?.icon ?? "";
+    if (mode === "both")
+      return make(label !== "" ? "text" : "name", label !== "" ? label : name, icon !== "" ? icon : "star");
     if (icon !== "")
       return make("text", icon);
-    return hasIcons ? make("icons", "") : make("glyph", "star");
+    return hasIcons && split !== true ? make("icons", "") : make("glyph", "star");
   }
 }

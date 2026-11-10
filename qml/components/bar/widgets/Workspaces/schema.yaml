@@ -170,11 +170,17 @@ settings:
     type: string
     title: Scratchpad labels
     x-control: toggle
-    enum: [icon, name]
-    x-enumLabels: {icon: Icon, name: Name}
+    enum: [icon, name, both]
+    x-enumLabels: {icon: Icon, name: Name, both: Both}
     default: icon
     x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true}
-    description: 'Icon: its icon from the Workspaces settings, else its apps'' icons (with App icons on), else a star. Name: its label from there, else its name. Hovering one shows its name.'
+    description: 'Icon: its icon from the Workspaces settings, else its apps'' icons (with App icons on), else a star. Name: its label from there, else its name. Both: its icon (or a star) before its label (or name). Hovering one shows its name.'
+  scratchpadSplit:
+    type: boolean
+    title: Divide labels from apps
+    default: false
+    x-showIf: {scratchpads: {not: 'off'}, showAppIcons: true, /$supports.namedSpecial: true}
+    description: 'In each scratchpad: its label, a short divider, then its windows'' app icons. The label never falls back to the apps'' icons.'
   spacing:
     type: string
     title: Spacing
@@ -193,7 +199,7 @@ settings:
     title: Active icon
     default: true
     x-showIf: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
-    description: An arrow on the active workspace pointing to the shown grid row.
+    description: An arrow on the active workspace pointing to the shown grid row. Hidden while the Head is Grid position, which shows it instead.
   clickToSwitch:
     type: boolean
     title: Click to switch
@@ -222,8 +228,8 @@ settings:
     x-enumLabels: {none: None, icon: Icon, active: Active workspace, position: Grid position}
     x-enumShowIf:
       position: {/Workspaces.layout: grid, /$supports.dynamicWorkspaces: false}
-    default: none
-    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position - which row (column on a vertical bar) is shown, a dot each.
+    default: position
+    description: Drawn before the workspaces in their box; a split bar sets it apart as the icon part. Grid position (the default) - in a grid layout, which row (column on a vertical bar) is shown, a dot each; other layouts show no head. While it shows, the active cell's arrow is hidden.
     x-showIf:
       anyOf:
         - {$bar.boxed: false}

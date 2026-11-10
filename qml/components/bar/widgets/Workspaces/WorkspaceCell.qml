@@ -64,6 +64,13 @@ Item {
   property string iconLayout: "largest"
   property int iconSlots: 1
   property string glyph: ""
+  // App icons after a short divider at the end of a glyph or text label (a
+  // scratchpad with `scratchpadSplit`), `tailLength` along the bar of
+  // `length` (WorkspaceCells.splitTail); the label sits in the rest
+  property var tailPaths: []
+  property real tailLength: 0
+  readonly property bool _tailed: tailPaths.length > 0 && (_shows === "glyph" || _shows === "text")
+  readonly property real _shift: _tailed ? -tailLength / 2 : 0
   // What it shows: "glyph", "text", "icons" or its "labels"
   readonly property string _shows: glyph !== "" ? "glyph" : text !== "" ? "text" : iconPaths.length > 0 ? "icons" : "labels"
   // A window on it asks for attention (its `look` is the urgent one)
@@ -166,6 +173,8 @@ Item {
 
     StyledIcon {
       anchors.centerIn: parent
+      anchors.horizontalCenterOffset: root.isVertical ? 0 : root._shift
+      anchors.verticalCenterOffset: root.isVertical ? root._shift : 0
       visible: root._shows === "glyph"
       text: root.glyph
       font.pixelSize: root.barConfig.fontSize * 1.2
@@ -179,6 +188,8 @@ Item {
     Row {
       id: textRow
       anchors.centerIn: parent
+      anchors.horizontalCenterOffset: root.isVertical ? 0 : root._shift
+      anchors.verticalCenterOffset: root.isVertical ? root._shift : 0
       visible: root._shows === "text"
       spacing: WorkspaceCells.iconGap(root.thickness)
       rotation: root.isVertical && !textLabel.symbol && textRow.implicitWidth > root.thickness * 0.8 ? -90 : 0
@@ -237,6 +248,55 @@ Item {
 
         ColorGlide on color {
           enabled: root.animated
+        }
+      }
+    }
+
+    // A short divider, then the app icons, ending the content (`tailPaths`).
+    // The divider is the cell's own content color, dimmed, so it reads on
+    // any fill
+    Item {
+      id: tail
+      readonly property var _divider: WorkspaceCells.splitDivider(root.thickness)
+
+      visible: root._tailed
+      x: root.isVertical ? 0 : parent.width - width
+      y: root.isVertical ? parent.height - height : 0
+      width: root.isVertical ? root.thickness : root.tailLength
+      height: root.isVertical ? root.tailLength : root.thickness
+
+      Grid {
+        anchors.centerIn: parent
+        flow: root.isVertical ? Grid.TopToBottom : Grid.LeftToRight
+        rows: root.isVertical ? -1 : 1
+        columns: root.isVertical ? 1 : -1
+        spacing: WorkspaceCells.iconGap(root.thickness)
+
+        Rectangle {
+          width: root.isVertical ? tail._divider.length : tail._divider.thickness
+          height: root.isVertical ? tail._divider.thickness : tail._divider.length
+          radius: tail._divider.thickness / 2
+          antialiasing: true
+          color: Qt.alpha(root.look.content, 0.6)
+
+          ColorGlide on color {
+            enabled: root.animated
+          }
+        }
+
+        Repeater {
+          // The most icons a cell shows (appIconsMax's top), each while it has one
+          model: 8
+
+          Image {
+            required property int index
+            visible: index < root.tailPaths.length
+            width: WorkspaceCells.iconSize(root.thickness)
+            height: width
+            sourceSize: Qt.size(64, 64)
+            source: root.tailPaths[index] ?? ""
+            opacity: root.boxed || root.isActive ? 1 : 0.7
+          }
         }
       }
     }

@@ -86,31 +86,52 @@ TestCase {
     compare(Scratchpads.entryFor(listed, "b"), null);
   }
 
+  function shown(kind, text, lead, tail) {
+    return {
+      "kind": kind,
+      "text": text,
+      "lead": lead,
+      "tail": tail
+    };
+  }
+
   function test_content() {
     const entry = {
       "name": "m",
       "icon": "ico",
       "text": "Magic"
     };
-    compare(Scratchpads.content(entry, "m", "icon", true), {
-      "kind": "text",
-      "text": "ico"
-    });
-    compare(Scratchpads.content(null, "m", "icon", true), {
-      "kind": "icons",
-      "text": ""
-    });
-    compare(Scratchpads.content(null, "m", "icon", false), {
-      "kind": "glyph",
-      "text": "star"
-    });
-    compare(Scratchpads.content(entry, "m", "name", false), {
-      "kind": "text",
+    compare(Scratchpads.content(entry, "m", "icon", true, false), shown("text", "ico", "", false));
+    compare(Scratchpads.content(null, "m", "icon", true, false), shown("icons", "", "", false));
+    compare(Scratchpads.content(null, "m", "icon", false, false), shown("glyph", "star", "", false));
+    compare(Scratchpads.content(entry, "m", "name", false, false), shown("text", "Magic", "", false));
+    compare(Scratchpads.content(null, "m", "name", false, false), shown("name", "m", "", false));
+  }
+
+  function test_contentBoth() {
+    const entry = {
+      "name": "m",
+      "icon": "ico",
       "text": "Magic"
-    });
-    compare(Scratchpads.content(null, "m", "name", false), {
-      "kind": "name",
-      "text": "m"
-    });
+    };
+    compare(Scratchpads.content(entry, "m", "both", true, false), shown("text", "Magic", "ico", false), "its icon before its text, never app icons");
+    compare(Scratchpads.content(null, "m", "both", false, false), shown("name", "m", "star", false), "a star and the name");
+    compare(Scratchpads.content({
+      "icon": "",
+      "text": "T"
+    }, "m", "both", false, false), shown("text", "T", "star", false));
+  }
+
+  function test_contentSplit() {
+    const entry = {
+      "name": "m",
+      "icon": "ico",
+      "text": "Magic"
+    };
+    compare(Scratchpads.content(null, "m", "icon", true, true), shown("glyph", "star", "", true), "the label is a star, the apps' icons follow the divider");
+    compare(Scratchpads.content(entry, "m", "icon", true, true), shown("text", "ico", "", true));
+    compare(Scratchpads.content(null, "m", "icon", false, true), shown("glyph", "star", "", false), "no windows, no divider");
+    compare(Scratchpads.content(entry, "m", "both", true, true), shown("text", "Magic", "ico", true));
+    compare(Scratchpads.content(null, "m", "name", true, true), shown("name", "m", "", true));
   }
 }
