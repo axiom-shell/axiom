@@ -453,6 +453,38 @@ QtObject {
     ShellManager.followLink("Layouts");
   }
 
+  // A new free menu for the bar editor's widget at `zone`/`index` (on the
+  // selected bar), set in its field at `path` (its popout's ["popout",
+  // "menu"], or a Button's click ["menu"]), then edited here as
+  // editOpenedBy does. The menu is saved at once (the bar draft may only
+  // point at a saved menu: EdgeMenuEditor.isSaved); the widget's change
+  // stays in the bar draft, undoable
+  function newMenuFor(zone, index, path) {
+    const widget = BarManager.selectedBar()?.widgets?.[zone]?.[index];
+    if (!widget || !path?.length)
+      return;
+    root.ensureLoaded();
+    root.menus.ensureLoaded();
+    const menu = root.menus.addSavedMenu("popout");
+    if (!menu)
+      return;
+    // A nested field is set as its whole top-level object
+    const key = path[0];
+    let value = menu.id;
+    if (path.length > 1) {
+      value = Utils.clone(widget.properties?.[key] ?? {});
+      let node = value;
+      for (const part of path.slice(1, -1)) {
+        node[part] = node[part] ?? {};
+        node = node[part];
+      }
+      node[path[path.length - 1]] = menu.id;
+    }
+    BarManager.updateWidgetProperty(zone, index, key, value);
+    root.editMenu(root.menus.selectedMenuIndex);
+    ShellManager.followLink("Layouts");
+  }
+
   // --- Save / reset ---
 
   // Merged onto the latest real config; stays dirty if rejected
