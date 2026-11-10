@@ -4293,6 +4293,13 @@
     "Add a Notes module to an overlay page or a menu.": "",
     "Add a Chat module to an overlay page or a menu.": "",
     "Slide comes in from off the screen, or for a free menu from the bar widget that opened it or the nearest screen edge. Fade fades in place; Scale, for a free menu, grows in place.": "",
-    "While the menu is open, it holds the keyboard, so the windows behind can't be typed in.": ""
+    "While the menu is open, it holds the keyboard, so the windows behind can't be typed in.": "",
+    "Scratchpad labels": "",
+    "Icon: its icon from the Workspaces settings, else its apps' icons (with App icons on), else a star. Name: its label from there, else its name. Hovering one shows its name.": "",
+    "Your own icon and label for a special workspace (scratchpad), by its name. The workspace switcher finds them by itself; this only changes how they look, and adds one to its All list.": "",
+    "Scratchpads": "",
+    "The name its bind uses: magic for Super + V.": "",
+    "Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any. All: also every one your Toggle special workspace binds or the Workspaces settings name.": "",
+    "With windows": ""
   }
 }

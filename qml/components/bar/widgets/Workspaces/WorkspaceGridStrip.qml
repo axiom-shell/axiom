@@ -32,6 +32,8 @@ Item {
   required property CellLook cellLook
   // The strip's windows chained after a row's cells
   readonly property int _stripCells: activeStrip.visible ? activeStrip.cells : 0
+  // The scratchpads' cells chained after those
+  readonly property int _scratchCells: scratchpads.visible ? scratchpads.cells : 0
 
   readonly property bool isVertical: barConfig.vertical
 
@@ -114,7 +116,7 @@ Item {
   Grid {
     id: layout
     // Only what's shown: a Grid keeps spacing for an empty column or row
-    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0))
+    readonly property int shown: Math.max(1, (activeStrip.stripOnly ? 0 : 1) + (activeStrip.visible ? 1 : 0) + (scratchpads.visible ? 1 : 0))
     rows: root.isVertical ? shown : 1
     columns: root.isVertical ? 1 : shown
     spacing: root.spacing
@@ -142,7 +144,23 @@ Item {
       clickable: root.properties.clickToSwitch
       hitArea: root.hitArea
       chainFirst: activeStrip.stripOnly ? 0 : root.lineIds(root.activeLine, root.activeId).length
-      chainCount: chainFirst + root._stripCells
+      chainCount: chainFirst + root._stripCells + root._scratchCells
+    }
+
+    ScratchpadCells {
+      id: scratchpads
+      barConfig: root.barConfig
+      properties: root.properties
+      cellLook: root.cellLook
+      monitorName: root.output
+      activeColor: root.activeColor
+      occupiedColor: root.occupiedColor
+      urgentColor: root.urgentColor
+      emptyColor: root.emptyColor
+      textColor: root.iconColor
+      hitArea: root.hitArea
+      chainFirst: activeStrip.chainFirst + root._stripCells
+      chainCount: chainFirst + root._scratchCells
     }
   }
 
@@ -182,7 +200,7 @@ Item {
       hitArea: root.hitArea
       barSpotOf: root.barSpotOf
       activeIcons: root.properties.activeWorkspaceIcons === "keep" || !activeStrip.visible
-      chainCount: line.ids.length + root._stripCells
+      chainCount: line.ids.length + root._stripCells + root._scratchCells
       // The active arrow takes the active cell's place
       glyphOf: (id, active) => active && root.properties.showActiveIcon ? root.positionGlyph(line.value, root.isVertical ? root.columns : root.rows) : ""
 

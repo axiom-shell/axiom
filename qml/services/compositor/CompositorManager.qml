@@ -130,6 +130,12 @@ Singleton {
   // Every workspace: [{ id, name, output, windowCount, active, focused,
   // urgent }] (urgent: a window on it asks for attention)
   readonly property var workspaces: root.backend?.workspaces ?? []
+  // The special workspaces (contract.md › Shapes, Special), [] without
+  // namedSpecial
+  readonly property var specials: root.supports.namedSpecial ? (root.backend?.specials ?? []) : []
+  // The special workspace names configured: Workspaces.scratchpads', then
+  // the toggleSpecial binds'
+  readonly property var specialNames: root.supports.namedSpecial ? Scratchpads.configuredNames(WorkspacesConfig.scratchpads, KeybindsConfig.activeBinds) : []
   // The focused monitor's name, or "" with none
   readonly property string focusedOutput: root.backend?.focusedOutput ?? ""
   // The focused monitor's name while it's connected (a screen surfaces are
@@ -295,14 +301,26 @@ Singleton {
     }, windows);
   }
 
+  // Toggles special workspace `name` on `output` ("" is the focused one)
+  function toggleSpecial(name, output) {
+    const trimmed = String(name ?? "").trim();
+    if (!root.supports.namedSpecial || trimmed === "")
+      return;
+    root.backend.toggleSpecial(trimmed, output || "");
+  }
+
+  // Moves the focused window to special workspace `name`
+  function moveToSpecial(name) {
+    const trimmed = String(name ?? "").trim();
+    if (!root.supports.namedSpecial || trimmed === "")
+      return;
+    root.backend.moveToSpecial(trimmed);
+  }
+
   // A workspace's windows, the biggest (by area) first, ties in the
   // windows' order
   function windowsBySize(workspaceId) {
-    const area = w => (w?.w ?? 0) * (w?.h ?? 0);
-    return root.windows.filter(w => w.workspaceId === workspaceId).map((w, i) => ({
-          "w": w,
-          "i": i
-        })).sort((a, b) => area(b.w) - area(a.w) || a.i - b.i).map(e => e.w);
+    return WorkspaceCells.bySize(root.windows.filter(w => w.workspaceId === workspaceId));
   }
 
   // A workspace's windows in strip order (WorkspaceGeometry.stripOrder)
@@ -770,6 +788,17 @@ Singleton {
     // (scrollStep); direction: left, right, up or down
     function scroll(direction: string): void {
       root.scrollStep(direction);
+    }
+
+    // verb: toggle (show or hide special workspace `name`) or move (the
+    // focused window into it)
+    function special(verb: string, name: string): void {
+      if (verb === "toggle")
+        root.toggleSpecial(name, "");
+      else if (verb === "move")
+        root.moveToSpecial(name);
+      else
+        console.warn("[CompositorManager] special: not a verb:", verb);
     }
 
     function left(): void {

@@ -85,8 +85,36 @@ QtObject {
   // right, then top to bottom
   function _icons(wsId) {
     const bySize = CompositorManager.windowsBySize(wsId);
-    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, root.properties.appIconsCount === "windows", root._onScreen(wsId, bySize));
+    return root._iconsFrom(bySize, root._onScreen(wsId, bySize));
+  }
+
+  // The icons of windows `bySize` (the biggest first), `onScreen` being
+  // the same windows in the order they sit on screen
+  function _iconsFrom(bySize, onScreen) {
+    const windows = root.iconLayout === "largest" ? bySize.slice(0, 1) : WorkspaceCells.chosen(bySize, root.iconSlots, root.properties.appIconsCount === "windows", onScreen);
     return windows.map(w => AppIconManager.resolveWindowIcon(w.appId, w.title));
+  }
+
+  // What the cell of scratchpad `special` (CompositorManager.specials) shows,
+  // `entry` being its Workspaces.scratchpads entry or null: the fields of
+  // of(), with app icons only in icon mode (`scratchpadLabel`)
+  function ofScratchpad(special, entry) {
+    const icons = root.properties.scratchpadLabel === "icon" && root.properties.showAppIcons && special.windows.length > 0 ? root._iconsFrom(WorkspaceCells.bySize(special.windows), WorkspaceCells.byPosition(special.windows)) : [];
+    const shown = Scratchpads.content(entry, special.name, root.properties.scratchpadLabel, icons.length > 0);
+    shown.written = root.properties.scratchpadLabel === "name" && shown.kind === "text";
+    shown.lead = "";
+    return {
+      "kind": shown.kind,
+      "text": shown.text,
+      "plain": root._plain(shown),
+      "lead": "",
+      "leadPlain": false,
+      "icons": shown.kind === "icons" ? icons : [],
+      "number": "",
+      "length": root._length(shown, icons),
+      "occupied": special.windowCount > 0,
+      "urgent": special.urgent === true
+    };
   }
 
   // A workspace's windows (`windows`) in the order they sit on screen: on

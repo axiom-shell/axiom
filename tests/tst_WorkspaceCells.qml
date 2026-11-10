@@ -247,6 +247,32 @@ TestCase {
     compare(WorkspaceCells.nameShown("", 3, 3), "", "niri's unnamed ones");
   }
 
+  function test_bySize_biggest_first_ties_in_order() {
+    const wins = [
+      {
+        "id": "a",
+        "w": 10,
+        "h": 10
+      },
+      {
+        "id": "b",
+        "w": 20,
+        "h": 20
+      },
+      {
+        "id": "c",
+        "w": 10,
+        "h": 10
+      },
+      {
+        "id": "d",
+        "w": 20,
+        "h": 20
+      }
+    ];
+    compare(WorkspaceCells.bySize(wins).map(w => w.id), ["b", "d", "a", "c"]);
+  }
+
   function test_pick_in_priority_order() {
     compare(WorkspaceCells.pick("circle", "web", ["a"], "mail").kind, "glyph", "the grid's arrow first");
     compare(WorkspaceCells.pick("", "web", ["a"], "mail"), {

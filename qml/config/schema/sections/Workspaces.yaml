@@ -144,3 +144,20 @@ properties:
       /$supports.strips: true
       /$supports.stripsAlways: false
     x-compositor: {hyprland: {key: scrolling.follow_focus}}
+  scratchpads:
+    type: array
+    x-group: Scratchpads
+    title: Scratchpads
+    x-showIf: {/$supports.namedSpecial: true}
+    default: []
+    description: Your own icon and label for a special workspace (scratchpad), by its name. The workspace switcher finds them by itself; this only changes how they look, and adds one to its All list.
+    items:
+      type: object
+      additionalProperties: false
+      x-order: [name, icon, text]
+      properties:
+        id: {$ref: '#/definitions/ItemId'}
+        name: {type: string, title: Name, default: '', description: 'The name its bind uses: magic for Super + V.'}
+        icon: {type: string, x-control: icon, title: Icon, default: ''}
+        text: {type: string, title: Label, default: ''}
+      required: [id]

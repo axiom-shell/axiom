@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 
 import qs.config
 import qs.components.methods
@@ -25,6 +26,9 @@ QtObject {
   // The widget's place in the bar's run, its cells being segments of it
   // (Workspaces' `_run`), else null
   property var run: null
+  // The bar's inner side, where its cells' tooltips show (as
+  // BarIconWidget.innerEdges)
+  readonly property int innerEdges: barConfig?.top ? Edges.Bottom : barConfig?.bottom ? Edges.Top : barConfig?.left ? Edges.Right : Edges.Left
   // Room kept to the widget's box across, and a cell's thickness inside it
   property real inset: 0
   property real thickness: barConfig ? barConfig.thickness - inset * 2 : 0

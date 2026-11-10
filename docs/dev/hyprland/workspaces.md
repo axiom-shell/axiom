@@ -90,7 +90,13 @@ One workspace layout serves everything that shows workspaces or moves between th
   - The strip popout's number cells show the same, less app icons (each line's windows follow it).
 - **Head.** `lead` puts an icon (`leadIcon`) or the active workspace's label, as its cell shows it without app icons (`CellContents.of` on the monitor's active id: a label's icon or text, the name, else its number), before the cells in their box (`SplitLead`), in from the box's edge by the bar's padding; a split bar sets it apart as the icon part ([widget style](../bar/widget-style.md) › Split). With no box (`segmented`) it has none, so the cells' first cap ([shapes and runs](../bar/widget-shapes-runs.md)) never follows one.
 - **Urgent.** A workspace a window on it marks urgent (the shape's `urgent`) draws in `urgentColor`, pulsing with `urgentPulse` ([widget style](../bar/widget-style.md) › Workspaces cells), on the bar and in both popouts.
-- **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`.
+- **Scratchpads.** With `scratchpads` (`occupied` or `all`; off by default, hidden where there are no `namedSpecial` workspaces) the special workspaces follow the workspaces and the strip windows behind a divider (`ScratchpadCells`, in both strips; the grid popout is untouched).
+  - The divider is `StripDivider` (the bar's separator style), left out where a powerline chains the cells on.
+  - A cell shows, by `scratchpadLabel`: `icon`: its icon from `Workspaces.scratchpads`, else its apps' icons (with `showAppIcons`), else a star; `name`: its label from there, else its name (`Scratchpads.content`, `CellContents.ofScratchpad`). Hovering shows its name.
+  - A special open on this monitor draws active; open elsewhere or closed, it draws as occupied with windows, else empty. An urgent one draws urgent.
+  - A click toggles it on this monitor (`CompositorManager.toggleSpecial(name, output)`). Scrolling skips them.
+  - `occupied` lists those with windows or open; `all` also the names the `toggleSpecial` binds and `Workspaces.scratchpads` give, as empty cells (`Scratchpads.cells`). Order: the global list's names, then binds', then the rest by name.
+- **Cells.** Both strips lay their cells out with `workspaces/WorkspaceCellRow`. `StripDivider` is the divider `ActiveStrip` and `ScratchpadCells` share.
   - It holds every shown workspace, or one grid row.
   - Its cells are `spacing` apart (`BarsConfig.workspaceCellSpacing`: tight 0, bar the bar's `innerGap`, wide twice it), as are the popouts' cells (the payload's `cellSpacing`); the strip's window cells (`StripWindows`) take the same spacing and `solidBoxes`, but the gap between the row and the strip after it stays the bar's.
   - `glyphOf` gives the grid's position arrow.

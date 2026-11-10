@@ -475,6 +475,137 @@ TestCase {
     compare(SwayState.specialToggle([], marks, "a-b", "WL-1").ids, ["2"]);
   }
 
+  function specialTree() {
+    const leaf = (id, title, marks) => ({
+          "id": id,
+          "name": title,
+          "pid": id,
+          "nodes": [],
+          "floating_nodes": [],
+          "marks": marks ?? [],
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "width": 10,
+            "height": 10
+          }
+        });
+    return {
+      "id": 1,
+      "nodes": [
+        {
+          "type": "output",
+          "name": "__i3",
+          "nodes": [
+            {
+              "type": "workspace",
+              "name": "__i3_scratch",
+              "num": -1,
+              "id": 2,
+              "nodes": [],
+              "floating_nodes": [leaf(20, "hidden", ["axiom-special-a-20"])]
+            }
+          ]
+        },
+        {
+          "type": "output",
+          "name": "WL-1",
+          "nodes": [
+            {
+              "type": "workspace",
+              "name": "1",
+              "num": 1,
+              "id": 3,
+              "nodes": [leaf(30, "plain"), leaf(31, "shown", ["axiom-special-b-31"])],
+              "floating_nodes": []
+            },
+            {
+              "type": "workspace",
+              "name": "axiom-special-notes",
+              "id": 40,
+              "urgent": true,
+              "nodes": [leaf(41, "note")],
+              "floating_nodes": []
+            }
+          ]
+        }
+      ]
+    };
+  }
+
+  function test_treeKeepsScratchWindowsApart() {
+    const info = SwayState.tree(fixture("get_tree"));
+    compare(info.scratch.map(w => w.title), ["scratchy"]);
+    compare(info.scratch[0].hidden, true);
+    compare(info.scratch[0].output, "");
+    verify(!info.windows.some(w => w.title === "scratchy"));
+  }
+
+  function test_treeListsSpecialWorkspaces() {
+    compare(SwayState.tree(specialTree()).specialWorkspaces, [
+      {
+        "name": "notes",
+        "id": -40,
+        "output": "WL-1",
+        "urgent": true
+      }
+    ]);
+    compare(SwayState.specialWorkspaceName("axiom-special-notes"), "notes");
+    compare(SwayState.specialWorkspaceName("1"), "");
+  }
+
+  function test_specialsInScratchpadMode() {
+    const tree = specialTree();
+    const info = SwayState.tree(tree);
+    const marks = SwayState.marks(tree);
+    const outputs = [
+      {
+        "name": "WL-1",
+        "activeWorkspaceId": 1
+      }
+    ];
+    const result = SwayState.specials(info, marks, outputs);
+    const a = result.find(s => s.name === "a");
+    compare(a.open, false);
+    compare(a.output, "");
+    compare(a.windows.map(w => w.title), ["hidden"]);
+    const b = result.find(s => s.name === "b");
+    compare(b.open, true);
+    compare(b.output, "WL-1");
+  }
+
+  function test_specialsInWorkspaceMode() {
+    const tree = specialTree();
+    const info = SwayState.tree(tree);
+    const marks = SwayState.marks(tree);
+    const closed = SwayState.specials(info, marks, [
+      {
+        "name": "WL-1",
+        "activeWorkspaceId": 1
+      }
+    ]).find(s => s.name === "notes");
+    compare(closed.open, false);
+    compare(closed.id, -40);
+    compare(closed.windows.map(w => w.title), ["note"]);
+    const open = SwayState.specials(info, marks, [
+      {
+        "name": "WL-1",
+        "activeWorkspaceId": -40
+      }
+    ]).find(s => s.name === "notes");
+    compare(open.open, true);
+    compare(open.output, "WL-1");
+    compare(open.urgent, true);
+  }
+
+  function test_specialsListMarkedAndWorkspaceWindows() {
+    const tree = specialTree();
+    tree.nodes[1].nodes[0].nodes[0].marks = ["axiom-special-notes-30"];
+    const info = SwayState.tree(tree);
+    const notes = SwayState.specials(info, SwayState.marks(tree), []).find(s => s.name === "notes");
+    compare(notes.windows.map(w => w.title).sort(), ["note", "plain"]);
+  }
+
   function test_windowCommands() {
     const windows = [
       {

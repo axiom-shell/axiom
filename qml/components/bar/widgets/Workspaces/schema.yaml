@@ -157,6 +157,24 @@ settings:
         - {/Workspaces.layout: scrolling, /$supports.strips: true}
         - {/$supports.stripsAlways: true}
     description: 'Hide: the strip windows already show them, so the active workspace shows its number, dot or label instead. The others keep their icons.'
+  scratchpads:
+    type: string
+    title: Scratchpads
+    x-control: toggle
+    enum: ['off', occupied, all]
+    x-enumLabels: {'off': 'Off', occupied: With windows, all: All}
+    default: 'off'
+    x-showIf: {/$supports.namedSpecial: true}
+    description: 'Special workspaces after the workspaces, behind a divider; click one to show or hide it. With windows: those holding any. All: also every one your Toggle special workspace binds or the Workspaces settings name.'
+  scratchpadLabel:
+    type: string
+    title: Scratchpad labels
+    x-control: toggle
+    enum: [icon, name]
+    x-enumLabels: {icon: Icon, name: Name}
+    default: icon
+    x-showIf: {scratchpads: {not: 'off'}, /$supports.namedSpecial: true}
+    description: 'Icon: its icon from the Workspaces settings, else its apps'' icons (with App icons on), else a star. Name: its label from there, else its name. Hovering one shows its name.'
   spacing:
     type: string
     title: Spacing

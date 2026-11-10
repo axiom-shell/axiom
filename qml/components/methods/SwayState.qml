@@ -28,8 +28,12 @@ QtObject {
   // and outputRects ({ [name]: { x, y, width, height } }), order (window ids
   // in the order sway's focus stacks say they were used, most recent first),
   // focusedId ("" with none), layouts ({ [tiled window id]: its parent's
-  // layout }) }. Windows in the scratchpad aren't listed; one
-  // shown from it is, on the workspace it shows on.
+  // layout }, scratch (the windows in the scratchpad, in the contract's
+  // shape with hidden true and output "": kept out of windows, for specials
+  // alone), specialWorkspaces ([{ name, id, output (the output holding it),
+  // urgent }] for each axiom-special-<name> workspace) }. Windows in the
+  // scratchpad aren't in windows; one shown from it is, on the workspace it
+  // shows on.
   function tree(reply) {
     const info = {
       "windows": [],
@@ -38,16 +42,42 @@ QtObject {
       "outputRects": {},
       "order": _focusOrder(reply),
       "focusedId": "",
-      "layouts": {}
+      "layouts": {},
+      "scratch": [],
+      "specialWorkspaces": []
     };
     for (const output of reply?.nodes ?? []) {
-      if (output.name === "__i3")
+      if (output.name === "__i3") {
+        for (const ws of output.nodes ?? []) {
+          const loose = {
+            "windows": [],
+            "counts": {},
+            "layouts": {},
+            "focusedId": ""
+          };
+          _walk(ws, {
+            "output": "",
+            "ws": ws,
+            "floating": false,
+            "hidden": true
+          }, loose);
+          info.scratch = info.scratch.concat(loose.windows);
+        }
         continue;
+      }
       info.outputRects[output.name] = output.rect;
       for (const ws of output.nodes ?? []) {
         if (ws.type !== "workspace")
           continue;
         info.workspaceRects[ws.name] = ws.rect;
+        const group = root.specialWorkspaceName(ws.name);
+        if (group !== "")
+          info.specialWorkspaces.push({
+            "name": group,
+            "id": root.workspaceId(ws),
+            "output": output.name,
+            "urgent": ws.urgent === true
+          });
         const before = info.windows.length;
         _walk(ws, {
           "output": output.name,
@@ -366,6 +396,47 @@ QtObject {
   // The workspace special group `name` is when it's a workspace of its own
   function specialWorkspace(name) {
     return `axiom-special-${name}`;
+  }
+
+  // The group name of an axiom special workspace's name, or "" for another
+  function specialWorkspaceName(wsName) {
+    const prefix = root.specialWorkspace("");
+    const text = String(wsName ?? "");
+    return text.startsWith(prefix) ? text.slice(prefix.length) : "";
+  }
+
+  // The special groups (contract.md › Shapes, Special) from tree() (`info`),
+  // marks() (`marks`) and the outputs: every group a mark or a workspace
+  // names, the same in both specialWorkspaces modes
+  function specials(info, marks, outputs) {
+    const names = [];
+    const add = name => {
+      if (name !== "" && !names.includes(name))
+        names.push(name);
+    };
+    for (const id of Object.keys(marks ?? {}))
+      (marks[id] ?? []).forEach(mark => add(root.specialGroup(mark)));
+    (info?.specialWorkspaces ?? []).forEach(ws => add(ws.name));
+    return names.map(name => {
+      const ws = (info?.specialWorkspaces ?? []).find(w => w.name === name);
+      const marked = win => (marks?.[win.id] ?? []).some(mark => root.specialGroup(mark) === name);
+      const all = info?.windows ?? [];
+      const windows = all.filter(win => marked(win) || win.workspaceName === root.specialWorkspace(name)).concat((info?.scratch ?? []).filter(marked));
+      let output = "";
+      if (ws)
+        output = (outputs ?? []).find(o => o.activeWorkspaceId === ws.id)?.name ?? "";
+      if (output === "")
+        output = all.find(win => marked(win) && win.output !== "")?.output ?? "";
+      return {
+        "name": name,
+        "id": ws?.id ?? 0,
+        "open": output !== "",
+        "output": output,
+        "windowCount": windows.length,
+        "urgent": ws?.urgent === true,
+        "windows": windows
+      };
+    });
   }
 
   // The commands toggling special group `name` as a workspace of its own:

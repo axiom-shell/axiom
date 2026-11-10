@@ -178,6 +178,16 @@ QtObject {
     return text === "" || text === String(id) || text === String(number) ? "" : text;
   }
 
+  // `windows` (the contract's), the biggest (by area) first, ties in their
+  // order
+  function bySize(windows) {
+    const area = w => (w?.w ?? 0) * (w?.h ?? 0);
+    return windows.map((w, i) => ({
+          "w": w,
+          "i": i
+        })).sort((a, b) => area(b.w) - area(a.w) || a.i - b.i).map(e => e.w);
+  }
+
   // What a cell shows, highest first: the grid's arrow (`glyph`), a label
   // of one's own (`label`), app icons (`icons`, given only for a workspace
   // with windows), the compositor's name (`name`, given only with names

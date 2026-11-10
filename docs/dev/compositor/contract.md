@@ -24,9 +24,16 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
   - `reserved` is what layer surfaces take from each edge: the compositor's own count where it gives one (Hyprland, sway), else axiom's layers' alone (niri: `LayerArrange.arrange`).
   - `activeWorkspaceId` is -1 while unknown.
   - `specialWorkspaceId` is 0 when none is open.
+  - Optional `specialWorkspaceName` (Hyprland's: `special:magic`, `""` when none is open): Hyprland 0.57 gives a special workspace no id, so `HyprState.specials` matches by name.
   - `description` is what `MonitorLayout.outputId` keys a stable identity on.
 - **Workspace**: `{ id, name, output, windowCount, active, focused, urgent }`. `urgent`: a window on it asks for attention (Hyprland's and sway's workspace `urgent`, niri's `is_urgent`; a dynamic list's added empty one never is).
   - `id` is the number axiom's layout uses (`WorkspacesConfig`).
+- **Special**: `{ name, id, open, output, windowCount, urgent, windows }`, a special workspace (scratchpad) for the switcher's cells (`CompositorManager.specials`; `HyprState.specials`, `SwayState.specials`).
+  - `name` is the name a `toggleSpecial` bind takes (Hyprland's `special:magic` is `magic`).
+  - `id` is the compositor's workspace id while it is a workspace (Hyprland's negative id, or -1 where Hyprland gives none; sway's workspace mode: minus its con id), else 0 (a sway scratchpad group). Never match on it for Hyprland: `HyprState.specials` matches workspaces, outputs and windows by name.
+  - `output` is the output it is open on, or `""`; `open` is `output !== ""`.
+  - `windows` are its windows in the Window shape, sway's hidden scratchpad ones included (`hidden: true`, `output: ""`); `windowCount` is their count.
+  - `urgent`: the workspace's (always false for a sway scratchpad group).
 - **Keyboard** (`withKeyboard(cb, registry)`): `{ layouts: ["us", "de"], index, keymap }`, or null. `layouts` are the codes of the layouts the compositor has: for one that names them in full (niri, sway), the layout `registry` gives each name (the xkb registry, `InputSourceManager.registry` from the daemon's `input.layouts`; `KeyboardLayouts.shape`), so an unsaved edit or a reorder of the config never relabels them; a name it doesn't list takes the configured code at its place (`Input.keyboard.sources`' xkb list while axiom sets the keyboard, else the compositor's own config) when there are as many, else a guess (`KeyboardLayouts.code`).
 - **Layer rects** (`withLayerRects`): `{ [output]: { w, h, layers: [{ namespace, x, y, w, h }] } }`, or null. Axiom places its layers itself (`LayerManager`); where this is given, it corrects each window by how far the compositor's rect differs (what axiom doesn't arrange: other apps' layers, reserved space).
 
@@ -41,6 +48,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
     - A backend that can't slide goes straight to the last leg.
     - The facade only asks for legs with `supports.workspaceSlide`.
   - `sendWindowToWorkspace(id)` (moveSilent)
+  - `specials` (optional, `[]` when left out), `toggleSpecial(name, output)` (`output` "" is the focused one) and `moveToSpecial(name)` (with `namedSpecial`)
   - `scrollStrip(direction)` (with `strips`)
   - `applyRemap(plan, outputNames)` (without `outputWorkspaces`): a layout change's remap, and after a hotplug the re-homing of an unplugged output's workspaces, which the compositor must itself have moved to an output still connected (Hyprland's and sway's do; [workspaces › Hotplugs](../hyprland/workspaces.md#hotplugs-an-unplugged-monitors-windows))
   - `returnWorkspaces(plan)` (where `applyRemap` is): puts re-homed windows back once their monitor is back (`WorkspaceGeometry.returnWindows`' `{ moves: [{ id, to, monitor }], workspaces: [{ id, monitor }], show: [{ monitor, id }] }`): each window to its workspace, each of `workspaces` onto its monitor, each monitor of `show` to that workspace, with the focus and the focused monitor's workspace left as they were ([workspaces › Hotplugs](../hyprland/workspaces.md#hotplugs-an-unplugged-monitors-windows))
@@ -92,7 +100,7 @@ Plain JS objects, rebuilt as the compositor reports changes. Converters sit in a
 | `bindMerge` | the user's own binds can be read (the Keybinds page's List, conflicts, Merge) |
 | `monitorColor` | a monitor rule's bit depth, color management and SDR fields |
 | `monitorMirror` | a monitor rule can mirror another output |
-| `namedSpecial` | named special workspaces (the `toggleSpecial` / `moveToSpecial` binds) |
+| `namedSpecial` | named special workspaces (the `toggleSpecial` / `moveToSpecial` binds, the switcher's scratchpads: `CompositorManager.specials`) |
 | `scratchpad` | a scratchpad (sway's), standing in for the special workspace in those binds |
 | `mouseBinds` | binds on mouse buttons (`mouseDrag`, `mouseResize`) |
 | `pseudoTile` | the `pseudo` bind |

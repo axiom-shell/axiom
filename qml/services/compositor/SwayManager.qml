@@ -25,6 +25,8 @@ Singleton {
   // The enabled outputs (SwayState.output): get_outputs lists disabled
   // ones too
   readonly property var outputs: I3.monitors.values.filter(m => m.lastIpcObject?.active !== false).map(m => SwayState.output(m, root._info, root.gapsOut))
+  // The special groups (SwayState.specials)
+  readonly property var specials: SwayState.specials(root._info, root._marks, root.outputs)
   // The numbered workspaces (SwayState.workspace)
   readonly property var workspaces: I3.workspaces.values.map(ws => SwayState.workspace(ws, root._info.counts)).filter(ws => ws !== null)
   // The focused output's name, or ""
@@ -246,21 +248,23 @@ Singleton {
   // workspace, goes to it or back (SwayState.specialWorkspaceToggle). The
   // group's windows the other kind keeps move over first
   // (SwayState.specialAdopt)
-  function toggleSpecial(name) {
-    const active = I3.focusedMonitor?.activeWorkspace?.name ?? "";
+  function toggleSpecial(name, output) {
+    const target = output || root.focusedOutput;
+    const active = I3.monitors.values.find(m => m.name === target)?.activeWorkspace?.name ?? "";
     const adopt = SwayState.specialAdopt(root.windows, root._marks, name, CompositorConfig.swaySpecial, active);
+    const focus = target !== root.focusedOutput ? [`focus output ${SwayState.quote(target)}`] : [];
     if (CompositorConfig.swaySpecial === "workspace") {
-      const output = root.focusedOutput;
-      SwayIpcManager.dispatch(adopt.lines.concat(SwayState.specialWorkspaceToggle(name, active, output, root._specialFrom[output] ?? "")).join("; "));
+      SwayIpcManager.dispatch(focus.concat(adopt.lines, SwayState.specialWorkspaceToggle(name, active, target, root._specialFrom[target] ?? "")).join("; "));
       if (active !== SwayState.specialWorkspace(name))
         root._specialFrom = Object.assign({}, root._specialFrom, {
-          [output]: active
+          [target]: active
         });
       return;
     }
-    const plan = SwayState.specialToggle(adopt.windows, adopt.marks, name, root.focusedOutput);
+    const plan = SwayState.specialToggle(adopt.windows, adopt.marks, name, target);
     const shown = plan.ids.filter(id => adopt.windows.some(w => w.id === id));
-    const lines = adopt.lines.concat(plan.show ? plan.ids.filter(id => !adopt.windows.some(w => w.id === id && w.output === root.focusedOutput)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`));
+    const changes = adopt.lines.concat(plan.show ? plan.ids.filter(id => !adopt.windows.some(w => w.id === id && w.output === target)).map(id => `${_con(id)} scratchpad show`) : shown.map(id => `${_con(id)} move scratchpad`));
+    const lines = changes.length > 0 ? focus.concat(changes) : [];
     if (lines.length > 0)
       SwayIpcManager.command(lines.join("; "), () => root._debounce.restart());
   }
