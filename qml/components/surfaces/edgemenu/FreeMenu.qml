@@ -25,6 +25,11 @@ import qs.components.hosts.popout
 // (EdgeMenuManager.positions), where a bind or IPC opens it again until
 // logout. A right click there offers Reset position.
 //
+// It also shows a popped-out edge menu (EdgeMenuManager.popOut): at the
+// spot its edge box was, appearing at once, held open as if pinned (an
+// underlay), with its edge's layout; dragged, it moves for the moment
+// only. Its close docks it.
+//
 // Open/close and hover-loss dismissal are PopoutWrapperBase's, as for the
 // popouts.
 PopoutWrapperBase {
@@ -33,13 +38,23 @@ PopoutWrapperBase {
   required property var menu
   required property ShellScreen screen
   readonly property string menuId: root.menu.id
+  // A popped-out edge menu's spot as it popped out ({ screen, x, y }),
+  // else null (a free menu)
+  readonly property var poppedOut: EdgeMenuManager.poppedOut[root.menuId] ?? null
+  readonly property bool popped: root.poppedOut !== null && !EdgeMenusConfig.isFree(root.menu)
+  // Laid out as on its edge while popped out (a top or bottom menu's
+  // modules along a row), else down a column
+  readonly property bool vertical: !root.popped || root.menu.edge === "left" || root.menu.edge === "right"
+  // Its box drawn: a popped-out menu's edge host can go (EdgeMenu)
+  readonly property bool boxShown: surface.active
 
   // Its box's frame: a box floating free of the edges
   readonly property var _free: SurfaceContext.free()
   readonly property real contentPadding: Appearance.borderWidth + PopoutsConfig.padding
   readonly property var colors: EdgeMenusConfig.colorsOf(root.menu)
-  // fade | scale | slide
-  readonly property string animation: root.menu.freeAnimation
+  // fade | scale | slide; popped out, it appears at once where its edge
+  // box was (an instant fade)
+  readonly property string animation: root.popped ? "fade" : root.menu.freeAnimation
   // Its window is on Top, under the Overlay layer (SubPopout reads it)
   readonly property bool onOverlayLayer: false
 
@@ -59,8 +74,9 @@ PopoutWrapperBase {
   readonly property Item contentItem: loader.item as Item
   readonly property real boxWidth: Math.ceil(root.contentItem?.implicitWidth ?? 0) + root.contentPadding * 2
   readonly property real boxHeight: Math.ceil(root.contentItem?.implicitHeight ?? 0) + root.contentPadding * 2
-  // Room for the modules down the free area: past it they scroll
-  readonly property real maxLength: (root.screen?.height ?? 0) - root.insets.top - root.insets.bottom - root.contentPadding * 2
+  // Room for the modules down the free area (across it, laid out as a
+  // top or bottom menu): past it they scroll
+  readonly property real maxLength: root.vertical ? (root.screen?.height ?? 0) - root.insets.top - root.insets.bottom - root.contentPadding * 2 : (root.screen?.width ?? 0) - root.insets.left - root.insets.right - root.contentPadding * 2
 
   // What opened it, taken as it opens: a bar widget on its screen
   // (PopoutAnchor.screenRect, its bar's edge as a name), and the cursor
@@ -109,14 +125,14 @@ PopoutWrapperBase {
   // session spot when opened on its own (FreeMenuPlace.spot)
   readonly property var spot: FreeMenuPlace.spot({
     "dragged": root._dragged,
-    "popOut": null,
+    "popOut": root.poppedOut,
     "fromWidget": root._fromWidget,
     "session": EdgeMenuManager.positions[root.menuId] ?? null,
     "screen": root.screen?.name ?? "",
     "anchor": root.menu.freeAnchor,
     "draggable": root.menu.draggable
   })
-  readonly property bool canDrag: FreeMenuPlace.canDrag(root.menu, false)
+  readonly property bool canDrag: FreeMenuPlace.canDrag(root.menu, root.popped)
 
   // Where its box goes on the screen, and the edge it slides in from
   readonly property var place: FreeMenuPlace.place({
@@ -165,17 +181,17 @@ PopoutWrapperBase {
 
   // Its place among the popouts (PopoutManager), ranked as it was opened
   // (EdgeMenuManager.claimKinds): a widget's popout as a bar popout, else
-  // a menu; held by the editor, it gives way and comes back. Pinned, it's
-  // an underlay: drawn under the popouts on its Top layer, it never closes
-  // anything and nothing opening over it closes it
-  // (PopoutGeometry.isUnderlay)
+  // a menu; held by the editor, it gives way and comes back. Pinned or
+  // popped out, it's an underlay (FreeMenuPlace.underlay): drawn under the
+  // popouts on its Top layer, it never closes anything and nothing opening
+  // over it closes it (PopoutGeometry.isUnderlay)
   property PopoutClaim claim: PopoutClaim {
     key: "menu:" + root.menuId
     kind: root.currentData?.claimKind ?? "menu"
     screen: root.screen?.name ?? ""
     edge: ""
     resident: sync.held
-    underlay: EdgeMenuManager.isPinned(root.menuId)
+    underlay: FreeMenuPlace.underlay(EdgeMenuManager.isPinned(root.menuId), root.popped)
     occupied: root.occupied
     closing: root.isClosing
     wanted: root.isOpen && root.contentItem !== null && placeOnScreen.settled && !root._locating
@@ -350,6 +366,7 @@ PopoutWrapperBase {
 
       // Fades in place, or scales as it does; slides from its edge
       fade: root.animation !== "slide"
+      animationDuration: root.popped ? 0 : Appearance.animNormal
       // While the blur window backs surfaces, once it knows where this
       // one is, so it never shows unbacked beside them
       active: root.isOpen && root.claimed && panel.visible && (!BlurManager.backingOn(root.screen) || placeOnScreen.settled)
@@ -396,7 +413,7 @@ PopoutWrapperBase {
         onDropped: {
           if (FreeMenuPlace.keepsDrag({
             "free": EdgeMenusConfig.isFree(root.menu),
-            "poppedOut": false,
+            "poppedOut": root.popped,
             "fromWidget": root._fromWidget
           }))
             EdgeMenuManager.storePosition(root.menuId, {
@@ -438,7 +455,8 @@ PopoutWrapperBase {
 
         sourceComponent: EdgeMenuBody {
           menu: root.menu
-          vertical: true
+          free: true
+          vertical: root.vertical
           maxLength: root.maxLength
         }
 

@@ -131,13 +131,27 @@ EdgePopout {
 
   // Asked for again while open (EdgeMenuManager.engageRequested): it comes
   // forward (EdgePopout.engage). The integrated host holds no popout
-  // claim, so it has no rank to raise
+  // claim, so it has no rank to raise. Asked to pop out, it hands its spot
+  // to the free host (EdgeMenuManager.popOut)
   Connections {
     target: EdgeMenuManager
 
     function onEngageRequested(id) {
       if (id === root.menuId)
         root.engage();
+    }
+
+    // Its pop-out button: the free host takes it where its content is
+    // now (its box there, the content inside the same padding)
+    function onPopOutRequested(id) {
+      if (id !== root.menuId || !root.isOpen)
+        return;
+      const at = root.contentOnScreen();
+      EdgeMenuManager.popOut(id, {
+        "screen": root.screen?.name ?? "",
+        "x": at.x - root.contentPadding,
+        "y": at.y - root.contentPadding
+      });
     }
   }
 

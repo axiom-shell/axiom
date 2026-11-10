@@ -11,6 +11,10 @@ import qs.services.core
 // close on their own. Kept across QML reloads, so a reload doesn't close an
 // integrated menu and reflow the windows. Pins are also saved to
 // $XDG_STATE_HOME/axiom/ui/edgemenus.json, and a pinned menu opens again when qs starts.
+// An edge menu with `popOutButton` can pop out (popOut): it shows in the
+// free host where its box was, held open as if pinned, until it closes,
+// which docks it (dock); nothing of it is kept, and a reload docks it
+// closed.
 // The layouts editor's working copy of EdgeMenus is OverlayManager.menus
 // (EdgeMenuEditor).
 //
@@ -21,6 +25,9 @@ Singleton {
   // { id: true } for each open / pinned menu
   readonly property var openMenus: root._parse(_run.open)
   readonly property var pinnedMenus: root._parse(_run.pinned)
+  // { id: { screen, x, y } } for each popped-out menu: its box's top-left
+  // on its screen as it popped out (FreeMenuPlace.spot's popOut)
+  readonly property var poppedOut: root._parseObject(_run.poppedOut)
 
   // What opened each menu (a bar button), which keeps a floating menu open
   // while hovered, as a bar popout's anchor does. Not kept across reloads.
@@ -77,10 +84,21 @@ Singleton {
     // JSON lists of ids
     property string open: "[]"
     property string pinned: "[]"
+    // { id: { screen, x, y } }: the popped-out menus, at the spot (their
+    // box's top-left) they popped out at (kept here only so a reload can
+    // dock them, closed)
+    property string poppedOut: "{}"
     // False only on the first load after qs starts
     property bool started: false
 
     onLoaded: {
+      // A reload docks a popped-out menu, closed (read from the text: the
+      // maps bound to it aren't up to date yet)
+      const popped = Object.keys(root._parseObject(_run.poppedOut));
+      if (popped.length > 0) {
+        _run.open = JSON.stringify(Object.keys(root._parse(_run.open)).filter(id => !popped.includes(id)));
+        _run.poppedOut = "{}";
+      }
       if (_run.started)
         return;
       _run.started = true;
@@ -148,6 +166,15 @@ Singleton {
     }
   }
 
+  function _parseObject(json) {
+    try {
+      const value = JSON.parse(json);
+      return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
   function _set(map, id, on) {
     const ids = Object.keys(map).filter(key => key !== id);
     if (on)
@@ -155,11 +182,11 @@ Singleton {
     return JSON.stringify(ids);
   }
 
-  // True for a menu held open by the editor: it ignores closeOnLeave and
-  // outside clicks, as a pinned one does (previewing a free menu holds
-  // the menu it opens from, previewParent)
+  // True for a menu held open by the editor or popped out: it ignores
+  // closeOnLeave and outside clicks, as a pinned one does (previewing a
+  // free menu holds the menu it opens from, previewParent)
   function isHeld(id) {
-    return root.isPinned(id) || (id !== "" && (OverlayManager.menus.previewing === id || OverlayManager.menus.previewParent === id));
+    return root.isPinned(id) || root.isPoppedOut(id) || (id !== "" && (OverlayManager.menus.previewing === id || OverlayManager.menus.previewParent === id));
   }
 
   function isOpen(id) {
@@ -167,6 +194,47 @@ Singleton {
   }
   function isPinned(id) {
     return root.pinnedMenus[id] === true;
+  }
+  function isPoppedOut(id) {
+    return root.poppedOut[id] !== undefined;
+  }
+
+  // Asked to pop out (the menu's pop-out button): its edge host answers
+  // with popOut, giving its box's spot
+  signal popOutRequested(string id)
+
+  // The pop-out button: an open edge menu that can pop out
+  // (EdgeMenusConfig.canPopOut) asks its host to; a popped-out one docks,
+  // closed
+  function togglePoppedOut(id) {
+    if (root.isPoppedOut(id))
+      root.dock(id);
+    else if (root.isOpen(id) && EdgeMenusConfig.canPopOut(EdgeMenusConfig.menuById(id)))
+      root.popOutRequested(id);
+  }
+
+  // Shows open menu `id` in the free host, its box's top-left at `spot`
+  // ({ screen, x, y }): its edge host goes once the free one has shown
+  // (FreeMenuPlace.hosts)
+  function popOut(id, spot) {
+    if (!root.isOpen(id) || !spot || !EdgeMenusConfig.canPopOut(EdgeMenusConfig.menuById(id)))
+      return;
+    _run.poppedOut = JSON.stringify(Utils.withEntry(root.poppedOut, id, {
+      "screen": spot.screen,
+      "x": Math.round(spot.x),
+      "y": Math.round(spot.y)
+    }));
+  }
+
+  // Closes a popped-out menu, back on its edge: every close of one comes
+  // here (its close button, the pop-out button, a bind or bar Button
+  // toggle, IPC close, Escape). Closed first, so its edge host comes back
+  // closed
+  function dock(id) {
+    if (!root.isPoppedOut(id))
+      return;
+    _run.open = root._set(root.openMenus, id, false);
+    _run.poppedOut = JSON.stringify(Utils.withEntry(root.poppedOut, id, undefined));
   }
 
   // A module's host (Card/Panel.host) is an edge menu it can pin: an
@@ -184,8 +252,9 @@ Singleton {
   }
 
   // `kind`: how it ranks (claimKinds), "menu" when left out
+  // A popped-out menu stays as it is: no second copy
   function open(id, anchor, kind) {
-    if (!root._exists(id))
+    if (!root._exists(id) || root.isPoppedOut(id))
       return;
     const anchors = Object.assign({}, root.anchors);
     anchors[id] = anchor ?? null;
@@ -216,7 +285,7 @@ Singleton {
   // Opens a menu and moves the cursor into it, so one that closes when the
   // pointer leaves stays open
   function reveal(id) {
-    if (!root._exists(id))
+    if (!root._exists(id) || root.isPoppedOut(id))
       return;
     root.revealing = root._parse(root._set(root.revealing, id, true));
     root.open(id, null);
@@ -228,7 +297,12 @@ Singleton {
       root.revealing = root._parse(root._set(root.revealing, id, false));
   }
 
+  // A popped-out one docks
   function close(id) {
+    if (root.isPoppedOut(id)) {
+      root.dock(id);
+      return;
+    }
     if (!root.isOpen(id))
       return;
     _run.open = root._set(root.openMenus, id, false);
@@ -300,7 +374,7 @@ Singleton {
     }
 
     function list(): string {
-      return EdgeMenusConfig.menus.map(menu => `${menu.id}${root.isOpen(menu.id) ? " (open)" : ""}${root.isPinned(menu.id) ? " (pinned)" : ""}`).join("\n");
+      return EdgeMenusConfig.menus.map(menu => `${menu.id}${root.isOpen(menu.id) ? " (open)" : ""}${root.isPinned(menu.id) ? " (pinned)" : ""}${root.isPoppedOut(menu.id) ? " (popped out)" : ""}`).join("\n");
     }
   }
 }

@@ -126,6 +126,13 @@ PopoutWrapperBase {
   readonly property var triggerWindow: trigger
   readonly property string layerNamespace: root.slidesUnder ? "axiom-popout-under" : root.overNamespace
   readonly property rect boxInWindow: Qt.rect(boxArea.x, boxArea.y, boxArea.width, boxArea.height)
+  // Its content's top-left on the screen as it's drawn now (a submenu's
+  // stretch above it left out): where a popped-out edge menu's free box
+  // puts its content (EdgeMenuManager.popOut)
+  function contentOnScreen() {
+    const at = loader.mapToItem(null, 0, slot.shownStretchTop);
+    return Qt.point(placeOnScreen.placed.x + at.x, placeOnScreen.placed.y + at.y);
+  }
 
   // Its place among the popouts (PopoutManager), under `claimKey` (none:
   // it takes no part): it shows once granted, closes when a higher popout

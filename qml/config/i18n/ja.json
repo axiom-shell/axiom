@@ -4281,6 +4281,8 @@
     "Draggable": "",
     "Lifts the open menu off its edge where it is, staying open like a pinned one. Closed, it's back on its edge.": "",
     "Drag it by its top to move it. A free menu then opens there again when a bind or a script opens it, until you log out.": "",
-    "Reset position": ""
+    "Reset position": "",
+    "Dock: close it back onto its edge": "",
+    "Pop out: keep it open off its edge": ""
   }
 }

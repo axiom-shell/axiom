@@ -80,6 +80,13 @@ QtObject {
     return ScreenEdge.fromConfig(menu.edge);
   }
 
+  // Whether an edge menu can pop out (`popOutButton`, an `edge` menu's
+  // alone: never a strip, and a free menu is out already): its button
+  // lifts it into the free host, at its box (EdgeMenuManager.popOut)
+  function canPopOut(menu) {
+    return menu?.placement === "edge" && !!menu.popOutButton;
+  }
+
   // The menu's box colours
   function colorsOf(menu) {
     return {

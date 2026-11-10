@@ -116,9 +116,12 @@ QtObject {
   // it closes what it now covers below it (it grew into it), and gives way
   // to what's above as a claim would (its first footprint may have been
   // where its window was only estimated to be, LayerOrigin.placed, and
-  // a popout never shows over a higher one); yielded, it may come back
+  // a popout never shows over a higher one); yielded, it may come back.
+  // Only the claim registered under its key: a host handing over to
+  // another under the same key (a popped-out edge menu's edge host, until
+  // its free host has shown) changes nothing once the new one claimed
   function update(c) {
-    if (!root._claims[c.key])
+    if (root._claims[c.key] !== c)
       return;
     if (c._state === "yielded") {
       // No longer resident (unpinned while away): it closes, as it would
