@@ -38,7 +38,6 @@ QtObject {
   readonly property bool revealing: EdgeMenuManager.revealing[root.menuId] === true
   // Closes when the pointer leaves, unless held or being revealed
   readonly property bool autoDismiss: root.menu.close.onLeave && !root.held && !root.revealing
-  onAutoDismissChanged: root.host.updateDismissTimer()
 
   // The hover strip's length, from config alone, so it's the same open
   // or closed: its box's, its modules' grid with `pad` on both ends, no
@@ -63,6 +62,14 @@ QtObject {
 
   property Connections _host: Connections {
     target: root.host
+
+    // The host's own autoDismiss (bound to this one's) once it has
+    // changed: this one's change can reach a handler here before the
+    // host's binding, which then restarted the countdown of a menu just
+    // held (a pinned free menu closed by a reload)
+    function onAutoDismissChanged() {
+      root.host.updateDismissTimer();
+    }
 
     function onIsOpenChanged() {
       if (!root.host.isOpen)
