@@ -317,6 +317,14 @@ Singleton {
     _run.open = root._set(root.openMenus, id, false);
   }
 
+  // A free menu's close button: closes it, unpinned first, so it stays
+  // closed (a pin reopens it at the next start)
+  function closeUnpinned(id) {
+    if (root.isPinned(id))
+      root.setPinned(id, false);
+    root.close(id);
+  }
+
   function toggle(id, anchor) {
     // Covered, it's brought forward rather than closed
     if (root.covered(id))

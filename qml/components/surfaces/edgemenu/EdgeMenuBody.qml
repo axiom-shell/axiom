@@ -19,7 +19,8 @@ import qs.components.hosts.overlay
 // top right, growing modules growing downward (a popped-out edge menu's
 // buttons stay in its edge's corner, so its pop-out toggle doesn't move).
 // Its buttons: the pop-out toggle (an edge menu's `popOutButton`, which
-// docks it again) and the pin (`pinButton`).
+// docks it again), the pin (`pinButton`) and, last, a free menu's close
+// (`closeButton`).
 Item {
   id: root
 
@@ -191,6 +192,18 @@ Item {
       borderColor: Theme.border
       tooltipText: root.pinned ? I18n.tr("Unpin: close as usual") : I18n.tr("Pin: keep this menu open")
       onClicked: EdgeMenuManager.togglePinned(root.menu.id)
+    }
+
+    // A free menu's `closeButton`: closes it, unpinned
+    StyledIconButton {
+      visible: EdgeMenusConfig.isFree(root.menu) && root.menu.closeButton
+      size: Widget.height
+      iconText: "close"
+      backgroundColor: Qt.alpha(Theme.background, 0.85)
+      hoverColor: Theme.backgroundHighlight
+      borderColor: Theme.border
+      tooltipText: I18n.tr("Close")
+      onClicked: EdgeMenuManager.closeUnpinned(root.menu.id)
     }
   }
 }

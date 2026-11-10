@@ -25,7 +25,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
   - The editor's `GridEditor.sizeScale` doubles default sizes.
   - `updateMenuField` rescales the places (`GridPlacement.scalePlace`) and `offset` so modules stay put, as the lock screen's does.
 - Style:
-  - `moduleBorders`, `pinButton` (the padding is `Popouts.padding`);
+  - `moduleBorders`, `pinButton` (the padding is `Popouts.padding`), and a free menu's `closeButton` (closes it, unpinned: [Free menus](free-menus.md) › Pinning);
   - `background` (`panel` | `none`; `edge` and `free` menus only, never a strip): `none` draws the menu as tiles (Tiles, below);
   - `backgroundColor` / `borderColor`, read through `EdgeMenusConfig.colorsOf` (a tiled menu has no border: the setting hides);
   - floating: `detached` / `distance` / `animation` (see [Held off an edge](../popouts/held-off-edge.md)), read through `EdgeMenusConfig.detachedOf`: a tiled edge menu is always held off its edge, so `detached` hides and `distance` and `animation` show;

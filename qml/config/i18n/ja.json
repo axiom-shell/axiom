@@ -4292,6 +4292,8 @@
     "Opened by a keybind": "",
     "New submenu…": "",
     "New menu…": "",
-    "None leaves out the menu's box, so its cards float as tiles of their own. An edge menu is then held off its edge.": ""
+    "None leaves out the menu's box, so its cards float as tiles of their own. An edge menu is then held off its edge.": "",
+    "Closes the menu, unpinning it if it's pinned.": "",
+    "Close button": ""
   }
 }

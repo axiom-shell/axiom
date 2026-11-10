@@ -1,7 +1,7 @@
 # Free menus
 
 > **Files:** `qml/components/surfaces/edgemenu/FreeMenu.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/services/core/StateManager.qml`, `qml/components/hosts/popout/EdgePopout.qml`, `qml/components/methods/PopoutGeometry.qml`, `qml/components/methods/FreeMenuPlace.qml`, `tests/tst_FreeMenuPlace.qml`, `qml/components/methods/SurfaceContext.qml`, `qml/components/surfaces/edgemenu/EdgeMenu.qml`, `qml/components/surfaces/edgemenu/EdgeMenuSync.qml`, `qml/components/surfaces/edgemenu/EdgeMenuBody.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/bar/BarWidgetHost.qml`
-> **Config:** `EdgeMenus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `freeAnimation` (`fade` | `scale` | `slide`), `draggable`, `background`, `screen`, `pinButton`, `backgroundColor` / `borderColor`, `close.*`
+> **Config:** `EdgeMenus.items[]` with `placement: "free"`: `freeAnchor` (`at`: `centre` | `cursor` | `point`, `x`, `y`), `freeAnimation` (`fade` | `scale` | `slide`), `draggable`, `background`, `screen`, `pinButton`, `closeButton`, `backgroundColor` / `borderColor`, `close.*`
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Editing and submenus](editing-submenus.md), [Popout registry](../popouts/registry.md), [Popout submenus](../popouts/submenus.md), [Layer arrangement](../compositor/layer-arrangement.md), [Plan](../plans/menus-rework.md)
 
 A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own, `FreeMenu`, at the bar widget that opened it, or at its `freeAnchor` (or where it was dragged this session). Submenu rows can also open it beside another menu, in that menu's submenu (unchanged, see [Editing and submenus](editing-submenus.md)). The same window also shows a popped-out edge menu (below).
@@ -63,6 +63,7 @@ A menu with no edge (`EdgeMenusConfig.isFree`). It opens in a window of its own,
 - **Clicks.** It is no grab partner of the other popouts: a click on it closes an open bar or edge popout, as any outside click does. It takes the keyboard only when clicked (`OnDemand`), never exclusively.
 
 ### Pinning
+- **`closeButton`** (free menus only, default off; decided 2026-11-10: "free menu should have option for a close button"): a close button last in the button row, after the pin, so neither moves. It closes the menu and unpins it first (`EdgeMenuManager.closeUnpinned`). A popped-out edge menu has none: its toggle docks it.
 - `EdgeMenuManager.canPin` takes a free menu in its own window (its `EdgeMenuBody` isn't a submenu's), so the `pinButton` and QuickActions' `pin` work on it. Shown in another menu's submenu it has no pin.
 - Pins are saved in `ui/edgemenus.json`, as for every menu, and a pinned free menu opens again when qs starts (at its `freeAnchor`).
 - On Top, a pinned one hides under a fullscreen window and comes back after it (the compositor's doing; a live check).
