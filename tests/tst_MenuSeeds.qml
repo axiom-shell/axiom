@@ -25,6 +25,7 @@ TestCase {
       const menu = MenuSeeds.seed(purpose, "menu-2", "Menu 2");
       compare(menu.placement, "free", purpose);
       compare(menu.animation, "fade", purpose + " fades in, as free menus did before one animation setting");
+      compare(menu.closeButton, true, purpose + " has a close button");
       compare(menu.open, undefined, purpose + " leaves opening at the defaults");
       compare(menu.freeAnchor, undefined, purpose + " opens where its opener puts it");
       compare(menu.close, undefined, purpose + " closes as the defaults say");
@@ -35,19 +36,21 @@ TestCase {
     const menu = MenuSeeds.seed("free", "menu-3", "Menu 3");
     compare(menu.placement, "free");
     compare(menu.animation, "fade");
+    compare(menu.closeButton, true, "closed by its button");
     compare(menu.freeAnchor, {
       "at": "centre"
     }, "a floating one opens at the screen's centre");
     compare(menu.close, {
       "onLeave": false,
-      "onOutsideClick": true
-    }, "it stays open when the pointer leaves, and a click outside closes it");
+      "onOutsideClick": false
+    }, "it stays open when the pointer leaves, and an outside click doesn't take the keyboard");
     compare(MenuSeeds.seed("key", "m", "M").placement, "edge", "no keybind purpose any more");
   }
 
   function test_unknown() {
     compare(MenuSeeds.seed(undefined, "m", "M").placement, "edge", "no purpose: an edge menu, as New menu always made");
     compare(MenuSeeds.seed("bogus", "m", "M").placement, "edge");
+    compare(MenuSeeds.seed("edge", "m", "M").closeButton, undefined, "an edge menu's close button stays at the default (off)");
   }
 
   function test_fresh() {

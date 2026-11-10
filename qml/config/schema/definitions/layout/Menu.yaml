@@ -267,4 +267,5 @@ properties:
         type: boolean
         title: Close on outside click
         default: false
+        description: While the menu is open, it holds the keyboard, so the windows behind can't be typed in.
         x-showIf: {../placement: [edge, free]}

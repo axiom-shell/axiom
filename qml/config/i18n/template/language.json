@@ -3763,6 +3763,7 @@
     "While a window is fullscreen": "",
     "While an app records from the microphone.": "",
     "While on, these win over your compositor's own config.": "",
+    "While the menu is open, it holds the keyboard, so the windows behind can't be typed in.": "",
     "While the pointer is on the OSD, nothing under it moves.": "",
     "While the screen is locked": "",
     "Whole edge": "",

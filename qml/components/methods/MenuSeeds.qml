@@ -14,11 +14,12 @@ QtObject {
   // A new menu's own fields for `purpose` (one of `purposes`; anything
   // else is "edge"), with its `id` and `name` and no modules yet: an edge
   // menu opens on hovering its edge; a bar widget's popout, a submenu and a
-  // floating menu are free (no edge) and fade in, as free menus did before
-  // they shared the edge menus' `animation` (whose default slides). A
-  // floating one opens at the screen's centre, mostly by a bind or a
-  // script, with the pointer elsewhere: it stays open when the pointer
-  // leaves, and a click outside closes it
+  // floating menu are free (no edge), fade in, as free menus did before
+  // they shared the edge menus' `animation` (whose default slides), and
+  // have a close button. A floating one opens at the screen's centre,
+  // mostly by a bind or a script, with the pointer elsewhere: it stays open
+  // when the pointer leaves, and an outside click doesn't close it, so it
+  // never holds the keyboard (close.onOutsideClick's grab)
   function seed(purpose, id, name) {
     const menu = {
       "id": id,
@@ -36,13 +37,14 @@ QtObject {
     }
     menu.placement = "free";
     menu.animation = "fade";
+    menu.closeButton = true;
     if (purpose === "free") {
       menu.freeAnchor = {
         "at": "centre"
       };
       menu.close = {
         "onLeave": false,
-        "onOutsideClick": true
+        "onOutsideClick": false
       };
     }
     return menu;
