@@ -1,6 +1,6 @@
 # Edge menus: editing and submenus
 
-> **Files:** `qml/services/ui/EdgeMenuEditor.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
+> **Files:** `qml/services/ui/EdgeMenuEditor.qml`, `qml/services/ui/EdgeMenuManager.qml`, `qml/config/EdgeMenusConfig.qml`, `qml/components/views/Layouts/MenuTarget.qml`, `qml/components/views/Layouts/MenuOpening.qml`, `qml/components/views/Layouts/OpenerButtons.qml`, `qml/components/views/Layouts/MenusSection.qml`, `qml/components/methods/MenuSeeds.qml`, `qml/components/content/Submenu/Submenu.qml`, `qml/components/content/Submenu/MenuSubmenu.qml`, `qml/services/ui/GridEditor.qml`
 > **Config:** `EdgeMenus.items[]` (`placement: "free"`, `offset`, `gridOffset`, `modules[]` with `Submenu` modules' `menu`, `openOnHover`)
 > **Related:** [Overview](overview.md), [Hosts](hosts.md), [Layouts editor](../overlay/layouts-editor.md), [Grid canvas](../overlay/grid-canvas.md), [Popout submenus](../popouts/submenus.md), [Editors pattern](../core/editors-pattern.md)
 
@@ -23,8 +23,28 @@ How edge menus are edited on the Layouts page (draft, field groups, previewing, 
   - **Buttons that add an opener**, drawn by `OpenerButtons` (shared with the page's Opening group):
     - a bar Button: `addBarButton` → `BarManager.addWidgetTo`, into the bar editor's draft, then the bar editor on that bar;
     - a keybind: `addKeybind` → `KeybindManager.editor.addAndRecord`, then the Keybinds page's editor recording its key.
-- A new menu (`addMenu`) opens on hover and starts previewing.
+- A new menu (`addMenu`) is selected and starts previewing; what it starts as depends on what it's for (below).
 - Beside "Show on screen", "Show other menus" draws the others on the grid.
+
+### Creating a menu from what opens it
+- **What it starts as** is `MenuSeeds.seed(purpose, id, name)` (pure, `tst_MenuSeeds`), over the `EdgeMenu` schema's defaults (`ConfigManager.withDefaults`):
+
+  | Purpose | Seed |
+  |---|---|
+  | `edge` (the default: `addMenu()`) | `placement: edge`, `open.onHover: true` |
+  | `popout` | `placement: free` |
+  | `submenu` | `placement: free` |
+  | `key` | `placement: free`, `freeAnchor.at: centre` |
+- **Layouts' New menu** (`MenusSection`) opens a `StyledContextMenu` of the four purposes, then `addMenu(purpose)`.
+  - `edge`, `popout` and `submenu` add the menu to the draft, unsaved.
+  - `key` saves it at once (`addSavedMenu`), since a keybind may only open a saved menu (`isSaved`), then runs `addKeybind` (the Keybinds page recording its key).
+- **A Submenu module's New submenu…** (a link under its `menu` field in `EditorInspector`, through `OptionsGroup.fieldAction`): `addSubmenu(moduleIndex)` adds a free menu to the same draft, sets the module's `menu` to it (undoable in the menu's `GridEditor`), then selects it and holds it open beside its parent. Everything stays in one draft, so nothing points at an unsaved menu from another editor.
+- **The bar editor's New menu…** (a link under each edge menu picker in `WidgetInspector`: a widget's `popout.menu`, a Button's click `menu`): `OverlayManager.newMenuFor(zone, index, path)`.
+  - It saves a new `popout` menu at once (`addSavedMenu` → `_commitNew`: the saved config plus that one item, through `ConfigManager.commit`). The menu draft takes it as saved (`ConfigDraft.adopt`), so it doesn't show as unsaved and a later save of the draft keeps it once.
+  - It sets the field in the bar draft (`BarManager.updateWidgetProperty`, undoable; a nested field as its whole object), then opens the menu in Layouts as `editOpenedBy` does (`followLink`).
+  - So the bar draft never points at an unsaved menu.
+- The pickers keep listing every menu.
+- The links are `SettingsLink`s with a `run` function; a form draws one under a field when its `fieldAction` hook (`SchemaPropertiesForm`) gives one.
 
 ### The canvas never moves modules on screen
 - The canvas's lattice is the menu's (its cells past the lattice along the edge tinted, `latticeSpan`), so it never moves when modules do.

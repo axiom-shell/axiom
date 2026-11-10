@@ -249,6 +249,7 @@ Found meanwhile:
 - [A theme can't be generated from an avif or jxl wallpaper](issues.md#a-theme-cant-be-generated-from-an-avif-or-jxl-wallpaper) (a choice: a Go decoder dependency, or the shell handing over the image Qt decoded)
 - [Peripherals only UPower sees aren't in the Battery widget or module](issues.md#peripherals-only-upower-sees-arent-in-the-battery-widget-or-module) (Full Bluetooth)
 - [Ctrl+C on a file row copies its path, not the file](issues.md#ctrlc-on-a-file-row-copies-its-path-not-the-file) (file search, left out of v1)
+- [An edge menu picker shows a blank for no menu](issues.md#an-edge-menu-picker-shows-a-blank-for-no-menu) (menus rework)
 
 Needs a plan:
 - [The chat has no slash commands to control it](issues.md#the-chat-has-no-slash-commands-to-control-it)

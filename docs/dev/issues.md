@@ -42,7 +42,7 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
 
 ### Menus rework
 - **Where:** `qml/config/schema/definitions/layout/EdgeMenu.yaml` (`placement`), `qml/config/EdgeMenusConfig.qml` (`isFree`, `popoutMenuOf`), `qml/components/surfaces/edgemenu/EdgeMenu.qml`
-- **What:** An edge menu's mode (`floating | integrated | submenu`) mixed where a menu lives with what opens it: a `submenu` menu was named after one of its openers, a menu wanted only as a widget popout needed an edge, a screen and hover settings, and `popoutMenuOf` could never open a menu with no edge. Stage 1 split out `placement` (`edge | strip | free`, config v103); stage 2 gave a `free` menu its own window ([free-menus](edge-menus/free-menus.md)), so a widget popout, a bind and a Submenu row can all open it; stage 3 keeps a pinned free menu visible under the popouts opened over it (an underlay in the popout registry); stage 3b lets a free menu be dragged (its spot kept for the login session) and an edge menu pop out into the free host until it closes; stage 4 adds `background: none`, a menu drawn as tiles (its cards each on a tile with its own shadow and blur, input on the cards alone, an edge menu held off its edge). The plan: [plans/menus-rework.md](plans/menus-rework.md) (a `placement` of `edge | strip | free`, free menus with their own window, transparent menus, creation shortcuts, the rename to `Menus`).
+- **What:** An edge menu's mode (`floating | integrated | submenu`) mixed where a menu lives with what opens it: a `submenu` menu was named after one of its openers, a menu wanted only as a widget popout needed an edge, a screen and hover settings, and `popoutMenuOf` could never open a menu with no edge. Stage 1 split out `placement` (`edge | strip | free`, config v103); stage 2 gave a `free` menu its own window ([free-menus](edge-menus/free-menus.md)), so a widget popout, a bind and a Submenu row can all open it; stage 3 keeps a pinned free menu visible under the popouts opened over it (an underlay in the popout registry); stage 3b lets a free menu be dragged (its spot kept for the login session) and an edge menu pop out into the free host until it closes; stage 4 adds `background: none`, a menu drawn as tiles (its cards each on a tile with its own shadow and blur, input on the cards alone, an edge menu held off its edge); stage 5 adds the creation shortcuts (Layouts' New menu asks what the menu is for, a Submenu module's New submenu…, the bar editor's New menu… beside its edge menu pickers, saving the menu at once). The plan: [plans/menus-rework.md](plans/menus-rework.md) (a `placement` of `edge | strip | free`, free menus with their own window, transparent menus, creation shortcuts, the rename to `Menus`).
 - **Size:** needs a plan
 - **Found:** 2026-11-09, while planning the menus rework
 
@@ -115,6 +115,12 @@ Entries are grouped by the shell system they're in, one `##` heading per area (B
   **On hold** (maintainer, 2026-10-31): "put this on hold - note that growing modules kinda needs a re-work or removal". Growing modules as a whole (`grow`, [grow-expand](overlay/grow-expand.md)) need a rework or removal; this entry waits for that and is [deferred](roadmap.md#deferred). No design is recorded.
 - **Size:** small
 - **Found:** 2026-10-31, while reviewing the edge-menus system
+
+### An edge menu picker shows a blank for no menu
+- **Where:** `qml/components/forms/SchemaField.qml` (`optionLabels`), `qml/config/schema/definitions/kinds/WidgetBase.yaml` (`popout.menu`)
+- **What:** A field with `x-options: edgeMenus` (a widget's `popout.menu`, a Button's `menu`, a Submenu module's `menu`) lists "" first (`SettingsManager.optionsFor`), but `optionLabels` builds its labels from `EdgeMenusConfig.menus` alone, so the field's `x-emptyLabel` ("Its own popout", "None") is never used and the combo shows an empty box for no menu (seen in the bar editor's Clock inspector, Open instead, 2026-11-10). The other list sources (`regions`, `calendars`) add their `x-emptyLabel` under "".
+- **Size:** trivial
+- **Found:** 2026-11-10, while building the menus rework's creation shortcuts
 
 ## Docks, toasts and the OSD
 

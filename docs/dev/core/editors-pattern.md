@@ -13,6 +13,7 @@ The settings, bar, layouts, keybinds and monitors editors share one shape; a new
 - Editors (the settings page too) show unsaved edits live through `ConfigManager.setPreview`, never by changing `ConfigManager.config`.
 - Save merges onto the latest config (`commit`, which may refuse: the draft stays dirty; a save axiom refuses later makes it dirty again through `ConfigManager.saveRefused`, and its `refused` signal has the editor preview the edits again). Discard (shown only while dirty) reloads.
 - Typed text in a text or number box reaches the draft only on Enter, focus loss or Save, but shows Save at once: the box holds `EditsManager.typingField`, `SaveResetActions` (and `saveAll()` / `discardAll()`) commit or drop it first. Half-typed commands and paths never reach the preview.
+- An item another editor's shortcut saves at once into a list section (the bar editor's New menu…: the saved config plus that item) joins the draft through `ConfigDraft.adopt(item)`, added to both its saved and its local copy, so it shows saved and a later save keeps it once ([editing and submenus](../edge-menus/editing-submenus.md) › Creating a menu from what opens it).
 - `ensureLoaded()` on page open reloads only a clean draft. Settings and Keybinds use `ConfigDraft.loadIfStale()`, which also skips one already holding the current config, since pages are rebuilt on every open ([streamed building](streamed-building.md) › Editors reopening).
 
 ### Selection
