@@ -168,7 +168,7 @@ properties:
     title: Detach from edge
     default: false
     description: A separate box held off the edge, instead of growing out of it.
-    x-showIf: {placement: edge}
+    x-showIf: {placement: edge, background: panel}
   distance:
     x-group: Placement
     type: integer
@@ -178,11 +178,17 @@ properties:
     minimum: 0
     maximum: 50
     description: 0 lines it up with your window border, 50 centres it.
-    x-showIf: {placement: edge, detached: true}
+    x-showIf:
+      anyOf:
+        - {placement: edge, detached: true}
+        - {placement: edge, background: none}
   animation:
     $ref: '#/definitions/DetachedAnimation'
     x-group: Placement
-    x-showIf: {placement: edge, detached: true}
+    x-showIf:
+      anyOf:
+        - {placement: edge, detached: true}
+        - {placement: edge, background: none}
   frame:
     x-group: Style
     type: boolean
@@ -213,18 +219,33 @@ properties:
       anyOf:
         - {placement: free}
         - {placement: edge, popOutButton: true}
+  background:
+    x-group: Style
+    type: string
+    title: Box
+    default: panel
+    enum: [panel, none]
+    x-control: toggle
+    x-enumLabels: {panel: Panel, none: None}
+    description: None leaves out the menu's box, so its cards float as tiles of their own and clicks between them reach what's behind. An edge menu is then held off its edge.
+    x-showIf: {placement: [edge, free]}
   backgroundColor:
     x-group: Style
     type: string
     title: Background
     x-options: colors
     default: base00
+    description: The menu's box, or with Box set to None, the tile under each card.
   borderColor:
     x-group: Style
     type: string
     title: Border
     x-options: colors
     default: base05
+    x-showIf:
+      anyOf:
+        - {placement: strip}
+        - {background: panel}
   close:
     type: object
     title: Closing

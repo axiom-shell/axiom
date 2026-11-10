@@ -212,7 +212,7 @@ PopoutWrapperBase {
   readonly property bool claimed: root.claim.held
 
   autoDismiss: sync.autoDismiss
-  dismissDelay: root.menu.close.delay
+  dismissDelay: EdgeMenusConfig.closeDelayOf(root.menu)
   keepAlive: surface.hovered
   currentItem: root.contentItem
   window: panel

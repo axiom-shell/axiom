@@ -23,7 +23,7 @@ EdgePopout {
 
   // Held off the edge, `distance` across the free screen from it
   // (EdgePlacement.gaps)
-  held: root.menu.detached
+  held: EdgeMenusConfig.detachedOf(root.menu)
   distance: root.menu.distance / 100
   fade: root.menu.animation === "fade"
 
@@ -107,7 +107,7 @@ EdgePopout {
   // On the modules, in screen px (the box's own position is in this
   // window's coordinates, which start past the perpendicular edges')
   triggerCentre: GridPlacement.menuFillsEdge(root.menu) ? (root.startPad + root.screenLength - root.endPad) / 2 : root.modulesStart + root.gridLength / 2
-  dismissDelay: root.menu.close.delay
+  dismissDelay: EdgeMenusConfig.closeDelayOf(root.menu)
   keyboardOnDemand: true
   closeOnClickOutside: root.menu.close.onOutsideClick && !sync.held
   // Over the overlay its grab (which lets input through to the menu) is

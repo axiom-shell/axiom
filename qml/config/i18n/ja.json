@@ -4283,6 +4283,10 @@
     "Drag it by its top to move it. A free menu then opens there again when a bind or a script opens it, until you log out.": "",
     "Reset position": "",
     "Dock: close it back onto its edge": "",
-    "Pop out: keep it open off its edge": ""
+    "Pop out: keep it open off its edge": "",
+    "Panel": "",
+    "None leaves out the menu's box, so its cards float as tiles of their own and clicks between them reach what's behind. An edge menu is then held off its edge.": "",
+    "The menu's box, or with Box set to None, the tile under each card.": "",
+    "Box": ""
   }
 }
