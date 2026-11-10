@@ -7,7 +7,7 @@
 How an edge menu is put on screen: the shared body and sync, the lattice its modules sit on, and the two edge hosts, `FloatingEdgeMenu` (placement `edge`) and `IntegratedEdgeMenu` (placement `strip`). A `free` menu's host, `FreeMenu`, is in [Free menus](free-menus.md).
 
 ### Building (`surfaces/edgemenu/`)
-- `qml/shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement.
+- `qml/shell/EdgeMenus` builds one `EdgeMenu` per enabled entry (keyed by id), which `LazyLoader`s the host for its placement (`FreeMenuPlace.hosts`: a popped-out edge menu is in the free host, [Free menus](free-menus.md) › A popped-out edge menu).
 - `EdgeMenu` keeps the last live entry, so the hosts read its (schema-defaulted) fields directly.
 
 ### The body (`EdgeMenuBody`)
@@ -22,7 +22,7 @@ How an edge menu is put on screen: the shared body and sync, the lattice its mod
   - Submenus (`MenuSubmenu`) are an `EdgeMenuBody` too, with `submenu` set and `screen` that of their parent menu: the same grid and zoom on its screen, only capped (never stretched), with no pin or Escape of its own.
 - Taking its whole edge (`fillsEdge`, `GridPlacement.menuFillsEdge`: `length` `edge`, or any integrated menu) it's stretched along the edge to `maxLength`; otherwise it scrolls along it past that.
 - Its modules are laid out as `GridPlacement.menuModules` gives them: an integrated menu's moved back along the edge to start at its first module, so a lone module placed past the grid's start still spans the edge end to end. A whole-edge floating menu keeps a gap before its modules (`menuKeepsLead`: the layouts editor holds it on purpose); `menuOnScreen` draws both the same.
-- With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`). With no edge (`EdgeMenuBody.edge` is `""` for a free menu or a submenu) the pin is at the top right and growing modules grow downward.
+- With `pinButton` it draws a pin in the corner away from the edge (`EdgeMenuManager.togglePinned`), after the pop-out toggle of an edge menu with `popOutButton` and before the close a popped-out one has. In the free host (`EdgeMenuBody.free`) or a submenu it has no edge (`edge` is `""`): the buttons are at the top right and growing modules grow downward.
 
 ### The lattice along the edge
 - Along the edge the modules sit on a lattice fixed to the screen (`GridPlacement.menuAlong`, at the host's `unit`).

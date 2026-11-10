@@ -13,7 +13,8 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 
 ### An entry's fields
 - `id`, `name`, `monitor`, `edge`, `placement` (`edge` | `strip` | `free`; until config v103 `mode`: `floating` | `integrated` | `submenu`).
-- Free menus: `freeAnchor` and `freeAnimation` ([Free menus](free-menus.md)); their edge, length, offsets and hover opening hide.
+- Free menus: `freeAnchor`, `freeAnimation` and `draggable` ([Free menus](free-menus.md)); their edge, length, offsets and hover opening hide.
+- `popOutButton` (`edge` menus only) and, with it on, `draggable`: a pop-out toggle beside the pin ([Free menus](free-menus.md) › A popped-out edge menu).
 - `offset` / `gridOffset`: where the modules sit along the edge (see [Hosts](hosts.md)).
 - `length` (`edge` menus only: a `strip` menu always takes its whole edge, `GridPlacement.menuFillsEdge`, so the setting is hidden for it, `x-showIf: {placement: edge}`):
   - `content`: as long as its modules;
@@ -34,6 +35,7 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 
 ### State (`EdgeMenuManager`)
 - Holds which menus are open and pinned, in a `PersistentProperties`, so a reload doesn't reflow windows.
+- Holds which edge menus are popped out (`poppedOut`, runtime only: a reload docks them, closed) and the free menus' session spots (`positions`, in `$XDG_RUNTIME_DIR`, gone at logout; `resetPosition`). See [Free menus](free-menus.md).
 - Owns the `edgeMenu` IPC target. Its `open` and `toggle` reveal a closed menu (`reveal`: the cursor moves into it), so one that closes on leave stays up when a bind or script opens it.
 - The layouts editor's draft of the menus is not here: `OverlayManager.menus` (`EdgeMenuEditor`, [Editing and submenus](editing-submenus.md)).
 - The menus follow it and report back when they close by themselves.
@@ -46,6 +48,11 @@ Menus that pop out of a screen edge, holding overlay modules. This doc lists an 
 ### Pin
 - `pinButton` puts a pin on the menu, and QuickActions has a `pin` action. Both toggle `EdgeMenuManager.pinned[id]`.
 - While pinned, a menu ignores `closeOnLeave` and outside clicks.
+
+### Pop out
+- `popOutButton` (an `edge` menu's) puts a pop-out toggle beside the pin. It lifts the open menu into the free host where its box is, held open as if pinned (an underlay), with a close button.
+- Every close docks it, closed: the close button, the toggle, a bind or bar Button toggle, `edgeMenu close`, Escape. While it's out, opening it and hovering its edge do nothing.
+- Nothing of it is kept: a reload docks it, closed. A fullscreen window only hides it. Details: [Free menus](free-menus.md) › A popped-out edge menu.
 - A pinned edge or strip menu still gives way when covered and comes back. Only a pinned free menu stays visible under the popouts opened over it, closing none of them ([Free menus](free-menus.md) › Its claim).
 
 ### Hosts seen by modules

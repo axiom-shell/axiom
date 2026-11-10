@@ -56,14 +56,15 @@ While engaged it ranks as its kind, so it opens over a dock. Once let go it drop
 - **Showing only once granted:** a host shows only once granted (`PopoutClaim.held`: granted, or closing after it was). The pill it stands on therefore draws back only after its box has slid away.
 - **Same-frame handover:** the evicted popouts start closing in the same frame the new one starts opening.
 - **The overlay opening** closes the `bar` and `menu` claims on its screen, pinned or yielded ones too (`closeOn`, `PopoutGeometry.closedByOverlay`): they'd be latched under it. Their submenus close with them. An underlay stays.
+- **One claim per key:** a second claim under a key takes the entry over (a popped-out edge menu's free host taking over from its edge host). `update` then ignores the first one, as `release` does.
 - **Footprint changes:** if a claim's footprint changes while it shows (a resize, a switch in place, its window's real place arriving), it re-resolves as a claim does: it closes anything below it that it now covers, and gives way itself (refused, or yielded if resident) to anything above it. A popout never stays open over a higher one.
 
 ### Underlays
-- A claim with `underlay` (a pinned free menu: [Free menus](../edge-menus/free-menus.md) › Its claim) is drawn under every popout, so it takes no part in collisions (`PopoutGeometry.isUnderlay`, a submenu of one included):
+- A claim with `underlay` (a pinned free menu, or a popped-out edge menu: [Free menus](../edge-menus/free-menus.md) › Its claim) is drawn under every popout, so it takes no part in collisions (`PopoutGeometry.isUnderlay`, a submenu of one included):
   - it never closes or yields anything, opening, growing or moving;
   - nothing opening over it closes it or makes it yield, and the overlay's `closeOn` leaves it.
 - The layer keeps it underneath, not the rank: popouts are on the Overlay layer, or on Top in namespaces ordered over its `axiom-menu`.
-- `popouts list` marks it `underlay`. Rows: `tst_PopoutGeometry`'s `test_underlay`, `test_free_not_underlay` and `test_closed_by_overlay`.
+- `popouts list` marks it `underlay`. Rows: `tst_PopoutGeometry`'s `test_underlay`, `test_popped_out_underlay`, `test_free_not_underlay` and `test_closed_by_overlay`.
 
 ### An open popout never moves
 - A bar popout keeps the anchor rect it opened at; a widget moving or growing meanwhile doesn't drag it.
