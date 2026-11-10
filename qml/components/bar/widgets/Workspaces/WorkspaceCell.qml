@@ -278,15 +278,23 @@ Item {
         verticalItemAlignment: Grid.AlignVCenter
         horizontalItemAlignment: Grid.AlignHCenter
 
-        // A box the cell's whole thickness across the bar
+        // A box the cell's whole thickness across the bar, the divider's
+        // size along it at its start and the pad after it (less the Grid's
+        // spacing, which comes next)
         Item {
-          width: root.isVertical ? root.thickness : root.dividerAlong
-          height: root.isVertical ? root.dividerAlong : root.thickness
+          readonly property real _along: root.dividerAlong + root.tailEdge - WorkspaceCells.iconGap(root.thickness)
+          width: root.isVertical ? root.thickness : _along
+          height: root.isVertical ? _along : root.thickness
 
-          StripDivider {
-            anchors.centerIn: parent
-            barConfig: root.barConfig
-            cell: root.thickness
+          Item {
+            width: root.isVertical ? root.thickness : root.dividerAlong
+            height: root.isVertical ? root.dividerAlong : root.thickness
+
+            StripDivider {
+              anchors.centerIn: parent
+              barConfig: root.barConfig
+              cell: root.thickness
+            }
           }
         }
 

@@ -81,13 +81,14 @@ QtObject {
   }
 
   // A split cell (a scratchpad with `scratchpadSplit`) along the bar is
-  // [pad][label][gap][divider][gap][icons][pad]: the same gap each side of
-  // the divider, and the end padding mirroring the start's. `label` is the
-  // label's ink length, `count` the app icons, `along` the divider's
-  // (dividerAlong). The functions below give each part; WorkspaceCell and
-  // CellContents only read them.
+  // [pad][label ink][pad] divider [pad][icons ink][pad]: the divider splits
+  // it into two compartments, each content centred in its own, the same pad
+  // on all four sides. `label` is the label's ink length, `count` the app
+  // icons, `along` the divider's (dividerAlong). The functions below give
+  // each part; WorkspaceCell and CellContents only read them.
 
-  // The padding at each end of a split cell
+  // The padding round each content of a split cell, its ends and either
+  // side of the divider (the gap between several icons stays iconGap)
   function splitPad(thickness) {
     return Math.round(thickness * 0.25);
   }
@@ -115,13 +116,12 @@ QtObject {
     return Math.ceil(sepThickness);
   }
 
-  // What follows the label: a gap, the divider, a gap, then `count` app
+  // What follows the label: a pad, the divider, a pad, then `count` app
   // icons side by side. 0 for none.
   function splitTail(count, thickness, along) {
     if (count <= 0)
       return 0;
-    const gap = root.iconGap(thickness);
-    return 2 * gap + along + count * root.iconSize(thickness) + (count - 1) * gap;
+    return 2 * root.splitPad(thickness) + along + count * root.iconSize(thickness) + (count - 1) * root.iconGap(thickness);
   }
 
   // A split cell's whole length along the bar

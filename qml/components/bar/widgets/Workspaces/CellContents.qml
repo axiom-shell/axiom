@@ -165,6 +165,12 @@ QtObject {
     return Math.max(root.restLength, Math.ceil(root._metrics.advanceWidth(shown.text) + lead) + Math.round(root.thickness * 0.5));
   }
 
+  // The same, not bold (a boxed cell's words are never bold: its ink's margins)
+  readonly property FontMetrics _inkMetrics: FontMetrics {
+    font.family: Appearance.fontFamily
+    font.pixelSize: root.barConfig ? root.barConfig.fontSize - 1 : Appearance.fontSize
+  }
+
   // The icon font at a symbol label's size, to find how far its ink sits in
   // from the box it's drawn in (a Material Symbols glyph has a margin of
   // about a seventh of its size each side)
@@ -177,7 +183,7 @@ QtObject {
   // horizontal bar (a vertical bar's isn't measured: 0): an icon in the icon
   // font, or words (`plain`) in the text font
   function _inkInset(name, plain) {
-    const metrics = plain ? root._metrics : root._iconMetrics;
+    const metrics = plain ? root._inkMetrics : root._iconMetrics;
     if (root.barConfig.vertical || metrics.font.pixelSize <= 0 || name === "")
       return {
         "start": 0,
@@ -186,8 +192,8 @@ QtObject {
     const ink = metrics.tightBoundingRect(name);
     const advance = metrics.advanceWidth(name);
     return {
-      "start": Math.max(0, Math.round(ink.x)),
-      "end": Math.max(0, Math.round(advance - ink.x - ink.width))
+      "start": Math.max(0, ink.x),
+      "end": Math.max(0, advance - ink.x - ink.width)
     };
   }
 

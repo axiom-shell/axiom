@@ -65,11 +65,11 @@ TestCase {
   }
 
   function test_splitTail() {
-    // thickness 20: gap 2, icon 12; a line divider 1 along
+    // thickness 20: pad 5, gap 2, icon 12; a line divider 1 along
     compare(WorkspaceCells.splitTail(0, 20, 1), 0, "no icons, no divider");
-    compare(WorkspaceCells.splitTail(1, 20, 1), 17, "gap, divider, gap, one icon");
-    compare(WorkspaceCells.splitTail(2, 20, 1), 31, "a gap between icons");
-    compare(WorkspaceCells.splitTail(1, 20, 4), 20, "a wider divider");
+    compare(WorkspaceCells.splitTail(1, 20, 1), 23, "pad 5, divider, pad 5, one icon");
+    compare(WorkspaceCells.splitTail(2, 20, 1), 37, "a gap between icons");
+    compare(WorkspaceCells.splitTail(1, 20, 4), 26, "a wider divider");
   }
 
   // A label whose box has margins at its ends (an icon before text: 2 at
@@ -83,7 +83,7 @@ TestCase {
       const boxStart = length / 2 + WorkspaceCells.splitShift(1, 28, 1, start, end) - box / 2;
       compare(boxStart + start, pad, what + ": the ink starts at the padding");
       const inkEnd = boxStart + box - end;
-      const iconsEnd = inkEnd + WorkspaceCells.iconGap(28) + 1 + WorkspaceCells.iconGap(28) + WorkspaceCells.iconSize(28);
+      const iconsEnd = inkEnd + 2 * pad + 1 + WorkspaceCells.iconSize(28);
       compare(length - iconsEnd, pad, what + ": the end mirrors it");
     }
   }
@@ -98,7 +98,7 @@ TestCase {
     compare(WorkspaceCells.dividerLength("chevron", 20), 12);
   }
 
-  // [pad][label][gap][divider][gap][icons][pad]: the label's side of the
+  // [pad][label][pad] divider [pad][icons][pad]: the label side of the
   // divider as far from it as the icons' side, the ends alike
   function test_splitGeometry() {
     // [label length, icons, thickness, divider along, what]; the helper is the
@@ -110,15 +110,17 @@ TestCase {
       const gap = WorkspaceCells.iconGap(thickness);
       const icons = count * WorkspaceCells.iconSize(thickness) + (count - 1) * gap;
       const length = WorkspaceCells.splitLength(label, count, thickness, along);
-      compare(length, 2 * pad + label + 2 * gap + along + icons, what + ": the whole");
+      compare(length, 4 * pad + label + along + icons, what + ": the whole");
       // Where each part sits, from the cell's start: the label centred by the shift
       const labelStart = length / 2 + WorkspaceCells.splitShift(count, thickness, along, 0, 0) - label / 2;
       compare(labelStart, pad, what + ": the label starts after the padding");
-      const dividerStart = labelStart + label + gap;
-      const iconsEnd = dividerStart + along + gap + icons;
-      compare(length - iconsEnd, pad, what + ": the end padding mirrors the start");
-      // The tail the cell draws ends the icons before that padding
-      compare(length - pad - WorkspaceCells.splitTail(count, thickness, along) + gap, dividerStart, what + ": the divider starts a gap after the label");
+      const dividerStart = labelStart + label + pad;
+      compare(dividerStart - (labelStart + label), pad, what + ": a pad before the divider");
+      // The tail the cell draws ends the icons a pad before the cell's end
+      compare(length - pad - WorkspaceCells.splitTail(count, thickness, along) + pad, dividerStart, what + ": the divider starts a pad after the label");
+      const iconsStart = dividerStart + along + pad;
+      compare(iconsStart - (dividerStart + along), pad, what + ": a pad after the divider");
+      compare(length - (iconsStart + icons), pad, what + ": the end padding mirrors the start");
     }
   }
 
