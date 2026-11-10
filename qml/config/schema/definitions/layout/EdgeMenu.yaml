@@ -130,7 +130,7 @@ properties:
     type: boolean
     title: Popout at its widget
     default: false
-    description: Opened as a bar widget's popout, it opens at that widget.
+    description: Opened as a bar widget's popout, it opens at that widget. For a menu meant mainly as a widget's popout, set Placement to Free instead.
     x-showIf: {placement: edge, length: content}
   layout:
     $ref: '#/definitions/Layout'

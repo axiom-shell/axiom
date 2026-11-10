@@ -2364,7 +2364,7 @@
     "Open when the pointer rests on the screen edge.": "",
     "Open windows": "",
     "OpenAI-compatible": "",
-    "Opened as a bar widget's popout, it opens at that widget.": "",
+    "Opened as a bar widget's popout, it opens at that widget. For a menu meant mainly as a widget's popout, set Placement to Free instead.": "",
     "Opened to edit network connections and VPNs. Empty hides its buttons.": "",
     "Opening": "",
     "Opening animation": "",

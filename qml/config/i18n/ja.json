@@ -3569,7 +3569,6 @@
     "A grid of modules.": "",
     "Off, it still shows while the OSD is open.": "",
     "Show the hidden bar briefly when a widget has news.": "",
-    "Opened as a bar widget's popout, it opens at that widget.": "",
     "A Material Symbols name, used when the script gives none.": "",
     "Split each grid unit in two for finer placement.": "",
     "Smallest length when the bar is crowded (px).": "",
@@ -4294,6 +4293,7 @@
     "Closes the menu, unpinning it if it's pinned.": "",
     "Close button": "",
     "Empty uses the primary monitor. A free menu opened by a bar widget opens on that widget's monitor.": "",
-    "Where a bind or a script opens it. Opened by a bar widget, it opens at that widget. Cursor opens on the monitor the cursor is on.": ""
+    "Where a bind or a script opens it. Opened by a bar widget, it opens at that widget. Cursor opens on the monitor the cursor is on.": "",
+    "Opened as a bar widget's popout, it opens at that widget. For a menu meant mainly as a widget's popout, set Placement to Free instead.": ""
   }
 }
