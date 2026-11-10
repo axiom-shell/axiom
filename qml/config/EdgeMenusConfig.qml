@@ -30,6 +30,18 @@ QtObject {
     return root.menus.find(menu => menu.id === id) ?? null;
   }
 
+  // Each placement's label (the schema's `x-enumLabels`: English, shown
+  // through I18n.tr), for the menu pickers
+  readonly property var placementLabels: ConfigManager.configSchema.definitions.EdgeMenu.properties.placement["x-enumLabels"]
+
+  // Whether a menu picker limited to `placements` (its `x-menuPlacements`:
+  // a widget's hover popout takes no strip, which pushes the bars
+  // inwards) offers menu `id`
+  function offeredIn(id, placements) {
+    const menu = root.menuById(id);
+    return menu !== null && Array.prototype.includes.call(placements, menu.placement);
+  }
+
   // The menu a bar widget opens as its popout (its `popout.menu`, with
   // `popout.enabled` on), else "": it opens its own popout, if any. A menu
   // that's gone or disabled leaves it its own. Widgets without the fields
